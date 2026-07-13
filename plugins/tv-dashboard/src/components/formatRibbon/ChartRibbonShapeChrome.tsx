@@ -17,8 +17,6 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 import {
   DECK_COLOR_ACCENT,
-  FieldLabel,
-  NativeTextControl,
   ShapeFillMenu,
   ShapeOutlineMenu,
   ShapeShadowMenu,
@@ -29,6 +27,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
+import { DeckRangeField } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 
@@ -181,20 +180,14 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
       {effectiveChartPart.kind === "marker" ? (
         <DeckRibbonGroup label="Marcador" hint={H.shape}>
           <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-            <FieldLabel
-              htmlFor="td-chart-marker-radius"
-              label="Raio"
-              className="td-deck-ribbon__field-label"
-            />
-            <NativeTextControl
+            <DeckRangeField
               id="td-chart-marker-radius"
-              type="number"
-              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+              label="Raio"
               min={1}
               max={12}
               step={0.5}
               value={partState?.style?.markerRadius ?? 2.5}
-              onChange={(value) => patchPartStyle({ markerRadius: Number(value) || 2.5 })}
+              onChange={(value) => patchPartStyle({ markerRadius: value || 2.5 })}
             />
             <DeckRibbonTile
               icon={Copy}

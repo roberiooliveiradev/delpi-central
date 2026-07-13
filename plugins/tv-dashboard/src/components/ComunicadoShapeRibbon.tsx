@@ -26,8 +26,6 @@ import {
   DECK_COLOR_BORDER,
   DECK_COLOR_SURFACE,
   DECK_SHAPE_DEFAULTS,
-  FieldLabel,
-  NativeTextControl,
   ShapeFillMenu,
   ShapeOutlineMenu,
   ShapeShadowMenu,
@@ -56,6 +54,7 @@ import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
 import { TableRibbonShapeChrome } from "./formatRibbon/TableRibbonShapeChrome";
 import { PartSelectionNav } from "./ComunicadoPartFormatRibbon";
 import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
+import { DeckRangeField } from "./deck/DeckRangeField";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
@@ -434,27 +433,19 @@ export function ComunicadoShapeRibbon() {
 
       {primitive === "point" ? (
         <DeckRibbonGroup label="Marcador" hint={H.shapeSize}>
-          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-            <FieldLabel
-              htmlFor="td-shape-marker-radius"
-              label="Raio px"
-              hint={H.shapeSize}
-              className="td-deck-ribbon__field-label"
-            />
-            <NativeTextControl
-              id="td-shape-marker-radius"
-              type="number"
-              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-              min={2}
-              max={48}
-              step={1}
-              aria-label="Raio do ponto em pixels"
-              value={block.style?.markerRadius ?? 8}
-              onChange={(value) =>
-                updateSelectedStyle({ markerRadius: Math.max(2, Math.min(48, Number(value) || 8)) })
-              }
-            />
-          </div>
+          <DeckRangeField
+            id="td-shape-marker-radius"
+            label="Raio px"
+            hint={H.shapeSize}
+            min={2}
+            max={48}
+            step={1}
+            value={block.style?.markerRadius ?? 8}
+            aria-label="Raio do ponto em pixels"
+            onChange={(value) =>
+              updateSelectedStyle({ markerRadius: Math.max(2, Math.min(48, value || 8)) })
+            }
+          />
         </DeckRibbonGroup>
       ) : null}
     </>,

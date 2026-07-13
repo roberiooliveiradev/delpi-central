@@ -57,10 +57,8 @@ export function useComunicadoEditorSelection({
   blocks,
   updateBlockTextFieldsRef,
 }: Options) {
-  const [selectedIds, setSelectedIds] = useState<string[]>(() => {
-    const first = configRef.current.blocks?.[0]?.id;
-    return first ? [first] : [];
-  });
+  /** Sem auto-seleção: Gerenciar / F5 abrem na Página Inicial, não em Elemento. */
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [editingChartPart, setEditingChartPart] = useState<ComunicadoChartPartRef | null>(null);

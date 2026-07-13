@@ -12,6 +12,7 @@ export { DeckIconField } from "./DeckIconField";
 export { DeckSettingsAccordion } from "./DeckSettingsAccordion";
 export { DeckInspectorLayout } from "./DeckInspectorLayout";
 export { DeckPropertySection } from "./DeckPropertySection";
+export { DeckRangeField } from "./DeckRangeField";
 export { DeckHistoryTabActions } from "./DeckHistoryTabActions";
 export { DeckRibbonLargeButton } from "./DeckRibbonLargeButton";
 export { DeckRibbonShell } from "./DeckRibbonShell";

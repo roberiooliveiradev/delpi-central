@@ -1,4 +1,3 @@
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   cornerAdjustmentToBorderRadiusPx,
   patchShapeAdjustment,
@@ -9,7 +8,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { DeckField } from "./deck/DeckField";
+import { DeckRangeField } from "./deck/DeckRangeField";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 
 type Props = {
@@ -22,7 +21,7 @@ type Props = {
 };
 
 /**
- * Controles numéricos dos ajustes de geometria (equivalente aos handles amarelos do PowerPoint).
+ * Controles contínuos dos ajustes de geometria (handles amarelos do PowerPoint).
  */
 export function ShapeAdjustmentsControl({
   kind,
@@ -42,68 +41,40 @@ export function ShapeAdjustmentsControl({
     const displayValue = isCorner
       ? (style?.borderRadius ?? cornerAdjustmentToBorderRadiusPx(values[spec.index], 64))
       : Math.round(values[spec.index] * 1000) / 1000;
+    const min = isCorner ? 0 : spec.min;
+    const max = isCorner ? 128 : spec.max;
+    const step = isCorner ? 1 : 0.01;
+    const label = isCorner
+      ? variant === "inspector"
+        ? "Cantos (px)"
+        : "Raio (px)"
+      : spec.label;
 
     return (
-      <div key={spec.id} className={variant === "ribbon" ? "td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline" : undefined}>
-        {variant === "ribbon" ? (
-          <FieldLabel
-            htmlFor={id}
-            label={isCorner ? "Raio (px)" : spec.label}
-            hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.shapeAdjustment}
-            className="td-deck-ribbon__field-label"
-          />
-        ) : null}
-        {variant === "inspector" ? (
-          <DeckField
-            id={id}
-            label={isCorner ? "Cantos (px)" : spec.label}
-            hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.shapeAdjustment}
-          >
-            <NativeTextControl
-              id={id}
-              type="number"
-              min={isCorner ? 0 : spec.min}
-              max={isCorner ? 128 : spec.max}
-              step={isCorner ? 1 : 0.01}
-              value={displayValue}
-              onChange={(raw) => {
-                const num = Number(raw) || 0;
-                if (isCorner) {
-                  const adj = Math.max(0, Math.min(0.5, num / 64));
-                  onChange(patchShapeAdjustment(kind, style, spec.index, adj, 64));
-                  return;
-                }
-                onChange(patchShapeAdjustment(kind, style, spec.index, num));
-              }}
-            />
-          </DeckField>
-        ) : (
-          <NativeTextControl
-            id={id}
-            type="number"
-            className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-            min={isCorner ? 0 : spec.min}
-            max={isCorner ? 128 : spec.max}
-            step={isCorner ? 1 : 0.01}
-            aria-label={spec.label}
-            value={displayValue}
-            onChange={(raw) => {
-              const num = Number(raw) || 0;
-              if (isCorner) {
-                const adj = Math.max(0, Math.min(0.5, num / 64));
-                onChange(patchShapeAdjustment(kind, style, spec.index, adj, 64));
-                return;
-              }
-              onChange(patchShapeAdjustment(kind, style, spec.index, num));
-            }}
-          />
-        )}
-      </div>
+      <DeckRangeField
+        key={spec.id}
+        id={id}
+        label={label}
+        hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.shapeAdjustment}
+        value={displayValue}
+        min={min}
+        max={max}
+        step={step}
+        aria-label={spec.label}
+        onChange={(num) => {
+          if (isCorner) {
+            const adj = Math.max(0, Math.min(0.5, num / 64));
+            onChange(patchShapeAdjustment(kind, style, spec.index, adj, 64));
+            return;
+          }
+          onChange(patchShapeAdjustment(kind, style, spec.index, num));
+        }}
+      />
     );
   });
 
   if (variant === "inspector") {
-    return <>{fields}</>;
+    return <div className="td-deck-inspector__range-stack">{fields}</div>;
   }
 
   return (

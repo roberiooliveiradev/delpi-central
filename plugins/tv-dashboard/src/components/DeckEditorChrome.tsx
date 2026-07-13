@@ -116,7 +116,7 @@ export function DeckEditorChrome({
     setLayersModalOpen(false);
     if (editor?.selectionPanelTab === "layers") {
       editor.setSelectionPanelTab("element");
-      if (hasSelection) setActiveTab(isTableSelection ? "tableDesign" : "element");
+      setActiveTab("home");
     }
   }
 
@@ -139,25 +139,14 @@ export function DeckEditorChrome({
 
   useEffect(() => {
     if (activeTab === "layers") {
-      setActiveTab(hasSelection ? (isTableSelection ? "tableDesign" : "element") : "home");
+      setActiveTab("home");
       return;
     }
+    /* Aba contextual sumiu (ex.: limpou seleção) → Página Inicial. */
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      if (!hasSelection) {
-        setActiveTab("home");
-        return;
-      }
-      if (isTableSelection) {
-        setActiveTab("tableDesign");
-        return;
-      }
-      setActiveTab(
-        editor?.selectionPanelTab === "layers"
-          ? "element"
-          : (editor?.selectionPanelTab ?? "element"),
-      );
+      setActiveTab("home");
     }
-  }, [activeTab, tabs, hasSelection, isTableSelection, editor?.selectionPanelTab]);
+  }, [activeTab, tabs]);
 
   useEffect(() => {
     if (!hasSelection || !isCustomSlide) return;
@@ -170,6 +159,12 @@ export function DeckEditorChrome({
     }
   }, [isTableSelection, hasSelection, isCustomSlide, activeTab]);
 
+  /**
+   * Painel lateral: só Camadas/Dados empurram a faixa.
+   * «element» não força a ribbon — senão Gerenciar/F5 e «Página Inicial»
+   * com seleção saltariam de volta para Elemento.
+   * Troca para Elemento: clique na aba ou requestRibbonTab (seleção no palco).
+   */
   useEffect(() => {
     const panelTab = editor?.selectionPanelTab;
     if (!hasSelection || !isCustomSlide || !panelTab) return;
@@ -178,12 +173,10 @@ export function DeckEditorChrome({
       return;
     }
     setLayersModalOpen(false);
-    if (panelTab === "element") {
-      setActiveTab(isTableSelection ? "tableDesign" : "element");
-      return;
+    if (panelTab === "data") {
+      setActiveTab("data");
     }
-    setActiveTab(panelTab);
-  }, [editor?.selectionPanelTab, hasSelection, isCustomSlide, isTableSelection]);
+  }, [editor?.selectionPanelTab, hasSelection, isCustomSlide]);
 
   useEffect(() => {
     if (activeTab === "slide" && !slide) {

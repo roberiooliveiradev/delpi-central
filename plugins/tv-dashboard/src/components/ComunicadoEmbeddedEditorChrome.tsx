@@ -54,7 +54,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     setLayersModalOpen(false);
     if (editor.selectionPanelTab === "layers") {
       editor.setSelectionPanelTab("element");
-      if (hasSelection) setActiveTab(isTableSelection ? "tableDesign" : "element");
+      setActiveTab("insert");
     }
   }
 
@@ -77,9 +77,9 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab || (tab.id === "layers" && layersModalOpen))) {
-      setActiveTab(hasSelection ? (isTableSelection ? "tableDesign" : "element") : "insert");
+      setActiveTab("insert");
     }
-  }, [activeTab, tabs, hasSelection, layersModalOpen, isTableSelection]);
+  }, [activeTab, tabs, layersModalOpen]);
 
   useEffect(() => {
     if (!hasSelection) return;
@@ -98,16 +98,11 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       setLayersModalOpen(true);
       return;
     }
-    if (editor.selectionPanelTab === "element") {
-      setLayersModalOpen(false);
-      setActiveTab(isTableSelection ? "tableDesign" : "element");
-      return;
+    setLayersModalOpen(false);
+    if (editor.selectionPanelTab === "data") {
+      setActiveTab("data");
     }
-    if (isSelectionPanelTab(editor.selectionPanelTab)) {
-      setLayersModalOpen(false);
-      setActiveTab(editor.selectionPanelTab);
-    }
-  }, [editor.selectionPanelTab, hasSelection, isTableSelection]);
+  }, [editor.selectionPanelTab, hasSelection]);
 
   function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {

@@ -3801,10 +3801,13 @@
 }
 
 /*
- * Range de opacidade: escala visual 0–100 (em 100% o preenchimento chega ao fim).
+ * Slider canônico da ribbon (raio, posição, opacidade…).
+ * Classe `.td-deck-ribbon__range` (+ alias `__opacity-range` para consumidores legados).
  */
+.dashboard-tv-dashboard .td-deck-ribbon__range,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range {
   appearance: none;
+  width: min(120px, 100%);
   height: 6px;
   border-radius: 999px;
   accent-color: var(--td-accent);
@@ -3816,6 +3819,7 @@
   );
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon__range::-webkit-slider-thumb,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-webkit-slider-thumb {
   appearance: none;
   width: 12px;
@@ -3827,6 +3831,7 @@
   cursor: pointer;
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon__range::-moz-range-thumb,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-moz-range-thumb {
   width: 12px;
   height: 12px;
@@ -3836,18 +3841,33 @@
   cursor: pointer;
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon__range::-moz-range-track,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: transparent;
+  background: color-mix(in srgb, var(--td-border) 75%, transparent);
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon__range-value,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-value {
-  min-width: 2.5em;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--td-text-muted);
+  min-width: 2.25rem;
+  font-size: 11px;
+  color: var(--td-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__frame-field--range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 140px;
+}
+
+.dashboard-tv-dashboard .td-deck-inspector__range-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__zoom-label {

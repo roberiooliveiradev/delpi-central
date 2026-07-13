@@ -1,4 +1,3 @@
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   blockUsesInnerShapeChrome,
   chartPartAllowsFrame,
@@ -35,6 +34,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { DeckRangeField } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 
@@ -149,45 +149,31 @@ export function FormatRibbonFrameSection() {
         ) : (
           <div className="td-deck-ribbon__frame-grid">
             {frameKeys.map((key) => (
-              <span key={key} className="td-deck-ribbon__frame-field">
-                <FieldLabel
-                  htmlFor={`td-ribbon-kpi-part-frame-${key}`}
-                  label={FRAME_LABELS[key]}
-                  hint={FRAME_HINTS[key]}
-                  className="td-deck-ribbon__field-label"
-                />
-                <NativeTextControl
-                  id={`td-ribbon-kpi-part-frame-${key}`}
-                  type="number"
-                  className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                  min={key === "w" || key === "h" ? 1 : 0}
-                  max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
-                  step={1}
-                  aria-label={FRAME_LABELS[key]}
-                  value={formatDesignPx(partFramePx[key] ?? 0)}
-                  onChange={(value) => setPartFrameKey(key, Number(value))}
-                />
-              </span>
-            ))}
-            <span className="td-deck-ribbon__frame-field">
-              <FieldLabel
-                htmlFor="td-ribbon-kpi-part-frame-radius"
-                label="Raio px"
-                hint={H.borderRadius}
-                className="td-deck-ribbon__field-label"
-              />
-              <NativeTextControl
-                id="td-ribbon-kpi-part-frame-radius"
-                type="number"
-                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={0}
-                max={64}
+              <DeckRangeField
+                key={key}
+                id={`td-ribbon-kpi-part-frame-${key}`}
+                label={FRAME_LABELS[key]}
+                hint={FRAME_HINTS[key]}
+                min={key === "w" || key === "h" ? 1 : 0}
+                max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
                 step={1}
-                aria-label="Raio dos cantos em pixels"
-                value={borderRadius}
-                onChange={(value) => setPartRadius(Number(value))}
+                value={formatDesignPx(partFramePx[key] ?? 0)}
+                displayValue={String(formatDesignPx(partFramePx[key] ?? 0))}
+                aria-label={FRAME_LABELS[key]}
+                onChange={(value) => setPartFrameKey(key, value)}
               />
-            </span>
+            ))}
+            <DeckRangeField
+              id="td-ribbon-kpi-part-frame-radius"
+              label="Raio px"
+              hint={H.borderRadius}
+              min={0}
+              max={64}
+              step={1}
+              value={borderRadius}
+              aria-label="Raio dos cantos em pixels"
+              onChange={(value) => setPartRadius(value)}
+            />
           </div>
         )}
       </DeckRibbonGroup>
@@ -243,25 +229,19 @@ export function FormatRibbonFrameSection() {
       <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
         <div className="td-deck-ribbon__frame-grid">
           {frameKeys.map((key) => (
-            <span key={key} className="td-deck-ribbon__frame-field">
-              <FieldLabel
-                htmlFor={`td-ribbon-chart-part-frame-${key}`}
-                label={FRAME_LABELS[key]}
-                hint={FRAME_HINTS[key]}
-                className="td-deck-ribbon__field-label"
-              />
-              <NativeTextControl
-                id={`td-ribbon-chart-part-frame-${key}`}
-                type="number"
-                className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={key === "w" || key === "h" ? 1 : 0}
-                max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
-                step={1}
-                aria-label={FRAME_LABELS[key]}
-                value={formatDesignPx(partFramePx[key] ?? 0)}
-                onChange={(value) => setPartFrameKey(key, Number(value))}
-              />
-            </span>
+            <DeckRangeField
+              key={key}
+              id={`td-ribbon-chart-part-frame-${key}`}
+              label={FRAME_LABELS[key]}
+              hint={FRAME_HINTS[key]}
+              min={key === "w" || key === "h" ? 1 : 0}
+              max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
+              step={1}
+              value={formatDesignPx(partFramePx[key] ?? 0)}
+              displayValue={String(formatDesignPx(partFramePx[key] ?? 0))}
+              aria-label={FRAME_LABELS[key]}
+              onChange={(value) => setPartFrameKey(key, value)}
+            />
           ))}
         </div>
       </DeckRibbonGroup>
@@ -298,73 +278,51 @@ export function FormatRibbonFrameSection() {
     <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
       <div className="td-deck-ribbon__frame-grid">
         {frameKeys.map((key) => (
-          <span key={key} className="td-deck-ribbon__frame-field">
-            <FieldLabel
-              htmlFor={`td-ribbon-frame-${key}`}
-              label={FRAME_LABELS[key]}
-              hint={FRAME_HINTS[key]}
-              className="td-deck-ribbon__field-label"
-            />
-            <NativeTextControl
-              id={`td-ribbon-frame-${key}`}
-              type="number"
-              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-              min={key === "w" || key === "h" ? 1 : 0}
-              max={axisMax(key, slideDesign)}
-              step={1}
-              aria-label={FRAME_LABELS[key]}
-              value={formatDesignPx(framePx[key])}
-              onChange={(value) => setFrameKey(key, Number(value))}
-            />
-          </span>
-        ))}
-        <span className="td-deck-ribbon__frame-field">
-          <FieldLabel
-            htmlFor="td-ribbon-frame-rotation"
-            label="Rot. °"
-            hint={H.frameRotation}
-            className="td-deck-ribbon__field-label"
-          />
-          <NativeTextControl
-            id="td-ribbon-frame-rotation"
-            type="number"
-            className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-            min={-180}
-            max={180}
+          <DeckRangeField
+            key={key}
+            id={`td-ribbon-frame-${key}`}
+            label={FRAME_LABELS[key]}
+            hint={FRAME_HINTS[key]}
+            min={key === "w" || key === "h" ? 1 : 0}
+            max={axisMax(key, slideDesign)}
             step={1}
-            aria-label="Rotação em graus"
-            value={selected.style?.rotation ?? 0}
+            value={formatDesignPx(framePx[key])}
+            displayValue={String(formatDesignPx(framePx[key]))}
+            aria-label={FRAME_LABELS[key]}
+            onChange={(value) => setFrameKey(key, value)}
+          />
+        ))}
+        <DeckRangeField
+          id="td-ribbon-frame-rotation"
+          label="Rot. °"
+          hint={H.frameRotation}
+          min={-180}
+          max={180}
+          step={1}
+          value={selected.style?.rotation ?? 0}
+          aria-label="Rotação em graus"
+          onChange={(value) =>
+            updateSelectedStyle({
+              rotation: Math.max(-180, Math.min(180, value)),
+            })
+          }
+        />
+        {showCornerRadius ? (
+          <DeckRangeField
+            id="td-ribbon-frame-radius"
+            label="Raio px"
+            hint={H.borderRadius}
+            min={0}
+            max={64}
+            step={1}
+            value={borderRadius}
+            aria-label="Raio dos cantos em pixels"
             onChange={(value) =>
               updateSelectedStyle({
-                rotation: Math.max(-180, Math.min(180, Number(value) || 0)),
+                borderRadius: Math.max(0, Math.min(64, value)),
               })
             }
           />
-        </span>
-        {showCornerRadius ? (
-          <span className="td-deck-ribbon__frame-field">
-            <FieldLabel
-              htmlFor="td-ribbon-frame-radius"
-              label="Raio px"
-              hint={H.borderRadius}
-              className="td-deck-ribbon__field-label"
-            />
-            <NativeTextControl
-              id="td-ribbon-frame-radius"
-              type="number"
-              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-              min={0}
-              max={64}
-              step={1}
-              aria-label="Raio dos cantos em pixels"
-              value={borderRadius}
-              onChange={(value) =>
-                updateSelectedStyle({
-                  borderRadius: Math.max(0, Math.min(64, Number(value) || 0)),
-                })
-              }
-            />
-          </span>
         ) : null}
       </div>
     </DeckRibbonGroup>

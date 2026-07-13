@@ -22,7 +22,7 @@ describe("useComunicadoEditorSelection", () => {
       });
     });
 
-    expect(result.current.selectedIds).toEqual(["a"]);
+    expect(result.current.selectedIds).toEqual([]);
 
     act(() => {
       result.current.selectBlock("b");

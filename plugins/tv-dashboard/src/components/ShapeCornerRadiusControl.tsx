@@ -1,6 +1,5 @@
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
-
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DeckRangeField } from "./deck/DeckRangeField";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 
 type Props = {
@@ -9,6 +8,8 @@ type Props = {
   onChange: (radius: number) => void;
   max?: number;
   label?: string;
+  /** Sem grupo próprio — para embutir em «Aparência». */
+  embedded?: boolean;
 };
 
 /** Controle compartilhado de cantos arredondados (formas, chartArea, KPI, tabela). */
@@ -18,29 +19,20 @@ export function ShapeCornerRadiusControl({
   onChange,
   max = 64,
   label = "Cantos",
-  /** Sem grupo próprio — para embutir em «Aparência». */
   embedded = false,
-}: Props & { embedded?: boolean }) {
+}: Props) {
   const control = (
-    <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
-      <FieldLabel
-        htmlFor={id}
-        label="Raio (px)"
-        hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.borderRadius}
-        className="td-deck-ribbon__field-label"
-      />
-      <NativeTextControl
-        id={id}
-        type="number"
-        className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-        min={0}
-        max={max}
-        step={1}
-        aria-label="Cantos arredondados em pixels"
-        value={value}
-        onChange={(raw) => onChange(Math.max(0, Math.min(max, Number(raw) || 0)))}
-      />
-    </div>
+    <DeckRangeField
+      id={id}
+      label="Raio (px)"
+      hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.borderRadius}
+      min={0}
+      max={max}
+      step={1}
+      value={value}
+      aria-label="Cantos arredondados em pixels"
+      onChange={(next) => onChange(Math.max(0, Math.min(max, next)))}
+    />
   );
 
   if (embedded) return control;
