@@ -353,3 +353,84 @@ def test_bom_row_description_match_reconciles_ocr_digit_and_catalog_code():
     assert "40090055" not in result.extra_in_pdf
     assert "10080106" not in result.missing_in_pdf
     assert "10020055" not in result.missing_in_pdf
+
+
+def test_ocr_parent_typo_rematch_drops_child_cable_extra():
+    """Pai 50xx com dígito OCR errado + assinatura → recupera PI e não cobra cabo-filho."""
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50215425",
+                    "description": "CT26VERM-00036/04/06-0000-0000",
+                    "quantity": 1.0,
+                    "components": [{"code": "10440133", "quantity": 36.0}],
+                }
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["50215429", "10440133"],
+        "intermediateCodes": ["50215429"],
+        "bomRows": [
+            {
+                "code": "50215429",
+                "description": "CT26VERM-00036/04/06-0000-0000",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            }
+        ],
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90264227",
+    )
+
+    assert "50215425" not in result.missing_in_pdf
+    assert "50215429" not in result.extra_in_pdf
+    assert "10440133" not in result.extra_in_pdf
+
+
+def test_family_swap_10xx_with_intermediate_signature_matches_pi():
+    """OCR lê 10xxxxxx mas descrição tem assinatura de intermediário → casa com PI da API."""
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50215425",
+                    "description": "CT26VERM-00036/04/06-0000-0000",
+                    "quantity": 1.0,
+                    "components": [],
+                }
+            ]
+        }
+    }
+    pdf_extract = {
+        "componentCodes": ["10215425"],
+        "intermediateCodes": [],
+        "bomRows": [
+            {
+                "code": "10215425",
+                "description": "CT26VERM-00036/04/06-0000-0000",
+                "quantitySource": "column",
+                "quantityTrusted": True,
+            }
+        ],
+    }
+
+    result = ChatDrawingBomComparisonService.compare(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90264227",
+    )
+    pdf_intermediate = ChatDrawingBomComparisonService.resolve_pdf_intermediate_codes(
+        root=root,
+        pdf_extract=pdf_extract,
+        product_code="90264227",
+    )
+
+    assert "50215425" not in result.missing_in_pdf
+    assert "10215425" not in result.extra_in_pdf
+    assert "50215425" in pdf_intermediate

@@ -87,10 +87,29 @@ class ChatDrawingBomComparisonService:
             pdf_extract=pdf_extract,
             api_codes=set(structure_all_codes),
         )
+        intermediate_matched, intermediate_false_rows = (
+            cls.reconcile_intermediate_bom_row_description_matches(
+                root=root,
+                pdf_extract=pdf_extract,
+                api_codes=set(structure_all_codes),
+            )
+        )
+        matched_codes |= intermediate_matched
+        false_row_codes |= intermediate_false_rows
         pdf_bom_codes |= matched_codes
         pdf_bom_codes -= false_row_codes
         pdf_bom_codes -= ChatDrawingBomReferenceNoiseService.collect_reference_noise_codes(
             pdf_extract
+        )
+
+        # Reaplica após reconciliação: pai 50xx recuperado por assinatura → drop MP-filho.
+        pdf_bom_codes = cls.normalize_pdf_bom_codes(
+            pdf_bom_codes,
+            child_cable_parents=cls.collect_child_cable_parents(root),
+        )
+        pdf_bom_codes = cls.drop_family_swap_noise_codes(
+            pdf_bom_codes,
+            false_row_codes=false_row_codes,
         )
 
         normalized_product = ChatProductQueryIntentService.normalize_product_code(
@@ -394,7 +413,11 @@ class ChatDrawingBomComparisonService:
         pdf_extract: dict,
         api_codes: set[str],
     ) -> tuple[set[str], set[str]]:
-        """Linha BOM 50xx com dígito OCR errado mas assinatura CB/CT alinhada ao cadastro."""
+        """Linha BOM com assinatura CA–CV alinhada ao PI da API (inclui OCR trocando 10↔50)."""
+        from app.domain.services.chat_drawing_product_family_classification_service import (
+            ChatDrawingProductFamilyClassificationService,
+        )
+
         structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
         api_intermediates = [
             row
@@ -418,11 +441,21 @@ class ChatDrawingBomComparisonService:
             )
             row_desc = str(bom_row.get("description") or "").strip()
 
-            if (
-                not row_code
-                or not row_desc
-                or not ChatDrawingPatternsService.is_intermediate_family(row_code)
-            ):
+            if not row_code or not row_desc:
+                continue
+
+            is_pi_code = ChatDrawingPatternsService.is_intermediate_family(row_code)
+            has_signature = (
+                ChatDrawingProductFamilyClassificationService.has_intermediate_signature(
+                    row_desc
+                )
+            )
+
+            # PI com assinatura, ou MP/OCR com assinatura de intermediário (troca de família).
+            if not is_pi_code and not has_signature:
+                continue
+
+            if is_pi_code and not has_signature and not row_desc:
                 continue
 
             row_haystack = row_desc.upper().replace(" ", "")
@@ -445,6 +478,23 @@ class ChatDrawingBomComparisonService:
                 if best_api_code:
                     break
 
+                # Assinatura só no PDF: cor+isolamento bate com descrição API compactada.
+                api_haystack = str(struct_row.description or "").upper().replace(" ", "")
+                pdf_color = (
+                    ChatDrawingProductFamilyClassificationService.extract_intermediate_color(
+                        row_desc
+                    )
+                )
+
+                if (
+                    pdf_color
+                    and pdf_color in api_haystack
+                    and has_signature
+                    and cls._insulation_token_overlap(row_haystack, api_haystack)
+                ):
+                    best_api_code = struct_row.code
+                    break
+
             if not best_api_code:
                 continue
 
@@ -454,6 +504,32 @@ class ChatDrawingBomComparisonService:
                 false_row_codes.add(row_code)
 
         return matched, false_row_codes
+
+    @classmethod
+    def _insulation_token_overlap(cls, left: str, right: str) -> bool:
+        from app.domain.services.chat_technical_description_vocabulary_service import (
+            ChatTechnicalDescriptionVocabularyService,
+        )
+
+        for token in ChatTechnicalDescriptionVocabularyService.insulation_code_tokens():
+            pattern = re.compile(rf"{re.escape(token)}[\d,.]", re.IGNORECASE)
+
+            if pattern.search(left) and pattern.search(right):
+                return True
+
+        return False
+
+    @classmethod
+    def drop_family_swap_noise_codes(
+        cls,
+        pdf_codes: set[str],
+        *,
+        false_row_codes: set[str],
+    ) -> set[str]:
+        if not false_row_codes:
+            return set(pdf_codes)
+
+        return {code for code in pdf_codes if code not in false_row_codes}
 
     @classmethod
     def _fulltext_only_intermediate_phantoms(
