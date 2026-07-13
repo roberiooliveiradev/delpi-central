@@ -151,11 +151,23 @@ class ChatDrawingBomQuantitySemanticsService:
         cable_units = ChatDrawingPatternsService.cable_length_units()
 
         if ChatDrawingPatternsService.is_intermediate_family(api_row.code):
-            return cls._normalize_intermediate_quantity(
-                pdf_quantity=pdf_quantity,
-                api_row=api_row,
-                batch_scale=batch_scale,
+            from app.domain.services.chat_drawing_product_family_classification_service import (
+                ChatDrawingProductFamilyClassificationService,
             )
+
+            description = cls._structure_item_description(root, api_row.code)
+
+            if ChatDrawingProductFamilyClassificationService.is_structure_intermediate_row(
+                api_row.code,
+                description=description,
+            ):
+                return cls._normalize_intermediate_quantity(
+                    pdf_quantity=pdf_quantity,
+                    api_row=api_row,
+                    batch_scale=batch_scale,
+                )
+
+            # Falso 50xx (consumível) — segue fluxo de comprimento/peça abaixo.
 
         if api_unit in piece_units:
             normalized = pdf_quantity * batch_scale
@@ -273,12 +285,15 @@ class ChatDrawingBomQuantitySemanticsService:
         pdf_extract: dict,
         batch_scale: float,
     ) -> PdfQuantityNormalization:
+        # Consumível (termoencolhível/tubo): só cotas do PDF — não usar QTD MT da SG1010
+        # como comprimento do desenho (gera falso mismatch).
         return cls._normalize_cable_length_quantity(
             pdf_quantity=pdf_quantity,
             api_row=api_row,
             root=root,
             pdf_extract=pdf_extract,
             batch_scale=batch_scale,
+            allow_structure_quantity_fallback=False,
         )
 
     @classmethod
@@ -290,6 +305,7 @@ class ChatDrawingBomQuantitySemanticsService:
         root: dict,
         pdf_extract: dict,
         batch_scale: float,
+        allow_structure_quantity_fallback: bool = True,
     ) -> PdfQuantityNormalization:
         max_piece_qty = ChatDrawingPatternsService.max_piece_count_quantity()
 
@@ -305,6 +321,7 @@ class ChatDrawingBomQuantitySemanticsService:
             code=api_row.code,
             root=root,
             pdf_extract=pdf_extract,
+            allow_structure_quantity_fallback=allow_structure_quantity_fallback,
         )
 
         if length_mm is None:
@@ -336,6 +353,7 @@ class ChatDrawingBomQuantitySemanticsService:
         code: str,
         root: dict,
         pdf_extract: dict,
+        allow_structure_quantity_fallback: bool = True,
     ) -> float | None:
         dimensions = pdf_extract.get("dimensions")
 
@@ -364,6 +382,9 @@ class ChatDrawingBomQuantitySemanticsService:
 
                     if plausible:
                         return max(plausible)
+
+        if not allow_structure_quantity_fallback:
+            return None
 
         item = cls._structure_item(
             root.get("structure") if isinstance(root.get("structure"), dict) else {},
@@ -435,6 +456,17 @@ class ChatDrawingBomQuantitySemanticsService:
 
     @classmethod
     def is_length_consumable_material(cls, code: str, description: str = "") -> bool:
+        from app.domain.services.chat_drawing_product_family_classification_service import (
+            ChatDrawingProductFamilyClassificationService,
+        )
+
+        if ChatDrawingProductFamilyClassificationService.is_consumable_mp(
+            code,
+            description=description,
+        ):
+            return True
+
+        # Fallback legado (prefixos stamp) se vocabulário não marcar o grupo.
         normalized = ChatProductQueryIntentService.normalize_product_code(code)
         upper_desc = str(description or "").upper()
 

@@ -17,6 +17,29 @@ def test_parse_intermediate_description_length_and_decapes():
     assert parsed["rightDecapeMm"] == 6.0
 
 
+def test_collect_structure_intermediates_skips_false_consumable_50xx():
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50250279",
+                    "description": "LUVATERMOENCOLHVEL 6MM",
+                    "components": [{"code": "10130001", "quantity": 6.0}],
+                },
+                {
+                    "code": "50215433",
+                    "description": "CT26PRET-00050/2,5/06-0000-0000",
+                    "components": [{"code": "10440134", "quantity": 50.0}],
+                },
+            ]
+        }
+    }
+
+    rows = ChatDrawingIntermediateSemanticsService.collect_structure_intermediates(root)
+
+    assert [row["code"] for row in rows] == ["50215433"]
+
+
 def test_collect_structure_intermediates_uses_child_quantity():
     root = {
         "structure": {

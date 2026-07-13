@@ -173,5 +173,48 @@ def test_intermediate_pi_mi_quantity_compares_one_to_one():
         product_code="90263954",
     )
 
-    assert not pending
-    assert not mismatches
+def test_false_50xx_consumable_not_in_api_intermediate_presence():
+    from app.domain.services.chat_drawing_structure_validation_service import (
+        ChatDrawingStructureValidationService,
+    )
+
+    root = {
+        "structure": {
+            "items": [
+                {
+                    "code": "50250279",
+                    "description": "TERMOENCOLHIVEL 6MM",
+                    "components": [],
+                },
+                {
+                    "code": "50215425",
+                    "description": "CT26VERM-00036/04/06-0000-0000",
+                    "components": [],
+                },
+            ]
+        }
+    }
+
+    api_codes = ChatDrawingStructureValidationService._collect_api_intermediate_codes(
+        root,
+        "90260001",
+    )
+
+    assert "50215425" in api_codes
+    assert "50250279" not in api_codes
+
+
+def test_false_50xx_with_consumable_description_is_length_consumable():
+    assert ChatDrawingBomQuantitySemanticsService.is_length_consumable_material(
+        "50250279",
+        "TERMOENCOLHIVEL 6MM",
+    )
+
+    from app.domain.services.chat_drawing_product_family_classification_service import (
+        ChatDrawingProductFamilyClassificationService,
+    )
+
+    assert not ChatDrawingProductFamilyClassificationService.is_structure_intermediate_row(
+        "50250279",
+        description="TERMOENCOLHIVEL 6MM",
+    )

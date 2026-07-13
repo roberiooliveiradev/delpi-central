@@ -257,6 +257,31 @@ class ChatDrawingProductFamilyClassificationService:
         return True
 
     @classmethod
+    def is_structure_intermediate_row(
+        cls,
+        code: str | None,
+        *,
+        description: str | None = None,
+    ) -> bool:
+        """PI na SG1010: prefixo 50xx, excluindo só falso consumível com descrição."""
+        normalized = ChatProductQueryIntentService.normalize_product_code(code or "")
+
+        if not normalized or not ChatDrawingPatternsService.is_intermediate_family(
+            normalized
+        ):
+            return False
+
+        text = str(description or "").strip()
+
+        if not text:
+            return True
+
+        return not cls.is_false_intermediate_candidate(
+            normalized,
+            description=text,
+        )
+
+    @classmethod
     def consumable_description_noise_markers(cls) -> tuple[str, ...]:
         node = ChatDrawingPatternsService.validation_rule("intermediateBomEvidence")
         markers: list[str] = []

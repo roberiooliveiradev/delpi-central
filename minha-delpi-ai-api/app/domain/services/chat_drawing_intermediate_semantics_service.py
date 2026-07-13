@@ -48,7 +48,15 @@ class ChatDrawingIntermediateSemanticsService:
                 )
 
                 if code and ChatDrawingPatternsService.is_intermediate_family(code):
-                    rows.append(cls._build_intermediate_row(item, root))
+                    from app.domain.services.chat_drawing_product_family_classification_service import (
+                        ChatDrawingProductFamilyClassificationService,
+                    )
+
+                    if ChatDrawingProductFamilyClassificationService.is_structure_intermediate_row(
+                        code,
+                        description=str(item.get("description") or ""),
+                    ):
+                        rows.append(cls._build_intermediate_row(item, root))
 
                 components = item.get("components")
 

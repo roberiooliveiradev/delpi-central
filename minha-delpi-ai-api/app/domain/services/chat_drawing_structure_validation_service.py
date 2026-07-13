@@ -343,13 +343,34 @@ class ChatDrawingStructureValidationService:
 
     @classmethod
     def _collect_api_intermediate_codes(cls, root: dict, product_code: str) -> set[str]:
-        codes: set[str] = set()
+        from app.domain.services.chat_drawing_product_family_classification_service import (
+            ChatDrawingProductFamilyClassificationService,
+        )
+        from app.domain.services.chat_drawing_structure_index_service import (
+            ChatDrawingStructureIndexService,
+        )
 
-        for code in ChatDrawingBomComparisonService.collect_structure_bom_codes(
+        root_code = ChatProductQueryIntentService.normalize_product_code(product_code)
+        bom_codes = ChatDrawingBomComparisonService.collect_structure_bom_codes(
             root,
             product_code,
-        ):
-            if ChatDrawingPatternsService.is_intermediate_family(str(code)):
+        )
+        codes: set[str] = set()
+        structure = root.get("structure") if isinstance(root.get("structure"), dict) else {}
+        descriptions = {
+            row.code: row.description
+            for row in ChatDrawingStructureIndexService.flatten_items(structure)
+            if row.code
+        }
+
+        for code in bom_codes:
+            if code == root_code:
+                continue
+
+            if ChatDrawingProductFamilyClassificationService.is_structure_intermediate_row(
+                code,
+                description=descriptions.get(code, ""),
+            ):
                 codes.add(code)
 
         return codes
