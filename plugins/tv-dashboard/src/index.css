@@ -8,8 +8,15 @@
   --td-muted: color-mix(in srgb, var(--td-text) 55%, transparent);
   --td-stage-chrome: color-mix(in srgb, var(--td-text) 8%, var(--td-surface));
   --td-stage-preview: color-mix(in srgb, var(--td-text) 92%, var(--td-surface));
-  /* Linhas da grade no slide (fundo típico #fff) — não usar --td-border do chrome UI. */
-  --td-stage-grid-line: color-mix(in srgb, #0f172a 16%, transparent);
+  /*
+   * Grade do slide: par escuro + claro na mesma célula.
+   * Em fundo claro a linha escura aparece; em fundo escuro/gradiente, a clara.
+   * Não usar --td-border do chrome UI (soma contraste com o tema do portal).
+   */
+  --td-stage-grid-line-dark: color-mix(in srgb, #0f172a 18%, transparent);
+  --td-stage-grid-line-light: color-mix(in srgb, #f8fafc 28%, transparent);
+  /* Alias legado (consumidores isolados). */
+  --td-stage-grid-line: var(--td-stage-grid-line-dark);
   /* Densidade chrome PPT (accent Delpi). */
   --td-chrome-tab-height: 36px;
   --td-chrome-radius: 2px;
@@ -1247,15 +1254,26 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
+  /* Clara por cima da escura: contraste em fundos claros e escuros. */
   background-image:
     linear-gradient(
       to right,
-      var(--td-stage-grid-line) 1px,
+      var(--td-stage-grid-line-light) 1px,
       transparent 1px
     ),
     linear-gradient(
       to bottom,
-      var(--td-stage-grid-line) 1px,
+      var(--td-stage-grid-line-light) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to right,
+      var(--td-stage-grid-line-dark) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      var(--td-stage-grid-line-dark) 1px,
       transparent 1px
     );
   /* Fallback; o tamanho real vem de style.backgroundSize (px de design). */
