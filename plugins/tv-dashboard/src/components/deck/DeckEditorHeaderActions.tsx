@@ -94,7 +94,7 @@ export function DeckEditorHeaderActions({
         </HeaderActionButton>
 
         <HeaderActionButton
-          hint="Catálogo de atalhos do teclado. Toque Alt no editor para ligar/desligar balões nas ações."
+          hint="Catálogo de atalhos. F1–F8 = abas; F10 revela balões; Alt liga/desliga balões Ctrl."
           ariaLabel="Atalhos do teclado"
           onClick={openCatalog}
         >

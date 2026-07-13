@@ -45,14 +45,7 @@
   display: none;
 }
 
-/* ── Atalhos: balões Alt + catálogo ── */
-.dashboard-tv-dashboard .td-shortcut-tip {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  vertical-align: middle;
-}
-
+/* ── Atalhos: clusters locais + catálogo (balão visual = KeyTip em plugin-ui) ── */
 .dashboard-tv-dashboard .td-shortcut-tip__cluster {
   display: inline-flex;
   align-items: center;
@@ -61,93 +54,6 @@
 
 .dashboard-tv-dashboard .td-shortcut-tip__cluster--zoom {
   gap: 6px;
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip-layer {
-  /* Portal no body — só escopo CSS; sem layout próprio. */
-  display: contents;
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip__badge {
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 80;
-  padding: 4px 9px;
-  border-radius: 6px;
-  border: 2px solid #0f172a;
-  background: #fbbf24;
-  color: #0f172a;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  line-height: 1.2;
-  white-space: nowrap;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #fbbf24 70%, #fff),
-    0 8px 20px color-mix(in srgb, #000 45%, transparent);
-  pointer-events: none;
-  animation: td-shortcut-tip-in 0.12s ease-out;
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip__badge--keytip {
-  min-width: 1.4em;
-  padding: 4px 7px;
-  text-align: center;
-  font-size: 13px;
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip__badge--bottom {
-  bottom: auto;
-  top: calc(100% + 6px);
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip__badge--portal.td-shortcut-tip__badge--bottom {
-  top: auto;
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip__badge::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border: 5px solid transparent;
-  border-top-color: #fbbf24;
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip__badge--bottom::after {
-  top: auto;
-  bottom: 100%;
-  border-top-color: transparent;
-  border-bottom-color: #fbbf24;
-}
-
-.dashboard-tv-dashboard .td-shortcut-tip__badge--portal::after {
-  display: none;
-}
-
-@keyframes td-shortcut-tip-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@keyframes td-shortcut-tip-in-portal {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .dashboard-tv-dashboard .td-shortcuts-catalog__lead {

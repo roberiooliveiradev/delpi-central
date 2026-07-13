@@ -4,6 +4,7 @@ import {
   FieldLabel,
   HelpTooltip,
   HintAction,
+  KeyTip,
   SectionHintLabel,
   TabHintCell,
   TitleWithHelp,
@@ -13,6 +14,25 @@ import { PUC_PREFIX } from "../../app/bemPrefix";
 import type { CatalogEntryDraft } from "../types";
 
 const titleClasses = titleWithHelpBemClasses(PUC_PREFIX);
+
+function KeyTipDemo({ variant }: { variant: "shortcut" | "letter" }) {
+  const [active, setActive] = useState(true);
+  return (
+    <div style={{ display: "inline-flex", gap: 12, alignItems: "center" }}>
+      <KeyTip
+        label={variant === "letter" ? "P" : "Ctrl+Z"}
+        active={active}
+        variant={variant}
+        placement="bottom"
+      >
+        <button type="button" className="puc-primary-btn" onClick={() => setActive((v) => !v)}>
+          {variant === "letter" ? "Aba (F)" : "Desfazer (Alt)"}
+        </button>
+      </KeyTip>
+      <span style={{ fontSize: 12, opacity: 0.7 }}>{active ? "ativo" : "oculto"}</span>
+    </div>
+  );
+}
 
 export const helpCatalogEntries: CatalogEntryDraft[] = [
   {
@@ -41,6 +61,27 @@ export const helpCatalogEntries: CatalogEntryDraft[] = [
             </button>
           </HelpTooltip>
         ),
+      },
+    ],
+  },
+  {
+    id: "help.KeyTip",
+    family: "help",
+    exportName: "KeyTip",
+    title: "KeyTip",
+    description: "Balão de atalho (Alt/Ctrl ou letra F). Portal + setinha; consumidor controla active.",
+    docAnchor: "keytip",
+    propsSummary: ["label", "active", "placement", "variant", "offsetX"],
+    demos: [
+      {
+        id: "shortcut",
+        label: "Atalho",
+        render: () => <KeyTipDemo variant="shortcut" />,
+      },
+      {
+        id: "letter",
+        label: "Letra",
+        render: () => <KeyTipDemo variant="letter" />,
       },
     ],
   },

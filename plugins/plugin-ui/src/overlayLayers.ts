@@ -10,4 +10,6 @@ export const DELPI_UI_OVERLAY_Z_INDEX = {
   /** FormSelect, menus ancorados — acima de `.td-modal` / ModalShell. */
   anchoredPanel: 10500,
   helpTooltip: 11000,
+  /** KeyTips (atalhos Alt / letras F) — acima de HelpTooltip. */
+  keyTip: 11100,
 } as const;

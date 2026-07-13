@@ -10,7 +10,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 
 | Família | Exemplos no catálogo |
 |---------|----------------------|
-| help | HelpTooltip, FieldLabel, TabHintCell… |
+| help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | PageHeader, KpiCard, DelpiKpiCard, ChartCard… |
 | feedback | EmptyState, ModalShell, DrawerShell… |
 | forms | SelectField, DateField, MultiSelectField… |
@@ -56,6 +56,33 @@ Balão ao passar o mouse ou focar. Ícone **?** por padrão; modo `wrap` envolve
 ```
 
 **Não** aninhe `<button>` dentro de `<button>`. Para abas, use `TabHintCell`.
+
+---
+
+### `KeyTip`
+
+Balão de atalho (KeyTips Office / Alt+Ctrl). Portal no `body`, flip na viewport, setinha de balão.
+
+| Prop | Tipo | Default | Descrição |
+|------|------|---------|-----------|
+| `label` | `ReactNode` | — | Texto do balão (`Ctrl+Z`, `P`, …) |
+| `active` | `boolean` | — | Controla visibilidade |
+| `placement` | `"top" \| "bottom"` | `"top"` | Preferência; inverte se não couber |
+| `offsetX` | `number` | `0` | Desloca no eixo X (evitar sobreposição) |
+| `variant` | `"shortcut" \| "letter"` | `"shortcut"` | Letra única mais compacta |
+| `portalScopeClassName` | `string?` | — | Escopo MFE (ex.: `dashboard-tv-dashboard`) |
+
+```tsx
+<KeyTip label="Ctrl+Z" active={altTipsActive} placement="bottom">
+  <button type="button">Desfazer</button>
+</KeyTip>
+
+<KeyTip label="P" active={showTabTips} variant="letter" data-td-keytip="P">
+  <button type="button" role="tab">Página Inicial</button>
+</KeyTip>
+```
+
+O consumidor decide **quando** ativar (Alt toggle, tecla F, etc.).
 
 ---
 
@@ -493,6 +520,9 @@ Input + lista de presets (escolher ou digitar). Confirma no blur/Enter; seleçã
 | `delpi-ui-help-tooltip` | Root do tooltip |
 | `delpi-ui-help-tooltip__trigger` | Botão ? |
 | `delpi-ui-help-tooltip__bubble` | Balão (portal) |
+| `delpi-ui-keytip` | Balão KeyTip (atalho) |
+| `delpi-ui-keytip--letter` | Variante letra única (F) |
+| `delpi-ui-keytip-anchor` | Âncora do KeyTip |
 | `delpi-ui-field-label` | Layout label + ? |
 | `delpi-ui-tab-cell` | Wrapper aba + ? |
 | `delpi-ui-tab` / `delpi-ui-tab--active` | Aba default (override via props) |

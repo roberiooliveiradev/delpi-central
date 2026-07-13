@@ -11,7 +11,7 @@
 
 | Família | Exports | Testes |
 |---------|---------|--------|
-| `help` | `HelpTooltip`, `FieldLabel`, `SectionHintLabel`, `TabHintCell`, `HintAction` | `FieldLabel.test.tsx` |
+| `help` | `HelpTooltip`, `KeyTip`, `FieldLabel`, `SectionHintLabel`, `TabHintCell`, `HintAction` | `FieldLabel.test.tsx`, `KeyTip.test.tsx` |
 
 Referência de integração: `plugins/controle-retrabalhos/` (MF + `preparePluginUiRemote()`).
 

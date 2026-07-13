@@ -13,3 +13,14 @@ export {
 } from "./TitleWithHelp";
 export { TabHintCell, type TabHintCellProps } from "./TabHintCell";
 export { HintAction, type HintActionProps } from "./HintAction";
+export {
+  KeyTip,
+  type KeyTipProps,
+  type KeyTipVariant,
+} from "./KeyTip";
+export {
+  resolveKeyTipPosition,
+  type KeyTipPlacement,
+  type KeyTipPosition,
+  type KeyTipPositionInput,
+} from "./keyTipPosition";

@@ -1,19 +1,16 @@
 import type { DeckRibbonTabId } from "../components/deck/deckRibbonTabMeta";
+import { DECK_RIBBON_TABS } from "../components/deck/deckRibbonTabMeta";
 
 export type DeckKeyTipScope = "tabs" | "actions";
 export type DeckKeyTipMode = "idle" | "tabs" | "actions";
 
-/** Letras das abas do chrome (Escopo `tabs`). */
-export const DECK_TAB_KEYTIPS: Record<DeckRibbonTabId, string> = {
-  home: "P",
-  insert: "I",
-  view: "V",
-  slide: "T",
-  playlist: "G",
-  element: "L",
-  data: "D",
-  layers: "C",
-};
+/**
+ * Teclas de função das abas (escopo `tabs`), na ordem canônica de `DECK_RIBBON_TABS`.
+ * F1 = Página Inicial, F2 = Inserir, …
+ */
+export const DECK_TAB_KEYTIPS: Record<DeckRibbonTabId, string> = Object.fromEntries(
+  DECK_RIBBON_TABS.map((tab, index) => [tab.id, `F${index + 1}`]),
+) as Record<DeckRibbonTabId, string>;
 
 /** Ações da Página Inicial (Escopo `actions`). */
 export const DECK_HOME_ACTION_KEYTIPS = {
@@ -56,12 +53,27 @@ export const DECK_INSERT_ACTION_KEYTIPS = {
   table: "B",
 } as const;
 
-export function normalizeKeyTipLetter(raw: string): string {
-  if (raw === " ") return "SPACE";
-  return raw.length === 1 ? raw.toUpperCase() : raw.toUpperCase();
+const FUNCTION_KEY_RE = /^F([1-9]|1[0-2])$/i;
+
+export function isDeckFunctionKeyName(raw: string): boolean {
+  return FUNCTION_KEY_RE.test(raw.trim());
 }
 
-/** Tecla de ação válida para KeyTips (letra, dígito). */
+export function normalizeKeyTipLetter(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  if (isDeckFunctionKeyName(trimmed)) return trimmed.toUpperCase();
+  if (trimmed === " ") return "SPACE";
+  return trimmed.length === 1 ? trimmed.toUpperCase() : trimmed.toUpperCase();
+}
+
+/** Tecla F1–F12 (sem modificadores) para KeyTips de aba. */
+export function isDeckKeyTipFunctionKey(event: KeyboardEvent): boolean {
+  if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return false;
+  return isDeckFunctionKeyName(event.key);
+}
+
+/** Tecla de ação válida para KeyTips da ribbon (letra, dígito). */
 export function isDeckKeyTipActionKey(event: KeyboardEvent): boolean {
   if (event.ctrlKey || event.metaKey || event.altKey) return false;
   if (event.key.length !== 1) return false;

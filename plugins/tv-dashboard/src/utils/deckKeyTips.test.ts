@@ -4,21 +4,46 @@ import {
   DECK_TAB_KEYTIPS,
   activateDeckKeyTipTarget,
   isDeckKeyTipActionKey,
+  isDeckKeyTipFunctionKey,
   normalizeKeyTipLetter,
 } from "./deckKeyTips";
 
 describe("deckKeyTips", () => {
-  it("normaliza letras e dígitos", () => {
+  it("normaliza letras, dígitos e teclas F1…", () => {
     expect(normalizeKeyTipLetter("p")).toBe("P");
     expect(normalizeKeyTipLetter("1")).toBe("1");
+    expect(normalizeKeyTipLetter("f1")).toBe("F1");
+    expect(normalizeKeyTipLetter("F8")).toBe("F8");
   });
 
-  it("letras das abas são únicas", () => {
-    const letters = Object.values(DECK_TAB_KEYTIPS);
-    expect(new Set(letters).size).toBe(letters.length);
+  it("atalhos de aba são F1… únicos na ordem das abas", () => {
+    const tips = Object.values(DECK_TAB_KEYTIPS);
+    expect(new Set(tips).size).toBe(tips.length);
+    expect(DECK_TAB_KEYTIPS.home).toBe("F1");
+    expect(DECK_TAB_KEYTIPS.insert).toBe("F2");
+    expect(DECK_TAB_KEYTIPS.view).toBe("F3");
+    expect(tips.every((tip) => /^F\d+$/.test(tip))).toBe(true);
   });
 
-  it("reconhece tecla de ação KeyTip", () => {
+  it("reconhece tecla de função e tecla de ação", () => {
+    expect(
+      isDeckKeyTipFunctionKey({
+        key: "F1",
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: false,
+      } as KeyboardEvent),
+    ).toBe(true);
+    expect(
+      isDeckKeyTipFunctionKey({
+        key: "F5",
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: true,
+      } as KeyboardEvent),
+    ).toBe(false);
     expect(
       isDeckKeyTipActionKey({
         key: "n",
@@ -29,30 +54,45 @@ describe("deckKeyTips", () => {
     ).toBe(true);
     expect(
       isDeckKeyTipActionKey({
-        key: "N",
-        ctrlKey: true,
+        key: "F1",
+        ctrlKey: false,
         metaKey: false,
         altKey: false,
       } as KeyboardEvent),
     ).toBe(false);
   });
 
-  it("activateDeckKeyTipTarget clica no botão anotado", () => {
-    const host = document.createElement("span");
-    host.dataset.tdKeytipScope = "actions";
-    host.dataset.tdKeytip = "N";
-    const button = document.createElement("button");
-    let clicked = false;
-    button.addEventListener("click", () => {
-      clicked = true;
+  it("activateDeckKeyTipTarget clica no botão anotado (aba F1 e ação N)", () => {
+    const tabHost = document.createElement("span");
+    tabHost.dataset.tdKeytipScope = "tabs";
+    tabHost.dataset.tdKeytip = "F1";
+    const tabButton = document.createElement("button");
+    let tabClicked = false;
+    tabButton.addEventListener("click", () => {
+      tabClicked = true;
     });
-    host.appendChild(button);
-    document.body.appendChild(host);
+    tabHost.appendChild(tabButton);
+    document.body.appendChild(tabHost);
+
+    const actionHost = document.createElement("span");
+    actionHost.dataset.tdKeytipScope = "actions";
+    actionHost.dataset.tdKeytip = "N";
+    const actionButton = document.createElement("button");
+    let actionClicked = false;
+    actionButton.addEventListener("click", () => {
+      actionClicked = true;
+    });
+    actionHost.appendChild(actionButton);
+    document.body.appendChild(actionHost);
+
     try {
+      expect(activateDeckKeyTipTarget("tabs", "f1")).toBe(true);
+      expect(tabClicked).toBe(true);
       expect(activateDeckKeyTipTarget("actions", "n")).toBe(true);
-      expect(clicked).toBe(true);
+      expect(actionClicked).toBe(true);
     } finally {
-      host.remove();
+      tabHost.remove();
+      actionHost.remove();
     }
   });
 });

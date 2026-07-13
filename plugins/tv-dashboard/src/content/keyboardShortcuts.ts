@@ -124,8 +124,9 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     id: "keytips",
     group: "palco",
     label: "KeyTips das abas e ribbon",
-    keys: "F",
-    description: "F mostra letras das abas; letra abre a aba; outra letra dispara a ação; Esc volta",
+    keys: "F1…F8",
+    description:
+      "F1–F8 abrem a aba (Página Inicial → Camadas). Em seguida uma letra dispara a ação da ribbon. F10 só revela os balões; Esc volta",
     showAltTip: false,
   },
   {

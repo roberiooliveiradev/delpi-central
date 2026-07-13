@@ -12,6 +12,7 @@ import {
 import {
   activateDeckKeyTipTarget,
   isDeckKeyTipActionKey,
+  isDeckKeyTipFunctionKey,
   type DeckKeyTipMode,
 } from "../utils/deckKeyTips";
 
@@ -19,7 +20,7 @@ type DeckKeyTipsContextValue = {
   mode: DeckKeyTipMode;
   enterTabs: () => void;
   exit: () => void;
-  /** true quando balões de aba devem aparecer. */
+  /** true quando balões de aba (F1…) devem aparecer. */
   showTabTips: boolean;
   /** true quando balões de ação da ribbon devem aparecer. */
   showActionTips: boolean;
@@ -33,16 +34,12 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
 }
 
-function isKeyTipFKey(event: KeyboardEvent): boolean {
-  return event.key === "f" || event.key === "F" || event.code === "KeyF";
-}
-
 /**
- * KeyTips do chrome (estilo Office):
- * - F → mostra letras das abas
- * - letra → ativa aba e mostra letras das ações
- * - letra → dispara ação e sai
+ * KeyTips do chrome:
+ * - F1…Fn → ativa a aba correspondente e mostra letras das ações
+ * - letra/dígito → dispara ação e sai
  * - Esc → volta um nível / sai
+ * - F10 → só revela (ou oculta) os balões F1…Fn das abas
  */
 export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<DeckKeyTipMode>("idle");
@@ -67,10 +64,30 @@ export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (isKeyTipFKey(event) && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      /* F10: preview dos atalhos de aba (F1…) sem selecionar. */
+      if (
+        event.key === "F10" &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        !event.shiftKey
+      ) {
         if (event.repeat) return;
         event.preventDefault();
         setMode((current) => (current === "idle" ? "tabs" : "idle"));
+        return;
+      }
+
+      if (isDeckKeyTipFunctionKey(event)) {
+        if (event.repeat) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const ok = activateDeckKeyTipTarget("tabs", event.key);
+        if (ok) {
+          window.requestAnimationFrame(() => setMode("actions"));
+        } else {
+          setMode("tabs");
+        }
         return;
       }
 
@@ -81,11 +98,7 @@ export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
       event.stopPropagation();
 
       if (mode === "tabs") {
-        const ok = activateDeckKeyTipTarget("tabs", event.key);
-        if (ok) {
-          // Próximo frame: ribbon da aba já montou.
-          window.requestAnimationFrame(() => setMode("actions"));
-        }
+        /* Letras antigas não abrem aba — abas são só F1…Fn. */
         return;
       }
 
@@ -114,7 +127,7 @@ export function DeckKeyTipsProvider({ children }: { children: ReactNode }) {
       mode,
       enterTabs,
       exit,
-      showTabTips: mode === "tabs",
+      showTabTips: mode === "tabs" || mode === "actions",
       showActionTips: mode === "actions",
     }),
     [enterTabs, exit, mode],

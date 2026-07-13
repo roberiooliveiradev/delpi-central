@@ -26,6 +26,7 @@ Complementa: `plugins-visual-design-system.mdc`, `plugins-frontend-build.mdc`, `
 | Export | Uso |
 |--------|-----|
 | `HelpTooltip` | Balão explicativo (? ou `wrap`) |
+| `KeyTip` | Balão de atalho (Alt / letras F) — portal + flip |
 | `FieldLabel` | Rótulo de campo + ajuda |
 | `SectionHintLabel` | Rótulo de seção (ribbon, painel) |
 | `TabHintCell` | Aba + ? sem botão aninhado |

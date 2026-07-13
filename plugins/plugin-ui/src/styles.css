@@ -65,6 +65,92 @@
   transition: opacity 0.15s ease;
 }
 
+/* --- KeyTip (atalhos Alt / letras F) --- */
+.delpi-ui-keytip-anchor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.delpi-ui-keytip-layer {
+  display: contents;
+}
+
+.delpi-ui-keytip {
+  --delpi-ui-keytip-bg: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #111111)) 88%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  --delpi-ui-keytip-fg: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --delpi-ui-keytip-border: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--text, #111111)) 28%,
+    transparent
+  );
+  --delpi-ui-keytip-arrow: 6px;
+
+  position: fixed;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: none;
+  height: auto;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-keytip-border);
+  background: var(--delpi-ui-keytip-bg);
+  color: var(--delpi-ui-keytip-fg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px color-mix(in srgb, #000 35%, transparent);
+  pointer-events: none;
+  animation: delpi-ui-keytip-in 0.12s ease-out;
+}
+
+.delpi-ui-keytip--letter {
+  min-width: 1.5em;
+  padding: 4px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.delpi-ui-keytip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  margin-left: calc(var(--delpi-ui-keytip-arrow) * -1);
+  border: var(--delpi-ui-keytip-arrow) solid transparent;
+  border-top-color: var(--delpi-ui-keytip-bg);
+}
+
+.delpi-ui-keytip--bottom::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--delpi-ui-keytip-bg);
+}
+
+@keyframes delpi-ui-keytip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .delpi-ui-field-label {
   display: block;
 }

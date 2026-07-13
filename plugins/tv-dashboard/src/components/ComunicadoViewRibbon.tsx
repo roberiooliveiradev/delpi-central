@@ -160,7 +160,7 @@ export function ComunicadoViewRibbon() {
           <DeckRibbonTile
             icon={Keyboard}
             label="Atalhos"
-            hint="Catálogo de atalhos do teclado. F = KeyTips das abas; Alt = liga/desliga balões Ctrl."
+            hint="Catálogo de atalhos do teclado. F1–F8 = abas; F10 revela balões; Alt = liga/desliga balões Ctrl."
             keyTip={K.shortcuts}
             onClick={openCatalog}
           />

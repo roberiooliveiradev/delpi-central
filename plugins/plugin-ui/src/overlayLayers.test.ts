@@ -21,4 +21,8 @@ describe("DELPI_UI_OVERLAY_Z_INDEX", () => {
       DELPI_UI_OVERLAY_Z_INDEX.shapeDialog,
     );
   });
+
+  it("keyTip fica acima de helpTooltip", () => {
+    expect(DELPI_UI_OVERLAY_Z_INDEX.keyTip).toBeGreaterThan(DELPI_UI_OVERLAY_Z_INDEX.helpTooltip);
+  });
 });

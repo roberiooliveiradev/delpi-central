@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveShortcutTipPosition } from "./shortcutTipPosition";
+import { resolveKeyTipPosition } from "./keyTipPosition";
 
 const tip = { tipWidth: 80, tipHeight: 28 };
 
-describe("resolveShortcutTipPosition", () => {
+describe("resolveKeyTipPosition", () => {
   it("usa o lado preferido quando há espaço", () => {
-    const pos = resolveShortcutTipPosition({
+    const pos = resolveKeyTipPosition({
       ...tip,
       preferred: "top",
       viewportWidth: 1200,
@@ -15,11 +15,11 @@ describe("resolveShortcutTipPosition", () => {
     });
     expect(pos.placement).toBe("top");
     expect(pos.top).toBe(200 - 28 - 10);
-    expect(pos.left).toBe(400 + 40 - 40); // centro − metade do tip
+    expect(pos.left).toBe(400 + 40 - 40);
   });
 
   it("inverte para baixo quando não cabe acima (chrome superior)", () => {
-    const pos = resolveShortcutTipPosition({
+    const pos = resolveKeyTipPosition({
       ...tip,
       preferred: "top",
       viewportWidth: 1200,
@@ -31,7 +31,7 @@ describe("resolveShortcutTipPosition", () => {
   });
 
   it("clampa na borda direita da viewport", () => {
-    const pos = resolveShortcutTipPosition({
+    const pos = resolveKeyTipPosition({
       tipWidth: 100,
       tipHeight: 24,
       preferred: "bottom",
@@ -43,7 +43,7 @@ describe("resolveShortcutTipPosition", () => {
   });
 
   it("aplica offsetX antes do clamp", () => {
-    const pos = resolveShortcutTipPosition({
+    const pos = resolveKeyTipPosition({
       tipWidth: 60,
       tipHeight: 24,
       preferred: "bottom",
