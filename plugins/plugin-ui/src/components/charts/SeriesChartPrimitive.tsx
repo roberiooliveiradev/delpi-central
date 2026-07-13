@@ -132,7 +132,7 @@ export function SeriesChartPrimitive({
   const layout = buildSeriesChartLayout({
     points: usable,
     showXAxisLabels: config.showAxes !== false && config.showXAxisLabels !== false,
-    showXAxisTitle: config.showXAxisTitle === true,
+    showXAxisTitle: config.showXAxisTitle !== false,
     viewW: viewSize.w,
     viewH: viewSize.h,
     categoryPaddingPercent: config.categoryPaddingPercent,

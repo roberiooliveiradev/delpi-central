@@ -236,7 +236,7 @@ export function ChartPlotAreaGroup({
         <ChartAxisY
           layout={layout}
           showLabels={cartesianAxes && config.showYAxisLabels !== false}
-          showTitle={config.showYAxisTitle === true}
+          showTitle={config.showYAxisTitle !== false}
           title={config.yAxisTitle}
           valueFormat={valueFormat}
           interaction={interaction}
@@ -297,7 +297,7 @@ export function ChartPlotAreaGroup({
           layout={layout}
           points={points}
           showLabels={cartesianAxes && config.showXAxisLabels !== false}
-          showTitle={config.showXAxisTitle === true}
+          showTitle={config.showXAxisTitle !== false}
           title={config.xAxisTitle}
           interaction={interaction}
           chartParts={chartParts}

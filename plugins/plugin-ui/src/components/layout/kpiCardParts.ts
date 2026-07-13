@@ -356,11 +356,13 @@ export function kpiPartHasBoxPaint(style?: KpiPartStyle | null): boolean {
 
 /**
  * Layout absoluto (% do card) + chrome (raio/fundo/contorno).
- * Sem frame: se há fill/borda, a caixa abraça o conteúdo (não estica com flex:1 do valor).
+ * Sem frame: se há fill/borda em parte textual, a caixa abraça o conteúdo
+ * (não estica com flex:1 do valor). A parte `card` é a moldura do bloco —
+ * nunca encolhe com fit-content.
  */
 export function resolveKpiPartLayoutStyle(
   state: KpiPartState | null | undefined,
-  options?: { iconSizeFallback?: boolean },
+  options?: { iconSizeFallback?: boolean; partKind?: KpiPartRef["kind"] },
 ): CSSProperties {
   const style = state?.style;
   const frame = resolveKpiPartFrame(state);
@@ -394,7 +396,7 @@ export function resolveKpiPartLayoutStyle(
     css.zIndex = 2;
     css.boxSizing = "border-box";
     css.margin = 0;
-  } else if (kpiPartHasBoxPaint(style)) {
+  } else if (kpiPartHasBoxPaint(style) && options?.partKind !== "card") {
     // Evita que fill do valor (flex:1) pinte o card inteiro.
     css.flex = "0 0 auto";
     css.alignSelf = "flex-start";

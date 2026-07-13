@@ -161,13 +161,33 @@ describe("kpi icon layout", () => {
   });
 
   it("resolveKpiPartLayoutStyle com fill sem frame abraça o conteúdo", () => {
-    const css = resolveKpiPartLayoutStyle({
-      style: { fill: "#fef3c7" },
-    });
+    const css = resolveKpiPartLayoutStyle(
+      { style: { fill: "#fef3c7" } },
+      { partKind: "value" },
+    );
     expect(css.background).toBe("#fef3c7");
     expect(css.flex).toBe("0 0 auto");
     expect(css.width).toBe("fit-content");
     expect(css.position).toBeUndefined();
+  });
+
+  it("resolveKpiPartLayoutStyle na parte card não encolhe com fit-content", () => {
+    const css = resolveKpiPartLayoutStyle(
+      {
+        style: {
+          fill: "#ffffff",
+          stroke: "#b4b4b4",
+          strokeWidth: 1,
+          borderRadius: 16,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        },
+      },
+      { partKind: "card" },
+    );
+    expect(css.background).toBe("#ffffff");
+    expect(css.boxShadow).toContain("rgba");
+    expect(css.width).toBeUndefined();
+    expect(css.flex).toBeUndefined();
   });
 
   it("kpiPartBoxChromeLabels distingue card vs valor", () => {

@@ -226,6 +226,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Ligue ou desligue partes. O detalhe (texto, eixos, grade) abre ao selecionar a parte no palco ou na faixa Gráfico.",
     chartAppearance: "Formato numérico e cor da série.",
     chartTitle: "Título central acima do gráfico (ex.: ROL). Vazio usa o nome da fonte de dados.",
+    chartAxisTitles:
+      "Títulos dos eixos X/Y. Ligados por padrão; vazio usa os rótulos da rota (ex.: Período e a métrica).",
     chartLegend: "Texto exibido na legenda para identificar a série.",
     chartDataLabels: "Mostra o valor numérico em cada ponto ou barra.",
     tableElements: "Ative ou configure cada parte da tabela, como título, cabeçalho e listras.",

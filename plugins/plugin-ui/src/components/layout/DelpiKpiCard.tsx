@@ -287,10 +287,10 @@ export function DelpiKpiCard({
   const hintFramed = Boolean(resolveKpiPartFrame(hintState));
   const iconFramed = Boolean(resolveKpiPartFrame(iconState));
   const cardFramed = Boolean(resolveKpiPartFrame(cardState));
-  const titleLayoutStyle = resolveKpiPartLayoutStyle(titleState);
-  const valueLayoutStyle = resolveKpiPartLayoutStyle(valueState);
-  const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState);
-  const cardLayoutStyle = resolveKpiPartLayoutStyle(cardState);
+  const titleLayoutStyle = resolveKpiPartLayoutStyle(titleState, { partKind: "title" });
+  const valueLayoutStyle = resolveKpiPartLayoutStyle(valueState, { partKind: "value" });
+  const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState, { partKind: "hint" });
+  const cardLayoutStyle = resolveKpiPartLayoutStyle(cardState, { partKind: "card" });
 
   const titleTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(

@@ -17,6 +17,7 @@ export {
   SERIES_CHART_LEGEND_POSITION_OPTIONS as CHART_LEGEND_POSITION_OPTIONS,
   formatSeriesChartValue,
   mergeSeriesChartOptions as mergeComunicadoChartOptions,
+  migrateSeriesChartOptionsOnLoad as migrateComunicadoChartOptionsOnLoad,
   resolveSeriesChartDisplayOptions as resolveChartDisplayOptions,
   resolveSeriesChartTicks,
   usableSeriesChartPoints,

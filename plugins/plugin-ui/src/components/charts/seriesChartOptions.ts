@@ -50,7 +50,15 @@ export type SeriesChartOptions = {
    * Default: `DEFAULT_CATEGORY_PADDING_PERCENT`.
    */
   categoryPaddingPercent?: number;
+  /**
+   * Versão do chrome do gráfico. Ausente = bloco legado (pré–títulos de eixo ON).
+   * Usado só no load para migrar defaults sem reabrir o que o usuário desligou depois.
+   */
+  chromeVersion?: number;
 };
+
+/** Chrome atual: títulos de eixo ligados por padrão + fallback da rota. */
+export const SERIES_CHART_CHROME_VERSION = 1;
 
 export type SeriesChartPoint = {
   label?: string;
@@ -85,8 +93,8 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showAxes: true,
   showXAxisLabels: true,
   showYAxisLabels: true,
-  showXAxisTitle: false,
-  showYAxisTitle: false,
+  showXAxisTitle: true,
+  showYAxisTitle: true,
   showDataLabels: false,
   showDataTable: false,
   showGrid: true,
@@ -97,7 +105,32 @@ export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   theme: "light",
   backgroundColor: OFFICE_CHART_AREA_FILL,
   categoryPaddingPercent: DEFAULT_CATEGORY_PADDING_PERCENT,
+  chromeVersion: SERIES_CHART_CHROME_VERSION,
 };
+
+/**
+ * Migra options no load do bloco (JSON antigo).
+ * Blocos sem `chromeVersion` e com eixos off sem texto → liga títulos (novo padrão).
+ * Blocos já na versão atual preservam escolha do usuário (ex.: eixos desligados).
+ */
+export function migrateSeriesChartOptionsOnLoad(
+  raw?: SeriesChartOptions | null,
+): SeriesChartOptions {
+  const merged = mergeSeriesChartOptions(raw);
+  if ((raw?.chromeVersion ?? 0) >= SERIES_CHART_CHROME_VERSION) {
+    return merged;
+  }
+  const legacyAxisTitlesOff =
+    raw?.showXAxisTitle !== true &&
+    raw?.showYAxisTitle !== true &&
+    !trimChartText(raw?.xAxisTitle) &&
+    !trimChartText(raw?.yAxisTitle);
+  return {
+    ...merged,
+    ...(legacyAxisTitlesOff ? { showXAxisTitle: true, showYAxisTitle: true } : {}),
+    chromeVersion: SERIES_CHART_CHROME_VERSION,
+  };
+}
 
 export function mergeSeriesChartOptions(partial?: SeriesChartOptions | null): SeriesChartOptions {
   const merged = { ...DEFAULT_SERIES_CHART_OPTIONS, ...(partial ?? {}) };
@@ -114,16 +147,58 @@ export function mergeSeriesChartOptions(partial?: SeriesChartOptions | null): Se
   return merged;
 }
 
+/** Metadados da rota/enrichment usados como fallback de título e eixos (igual ao título do gráfico). */
+export type SeriesChartResolvedMeta = {
+  label?: string | null;
+  kpi?: { label?: string | null } | null;
+  table?: {
+    columns?: Array<{ key?: string; label?: string } | null> | null;
+  } | null;
+};
+
+function trimChartText(value: unknown): string {
+  if (typeof value !== "string") return "";
+  return value.trim();
+}
+
+/** Eixo X: 1ª coluna tabular da rota (ex.: «Período») ou fallback. */
+function defaultXAxisTitleFromResolved(resolved?: SeriesChartResolvedMeta | null): string {
+  const cols = resolved?.table?.columns;
+  if (Array.isArray(cols)) {
+    for (const col of cols) {
+      const label = trimChartText(col?.label);
+      if (label) return label;
+    }
+  }
+  return "Período";
+}
+
+/** Eixo Y: 2ª coluna (métrica) ou label/KPI da rota — mesma fonte do título. */
+function defaultYAxisTitleFromResolved(resolved?: SeriesChartResolvedMeta | null): string {
+  const cols = resolved?.table?.columns;
+  if (Array.isArray(cols) && cols.length > 1) {
+    const valueLabel = trimChartText(cols[1]?.label);
+    if (valueLabel) return valueLabel;
+  }
+  return trimChartText(resolved?.kpi?.label) || trimChartText(resolved?.label);
+}
+
 export function resolveSeriesChartDisplayOptions(
   blockOptions: SeriesChartOptions | undefined,
-  resolved?: { label?: string; kpi?: { label?: string } },
+  resolved?: SeriesChartResolvedMeta | null,
 ): SeriesChartOptions {
   const merged = mergeSeriesChartOptions(blockOptions);
-  const fallbackTitle = resolved?.label ?? resolved?.kpi?.label ?? "";
+  const fallbackTitle = trimChartText(resolved?.label) || trimChartText(resolved?.kpi?.label);
+  const xAxisTitle = trimChartText(merged.xAxisTitle) || defaultXAxisTitleFromResolved(resolved);
+  const yAxisTitle =
+    trimChartText(merged.yAxisTitle) || defaultYAxisTitleFromResolved(resolved) || fallbackTitle;
   return {
     ...merged,
-    title: merged.title?.trim() || fallbackTitle,
-    seriesName: merged.seriesName?.trim() || merged.title?.trim() || fallbackTitle || "Série",
+    title: trimChartText(merged.title) || fallbackTitle,
+    seriesName:
+      trimChartText(merged.seriesName) || trimChartText(merged.title) || fallbackTitle || "Série",
+    xAxisTitle: xAxisTitle || undefined,
+    yAxisTitle: yAxisTitle || undefined,
   };
 }
 

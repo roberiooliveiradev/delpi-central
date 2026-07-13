@@ -516,11 +516,11 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
     visible: config.showAxes !== false && config.showYAxisLabels !== false,
   };
   parts[serializeChartPartRef({ kind: "axisTitle", axis: "x" })] = {
-    visible: config.showXAxisTitle === true,
+    visible: config.showXAxisTitle !== false,
     content: config.xAxisTitle?.trim() || undefined,
   };
   parts[serializeChartPartRef({ kind: "axisTitle", axis: "y" })] = {
-    visible: config.showYAxisTitle === true,
+    visible: config.showYAxisTitle !== false,
     content: config.yAxisTitle?.trim() || undefined,
   };
   parts[serializeChartPartRef({ kind: "grid" })] = {
@@ -660,8 +660,26 @@ export function mergeSeriesChartOptionsWithParts(
   options?: SeriesChartOptions | null,
   parts?: ChartPartsMap | null,
 ): SeriesChartOptions {
-  const fromParts = partsToChartOptions(parts);
-  return mergeSeriesChartOptions({ ...mergeSeriesChartOptions(options), ...fromParts });
+  const base = mergeSeriesChartOptions(options);
+  const fromParts = { ...partsToChartOptions(parts) };
+  /* Seed legado gravava axisTitle visible:false sem texto — não apagar show ligado nas options. */
+  const axisTitleX = getChartPartState(parts, { kind: "axisTitle", axis: "x" });
+  const axisTitleY = getChartPartState(parts, { kind: "axisTitle", axis: "y" });
+  if (
+    base.showXAxisTitle !== false &&
+    fromParts.showXAxisTitle === false &&
+    !String(axisTitleX?.content ?? "").trim()
+  ) {
+    delete fromParts.showXAxisTitle;
+  }
+  if (
+    base.showYAxisTitle !== false &&
+    fromParts.showYAxisTitle === false &&
+    !String(axisTitleY?.content ?? "").trim()
+  ) {
+    delete fromParts.showYAxisTitle;
+  }
+  return mergeSeriesChartOptions({ ...base, ...fromParts });
 }
 
 /** Cor da série: primitivo line (stroke) — única fonte; `seriesColor` só como fallback legado. */

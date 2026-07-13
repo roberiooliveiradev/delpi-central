@@ -133,6 +133,19 @@ describe("seriesChartParts", () => {
     expect(nudged.title?.frame).toEqual({ x: 15, y: 7, w: undefined, h: undefined });
   });
 
+  it("mergeSeriesChartOptionsWithParts não deixa seed legado de axisTitle apagar show ligado", () => {
+    const merged = mergeSeriesChartOptionsWithParts(
+      { showXAxisTitle: true, showYAxisTitle: true, xAxisTitle: "Período", yAxisTitle: "OEE" },
+      {
+        "axisTitle:x": { visible: false },
+        "axisTitle:y": { visible: false },
+      },
+    );
+    expect(merged.showXAxisTitle).toBe(true);
+    expect(merged.showYAxisTitle).toBe(true);
+    expect(merged.xAxisTitle).toBe("Período");
+  });
+
   it("defaults Delpi: série accent e chartArea com raio/sombra", () => {
     const parts = chartOptionsToParts(mergeSeriesChartOptions({}));
     expect(parts.chartArea?.style?.fill).toBe("#ffffff");

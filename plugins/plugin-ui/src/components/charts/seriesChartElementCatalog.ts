@@ -111,7 +111,7 @@ export function isSeriesChartElementEnabled(
     case "axes":
       return options.showAxes !== false;
     case "axisTitles":
-      return options.showXAxisTitle === true || options.showYAxisTitle === true;
+      return options.showXAxisTitle !== false || options.showYAxisTitle !== false;
     case "chartTitle":
       return options.showTitle !== false;
     case "dataLabels":

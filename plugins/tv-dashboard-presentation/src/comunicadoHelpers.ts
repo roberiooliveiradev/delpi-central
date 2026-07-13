@@ -34,7 +34,7 @@ import {
   normalizeBlockAnimations,
   serializeBlockAnimations,
 } from "./comunicadoBlockAnimations";
-import { DEFAULT_COMUNICADO_CHART_OPTIONS, type ComunicadoChartOptions } from "./comunicadoChartOptions";
+import { DEFAULT_COMUNICADO_CHART_OPTIONS, migrateComunicadoChartOptionsOnLoad, type ComunicadoChartOptions } from "./comunicadoChartOptions";
 import {
   DEFAULT_COMUNICADO_KPI_OPTIONS,
   mergeComunicadoKpiOptions,
@@ -919,10 +919,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   }
   if (type === "chart_view") {
     const chartType = typeof block.chartType === "string" ? (block.chartType as ComunicadoChartType) : "line";
-    const chartOptions =
+    const rawChartOptions =
       block.chartOptions && typeof block.chartOptions === "object"
-        ? ({ ...DEFAULT_COMUNICADO_CHART_OPTIONS, ...(block.chartOptions as ComunicadoChartOptions) })
-        : { ...DEFAULT_COMUNICADO_CHART_OPTIONS };
+        ? (block.chartOptions as ComunicadoChartOptions)
+        : null;
+    const chartOptions = migrateComunicadoChartOptionsOnLoad(rawChartOptions);
     const rawParts =
       block.chartParts && typeof block.chartParts === "object"
         ? (block.chartParts as ComunicadoChartPartsMap)
