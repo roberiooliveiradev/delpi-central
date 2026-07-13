@@ -11,6 +11,7 @@
     transparent
   );
   --delpi-ui-range-negative: #f87171;
+  --delpi-ui-range-fill: var(--delpi-ui-range-accent);
 
   display: flex;
   flex-direction: column;
@@ -21,6 +22,10 @@
   min-width: 148px;
   padding: 2px 0;
   box-sizing: border-box;
+}
+
+.delpi-ui-range-field--negative {
+  --delpi-ui-range-fill: var(--delpi-ui-range-negative);
 }
 
 .delpi-ui-range-field__label {
@@ -52,11 +57,11 @@ input.delpi-ui-native-range.delpi-ui-range-field__slider {
   min-height: 0;
   background: linear-gradient(
     to right,
-    var(--delpi-ui-range-accent) 0%,
-    var(--delpi-ui-range-accent) var(--delpi-ui-range-progress, 100%),
+    var(--delpi-ui-range-fill) 0%,
+    var(--delpi-ui-range-fill) var(--delpi-ui-range-progress, 100%),
     var(--delpi-ui-range-track) var(--delpi-ui-range-progress, 100%)
   );
-  accent-color: var(--delpi-ui-range-accent);
+  accent-color: var(--delpi-ui-range-fill);
   cursor: pointer;
 }
 
@@ -65,8 +70,8 @@ input.delpi-ui-native-range.delpi-ui-range-field__slider {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--delpi-ui-range-accent);
-  border: 1px solid color-mix(in srgb, var(--delpi-ui-range-accent) 40%, #fff);
+  background: var(--delpi-ui-range-fill);
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-range-fill) 40%, #fff);
   box-shadow: 0 0 0 1px color-mix(
     in srgb,
     var(--delpi-ui-surface, var(--surface, #fff)) 50%,
@@ -79,8 +84,8 @@ input.delpi-ui-native-range.delpi-ui-range-field__slider {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--delpi-ui-range-accent);
-  border: 1px solid color-mix(in srgb, var(--delpi-ui-range-accent) 40%, #fff);
+  background: var(--delpi-ui-range-fill);
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-range-fill) 40%, #fff);
   cursor: pointer;
 }
 
@@ -97,15 +102,9 @@ input.delpi-ui-native-range.delpi-ui-range-field__slider {
   box-sizing: border-box;
 }
 
-/* Vermelho só no texto do input — a escala permanece no accent. */
 input.delpi-ui-range-field__input.delpi-ui-range-field__input--negative {
   color: var(--delpi-ui-range-negative);
   caret-color: var(--delpi-ui-range-negative);
   font-weight: 600;
   accent-color: auto;
-}
-
-.delpi-ui-range-field__row:has(.delpi-ui-range-field__input--negative) .delpi-ui-range-field__slider {
-  accent-color: var(--delpi-ui-range-accent);
-  color: var(--delpi-ui-range-accent);
 }

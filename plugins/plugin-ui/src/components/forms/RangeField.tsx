@@ -88,7 +88,13 @@ export function RangeField({
   };
 
   return (
-    <span className={mergeClassNames(RANGE_FIELD_CLASS, className)}>
+    <span
+      className={mergeClassNames(
+        RANGE_FIELD_CLASS,
+        negative ? `${RANGE_FIELD_CLASS}--negative` : null,
+        className,
+      )}
+    >
       <FieldLabel
         htmlFor={id}
         label={label}

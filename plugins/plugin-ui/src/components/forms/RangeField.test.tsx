@@ -79,8 +79,8 @@ describe("RangeField", () => {
     expect((screen.getByLabelText("Opacidade (digitar)") as HTMLInputElement).value).toBe("55%");
   });
 
-  it("marca input em tom vermelho quando o valor é negativo", () => {
-    render(
+  it("marca input e raiz em tom vermelho quando o valor é negativo", () => {
+    const { container } = render(
       <RangeField
         id="rf-rot"
         label="Rot. °"
@@ -92,5 +92,6 @@ describe("RangeField", () => {
     );
     const input = screen.getByLabelText("Rot. ° (digitar)");
     expect(input.className).toContain("delpi-ui-range-field__input--negative");
+    expect(container.querySelector(".delpi-ui-range-field--negative")).toBeTruthy();
   });
 });

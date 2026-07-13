@@ -513,7 +513,7 @@ Input + lista de presets (escolher ou digitar). Confirma no blur/Enter; seleçã
 
 ### `RangeField`
 
-Campo contínuo canônico: rótulo + slider + input numérico abaixo (digitar). Aceita `displayValue` com `%`/vírgula; valores negativos ficam em tom vermelho só no texto. CSS: `styles/range-field.css` (`.delpi-ui-range-field*`).
+Campo contínuo canônico: rótulo + slider + input numérico abaixo (digitar). Aceita `displayValue` com `%`/vírgula; valores negativos ficam em tom vermelho no texto e no slider (`.delpi-ui-range-field--negative`). CSS: `styles/range-field.css` (`.delpi-ui-range-field*`).
 
 ```tsx
 <RangeField
