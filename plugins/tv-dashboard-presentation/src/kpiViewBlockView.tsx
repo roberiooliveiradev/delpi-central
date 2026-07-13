@@ -7,6 +7,7 @@ import {
   type ComunicadoKpiInteraction,
 } from "./comunicadoKpiParts";
 import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
+import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 
 type Props = {
@@ -46,7 +47,10 @@ export function KpiViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = block.resolved;
+  const resolved = applyMetricSelectionToResolved(block.resolved, {
+    selectedValueFields: block.selectedValueFields,
+    valueField: block.valueField,
+  });
   const bound = Boolean(block.dataSourceId?.trim());
 
   if (resolved?.error) {
@@ -65,8 +69,10 @@ export function KpiViewBlockView({
     );
   }
 
-  const presentation = resolveKpiViewPresentation(resolved, block.kpiOptions);
-  const hasValue = resolved.kpi?.value != null && resolved.kpi.value !== "";
+  const metrics = resolved.kpiMetrics ?? [];
+  const hasMulti = metrics.length > 1;
+  const hasValue =
+    hasMulti || (resolved.kpi?.value != null && resolved.kpi.value !== "");
   if (!hasValue) {
     return (
       <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
@@ -77,16 +83,17 @@ export function KpiViewBlockView({
 
   // Parts são a fonte de verdade (paridade editor ↔ prévia ↔ apresentação).
   const mergedParts = mergeKpiPartsWithOptions(block.kpiParts, block.kpiOptions);
-  const iconAllowed = isKpiPartVisible(mergedParts, { kind: "icon" }, presentation.showIcon);
-  const Icon =
-    iconAllowed && presentation.iconName
-      ? resolveComunicadoLucideIcon(presentation.iconName)
-      : null;
-  const showIcon = Boolean(iconAllowed && Icon);
   const kpiInteraction = interactive ? interaction : null;
 
-  return (
-    <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view">
+  const renderCard = (metricResolved = resolved) => {
+    const presentation = resolveKpiViewPresentation(metricResolved, block.kpiOptions);
+    const iconAllowed = isKpiPartVisible(mergedParts, { kind: "icon" }, presentation.showIcon);
+    const Icon =
+      iconAllowed && presentation.iconName
+        ? resolveComunicadoLucideIcon(presentation.iconName)
+        : null;
+    const showIcon = Boolean(iconAllowed && Icon);
+    return (
       <DelpiKpiCard
         label={presentation.label}
         value={presentation.valueText}
@@ -97,8 +104,30 @@ export function KpiViewBlockView({
         icon={showIcon && Icon ? <Icon aria-hidden strokeWidth={2} /> : undefined}
         kpiOptions={block.kpiOptions}
         kpiParts={block.kpiParts}
-        interaction={kpiInteraction}
+        interaction={hasMulti ? null : kpiInteraction}
       />
+    );
+  };
+
+  if (hasMulti) {
+    return (
+      <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view tdp-kpi-view--multi">
+        {metrics.map((metric) => (
+          <div key={metric.field} className="tdp-kpi-view__cell">
+            {renderCard({
+              ...resolved,
+              kpi: { value: metric.value, label: metric.label },
+              label: metric.label,
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view">
+      {renderCard()}
     </div>
   );
 }

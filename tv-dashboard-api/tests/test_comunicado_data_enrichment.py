@@ -459,3 +459,83 @@ def test_enrich_sales_conversion_rate_resolves_kpi_and_chart_point():
     assert enriched[0]["resolved"]["chart"]["points"]
     assert enriched[1]["resolved"]["kpi"]["value"] == 13.9
     assert enriched[2]["resolved"]["chart"]["points"][0]["value"] == 13.9
+
+
+def test_enrich_multi_metric_lmp_summary_all_and_selected():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_lmps_dashboard_summary", "shape": "scalar"},
+        "data": {
+            "summary": {
+                "total_lmps": 42,
+                "percent_dentro_prazo": 81.5,
+                "avg_lead_time": 3.2,
+                "total_items": 120,
+            }
+        },
+        "route": {
+            "label": "KPIs LMP",
+            "valueFields": [
+                "total_lmps",
+                "percent_dentro_prazo",
+                "avg_lead_time",
+                "total_items",
+            ],
+            "valueFieldLabels": {
+                "total_lmps": "Total de LMPs",
+                "percent_dentro_prazo": "% no prazo",
+                "avg_lead_time": "Lead time médio",
+                "total_items": "Total de itens",
+            },
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    all_metrics = service.enrich_blocks(
+        [
+            {
+                "id": "src-all",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_lmps_dashboard_summary",
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    metrics = all_metrics[0]["resolved"]["kpiMetrics"]
+    assert len(metrics) == 4
+    assert metrics[0]["field"] == "total_lmps"
+    assert metrics[0]["value"] == 42
+    assert all_metrics[0]["resolved"]["kpi"]["value"] == 42
+    assert len(all_metrics[0]["resolved"]["chart"]["points"]) == 4
+    assert len(all_metrics[0]["resolved"]["table"]["rows"]) == 4
+
+    selected = service.enrich_blocks(
+        [
+            {
+                "id": "src-sel",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_lmps_dashboard_summary",
+                    "displayMode": "kpi",
+                    "selectedValueFields": ["percent_dentro_prazo", "total_items"],
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    selected_metrics = selected[0]["resolved"]["kpiMetrics"]
+    assert [item["field"] for item in selected_metrics] == [
+        "percent_dentro_prazo",
+        "total_items",
+    ]
+    assert selected[0]["resolved"]["kpi"]["value"] == 81.5
+    assert selected[0]["resolved"]["kpi"]["label"] == "% no prazo"

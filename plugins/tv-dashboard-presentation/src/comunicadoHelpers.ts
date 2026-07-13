@@ -99,6 +99,7 @@ import {
   isDataViewBlockType,
   isFetchableDataBlockType,
 } from "./comunicadoDataArchitecture";
+import { normalizeSelectedValueFields } from "./resolveKpiMetrics";
 
 export {
   isDataBoundEditorBlockType,
@@ -672,6 +673,7 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       displayMode: block.dataBinding.displayMode,
       label: block.dataBinding.label,
       valueField: block.dataBinding.valueField,
+      selectedValueFields: block.dataBinding.selectedValueFields,
       maxRows: block.dataBinding.maxRows,
       refreshSec: block.dataBinding.refreshSec,
     };
@@ -682,17 +684,22 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       displayMode: block.dataBinding.displayMode,
       label: block.dataBinding.label,
       valueField: block.dataBinding.valueField,
+      selectedValueFields: block.dataBinding.selectedValueFields,
       maxRows: block.dataBinding.maxRows,
       refreshSec: block.dataBinding.refreshSec,
     };
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.selectedValueFields?.length) base.selectedValueFields = [...block.selectedValueFields];
+    if (block.valueField) base.valueField = block.valueField;
     if (block.chartOptions) base.chartOptions = { ...block.chartOptions };
     if (block.chartParts) base.chartParts = { ...block.chartParts };
   } else if (block.type === "table_view") {
     base.tablePreset = block.tablePreset;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.selectedValueFields?.length) base.selectedValueFields = [...block.selectedValueFields];
+    if (block.valueField) base.valueField = block.valueField;
     if (block.maxRows != null) base.maxRows = block.maxRows;
     if (block.maxCols != null) base.maxCols = block.maxCols;
     if (block.tableOptions) base.tableOptions = { ...block.tableOptions };
@@ -704,6 +711,8 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.headerRow != null) base.headerRow = block.headerRow;
   } else if (block.type === "kpi_view") {
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
+    if (block.selectedValueFields?.length) base.selectedValueFields = [...block.selectedValueFields];
+    if (block.valueField) base.valueField = block.valueField;
     if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
     if (block.kpiParts) base.kpiParts = { ...block.kpiParts };
   }
@@ -863,7 +872,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
           params: (binding.params as ComunicadoDataBinding["params"]) ?? {},
           displayMode: binding.displayMode,
           label: binding.label,
-          valueField: binding.valueField,
+          valueField: typeof binding.valueField === "string" ? binding.valueField : undefined,
+          selectedValueFields: normalizeSelectedValueFields(binding.selectedValueFields),
           maxRows: binding.maxRows,
           refreshSec: binding.refreshSec,
         },
@@ -893,7 +903,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
           params: (binding.params as ComunicadoDataBinding["params"]) ?? {},
           displayMode: binding.displayMode ?? "auto",
           label: binding.label,
-          valueField: binding.valueField,
+          valueField: typeof binding.valueField === "string" ? binding.valueField : undefined,
+          selectedValueFields: normalizeSelectedValueFields(binding.selectedValueFields),
           maxRows: binding.maxRows,
           refreshSec: binding.refreshSec,
         },
@@ -927,6 +938,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         chartOptions,
         chartParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        selectedValueFields: normalizeSelectedValueFields(block.selectedValueFields),
+        valueField: typeof block.valueField === "string" ? block.valueField : undefined,
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)
@@ -958,6 +971,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         tableOptions,
         tableParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        selectedValueFields: normalizeSelectedValueFields(block.selectedValueFields),
+        valueField: typeof block.valueField === "string" ? block.valueField : undefined,
         maxRows: normalizeTableViewLimit(block.maxRows, TABLE_VIEW_MAX_ROWS_CAP),
         maxCols: normalizeTableViewLimit(block.maxCols, TABLE_VIEW_MAX_COLS_CAP),
         resolved:
@@ -1020,6 +1035,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         style: { ...defaultStyle("kpi_view"), ...style },
         groupId,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
+        selectedValueFields: normalizeSelectedValueFields(block.selectedValueFields),
+        valueField: typeof block.valueField === "string" ? block.valueField : undefined,
         kpiOptions,
         kpiParts,
         resolved:

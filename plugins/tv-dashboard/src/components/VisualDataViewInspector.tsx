@@ -4,23 +4,30 @@ import {
   TABLE_VIEW_MAX_ROWS_CAP,
   chartTypeLabel,
   dataSourceOptionsForInspector,
+  isDataSourceBlockType,
   normalizeTableViewLimit,
   tablePresetLabel,
   type ComunicadoBlock,
+  type ComunicadoChartViewBlock,
+  type ComunicadoKpiViewBlock,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 
+import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { ValueFieldsMultiSelect, type ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 type Props = {
   pane?: boolean;
   layout?: PanelLayout;
   /** Abre aba Dados do painel lateral (catálogo de fontes). */
   onOpenDataSources?: () => void;
+  /** Rota da fonte ligada (labels de valueFields). */
+  route?: TvDataRouteCatalogItem | null;
 };
 
 function parseLimitInput(raw: string, cap: number): number | undefined {
@@ -29,10 +36,36 @@ function parseLimitInput(raw: string, cap: number): number | undefined {
   return normalizeTableViewLimit(Number(trimmed), cap);
 }
 
+function viewValueFieldOptions(
+  route: TvDataRouteCatalogItem | null | undefined,
+  source: ComunicadoBlock | null,
+): ValueFieldOption[] {
+  const fromRoute = route?.valueFields ?? [];
+  const labels = route?.valueFieldLabels ?? {};
+  if (fromRoute.length > 0) {
+    return fromRoute
+      .map((field) => String(field).trim())
+      .filter(Boolean)
+      .map((field) => ({
+        field,
+        label: labels[field]?.trim() || field,
+      }));
+  }
+  const metrics =
+    source && "resolved" in source && source.resolved && Array.isArray(source.resolved.kpiMetrics)
+      ? source.resolved.kpiMetrics
+      : [];
+  return metrics.map((metric) => ({
+    field: metric.field,
+    label: metric.label || metric.field,
+  }));
+}
+
 export function VisualDataViewInspector({
   pane = false,
   layout = "pane",
   onOpenDataSources,
+  route = null,
 }: Props) {
   const { selected, blocks, updateSelected, openDataPanel } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
@@ -52,6 +85,30 @@ export function VisualDataViewInspector({
   const hasSource = Boolean(selected.dataSourceId?.trim());
   const openSources = onOpenDataSources ?? openDataPanel;
   const tableBlock = selected.type === "table_view" ? (selected as ComunicadoTableViewBlock) : null;
+  const linkedSource =
+    hasSource
+      ? blocks.find(
+          (block) =>
+            block.id === selected.dataSourceId && isDataSourceBlockType(block.type),
+        ) ?? null
+      : null;
+  const valueFieldOptions = viewValueFieldOptions(route, linkedSource);
+
+  const applyMetricPatch = (patch: {
+    selectedValueFields?: string[];
+    valueField?: string;
+  }) => {
+    const next: Partial<ComunicadoChartViewBlock & ComunicadoKpiViewBlock & ComunicadoTableViewBlock> =
+      {};
+    if (!patch.selectedValueFields || patch.selectedValueFields.length === 0) {
+      next.selectedValueFields = undefined;
+      next.valueField = undefined;
+    } else {
+      next.selectedValueFields = patch.selectedValueFields;
+      next.valueField = patch.valueField ?? patch.selectedValueFields[0];
+    }
+    updateSelected(next as Partial<ComunicadoBlock>);
+  };
 
   const connectionBody = (
     <>
@@ -98,6 +155,22 @@ export function VisualDataViewInspector({
           ]}
         />
       </DeckField>
+      {hasSource && valueFieldOptions.length > 0 ? (
+        <DeckField
+          id="td-view-value-fields"
+          label="Métricas neste visual"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewValueFields}
+        >
+          <ValueFieldsMultiSelect
+            idPrefix="td-view-value-field"
+            options={valueFieldOptions}
+            selectedValueFields={selected.selectedValueFields}
+            valueField={selected.valueField}
+            compact={isRibbon}
+            onChange={applyMetricPatch}
+          />
+        </DeckField>
+      ) : null}
     </>
   );
 

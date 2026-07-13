@@ -554,5 +554,13 @@ export {
   applyTableViewDisplayLimits,
   normalizeTableViewLimit,
 } from "./tableViewLimits";
+export {
+  applyMetricSelectionToResolved,
+  filterKpiMetrics,
+  normalizeSelectedValueFields,
+  resolveSelectedMetricFields,
+  type MetricSelection,
+} from "./resolveKpiMetrics";
+export type { ComunicadoDataKpiMetric } from "./comunicadoTypes";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

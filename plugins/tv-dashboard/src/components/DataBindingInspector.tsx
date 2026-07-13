@@ -30,6 +30,11 @@ import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { Modal } from "./ui/Modal";
+import {
+  applyValueFieldSelectionToBinding,
+  ValueFieldsMultiSelect,
+  type ValueFieldOption,
+} from "./ValueFieldsMultiSelect";
 
 const REFRESH_PRESET_VALUES = new Set(["60", "120", "300", "600"]);
 
@@ -38,9 +43,16 @@ function routeSuggestedModes(route: TvDataRouteCatalogItem | null): string[] | u
   return route.suggestedDisplayModes ?? route.allowedDisplayModes;
 }
 
-function routeValueFieldOptions(route: TvDataRouteCatalogItem | null): string[] {
+function routeValueFieldOptions(route: TvDataRouteCatalogItem | null): ValueFieldOption[] {
   const fields = route?.valueFields ?? [];
-  return fields.map((field) => String(field).trim()).filter(Boolean);
+  const labels = route?.valueFieldLabels ?? {};
+  return fields
+    .map((field) => String(field).trim())
+    .filter(Boolean)
+    .map((field) => ({
+      field,
+      label: labels[field]?.trim() || field,
+    }));
 }
 
 function routeMaxRowsLimit(route: TvDataRouteCatalogItem | null): number {
@@ -234,25 +246,22 @@ export function DataBindingInspector({
         />
       </DeckField>
       {valueFieldOptions.length > 0 ? (
-        <DeckField id="td-data-value-field" label="Campo de valor">
-          <FormSelectControl
-            id="td-data-value-field"
-            className={compactSelect}
-            ariaLabel="Campo de valor"
-            value={binding.valueField ?? ""}
-            onChange={(value) => {
-              const nextBinding: ComunicadoDataBinding = { ...binding };
-              if (!value) {
-                delete nextBinding.valueField;
-              } else {
-                nextBinding.valueField = value;
-              }
-              applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
-            }}
-            options={[
-              { value: "", label: "Automático (primeiro disponível)" },
-              ...valueFieldOptions.map((field) => ({ value: field, label: field })),
-            ]}
+        <DeckField
+          id="td-data-value-fields"
+          label="Campos de valor"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.valueFields}
+        >
+          <ValueFieldsMultiSelect
+            idPrefix="td-data-value-field"
+            options={valueFieldOptions}
+            selectedValueFields={binding.selectedValueFields}
+            valueField={binding.valueField}
+            compact={isRibbon}
+            onChange={(patch) =>
+              applyPatch({
+                dataBinding: applyValueFieldSelectionToBinding(binding, patch),
+              } as Partial<ComunicadoBlock>)
+            }
           />
         </DeckField>
       ) : null}

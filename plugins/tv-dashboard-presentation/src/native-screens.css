@@ -1115,6 +1115,26 @@
   box-sizing: border-box;
 }
 
+.tdp-kpi-view--multi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 7.5em), 1fr));
+  gap: 0.35em;
+  align-content: stretch;
+}
+
+.tdp-kpi-view__cell {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+.tdp-kpi-view__cell .delpi-kpi-card-shell,
+.tdp-kpi-view__cell .delpi-kpi-card {
+  width: 100%;
+  height: 100%;
+}
+
 .tdp-kpi-view .delpi-kpi-card-shell,
 .tdp-kpi-view .delpi-kpi-card {
   height: 100%;

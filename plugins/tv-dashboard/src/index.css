@@ -4700,6 +4700,20 @@
   accent-color: var(--td-accent);
 }
 
+.dashboard-tv-dashboard .td-deck-inspector__value-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dashboard-tv-dashboard .td-deck-inspector__value-fields--compact {
+  gap: 0.2rem;
+}
+
+.dashboard-tv-dashboard .td-deck-inspector__value-fields .td-deck-inspector__hint {
+  margin: 0 0 0.15rem;
+}
+
 .dashboard-tv-dashboard .td-chart-elements {
   display: flex;
   flex-direction: column;

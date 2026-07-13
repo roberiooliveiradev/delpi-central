@@ -206,6 +206,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     viewBinding: "Conecte o gráfico, tabela ou KPI a uma fonte inserida no palco (ícone de banco).",
+    valueFields:
+      "Marque quais métricas escalares da rota entram no KPI, gráfico ou tabela. Vazio (todas marcadas) = exibir todas.",
+    viewValueFields:
+      "Filtra métricas só neste visual, sem novo fetch. Use a fonte para limitar o conjunto disponível a todos os visuais.",
     connectFlow:
       "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados.",
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */

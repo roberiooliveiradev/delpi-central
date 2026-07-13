@@ -1214,7 +1214,9 @@ python3 scripts/check_tv_data_routes.py --check                   # validação 
 python3 scripts/enrich_tv_data_routes_pt.py --write               # label + description PT
 ```
 
-Enriquecimentos manuais por `operationId` são **preservados** na regeneração (`label`, `description`, `category`, `seriesField`, `paramSchema`, `valueFields`, `tvConstraints`). O picker do editor (`DataRouteCatalogPanel`) exibe **título PT + descrição + path** e filtros por categoria/forma (KPI/Série/Tabela).
+Enriquecimentos manuais por `operationId` são **preservados** na regeneração (`label`, `description`, `category`, `seriesField`, `paramSchema`, `valueFields`, `valueFieldLabels`, `tvConstraints`). O picker do editor (`DataRouteCatalogPanel`) exibe **título PT + descrição + path** e filtros por categoria/forma (KPI/Série/Tabela).
+
+**Multi-métrica:** quando a rota declara vários `valueFields`, o enrichment monta `resolved.kpiMetrics` (e fallback chart/tabela por métrica). O gestor escolhe campos na fonte (`selectedValueFields`) e pode filtrar de novo no visual (`kpi_view` / `chart_view` / `table_view`) — KPI em grade, barras ou tabela indicador/valor.
 
 ```json
 {

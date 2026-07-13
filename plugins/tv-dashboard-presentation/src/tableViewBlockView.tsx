@@ -3,6 +3,7 @@ import { tablePresetLabel } from "./comunicadoChartView";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoTableInteraction } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
+import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
 import { applyTableViewDisplayLimits } from "./tableViewLimits";
 import { resolveTableColumns } from "./tvDataPresentation";
 
@@ -19,7 +20,10 @@ export function TableViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = block.resolved;
+  const resolved = applyMetricSelectionToResolved(block.resolved, {
+    selectedValueFields: block.selectedValueFields,
+    valueField: block.valueField,
+  });
   const label = tablePresetLabel(block.tablePreset);
   const tableInteraction = interactive ? interaction : null;
 

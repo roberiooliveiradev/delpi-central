@@ -57,7 +57,11 @@ Fonte de verdade: **api-delpi OpenAPI completo** → `openapi_baseline.json` (v2
 |---|---|
 | `api-delpi/app/content/openapi_baseline.json` | Inventário GET + query params + `x-delpi.shape` |
 | `tv-dashboard-api/.../tv_data_routes.json` | Catálogo servido ao editor (`GET /data/routes`) |
-| `tv_data_route_overlays.json` | Curadoria TV (`valueFields`, `tvConstraints`, labels, `paramStrategy`) |
+| `tv_data_route_overlays.json` | Curadoria TV (`valueFields`, `valueFieldLabels`, `tvConstraints`, labels, `paramStrategy`) |
+
+### Multi-métrica (escalares)
+
+Rotas com vários `valueFields` (ex.: `get_lmps_dashboard_summary`) resolvem `resolved.kpiMetrics[]` no enrichment. O binding aceita `selectedValueFields` (lista) e `valueField` (legado, um campo). Sem seleção = todas as métricas. Views (`kpi_view` / `chart_view` / `table_view`) podem filtrar de novo no cliente sem novo fetch.
 
 Esteira pós-deploy / após mudança de rota na api-delpi:
 

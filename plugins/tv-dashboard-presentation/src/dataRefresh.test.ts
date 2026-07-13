@@ -58,4 +58,23 @@ describe("buildDataPreviewFingerprint", () => {
     });
     expect(before).toBe(after);
   });
+
+  it("muda quando selectedValueFields muda", () => {
+    const before = buildDataPreviewFingerprint(baseConfig);
+    const after = buildDataPreviewFingerprint({
+      ...baseConfig,
+      blocks: [
+        {
+          ...baseConfig.blocks![0],
+          type: "data_metric",
+          dataBinding: {
+            operationId: "get_oee",
+            params: { periodDays: 1 },
+            selectedValueFields: ["value"],
+          },
+        },
+      ],
+    });
+    expect(after).not.toBe(before);
+  });
 });

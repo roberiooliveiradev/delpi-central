@@ -178,6 +178,22 @@
         }
       }
     },
+    "get_lmps_dashboard_summary": {
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items"
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens"
+      },
+      "allowedDisplayModes": ["kpi", "bar_chart", "table", "auto"],
+      "description": "KPIs agregados do painel de LMPs. Selecione quais métricas exibir no visual (KPI, gráfico ou tabela)."
+    },
     "search_products": {
       "tableFields": "items",
       "tvConstraints": {

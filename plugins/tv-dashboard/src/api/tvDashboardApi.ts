@@ -335,6 +335,7 @@ export type TvDataRouteCatalogItem = {
   allowedDisplayModes?: string[];
   suggestedDisplayModes?: string[];
   valueFields?: string[];
+  valueFieldLabels?: Record<string, string>;
   defaultParams?: Record<string, unknown>;
   paramSchema?: Record<string, unknown>;
   fixedQueryParams?: Record<string, unknown>;

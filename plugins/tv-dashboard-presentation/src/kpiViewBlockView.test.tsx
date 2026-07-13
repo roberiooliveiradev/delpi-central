@@ -44,4 +44,26 @@ describe("KpiViewBlockView icon visibility", () => {
     const { container } = render(<KpiViewBlockView block={block} />);
     expect(container.querySelector(".delpi-kpi-icon")).toBeTruthy();
   });
+
+  it("renderiza grade quando há várias kpiMetrics", () => {
+    const base = createKpiViewBlock();
+    if (base.type !== "kpi_view") throw new Error("expected kpi_view");
+    const block: ComunicadoKpiViewBlock = {
+      ...base,
+      dataSourceId: "src-1",
+      resolved: {
+        kpi: { value: 42, label: "Total de LMPs" },
+        kpiMetrics: [
+          { field: "total_lmps", value: 42, label: "Total de LMPs" },
+          { field: "avg_lead_time", value: 3.2, label: "Lead time médio" },
+        ],
+      },
+    };
+    const { container } = render(<KpiViewBlockView block={block} />);
+    expect(container.querySelector(".tdp-kpi-view--multi")).toBeTruthy();
+    expect(screen.getByText("Total de LMPs")).toBeTruthy();
+    expect(screen.getByText("Lead time médio")).toBeTruthy();
+    expect(screen.getByText("42")).toBeTruthy();
+    expect(screen.getByText("3.2")).toBeTruthy();
+  });
 });

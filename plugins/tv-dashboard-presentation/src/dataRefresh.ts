@@ -42,6 +42,7 @@ function serializeBindingForFingerprint(binding: ComunicadoDataBinding): Record<
     displayMode: binding.displayMode,
     label: binding.label,
     valueField: binding.valueField,
+    selectedValueFields: binding.selectedValueFields ?? [],
     maxRows: binding.maxRows,
     refreshSec: binding.refreshSec,
   };

@@ -163,7 +163,11 @@ export function SelectedDataSidePanel({
       ) : null}
 
       {isView ? (
-        <VisualDataViewInspector pane onOpenDataSources={() => openCatalog()} />
+        <VisualDataViewInspector
+          pane
+          route={selectedRoute}
+          onOpenDataSources={() => openCatalog()}
+        />
       ) : null}
 
       {bindingTarget && "dataBinding" in bindingTarget ? (

@@ -232,7 +232,10 @@ export type ComunicadoDataBinding = {
   params?: Record<string, string | number | boolean | null>;
   displayMode?: ComunicadoDataDisplayMode;
   label?: string;
+  /** Campo principal (legado). Preferir `selectedValueFields` para multi-métrica. */
   valueField?: string;
+  /** Campos exibidos no visual; vazio/ausente = todas as métricas disponíveis da rota. */
+  selectedValueFields?: string[];
   maxRows?: number;
   refreshSec?: number;
 };
@@ -267,6 +270,9 @@ export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
   type: "chart_view";
   chartType: ComunicadoChartType;
   dataSourceId?: string;
+  /** Override da seleção de métricas da fonte (escalares multi-campo). */
+  selectedValueFields?: string[];
+  valueField?: string;
   chartOptions?: ComunicadoChartOptions;
   /** Onda 4G — estilo/visibilidade por parte (adapter com chartOptions). */
   chartParts?: ComunicadoChartPartsMap;
@@ -280,6 +286,8 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   /** Onda 4G.8 — estilo/visibilidade por parte (adapter com tableOptions). */
   tableParts?: ComunicadoTablePartsMap;
   dataSourceId?: string;
+  selectedValueFields?: string[];
+  valueField?: string;
   /** Truncamento de exibição: máx. de linhas (vazio = todas do resolved, com scroll). */
   maxRows?: number;
   /** Truncamento de exibição: máx. de colunas (vazio = todas). */
@@ -299,6 +307,8 @@ export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
 export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
   type: "kpi_view";
   dataSourceId?: string;
+  selectedValueFields?: string[];
+  valueField?: string;
   kpiOptions?: import("./comunicadoKpiOptions").ComunicadoKpiOptions;
   /** Partes primitivas (card/title/value/hint/icon) — padrão chartParts. */
   kpiParts?: import("./comunicadoKpiParts").ComunicadoKpiPartsMap;
@@ -316,6 +326,12 @@ export type ComunicadoDataTableColumn = {
   label: string;
 };
 
+export type ComunicadoDataKpiMetric = {
+  field: string;
+  value?: unknown;
+  label: string;
+};
+
 export type ComunicadoDataResolved = {
   meta?: Record<string, unknown>;
   data?: unknown;
@@ -323,6 +339,8 @@ export type ComunicadoDataResolved = {
   displayMode?: string;
   label?: string;
   kpi?: { value?: unknown; label?: string };
+  /** Métricas escalares disponíveis (multi-campo). */
+  kpiMetrics?: ComunicadoDataKpiMetric[];
   chart?: {
     points?: Array<{ label?: unknown; value?: unknown }>;
     chartType?: "line" | "bar";

@@ -5,6 +5,7 @@ import {
 } from "./comunicadoChartView";
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
+import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
 import { TvDataSeriesChartWidget } from "./tvDataChartWidgets";
 
 type Props = {
@@ -48,7 +49,10 @@ export function ChartViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = block.resolved;
+  const resolved = applyMetricSelectionToResolved(block.resolved, {
+    selectedValueFields: block.selectedValueFields,
+    valueField: block.valueField,
+  });
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
   const chartInteraction = interactive ? interaction : null;
   const bound = Boolean(block.dataSourceId?.trim());

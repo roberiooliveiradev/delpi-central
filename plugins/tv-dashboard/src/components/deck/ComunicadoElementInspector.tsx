@@ -267,7 +267,11 @@ export function ComunicadoElementInspector({
         <DataBindingInspector route={selectedRoute} pane={pane} branchScope={branchScope} />
       ) : null}
       {!multiSelect && isViewBlock ? (
-        <VisualDataViewInspector pane={pane} onOpenDataSources={onOpenDataSources} />
+        <VisualDataViewInspector
+          pane={pane}
+          route={selectedRoute}
+          onOpenDataSources={onOpenDataSources}
+        />
       ) : null}
       {!multiSelect && selected?.type === "chart_view" ? (
         <ChartViewOptionsInspector pane={pane} />

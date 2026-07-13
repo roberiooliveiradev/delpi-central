@@ -49,12 +49,47 @@ def _build_data_cache_key(
     )
 
 
-def _value_fields_for_binding(route_info: dict[str, Any], binding: dict[str, Any]) -> list[str]:
+def _catalog_value_fields(route_info: dict[str, Any]) -> list[str]:
+    raw = route_info.get("valueFields") or []
+    return [str(field).strip() for field in raw if str(field).strip()]
+
+
+def _value_field_labels(route_info: dict[str, Any]) -> dict[str, str]:
+    raw = route_info.get("valueFieldLabels")
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(key).strip(): str(label).strip()
+        for key, label in raw.items()
+        if str(key).strip() and str(label).strip()
+    }
+
+
+def _humanize_value_field(field: str, labels: dict[str, str]) -> str:
+    if field in labels:
+        return labels[field]
+    return field.replace("_", " ").strip()
+
+
+def _binding_selected_fields(binding: dict[str, Any]) -> list[str] | None:
+    """None = todas as métricas; lista = filtro (ordem preservada)."""
+    selected = binding.get("selectedValueFields")
+    if isinstance(selected, list):
+        fields = [str(item).strip() for item in selected if str(item).strip()]
+        if fields:
+            return fields
     override = binding.get("valueField")
     if override is not None and str(override).strip():
         return [str(override).strip()]
-    raw = route_info.get("valueFields") or []
-    return [str(field).strip() for field in raw if str(field).strip()]
+    return None
+
+
+def _value_fields_for_binding(route_info: dict[str, Any], binding: dict[str, Any]) -> list[str]:
+    """Compat: lista efetiva para scalar único (seleção ou catálogo)."""
+    selected = _binding_selected_fields(binding)
+    if selected is not None:
+        return selected
+    return _catalog_value_fields(route_info)
 
 
 def _iter_scalar_candidate_keys(value_fields: list[Any]) -> list[str]:
@@ -96,6 +131,88 @@ def _first_numeric_like_field(payload: dict[str, Any]) -> Any:
         return None
     preferred.sort(key=lambda item: (item[0], item[1]))
     return preferred[0][2]
+
+
+def _discover_numeric_field_keys(payload: dict[str, Any]) -> list[str]:
+    preferred: list[tuple[int, str]] = []
+    for key, value in payload.items():
+        if value is None or isinstance(value, (dict, list, bool)):
+            continue
+        if not isinstance(key, str):
+            continue
+        key_l = key.lower()
+        rank = 3
+        if key_l.endswith("_pct") or key_l.endswith("_percentage") or key_l.endswith("pct"):
+            rank = 0
+        elif key_l in {"value", "total"}:
+            rank = 1
+        elif isinstance(value, (int, float)) and not isinstance(value, bool):
+            rank = 2
+        else:
+            continue
+        preferred.append((rank, key))
+    preferred.sort(key=lambda item: (item[0], item[1]))
+    return [key for _, key in preferred]
+
+
+def _scalar_payloads(data: Any) -> list[dict[str, Any]]:
+    if not isinstance(data, dict):
+        return []
+    payloads: list[dict[str, Any]] = []
+    summary = data.get("summary")
+    if isinstance(summary, dict):
+        payloads.append(summary)
+    payloads.append(data)
+    return payloads
+
+
+def _lookup_scalar_field(data: Any, field: str) -> Any:
+    for payload in _scalar_payloads(data):
+        if field in payload and payload[field] is not None:
+            return payload[field]
+    return None
+
+
+def _extract_kpi_metrics(
+    data: Any,
+    *,
+    route_info: dict[str, Any],
+    binding: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Extrai todas as métricas escalares disponíveis e aplica seleção do binding."""
+    labels = _value_field_labels(route_info)
+    catalog = _catalog_value_fields(route_info)
+    if catalog:
+        candidates = catalog
+    else:
+        candidates: list[str] = []
+        seen: set[str] = set()
+        for payload in _scalar_payloads(data):
+            for key in _discover_numeric_field_keys(payload):
+                if key not in seen:
+                    seen.add(key)
+                    candidates.append(key)
+
+    metrics: list[dict[str, Any]] = []
+    for field in candidates:
+        value = _lookup_scalar_field(data, field)
+        if value is None or isinstance(value, (dict, list, bool)):
+            continue
+        metrics.append(
+            {
+                "field": field,
+                "value": value,
+                "label": _humanize_value_field(field, labels),
+            }
+        )
+
+    selected = _binding_selected_fields(binding)
+    if selected is None:
+        return metrics
+    wanted = {field: index for index, field in enumerate(selected)}
+    filtered = [metric for metric in metrics if metric["field"] in wanted]
+    filtered.sort(key=lambda metric: wanted.get(str(metric["field"]), 999))
+    return filtered
 
 
 def _extract_scalar_value(data: Any, value_fields: list[Any]) -> Any:
@@ -329,25 +446,45 @@ class ComunicadoDataEnrichmentService:
             mode = _infer_auto_display_mode(data, route_info, meta)
 
         value_fields = _value_fields_for_binding(route_info, binding)
+        metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding)
         branch = merged_params.get("branch")
         branch_str = str(branch).strip() if branch else None
         max_rows = _resolve_table_max_rows(binding, route_info)
 
         if mode == "kpi":
-            scalar = _extract_scalar_value(data, value_fields)
+            primary = metrics[0] if metrics else None
+            scalar = primary["value"] if primary else _extract_scalar_value(data, value_fields)
             if scalar is None:
                 points = _extract_series(data, route_info.get("seriesField"), branch=branch_str)
                 if points:
                     scalar = points[-1].get("value")
-            return {"kpi": {"value": scalar, "label": label}}
+            kpi_label = primary["label"] if primary else label
+            return {
+                "kpi": {"value": scalar, "label": kpi_label},
+                "kpiMetrics": metrics,
+            }
 
         if mode in {"line_chart", "bar_chart"}:
             points = _extract_series(data, route_info.get("seriesField"), branch=branch_str)
             if not points:
-                scalar = _extract_scalar_value(data, value_fields)
-                points = _scalar_as_chart_points(scalar, label)
-            chart_type = "bar" if mode == "bar_chart" else "line"
-            return {"chart": {"points": points, "chartType": chart_type}}
+                if len(metrics) > 1:
+                    points = [
+                        {"label": metric["label"], "value": metric["value"]} for metric in metrics
+                    ]
+                else:
+                    scalar = (
+                        metrics[0]["value"]
+                        if metrics
+                        else _extract_scalar_value(data, value_fields)
+                    )
+                    points = _scalar_as_chart_points(scalar, label)
+            chart_type = "bar" if mode == "bar_chart" or len(metrics) > 1 else "line"
+            if mode == "line_chart" and len(metrics) <= 1:
+                chart_type = "line"
+            return {
+                "chart": {"points": points, "chartType": chart_type},
+                "kpiMetrics": metrics,
+            }
 
         rows, columns = _extract_table_rows(
             data,
@@ -359,16 +496,33 @@ class ComunicadoDataEnrichmentService:
             value_label=label,
         )
         if not rows:
-            scalar = _extract_scalar_value(data, value_fields)
-            if scalar is not None:
-                row: dict[str, Any] = {}
-                field_key = value_fields[0] if value_fields else "value"
-                row[field_key] = scalar
-                if label:
-                    row["label"] = label
-                rows = [row]
-                columns = _build_table_columns(meta, rows)
-        return {"table": {"rows": rows, "columns": columns}}
+            if metrics:
+                rows = [
+                    {
+                        "metric": metric["label"],
+                        "field": metric["field"],
+                        "value": metric["value"],
+                    }
+                    for metric in metrics
+                ]
+                columns = [
+                    {"key": "metric", "label": "Indicador"},
+                    {"key": "value", "label": "Valor"},
+                ]
+            else:
+                scalar = _extract_scalar_value(data, value_fields)
+                if scalar is not None:
+                    row: dict[str, Any] = {}
+                    field_key = value_fields[0] if value_fields else "value"
+                    row[field_key] = scalar
+                    if label:
+                        row["label"] = label
+                    rows = [row]
+                    columns = _build_table_columns(meta, rows)
+        return {
+            "table": {"rows": rows, "columns": columns},
+            "kpiMetrics": metrics,
+        }
 
     def _enrich_data_block(
         self,
