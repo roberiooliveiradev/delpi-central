@@ -98,6 +98,14 @@ export {
   type ChartElementId,
 } from "./seriesChartElementCatalog";
 export {
+  applyChartAddElementChoice,
+  applyChartAddElementChoiceWithParts,
+  chartAddElementChoiceRootId,
+  chartAddElementMoreOptionsPartRef,
+  isChartAddElementChoiceActive,
+  type ChartAddElementChoiceId,
+} from "./seriesChartAddElementChoices";
+export {
   CHART_MARKER_RADIUS,
   CHART_PART_DATA_ATTR,
   CHART_LINE_STROKE_WIDTH_SEMANTIC,

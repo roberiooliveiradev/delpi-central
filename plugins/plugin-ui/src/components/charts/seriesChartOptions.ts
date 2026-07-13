@@ -8,7 +8,7 @@ import {
 
 export type SeriesChartValueFormat = "auto" | "number" | "currency" | "percent";
 
-export type SeriesChartLegendPosition = "top" | "bottom" | "right" | "hidden";
+export type SeriesChartLegendPosition = "top" | "bottom" | "left" | "right" | "hidden";
 
 export type SeriesChartTheme = "light" | "dark";
 

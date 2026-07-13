@@ -257,6 +257,7 @@ export function SeriesChartPrimitive({
       {config.legendPosition === "top" ? legend : null}
 
       <div className={cn.body}>
+        {config.legendPosition === "left" ? legend : null}
         <div className={cn.plotHost} ref={plotHostRef}>
           <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
             {renderPlotArea(plotProps)}

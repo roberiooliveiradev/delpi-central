@@ -2634,8 +2634,121 @@
   overflow: auto;
 }
 
+.dashboard-tv-dashboard .td-chart-float__popover--cascade {
+  max-height: none;
+  overflow: visible;
+}
+
 .dashboard-tv-dashboard .td-chart-float__popover--actions .td-deck-ribbon__cascade-item {
   min-width: 200px;
+}
+
+/* Adicionar elemento — cascata PPT (raiz + flyout) */
+.dashboard-tv-dashboard .td-chart-add-element-portal,
+.dashboard-tv-dashboard .td-chart-float__portal:has(.td-chart-add-element) {
+  z-index: 10350;
+  overflow: visible;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  min-width: 220px;
+  border: 1px solid var(--td-border);
+  border-radius: var(--td-chrome-radius);
+  background: var(--td-surface);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+  color: var(--td-text);
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__root {
+  position: relative;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__root-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__root-btn:hover,
+.dashboard-tv-dashboard .td-chart-add-element__root--open > .td-chart-add-element__root-btn {
+  background: color-mix(in srgb, var(--td-accent) 12%, transparent);
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__root-btn span {
+  flex: 1;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__chevron {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__flyout {
+  position: absolute;
+  top: 0;
+  left: calc(100% - 2px);
+  z-index: 2;
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  min-width: 210px;
+  border: 1px solid var(--td-border);
+  border-radius: var(--td-chrome-radius);
+  background: var(--td-surface);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__choice,
+.dashboard-tv-dashboard .td-chart-add-element__more {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__choice:hover,
+.dashboard-tv-dashboard .td-chart-add-element__more:hover {
+  background: color-mix(in srgb, var(--td-accent) 12%, transparent);
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__choice span {
+  flex: 1;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__choice--active {
+  color: var(--td-accent);
+  font-weight: 600;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__flyout-sep {
+  height: 1px;
+  margin: 4px 8px;
+  background: var(--td-border);
+  list-style: none;
+}
+
+.dashboard-tv-dashboard .td-chart-add-element__more {
+  color: var(--td-accent);
 }
 
 /* Layout Rápido */

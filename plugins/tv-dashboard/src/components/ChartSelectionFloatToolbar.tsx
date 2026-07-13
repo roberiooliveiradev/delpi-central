@@ -2,11 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { Filter, Paintbrush, Plus } from "lucide-react";
 import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 import {
+  applyChartAddElementChoiceWithParts,
   applyChartElementVisibility,
+  chartElementPrimaryPartRef,
   isChartElementEnabled,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
   partsToChartOptions,
+  toSeriesChartKind,
+  type ChartAddElementChoiceId,
   type ChartElementId,
   type ComunicadoBlock,
   type ComunicadoChartOptions,
@@ -29,11 +33,13 @@ type FloatPanel = "elements" | "style" | "data" | null;
  * `+` e pincel reutilizam os mesmos menus da ribbon.
  */
 export function ChartSelectionFloatToolbar({ block }: Props) {
-  const { updateSelected, openDataPanel } = useComunicadoEditor();
+  const { updateSelected, openDataPanel, selectChartPart, setSelectionPanelTab } =
+    useComunicadoEditor();
   const [panel, setPanel] = useState<FloatPanel>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
 
+  const chartKind = toSeriesChartKind(block.chartType) ?? "line";
   const options = mergeComunicadoChartOptions({
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
@@ -70,6 +76,22 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
       chartOptions: result.options,
       chartParts: result.parts,
     } as Partial<ComunicadoBlock>);
+  };
+
+  const applyAddElementChoice = (choiceId: ChartAddElementChoiceId) => {
+    const result = applyChartAddElementChoiceWithParts(choiceId, options, block.chartParts);
+    updateSelected({
+      chartOptions: result.options,
+      chartParts: result.parts,
+    } as Partial<ComunicadoBlock>);
+  };
+
+  const openAddElementMoreOptions = (elementId: ChartElementId) => {
+    const part = chartElementPrimaryPartRef(elementId);
+    if (part) selectChartPart(block.id, part);
+    setSelectionPanelTab("element");
+    document.getElementById("td-chart-pane-elements")?.scrollIntoView({ block: "nearest" });
+    setPanel(null);
   };
 
   return (
@@ -131,8 +153,13 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           className="td-chart-float__portal"
           role="menu"
         >
-          <div ref={popoverRef} className="td-chart-float__popover">
-            <ChartAddElementMenu options={options} onToggle={toggleElement} />
+          <div ref={popoverRef} className="td-chart-float__popover td-chart-float__popover--cascade">
+            <ChartAddElementMenu
+              options={options}
+              chartKind={chartKind}
+              onApplyChoice={applyAddElementChoice}
+              onMoreOptions={openAddElementMoreOptions}
+            />
           </div>
         </AnchoredPanelPortal>
       ) : null}

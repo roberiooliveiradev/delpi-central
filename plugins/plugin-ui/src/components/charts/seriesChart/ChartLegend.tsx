@@ -53,7 +53,13 @@ export function ChartLegend({
   if (!visible || position === "hidden") return null;
 
   const positionClass =
-    position === "top" ? cn.legendTop : position === "right" ? cn.legendRight : cn.legendBottom;
+    position === "top"
+      ? cn.legendTop
+      : position === "right"
+        ? cn.legendRight
+        : position === "left"
+          ? cn.legendLeft
+          : cn.legendBottom;
 
   const ref = { kind: "legend" as const };
   const frame = getChartPartState(chartParts, ref)?.frame;

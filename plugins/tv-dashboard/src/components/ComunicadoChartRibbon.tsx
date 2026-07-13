@@ -12,17 +12,20 @@ import {
   type DelpiChartType,
 } from "@delpi/plugin-ui/index";
 import {
+  applyChartAddElementChoiceWithParts,
   applyChartElementVisibility,
   chartElementPrimaryPartRef,
   isChartElementEnabled,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
   partsToChartOptions,
-  type ComunicadoChartType,
-  type ComunicadoChartViewBlock,
+  toSeriesChartKind,
+  type ChartAddElementChoiceId,
   type ChartElementId,
   type ComunicadoBlock,
   type ComunicadoChartOptions,
+  type ComunicadoChartType,
+  type ComunicadoChartViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import { CHART_ADD_ELEMENT_ITEMS } from "../content/chartAddElementItems";
@@ -52,6 +55,7 @@ export function ComunicadoChartRibbon() {
     updateSelected,
     selectChartPart,
     openDataPanel,
+    setSelectionPanelTab,
   } = useComunicadoEditor();
   const addElementAnchorRef = useRef<HTMLDivElement>(null);
   const addElementPanelRef = useRef<HTMLDivElement>(null);
@@ -75,6 +79,7 @@ export function ComunicadoChartRibbon() {
   }
 
   const block = selected as ComunicadoChartViewBlock;
+  const chartKind = toSeriesChartKind(block.chartType) ?? "line";
   const options = mergeComunicadoChartOptions({
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
@@ -90,6 +95,22 @@ export function ComunicadoChartRibbon() {
       const part = chartElementPrimaryPartRef(elementId);
       if (part) selectChartPart(block.id, part);
     }
+  };
+
+  const applyAddElementChoice = (choiceId: ChartAddElementChoiceId) => {
+    const result = applyChartAddElementChoiceWithParts(choiceId, options, block.chartParts);
+    updateSelected({
+      chartOptions: result.options,
+      chartParts: result.parts,
+    } as Partial<ComunicadoBlock>);
+  };
+
+  const openAddElementMoreOptions = (elementId: ChartElementId) => {
+    const part = chartElementPrimaryPartRef(elementId);
+    if (part) selectChartPart(block.id, part);
+    setSelectionPanelTab("element");
+    document.getElementById("td-chart-pane-elements")?.scrollIntoView({ block: "nearest" });
+    setAddElementOpen(false);
   };
 
   const applyLayout = (layoutId: string) => {
@@ -144,7 +165,12 @@ export function ComunicadoChartRibbon() {
                 aria-label="Adicionar elemento de gráfico"
               >
                 <div ref={addElementPanelRef}>
-                  <ChartAddElementMenu options={options} onToggle={toggleElement} />
+                  <ChartAddElementMenu
+                    options={options}
+                    chartKind={chartKind}
+                    onApplyChoice={applyAddElementChoice}
+                    onMoreOptions={openAddElementMoreOptions}
+                  />
                 </div>
               </AnchoredPanelPortal>
             ) : null}
