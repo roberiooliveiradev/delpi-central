@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
 import {
   readStageDisplayPreferences,
-  stageViewNeedsInitialFit,
   writeStageDisplayPreferences,
   type StageDisplayPreferences,
 } from "../../utils/stageDisplayPreferences";
@@ -20,8 +19,8 @@ const STAGE_VIEW_FIT_MAX_ATTEMPTS = 60;
  * Preferências persistem em localStorage (sobrevivem ao refresh).
  * O ref do canvas de interação é ligado depois via `bindCanvasRef`.
  *
- * Sem âncora salva: bootstrap = Ajustar (fit) e grava a primeira posição.
- * Com âncora: restaura — nunca chama fit (evita apagar a vista do usuário).
+ * Sem âncora / ao montar: bootstrap = sempre Ajustar (fit).
+ * Com âncora: resize do wrap preserva o ponto sob o centro (não no load).
  */
 export function useComunicadoEditorStage() {
   const [prefs, setPrefs] = useState<StageDisplayPreferences>(() => readStageDisplayPreferences());
@@ -31,7 +30,7 @@ export function useComunicadoEditorStage() {
   const [stageViewReady, setStageViewReady] = useState(false);
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const snapEnabledRef = useRef(prefs.snapEnabled);
-  const stageGridSizePxRef = useRef(prefs.stageGridSizePx);
+  const stageGridSizePercentRef = useRef(prefs.stageGridSizePercent);
   const interactionCanvasRefSlot = useRef<RefObject<HTMLElement | null> | null>(null);
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
@@ -48,8 +47,8 @@ export function useComunicadoEditorStage() {
   }, [prefs.snapEnabled]);
 
   useEffect(() => {
-    stageGridSizePxRef.current = prefs.stageGridSizePx;
-  }, [prefs.stageGridSizePx]);
+    stageGridSizePercentRef.current = prefs.stageGridSizePercent;
+  }, [prefs.stageGridSizePercent]);
 
   useEffect(() => {
     writeStageDisplayPreferences(prefs);
@@ -205,33 +204,16 @@ export function useComunicadoEditorStage() {
   }, [markViewBootstrapped, patchPrefs]);
 
   /**
-   * No load: restaura âncora/scroll salvos; se não houver, usa Ajustar.
-   * Nunca faz fit quando já existe posição salva (senão apaga a vista do usuário).
+   * Ao abrir o editor: sempre Ajustar (fit).
+   * Restaurar scroll/zoom do localStorage deslocava o slide (canto da viewport)
+   * entre sessões / tamanhos de painel diferentes.
    */
   const bootstrapStageViewPosition = useCallback(() => {
     suppressViewPersistRef.current = true;
     viewBootstrappedRef.current = false;
     setStageViewReady(false);
-
-    const tryRestore = (attempt: number) => {
-      if (stageViewNeedsInitialFit(prefsRef.current)) {
-        fitStageToView();
-        return;
-      }
-      if (restoreStageViewPosition()) return;
-      if (attempt < STAGE_VIEW_FIT_MAX_ATTEMPTS) {
-        window.requestAnimationFrame(() => tryRestore(attempt + 1));
-        return;
-      }
-      // Ainda sem layout — libera persist e tenta restore uma última vez sem fit.
-      markViewBootstrapped();
-      window.requestAnimationFrame(() => {
-        applySavedViewToWrap();
-      });
-    };
-
-    tryRestore(0);
-  }, [applySavedViewToWrap, fitStageToView, markViewBootstrapped, restoreStageViewPosition]);
+    fitStageToView();
+  }, [fitStageToView]);
 
   return {
     stageZoom: prefs.stageZoom,
@@ -249,12 +231,13 @@ export function useComunicadoEditorStage() {
       const next = typeof value === "function" ? value(prefsRef.current.showStageGrid) : value;
       patchPrefs({ showStageGrid: next });
     },
-    stageGridSizePx: prefs.stageGridSizePx,
-    setStageGridSizePx: (value: number | ((prev: number) => number)) => {
-      const raw = typeof value === "function" ? value(prefsRef.current.stageGridSizePx) : value;
-      patchPrefs({ stageGridSizePx: raw });
+    stageGridSizePercent: prefs.stageGridSizePercent,
+    setStageGridSizePercent: (value: number | ((prev: number) => number)) => {
+      const raw =
+        typeof value === "function" ? value(prefsRef.current.stageGridSizePercent) : value;
+      patchPrefs({ stageGridSizePercent: raw });
     },
-    stageGridSizePxRef,
+    stageGridSizePercentRef,
     showStageGuides: prefs.showStageGuides,
     setShowStageGuides: (value: boolean | ((prev: boolean) => boolean)) => {
       const next = typeof value === "function" ? value(prefsRef.current.showStageGuides) : value;

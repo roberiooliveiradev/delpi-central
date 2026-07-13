@@ -1,20 +1,21 @@
 import { clampStageZoom } from "./stageViewport";
 import {
-  STAGE_GRID_SIZE_DEFAULT_PX,
-  clampStageGridSizePx,
+  STAGE_GRID_SIZE_DEFAULT_PERCENT,
+  clampStageGridSizePercent,
+  migrateStageGridSizePxToPercent,
 } from "./stageGridSize";
 
 const STORAGE_KEY = "td-stage-display-preferences";
 
-/** Design de referência para clamp persistido (Full HD). O modal reclampa no viewport real. */
-const PREFS_CLAMP_DESIGN = { width: 1920, height: 1080 };
+/** Design de referência para migração de prefs legadas em px (Full HD). */
+const PREFS_MIGRATE_DESIGN = { width: 1920, height: 1080 };
 
 export type StageDisplayPreferences = {
   stageZoom: number;
   showStageRulers: boolean;
   showStageGrid: boolean;
-  /** Tamanho da célula da grade em px de design. */
-  stageGridSizePx: number;
+  /** Tamanho da célula da grade em % do slide (divisor de 100). */
+  stageGridSizePercent: number;
   showStageGuides: boolean;
   snapEnabled: boolean;
   /**
@@ -33,7 +34,7 @@ export const DEFAULT_STAGE_DISPLAY_PREFERENCES: StageDisplayPreferences = {
   stageZoom: 1,
   showStageRulers: true,
   showStageGrid: false,
-  stageGridSizePx: STAGE_GRID_SIZE_DEFAULT_PX,
+  stageGridSizePercent: STAGE_GRID_SIZE_DEFAULT_PERCENT,
   showStageGuides: true,
   snapEnabled: true,
   stageViewAnchorX: 0,
@@ -49,6 +50,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function readFiniteNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function resolveGridSizePercent(raw: Record<string, unknown>): number {
+  const percent = readFiniteNumber(raw.stageGridSizePercent);
+  if (percent != null) return clampStageGridSizePercent(percent);
+  const legacyPx = readFiniteNumber(raw.stageGridSizePx);
+  if (legacyPx != null) return migrateStageGridSizePxToPercent(legacyPx, PREFS_MIGRATE_DESIGN);
+  return DEFAULT_STAGE_DISPLAY_PREFERENCES.stageGridSizePercent;
 }
 
 export function normalizeStageDisplayPreferences(
@@ -80,10 +89,7 @@ export function normalizeStageDisplayPreferences(
       typeof raw.showStageGrid === "boolean"
         ? raw.showStageGrid
         : DEFAULT_STAGE_DISPLAY_PREFERENCES.showStageGrid,
-    stageGridSizePx:
-      typeof raw.stageGridSizePx === "number" && Number.isFinite(raw.stageGridSizePx)
-        ? clampStageGridSizePx(raw.stageGridSizePx, PREFS_CLAMP_DESIGN)
-        : DEFAULT_STAGE_DISPLAY_PREFERENCES.stageGridSizePx,
+    stageGridSizePercent: resolveGridSizePercent(raw),
     showStageGuides:
       typeof raw.showStageGuides === "boolean"
         ? raw.showStageGuides
@@ -115,9 +121,14 @@ export function readStageDisplayPreferences(): StageDisplayPreferences {
   }
 }
 
-/** Sem âncora gravada → bootstrap deve usar Ajustar e salvar a 1ª posição. */
-export function stageViewNeedsInitialFit(prefs: Pick<StageDisplayPreferences, "stageViewAnchorSaved">): boolean {
-  return !prefs.stageViewAnchorSaved;
+/**
+ * Vista inicial do palco ao montar o editor.
+ * Sempre Ajustar — não restaurar scroll salvo (quebrava entre sessões).
+ */
+export function stageViewNeedsInitialFit(
+  _prefs?: Pick<StageDisplayPreferences, "stageViewAnchorSaved">,
+): boolean {
+  return true;
 }
 
 export function writeStageDisplayPreferences(prefs: StageDisplayPreferences): void {

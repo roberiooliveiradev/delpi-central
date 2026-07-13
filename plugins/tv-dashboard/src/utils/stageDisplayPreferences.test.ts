@@ -40,7 +40,7 @@ describe("stageDisplayPreferences", () => {
       stageZoom: 0.7,
       showStageRulers: false,
       showStageGrid: true,
-      stageGridSizePx: 50,
+      stageGridSizePercent: 10,
       showStageGuides: false,
       snapEnabled: false,
       stageViewAnchorX: 120.5,
@@ -54,7 +54,7 @@ describe("stageDisplayPreferences", () => {
       stageZoom: 0.7,
       showStageRulers: false,
       showStageGrid: true,
-      stageGridSizePx: 50,
+      stageGridSizePercent: 10,
       showStageGuides: false,
       snapEnabled: false,
       stageViewAnchorX: 120.5,
@@ -77,16 +77,19 @@ describe("stageDisplayPreferences", () => {
     ).toBe(false);
   });
 
-  it("sem âncora salva indica bootstrap com Ajustar", () => {
+  it("bootstrap da vista do palco sempre usa Ajustar", () => {
     expect(stageViewNeedsInitialFit({ stageViewAnchorSaved: false })).toBe(true);
-    expect(stageViewNeedsInitialFit({ stageViewAnchorSaved: true })).toBe(false);
+    expect(stageViewNeedsInitialFit({ stageViewAnchorSaved: true })).toBe(true);
     expect(stageViewNeedsInitialFit(DEFAULT_STAGE_DISPLAY_PREFERENCES)).toBe(true);
   });
 
-  it("limita zoom e tamanho da grade ao intervalo válido", () => {
+  it("limita zoom e encaixa grade em presets % (migra px legado)", () => {
     expect(normalizeStageDisplayPreferences({ stageZoom: 9 }).stageZoom).toBe(2);
     expect(normalizeStageDisplayPreferences({ stageZoom: 0.05 }).stageZoom).toBe(0.1);
-    expect(normalizeStageDisplayPreferences({ stageGridSizePx: 2 }).stageGridSizePx).toBe(10);
-    expect(normalizeStageDisplayPreferences({ stageGridSizePx: 9000 }).stageGridSizePx).toBe(540);
+    expect(normalizeStageDisplayPreferences({ stageGridSizePercent: 12 }).stageGridSizePercent).toBe(
+      10,
+    );
+    expect(normalizeStageDisplayPreferences({ stageGridSizePx: 96 }).stageGridSizePercent).toBe(5);
+    expect(normalizeStageDisplayPreferences({ stageGridSizePx: 2 }).stageGridSizePercent).toBe(1);
   });
 });

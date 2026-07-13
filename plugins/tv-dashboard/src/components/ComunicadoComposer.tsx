@@ -28,7 +28,7 @@ import {
   type StageScrollPoint,
 } from "../utils/stagePan";
 import { shouldRenderStageGrid } from "../utils/stageViewport";
-import { clampStageGridSizePx } from "../utils/stageGridSize";
+import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -112,7 +112,7 @@ export function ComunicadoComposerCanvas() {
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
-    stageGridSizePx,
+    stageGridSizePercent,
     updateBlock,
     viewportProfile,
     stageZoom,
@@ -130,8 +130,8 @@ export function ComunicadoComposerCanvas() {
     [viewportProfile],
   );
   const gridSizePx = useMemo(
-    () => clampStageGridSizePx(stageGridSizePx, designSize),
-    [stageGridSizePx, designSize],
+    () => stageGridSizePercentToDesignPx(stageGridSizePercent, designSize),
+    [stageGridSizePercent, designSize],
   );
   const [marquee, setMarquee] = useState<MarqueeRect | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -164,7 +164,7 @@ export function ComunicadoComposerCanvas() {
       ) {
         return;
       }
-      // Durante bootstrap não compensar — senão sobrescreve o scroll restaurado do localStorage.
+      // Durante bootstrap não compensar — o fit (Ajustar) define o scroll.
       if (stageViewReady && last && last.clientWidth > 0 && last.clientHeight > 0) {
         pendingStageScrollRef.current = stageScrollPreserveContentUnderViewportCenter({
           scrollLeft: wrap.scrollLeft,
@@ -218,8 +218,7 @@ export function ComunicadoComposerCanvas() {
     persistStageViewPosition({ immediate: true });
   }, [panGutter.x, panGutter.y, persistStageViewPosition, stageViewReady]);
 
-  // Mount: restaura localStorage; se não houver posição, Ajustar e grava a 1ª.
-  // Depois: fit só se o formato do slide mudar.
+  // Mount: sempre Ajustar (fit). Depois: fit só se o formato do slide mudar.
   const designKeyRef = useRef<string | null>(null);
   useEffect(() => {
     const key = `${viewportProfile}:${designSize.width}x${designSize.height}`;
@@ -425,7 +424,7 @@ export function ComunicadoComposerCanvas() {
               className="td-composer__stage-grid"
               aria-hidden="true"
               style={{
-                backgroundSize: `${gridSizePx}px ${gridSizePx}px`,
+                backgroundSize: `${gridSizePx.xPx}px ${gridSizePx.yPx}px`,
               }}
             />
           ) : null}

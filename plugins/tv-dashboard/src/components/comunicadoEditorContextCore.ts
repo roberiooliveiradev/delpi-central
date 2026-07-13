@@ -228,8 +228,8 @@ export type ComunicadoEditorContextValue = {
   setShowStageRulers: (show: boolean) => void;
   showStageGrid: boolean;
   setShowStageGrid: (show: boolean) => void;
-  stageGridSizePx: number;
-  setStageGridSizePx: (sizePx: number) => void;
+  stageGridSizePercent: number;
+  setStageGridSizePercent: (sizePercent: number) => void;
   showStageGuides: boolean;
   setShowStageGuides: (show: boolean) => void;
   snapEnabled: boolean;

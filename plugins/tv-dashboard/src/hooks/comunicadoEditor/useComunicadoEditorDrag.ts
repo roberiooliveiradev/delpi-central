@@ -15,7 +15,7 @@ import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHist
 import { useCanvasBlockInteraction } from "../../components/useCanvasBlockInteraction";
 import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import { snapComunicadoFrame } from "../../utils/comunicadoSnap";
-import { stageGridSizePxToPercent } from "../../utils/stageGridSize";
+import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
 
 type Options = {
@@ -26,9 +26,7 @@ type Options = {
   pushPast: (snapshot: ComunicadoConfig) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
   snapEnabledRef: MutableRefObject<boolean>;
-  stageGridSizePxRef: MutableRefObject<number>;
-  /** Largura/altura de design do palco (px). */
-  designSizeRef: MutableRefObject<{ width: number; height: number }>;
+  stageGridSizePercentRef: MutableRefObject<number>;
 };
 
 /**
@@ -42,8 +40,7 @@ export function useComunicadoEditorDrag({
   pushPast,
   deckHistory,
   snapEnabledRef,
-  stageGridSizePxRef,
-  designSizeRef,
+  stageGridSizePercentRef,
 }: Options) {
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const multiDragRef = useRef<{ startFrames: Map<string, ComunicadoBlock["frame"]> } | null>(null);
@@ -188,13 +185,9 @@ export function useComunicadoEditorDrag({
         if (index < 0) continue;
         const current = nextBlocks[index];
         const snapMode = mode === "resize" ? "resize" : "move";
-        const gridPx = stageGridSizePxRef.current;
-        const design = designSizeRef.current;
+        const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
         const snappedFrame = snapEnabledRef.current
-          ? snapComunicadoFrame(current, current.frame, snapMode, {
-              xPercent: stageGridSizePxToPercent(gridPx, design.width),
-              yPercent: stageGridSizePxToPercent(gridPx, design.height),
-            })
+          ? snapComunicadoFrame(current, current.frame, snapMode, snapPercents)
           : clampFrameForBlock(current, current.frame);
         let updated: ComunicadoBlock = { ...current, frame: snappedFrame };
         if (
@@ -237,7 +230,7 @@ export function useComunicadoEditorDrag({
       }
       applyConfig(nextConfig);
     },
-    [applyConfig, configRef, deckHistory, designSizeRef, pushPast, snapEnabledRef, stageGridSizePxRef],
+    [applyConfig, configRef, deckHistory, pushPast, snapEnabledRef, stageGridSizePercentRef],
   );
 
   const clearDragSnapshot = useCallback(() => {

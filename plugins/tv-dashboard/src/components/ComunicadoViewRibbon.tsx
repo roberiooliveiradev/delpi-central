@@ -11,15 +11,14 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { useMemo } from "react";
-import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useKeyboardShortcutsTips } from "../context/KeyboardShortcutsTipsProvider";
 import {
-  STAGE_GRID_SIZE_MIN_PX,
-  clampStageGridSizePx,
-  stageGridSizeMaxPx,
-  stageGridSizePresetsForDesign,
+  STAGE_GRID_SIZE_MAX_PERCENT,
+  STAGE_GRID_SIZE_MIN_PERCENT,
+  clampStageGridSizePercent,
+  stageGridSizePercentPresets,
 } from "../utils/stageGridSize";
 import { DECK_VIEW_ACTION_KEYTIPS } from "../utils/deckKeyTips";
 import { clampStageZoom, STAGE_ZOOM_MAX, STAGE_ZOOM_MIN } from "../utils/stageViewport";
@@ -41,23 +40,17 @@ export function ComunicadoViewRibbon() {
     setShowStageRulers,
     showStageGrid,
     setShowStageGrid,
-    stageGridSizePx,
-    setStageGridSizePx,
+    stageGridSizePercent,
+    setStageGridSizePercent,
     showStageGuides,
     setShowStageGuides,
     snapEnabled,
     setSnapEnabled,
-    viewportProfile,
   } = useComunicadoEditor();
   const { openCatalog } = useKeyboardShortcutsTips();
 
-  const design = useMemo(
-    () => resolveViewportPixelSize(viewportProfile || "1080p"),
-    [viewportProfile],
-  );
-  const gridPresets = useMemo(() => stageGridSizePresetsForDesign(design), [design]);
-  const gridSizeMax = stageGridSizeMaxPx(design);
-  const gridSizeValue = clampStageGridSizePx(stageGridSizePx, design);
+  const gridPresets = useMemo(() => stageGridSizePercentPresets(), []);
+  const gridSizeValue = clampStageGridSizePercent(stageGridSizePercent);
 
   return (
     <div className="td-deck-ribbon__groups">
@@ -121,21 +114,21 @@ export function ComunicadoViewRibbon() {
             onClick={() => setShowStageGrid(!showStageGrid)}
           />
           <div className="td-deck-ribbon__grid-size" role="group" aria-label="Tamanho da grade">
-            <span className="td-deck-ribbon__grid-size-label">Tamanho</span>
+            <span className="td-deck-ribbon__grid-size-label">Tamanho %</span>
             <HintAction hint={V.gridSize} ariaLabel="Ajuda: Tamanho da grade">
               <ComboboxNumberControl
                 className="td-deck-ribbon__grid-size-combobox"
                 compact
                 square
-                aria-label="Tamanho da célula da grade"
+                aria-label="Tamanho da célula da grade em percentual do slide"
                 value={gridSizeValue}
                 options={gridPresets}
-                min={STAGE_GRID_SIZE_MIN_PX}
-                max={gridSizeMax}
-                clamp={(raw) => clampStageGridSizePx(raw, design)}
+                min={STAGE_GRID_SIZE_MIN_PERCENT}
+                max={STAGE_GRID_SIZE_MAX_PERCENT}
+                clamp={clampStageGridSizePercent}
                 portalScopeClassName="dashboard-tv-dashboard"
                 onChange={(next) => {
-                  setStageGridSizePx(clampStageGridSizePx(next, design));
+                  setStageGridSizePercent(clampStageGridSizePercent(next));
                   if (!showStageGrid) setShowStageGrid(true);
                 }}
               />

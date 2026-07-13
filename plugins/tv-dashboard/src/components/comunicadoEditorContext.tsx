@@ -236,8 +236,7 @@ export function ComunicadoEditorProvider({
     pushPast,
     deckHistory,
     snapEnabledRef: stage.snapEnabledRef,
-    stageGridSizePxRef: stage.stageGridSizePxRef,
-    designSizeRef,
+    stageGridSizePercentRef: stage.stageGridSizePercentRef,
   });
   stage.bindCanvasRef(canvasRef);
 
@@ -500,8 +499,8 @@ export function ComunicadoEditorProvider({
     setShowStageRulers: stage.setShowStageRulers,
     showStageGrid: stage.showStageGrid,
     setShowStageGrid: stage.setShowStageGrid,
-    stageGridSizePx: stage.stageGridSizePx,
-    setStageGridSizePx: stage.setStageGridSizePx,
+    stageGridSizePercent: stage.stageGridSizePercent,
+    setStageGridSizePercent: stage.setStageGridSizePercent,
     showStageGuides: stage.showStageGuides,
     setShowStageGuides: stage.setShowStageGuides,
     snapEnabled: stage.snapEnabled,

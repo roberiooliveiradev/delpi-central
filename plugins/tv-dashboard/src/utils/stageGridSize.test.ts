@@ -1,38 +1,44 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  STAGE_GRID_SIZE_DEFAULT_PX,
-  STAGE_GRID_SIZE_MIN_PX,
-  clampStageGridSizePx,
-  stageGridSizeMaxPx,
-  stageGridSizePresetsForDesign,
-  stageGridSizePxToPercent,
+  STAGE_GRID_SIZE_DEFAULT_PERCENT,
+  STAGE_GRID_SIZE_PERCENT_PRESETS,
+  clampStageGridSizePercent,
+  migrateStageGridSizePxToPercent,
+  stageGridSizePercentToDesignPx,
+  stageGridSnapPercents,
 } from "./stageGridSize";
 
 describe("stageGridSize", () => {
   const hd = { width: 1920, height: 1080 };
 
-  it("máximo é metade do menor lado", () => {
-    expect(stageGridSizeMaxPx(hd)).toBe(540);
-    expect(stageGridSizeMaxPx({ width: 800, height: 2000 })).toBe(400);
+  it("só admite divisores de 100% como presets", () => {
+    for (const pct of STAGE_GRID_SIZE_PERCENT_PRESETS) {
+      expect(100 % pct).toBe(0);
+    }
   });
 
-  it("respeita mínimo 10px e máximo do viewport", () => {
-    expect(clampStageGridSizePx(5, hd)).toBe(STAGE_GRID_SIZE_MIN_PX);
-    expect(clampStageGridSizePx(9999, hd)).toBe(540);
-    expect(clampStageGridSizePx(50.4, hd)).toBe(50);
-    expect(clampStageGridSizePx(Number.NaN, hd)).toBe(STAGE_GRID_SIZE_DEFAULT_PX);
+  it("encaixa no preset mais próximo (sem faixa contínua 1–50)", () => {
+    expect(clampStageGridSizePercent(3)).toBe(2);
+    expect(clampStageGridSizePercent(6)).toBe(5);
+    expect(clampStageGridSizePercent(12)).toBe(10);
+    expect(clampStageGridSizePercent(30)).toBe(25);
+    expect(clampStageGridSizePercent(Number.NaN)).toBe(STAGE_GRID_SIZE_DEFAULT_PERCENT);
   });
 
-  it("presets ficam dentro do máximo e incluem o teto quando útil", () => {
-    const presets = stageGridSizePresetsForDesign(hd);
-    expect(presets[0]).toBe(10);
-    expect(presets.every((value) => value <= 540)).toBe(true);
-    expect(presets).toContain(540);
+  it("converte % → px por eixo para fechar nas bordas do slide", () => {
+    expect(stageGridSizePercentToDesignPx(5, hd)).toEqual({ xPx: 96, yPx: 54 });
+    expect(stageGridSizePercentToDesignPx(10, hd)).toEqual({ xPx: 192, yPx: 108 });
+    expect(stageGridSizePercentToDesignPx(25, hd)).toEqual({ xPx: 480, yPx: 270 });
   });
 
-  it("converte px para percentual do eixo", () => {
-    expect(stageGridSizePxToPercent(96, 1920)).toBe(5);
-    expect(stageGridSizePxToPercent(54, 1080)).toBe(5);
+  it("snap usa o mesmo percentual nos dois eixos", () => {
+    expect(stageGridSnapPercents(5)).toEqual({ xPercent: 5, yPercent: 5 });
+  });
+
+  it("migra px legado para o preset % mais próximo (base = largura)", () => {
+    expect(migrateStageGridSizePxToPercent(96, hd)).toBe(5);
+    expect(migrateStageGridSizePxToPercent(192, hd)).toBe(10);
+    expect(migrateStageGridSizePxToPercent(10, hd)).toBe(1);
   });
 });
