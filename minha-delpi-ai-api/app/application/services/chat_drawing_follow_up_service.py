@@ -101,14 +101,14 @@ class ChatDrawingFollowUpService:
             ]
         )
         queries = _playbook().get("drawingFollowUpQueries") or {}
-        critical = int(drawing.get("criticalErrors") or 0)
-        warnings = int(drawing.get("warnings") or 0)
-        errors = int(drawing.get("errors") or 0)
+        critical, warnings, errors = cls._status_counts(drawing)
 
         if critical <= 0 and "Ver só erros críticos" in labels:
             labels = [label for label in labels if label != "Ver só erros críticos"]
 
-        if critical > 0 or (warnings <= 0 and errors <= 0):
+        # Chip de revisão manual: oferece enquanto houver pendente/erro ajustável.
+        # Críticos permanecem (override não os remove); não esconder o atalho por causa deles.
+        if warnings <= 0 and errors <= 0:
             labels = [
                 label
                 for label in labels
@@ -125,7 +125,11 @@ class ChatDrawingFollowUpService:
             labels = [label for label in labels if label != "Reextrair BOM do PDF"]
         elif "Reextrair BOM do PDF" in labels:
             labels = [label for label in labels if label != "Reextrair BOM do PDF"]
-            insert_at = 1 if critical > 0 else 2
+            # Após chips de revisão manual (se houver); senão após «Ver só erros críticos».
+            insert_at = 0
+            for index, label in enumerate(labels):
+                if label in {"Confirmar revisão manual", "Descartar ressalva", "Ver só erros críticos"}:
+                    insert_at = index + 1
             labels.insert(min(insert_at, len(labels)), "Reextrair BOM do PDF")
 
         suggestions: list[dict[str, str]] = []
@@ -140,6 +144,35 @@ class ChatDrawingFollowUpService:
             suggestions.append({"label": str(label), "query": template})
 
         return suggestions
+
+    @classmethod
+    def _status_counts(cls, drawing: dict) -> tuple[int, int, int]:
+        """Contagens a partir dos itens (fonte de verdade) com fallback nos totais."""
+        items = drawing.get("items") if isinstance(drawing.get("items"), list) else []
+
+        if items:
+            critical = sum(
+                1
+                for item in items
+                if isinstance(item, dict) and str(item.get("status") or "") == "critical_error"
+            )
+            errors = sum(
+                1
+                for item in items
+                if isinstance(item, dict) and str(item.get("status") or "") == "error"
+            )
+            warnings = sum(
+                1
+                for item in items
+                if isinstance(item, dict) and str(item.get("status") or "") == "pending"
+            )
+            return critical, warnings, errors
+
+        return (
+            int(drawing.get("criticalErrors") or 0),
+            int(drawing.get("warnings") or 0),
+            int(drawing.get("errors") or 0),
+        )
 
     @classmethod
     def _should_offer_bom_reextract(cls, drawing: dict) -> bool:
