@@ -361,7 +361,9 @@ export function DelpiKpiCard({
   const valueCornerRadius = parts.value?.style?.borderRadius ?? 0;
   const hintCornerRadius = parts.hint?.style?.borderRadius ?? 0;
   const iconCornerRadius = parts.icon?.style?.borderRadius ?? KPI_ICON_DEFAULT_RADIUS_PX;
-  const cardCornerRadius = parts.card?.style?.borderRadius ?? cardRadius ?? 14;
+  const cardCornerRadius =
+    parts.card?.style?.borderRadius ?? cardRadius ?? DECK_KPI_DEFAULTS.borderRadius;
+  const cardShadow = parts.card?.style?.boxShadow ?? DECK_KPI_DEFAULTS.boxShadow;
 
   const shellStyle: CSSProperties = {
     position: "relative",
@@ -370,6 +372,8 @@ export function DelpiKpiCard({
     ["--delpi-kpi-hint-color" as string]: resolvedHintColor,
     ["--delpi-kpi-value-fg" as string]: resolvedValueColor,
     ["--delpi-kpi-card-bg" as string]: resolvedBg ?? DECK_KPI_DEFAULTS.backgroundColor,
+    ["--delpi-kpi-card-radius" as string]: `${cardCornerRadius}px`,
+    ["--delpi-kpi-card-shadow" as string]: cardShadow,
     ...(cardStroke && cardStrokeWidth != null && cardStrokeWidth > 0
       ? ({
           ["--delpi-kpi-card-border-width" as string]: `${cardStrokeWidth}px`,
@@ -380,12 +384,10 @@ export function DelpiKpiCard({
             ["--delpi-kpi-card-border-width" as string]: "0px",
             ["--delpi-kpi-card-border-color" as string]: "transparent",
           } as CSSProperties)
-        : {}),
-    ...(cardRadius != null
-      ? ({
-          ["--delpi-kpi-card-radius" as string]: `${cardRadius}px`,
-        } as CSSProperties)
-      : {}),
+        : {
+            ["--delpi-kpi-card-border-width" as string]: `${DECK_KPI_DEFAULTS.borderWidth}px`,
+            ["--delpi-kpi-card-border-color" as string]: DECK_KPI_DEFAULTS.borderColor,
+          }),
     ...(parts.card?.style?.opacity != null
       ? ({
           ["--delpi-kpi-card-opacity" as string]: String(parts.card.style.opacity),

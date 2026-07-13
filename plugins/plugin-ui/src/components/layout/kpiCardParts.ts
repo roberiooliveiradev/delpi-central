@@ -9,7 +9,9 @@ import type {
 } from "react";
 
 import type { MetricKpiCardTone } from "../layout/MetricKpiCard";
+import { AUTOMATIC_TEXT_COLOR } from "../shape/colorUtils";
 import { applyTextEffectStyleToCss } from "../shape/textEffectStyle";
+import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 
 export const KPI_PART_DATA_ATTR = "data-kpi-part";
 
@@ -36,6 +38,8 @@ export type KpiPartStyle = {
   strokeWidth?: number;
   /** Cantos arredondados (px). */
   borderRadius?: number;
+  /** Sombra do box (CSS box-shadow) — tipicamente na parte `card`. */
+  boxShadow?: string;
   /** Sombra tipográfica (CSS text-shadow). */
   textShadow?: string;
   textStrokeColor?: string;
@@ -374,6 +378,9 @@ export function resolveKpiPartLayoutStyle(
   }
   if (style?.borderRadius != null) {
     css.borderRadius = `${Math.max(0, style.borderRadius)}px`;
+  }
+  if (style?.boxShadow != null && style.boxShadow !== "") {
+    css.boxShadow = style.boxShadow;
   }
   if (style?.opacity != null) css.opacity = style.opacity;
 
@@ -730,8 +737,11 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
     card: {
       visible: true,
       style: {
-        fill: options?.backgroundColor,
-        borderRadius: 14,
+        fill: options?.backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor,
+        borderRadius: DECK_KPI_DEFAULTS.borderRadius,
+        stroke: DECK_KPI_DEFAULTS.borderColor,
+        strokeWidth: DECK_KPI_DEFAULTS.borderWidth,
+        boxShadow: DECK_KPI_DEFAULTS.boxShadow,
       },
     },
     title: {
@@ -740,12 +750,13 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
       style: {
         fontSize: KPI_PART_FONT_SIZE_DEFAULTS.title,
         fontWeight: 600,
+        color: AUTOMATIC_TEXT_COLOR,
       },
     },
     value: {
       visible: true,
       style: {
-        color: options?.valueColor,
+        color: options?.valueColor ?? AUTOMATIC_TEXT_COLOR,
         fontSize: KPI_PART_FONT_SIZE_DEFAULTS.value,
         fontWeight: 700,
       },
@@ -756,6 +767,7 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
       style: {
         fontSize: KPI_PART_FONT_SIZE_DEFAULTS.hint,
         fontWeight: 500,
+        color: AUTOMATIC_TEXT_COLOR,
       },
     },
     icon: {

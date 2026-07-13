@@ -33,6 +33,14 @@ describe("resolveDelpiKpiTone", () => {
 });
 
 describe("DelpiKpiCard chrome", () => {
+  it("aplica raio e sombra padrão via CSS vars no shell", () => {
+    const { container } = render(<DelpiKpiCard label="% no prazo" value="100" />);
+    const shell = container.querySelector(".delpi-kpi-card-shell") as HTMLElement;
+    expect(shell.style.getPropertyValue("--delpi-kpi-card-radius")).toBe("16px");
+    expect(shell.style.getPropertyValue("--delpi-kpi-card-shadow")).toContain("rgba(15, 23, 42");
+    expect(shell.style.getPropertyValue("--delpi-kpi-card-border-color")).toBe("#b4b4b4");
+  });
+
   it("aplica borda só via CSS vars no shell (sem border inline duplicado)", () => {
     const { container } = render(
       <DelpiKpiCard

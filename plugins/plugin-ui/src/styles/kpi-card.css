@@ -6,6 +6,7 @@
   min-height: 0;
   display: flex;
   box-sizing: border-box;
+  overflow: visible;
 }
 
 .delpi-kpi-card {
@@ -17,13 +18,11 @@
   width: 100%;
   min-height: 0;
   padding: 20px 22px;
-  border-radius: var(--delpi-kpi-card-radius, 14px);
+  border-radius: var(--delpi-kpi-card-radius, 16px);
   border: var(--delpi-kpi-card-border-width, 1px) solid
-    var(--delpi-kpi-card-border-color, var(--delpi-ui-border, color-mix(in srgb, #94a3b8 35%, transparent)));
+    var(--delpi-kpi-card-border-color, var(--delpi-ui-border, #b4b4b4));
   background: var(--delpi-kpi-card-bg, #ffffff);
-  box-shadow:
-    0 1px 2px color-mix(in srgb, #0f172a 4%, transparent),
-    0 10px 28px color-mix(in srgb, #0f172a 6%, transparent);
+  box-shadow: var(--delpi-kpi-card-shadow, 0 12px 28px rgba(15, 23, 42, 0.1));
   box-sizing: border-box;
   opacity: var(--delpi-kpi-card-opacity, 1);
   /* Tipografia do card — tokens de conteúdo, NÃO tema chrome do host (evita branco em fundo claro). */

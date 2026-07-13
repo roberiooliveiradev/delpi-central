@@ -91,12 +91,23 @@ export const DECK_CHART_DEFAULTS = {
   backgroundColor: DECK_COLOR_SURFACE,
 } as const;
 
-/** Defaults de KPI (mesmo visual claro do gráfico). */
+/** Defaults de KPI (mesmo visual claro do gráfico) — chrome + tipografia. */
 export const DECK_KPI_DEFAULTS = {
   backgroundColor: DECK_COLOR_SURFACE,
   valueColor: DECK_COLOR_TEXT_STRONG,
   labelColor: DECK_COLOR_MUTED,
   accent: DECK_COLOR_ACCENT,
+  /** Raio padrão do card (px). */
+  borderRadius: 16,
+  /** Contorno suave alinhado ao catálogo. */
+  borderColor: DECK_COLOR_BORDER,
+  borderWidth: 1,
+  /**
+   * Sombra padrão do card (contato + ambiente).
+   * Persistida em `kpiParts.card.style.boxShadow`.
+   */
+  boxShadow:
+    "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
 } as const;
 
 /** Defaults de tabela — células (grade) vs moldura (contorno Office). */

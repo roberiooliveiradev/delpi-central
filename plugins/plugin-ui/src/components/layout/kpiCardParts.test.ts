@@ -24,6 +24,7 @@ import {
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
 } from "./kpiCardParts";
+import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import {
   applyKpiElementVisibility,
   isKpiElementEnabled,
@@ -56,7 +57,11 @@ describe("kpiCardParts adapters", () => {
     expect(parts.hint?.content).toBe("meta");
     expect(parts.icon?.visible).toBe(true);
     expect(parts.card?.style?.fill).toBe("#fff");
+    expect(parts.card?.style?.borderRadius).toBe(DECK_KPI_DEFAULTS.borderRadius);
+    expect(parts.card?.style?.boxShadow).toBe(DECK_KPI_DEFAULTS.boxShadow);
+    expect(parts.card?.style?.stroke).toBe(DECK_KPI_DEFAULTS.borderColor);
     expect(parts.title?.style?.fontSize).toBe(14);
+    expect(parts.title?.style?.color).toBe("auto");
     expect(parts.value?.style?.fontSize).toBe(48);
     expect(parts.hint?.style?.fontSize).toBe(12);
     const back = partsToKpiOptions(parts);
