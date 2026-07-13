@@ -13,6 +13,7 @@
 @import "./styles/select-control.css";
 @import "./styles/table-column-visibility.css";
 @import "./styles/combobox-number.css";
+@import "./styles/range-field.css";
 @import "./styles/kpi-card.css";
 @import "./styles/series-chart.css";
 @import "./styles/configurable-table.css";

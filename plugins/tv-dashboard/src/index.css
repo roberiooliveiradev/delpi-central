@@ -3903,10 +3903,32 @@
 }
 
 /*
- * Slider canônico da ribbon (raio, posição, opacidade…).
- * Classe `.td-deck-ribbon__range` (+ alias `__opacity-range` para consumidores legados).
+ * RangeField (@delpi/plugin-ui) na ribbon — densidade + tokens do deck.
+ * Estilos canônicos em plugin-ui/styles/range-field.css.
  */
-.dashboard-tv-dashboard .td-deck-ribbon__range,
+.dashboard-tv-dashboard {
+  --delpi-ui-range-accent: var(--td-accent);
+  --delpi-ui-accent: var(--td-accent);
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-range-field {
+  width: 148px;
+  min-width: 148px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-range-field__label {
+  font-size: 10px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .delpi-ui-range-field__input.delpi-ui-native-control--compact {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
+}
+
+/* Legado: sliders avulsos ainda com classe td-deck-ribbon__opacity-range. */
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range {
   appearance: none;
   flex: 1 1 auto;
@@ -3923,7 +3945,6 @@
   );
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__range::-webkit-slider-thumb,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-webkit-slider-thumb {
   appearance: none;
   width: 12px;
@@ -3935,7 +3956,6 @@
   cursor: pointer;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__range::-moz-range-thumb,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-moz-range-thumb {
   width: 12px;
   height: 12px;
@@ -3945,7 +3965,6 @@
   cursor: pointer;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__range::-moz-range-track,
 .dashboard-tv-dashboard .td-deck-ribbon__opacity-range::-moz-range-track {
   height: 6px;
   border-radius: 999px;
@@ -3958,56 +3977,6 @@
   font-size: 11px;
   color: var(--td-muted);
   font-variant-numeric: tabular-nums;
-}
-
-.dashboard-tv-dashboard .td-deck-ribbon__frame-field--range {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  flex: 0 0 auto;
-  width: 148px;
-  min-width: 148px;
-  padding: 2px 0;
-}
-
-/* Label → slider → input (número sempre na base da célula). */
-.dashboard-tv-dashboard .td-deck-ribbon__range-row {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  width: 100%;
-  min-width: 0;
-}
-
-.dashboard-tv-dashboard .td-deck-ribbon__range-row .td-deck-ribbon__range,
-.dashboard-tv-dashboard .td-deck-ribbon__range-row .td-deck-ribbon__opacity-range {
-  width: 100%;
-  min-width: 0;
-  flex: 0 0 auto;
-}
-
-.dashboard-tv-dashboard .td-deck-ribbon__range-input,
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__range-input.td-deck-ribbon__number--compact {
-  flex: 0 0 auto;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-/* Vermelho só no texto do input — a escala (range) permanece no accent. */
-.dashboard-tv-dashboard input.td-deck-ribbon__range-input.td-deck-ribbon__range-input--negative {
-  color: #f87171;
-  caret-color: #f87171;
-  font-weight: 600;
-  accent-color: auto;
-}
-
-.dashboard-tv-dashboard .td-deck-ribbon__range-row:has(.td-deck-ribbon__range-input--negative) .td-deck-ribbon__range,
-.dashboard-tv-dashboard .td-deck-ribbon__range-row:has(.td-deck-ribbon__range-input--negative) .td-deck-ribbon__opacity-range {
-  accent-color: var(--td-accent);
-  color: var(--td-accent);
 }
 
 .dashboard-tv-dashboard .td-deck-inspector__range-stack {
@@ -4884,7 +4853,8 @@
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation .td-field,
-.dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation .td-deck-ribbon__frame-field {
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation .td-deck-ribbon__frame-field,
+.dashboard-tv-dashboard .td-deck-ribbon .td-deck-tabs__grid--playlist-rotation .delpi-ui-range-field {
   min-width: 118px;
   max-width: 200px;
   width: auto;

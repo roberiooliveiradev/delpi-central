@@ -21,8 +21,8 @@ export type NativeRangeControlProps = {
 };
 
 /**
- * `<input type="range">` canônico — classe `.delpi-ui-native-range` (sem visual de text field).
- * Estilos de fill/thumb ficam no consumidor (ex. ribbon do deck) via `className`.
+ * `<input type="range">` canônico — classe `.delpi-ui-native-range`.
+ * Preferir `RangeField` para rótulo + slider + input; fill/thumb canônicos em `styles/range-field.css`.
  */
 export function NativeRangeControl({
   id,

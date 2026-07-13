@@ -177,6 +177,13 @@ export {
 } from "./ComboboxNumberControl";
 
 export {
+  RANGE_FIELD_CLASS,
+  RangeField,
+  parseRangeFieldNumber,
+  type RangeFieldProps,
+} from "./RangeField";
+
+export {
   NativeTextAreaControl,
   type NativeTextAreaControlProps,
 } from "./NativeTextAreaControl";

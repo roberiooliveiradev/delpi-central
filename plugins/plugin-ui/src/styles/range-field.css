@@ -1,0 +1,111 @@
+/**
+ * RangeField — rótulo + slider + input (valor digitável abaixo).
+ * Tokens: --delpi-ui-* / --delpi-ui-range-progress.
+ */
+
+.delpi-ui-range-field {
+  --delpi-ui-range-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+  --delpi-ui-range-track: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #d0d7de)) 75%,
+    transparent
+  );
+  --delpi-ui-range-negative: #f87171;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  flex: 0 0 auto;
+  width: 148px;
+  min-width: 148px;
+  padding: 2px 0;
+  box-sizing: border-box;
+}
+
+.delpi-ui-range-field__label {
+  font-size: 10px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.delpi-ui-range-field__row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.delpi-ui-range-field__slider,
+input.delpi-ui-native-range.delpi-ui-range-field__slider {
+  appearance: none;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  height: 6px;
+  margin: 0;
+  border: none;
+  border-radius: 999px;
+  padding: 0;
+  min-height: 0;
+  background: linear-gradient(
+    to right,
+    var(--delpi-ui-range-accent) 0%,
+    var(--delpi-ui-range-accent) var(--delpi-ui-range-progress, 100%),
+    var(--delpi-ui-range-track) var(--delpi-ui-range-progress, 100%)
+  );
+  accent-color: var(--delpi-ui-range-accent);
+  cursor: pointer;
+}
+
+.delpi-ui-range-field__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--delpi-ui-range-accent);
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-range-accent) 40%, #fff);
+  box-shadow: 0 0 0 1px color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #fff)) 50%,
+    transparent
+  );
+  cursor: pointer;
+}
+
+.delpi-ui-range-field__slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--delpi-ui-range-accent);
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-range-accent) 40%, #fff);
+  cursor: pointer;
+}
+
+.delpi-ui-range-field__slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--delpi-ui-range-track);
+}
+
+.delpi-ui-range-field__input {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Vermelho só no texto do input — a escala permanece no accent. */
+input.delpi-ui-range-field__input.delpi-ui-range-field__input--negative {
+  color: var(--delpi-ui-range-negative);
+  caret-color: var(--delpi-ui-range-negative);
+  font-weight: 600;
+  accent-color: auto;
+}
+
+.delpi-ui-range-field__row:has(.delpi-ui-range-field__input--negative) .delpi-ui-range-field__slider {
+  accent-color: var(--delpi-ui-range-accent);
+  color: var(--delpi-ui-range-accent);
+}
