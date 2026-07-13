@@ -1,6 +1,7 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
+from tv_app.application.services.playlist_access_service import PlaylistAccess
 from tv_app.interface.http.routes import media_routes
 
 
@@ -21,17 +22,24 @@ def test_list_media_returns_items():
             "createdAt": "2026-07-07T12:00:00",
         }
     ]
-    media_routes._repo.get_by_id = MagicMock(return_value={"id": str(playlist_id)})
     media_routes._media_repo = repo
 
     class User:
         is_superadmin = True
+        sub = "admin-1"
 
     request = MagicMock()
     request.state = MagicMock()
     request.state.user = User()
 
-    response = media_routes.list_media(request, playlist_id)
+    with patch(
+        "tv_app.interface.http.playlist_access_http._access.resolve",
+        return_value=PlaylistAccess(
+            level="owner",
+            playlist={"id": str(playlist_id), "publicToken": "tok", "isActive": True},
+        ),
+    ):
+        response = media_routes.list_media(request, playlist_id)
     body = response.body.decode("utf-8")
     assert '"success":true' in body.replace(" ", "")
     assert str(asset_id) in body

@@ -13,16 +13,14 @@ from tv_app.application.services.data.tv_data_preview_service import TvDataPrevi
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_MANAGE, TV_READ, assert_permission
-from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 from tv_app.interface.http.auth_http import resolve_user
+from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
 
 router = APIRouter(prefix="/data", tags=["TV Dados"])
 _catalog = TvDataRouteCatalogService()
 _validation = TvDataConfigValidationService(_catalog)
 _preview = TvDataPreviewService(_catalog)
 _openapi = TvDataOpenApiCatalogService(_catalog)
-_playlists = PlaylistRepository()
-
 
 class PreviewDataBlockBody(BaseModel):
     block: dict[str, Any]
@@ -84,9 +82,11 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
             playlist_uuid = UUID(body.playlistId)
         except ValueError:
             return fail("Programação inválida.", 422)
-        playlist = _playlists.get_by_id(playlist_uuid)
-        if not playlist:
-            return fail("Programação não encontrada.", 404)
+        guarded = require_playlist_access(request, playlist_uuid, need="read")
+        if is_access_error(guarded):
+            return guarded
+        _, access = guarded
+        playlist = access.playlist or {}
         defaults = playlist.get("dataDefaults")
         playlist_defaults = defaults if isinstance(defaults, dict) else {}
 

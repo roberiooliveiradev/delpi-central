@@ -25,6 +25,7 @@ def _utcnow() -> datetime:
 
 
 def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
+    owner = row.get("owner_user_id") or row.get("created_by")
     return {
         "id": str(row["id"]),
         "publicToken": row["public_token"],
@@ -38,6 +39,7 @@ def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
         "viewCount": row["view_count"],
         "lastPresentedAt": row["last_presented_at"].isoformat() if row["last_presented_at"] else None,
         "createdBy": row["created_by"],
+        "ownerUserId": owner,
         "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
         "updatedAt": row["updated_at"].isoformat() if row["updated_at"] else None,
         "dataDefaults": row.get("data_defaults") or {},
@@ -63,20 +65,246 @@ def _row_to_slide(row: dict[str, Any]) -> dict[str, Any]:
 
 
 class PlaylistRepository:
-    def list_playlists(self, *, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
+    def list_playlists(
+        self,
+        *,
+        limit: int = 50,
+        offset: int = 0,
+        user_id: str | None = None,
+        include_all: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Lista programações do usuário (dono ou share). `include_all` só para admin."""
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                if include_all or not user_id:
+                    cur.execute(
+                        """
+                        SELECT *
+                        FROM tv_dashboard.playlists
+                        ORDER BY updated_at DESC
+                        LIMIT %s OFFSET %s
+                        """,
+                        (limit, offset),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT p.*
+                        FROM tv_dashboard.playlists p
+                        WHERE p.owner_user_id = %s
+                           OR EXISTS (
+                             SELECT 1
+                             FROM tv_dashboard.playlist_shares s
+                             WHERE s.playlist_id = p.id
+                               AND s.target_user_id = %s
+                           )
+                        ORDER BY p.updated_at DESC
+                        LIMIT %s OFFSET %s
+                        """,
+                        (user_id, user_id, limit, offset),
+                    )
+                rows = cur.fetchall()
+        return [_row_to_playlist(row) for row in rows]
+
+    def get_share_role(self, playlist_id: UUID, target_user_id: str) -> str | None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT role
+                    FROM tv_dashboard.playlist_shares
+                    WHERE playlist_id = %s AND target_user_id = %s
+                    """,
+                    (str(playlist_id), target_user_id.strip()),
+                )
+                row = cur.fetchone()
+        if not row:
+            return None
+        return str(row["role"])
+
+    def list_shares(self, playlist_id: UUID) -> list[dict[str, Any]]:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT id, playlist_id, target_user_id, role, created_by, created_at
+                    FROM tv_dashboard.playlist_shares
+                    WHERE playlist_id = %s
+                    ORDER BY created_at ASC
+                    """,
+                    (str(playlist_id),),
+                )
+                rows = cur.fetchall()
+        return [
+            {
+                "id": str(row["id"]),
+                "playlistId": str(row["playlist_id"]),
+                "targetUserId": row["target_user_id"],
+                "role": row["role"],
+                "createdBy": row["created_by"],
+                "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
+            }
+            for row in rows
+        ]
+
+    def upsert_share(
+        self,
+        playlist_id: UUID,
+        *,
+        target_user_id: str,
+        role: str,
+        created_by: str | None,
+    ) -> dict[str, Any]:
+        role_norm = role if role in {"viewer", "editor"} else "editor"
+        target = target_user_id.strip()
+        if not target:
+            raise ValueError("target_user_id obrigatório")
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO tv_dashboard.playlist_shares
+                      (playlist_id, target_user_id, role, created_by)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (playlist_id, target_user_id)
+                    DO UPDATE SET role = EXCLUDED.role
+                    RETURNING id, playlist_id, target_user_id, role, created_by, created_at
+                    """,
+                    (str(playlist_id), target, role_norm, created_by),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return {
+            "id": str(row["id"]),
+            "playlistId": str(row["playlist_id"]),
+            "targetUserId": row["target_user_id"],
+            "role": row["role"],
+            "createdBy": row["created_by"],
+            "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
+        }
+
+    def revoke_share(self, playlist_id: UUID, target_user_id: str) -> bool:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM tv_dashboard.playlist_shares
+                    WHERE playlist_id = %s AND target_user_id = %s
+                    RETURNING id
+                    """,
+                    (str(playlist_id), target_user_id.strip()),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return row is not None
+
+    def create_edit_invite(
+        self,
+        playlist_id: UUID,
+        *,
+        role: str,
+        created_by: str,
+        expires_at: datetime | None = None,
+    ) -> dict[str, Any]:
+        token = secrets.token_urlsafe(32)
+        role_norm = role if role in {"viewer", "editor"} else "editor"
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO tv_dashboard.playlist_edit_invites
+                      (playlist_id, token, role, created_by, expires_at)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, playlist_id, token, role, created_by, expires_at, created_at
+                    """,
+                    (str(playlist_id), token, role_norm, created_by, expires_at),
+                )
+                row = cur.fetchone()
+            conn.commit()
+        return {
+            "id": str(row["id"]),
+            "playlistId": str(row["playlist_id"]),
+            "token": row["token"],
+            "role": row["role"],
+            "createdBy": row["created_by"],
+            "expiresAt": row["expires_at"].isoformat() if row["expires_at"] else None,
+            "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
+        }
+
+    def get_edit_invite_by_token(self, token: str) -> dict[str, Any] | None:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
                     SELECT *
-                    FROM tv_dashboard.playlists
-                    ORDER BY updated_at DESC
-                    LIMIT %s OFFSET %s
+                    FROM tv_dashboard.playlist_edit_invites
+                    WHERE token = %s
                     """,
-                    (limit, offset),
+                    (token.strip(),),
                 )
-                rows = cur.fetchall()
-        return [_row_to_playlist(row) for row in rows]
+                row = cur.fetchone()
+        if not row:
+            return None
+        return {
+            "id": str(row["id"]),
+            "playlistId": str(row["playlist_id"]),
+            "token": row["token"],
+            "role": row["role"],
+            "createdBy": row["created_by"],
+            "expiresAt": row["expires_at"].isoformat() if row["expires_at"] else None,
+            "revokedAt": row["revoked_at"].isoformat() if row["revoked_at"] else None,
+            "redeemedAt": row["redeemed_at"].isoformat() if row["redeemed_at"] else None,
+            "redeemedBy": row["redeemed_by"],
+            "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
+        }
+
+    def redeem_edit_invite(self, token: str, *, redeemed_by: str) -> dict[str, Any] | None:
+        """Cria/atualiza share para o usuário e marca o invite como resgatado (reutilizável até revoke)."""
+        invite = self.get_edit_invite_by_token(token)
+        if not invite:
+            return None
+        if invite.get("revokedAt"):
+            return None
+        expires = invite.get("expiresAt")
+        if expires:
+            exp = datetime.fromisoformat(expires)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp < _utcnow():
+                return None
+        share = self.upsert_share(
+            UUID(invite["playlistId"]),
+            target_user_id=redeemed_by,
+            role=str(invite["role"]),
+            created_by=invite.get("createdBy"),
+        )
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE tv_dashboard.playlist_edit_invites
+                    SET redeemed_at = NOW(), redeemed_by = %s
+                    WHERE token = %s AND revoked_at IS NULL
+                    """,
+                    (redeemed_by, token.strip()),
+                )
+            conn.commit()
+        return {"share": share, "playlistId": invite["playlistId"], "role": invite["role"]}
+
+    def revoke_edit_invites(self, playlist_id: UUID) -> int:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE tv_dashboard.playlist_edit_invites
+                    SET revoked_at = NOW()
+                    WHERE playlist_id = %s AND revoked_at IS NULL
+                    """,
+                    (str(playlist_id),),
+                )
+                count = cur.rowcount
+            conn.commit()
+        return int(count or 0)
 
     def get_by_id(self, playlist_id: UUID) -> dict[str, Any] | None:
         with get_connection() as conn:
@@ -100,15 +328,17 @@ class PlaylistRepository:
 
     def create(self, *, name: str, description: str | None, created_by: str | None) -> dict[str, Any]:
         token = secrets.token_urlsafe(32)
+        owner = (created_by or "").strip() or None
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO tv_dashboard.playlists (public_token, name, description, created_by)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO tv_dashboard.playlists
+                      (public_token, name, description, created_by, owner_user_id)
+                    VALUES (%s, %s, %s, %s, %s)
                     RETURNING *
                     """,
-                    (token, name.strip(), description, created_by),
+                    (token, name.strip(), description, created_by, owner),
                 )
                 row = cur.fetchone()
             conn.commit()
@@ -233,15 +463,17 @@ class PlaylistRepository:
         slides = self.list_slides(playlist_id)
         token = secrets.token_urlsafe(32)
         copy_name = f"{source['name']}{name_suffix}".strip()
+        owner = (created_by or "").strip() or None
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """
                     INSERT INTO tv_dashboard.playlists (
                       public_token, name, description, viewport_profile, transition_style,
-                      default_duration_sec, global_refresh_sec, data_defaults, master_config, is_active, created_by
+                      default_duration_sec, global_refresh_sec, data_defaults, master_config,
+                      is_active, created_by, owner_user_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, FALSE, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, FALSE, %s, %s)
                     RETURNING *
                     """,
                     (
@@ -255,6 +487,7 @@ class PlaylistRepository:
                         json.dumps(source.get("dataDefaults") or {}),
                         json.dumps(source.get("masterConfig") or {}),
                         created_by,
+                        owner,
                     ),
                 )
                 new_row = cur.fetchone()

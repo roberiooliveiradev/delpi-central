@@ -12,30 +12,20 @@ from tv_app.application.services.media_storage_service import (
 )
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.core.responses import fail, ok
-from tv_app.core.security import TV_READ, TV_WRITE, assert_permission
 from tv_app.infrastructure.persistence.repositories.media_repository import MediaRepository
-from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
-from tv_app.interface.http.auth_http import resolve_user
+from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
 
 router = APIRouter(prefix="/playlists/{playlist_id}/media", tags=["Media"])
-_repo = PlaylistRepository()
 _media_repo = MediaRepository()
 _storage = MediaStorageService()
 
 
-def _ensure_playlist(playlist_id: UUID) -> bool:
-    return _repo.get_by_id(playlist_id) is not None
-
-
 @router.post("")
 async def upload_media(request: Request, playlist_id: UUID, file: UploadFile = File(...)):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail(message("playlistNotFound"), 404)
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     content = await file.read()
     try:
         stored_name, mime_type, media_kind = _storage.save(
@@ -62,13 +52,9 @@ async def upload_media(request: Request, playlist_id: UUID, file: UploadFile = F
 
 @router.get("")
 def list_media(request: Request, playlist_id: UUID, media_kind: str | None = None):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_READ)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail(message("playlistNotFound"), 404)
+    guarded = require_playlist_access(request, playlist_id, need="read")
+    if is_access_error(guarded):
+        return guarded
     kind = media_kind.strip() if isinstance(media_kind, str) and media_kind.strip() else None
     if kind and kind not in {"image", "video", "font"}:
         return fail(message("mediaKindInvalid", "Tipo de mídia inválido."), 422)
@@ -78,13 +64,9 @@ def list_media(request: Request, playlist_id: UUID, media_kind: str | None = Non
 
 @router.get("/{asset_id}")
 def serve_media(request: Request, playlist_id: UUID, asset_id: UUID):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_READ)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail(message("playlistNotFound"), 404)
+    guarded = require_playlist_access(request, playlist_id, need="read")
+    if is_access_error(guarded):
+        return guarded
     asset = _media_repo.get_for_playlist(playlist_id, asset_id)
     if not asset:
         return fail(message("mediaNotFound", "Mídia não encontrada."), 404)

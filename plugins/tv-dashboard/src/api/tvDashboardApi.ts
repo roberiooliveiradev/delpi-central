@@ -40,9 +40,35 @@ export type Playlist = {
   viewCount: number;
   lastPresentedAt?: string | null;
   publicUrl?: string;
+  ownerUserId?: string | null;
+  createdBy?: string | null;
+  /** owner | editor | viewer — preenchido pela API de acesso. */
+  accessRole?: "owner" | "editor" | "viewer";
   dataDefaults?: Record<string, unknown>;
   masterConfig?: PlaylistMasterConfig;
   slides?: Slide[];
+};
+
+export type PlaylistShare = {
+  id: string;
+  playlistId: string;
+  targetUserId: string;
+  role: "viewer" | "editor";
+  createdBy?: string | null;
+  createdAt?: string | null;
+  /** Enriquecimento opcional no cliente (diretório). */
+  displayName?: string;
+  email?: string;
+};
+
+export type PlaylistEditInvite = {
+  id: string;
+  playlistId: string;
+  token: string;
+  role: "viewer" | "editor";
+  redeemPath?: string;
+  expiresAt?: string | null;
+  createdAt?: string | null;
 };
 
 export type Slide = {
@@ -226,6 +252,62 @@ export async function duplicatePlaylist(id: string) {
 export async function regeneratePlaylistToken(id: string) {
   return unwrap(
     httpPost<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}/regenerate-token`, {}),
+  );
+}
+
+export async function listPlaylistShares(playlistId: string) {
+  const data = await unwrap(
+    httpGet<ApiEnvelope<{ items: PlaylistShare[] }>>(
+      `${API_BASE}/playlists/${playlistId}/shares`,
+    ),
+  );
+  return data.items;
+}
+
+export async function upsertPlaylistShare(
+  playlistId: string,
+  body: { targetUserId: string; role: "viewer" | "editor" },
+) {
+  return unwrap(
+    httpPost<ApiEnvelope<PlaylistShare>>(`${API_BASE}/playlists/${playlistId}/shares`, body),
+  );
+}
+
+export async function revokePlaylistShare(playlistId: string, targetUserId: string) {
+  return unwrap(
+    httpDelete<ApiEnvelope<null>>(
+      `${API_BASE}/playlists/${playlistId}/shares/${encodeURIComponent(targetUserId)}`,
+    ),
+  );
+}
+
+export async function createPlaylistEditInvite(
+  playlistId: string,
+  role: "viewer" | "editor" = "editor",
+) {
+  return unwrap(
+    httpPost<ApiEnvelope<PlaylistEditInvite>>(
+      `${API_BASE}/playlists/${playlistId}/edit-invites`,
+      { role },
+    ),
+  );
+}
+
+export async function revokePlaylistEditInvites(playlistId: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<{ revoked: number }>>(
+      `${API_BASE}/playlists/${playlistId}/edit-invites/revoke`,
+      {},
+    ),
+  );
+}
+
+export async function acceptPlaylistEditInvite(token: string) {
+  return unwrap(
+    httpPost<ApiEnvelope<{ playlistId: string; role: string; share: PlaylistShare }>>(
+      `${API_BASE}/playlists/edit-invites/accept`,
+      { token },
+    ),
   );
 }
 

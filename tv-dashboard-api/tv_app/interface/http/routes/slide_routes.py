@@ -20,13 +20,12 @@ from tv_app.application.services.slide_preset_service import (
 
 from tv_app.application.services.external_url_validator_service import validate_external_url
 from tv_app.core.responses import fail, ok
-from tv_app.core.security import TV_READ, TV_WRITE, assert_permission
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
     PlaylistNotFoundError,
     PlaylistRepository,
     SlideNotFoundError,
 )
-from tv_app.interface.http.auth_http import resolve_user
+from tv_app.interface.http.playlist_access_http import is_access_error, require_playlist_access
 
 router = APIRouter(prefix="/playlists/{playlist_id}/slides", tags=["Slides"])
 _repo = PlaylistRepository()
@@ -99,10 +98,6 @@ class PreviewDataBlockBody(BaseModel):
     nativeConfig: dict
 
 
-def _ensure_playlist(playlist_id: UUID) -> bool:
-    return _repo.get_by_id(playlist_id) is not None
-
-
 def _prepare_native_config(
     native_config: dict | None,
     *,
@@ -117,13 +112,10 @@ def _prepare_native_config(
 
 @router.post("")
 def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     native_config = body.nativeConfig
     try:
         if body.slideType == "native" and native_config is not None:
@@ -153,13 +145,10 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
 
 @router.post("/from-preset")
 def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPresetBody):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
         preset_payload = resolve_preset_slide(body.presetKey)
     except SlidePresetNotFoundError:
@@ -185,13 +174,10 @@ def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPres
 
 @router.post("/reorder")
 def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     slides = _repo.reorder_slides(
         playlist_id,
         [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items],
@@ -205,13 +191,10 @@ def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
 
 @router.patch("/{slide_id}")
 def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: UpdateSlideBody):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     payload = body.model_dump(exclude_unset=True)
     try:
         if payload.get("nativeConfig") is not None:
@@ -239,13 +222,10 @@ def preview_data_block(
     slide_id: UUID,
     body: PreviewDataBlockBody,
 ):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_READ)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
+    guarded = require_playlist_access(request, playlist_id, need="read")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
         _repo.get_slide(slide_id)
     except SlideNotFoundError:
@@ -273,13 +253,10 @@ def preview_data_block(
 
 @router.delete("/{slide_id}")
 def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
         _repo.delete_slide(slide_id)
     except SlideNotFoundError:
@@ -293,13 +270,10 @@ def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
 
 @router.post("/{slide_id}/duplicate")
 def duplicate_slide(request: Request, playlist_id: UUID, slide_id: UUID):
-    user = resolve_user(request)
-    try:
-        assert_permission(user, TV_WRITE)
-    except PermissionError as exc:
-        return fail(str(exc), 403)
-    if not _ensure_playlist(playlist_id):
-        return fail("Programação não encontrada.", 404)
+    guarded = require_playlist_access(request, playlist_id, need="edit")
+    if is_access_error(guarded):
+        return guarded
+    user, _ = guarded
     try:
         existing = _repo.get_slide(slide_id)
     except SlideNotFoundError:

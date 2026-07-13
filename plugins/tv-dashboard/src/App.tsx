@@ -6,7 +6,7 @@ import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
 import { PlaylistEditorPage } from "./pages/PlaylistEditorPage";
 import { PlaylistPreviewPage } from "./pages/PlaylistPreviewPage";
-import { PlaylistSharePage } from "./pages/PlaylistSharePage";
+import { AcceptPlaylistInvitePage, PlaylistSharePage } from "./pages/PlaylistSharePage";
 import { PlaylistsPage } from "./pages/PlaylistsPage";
 import {
   newPlaylistPath,
@@ -41,7 +41,14 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
 
   const pathname = useTvDashboardPath(pathnameFromHost);
   const path = normalizeTvDashboardPath(pathname);
-  const route = useMemo(() => parseTvDashboardRoute(path), [path]);
+  const route = useMemo(
+    () =>
+      parseTvDashboardRoute(
+        path,
+        typeof window !== "undefined" ? window.location.search : undefined,
+      ),
+    [path],
+  );
 
   const editorSessionPlaylistIdRef = useRef<string | null>(null);
   if (route.view === "edit") {
@@ -90,6 +97,14 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
           <PlaylistSharePage
             playlistId={route.id}
             onBack={() => navigate(playlistPath(route.id))}
+          />
+        );
+      case "accept-invite":
+        return (
+          <AcceptPlaylistInvitePage
+            playlistId={route.id}
+            token={route.token}
+            onDone={(id) => navigate(playlistPath(id))}
           />
         );
       case "edit":

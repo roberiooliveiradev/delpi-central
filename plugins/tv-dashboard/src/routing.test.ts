@@ -24,6 +24,16 @@ describe("parseTvDashboardRoute", () => {
     expect(parseTvDashboardRoute(playlistSharePath(id))).toEqual({ view: "share", id });
   });
 
+  it("parses accept-invite with token", () => {
+    const id = "abc-123";
+    const token = "invite-tok";
+    expect(parseTvDashboardRoute(`/apps/tv-dashboard/playlists/${id}/accept-invite?token=${token}`)).toEqual({
+      view: "accept-invite",
+      id,
+      token,
+    });
+  });
+
   it("supports legacy uuid path", () => {
     expect(parseTvDashboardRoute("/apps/tv-dashboard/abc-123")).toEqual({ view: "edit", id: "abc-123" });
   });
