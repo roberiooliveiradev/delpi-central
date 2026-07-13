@@ -173,3 +173,10 @@ export {
   type TableHeaderHintPresentation,
   type TableHeaderHintProps,
 } from "./TableHeaderCell";
+
+export {
+  TableColumnVisibilityMenu,
+  type TableColumnVisibilityItem,
+  type TableColumnVisibilityMenuLabels,
+  type TableColumnVisibilityMenuProps,
+} from "./TableColumnVisibilityMenu";

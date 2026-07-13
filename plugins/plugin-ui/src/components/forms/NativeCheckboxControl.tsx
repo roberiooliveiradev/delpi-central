@@ -6,6 +6,11 @@ export type NativeCheckboxControlProps = {
   onChange: (checked: boolean) => void;
   /** Rótulo principal (texto ou bloco rico — ex. título + hint). */
   label?: ReactNode;
+  /**
+   * Alias de `label` — vários plugins passavam o texto como children;
+   * sem isso o checkbox aparece sem rótulo (parece “texto invisível” no tema claro).
+   */
+  children?: ReactNode;
   /** Texto auxiliar abaixo do label (quando `label` é string simples). */
   hint?: ReactNode;
   disabled?: boolean;
@@ -22,16 +27,20 @@ export function NativeCheckboxControl({
   checked,
   onChange,
   label,
+  children,
   hint,
   disabled,
   className,
   inputClassName,
   "aria-label": ariaLabel,
 }: NativeCheckboxControlProps) {
+  const resolvedLabel = label ?? children;
   const copy =
-    label || hint ? (
+    resolvedLabel || hint ? (
       <span className="delpi-ui-native-checkbox__copy">
-        {label ? <span className="delpi-ui-native-checkbox__label">{label}</span> : null}
+        {resolvedLabel ? (
+          <span className="delpi-ui-native-checkbox__label">{resolvedLabel}</span>
+        ) : null}
         {hint ? <span className="delpi-ui-native-checkbox__hint">{hint}</span> : null}
       </span>
     ) : null;

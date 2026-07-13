@@ -6,10 +6,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- `NativeCheckboxControl`: aceita `children` como alias de `label` — corrige checkboxes sem texto visível (ex.: menu Colunas em pedidos de venda).
 - Select portado (`SelectControl` / `FilterSelectField`): painel no `body` passa a herdar escopo `.dashboard-*` (inferido do âncora ou `portalScopeClassName`), evitando lista sem CSS (bullets / caixas soltas).
 
 ### Added
 
+- `TableColumnVisibilityMenu` — menu “Colunas” / “Exibir colunas” canônico (tokens `--delpi-ui-*`, claro/escuro).
 - `FilterSelectField` em `createDashboardFiltersKit` (filtros com `<select>`).
 - `createKaizenKpiCard`, `simpleKpiKaizenBemClasses` e `simpleKpiKaizenToneClass` (`SimpleKpiCard` estilo kaizen).
 - `createAnalyticsKpiCard` / `simpleKpiAnalyticsBemClasses` (KPI `analytics-kpi` — consumidor `auditoria-5s`).

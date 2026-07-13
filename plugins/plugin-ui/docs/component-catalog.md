@@ -2,7 +2,22 @@
 
 Exports públicos de `@delpi/plugin-ui`. Import único.
 
-**Prévia visual (app):** no portal, rota `/apps/plugin-ui` (permissão `plugin-ui.view`) — mesmo remote, expose `./App`. Em desenvolvimento: `cd plugins/plugin-ui && npm run dev` (porta 5010). Ver [contributing.md](./contributing.md) § Catálogo visual.
+**Prévia visual (app):** no portal, rota `/apps/plugin-ui` (permissão `plugin-ui.view`) — expose `./App`. Em desenvolvimento: `cd plugins/plugin-ui && npm run dev` (porta 5010).
+
+O app cobre **todos** os componentes React visuais listados em `src/catalog/visualComponents.ts` (teste de cobertura em `componentRegistry.test.ts`). Demos interativas vivem em `src/catalog/demos/`; o que ainda não tem fixture completa aparece como **stub** com nota.
+
+| Família | Exemplos no catálogo |
+|---------|----------------------|
+| help | HelpTooltip, FieldLabel, TabHintCell… |
+| layout | PageHeader, KpiCard, DelpiKpiCard, ChartCard… |
+| feedback | EmptyState, ModalShell, DrawerShell… |
+| forms | SelectField, DateField, MultiSelectField… |
+| **data** | **DataTable**, **DataTableSection**, CompactPagination, ConfigurablePresentationTable… |
+| export | TabularExportButtons, DocumentExportActions… |
+| charts | ConfigurableSeriesChart, ImpactEffortMatrix, ChartTypeCatalogPanel… |
+| preview / diagram / shape / menu | prévias + stubs onde falta fixture |
+
+Tabela estilo **dashboard LMPS**: use a entrada `DataTable` / `DataTableSection` (não a ConfigurablePresentationTable do TV/deck).
 
 Exportação tabular (CSV / Excel / PDF DELPI) e botões (`TabularExportButtons`, `DocumentExportActions`, `ExcelExportButton`): ver [export-catalog.md](./export-catalog.md).
 
@@ -379,6 +394,20 @@ Tabela genérica com sort, empty/loading e seção completa (busca, page size, p
 | `buildDataTableSearchText` | Haystack para filtro local |
 
 Helpers: `dataTableBemClasses`, `dataTableSectionBemClasses`, `createDashboardDataTableKit`.
+
+### `TableColumnVisibilityMenu`
+
+Menu da toolbar de tabela para exibir/ocultar colunas (checkboxes). Tokens `--delpi-ui-*` — funciona em claro e escuro.
+
+| Prop | Descrição |
+|------|-----------|
+| `columns` | `{ key, label }[]` |
+| `visibility` | `Record<string, boolean>` |
+| `onToggleColumn` / `onReset` | Callbacks |
+| `labels` | Textos PT (`trigger`, `panelTitle`, `reset`, `hint`, `columnAriaLabel`) |
+| `keepAtLeastOne` | Impede desmarcar a última coluna (default `true`) |
+
+CSS: `styles/table-column-visibility.css`. Consumidor: `pedidos-venda-abertos` (`TableColumnSettings` fino).
 
 ### `DetailFieldGrid`
 

@@ -20,6 +20,12 @@
   --pva-font-sm: 13px;
   --pva-font-md: 14px;
   --pva-table-head-bg: color-mix(in srgb, var(--pva-text) 6%, var(--pva-surface));
+  --delpi-ui-accent: var(--pva-accent);
+  --delpi-ui-surface: var(--pva-surface);
+  --delpi-ui-text: var(--pva-text);
+  --delpi-ui-border: var(--pva-border);
+  --delpi-ui-muted: var(--pva-muted);
+  --delpi-ui-text-muted: var(--pva-muted);
 }
 
 .dashboard-pedidos-venda-abertos.dashboard-page {
@@ -602,39 +608,6 @@
   margin: 0;
   color: var(--pva-muted);
   font-size: var(--pva-font-sm);
-}
-
-.pva-table-settings {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.pva-table-settings__panel {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 8px);
-  right: 0;
-  width: min(320px, calc(100vw - 32px));
-  padding: 14px;
-  border: 1px solid var(--pva-border);
-  border-radius: var(--pva-radius);
-  background: var(--pva-surface);
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--pva-text) 12%, transparent);
-}
-
-.pva-table-settings__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.pva-table-settings__hint {
-  margin: 12px 0 0;
-  color: var(--pva-muted);
-  font-size: 12px;
-  line-height: 1.45;
 }
 
 .pva-table-wrap {

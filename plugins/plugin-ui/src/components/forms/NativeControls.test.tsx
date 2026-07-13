@@ -45,6 +45,18 @@ describe("NativeCheckboxControl", () => {
     );
     expect(container.querySelector(".delpi-ui-native-checkbox")).toBeTruthy();
   });
+
+  it("aceita children como alias de label (compat plugins legados)", () => {
+    const { container } = render(
+      <NativeCheckboxControl checked={false} onChange={() => undefined}>
+        Filial SC
+      </NativeCheckboxControl>,
+    );
+    expect(screen.getByText("Filial SC")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-native-checkbox__label")?.textContent).toBe(
+      "Filial SC",
+    );
+  });
 });
 
 describe("NativeSwitchControl", () => {

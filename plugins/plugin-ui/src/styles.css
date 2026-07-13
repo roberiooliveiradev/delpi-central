@@ -11,6 +11,7 @@
 @import "./styles/format-pane.css";
 @import "./styles/native-controls.css";
 @import "./styles/select-control.css";
+@import "./styles/table-column-visibility.css";
 @import "./styles/combobox-number.css";
 @import "./styles/kpi-card.css";
 @import "./styles/series-chart.css";

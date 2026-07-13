@@ -202,7 +202,7 @@ Checklist: [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugi
 
 | Plugin | F1 help | F2/F3 componentes | MF |
 |--------|---------|-------------------|-----|
-| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell | ✅ |
+| `pedidos-venda-abertos` | — | PageHeader, Pagination, KpiCard, MultiSelect, FilterBarShell, **TableColumnVisibilityMenu** | ✅ |
 | `inspecoes-entrada` | — | PageHeader, Pagination, KpiCard, FilterBarShell | ✅ |
 | `propostas-comerciais` | — | PageHeader, StateBox, PanelCard, InfoGrid | ✅ |
 | `strategic-indicators` | — | PageHeader, InfoState, LoadingActivityInline, ContentCard, **StatusBadge**, **SectionBlock**, **FilterSelectField** / **SiSelectControl** | ✅ |
