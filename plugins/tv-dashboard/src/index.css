@@ -3996,9 +3996,18 @@
   box-sizing: border-box;
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon__range-input--negative {
+/* Vermelho só no texto do input — a escala (range) permanece no accent. */
+.dashboard-tv-dashboard input.td-deck-ribbon__range-input.td-deck-ribbon__range-input--negative {
   color: #f87171;
+  caret-color: #f87171;
   font-weight: 600;
+  accent-color: auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__range-row:has(.td-deck-ribbon__range-input--negative) .td-deck-ribbon__range,
+.dashboard-tv-dashboard .td-deck-ribbon__range-row:has(.td-deck-ribbon__range-input--negative) .td-deck-ribbon__opacity-range {
+  accent-color: var(--td-accent);
+  color: var(--td-accent);
 }
 
 .dashboard-tv-dashboard .td-deck-inspector__range-stack {
