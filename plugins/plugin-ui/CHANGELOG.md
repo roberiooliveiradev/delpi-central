@@ -4,6 +4,10 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Select portado (`SelectControl` / `FilterSelectField`): painel no `body` passa a herdar escopo `.dashboard-*` (inferido do âncora ou `portalScopeClassName`), evitando lista sem CSS (bullets / caixas soltas).
+
 ### Added
 
 - `FilterSelectField` em `createDashboardFiltersKit` (filtros com `<select>`).

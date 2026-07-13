@@ -310,10 +310,10 @@ Shell da linha de filtros (`{prefix}-filters-row`) e campos label+controle reuti
 |--------|-----------|
 | `FiltersRow` | `<section>` com `aria-label`, variante `extended`, slot `trailing` |
 | `FilterInputField` | Label + `FieldLabel` + input (`month`/`date`/`text`/`search`) |
-| `FilterSelectField` | Label + `<select>` com `placeholderOption` opcional |
+| `FilterSelectField` | Label + `SelectControl` (painel portado; escopo `.dashboard-*` automático ou `portalScopeClassName`) |
 | `FilterBar` | Alias de `FiltersRow` (roadmap F2.6) |
 
-Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels })` — retorna `FiltersRow`, `FilterInputField` e `FilterSelectField`.
+Helpers: `filtersRowBemClasses(prefix)` e `createDashboardFiltersKit({ prefix, labels, portalScopeClassName? })` — retorna `FiltersRow`, `FilterInputField` e `FilterSelectField`.
 
 ### `SimpleKpiCard` / `createKaizenKpiCard` / `createAnalyticsKpiCard`
 

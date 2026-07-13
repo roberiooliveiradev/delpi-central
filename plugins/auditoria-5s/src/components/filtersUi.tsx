@@ -52,6 +52,7 @@ export function FilterSelectField(
     <PluginFilterSelectField
       classNames={FIELD_CLASS_NAMES}
       selectClassNames={ANALYTICS_SELECT_CLASS_NAMES}
+      portalScopeClassName="dashboard-auditoria-5s"
       {...props}
     />
   );
@@ -68,6 +69,7 @@ export function ListFilterSelectField(
     <PluginFilterSelectField
       classNames={LIST_FIELD_CLASS_NAMES}
       selectClassNames={ANALYTICS_SELECT_CLASS_NAMES}
+      portalScopeClassName="dashboard-auditoria-5s"
       {...props}
     />
   );

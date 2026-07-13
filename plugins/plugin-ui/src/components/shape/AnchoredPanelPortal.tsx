@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { type ReactNode, type RefObject } from "react";
 
+import { resolveMfePortalScopeClassName } from "./delpiUiPortalTheme";
 import { useAnchoredPanelPosition } from "./useAnchoredPanelPosition";
 import { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 
@@ -18,6 +19,7 @@ export type AnchoredPanelPortalProps = {
   /**
    * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`).
    * Sem escopo, CSS do plugin sob `.dashboard-*` não aplica no body.
+   * Se omitido, infere o ancestral `.dashboard-*` do âncora.
    */
   portalScopeClassName?: string;
   children: ReactNode;
@@ -50,7 +52,12 @@ export function AnchoredPanelPortal({
           .filter(Boolean)
           .join(" ");
 
-  const scopeClass = [portalScopeClassName, theme.hostClassName].filter(Boolean).join(" ");
+  const scopeClass = [
+    resolveMfePortalScopeClassName(anchorRef.current, portalScopeClassName),
+    theme.hostClassName,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const panel = (
     <div

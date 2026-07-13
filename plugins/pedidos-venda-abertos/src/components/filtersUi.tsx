@@ -26,6 +26,7 @@ const {
   FilterSelectField: KitFilterSelectField,
 } = createDashboardFiltersKit({
   prefix: "pva",
+  portalScopeClassName: "dashboard-pedidos-venda-abertos",
   labels: { filtersAriaLabel: "Filtros" },
 });
 

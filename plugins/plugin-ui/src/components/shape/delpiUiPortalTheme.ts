@@ -108,3 +108,29 @@ export function resolveDelpiUiPortalTheme(anchor?: HTMLElement | null): DelpiUiP
 }
 
 export const DELPI_UI_SHAPE_THEME_HOST_CLASS = "delpi-ui-shape-theme-host";
+
+/** Classe root de MFE federado (`dashboard-{nome}`) — escopo CSS anti-vazamento. */
+const MFE_DASHBOARD_SCOPE_RE = /^dashboard-[a-z0-9-]+$/i;
+
+/**
+ * Resolve a classe de escopo do plugin para portais no `body`.
+ * Preferência: prop explícita; senão ancestral `.dashboard-*` do âncora.
+ * Sem escopo, seletores `.dashboard-* .{prefix}-select__*` não aplicam no painel portado.
+ */
+export function resolveMfePortalScopeClassName(
+  anchor?: HTMLElement | null,
+  explicit?: string,
+): string | undefined {
+  const trimmed = explicit?.trim();
+  if (trimmed) return trimmed;
+  if (!anchor) return undefined;
+
+  let node: HTMLElement | null = anchor;
+  while (node) {
+    for (const className of Array.from(node.classList)) {
+      if (MFE_DASHBOARD_SCOPE_RE.test(className)) return className;
+    }
+    node = node.parentElement;
+  }
+  return undefined;
+}

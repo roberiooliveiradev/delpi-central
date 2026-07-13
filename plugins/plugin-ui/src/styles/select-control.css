@@ -112,7 +112,8 @@
 }
 
 /* Portal no body: posição vem do AnchoredPanelPortal (fixed); evita stretch por `right: 0`. */
-.delpi-ui-select__panel--portal {
+.delpi-ui-select__panel--portal,
+[class*="-select__panel--portal"] {
   right: auto;
   top: auto;
   left: auto;

@@ -1617,8 +1617,9 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   justify-content: space-between;
   gap: 8px;
   width: 100%;
+  box-sizing: border-box;
   min-height: var(--dq-control-height, 42px);
-  padding: 0 12px;
+  padding: 8px 12px;
   border-radius: var(--dq-control-radius, 10px);
   border: 1px solid var(--dq-card-border, var(--border, #e2e8f0));
   background: var(--surface, #fff);
@@ -1652,10 +1653,23 @@ html.dq-printing .dashboard-quality .recharts-responsive-container {
   display: grid;
   gap: 6px;
   padding: 8px;
+  box-sizing: border-box;
   border-radius: 10px;
   border: 1px solid var(--dq-card-border, var(--border, #e2e8f0));
   background: var(--dq-card-bg, var(--surface, #fff));
+  color: var(--dq-text, inherit);
   box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+}
+
+.dashboard-quality .dq-select__panel--portal {
+  right: auto;
+  top: auto;
+  left: auto;
+}
+
+.dashboard-quality .dq-select__list li {
+  margin: 0;
+  list-style: none;
 }
 
 .dashboard-quality .dq-select__list {

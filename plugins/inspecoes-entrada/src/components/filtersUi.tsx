@@ -49,6 +49,7 @@ export function FilterSelectField({
     <PluginFilterSelectField
       classNames={wide ? WIDE_FIELD_CLASS_NAMES : FIELD_CLASS_NAMES}
       selectClassNames={SELECT_CLASS_NAMES}
+      portalScopeClassName="dashboard-inspecoes-entrada"
       {...props}
     />
   );

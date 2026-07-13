@@ -33,6 +33,7 @@ export function useAnchoredPanelPosition(
     position: "fixed",
     top: -9999,
     left: -9999,
+    right: "auto",
     zIndex: PANEL_Z_INDEX,
     visibility: "hidden",
   });
@@ -43,6 +44,7 @@ export function useAnchoredPanelPosition(
         position: "fixed",
         top: -9999,
         left: -9999,
+        right: "auto",
         zIndex: PANEL_Z_INDEX,
         visibility: "hidden",
       });
@@ -75,6 +77,7 @@ export function useAnchoredPanelPosition(
         position: "fixed",
         top,
         left,
+        right: "auto",
         zIndex: PANEL_Z_INDEX,
         visibility: "visible",
         ...(matchAnchorWidth ? { minWidth: rect.width } : null),

@@ -70,6 +70,8 @@ export type FilterSelectFieldProps = {
   /** Classes BEM do SelectControl (`{prefix}-select*`). */
   selectClassNames: SelectControlClassNames;
   selectLabels?: SelectControlLabels;
+  /** Escopo CSS do MFE no portal do painel (ex.: `dashboard-quality`). */
+  portalScopeClassName?: string;
 };
 
 export type DashboardFiltersLabels = {
@@ -172,6 +174,7 @@ export function FilterSelectField({
   classNames,
   selectClassNames,
   selectLabels = DEFAULT_FILTER_SELECT_LABELS,
+  portalScopeClassName,
 }: FilterSelectFieldProps) {
   const generatedId = useId();
   const fieldId = id ?? generatedId;
@@ -193,6 +196,7 @@ export function FilterSelectField({
         ariaLabel={label}
         classNames={selectClassNames}
         labels={selectLabels}
+        portalScopeClassName={portalScopeClassName}
       />
     </div>
   );
@@ -201,6 +205,8 @@ export function FilterSelectField({
 export function createDashboardFiltersKit(config: {
   prefix: string;
   labels: DashboardFiltersLabels;
+  /** Escopo CSS do MFE (ex.: `dashboard-quality`) para painéis SelectControl no body. */
+  portalScopeClassName?: string;
 }): DashboardFiltersKit {
   const classNames = filtersRowBemClasses(config.prefix);
   const selectClassNames = selectControlBemClasses(config.prefix);
@@ -223,6 +229,7 @@ export function createDashboardFiltersKit(config: {
         <FilterSelectField
           classNames={classNames}
           selectClassNames={selectClassNames}
+          portalScopeClassName={config.portalScopeClassName}
           {...props}
         />
       );

@@ -97,4 +97,29 @@ describe("FilterSelectField", () => {
     fireEvent.click(screen.getByRole("button", { name: "Opção B" }));
     expect(onChange).toHaveBeenCalledWith("b");
   });
+
+  it("envolve o painel portado com escopo do dashboard (CSS do plugin)", () => {
+    render(
+      <div className="dashboard-quality">
+        <FilterSelectField
+          classNames={classNames}
+          selectClassNames={selectControlBemClasses("dq")}
+          id="dq-ppm"
+          label="Produto (PPM)"
+          value="all"
+          onChange={() => undefined}
+          options={[
+            { value: "all", label: "Todos os produtos" },
+            { value: "plugs", label: "Plugues (9048*)" },
+          ]}
+        />
+      </div>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Produto (PPM)" }));
+    const scope = document.body.querySelector(".dashboard-quality.delpi-ui-shape-theme-host");
+    expect(scope).toBeTruthy();
+    expect(scope?.querySelector(".dq-select__panel--portal")).toBeTruthy();
+    expect(scope?.querySelector(".dq-select__list")).toBeTruthy();
+  });
 });
