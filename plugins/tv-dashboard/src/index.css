@@ -5304,15 +5304,15 @@
   overflow: visible;
 }
 
-/* Fit (Elemento/Dados): respeita o teto 120px — evita onboarding/inspector vazarem no palco. */
+/* Fit (Elemento/Dados): grupos quebram linha — sem barra de rolagem horizontal. */
 .dashboard-tv-dashboard .td-deck-chrome__ribbon:has(.td-deck-ribbon--fit) {
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__ribbon .td-deck-ribbon--fit {
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__panel {
