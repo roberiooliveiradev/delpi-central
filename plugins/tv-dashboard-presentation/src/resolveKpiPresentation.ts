@@ -44,9 +44,10 @@ export function resolveKpiViewPresentation(
     tone: toneResult.tone,
     valueColor: toneResult.valueColor ?? options.valueColor,
     backgroundColor: toneResult.backgroundColor ?? options.backgroundColor,
-    iconName: options.iconName?.trim() || undefined,
-    // Opt-in: só exibe ícone quando `showIcon` é explicitamente true.
-    showIcon: options.showIcon === true,
+    iconName:
+      options.iconName?.trim() ||
+      (options.showIcon !== false ? "Gauge" : undefined),
+    showIcon: options.showIcon !== false,
   };
 }
 

@@ -76,7 +76,7 @@ export type SeriesChartKind =
 export const SERIES_CHART_CATEGORY_PALETTE = DECK_CATEGORY_PALETTE;
 
 /** Padding padrão de categoria (~3% de cada lado do plot). */
-export const DEFAULT_CATEGORY_PADDING_PERCENT = 3;
+export const DEFAULT_CATEGORY_PADDING_PERCENT = 6;
 
 export const DEFAULT_SERIES_CHART_OPTIONS: SeriesChartOptions = {
   showTitle: true,

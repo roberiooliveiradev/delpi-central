@@ -168,6 +168,7 @@ export function SeriesChartPrimitive({
     background: chartArea.fill,
     border: `${Math.max(0, chartArea.strokeWidth)}px solid ${chartArea.stroke}`,
     borderRadius: chartArea.borderRadius,
+    boxShadow: chartArea.boxShadow,
     boxSizing: "border-box",
     // Clip ao radius; com seleção do fundo libera overflow p/ handles.
     overflow: chartAreaSelected ? "visible" : "hidden",

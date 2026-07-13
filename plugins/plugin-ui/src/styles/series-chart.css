@@ -5,14 +5,18 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.45rem;
   box-sizing: border-box;
-  /* radius via estilo inline (chartArea); clip padrão — abre com parte selecionada p/ handles. */
-  border-radius: 0;
+  /* radius/shadow via estilo inline (chartArea); clip padrão — abre com parte selecionada p/ handles. */
+  border-radius: var(--delpi-ui-series-chart-radius, 16px);
   overflow: hidden;
-  padding: 0.35rem 0.45rem;
+  padding: 0.55rem 0.65rem;
   background: var(--delpi-ui-series-chart-bg, #ffffff);
   color: var(--delpi-ui-series-chart-text, #1e293b);
+  box-shadow: var(
+    --tdp-block-box-shadow,
+    var(--delpi-ui-series-chart-shadow, none)
+  );
 }
 
 .delpi-ui-series-chart:has(.delpi-ui-series-chart__part--selected),

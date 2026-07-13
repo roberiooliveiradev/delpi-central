@@ -81,7 +81,7 @@ export const DECK_SHAPE_DEFAULTS = {
   lineStroke: DECK_COLOR_ACCENT,
 } as const;
 
-/** Defaults de gráfico (série + área). */
+/** Defaults de gráfico (série + área) — chrome alinhado ao KPI. */
 export const DECK_CHART_DEFAULTS = {
   seriesColor: DECK_COLOR_ACCENT,
   areaFill: DECK_COLOR_SURFACE,
@@ -89,6 +89,12 @@ export const DECK_CHART_DEFAULTS = {
   plotFill: DECK_COLOR_SURFACE,
   plotStroke: DECK_COLOR_BORDER,
   backgroundColor: DECK_COLOR_SURFACE,
+  /** Raio padrão da área do gráfico (px) — paridade com KPI. */
+  borderRadius: 16,
+  borderColor: DECK_COLOR_BORDER,
+  borderWidth: 1,
+  boxShadow:
+    "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
 } as const;
 
 /** Defaults de KPI (mesmo visual claro do gráfico) — chrome + tipografia. */
@@ -97,6 +103,8 @@ export const DECK_KPI_DEFAULTS = {
   valueColor: DECK_COLOR_TEXT_STRONG,
   labelColor: DECK_COLOR_MUTED,
   accent: DECK_COLOR_ACCENT,
+  /** Ícone Lucide padrão do card. */
+  iconName: "Gauge",
   /** Raio padrão do card (px). */
   borderRadius: 16,
   /** Contorno suave alinhado ao catálogo. */

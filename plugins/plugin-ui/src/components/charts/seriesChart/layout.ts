@@ -10,8 +10,8 @@ import type { ChartPartFrame } from "../seriesChartParts";
 export const SERIES_CHART_VIEW_W = 400;
 export const SERIES_CHART_VIEW_H = 220;
 
-/** Inset interno do plot — marcadores/linha não colam nem cortam na borda. */
-export const SERIES_CHART_PLOT_INSET = 8;
+/** Inset interno do plot — folga para stroke/marcadores não colarem nem furarem o clip. */
+export const SERIES_CHART_PLOT_INSET = 14;
 
 export type SeriesChartMargin = {
   top: number;
@@ -99,9 +99,9 @@ export function marginsFromPlotFrame(
 }
 
 const BASE_MARGIN: SeriesChartMargin = {
-  top: 16,
-  right: 18,
-  bottom: 28,
+  top: 22,
+  right: 20,
+  bottom: 30,
   left: 52,
 };
 
@@ -257,8 +257,10 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
 
   const toX = (index: number, count: number) =>
     margin.left + plotInset + (count > 1 ? (index / (count - 1)) * innerW : innerW / 2);
-  const toY = (value: number) =>
-    margin.top + plotInset + (1 - (value - axisMin) / axisRange) * innerH;
+  const toY = (value: number) => {
+    const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
+    return margin.top + plotInset + (1 - t) * innerH;
+  };
 
   return {
     viewW,

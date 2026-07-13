@@ -19,6 +19,7 @@ import {
   OFFICE_CHART_SERIES_COLOR,
   type SeriesChartKind,
 } from "./seriesChartOptions";
+import { DECK_CHART_DEFAULTS } from "../../theme/deckColorCatalog";
 
 /** Atributo DOM para hit-test no editor (sem HTML livre). */
 export const CHART_PART_DATA_ATTR = "data-chart-part";
@@ -114,8 +115,10 @@ export type ChartPartStyle = {
   verticalAlign?: "top" | "middle" | "bottom";
   /** Raio do marcador (primitivo point). */
   markerRadius?: number;
-  /** Cantos (Format Shape) — padrão Office do gráfico = 0. */
+  /** Cantos (Format Shape) — padrão visual Delpi = DECK_CHART_DEFAULTS.borderRadius. */
   borderRadius?: number;
+  /** Sombra do box (CSS box-shadow) — tipicamente na parte `chartArea`. */
+  boxShadow?: string;
   /** Sombra tipográfica (título/legenda). */
   textShadow?: string;
   textStrokeColor?: string;
@@ -467,18 +470,19 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   parts[serializeChartPartRef({ kind: "chartArea" })] = {
     visible: true,
     style: {
-      fill: config.backgroundColor ?? OFFICE_CHART_AREA_FILL,
-      stroke: OFFICE_CHART_AREA_STROKE,
-      strokeWidth: 1,
-      borderRadius: 0,
+      fill: config.backgroundColor ?? DECK_CHART_DEFAULTS.areaFill,
+      stroke: DECK_CHART_DEFAULTS.areaStroke,
+      strokeWidth: DECK_CHART_DEFAULTS.borderWidth,
+      borderRadius: DECK_CHART_DEFAULTS.borderRadius,
+      boxShadow: DECK_CHART_DEFAULTS.boxShadow,
     },
   };
 
   parts[serializeChartPartRef({ kind: "plotArea" })] = {
     visible: true,
     style: {
-      fill: OFFICE_CHART_PLOT_FILL,
-      stroke: OFFICE_CHART_PLOT_STROKE,
+      fill: DECK_CHART_DEFAULTS.plotFill,
+      stroke: DECK_CHART_DEFAULTS.plotStroke,
       // Contorno do plot desligado por default — eixos já delimitam (evita moldura dupla).
       strokeWidth: 0,
       borderRadius: 0,
@@ -901,17 +905,31 @@ export function nudgeChartPartFrame(
   return upsertChartPartState(parts, ref, { frame: next });
 }
 
-/** Format Chart Area (Excel) — preenchimento + contorno + cantos. */
+/** Format Chart Area (Excel) — preenchimento + contorno + cantos + sombra. */
 export function resolveChartAreaStyle(
   options: SeriesChartOptions,
   parts?: ChartPartsMap | null,
-): { fill: string; stroke: string; strokeWidth: number; borderRadius: number } {
+): {
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  borderRadius: number;
+  boxShadow: string;
+} {
   const area = getChartPartState(parts, { kind: "chartArea" });
+  const legacyOfficeChrome =
+    (area?.style?.borderRadius == null || area.style.borderRadius === 0) &&
+    !area?.style?.boxShadow?.trim();
   return {
-    fill: area?.style?.fill ?? options.backgroundColor ?? OFFICE_CHART_AREA_FILL,
-    stroke: area?.style?.stroke ?? OFFICE_CHART_AREA_STROKE,
-    strokeWidth: area?.style?.strokeWidth ?? 1,
-    borderRadius: area?.style?.borderRadius ?? 0,
+    fill: area?.style?.fill ?? options.backgroundColor ?? DECK_CHART_DEFAULTS.areaFill,
+    stroke: area?.style?.stroke ?? DECK_CHART_DEFAULTS.areaStroke,
+    strokeWidth: area?.style?.strokeWidth ?? DECK_CHART_DEFAULTS.borderWidth,
+    borderRadius: legacyOfficeChrome
+      ? DECK_CHART_DEFAULTS.borderRadius
+      : (area?.style?.borderRadius ?? DECK_CHART_DEFAULTS.borderRadius),
+    boxShadow: legacyOfficeChrome
+      ? DECK_CHART_DEFAULTS.boxShadow
+      : (area?.style?.boxShadow ?? DECK_CHART_DEFAULTS.boxShadow),
   };
 }
 

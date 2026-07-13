@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { DECK_CHART_DEFAULTS } from "../../theme/deckColorCatalog";
 import { DEFAULT_SERIES_CHART_OPTIONS, mergeSeriesChartOptions } from "./seriesChartOptions";
 import {
   applyMarkerStyleToAll,
@@ -132,14 +133,16 @@ describe("seriesChartParts", () => {
     expect(nudged.title?.frame).toEqual({ x: 15, y: 7, w: undefined, h: undefined });
   });
 
-  it("defaults Office: série azul da forma e chartArea com cantos 0", () => {
+  it("defaults Delpi: série accent e chartArea com raio/sombra", () => {
     const parts = chartOptionsToParts(mergeSeriesChartOptions({}));
     expect(parts.chartArea?.style?.fill).toBe("#ffffff");
-    expect(parts.chartArea?.style?.borderRadius).toBe(0);
+    expect(parts.chartArea?.style?.borderRadius).toBe(DECK_CHART_DEFAULTS.borderRadius);
+    expect(parts.chartArea?.style?.boxShadow).toBe(DECK_CHART_DEFAULTS.boxShadow);
     expect(parts.plotArea?.style?.stroke).toBeTruthy();
     const options = mergeSeriesChartOptions({});
     expect(options.seriesColor).toBe("#089bdb");
-    expect(resolveChartAreaStyle(options, parts).borderRadius).toBe(0);
+    expect(resolveChartAreaStyle(options, parts).borderRadius).toBe(DECK_CHART_DEFAULTS.borderRadius);
+    expect(resolveChartAreaStyle(options, parts).boxShadow).toBe(DECK_CHART_DEFAULTS.boxShadow);
   });
 
   it("mergeChartPartsWithOptions preserva borda custom da chartArea", () => {

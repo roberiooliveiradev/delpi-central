@@ -34,11 +34,19 @@ describe("deckColorCatalog", () => {
     expect(DECK_TABLE_DEFAULTS.cellBg).toBe(DECK_THEME_LIGHT.bg);
   });
 
-  it("define chrome visual padrão do KPI (raio, borda, sombra)", () => {
+  it("define chrome visual padrão do gráfico (raio, borda, sombra)", () => {
+    expect(DECK_CHART_DEFAULTS.borderRadius).toBe(16);
+    expect(DECK_CHART_DEFAULTS.borderColor).toBe("#b4b4b4");
+    expect(DECK_CHART_DEFAULTS.borderWidth).toBe(1);
+    expect(DECK_CHART_DEFAULTS.boxShadow).toContain("rgba(15, 23, 42");
+  });
+
+  it("define chrome visual padrão do KPI (raio, borda, sombra, ícone)", () => {
     expect(DECK_KPI_DEFAULTS.borderRadius).toBe(16);
     expect(DECK_KPI_DEFAULTS.borderColor).toBe("#b4b4b4");
     expect(DECK_KPI_DEFAULTS.borderWidth).toBe(1);
     expect(DECK_KPI_DEFAULTS.boxShadow).toContain("rgba(15, 23, 42");
+    expect(DECK_KPI_DEFAULTS.iconName).toBe("Gauge");
   });
 
   it("expõe CSS vars para herança no bloco de dados", () => {

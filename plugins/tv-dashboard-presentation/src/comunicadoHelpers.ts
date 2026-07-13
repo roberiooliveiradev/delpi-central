@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import {
+  DECK_CHART_DEFAULTS,
   DECK_COLOR_ACCENT,
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
@@ -194,7 +195,12 @@ export function createChartViewBlock(chartType: ComunicadoChartType): Comunicado
     chartOptions,
     chartParts: chartOptionsToParts(chartOptions),
     frame: { x: 10, y: 28, w: 80, h: 45 },
-    style: { zIndex: 2, borderRadius: 0, color: DECK_COLOR_TEXT_STRONG },
+    style: {
+      zIndex: 2,
+      borderRadius: 0,
+      color: DECK_COLOR_TEXT_STRONG,
+      boxShadow: DECK_CHART_DEFAULTS.boxShadow,
+    },
   };
 }
 
@@ -273,13 +279,8 @@ export function createCanvasTableBlock(rows = 3, cols = 3): ComunicadoCanvasTabl
 export function createKpiViewBlock(options?: Partial<ComunicadoKpiOptions>): ComunicadoBlock {
   const kpiOptions = mergeComunicadoKpiOptions({
     ...DEFAULT_COMUNICADO_KPI_OPTIONS,
-    // Ícone só quando o caller pede explicitamente (evita «forma» Gauge fantasma na TV).
-    ...(options?.iconName || options?.showIcon
-      ? {
-          iconName: options.iconName ?? "Gauge",
-          showIcon: options.showIcon ?? true,
-        }
-      : { showIcon: false }),
+    iconName: options?.iconName ?? DEFAULT_COMUNICADO_KPI_OPTIONS.iconName,
+    showIcon: options?.showIcon ?? true,
     ...options,
   });
   return {

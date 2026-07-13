@@ -45,11 +45,12 @@ describe("kpi_view", () => {
     }
   });
 
-  it("não liga ícone por padrão ao criar kpi_view", () => {
+  it("liga ícone Gauge por padrão ao criar kpi_view", () => {
     const block = createKpiViewBlock({ title: "Consumo" });
     if (block.type !== "kpi_view") throw new Error("kpi");
-    expect(block.kpiOptions?.showIcon).toBe(false);
-    expect(block.kpiParts?.icon?.visible).toBe(false);
+    expect(block.kpiOptions?.showIcon).toBe(true);
+    expect(block.kpiOptions?.iconName).toBe("Gauge");
+    expect(block.kpiParts?.icon?.visible).not.toBe(false);
   });
 
   it("resolve apresentação com regras de cor", () => {

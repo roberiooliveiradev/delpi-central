@@ -14,10 +14,10 @@ function kpiWithResolved(block: ReturnType<typeof createKpiViewBlock>): Comunica
 }
 
 describe("KpiViewBlockView icon visibility", () => {
-  it("não renderiza ícone Gauge por padrão (opt-in)", () => {
+  it("renderiza ícone Gauge por padrão no padrão visual do KPI", () => {
     const block = kpiWithResolved(createKpiViewBlock({ title: "Consumo" }));
     const { container } = render(<KpiViewBlockView block={block} />);
-    expect(container.querySelector(".delpi-kpi-icon")).toBeNull();
+    expect(container.querySelector(".delpi-kpi-icon")).toBeTruthy();
     expect(screen.getByText("10")).toBeTruthy();
   });
 
@@ -33,6 +33,14 @@ describe("KpiViewBlockView icon visibility", () => {
         icon: { visible: false, style: { fill: "#ffffff" } },
       },
     };
+    const { container } = render(<KpiViewBlockView block={block} />);
+    expect(container.querySelector(".delpi-kpi-icon")).toBeNull();
+  });
+
+  it("não renderiza ícone quando showIcon=false", () => {
+    const block = kpiWithResolved(
+      createKpiViewBlock({ title: "Consumo", showIcon: false }),
+    );
     const { container } = render(<KpiViewBlockView block={block} />);
     expect(container.querySelector(".delpi-kpi-icon")).toBeNull();
   });

@@ -196,7 +196,7 @@ describe("golden layout fixture OTD", () => {
     );
     expect(snapshot.firstAnchor).toBe("start");
     expect(snapshot.lastAnchor).toBe("end");
-    expect(snapshot.plotInset).toBeGreaterThanOrEqual(8);
+    expect(snapshot.plotInset).toBeGreaterThanOrEqual(14);
     expect(snapshot.margin.right).toBeGreaterThanOrEqual(18);
     expect(snapshot.xLast - snapshot.x0).toBeGreaterThan(snapshot.plotW * 0.5);
   });
