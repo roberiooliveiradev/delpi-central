@@ -62,13 +62,21 @@ export function VisualDataViewInspector({
       ) : (
         <p className="td-deck-inspector__meta">Tabela: {tablePresetLabel(selected.tablePreset)}</p>
       )}
-      {!hasSource ? (
+      {!hasSource && !isRibbon ? (
         <div className="td-deck-inspector__onboarding">
           <p className="td-deck-inspector__hint">{TV_DASHBOARD_HELP_TOOLTIPS.data.connectFlow}</p>
           <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={() => openSources()}>
             Abrir fontes de dados
           </button>
         </div>
+      ) : null}
+      {!hasSource && isRibbon ? (
+        <>
+          <p className="td-deck-inspector__hint">{TV_DASHBOARD_HELP_TOOLTIPS.data.connectFlowRibbon}</p>
+          <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={() => openSources()}>
+            Abrir fontes de dados
+          </button>
+        </>
       ) : null}
       <DeckField id="td-view-data-source" label="Fonte de dados">
         <FormSelectControl

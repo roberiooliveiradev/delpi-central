@@ -77,7 +77,8 @@ function isSettingsTab(tab: DeckRibbonTabId): tab is "slide" | "playlist" {
 }
 
 function ribbonDensityFor(tab: DeckRibbonTabId): "band" | "fit" {
-  return tab === "element" || tab === "data" ? "fit" : "band";
+  // Dados: faixa baixa (toolbar). Elemento: fit para selects/campos.
+  return tab === "element" ? "fit" : "band";
 }
 
 /** Chrome do editor: abas estilo PowerPoint + ribbon contextual + painel de configuração. */

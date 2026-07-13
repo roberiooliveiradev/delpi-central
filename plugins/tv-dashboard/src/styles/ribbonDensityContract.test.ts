@@ -38,6 +38,15 @@ describe("ribbon density contract", () => {
     expect(fit).toMatch(/max-height:\s*120px/);
   });
 
+  it("chrome clipa ribbon fit para não vazar conteúdo no palco", () => {
+    expect(css).toMatch(
+      /\.td-deck-chrome__ribbon:has\(\.td-deck-ribbon--fit\)\s*\{[^}]*overflow-y:\s*hidden/s,
+    );
+    expect(css).toMatch(
+      /\.td-deck-chrome__ribbon \.td-deck-ribbon--fit\s*\{[^}]*overflow-y:\s*hidden/s,
+    );
+  });
+
   it("tiles compactos usam ícone Lucide 18 e faixa de uma linha", () => {
     expect(tileSource).toMatch(/Icon size=\{18\}/);
     expect(css).toMatch(

@@ -27,7 +27,7 @@ type Props = {
 };
 
 function ribbonDensityFor(tab: RibbonEmbeddedTab): "band" | "fit" {
-  return tab === "element" || tab === "data" ? "fit" : "band";
+  return tab === "element" ? "fit" : "band";
 }
 
 /** Chrome compacto do compositor embutido — mesmas faixas do deck. */

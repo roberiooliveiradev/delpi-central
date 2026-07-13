@@ -1,12 +1,28 @@
+import { useEffect } from "react";
+import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
+
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { SelectedDataSidePanel } from "./SelectedDataSidePanel";
 
 /**
- * Aba Dados na top bar — configuração da fonte selecionada;
- * catálogo abre em modal (não na faixa nem no painel lateral).
+ * Aba Dados na top bar — toolbar compacta; inspector completo no painel lateral.
+ * Catálogo abre em modal.
  */
 export function ComunicadoDataRibbon() {
-  const { setSelectionPanelTab, setDataPanelIntent, openDataCatalog } = useComunicadoEditor();
+  const {
+    selected,
+    setSelectionPanelTab,
+    setDataPanelIntent,
+    setDataPanelOpen,
+    openDataCatalog,
+  } = useComunicadoEditor();
+
+  useEffect(() => {
+    setSelectionPanelTab("data");
+    setDataPanelOpen(true);
+    const preferCatalog = !selected || !isDataBoundEditorBlockType(selected.type);
+    setDataPanelIntent(preferCatalog ? "catalog" : "binding");
+  }, [selected, setDataPanelIntent, setDataPanelOpen, setSelectionPanelTab]);
 
   return (
     <div className="td-deck-ribbon__groups td-deck-ribbon__groups--inspector">

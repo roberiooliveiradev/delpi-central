@@ -205,7 +205,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
     viewBinding: "Conecte o gráfico, tabela ou KPI a uma fonte inserida no palco (ícone de banco).",
     connectFlow:
-      "1) Inserir → Dados → escolha uma rota (cria data_source no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → aba Elemento → Conexão de dados → Fonte de dados.",
+      "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados.",
+    /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */
+    connectFlowRibbon: "Sem fonte — escolha no seletor do painel ou abra o catálogo.",
     connectOnStage:
       "Com um gráfico, tabela ou KPI selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
     kpiCard: "Título, subtítulo, unidade, ícone e tom de cor do card KPI (padrão visual Delpi).",

@@ -18,13 +18,14 @@ type Props = {
   branchScope?: BranchScope | null;
   onInserted?: () => void;
   onOpenCatalog?: () => void;
-  /** ribbon = top bar full-width; pane = painel lateral. */
+  /** ribbon = top bar compacta; pane = painel lateral com inspector completo. */
   layout?: PanelLayout;
 };
 
 /**
  * Conteúdo da aba Dados (side bar e ribbon):
- * - com elemento de dados selecionado → configuração da fonte / vínculo
+ * - ribbon: só ações curtas (nunca inspector/onboarding — vazava sobre o filmstrip)
+ * - pane: configuração da fonte / vínculo
  * - sem seleção de dados ou intent catálogo → listagem para inserir
  */
 export function SelectedDataSidePanel({
@@ -39,6 +40,7 @@ export function SelectedDataSidePanel({
     selectedIds,
     dataPanelIntent,
     openDataCatalog,
+    openDataPanel,
     setDataPanelIntent,
   } = useComunicadoEditor();
   const context = useMemo(
@@ -54,47 +56,63 @@ export function SelectedDataSidePanel({
   const bindingTarget = context.bindingTarget;
 
   useEffect(() => {
-    if (showCatalog || !bindingTarget || !("dataBinding" in bindingTarget)) return;
+    if (isRibbon || showCatalog || !bindingTarget || !("dataBinding" in bindingTarget)) return;
     void listDataRoutes()
       .then(setRoutes)
       .catch(() => setRoutes([]));
-  }, [showCatalog, bindingTarget]);
+  }, [isRibbon, showCatalog, bindingTarget]);
 
   const selectedRoute = useMemo(() => {
     if (!bindingTarget || !("dataBinding" in bindingTarget)) return null;
     return routes.find((route) => route.operationId === bindingTarget.dataBinding.operationId) ?? null;
   }, [bindingTarget, routes]);
 
-  if (showCatalog) {
-    // Ribbon: catálogo denso abre em modal — a faixa não comporta a listagem.
-    if (isRibbon) {
-      return (
-        <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados">
-          <p className="td-deck-inspector__hint">
-            Escolha uma fonte no catálogo para inserir no palco.
-          </p>
-          <div className="td-deck-ribbon__field-grid">
+  /** Faixa superior: toolbar horizontal — inspector completo só no painel lateral. */
+  if (isRibbon) {
+    const primary = context.primary;
+    const isView = primary ? isDataViewBlockType(primary.type) : false;
+    const unboundView = isView && !bindingTarget;
+    const hint = showCatalog
+      ? "Escolha uma fonte no catálogo para inserir no palco."
+      : context.kind === "mixed"
+        ? context.message
+        : unboundView
+          ? "KPI/gráfico sem fonte — conecte no painel ao lado ou abra o catálogo."
+          : bindingTarget
+            ? "Fonte ligada — edite parâmetros e conexão no painel Dados."
+            : "Configure os dados no painel ao lado.";
+
+    return (
+      <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados td-deck-ribbon__panel--dados-compact">
+        <p className="td-deck-inspector__hint">{hint}</p>
+        <div className="td-deck-ribbon__field-grid">
+          <button type="button" className="td-btn td-btn--sm" onClick={() => openCatalog()}>
+            Abrir catálogo de fontes
+          </button>
+          {!showCatalog && context.kind !== "none" ? (
             <button
               type="button"
-              className="td-btn td-btn--sm"
-              onClick={() => openCatalog()}
+              className="td-btn td-btn--sm td-btn--ghost"
+              onClick={() => openDataPanel()}
             >
-              Abrir catálogo de fontes
+              {unboundView ? "Conectar no painel" : "Abrir painel Dados"}
             </button>
-            {context.kind !== "none" ? (
-              <button
-                type="button"
-                className="td-btn td-btn--sm td-btn--ghost"
-                onClick={() => setDataPanelIntent("binding")}
-              >
-                Voltar à fonte atual
-              </button>
-            ) : null}
-          </div>
+          ) : null}
+          {showCatalog && context.kind !== "none" ? (
+            <button
+              type="button"
+              className="td-btn td-btn--sm td-btn--ghost"
+              onClick={() => setDataPanelIntent("binding")}
+            >
+              Voltar à fonte atual
+            </button>
+          ) : null}
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
+  if (showCatalog) {
     return (
       <div>
         {context.kind !== "none" ? (
@@ -119,27 +137,23 @@ export function SelectedDataSidePanel({
 
   if (context.kind === "mixed") {
     return (
-      <div className={isRibbon ? "td-deck-ribbon__panel td-deck-ribbon__panel--dados" : undefined}>
-        <DeckPropertySection pane={!isRibbon} title="Dados" defaultOpen>
-          <p className="td-deck-inspector__hint">{context.message}</p>
-          <button
-            type="button"
-            className="td-btn td-btn--sm td-btn--ghost"
-            onClick={() => openCatalog()}
-          >
-            Inserir nova fonte
-          </button>
-        </DeckPropertySection>
-      </div>
+      <DeckPropertySection pane title="Dados" defaultOpen>
+        <p className="td-deck-inspector__hint">{context.message}</p>
+        <button
+          type="button"
+          className="td-btn td-btn--sm td-btn--ghost"
+          onClick={() => openCatalog()}
+        >
+          Inserir nova fonte
+        </button>
+      </DeckPropertySection>
     );
   }
 
   const primary = context.primary;
   const isView = primary ? isDataViewBlockType(primary.type) : false;
-  const editingLinked =
-    Boolean(bindingTarget && selected && bindingTarget.id !== selected.id && isView);
 
-  const body = (
+  return (
     <>
       {context.kind === "homogeneous" && context.dataBlocks.length > 1 ? (
         <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
@@ -149,29 +163,18 @@ export function SelectedDataSidePanel({
       ) : null}
 
       {isView ? (
-        <VisualDataViewInspector
-          pane={!isRibbon}
-          layout={layout}
-          onOpenDataSources={() => openCatalog()}
-        />
+        <VisualDataViewInspector pane onOpenDataSources={() => openCatalog()} />
       ) : null}
 
       {bindingTarget && "dataBinding" in bindingTarget ? (
         <DataBindingInspector
           route={selectedRoute}
-          pane={!isRibbon}
-          layout={layout}
+          pane
           branchScope={branchScope}
           block={selected?.id !== bindingTarget.id ? bindingTarget : null}
-          sections={
-            isRibbon && editingLinked
-              ? ["params", "refresh"]
-              : undefined
-          }
-          onOpenCatalog={isRibbon ? () => openCatalog() : undefined}
         />
       ) : isView ? (
-        <DeckPropertySection pane={!isRibbon} title="Parâmetros da fonte" defaultOpen>
+        <DeckPropertySection pane title="Parâmetros da fonte" defaultOpen>
           <p className="td-deck-inspector__hint">
             Conecte uma fonte acima para editar parâmetros da rota api-delpi.
           </p>
@@ -186,28 +189,22 @@ export function SelectedDataSidePanel({
       ) : null}
 
       {!isView && !bindingTarget ? (
-        <DeckPropertySection pane={!isRibbon} title="Dados" defaultOpen>
+        <DeckPropertySection pane title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">Nenhuma configuração de dados disponível.</p>
         </DeckPropertySection>
       ) : null}
 
-      {!isRibbon ? (
-        <div className="td-deck-inspector__actions" style={{ padding: "8px 12px" }}>
-          <button
-            type="button"
-            className="td-btn td-btn--sm td-btn--ghost"
-            onClick={() => openCatalog()}
-          >
-            Inserir nova fonte…
-          </button>
-        </div>
-      ) : null}
+      <div className="td-deck-inspector__actions" style={{ padding: "8px 12px" }}>
+        <button
+          type="button"
+          className="td-btn td-btn--sm td-btn--ghost"
+          onClick={() => openCatalog()}
+        >
+          Inserir nova fonte…
+        </button>
+      </div>
     </>
   );
-
-  if (!isRibbon) return body;
-
-  return <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados">{body}</div>;
 }
 
 export type { ComunicadoBlock };
