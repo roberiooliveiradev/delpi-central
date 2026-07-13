@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
@@ -56,6 +59,16 @@ describe("NativeCheckboxControl", () => {
     expect(container.querySelector(".delpi-ui-native-checkbox__label")?.textContent).toBe(
       "Filial SC",
     );
+  });
+
+  it("declara flex-direction row no CSS canônico (defesa contra label column do portal)", () => {
+    const cssPath = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../styles/native-controls.css",
+    );
+    const css = readFileSync(cssPath, "utf8");
+    expect(css).toMatch(/\.delpi-ui-native-checkbox\s*\{[^}]*flex-direction:\s*row/s);
+    expect(css).toMatch(/\.delpi-ui-native-switch\s*\{[^}]*flex-direction:\s*row/s);
   });
 });
 

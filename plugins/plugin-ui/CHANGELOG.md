@@ -6,6 +6,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- `NativeCheckboxControl` / switch: `flex-direction: row` explícito — o portal tinha `label { flex-direction: column }` global em `Modal.css`, quebrando checkbox + texto em linha nos MFEs.
 - `NativeCheckboxControl`: aceita `children` como alias de `label` — corrige checkboxes sem texto visível (ex.: menu Colunas em pedidos de venda).
 - Select portado (`SelectControl` / `FilterSelectField`): painel no `body` passa a herdar escopo `.dashboard-*` (inferido do âncora ou `portalScopeClassName`), evitando lista sem CSS (bullets / caixas soltas).
 

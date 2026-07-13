@@ -128,13 +128,16 @@ textarea.delpi-ui-native-control--compact {
   --delpi-ui-control-radius: 8px;
 }
 
-/* Checkbox */
+/* Checkbox — row explícito: portal Modal.css tem `label { flex-direction: column }` global. */
 .delpi-ui-native-checkbox {
   display: inline-flex;
-  align-items: flex-start;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 8px;
   margin: 0;
   font-size: 13px;
+  font-weight: 500;
   color: var(--delpi-ui-text, var(--text, #111));
   cursor: pointer;
 }
@@ -142,7 +145,8 @@ textarea.delpi-ui-native-control--compact {
 .delpi-ui-native-checkbox input {
   width: 1rem;
   height: 1rem;
-  margin: 0.15em 0 0;
+  margin: 0;
+  flex: 0 0 auto;
   flex-shrink: 0;
   accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   cursor: pointer;
@@ -152,6 +156,7 @@ textarea.delpi-ui-native-control--compact {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
@@ -161,12 +166,15 @@ textarea.delpi-ui-native-control--compact {
 
 .delpi-ui-native-checkbox__hint {
   font-size: 12px;
+  font-weight: 400;
   color: var(--delpi-ui-text-muted, var(--td-text-muted, #64748b));
 }
 
-/* Switch */
+/* Switch — mesmo reforço de eixo horizontal (é <label>). */
 .delpi-ui-native-switch {
   display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   margin: 0;

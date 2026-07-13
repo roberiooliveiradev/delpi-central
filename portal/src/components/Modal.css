@@ -290,10 +290,10 @@ button.danger:hover {
 
 
 /* =========================
-   Inputs
+   Inputs (escopo do modal — não vazar para MFEs federados)
 ========================= */
 
-label {
+.modal label {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -301,7 +301,7 @@ label {
   color: var(--text);
 }
 
-label small {
+.modal label small {
   font-weight: 400;
   color: var(--text-muted);
 }

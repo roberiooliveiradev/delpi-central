@@ -102,15 +102,25 @@
 }
 
 .delpi-ui-table-columns__option {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
   width: 100%;
   min-height: 28px;
   padding: 2px 8px;
   border-radius: 8px;
   color: var(--delpi-ui-table-columns-text);
+  box-sizing: border-box;
 }
 
 .delpi-ui-table-columns__option:hover {
   background: color-mix(in srgb, var(--delpi-ui-table-columns-accent) 8%, transparent);
+}
+
+.delpi-ui-table-columns__option .delpi-ui-native-checkbox__copy {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .delpi-ui-table-columns__option .delpi-ui-native-checkbox__label {
