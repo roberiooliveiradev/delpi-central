@@ -11,6 +11,12 @@ describe("ComunicadoDataRibbon catalog open contract", () => {
     expect(openDataCatalog).toHaveBeenCalledTimes(1);
   });
 
+  it("Trocar rota pede o catálogo em modo replace", () => {
+    const openDataCatalog = vi.fn();
+    openDataCatalog("replace");
+    expect(openDataCatalog).toHaveBeenCalledWith("replace");
+  });
+
   it("onInserted restaura intent binding antes de ir ao Elemento", () => {
     const setDataPanelIntent = vi.fn();
     const setSelectionPanelTab = vi.fn();

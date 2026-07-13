@@ -10,6 +10,7 @@ import {
 
 import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import type { DataCatalogMode } from "./comunicadoEditorContextCore";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
@@ -57,12 +58,14 @@ function CategoryIcon({ category }: { category: string }) {
 }
 
 type Props = {
-  /** Chamado após inserir fonte no palco (ex.: voltar aba Elemento). */
+  /** Chamado após inserir/substituir fonte (ex.: fechar modal ou voltar aba Elemento). */
   onInserted?: () => void;
   branchScope?: BranchScope | null;
   layout?: "ribbon" | "pane";
   /** Modal já tem título — omite o FieldLabel duplicado. */
   hideHeading?: boolean;
+  /** insert = nova fonte no palco; replace = troca a rota do bloco selecionado. */
+  mode?: DataCatalogMode;
 };
 
 export function DataRoutesSidePanel({
@@ -70,8 +73,10 @@ export function DataRoutesSidePanel({
   branchScope = null,
   layout = "pane",
   hideHeading = false,
+  mode = "insert",
 }: Props) {
-  const { config, addDataSourceBlock, globalRefreshSec } = useComunicadoEditor();
+  const { config, addDataSourceBlock, replaceSelectedDataRoute, globalRefreshSec } =
+    useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,14 +99,14 @@ export function DataRoutesSidePanel({
   function pickRoute(route: TvDataRouteCatalogItem) {
     setPickedRoute(route);
     setLabel(route.label);
-    const defaults = Object.fromEntries(
+    const defaults: NonNullable<ComunicadoDataBinding["params"]> = Object.fromEntries(
       Object.entries(route.paramSchema ?? {})
         .map(([key, schema]) => {
           const def = (schema as { default?: string | number }).default;
           return def !== undefined ? [key, def] : null;
         })
         .filter(Boolean) as Array<[string, string | number]>,
-    ) as ComunicadoDataBinding["params"];
+    );
     const pair = findDateRangeKeys(Object.keys(route.paramSchema ?? {}));
     const preset = defaultDateRangePreset(pair);
     if (preset) {
@@ -124,7 +129,11 @@ export function DataRoutesSidePanel({
       defaultParams,
       refreshSec: refreshSec.trim() ? Number(refreshSec) : undefined,
     });
-    addDataSourceBlock(block);
+    if (mode === "replace") {
+      replaceSelectedDataRoute(block);
+    } else {
+      addDataSourceBlock(block);
+    }
     setPickedRoute(null);
     onInserted?.();
   }
@@ -201,7 +210,7 @@ export function DataRoutesSidePanel({
             }}
           />
           <button type="button" className="td-btn td-btn--primary td-btn--sm" onClick={handleInsert}>
-            Inserir fonte de dados
+            {mode === "replace" ? "Aplicar rota" : "Inserir fonte de dados"}
           </button>
         </DeckPropertySection>
       </div>

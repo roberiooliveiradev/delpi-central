@@ -17,6 +17,7 @@ import {
   deleteKpiPart,
   deleteTablePart,
   isDataBlockType,
+  isDataSourceBlockType,
   isDataViewBlockType,
   kpiPartAllowsDelete,
   mergeComunicadoChartOptions,
@@ -58,6 +59,7 @@ import {
 } from "../../content/comunicadoSlideThemes";
 import type {
   ComunicadoRibbonTabRequest,
+  DataCatalogMode,
   DataPanelIntent,
 } from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
@@ -98,6 +100,7 @@ type Options = {
   setDataPanelOpen: Dispatch<SetStateAction<boolean>>;
   setDataPanelIntent: Dispatch<SetStateAction<DataPanelIntent>>;
   setDataCatalogModalOpen: Dispatch<SetStateAction<boolean>>;
+  setDataCatalogMode: Dispatch<SetStateAction<DataCatalogMode>>;
   setShapeMenuOpen: Dispatch<SetStateAction<boolean>>;
   setRibbonTabRequest: Dispatch<SetStateAction<ComunicadoRibbonTabRequest | null>>;
   /** Preenchido pelo Provider para o clipboard. */
@@ -134,6 +137,7 @@ export function useComunicadoEditorBlocks({
   setDataPanelOpen,
   setDataPanelIntent,
   setDataCatalogModalOpen,
+  setDataCatalogMode,
   setShapeMenuOpen,
   setRibbonTabRequest,
   removeSelectedRef,
@@ -278,9 +282,13 @@ export function useComunicadoEditorBlocks({
     setRibbonTabRequest("data");
   }, [setDataPanelIntent, setDataPanelOpen, setRibbonTabRequest]);
 
-  const openDataCatalog = useCallback(() => {
-    setDataCatalogModalOpen(true);
-  }, [setDataCatalogModalOpen]);
+  const openDataCatalog = useCallback(
+    (mode: DataCatalogMode = "insert") => {
+      setDataCatalogMode(mode);
+      setDataCatalogModalOpen(true);
+    },
+    [setDataCatalogMode, setDataCatalogModalOpen],
+  );
 
   const setDataFilters = useCallback(
     (filters: ComunicadoDataFilters | undefined) => {
@@ -610,19 +618,38 @@ export function useComunicadoEditorBlocks({
 
   const replaceSelectedDataRoute = useCallback(
     (block: ComunicadoBlock) => {
-      if (!selected || !isDataBlockType(selected.type) || !isDataBlockType(block.type)) return;
-      if (!("dataBinding" in selected) || !("dataBinding" in block)) return;
-      updateSelected({
-        type: block.type,
-        frame: block.frame,
-        dataBinding: {
-          ...selected.dataBinding,
-          operationId: block.dataBinding.operationId,
-          label: block.dataBinding.label,
-          displayMode: block.dataBinding.displayMode,
-          params: { ...(block.dataBinding.params ?? {}) },
-        },
-      } as Partial<ComunicadoBlock>);
+      if (!selected || !("dataBinding" in selected) || !("dataBinding" in block)) return;
+      const selectedIsData =
+        isDataBlockType(selected.type) || isDataSourceBlockType(selected.type);
+      if (!selectedIsData) return;
+
+      if (isDataSourceBlockType(selected.type)) {
+        const nextBinding = { ...selected.dataBinding };
+        nextBinding.operationId = block.dataBinding.operationId;
+        nextBinding.label = block.dataBinding.label;
+        nextBinding.params = { ...(block.dataBinding.params ?? {}) };
+        if (block.dataBinding.refreshSec != null) {
+          nextBinding.refreshSec = block.dataBinding.refreshSec;
+        } else {
+          delete nextBinding.refreshSec;
+        }
+        delete nextBinding.selectedValueFields;
+        delete nextBinding.valueField;
+        updateSelected({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
+      } else if (isDataBlockType(block.type)) {
+        updateSelected({
+          type: block.type,
+          dataBinding: {
+            ...selected.dataBinding,
+            operationId: block.dataBinding.operationId,
+            label: block.dataBinding.label,
+            displayMode: block.dataBinding.displayMode,
+            params: { ...(block.dataBinding.params ?? {}) },
+          },
+        } as Partial<ComunicadoBlock>);
+      } else {
+        return;
+      }
       setSelectedId(selected.id);
     },
     [selected, setSelectedId, updateSelected],

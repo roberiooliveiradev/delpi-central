@@ -25,7 +25,6 @@ import {
   visibleParamSchema,
   type DataParamSchema,
 } from "./DataParamFields";
-import { DataRoutePickerModal } from "./DataRoutePickerModal";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -94,11 +93,10 @@ export function DataBindingInspector({
     updateSelected,
     updateBlock,
     duplicateSelected,
-    replaceSelectedDataRoute,
+    openDataCatalog,
     globalRefreshSec,
     setLastDataDisplayMode,
   } = useComunicadoEditor();
-  const [routePickerOpen, setRoutePickerOpen] = useState(false);
   const [paramsModalOpen, setParamsModalOpen] = useState(false);
   const [refreshCustom, setRefreshCustom] = useState(false);
   const isRibbon = layout === "ribbon";
@@ -206,14 +204,22 @@ export function DataBindingInspector({
             </button>
           ) : null}
           {!editingLinkedSource ? (
-            <button type="button" className="td-btn td-btn--sm" onClick={() => setRoutePickerOpen(true)}>
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              onClick={() => openDataCatalog("replace")}
+            >
               <RefreshCw size={14} aria-hidden="true" />
               Trocar rota
             </button>
           ) : null}
         </div>
       ) : !editingLinkedSource ? (
-        <button type="button" className="td-btn td-btn--sm" onClick={() => setRoutePickerOpen(true)}>
+        <button
+          type="button"
+          className="td-btn td-btn--sm"
+          onClick={() => openDataCatalog("replace")}
+        >
           <RefreshCw size={14} aria-hidden="true" />
           Trocar rota
         </button>
@@ -369,17 +375,6 @@ export function DataBindingInspector({
     </>
   );
 
-  const picker = !editingLinkedSource ? (
-    <DataRoutePickerModal
-      open={routePickerOpen}
-      onClose={() => setRoutePickerOpen(false)}
-      onSelect={(block) => {
-        replaceSelectedDataRoute(block);
-        setRoutePickerOpen(false);
-      }}
-    />
-  ) : null;
-
   const paramsModal = (
     <Modal
       open={paramsModalOpen}
@@ -430,7 +425,6 @@ export function DataBindingInspector({
             <div className="td-deck-ribbon__field-grid">{refreshFields}</div>
           </RibbonZone>
         ) : null}
-        {picker}
         {paramsNeedModal ? paramsModal : null}
       </>
     );
@@ -447,7 +441,6 @@ export function DataBindingInspector({
         {refreshFields}
         {paramFields}
       </DeckPropertySection>
-      {picker}
     </>
   );
 }

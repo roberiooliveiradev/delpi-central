@@ -60,6 +60,9 @@ export type SelectionPanelTab = "element" | "data" | "layers";
 /** Intenção ao abrir a aba Dados do painel lateral. */
 export type DataPanelIntent = "binding" | "catalog";
 
+/** Modo do modal de catálogo: inserir fonte nova ou trocar a rota da seleção. */
+export type DataCatalogMode = "insert" | "replace";
+
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
@@ -126,10 +129,12 @@ export type ComunicadoEditorContextValue = {
   addTableViewBlock: (rows: number, cols: number, preset: ComunicadoTablePreset) => void;
   addKpiViewBlock: () => void;
   openDataPanel: () => void;
-  /** Abre o catálogo de inserção em modal (entrada pela top bar). */
-  openDataCatalog: () => void;
+  /** Abre o catálogo em modal (Inserir / Trocar rota). */
+  openDataCatalog: (mode?: DataCatalogMode) => void;
   dataCatalogModalOpen: boolean;
   setDataCatalogModalOpen: (open: boolean) => void;
+  dataCatalogMode: DataCatalogMode;
+  setDataCatalogMode: (mode: DataCatalogMode) => void;
   dataPanelOpen: boolean;
   setDataPanelOpen: (open: boolean) => void;
   dataPanelIntent: DataPanelIntent;

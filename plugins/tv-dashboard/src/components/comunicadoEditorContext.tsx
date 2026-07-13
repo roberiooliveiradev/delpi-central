@@ -130,6 +130,7 @@ export function ComunicadoEditorProvider({
   const [dataPanelOpen, setDataPanelOpen] = useState(false);
   const [dataPanelIntent, setDataPanelIntent] = useState<"binding" | "catalog">("binding");
   const [dataCatalogModalOpen, setDataCatalogModalOpen] = useState(false);
+  const [dataCatalogMode, setDataCatalogMode] = useState<"insert" | "replace">("insert");
   const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
 
   const configRef = useRef(config);
@@ -293,6 +294,7 @@ export function ComunicadoEditorProvider({
     setDataPanelOpen,
     setDataPanelIntent,
     setDataCatalogModalOpen,
+    setDataCatalogMode,
     setShapeMenuOpen,
     setRibbonTabRequest: selection.setRibbonTabRequest,
     removeSelectedRef,
@@ -425,6 +427,8 @@ export function ComunicadoEditorProvider({
     openDataCatalog: blockActions.openDataCatalog,
     dataCatalogModalOpen,
     setDataCatalogModalOpen,
+    dataCatalogMode,
+    setDataCatalogMode,
     dataPanelOpen,
     setDataPanelOpen,
     dataPanelIntent,

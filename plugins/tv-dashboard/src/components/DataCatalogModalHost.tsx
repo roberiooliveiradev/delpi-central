@@ -8,26 +8,37 @@ type Props = {
 };
 
 /**
- * Catálogo de fontes em modal — usado pela top bar (Inserir / Dados).
+ * Catálogo de fontes em modal — Inserir (top bar) ou Trocar rota (inspetor Dados).
  * O painel lateral continua com listagem inline quando a aba Dados está vazia.
  */
 export function DataCatalogModalHost({ branchScope = null }: Props) {
-  const { dataCatalogModalOpen, setDataCatalogModalOpen, setDataPanelIntent } =
-    useComunicadoEditor();
+  const {
+    dataCatalogModalOpen,
+    setDataCatalogModalOpen,
+    dataCatalogMode,
+    setDataCatalogMode,
+    setDataPanelIntent,
+  } = useComunicadoEditor();
+
+  function closeCatalog() {
+    setDataCatalogModalOpen(false);
+    setDataCatalogMode("insert");
+  }
 
   return (
     <Modal
       open={dataCatalogModalOpen}
-      title="Fontes de dados"
-      onClose={() => setDataCatalogModalOpen(false)}
+      title={dataCatalogMode === "replace" ? "Trocar fonte de dados" : "Fontes de dados"}
+      onClose={closeCatalog}
       className="td-modal--wide td-modal--data-catalog"
     >
       <DataRoutesSidePanel
         layout="pane"
         hideHeading
+        mode={dataCatalogMode}
         branchScope={branchScope}
         onInserted={() => {
-          setDataCatalogModalOpen(false);
+          closeCatalog();
           setDataPanelIntent("binding");
         }}
       />
