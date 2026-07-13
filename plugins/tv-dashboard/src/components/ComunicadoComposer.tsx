@@ -596,7 +596,8 @@ export function ComunicadoComposerCanvas() {
                 ) : null}
                 {isPrimary &&
                 block.type === "chart_view" &&
-                selectedIds.length === 1 ? (
+                selectedIds.length === 1 &&
+                !selectedChartPart ? (
                   <ChartSelectionFloatToolbar block={block} />
                 ) : null}
               </div>

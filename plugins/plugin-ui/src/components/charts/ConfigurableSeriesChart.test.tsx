@@ -110,6 +110,29 @@ describe("ConfigurableSeriesChart", () => {
     expect(container.querySelector(".delpi-ui-series-chart__grid-line")).toBeTruthy();
   });
 
+  it("pinta plotArea antes da grade (grade não fica coberta pelo fill)", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="area"
+        points={[
+          { label: "a", value: 90 },
+          { label: "b", value: 95 },
+          { label: "c", value: 88 },
+          { label: "d", value: 92 },
+        ]}
+        options={{ showGrid: true, showLegend: false, legendPosition: "hidden" }}
+      />,
+    );
+    const svg = container.querySelector("svg");
+    expect(svg).toBeTruthy();
+    const plot = svg!.querySelector(".delpi-ui-series-chart__plot-area");
+    const grid = svg!.querySelector(".delpi-ui-series-chart__grid-line");
+    expect(plot).toBeTruthy();
+    expect(grid).toBeTruthy();
+    const position = plot!.compareDocumentPosition(grid!);
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("clipa cantos arredondados da chartArea (overflow hidden na raiz)", () => {
     const { container } = render(
       <ConfigurableSeriesChart

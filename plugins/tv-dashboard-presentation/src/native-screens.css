@@ -1167,8 +1167,13 @@
 }
 
 .tdp-kpi-view .delpi-kpi-icon {
-  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 12%, transparent);
-  color: var(--tdp-data-accent, #089bdb);
+  /* Não forçar accent — respeita `--delpi-kpi-icon-fg` / color do DelpiKpiCard. */
+  background: color-mix(
+    in srgb,
+    var(--delpi-kpi-icon-fg, var(--tdp-data-accent, #089bdb)) 12%,
+    transparent
+  );
+  color: var(--delpi-kpi-icon-fg, var(--tdp-data-accent, #089bdb));
 }
 
 .tdp-kpi-placeholder {

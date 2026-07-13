@@ -41,6 +41,11 @@ export type SeriesChartOptions = {
   showMarkers?: boolean;
   valueFormat?: SeriesChartValueFormat;
   seriesColor?: string;
+  /**
+   * Paleta cíclica (pie/fatias/categorias). Índice 0 ≈ série; índice 1 ≈ fill de área.
+   * Vinda de «Alterar cores»; ausente = catálogo Delpi padrão.
+   */
+  categoryColors?: string[];
   /** Padrão Office: fundo claro. `dark` só sob pedido explícito. */
   theme?: SeriesChartTheme;
   backgroundColor?: string;
@@ -285,4 +290,21 @@ export function resolveSeriesChartTicks(min: number, max: number, count = 5): nu
   }
   if (ticks.length < 2) return [min, max];
   return ticks;
+}
+
+/**
+ * Cor por categoria/fatia (pie, empilhado, funil).
+ * Com `categoryColors` da paleta Alterar cores; senão série 0 + catálogo Delpi.
+ */
+export function resolveSeriesCategoryColor(
+  index: number,
+  seriesColor: string | undefined,
+  categoryColors?: string[] | null,
+  fallbackPalette: readonly string[] = SERIES_CHART_CATEGORY_PALETTE,
+): string {
+  if (categoryColors && categoryColors.length > 0) {
+    return categoryColors[index % categoryColors.length] ?? seriesColor ?? fallbackPalette[0]!;
+  }
+  if (index === 0) return seriesColor ?? fallbackPalette[0]!;
+  return fallbackPalette[index % fallbackPalette.length]!;
 }

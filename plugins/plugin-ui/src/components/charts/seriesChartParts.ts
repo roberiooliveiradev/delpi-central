@@ -551,13 +551,15 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
     content: config.seriesName?.trim() || undefined,
   };
 
+  const seriesFill =
+    config.categoryColors?.[1]?.trim() || config.seriesColor;
   parts[serializeChartPartRef({ kind: "series", seriesIndex: 0 })] = {
     visible: true,
     content: config.seriesName?.trim() || undefined,
     style: {
       stroke: config.seriesColor,
       strokeWidth: CHART_SERIES_LINE_STROKE_WIDTH,
-      fill: config.seriesColor,
+      fill: seriesFill,
     },
   };
 
@@ -601,7 +603,7 @@ export function mergeChartPartsWithOptions(
     const prevState = prev[key];
     const projectedState = projected[key];
     if (!prevState) continue;
-    if (key === "chartArea" || key === "plotArea" || key.startsWith("marker:") || key.startsWith("dataLabel:")) {
+    if (key === "chartArea" || key === "plotArea" || key.startsWith("dataLabel:")) {
       merged[key] = {
         ...projectedState,
         ...prevState,
@@ -611,6 +613,18 @@ export function mergeChartPartsWithOptions(
           ...(key === "chartArea" && projectedState?.style?.fill
             ? { fill: projectedState.style.fill }
             : {}),
+        },
+      };
+    } else if (key.startsWith("marker:")) {
+      const showMarkers = options?.showMarkers !== false;
+      merged[key] = {
+        ...projectedState,
+        ...prevState,
+        /* Estilo «Com marcadores» / showMarkers flat manda na visibilidade. */
+        visible: showMarkers,
+        style: {
+          ...projectedState?.style,
+          ...prevState.style,
         },
       };
     } else if (key.startsWith("series:")) {
@@ -667,7 +681,7 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
 
   if (chartArea?.style?.fill) {
     patch.backgroundColor = chartArea.style.fill;
-    patch.theme = "light";
+    /* theme vive só nas options flat — nunca forçar light aqui (quebra Estilo Escuro). */
   }
 
   if (axisX?.visible === false && axisY?.visible === false) {

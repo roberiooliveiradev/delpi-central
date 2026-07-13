@@ -2,6 +2,7 @@ import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   SERIES_CHART_CATEGORY_PALETTE,
   OFFICE_CHART_SERIES_COLOR,
+  resolveSeriesCategoryColor,
 } from "../seriesChartOptions";
 import {
   bindChartPartPointer,
@@ -16,6 +17,7 @@ export type ChartSeriesFunnelProps = Pick<SeriesChartSharedProps, "layout" | "po
   interaction?: SeriesChartInteraction | null;
   seriesIndex?: number;
   chartParts?: ChartPartsMap | null;
+  categoryColors?: string[] | null;
 };
 
 /** Funil: trapézios horizontais com largura ∝ valor (estágios de cima para baixo). */
@@ -26,6 +28,7 @@ export function ChartSeriesFunnel({
   interaction,
   seriesIndex = 0,
   chartParts,
+  categoryColors,
 }: ChartSeriesFunnelProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH, plotInset } = layout;
@@ -71,10 +74,12 @@ export function ChartSeriesFunnel({
           `L ${cx - botW / 2} ${y1}`,
           "Z",
         ].join(" ");
-        const fill =
-          i === 0
-            ? seriesColor || OFFICE_CHART_SERIES_COLOR
-            : SERIES_CHART_CATEGORY_PALETTE[i % SERIES_CHART_CATEGORY_PALETTE.length]!;
+        const fill = resolveSeriesCategoryColor(
+          i,
+          seriesColor || OFFICE_CHART_SERIES_COLOR,
+          categoryColors,
+          SERIES_CHART_CATEGORY_PALETTE,
+        );
         return (
           <path
             key={`funnel-${point.sourceIndex}`}

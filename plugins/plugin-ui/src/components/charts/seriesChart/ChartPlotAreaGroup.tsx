@@ -81,6 +81,7 @@ export function ChartPlotAreaGroup({
           seriesColor={seriesColor}
           interaction={interaction}
           chartParts={chartParts}
+          categoryColors={config.categoryColors}
         />
       ) : null}
 
@@ -141,6 +142,7 @@ export function ChartPlotAreaGroup({
           seriesColor={seriesColor}
           interaction={interaction}
           chartParts={chartParts}
+          categoryColors={config.categoryColors}
         />
       ) : null}
 
@@ -163,6 +165,7 @@ export function ChartPlotAreaGroup({
           interaction={interaction}
           chartParts={chartParts}
           innerRadiusRatio={pieInnerRadiusRatio}
+          categoryColors={config.categoryColors}
         />
       ) : null}
 
@@ -232,6 +235,23 @@ export function ChartPlotAreaGroup({
 
   return (
     <>
+      <ChartPlotArea
+        layout={layout}
+        showAxes={cartesianAxes}
+        interaction={interaction}
+        chartParts={chartParts}
+      />
+
+      {!skipCartesian ? (
+        <ChartGrid
+          layout={layout}
+          showHorizontal={cartesianGrid}
+          showVertical={showVerticalGrid && !skipCartesian}
+          pointCount={points.length}
+          interaction={interaction}
+        />
+      ) : null}
+
       {!skipCartesian ? (
         <ChartAxisY
           layout={layout}
@@ -244,22 +264,6 @@ export function ChartPlotAreaGroup({
         />
       ) : null}
 
-      {!skipCartesian ? (
-        <ChartGrid
-          layout={layout}
-          showHorizontal={cartesianGrid}
-          showVertical={showVerticalGrid && !skipCartesian}
-          pointCount={points.length}
-          interaction={interaction}
-        />
-      ) : null}
-
-      <ChartPlotArea
-        layout={layout}
-        showAxes={cartesianAxes}
-        interaction={interaction}
-        chartParts={chartParts}
-      />
       {!skipCartesian ? <ChartAxisLines layout={layout} visible={cartesianAxes} interaction={interaction} /> : null}
 
       {!skipCartesian ? (

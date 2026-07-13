@@ -5,6 +5,7 @@ import {
   CHART_STYLE_RECIPES,
   applyChartColorPalette,
   applyChartStyleRecipe,
+  isChartStyleRecipeActive,
   type ChartColorPalette,
   type ChartStyleRecipe,
 } from "../content/chartStyleRecipes";
@@ -27,6 +28,9 @@ export function ChartColorsStylesMenu({ options, onApplyOptions }: Props) {
     <div className="td-chart-style-menu" role="menu" aria-label="Cores e estilos do gráfico">
       <section className="td-chart-style-menu__section">
         <h4>Alterar cores</h4>
+        <p className="td-chart-style-menu__hint">
+          Uma série usa a cor principal; pies e categorias usam as demais do swatch.
+        </p>
         <div className="td-chart-style-menu__palettes">
           {CHART_COLOR_PALETTES.map((palette) => (
             <button
@@ -58,21 +62,30 @@ export function ChartColorsStylesMenu({ options, onApplyOptions }: Props) {
       <section className="td-chart-style-menu__section">
         <h4>Estilos de gráfico</h4>
         <div className="td-chart-style-menu__styles">
-          {CHART_STYLE_RECIPES.map((recipe) => (
-            <button
-              key={recipe.id}
-              type="button"
-              className="td-chart-style-menu__style"
-              title={recipe.label}
-              onClick={() => applyStyle(recipe)}
-            >
-              <span
-                className={`td-chart-style-menu__style-thumb td-chart-style-menu__style-thumb--${recipe.id}`}
-                aria-hidden="true"
-              />
-              <span>{recipe.label}</span>
-            </button>
-          ))}
+          {CHART_STYLE_RECIPES.map((recipe) => {
+            const active = isChartStyleRecipeActive(recipe, options);
+            return (
+              <button
+                key={recipe.id}
+                type="button"
+                className={[
+                  "td-chart-style-menu__style",
+                  active ? "td-chart-style-menu__style--active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                title={recipe.label}
+                aria-pressed={active}
+                onClick={() => applyStyle(recipe)}
+              >
+                <span
+                  className={`td-chart-style-menu__style-thumb td-chart-style-menu__style-thumb--${recipe.id}`}
+                  aria-hidden="true"
+                />
+                <span>{recipe.label}</span>
+              </button>
+            );
+          })}
         </div>
       </section>
     </div>

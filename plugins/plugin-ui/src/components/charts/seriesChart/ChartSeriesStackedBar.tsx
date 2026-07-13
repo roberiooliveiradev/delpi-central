@@ -2,6 +2,7 @@ import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   SERIES_CHART_CATEGORY_PALETTE,
   OFFICE_CHART_SERIES_COLOR,
+  resolveSeriesCategoryColor,
 } from "../seriesChartOptions";
 import {
   bindChartPartPointer,
@@ -16,6 +17,7 @@ export type ChartSeriesStackedBarProps = Pick<SeriesChartSharedProps, "layout" |
   interaction?: SeriesChartInteraction | null;
   seriesIndex?: number;
   chartParts?: ChartPartsMap | null;
+  categoryColors?: string[] | null;
 };
 
 /**
@@ -30,6 +32,7 @@ export function ChartSeriesStackedBar({
   interaction,
   seriesIndex = 0,
   chartParts,
+  categoryColors,
 }: ChartSeriesStackedBarProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH, plotInset } = layout;
@@ -68,10 +71,12 @@ export function ChartSeriesStackedBar({
         const segH = (value / total) * innerH;
         const y = baseY - fromBottom - segH;
         fromBottom += segH;
-        const fill =
-          i === 0
-            ? seriesColor || OFFICE_CHART_SERIES_COLOR
-            : SERIES_CHART_CATEGORY_PALETTE[i % SERIES_CHART_CATEGORY_PALETTE.length]!;
+        const fill = resolveSeriesCategoryColor(
+          i,
+          seriesColor || OFFICE_CHART_SERIES_COLOR,
+          categoryColors,
+          SERIES_CHART_CATEGORY_PALETTE,
+        );
         return (
           <rect
             key={`stack-${point.sourceIndex}`}

@@ -35,9 +35,14 @@ import {
 } from "../content/chartQuickLayouts";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import {
+  isPartSelectionChrome,
+  resolveSelectionChromeMode,
+} from "../utils/resolveSelectionChromeMode";
 import { ChartAddElementMenu } from "./ChartAddElementMenu";
 import { ChartChangeTypeDialog } from "./ChartChangeTypeDialog";
 import { ChartColorsStylesMenu } from "./ChartColorsStylesMenu";
+import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { FormatRibbonOrganizeSection, FormatRibbonFrameSection, FormatRibbonTypographySections } from "./formatRibbon";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
@@ -52,6 +57,7 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 export function ComunicadoChartRibbon() {
   const {
     selected,
+    selectedChartPart,
     updateSelected,
     selectChartPart,
     openDataPanel,
@@ -67,6 +73,14 @@ export function ComunicadoChartRibbon() {
   const [layoutOpen, setLayoutOpen] = useState(false);
   const [colorsOpen, setColorsOpen] = useState(false);
   const [changeTypeOpen, setChangeTypeOpen] = useState(false);
+
+  const selectionChrome = resolveSelectionChromeMode({
+    selected,
+    selectedChartPart,
+  });
+  if (isPartSelectionChrome(selectionChrome)) {
+    return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
+  }
 
   if (!selected || selected.type !== "chart_view") {
     return (

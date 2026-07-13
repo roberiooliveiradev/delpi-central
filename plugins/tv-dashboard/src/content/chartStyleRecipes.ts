@@ -1,3 +1,7 @@
+import {
+  DECK_THEME_DARK,
+  DECK_THEME_LIGHT,
+} from "@delpi/plugin-ui/index";
 import type { ComunicadoChartOptions } from "@delpi/tv-dashboard-presentation";
 
 /** Paleta de série (swatches) — Alterar Cores. */
@@ -59,30 +63,58 @@ export const CHART_STYLE_RECIPES: ChartStyleRecipe[] = [
   {
     id: "office-light",
     label: "Claro",
-    patch: { theme: "light", showGrid: true, backgroundColor: undefined },
+    patch: {
+      theme: "light",
+      backgroundColor: DECK_THEME_LIGHT.bg,
+      showGrid: true,
+      showVerticalGrid: false,
+    },
   },
   {
     id: "office-dark",
     label: "Escuro",
-    patch: { theme: "dark", showGrid: true },
+    patch: {
+      theme: "dark",
+      backgroundColor: DECK_THEME_DARK.bg,
+      showGrid: true,
+      showVerticalGrid: false,
+    },
   },
   {
     id: "clean",
     label: "Sem grade",
-    patch: { theme: "light", showGrid: false, showVerticalGrid: false },
+    patch: {
+      theme: "light",
+      backgroundColor: DECK_THEME_LIGHT.bg,
+      showGrid: false,
+      showVerticalGrid: false,
+    },
   },
   {
     id: "markers-on",
     label: "Com marcadores",
-    patch: { theme: "light", showMarkers: true, showGrid: true },
+    patch: {
+      theme: "light",
+      backgroundColor: DECK_THEME_LIGHT.bg,
+      showMarkers: true,
+      showGrid: true,
+    },
   },
 ];
 
+/**
+ * Aplica paleta: cor principal da série + `categoryColors` (área/pie/fatias).
+ * Em gráfico com **uma** série, a linha/barra usa a cor principal; a 2ª entra no fill da área.
+ */
 export function applyChartColorPalette(
   palette: ChartColorPalette,
   options: ComunicadoChartOptions,
 ): ComunicadoChartOptions {
-  return { ...options, seriesColor: palette.seriesColor };
+  return {
+    ...options,
+    seriesColor: palette.seriesColor,
+    categoryColors: [...palette.colors],
+  };
 }
 
 export function applyChartStyleRecipe(
@@ -90,4 +122,28 @@ export function applyChartStyleRecipe(
   options: ComunicadoChartOptions,
 ): ComunicadoChartOptions {
   return { ...options, ...recipe.patch };
+}
+
+/** Destaca o thumb ativo (theme / grade / marcadores). */
+export function isChartStyleRecipeActive(
+  recipe: ChartStyleRecipe,
+  options: ComunicadoChartOptions,
+): boolean {
+  const theme = options.theme ?? "light";
+  const showGrid = options.showGrid !== false;
+  const showVertical = Boolean(options.showVerticalGrid);
+  const showMarkers = options.showMarkers !== false;
+
+  switch (recipe.id) {
+    case "office-light":
+      return theme === "light" && showGrid && !showVertical;
+    case "office-dark":
+      return theme === "dark";
+    case "clean":
+      return !showGrid && !showVertical;
+    case "markers-on":
+      return showMarkers && theme === "light";
+    default:
+      return false;
+  }
 }

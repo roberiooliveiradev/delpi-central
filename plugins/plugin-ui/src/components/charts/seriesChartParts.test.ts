@@ -180,6 +180,44 @@ describe("seriesChartParts", () => {
     expect(merged["series:0"]?.style?.strokeWidth).toBe(3);
   });
 
+  it("partsToChartOptions não força theme light (permite estilo Escuro)", () => {
+    const options = mergeSeriesChartOptions({
+      theme: "dark",
+      backgroundColor: "#0b1520",
+    });
+    const parts = mergeChartPartsWithOptions(null, options);
+    const fromParts = partsToChartOptions(parts);
+    expect(fromParts.theme).toBeUndefined();
+    expect(fromParts.backgroundColor).toBe("#0b1520");
+    const effective = mergeSeriesChartOptionsWithParts(options, parts);
+    expect(effective.theme).toBe("dark");
+    expect(effective.backgroundColor).toBe("#0b1520");
+  });
+
+  it("mergeChartPartsWithOptions aplica categoryColors[1] no fill da série", () => {
+    const merged = mergeChartPartsWithOptions(
+      chartOptionsToParts(mergeSeriesChartOptions({ seriesColor: "#0f766e" })),
+      mergeSeriesChartOptions({
+        seriesColor: "#0f766e",
+        categoryColors: ["#0f766e", "#14b8a6", "#115e59"],
+      }),
+    );
+    expect(merged["series:0"]?.style?.stroke).toBe("#0f766e");
+    expect(merged["series:0"]?.style?.fill).toBe("#14b8a6");
+  });
+
+  it("mergeChartPartsWithOptions aplica showMarkers sobre marker parts", () => {
+    const withHidden = {
+      ...chartOptionsToParts(mergeSeriesChartOptions({ showMarkers: false })),
+      "marker:0:0": { visible: false },
+    };
+    const shown = mergeChartPartsWithOptions(
+      withHidden,
+      mergeSeriesChartOptions({ showMarkers: true }),
+    );
+    expect(shown["marker:0:0"]?.visible).toBe(true);
+  });
+
   it("mergeChartPartsWithOptions preserva borda custom da chartArea", () => {
     const base = chartOptionsToParts(mergeSeriesChartOptions({}));
     const customized = upsertChartPartState(base, { kind: "chartArea" }, {

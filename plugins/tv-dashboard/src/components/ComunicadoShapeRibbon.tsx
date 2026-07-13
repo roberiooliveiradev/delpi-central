@@ -45,6 +45,10 @@ import { COMUNICADO_BOX_SHADOW_PRESETS } from "../content/comunicadoVisualPreset
 import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { selectedHasGroup } from "../utils/comunicadoGrouping";
 import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
+import {
+  isPartSelectionChrome,
+  resolveSelectionChromeMode,
+} from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { FormatRibbonAlignSection } from "./FormatRibbonAlignSection";
@@ -55,6 +59,7 @@ import {
   FormatRibbonFrameSection,
 } from "./formatRibbon";
 import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
+import { PartSelectionNav } from "./ComunicadoPartFormatRibbon";
 import { ShapeAdjustmentsControl } from "./ShapeAdjustmentsControl";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -85,9 +90,18 @@ export function ComunicadoShapeRibbon() {
     groupSelected,
     ungroupSelected,
     connectSelected,
+    clearKpiPartSelection,
   } = useComunicadoEditor();
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
+
+  const selectionChrome = resolveSelectionChromeMode({
+    selected,
+    selectedChartPart,
+    selectedKpiPart,
+    selectedTablePart,
+  });
+  const partChrome = isPartSelectionChrome(selectionChrome) ? selectionChrome : null;
 
   const multiSelected = selectedIds.length >= 2;
   const canDistribute = selectedIds.length >= 3;
@@ -166,6 +180,9 @@ export function ComunicadoShapeRibbon() {
 
   const shell = (chrome: ReactNode, opts?: { organize?: boolean }) => (
     <div className="td-deck-ribbon__groups">
+      {partChrome && partChrome.source === "kpi" ? (
+        <PartSelectionNav chrome={partChrome} onBack={clearKpiPartSelection} />
+      ) : null}
       {multiSelected ? (
         <FormatRibbonAlignSection
           canDistribute={canDistribute}

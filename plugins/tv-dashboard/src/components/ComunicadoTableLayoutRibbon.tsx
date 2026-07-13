@@ -8,7 +8,12 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import {
+  isPartSelectionChrome,
+  resolveSelectionChromeMode,
+} from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
 import { FormatRibbonFrameSection, FormatRibbonOrganizeSection } from "./formatRibbon";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
@@ -20,7 +25,15 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
  * Sem merge/insert estrutural (tabela data-bound).
  */
 export function ComunicadoTableLayoutRibbon() {
-  const { selected, updateSelected, openDataPanel } = useComunicadoEditor();
+  const { selected, selectedTablePart, updateSelected, openDataPanel } = useComunicadoEditor();
+
+  const selectionChrome = resolveSelectionChromeMode({
+    selected,
+    selectedTablePart,
+  });
+  if (isPartSelectionChrome(selectionChrome)) {
+    return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
+  }
 
   if (!selected || selected.type !== "table_view") {
     return (

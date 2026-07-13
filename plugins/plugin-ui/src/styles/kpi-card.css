@@ -108,8 +108,13 @@
   flex-shrink: 0;
   align-self: flex-start;
   box-sizing: border-box;
-  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 14%, transparent);
-  color: var(--delpi-ui-accent, #089bdb);
+  /* `--delpi-kpi-icon-fg` vem do inline style quando o usuário escolhe cor. */
+  background: color-mix(
+    in srgb,
+    var(--delpi-kpi-icon-fg, var(--delpi-ui-accent, #089bdb)) 14%,
+    transparent
+  );
+  color: var(--delpi-kpi-icon-fg, var(--delpi-ui-accent, #089bdb));
   border: 0 solid transparent;
 }
 
@@ -267,18 +272,30 @@
 }
 
 .delpi-kpi-card--positive .delpi-kpi-icon {
-  background: color-mix(in srgb, var(--delpi-ui-success, #16a34a) 14%, transparent);
-  color: var(--delpi-ui-success, #16a34a);
+  background: color-mix(
+    in srgb,
+    var(--delpi-kpi-icon-fg, var(--delpi-ui-success, #16a34a)) 14%,
+    transparent
+  );
+  color: var(--delpi-kpi-icon-fg, var(--delpi-ui-success, #16a34a));
 }
 
 .delpi-kpi-card--negative .delpi-kpi-icon {
-  background: color-mix(in srgb, var(--delpi-ui-danger, #dc2626) 14%, transparent);
-  color: var(--delpi-ui-danger, #dc2626);
+  background: color-mix(
+    in srgb,
+    var(--delpi-kpi-icon-fg, var(--delpi-ui-danger, #dc2626)) 14%,
+    transparent
+  );
+  color: var(--delpi-kpi-icon-fg, var(--delpi-ui-danger, #dc2626));
 }
 
 .delpi-kpi-card--warning .delpi-kpi-icon {
-  background: color-mix(in srgb, var(--delpi-ui-warning, #ea580c) 14%, transparent);
-  color: var(--delpi-ui-warning, #ea580c);
+  background: color-mix(
+    in srgb,
+    var(--delpi-kpi-icon-fg, var(--delpi-ui-warning, #ea580c)) 14%,
+    transparent
+  );
+  color: var(--delpi-kpi-icon-fg, var(--delpi-ui-warning, #ea580c));
 }
 
 .delpi-kpi-card-shell[data-custom-value="true"] .delpi-kpi-card__value {

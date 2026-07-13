@@ -11,11 +11,9 @@ import {
   mergeTablePartsWithOptions,
   partsToTableOptions,
   resolveTableFrameStyle,
-  serializeTablePartRef,
   tablePartAllowsDelete,
   upsertTablePartState,
   applyTablePartStyleToSiblingParts,
-  type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -24,28 +22,12 @@ import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { tablePartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 
 type Props = {
   pane?: boolean;
   block: ComunicadoTableViewBlock;
 };
-
-function tablePartLabel(part: ComunicadoTablePartRef): string {
-  switch (part.kind) {
-    case "frame":
-      return "Moldura";
-    case "title":
-      return "Título";
-    case "header":
-      return "Cabeçalho";
-    case "headerCell":
-      return `Coluna ${part.colIndex + 1}`;
-    case "cell":
-      return `Célula ${part.rowIndex + 1}:${part.colIndex + 1}`;
-    default:
-      return serializeTablePartRef(part);
-  }
-}
 
 type PartStylePatch = {
   fill?: string;
@@ -125,7 +107,7 @@ export function TablePartInspector({ pane = false, block }: Props) {
   return (
     <DeckPropertySection
       pane={pane}
-      title={`Parte: ${tablePartLabel(selectedTablePart)}`}
+      title={`Parte: ${tablePartSelectionLabel(selectedTablePart)}`}
       hint="Ajuste esta parte. Contorno da moldura também na aba Forma."
       defaultOpen
     >

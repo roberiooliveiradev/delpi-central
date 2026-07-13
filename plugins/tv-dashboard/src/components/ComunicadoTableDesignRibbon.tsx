@@ -24,7 +24,12 @@ import {
 import { TABLE_STYLE_RECIPES, type TableStyleRecipe } from "../content/tableStyleRecipes";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../content/comunicadoVisualPresets";
+import {
+  isPartSelectionChrome,
+  resolveSelectionChromeMode,
+} from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
@@ -73,6 +78,14 @@ export function ComunicadoTableDesignRibbon() {
   } = useComunicadoEditor();
   const [galleryOpen, setGalleryOpen] = useState(false);
   const galleryAnchorRef = useRef<HTMLDivElement>(null);
+
+  const selectionChrome = resolveSelectionChromeMode({
+    selected,
+    selectedTablePart,
+  });
+  if (isPartSelectionChrome(selectionChrome)) {
+    return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
+  }
 
   if (!selected || selected.type !== "table_view") {
     return (

@@ -24,7 +24,6 @@ import {
   upsertChartPartState,
   type ComunicadoChartOptions,
   type ComunicadoChartPartFrame,
-  type ComunicadoChartPartRef,
   type ComunicadoChartViewBlock,
   type ComunicadoFrame,
 } from "@delpi/tv-dashboard-presentation";
@@ -34,40 +33,12 @@ import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { chartPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 
 type Props = {
   pane?: boolean;
   block: ComunicadoChartViewBlock;
 };
-
-function chartPartLabel(part: ComunicadoChartPartRef): string {
-  switch (part.kind) {
-    case "chartArea":
-      return "Área do gráfico";
-    case "plotArea":
-      return "Área de plotagem";
-    case "title":
-      return "Título";
-    case "legend":
-      return "Legenda";
-    case "series":
-      return "Série (linha)";
-    case "marker":
-      return `Marcador ${part.pointIndex + 1}`;
-    case "dataLabel":
-      return `Rótulo ${part.pointIndex + 1}`;
-    case "axis":
-      return part.axis === "x" ? "Eixo X" : "Eixo Y";
-    case "axisTitle":
-      return part.axis === "x" ? "Título eixo X" : "Título eixo Y";
-    case "grid":
-      return "Grade";
-    case "dataTable":
-      return "Tabela de dados";
-    default:
-      return serializeChartPartRef(part);
-  }
-}
 
 function resolveSeriesPointCount(block: ComunicadoChartViewBlock): number {
   const points = block.resolved?.chart?.points;
@@ -218,7 +189,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
   return (
     <DeckPropertySection
       pane={pane}
-      title={`Parte: ${chartPartLabel(selectedChartPart)}`}
+      title={`Parte: ${chartPartSelectionLabel(selectedChartPart)}`}
       hint="Ajuste estilo e conteúdo desta parte. Del oculta a parte (não remove o gráfico)."
       defaultOpen
     >

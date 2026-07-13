@@ -1,15 +1,33 @@
 import { resolveObjectRibbonTab } from "../utils/resolveObjectRibbonTab";
+import {
+  isPartSelectionChrome,
+  resolveSelectionChromeMode,
+} from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoChartRibbon } from "./ComunicadoChartRibbon";
+import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
 import { ComunicadoShapeRibbon } from "./ComunicadoShapeRibbon";
 import { ComunicadoTableDesignRibbon } from "./ComunicadoTableDesignRibbon";
 
 /**
  * Aba Elemento (top bar) — tipografia, chrome e organização conforme o tipo.
- * Tabela usa as abas Design/Layout no chrome; fallback aqui se Elemento abrir.
+ * Com parte selecionada: só chrome da parte (não misturar com layout global).
  */
 export function ComunicadoElementRibbon() {
-  const { selected, selectedChartPart, selectedKpiPart } = useComunicadoEditor();
+  const { selected, selectedChartPart, selectedKpiPart, selectedTablePart } =
+    useComunicadoEditor();
+
+  const selectionChrome = resolveSelectionChromeMode({
+    selected,
+    selectedChartPart,
+    selectedKpiPart,
+    selectedTablePart,
+  });
+  /* KPI parte → ShapeRibbon (já tem Aparência); chart/tabela → PartFormatRibbon. */
+  if (isPartSelectionChrome(selectionChrome) && selectionChrome.source !== "kpi") {
+    return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
+  }
+
   const kind = resolveObjectRibbonTab({
     selected,
     selectedChartPart,

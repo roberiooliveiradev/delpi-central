@@ -68,6 +68,7 @@ export {
   migrateSeriesChartOptionsOnLoad,
   resolveSeriesChartDisplayOptions,
   resolveSeriesChartTicks,
+  resolveSeriesCategoryColor,
   seriesChartThemeStyle,
   usableSeriesChartPoints,
   type SeriesChartKind,

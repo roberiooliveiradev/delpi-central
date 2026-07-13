@@ -584,7 +584,7 @@ export function DelpiKpiCard({
               ]
                 .filter(Boolean)
                 .join(" ")}
-              style={resolveKpiIconBoxStyle(iconState)}
+              style={resolveKpiIconBoxStyle(iconState, cardBg)}
               aria-hidden="true"
               {...{
                 [KPI_PART_DATA_ATTR]: iconPtr[KPI_PART_DATA_ATTR],

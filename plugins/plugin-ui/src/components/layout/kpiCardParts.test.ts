@@ -144,6 +144,15 @@ describe("kpi icon layout", () => {
     expect(css.color).toBe("#0af");
     expect(css.borderRadius).toBe("10px");
     expect(css.borderWidth).toBe("2px");
+    expect((css as Record<string, string>)["--delpi-kpi-icon-fg"]).toBe("#0af");
+  });
+
+  it("resolveKpiIconBoxStyle resolve Automático sem gravar sentinel no CSS", () => {
+    const css = resolveKpiIconBoxStyle({
+      style: { color: "auto", fill: "#ffffff" },
+    });
+    expect(css.color).toBe("#000000");
+    expect((css as Record<string, string>)["--delpi-kpi-icon-fg"]).toBe("#000000");
   });
 
   it("resolveKpiPartLayoutStyle aplica frame absoluto e raio", () => {

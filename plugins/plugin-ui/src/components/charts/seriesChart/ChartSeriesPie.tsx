@@ -1,4 +1,5 @@
 import { DECK_CATEGORY_PALETTE } from "../../../theme/deckColorCatalog";
+import { resolveSeriesCategoryColor } from "../seriesChartOptions";
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   bindChartPartPointer,
@@ -15,9 +16,8 @@ export type ChartSeriesPieProps = Pick<SeriesChartSharedProps, "layout" | "point
   chartParts?: ChartPartsMap | null;
   /** Rosca (doughnut): raio interno relativo 0–0.9. */
   innerRadiusRatio?: number;
+  categoryColors?: string[] | null;
 };
-
-const SLICE_PALETTE = DECK_CATEGORY_PALETTE;
 
 function polar(cx: number, cy: number, r: number, angleRad: number) {
   return { x: cx + r * Math.cos(angleRad), y: cy + r * Math.sin(angleRad) };
@@ -62,6 +62,7 @@ export function ChartSeriesPie({
   seriesIndex = 0,
   chartParts,
   innerRadiusRatio = 0,
+  categoryColors,
 }: ChartSeriesPieProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH } = layout;
@@ -108,7 +109,7 @@ export function ChartSeriesPie({
         };
         const fill =
           getChartPartState(chartParts, markerRef)?.style?.fill ??
-          (i === 0 ? seriesColor : SLICE_PALETTE[i % SLICE_PALETTE.length]!);
+          resolveSeriesCategoryColor(i, seriesColor, categoryColors, DECK_CATEGORY_PALETTE);
         const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(
           markerRef,
           interaction,

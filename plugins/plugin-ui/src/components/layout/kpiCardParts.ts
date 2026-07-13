@@ -9,7 +9,7 @@ import type {
 } from "react";
 
 import type { MetricKpiCardTone } from "../layout/MetricKpiCard";
-import { AUTOMATIC_TEXT_COLOR } from "../shape/colorUtils";
+import { AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, resolvePaintTextColor } from "../shape/colorUtils";
 import { applyTextEffectStyleToCss } from "../shape/textEffectStyle";
 import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import { resolveTextPartColumnBoxLayout } from "../../utils/textPartBoxLayout";
@@ -371,7 +371,10 @@ export function resolveKpiPartLayoutStyle(
   const css: CSSProperties = {};
 
   if (style?.fill != null && style.fill !== "") css.background = style.fill;
-  if (style?.color) css.color = style.color;
+  /* Nunca gravar sentinel `auto` em CSS — inválido e perde para accent do tema. */
+  if (style?.color && !isAutomaticTextColor(style.color)) {
+    css.color = style.color;
+  }
   if (style?.stroke != null && style.stroke !== "") {
     css.borderColor = style.stroke;
     css.borderStyle = "solid";
@@ -465,8 +468,29 @@ export function kpiPartSupportsTypography(ref: KpiPartRef | null | undefined): b
 /** Estilo do box do ícone a partir de `kpiParts.icon` (cores, raio, frame/% ou size px). */
 export function resolveKpiIconBoxStyle(
   state: KpiPartState | null | undefined,
+  contrastBackground?: string | null,
 ): CSSProperties {
-  return resolveKpiPartLayoutStyle(state, { iconSizeFallback: true });
+  const css = resolveKpiPartLayoutStyle(state, { iconSizeFallback: true });
+  const rawColor = state?.style?.color?.trim();
+  if (!rawColor) {
+    return css;
+  }
+
+  const iconFill = state?.style?.fill;
+  const contrastBg =
+    iconFill && iconFill !== "transparent" && iconFill !== "none"
+      ? iconFill
+      : (contrastBackground ?? DECK_KPI_DEFAULTS.backgroundColor);
+
+  /* Cor do glyph — escolha do usuário (ou Automático vs fundo); nunca sentinel `auto` no CSS. */
+  const fg = isAutomaticTextColor(rawColor)
+    ? resolvePaintTextColor(AUTOMATIC_TEXT_COLOR, contrastBg)
+    : rawColor;
+  if (fg) {
+    css.color = fg;
+    (css as Record<string, string>)["--delpi-kpi-icon-fg"] = fg;
+  }
+  return css;
 }
 
 export function serializeKpiPartRef(ref: KpiPartRef): string {

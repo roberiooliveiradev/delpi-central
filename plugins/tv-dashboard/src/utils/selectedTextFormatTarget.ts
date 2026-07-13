@@ -11,6 +11,11 @@ import {
   type ComunicadoKpiPartRef,
 } from "@delpi/tv-dashboard-presentation";
 
+import {
+  chartPartSelectionLabel,
+  kpiPartSelectionLabel,
+} from "./resolveSelectionChromeMode";
+
 /** Subconjunto tipográfico compartilhado entre bloco de texto e parts KPI/chart. */
 export type TextFormatStyleSnapshot = {
   fontFamily?: string;
@@ -67,36 +72,6 @@ export function textFormatTargetSupportsParagraphAlign(
   target: SelectedTextFormatTarget | null | undefined,
 ): boolean {
   return Boolean(target);
-}
-
-function kpiPartLabel(part: ComunicadoKpiPartRef): string {
-  switch (part.kind) {
-    case "title":
-      return "Título";
-    case "hint":
-      return "Subtítulo";
-    case "value":
-      return "Valor";
-    default:
-      return part.kind;
-  }
-}
-
-function chartPartLabel(part: ComunicadoChartPartRef): string {
-  switch (part.kind) {
-    case "title":
-      return "Título";
-    case "legend":
-      return "Legenda";
-    case "axisTitle":
-      return `Título eixo ${part.axis?.toUpperCase() ?? ""}`.trim();
-    case "axis":
-      return `Eixo ${part.axis?.toUpperCase() ?? ""}`.trim();
-    case "dataLabel":
-      return "Rótulo de dados";
-    default:
-      return part.kind;
-  }
 }
 
 /**
@@ -169,7 +144,7 @@ export function resolveSelectedTextFormatTarget(params: {
       mode: "part",
       source: "kpi",
       blockId: selected.id,
-      partLabel: kpiPartLabel(selectedKpiPart),
+      partLabel: kpiPartSelectionLabel(selectedKpiPart),
       style: {
         fontFamily: partStyle?.fontFamily,
         fontSize: resolveKpiPartFontSize(kind, partStyle),
@@ -197,7 +172,7 @@ export function resolveSelectedTextFormatTarget(params: {
       mode: "part",
       source: "chart",
       blockId: selected.id,
-      partLabel: chartPartLabel(selectedChartPart),
+      partLabel: chartPartSelectionLabel(selectedChartPart),
       style: {
         fontFamily: partStyle?.fontFamily,
         fontSize: kind ? resolveChartPartFontSize(kind, partStyle) : partStyle?.fontSize,

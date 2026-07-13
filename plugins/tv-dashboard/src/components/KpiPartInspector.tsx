@@ -20,12 +20,10 @@ import {
   resolveViewportPixelSize,
   clearKpiPartsFreeLayoutFrames,
   seedKpiPartsFreeLayoutFrames,
-  serializeKpiPartRef,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
   isKpiTextPartKind,
   type ComunicadoKpiPartFrame,
-  type ComunicadoKpiPartRef,
   type ComunicadoKpiViewBlock,
   type KpiFramePartKind,
 } from "@delpi/tv-dashboard-presentation";
@@ -36,28 +34,12 @@ import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { kpiPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 
 type Props = {
   pane?: boolean;
   block: ComunicadoKpiViewBlock;
 };
-
-function kpiPartLabel(part: ComunicadoKpiPartRef): string {
-  switch (part.kind) {
-    case "card":
-      return "Card";
-    case "title":
-      return "Título";
-    case "value":
-      return "Valor";
-    case "hint":
-      return "Subtítulo";
-    case "icon":
-      return "Ícone";
-    default:
-      return serializeKpiPartRef(part);
-  }
-}
 
 type PartStylePatch = {
   fill?: string;
@@ -192,7 +174,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   return (
     <DeckPropertySection
       pane={pane}
-      title={`Parte: ${kpiPartLabel(selectedKpiPart)}`}
+      title={`Parte: ${kpiPartSelectionLabel(selectedKpiPart)}`}
       hint={
         isTextPart
           ? "Tipografia desta parte (igual à faixa superior). Fundo/borda da caixa não alteram o card."
