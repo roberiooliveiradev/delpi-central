@@ -241,6 +241,57 @@ def test_api_anchored_spaced_ocr_token():
     assert item["status"] == "ok"
 
 
+def test_description_noise_cabo_para_not_plausible_reference():
+    """Ruído de descrição no carimbo (COD: CABO PARA 1002) ≠ REF do cliente."""
+    assert not ChatDrawingCustomerReferenceCrossCheckService.is_plausible_reference(
+        "CABO PARA 1002"
+    )
+    assert (
+        ChatDrawingCustomerReferenceCrossCheckService.coerce_reference("CABO PARA 1002")
+        == ""
+    )
+
+
+def test_cabo_para_noise_without_fulltext_is_pending_not_critical():
+    """Sem haystack completo, extract sujo não pode reprovar por mismatch."""
+    item = ChatDrawingCustomerReferenceCrossCheckService.build_from_sources(
+        product={"customer_reference": "10432385"},
+        pdf_extract={"customerReference": "CABO PARA 1002", "legible": True},
+    )
+
+    assert item is not None
+    assert item["templateKey"] == "customer_reference_pending_pdf"
+    assert item["status"] == "pending"
+
+
+def test_cabo_para_noise_with_ref_in_fulltext_is_ok():
+    pdf_extract = {
+        "customerReference": "CABO PARA 1002",
+        "fullText": (
+            "CLIENTE: WEG INDUSTRIAS S.A - MOTORES\n"
+            "REF: 10432385\n"
+            "COD: CABO PARA 1002\n"
+            "90261823 REV: 00\n"
+        ),
+        "legible": True,
+    }
+    item = ChatDrawingCustomerReferenceCrossCheckService.build_from_sources(
+        product={"customer_reference": "10432385"},
+        pdf_extract=pdf_extract,
+    )
+
+    assert item is not None
+    assert item["templateKey"] == "customer_reference_ok"
+    assert item["status"] == "ok"
+
+
+def test_extract_from_text_skips_cabo_para_prefers_digit_ref():
+    blob = "COD: CABO PARA 1002\nREF: 10432385\n"
+    extracted = ChatDrawingCustomerReferenceCrossCheckService.extract_from_text(blob)
+
+    assert extracted == "10432385"
+
+
 def test_api_anchored_mismatch_when_pdf_has_other_ref():
     pdf_extract = {
         "customerReference": "99999999",

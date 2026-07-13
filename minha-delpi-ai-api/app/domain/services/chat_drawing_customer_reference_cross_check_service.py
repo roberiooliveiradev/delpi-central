@@ -88,8 +88,14 @@ class ChatDrawingCustomerReferenceCrossCheckService:
                 api_evidence=api_clean or api_norm,
             )
 
-        # Extração PDF trouxe outra REF/COD plausível — divergência real.
-        if api_norm and extracted_norm and extracted_norm != api_norm:
+        # Só crítico com outra REF/COD *forte* (ex.: dígitos / 3E4270G02).
+        # Ruído de descrição (CABO PARA 1002) → pending, não reprova.
+        if (
+            api_norm
+            and extracted_norm
+            and extracted_norm != api_norm
+            and cls.is_strong_reference_code(extracted_clean)
+        ):
             return content.item_from_template(
                 "customer_reference_mismatch",
                 status=cls._STATUS_CRITICAL,
@@ -97,7 +103,12 @@ class ChatDrawingCustomerReferenceCrossCheckService:
                 api_evidence=api_clean or api_norm,
             )
 
-        if api_norm and pdf_norm and pdf_norm != api_norm:
+        if (
+            api_norm
+            and pdf_norm
+            and pdf_norm != api_norm
+            and cls.is_strong_reference_code(pdf_clean)
+        ):
             return content.item_from_template(
                 "customer_reference_mismatch",
                 status=cls._STATUS_CRITICAL,
@@ -261,6 +272,46 @@ class ChatDrawingCustomerReferenceCrossCheckService:
         return False
 
     @classmethod
+    def has_description_noise_words(cls, raw: str) -> bool:
+        """Trecho de BOM/descrição (ex.: CABO PARA 1002) não é REF do cliente."""
+        upper = str(raw or "").upper()
+
+        if not upper.strip():
+            return False
+
+        for word in ChatDrawingPatternsService.customer_reference_description_noise_words():
+            if not word:
+                continue
+
+            if re.search(rf"(?<![A-Z0-9]){re.escape(word)}(?![A-Z0-9])", upper):
+                return True
+
+        return False
+
+    @classmethod
+    def is_strong_reference_code(cls, raw: str) -> bool:
+        """REF tipicamente numérica ou código compacto (ex.: 3E 4270 G02)."""
+        value = cls.sanitize_raw(raw)
+
+        if not value or not cls.is_plausible_reference(value):
+            return False
+
+        compact = re.sub(r"[^A-Z0-9]", "", value.upper())
+
+        if compact.isdigit():
+            return True
+
+        tokens = [part for part in re.split(r"[\s\-_/]+", value.upper()) if part]
+
+        if len(tokens) > 4:
+            return False
+
+        if any(len(token) > 10 for token in tokens):
+            return False
+
+        return bool(re.search(r"\d", compact))
+
+    @classmethod
     def is_plausible_reference(cls, raw: str) -> bool:
         value = cls.sanitize_raw(raw)
 
@@ -270,6 +321,9 @@ class ChatDrawingCustomerReferenceCrossCheckService:
         if cls.looks_like_customer_name(value):
             return False
 
+        if cls.has_description_noise_words(value):
+            return False
+
         compact = re.sub(r"[^A-Z0-9]", "", value.upper())
 
         if len(compact) < 4 or len(compact) > 24:
@@ -277,6 +331,10 @@ class ChatDrawingCustomerReferenceCrossCheckService:
 
         if compact.isdigit():
             return 4 <= len(compact) <= 14
+
+        # Código alfanumérico compacto exige ao menos um dígito (evita "CABOPARA").
+        if not re.search(r"\d", compact):
+            return False
 
         return bool(re.fullmatch(r"[A-Z0-9]{4,24}", compact))
 

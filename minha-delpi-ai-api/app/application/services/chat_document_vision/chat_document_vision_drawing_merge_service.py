@@ -40,6 +40,20 @@ class ChatDocumentVisionDrawingMergeService:
             if not merged.get(key) and doc.get(key):
                 merged[key] = doc[key]
 
+        # Haystack de REF/COD precisa do texto completo; visão pode enriquecer OCR.
+        base_text = str(merged.get("fullText") or "").strip()
+        doc_text = str(doc.get("fullText") or "").strip()
+
+        if not base_text and doc_text:
+            merged["fullText"] = doc_text
+        elif (
+            base_text
+            and doc_text
+            and doc_text not in base_text
+            and len(doc_text) >= 40
+        ):
+            merged["fullText"] = f"{base_text}\n\n{doc_text}".strip()
+
         for key in ("componentCodes", "intermediateCodes"):
             existing = list(merged.get(key) or [])
             incoming = doc.get(key)

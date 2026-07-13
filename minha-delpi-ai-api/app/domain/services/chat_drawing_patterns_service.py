@@ -933,6 +933,14 @@ class ChatDrawingPatternsService:
         return tuple(str(item).upper() for item in items if str(item).strip())
 
     @classmethod
+    def customer_reference_description_noise_words(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(
+            _STAMP_BUNDLE,
+            "customerReferenceDescriptionNoiseWords",
+        )
+        return tuple(str(item).upper() for item in items if str(item).strip())
+
+    @classmethod
     def title_separator_strip(cls) -> re.Pattern[str]:
         return cls.compile_stamp("titleSeparatorStrip")
 
