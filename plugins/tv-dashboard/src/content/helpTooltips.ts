@@ -151,6 +151,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     guides: "Exibe guias horizontais e verticais no centro do palco.",
     rulers: "Mostra réguas horizontais e verticais ao redor do palco, como no PowerPoint.",
     snap: "Encaixa posição e tamanho na grade e nas guias ao soltar o elemento.",
+    pan: "Arrastar o palco (pan). Ative e clique + arraste; Esc cancela a ferramenta.",
     showGroup: "Elementos visuais de apoio no palco do editor (não aparecem na TV).",
   },
   header: {

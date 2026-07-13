@@ -1012,6 +1012,20 @@
   align-items: flex-start;
 }
 
+.dashboard-tv-dashboard .td-composer__canvas-wrap--pan {
+  cursor: grab;
+  touch-action: none;
+}
+
+.dashboard-tv-dashboard .td-composer__canvas-wrap--pan > * {
+  /* Pan no wrap — bloqueia seleção/arraste de blocos enquanto a ferramenta está ativa. */
+  pointer-events: none;
+}
+
+.dashboard-tv-dashboard .td-composer__canvas-wrap--pan.td-composer__canvas-wrap--panning {
+  cursor: grabbing;
+}
+
 .dashboard-tv-dashboard .td-composer__canvas--zoomed {
   /* Zoom passa a ser inline no canvas (pixels de design × stageZoom). */
   transform: none;

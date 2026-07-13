@@ -1,5 +1,6 @@
 import {
   Grid3x3,
+  Hand,
   Maximize2,
   Ruler,
   ZoomIn,
@@ -9,12 +10,15 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { applyStagePanScrollDelta } from "../utils/stagePan";
 import {
   buildAxisRulerTicks,
   clampStageZoom,
@@ -53,7 +57,7 @@ const EMPTY_METRICS: StageMetrics = {
 function measureStageMetrics(
   wrap: HTMLDivElement | null,
   canvas: HTMLDivElement | null,
-  zoom: number,
+  _zoom: number,
 ): StageMetrics {
   if (!wrap || !canvas) return EMPTY_METRICS;
 
@@ -139,6 +143,8 @@ function ComunicadoStageStatusBar() {
     setShowStageGrid,
     showStageGuides,
     setShowStageGuides,
+    stagePanMode,
+    setStagePanMode,
   } = useComunicadoEditor();
 
   const zoomPercent = Math.round(stageZoom * 100);
@@ -175,6 +181,21 @@ function ComunicadoStageStatusBar() {
           onClick={() => setShowStageGuides(!showStageGuides)}
         >
           <Ruler size={14} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className={[
+            "td-stage-statusbar__toggle",
+            stagePanMode ? "td-stage-statusbar__toggle--active" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          title={V.pan}
+          aria-label="Pan"
+          aria-pressed={stagePanMode}
+          onClick={() => setStagePanMode(!stagePanMode)}
+        >
+          <Hand size={14} aria-hidden="true" />
         </button>
       </div>
 
@@ -232,8 +253,20 @@ type Props = {
 };
 
 export function ComunicadoStageShell({ children }: Props) {
-  const { stageZoom, showStageRulers, canvasWrapRef, canvasRef } = useComunicadoEditor();
+  const {
+    stageZoom,
+    showStageRulers,
+    canvasWrapRef,
+    canvasRef,
+    stagePanMode,
+    setStagePanMode,
+  } = useComunicadoEditor();
   const [metrics, setMetrics] = useState<StageMetrics>(EMPTY_METRICS);
+  const panDragRef = useRef<{
+    pointerId: number;
+    lastX: number;
+    lastY: number;
+  } | null>(null);
 
   const refreshMetrics = useCallback(() => {
     setMetrics(measureStageMetrics(canvasWrapRef.current, canvasRef.current, stageZoom));
@@ -252,9 +285,69 @@ export function ComunicadoStageShell({ children }: Props) {
     return () => observer.disconnect();
   }, [canvasRef, canvasWrapRef, refreshMetrics]);
 
+  useEffect(() => {
+    if (!stagePanMode) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setStagePanMode(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [setStagePanMode, stagePanMode]);
+
   const handleScroll = useCallback(() => {
     refreshMetrics();
   }, [refreshMetrics]);
+
+  const handlePanPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!stagePanMode) return;
+      if (event.button !== 0) return;
+      const wrap = canvasWrapRef.current;
+      if (!wrap) return;
+      event.preventDefault();
+      wrap.setPointerCapture(event.pointerId);
+      panDragRef.current = {
+        pointerId: event.pointerId,
+        lastX: event.clientX,
+        lastY: event.clientY,
+      };
+      wrap.classList.add("td-composer__canvas-wrap--panning");
+    },
+    [canvasWrapRef, stagePanMode],
+  );
+
+  const handlePanPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = panDragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      const wrap = canvasWrapRef.current;
+      if (!wrap) return;
+      const dx = event.clientX - drag.lastX;
+      const dy = event.clientY - drag.lastY;
+      drag.lastX = event.clientX;
+      drag.lastY = event.clientY;
+      const next = applyStagePanScrollDelta(wrap, dx, dy);
+      wrap.scrollLeft = next.scrollLeft;
+      wrap.scrollTop = next.scrollTop;
+    },
+    [canvasWrapRef],
+  );
+
+  const endPanDrag = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = panDragRef.current;
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      panDragRef.current = null;
+      const wrap = canvasWrapRef.current;
+      if (!wrap) return;
+      if (wrap.hasPointerCapture(event.pointerId)) {
+        wrap.releasePointerCapture(event.pointerId);
+      }
+      wrap.classList.remove("td-composer__canvas-wrap--panning");
+    },
+    [canvasWrapRef],
+  );
 
   const shellStyle = {
     "--td-ruler-size": `${STAGE_RULER_SIZE_PX}px`,
@@ -280,8 +373,19 @@ export function ComunicadoStageShell({ children }: Props) {
         ) : null}
         <div
           ref={canvasWrapRef}
-          className="td-composer__canvas-wrap td-composer__canvas-wrap--full td-composer__canvas-wrap--zoom"
+          className={[
+            "td-composer__canvas-wrap",
+            "td-composer__canvas-wrap--full",
+            "td-composer__canvas-wrap--zoom",
+            stagePanMode ? "td-composer__canvas-wrap--pan" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           onScroll={handleScroll}
+          onPointerDown={handlePanPointerDown}
+          onPointerMove={handlePanPointerMove}
+          onPointerUp={endPanDrag}
+          onPointerCancel={endPanDrag}
         >
           {children}
         </div>

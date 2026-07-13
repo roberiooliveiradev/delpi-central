@@ -14,6 +14,8 @@ import { computeFitStageZoom, clampStageZoom } from "../../utils/stageViewport";
  */
 export function useComunicadoEditorStage() {
   const [prefs, setPrefs] = useState<StageDisplayPreferences>(() => readStageDisplayPreferences());
+  /** Ferramenta pan (mão) — sessão; não persiste em localStorage. */
+  const [stagePanMode, setStagePanModeState] = useState(false);
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const snapEnabledRef = useRef(prefs.snapEnabled);
   const interactionCanvasRefSlot = useRef<RefObject<HTMLElement | null> | null>(null);
@@ -73,5 +75,9 @@ export function useComunicadoEditorStage() {
     canvasWrapRef,
     fitStageToView,
     bindCanvasRef,
+    stagePanMode,
+    setStagePanMode: (enabled: boolean) => {
+      setStagePanModeState(enabled);
+    },
   };
 }

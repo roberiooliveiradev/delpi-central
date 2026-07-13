@@ -491,6 +491,8 @@ export function ComunicadoEditorProvider({
     setShowStageGuides: stage.setShowStageGuides,
     snapEnabled: stage.snapEnabled,
     setSnapEnabled: stage.setSnapEnabled,
+    stagePanMode: stage.stagePanMode,
+    setStagePanMode: stage.setStagePanMode,
     fileInputRef: media.fileInputRef,
     handleUploadFile: media.handleUploadFile,
     uploadCustomFont: media.uploadCustomFont,

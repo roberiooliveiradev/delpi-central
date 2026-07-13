@@ -221,6 +221,9 @@ export type ComunicadoEditorContextValue = {
   setShowStageGuides: (show: boolean) => void;
   snapEnabled: boolean;
   setSnapEnabled: (enabled: boolean) => void;
+  /** Ferramenta pan (arrastar o palco). */
+  stagePanMode: boolean;
+  setStagePanMode: (enabled: boolean) => void;
   fileInputRef: RefObject<HTMLInputElement | null>;
   handleUploadFile: (file: File, target: "block" | "background") => void;
   uploadCustomFont: (file: File) => Promise<void>;
