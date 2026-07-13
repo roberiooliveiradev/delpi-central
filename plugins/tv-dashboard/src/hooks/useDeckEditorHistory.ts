@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Playlist } from "../api/tvDashboardApi";
 import {
@@ -8,6 +8,11 @@ import {
   syncPlaylistToSnapshot,
   type DeckEditorSnapshot,
 } from "../utils/deckEditorHistory";
+import {
+  clearDeckEditorHistory,
+  readDeckEditorHistory,
+  writeDeckEditorHistory,
+} from "../utils/deckEditorHistoryPreferences";
 
 type Options = {
   playlistId: string;
@@ -38,9 +43,25 @@ export function useDeckEditorHistory({
     setCanRedo(futureRef.current.length > 0);
   }, []);
 
+  const persistStacks = useCallback(() => {
+    if (!playlistId) return;
+    if (pastRef.current.length === 0 && futureRef.current.length === 0) {
+      clearDeckEditorHistory(playlistId);
+      return;
+    }
+    writeDeckEditorHistory(playlistId, pastRef.current, futureRef.current);
+  }, [playlistId]);
+
   const bumpHistoryEpoch = useCallback(() => {
     setHistoryEpoch((epoch) => epoch + 1);
   }, []);
+
+  useEffect(() => {
+    const stored = readDeckEditorHistory(playlistId);
+    pastRef.current = stored?.past ?? [];
+    futureRef.current = stored?.future ?? [];
+    refreshAvailability();
+  }, [playlistId, refreshAvailability]);
 
   const captureCurrent = useCallback((): DeckEditorSnapshot | null => {
     const playlist = getPlaylist();
@@ -53,20 +74,31 @@ export function useDeckEditorHistory({
     );
   }, [getComunicadoSlideId, getLiveComunicadoConfig, getPlaylist, getSelectedSlideId]);
 
-  const recordBeforeChange = useCallback((liveComunicadoOverride?: Record<string, unknown> | null) => {
-    if (syncingRef.current) return;
-    const playlist = getPlaylist();
-    if (!playlist) return;
-    const snapshot = buildDeckEditorSnapshot(
-      playlist,
-      getSelectedSlideId(),
-      liveComunicadoOverride ?? getLiveComunicadoConfig(),
-      getComunicadoSlideId(),
-    );
-    pastRef.current = pushDeckHistory(pastRef.current, snapshot);
-    futureRef.current = [];
-    refreshAvailability();
-  }, [getComunicadoSlideId, getLiveComunicadoConfig, getPlaylist, getSelectedSlideId, refreshAvailability]);
+  const recordBeforeChange = useCallback(
+    (liveComunicadoOverride?: Record<string, unknown> | null) => {
+      if (syncingRef.current) return;
+      const playlist = getPlaylist();
+      if (!playlist) return;
+      const snapshot = buildDeckEditorSnapshot(
+        playlist,
+        getSelectedSlideId(),
+        liveComunicadoOverride ?? getLiveComunicadoConfig(),
+        getComunicadoSlideId(),
+      );
+      pastRef.current = pushDeckHistory(pastRef.current, snapshot);
+      futureRef.current = [];
+      refreshAvailability();
+      persistStacks();
+    },
+    [
+      getComunicadoSlideId,
+      getLiveComunicadoConfig,
+      getPlaylist,
+      getSelectedSlideId,
+      persistStacks,
+      refreshAvailability,
+    ],
+  );
 
   const applyWithSync = useCallback(
     async (snapshot: DeckEditorSnapshot) => {
@@ -97,7 +129,8 @@ export function useDeckEditorHistory({
     }
     void applyWithSync(previous);
     refreshAvailability();
-  }, [applyWithSync, captureCurrent, refreshAvailability]);
+    persistStacks();
+  }, [applyWithSync, captureCurrent, persistStacks, refreshAvailability]);
 
   const redo = useCallback(() => {
     const next = futureRef.current.pop();
@@ -108,13 +141,15 @@ export function useDeckEditorHistory({
     }
     void applyWithSync(next);
     refreshAvailability();
-  }, [applyWithSync, captureCurrent, refreshAvailability]);
+    persistStacks();
+  }, [applyWithSync, captureCurrent, persistStacks, refreshAvailability]);
 
   const reset = useCallback(() => {
     pastRef.current = [];
     futureRef.current = [];
     refreshAvailability();
-  }, [refreshAvailability]);
+    clearDeckEditorHistory(playlistId);
+  }, [playlistId, refreshAvailability]);
 
   return {
     recordBeforeChange,
