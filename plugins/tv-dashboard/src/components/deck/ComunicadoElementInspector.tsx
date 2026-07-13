@@ -11,6 +11,8 @@ import {
   BLOCK_ENTRANCE_PRESET_OPTIONS,
   entranceAnimationFromPreset,
   entrancePresetValue,
+  formatDesignPx,
+  framePercentToDesignPx,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
@@ -18,7 +20,9 @@ import {
   isPointShapeKind,
   normalizeHrefInput,
   normalizeCanvasTableCells,
+  patchComunicadoFrameDesignPx,
   resolveEntranceAnimation,
+  resolveViewportPixelSize,
   shapeHasAdjustments,
   visualBoxSupportsShapeFormatting,
   type ComunicadoBlock,
@@ -45,17 +49,13 @@ const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 const FRAME_KEYS = ["x", "y", "w", "h"] as const;
 const FRAME_LABELS: Record<(typeof FRAME_KEYS)[number], string> = {
-  x: "X %",
-  y: "Y %",
-  w: "Largura %",
-  h: "Altura %",
+  x: "X px",
+  y: "Y px",
+  w: "Largura px",
+  h: "Altura px",
 };
 
 type Labels = Record<string, string>;
-
-function formatFrameValue(value: number): string {
-  return String(Math.round(value * 10) / 10);
-}
 
 export function ComunicadoElementInspector({
   labels = {},
@@ -81,8 +81,10 @@ export function ComunicadoElementInspector({
     triggerUpload,
     openMediaLibrary,
     updateBlockLink,
+    viewportProfile,
   } = useComunicadoEditor();
 
+  const slideDesign = resolveViewportPixelSize(viewportProfile);
   const multiSelect = selectedIds.length > 1;
   const isShapeBlock =
     selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsShapeFormatting(selected);
@@ -353,6 +355,7 @@ export function ComunicadoElementInspector({
           {(() => {
             const pointOnly =
               selected.type === "shape" && isPointShapeKind(selected.shape);
+            const framePx = framePercentToDesignPx(selected.frame, slideDesign);
             return (
               <>
                 <div className="td-deck-frame-grid">
@@ -367,13 +370,18 @@ export function ComunicadoElementInspector({
                       <NativeTextControl
                         id={`td-frame-${key}`}
                         type="number"
-                        min={0}
-                        max={100}
-                        step={0.1}
-                        value={formatFrameValue(selected.frame[key])}
+                        min={key === "w" || key === "h" ? 1 : 0}
+                        max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
+                        step={1}
+                        value={String(formatDesignPx(framePx[key]))}
                         onChange={(value) =>
                           updateSelected({
-                            frame: { ...selected.frame, [key]: Number(value) },
+                            frame: patchComunicadoFrameDesignPx(
+                              selected.frame,
+                              key,
+                              Number(value),
+                              slideDesign,
+                            ),
                           } as Partial<ComunicadoBlock>)
                         }
                       />

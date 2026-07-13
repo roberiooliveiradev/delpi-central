@@ -6,8 +6,11 @@ import {
   clampKpiPartFrame,
   defaultChartPartFrame,
   defaultKpiPartFrame,
+  formatDesignPx,
+  framePercentToDesignPx,
   getChartPartState,
   getKpiPartState,
+  hostDesignSizeFromFramePercent,
   resolveKpiPartFrame,
   isPointShapeKind,
   kpiPartAllowsFrame,
@@ -15,7 +18,10 @@ import {
   mergeKpiPartsWithOptions,
   partsToChartOptions,
   partsToKpiOptions,
+  patchComunicadoFrame,
+  patchComunicadoFrameDesignPx,
   resolveBlockShapeChromeStyle,
+  resolveViewportPixelSize,
   seedKpiPartsFreeLayoutFrames,
   upsertChartPartState,
   upsertKpiPartState,
@@ -24,6 +30,7 @@ import {
   type ComunicadoFrame,
   type ComunicadoKpiViewBlock,
   type KpiFramePartKind,
+  type ViewportPixelSize,
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -37,10 +44,10 @@ const SIZE_KEYS = ["w", "h"] as const;
 const POSITION_KEYS = ["x", "y"] as const;
 
 const FRAME_LABELS: Record<"x" | "y" | "w" | "h", string> = {
-  x: "X %",
-  y: "Y %",
-  w: "Larg. %",
-  h: "Alt. %",
+  x: "X px",
+  y: "Y px",
+  w: "Larg. px",
+  h: "Alt. px",
 };
 
 const FRAME_HINTS: Record<"x" | "y" | "w" | "h", string> = {
@@ -50,34 +57,13 @@ const FRAME_HINTS: Record<"x" | "y" | "w" | "h", string> = {
   h: H.frameH,
 };
 
-function formatFrameValue(value: number): number {
-  return Number((Number.isFinite(value) ? value : 0).toFixed(1));
-}
-
-/** Ajusta eixo do frame mantendo o bloco dentro do palco (0–100%). */
-export function patchComunicadoFrame(
-  frame: ComunicadoFrame,
-  key: keyof ComunicadoFrame,
-  raw: number,
-): ComunicadoFrame {
-  const value = Number.isFinite(raw) ? raw : frame[key];
-  if (key === "w" || key === "h") {
-    const size = Math.max(0.5, Math.min(100, value));
-    const next = { ...frame, [key]: size };
-    if (key === "w") {
-      next.x = Math.max(0, Math.min(100 - size, frame.x));
-    } else {
-      next.y = Math.max(0, Math.min(100 - size, frame.y));
-    }
-    return next;
-  }
-  const max = key === "x" ? 100 - frame.w : 100 - frame.h;
-  return { ...frame, [key]: Math.max(0, Math.min(max, value)) };
-}
+/** @deprecated Preferir `patchComunicadoFrame` / `patchComunicadoFrameDesignPx` em presentation. */
+export { patchComunicadoFrame };
 
 /**
  * Posição / tamanho / rotação / raio — bloco no palco ou parte do KPI/gráfico
  * (title/value/hint/icon ou title/legend/plotArea), espelhando o inspetor.
+ * UI em px de design; modelo permanece em %.
  */
 export function FormatRibbonFrameSection() {
   const {
@@ -87,7 +73,10 @@ export function FormatRibbonFrameSection() {
     selectedChartPart,
     updateSelected,
     updateSelectedStyle,
+    viewportProfile,
   } = useComunicadoEditor();
+
+  const slideDesign = resolveViewportPixelSize(viewportProfile);
 
   if (!selected || selectedIds.length > 1) return null;
 
@@ -104,12 +93,12 @@ export function FormatRibbonFrameSection() {
     const partFrame = clampKpiPartFrame(explicitFrame ?? defaultKpiPartFrame(frameKind));
     const borderRadius = partState?.style?.borderRadius ?? 0;
     const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
+    const hostDesign = hostDesignSizeFromFramePercent(block.frame, slideDesign);
+    const partFramePx = framePercentToDesignPx(partFrame, hostDesign);
 
-    const setPartFrameKey = (key: "x" | "y" | "w" | "h", raw: number) => {
-      const nextFrame = clampKpiPartFrame({
-        ...partFrame,
-        [key]: Number.isFinite(raw) ? raw : partFrame[key],
-      });
+    const setPartFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
+      const nextPct = patchComunicadoFrameDesignPx(partFrame, key, rawPx, hostDesign);
+      const nextFrame = clampKpiPartFrame(nextPct);
       const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, { frame: nextFrame });
       updateSelected({
         kpiParts: mergeKpiPartsWithOptions(nextParts, partsToKpiOptions(nextParts)),
@@ -135,7 +124,7 @@ export function FormatRibbonFrameSection() {
     return (
       <DeckRibbonGroup
         label="Posição e tamanho"
-        hint="Posição da parte no card (%) — não é o bloco no slide."
+        hint="Posição da parte no card (px de design) — não é o bloco no slide."
       >
         {!explicitFrame ? (
           <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -155,11 +144,11 @@ export function FormatRibbonFrameSection() {
                   id={`td-ribbon-kpi-part-frame-${key}`}
                   type="number"
                   className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                  min={key === "w" || key === "h" ? 4 : 0}
-                  max={key === "w" || key === "h" ? 100 : 100}
-                  step={0.5}
+                  min={key === "w" || key === "h" ? 1 : 0}
+                  max={key === "x" || key === "w" ? hostDesign.width : hostDesign.height}
+                  step={1}
                   aria-label={FRAME_LABELS[key]}
-                  value={formatFrameValue(partFrame[key] ?? 0)}
+                  value={formatDesignPx(partFramePx[key] ?? 0)}
                   onChange={(value) => setPartFrameKey(key, Number(value))}
                 />
               </span>
@@ -200,13 +189,22 @@ export function FormatRibbonFrameSection() {
     const defaults = defaultChartPartFrame(chartPartTarget);
     const partFrame = clampChartPartFrame(partState?.frame ?? defaults);
     const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
+    const hostDesign = hostDesignSizeFromFramePercent(block.frame, slideDesign);
+    const partFrameForPx: ComunicadoFrame = {
+      x: partFrame.x,
+      y: partFrame.y,
+      w: partFrame.w ?? defaults.w ?? 20,
+      h: partFrame.h ?? defaults.h ?? 20,
+    };
+    const partFramePx = framePercentToDesignPx(partFrameForPx, hostDesign);
 
-    const setPartFrameKey = (key: "x" | "y" | "w" | "h", raw: number) => {
+    const setPartFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
+      const nextPct = patchComunicadoFrameDesignPx(partFrameForPx, key, rawPx, hostDesign);
       const nextFrame = clampChartPartFrame({
         ...partFrame,
         w: partFrame.w ?? defaults.w,
         h: partFrame.h ?? defaults.h,
-        [key]: Number.isFinite(raw) ? raw : (partFrame[key] ?? defaults[key] ?? 0),
+        ...nextPct,
       });
       const nextParts = upsertChartPartState(block.chartParts, chartPartTarget, {
         frame: nextFrame,
@@ -231,11 +229,11 @@ export function FormatRibbonFrameSection() {
                 id={`td-ribbon-chart-part-frame-${key}`}
                 type="number"
                 className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                min={key === "w" || key === "h" ? 5 : 0}
-                max={100}
-                step={0.5}
+                min={key === "w" || key === "h" ? 1 : 0}
+                max={key === "x" || key === "w" ? hostDesign.width : hostDesign.height}
+                step={1}
                 aria-label={FRAME_LABELS[key]}
-                value={formatFrameValue(partFrame[key] ?? defaults[key] ?? 0)}
+                value={formatDesignPx(partFramePx[key] ?? 0)}
                 onChange={(value) => setPartFrameKey(key, Number(value))}
               />
             </span>
@@ -259,11 +257,16 @@ export function FormatRibbonFrameSection() {
     !pointOnly &&
     !(selected.type === "kpi_view" && selectedKpiPart == null);
 
-  const setFrameKey = (key: "x" | "y" | "w" | "h", raw: number) => {
+  const framePx = framePercentToDesignPx(selected.frame, slideDesign);
+
+  const setFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
     updateSelected({
-      frame: patchComunicadoFrame(selected.frame, key, raw),
+      frame: patchComunicadoFrameDesignPx(selected.frame, key, rawPx, slideDesign),
     } as Partial<ComunicadoBlock>);
   };
+
+  const axisMax = (key: "x" | "y" | "w" | "h", design: ViewportPixelSize) =>
+    key === "x" || key === "w" ? design.width : design.height;
 
   return (
     <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
@@ -280,11 +283,11 @@ export function FormatRibbonFrameSection() {
               id={`td-ribbon-frame-${key}`}
               type="number"
               className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-              min={key === "w" || key === "h" ? 0.5 : 0}
-              max={100}
-              step={0.5}
+              min={key === "w" || key === "h" ? 1 : 0}
+              max={axisMax(key, slideDesign)}
+              step={1}
               aria-label={FRAME_LABELS[key]}
-              value={formatFrameValue(selected.frame[key])}
+              value={formatDesignPx(framePx[key])}
               onChange={(value) => setFrameKey(key, Number(value))}
             />
           </span>

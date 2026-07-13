@@ -5,7 +5,10 @@ import {
   clampKpiPartFrame,
   defaultKpiPartFrame,
   deleteKpiPart,
+  formatDesignPx,
+  framePercentToDesignPx,
   getKpiPartState,
+  hostDesignSizeFromFramePercent,
   kpiPartAllowsDelete,
   kpiPartAllowsFrame,
   kpiPartBoxChromeLabels,
@@ -13,7 +16,9 @@ import {
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
+  patchComunicadoFrameDesignPx,
   resolveKpiPartFrame,
+  resolveViewportPixelSize,
   clearKpiPartsFreeLayoutFrames,
   seedKpiPartsFreeLayoutFrames,
   serializeKpiPartRef,
@@ -79,10 +84,13 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     clearKpiPartSelection,
     beginEditKpiPart,
     updateSelected,
+    viewportProfile,
   } = useComunicadoEditor();
 
   if (!selectedKpiPart) return null;
 
+  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const hostDesign = hostDesignSizeFromFramePercent(block.frame, slideDesign);
   const options = mergeComunicadoKpiOptions({
     ...block.kpiOptions,
     ...partsToKpiOptions(block.kpiParts),
@@ -94,6 +102,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
   const frameKind = selectedKpiPart.kind as KpiFramePartKind;
   const explicitFrame = resolveKpiPartFrame(partState);
   const partFrame = clampKpiPartFrame(explicitFrame ?? defaultKpiPartFrame(frameKind));
+  const partFramePx = framePercentToDesignPx(partFrame, hostDesign);
   const boxLabels = kpiPartBoxChromeLabels(selectedKpiPart.kind);
   const isTextPart = kpiPartSupportsTypography(selectedKpiPart);
   const cardFill =
@@ -139,8 +148,9 @@ export function KpiPartInspector({ pane = false, block }: Props) {
     } as Partial<typeof block>);
   };
 
-  const persistPartFrame = (patch: Partial<ComunicadoKpiPartFrame>) => {
-    persistPart({ frame: clampKpiPartFrame({ ...partFrame, ...patch }) });
+  const persistPartFramePx = (key: "x" | "y" | "w" | "h", rawPx: number) => {
+    const nextPct = patchComunicadoFrameDesignPx(partFrame, key, rawPx, hostDesign);
+    persistPart({ frame: clampKpiPartFrame(nextPct) });
   };
 
   const enableFreePosition = () => {
@@ -387,7 +397,7 @@ export function KpiPartInspector({ pane = false, block }: Props) {
       {frameable ? (
         <>
           <p className="td-deck-inspector__hint">
-            Posição da parte no card (%) — não é a posição do bloco no slide
+            Posição da parte no card (px de design) — não é a posição do bloco no slide
           </p>
           {!explicitFrame ? (
             <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -396,50 +406,50 @@ export function KpiPartInspector({ pane = false, block }: Props) {
           ) : (
             <>
               <div className="td-part-inspector-toolbar__fields-row">
-                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-x`} label="Posição X (%)">
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-x`} label="Posição X (px)">
                   <NativeTextControl
                     id={`td-kpi-part-${selectedKpiPart.kind}-x`}
                     type="number"
                     min={0}
-                    max={100}
-                    step={0.5}
-                    value={Number(partFrame.x.toFixed(1))}
-                    onChange={(value) => persistPartFrame({ x: Number(value) || 0 })}
+                    max={hostDesign.width}
+                    step={1}
+                    value={formatDesignPx(partFramePx.x)}
+                    onChange={(value) => persistPartFramePx("x", Number(value) || 0)}
                   />
                 </DeckField>
-                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-y`} label="Posição Y (%)">
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-y`} label="Posição Y (px)">
                   <NativeTextControl
                     id={`td-kpi-part-${selectedKpiPart.kind}-y`}
                     type="number"
                     min={0}
-                    max={100}
-                    step={0.5}
-                    value={Number(partFrame.y.toFixed(1))}
-                    onChange={(value) => persistPartFrame({ y: Number(value) || 0 })}
+                    max={hostDesign.height}
+                    step={1}
+                    value={formatDesignPx(partFramePx.y)}
+                    onChange={(value) => persistPartFramePx("y", Number(value) || 0)}
                   />
                 </DeckField>
               </div>
               <div className="td-part-inspector-toolbar__fields-row">
-                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-w`} label="Largura (%)">
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-w`} label="Largura (px)">
                   <NativeTextControl
                     id={`td-kpi-part-${selectedKpiPart.kind}-w`}
                     type="number"
-                    min={4}
-                    max={96}
-                    step={0.5}
-                    value={Number((partFrame.w ?? 20).toFixed(1))}
-                    onChange={(value) => persistPartFrame({ w: Number(value) || 4 })}
+                    min={1}
+                    max={hostDesign.width}
+                    step={1}
+                    value={formatDesignPx(partFramePx.w)}
+                    onChange={(value) => persistPartFramePx("w", Number(value) || 1)}
                   />
                 </DeckField>
-                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-h`} label="Altura (%)">
+                <DeckField id={`td-kpi-part-${selectedKpiPart.kind}-h`} label="Altura (px)">
                   <NativeTextControl
                     id={`td-kpi-part-${selectedKpiPart.kind}-h`}
                     type="number"
-                    min={4}
-                    max={96}
-                    step={0.5}
-                    value={Number((partFrame.h ?? 20).toFixed(1))}
-                    onChange={(value) => persistPartFrame({ h: Number(value) || 4 })}
+                    min={1}
+                    max={hostDesign.height}
+                    step={1}
+                    value={formatDesignPx(partFramePx.h)}
+                    onChange={(value) => persistPartFramePx("h", Number(value) || 1)}
                   />
                 </DeckField>
               </div>

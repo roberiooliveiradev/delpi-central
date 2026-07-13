@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { patchComunicadoFrame } from "./FormatRibbonFrameSection";
+import { patchComunicadoFrame } from "@delpi/tv-dashboard-presentation";
 
 describe("patchComunicadoFrame", () => {
   const base = { x: 10, y: 20, w: 30, h: 40 };

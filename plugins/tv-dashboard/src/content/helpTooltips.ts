@@ -66,10 +66,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     boxShadow:
       "Sombra: presets (inclui Elevada com 2 camadas e Interna), externa/interna, camadas e ajuste fino de X, Y, desfoque, expansão, opacidade e cor.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
-    frameX: "Posição horizontal do canto esquerdo, em % da largura do palco (0–100).",
-    frameY: "Posição vertical do topo, em % da altura do palco (0–100).",
-    frameW: "Largura do elemento em % da largura do palco.",
-    frameH: "Altura do elemento em % da altura do palco.",
+    frameX: "Posição horizontal do canto esquerdo, em pixels de design do palco (não muda com o zoom).",
+    frameY: "Posição vertical do topo, em pixels de design do palco (não muda com o zoom).",
+    frameW: "Largura do elemento em pixels de design do palco.",
+    frameH: "Altura do elemento em pixels de design do palco.",
     frameRotation: "Gira o elemento em graus (−180 a 180) em torno do centro do quadro.",
     alignSelectionLeft: "Alinhar borda esquerda dos elementos selecionados.",
     alignSelectionCenterH: "Centralizar horizontalmente a seleção.",
@@ -280,7 +280,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     shapeText: "Texto opcional renderizado dentro da forma.",
     strokeWidth: "Espessura da borda da forma, em pixels.",
     position:
-      "Posição e tamanho em percentual do palco (0–100). Útil para alinhamento preciso entre elementos.",
+      "Posição e tamanho em pixels de design do palco. O zoom só altera a vista; os valores permanecem os mesmos.",
     rotation: "Gira o elemento em graus (−180 a 180) em torno do centro do quadro.",
     layerUp: "Move o elemento uma camada acima, sobrepondo os demais.",
     layerDown: "Envia o elemento uma camada abaixo, atrás dos demais.",

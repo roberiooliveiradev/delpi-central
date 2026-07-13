@@ -20,11 +20,12 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { applyStagePanScrollDelta, stageScrollAfterZoomTowardPoint } from "../utils/stagePan";
+import { resolveViewportPixelSize } from "@delpi/tv-dashboard-presentation";
+
 import {
   buildAxisRulerTicks,
   clampStageZoom,
   STAGE_RULER_SIZE_PX,
-  STAGE_RULER_UNITS,
   STAGE_ZOOM_MAX,
   STAGE_ZOOM_MIN,
   stageZoomFromWheelDelta,
@@ -79,12 +80,21 @@ function measureStageMetrics(
   };
 }
 
-function StageRulerHorizontal({ metrics, zoom }: { metrics: StageMetrics; zoom: number }) {
-  const pxPerUnit = metrics.canvasW > 0 ? (metrics.canvasW * zoom) / STAGE_RULER_UNITS : 0;
+function StageRulerHorizontal({
+  metrics,
+  zoom,
+  designWidth,
+}: {
+  metrics: StageMetrics;
+  zoom: number;
+  designWidth: number;
+}) {
+  const unitsTotal = designWidth > 0 ? designWidth : metrics.canvasW;
+  const pxPerUnit = unitsTotal > 0 ? (metrics.canvasW * zoom) / unitsTotal : 0;
   const ticks = useMemo(
     () =>
-      buildAxisRulerTicks(metrics.wrapW, pxPerUnit, metrics.originL, metrics.scrollL, STAGE_RULER_UNITS),
-    [metrics.canvasW, metrics.originL, metrics.scrollL, metrics.wrapW, pxPerUnit],
+      buildAxisRulerTicks(metrics.wrapW, pxPerUnit, metrics.originL, metrics.scrollL, unitsTotal),
+    [metrics.originL, metrics.scrollL, metrics.wrapW, pxPerUnit, unitsTotal],
   );
 
   return (
@@ -108,12 +118,21 @@ function StageRulerHorizontal({ metrics, zoom }: { metrics: StageMetrics; zoom: 
   );
 }
 
-function StageRulerVertical({ metrics, zoom }: { metrics: StageMetrics; zoom: number }) {
-  const pxPerUnit = metrics.canvasH > 0 ? (metrics.canvasH * zoom) / STAGE_RULER_UNITS : 0;
+function StageRulerVertical({
+  metrics,
+  zoom,
+  designHeight,
+}: {
+  metrics: StageMetrics;
+  zoom: number;
+  designHeight: number;
+}) {
+  const unitsTotal = designHeight > 0 ? designHeight : metrics.canvasH;
+  const pxPerUnit = unitsTotal > 0 ? (metrics.canvasH * zoom) / unitsTotal : 0;
   const ticks = useMemo(
     () =>
-      buildAxisRulerTicks(metrics.wrapH, pxPerUnit, metrics.originT, metrics.scrollT, STAGE_RULER_UNITS),
-    [metrics.canvasH, metrics.originT, metrics.scrollT, metrics.wrapH, pxPerUnit],
+      buildAxisRulerTicks(metrics.wrapH, pxPerUnit, metrics.originT, metrics.scrollT, unitsTotal),
+    [metrics.originT, metrics.scrollT, metrics.wrapH, pxPerUnit, unitsTotal],
   );
 
   return (
@@ -277,7 +296,9 @@ export function ComunicadoStageShell({ children }: Props) {
     stagePanMode,
     setStagePanMode,
     persistStageViewPosition,
+    viewportProfile,
   } = useComunicadoEditor();
+  const slideDesign = resolveViewportPixelSize(viewportProfile);
   const [metrics, setMetrics] = useState<StageMetrics>(EMPTY_METRICS);
   const [ctrlPanHeld, setCtrlPanHeld] = useState(false);
   const panDragRef = useRef<{
@@ -453,8 +474,16 @@ export function ComunicadoStageShell({ children }: Props) {
         {showStageRulers ? (
           <>
             <div className="td-stage-shell__corner" aria-hidden="true" />
-            <StageRulerHorizontal metrics={metrics} zoom={stageZoom} />
-            <StageRulerVertical metrics={metrics} zoom={stageZoom} />
+            <StageRulerHorizontal
+              metrics={metrics}
+              zoom={stageZoom}
+              designWidth={slideDesign.width}
+            />
+            <StageRulerVertical
+              metrics={metrics}
+              zoom={stageZoom}
+              designHeight={slideDesign.height}
+            />
           </>
         ) : null}
         <div

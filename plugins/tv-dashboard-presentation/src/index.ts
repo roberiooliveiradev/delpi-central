@@ -26,6 +26,16 @@ export {
   resolveViewportPixelSize,
   type ViewportPixelSize,
 } from "./viewportPixelSize";
+export {
+  designPxToPercent,
+  formatDesignPx,
+  frameDesignPxToPercent,
+  framePercentToDesignPx,
+  hostDesignSizeFromFramePercent,
+  patchComunicadoFrame,
+  patchComunicadoFrameDesignPx,
+  percentToDesignPx,
+} from "./frameDesignPixels";
 export { formatPct, formatNumber } from "./nativeFormat";
 export type {
   PresentationMeta,

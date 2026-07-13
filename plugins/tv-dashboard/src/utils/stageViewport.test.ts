@@ -35,12 +35,20 @@ describe("stageViewport", () => {
     canvas.remove();
   });
 
-  it("gera marcas da régua com rótulos a cada 20 unidades", () => {
+  it("gera marcas da régua com rótulos a cada 20 unidades (eixo 0–100)", () => {
     const ticks = buildAxisRulerTicks(200, 2, 0, 0, STAGE_RULER_UNITS);
     const labels = ticks.filter((tick) => tick.label).map((tick) => tick.label);
     expect(labels).toContain("0");
     expect(labels).toContain("20");
     expect(labels).toContain("40");
+  });
+
+  it("gera marcas da régua em px de design (1080p)", () => {
+    const ticks = buildAxisRulerTicks(400, 1, 0, 0, 1920);
+    const labels = ticks.filter((tick) => tick.label).map((tick) => tick.label);
+    expect(labels).toContain("0");
+    expect(labels).toContain("200");
+    expect(labels).toContain("400");
   });
 
   it("oculta grade abaixo do zoom mínimo útil", () => {

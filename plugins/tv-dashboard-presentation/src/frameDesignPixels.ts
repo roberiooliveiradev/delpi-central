@@ -1,0 +1,97 @@
+import type { ComunicadoFrame } from "./comunicadoTypes";
+import type { ViewportPixelSize } from "./viewportPixelSize";
+
+/** % do eixo → px de design. */
+export function percentToDesignPx(percent: number, axisSize: number): number {
+  if (!(axisSize > 0) || !Number.isFinite(percent)) return 0;
+  return (percent / 100) * axisSize;
+}
+
+/** px de design → % do eixo. */
+export function designPxToPercent(px: number, axisSize: number): number {
+  if (!(axisSize > 0) || !Number.isFinite(px)) return 0;
+  return (px / axisSize) * 100;
+}
+
+/** Frame persistido (%) → px de design do slide/host. */
+export function framePercentToDesignPx(
+  frame: ComunicadoFrame,
+  designSize: ViewportPixelSize,
+): ComunicadoFrame {
+  return {
+    x: percentToDesignPx(frame.x, designSize.width),
+    y: percentToDesignPx(frame.y, designSize.height),
+    w: percentToDesignPx(frame.w, designSize.width),
+    h: percentToDesignPx(frame.h, designSize.height),
+  };
+}
+
+/** Frame em px de design → % para persistência. */
+export function frameDesignPxToPercent(
+  framePx: ComunicadoFrame,
+  designSize: ViewportPixelSize,
+): ComunicadoFrame {
+  return {
+    x: designPxToPercent(framePx.x, designSize.width),
+    y: designPxToPercent(framePx.y, designSize.height),
+    w: designPxToPercent(framePx.w, designSize.width),
+    h: designPxToPercent(framePx.h, designSize.height),
+  };
+}
+
+/**
+ * Tamanho do host em px de design a partir do frame %-do-slide do bloco
+ * (partes KPI/chart usam % relativos a este host).
+ */
+export function hostDesignSizeFromFramePercent(
+  hostFramePct: Pick<ComunicadoFrame, "w" | "h">,
+  slideDesign: ViewportPixelSize,
+): ViewportPixelSize {
+  return {
+    width: Math.max(1, percentToDesignPx(hostFramePct.w, slideDesign.width)),
+    height: Math.max(1, percentToDesignPx(hostFramePct.h, slideDesign.height)),
+  };
+}
+
+/** Ajusta eixo do frame mantendo o bloco dentro do palco (0–100%). */
+export function patchComunicadoFrame(
+  frame: ComunicadoFrame,
+  key: keyof ComunicadoFrame,
+  raw: number,
+): ComunicadoFrame {
+  const value = Number.isFinite(raw) ? raw : frame[key];
+  if (key === "w" || key === "h") {
+    const size = Math.max(0.5, Math.min(100, value));
+    const next = { ...frame, [key]: size };
+    if (key === "w") {
+      next.x = Math.max(0, Math.min(100 - size, frame.x));
+    } else {
+      next.y = Math.max(0, Math.min(100 - size, frame.y));
+    }
+    return next;
+  }
+  const max = key === "x" ? 100 - frame.w : 100 - frame.h;
+  return { ...frame, [key]: Math.max(0, Math.min(max, value)) };
+}
+
+/**
+ * Edita um eixo em px de design e devolve frame em % (persistência).
+ * `designSize` = slide (bloco) ou host (parte KPI/chart).
+ */
+export function patchComunicadoFrameDesignPx(
+  framePct: ComunicadoFrame,
+  key: keyof ComunicadoFrame,
+  rawPx: number,
+  designSize: ViewportPixelSize,
+): ComunicadoFrame {
+  const axis = key === "x" || key === "w" ? designSize.width : designSize.height;
+  const pct = designPxToPercent(rawPx, axis);
+  return patchComunicadoFrame(framePct, key, pct);
+}
+
+/** Valor exibido na UI (px de design, 1 casa quando necessário). */
+export function formatDesignPx(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const rounded = Math.round(value * 10) / 10;
+  return Number.isInteger(rounded) ? rounded : rounded;
+}
