@@ -249,6 +249,7 @@ export function ChartPlotAreaGroup({
           showVertical={showVerticalGrid && !skipCartesian}
           pointCount={points.length}
           interaction={interaction}
+          chartParts={chartParts}
         />
       ) : null}
 
@@ -264,7 +265,14 @@ export function ChartPlotAreaGroup({
         />
       ) : null}
 
-      {!skipCartesian ? <ChartAxisLines layout={layout} visible={cartesianAxes} interaction={interaction} /> : null}
+      {!skipCartesian ? (
+        <ChartAxisLines
+          layout={layout}
+          visible={cartesianAxes}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+      ) : null}
 
       {!skipCartesian ? (
         <>

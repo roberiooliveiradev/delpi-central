@@ -152,7 +152,10 @@ export function setSeriesChartElementEnabled(
     case "dataTable":
       return { showDataTable: enabled };
     case "gridlines":
-      return { showGrid: enabled, showVerticalGrid: enabled };
+      /* Ribbon «Grade»: liga horizontal; desliga H+V. Vertical fica no inspetor. */
+      return enabled
+        ? { showGrid: true }
+        : { showGrid: false, showVerticalGrid: false };
     case "legend":
       return enabled
         ? { showLegend: true, legendPosition: "bottom" }
@@ -183,6 +186,7 @@ export function chartElementPartRefs(elementId: SeriesChartElementId): ChartPart
       return [{ kind: "series", seriesIndex: 0 }];
     case "axes":
       return [
+        { kind: "axes" },
         { kind: "axis", axis: "x" },
         { kind: "axis", axis: "y" },
       ];
@@ -239,6 +243,7 @@ export function chartElementIdForPartRef(ref: ChartPartRef): SeriesChartElementI
       return "legend";
     case "series":
       return "series";
+    case "axes":
     case "axis":
       return "axes";
     case "axisTitle":

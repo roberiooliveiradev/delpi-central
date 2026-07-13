@@ -81,8 +81,8 @@
 }
 
 .delpi-ui-series-chart__grid-line {
-  stroke: var(--delpi-ui-series-chart-grid, color-mix(in srgb, #94a3b8 35%, transparent));
-  stroke-width: 0.75;
+  stroke: var(--delpi-ui-series-chart-grid, color-mix(in srgb, #64748b 55%, transparent));
+  stroke-width: 1;
 }
 
 .delpi-ui-series-chart__grid-line--vertical {

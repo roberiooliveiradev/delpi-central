@@ -331,22 +331,46 @@ export function ComunicadoChartRibbon() {
 
       <DeckRibbonGroup label="Eixos" hint={H.chartAxes}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={BarChart3}
-            label="Eixos"
-            hint="Mostrar ou ocultar eixos e rótulos de escala."
-            active={isChartElementEnabled("axes", options)}
-            onClick={() => toggleElement("axes", !isChartElementEnabled("axes", options))}
-          />
-          <DeckRibbonTile
-            icon={Grid3x3}
-            label="Grade"
-            hint="Linhas de grade horizontais."
-            active={isChartElementEnabled("gridlines", options)}
-            onClick={() =>
-              toggleElement("gridlines", !isChartElementEnabled("gridlines", options))
-            }
-          />
+          {(
+            [
+              {
+                id: "axes" as const,
+                icon: BarChart3,
+                label: "Eixos",
+                hint: "Liga os eixos e seleciona ambos para contorno/estilo.",
+              },
+              {
+                id: "gridlines" as const,
+                icon: Grid3x3,
+                label: "Grade",
+                hint: "Liga a grade horizontal e edita o traço das linhas.",
+              },
+            ] as const
+          ).map((item) => {
+            const enabled = isChartElementEnabled(item.id, options);
+            const focused = isChartElementOpenForPart(item.id, selectedChartPart);
+            return (
+              <DeckRibbonTile
+                key={item.id}
+                icon={item.icon}
+                label={item.label}
+                hint={item.hint}
+                active={enabled || focused}
+                onClick={() => {
+                  if (enabled) {
+                    if (focused) {
+                      toggleElement(item.id, false);
+                    } else {
+                      const part = chartElementPrimaryPartRef(item.id);
+                      if (part) selectChartPart(block.id, part);
+                    }
+                    return;
+                  }
+                  toggleElement(item.id, true);
+                }}
+              />
+            );
+          })}
         </div>
       </DeckRibbonGroup>
 

@@ -3,7 +3,9 @@ import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent }
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
-  isChartPartRefEqual,
+  isChartPartInteractionSelected,
+  resolveChartLinePartStroke,
+  type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 import type { SeriesChartLayout } from "./layout";
@@ -14,6 +16,7 @@ export type ChartGridProps = {
   showVertical?: boolean;
   pointCount: number;
   interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
 };
 
 export function ChartGrid({
@@ -22,12 +25,14 @@ export function ChartGrid({
   showVertical = false,
   pointCount,
   interaction,
+  chartParts,
 }: ChartGridProps) {
   const cn = useSeriesChartClasses();
   const { margin, plotW, plotH, ticks, toX, toY } = layout;
   const ref = { kind: "grid" as const };
-  const selected = isChartPartRefEqual(ref, interaction?.selectedPart);
+  const selected = isChartPartInteractionSelected(ref, interaction?.selectedPart);
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
+  const lineStroke = resolveChartLinePartStroke(chartParts, ref);
 
   if (!showHorizontal && !showVertical) return null;
 
@@ -45,6 +50,12 @@ export function ChartGrid({
         interaction?.onPartDoubleClick?.(ref, event);
       }
     : undefined;
+
+  const strokeAttrs = {
+    ...(lineStroke.stroke ? { stroke: lineStroke.stroke } : {}),
+    ...(lineStroke.strokeWidth != null ? { strokeWidth: lineStroke.strokeWidth } : {}),
+    ...(lineStroke.opacity != null ? { opacity: lineStroke.opacity } : {}),
+  };
 
   return (
     <g
@@ -78,6 +89,7 @@ export function ChartGrid({
                   y2={y}
                   className={cn.gridLine}
                   pointerEvents="none"
+                  {...strokeAttrs}
                 />
               </g>
             );
@@ -108,6 +120,7 @@ export function ChartGrid({
                   y2={margin.top + plotH}
                   className={`${cn.gridLine} ${cn.gridLineVertical}`}
                   pointerEvents="none"
+                  {...strokeAttrs}
                 />
               </g>
             );

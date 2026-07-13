@@ -64,6 +64,7 @@ export function chartPartVisualPrimitive(
     case "marker":
       return chartType === "pie" || chartType === "funnel" ? "area" : "point";
     case "grid":
+    case "axes":
     case "axis":
       return "line";
     case "chartArea":
@@ -98,6 +99,8 @@ export type ChartPartRef =
   | { kind: "dataLabel"; seriesIndex: number; pointIndex: number }
   /** Seleção em lote — tipografia comum a todos os rótulos de dados. */
   | { kind: "dataLabels" }
+  /** Seleção em lote — eixos X+Y (contorno/highlight). */
+  | { kind: "axes" }
   | { kind: "axis"; axis: "x" | "y" }
   | { kind: "axisTitle"; axis: "x" | "y" }
   | { kind: "grid" }
@@ -211,6 +214,8 @@ export function serializeChartPartRef(ref: ChartPartRef): string {
       return `dataLabel:${ref.seriesIndex}:${ref.pointIndex}`;
     case "dataLabels":
       return "dataLabels";
+    case "axes":
+      return "axes";
     case "axis":
       return `axis:${ref.axis}`;
     case "axisTitle":
@@ -232,6 +237,7 @@ export function parseChartPartRef(raw: string | null | undefined): ChartPartRef 
   if (value === "grid") return { kind: "grid" };
   if (value === "dataTable") return { kind: "dataTable" };
   if (value === "dataLabels") return { kind: "dataLabels" };
+  if (value === "axes") return { kind: "axes" };
 
   const series = /^series:(\d+)$/.exec(value);
   if (series) return { kind: "series", seriesIndex: Number(series[1]) };
@@ -268,13 +274,14 @@ export function isChartPartRefEqual(a: ChartPartRef | null | undefined, b: Chart
   return serializeChartPartRef(a) === serializeChartPartRef(b);
 }
 
-/** Seleção visual: grupo `dataLabels` destaca todos os rótulos individuais. */
+/** Seleção visual: grupos `dataLabels` / `axes` destacam partes individuais. */
 export function isChartPartInteractionSelected(
   ref: ChartPartRef,
   selectedPart?: ChartPartRef | null,
 ): boolean {
   if (!selectedPart) return false;
   if (selectedPart.kind === "dataLabels" && ref.kind === "dataLabel") return true;
+  if (selectedPart.kind === "axes" && ref.kind === "axis") return true;
   return isChartPartRefEqual(ref, selectedPart);
 }
 
@@ -307,6 +314,7 @@ const CHART_PART_KIND_CAPABILITIES: Record<ChartPartRef["kind"], ChartPartCapabi
   dataLabel: { movable: false, editable: true, deletable: true, resizable: false },
   dataLabels: { movable: false, editable: true, deletable: true, resizable: false },
   /** Eixos ganham/perdem espaço via `plotArea.frame` (4H.6) — sem frame próprio. */
+  axes: { movable: false, editable: false, deletable: true, resizable: false },
   axis: { movable: false, editable: false, deletable: true, resizable: false },
   axisTitle: { movable: false, editable: true, deletable: true, resizable: false },
   grid: { movable: false, editable: false, deletable: true, resizable: false },
@@ -591,6 +599,9 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
     },
   };
 
+  parts[serializeChartPartRef({ kind: "axes" })] = {
+    visible: config.showAxes !== false,
+  };
   parts[serializeChartPartRef({ kind: "axis", axis: "x" })] = {
     visible: config.showAxes !== false && config.showXAxisLabels !== false,
   };
@@ -750,9 +761,14 @@ export function partsToChartOptions(parts?: ChartPartsMap | null): Partial<Serie
     if (axisTitleY.visible !== undefined) patch.showYAxisTitle = axisTitleY.visible;
     if (axisTitleY.content !== undefined) patch.yAxisTitle = axisTitleY.content;
   }
-  if (grid?.visible !== undefined) {
-    patch.showGrid = grid.visible;
-    patch.showVerticalGrid = grid.visible;
+  /*
+   * Grade: `visible:false` desliga H+V. `visible:true` não força vertical —
+   * H/V independentes vivem nas options flat (inspetor / Adicionar elemento).
+   * Forçar showVerticalGrid = visible quebrava o round-trip e “apagava” alterações.
+   */
+  if (grid?.visible === false) {
+    patch.showGrid = false;
+    patch.showVerticalGrid = false;
   }
   if (dataTable?.visible !== undefined) patch.showDataTable = dataTable.visible;
 
@@ -800,6 +816,26 @@ export function mergeSeriesChartOptionsWithParts(
 }
 
 /** Cor da série: primitivo line (stroke) — única fonte; `seriesColor` só como fallback legado. */
+/**
+ * Traço efetivo de linha (eixo / grade): herda estilo do grupo (`axes`) quando houver.
+ * ChartGrid / ChartAxisLines consomem — chrome de contorno não pode ser no-op.
+ */
+export function resolveChartLinePartStroke(
+  parts: ChartPartsMap | null | undefined,
+  ref: ChartPartRef,
+): { stroke?: string; strokeWidth?: number; opacity?: number } {
+  const own = getChartPartState(parts, ref)?.style;
+  const group =
+    ref.kind === "axis" ? getChartPartState(parts, { kind: "axes" })?.style : undefined;
+  const style = group || own ? { ...group, ...own } : undefined;
+  if (!style) return {};
+  return {
+    stroke: style.stroke,
+    strokeWidth: style.strokeWidth,
+    opacity: style.opacity,
+  };
+}
+
 export function resolveSeriesStrokeColor(
   options: SeriesChartOptions,
   parts?: ChartPartsMap | null,

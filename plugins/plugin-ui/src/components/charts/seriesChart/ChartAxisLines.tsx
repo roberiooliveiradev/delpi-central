@@ -1,7 +1,9 @@
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
-  isChartPartRefEqual,
+  isChartPartInteractionSelected,
+  resolveChartLinePartStroke,
+  type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 import type { SeriesChartLayout } from "./layout";
@@ -10,9 +12,15 @@ export type ChartAxisLinesProps = {
   layout: SeriesChartLayout;
   visible?: boolean;
   interaction?: SeriesChartInteraction | null;
+  chartParts?: ChartPartsMap | null;
 };
 
-export function ChartAxisLines({ layout, visible = true, interaction }: ChartAxisLinesProps) {
+export function ChartAxisLines({
+  layout,
+  visible = true,
+  interaction,
+  chartParts,
+}: ChartAxisLinesProps) {
   const cn = useSeriesChartClasses();
   if (!visible) return null;
 
@@ -21,8 +29,10 @@ export function ChartAxisLines({ layout, visible = true, interaction }: ChartAxi
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const xRef = { kind: "axis" as const, axis: "x" as const };
   const yRef = { kind: "axis" as const, axis: "y" as const };
-  const xSelected = isChartPartRefEqual(xRef, interaction?.selectedPart);
-  const ySelected = isChartPartRefEqual(yRef, interaction?.selectedPart);
+  const xSelected = isChartPartInteractionSelected(xRef, interaction?.selectedPart);
+  const ySelected = isChartPartInteractionSelected(yRef, interaction?.selectedPart);
+  const xStroke = resolveChartLinePartStroke(chartParts, xRef);
+  const yStroke = resolveChartLinePartStroke(chartParts, yRef);
 
   return (
     <>
@@ -66,6 +76,9 @@ export function ChartAxisLines({ layout, visible = true, interaction }: ChartAxi
             .filter(Boolean)
             .join(" ")}
           pointerEvents="none"
+          {...(xStroke.stroke ? { stroke: xStroke.stroke } : {})}
+          {...(xStroke.strokeWidth != null ? { strokeWidth: xStroke.strokeWidth } : {})}
+          {...(xStroke.opacity != null ? { opacity: xStroke.opacity } : {})}
         />
       </g>
       <g
@@ -108,6 +121,9 @@ export function ChartAxisLines({ layout, visible = true, interaction }: ChartAxi
             .filter(Boolean)
             .join(" ")}
           pointerEvents="none"
+          {...(yStroke.stroke ? { stroke: yStroke.stroke } : {})}
+          {...(yStroke.strokeWidth != null ? { strokeWidth: yStroke.strokeWidth } : {})}
+          {...(yStroke.opacity != null ? { opacity: yStroke.opacity } : {})}
         />
       </g>
     </>

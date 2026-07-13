@@ -25,6 +25,7 @@ import {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartAreaStyle,
+  resolveChartLinePartStroke,
   resolveChartPartFontSize,
   resolveMarkerStyle,
   resolveSeriesStrokeColor,
@@ -37,6 +38,8 @@ describe("seriesChartParts", () => {
     expect(serializeChartPartRef({ kind: "title" })).toBe("title");
     expect(serializeChartPartRef({ kind: "series", seriesIndex: 0 })).toBe("series:0");
     expect(serializeChartPartRef({ kind: "marker", seriesIndex: 0, pointIndex: 3 })).toBe("marker:0:3");
+    expect(serializeChartPartRef({ kind: "axes" })).toBe("axes");
+    expect(parseChartPartRef("axes")).toEqual({ kind: "axes" });
     expect(parseChartPartRef("axisTitle:y")).toEqual({ kind: "axisTitle", axis: "y" });
     expect(parseChartPartRef("nope")).toBeNull();
   });
@@ -256,6 +259,8 @@ describe("seriesChartParts", () => {
     expect(chartPartAllowsFrame({ kind: "chartArea" })).toBe(true);
     expect(chartPartAllowsFrame({ kind: "series", seriesIndex: 0 })).toBe(false);
     expect(chartPartAllowsFrame({ kind: "dataLabels" })).toBe(false);
+    expect(chartPartAllowsFrame({ kind: "axes" })).toBe(false);
+    expect(chartPartAllowsFrame({ kind: "grid" })).toBe(false);
     expect(chartPartAllowsFrame({ kind: "dataLabel", seriesIndex: 0, pointIndex: 0 })).toBe(false);
   });
 
@@ -317,6 +322,53 @@ describe("seriesChartParts", () => {
         { kind: "dataLabel", seriesIndex: 0, pointIndex: 1 },
       ),
     ).toBe(false);
+  });
+
+  it("isChartPartInteractionSelected destaca ambos os eixos no grupo axes", () => {
+    expect(
+      isChartPartInteractionSelected({ kind: "axis", axis: "x" }, { kind: "axes" }),
+    ).toBe(true);
+    expect(
+      isChartPartInteractionSelected({ kind: "axis", axis: "y" }, { kind: "axes" }),
+    ).toBe(true);
+    expect(
+      isChartPartInteractionSelected({ kind: "axis", axis: "x" }, { kind: "axis", axis: "y" }),
+    ).toBe(false);
+  });
+
+  it("partsToChartOptions não força grade vertical quando a parte grid está ligada", () => {
+    const parts = chartOptionsToParts(
+      mergeSeriesChartOptions({ showGrid: true, showVerticalGrid: false }),
+    );
+    expect(parts.grid?.visible).toBe(true);
+    const fromParts = partsToChartOptions(parts);
+    expect(fromParts.showGrid).toBeUndefined();
+    expect(fromParts.showVerticalGrid).toBeUndefined();
+    const merged = mergeSeriesChartOptionsWithParts(
+      { showGrid: true, showVerticalGrid: false },
+      parts,
+    );
+    expect(merged.showGrid).toBe(true);
+    expect(merged.showVerticalGrid).toBe(false);
+  });
+
+  it("partsToChartOptions desliga H+V quando grid.visible=false", () => {
+    const parts = upsertChartPartState({}, { kind: "grid" }, { visible: false });
+    expect(partsToChartOptions(parts)).toMatchObject({
+      showGrid: false,
+      showVerticalGrid: false,
+    });
+  });
+
+  it("resolveChartLinePartStroke herda estilo do grupo axes", () => {
+    const parts = upsertChartPartState({}, { kind: "axes" }, {
+      style: { stroke: "#ff0000", strokeWidth: 3 },
+    });
+    expect(resolveChartLinePartStroke(parts, { kind: "axis", axis: "x" })).toEqual({
+      stroke: "#ff0000",
+      strokeWidth: 3,
+      opacity: undefined,
+    });
   });
 
   it("chartPartTypographyStyle em título aplica caixa coluna (verticalAlign)", () => {

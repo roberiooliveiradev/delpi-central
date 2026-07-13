@@ -42,6 +42,8 @@ export function chartPartSelectionLabel(part: ComunicadoChartPartRef): string {
       return `Rótulo ${(part.pointIndex ?? 0) + 1}`;
     case "dataLabels":
       return "Rótulos de dados";
+    case "axes":
+      return "Eixos";
     case "axis":
       return part.axis === "x" ? "Eixo X" : "Eixo Y";
     case "axisTitle":

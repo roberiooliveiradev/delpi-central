@@ -2,7 +2,7 @@ import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
   chartPartTypographyStyle,
-  isChartPartRefEqual,
+  isChartPartInteractionSelected,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -34,8 +34,8 @@ export function ChartAxisY({
   const axisRef = { kind: "axis" as const, axis: "y" as const };
   const titleRef = { kind: "axisTitle" as const, axis: "y" as const };
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const axisSelected = isChartPartRefEqual(axisRef, interaction?.selectedPart);
-  const titleSelected = isChartPartRefEqual(titleRef, interaction?.selectedPart);
+  const axisSelected = isChartPartInteractionSelected(axisRef, interaction?.selectedPart);
+  const titleSelected = isChartPartInteractionSelected(titleRef, interaction?.selectedPart);
   const axisTypography = chartPartTypographyStyle(chartParts, axisRef);
   const titleTypography = chartPartTypographyStyle(chartParts, titleRef);
 

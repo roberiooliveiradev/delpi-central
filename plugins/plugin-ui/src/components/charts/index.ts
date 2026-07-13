@@ -149,6 +149,7 @@ export {
   resolveMarkerStyle,
   resolvePlotAreaStyle,
   resolveSeriesLineStyle,
+  resolveChartLinePartStroke,
   resolveSeriesStrokeColor,
   resolveSeriesStrokeWidth,
   serializeChartPartRef,

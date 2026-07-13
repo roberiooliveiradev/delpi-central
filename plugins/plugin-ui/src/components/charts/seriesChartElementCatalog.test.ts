@@ -51,12 +51,16 @@ describe("seriesChartElementCatalog", () => {
   it("mapeia catálogo → ChartPartRef (4G.7)", () => {
     expect(chartElementPrimaryPartRef("chartTitle")).toEqual({ kind: "title" });
     expect(chartElementPartRefs("axes")).toEqual([
+      { kind: "axes" },
       { kind: "axis", axis: "x" },
       { kind: "axis", axis: "y" },
     ]);
+    expect(chartElementPrimaryPartRef("axes")).toEqual({ kind: "axes" });
     expect(chartElementPrimaryPartRef("dataLabels")).toEqual({
       kind: "dataLabels",
     });
+    expect(chartElementIdForPartRef({ kind: "axes" })).toBe("axes");
+    expect(isChartElementOpenForPart("axes", { kind: "axes" })).toBe(true);
     expect(chartElementPrimaryPartRef("markers")).toEqual({
       kind: "marker",
       seriesIndex: 0,
@@ -75,5 +79,17 @@ describe("seriesChartElementCatalog", () => {
     const on = applyChartElementVisibility("legend", false, base, off.parts);
     expect(on.options.showLegend).toBe(false);
     expect(on.parts.legend?.visible).toBe(false);
+  });
+
+  it("gridlines liga só horizontal sem forçar vertical no catálogo", () => {
+    const off = mergeSeriesChartOptions(setSeriesChartElementEnabled("gridlines", false));
+    expect(off.showGrid).toBe(false);
+    expect(off.showVerticalGrid).toBe(false);
+    const on = mergeSeriesChartOptions({
+      ...off,
+      ...setSeriesChartElementEnabled("gridlines", true),
+    });
+    expect(on.showGrid).toBe(true);
+    expect(on.showVerticalGrid).toBe(false);
   });
 });

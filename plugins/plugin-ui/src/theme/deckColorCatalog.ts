@@ -57,7 +57,7 @@ export const DECK_THEME_LIGHT = {
   muted: DECK_COLOR_MUTED,
   accent: DECK_COLOR_ACCENT,
   border: DECK_COLOR_BORDER,
-  grid: "color-mix(in srgb, #94a3b8 35%, transparent)",
+  grid: "color-mix(in srgb, #64748b 55%, transparent)",
 } as const;
 
 /** Tema escuro (opt-in — slides/master nativos). */
@@ -68,7 +68,7 @@ export const DECK_THEME_DARK = {
   muted: "#94a3b8",
   accent: DECK_COLOR_ACCENT,
   border: "color-mix(in srgb, #089bdb 28%, transparent)",
-  grid: "color-mix(in srgb, #94a3b8 25%, transparent)",
+  grid: "color-mix(in srgb, #cbd5e1 45%, transparent)",
 } as const;
 
 export type DeckColorTheme = typeof DECK_THEME_LIGHT;

@@ -55,5 +55,7 @@ describe("resolveSelectionChromeMode", () => {
     expect(chartPartSelectionLabel({ kind: "grid" })).toBe("Grade");
     expect(chartPartSelectionLabel({ kind: "plotArea" })).toBe("Área de plotagem");
     expect(chartPartSelectionLabel({ kind: "dataLabels" })).toBe("Rótulos de dados");
+    expect(chartPartSelectionLabel({ kind: "axes" })).toBe("Eixos");
+    expect(chartPartSelectionLabel({ kind: "grid" })).toBe("Grade");
   });
 });
