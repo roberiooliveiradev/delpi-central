@@ -54,7 +54,9 @@ export default function CatalogApp(_props: AppProps = {}) {
             <p className="puc-eyebrow">@delpi/plugin-ui</p>
             <h1 className="puc-app-title">Catálogo de componentes</h1>
             <p className="puc-app-subtitle">
-              Listagem e prévia visual. Tema claro/escuro segue o portal (`data-theme`).
+              Listagem e prévia de todos os componentes visuais. Tema claro/escuro segue
+              o portal (`data-theme`). Busque por <code>DataTable</code> para o visual
+              estilo dashboards LMPS.
             </p>
           </div>
           <label className="puc-search">

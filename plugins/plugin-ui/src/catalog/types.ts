@@ -7,7 +7,11 @@ export type CatalogFamily =
   | "forms"
   | "data"
   | "export"
-  | "sandbox";
+  | "charts"
+  | "preview"
+  | "diagram"
+  | "shape"
+  | "menu";
 
 export type CatalogDemo = {
   id: string;
@@ -35,5 +39,9 @@ export const CATALOG_FAMILY_LABELS: Record<CatalogFamily, string> = {
   forms: "Forms",
   data: "Data",
   export: "Export",
-  sandbox: "Sandbox",
+  charts: "Charts",
+  preview: "Preview",
+  diagram: "Diagram",
+  shape: "Shape",
+  menu: "Menu",
 };

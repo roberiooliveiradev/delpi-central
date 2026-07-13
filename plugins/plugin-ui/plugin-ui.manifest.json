@@ -31,7 +31,6 @@
   ],
 
   "ui": {
-    "renderMode": "federated",
-    "exposedModule": "./App"
+    "renderMode": "federated"
   }
 }

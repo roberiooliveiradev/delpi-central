@@ -49,7 +49,7 @@ Antes do rollout MF (jul/2026), consumidores usavam alias Vite + `COPY plugin-ui
 
 ## App — Catálogo UI
 
-Além da biblioteca (`./index` + `./styles`), o remote expõe **`./App`**: listagem e prévia dos componentes.
+Além da biblioteca (`./index` + `./styles`), o remote expõe **`./App`**: listagem e prévia de **todos** os componentes React visuais (`src/catalog/visualComponents.ts`).
 
 | Item | Valor |
 |------|--------|
@@ -58,8 +58,9 @@ Além da biblioteca (`./index` + `./styles`), o remote expõe **`./App`**: lista
 | Dev | `npm run dev` → http://localhost:5010 |
 | Registro | `TOKEN=$(bash infra/scripts/get-dev-token.sh) ./scripts/register-manifest.sh` |
 | Smoke | `curl -fsS http://localhost/apps/plugin-ui/assets/remoteEntry.js \| head` |
+| Cobertura | `npm test` (ids únicos + 100% `VISUAL_COMPONENTS`) |
 
-Demos: `src/catalog/` — ao adicionar export público, incluir demo (ver contributing).
+Demos: `src/catalog/demos/`. Tabela estilo LMPS: entradas **DataTable** / **DataTableSection**. Stubs aparecem quando ainda falta fixture (shape ribbon, FlowchartEditor, etc.).
 
 ---
 

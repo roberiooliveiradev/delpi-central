@@ -35,11 +35,19 @@ Se alguma resposta for não, o componente pertence ao plugin específico — nã
 O mesmo pacote expõe `./App` — app federado de listagem/prévia:
 
 - Código: `src/app/` (shell) + `src/catalog/` (registry + demos)
+- Inventário obrigatório: `src/catalog/visualComponents.ts` (um export visual = uma entrada)
+- Cobertura: `npm test` → `componentRegistry.test.ts` falha se faltar componente
 - Manifesto: [`plugin-ui.manifest.json`](../plugin-ui.manifest.json) — permissão `plugin-ui.view`
 - Dev local: `npm run dev` (porta 5010) monta o catálogo em `#root`
 - Registro: `TOKEN=… ./scripts/register-manifest.sh`
 
-**Novo export público:** além do markdown, incluir entrada em `src/catalog/componentRegistry.ts` (via arquivo da família em `demos/`).
+**Novo export público visual:**
+
+1. Documentar em `component-catalog.md`
+2. Incluir em `visualComponents.ts`
+3. Preferir demo interativa em `src/catalog/demos/{familia}.tsx` (senão o registry gera stub automático)
+
+Helpers BEM, factories `create*`, tipos e constantes **não** entram no catálogo visual.
 
 ## Convenções de código
 
@@ -111,7 +119,8 @@ Apagar `components/HelpTooltip.tsx` (ou equivalente) e atualizar imports para `@
 ## Checklist antes do merge
 
 - [ ] Export documentado em `component-catalog.md`
-- [ ] Demo no catálogo visual (`src/catalog/`)
+- [ ] Entrada em `src/catalog/visualComponents.ts` (+ demo preferencial)
+- [ ] Demo no catálogo visual (`src/catalog/`) ou stub aceito temporariamente
 - [ ] Estilos `delpi-ui-*` sem vazar para `body` / `:root` global
 - [ ] `npm test` verde em `plugin-ui`
 - [ ] `npm run build` verde em pelo menos um consumidor alterado

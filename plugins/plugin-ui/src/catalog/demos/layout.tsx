@@ -7,17 +7,35 @@ import {
   chartCardBemClasses,
   ContentCard,
   contentCardBemClasses,
+  DelpiKpiCard,
+  DetailCard,
+  detailCardProductionBemClasses,
+  DetailFieldGrid,
+  detailFieldGridBemClasses,
   FilterInputField,
   FiltersRow,
   filtersRowBemClasses,
+  FitText,
+  FormActions,
+  formActionsBemClasses,
+  FormGrid,
+  formGridBemClasses,
+  FormatPaneSection,
+  FormatPaneShell,
   KpiCard,
   kpiCardBemClasses,
+  MetricKpiCard,
+  metricKpiCardBemClasses,
   PageHeader,
   pageHeaderBrandBemClasses,
   PanelCard,
   panelCardBemClasses,
+  SectionBlock,
+  sectionBlockBemClasses,
   SectionCard,
   sectionCardKaizenBemClasses,
+  SimpleKpiCard,
+  simpleKpiCardBemClasses,
 } from "../../components/layout";
 import type { CatalogEntry } from "../types";
 
@@ -28,6 +46,13 @@ const kpiCn = kpiCardBemClasses(PUC_PREFIX);
 const chartCn = chartCardBemClasses(PUC_PREFIX, { withActions: false });
 const filtersCn = filtersRowBemClasses(PUC_PREFIX);
 const sectionCn = sectionCardKaizenBemClasses(PUC_PREFIX);
+const simpleKpiCn = simpleKpiCardBemClasses(PUC_PREFIX, "kpi-card", { withBody: true, withSubtitle: true });
+const metricKpiCn = metricKpiCardBemClasses(PUC_PREFIX);
+const detailCn = detailCardProductionBemClasses(PUC_PREFIX);
+const detailGridCn = detailFieldGridBemClasses(PUC_PREFIX);
+const formGridCn = formGridBemClasses(PUC_PREFIX);
+const formActionsCn = formActionsBemClasses(PUC_PREFIX);
+const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
 
 export const layoutCatalogEntries: CatalogEntry[] = [
   {
@@ -191,6 +216,228 @@ export const layoutCatalogEntries: CatalogEntry[] = [
           >
             <p className="puc-muted">Conteúdo da seção.</p>
           </SectionCard>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.DelpiKpiCard",
+    family: "layout",
+    exportName: "DelpiKpiCard",
+    title: "DelpiKpiCard",
+    description: "KPI canônico Delpi (primitivos / TV).",
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <div className="puc-kpi-grid">
+            <DelpiKpiCard label="OEE" value="87%" hint="Meta 85%" icon={<Activity size={22} />} />
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.SimpleKpiCard",
+    family: "layout",
+    exportName: "SimpleKpiCard",
+    title: "SimpleKpiCard",
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <SimpleKpiCard
+            title="Abertos"
+            value="42"
+            subtitle="últimos 30 dias"
+            icon={<Activity size={22} />}
+            classNames={simpleKpiCn}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.MetricKpiCard",
+    family: "layout",
+    exportName: "MetricKpiCard",
+    title: "MetricKpiCard",
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <MetricKpiCard
+            label="Taxa"
+            value="12,4%"
+            hint="vs. mês anterior"
+            tone="positive"
+            icon={<Activity size={22} />}
+            classNames={metricKpiCn}
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.DetailCard",
+    family: "layout",
+    exportName: "DetailCard",
+    title: "DetailCard",
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <DetailCard
+            title="Detalhe"
+            titleHint="Ficha resumida"
+            classNames={detailCn}
+            labels={{ titleHelpAriaLabel: (t) => `Ajuda: ${t}` }}
+          >
+            <p className="puc-muted">Corpo do detalhe.</p>
+          </DetailCard>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.DetailFieldGrid",
+    family: "layout",
+    exportName: "DetailFieldGrid",
+    title: "DetailFieldGrid",
+    demos: [
+      {
+        id: "default",
+        label: "Campos",
+        render: () => (
+          <DetailFieldGrid
+            fields={[
+              { label: "Código", value: "A-100" },
+              { label: "Status", value: "Ativo" },
+            ]}
+            classNames={detailGridCn}
+            labels={{ fieldHelpAriaLabel: (l) => `Ajuda: ${l}` }}
+            valueFallback="—"
+          />
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.FormGrid",
+    family: "layout",
+    exportName: "FormGrid",
+    title: "FormGrid",
+    demos: [
+      {
+        id: "default",
+        label: "Grid",
+        render: () => (
+          <FormGrid classNames={formGridCn}>
+            <div className="puc-field">Campo A</div>
+            <div className="puc-field">Campo B</div>
+          </FormGrid>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.FormActions",
+    family: "layout",
+    exportName: "FormActions",
+    title: "FormActions",
+    demos: [
+      {
+        id: "default",
+        label: "Ações",
+        render: () => (
+          <FormActions classNames={formActionsCn} align="end">
+            <button type="button" className="puc-ghost-btn">
+              Cancelar
+            </button>
+            <button type="button" className="puc-primary-btn">
+              Salvar
+            </button>
+          </FormActions>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.SectionBlock",
+    family: "layout",
+    exportName: "SectionBlock",
+    title: "SectionBlock",
+    demos: [
+      {
+        id: "default",
+        label: "Bloco",
+        render: () => (
+          <SectionBlock title="Bloco" classNames={sectionBlockCn}>
+            <p className="puc-muted">Conteúdo.</p>
+          </SectionBlock>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.FormatPaneSection",
+    family: "layout",
+    exportName: "FormatPaneSection",
+    title: "FormatPaneSection",
+    demos: [
+      {
+        id: "default",
+        label: "Seção",
+        render: () => (
+          <FormatPaneSection title="Camadas" hint="Ordem de construção">
+            <p className="puc-muted">Itens da seção.</p>
+          </FormatPaneSection>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.FormatPaneShell",
+    family: "layout",
+    exportName: "FormatPaneShell",
+    title: "FormatPaneShell",
+    demos: [
+      {
+        id: "default",
+        label: "Shell",
+        render: () => (
+          <FormatPaneShell
+            title="Formatar"
+            tabs={[
+              { id: "format", label: "Formatar" },
+              { id: "data", label: "Dados" },
+            ]}
+            activeTabId="format"
+            onTabChange={() => undefined}
+          >
+            <p className="puc-muted">Corpo do painel.</p>
+          </FormatPaneShell>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.FitText",
+    family: "layout",
+    exportName: "FitText",
+    title: "FitText",
+    demos: [
+      {
+        id: "default",
+        label: "Ajuste",
+        render: () => (
+          <div style={{ width: 120, height: 48, border: "1px dashed var(--puc-border)" }}>
+            <FitText>87,4%</FitText>
+          </div>
         ),
       },
     ],
