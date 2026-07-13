@@ -37,9 +37,8 @@ export function computeDesignViewportScale(
  * Renderiza o slide no tamanho de design do `viewportProfile` e aplica escala
  * uniforme para encaixar no container.
  *
- * - `contain` — letterbox/pillarbox (editor / miniaturas).
- * - `cover` — preenche o container (kiosk TV e prévia admin); em 16:9 exato
- *   equivale a contain; em viewport mais larga evita faixas pretas laterais.
+ * - `contain` — letterbox/pillarbox sem cortar (prévia, kiosk e editor).
+ * - `cover` — preenche o container (pode cortar bordas; só sob demanda).
  *
  * O container usa `position: absolute; inset: 0` para medir a área real do palco.
  */

@@ -669,10 +669,13 @@
 }
 
 .tdp-preview-badge {
-  position: fixed;
-  top: 12px;
-  left: 12px;
+  /* Absolute no palco — `fixed` herda containing block de transform do portal. */
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
   z-index: 20;
+  max-width: min(420px, calc(100% - 160px));
+  box-sizing: border-box;
   padding: 6px 12px;
   border-radius: 999px;
   background: color-mix(in srgb, #089bdb 25%, #000);
@@ -689,8 +692,8 @@
 }
 
 .tdp-preview-controls {
-  position: fixed;
-  bottom: 16px;
+  position: absolute;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 25;

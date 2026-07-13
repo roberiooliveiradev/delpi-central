@@ -22,6 +22,19 @@ describe("computeDesignViewportScale", () => {
     expect(computeDesignViewportScale(1920, 900, 1920, 1080, "contain")).toBeCloseTo(900 / 1080);
   });
 
+  it("contain em browser típico (mais largo que 16:9) não corta altura do slide", () => {
+    // Viewport 1600×900 vs 1920×1080: contain escala pela altura — KPI no topo permanece no quadro.
+    const scale = computeDesignViewportScale(1600, 900, 1920, 1080, "contain");
+    expect(scale).toBeCloseTo(900 / 1080);
+    expect(1920 * scale).toBeLessThanOrEqual(1600 + 0.01);
+    expect(1080 * scale).toBeLessThanOrEqual(900 + 0.01);
+  });
+
+  it("cover em browser mais baixo que 16:9 corta o topo/base (documenta o trade-off)", () => {
+    const cover = computeDesignViewportScale(1920, 900, 1920, 1080, "cover");
+    expect(1080 * cover).toBeGreaterThan(900);
+  });
+
   it("retorna 0 para dimensões inválidas", () => {
     expect(computeDesignViewportScale(0, 900, 1920, 1080)).toBe(0);
   });
