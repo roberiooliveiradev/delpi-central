@@ -7,6 +7,8 @@ Documentos com `scope: global` — herdados por chats e agentes com skill **`com
 | Arquivo | Origem | Uso |
 |---------|--------|-----|
 | [normas-tecnicas-delpi.md](./normas-tecnicas-delpi.md) | `GPT_instructions/Normas_Tecnicas_DELPI.md` | Descrição técnica de MP (grupos 1001–1025); skill `technical-description-delpi` + intent `ChatTechnicalDescriptionIntentService` |
+
+Intermediários **50xx** (código estruturado TOTVS): documento em [`../sources/gpt-instructions/Understanding DELPI Intermediate Product Codes.md`](../sources/gpt-instructions/Understanding%20DELPI%20Intermediate%20Product%20Codes.md) / espelho gpt-instructions — escopo típico **agente**, não global; a skill `technical-description-delpi` e o pipeline de desenho consomem o vocabulário espelhado em `technical_description_vocabulary.json`.
 | [gpt-instructions.md](./gpt-instructions.md) | `GPT_instructions/GPT_instructions.md` | Regras gerais de comportamento GPT |
 | [o-arquiteto-do-codigo.md](./o-arquiteto-do-codigo.md) | `GPT_instructions/O_ARQUITETO_DO_CODIGO.md` | Identidade / plataforma DELPI |
 
@@ -28,6 +30,7 @@ Saída: arquivos nesta pasta + ingestão na base RAG (`scope: global`).
 ## Perguntas típicas (chat)
 
 - «Como descrever um terminal?» → RAG **Normas**, grupo **1008**, sem API de catálogo.
+- «Explique o código intermediário 5023… CB1,50VERD-…» → skill `technical-description-delpi` + doc Intermediate Product Codes.
 - «Qual a descrição do produto X?» → API REST (cadastro existente) — **não** usa Normas como lookup.
 
-Checklist **N1–N4:** [`../../testing/smoke-operacional-manual.md`](../../testing/smoke-operacional-manual.md).
+Checklist **N1–N17:** [`../../testing/smoke-operacional-manual.md`](../../testing/smoke-operacional-manual.md).

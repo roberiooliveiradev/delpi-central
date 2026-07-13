@@ -50,10 +50,28 @@
 | V2 | Família **7026** desliga `balloon_presence` | Regra não universal | Config JSON |
 | V3 | Tolerâncias fixas (±10% QTD, mm) | JSON `drawing_validation.json` | Declarativo |
 | V4 | Vigência BOM (`G1_FIM`) | Estrutura vigente na data | **Implementado** — `structure.bom_validity` + checklist `structure_bom_validity_ok` (sem lag PDF × revisão) |
-| V9 | REF. do cliente (`REF:` / COD. CLIENTE) × `B1_REFEREN` | Cabeçalho crítico se divergir | **Implementado** — `customer_reference_cross_check` + extração `REF:` |
 | V5 | LLM **não** reclassifica checklist | Render-only | Intencional |
 | V6 | Código cabo **CA\*** (`00653`) confundido com comprimento do chicote | Falso crítico `653 MT` × PDF | **Implementado** — âncora `660MM` na descrição do PA + referência em mm (`90260027`) |
 | V7 | `total_length` crítico com OCR de cotas ruim | Reprovação indevida | **Implementado** — `total_length` em `pdfDependentTemplateKeys` (gate ≥ 95%) |
+| V8 | Falso **50xx** (termoencolhível) / OCR **10↔50** / MP no SG2010 | `intermediate_*`, `bom_extra`, `guide_structure_extra`, length/qtd | **Implementado** (jul/2026) — `ChatDrawingProductFamilyClassificationService` + vocabulário técnico; ver § PI × MP abaixo |
+| V9 | REF. do cliente (`REF:` / COD. CLIENTE) × `B1_REFEREN` | Cabeçalho crítico se divergir | **Implementado** — `customer_reference_cross_check` + extração `REF:` |
+
+---
+
+## PI × MP × consumível (jul/2026)
+
+Classificação canônica: `ChatDrawingProductFamilyClassificationService` ← `technical_description_vocabulary.json` (mesma fonte da skill `technical-description-delpi`).
+
+| Família | Critério | Efeito no checklist |
+|---------|----------|---------------------|
+| **Intermediário (PI)** | prefixo `50` + assinatura CA–CV / cor 4 letras (ou linha SG1010 sem ruído de consumível) | Presença, length, decape, BOM |
+| **Matéria-prima** | grupos 1001–1025 (prefixo de código) | Linha BOM; **não** exige roteiro |
+| **Consumível** | 1013/1050 + marcadores (termoencolhível, tubo) | Não vira PI; qtd por comprimento só com cota PDF |
+| **Falso 50xx** | descrição consumível / sem assinatura | Fora de `intermediateCodes`, length/decape e presença API |
+
+Serviços consumidores: `ChatDrawingBomComparisonService`, `ChatDrawingBomReferenceNoiseService`, `ChatDrawingIntermediateCodeService`, `ChatDrawingIntermediateSemanticsService`, `ChatDrawingStructureValidationService`, `ChatDrawingGuideStructureConsistencyService`, `ChatDrawingBomQuantitySemanticsService`.
+
+Skill de descrição técnica **explica** nomenclatura; **status** do desenho continua só em `drawingAnalysis.items[]`.
 
 ---
 
@@ -84,6 +102,7 @@ Changelog: [`../changelog/2026-06-drawing-cotas-estrutura-relatorio.md`](../chan
 - **16/16** regras com regressão por categoria (`drawing_validation_rules.json`)
 - **Cotas × estrutura** no relatório markdown + referência de comprimento em mm (jun/2026 — `90260027`)
 - PI aninhado sob PA na coleta de intermediários; gate `total_length` com confiança OCR
+- **PI × MP** (jul/2026): classificação via vocabulário técnico; anti-fantasma 50xx; OCR 10↔50; MP fora do `guide_structure_extra`; consumível sem falso length/qtd
 
 ---
 

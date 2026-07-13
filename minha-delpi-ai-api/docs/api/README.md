@@ -39,6 +39,7 @@ Uploads multipart devem enviar apenas o header de autorização; não defina man
 | [`../roadmap/melhorias-futuras.md`](../roadmap/melhorias-futuras.md) | Melhorias pós-roadmap (concluídas; RBAC core pendente) |
 | [`../roadmap/README.md`](../roadmap/README.md) | Índice do roadmap (inteligência do chat, ondas 1–12) |
 | [`../changelog/2026-05-inteligencia-chat-entregas.md`](../changelog/2026-05-inteligencia-chat-entregas.md) | Entregas maio/2026: SQL produção, Normas, download, bundle agente |
+| [`../changelog/2026-07-technical-description-drawing-pi-mp.md`](../changelog/2026-07-technical-description-drawing-pi-mp.md) | jul/2026: skill MP+50xx + classificação PI/MP no desenho |
 
 Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/minha-delpi-chat/README.md).
 
@@ -51,7 +52,7 @@ Plugin (UI): [`../../../plugins/minha-delpi-chat/README.md`](../../../plugins/mi
 | `02-chat-sessoes-mensagens.md` | Sessões, histórico, mensagens, streaming, pin/archive e edição. |
 | `03-agentes.md` | CRUD, compartilhamento, stats, export/import, duplicate, preview e runtime no chat. |
 | `04-actions-openapi.md` | Providers/actions OpenAPI, vínculo agente -> provider, rotas, teste e logs. |
-| `11-skills.md` | Catálogo de skills, vínculo por agente, SQL elaborar vs executar. |
+| `11-skills.md` | Catálogo de skills (SQL, company-knowledge, **technical-description-delpi** MP+50xx, drawing-analysis PI/MP), vínculo por agente. |
 | `12-modelo-conceitual.md` | Definições: chat, agente, skill, action, knowledge e demais entidades. |
 | `05-projetos-fontes-anexos-artefatos.md` | Projetos, fontes, anexos e artefatos. |
 | `06-knowledge.md` | Ingestão e busca na base de conhecimento. |

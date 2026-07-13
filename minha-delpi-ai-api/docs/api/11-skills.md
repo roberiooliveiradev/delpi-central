@@ -144,11 +144,24 @@ Execução SQL no chat comum **não** é permitida via external actions.
 
 ### Skill `technical-description-delpi`
 
+- **Label:** Descrição técnica de MP e intermediários.
 - **Comportamento:** cria, explica e **analisa** descrições de **matérias-primas** (Normas Técnicas DELPI, grupos 1001–1025) e de **produtos intermediários** (família **50xx**: isolação CA–CV, cor 4 letras, comprimento, decape, terminais/isoladores). Injeta policy no prompt; o intent `ChatTechnicalDescriptionIntentService` força RAG normativo e a policy de turno `technical-description-normas.md`.
-- **Fonte:** `normas-tecnicas-delpi.md` (`company-knowledge`) + `Understanding DELPI Intermediate Product Codes.md` (agente / gpt-instructions) + vocabulário `technical_description_vocabulary.json`.
+- **Fonte:** `normas-tecnicas-delpi.md` (`company-knowledge`) + `Understanding DELPI Intermediate Product Codes.md` / espelho gpt-instructions (agente) + vocabulário `technical_description_vocabulary.json`.
 - **Ativação:** mesmo default de `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (chat comum e agente sem config explícita). Metadata legado: `technicalDescription`.
+- **Ponte com desenho:** o mesmo vocabulário alimenta `ChatDrawingProductFamilyClassificationService` (PI × MP × consumível) no pipeline `drawing-analysis-delpi` — anti-fantasma 50xx, reconciliação OCR 10↔50 e filtro de MP no roteiro SG2010. A skill de descrição **não** valida PDF; o checklist continua só no pipeline de desenho.
 - **Não faz:** consulta cadastral por código de produto (API) nem análise de desenho PDF (`drawing-analysis-delpi`).
 - **Desativar:** `PUT /chat/agents/{id}/skills` com `skillKey: "technical-description-delpi"` e `enabled: false`.
+
+### Skill `drawing-analysis-delpi` (relação com PI/MP)
+
+- **Comportamento:** PDF × `/products/{code}/analyser` → checklist `drawingAnalysis` (BOM, intermediários, cotas, roteiro).
+- **Classificação PI/MP (jul/2026):** `ChatDrawingProductFamilyClassificationService` usa `technical_description_vocabulary.json` para:
+  - rejeitar **falso intermediário** (50xx com descrição de consumível / sem assinatura CA–CV);
+  - reconciliar OCR **10↔50** por assinatura na BOM;
+  - dropar cabo-filho quando o pai 50xx é recuperado;
+  - ignorar MP/consumível em `guide_structure_extra` (SG2010);
+  - excluir falso 50xx de length/decape/qtd na estrutura.
+- **Doc:** [`../architecture/chat-drawing-skill-limitations.md`](../architecture/chat-drawing-skill-limitations.md) · policies `drawing-analysis-delpi-skill.md`.
 
 ## Skill SQL — elaborar vs executar
 

@@ -161,7 +161,9 @@ Serviços `ChatDrawing*` e parse BOM legado (`ChatDocumentVisionBomService`) sã
 | `ChatConversationContextService` | Texto de histórico + dados de `toolCalls` em metadata |
 | `ChatAnalysisIntentService` | Detecção de comparação / insights; `is_data_interpretation_request` e `is_data_reference_without_tool_data` para follow-ups sobre dados já consultados |
 | `ChatDataInterpretationAnswerService` | Resposta direta nos follow-ups (#74–78): monta markdown a partir de `humanizedSummary` das tool calls recentes, sem nova API/SQL |
-| `ChatTechnicalDescriptionIntentService` | «Como descrever terminal/cabo?», campos da descrição técnica → RAG `Normas_Tecnicas_DELPI.md` (global), sem API de catálogo |
+| `ChatTechnicalDescriptionIntentService` | «Como descrever terminal/cabo/intermediário 50xx?», campos da descrição → RAG Normas + Intermediate Codes, sem API de catálogo |
+| `ChatTechnicalDescriptionVocabularyService` | Bundle `technical_description_vocabulary.json` (grupos, cores, CA–CV) |
+| `ChatDrawingProductFamilyClassificationService` | Classifica PI/MP/consumível no pipeline de desenho a partir do mesmo vocabulário |
 | `ChatCanvasIntentService` | Pedido de enviar ou **atualizar** conteúdo na lousa (cópia, append, merge com API; não confunde com Canva.com) |
 | `ChatCanvasContentService` | Monta markdown da lousa: última resposta útil, `canvasOpen` do histórico, merge com tools |
 | `ChatAttachmentWelcomeService` | Welcome ao anexar + preview de leitura (Playbook 05) |
@@ -554,24 +556,28 @@ O agente **não substitui** detecção de intenção, pipeline operacional ou mo
 
 **Base global de conhecimento:** agentes sem skill explícita `company-knowledge` herdam `CHAT_DEFAULT_COMPANY_KNOWLEDGE_SKILL` (documentos em [`../knowledge/domains/global/`](../knowledge/domains/global/): `normas-tecnicas-delpi.md`, `gpt-instructions.md`, `O_ARQUITETO_DO_CODIGO.md`).
 
-### Descrição técnica de matérias-primas — Normas DELPI (maio/2026)
+### Descrição técnica de MP e intermediários — Normas DELPI (maio/2026 · ampliada jul/2026)
 
-Perguntas de **como escrever/descadastrar** descrições técnicas (não confundir com «qual a descrição do produto 10080047»):
+Perguntas de **como escrever/analisar** descrições técnicas (não confundir com «qual a descrição do produto 10080047»):
 
 | Etapa | Comportamento |
 |-------|----------------|
-| `ChatTechnicalDescriptionIntentService` | Detecta orientação normativa («como descrever terminal», «campos da descrição», «normas técnicas cabo») |
-| `ChatTurnPreparationService` | `build_rag_query` enriquecido com grupo técnico (ex.: terminal → **1008**) |
+| `ChatTechnicalDescriptionIntentService` | Detecta orientação normativa («como descrever terminal», «código intermediário 50xx», «o que significa CB/PRET») |
+| `ChatTechnicalDescriptionVocabularyService` | Grupos 1001–1025 + **50xx**, cores MP/4 letras, isolação CA–CV, consumíveis 1013/1050 |
+| `ChatTurnPreparationService` | `build_rag_query` enriquecido (Normas e/ou Intermediate Product Codes) |
 | `ExternalActionSelectionService` | Retorna `None` — **sem** busca REST de catálogo |
 | `ChatOperationalPipelineService` | Fast path operacional **desligado** |
 | `ChatOperationalParameterService` | **Pula loop agentic** (resposta documental via RAG + 1 LLM) |
-| Policy | `technical-description-normas.md` — ir à seção do `Normas_Tecnicas_DELPI.md`, explicar estrutura/campos/exemplos |
+| Policy | `technical-description-normas.md` + skill `technical-description-delpi-skill.md` |
+| Desenho | Mesmo vocabulário → `ChatDrawingProductFamilyClassificationService` (não reclassifica checklist; só alimenta o pipeline) |
 
-Fonte RAG: `docs/knowledge/domains/global/normas-tecnicas-delpi.md` (`scope: global`). Skill `company-knowledge` necessária (default herdado).
+Fontes RAG: `docs/knowledge/domains/global/normas-tecnicas-delpi.md` (`scope: global`); intermediários em `Understanding DELPI Intermediate Product Codes.md` (escopo agente / gpt-instructions). Skill `company-knowledge` necessária para Normas MP (default herdado).
 
-Testes: `test_chat_technical_description_intent_service.py`, `test_select_action_skips_catalog_for_technical_description_guidance`.
+Testes: `test_chat_technical_description_intent_service.py`, `test_chat_drawing_product_family_classification_service.py`, `test_select_action_skips_catalog_for_technical_description_guidance`.
 
-Checklist manual: **N1–N4** em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+Checklist manual: **N1–N14** (+ intermediários **N15–N17**) em [`../testing/smoke-operacional-manual.md`](../testing/smoke-operacional-manual.md).
+
+API skills: [`../api/11-skills.md`](../api/11-skills.md).
 
 ### SQL operacional — produção do dia (maio/2026, vocabulário jun/2026)
 

@@ -584,6 +584,9 @@ Valida intent `ChatTechnicalDescriptionIntentService` + RAG global `normas-tecni
 | N12 | quais campos são obrigatórios na descrição de tubo isolante? | Grupo **1012** |
 | N13 | diretrizes de criação de descrição de produto | Pode usar RAG agente (`diretrizes_*`) **referenciando** Normas |
 | N14 | como descrever materia prima no totvs? | Visão cadastro + Normas; **sem** API de produto |
+| N15 | explique o código intermediário 50232222 CB1,50VERD-00255/06/06–6314–0111 | Segmentos 50xx (família, CA–CV, cor 4 letras, comprimento, decape, terminais); **sem** `/products/search` |
+| N16 | o que significa CB e PRET no intermediário? | CB=EPR; PRET=Preto (4 letras); vocabulário técnico |
+| N17 | como montar um código intermediário família 5023? | Passos do doc Intermediate Product Codes + skill `technical-description-delpi` |
 
 ### Regressão cruzada — Normas × operacional × SQL
 

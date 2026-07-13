@@ -23,7 +23,7 @@ Espelho **verbatim** da pasta `api-delpi-py/GPT_instructions` dentro do reposit�
 | `drawing_rules_delpi.md` | Regras gráficas → agente |
 | `drawing_requirements_delpi.md` | Requisitos de desenho → agente |
 | `validation_rules_delpi.md` | Conformidade automática → agente |
-| `Understanding DELPI Intermediate Product Codes.md` | Códigos intermediários 50xx → agente |
+| `Understanding DELPI Intermediate Product Codes.md` | Códigos intermediários 50xx → agente; skill `technical-description-delpi` + classificação no desenho (`ChatDrawingProductFamilyClassificationService`) |
 | `diretrizes_criacao_de_descricao.md` | Padronização de descrições → agente |
 | `instructions.md` | Apontador para `GPT_instructions.md` (omitir na ingestão) |
 | `Checklist Revisão de Desenhos DELPI.pdf` | Checklist operacional (referência; backlog Onda 12) |
