@@ -151,14 +151,17 @@ export function ProcessoFolderBrowser({
       if (current.key === key) {
         return { key, direction: current.direction === "asc" ? "desc" : "asc" };
       }
-      return { key, direction: "asc" };
+      return { key, direction: key === "atualizado" ? "desc" : "asc" };
     });
   }
 
   function handleSortFieldChange(field: string) {
     const key = field as ProcessoListSortField;
     if (!PROCESSO_LIST_SORT_OPTIONS.some((option) => option.value === key)) return;
-    setSort((current) => ({ ...current, key }));
+    setSort((current) => ({
+      key,
+      direction: key === "atualizado" && current.key !== "atualizado" ? "desc" : current.direction,
+    }));
   }
 
   function toggleSortDirection() {

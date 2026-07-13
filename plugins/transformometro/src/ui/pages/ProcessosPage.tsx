@@ -36,6 +36,7 @@ import {
   masterPayloadFromProcessoForm,
   type ProcessoFormState,
 } from "../processos/processoForm";
+import { formatDateTime } from "../../utils/format";
 import { renderTableStatus } from "../../utils/tablePresentation";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -147,6 +148,13 @@ export function ProcessosPage({
             title={`Preenchimento do cadastro — ${row.codigo_processo}`}
           />
         ),
+      },
+      {
+        key: "atualizado",
+        header: "Atualizado em",
+        headerHint: P.atualizadoEm,
+        sortable: true,
+        render: (row) => formatDateTime(row.updated_at),
       },
     ],
     []

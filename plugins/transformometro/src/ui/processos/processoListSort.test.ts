@@ -57,6 +57,32 @@ describe("processoListSort", () => {
     writeProcessoListSort({ key: "codigo", direction: "desc" });
     expect(readProcessoListSort()).toEqual({ key: "codigo", direction: "desc" });
   });
+
+  it("ordena por data de atualização", () => {
+    const items = [
+      processo({
+        processo_id: "1",
+        codigo_processo: "PROC-0001",
+        nome_processo: "Antigo",
+        updated_at: "2026-01-01T10:00:00Z",
+      }),
+      processo({
+        processo_id: "2",
+        codigo_processo: "PROC-0002",
+        nome_processo: "Recente",
+        updated_at: "2026-07-01T10:00:00Z",
+      }),
+      processo({
+        processo_id: "3",
+        codigo_processo: "PROC-0003",
+        nome_processo: "Sem data",
+      }),
+    ];
+    const asc = sortProcessoListItems(items, { key: "atualizado", direction: "asc" });
+    expect(asc.map((row) => row.nome_processo)).toEqual(["Sem data", "Antigo", "Recente"]);
+    const desc = sortProcessoListItems(items, { key: "atualizado", direction: "desc" });
+    expect(desc.map((row) => row.nome_processo)).toEqual(["Recente", "Antigo", "Sem data"]);
+  });
 });
 
 describe("fieldVisibilityForProcessoListView", () => {

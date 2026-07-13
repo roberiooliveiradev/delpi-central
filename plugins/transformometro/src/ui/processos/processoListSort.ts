@@ -1,7 +1,7 @@
 import type { Processo } from "../../data/api/transformometroApi";
 import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 
-export type ProcessoListSortField = "nome" | "codigo" | "status" | "preenchimento";
+export type ProcessoListSortField = "nome" | "codigo" | "status" | "preenchimento" | "atualizado";
 export type ProcessoListSortDirection = "asc" | "desc";
 
 export type ProcessoListSort = {
@@ -21,6 +21,7 @@ export const PROCESSO_LIST_SORT_OPTIONS: Array<{ value: ProcessoListSortField; l
   { value: "codigo", label: "Código" },
   { value: "status", label: "Status" },
   { value: "preenchimento", label: "Preenchimento" },
+  { value: "atualizado", label: "Data de atualização" },
 ];
 
 const SORT_FIELDS = new Set<string>(PROCESSO_LIST_SORT_OPTIONS.map((option) => option.value));
@@ -52,6 +53,13 @@ export function writeProcessoListSort(sort: ProcessoListSort): void {
   storage.setItem(PROCESSO_LIST_SORT_STORAGE_KEY, JSON.stringify(sort));
 }
 
+function updatedAtTimestamp(processo: Processo): number {
+  const raw = processo.updated_at;
+  if (!raw) return 0;
+  const time = Date.parse(raw);
+  return Number.isNaN(time) ? 0 : time;
+}
+
 export function sortProcessoListItems(items: Processo[], sort: ProcessoListSort): Processo[] {
   const copy = [...items];
   const factor = sort.direction === "asc" ? 1 : -1;
@@ -61,6 +69,10 @@ export function sortProcessoListItems(items: Processo[], sort: ProcessoListSort)
       return (
         (computeProcessoListCompletion(left).percent - computeProcessoListCompletion(right).percent) * factor
       );
+    }
+
+    if (sort.key === "atualizado") {
+      return (updatedAtTimestamp(left) - updatedAtTimestamp(right)) * factor;
     }
 
     let leftValue = "";

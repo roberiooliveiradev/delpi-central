@@ -152,7 +152,9 @@ export const TM_HELP_TOOLTIPS = {
     modosVisualizacao:
       "Alterne entre ícones grandes (só título), ícones médios (+ código e meta), lista (+ status e preenchimento) e tabela detalhada.",
     ordenacaoCampo: "Campo usado para ordenar a lista em todos os modos de visualização.",
-    ordenacaoDirecao: "Menor → maior (A–Z, 0–100) ou Maior → menor (Z–A, 100–0).",
+    ordenacaoDirecao:
+      "Menor → maior (A–Z, 0–100, mais antigo) ou Maior → menor (Z–A, 100–0, mais recente).",
+    atualizadoEm: "Data e hora da última alteração registrada do processo no cadastro.",
   },
   decomposition: {
     mapeamento:

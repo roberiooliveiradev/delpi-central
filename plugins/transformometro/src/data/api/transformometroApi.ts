@@ -112,6 +112,8 @@ export type Processo = {
   objetivo_processo?: string | null;
   familia_processo?: string | null;
   agrupador_ferramenta?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
   setup_stats?: ProcessoSetupStats;
 };
 
