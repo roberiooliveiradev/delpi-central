@@ -19,32 +19,83 @@ class ChatDrawingReportAdjustmentTargetService:
         message: str | None,
         analysis: dict[str, Any],
     ) -> str | None:
+        keys = cls.resolve_template_keys(message, analysis)
+
+        if len(keys) == 1:
+            return keys[0]
+
+        return None
+
+    @classmethod
+    def resolve_template_keys(
+        cls,
+        message: str | None,
+        analysis: dict[str, Any],
+    ) -> list[str]:
+        """Um ou mais templateKeys ajustáveis — chip/«tudo certo» confirma todos os pendentes."""
         normalized = ChatDrawingQueryIntentContentService.normalize_message(message)
         explicit = cls._resolve_explicit_template_key(normalized)
 
         if explicit:
-            return explicit
+            return [explicit]
 
         adjustable = cls._adjustable_items(analysis)
 
         if len(adjustable) == 1:
-            return str(adjustable[0].get("templateKey") or "").strip() or None
+            key = str(adjustable[0].get("templateKey") or "").strip()
+            return [key] if key else []
 
         section_key = cls._resolve_section_hint(normalized)
 
         if section_key:
+            section_matches: list[str] = []
+
             for item in adjustable:
                 section = ChatDrawingQueryIntentContentService.normalize_message(
                     str(item.get("section") or "")
                 )
 
-                if section_key in section:
-                    return str(item.get("templateKey") or "").strip() or None
+                if section_key not in section:
+                    continue
 
-        if len(adjustable) > 1:
-            return None
+                key = str(item.get("templateKey") or "").strip()
 
-        return None
+                if key:
+                    section_matches.append(key)
+
+            if section_matches:
+                return section_matches
+
+        if cls.is_confirm_all_adjustable(message) and adjustable:
+            keys: list[str] = []
+
+            for item in adjustable:
+                key = str(item.get("templateKey") or "").strip()
+
+                if key and key not in keys:
+                    keys.append(key)
+
+            return keys
+
+        return []
+
+    @classmethod
+    def is_confirm_all_adjustable(cls, message: str | None) -> bool:
+        if not message or not str(message).strip():
+            return False
+
+        normalized = ChatDrawingQueryIntentContentService.normalize_message(message)
+
+        if ChatDrawingQueryIntentContentService.matches_trigger_category(
+            normalized,
+            "confirmAllAdjustable",
+        ):
+            return True
+
+        return ChatDrawingQueryIntentContentService.matches_trigger_category(
+            normalized,
+            "chipTriggers",
+        )
 
     @classmethod
     def adjustable_items(cls, analysis: dict[str, Any]) -> list[dict[str, Any]]:
@@ -52,7 +103,7 @@ class ChatDrawingReportAdjustmentTargetService:
 
     @classmethod
     def is_ambiguous(cls, message: str | None, analysis: dict[str, Any]) -> bool:
-        return cls.resolve_template_key(message, analysis) is None and bool(
+        return not cls.resolve_template_keys(message, analysis) and bool(
             cls._adjustable_items(analysis)
         )
 

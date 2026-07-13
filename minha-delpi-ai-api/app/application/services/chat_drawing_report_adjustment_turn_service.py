@@ -58,12 +58,12 @@ class ChatDrawingReportAdjustmentTurnService:
         existing_overrides = ChatDrawingReportAdjustmentService.load_overrides(
             previous_messages
         )
-        template_key = ChatDrawingReportAdjustmentTargetService.resolve_template_key(
+        template_keys = ChatDrawingReportAdjustmentTargetService.resolve_template_keys(
             message,
             analysis,
         )
 
-        if not template_key:
+        if not template_keys:
             if ChatDrawingReportAdjustmentTargetService.is_ambiguous(message, analysis):
                 return cls._build_direct_result(
                     message=message,
@@ -88,10 +88,16 @@ class ChatDrawingReportAdjustmentTurnService:
 
             return None
 
-        if ChatDrawingReportAdjustmentTargetService.is_critical_target(
-            template_key,
-            analysis,
-        ):
+        critical_keys = [
+            key
+            for key in template_keys
+            if ChatDrawingReportAdjustmentTargetService.is_critical_target(
+                key,
+                analysis,
+            )
+        ]
+
+        if critical_keys and len(critical_keys) == len(template_keys):
             return cls._build_direct_result(
                 message=message,
                 direct_answer=ChatDrawingQueryIntentContentService.get(
@@ -102,14 +108,21 @@ class ChatDrawingReportAdjustmentTurnService:
                 overrides=existing_overrides,
             )
 
-        new_override = ChatDrawingReportAdjustmentService.build_override(
-            template_key=template_key,
-            analysis=analysis,
-        )
-        overrides = ChatDrawingReportAdjustmentService.merge_override_lists(
-            existing_overrides,
-            new_override,
-        )
+        overrides = list(existing_overrides)
+
+        for template_key in template_keys:
+            if template_key in critical_keys:
+                continue
+
+            new_override = ChatDrawingReportAdjustmentService.build_override(
+                template_key=template_key,
+                analysis=analysis,
+            )
+            overrides = ChatDrawingReportAdjustmentService.merge_override_lists(
+                overrides,
+                new_override,
+            )
+
         updated_analysis = ChatDrawingReportAdjustmentService.apply_overrides(
             analysis,
             overrides,

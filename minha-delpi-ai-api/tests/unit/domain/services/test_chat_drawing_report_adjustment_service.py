@@ -108,6 +108,84 @@ def test_chip_adjustment_turn_updates_report_to_approved():
     assert result["drawingAnalysisExport"]["markdown"]
 
 
+def test_chip_confirms_all_pendings_when_multiple_items():
+    analysis = {
+        "status": "approved_with_notes",
+        "overallLabel": "Aprovado com ressalvas",
+        "productCode": "90261823",
+        "criticalErrors": 0,
+        "errors": 0,
+        "warnings": 3,
+        "items": [
+            {
+                "section": "Cabeçalho",
+                "item": "Revisão",
+                "status": "pending",
+                "templateKey": "revision_manual_pending",
+            },
+            {
+                "section": "Estrutura",
+                "item": "Vigência BOM",
+                "status": "pending",
+                "templateKey": "structure_bom_validity_revision_lag",
+            },
+            {
+                "section": "Cotas",
+                "item": "Comprimento de trecho",
+                "status": "pending",
+                "templateKey": "segment_length_pending",
+            },
+            {
+                "section": "Produto",
+                "item": "Produto encontrado",
+                "status": "ok",
+                "templateKey": "product_found",
+            },
+        ],
+    }
+    message = (
+        "confirmar revisão manual do item pendente no relatório do desenho 90261823"
+    )
+    result = ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+        message,
+        previous_messages=_history_with_analysis(analysis),
+    )
+
+    assert result is not None
+    updated = result["drawingAnalysis"]
+    assert updated["status"] == "approved"
+    assert updated["warnings"] == 0
+    pending = [
+        item["templateKey"]
+        for item in updated["items"]
+        if item.get("status") == "pending"
+    ]
+    assert pending == []
+    assert len(result["drawingAnalysisOverrides"]) == 3
+    assert all(
+        item.get("manualReview") is True
+        for item in updated["items"]
+        if item.get("templateKey")
+        in {
+            "revision_manual_pending",
+            "structure_bom_validity_revision_lag",
+            "segment_length_pending",
+        }
+    )
+
+
+def test_tudo_certo_confirms_all_adjustable_pendings():
+    message = "está tudo certo, foi revisado"
+    result = ChatDrawingReportAdjustmentTurnService.resolve_tool_context_result(
+        message,
+        previous_messages=_history_with_analysis(),
+    )
+
+    assert result is not None
+    assert result["drawingAnalysis"]["status"] == "approved"
+    assert result["drawingAnalysis"]["warnings"] == 0
+
+
 def test_chip_adjustment_reads_chat_message_entity_history():
     message = (
         "confirmar revisão manual do item pendente no relatório do desenho 90261877"
