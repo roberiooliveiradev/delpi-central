@@ -332,8 +332,10 @@ export function ComunicadoChartRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <FormatRibbonFrameSection />
-      <FormatRibbonOrganizeSection />
+      <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--frame-organize">
+        <FormatRibbonFrameSection />
+        <FormatRibbonOrganizeSection />
+      </div>
 
       <ChartChangeTypeDialog
         open={changeTypeOpen}

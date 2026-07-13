@@ -44,7 +44,7 @@ export function ComunicadoPartFormatRibbon({ chrome }: Props) {
     <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
       <PartSelectionNav chrome={chrome} onBack={onBack} />
       <FormatRibbonTypographySections />
-      <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--chrome-frame">
+      <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--chrome-frame-organize">
         {chrome.source === "chart" && selected?.type === "chart_view" ? (
           <ChartRibbonShapeChrome block={selected as ComunicadoChartViewBlock} />
         ) : null}
@@ -52,8 +52,8 @@ export function ComunicadoPartFormatRibbon({ chrome }: Props) {
           <TableRibbonShapeChrome block={selected as ComunicadoTableViewBlock} />
         ) : null}
         <FormatRibbonFrameSection />
+        <FormatRibbonOrganizeSection />
       </div>
-      <FormatRibbonOrganizeSection />
       {chrome.source === "kpi" ? (
         <p className="td-subtitle td-deck-ribbon__hint">
           Preenchimento e tipografia finos também no painel Formatar → Parte: {chrome.partLabel}.

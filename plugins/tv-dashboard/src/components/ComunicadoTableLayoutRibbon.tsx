@@ -142,8 +142,10 @@ export function ComunicadoTableLayoutRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <FormatRibbonFrameSection />
-      <FormatRibbonOrganizeSection />
+      <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--frame-organize">
+        <FormatRibbonFrameSection />
+        <FormatRibbonOrganizeSection />
+      </div>
     </div>
   );
 }
