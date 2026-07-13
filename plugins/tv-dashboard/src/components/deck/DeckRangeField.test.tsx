@@ -50,4 +50,41 @@ describe("DeckRangeField", () => {
     fireEvent.change(screen.getByLabelText("Y px"), { target: { value: "42" } });
     expect(onChange).toHaveBeenCalledWith(42);
   });
+
+  it("exibe e aceita displayValue com sufixo % (opacidade)", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <DeckRangeField
+        id="td-opacity"
+        label="Opacidade"
+        value={80}
+        min={0}
+        max={100}
+        step={5}
+        displayValue="80%"
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByLabelText("Opacidade (digitar)") as HTMLInputElement;
+    expect(input.value).toBe("80%");
+
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "55%" } });
+    fireEvent.blur(input);
+    expect(onChange).toHaveBeenCalledWith(55);
+
+    rerender(
+      <DeckRangeField
+        id="td-opacity"
+        label="Opacidade"
+        value={55}
+        min={0}
+        max={100}
+        step={5}
+        displayValue="55%"
+        onChange={onChange}
+      />,
+    );
+    expect((screen.getByLabelText("Opacidade (digitar)") as HTMLInputElement).value).toBe("55%");
+  });
 });

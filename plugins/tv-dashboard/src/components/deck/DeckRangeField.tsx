@@ -21,14 +21,18 @@ function formatShown(value: number, displayValue?: string): string {
   return String(Math.round(value * 1000) / 1000);
 }
 
+/** Extrai número de rascunhos com vírgula, sufixo % etc. (ex.: "80%", "595,2"). */
 function parseAndClamp(raw: string, min: number, max: number, fallback: number): number {
-  const num = Number(raw.replace(",", "."));
+  const normalized = raw.trim().replace(/\s/g, "").replace(",", ".");
+  const match = normalized.match(/-?\d+(?:\.\d+)?/);
+  const num = match ? Number(match[0]) : NaN;
   if (!Number.isFinite(num)) return fallback;
   return Math.min(max, Math.max(min, num));
 }
 
 /**
  * Campo contínuo canônico — rótulo, slider e input numérico abaixo (digitar).
+ * O companion usa `type=text` + `inputMode=decimal` para aceitar display com `%` / vírgula.
  */
 export function DeckRangeField({
   id,
@@ -57,8 +61,11 @@ export function DeckRangeField({
   const commitDraft = () => {
     setEditing(false);
     const next = parseAndClamp(draft, min, max, clamped);
-    setDraft(formatShown(next, displayValue));
-    if (next !== value) onChange(next);
+    if (next !== value) {
+      onChange(next);
+      return;
+    }
+    setDraft(formatShown(value, displayValue));
   };
 
   return (
@@ -90,11 +97,9 @@ export function DeckRangeField({
         />
         <NativeTextControl
           id={`${id}-num`}
-          type="number"
+          type="text"
+          inputMode="decimal"
           className="td-deck-ribbon__number td-deck-ribbon__number--compact td-deck-ribbon__range-input"
-          min={min}
-          max={max}
-          step={step}
           aria-label={`${ariaLabel ?? label} (digitar)`}
           value={draft}
           onFocus={() => setEditing(true)}
