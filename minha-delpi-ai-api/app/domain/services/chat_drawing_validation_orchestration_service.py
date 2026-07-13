@@ -667,13 +667,9 @@ class ChatDrawingValidationOrchestrationService:
                 ChatDrawingCustomerReferenceCrossCheckService,
             )
 
-            customer_ref_item = ChatDrawingCustomerReferenceCrossCheckService.build_check_item(
-                pdf_reference=ChatDrawingCustomerReferenceCrossCheckService.resolve_pdf_reference(
-                    pdf_extract
-                ),
-                api_reference=ChatDrawingCustomerReferenceCrossCheckService.resolve_api_reference(
-                    product
-                ),
+            customer_ref_item = ChatDrawingCustomerReferenceCrossCheckService.build_from_sources(
+                product=product,
+                pdf_extract=pdf_extract,
             )
 
             if customer_ref_item:
@@ -857,6 +853,28 @@ class ChatDrawingValidationOrchestrationService:
             items
         )
 
+        from app.domain.services.chat_drawing_customer_reference_cross_check_service import (
+            ChatDrawingCustomerReferenceCrossCheckService,
+        )
+
+        customer_reference_api = (
+            ChatDrawingCustomerReferenceCrossCheckService.resolve_api_reference(product)
+            or str(product.get("customer_reference") or "").strip()
+            or None
+        )
+        customer_reference_pdf = (
+            ChatDrawingCustomerReferenceCrossCheckService.find_reference_in_text(
+                customer_reference_api or "",
+                ChatDrawingCustomerReferenceCrossCheckService.pdf_haystack(pdf_meta),
+            )
+            if customer_reference_api and pdf_meta
+            else None
+        ) or (
+            ChatDrawingCustomerReferenceCrossCheckService.resolve_pdf_reference(pdf_meta)
+            if pdf_meta
+            else None
+        ) or None
+
         return {
             "drawingAnalysis": {
                 "status": overall,
@@ -864,8 +882,8 @@ class ChatDrawingValidationOrchestrationService:
                 "productCode": product_code,
                 "revisionPdf": pdf_meta.get("revision"),
                 "revisionPdfInternal": pdf_meta.get("internalRevision"),
-                "customerReferencePdf": pdf_meta.get("customerReference"),
-                "customerReferenceApi": product.get("customer_reference"),
+                "customerReferencePdf": customer_reference_pdf,
+                "customerReferenceApi": customer_reference_api,
                 "revisionApi": product.get("current_revision")
                 or product.get("last_revision_date"),
                 "pdfProductCode": pdf_meta.get("productCode") or product_code,

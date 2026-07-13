@@ -210,21 +210,9 @@ class ChatDrawingPdfExtractionService:
             "productCodeSource": stamp_source,
             "revision": revision,
             "internalRevision": cls._extract_internal_revision(scope_text or cad_text),
-            "customerReference": (
+            "customerReference": cls._coerce_customer_reference(
                 str(stamp_extract.get("customerCode") or "").strip()
-                or cls._extract_labeled_value(
-                    scope_text,
-                    labels=(
-                        "COD. CLIENTE",
-                        "COD CLIENTE",
-                        "CÓD. CLIENTE",
-                        "REFERENCIA CLIENTE",
-                        "REFERÊNCIA CLIENTE",
-                        "REF:",
-                        "REF.",
-                        "REF ",
-                    ),
-                )
+                or cls._extract_customer_reference(scope_text)
             ),
             "description": stamp_extract.get("description")
             or cls._extract_labeled_value(
@@ -387,6 +375,23 @@ class ChatDrawingPdfExtractionService:
             return None
 
         return str(matches[-1]).zfill(2)
+
+    @classmethod
+    def _coerce_customer_reference(cls, raw: str | None) -> str | None:
+        from app.domain.services.chat_drawing_customer_reference_cross_check_service import (
+            ChatDrawingCustomerReferenceCrossCheckService,
+        )
+
+        value = ChatDrawingCustomerReferenceCrossCheckService.coerce_reference(str(raw or ""))
+        return value or None
+
+    @classmethod
+    def _extract_customer_reference(cls, text: str) -> str | None:
+        from app.domain.services.chat_drawing_customer_reference_cross_check_service import (
+            ChatDrawingCustomerReferenceCrossCheckService,
+        )
+
+        return ChatDrawingCustomerReferenceCrossCheckService.extract_from_text(text)
 
     @classmethod
     def _extract_labeled_value(cls, text: str, *, labels: tuple[str, ...]) -> str | None:

@@ -270,16 +270,12 @@ class ChatDrawingStampExtractionService:
 
     @classmethod
     def _extract_customer_fields(cls, text: str) -> tuple[str | None, str | None]:
-        customer_code = None
+        from app.domain.services.chat_drawing_customer_reference_cross_check_service import (
+            ChatDrawingCustomerReferenceCrossCheckService,
+        )
+
+        customer_code = ChatDrawingCustomerReferenceCrossCheckService.extract_from_text(text)
         customer_description = None
-
-        code_match = ChatDrawingPatternsService.customer_code_labeled().search(text)
-
-        if not code_match:
-            code_match = ChatDrawingPatternsService.customer_code_inline().search(text)
-
-        if code_match:
-            customer_code = code_match.group(1).strip()
 
         des_match = ChatDrawingPatternsService.customer_description_labeled().search(text)
 

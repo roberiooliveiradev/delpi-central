@@ -208,25 +208,25 @@
     "customer_reference_ok": {
       "section": "Cabeçalho",
       "item": "Referência do cliente",
-      "rule": "REF./COD. CLIENTE no PDF × B1_REFEREN (api-delpi)",
+      "rule": "B1_REFEREN (api-delpi) × REF:/COD: no PDF",
       "recommendation": "—"
     },
     "customer_reference_mismatch": {
       "section": "Cabeçalho",
       "item": "Referência do cliente",
-      "rule": "REF./COD. CLIENTE no PDF deve coincidir com B1_REFEREN",
-      "recommendation": "Corrigir REF. no desenho ou a referência do cliente no Protheus"
+      "rule": "Valor em REF:/COD: no PDF deve coincidir com B1_REFEREN",
+      "recommendation": "Corrigir REF./COD. no desenho ou a referência do cliente no Protheus"
     },
     "customer_reference_pending_pdf": {
       "section": "Cabeçalho",
       "item": "Referência do cliente",
-      "rule": "Cadastro tem B1_REFEREN; REF. não lida no PDF",
-      "recommendation": "Conferir campo REF./COD. CLIENTE no carimbo do desenho"
+      "rule": "Cadastro tem B1_REFEREN; valor não encontrado no PDF (REF:/COD:)",
+      "recommendation": "Conferir campo REF:/COD: no carimbo do desenho"
     },
     "customer_reference_pending_api": {
       "section": "Cabeçalho",
       "item": "Referência do cliente",
-      "rule": "PDF tem REF.; B1_REFEREN vazio no cadastro",
+      "rule": "PDF tem REF./COD.; B1_REFEREN vazio no cadastro",
       "recommendation": "Preencher referência do cliente (B1_REFEREN) no Protheus"
     },
     "extraction_confidence": {

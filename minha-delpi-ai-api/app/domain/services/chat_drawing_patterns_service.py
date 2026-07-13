@@ -913,6 +913,26 @@ class ChatDrawingPatternsService:
         return cls.compile_stamp("customerDescriptionLabeled")
 
     @classmethod
+    def customer_name_noise(cls) -> re.Pattern[str]:
+        return cls.compile_stamp("customerNameNoise")
+
+    @classmethod
+    def customer_reference_labels(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(
+            _STAMP_BUNDLE,
+            "customerReferenceLabels",
+        )
+        return tuple(str(item) for item in items if str(item).strip())
+
+    @classmethod
+    def customer_name_noise_markers(cls) -> tuple[str, ...]:
+        items = ChatAssistantContentService.list(
+            _STAMP_BUNDLE,
+            "customerNameNoiseMarkers",
+        )
+        return tuple(str(item).upper() for item in items if str(item).strip())
+
+    @classmethod
     def title_separator_strip(cls) -> re.Pattern[str]:
         return cls.compile_stamp("titleSeparatorStrip")
 
