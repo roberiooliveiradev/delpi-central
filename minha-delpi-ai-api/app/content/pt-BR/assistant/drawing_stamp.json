@@ -291,9 +291,9 @@
     }
   },
   "patterns": {
-    "componentCode": "\\b((?:90|70)\\d{6}|800[01]\\d{4}|50\\d{6}|10\\d{6}|100\\d{5}|40\\d{6}|101\\d{4,5})\\b",
-    "intermediateCode": "\\b(50\\d{6})\\b",
-    "finishedProductCode": "\\b((?:90|70)\\d{6}|800[01]\\d{4})\\b",
+    "componentCode": "(?<![0-9])((?:90|70)\\d{6}|800[01]\\d{4}|50\\d{6}|10\\d{6}|100\\d{5}|40\\d{6}|101\\d{4,5})(?![0-9])",
+    "intermediateCode": "(?<![0-9])(50\\d{6})(?![0-9])",
+    "finishedProductCode": "(?<![0-9])((?:90|70)\\d{6}|800[01]\\d{4})(?![0-9])",
     "finishedProductCodeAnchor": "^((?:90|70)\\d{6}|800[01]\\d{4})$",
     "revision": "(?:REV(?:IS[AÃ]O)?\\.?|REVISION)\\s*[:.]?\\s*(\\d{1,3})",
     "internalRevisionTable": "(\\d{2})\\s*\\[\\s*\\d{2}/\\d{2}/\\d{2}\\s*\\]",
@@ -314,7 +314,7 @@
     "decapeNote": "DECAPE\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "decapeMachineSide": "DECAPAR\\s+O\\s+LADO\\s+DE\\s+(\\d[\\d\\s,.]*)\\s*M{0,2}",
     "hintNumberTail": "(\\d[\\d\\s,.]*)\\s*M{0,2}",
-    "codeToken": "\\b((?:90|70)\\d{6}|800[01]\\d{4}|50\\d{6}|10\\d{6}|100\\d{5})\\b",
+    "codeToken": "(?<![0-9])((?:90|70)\\d{6}|800[01]\\d{4}|50\\d{6}|10\\d{6}|100\\d{5})(?![0-9])",
     "ocrSpacedCode": "(?:90|70|80|50|10)\\s*(\\d{3})\\s*(\\d{3})",
     "stampRevision": "REV(?:\\.|IS[ÃA]O)?\\s*[:.]?\\s*(\\d{1,3})",
     "primaryDrawingCode": "^(?:(?:90|70)\\d{6}|800[01]\\d{4}|50\\d{6})$",

@@ -299,6 +299,27 @@ class ChatDrawingBomQuantityAssertivenessService:
             ):
                 return "decimal_piece_quantity"
 
+        # OCR de célula (refined_column) em PDF ODA/fonte colada: decimais que não
+        # batem com a SG1010 são ruído (ex.: 0.756 lido no lugar de 01 / 750 mm).
+        if (
+            source == "refined_column"
+            and ChatDrawingPatternsService.bom_quantity_semantics_rule(
+                "rejectDecimalPieceQuantity",
+                True,
+            )
+            and not float(quantity).is_integer()
+            and (
+                api_row is None
+                or not cls._matches_api(
+                    quantity=quantity,
+                    api_row=api_row,
+                    root=root,
+                    pdf_extract=pdf_extract,
+                )
+            )
+        ):
+            return "decimal_piece_quantity"
+
         if api_row is not None and not cls._matches_api(
             quantity=quantity,
             api_row=api_row,

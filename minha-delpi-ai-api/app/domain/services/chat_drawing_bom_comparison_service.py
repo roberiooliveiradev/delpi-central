@@ -317,6 +317,11 @@ class ChatDrawingBomComparisonService:
         product_code: str,
     ) -> set[str]:
         """Intermediários efetivos no PDF — mesma reconciliação da comparação BOM."""
+        structure_all_codes = ChatDrawingStructureIndexService.collect_all_codes(
+            root,
+            product_code,
+        )
+        api_structure_codes = set(structure_all_codes)
         pdf_intermediate = {
             ChatProductQueryIntentService.normalize_product_code(str(code))
             for code in (pdf_extract.get("intermediateCodes") or [])
@@ -331,24 +336,25 @@ class ChatDrawingBomComparisonService:
             cls.reconcile_intermediate_bom_row_description_matches(
                 root=root,
                 pdf_extract=pdf_extract,
-                api_codes=set(
-                    ChatDrawingStructureIndexService.collect_all_codes(
-                        root,
-                        product_code,
-                    )
-                ),
+                api_codes=api_structure_codes,
             )
         )
-        pdf_intermediate |= description_matched | intermediate_matched
+        # Presença em haystack regional/CAD (ex.: ODA colado) — mesma evidência de compare().
+        haystack_matched = {
+            code
+            for code in cls.collect_haystack_presence_codes(
+                pdf_extract,
+                api_codes=api_structure_codes,
+            )
+            if ChatDrawingPatternsService.is_intermediate_family(code)
+        }
+        presence_matched = description_matched | intermediate_matched | haystack_matched
+        pdf_intermediate |= presence_matched
 
-        structure_all_codes = ChatDrawingStructureIndexService.collect_all_codes(
-            root,
-            product_code,
-        )
         _, false_row_codes = cls.reconcile_bom_row_description_matches(
             root=root,
             pdf_extract=pdf_extract,
-            api_codes=set(structure_all_codes),
+            api_codes=api_structure_codes,
         )
         false_row_codes |= intermediate_false_rows
         for row in pdf_extract.get("bomRows") or []:
@@ -374,7 +380,7 @@ class ChatDrawingBomComparisonService:
         pdf_intermediate -= cls._fulltext_only_intermediate_phantoms(
             pdf_intermediate,
             pdf_extract=pdf_extract,
-            description_matched=description_matched | intermediate_matched,
+            description_matched=presence_matched,
             false_row_codes=false_row_codes,
         )
 

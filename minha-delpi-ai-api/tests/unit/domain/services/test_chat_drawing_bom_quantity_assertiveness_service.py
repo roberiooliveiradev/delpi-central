@@ -87,6 +87,30 @@ def test_mismatch_status_requires_trusted_quantity_source_for_critical():
     assert status == "pending"
 
 
+def test_refined_column_decimal_noise_rejected_for_milheiro_unit():
+    from app.domain.services.chat_drawing_bom_quantity_semantics_service import (
+        StructureQuantityRow,
+    )
+
+    row = {
+        "code": "10500017",
+        "quantity": "0.7560051",
+        "description": "fu",
+        "quantitySource": "refined_column",
+        "quantityTrusted": True,
+    }
+    reason = ChatDrawingBomQuantityAssertivenessService._untrusted_reason(
+        row=row,
+        code="10500017",
+        quantity=0.7560051,
+        api_row=StructureQuantityRow(code="10500017", quantity=1000.0, unit="MI"),
+        root={},
+        pdf_extract={},
+    )
+
+    assert reason == "decimal_piece_quantity"
+
+
 def test_column_inferred_quantity_source_skips_description_noise():
     row = {
         "code": "10090050",

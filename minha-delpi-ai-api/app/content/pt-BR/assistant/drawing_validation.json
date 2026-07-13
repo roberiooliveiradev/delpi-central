@@ -512,7 +512,10 @@
       ],
       "skipPendingWhenUntrustedReasons": [
         "quantity_from_description",
-        "zero_quantity"
+        "zero_quantity",
+        "decimal_piece_quantity",
+        "intermediate_length_as_quantity",
+        "intermediate_quantity_implausible"
       ],
       "refinementExhaustedPending": true,
       "criticalRequiresQuantitySource": ["column", "column_inferred", "refined_column", "annotation"],
