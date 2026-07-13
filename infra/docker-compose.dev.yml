@@ -713,6 +713,22 @@ services:
     networks:
       - delpi-network
 
+  inspecoes-processo:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: inspecoes-processo/Dockerfile
+      target: production
+
+    container_name: delpi-inspecoes-processo
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   cadastro-kaizen:
     <<: *plugin-ui-federated
     build:

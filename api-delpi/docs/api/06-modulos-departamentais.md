@@ -305,6 +305,29 @@ Documentação completa: [inspecoes-entrada.md](./inspecoes-entrada.md) · views
 
 ---
 
+## Inspeções de processo — `/inspecoes-processo`
+
+**Permissão:** `inspecoes-processo.view`, `inspecoes-processo.view.filial-01`, `inspecoes-processo.view.filial-02` ou `api-delpi.access`
+
+Painel operacional de inspeção em processo (views TOTVS + auditoria apontamento/QPR). Plugin: `inspecoes-processo`.
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/inspecoes-processo/resumo` | KPIs por filial. |
+| GET | `/inspecoes-processo/por-produto` | Ranking por produto. |
+| GET | `/inspecoes-processo/por-ensaiador` | Ranking por ensaiador. |
+| GET | `/inspecoes-processo/por-operacao` | Ranking por operação. |
+| GET | `/inspecoes-processo/ranking-ensaio` | Ranking por ensaio. |
+| GET | `/inspecoes-processo/historico` | Histórico paginado por OP. |
+| GET | `/inspecoes-processo/historico/detalhe` | Medições da OP. |
+| GET | `/inspecoes-processo/auditoria-apontamentos` | Apontamentos com inspeção amarrada sem QPR. |
+
+Parâmetro comum: `branch` (`01` \| `02`). Escopo por filial validado no router.
+
+Documentação completa: [inspecoes-processo.md](./inspecoes-processo.md) · auditoria: [ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md](../../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md).
+
+---
+
 ## Controle de Retrabalhos — `/retrabalhos`
 
 **Permissão:** `controle-retrabalhos.access`, `controle-retrabalhos.view`, `controle-retrabalhos.view.filial-sc`, `controle-retrabalhos.view.filial-es` ou `api-delpi.access`

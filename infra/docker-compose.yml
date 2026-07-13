@@ -782,6 +782,23 @@ services:
     networks:
       - delpi-network
 
+  inspecoes-processo:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: inspecoes-processo/Dockerfile
+      target: production
+
+    container_name: delpi-inspecoes-processo
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   central-agendamento:
     depends_on:
       - plugin-ui
@@ -1385,6 +1402,7 @@ services:
       - cadastro-kaizen
       - quality-action-plans
       - inspecoes-entrada
+      - inspecoes-processo
       - central-agendamento
       - controle-retrabalhos
       - dashboard-supplies
