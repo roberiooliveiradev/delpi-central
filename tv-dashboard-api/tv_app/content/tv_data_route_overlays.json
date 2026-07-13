@@ -46,7 +46,6 @@
       }
     },
     "get_ppm_external_summary": {
-      "paramStrategy": "date_range",
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -60,17 +59,9 @@
       "description": "Indicador numérico para «Qualidade — PPM externo».",
       "defaultParams": {
         "periodDays": 30
-      },
-      "paramSchema": {
-        "periodDays": {
-          "type": "integer",
-          "default": 30,
-          "label": "Período (dias)"
-        }
       }
     },
     "get_ppm_internal_summary": {
-      "paramStrategy": "date_range",
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
@@ -84,13 +75,6 @@
       "description": "Indicador numérico para «Qualidade — PPM interno».",
       "defaultParams": {
         "periodDays": 30
-      },
-      "paramSchema": {
-        "periodDays": {
-          "type": "integer",
-          "default": 30,
-          "label": "Período (dias)"
-        }
       }
     },
     "get_production_oee_series": {

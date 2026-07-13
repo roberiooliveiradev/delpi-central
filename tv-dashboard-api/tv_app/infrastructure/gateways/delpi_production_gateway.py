@@ -143,20 +143,31 @@ class DelpiProductionGateway:
         ppm = (ppm_type or "internal").strip().lower()
         if ppm not in {"internal", "external"}:
             ppm = "internal"
-        params = {"start_date": start, "end_date": end, "branch": branch}
+        params = {"date_start": start, "date_end": end, "branch": branch}
         envelope = self._client.get_ppm_summary(
             ppm,
             params={k: v for k, v in params.items() if v},
             authorization=self._auth(authorization),
         )
         summary = _extract_summary(envelope)
-        points = self._fetch_series_points(
-            fetch=lambda **kwargs: self._client.get_ppm_series(ppm, **kwargs),
-            branch=branch,
-            start=start,
-            end=end,
-            authorization=authorization,
-        )
+        series_params: dict[str, str] = {
+            "date_start": start,
+            "date_end": end,
+            "granularity": "day",
+        }
+        if branch:
+            series_params["branch"] = branch
+        try:
+            series_envelope = self._client.get_ppm_series(
+                ppm,
+                params=series_params,
+                authorization=self._auth(authorization),
+            )
+            points = extract_series_points(
+                envelope_data(series_envelope), "points", branch=branch
+            )
+        except Exception:  # noqa: BLE001 — KPI dual permanece mesmo se a série falhar
+            points = []
         return {
             "branch": branch,
             "periodDays": period_days,

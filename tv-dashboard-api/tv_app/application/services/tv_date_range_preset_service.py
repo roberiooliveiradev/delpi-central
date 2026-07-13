@@ -3,45 +3,101 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
-from typing import Any, Mapping
+from typing import Any, Mapping, Sequence
 
 DATE_RANGE_PRESET_KEY = "dateRangePreset"
 PERIOD_DAYS_KEY = "periodDays"
 
-START_KEYS = (
-    "date_start",
-    "start_date",
-    "date_from",
-    "dataInicio",
-    "data_inicial",
-    "issue_date_start",
-    "modified_from",
-    "from",
+# Pares canônicos OpenAPI (ordem = preferência ao detectar no schema).
+DATE_RANGE_KEY_PAIRS: tuple[tuple[str, str], ...] = (
+    ("date_start", "date_end"),
+    ("start_date", "end_date"),
+    ("date_from", "date_to"),
+    ("dataInicio", "dataFim"),
+    ("data_inicial", "data_final"),
+    ("issue_date_start", "issue_date_end"),
+    ("modified_from", "modified_to"),
+    ("from", "to"),
 )
-END_KEYS = (
-    "date_end",
-    "end_date",
-    "date_to",
-    "dataFim",
-    "data_final",
-    "issue_date_end",
-    "modified_to",
-    "to",
-)
+
+START_KEYS = tuple(pair[0] for pair in DATE_RANGE_KEY_PAIRS)
+END_KEYS = tuple(pair[1] for pair in DATE_RANGE_KEY_PAIRS)
 
 # Chaves internas — não devem ir na query HTTP da api-delpi.
 INTERNAL_PARAM_KEYS = frozenset({DATE_RANGE_PRESET_KEY})
+
+DEFAULT_DATE_RANGE_KEYS = ("start_date", "end_date")
 
 
 def find_date_range_keys(keys: Mapping[str, Any] | list[str] | tuple[str, ...] | None) -> tuple[str, str] | None:
     if keys is None:
         return None
     key_set = set(keys.keys() if isinstance(keys, Mapping) else keys)
-    start = next((key for key in START_KEYS if key in key_set), None)
-    end = next((key for key in END_KEYS if key in key_set), None)
-    if start and end:
-        return start, end
+    for start, end in DATE_RANGE_KEY_PAIRS:
+        if start in key_set and end in key_set:
+            return start, end
     return None
+
+
+def normalize_date_range_keys(raw: Any) -> tuple[str, str] | None:
+    """Aceita lista/tupla `[start, end]` ou dict `{start, end}` do catálogo."""
+    if isinstance(raw, Mapping):
+        start = raw.get("start") or raw.get("startKey") or raw.get("start_key")
+        end = raw.get("end") or raw.get("endKey") or raw.get("end_key")
+        if start and end:
+            return str(start), str(end)
+        return None
+    if isinstance(raw, Sequence) and not isinstance(raw, (str, bytes)) and len(raw) >= 2:
+        return str(raw[0]), str(raw[1])
+    return None
+
+
+def resolve_output_date_range_keys(
+    *,
+    schema_keys: Mapping[str, Any] | list[str] | tuple[str, ...] | None = None,
+    date_range_keys: Any = None,
+    strategy: str | None = None,
+    fallback: tuple[str, str] = DEFAULT_DATE_RANGE_KEYS,
+) -> tuple[str, str] | None:
+    """Nomes HTTP canônicos da rota — nunca inferir a partir dos valores do usuário."""
+    pair = find_date_range_keys(schema_keys) or normalize_date_range_keys(date_range_keys)
+    if pair:
+        return pair
+    if str(strategy or "").strip().lower() == "date_range":
+        return fallback
+    return None
+
+
+def read_date_range_values(
+    params: Mapping[str, Any],
+    start_key: str,
+    end_key: str,
+) -> tuple[Any, Any]:
+    """Lê início/fim aceitando aliases (UI/legado), mas o caller emite só start_key/end_key."""
+    start = params.get(start_key)
+    end = params.get(end_key)
+    if not _as_iso(start):
+        for key in START_KEYS:
+            if key == start_key:
+                continue
+            candidate = params.get(key)
+            if _as_iso(candidate):
+                start = candidate
+                break
+    if not _as_iso(end):
+        for key in END_KEYS:
+            if key == end_key:
+                continue
+            candidate = params.get(key)
+            if _as_iso(candidate):
+                end = candidate
+                break
+    return start, end
+
+
+def date_alias_keys(*, keep: tuple[str, str]) -> frozenset[str]:
+    keep_set = {keep[0], keep[1]}
+    return frozenset(set(START_KEYS) | set(END_KEYS) | keep_set)
 
 
 def compute_preset_range(
@@ -90,11 +146,14 @@ def apply_date_range_preset(
     params: Mapping[str, Any] | None,
     *,
     schema_keys: Mapping[str, Any] | list[str] | tuple[str, ...] | None = None,
+    date_range_keys: Any = None,
+    strategy: str | None = None,
     today: date | None = None,
 ) -> dict[str, Any]:
-    """Expande `dateRangePreset` / `periodDays` em datas concretas nos nomes do schema.
+    """Expande `dateRangePreset` / `periodDays` em datas concretas nos nomes canônicos.
 
     Remove `dateRangePreset` do resultado (só uso interno do bloco TV).
+    Não espelha aliases (`start_date` + `date_start`) — evita query HTTP ambígua.
     """
     merged: dict[str, Any] = {}
     if isinstance(params, Mapping):
@@ -110,10 +169,14 @@ def apply_date_range_preset(
     except (TypeError, ValueError):
         period_days = None
 
-    pair = find_date_range_keys(schema_keys) or find_date_range_keys(merged)
-    # Estratégia date_range do catálogo: canônico start_date/end_date.
+    pair = resolve_output_date_range_keys(
+        schema_keys=schema_keys,
+        date_range_keys=date_range_keys,
+        strategy=strategy if (preset or period_days is not None) else None,
+    )
+    # Fallback legado: periodDays sem schema/estratégia → start_date/end_date.
     if pair is None and (preset or period_days is not None):
-        pair = ("start_date", "end_date")
+        pair = find_date_range_keys(merged) or DEFAULT_DATE_RANGE_KEYS
 
     if pair:
         start_key, end_key = pair
@@ -122,17 +185,23 @@ def apply_date_range_preset(
             start_d, end_d = computed
             merged[start_key] = start_d.isoformat()
             merged[end_key] = end_d.isoformat()
-            # Espelha aliases comuns usados pela api-delpi.
-            if start_key != "start_date":
-                merged.setdefault("start_date", start_d.isoformat())
-            if end_key != "end_date":
-                merged.setdefault("end_date", end_d.isoformat())
         elif period_days is not None and not _as_iso(merged.get(start_key)):
-            start_d, end_d = date.today() - timedelta(days=max(period_days, 1) - 1), date.today()
-            if today is not None:
-                start_d, end_d = today - timedelta(days=max(period_days, 1) - 1), today
-            merged[start_key] = start_d.isoformat()
-            merged[end_key] = end_d.isoformat()
+            day = today or date.today()
+            start_d, end_d = day - timedelta(days=max(period_days, 1) - 1), day
+            # Se o valor canônico ainda não existe, tenta aliases antes de calcular.
+            alias_start, alias_end = read_date_range_values(merged, start_key, end_key)
+            if _as_iso(alias_start) and _as_iso(alias_end):
+                merged[start_key] = str(alias_start).strip()
+                merged[end_key] = str(alias_end).strip()
+            else:
+                merged[start_key] = start_d.isoformat()
+                merged[end_key] = end_d.isoformat()
+        else:
+            alias_start, alias_end = read_date_range_values(merged, start_key, end_key)
+            if _as_iso(alias_start):
+                merged[start_key] = str(alias_start).strip()
+            if _as_iso(alias_end):
+                merged[end_key] = str(alias_end).strip()
 
     merged.pop(DATE_RANGE_PRESET_KEY, None)
     return merged

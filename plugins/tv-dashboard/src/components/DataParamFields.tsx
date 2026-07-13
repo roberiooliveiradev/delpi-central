@@ -206,6 +206,9 @@ export function DataParamFields({
         ];
 
   const fields = entries.map(([key, field]) => {
+    // periodDays só no bloco de preset (Últimos N dias) quando há par de datas.
+    if (datePair && key === PERIOD_DAYS_PARAM) return null;
+
     const inherited = inheritedKeys.has(key);
     const current = values?.[key];
     const labelBase = resolveParamFieldLabel(key, field.label);

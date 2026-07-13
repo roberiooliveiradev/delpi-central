@@ -83,7 +83,9 @@ python3 scripts/check_tv_data_routes.py --check
 cd minha-delpi-ai-api && .venv/bin/python scripts/generate_operational_route_registry.py --write --check
 ```
 
-O gerador monta `paramSchema` / `paramStrategy` (`date_range` quando há `start_date`+`end_date`) e `metaShape` a partir do OpenAPI; overlays sobrescrevem só o que é específico do TV. Seed inicial de overlays: `--seed-overlays`.
+O gerador monta `paramSchema` / `paramStrategy` (`date_range` quando há par de datas
+OpenAPI — `date_start`+`date_end` ou `start_date`+`end_date`) e `dateRangeKeys` com os
+nomes HTTP canônicos; overlays sobrescrevem só o que é específico do TV. Seed inicial de overlays: `--seed-overlays`.
 
 
 ---

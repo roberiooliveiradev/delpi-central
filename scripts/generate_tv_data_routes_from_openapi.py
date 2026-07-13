@@ -521,31 +521,41 @@ def map_openapi_type(param: dict[str, Any]) -> str:
     return "string"
 
 
+# Pares de período OpenAPI — ordem = preferência (date_start antes de start_date).
+_DATE_RANGE_KEY_PAIRS: tuple[tuple[str, str], ...] = (
+    ("date_start", "date_end"),
+    ("start_date", "end_date"),
+    ("date_from", "date_to"),
+    ("dataInicio", "dataFim"),
+    ("data_inicial", "data_final"),
+    ("issue_date_start", "issue_date_end"),
+    ("modified_from", "modified_to"),
+)
+
+
+def detect_openapi_date_range_keys(names: set[str]) -> tuple[str, str] | None:
+    for start, end in _DATE_RANGE_KEY_PAIRS:
+        if start in names and end in names:
+            return start, end
+    return None
+
+
 def build_param_schema_from_openapi(
     parameters: list[dict[str, Any]] | None,
-) -> tuple[dict[str, Any], str]:
-    """Converte parameters do baseline → paramSchema TV + paramStrategy."""
+) -> tuple[dict[str, Any], str, tuple[str, str] | None]:
+    """Converte parameters do baseline → paramSchema TV + paramStrategy + dateRangeKeys.
+
+    Mantém as chaves de data canônicas no schema (UI de período relativo) e registra
+    `dateRangeKeys` para o gateway emitir exatamente os nomes HTTP da api-delpi.
+    """
     params = [p for p in (parameters or []) if isinstance(p, dict) and p.get("name")]
     names = {str(p["name"]) for p in params}
-    has_date_range = "start_date" in names and "end_date" in names
-    strategy = "date_range" if has_date_range else "direct"
+    date_range_keys = detect_openapi_date_range_keys(names)
+    strategy = "date_range" if date_range_keys else "direct"
     schema: dict[str, Any] = {}
-
-    if has_date_range:
-        schema["periodDays"] = enrich_param_schema_entry(
-            "periodDays",
-            {
-                "type": "integer",
-                "default": 30,
-                "label": PARAM_LABELS_PT["periodDays"],
-                "optional": True,
-            },
-        )
 
     for param in params:
         name = str(param["name"])
-        if has_date_range and name in {"start_date", "end_date"}:
-            continue
         entry: dict[str, Any] = {
             "type": map_openapi_type(param),
             "optional": not bool(param.get("required")),
@@ -560,7 +570,7 @@ def build_param_schema_from_openapi(
             entry["description"] = openapi_desc
         schema[name] = enrich_param_schema_entry(name, entry)
 
-    return schema, strategy
+    return schema, strategy, date_range_keys
 
 
 def infer_value_fields(operation_id: str) -> list[str]:
@@ -594,7 +604,9 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     operation_id = str(operation.get("operationId") or "").strip()
     summary = str(operation.get("summary") or "").strip()
     description = str(operation.get("description") or "").strip()
-    param_schema, param_strategy = build_param_schema_from_openapi(operation.get("parameters"))
+    param_schema, param_strategy, date_range_keys = build_param_schema_from_openapi(
+        operation.get("parameters")
+    )
     route: dict[str, Any] = {
         "operationId": operation_id,
         "httpMethod": "GET",
@@ -609,6 +621,8 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     if param_schema:
         route["paramSchema"] = param_schema
         route["paramStrategy"] = param_strategy
+        if date_range_keys:
+            route["dateRangeKeys"] = list(date_range_keys)
         if param_strategy == "date_range":
             route["defaultParams"] = {"periodDays": 30}
     value_fields = infer_value_fields(operation_id)

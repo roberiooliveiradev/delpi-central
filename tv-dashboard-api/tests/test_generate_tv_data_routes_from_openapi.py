@@ -50,7 +50,7 @@ def test_manual_enrichment_preserved_for_oee():
 
 def test_openapi_parameters_become_param_schema_for_closing_rate():
     gen = _load_generator_module()
-    schema, strategy = gen.build_param_schema_from_openapi(
+    schema, strategy, date_keys = gen.build_param_schema_from_openapi(
         [
             {"name": "branch", "required": False, "type": "string"},
             {"name": "start_date", "required": False, "type": "string"},
@@ -64,11 +64,11 @@ def test_openapi_parameters_become_param_schema_for_closing_rate():
         ]
     )
     assert strategy == "date_range"
-    assert "periodDays" in schema
+    assert date_keys == ("start_date", "end_date")
     assert "branch" in schema
     assert "customer_segment" in schema
-    assert "start_date" not in schema
-    assert "end_date" not in schema
+    assert "start_date" in schema
+    assert "end_date" in schema
 
     generated = gen.generate_routes(
         baseline_path=BASELINE,
@@ -77,9 +77,27 @@ def test_openapi_parameters_become_param_schema_for_closing_rate():
     )
     closing = next(item for item in generated if item["operationId"] == "get_sales_conversion_rate")
     assert closing.get("paramStrategy") == "date_range"
-    assert "periodDays" in (closing.get("paramSchema") or {})
+    assert closing.get("dateRangeKeys") == ["start_date", "end_date"]
+    assert "start_date" in (closing.get("paramSchema") or {})
     assert "customer_segment" in (closing.get("paramSchema") or {})
     assert closing.get("valueFields")
+
+
+def test_openapi_date_start_end_becomes_date_range_with_canonical_keys():
+    gen = _load_generator_module()
+    schema, strategy, date_keys = gen.build_param_schema_from_openapi(
+        [
+            {"name": "branch", "required": False, "type": "string"},
+            {"name": "date_start", "required": False, "type": "string"},
+            {"name": "date_end", "required": False, "type": "string"},
+            {"name": "product_prefix", "required": False, "type": "string"},
+        ]
+    )
+    assert strategy == "date_range"
+    assert date_keys == ("date_start", "date_end")
+    assert "date_start" in schema
+    assert "date_end" in schema
+    assert "start_date" not in schema
 
 
 def test_catalog_has_majority_param_schemas_from_openapi():

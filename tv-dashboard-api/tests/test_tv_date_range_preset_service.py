@@ -39,6 +39,19 @@ def test_apply_preset_writes_schema_keys_and_strips_internal():
     assert out["date_end"] == "2026-07-13"
     assert out["branch"] == "01"
     assert "dateRangePreset" not in out
+    assert "start_date" not in out
+
+
+def test_apply_preset_does_not_mirror_aliases():
+    today = date(2026, 7, 13)
+    out = apply_date_range_preset(
+        {"dateRangePreset": "this_month"},
+        schema_keys=["date_start", "date_end"],
+        today=today,
+    )
+    assert out["date_start"] == "2026-07-01"
+    assert "start_date" not in out
+    assert "end_date" not in out
 
 
 def test_custom_keeps_manual_dates():

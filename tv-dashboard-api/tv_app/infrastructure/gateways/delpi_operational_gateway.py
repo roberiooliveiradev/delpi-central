@@ -11,6 +11,9 @@ from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_date_range_preset_service import (
     PERIOD_DAYS_KEY,
     apply_date_range_preset,
+    date_alias_keys,
+    read_date_range_values,
+    resolve_output_date_range_keys,
 )
 
 
@@ -20,7 +23,13 @@ def _build_query_params(
 ) -> dict[str, str]:
     strategy = str(route.get("paramStrategy") or "direct")
     schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
-    merged = apply_date_range_preset(dict(params), schema_keys=schema)
+    date_range_keys = route.get("dateRangeKeys")
+    merged = apply_date_range_preset(
+        dict(params),
+        schema_keys=schema,
+        date_range_keys=date_range_keys,
+        strategy=strategy,
+    )
     query: dict[str, str] = {}
 
     fixed = route.get("fixedQueryParams")
@@ -30,8 +39,15 @@ def _build_query_params(
                 query[str(key)] = str(value)
 
     if strategy == "date_range":
-        start = merged.get("start_date")
-        end = merged.get("end_date")
+        # Nomes HTTP só do schema/catálogo — nunca dos valores do usuário (evita date_start em rota start_date).
+        pair = resolve_output_date_range_keys(
+            schema_keys=schema,
+            date_range_keys=date_range_keys,
+            strategy=strategy,
+        )
+        assert pair is not None  # strategy date_range sempre resolve
+        start_key, end_key = pair
+        start, end = read_date_range_values(merged, start_key, end_key)
         if not start or not end:
             period_days = int(
                 merged.get(PERIOD_DAYS_KEY)
@@ -41,21 +57,40 @@ def _build_query_params(
             end_d = date.today()
             start_d = end_d - timedelta(days=max(period_days, 1) - 1)
             start, end = start_d.isoformat(), end_d.isoformat()
-        query["start_date"] = str(start)
-        query["end_date"] = str(end)
+        query[start_key] = str(start)
+        query[end_key] = str(end)
         branch = merged.get("branch")
         if branch:
             query["branch"] = str(branch).strip()
+        drop_aliases = date_alias_keys(keep=(start_key, end_key))
         for key, value in merged.items():
-            if key in {PERIOD_DAYS_KEY, "start_date", "end_date", "branch", "date_start", "date_end"}:
+            if key in {PERIOD_DAYS_KEY, "branch"} | drop_aliases:
                 continue
             if value is None or value == "":
                 continue
             query[str(key)] = str(value)
         return query
 
+    # direct: emite schema + extras, mas se há par de datas canônico, remove aliases
+    pair = resolve_output_date_range_keys(
+        schema_keys=schema,
+        date_range_keys=date_range_keys,
+        strategy=None,
+    )
+    drop_aliases: set[str] = set()
+    if pair:
+        start_key, end_key = pair
+        start, end = read_date_range_values(merged, start_key, end_key)
+        if start:
+            merged[start_key] = start
+        if end:
+            merged[end_key] = end
+        drop_aliases = set(date_alias_keys(keep=(start_key, end_key))) - {start_key, end_key}
+
     for key, value in merged.items():
         if key == PERIOD_DAYS_KEY and key not in schema:
+            continue
+        if key in drop_aliases:
             continue
         if value is None or value == "":
             continue
