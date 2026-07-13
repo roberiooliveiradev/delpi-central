@@ -60,21 +60,66 @@ export function upgradeUnconditionalReactGlobalPublish(code: string): string {
 
 const DELPI_MF_REACT_RESOLVE = `${USABLE_REACT_GLOBAL_GUARD}?globalThis.${DELPI_MF_REACT_GLOBAL}:`;
 
+/** Identificadores minificados podem começar com `$` (ex.: `$h`) — `\w+` não casa. */
+const MF_IDENT = String.raw`[$A-Za-z_][\w$]*`;
+
+const REACT_CLIENT_INTERNALS = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
+const REACT_DOM_INTERNALS = "__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Escolhe o bridge CJS de React (não react-dom) entre vários `import{r as X}from"./index-*"`.
+ *
+ * Rollup às vezes emite `$h` = React e `kh` = react-dom. Se `(\w+)` ignora `$h`, o patch
+ * redireciona `kh()` para `__DELPI_MF_REACT__` → `p.__DOM_INTERNALS` fica undefined →
+ * `Cannot read properties of undefined (reading 'd')`.
+ */
+export function resolveBundledReactBridgeName(code: string): string | null {
+  const importRe = new RegExp(
+    String.raw`import\{r as (${MF_IDENT})\}from"\.\/index-[^"?]+\.js(?:\?v=[^"]+)?"`,
+    "g",
+  );
+  const bridges = [...code.matchAll(importRe)].map((m) => m[1]);
+  if (bridges.length === 0) return null;
+
+  for (const id of bridges) {
+    if (!code.includes(`${id}()`)) continue;
+    const assignRe = new RegExp(String.raw`(${MF_IDENT})=${escapeRegExp(id)}\(\)`);
+    const assignMatch = code.match(assignRe);
+    if (!assignMatch) continue;
+    const binding = assignMatch[1];
+    if (code.includes(`${binding}.${REACT_CLIENT_INTERNALS}`)) {
+      return id;
+    }
+  }
+
+  for (const id of bridges) {
+    if (!code.includes(`${id}()`)) continue;
+    const assignRe = new RegExp(String.raw`(${MF_IDENT})=${escapeRegExp(id)}\(\)`);
+    const assignMatch = code.match(assignRe);
+    if (assignMatch && code.includes(`${assignMatch[1]}.${REACT_DOM_INTERNALS}`)) {
+      continue;
+    }
+    return id;
+  }
+
+  return bridges.find((id) => code.includes(`${id}()`)) ?? null;
+}
+
 /**
  * App/recharts importam React bundled (index-*.js) fora do importShared.
  * Shims cacheiam `var e=Nu()` na 1ª execução — redireciona para o global canônico.
  */
 export function patchBundledReactConsumerChunk(code: string): string {
-  const importMatch = code.match(/import\{r as (\w+)\}from"\.\/index-[^"?]+\.js(?:\?v=[^"]+)?"/);
-  if (!importMatch) {
-    return code;
-  }
-  const reactBridge = importMatch[1];
-  if (!code.includes(`${reactBridge}()`)) {
+  const reactBridge = resolveBundledReactBridgeName(code);
+  if (!reactBridge) {
     return code;
   }
   const resolveExpr = `(${DELPI_MF_REACT_RESOLVE}${reactBridge}())`;
-  return code.replace(new RegExp(`${reactBridge}\\(\\)`, "g"), resolveExpr);
+  return code.replace(new RegExp(`${escapeRegExp(reactBridge)}\\(\\)`, "g"), resolveExpr);
 }
 
 function replaceFlattenElseBranch(code: string): string {

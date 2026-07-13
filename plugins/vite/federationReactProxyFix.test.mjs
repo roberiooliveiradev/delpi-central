@@ -13,6 +13,7 @@ import {
   patchRemoteEntryCacheBust,
   publishDelpiMfReact,
   isUsableReact,
+  resolveBundledReactBridgeName,
   upgradeUnconditionalReactGlobalPublish,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
@@ -90,6 +91,16 @@ function testAppChunkReactBridgeFallback() {
   assert.ok(!out.includes("var e=Nu()"), "init shim não chama Nu() direto");
 }
 
+/** Regressão: `$h`=React e `kh`=react-dom — não redirecionar `kh()` para o global React. */
+function testAppChunkPrefersDollarReactBridgeOverReactDom() {
+  const raw = String.raw`import{r as $h}from"./index-B4SFKWmm.js?v=4";import{r as kh}from"./index-q540vByz.js?v=4";function ld(){var q=$h(),p=kh();var z=q.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE,T=p.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;return T.d}`;
+  assert.equal(resolveBundledReactBridgeName(raw), "$h", "bridge React é $h");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes("var q=("), "redireciona $h()");
+  assert.ok(out.includes("p=kh()"), "não redireciona kh() (react-dom)");
+  assert.ok(!out.includes("p=(globalThis.__DELPI_MF_REACT__"), "p não vira React global");
+}
+
 function testUpgradeUnconditionalPublish() {
   const raw = String.raw`t==="react"&&(globalThis.__DELPI_MF_REACT__=w[t])`;
   const out = upgradeUnconditionalReactGlobalPublish(raw);
@@ -118,7 +129,8 @@ testPublishDoesNotOverwritePortalReact();
 testBrokenReactNotUsable();
 testUpgradeUnconditionalPublish();
 testAppChunkReactBridgeFallback();
+testAppChunkPrefersDollarReactBridgeOverReactDom();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 10 testes passaram");
+console.log("OK: federationReactProxyFix — 11 testes passaram");
