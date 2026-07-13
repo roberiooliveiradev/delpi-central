@@ -46,6 +46,31 @@ export function hasProcessoEscopo(escopo: ProcessoEscopoState | null | undefined
   return escopo.todas_filiais_ativas || escopo.filial_ids.length > 0;
 }
 
+/** Estado inicial do formulário de nova melhoria (herda do processo quando marcado). */
+export function resolveCreateInstanciaEscopo(
+  options: OptionsData,
+  processoEscopo: ProcessoEscopoState | null | undefined,
+  preferProcesso: boolean
+): ProcessoEscopoState & { filialId: string } {
+  if (preferProcesso && hasProcessoEscopo(processoEscopo) && processoEscopo) {
+    const firstFilial =
+      processoEscopo.filial_ids[0] ?? options.filiais[0]?.id ?? "01";
+    return {
+      todas_filiais_ativas: processoEscopo.todas_filiais_ativas,
+      filial_ids: processoEscopo.todas_filiais_ativas ? [] : [...processoEscopo.filial_ids],
+      setor_ids: [...processoEscopo.setor_ids],
+      filialId: firstFilial,
+    };
+  }
+  const firstFilial = options.filiais[0]?.id ?? "01";
+  return {
+    todas_filiais_ativas: false,
+    filial_ids: firstFilial ? [firstFilial] : [],
+    setor_ids: defaultSetorIdsForFilial(options.setores, firstFilial),
+    filialId: firstFilial,
+  };
+}
+
 export function processoEscopoPayload(escopo: ProcessoEscopoState): Partial<Processo> {
   return {
     todas_filiais_ativas: escopo.todas_filiais_ativas,

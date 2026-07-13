@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { TreeGuideRails } from "@delpi/plugin-ui/index";
 import type { ChatPresentation, ChatTreeNode } from "../../../data/api/chatTypes";
 import { buildTreePointMenuActions, type TableRowMenuAction } from "./chatDrillDown";
 import { ChatTableRowMenu, type TableRowMenuAnchor } from "../shared/menus/ChatTableRowMenu";
@@ -75,11 +76,13 @@ function countNodes(node: ChatTreeNode): number {
 function TreeNodeRow({
   node,
   depth,
+  isLastSiblingPath,
   defaultExpanded,
   onDrillDown,
 }: {
   node: ChatTreeNode;
   depth: number;
+  isLastSiblingPath: readonly boolean[];
   defaultExpanded: boolean;
   onDrillDown?: (query: string) => void;
 }) {
@@ -126,8 +129,9 @@ function TreeNodeRow({
         ]
           .filter(Boolean)
           .join(" ")}
-        style={{ paddingLeft: `${depth * 1.1 + 0.35}rem` }}
       >
+        <TreeGuideRails depth={depth} isLastSiblingPath={isLastSiblingPath} />
+
         {hasChildren ? (
           <button
             type="button"
@@ -202,11 +206,12 @@ function TreeNodeRow({
 
       {hasChildren && expanded ? (
         <ul className="mdc-rich-tree__children">
-          {node.children!.map((child) => (
+          {node.children!.map((child, index) => (
             <TreeNodeRow
               key={`${child.id}-${depth + 1}`}
               node={child}
               depth={depth + 1}
+              isLastSiblingPath={[...isLastSiblingPath, index === node.children!.length - 1]}
               defaultExpanded={depth < 1}
               onDrillDown={onDrillDown}
             />
@@ -274,6 +279,7 @@ export function ChatRichTree({
           <TreeNodeRow
             node={root}
             depth={0}
+            isLastSiblingPath={[]}
             defaultExpanded
             onDrillDown={onDrillDown}
           />

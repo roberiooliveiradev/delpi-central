@@ -1973,9 +1973,18 @@
   display: flex;
   align-items: flex-start;
   gap: 0.25rem;
-  padding: 0.35rem 0.5rem 0.35rem 0;
+  padding: 0.35rem 0.5rem 0.35rem 0.35rem;
   border-radius: var(--ds-radius-sm);
   position: relative;
+}
+
+.dashboard-transformometro .tm-rich-tree .delpi-ui-tree-guides {
+  --delpi-ui-tree-guide-color: color-mix(in srgb, var(--ds-text-muted) 42%, transparent);
+  --delpi-ui-border: var(--ds-card-border);
+}
+
+:root[data-theme="dark"] .dashboard-transformometro .tm-rich-tree .delpi-ui-tree-guides {
+  --delpi-ui-tree-guide-color: color-mix(in srgb, var(--ds-text-muted) 55%, transparent);
 }
 
 .dashboard-transformometro .tm-rich-tree__drag-handle,

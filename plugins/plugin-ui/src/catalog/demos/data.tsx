@@ -23,6 +23,7 @@ import {
   TablePageSizeSelect,
   TablePaginationNav,
   tablePaginationNavBemClasses,
+  TreeGuideRails,
   type DataTableColumn,
 } from "../../components/data";
 import { createDashboardLoadingActivityCard } from "../../components/feedback";
@@ -363,7 +364,44 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
       },
     ],
   },
+  {
+    id: "data.TreeGuideRails",
+    family: "data",
+    exportName: "TreeGuideRails",
+    title: "TreeGuideRails",
+    description: "Linhas pontilhadas suaves conectando níveis de uma árvore hierárquica.",
+    propsSummary: ["depth", "isLastSiblingPath"],
+    demos: [
+      {
+        id: "default",
+        label: "Hierarquia",
+        render: () => <TreeGuideRailsDemo />,
+      },
+    ],
+  },
 ];
+
+function TreeGuideRailsDemo() {
+  const rows: Array<{ label: string; depth: number; path: boolean[] }> = [
+    { label: "Macroprocesso", depth: 0, path: [] },
+    { label: "Processo-chave A", depth: 1, path: [false] },
+    { label: "Tarefa A.1", depth: 2, path: [false, false] },
+    { label: "Sub-tarefa A.1.1", depth: 3, path: [false, false, true] },
+    { label: "Tarefa A.2", depth: 2, path: [false, true] },
+    { label: "Processo-chave B", depth: 1, path: [true] },
+    { label: "Tarefa B.1", depth: 2, path: [true, true] },
+  ];
+  return (
+    <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
+      {rows.map((row) => (
+        <li key={row.label} style={{ display: "flex", alignItems: "flex-start", gap: 4, padding: "4px 0" }}>
+          <TreeGuideRails depth={row.depth} isLastSiblingPath={row.path} />
+          <span style={{ fontSize: 13, lineHeight: 1.4 }}>{row.label}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function DataTableDemo() {
   const [sortKey, setSortKey] = useState<string | null>("codigo");

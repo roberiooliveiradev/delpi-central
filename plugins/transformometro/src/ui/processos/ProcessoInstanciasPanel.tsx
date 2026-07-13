@@ -20,9 +20,11 @@ import {
   type MelhoriaFormFields,
 } from "../../constants/melhoriaForm";
 import {
+  defaultSetorIdsForFilial,
   formatInstanciaSetoresDisplay,
   formatInstanciaUnidadeDisplay,
   hasProcessoEscopo,
+  resolveCreateInstanciaEscopo,
   type ProcessoEscopoState,
 } from "./processoEscopo";
 import { TmNativeTextAreaField } from "../../components/ui/tmNativeFormFields";
@@ -120,11 +122,6 @@ function instanciaSetorIdsForForm(row: ProcessoInstancia, setores: OptionsData["
   });
 }
 
-function defaultSetorIds(setores: OptionsData["setores"], filialId: string): string[] {
-  const first = filterSetoresByFilial(setores, filialId)[0];
-  return first ? [first.id] : [];
-}
-
 export function ProcessoInstanciasPanel({
   instancias,
   selectedInstanciaId,
@@ -144,17 +141,19 @@ export function ProcessoInstanciasPanel({
   onDuplicate,
 }: Props) {
   const confirm = useConfirm();
+  const processoTemEscopo = hasProcessoEscopo(processoEscopo);
+  const initialCreateEscopo = resolveCreateInstanciaEscopo(
+    options,
+    processoEscopo,
+    processoTemEscopo
+  );
   const [showForm, setShowForm] = useState(initialShowForm);
   const [editingInstanciaId, setEditingInstanciaId] = useState<string | null>(null);
   const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
-  const [todasFiliais, setTodasFiliais] = useState(false);
-  const [filialId, setFilialId] = useState(options.filiais[0]?.id ?? "01");
-  const [filialIds, setFilialIds] = useState<string[]>(() =>
-    options.filiais[0]?.id ? [options.filiais[0].id] : []
-  );
-  const [setorIds, setSetorIds] = useState<string[]>(() =>
-    defaultSetorIds(options.setores, options.filiais[0]?.id ?? "01")
-  );
+  const [todasFiliais, setTodasFiliais] = useState(initialCreateEscopo.todas_filiais_ativas);
+  const [filialId, setFilialId] = useState(initialCreateEscopo.filialId);
+  const [filialIds, setFilialIds] = useState<string[]>(initialCreateEscopo.filial_ids);
+  const [setorIds, setSetorIds] = useState<string[]>(initialCreateEscopo.setor_ids);
   const [rotulo, setRotulo] = useState("");
   const [statusInstancia, setStatusInstancia] = useState("ativo");
   const [resumoMelhoria, setResumoMelhoria] = useState("");
@@ -163,7 +162,6 @@ export function ProcessoInstanciasPanel({
   const [dataAlvoGoLive, setDataAlvoGoLive] = useState("");
   const [prioridade, setPrioridade] = useState("media");
   const [saving, setSaving] = useState(false);
-  const processoTemEscopo = hasProcessoEscopo(processoEscopo);
   const [usarEscopoProcesso, setUsarEscopoProcesso] = useState(processoTemEscopo);
 
   const editingInstancia = useMemo(
@@ -178,9 +176,19 @@ export function ProcessoInstanciasPanel({
     : false;
 
   useEffect(() => {
-    if (initialShowForm) {
-      setShowForm(true);
+    if (!initialShowForm) return;
+    setShowForm(true);
+    // Formulário de criação: herdar escopo do processo na abertura (não só no toggle do checkbox).
+    if (editingInstanciaId || duplicateSourceId) return;
+    if (!hasProcessoEscopo(processoEscopo) || !processoEscopo) return;
+    setUsarEscopoProcesso(true);
+    setTodasFiliais(processoEscopo.todas_filiais_ativas);
+    setFilialIds(processoEscopo.todas_filiais_ativas ? [] : [...processoEscopo.filial_ids]);
+    setSetorIds([...processoEscopo.setor_ids]);
+    if (!processoEscopo.todas_filiais_ativas && processoEscopo.filial_ids[0]) {
+      setFilialId(processoEscopo.filial_ids[0]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- só reage à abertura pedida pelo pai
   }, [initialShowForm]);
 
   // Setores disponíveis conforme o modo (criar/editar multi-filial ou replicar).
@@ -290,26 +298,21 @@ export function ProcessoInstanciasPanel({
 
   function applyProcessoEscopo() {
     if (!processoEscopo) return;
-    setTodasFiliais(processoEscopo.todas_filiais_ativas);
-    setFilialIds(processoEscopo.todas_filiais_ativas ? [] : [...processoEscopo.filial_ids]);
-    setSetorIds([...processoEscopo.setor_ids]);
-    if (!processoEscopo.todas_filiais_ativas && processoEscopo.filial_ids[0]) {
-      setFilialId(processoEscopo.filial_ids[0]);
-    }
+    const resolved = resolveCreateInstanciaEscopo(options, processoEscopo, true);
+    setTodasFiliais(resolved.todas_filiais_ativas);
+    setFilialIds(resolved.filial_ids);
+    setSetorIds(resolved.setor_ids);
+    setFilialId(resolved.filialId);
   }
 
   function openCreateForm() {
     resetForm();
-    const firstFilial = options.filiais[0]?.id ?? "01";
-    setFilialId(firstFilial);
-    setFilialIds(firstFilial ? [firstFilial] : []);
-    setSetorIds(defaultSetorIds(options.setores, firstFilial));
+    const resolved = resolveCreateInstanciaEscopo(options, processoEscopo, processoTemEscopo);
+    setFilialId(resolved.filialId);
+    setFilialIds(resolved.filial_ids);
+    setSetorIds(resolved.setor_ids);
+    setTodasFiliais(resolved.todas_filiais_ativas);
     setUsarEscopoProcesso(processoTemEscopo);
-    if (processoTemEscopo && processoEscopo) {
-      setTodasFiliais(processoEscopo.todas_filiais_ativas);
-      setFilialIds(processoEscopo.todas_filiais_ativas ? [] : [...processoEscopo.filial_ids]);
-      setSetorIds([...processoEscopo.setor_ids]);
-    }
     setShowForm(true);
   }
 
@@ -358,7 +361,7 @@ export function ProcessoInstanciasPanel({
         : [...current, value];
       // Garante ao menos um setor pré-selecionado quando a primeira filial é marcada.
       if (next.length > 0 && setorIds.length === 0) {
-        setSetorIds(defaultSetorIds(options.setores, next[0]));
+        setSetorIds(defaultSetorIdsForFilial(options.setores, next[0]));
       }
       return next;
     });
@@ -803,7 +806,7 @@ export function ProcessoInstanciasPanel({
                               setTodasFiliais(next);
                               if (!next) {
                                 const firstFilial = filialIds[0] ?? options.filiais[0]?.id ?? "01";
-                                setSetorIds(defaultSetorIds(options.setores, firstFilial));
+                                setSetorIds(defaultSetorIdsForFilial(options.setores, firstFilial));
                               }
                             }}
                           label={<><span>Todas as unidades ativas (melhoria multi-unidade)</span><HelpTooltip
@@ -831,7 +834,10 @@ export function ProcessoInstanciasPanel({
                         <p className="tm-instancia-multi-banner">{multiplicadorHint(activeFilialCount)}</p>
                       ) : (
                         <p className="ds-hint">
-                          Unidades: {filialIds.join(", ") || "—"}
+                          Unidades:{" "}
+                          {filialIds
+                            .map((id) => options.filiais.find((filial) => filial.id === id)?.label ?? id)
+                            .join("; ") || "—"}
                         </p>
                       )}
                       <p className="ds-hint">
@@ -867,7 +873,7 @@ export function ProcessoInstanciasPanel({
                             const fallback =
                               filialIds[0] || filialId || options.filiais[0]?.id || "01";
                             setFilialIds([fallback]);
-                            setSetorIds(defaultSetorIds(options.setores, fallback));
+                            setSetorIds(defaultSetorIdsForFilial(options.setores, fallback));
                           }
                         }}
                       label={<><span>Todas as unidades ativas (melhoria multi-unidade)</span><HelpTooltip

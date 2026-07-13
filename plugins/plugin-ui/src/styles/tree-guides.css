@@ -1,0 +1,79 @@
+/* Guias pontilhadas suaves para árvores hierárquicas (TreeGuideRails) */
+
+.delpi-ui-tree-guides {
+  --delpi-ui-tree-guide-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #cbd5e1)) 55%,
+    transparent
+  );
+  --delpi-ui-tree-guide-slot: 1.1rem;
+  --delpi-ui-tree-guide-mid: 0.85rem;
+
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 1.6rem;
+  pointer-events: none;
+  user-select: none;
+}
+
+:root[data-theme="dark"] .delpi-ui-tree-guides {
+  --delpi-ui-tree-guide-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #475569)) 45%,
+    transparent
+  );
+}
+
+.delpi-ui-tree-guides__slot {
+  position: relative;
+  flex: 0 0 var(--delpi-ui-tree-guide-slot);
+  width: var(--delpi-ui-tree-guide-slot);
+  align-self: stretch;
+  min-height: inherit;
+}
+
+.delpi-ui-tree-guides__slot--blank {
+  /* Espaço sem linha — ancestral era o último irmão. */
+}
+
+.delpi-ui-tree-guides__slot--vline::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dotted var(--delpi-ui-tree-guide-color);
+  transform: translateX(-50%);
+}
+
+.delpi-ui-tree-guides__slot--tee::before,
+.delpi-ui-tree-guides__slot--corner::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 0;
+  border-left: 1px dotted var(--delpi-ui-tree-guide-color);
+  transform: translateX(-50%);
+}
+
+.delpi-ui-tree-guides__slot--tee::before {
+  bottom: 0;
+}
+
+.delpi-ui-tree-guides__slot--corner::before {
+  height: var(--delpi-ui-tree-guide-mid);
+}
+
+.delpi-ui-tree-guides__slot--tee::after,
+.delpi-ui-tree-guides__slot--corner::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: var(--delpi-ui-tree-guide-mid);
+  width: 50%;
+  height: 0;
+  border-top: 1px dotted var(--delpi-ui-tree-guide-color);
+}

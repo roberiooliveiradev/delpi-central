@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { GripVertical } from "lucide-react";
+import { TreeGuideRails } from "@delpi/plugin-ui/index";
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RichTreeNode } from "../../types/richTree";
@@ -96,6 +97,7 @@ type RowSlots = {
 type RichTreeNodeRowProps = RowSlots & {
   node: RichTreeNode;
   depth: number;
+  isLastSiblingPath: readonly boolean[];
   defaultExpanded: boolean;
   expandDepth: number;
   enableDragDrop?: boolean;
@@ -104,6 +106,7 @@ type RichTreeNodeRowProps = RowSlots & {
 function RichTreeNodeRow({
   node,
   depth,
+  isLastSiblingPath,
   defaultExpanded,
   expandDepth,
   renderLabel,
@@ -132,7 +135,6 @@ function RichTreeNodeRow({
         ]
           .filter(Boolean)
           .join(" ")}
-        style={{ paddingLeft: `${depth * 1.1 + 0.35}rem` }}
         onDragOver={
           enableDragDrop
             ? (event) => {
@@ -165,6 +167,8 @@ function RichTreeNodeRow({
         ) : (
           <span className="tm-rich-tree__drag-spacer" aria-hidden="true" />
         )}
+
+        <TreeGuideRails depth={depth} isLastSiblingPath={isLastSiblingPath} />
 
         {hasChildren ? (
           <button
@@ -210,11 +214,12 @@ function RichTreeNodeRow({
 
       {hasChildren && expanded ? (
         <ul className="tm-rich-tree__children">
-          {node.children!.map((child) => (
+          {node.children!.map((child, index) => (
             <RichTreeNodeRow
               key={child.id}
               node={child}
               depth={depth + 1}
+              isLastSiblingPath={[...isLastSiblingPath, index === node.children!.length - 1]}
               defaultExpanded={depth < expandDepth}
               expandDepth={expandDepth}
               renderLabel={renderLabel}
@@ -360,6 +365,7 @@ export function DecompositionRichTree({
         <RichTreeNodeRow
           node={root}
           depth={0}
+          isLastSiblingPath={[]}
           defaultExpanded
           expandDepth={expandDepth}
           renderLabel={renderLabel}

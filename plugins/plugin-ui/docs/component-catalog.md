@@ -411,6 +411,22 @@ Menu da toolbar de tabela para exibir/ocultar colunas (checkboxes). Tokens `--de
 
 CSS: `styles/table-column-visibility.css`. Consumidor: `pedidos-venda-abertos` (`TableColumnSettings` fino).
 
+### `TreeGuideRails`
+
+Trilhos pontilhados suaves para árvores hierárquicas (estilo explorador de arquivos). Tokens `--delpi-ui-tree-guide-*` / `--delpi-ui-border`.
+
+| Prop | Tipo | Descrição |
+|------|------|-----------|
+| `depth` | `number` | Profundidade do nó (`0` = raiz, sem guias) |
+| `isLastSiblingPath` | `boolean[]` | Por nível ancestral: `true` se aquele nó era o último irmão |
+| `className` | `string?` | Classe extra no root |
+
+```tsx
+<TreeGuideRails depth={2} isLastSiblingPath={[false, true]} />
+```
+
+CSS: `styles/tree-guides.css`. Consumidores: `transformometro` (WBS), `minha-delpi-chat` (árvore de apresentação).
+
 ### `DetailFieldGrid`
 
 Grade de detalhe (`<dl>`) para fichas operacionais — rótulos, valores, hint opcional e coluna wide.

@@ -16,6 +16,7 @@
 @import "./styles/kpi-card.css";
 @import "./styles/series-chart.css";
 @import "./styles/configurable-table.css";
+@import "./styles/tree-guides.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

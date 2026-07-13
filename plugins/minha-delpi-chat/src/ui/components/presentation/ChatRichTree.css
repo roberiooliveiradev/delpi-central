@@ -50,7 +50,12 @@
   display: flex;
   align-items: flex-start;
   gap: 0.25rem;
-  padding: 0.35rem 0.5rem 0.35rem 0;
+  padding: 0.35rem 0.5rem 0.35rem 0.35rem;
+}
+
+.mdc-rich-tree .delpi-ui-tree-guides {
+  --delpi-ui-tree-guide-color: color-mix(in srgb, var(--mdc-text-muted) 42%, transparent);
+  --delpi-ui-border: var(--mdc-card-border);
 }
 
 .mdc-rich-tree__row:hover .mdc-rich-tree__content--interactive,

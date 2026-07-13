@@ -180,3 +180,8 @@ export {
   type TableColumnVisibilityMenuLabels,
   type TableColumnVisibilityMenuProps,
 } from "./TableColumnVisibilityMenu";
+
+export {
+  TreeGuideRails,
+  type TreeGuideRailsProps,
+} from "./TreeGuideRails";

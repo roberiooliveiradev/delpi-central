@@ -112,6 +112,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: CATALOG_EXPAND_DATE,
     changeNote: "Menu Colunas / Exibir colunas canônico",
   }),
+  vc("data", "TreeGuideRails", {
+    addedAt: "2026-07-13",
+    changeNote: "Linhas pontilhadas suaves para árvores hierárquicas",
+  }),
   // forms
   vc("forms", "SelectField"),
   vc("forms", "SelectControl", {
