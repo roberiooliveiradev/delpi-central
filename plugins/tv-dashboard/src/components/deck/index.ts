@@ -1,5 +1,8 @@
-export { DeckEditorHeaderActions, DeckHomePlaylistChrome } from "./DeckEditorHeaderActions";
-export type { DeckHomePlaylistChromeProps } from "./DeckEditorHeaderActions";
+export { DeckEditorHeaderActions, DeckHomePlaylistChrome, DeckPlaylistIdentity } from "./DeckEditorHeaderActions";
+export type {
+  DeckHomePlaylistChromeProps,
+  DeckPlaylistIdentityProps,
+} from "./DeckEditorHeaderActions";
 export { ComunicadoElementInspector } from "./ComunicadoElementInspector";
 export { ComunicadoSlideBackgroundPanel } from "./ComunicadoSlideBackgroundPanel";
 export { ComunicadoSlideBackgroundRibbon } from "./ComunicadoSlideBackgroundRibbon";

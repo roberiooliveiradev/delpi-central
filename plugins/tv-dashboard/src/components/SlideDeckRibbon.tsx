@@ -34,7 +34,7 @@ type Props = {
   onExportPdf?: () => void;
   onExportPptx?: () => void;
   exportBusy?: boolean;
-  /** Controles da programação/TV (antes à direita das abas). */
+  /** Controles da programação/TV na ribbon; nome/status vão à barra superior. */
   playlistChrome?: DeckHomePlaylistChromeProps;
 };
 

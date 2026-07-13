@@ -19,10 +19,13 @@ import { DeckRibbonTile } from "./DeckRibbonTile";
 const H = TV_DASHBOARD_HELP_TOOLTIPS.header;
 const R = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
-export type DeckHomePlaylistChromeProps = {
+export type DeckPlaylistIdentityProps = {
   playlistName: string;
   tvStatusLabel?: string | null;
   tvStatusClass?: string;
+};
+
+export type DeckHomePlaylistChromeProps = DeckPlaylistIdentityProps & {
   linkActive: boolean;
   onBack: () => void;
   onPreview: () => void;
@@ -34,13 +37,27 @@ export type DeckHomePlaylistChromeProps = {
   onDelete: () => void;
 };
 
-/**
- * Controles da programação/TV na aba Página Inicial (antes ficavam à direita das abas).
- */
-export function DeckHomePlaylistChrome({
+/** Título da programação + badge TV — barra superior (ao lado das abas). */
+export function DeckPlaylistIdentity({
   playlistName,
   tvStatusLabel,
   tvStatusClass,
+}: DeckPlaylistIdentityProps) {
+  return (
+    <div className="td-deck-chrome__identity" aria-label="Programação">
+      <span className="td-deck-chrome__playlist-name" title={playlistName}>
+        {playlistName}
+      </span>
+      {tvStatusLabel ? <span className={tvStatusClass}>{tvStatusLabel}</span> : null}
+    </div>
+  );
+}
+
+/**
+ * Controles da programação/TV na aba Página Inicial (tiles na ribbon).
+ * Identidade (nome/status) fica em `DeckPlaylistIdentity` na barra superior.
+ */
+export function DeckHomePlaylistChrome({
   linkActive,
   onBack,
   onPreview,
@@ -54,45 +71,37 @@ export function DeckHomePlaylistChrome({
   const { openCatalog } = useKeyboardShortcutsTips();
 
   return (
-    <>
-      <DeckRibbonGroup label="Programação" hint={R.playlistChrome}>
-        <div className="td-deck-ribbon__playlist-chrome">
-          <div className="td-deck-ribbon__playlist-meta">
-            <span className="td-deck-ribbon__playlist-name" title={playlistName}>
-              {playlistName}
-            </span>
-            {tvStatusLabel ? <span className={tvStatusClass}>{tvStatusLabel}</span> : null}
-          </div>
-          <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-            <DeckRibbonTile icon={ArrowLeft} label="Voltar" hint={H.back} onClick={onBack} />
-            <DeckRibbonTile icon={Eye} label="Prévia" hint={H.preview} onClick={onPreview} />
-            <DeckRibbonTile
-              icon={Keyboard}
-              label="Atalhos"
-              hint="Catálogo de atalhos. Alt revela balões (Ctrl e F1–F8 nas abas)."
-              onClick={openCatalog}
-            />
-            <DeckRibbonTile icon={Users} label="Editores" hint={H.share} onClick={onShare} />
-            <DeckRibbonTile icon={Copy} label="Link TV" hint={H.copyLink} onClick={onCopyLink} />
-            <DeckRibbonTile icon={QrCode} label="QR" hint={H.qr} onClick={onQr} />
-            <DeckRibbonTile
-              icon={RefreshCw}
-              label="Novo link"
-              hint={H.regenerateToken}
-              onClick={onRegenerateToken}
-            />
-            <DeckRibbonTile
-              icon={linkActive ? Tv : MonitorOff}
-              label={linkActive ? "TV on" : "TV off"}
-              hint={H.toggleLink}
-              active={linkActive}
-              onClick={onToggleLink}
-            />
-            <DeckRibbonTile icon={Trash2} label="Excluir" hint={H.delete} onClick={onDelete} />
-          </div>
+    <DeckRibbonGroup label="Programação" hint={R.playlistChrome}>
+      <div className="td-deck-ribbon__playlist-chrome">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--playlist">
+          <DeckRibbonTile icon={ArrowLeft} label="Voltar" hint={H.back} onClick={onBack} />
+          <DeckRibbonTile icon={Eye} label="Prévia" hint={H.preview} onClick={onPreview} />
+          <DeckRibbonTile
+            icon={Keyboard}
+            label="Atalhos"
+            hint="Catálogo de atalhos. Alt revela balões (Ctrl e F1–F8 nas abas)."
+            onClick={openCatalog}
+          />
+          <DeckRibbonTile icon={Users} label="Editores" hint={H.share} onClick={onShare} />
+          <DeckRibbonTile icon={Copy} label="Link TV" hint={H.copyLink} onClick={onCopyLink} />
+          <DeckRibbonTile icon={QrCode} label="QR" hint={H.qr} onClick={onQr} />
+          <DeckRibbonTile
+            icon={RefreshCw}
+            label="Novo link"
+            hint={H.regenerateToken}
+            onClick={onRegenerateToken}
+          />
+          <DeckRibbonTile
+            icon={linkActive ? Tv : MonitorOff}
+            label={linkActive ? "TV on" : "TV off"}
+            active={linkActive}
+            hint={H.toggleLink}
+            onClick={onToggleLink}
+          />
+          <DeckRibbonTile icon={Trash2} label="Excluir" hint={H.delete} onClick={onDelete} />
         </div>
-      </DeckRibbonGroup>
-    </>
+      </div>
+    </DeckRibbonGroup>
   );
 }
 

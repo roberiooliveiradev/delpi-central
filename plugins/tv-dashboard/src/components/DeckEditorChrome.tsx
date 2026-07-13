@@ -19,6 +19,7 @@ import { Modal } from "./ui/Modal";
 import {
   ComunicadoSlideBackgroundRibbon,
   DeckHistoryTabActions,
+  DeckPlaylistIdentity,
   DeckRibbonShell,
   isContextualDeckRibbonTab,
   type DeckRibbonTabId,
@@ -209,6 +210,7 @@ export function DeckEditorChrome({
   }
 
   const showRibbon = isRibbonTab(activeTab);
+  const playlistChrome = slideDeck.playlistChrome;
 
   return (
     <section className="td-deck-chrome" aria-label="Editor da programação">
@@ -254,6 +256,13 @@ export function DeckEditorChrome({
             );
           })}
         </div>
+        {playlistChrome ? (
+          <DeckPlaylistIdentity
+            playlistName={playlistChrome.playlistName}
+            tvStatusLabel={playlistChrome.tvStatusLabel}
+            tvStatusClass={playlistChrome.tvStatusClass}
+          />
+        ) : null}
       </div>
 
       {showRibbon ? (
