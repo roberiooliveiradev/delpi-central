@@ -17,7 +17,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     background:
       "Define a cor ou imagem de fundo do slide personalizado. A imagem cobre toda a área do palco.",
     font: "Formata o texto selecionado: família, tamanho, estilo, realce e cor.",
-    textEffects: "Sombra, contorno e reflexo tipográfico (como efeitos de texto no PowerPoint).",
+    textEffects: "Sombra, contorno e reflexo tipográfico no texto selecionado.",
     textStroke: "Cor e espessura do contorno ao redor das letras.",
     textReflection: "Espelha o texto abaixo do bloco (melhor suporte em Chromium/TV).",
     paragraph:
@@ -30,7 +30,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     boxOutline: "Cor e espessura do contorno da caixa de texto.",
     shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
     shapeChange: "Substitui a forma selecionada por outra da biblioteca, mantendo posição e estilo quando possível.",
-    shapeSize: "Largura e altura da forma em percentual do slide (como no PowerPoint Online).",
+    shapeSize: "Largura e altura da forma em percentual do slide.",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Controla camadas e mídia do elemento selecionado: ordem (frente/fundo), troca de arquivo ou remoção.",
@@ -70,7 +70,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     borderColor: "Cor da borda do elemento.",
     borderRadius: "Arredondamento dos cantos em pixels.",
     shapeAdjustment:
-      "Ajuste de geometria da forma (igual aos losangos amarelos do PowerPoint). Cantos usam pixels; demais valores são relativos (0–1).",
+      "Ajuste de geometria da forma (handles amarelos). Cantos usam pixels; demais valores são relativos (0–1).",
     boxShadow:
       "Sombra: presets (inclui Elevada com 2 camadas e Interna), externa/interna, camadas e ajuste fino de X, Y, desfoque, expansão, opacidade e cor.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
@@ -96,7 +96,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",
-    insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados — estilo PowerPoint/Excel.",
+    insertDataGroup: "Fontes de dados, KPI, gráficos e tabelas desacoplados no slide.",
     insertDataSource: "Abre o catálogo de rotas api-delpi em um modal para inserir uma fonte de dados no palco.",
     insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",
     insertKpi: "Insere um card KPI. Conecte a uma fonte de dados e configure ícone, textos e cores.",
@@ -111,7 +111,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableData: "Fonte e vínculo dos dados da tabela.",
     tableStyles: "Presets visuais da tabela (grade, minimalista, faixas).",
     tableStyleOptions:
-      "Opções de estilo do Excel: cabeçalho, totais, listras, primeira/última coluna e bordas.",
+      "Opções de estilo da tabela: cabeçalho, totais, listras, primeira/última coluna e bordas.",
     tableFormat: "Abre a aba Forma para moldura (preenchimento e contorno) da tabela.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
     chartAxes: "Eixos e linhas de grade.",
@@ -144,15 +144,15 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     element:
       "Mesmos controles do painel lateral Elemento: tipografia, preenchimento, contorno, posição e organização.",
     chart:
-      "Ferramentas do gráfico selecionado (Excel Online): tipo, rótulos, eixos, grade e formato da parte.",
+      "Ferramentas do gráfico selecionado: tipo, rótulos, eixos, grade e formato da parte.",
     table:
-      "Ferramentas da tabela selecionada (Excel Table Design): estilos, opções de estilo (cabeçalho, totais, listras) e formato.",
+      "Ferramentas da tabela selecionada: estilos, opções de estilo (cabeçalho, totais, listras) e formato.",
     tableDesign:
-      "Estilos de tabela, opções de cabeçalho/listras, sombreamento, bordas e forma da moldura (como Design da Tabela no PowerPoint).",
+      "Estilos de tabela, opções de cabeçalho/listras, sombreamento, bordas e forma da moldura.",
     tableLayout:
-      "Tamanho da moldura, alinhamento do texto, organizar e truncamento de linhas/colunas (como Tabela Layout).",
+      "Tamanho da moldura, alinhamento do texto, organizar e truncamento de linhas/colunas.",
     shape:
-      "Ferramentas da forma selecionada (PowerPoint Online): alterar forma, estilos, preenchimento, contorno e tamanho.",
+      "Ferramentas da forma selecionada: alterar forma, estilos, preenchimento, contorno e tamanho.",
     data: "Mesmos controles do painel lateral Dados: fonte, parâmetros e catálogo.",
     layers: "Mesmos controles do painel lateral Camadas: ordem de construção e pilha visual.",
     view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
@@ -204,7 +204,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
     borderRadius: "Arredondamento dos cantos em pixels.",
     shapeAdjustment:
-      "Ajuste de geometria da forma (igual aos losangos amarelos do PowerPoint). Cantos usam pixels; demais valores são relativos (0–1).",
+      "Ajuste de geometria da forma (handles amarelos). Cantos usam pixels; demais valores são relativos (0–1).",
   },
   data: {
     catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",

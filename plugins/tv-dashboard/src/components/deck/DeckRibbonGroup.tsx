@@ -6,7 +6,7 @@ type Props = {
   hint?: string;
   wide?: boolean;
   /**
-   * `below` — ribbon PowerPoint (padrão).
+   * `below` — legenda abaixo dos controles (padrão da faixa).
    * `above` — subtítulo no painel embutido.
    * `none` — sem caption (accordion já titulou a seção).
    */
@@ -14,7 +14,7 @@ type Props = {
   children: ReactNode;
 };
 
-/** Grupo do ribbon estilo PowerPoint: controles em cima, legenda embaixo. */
+/** Grupo da faixa: controles em cima, legenda embaixo. */
 export function DeckRibbonGroup({
   label,
   hint,

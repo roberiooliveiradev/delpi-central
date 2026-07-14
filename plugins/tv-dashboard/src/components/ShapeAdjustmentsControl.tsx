@@ -21,7 +21,7 @@ type Props = {
 };
 
 /**
- * Controles contínuos dos ajustes de geometria (handles amarelos do PowerPoint).
+ * Controles contínuos dos ajustes de geometria (handles amarelos).
  */
 export function ShapeAdjustmentsControl({
   kind,

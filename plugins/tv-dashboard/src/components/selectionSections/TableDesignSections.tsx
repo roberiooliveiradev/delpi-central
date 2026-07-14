@@ -54,12 +54,12 @@ const STYLE_OPTION_CHECKS: Array<{
   hint: string;
 }> = [
   { id: "tableTitle", label: "Título", hint: "Exibir ou ocultar o título acima da tabela." },
-  { id: "header", label: "Linha de cabeçalho", hint: "Excel: Header Row." },
-  { id: "totalRow", label: "Linha de totais", hint: "Excel: Total Row." },
-  { id: "firstColumn", label: "Primeira coluna", hint: "Excel: First Column." },
-  { id: "lastColumn", label: "Última coluna", hint: "Excel: Last Column." },
-  { id: "zebraStripe", label: "Linhas em tiras", hint: "Excel: Banded Rows." },
-  { id: "bandedColumns", label: "Colunas em tiras", hint: "Excel: Banded Columns." },
+  { id: "header", label: "Linha de cabeçalho", hint: "Exibe a primeira linha como cabeçalho da tabela." },
+  { id: "totalRow", label: "Linha de totais", hint: "Exibe a última linha como linha de totais." },
+  { id: "firstColumn", label: "Primeira coluna", hint: "Destaca a primeira coluna da tabela." },
+  { id: "lastColumn", label: "Última coluna", hint: "Destaca a última coluna da tabela." },
+  { id: "zebraStripe", label: "Linhas em tiras", hint: "Alterna o fundo das linhas para facilitar a leitura." },
+  { id: "bandedColumns", label: "Colunas em tiras", hint: "Alterna o fundo das colunas para facilitar a leitura." },
   { id: "borders", label: "Bordas", hint: "Linhas separadoras entre células." },
 ];
 
@@ -192,7 +192,7 @@ function wrapPane(
   );
 }
 
-/** Opções de estilo (checkbox Excel). */
+/** Opções de estilo da tabela (checkboxes). */
 export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useTableDesignControls();
   if (!ctrl) return null;

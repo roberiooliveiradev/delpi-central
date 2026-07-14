@@ -7,7 +7,7 @@ type Props = {
   hint?: string;
   icon?: LucideIcon;
   compact?: boolean;
-  /** Painel lateral — seções recolhíveis estilo PowerPoint. */
+  /** Painel lateral — seções recolhíveis. */
   pane?: boolean;
   defaultOpen?: boolean;
   children: ReactNode;

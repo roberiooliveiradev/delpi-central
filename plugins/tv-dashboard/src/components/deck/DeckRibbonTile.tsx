@@ -16,7 +16,7 @@ type Props = {
   keyTip?: string;
 };
 
-/** Botão vertical do ribbon (ícone + rótulo), como Inserir no PowerPoint. */
+/** Botão vertical da faixa (ícone + rótulo). */
 export function DeckRibbonTile({
   icon: Icon,
   label,

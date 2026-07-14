@@ -2,7 +2,7 @@ import type { ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
 
 /**
  * Aplica o mesmo delta do frame “primary” (arrastado) a cada frame inicial da multi-seleção.
- * PowerPoint-like: move e resize sobem/descem juntos com dx/dy/dw/dh.
+ * Move e resize sobem/descem juntos com dx/dy/dw/dh.
  */
 export function applyMultiFrameDelta(
   startFrames: ReadonlyMap<string, ComunicadoFrame>,

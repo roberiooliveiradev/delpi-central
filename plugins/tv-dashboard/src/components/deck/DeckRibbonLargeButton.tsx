@@ -15,7 +15,7 @@ type Props = {
   keyTip?: string;
 };
 
-/** Botão principal alto do ribbon (ex.: Nova tela), como Novo slide no PowerPoint. */
+/** Botão principal alto da faixa (ex.: Nova tela). */
 export function DeckRibbonLargeButton({
   icon: Icon,
   label,

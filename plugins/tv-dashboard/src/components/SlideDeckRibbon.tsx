@@ -155,7 +155,7 @@ export function SlideDeckRibbon({
               <DeckRibbonTile
                 icon={Download}
                 label={exportBusy ? "…" : "PPTX"}
-                hint="Exportar a tela atual como PowerPoint editável (MVP)."
+                hint="Exportar a tela atual como arquivo PPTX editável (MVP)."
                 disabled={exportBusy}
                 keyTip={K.exportPptx}
                 onClick={onExportPptx}

@@ -21,7 +21,7 @@ export type ChartQuickLayout = {
   legendPosition?: NonNullable<ComunicadoChartOptions["legendPosition"]>;
 };
 
-/** Presets declarativos — Layout Rápido (PPT/Excel). */
+/** Presets declarativos de layout rápido do gráfico. */
 export const CHART_QUICK_LAYOUTS: ChartQuickLayout[] = [
   {
     id: "title_legend_bottom",

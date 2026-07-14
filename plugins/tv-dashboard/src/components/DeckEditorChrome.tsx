@@ -104,7 +104,7 @@ function ribbonDensityFor(tab: DeckRibbonTabId): "band" | "fit" {
     : "band";
 }
 
-/** Chrome do editor: abas estilo PowerPoint + ribbon contextual + painel de configuração. */
+/** Chrome do editor: abas + faixa contextual + painel de configuração. */
 export function DeckEditorChrome({
   playlist,
   slide,

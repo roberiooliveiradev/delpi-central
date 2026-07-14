@@ -314,7 +314,7 @@ export function ChartStylesSection({ layout }: { layout: SelectionSectionLayout 
       <DeckRibbonTile
         icon={Database}
         label="Selecionar dados"
-        hint="Abre o painel de fontes de dados (como Selecionar Dados no Excel)."
+        hint="Abre o painel de fontes de dados para vincular ou trocar a série."
         onClick={() => ctrl.openDataPanel()}
       />
     </div>

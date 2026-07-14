@@ -456,156 +456,164 @@ export function FormatRibbonTypographySections({
 
       {showParagraphAlign ? (
         <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} captionPlacement={captionPlacement}>
-          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--paragraph">
-            <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento horizontal">
-              {(
-                [
-                  { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
-                  { align: "center" as const, icon: AlignCenter, label: "Centralizar", hint: H.alignCenter },
-                  { align: "right" as const, icon: AlignRight, label: "Alinhar à direita", hint: H.alignRight },
-                  ...(isTextBlock
-                    ? ([
-                        {
-                          align: "justify" as const,
-                          icon: AlignJustify,
-                          label: "Justificar",
-                          hint: H.alignJustify,
-                        },
-                      ] as const)
-                    : []),
-                ] as const
-              ).map(({ align, icon: Icon, label, hint }) => (
-                <TdRibbonIconButton
-                  key={align}
-                  hint={hint}
-                  ariaLabel={label}
-                  active={textAlignActive === align}
-                  onClick={() => updateSelectedTextFormatStyle({ textAlign: align })}
+          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--paragraph">
+            <div className="td-deck-ribbon__paragraph-cols">
+              <div className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--align">
+                <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento horizontal">
+                  {(
+                    [
+                      { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
+                      { align: "center" as const, icon: AlignCenter, label: "Centralizar", hint: H.alignCenter },
+                      { align: "right" as const, icon: AlignRight, label: "Alinhar à direita", hint: H.alignRight },
+                      ...(isTextBlock
+                        ? ([
+                            {
+                              align: "justify" as const,
+                              icon: AlignJustify,
+                              label: "Justificar",
+                              hint: H.alignJustify,
+                            },
+                          ] as const)
+                        : []),
+                    ] as const
+                  ).map(({ align, icon: Icon, label, hint }) => (
+                    <TdRibbonIconButton
+                      key={align}
+                      hint={hint}
+                      ariaLabel={label}
+                      active={textAlignActive === align}
+                      onClick={() => updateSelectedTextFormatStyle({ textAlign: align })}
+                    >
+                      <Icon size={15} aria-hidden="true" />
+                    </TdRibbonIconButton>
+                  ))}
+                </div>
+                <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento vertical e listas">
+                  {(
+                    [
+                      {
+                        align: "top" as const,
+                        icon: AlignVerticalJustifyStart,
+                        label: "Alinhar ao topo",
+                        hint: H.alignTop,
+                      },
+                      {
+                        align: "middle" as const,
+                        icon: AlignVerticalJustifyCenter,
+                        label: "Centralizar verticalmente",
+                        hint: H.alignMiddle,
+                      },
+                      {
+                        align: "bottom" as const,
+                        icon: AlignVerticalJustifyEnd,
+                        label: "Alinhar à base",
+                        hint: H.alignBottom,
+                      },
+                    ] as const
+                  ).map(({ align, icon: Icon, label, hint }) => (
+                    <TdRibbonIconButton
+                      key={align}
+                      hint={hint}
+                      ariaLabel={label}
+                      active={textVerticalAlign === align}
+                      onClick={() => updateSelectedTextFormatStyle({ verticalAlign: align })}
+                    >
+                      <Icon size={15} aria-hidden="true" />
+                    </TdRibbonIconButton>
+                  ))}
+                  {isTextBlock ? (
+                    <>
+                      <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+                      <TdRibbonIconButton
+                        hint={H.bulletList}
+                        ariaLabel="Marcadores"
+                        active={Boolean(bulletListActive)}
+                        onClick={() => toggleSelectedTextListType("bullet")}
+                      >
+                        <List size={15} aria-hidden="true" />
+                      </TdRibbonIconButton>
+                      <TdRibbonIconButton
+                        hint={H.orderedList}
+                        ariaLabel="Lista numerada"
+                        active={Boolean(orderedListActive)}
+                        onClick={() => toggleSelectedTextListType("ordered")}
+                      >
+                        <ListOrdered size={15} aria-hidden="true" />
+                      </TdRibbonIconButton>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+              {isTextBlock && textBlock ? (
+                <div
+                  className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--spacing"
+                  role="group"
+                  aria-label="Estilo e espaçamento do parágrafo"
                 >
-                  <Icon size={15} aria-hidden="true" />
-                </TdRibbonIconButton>
-              ))}
-            </div>
-            <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento vertical e listas">
-              {(
-                [
-                  {
-                    align: "top" as const,
-                    icon: AlignVerticalJustifyStart,
-                    label: "Alinhar ao topo",
-                    hint: H.alignTop,
-                  },
-                  {
-                    align: "middle" as const,
-                    icon: AlignVerticalJustifyCenter,
-                    label: "Centralizar verticalmente",
-                    hint: H.alignMiddle,
-                  },
-                  {
-                    align: "bottom" as const,
-                    icon: AlignVerticalJustifyEnd,
-                    label: "Alinhar à base",
-                    hint: H.alignBottom,
-                  },
-                ] as const
-              ).map(({ align, icon: Icon, label, hint }) => (
-                <TdRibbonIconButton
-                  key={align}
-                  hint={hint}
-                  ariaLabel={label}
-                  active={textVerticalAlign === align}
-                  onClick={() => updateSelectedTextFormatStyle({ verticalAlign: align })}
-                >
-                  <Icon size={15} aria-hidden="true" />
-                </TdRibbonIconButton>
-              ))}
-              {isTextBlock ? (
-                <>
-                  <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                  <TdRibbonIconButton
-                    hint={H.bulletList}
-                    ariaLabel="Marcadores"
-                    active={Boolean(bulletListActive)}
-                    onClick={() => toggleSelectedTextListType("bullet")}
-                  >
-                    <List size={15} aria-hidden="true" />
-                  </TdRibbonIconButton>
-                  <TdRibbonIconButton
-                    hint={H.orderedList}
-                    ariaLabel="Lista numerada"
-                    active={Boolean(orderedListActive)}
-                    onClick={() => toggleSelectedTextListType("ordered")}
-                  >
-                    <ListOrdered size={15} aria-hidden="true" />
-                  </TdRibbonIconButton>
-                </>
+                  <span className="td-deck-ribbon__stack-field">
+                    <FieldLabel
+                      htmlFor="td-ribbon-named-style"
+                      label="Estilo"
+                      hint={H.namedStyle}
+                      className="td-deck-ribbon__field-label"
+                    />
+                    <TdRibbonSelect
+                      id="td-ribbon-named-style"
+                      className="td-deck-ribbon__select td-deck-ribbon__select--style"
+                      aria-label="Estilo de parágrafo"
+                      value={namedStyleValue}
+                      onChange={(value) =>
+                        applySelectedNamedTextStyle(value as typeof namedStyleValue)
+                      }
+                      options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
+                        value: option.key,
+                        label: option.label,
+                      }))}
+                    />
+                  </span>
+                  <span className="td-deck-ribbon__stack-field">
+                    <FieldLabel
+                      htmlFor="td-ribbon-line-height"
+                      label="Entrelinhas"
+                      hint={H.lineHeight}
+                      className="td-deck-ribbon__field-label"
+                    />
+                    <TdRibbonSelect
+                      id="td-ribbon-line-height"
+                      className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+                      aria-label="Entrelinhas"
+                      value={String(textBlock.style?.lineHeight ?? 1.15)}
+                      onChange={(value) => updateSelectedStyle({ lineHeight: Number(value) })}
+                      options={COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => ({
+                        value: String(value),
+                        label: value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value),
+                      }))}
+                    />
+                  </span>
+                  <span className="td-deck-ribbon__stack-field">
+                    <FieldLabel
+                      htmlFor="td-ribbon-letter-spacing"
+                      label="Espaçamento"
+                      hint={H.letterSpacing}
+                      className="td-deck-ribbon__field-label"
+                    />
+                    <NativeTextControl
+                      id="td-ribbon-letter-spacing"
+                      type="number"
+                      className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+                      aria-label="Espaçamento entre caracteres (px)"
+                      min={-2}
+                      max={24}
+                      step={0.5}
+                      value={textBlock.style?.letterSpacing ?? 0}
+                      onChange={(value) =>
+                        updateSelectedStyle({ letterSpacing: Number(value) || 0 })
+                      }
+                    />
+                  </span>
+                </div>
               ) : null}
             </div>
-            {isTextBlock && textBlock ? (
-              <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs td-deck-ribbon__toolbar-row--stack-fields">
-                <span className="td-deck-ribbon__stack-field">
-                  <FieldLabel
-                    htmlFor="td-ribbon-named-style"
-                    label="Estilo"
-                    hint={H.namedStyle}
-                    className="td-deck-ribbon__field-label"
-                  />
-                  <TdRibbonSelect
-                    id="td-ribbon-named-style"
-                    className="td-deck-ribbon__select td-deck-ribbon__select--style"
-                    aria-label="Estilo de parágrafo"
-                    value={namedStyleValue}
-                    onChange={(value) =>
-                      applySelectedNamedTextStyle(value as typeof namedStyleValue)
-                    }
-                    options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
-                      value: option.key,
-                      label: option.label,
-                    }))}
-                  />
-                </span>
-                <span className="td-deck-ribbon__stack-field">
-                  <FieldLabel
-                    htmlFor="td-ribbon-line-height"
-                    label="Entrelinhas"
-                    hint={H.lineHeight}
-                    className="td-deck-ribbon__field-label"
-                  />
-                  <TdRibbonSelect
-                    id="td-ribbon-line-height"
-                    className="td-deck-ribbon__select td-deck-ribbon__select--compact"
-                    aria-label="Entrelinhas"
-                    value={String(textBlock.style?.lineHeight ?? 1.15)}
-                    onChange={(value) => updateSelectedStyle({ lineHeight: Number(value) })}
-                    options={COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => ({
-                      value: String(value),
-                      label: value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value),
-                    }))}
-                  />
-                </span>
-                <span className="td-deck-ribbon__stack-field">
-                  <FieldLabel
-                    htmlFor="td-ribbon-letter-spacing"
-                    label="Espaçamento"
-                    hint={H.letterSpacing}
-                    className="td-deck-ribbon__field-label"
-                  />
-                  <NativeTextControl
-                    id="td-ribbon-letter-spacing"
-                    type="number"
-                    className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                    aria-label="Espaçamento entre caracteres (px)"
-                    min={-2}
-                    max={24}
-                    step={0.5}
-                    value={textBlock.style?.letterSpacing ?? 0}
-                    onChange={(value) =>
-                      updateSelectedStyle({ letterSpacing: Number(value) || 0 })
-                    }
-                  />
-                </span>
-              </div>
-            ) : null}
           </div>
         </DeckRibbonGroup>
       ) : null}
