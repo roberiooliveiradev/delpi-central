@@ -576,6 +576,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "update_scheduling_resource": RouteContract("scheduling_resource", "scalar"),
     "list_scheduling_bookings": RouteContract("scheduling_booking", "paged_list"),
     "list_pending_scheduling_bookings": RouteContract("scheduling_booking", "paged_list"),
+    "list_my_scheduling_bookings": RouteContract("scheduling_booking", "paged_list"),
     "create_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "create_scheduling_recurring_booking": RouteContract("scheduling_booking", "composite_analysis"),
     "approve_scheduling_booking": RouteContract("scheduling_booking", "scalar"),

@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, ClipboardCheck, RefreshCw, Settings2 } from "lucide-react";
+import {
+  CalendarPlus,
+  ClipboardCheck,
+  ClipboardList,
+  RefreshCw,
+  Settings2,
+} from "lucide-react";
 import type { View } from "react-big-calendar";
 import type { SlotInfo } from "react-big-calendar";
 import { isSameDay } from "date-fns";
@@ -9,6 +15,7 @@ import {
   cancelBooking,
   createBooking,
   createResource,
+  fetchMyBookings,
   fetchPendingBookings,
   fetchResources,
   isRecurringBookingResult,
@@ -22,6 +29,7 @@ import { ApprovalsPanel } from "../components/ApprovalsPanel";
 import { BookingCalendar, type CalendarEvent } from "../components/BookingCalendar";
 import { BookingDetailModal } from "../components/BookingDetailModal";
 import { BookingModal } from "../components/BookingModal";
+import { MyBookingsPanel } from "../components/MyBookingsPanel";
 import { ResourceAdminPanel } from "../components/ResourceAdminPanel";
 import { ResourceFormModal } from "../components/ResourceFormModal";
 import { ResourceSidebar } from "../components/ResourceSidebar";
@@ -34,7 +42,7 @@ type Props = {
   pathname?: string;
 };
 
-type ActiveView = "calendar" | "admin" | "approvals";
+type ActiveView = "calendar" | "admin" | "approvals" | "mine";
 
 function readQueryParam(name: string): string | null {
   if (typeof window === "undefined") return null;
@@ -56,6 +64,8 @@ export function SchedulingPage({ pathname }: Props) {
   const [adminResources, setAdminResources] = useState<SchedulingResource[]>([]);
   const [pendingBookings, setPendingBookings] = useState<SchedulingBooking[]>([]);
   const [pendingLoading, setPendingLoading] = useState(false);
+  const [myBookings, setMyBookings] = useState<SchedulingBooking[]>([]);
+  const [myBookingsLoading, setMyBookingsLoading] = useState(false);
   const [highlightBookingId, setHighlightBookingId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -100,6 +110,20 @@ export function SchedulingPage({ pathname }: Props) {
     }
   }
 
+  async function loadMyBookings() {
+    if (!branch) {
+      setMyBookings([]);
+      return;
+    }
+    setMyBookingsLoading(true);
+    try {
+      const data = await fetchMyBookings(branch);
+      setMyBookings(data);
+    } finally {
+      setMyBookingsLoading(false);
+    }
+  }
+
   async function openAdminView() {
     setActiveView("admin");
     await loadAdminResources();
@@ -111,17 +135,27 @@ export function SchedulingPage({ pathname }: Props) {
     await loadPendingBookings();
   }
 
+  async function openMyBookingsView(bookingId?: string | null) {
+    setActiveView("mine");
+    if (bookingId) setHighlightBookingId(bookingId);
+    await loadMyBookings();
+  }
+
   useEffect(() => {
-    if (!canApprove || !branch) return;
-    void loadPendingBookings();
+    if (!branch) return;
+    void loadMyBookings();
+    if (canApprove) void loadPendingBookings();
+
     const tab = readQueryParam("tab");
     const bookingId = readQueryParam("bookingId");
-    if (tab === "approvals") {
+    if (tab === "approvals" && canApprove) {
       void openApprovalsView(bookingId);
+    } else if (tab === "mine") {
+      void openMyBookingsView(bookingId);
     } else if (bookingId) {
       setHighlightBookingId(bookingId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deep link on mount / canApprove
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deep link on mount
   }, [canApprove, branch]);
 
   function openBookingModal(start?: Date, end?: Date, resourceId?: string) {
@@ -165,8 +199,11 @@ export function SchedulingPage({ pathname }: Props) {
       } else {
         setSuccess("Reserva confirmada com sucesso.");
       }
-      await reload();
-      if (canApprove) await loadPendingBookings();
+      await Promise.all([
+        reload(),
+        loadMyBookings(),
+        canApprove ? loadPendingBookings() : Promise.resolve(),
+      ]);
     } finally {
       setActionLoading(false);
     }
@@ -179,8 +216,26 @@ export function SchedulingPage({ pathname }: Props) {
       const result = await cancelBooking(selectedEvent.bookingId, scope);
       const count = result.cancelled_count ?? 1;
       setSuccess(count > 1 ? `${count} reservas canceladas.` : "Reserva cancelada.");
-      await reload();
-      if (canApprove) await loadPendingBookings();
+      await Promise.all([
+        reload(),
+        loadMyBookings(),
+        canApprove ? loadPendingBookings() : Promise.resolve(),
+      ]);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleCancelMyBooking(bookingId: string) {
+    setActionLoading(true);
+    try {
+      await cancelBooking(bookingId, "occurrence");
+      setSuccess("Reserva cancelada.");
+      await Promise.all([
+        reload(),
+        loadMyBookings(),
+        canApprove ? loadPendingBookings() : Promise.resolve(),
+      ]);
     } finally {
       setActionLoading(false);
     }
@@ -226,7 +281,7 @@ export function SchedulingPage({ pathname }: Props) {
     try {
       await approveBooking(bookingId);
       setSuccess("Reserva confirmada.");
-      await Promise.all([reload(), loadPendingBookings()]);
+      await Promise.all([reload(), loadPendingBookings(), loadMyBookings()]);
     } finally {
       setActionLoading(false);
     }
@@ -237,7 +292,7 @@ export function SchedulingPage({ pathname }: Props) {
     try {
       await rejectBooking(bookingId, reason);
       setSuccess("Reserva rejeitada. O solicitante foi notificado.");
-      await Promise.all([reload(), loadPendingBookings()]);
+      await Promise.all([reload(), loadPendingBookings(), loadMyBookings()]);
     } finally {
       setActionLoading(false);
     }
@@ -275,6 +330,19 @@ export function SchedulingPage({ pathname }: Props) {
                 onClick={() => setActiveView("calendar")}
               >
                 Calendário
+              </button>
+              <button
+                type="button"
+                className={`ca-btn ca-btn--ghost ${activeView === "mine" ? "ca-btn--active" : ""}`}
+                onClick={() => void openMyBookingsView()}
+              >
+                <ClipboardList size={16} />
+                Minhas reservas
+                {myBookings.filter((item) => item.status === "pending").length > 0 ? (
+                  <span className="ca-badge-count">
+                    {myBookings.filter((item) => item.status === "pending").length}
+                  </span>
+                ) : null}
               </button>
               {canApprove ? (
                 <button
@@ -381,6 +449,17 @@ export function SchedulingPage({ pathname }: Props) {
             onApprove={handleApprove}
             onReject={handleReject}
             onRefresh={() => void loadPendingBookings()}
+          />
+        ) : null}
+
+        {activeView === "mine" ? (
+          <MyBookingsPanel
+            bookings={myBookings}
+            highlightBookingId={highlightBookingId}
+            loading={myBookingsLoading}
+            actionLoading={actionLoading}
+            onRefresh={() => void loadMyBookings()}
+            onCancel={handleCancelMyBooking}
           />
         ) : null}
 

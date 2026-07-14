@@ -30,6 +30,7 @@ Campo novo: `requires_approval` (boolean). Quando `true`, `POST /bookings` cria 
 |--------|------|-----------|
 | GET | `/bookings?branch=&from=&to=` | view (+ pending no calendário) |
 | GET | `/bookings/pending?branch=&mine=` | fila da filial (`approve`); `mine=true` com view |
+| GET | `/bookings/mine?branch=` | reservas do usuário autenticado (todos os status) |
 | POST | `/bookings` | view — imediato ou pendente conforme recurso |
 | POST | `/bookings/{id}/approve` | approve |
 | POST | `/bookings/{id}/reject` | approve — body `{ "reason": "..." }` |

@@ -197,6 +197,13 @@ def test_decide_booking_approve_notifies_requester() -> None:
     notify.assert_called_once_with(booking=confirmed, event_type="booking_approved")
 
 
+def test_list_my_bookings_route_registered() -> None:
+    from app.interface.http.routes.scheduling.scheduling_router import router
+
+    paths = {getattr(route, "path", None) for route in router.routes}
+    assert "/bookings/mine" in paths
+
+
 def test_reject_requires_reason() -> None:
     repo = MagicMock()
     repo.expire_overdue_pending_bookings.return_value = []

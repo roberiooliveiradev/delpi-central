@@ -7,6 +7,7 @@ Plugin microfrontend para reserva de salas, salas de treinamento, veículos e ou
 - `/apps/central-agendamento/filial-es`
 - `/apps/central-agendamento/filial-sc`
 - Deep link de aprovação: `...?tab=approvals&bookingId={uuid}`
+- Minhas reservas: `...?tab=mine&bookingId={uuid}`
 
 ## API
 
@@ -16,6 +17,7 @@ Base: `/apps/api-delpi/scheduling`
 - `POST /resources` / `PATCH /resources/{id}` (gestores) — inclui `requires_approval`
 - `GET /bookings?branch=ES|SC&from=&to=`
 - `GET /bookings/pending?branch=&mine=`
+- `GET /bookings/mine?branch=` — solicitações do usuário e status
 - `POST /bookings` — confirma imediatamente ou cria `pending`
 - `POST /bookings/{id}/approve` / `reject`
 - `PATCH /bookings/{id}/cancel`
@@ -80,7 +82,7 @@ Cenários manuais de aprovação: recurso com `requires_approval` → pending �
 
 ## UI
 
-Calendário (`react-big-calendar`), sidebar de filtros, aba **Aprovações** (só com `approve`), painel administrativo (só com `manage`), eventos pendentes em destaque âmbar.
+Calendário (`react-big-calendar`), aba **Minhas reservas** (todos com `view`), aba **Aprovações** (só com `approve`), painel administrativo (só com `manage`), eventos pendentes em destaque âmbar.
 
 ## Roadmap
 

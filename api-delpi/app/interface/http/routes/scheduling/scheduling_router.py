@@ -319,6 +319,34 @@ def list_pending_bookings(
         return error_response("Erro interno ao listar pendências.", status_code=500)
 
 
+@router.get("/bookings/mine")
+@require_any_permission(SCHEDULING_READ_PERMISSIONS)
+def list_my_bookings(
+    branch: str = Query(..., pattern="^(ES|SC)$"),
+    limit: int = Query(100, ge=1, le=200),
+):
+    branch_error = _branch_access_error(branch)
+    if branch_error:
+        return branch_error
+
+    user_id = _current_user_id()
+    if not user_id or user_id == "unknown":
+        return error_response("Usuário não identificado.", status_code=401)
+
+    try:
+        repo = build_scheduling_repository()
+        ExpirePendingSchedulingBookingsUseCase(repo).execute(branch_code=branch)
+        data = repo.list_my_bookings(
+            branch,
+            booked_by_user_id=user_id,
+            limit=limit,
+        )
+        return api_delpi_success(data, operation_id="list_my_scheduling_bookings")
+    except Exception as exc:
+        log_error(f"Erro ao listar minhas reservas: {exc}")
+        return error_response("Erro interno ao listar suas reservas.", status_code=500)
+
+
 @router.post("/bookings")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def create_booking(body: CreateBookingBody):

@@ -62,7 +62,7 @@ def approvals_portal_route(branch_code: str, booking_id: str) -> str:
 def calendar_portal_route(branch_code: str, booking_id: str) -> str:
     return (
         f"{_APP_BASE}/{_branch_path_suffix(branch_code)}"
-        f"?bookingId={booking_id}"
+        f"?tab=mine&bookingId={booking_id}"
     )
 
 

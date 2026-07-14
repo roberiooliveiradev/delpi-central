@@ -255,6 +255,42 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         query += " ORDER BY b.start_at ASC"
         return self.fetch_all(query, tuple(params))
 
+    def list_my_bookings(
+        self,
+        branch_code: str,
+        *,
+        booked_by_user_id: str,
+        statuses: list[str] | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        query = f"""
+            {_BOOKING_SELECT}
+              FROM scheduling.bookings b
+              JOIN scheduling.resources r ON r.id = b.resource_id
+              LEFT JOIN scheduling.recurrence_series rs ON rs.id = b.recurrence_series_id
+             WHERE b.branch_code = %s
+               AND b.booked_by_user_id = %s
+        """
+        params: list[Any] = [branch_code, booked_by_user_id]
+        if statuses:
+            query += " AND b.status = ANY(%s)"
+            params.append(statuses)
+        safe_limit = max(1, min(int(limit), 200))
+        # Pendentes e futuras primeiro; encerradas depois (mais recentes no topo).
+        query += """
+             ORDER BY
+               CASE
+                 WHEN b.status = 'pending' THEN 0
+                 WHEN b.status = 'confirmed' AND b.start_at >= NOW() THEN 1
+                 WHEN b.status = 'confirmed' THEN 2
+                 ELSE 3
+               END,
+               b.start_at DESC
+             LIMIT %s
+        """
+        params.append(safe_limit)
+        return self.fetch_all(query, tuple(params))
+
     def get_booking(self, booking_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
             f"""

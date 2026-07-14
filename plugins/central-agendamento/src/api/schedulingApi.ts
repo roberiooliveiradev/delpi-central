@@ -190,6 +190,17 @@ export async function fetchPendingBookings(
   return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }
 
+export async function fetchMyBookings(
+  branch: BranchCode,
+  limit = 100,
+): Promise<SchedulingBooking[]> {
+  const params = new URLSearchParams({ branch, limit: String(limit) });
+  const envelope = await httpGet<ApiEnvelope<SchedulingBooking[]>>(
+    `${API_BASE}/bookings/mine?${params.toString()}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
+}
+
 export async function approveBooking(bookingId: string): Promise<SchedulingBooking> {
   const envelope = await httpPost<ApiEnvelope<SchedulingBooking>>(
     `${API_BASE}/bookings/${bookingId}/approve`,
