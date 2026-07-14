@@ -54,6 +54,7 @@ export {
   parseHexColor,
   relativeLuminance,
   resolveAutomaticTextColor,
+  resolveComplexBlockForeground,
   resolvePaintTextColor,
   AUTOMATIC_TEXT_COLOR,
   isAutomaticTextColor,

@@ -123,6 +123,23 @@ export const DECK_KPI_DEFAULTS = {
   frame: { x: 8, y: 32, w: 20, h: 15 },
 } as const;
 
+/**
+ * Defaults do bloco filtro (input) — superfície Office + sombra na moldura;
+ * campo de edição com contorno preto (forma).
+ */
+export const DECK_INPUT_DEFAULTS = {
+  backgroundColor: DECK_COLOR_SURFACE,
+  borderColor: DECK_COLOR_BORDER,
+  borderWidth: 1,
+  borderRadius: 8,
+  boxShadow:
+    "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
+  controlFill: DECK_COLOR_SURFACE,
+  controlBorderColor: DECK_COLOR_SHAPE_STROKE,
+  controlBorderWidth: 1,
+  controlBorderRadius: 6,
+} as const;
+
 /** Defaults de tabela — células (grade) vs moldura (chrome alinhado a KPI/gráfico). */
 export const DECK_TABLE_DEFAULTS = {
   headerBg: DECK_COLOR_TABLE_HEADER_BG,

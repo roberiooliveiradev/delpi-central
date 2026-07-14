@@ -3,9 +3,8 @@ import { useRef } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import {
-  hasIllegibleTextContrast,
-  isAutomaticTextColor,
   resolveAutomaticTextColor,
+  resolveComplexBlockForeground,
 } from "../shape/colorUtils";
 import { DECK_KPI_DEFAULTS } from "../../theme/deckColorCatalog";
 import { FitText } from "./FitText";
@@ -37,11 +36,10 @@ function resolveKpiPartForeground(
   role: "label" | "value",
 ): string {
   const auto = resolveAutomaticTextColor(cardBg);
-  const muted = auto === "#000000" ? DECK_KPI_DEFAULTS.labelColor : "#94a3b8";
-  if (isAutomaticTextColor(explicit) || hasIllegibleTextContrast(explicit, cardBg)) {
-    return role === "value" ? auto : muted;
-  }
-  return explicit!;
+  return resolveComplexBlockForeground(explicit, cardBg, {
+    role: role === "value" ? "emphasis" : "muted",
+    mutedColor: auto === "#000000" ? DECK_KPI_DEFAULTS.labelColor : "#94a3b8",
+  });
 }
 
 export type { MetricKpiCardTone as DelpiKpiCardTone };

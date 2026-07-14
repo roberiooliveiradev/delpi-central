@@ -30,6 +30,7 @@ import {
 import {
   DECK_COLOR_BORDER,
   DECK_COLOR_SURFACE,
+  DECK_INPUT_DEFAULTS,
   DECK_SHAPE_DEFAULTS,
   ShapeFillMenu,
   ShapeOutlineMenu,
@@ -329,9 +330,15 @@ export function ComunicadoShapeRibbon() {
     const partState = getInputPartState(block.inputParts, chromePart);
     const isFrameChrome = chromePart.kind === "frame";
     const boxLabels = inputPartBoxChromeLabels(chromePart.kind);
-    const fillValue = partState?.style?.fill ?? (isFrameChrome ? DECK_COLOR_SURFACE : "transparent");
-    const strokeValue = partState?.style?.stroke ?? (isFrameChrome ? DECK_COLOR_BORDER : "transparent");
-    const strokeWidth = partState?.style?.strokeWidth ?? (isFrameChrome ? 1 : 0);
+    const fillValue =
+      partState?.style?.fill ??
+      (isFrameChrome ? DECK_INPUT_DEFAULTS.backgroundColor : "transparent");
+    const strokeValue =
+      partState?.style?.stroke ??
+      (isFrameChrome ? DECK_INPUT_DEFAULTS.borderColor : "transparent");
+    const strokeWidth =
+      partState?.style?.strokeWidth ??
+      (isFrameChrome ? DECK_INPUT_DEFAULTS.borderWidth : 0);
 
     const patchChromeStyle = (style: Record<string, unknown>) => {
       updateSelected({

@@ -846,10 +846,11 @@ function EditorInputBlock({
       event.preventDefault();
       const rect = root.getBoundingClientRect();
       const elRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      let lastParts = block.inputParts ?? {};
-      if (!getInputPartState(lastParts, ref)?.frame) {
-        lastParts = materializeMissingInputPartFramesFromRoot(root, lastParts);
-      }
+      // Sempre materializar irmãos sem frame — evita híbrido badge-framed / control-flow.
+      let lastParts = materializeMissingInputPartFramesFromRoot(
+        root,
+        block.inputParts ?? {},
+      );
       const existing = getInputPartState(lastParts, ref)?.frame;
       const origin = clampInputPartFrame({
         x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
@@ -898,10 +899,10 @@ function EditorInputBlock({
       event.preventDefault();
       const rect = root.getBoundingClientRect();
       const elRect = host.getBoundingClientRect();
-      let lastParts = block.inputParts ?? {};
-      if (!getInputPartState(lastParts, ref)?.frame) {
-        lastParts = materializeMissingInputPartFramesFromRoot(root, lastParts);
-      }
+      let lastParts = materializeMissingInputPartFramesFromRoot(
+        root,
+        block.inputParts ?? {},
+      );
       const existing = getInputPartState(lastParts, ref)?.frame;
       const origin = clampInputPartFrame({
         x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,

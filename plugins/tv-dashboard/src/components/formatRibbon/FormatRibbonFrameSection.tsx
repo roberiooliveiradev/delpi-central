@@ -2,16 +2,21 @@ import {
   blockUsesInnerShapeChrome,
   chartPartAllowsFrame,
   clampChartPartFrame,
+  clampInputPartFrame,
   clampKpiPartFrame,
   defaultChartPartFrame,
+  defaultInputPartFrame,
   defaultKpiPartFrame,
   formatDesignPx,
   framePercentToPageBottomLeftPx,
   getChartPartState,
+  getInputPartState,
   getKpiPartState,
   hostRelativeFrameToPageBottomLeftPx,
+  resolveInputPartFrame,
   resolveKpiPartFrame,
   isPointShapeKind,
+  inputPartAllowsFrame,
   kpiPartAllowsFrame,
   mergeChartPartsWithOptions,
   mergeKpiPartsWithOptions,
@@ -24,13 +29,17 @@ import {
   resolveViewportPixelSize,
   scaleChartPartTypographyOnResize,
   scaleComplexBlockOnResize,
+  scaleInputPartTypographyOnResize,
   scaleKpiPartTypographyOnResize,
+  seedInputPartsFreeLayoutFrames,
   seedKpiPartsFreeLayoutFrames,
   upsertChartPartState,
+  upsertInputPartState,
   upsertKpiPartState,
   type ComunicadoBlock,
   type ComunicadoChartViewBlock,
   type ComunicadoFrame,
+  type ComunicadoInputBlock,
   type ComunicadoKpiViewBlock,
   type KpiFramePartKind,
   type ViewportPixelSize,
@@ -75,6 +84,7 @@ export function FormatRibbonFrameSection() {
     selectedIds,
     selectedKpiPart,
     selectedChartPart,
+    selectedInputPart,
     updateSelected,
     updateSelectedStyle,
     viewportProfile,
@@ -91,6 +101,111 @@ export function FormatRibbonFrameSection() {
     !chartPartAllowsFrame(selectedChartPart)
   ) {
     return null;
+  }
+
+  const inputPartTarget =
+    selected.type === "input" && selectedInputPart && inputPartAllowsFrame(selectedInputPart)
+      ? selectedInputPart
+      : null;
+
+  if (inputPartTarget && selected.type === "input") {
+    const block = selected as ComunicadoInputBlock;
+    const partState = getInputPartState(block.inputParts, inputPartTarget);
+    const explicitFrame = resolveInputPartFrame(partState);
+    const partFrame = clampInputPartFrame(
+      explicitFrame ?? defaultInputPartFrame(inputPartTarget.kind),
+    );
+    const borderRadius = partState?.style?.borderRadius ?? 0;
+    const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
+    const partFrameFull: ComunicadoFrame = {
+      x: partFrame.x,
+      y: partFrame.y,
+      w: partFrame.w ?? 20,
+      h: partFrame.h ?? 20,
+    };
+    const partFramePx = hostRelativeFrameToPageBottomLeftPx(
+      partFrameFull,
+      block.frame,
+      slideDesign,
+    );
+
+    const setPartFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
+      const nextPct = patchHostRelativeFramePageBottomLeftPx(
+        partFrameFull,
+        block.frame,
+        key,
+        rawPx,
+        slideDesign,
+      );
+      const nextFrame = clampInputPartFrame(nextPct);
+      let nextParts = upsertInputPartState(block.inputParts, inputPartTarget, {
+        frame: nextFrame,
+      });
+      if (key === "w" || key === "h") {
+        nextParts = scaleInputPartTypographyOnResize(
+          nextParts,
+          inputPartTarget,
+          partFrameFull,
+          { w: nextFrame.w ?? partFrameFull.w, h: nextFrame.h ?? partFrameFull.h },
+        );
+      }
+      updateSelected({ inputParts: nextParts } as Partial<ComunicadoBlock>);
+    };
+
+    const setPartRadius = (raw: number) => {
+      const nextParts = upsertInputPartState(block.inputParts, inputPartTarget, {
+        style: { borderRadius: Math.max(0, Math.min(64, Number(raw) || 0)) },
+      });
+      updateSelected({ inputParts: nextParts } as Partial<ComunicadoBlock>);
+    };
+
+    const enableFreePosition = () => {
+      updateSelected({
+        inputParts: seedInputPartsFreeLayoutFrames(block.inputParts),
+      } as Partial<ComunicadoBlock>);
+    };
+
+    return (
+      <DeckRibbonGroup
+        label="Posição e tamanho"
+        hint="Posição absoluta na página (px de design), origem no canto inferior esquerdo."
+      >
+        {!explicitFrame ? (
+          <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+            Posicionar livremente…
+          </button>
+        ) : (
+          <div className="td-deck-ribbon__frame-grid">
+            {frameKeys.map((key) => (
+              <DeckRangeField
+                key={key}
+                id={`td-ribbon-input-part-frame-${key}`}
+                label={FRAME_LABELS[key]}
+                hint={FRAME_HINTS[key]}
+                min={key === "w" || key === "h" ? 1 : 0}
+                max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
+                step={1}
+                value={formatDesignPx(partFramePx[key] ?? 0)}
+                displayValue={String(formatDesignPx(partFramePx[key] ?? 0))}
+                aria-label={FRAME_LABELS[key]}
+                onChange={(value) => setPartFrameKey(key, value)}
+              />
+            ))}
+            <DeckRangeField
+              id="td-ribbon-input-part-frame-radius"
+              label="Raio px"
+              hint={H.borderRadius}
+              min={0}
+              max={64}
+              step={1}
+              value={borderRadius}
+              aria-label="Raio dos cantos em pixels"
+              onChange={(value) => setPartRadius(value)}
+            />
+          </div>
+        )}
+      </DeckRibbonGroup>
+    );
   }
 
   const kpiPartTarget =

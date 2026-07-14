@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   DECK_CHART_DEFAULTS,
   DECK_COLOR_ACCENT,
+  DECK_COLOR_SHAPE_STROKE,
+  DECK_INPUT_DEFAULTS,
   DECK_KPI_DEFAULTS,
   DECK_SHAPE_DEFAULTS,
   DECK_TABLE_DEFAULTS,
@@ -57,6 +59,14 @@ describe("deckColorCatalog", () => {
     expect(DECK_KPI_DEFAULTS.boxShadow).toContain("rgba(15, 23, 42");
     expect(DECK_KPI_DEFAULTS.iconName).toBe("Gauge");
     expect(DECK_KPI_DEFAULTS.frame).toEqual({ x: 8, y: 32, w: 20, h: 15 });
+  });
+
+  it("define chrome do filtro: fundo branco, sombra na moldura, borda preta no campo", () => {
+    expect(DECK_INPUT_DEFAULTS.backgroundColor).toBe(DECK_THEME_LIGHT.bg);
+    expect(DECK_INPUT_DEFAULTS.borderColor).toBe("#b4b4b4");
+    expect(DECK_INPUT_DEFAULTS.boxShadow).toBe(DECK_KPI_DEFAULTS.boxShadow);
+    expect(DECK_INPUT_DEFAULTS.controlBorderColor).toBe(DECK_COLOR_SHAPE_STROKE);
+    expect(DECK_INPUT_DEFAULTS.controlFill).toBe("#ffffff");
   });
 
   it("expõe CSS vars para herança no bloco de dados", () => {

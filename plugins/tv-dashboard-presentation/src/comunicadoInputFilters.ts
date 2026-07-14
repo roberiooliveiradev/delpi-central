@@ -282,3 +282,45 @@ export function resolveInputRefreshSourceIds(
     .map((id) => String(id || "").trim())
     .filter((id) => id && fetchable.has(id));
 }
+
+/**
+ * Ao remover filtros do slide, limpa chaves de `dataFilters` que nenhum input restante mantém.
+ */
+export function pruneSlideDataFiltersAfterInputRemoval(
+  remainingBlocks: ComunicadoBlock[] | undefined | null,
+  currentFilters: ComunicadoDataFilters | undefined,
+  removedInputs: ComunicadoInputBlock[],
+): ComunicadoDataFilters | undefined {
+  if (!currentFilters || removedInputs.length === 0) return currentFilters;
+  const filters = { ...currentFilters };
+  for (const input of removedInputs) {
+    if (resolveInputTargetScope(input.input) !== "slide") continue;
+    const key = String(input.input?.paramKey || "").trim();
+    if (!key || !(key in filters)) continue;
+    const stillUsed = (remainingBlocks ?? []).some(
+      (block) =>
+        isComunicadoInputBlock(block) &&
+        resolveInputTargetScope(block.input) === "slide" &&
+        String(block.input?.paramKey || "").trim() === key &&
+        block.input?.defaultValue !== undefined &&
+        block.input?.defaultValue !== null &&
+        block.input?.defaultValue !== "",
+    );
+    if (!stillUsed) delete filters[key];
+  }
+  return Object.keys(filters).length > 0 ? filters : undefined;
+}
+
+/** União dos sourceIds a refreshar para uma lista de filtros removidos. */
+export function resolveRemovedInputRefreshSourceIds(
+  removedInputs: ComunicadoInputBlock[],
+  blocksBeforeRemoval: ComunicadoBlock[] | undefined | null,
+): string[] {
+  const ids = new Set<string>();
+  for (const input of removedInputs) {
+    for (const id of resolveInputRefreshSourceIds(input, blocksBeforeRemoval)) {
+      ids.add(id);
+    }
+  }
+  return [...ids];
+}

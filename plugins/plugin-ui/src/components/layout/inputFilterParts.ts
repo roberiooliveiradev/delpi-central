@@ -8,7 +8,15 @@ import type {
   PointerEvent as ReactPointerEvent,
 } from "react";
 
-import { AUTOMATIC_TEXT_COLOR, isAutomaticTextColor, resolvePaintTextColor } from "../shape/colorUtils";
+import {
+  DECK_COLOR_SHAPE_STROKE,
+  DECK_COLOR_SURFACE,
+  DECK_INPUT_DEFAULTS,
+} from "../../theme/deckColorCatalog";
+import {
+  AUTOMATIC_TEXT_COLOR,
+  resolveComplexBlockForeground,
+} from "../shape/colorUtils";
 
 export const INPUT_PART_DATA_ATTR = "data-input-part";
 
@@ -89,6 +97,14 @@ export const INPUT_PART_DEFAULT_FRAMES: Record<InputPartRef["kind"], InputPartFr
   badge: { x: 70, y: 8, w: 28, h: 28 },
   control: { x: 16, y: 48, w: 80, h: 44 },
 };
+
+/**
+ * Partes de conteúdo no free-layout (não a moldura).
+ * Seed/clear sempre em lote — evita híbrido flex+absolute.
+ */
+export const INPUT_FREE_LAYOUT_PART_KINDS = ["icon", "label", "badge", "control"] as const;
+
+export type InputFreeLayoutPartKind = (typeof INPUT_FREE_LAYOUT_PART_KINDS)[number];
 
 export const INPUT_PART_FONT_SIZE_DEFAULTS = {
   label: 14,
@@ -212,6 +228,36 @@ export function defaultInputPartFrame(kind: InputPartRef["kind"]): InputPartFram
   return { ...INPUT_PART_DEFAULT_FRAMES[kind] };
 }
 
+/** Chrome inicial do filtro — moldura Office + campo com borda preta (CSS do control). */
+export function defaultInputPartsMap(): InputPartsMap {
+  return {
+    frame: {
+      style: {
+        fill: DECK_INPUT_DEFAULTS.backgroundColor,
+        stroke: DECK_INPUT_DEFAULTS.borderColor,
+        strokeWidth: DECK_INPUT_DEFAULTS.borderWidth,
+        borderRadius: DECK_INPUT_DEFAULTS.borderRadius,
+        boxShadow: DECK_INPUT_DEFAULTS.boxShadow,
+      },
+    },
+  };
+}
+
+/** Frame com defaults Office quando parts/style ainda não persistiram chrome. */
+export function resolveInputFrameStateWithDefaults(
+  parts: InputPartsMap | null | undefined,
+): InputPartState {
+  const state = getInputPartState(parts, { kind: "frame" });
+  const defaults = defaultInputPartsMap().frame?.style ?? {};
+  return {
+    ...state,
+    style: {
+      ...defaults,
+      ...state?.style,
+    },
+  };
+}
+
 export function resolveInputPartFrame(
   state: InputPartState | null | undefined,
 ): InputPartFrame | null {
@@ -247,6 +293,34 @@ export function upsertInputPartState(
       frame: nextFrame,
     },
   };
+}
+
+/**
+ * Aplica frames default a todas as partes visíveis ainda sem frame.
+ * Nunca uma parte isolada — evita híbrido flex+absolute que quebra o stack.
+ */
+export function seedInputPartsFreeLayoutFrames(
+  parts: InputPartsMap | null | undefined,
+): InputPartsMap {
+  let next = parts ?? {};
+  for (const kind of INPUT_FREE_LAYOUT_PART_KINDS) {
+    const ref: InputPartRef = { kind };
+    if (!isInputPartVisible(next, ref)) continue;
+    if (resolveInputPartFrame(getInputPartState(next, ref))) continue;
+    next = upsertInputPartState(next, ref, { frame: defaultInputPartFrame(kind) });
+  }
+  return next;
+}
+
+/** Remove frames das partes de conteúdo — volta ao fluxo flex do filtro. */
+export function clearInputPartsFreeLayoutFrames(
+  parts: InputPartsMap | null | undefined,
+): InputPartsMap {
+  let next = parts ?? {};
+  for (const kind of INPUT_FREE_LAYOUT_PART_KINDS) {
+    next = upsertInputPartState(next, { kind }, { frame: null });
+  }
+  return next;
 }
 
 export function mergeInputParts(
@@ -356,18 +430,21 @@ export function bindInputPartPointer(
   onDoubleClick?: (event: ReactMouseEvent) => void;
 } {
   if (!interaction) return {};
+  const selected =
+    Boolean(interaction.selectedPart) && isInputPartRefEqual(interaction.selectedPart, ref);
+  const moveWhenSelected = inputPartAllowsMove(ref);
   return {
     onPointerDown: (event) => {
-      const selected =
-        interaction.selectedPart && isInputPartRefEqual(interaction.selectedPart, ref);
-      if (selected && inputPartAllowsMove(ref) && interaction.onPartMovePointerDown) {
-        interaction.onPartMovePointerDown(ref, event);
-        return;
-      }
+      // Isolar do drag do bloco (contrato KPI) — sem isso o frame herda o pointer.
+      event.stopPropagation();
       interaction.onPartPointerDown?.(ref, event);
+      if (moveWhenSelected && selected) {
+        interaction.onPartMovePointerDown?.(ref, event);
+      }
     },
     onDoubleClick: (event) => {
       event.stopPropagation();
+      event.preventDefault();
       interaction.onPartDoubleClick?.(ref, event);
     },
   };
@@ -385,18 +462,72 @@ function inputPartHasBoxPaint(style?: InputPartStyle | null): boolean {
   return hasFill || hasStroke;
 }
 
+/** Fundo de contraste do filtro: fill da moldura → fallback deck (não tema do host). */
+export function resolveInputContrastBackground(
+  parts: InputPartsMap | null | undefined,
+  blockStyle?: { backgroundColor?: string; fill?: string } | null,
+): string {
+  const frameFill = getInputPartState(parts, { kind: "frame" })?.style?.fill?.trim();
+  if (frameFill && frameFill !== "transparent" && frameFill !== "none") return frameFill;
+  const blockFill = blockStyle?.fill?.trim() || blockStyle?.backgroundColor?.trim();
+  if (blockFill && blockFill !== "transparent" && blockFill !== "none") return blockFill;
+  return DECK_COLOR_SURFACE;
+}
+
+/**
+ * CSS vars do bloco filtro — paint independente do tema chrome.
+ * Consumidores: native-screens.css (`--tdp-input-*`).
+ */
+export function resolveInputBlockPaintCssVars(
+  contrastBackground: string,
+  options?: { boxShadow?: string | null },
+): CSSProperties {
+  const fg = resolveComplexBlockForeground(AUTOMATIC_TEXT_COLOR, contrastBackground, {
+    role: "emphasis",
+  });
+  const muted = resolveComplexBlockForeground(AUTOMATIC_TEXT_COLOR, contrastBackground, {
+    role: "muted",
+  });
+  const shadow =
+    typeof options?.boxShadow === "string" && options.boxShadow.trim()
+      ? options.boxShadow.trim()
+      : DECK_INPUT_DEFAULTS.boxShadow;
+  return {
+    ["--tdp-input-surface" as string]: contrastBackground,
+    ["--tdp-input-fg" as string]: fg,
+    ["--tdp-input-muted" as string]: muted,
+    ["--tdp-input-border" as string]: muted,
+    ["--tdp-input-control-border" as string]: DECK_COLOR_SHAPE_STROKE,
+    ["--tdp-input-control-surface" as string]: DECK_COLOR_SURFACE,
+    ["--tdp-input-shadow" as string]: shadow,
+    ["--tdp-block-box-shadow" as string]: shadow,
+    color: fg,
+  };
+}
+
 export function resolveInputPartLayoutStyle(
   state: InputPartState | null | undefined,
-  options?: { iconSizeFallback?: boolean; partKind?: InputPartRef["kind"] },
+  options?: {
+    iconSizeFallback?: boolean;
+    partKind?: InputPartRef["kind"];
+    /** Fundo do filtro / da caixa da parte — Automático e contraste ilegível. */
+    contrastBackground?: string | null;
+  },
 ): CSSProperties {
   const style = state?.style;
   const frame = resolveInputPartFrame(state);
   const css: CSSProperties = {};
+  const contrastBg = options?.contrastBackground ?? DECK_COLOR_SURFACE;
+  const partFill =
+    style?.fill && style.fill !== "transparent" && style.fill !== "none"
+      ? style.fill
+      : contrastBg;
 
   if (style?.fill != null && style.fill !== "") css.background = style.fill;
-  if (style?.color && !isAutomaticTextColor(style.color)) {
-    css.color = style.color;
-  }
+  const fg = resolveComplexBlockForeground(style?.color, partFill, {
+    role: options?.partKind === "badge" ? "muted" : "emphasis",
+  });
+  css.color = fg;
   if (style?.stroke != null && style.stroke !== "") {
     css.borderColor = style.stroke;
     css.borderStyle = "solid";
@@ -454,18 +585,19 @@ export function resolveInputIconBoxStyle(
   state: InputPartState | null | undefined,
   contrastBackground?: string | null,
 ): CSSProperties {
-  const css = resolveInputPartLayoutStyle(state, { iconSizeFallback: true, partKind: "icon" });
-  const rawColor = state?.style?.color?.trim();
-  if (!rawColor) return css;
   const iconFill = state?.style?.fill;
   const contrastBg =
     iconFill && iconFill !== "transparent" && iconFill !== "none"
       ? iconFill
-      : (contrastBackground ?? "transparent");
-  const fg = isAutomaticTextColor(rawColor)
-    ? resolvePaintTextColor(AUTOMATIC_TEXT_COLOR, contrastBg)
-    : rawColor;
-  if (fg) css.color = fg;
+      : (contrastBackground ?? DECK_COLOR_SURFACE);
+  const css = resolveInputPartLayoutStyle(state, {
+    iconSizeFallback: true,
+    partKind: "icon",
+    contrastBackground: contrastBg,
+  });
+  css.color = resolveComplexBlockForeground(state?.style?.color, contrastBg, {
+    role: "emphasis",
+  });
   return css;
 }
 

@@ -4,6 +4,7 @@ import {
   DECK_CHART_DEFAULTS,
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
+  DECK_INPUT_DEFAULTS,
   DECK_KPI_DEFAULTS,
   DECK_SHAPE_DEFAULTS,
   DECK_TABLE_DEFAULTS,
@@ -49,7 +50,7 @@ import {
   partsToKpiOptions,
   type ComunicadoKpiPartsMap,
 } from "./comunicadoKpiParts";
-import { normalizeInputPartsForLoad } from "./comunicadoInputParts";
+import { defaultInputPartsMap, normalizeInputPartsForLoad } from "./comunicadoInputParts";
 import {
   chartOptionsToParts,
   normalizeChartPartsForLoad,
@@ -307,6 +308,7 @@ export function createInputBlock(options?: {
     type: "input",
     frame: defaultFrame("input"),
     style: defaultStyle("input"),
+    inputParts: defaultInputPartsMap(),
     input: {
       paramKey,
       label: typeof options?.label === "string" && options.label.trim() ? options.label.trim() : undefined,
@@ -516,13 +518,12 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     return { zIndex: 2, color: DECK_COLOR_TEXT_STRONG };
   }
   if (type === "input") {
+    /* Chrome (fill/stroke/sombra) vive em inputParts.frame — evita borda dupla no wrapper. */
     return {
       zIndex: 4,
       color: DECK_COLOR_TEXT_STRONG,
-      backgroundColor: "#ffffff",
-      borderColor: "#94a3b8",
-      borderWidth: 1,
-      borderRadius: 6,
+      borderRadius: DECK_INPUT_DEFAULTS.borderRadius,
+      boxShadow: DECK_INPUT_DEFAULTS.boxShadow,
       fontSize: 14,
       fontFamily: "Inter, system-ui, sans-serif",
       textAlign: "left" as const,
@@ -1421,8 +1422,13 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     if (style.color) css.color = style.color;
   }
 
-  /* KPI/chart/tabela: moldura no componente interno (DelpiKpiCard / chart / table). */
-  if (block.type === "kpi_view" || block.type === "chart_view" || block.type === "table_view") {
+  /* KPI/chart/tabela/filtro: moldura no componente interno — sem borda/fill no wrapper. */
+  if (
+    block.type === "kpi_view" ||
+    block.type === "chart_view" ||
+    block.type === "table_view" ||
+    block.type === "input"
+  ) {
     stripOuterChromeStyle(css);
     promoteBlockShadowToInnerChrome(css, style);
   }

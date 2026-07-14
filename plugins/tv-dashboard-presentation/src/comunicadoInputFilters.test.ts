@@ -8,10 +8,12 @@ import {
   intersectParamSchemaKeys,
   isValueAllowedByParamSchema,
   mergeFilterLayers,
+  pruneSlideDataFiltersAfterInputRemoval,
   resolveInputParamSchemaField,
   resolveInputRefreshSourceIds,
+  resolveRemovedInputRefreshSourceIds,
 } from "./comunicadoInputFilters";
-import type { ComunicadoBlock } from "./comunicadoTypes";
+import type { ComunicadoBlock, ComunicadoInputBlock } from "./comunicadoTypes";
 
 const schemaA = {
   branch: { type: "string", enum: ["01", "02"], label: "Filial" },
@@ -137,5 +139,55 @@ describe("comunicadoInputFilters", () => {
 
     expect(resolveInputRefreshSourceIds(slideInput, sources)).toEqual(["src-a", "src-b", "src-c"]);
     expect(resolveInputRefreshSourceIds(sourcesInput, sources)).toEqual(["src-a", "src-c"]);
+  });
+
+  it("pruneSlideDataFiltersAfterInputRemoval limpa chave só se nenhum input restante a mantém", () => {
+    const remaining = [
+      inputBlock("keep", {
+        paramKey: "periodDays",
+        defaultValue: 7,
+        targetScope: "slide",
+      }),
+    ];
+    const removed = [
+      inputBlock("gone", {
+        paramKey: "branch",
+        defaultValue: "01",
+        targetScope: "slide",
+      }),
+    ] as ComunicadoInputBlock[];
+    expect(
+      pruneSlideDataFiltersAfterInputRemoval(remaining, { branch: "01", periodDays: 7 }, removed),
+    ).toEqual({ periodDays: 7 });
+  });
+
+  it("resolveRemovedInputRefreshSourceIds agrega ids das fontes afetadas", () => {
+    const sources: ComunicadoBlock[] = [
+      {
+        id: "src-a",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        dataBinding: { operationId: "op_a", params: {} },
+      },
+      {
+        id: "src-b",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        dataBinding: { operationId: "op_b", params: {} },
+      },
+    ];
+    const removed = [
+      inputBlock("i1", {
+        paramKey: "branch",
+        targetScope: "sources",
+        targetSourceIds: ["src-a"],
+      }),
+      inputBlock("i2", {
+        paramKey: "branch",
+        targetScope: "sources",
+        targetSourceIds: ["src-b"],
+      }),
+    ] as ComunicadoInputBlock[];
+    expect(resolveRemovedInputRefreshSourceIds(removed, sources).sort()).toEqual(["src-a", "src-b"]);
   });
 });

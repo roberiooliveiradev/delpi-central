@@ -1,13 +1,27 @@
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   INPUT_ICON_DEFAULT_SIZE_PX,
+  clearInputPartsFreeLayoutFrames,
+  clampInputPartFrame,
+  defaultInputPartFrame,
+  formatDesignPx,
   getInputPartState,
+  hostRelativeFrameToPageBottomLeftPx,
   inputPartAllowsDelete,
+  inputPartAllowsFrame,
   inputPartBoxChromeLabels,
   inputPartSupportsTypography,
+  patchHostRelativeFramePageBottomLeftPx,
+  resolveInputContrastBackground,
   resolveInputPartFontSize,
+  resolveInputPartFrame,
+  resolveViewportPixelSize,
+  seedInputPartsFreeLayoutFrames,
   upsertInputPartState,
+  type ComunicadoFrame,
   type ComunicadoInputBlock,
+  type ComunicadoInputPartFrame,
+  type ComunicadoInputPartState,
   type InputTextPartKind,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -25,7 +39,12 @@ type Props = {
 
 /** Inspetor da parte selecionada do filtro. */
 export function InputPartInspector({ pane = false, block }: Props) {
-  const { selectedInputPart, clearInputPartSelection, updateSelected } = useComunicadoEditor();
+  const {
+    selectedInputPart,
+    clearInputPartSelection,
+    updateSelected,
+    viewportProfile,
+  } = useComunicadoEditor();
 
   if (!selectedInputPart) return null;
 
@@ -34,21 +53,61 @@ export function InputPartInspector({ pane = false, block }: Props) {
   const isText = inputPartSupportsTypography(selectedInputPart);
   const boxLabels = inputPartBoxChromeLabels(selectedInputPart.kind);
   const title = inputPartSelectionLabel(selectedInputPart);
+  const blockContrastBg = resolveInputContrastBackground(block.inputParts, block.style);
+  const partFill = partState?.style?.fill?.trim();
+  const textContrastBg =
+    partFill && partFill !== "transparent" && partFill !== "none"
+      ? partFill
+      : blockContrastBg;
+  const frameable = inputPartAllowsFrame(selectedInputPart);
+  const explicitFrame = resolveInputPartFrame(partState);
+  const slideDesign = resolveViewportPixelSize(viewportProfile);
+  const partFramePct = clampInputPartFrame(
+    explicitFrame ?? defaultInputPartFrame(selectedInputPart.kind),
+  );
+  const partFrame: ComunicadoFrame = {
+    x: partFramePct.x,
+    y: partFramePct.y,
+    w: partFramePct.w ?? 20,
+    h: partFramePct.h ?? 20,
+  };
+  const partFramePx = hostRelativeFrameToPageBottomLeftPx(
+    partFrame,
+    block.frame,
+    slideDesign,
+  );
 
-  const persist = (patch: {
-    visible?: boolean;
-    style?: {
-      fill?: string;
-      color?: string;
-      stroke?: string;
-      strokeWidth?: number;
-      borderRadius?: number;
-      fontSize?: number;
-      iconSize?: number;
-    };
-  }) => {
+  const persist = (
+    patch: Omit<ComunicadoInputPartState, "frame" | "style"> & {
+      style?: ComunicadoInputPartState["style"];
+      frame?: ComunicadoInputPartFrame | null;
+    },
+  ) => {
     updateSelected({
       inputParts: upsertInputPartState(block.inputParts, selectedInputPart, patch),
+    } as Partial<typeof block>);
+  };
+
+  const persistPartFramePx = (key: "x" | "y" | "w" | "h", rawPx: number) => {
+    const nextPct = patchHostRelativeFramePageBottomLeftPx(
+      partFrame,
+      block.frame,
+      key,
+      rawPx,
+      slideDesign,
+    );
+    persist({ frame: clampInputPartFrame(nextPct) });
+  };
+
+  const enableFreePosition = () => {
+    updateSelected({
+      inputParts: seedInputPartsFreeLayoutFrames(block.inputParts),
+    } as Partial<typeof block>);
+  };
+
+  const clearFreePosition = () => {
+    updateSelected({
+      inputParts: clearInputPartsFreeLayoutFrames(block.inputParts),
     } as Partial<typeof block>);
   };
 
@@ -82,12 +141,14 @@ export function InputPartInspector({ pane = false, block }: Props) {
         <>
           <DeckField id="td-input-part-fill" label={boxLabels.fill}>
             <TvRibbonColorPicker
+              label={boxLabels.fill}
               value={partState?.style?.fill ?? ""}
               onChange={(color) => persist({ style: { fill: color } })}
             />
           </DeckField>
           <DeckField id="td-input-part-stroke" label={boxLabels.stroke}>
             <TvRibbonColorPicker
+              label={boxLabels.stroke}
               value={partState?.style?.stroke ?? ""}
               onChange={(color) => persist({ style: { stroke: color } })}
             />
@@ -126,10 +187,84 @@ export function InputPartInspector({ pane = false, block }: Props) {
         </DeckField>
       ) : null}
 
+      {frameable ? (
+        <>
+          <p className="td-deck-inspector__hint">
+            Posição absoluta na página (px de design), origem no canto inferior esquerdo
+          </p>
+          {!explicitFrame ? (
+            <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
+              Posicionar livremente no filtro…
+            </button>
+          ) : (
+            <>
+              <div className="td-part-inspector-toolbar__fields-row">
+                <DeckField id="td-input-part-x" label="Posição X (px)">
+                  <NativeTextControl
+                    id="td-input-part-x"
+                    type="number"
+                    min={0}
+                    max={slideDesign.width}
+                    step={1}
+                    value={formatDesignPx(partFramePx.x)}
+                    onChange={(value) => persistPartFramePx("x", Number(value) || 0)}
+                  />
+                </DeckField>
+                <DeckField id="td-input-part-y" label="Posição Y (px)">
+                  <NativeTextControl
+                    id="td-input-part-y"
+                    type="number"
+                    min={0}
+                    max={slideDesign.height}
+                    step={1}
+                    value={formatDesignPx(partFramePx.y)}
+                    onChange={(value) => persistPartFramePx("y", Number(value) || 0)}
+                  />
+                </DeckField>
+              </div>
+              <div className="td-part-inspector-toolbar__fields-row">
+                <DeckField id="td-input-part-w" label="Largura (px)">
+                  <NativeTextControl
+                    id="td-input-part-w"
+                    type="number"
+                    min={1}
+                    max={slideDesign.width}
+                    step={1}
+                    value={formatDesignPx(partFramePx.w)}
+                    onChange={(value) => persistPartFramePx("w", Number(value) || 1)}
+                  />
+                </DeckField>
+                <DeckField id="td-input-part-h" label="Altura (px)">
+                  <NativeTextControl
+                    id="td-input-part-h"
+                    type="number"
+                    min={1}
+                    max={slideDesign.height}
+                    step={1}
+                    value={formatDesignPx(partFramePx.h)}
+                    onChange={(value) => persistPartFramePx("h", Number(value) || 1)}
+                  />
+                </DeckField>
+              </div>
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                onClick={clearFreePosition}
+              >
+                Voltar ao fluxo automático
+              </button>
+            </>
+          )}
+        </>
+      ) : null}
+
       {isText ? (
         <>
           <DeckField id="td-input-part-color" label="Cor do texto">
             <TvRibbonColorPicker
+              label="Cor do texto"
+              variant="text"
+              contrastBackground={textContrastBg}
               value={partState?.style?.color ?? ""}
               onChange={(color) => persist({ style: { color } })}
             />

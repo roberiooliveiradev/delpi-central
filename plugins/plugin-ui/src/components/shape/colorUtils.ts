@@ -297,3 +297,27 @@ export function hasIllegibleTextContrast(
   const bothDark = fgL <= 0.25 && bgL <= 0.45;
   return bothLight || bothDark;
 }
+
+/**
+ * Foreground de partes de blocos complexos (KPI / filtro / chart text).
+ * Resolve «Automático» e herança ilegível contra o **fundo do bloco**, nunca o tema do host.
+ */
+export function resolveComplexBlockForeground(
+  explicit: string | null | undefined,
+  contrastBackground: string,
+  options?: {
+    role?: "emphasis" | "muted";
+    /** Override do muted (ex.: DECK_KPI_DEFAULTS.labelColor). */
+    mutedColor?: string;
+  },
+): string {
+  const role = options?.role ?? "emphasis";
+  const auto = resolveAutomaticTextColor(contrastBackground);
+  const muted =
+    options?.mutedColor ?? (auto === "#000000" ? "#475569" : "#94a3b8");
+  if (isAutomaticTextColor(explicit) || hasIllegibleTextContrast(explicit, contrastBackground)) {
+    return role === "emphasis" ? auto : muted;
+  }
+  const trimmed = explicit?.trim();
+  return trimmed || auto;
+}

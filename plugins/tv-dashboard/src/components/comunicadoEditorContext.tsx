@@ -171,6 +171,15 @@ export function ComunicadoEditorProvider({
     clearStaleForSourceIds,
   });
 
+  const onInputBlocksRemoved = useCallback(
+    ({ sourceIds }: { sourceIds: string[] }) => {
+      if (sourceIds.length === 0) return;
+      clearStaleForSourceIds?.(sourceIds);
+      void refreshDataPreview({ force: true, blockIds: sourceIds });
+    },
+    [clearStaleForSourceIds, refreshDataPreview],
+  );
+
   const blocks = useMemo(() => {
     const sorted = sortBlocksByZIndex(config.blocks ?? []);
     return sorted.map((block) => {
@@ -325,6 +334,7 @@ export function ComunicadoEditorProvider({
     setRibbonTabRequest: selection.setRibbonTabRequest,
     removeSelectedRef,
     updateBlockTextFieldsRef,
+    onInputBlocksRemoved,
   });
 
   const setSpeakerNotes = useCallback(

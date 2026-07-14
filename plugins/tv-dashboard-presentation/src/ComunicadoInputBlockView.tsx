@@ -11,6 +11,9 @@ import {
   isInputPartRefEqual,
   isInputPartVisible,
   inputPartAllowsResize,
+  resolveInputBlockPaintCssVars,
+  resolveInputContrastBackground,
+  resolveInputFrameStateWithDefaults,
   resolveInputIconBoxStyle,
   resolveInputPartFontSize,
   resolveInputPartFrame,
@@ -134,10 +137,18 @@ export function ComunicadoInputBlockView({
           (linkedSourceCount ?? block.input?.targetSourceIds?.length ?? 0) === 1 ? "" : "s"
         }`;
 
-  const frameState = getInputPartState(parts, { kind: "frame" });
-  const frameLayout = resolveInputPartLayoutStyle(frameState, { partKind: "frame" });
+  const contrastBackground = resolveInputContrastBackground(parts, block.style);
+  const frameState = resolveInputFrameStateWithDefaults(parts);
+  const paintVars = resolveInputBlockPaintCssVars(contrastBackground, {
+    boxShadow: frameState.style?.boxShadow ?? block.style?.boxShadow,
+  });
+  const frameLayout = resolveInputPartLayoutStyle(frameState, {
+    partKind: "frame",
+    contrastBackground,
+  });
   const rootStyle: CSSProperties = {
     ...style,
+    ...paintVars,
     ...(frameLayout.background ? { background: frameLayout.background } : {}),
     ...(frameLayout.borderColor ? { borderColor: frameLayout.borderColor } : {}),
     ...(frameLayout.borderWidth ? { borderWidth: frameLayout.borderWidth } : {}),
@@ -186,7 +197,10 @@ export function ComunicadoInputBlockView({
           className={controlClass}
           value={current === null || current === undefined ? "" : String(current)}
           onChange={handleSelect}
-          onPointerDown={(event) => event.stopPropagation()}
+          onPointerDown={(event) => {
+            // No editor, o wrapper da parte precisa receber o pointer (move/select).
+            if (!interaction) event.stopPropagation();
+          }}
           aria-label={label}
           disabled={dataLoading}
         >
@@ -205,7 +219,9 @@ export function ComunicadoInputBlockView({
           type={controlKind === "number" ? "number" : controlKind === "date" ? "date" : "text"}
           value={current === null || current === undefined ? "" : String(current)}
           onChange={handleText}
-          onPointerDown={(event) => event.stopPropagation()}
+          onPointerDown={(event) => {
+            if (!interaction) event.stopPropagation();
+          }}
           aria-label={label}
           placeholder={field?.description || paramKey}
           disabled={dataLoading}
@@ -294,7 +310,7 @@ export function ComunicadoInputBlockView({
             isInputPartRefEqual(selected, { kind: "icon" }),
             Boolean(resolveInputPartFrame(iconState)),
           )}
-          style={resolveInputIconBoxStyle(iconState)}
+          style={resolveInputIconBoxStyle(iconState, contrastBackground)}
           {...{ [INPUT_PART_DATA_ATTR]: "icon" }}
           {...iconBind}
         >
@@ -313,7 +329,10 @@ export function ComunicadoInputBlockView({
                 Boolean(resolveInputPartFrame(labelState)),
               )}
               style={{
-                ...resolveInputPartLayoutStyle(labelState, { partKind: "label" }),
+                ...resolveInputPartLayoutStyle(labelState, {
+                  partKind: "label",
+                  contrastBackground,
+                }),
                 fontSize: `${labelFont}px`,
               }}
               {...{ [INPUT_PART_DATA_ATTR]: "label" }}
@@ -334,7 +353,10 @@ export function ComunicadoInputBlockView({
                 "tdp-comunicado__input-block-badge",
               ].join(" ")}
               style={{
-                ...resolveInputPartLayoutStyle(badgeState, { partKind: "badge" }),
+                ...resolveInputPartLayoutStyle(badgeState, {
+                  partKind: "badge",
+                  contrastBackground,
+                }),
                 fontSize: `${badgeFont}px`,
               }}
               title={scopeBadge}
@@ -359,7 +381,10 @@ export function ComunicadoInputBlockView({
             Boolean(resolveInputPartFrame(controlState)),
           )}
           style={{
-            ...resolveInputPartLayoutStyle(controlState, { partKind: "control" }),
+            ...resolveInputPartLayoutStyle(controlState, {
+              partKind: "control",
+              contrastBackground,
+            }),
             fontSize: `${controlFont}px`,
           }}
           {...{ [INPUT_PART_DATA_ATTR]: "control" }}

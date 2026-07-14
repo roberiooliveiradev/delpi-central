@@ -12,6 +12,7 @@ import {
   clampFontSize,
   comunicadoTextInnerStyle,
   createChartViewBlock,
+  createInputBlock,
   createKpiViewBlock,
   createShapeBlock,
   createTableViewBlock,
@@ -165,17 +166,19 @@ describe("comunicadoHelpers", () => {
     expect(css.borderRadius).toBeUndefined();
   });
 
-  it("promove boxShadow de kpi/chart/tabela para --tdp-block-box-shadow na moldura", () => {
+  it("promove boxShadow de kpi/chart/tabela/filtro para --tdp-block-box-shadow na moldura", () => {
     const shadow = "0 4px 14px rgba(0, 0, 0, 0.28)";
     const blocks = [
       createKpiViewBlock(),
       createChartViewBlock("line"),
       createTableViewBlock(3, 3),
+      createInputBlock({ paramKey: "branch" }),
     ];
     for (const block of blocks) {
       block.style = { ...block.style, boxShadow: shadow };
       const css = blockCssStyle(block) as CSSProperties & Record<string, string>;
       expect(css.boxShadow).toBeUndefined();
+      expect(css.border).toBeUndefined();
       expect(css["--tdp-block-box-shadow"]).toBe(shadow);
     }
   });

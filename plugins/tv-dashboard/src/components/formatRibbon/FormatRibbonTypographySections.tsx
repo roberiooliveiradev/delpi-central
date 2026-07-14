@@ -39,6 +39,7 @@ import {
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
   COMUNICADO_TEXT_SHADOW_PRESETS,
+  resolveInputContrastBackground,
   resolveTextShadowPresetId,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -321,6 +322,12 @@ export function FormatRibbonTypographySections() {
                 (selected?.type === "kpi_view"
                   ? (selected.kpiParts?.card?.style?.fill ??
                     selected.kpiOptions?.backgroundColor)
+                  : undefined) ??
+                (selected?.type === "input"
+                  ? resolveInputContrastBackground(
+                      selected.inputParts,
+                      selected.style,
+                    )
                   : undefined) ??
                 (selected?.style?.fill && selected.style.fill !== "transparent"
                   ? selected.style.fill

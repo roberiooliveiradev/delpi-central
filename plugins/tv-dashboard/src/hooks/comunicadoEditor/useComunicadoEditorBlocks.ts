@@ -23,6 +23,7 @@ import {
   kpiPartAllowsDelete,
   mergeComunicadoChartOptions,
   mergeComunicadoKpiOptions,
+  isComunicadoInputBlock,
   newBlockId,
   nextZIndex,
   nudgeChartPartFrame,
@@ -30,8 +31,10 @@ import {
   partsToChartOptions,
   partsToKpiOptions,
   pruneOrphanConnectors,
+  pruneSlideDataFiltersAfterInputRemoval,
   reconcileConnectorsAfterDrag,
   resolvePreferredDataSourceId,
+  resolveRemovedInputRefreshSourceIds,
   sortBlocksByZIndex,
   syncAllConnectors,
   syncTextBlockFields,
@@ -111,6 +114,8 @@ type Options = {
   updateBlockTextFieldsRef: MutableRefObject<
     (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => void
   >;
+  /** Após excluir blocos `input`, recalcular preview das fontes afetadas. */
+  onInputBlocksRemoved?: (payload: { sourceIds: string[] }) => void;
 };
 
 /**
@@ -144,6 +149,7 @@ export function useComunicadoEditorBlocks({
   setRibbonTabRequest,
   removeSelectedRef,
   updateBlockTextFieldsRef,
+  onInputBlocksRemoved,
 }: Options) {
   const updateBlocks = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
@@ -758,12 +764,40 @@ export function useComunicadoEditorBlocks({
 
     if (selectedIds.length === 0) return;
     const removeSet = new Set(selectedIds);
-    const filtered = (configRef.current.blocks ?? []).filter((block) => !removeSet.has(block.id));
+    const currentBlocks = configRef.current.blocks ?? [];
+    const removedInputs = currentBlocks.filter(
+      (block): block is ComunicadoInputBlock =>
+        removeSet.has(block.id) && isComunicadoInputBlock(block),
+    );
+    const refreshSourceIds = resolveRemovedInputRefreshSourceIds(removedInputs, currentBlocks);
+    const filtered = currentBlocks.filter((block) => !removeSet.has(block.id));
     const nextBlocks = pruneOrphanConnectors(filtered);
     selectBlocksByIds(nextBlocks[0]?.id ? [nextBlocks[0].id] : []);
+
+    if (removedInputs.length > 0) {
+      const synced = syncAllConnectors(nextBlocks);
+      const nextFilters = pruneSlideDataFiltersAfterInputRemoval(
+        synced,
+        configRef.current.dataFilters,
+        removedInputs,
+      );
+      commitWithHistory({
+        ...configRef.current,
+        blocks: synced,
+        dataFilters: nextFilters,
+        version: Math.max(configRef.current.version ?? 3, 4),
+      });
+      if (refreshSourceIds.length > 0) {
+        onInputBlocksRemoved?.({ sourceIds: refreshSourceIds });
+      }
+      return;
+    }
+
     updateBlocks(nextBlocks);
   }, [
+    commitWithHistory,
     configRef,
+    onInputBlocksRemoved,
     selectBlocksByIds,
     selected,
     selectedBlocks,

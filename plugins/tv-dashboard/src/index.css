@@ -1171,6 +1171,8 @@
   --tdp-data-bg: #ffffff;
   --tdp-data-surface: #ffffff;
   --tdp-data-border: #b4b4b4;
+  /* `color: inherit` em controles do slide não pode seguir o texto do chrome. */
+  color: #0f172a;
 }
 
 .dashboard-tv-dashboard .td-composer__canvas-zoom-sizer {

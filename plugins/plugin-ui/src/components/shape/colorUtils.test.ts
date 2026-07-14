@@ -9,7 +9,9 @@ import {
   normalizeHex,
   parseHexColor,
   relativeLuminance,
+  AUTOMATIC_TEXT_COLOR,
   resolveAutomaticTextColor,
+  resolveComplexBlockForeground,
   resolvePaintTextColor,
   hasIllegibleTextContrast,
   rgbToHex,
@@ -83,5 +85,18 @@ describe("shape colorUtils", () => {
     expect(hasIllegibleTextContrast("#0f172a", "#ffffff")).toBe(false);
     expect(resolvePaintTextColor("#ffffff", "#f8fafc")).toBe("#000000");
     expect(resolvePaintTextColor("auto", "#0f172a")).toBe("#ffffff");
+  });
+
+  it("foreground de bloco complexo usa fundo do bloco, não tema do host", () => {
+    expect(resolveComplexBlockForeground(AUTOMATIC_TEXT_COLOR, "#ffffff")).toBe("#000000");
+    expect(resolveComplexBlockForeground("auto", "#0f172a")).toBe("#ffffff");
+    expect(resolveComplexBlockForeground("#e2e8f0", "#ffffff")).toBe("#000000");
+    expect(resolveComplexBlockForeground("#0f172a", "#ffffff")).toBe("#0f172a");
+    expect(
+      resolveComplexBlockForeground("auto", "#ffffff", { role: "muted" }),
+    ).toBe("#475569");
+    expect(
+      resolveComplexBlockForeground("auto", "#0f172a", { role: "muted" }),
+    ).toBe("#94a3b8");
   });
 });
