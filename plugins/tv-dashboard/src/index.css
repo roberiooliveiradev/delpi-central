@@ -3239,6 +3239,73 @@ body.td-composer--marqueeing * {
   min-width: 0;
 }
 
+/*
+ * Table design — causas raiz do vazamento:
+ * - Opções: grade ribbon 4×max-content (~520px) dentro de ~300px
+ * - Estilos: faixa horizontal inline-flex (7×40px + Mais) sem wrap
+ */
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__style-checks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__style-checks--pane {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__style-check,
+.dashboard-tv-dashboard .td-deck-ribbon__style-checks--pane .td-deck-ribbon__style-check {
+  min-width: 0;
+  white-space: normal;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .td-table-style-gallery-pane {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-table-style-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__border-controls,
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__border-pen {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-inspector__section-body,
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section-body {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+
 /* RangeField: default plugin-ui tem min-width 148px — força contenção na sidebar. */
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-range-field {
   width: 100%;

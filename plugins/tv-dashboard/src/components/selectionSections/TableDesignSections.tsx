@@ -200,12 +200,24 @@ function wrapPane(
 function TableStyleOptionsChecks({
   options,
   onToggle,
+  density = "ribbon",
 }: {
   options: ComunicadoTableOptions;
   onToggle: (id: TableElementId, enabled: boolean) => void;
+  /** `pane`: grade estreita da sidebar (ribbon usa 4 colunas largas). */
+  density?: "ribbon" | "pane";
 }) {
   return (
-    <div className="td-deck-ribbon__style-checks" role="group" aria-label="Opções de estilo">
+    <div
+      className={[
+        "td-deck-ribbon__style-checks",
+        density === "pane" ? "td-deck-ribbon__style-checks--pane" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      role="group"
+      aria-label="Opções de estilo"
+    >
       {STYLE_OPTION_CHECKS.map((item) => {
         const checked = isTableElementEnabled(item.id, options);
         return (
@@ -236,7 +248,11 @@ export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionL
   if (!ctrl) return null;
 
   const checks = (
-    <TableStyleOptionsChecks options={ctrl.options} onToggle={ctrl.toggleElement} />
+    <TableStyleOptionsChecks
+      options={ctrl.options}
+      onToggle={ctrl.toggleElement}
+      density={layout === "pane" ? "pane" : "ribbon"}
+    />
   );
 
   if (layout === "pane") {
@@ -295,12 +311,20 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
   if (!ctrl) return null;
 
   const gallery = (
-    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+    <div
+      className={
+        layout === "pane"
+          ? "td-table-style-gallery-pane"
+          : "td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus"
+      }
+    >
       <TableStyleRibbonStrip
         presets={STYLE_GALLERY_PRESETS}
         selectedId={ctrl.activeStyleId}
         onSelect={ctrl.applyGalleryPreset}
         onClear={ctrl.clearTableStyle}
+        /* Sidebar: menos thumbs visíveis + wrap CSS; ribbon: faixa horizontal. */
+        maxVisible={layout === "pane" ? 6 : 7}
       />
     </div>
   );

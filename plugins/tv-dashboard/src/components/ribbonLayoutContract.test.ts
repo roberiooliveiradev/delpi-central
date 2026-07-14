@@ -9,6 +9,16 @@ describe("ribbon table style checks layout", () => {
     expect(css).toContain(".td-deck-ribbon__style-check");
   });
 
+  it("sidebar / painel usa grade 2 colunas e strip com wrap (não vaza ribbon)", () => {
+    const css = readFileSync(resolve(__dirname, "../index.css"), "utf8");
+    expect(css).toMatch(
+      /\.td-deck-ribbon__style-checks--pane\s*\{[^}]*grid-template-columns:\s*repeat\(2/s,
+    );
+    expect(css).toMatch(
+      /\.td-deck-side-panel \.delpi-ui-table-style-strip\s*\{[^}]*flex-wrap:\s*wrap/s,
+    );
+  });
+
   it("Posição/tamanho ficam em faixa horizontal (não cortam Larg/Alt)", () => {
     const css = readFileSync(resolve(__dirname, "../index.css"), "utf8");
     expect(css).toMatch(
