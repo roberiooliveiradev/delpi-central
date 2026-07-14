@@ -95,3 +95,54 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
     inputs: inputBlocks,
   });
 }
+
+type PreviewFingerprintPayload = {
+  dataFilters?: unknown;
+  blocks?: unknown;
+  viewLinks?: unknown;
+  inputs?: unknown;
+};
+
+function parsePreviewFingerprint(fingerprint: string): PreviewFingerprintPayload | null {
+  try {
+    const raw = JSON.parse(fingerprint) as PreviewFingerprintPayload;
+    return raw && typeof raw === "object" ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Quais fontes marcar stale quando o fingerprint muda.
+ * Se só inputs/dataFilters mudaram → ids afetados pelos blocos input;
+ * se binding/viewLink mudou → todas as fetchable.
+ */
+export function resolveStaleSourceIdsForPreviewChange(params: {
+  previousFingerprint: string | null;
+  nextFingerprint: string;
+  allFetchableIds: string[];
+  inputAffectedSourceIds: string[];
+}): string[] {
+  const { previousFingerprint, nextFingerprint, allFetchableIds, inputAffectedSourceIds } = params;
+  if (!previousFingerprint || previousFingerprint === nextFingerprint) return [];
+  const prev = parsePreviewFingerprint(previousFingerprint);
+  const next = parsePreviewFingerprint(nextFingerprint);
+  if (!prev || !next) return allFetchableIds;
+
+  const bindingsChanged =
+    JSON.stringify(prev.blocks ?? null) !== JSON.stringify(next.blocks ?? null) ||
+    JSON.stringify(prev.viewLinks ?? null) !== JSON.stringify(next.viewLinks ?? null);
+  if (bindingsChanged) return allFetchableIds;
+
+  const inputsChanged =
+    JSON.stringify(prev.inputs ?? null) !== JSON.stringify(next.inputs ?? null);
+  const dataFiltersChanged =
+    JSON.stringify(prev.dataFilters ?? null) !== JSON.stringify(next.dataFilters ?? null);
+
+  if (!inputsChanged && !dataFiltersChanged) return allFetchableIds;
+
+  // Mudança só em blocos input → auto-refresh do filtro cobre; não acusar stale.
+  if (inputsChanged && !dataFiltersChanged) return [];
+
+  return inputAffectedSourceIds.length > 0 ? inputAffectedSourceIds : allFetchableIds;
+}

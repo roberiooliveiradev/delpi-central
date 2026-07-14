@@ -3,6 +3,7 @@ import { useCallback, useRef, type MutableRefObject } from "react";
 import {
   applyComplexBlockFrameWithTypography,
   clampFrameForBlock,
+  isComplexViewBlock,
   isConnectorShapeBlock,
   isLineShapeKind,
   reconcileConnectorsAfterDrag,
@@ -29,12 +30,6 @@ type Options = {
   snapEnabledRef: MutableRefObject<boolean>;
   stageGridSizePercentRef: MutableRefObject<number>;
 };
-
-function isComplexViewBlock(
-  block: ComunicadoBlock,
-): block is Extract<ComunicadoBlock, { type: "kpi_view" | "chart_view" | "table_view" }> {
-  return block.type === "kpi_view" || block.type === "chart_view" || block.type === "table_view";
-}
 
 /**
  * Drag / resize / rotate no palco — handlers + `useCanvasBlockInteraction`.

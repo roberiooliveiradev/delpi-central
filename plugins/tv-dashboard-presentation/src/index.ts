@@ -46,12 +46,21 @@ export {
   scaleChartPartsTypography,
   scaleComplexBlockOnResize,
   scaleFontPx,
+  scaleInputPartTypographyOnResize,
+  scaleInputPartsTypography,
   scaleKpiPartTypographyOnResize,
   scaleKpiPartsTypography,
   scaleTableOptionsFontSize,
   uniformFrameScale,
   type FrameSize,
 } from "./scaleComplexBlockTypography";
+export {
+  COMPLEX_VIEW_BLOCK_TYPES,
+  isComplexViewBlock,
+  isComplexViewBlockType,
+  type ComplexViewBlock,
+  type ComplexViewBlockType,
+} from "./complexViewBlocks";
 export {
   designYBottomLeftToTopLeft,
   designYTopLeftToBottomLeft,
@@ -238,6 +247,7 @@ export {
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
   resolveDataBlockRefreshSec,
+  resolveStaleSourceIdsForPreviewChange,
 } from "./dataRefresh";
 export {
   applyRuntimeInputValue,
@@ -251,6 +261,7 @@ export {
   listFetchableSourceIds,
   mergeFilterLayers,
   resolveInputParamSchemaField,
+  resolveInputRefreshSourceIds,
   resolveInputTargetScope,
   type InputFilterContributions,
   type InputParamSchema,
@@ -308,8 +319,11 @@ export {
 } from "./comunicadoHelpers";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
 export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
-export { ComunicadoInputBlockView } from "./ComunicadoInputBlockView";
-export type { InputResolvedField } from "./ComunicadoInputBlockView";
+export {
+  ComunicadoInputBlockView,
+  resolveInputControlKind,
+} from "./ComunicadoInputBlockView";
+export type { InputControlKind, InputResolvedField } from "./ComunicadoInputBlockView";
 export { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
 export {
   type ComunicadoVisualBoxBlock,
@@ -482,6 +496,57 @@ export {
   type KpiFramePartKind,
   type KpiTextPartKind,
 } from "./comunicadoKpiParts";
+export {
+  INPUT_ICON_DEFAULT_SIZE_PX,
+  INPUT_PART_DATA_ATTR,
+  INPUT_PART_DEFAULT_FRAMES,
+  INPUT_PART_FONT_SIZE_DEFAULTS,
+  INPUT_PART_RESIZE_HANDLES,
+  INPUT_TEXT_PART_KINDS,
+  INPUT_ELEMENT_CATALOG,
+  bindInputPartPointer,
+  clampInputPartFrame,
+  defaultInputPartFrame,
+  findInputPartFromTarget,
+  getInputPartState,
+  inputElementIdForPartRef,
+  inputElementPrimaryPartRef,
+  inputPartAllowsDelete,
+  inputPartAllowsFrame,
+  inputPartAllowsMove,
+  inputPartAllowsResize,
+  inputPartBoxChromeLabels,
+  inputPartCapabilities,
+  inputPartSupportsTypography,
+  isInputElementEnabled,
+  isInputPartRefEqual,
+  isInputPartVisible,
+  isInputTextPartKind,
+  materializeMissingInputPartFramesFromRoot,
+  mergeInputParts,
+  normalizeInputPartsForLoad,
+  parseInputPartRef,
+  resizeInputPartFrame,
+  resolveInputIconBoxStyle,
+  resolveInputPartFontSize,
+  resolveInputPartFrame,
+  resolveInputPartFrameRoot,
+  resolveInputPartLayoutStyle,
+  resolveInputShapeChromePartRef,
+  serializeInputPartRef,
+  setInputElementEnabled,
+  upsertInputPartState,
+  type ComunicadoInputInteraction,
+  type ComunicadoInputPartFrame,
+  type ComunicadoInputPartRef,
+  type ComunicadoInputPartResizeHandle,
+  type ComunicadoInputPartsMap,
+  type ComunicadoInputPartState,
+  type ComunicadoInputPartStyle,
+  type InputElementDefinition,
+  type InputElementId,
+  type InputTextPartKind,
+} from "./comunicadoInputParts";
 export { TableViewBlockView } from "./tableViewBlockView";
 export { DataSourceBlockView } from "./dataSourceBlockView";
 export {

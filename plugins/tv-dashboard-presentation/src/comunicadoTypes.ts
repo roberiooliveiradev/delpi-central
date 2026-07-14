@@ -318,12 +318,16 @@ export type ComunicadoInputBlock = ComunicadoBlockBase & {
     paramKey: string;
     /** Rótulo na UI; vazio = label do schema. */
     label?: string;
+    /** Nome Lucide opcional (ex.: Building2, Filter). */
+    iconName?: string;
     defaultValue?: string | number | boolean | null;
     /** Padrão: slide. */
     targetScope?: ComunicadoInputTargetScope;
     /** Obrigatório se targetScope === "sources". */
     targetSourceIds?: string[];
   };
+  /** Partes (frame/icon/label/badge/control) — estilo e frames %; binding fica em `input`. */
+  inputParts?: import("./comunicadoInputParts").ComunicadoInputPartsMap;
 };
 
 export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {

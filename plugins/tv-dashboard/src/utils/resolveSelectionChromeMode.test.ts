@@ -51,6 +51,24 @@ describe("resolveSelectionChromeMode", () => {
     }
   });
 
+  it("parte de filtro → part chrome", () => {
+    const mode = resolveSelectionChromeMode({
+      selected: {
+        id: "i1",
+        type: "input",
+        frame: { x: 0, y: 0, w: 30, h: 12 },
+        input: { paramKey: "branch" },
+      } as never,
+      selectedInputPart: { kind: "label" },
+    });
+    expect(isPartSelectionChrome(mode)).toBe(true);
+    if (mode.mode === "part") {
+      expect(mode.source).toBe("input");
+      expect(mode.partLabel).toBe("Rótulo");
+      expect(mode.backLabel).toBe("Voltar ao filtro");
+    }
+  });
+
   it("chartPartSelectionLabel cobre grade e plot", () => {
     expect(chartPartSelectionLabel({ kind: "grid" })).toBe("Grade");
     expect(chartPartSelectionLabel({ kind: "plotArea" })).toBe("Área de plotagem");

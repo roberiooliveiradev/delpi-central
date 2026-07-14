@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildDataPreviewFingerprint, resolveDataBlockRefreshSec } from "./dataRefresh";
+import {
+  buildDataPreviewFingerprint,
+  resolveDataBlockRefreshSec,
+  resolveStaleSourceIdsForPreviewChange,
+} from "./dataRefresh";
 import type { ComunicadoConfig } from "./comunicadoTypes";
 
 describe("resolveDataBlockRefreshSec", () => {
@@ -76,5 +80,131 @@ describe("buildDataPreviewFingerprint", () => {
       ],
     });
     expect(after).not.toBe(before);
+  });
+
+  it("não muda quando só iconName do filtro muda", () => {
+    const withInput: ComunicadoConfig = {
+      blocks: [
+        ...(baseConfig.blocks ?? []),
+        {
+          id: "input-1",
+          type: "input",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          input: {
+            paramKey: "branch",
+            defaultValue: "01",
+            targetScope: "slide",
+          },
+        },
+      ],
+    };
+    const before = buildDataPreviewFingerprint(withInput);
+    const after = buildDataPreviewFingerprint({
+      ...withInput,
+      blocks: [
+        withInput.blocks![0],
+        {
+          ...withInput.blocks![1],
+          type: "input",
+          input: {
+            paramKey: "branch",
+            defaultValue: "01",
+            targetScope: "slide",
+            iconName: "Building2",
+          },
+        },
+      ],
+    });
+    expect(after).toBe(before);
+  });
+});
+
+describe("resolveStaleSourceIdsForPreviewChange", () => {
+  const all = ["src-a", "src-b"];
+
+  it("binding mudou → todas as fontes", () => {
+    const prev = buildDataPreviewFingerprint({
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: { a: 1 } },
+        },
+      ],
+    });
+    const next = buildDataPreviewFingerprint({
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: { a: 2 } },
+        },
+      ],
+    });
+    expect(
+      resolveStaleSourceIdsForPreviewChange({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        allFetchableIds: all,
+        inputAffectedSourceIds: ["src-a"],
+      }),
+    ).toEqual(all);
+  });
+
+  it("só valor do input mudou → sem stale (auto-refresh)", () => {
+    const mk = (value: string): ComunicadoConfig => ({
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+        {
+          id: "input-1",
+          type: "input",
+          frame: { x: 0, y: 0, w: 20, h: 10 },
+          input: { paramKey: "branch", defaultValue: value, targetScope: "slide" },
+        },
+      ],
+    });
+    const prev = buildDataPreviewFingerprint(mk("01"));
+    const next = buildDataPreviewFingerprint(mk("02"));
+    expect(
+      resolveStaleSourceIdsForPreviewChange({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        allFetchableIds: all,
+        inputAffectedSourceIds: ["src-a"],
+      }),
+    ).toEqual([]);
+  });
+
+  it("dataFilters (ribbon) mudou → fontes afetadas pelo input", () => {
+    const base: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "src-a",
+          type: "data_source",
+          frame: { x: 0, y: 0, w: 10, h: 10 },
+          dataBinding: { operationId: "op", params: {} },
+        },
+      ],
+    };
+    const prev = buildDataPreviewFingerprint(base);
+    const next = buildDataPreviewFingerprint({
+      ...base,
+      dataFilters: { branch: "02" },
+    });
+    expect(
+      resolveStaleSourceIdsForPreviewChange({
+        previousFingerprint: prev,
+        nextFingerprint: next,
+        allFetchableIds: all,
+        inputAffectedSourceIds: ["src-a"],
+      }),
+    ).toEqual(["src-a"]);
   });
 });

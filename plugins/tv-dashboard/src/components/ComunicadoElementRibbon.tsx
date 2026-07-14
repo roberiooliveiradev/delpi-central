@@ -14,17 +14,27 @@ import { ComunicadoTableDesignRibbon } from "./ComunicadoTableDesignRibbon";
  * Com parte selecionada: só chrome da parte (não misturar com layout global).
  */
 export function ComunicadoElementRibbon() {
-  const { selected, selectedChartPart, selectedKpiPart, selectedTablePart } =
-    useComunicadoEditor();
+  const {
+    selected,
+    selectedChartPart,
+    selectedKpiPart,
+    selectedTablePart,
+    selectedInputPart,
+  } = useComunicadoEditor();
 
   const selectionChrome = resolveSelectionChromeMode({
     selected,
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,
+    selectedInputPart,
   });
-  /* KPI parte → ShapeRibbon (já tem Aparência); chart/tabela → PartFormatRibbon. */
-  if (isPartSelectionChrome(selectionChrome) && selectionChrome.source !== "kpi") {
+  /* KPI/filtro parte → ShapeRibbon; chart/tabela → PartFormatRibbon. */
+  if (
+    isPartSelectionChrome(selectionChrome) &&
+    selectionChrome.source !== "kpi" &&
+    selectionChrome.source !== "input"
+  ) {
     return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
   }
 

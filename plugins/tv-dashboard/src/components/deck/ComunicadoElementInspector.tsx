@@ -44,6 +44,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { InputBindingInspector } from "../InputBindingInspector";
+import { InputViewOptionsInspector } from "../InputViewOptionsInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { KpiViewOptionsInspector } from "../KpiViewOptionsInspector";
 import { ShapeAdjustmentsControl } from "../ShapeAdjustmentsControl";
@@ -97,6 +98,7 @@ export function ComunicadoElementInspector({
     selectedIds,
     selectedKpiPart,
     selectedChartPart,
+    selectedInputPart,
     uploading,
     updateSelected,
     updateSelectedStyle,
@@ -331,6 +333,7 @@ export function ComunicadoElementInspector({
       ) : null}
 
       {!multiSelect && selected.type === "input" ? <InputBindingInspector pane={pane} /> : null}
+      {!multiSelect && selected.type === "input" ? <InputViewOptionsInspector pane={pane} /> : null}
 
       {!multiSelect && isDataBlock ? (
         <DataBindingInspector route={selectedRoute} pane={pane} branchScope={branchScope} />
@@ -470,7 +473,11 @@ export function ComunicadoElementInspector({
         </>
       ) : null}
 
-      {!multiSelect && !selectedKpiPart && !selectedChartPart && (!isShapeBlock || shapeOptionsTab === "shape") ? (
+      {!multiSelect &&
+      !selectedKpiPart &&
+      !selectedChartPart &&
+      !selectedInputPart &&
+      (!isShapeBlock || shapeOptionsTab === "shape") ? (
         <div id={isShapeBlock ? "td-shape-pane-size" : undefined}>
         <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position} defaultOpen={false}>
           {(() => {

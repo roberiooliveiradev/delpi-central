@@ -35,14 +35,26 @@ import {
   resolveKpiPartFrameRoot,
   upsertKpiPartState,
   isFetchableDataBlockType,
+  clampInputPartFrame,
+  getInputPartState,
+  inputPartAllowsMove,
+  inputPartAllowsResize,
+  materializeMissingInputPartFramesFromRoot,
   resolveInputParamSchemaField,
+  resolveInputPartFrameRoot,
+  resolveInputRefreshSourceIds,
   resolveInputTargetScope,
+  resizeInputPartFrame,
+  scaleInputPartTypographyOnResize,
+  upsertInputPartState,
   type ComunicadoBlock,
   type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
   type ComunicadoChartViewBlock,
   type ComunicadoInputBlock,
+  type ComunicadoInputPartRef,
+  type ComunicadoInputPartResizeHandle,
   type ComunicadoKpiPartFrame,
   type ComunicadoKpiPartRef,
   type ComunicadoKpiPartResizeHandle,
@@ -729,17 +741,41 @@ function EditorInputBlock({
   className,
   configBlocks,
   patchInputBlock,
+  scheduleInputFilterRefreshById,
+  refreshingSourceIds,
 }: {
   block: ComunicadoInputBlock;
   fontScale?: number;
   className?: string;
   configBlocks: ComunicadoBlock[];
   patchInputBlock: (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => void;
+  scheduleInputFilterRefreshById: (blockId: string) => void;
+  refreshingSourceIds: string[];
 }) {
+  const {
+    selectedId,
+    selectedInputPart,
+    selectBlock,
+    selectInputPart,
+    requestRibbonTab,
+    updateBlock,
+    startDrag,
+  } = useComunicadoEditor();
+
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   useEffect(() => {
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
   }, []);
+
+  const linkedIds = useMemo(
+    () => resolveInputRefreshSourceIds(block, configBlocks),
+    [block, configBlocks],
+  );
+
+  const dataLoading = useMemo(
+    () => linkedIds.some((id) => refreshingSourceIds.includes(id)),
+    [linkedIds, refreshingSourceIds],
+  );
 
   const decorated = useMemo(() => {
     const scope = resolveInputTargetScope(block.input);
@@ -776,6 +812,148 @@ function EditorInputBlock({
     };
   }, [block, configBlocks, routes]);
 
+  const onPartPointerDown = useCallback(
+    (part: ComunicadoInputPartRef, event?: ReactPointerEvent) => {
+      if (!event) return;
+      const samePartSelected =
+        selectedId === block.id &&
+        Boolean(selectedInputPart && selectedInputPart.kind === part.kind);
+      const action = resolveCompositePartPointerAction({
+        blockSelected: selectedId === block.id,
+        samePartSelected,
+        partAllowsMove: inputPartAllowsMove(part),
+      });
+      if (action === "part-move") return;
+      selectBlock(block.id);
+      startDrag(event, block, "move");
+    },
+    [block, selectBlock, selectedId, selectedInputPart, startDrag],
+  );
+
+  const onPartDoubleClick = useCallback(
+    (part: ComunicadoInputPartRef) => {
+      selectInputPart(block.id, part);
+      requestRibbonTab("shape");
+    },
+    [block.id, requestRibbonTab, selectInputPart],
+  );
+
+  const onPartMovePointerDown = useCallback(
+    (ref: ComunicadoInputPartRef, event: ReactPointerEvent) => {
+      if (!inputPartAllowsMove(ref)) return;
+      const root = resolveInputPartFrameRoot(event.currentTarget as HTMLElement);
+      if (!root) return;
+      event.preventDefault();
+      const rect = root.getBoundingClientRect();
+      const elRect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      let lastParts = block.inputParts ?? {};
+      if (!getInputPartState(lastParts, ref)?.frame) {
+        lastParts = materializeMissingInputPartFramesFromRoot(root, lastParts);
+      }
+      const existing = getInputPartState(lastParts, ref)?.frame;
+      const origin = clampInputPartFrame({
+        x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
+        y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+      });
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
+      let dragged = false;
+
+      const onMove = (ev: PointerEvent) => {
+        const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
+        const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
+        if (!dragged && Math.abs(dx) + Math.abs(dy) < 0.4) return;
+        dragged = true;
+        const nextFrame = clampInputPartFrame({
+          ...origin,
+          x: origin.x + dx,
+          y: origin.y + dy,
+        });
+        lastParts = upsertInputPartState(lastParts, ref, { frame: nextFrame });
+        updateBlock(block.id, { inputParts: lastParts } as Partial<ComunicadoBlock>);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [block.id, block.inputParts, updateBlock],
+  );
+
+  const onPartResizePointerDown = useCallback(
+    (
+      ref: ComunicadoInputPartRef,
+      event: ReactPointerEvent,
+      handle: ComunicadoInputPartResizeHandle,
+    ) => {
+      if (!inputPartAllowsResize(ref)) return;
+      const root = resolveInputPartFrameRoot(event.currentTarget as HTMLElement);
+      const host = (event.currentTarget as HTMLElement).closest("[data-input-part]");
+      if (!root || !host) return;
+      event.preventDefault();
+      const rect = root.getBoundingClientRect();
+      const elRect = host.getBoundingClientRect();
+      let lastParts = block.inputParts ?? {};
+      if (!getInputPartState(lastParts, ref)?.frame) {
+        lastParts = materializeMissingInputPartFramesFromRoot(root, lastParts);
+      }
+      const existing = getInputPartState(lastParts, ref)?.frame;
+      const origin = clampInputPartFrame({
+        x: existing?.x ?? ((elRect.left - rect.left) / Math.max(rect.width, 1)) * 100,
+        y: existing?.y ?? ((elRect.top - rect.top) / Math.max(rect.height, 1)) * 100,
+        w: existing?.w ?? (elRect.width / Math.max(rect.width, 1)) * 100,
+        h: existing?.h ?? (elRect.height / Math.max(rect.height, 1)) * 100,
+      });
+      const startClientX = event.clientX;
+      const startClientY = event.clientY;
+      const beforeSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
+
+      const onMove = (ev: PointerEvent) => {
+        const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
+        const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
+        const nextFrame = resizeInputPartFrame(origin, handle, dx, dy);
+        lastParts = upsertInputPartState(lastParts, ref, { frame: nextFrame });
+        lastParts = scaleInputPartTypographyOnResize(lastParts, ref, beforeSize, {
+          w: nextFrame.w ?? beforeSize.w,
+          h: nextFrame.h ?? beforeSize.h,
+        });
+        updateBlock(block.id, { inputParts: lastParts } as Partial<ComunicadoBlock>);
+      };
+
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [block.id, block.inputParts, updateBlock],
+  );
+
+  const interaction = useMemo(
+    () => ({
+      selectedPart: selectedId === block.id ? selectedInputPart : null,
+      onPartPointerDown,
+      onPartDoubleClick,
+      onPartMovePointerDown,
+      onPartResizePointerDown,
+    }),
+    [
+      block.id,
+      onPartDoubleClick,
+      onPartMovePointerDown,
+      onPartPointerDown,
+      onPartResizePointerDown,
+      selectedId,
+      selectedInputPart,
+    ],
+  );
+
   return (
     <ComunicadoBlockView
       block={decorated}
@@ -784,8 +962,11 @@ function EditorInputBlock({
       inputsInteractive
       embedded
       className={className}
+      dataLoading={dataLoading}
+      inputInteraction={interaction}
       onInputValueChange={(_blockId, value) => {
         patchInputBlock(block.id, { defaultValue: value });
+        scheduleInputFilterRefreshById(block.id);
       }}
     />
   );
@@ -810,7 +991,13 @@ export function ComunicadoEditorBlockView({
   isEditingText = false,
   dataLoading = false,
 }: Props) {
-  const { updateBlock, config, patchInputBlock } = useComunicadoEditor();
+  const {
+    updateBlock,
+    config,
+    patchInputBlock,
+    scheduleInputFilterRefreshById,
+    refreshingSourceIds,
+  } = useComunicadoEditor();
   const slideDataFilters = config.dataFilters ?? null;
   const dataParamLabelProps = useMemo(
     () => ({
@@ -902,6 +1089,8 @@ export function ComunicadoEditorBlockView({
         className={className}
         configBlocks={config.blocks ?? []}
         patchInputBlock={patchInputBlock}
+        scheduleInputFilterRefreshById={scheduleInputFilterRefreshById}
+        refreshingSourceIds={refreshingSourceIds}
       />
     );
   }

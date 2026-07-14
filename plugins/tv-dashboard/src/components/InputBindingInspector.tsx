@@ -6,7 +6,7 @@ import {
   resolveInputParamSchemaField,
   type ComunicadoInputBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, LucideIconPicker, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
@@ -18,6 +18,13 @@ import { DeckPropertySection } from "./deck/DeckPropertySection";
 type Props = {
   pane?: boolean;
 };
+
+const INPUT_DATA_PATCH_KEYS = new Set([
+  "defaultValue",
+  "paramKey",
+  "targetScope",
+  "targetSourceIds",
+]);
 
 function schemasForTargets(
   routes: TvDataRouteCatalogItem[],
@@ -32,7 +39,12 @@ function schemasForTargets(
 }
 
 export function InputBindingInspector({ pane = false }: Props) {
-  const { selected, config, patchInputBlock } = useComunicadoEditor();
+  const {
+    selected,
+    config,
+    patchInputBlock,
+    scheduleInputFilterRefresh,
+  } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
 
   useEffect(() => {
@@ -83,7 +95,15 @@ export function InputBindingInspector({ pane = false }: Props) {
   const sources = listDataSourceBlocks(config.blocks ?? []);
 
   const applyInputPatch = (patch: Partial<ComunicadoInputBlock["input"]>) => {
+    const nextBlock: ComunicadoInputBlock = {
+      ...block,
+      input: { ...block.input, ...patch },
+    };
     patchInputBlock(block.id, patch);
+    if (Object.keys(patch).some((key) => INPUT_DATA_PATCH_KEYS.has(key))) {
+      // Usa o bloco já mesclado — config pode ainda não ter re-renderizado.
+      scheduleInputFilterRefresh(nextBlock);
+    }
   };
 
   const singleSchema: DataParamSchema =
@@ -101,7 +121,7 @@ export function InputBindingInspector({ pane = false }: Props) {
     <DeckPropertySection
       pane={pane}
       title="Campo / Filtro"
-      hint="Parâmetro limitado ao schema das rotas das fontes alvo. Opções vêm da api-delpi."
+      hint="Parâmetro limitado ao schema das rotas das fontes alvo. Opções vêm da api-delpi. Mudar o valor atualiza as fontes amarradas."
     >
       {fetchable.length === 0 ? (
         <p className="td-deck-inspector__hint">Inclua uma fonte de dados no slide antes de configurar o filtro.</p>
@@ -185,6 +205,21 @@ export function InputBindingInspector({ pane = false }: Props) {
           id="td-input-label"
           value={block.input.label ?? ""}
           onChange={(value) => applyInputPatch({ label: value.trim() || undefined })}
+        />
+      </DeckField>
+
+      <DeckField id="td-input-icon" label="Ícone (opcional)">
+        <LucideIconPicker
+          embedded
+          curatedOnly={false}
+          nameFormat="pascal"
+          value={block.input.iconName ?? ""}
+          onChange={(name) =>
+            applyInputPatch({ iconName: name?.trim() ? name.trim() : undefined })
+          }
+          labels={{
+            clear: "Sem ícone",
+          }}
         />
       </DeckField>
 

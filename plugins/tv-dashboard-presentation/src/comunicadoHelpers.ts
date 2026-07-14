@@ -49,6 +49,7 @@ import {
   partsToKpiOptions,
   type ComunicadoKpiPartsMap,
 } from "./comunicadoKpiParts";
+import { normalizeInputPartsForLoad } from "./comunicadoInputParts";
 import {
   chartOptionsToParts,
   normalizeChartPartsForLoad,
@@ -286,6 +287,7 @@ export function normalizeCanvasTableCells(
 export function createInputBlock(options?: {
   paramKey?: string;
   label?: string;
+  iconName?: string;
   targetScope?: "slide" | "sources";
   targetSourceIds?: string[];
   defaultValue?: string | number | boolean | null;
@@ -296,6 +298,10 @@ export function createInputBlock(options?: {
     targetScope === "sources"
       ? (options?.targetSourceIds ?? []).map((id) => String(id).trim()).filter(Boolean)
       : undefined;
+  const iconName =
+    typeof options?.iconName === "string" && options.iconName.trim()
+      ? options.iconName.trim()
+      : undefined;
   return {
     id: newBlockId(),
     type: "input",
@@ -304,6 +310,7 @@ export function createInputBlock(options?: {
     input: {
       paramKey,
       label: typeof options?.label === "string" && options.label.trim() ? options.label.trim() : undefined,
+      ...(iconName ? { iconName } : {}),
       defaultValue: options?.defaultValue ?? null,
       targetScope,
       ...(targetSourceIds && targetSourceIds.length > 0 ? { targetSourceIds } : {}),
@@ -809,12 +816,14 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     base.input = {
       paramKey: input?.paramKey ?? "",
       ...(input?.label ? { label: input.label } : {}),
+      ...(input?.iconName ? { iconName: input.iconName } : {}),
       defaultValue: input?.defaultValue ?? null,
       targetScope: input?.targetScope === "sources" ? "sources" : "slide",
       ...(input?.targetScope === "sources" && input.targetSourceIds?.length
         ? { targetSourceIds: [...input.targetSourceIds] }
         : {}),
     };
+    if (block.inputParts) base.inputParts = { ...block.inputParts };
   }
   return base;
 }
@@ -1129,6 +1138,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       typeof rawInput.defaultValue === "boolean"
         ? rawInput.defaultValue
         : null;
+    const iconName =
+      typeof rawInput.iconName === "string" && rawInput.iconName.trim()
+        ? rawInput.iconName.trim()
+        : undefined;
+    const inputParts = normalizeInputPartsForLoad(block.inputParts);
     return attachBlockAnimations(
       {
         id,
@@ -1142,12 +1156,14 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
             typeof rawInput.label === "string" && rawInput.label.trim()
               ? rawInput.label.trim()
               : undefined,
+          ...(iconName ? { iconName } : {}),
           defaultValue,
           targetScope,
           ...(targetScope === "sources" && targetSourceIds.length > 0
             ? { targetSourceIds }
             : {}),
         },
+        ...(inputParts ? { inputParts } : {}),
       } as ComunicadoInputBlock,
       block,
     );

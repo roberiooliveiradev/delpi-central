@@ -267,3 +267,18 @@ export function hasInputFilterContributions(contributions: InputFilterContributi
     (params) => params && Object.keys(params).length > 0,
   );
 }
+
+/** Ids fetchable que o input deve refreshar (slide = todos; sources = lista). */
+export function resolveInputRefreshSourceIds(
+  block: ComunicadoInputBlock | undefined | null,
+  blocks: ComunicadoBlock[] | undefined | null,
+): string[] {
+  if (!block || block.type !== "input") return [];
+  if (resolveInputTargetScope(block.input) === "slide") {
+    return listFetchableSourceIds(blocks);
+  }
+  const fetchable = new Set(listFetchableSourceIds(blocks));
+  return (block.input?.targetSourceIds ?? [])
+    .map((id) => String(id || "").trim())
+    .filter((id) => id && fetchable.has(id));
+}

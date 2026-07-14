@@ -1,9 +1,10 @@
 /**
- * Escala tipografia/traços de blocos complexos (KPI / gráfico / tabela)
+ * Escala tipografia/traços de blocos complexos (KPI / gráfico / tabela / filtro)
  * ao redimensionar o frame — estilo PowerPoint “scale object”.
  * Fator uniforme: min(wRatio, hRatio). Persistido no modelo (px de design).
  */
 
+import { isComplexViewBlockType } from "./complexViewBlocks";
 import {
   CHART_PART_FONT_SIZE_DEFAULTS,
   isChartTextPartKind,
@@ -16,6 +17,18 @@ import {
   type ComunicadoChartPartsMap,
   type ComunicadoChartPartStyle,
 } from "./comunicadoChartParts";
+import {
+  INPUT_ICON_DEFAULT_SIZE_PX,
+  INPUT_PART_FONT_SIZE_DEFAULTS,
+  isInputTextPartKind,
+  mergeInputParts,
+  resolveInputPartFontSize,
+  serializeInputPartRef,
+  upsertInputPartState,
+  type ComunicadoInputPartRef,
+  type ComunicadoInputPartsMap,
+  type ComunicadoInputPartStyle,
+} from "./comunicadoInputParts";
 import {
   KPI_ICON_DEFAULT_SIZE_PX,
   KPI_PART_FONT_SIZE_DEFAULTS,
@@ -32,6 +45,7 @@ import type {
   ComunicadoBlock,
   ComunicadoChartViewBlock,
   ComunicadoFrame,
+  ComunicadoInputBlock,
   ComunicadoKpiViewBlock,
   ComunicadoTableViewBlock,
 } from "./comunicadoTypes";
@@ -86,11 +100,6 @@ function scaleIconPx(px: number, scale: number): number {
   return Math.max(ICON_PX_MIN, Math.min(ICON_PX_MAX, Math.round(px * scale)));
 }
 
-function isComplexBlockType(
-  type: ComunicadoBlock["type"],
-): type is "kpi_view" | "chart_view" | "table_view" {
-  return type === "kpi_view" || type === "chart_view" || type === "table_view";
-}
 
 function scaleChartPartStyle(
   ref: ComunicadoChartPartRef,
@@ -271,6 +280,93 @@ export function scaleTableOptionsFontSize(
   return scaleFontPx(base, scale);
 }
 
+function scaleInputPartStyle(
+  ref: ComunicadoInputPartRef,
+  style: ComunicadoInputPartStyle | undefined,
+  scale: number,
+): ComunicadoInputPartStyle {
+  const next: ComunicadoInputPartStyle = { ...(style ?? {}) };
+  if (isInputTextPartKind(ref.kind)) {
+    const base = resolveInputPartFontSize(ref.kind, style);
+    next.fontSize = scaleFontPx(base, scale);
+  } else if (style?.fontSize != null && style.fontSize > 0) {
+    next.fontSize = scaleFontPx(style.fontSize, scale);
+  }
+  if (ref.kind === "icon" || style?.iconSize != null) {
+    const base =
+      style?.iconSize != null && style.iconSize > 0
+        ? style.iconSize
+        : INPUT_ICON_DEFAULT_SIZE_PX;
+    next.iconSize = scaleIconPx(base, scale);
+  }
+  if (style?.borderRadius != null && style.borderRadius > 0) {
+    next.borderRadius = scaleStrokePx(style.borderRadius, scale);
+  }
+  if (style?.textStrokeWidth != null && style.textStrokeWidth > 0) {
+    next.textStrokeWidth = scaleStrokePx(style.textStrokeWidth, scale);
+  }
+  if (style?.strokeWidth != null && style.strokeWidth > 0) {
+    next.strokeWidth = scaleStrokePx(style.strokeWidth, scale);
+  }
+  return next;
+}
+
+function ensureInputTextDefaults(parts: ComunicadoInputPartsMap): ComunicadoInputPartsMap {
+  let next = parts;
+  for (const kind of Object.keys(INPUT_PART_FONT_SIZE_DEFAULTS) as Array<
+    keyof typeof INPUT_PART_FONT_SIZE_DEFAULTS
+  >) {
+    const ref: ComunicadoInputPartRef = { kind };
+    const key = serializeInputPartRef(ref);
+    if (!next[key]?.style?.fontSize) {
+      next = upsertInputPartState(next, ref, {
+        style: { fontSize: INPUT_PART_FONT_SIZE_DEFAULTS[kind] },
+      });
+    }
+  }
+  const iconKey = serializeInputPartRef({ kind: "icon" });
+  if (next[iconKey] && next[iconKey]?.style?.iconSize == null) {
+    next = upsertInputPartState(next, { kind: "icon" }, {
+      style: { iconSize: INPUT_ICON_DEFAULT_SIZE_PX },
+    });
+  }
+  return next;
+}
+
+export function scaleInputPartsTypography(
+  parts: ComunicadoInputPartsMap | null | undefined,
+  scale: number,
+  options?: { ensureDefaults?: boolean },
+): ComunicadoInputPartsMap {
+  if (Math.abs(scale - 1) < SCALE_EPSILON) return parts ?? {};
+  let next = options?.ensureDefaults
+    ? ensureInputTextDefaults(mergeInputParts(parts))
+    : { ...(parts ?? {}) };
+  for (const kind of ["label", "badge", "control", "icon", "frame"] as const) {
+    const ref: ComunicadoInputPartRef = { kind };
+    const key = serializeInputPartRef(ref);
+    if (!next[key] && kind === "frame") continue;
+    if (!next[key] && !options?.ensureDefaults) continue;
+    const stylePatch = scaleInputPartStyle(ref, next[key]?.style, scale);
+    next = upsertInputPartState(next, ref, { style: stylePatch });
+  }
+  return next;
+}
+
+export function scaleInputPartTypographyOnResize(
+  parts: ComunicadoInputPartsMap | null | undefined,
+  ref: ComunicadoInputPartRef,
+  beforeFrame: FrameSize,
+  afterFrame: FrameSize,
+): ComunicadoInputPartsMap {
+  const scale = uniformFrameScale(beforeFrame, afterFrame);
+  if (Math.abs(scale - 1) < SCALE_EPSILON) return parts ?? {};
+  if (!isInputTextPartKind(ref.kind) && ref.kind !== "icon") return parts ?? {};
+  const key = serializeInputPartRef(ref);
+  const stylePatch = scaleInputPartStyle(ref, parts?.[key]?.style, scale);
+  return upsertInputPartState(parts, ref, { style: stylePatch });
+}
+
 /**
  * Aplica escala tipográfica ao bloco complexo após mudança de w/h do frame.
  * `block` deve ser o **baseline** (tipografia pré-resize) — nunca o estado já escalado
@@ -283,7 +379,7 @@ export function scaleComplexBlockOnResize(
   beforeFrame: FrameSize,
   afterFrame: FrameSize,
 ): ComunicadoBlock {
-  if (!isComplexBlockType(block.type)) return block;
+  if (!isComplexViewBlockType(block.type)) return block;
   const scale = uniformFrameScale(beforeFrame, afterFrame);
   if (Math.abs(scale - 1) < SCALE_EPSILON) return block;
 
@@ -302,6 +398,16 @@ export function scaleComplexBlockOnResize(
     return {
       ...chart,
       chartParts: scaleChartPartsTypography(baseParts, scale, { ensureDefaults: true }),
+    };
+  }
+
+  if (block.type === "input") {
+    const inputBlock = block as ComunicadoInputBlock;
+    return {
+      ...inputBlock,
+      inputParts: scaleInputPartsTypography(inputBlock.inputParts, scale, {
+        ensureDefaults: true,
+      }),
     };
   }
 

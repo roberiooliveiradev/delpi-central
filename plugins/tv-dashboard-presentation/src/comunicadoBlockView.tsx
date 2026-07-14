@@ -20,6 +20,7 @@ import { DataSourceBlockView } from "./dataSourceBlockView";
 import { KpiViewBlockView } from "./kpiViewBlockView";
 import { TableViewBlockView } from "./tableViewBlockView";
 import { ComunicadoInputBlockView } from "./ComunicadoInputBlockView";
+import type { ComunicadoInputInteraction } from "./comunicadoInputParts";
 import { TvDataBlockView } from "./tvDataBlockView";
 
 type Props = {
@@ -32,6 +33,8 @@ type Props = {
   /** Valor runtime do input (kiosk); se omitido usa defaultValue. */
   inputRuntimeValue?: string | number | boolean | null;
   onInputValueChange?: (blockId: string, value: string | number | boolean | null) => void;
+  /** Subseleção de partes do filtro (editor). */
+  inputInteraction?: ComunicadoInputInteraction | null;
   /** Quando true, o pai controla left/top/width/height. */
   embedded?: boolean;
   dataLoading?: boolean;
@@ -108,6 +111,7 @@ export function ComunicadoBlockView({
   inputsInteractive = false,
   inputRuntimeValue,
   onInputValueChange,
+  inputInteraction = null,
   embedded = false,
   dataLoading = false,
   slideDataFilters = null,
@@ -299,6 +303,13 @@ export function ComunicadoBlockView({
         value={inputRuntimeValue}
         interactive={canEdit}
         paramAvailable={paramAvailable && Boolean(block.input?.paramKey)}
+        linkedSourceCount={
+          block.input?.targetScope === "sources"
+            ? (block.input.targetSourceIds?.length ?? 0)
+            : undefined
+        }
+        dataLoading={dataLoading}
+        interaction={inputInteraction}
         onChange={
           onInputValueChange
             ? (value) => onInputValueChange(block.id, value)

@@ -12,6 +12,10 @@ import {
   upsertChartPartState,
 } from "./comunicadoChartParts";
 import {
+  getInputPartState,
+  upsertInputPartState,
+} from "./comunicadoInputParts";
+import {
   getKpiPartState,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
@@ -27,7 +31,7 @@ import type { ComunicadoBlock } from "./comunicadoTypes";
 import { isAreaShapeKind, resolveShapePrimitive } from "./comunicadoVisualPrimitive";
 
 /**
- * Chrome de forma compartilhado (cantos / contorno) — formas area, KPI card, tabela e chartArea.
+ * Chrome de forma compartilhado (cantos / contorno) — formas area, KPI card, tabela, chartArea e filtro.
  * Handles amarelos e ribbon usam este módulo; não duplicar por tipo de bloco.
  */
 
@@ -37,7 +41,12 @@ export function blockSupportsShapeChromeHandles(block: ComunicadoBlock): boolean
   if (block.type === "shape") {
     return isAreaShapeKind(block.shape) || shapeAdjustmentSpecs(block.shape).length > 0;
   }
-  return block.type === "kpi_view" || block.type === "table_view" || block.type === "chart_view";
+  return (
+    block.type === "kpi_view" ||
+    block.type === "table_view" ||
+    block.type === "chart_view" ||
+    block.type === "input"
+  );
 }
 
 /** Specs de ajuste para handles no palco (forma completa ou só cantos do chrome). */
@@ -70,6 +79,10 @@ export function resolveBlockShapeChromeCornerPx(block: ComunicadoBlock): number 
     const area = resolveChartAreaStyle(block.chartOptions ?? {}, block.chartParts);
     const part = getChartPartState(block.chartParts, { kind: "chartArea" });
     return part?.style?.borderRadius ?? area.borderRadius ?? 0;
+  }
+  if (block.type === "input") {
+    const frame = getInputPartState(block.inputParts, { kind: "frame" });
+    return frame?.style?.borderRadius ?? block.style?.borderRadius ?? 0;
   }
   return 0;
 }
@@ -145,6 +158,15 @@ export function applyBlockShapeChromeAdjustment(
     };
   }
 
+  if (block.type === "input") {
+    return {
+      inputParts: upsertInputPartState(block.inputParts, { kind: "frame" }, {
+        style: { borderRadius: px },
+      }),
+      style: { ...block.style, borderRadius: px },
+    };
+  }
+
   return null;
 }
 
@@ -159,7 +181,12 @@ export function resolveBlockSelectionBorderRadiusPx(block: ComunicadoBlock): num
 
 /** Tipos cuja moldura visual (fill/stroke/radius) vive em parts, não no wrapper. */
 export function blockUsesInnerShapeChrome(block: ComunicadoBlock): boolean {
-  return block.type === "kpi_view" || block.type === "table_view" || block.type === "chart_view";
+  return (
+    block.type === "kpi_view" ||
+    block.type === "table_view" ||
+    block.type === "chart_view" ||
+    block.type === "input"
+  );
 }
 
 export type BlockShapeChromeStyle = {
@@ -198,6 +225,16 @@ export function resolveBlockShapeChromeStyle(block: ComunicadoBlock): BlockShape
       strokeWidth: part?.style?.strokeWidth ?? area.strokeWidth ?? 0,
       stroke: part?.style?.stroke ?? area.stroke,
       fill: part?.style?.fill ?? area.fill,
+    };
+  }
+  if (block.type === "input") {
+    const frame = getInputPartState(block.inputParts, { kind: "frame" });
+    return {
+      borderRadius: frame?.style?.borderRadius ?? block.style?.borderRadius ?? 0,
+      strokeWidth:
+        frame?.style?.strokeWidth ?? block.style?.borderWidth ?? block.style?.strokeWidth ?? 0,
+      stroke: frame?.style?.stroke ?? block.style?.borderColor ?? block.style?.stroke ?? "transparent",
+      fill: frame?.style?.fill ?? block.style?.backgroundColor,
     };
   }
   return null;
@@ -291,6 +328,21 @@ export function applyBlockShapeChromeStyle(
   if (block.type === "chart_view") {
     return {
       chartParts: upsertChartPartState(block.chartParts, { kind: "chartArea" }, { style: partStyle }),
+      style: {
+        ...block.style,
+        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
+        ...(typeof partStyle.strokeWidth === "number"
+          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
+          : {}),
+        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
+        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
+      },
+    };
+  }
+
+  if (block.type === "input") {
+    return {
+      inputParts: upsertInputPartState(block.inputParts, { kind: "frame" }, { style: partStyle }),
       style: {
         ...block.style,
         ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),

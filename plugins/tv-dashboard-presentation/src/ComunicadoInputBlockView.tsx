@@ -1,5 +1,24 @@
-import type { CSSProperties, ChangeEvent } from "react";
+import type { CSSProperties, ChangeEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 
+import { resolveComunicadoLucideIcon } from "./comunicadoIconView";
+import { resolveInputTargetScope } from "./comunicadoInputFilters";
+import {
+  INPUT_ICON_DEFAULT_SIZE_PX,
+  INPUT_PART_DATA_ATTR,
+  INPUT_PART_RESIZE_HANDLES,
+  bindInputPartPointer,
+  getInputPartState,
+  isInputPartRefEqual,
+  isInputPartVisible,
+  inputPartAllowsResize,
+  resolveInputIconBoxStyle,
+  resolveInputPartFontSize,
+  resolveInputPartFrame,
+  resolveInputPartLayoutStyle,
+  type ComunicadoInputInteraction,
+  type ComunicadoInputPartRef,
+  type ComunicadoInputPartResizeHandle,
+} from "./comunicadoInputParts";
 import type { ComunicadoInputBlock } from "./comunicadoTypes";
 
 export type InputResolvedField = {
@@ -12,6 +31,8 @@ export type InputResolvedField = {
   format?: string;
 };
 
+export type InputControlKind = "select" | "boolean" | "number" | "date" | "text";
+
 type Props = {
   block: ComunicadoInputBlock;
   /** Snapshot do schema (kiosk via enrich) ou resolvido no editor. */
@@ -19,6 +40,11 @@ type Props = {
   value?: string | number | boolean | null;
   interactive?: boolean;
   paramAvailable?: boolean;
+  /** Fontes alvo (para badge «N fontes»). */
+  linkedSourceCount?: number;
+  /** Refresh em andamento das fontes amarradas. */
+  dataLoading?: boolean;
+  interaction?: ComunicadoInputInteraction | null;
   onChange?: (value: string | number | boolean | null) => void;
   className?: string;
   style?: CSSProperties;
@@ -43,6 +69,35 @@ function isDateField(key: string, field: InputResolvedField | null | undefined):
   return /date|data|from|to|inicio|fim/i.test(key);
 }
 
+/** Tipo de controle no palco — só heurística do paramSchema (sem controlKind persistido). */
+export function resolveInputControlKind(
+  paramKey: string,
+  field: InputResolvedField | null | undefined,
+): InputControlKind {
+  if (!field) return "text";
+  if (field.type === "boolean") return "boolean";
+  const rawEnum = Array.isArray(field.enum) ? field.enum.filter((item) => item != null) : [];
+  if (rawEnum.length > 0) return "select";
+  if (field.type === "integer" || field.type === "number") return "number";
+  if (isDateField(paramKey, field)) return "date";
+  return "text";
+}
+
+function partClass(
+  kind: ComunicadoInputPartRef["kind"],
+  selected: boolean,
+  hasFrame: boolean,
+): string {
+  return [
+    `tdp-comunicado__input-block-part`,
+    `tdp-comunicado__input-block-part--${kind}`,
+    selected ? "tdp-comunicado__input-block-part--selected" : null,
+    hasFrame ? "tdp-comunicado__input-block-part--framed" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 /** Controle de filtro no palco / kiosk — opções só do paramSchema da rota. */
 export function ComunicadoInputBlockView({
   block,
@@ -50,15 +105,46 @@ export function ComunicadoInputBlockView({
   value,
   interactive = false,
   paramAvailable = true,
+  linkedSourceCount,
+  dataLoading = false,
+  interaction = null,
   onChange,
   className,
   style,
 }: Props) {
+  const parts = block.inputParts;
   const paramKey = block.input?.paramKey ?? "";
   const label = block.input?.label?.trim() || field?.label || paramKey || "Filtro";
   const current = value !== undefined ? value : (block.input?.defaultValue ?? null);
   const options = enumOptions(field);
   const unavailable = !paramAvailable || !paramKey;
+  const scope = resolveInputTargetScope(block.input);
+  const controlKind = resolveInputControlKind(paramKey, field);
+  const iconName = block.input?.iconName?.trim();
+  const Icon = iconName ? resolveComunicadoLucideIcon(iconName) : null;
+  const showIcon = Boolean(Icon) && isInputPartVisible(parts, { kind: "icon" });
+  const showLabel = isInputPartVisible(parts, { kind: "label" });
+  const showBadge = isInputPartVisible(parts, { kind: "badge" });
+  const showControl = isInputPartVisible(parts, { kind: "control" });
+
+  const scopeBadge =
+    scope === "slide"
+      ? "Filtro do slide"
+      : `${linkedSourceCount ?? block.input?.targetSourceIds?.length ?? 0} fonte${
+          (linkedSourceCount ?? block.input?.targetSourceIds?.length ?? 0) === 1 ? "" : "s"
+        }`;
+
+  const frameState = getInputPartState(parts, { kind: "frame" });
+  const frameLayout = resolveInputPartLayoutStyle(frameState, { partKind: "frame" });
+  const rootStyle: CSSProperties = {
+    ...style,
+    ...(frameLayout.background ? { background: frameLayout.background } : {}),
+    ...(frameLayout.borderColor ? { borderColor: frameLayout.borderColor } : {}),
+    ...(frameLayout.borderWidth ? { borderWidth: frameLayout.borderWidth } : {}),
+    ...(frameLayout.borderStyle ? { borderStyle: frameLayout.borderStyle } : {}),
+    ...(frameLayout.borderRadius ? { borderRadius: frameLayout.borderRadius } : {}),
+    ...(frameLayout.boxShadow ? { boxShadow: frameLayout.boxShadow } : {}),
+  };
 
   const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
     const next = event.target.value;
@@ -83,57 +169,206 @@ export function ComunicadoInputBlockView({
     onChange?.(next === "" ? null : next);
   };
 
+  const controlClass = [
+    "tdp-comunicado__input-block-control",
+    `tdp-comunicado__input-block-control--${controlKind}`,
+  ].join(" ");
+
+  let controlNode: ReactNode = null;
+  if (unavailable) {
+    controlNode = (
+      <span className="tdp-comunicado__input-block-unavailable">Parâmetro indisponível</span>
+    );
+  } else if (interactive) {
+    if (controlKind === "select" || controlKind === "boolean") {
+      controlNode = (
+        <select
+          className={controlClass}
+          value={current === null || current === undefined ? "" : String(current)}
+          onChange={handleSelect}
+          onPointerDown={(event) => event.stopPropagation()}
+          aria-label={label}
+          disabled={dataLoading}
+        >
+          <option value="">—</option>
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      );
+    } else {
+      controlNode = (
+        <input
+          className={controlClass}
+          type={controlKind === "number" ? "number" : controlKind === "date" ? "date" : "text"}
+          value={current === null || current === undefined ? "" : String(current)}
+          onChange={handleText}
+          onPointerDown={(event) => event.stopPropagation()}
+          aria-label={label}
+          placeholder={field?.description || paramKey}
+          disabled={dataLoading}
+        />
+      );
+    }
+  } else {
+    controlNode = (
+      <span className="tdp-comunicado__input-block-value">
+        {current === null || current === undefined || current === "" ? "—" : String(current)}
+      </span>
+    );
+  }
+
+  const selected = interaction?.selectedPart ?? null;
+  const hasAnyPartFrame = ["icon", "label", "badge", "control"].some((kind) =>
+    Boolean(resolveInputPartFrame(getInputPartState(parts, { kind } as ComunicadoInputPartRef))),
+  );
+
+  const renderPartChrome = (ref: ComunicadoInputPartRef) => {
+    if (!interaction || !isInputPartRefEqual(selected, ref) || !inputPartAllowsResize(ref)) {
+      return null;
+    }
+    return (
+      <span className="tdp-comunicado__input-part-handles" aria-hidden>
+        {INPUT_PART_RESIZE_HANDLES.map((handle) => (
+          <button
+            key={handle}
+            type="button"
+            className={`tdp-comunicado__input-part-handle tdp-comunicado__input-part-handle--${handle}`}
+            onPointerDown={(event: ReactPointerEvent) => {
+              event.stopPropagation();
+              interaction.onPartResizePointerDown?.(
+                ref,
+                event,
+                handle as ComunicadoInputPartResizeHandle,
+              );
+            }}
+          />
+        ))}
+      </span>
+    );
+  };
+
+  const iconState = getInputPartState(parts, { kind: "icon" });
+  const labelState = getInputPartState(parts, { kind: "label" });
+  const badgeState = getInputPartState(parts, { kind: "badge" });
+  const controlState = getInputPartState(parts, { kind: "control" });
+  const iconBind = bindInputPartPointer({ kind: "icon" }, interaction);
+  const labelBind = bindInputPartPointer({ kind: "label" }, interaction);
+  const badgeBind = bindInputPartPointer({ kind: "badge" }, interaction);
+  const controlBind = bindInputPartPointer({ kind: "control" }, interaction);
+  const frameBind = bindInputPartPointer({ kind: "frame" }, interaction);
+
+  const iconSize =
+    iconState?.style?.iconSize != null && iconState.style.iconSize > 0
+      ? iconState.style.iconSize
+      : INPUT_ICON_DEFAULT_SIZE_PX;
+
+  const labelFont = resolveInputPartFontSize("label", labelState?.style);
+  const badgeFont = resolveInputPartFontSize("badge", badgeState?.style);
+  const controlFont = resolveInputPartFontSize("control", controlState?.style);
+
   return (
     <div
-      className={["tdp-comunicado__input-block", className].filter(Boolean).join(" ")}
-      style={style}
+      className={[
+        "tdp-comunicado__input-block",
+        `tdp-comunicado__input-block--scope-${scope}`,
+        dataLoading ? "tdp-comunicado__input-block--loading" : null,
+        hasAnyPartFrame ? "tdp-comunicado__input-block--free-layout" : null,
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={rootStyle}
       data-param-key={paramKey || undefined}
+      data-scope={scope}
+      data-control={controlKind}
+      {...{ [INPUT_PART_DATA_ATTR]: "frame" }}
+      {...frameBind}
     >
-      <label className="tdp-comunicado__input-block-label">
-        <span className="tdp-comunicado__input-block-label-text">{label}</span>
-        {unavailable ? (
-          <span className="tdp-comunicado__input-block-unavailable">Parâmetro indisponível</span>
-        ) : interactive ? (
-          options.length > 0 ? (
-            <select
-              className="tdp-comunicado__input-block-control"
-              value={current === null || current === undefined ? "" : String(current)}
-              onChange={handleSelect}
-              onPointerDown={(event) => event.stopPropagation()}
-              aria-label={label}
+      {showIcon && Icon ? (
+        <span
+          className={partClass(
+            "icon",
+            isInputPartRefEqual(selected, { kind: "icon" }),
+            Boolean(resolveInputPartFrame(iconState)),
+          )}
+          style={resolveInputIconBoxStyle(iconState)}
+          {...{ [INPUT_PART_DATA_ATTR]: "icon" }}
+          {...iconBind}
+        >
+          <Icon size={`${iconSize}px`} strokeWidth={2} />
+          {renderPartChrome({ kind: "icon" })}
+        </span>
+      ) : null}
+
+      {showLabel || showBadge ? (
+        <span className="tdp-comunicado__input-block-heading">
+          {showLabel ? (
+            <span
+              className={partClass(
+                "label",
+                isInputPartRefEqual(selected, { kind: "label" }),
+                Boolean(resolveInputPartFrame(labelState)),
+              )}
+              style={{
+                ...resolveInputPartLayoutStyle(labelState, { partKind: "label" }),
+                fontSize: `${labelFont}px`,
+              }}
+              {...{ [INPUT_PART_DATA_ATTR]: "label" }}
+              {...labelBind}
             >
-              <option value="">—</option>
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              className="tdp-comunicado__input-block-control"
-              type={
-                field?.type === "integer" || field?.type === "number"
-                  ? "number"
-                  : isDateField(paramKey, field)
-                    ? "date"
-                    : "text"
-              }
-              value={current === null || current === undefined ? "" : String(current)}
-              onChange={handleText}
-              onPointerDown={(event) => event.stopPropagation()}
-              aria-label={label}
-              placeholder={field?.description || paramKey}
-            />
-          )
-        ) : (
-          <span className="tdp-comunicado__input-block-value">
-            {current === null || current === undefined || current === ""
-              ? "—"
-              : String(current)}
-          </span>
-        )}
-      </label>
+              <span className="tdp-comunicado__input-block-label-text">{label}</span>
+              {renderPartChrome({ kind: "label" })}
+            </span>
+          ) : null}
+          {showBadge ? (
+            <span
+              className={[
+                partClass(
+                  "badge",
+                  isInputPartRefEqual(selected, { kind: "badge" }),
+                  Boolean(resolveInputPartFrame(badgeState)),
+                ),
+                "tdp-comunicado__input-block-badge",
+              ].join(" ")}
+              style={{
+                ...resolveInputPartLayoutStyle(badgeState, { partKind: "badge" }),
+                fontSize: `${badgeFont}px`,
+              }}
+              title={scopeBadge}
+              {...{ [INPUT_PART_DATA_ATTR]: "badge" }}
+              {...badgeBind}
+            >
+              {scopeBadge}
+              {renderPartChrome({ kind: "badge" })}
+            </span>
+          ) : null}
+          {dataLoading ? (
+            <span className="tdp-comunicado__input-block-spinner" aria-label="Atualizando dados" />
+          ) : null}
+        </span>
+      ) : null}
+
+      {showControl ? (
+        <span
+          className={partClass(
+            "control",
+            isInputPartRefEqual(selected, { kind: "control" }),
+            Boolean(resolveInputPartFrame(controlState)),
+          )}
+          style={{
+            ...resolveInputPartLayoutStyle(controlState, { partKind: "control" }),
+            fontSize: `${controlFont}px`,
+          }}
+          {...{ [INPUT_PART_DATA_ATTR]: "control" }}
+          {...controlBind}
+        >
+          {controlNode}
+          {renderPartChrome({ kind: "control" })}
+        </span>
+      ) : null}
     </div>
   );
 }

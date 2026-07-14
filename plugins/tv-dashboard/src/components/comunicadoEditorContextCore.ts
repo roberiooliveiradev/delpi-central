@@ -13,6 +13,7 @@ import type {
   ComunicadoDataDisplayMode,
   ComunicadoChartType,
   ComunicadoChartPartRef,
+  ComunicadoInputPartRef,
   ComunicadoKpiPartRef,
   ComunicadoTablePartRef,
   ComunicadoTablePreset,
@@ -102,6 +103,10 @@ export type ComunicadoEditorContextValue = {
   beginEditKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;
   commitKpiPartContent: (content: string) => void;
   cancelEditKpiPart: () => void;
+  /** Filtro — subseleção de parte (frame/icon/label/badge/control). */
+  selectedInputPart: ComunicadoInputPartRef | null;
+  selectInputPart: (blockId: string, part: ComunicadoInputPartRef) => void;
+  clearInputPartSelection: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
   textEditSelection: TextEditSelection | null;
@@ -153,6 +158,9 @@ export type ComunicadoEditorContextValue = {
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
   /** Atualiza input + espelho dataFilters (escopo slide) num único commit. */
   patchInputBlock: (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => void;
+  /** Debounce refresh das fontes amarradas ao filtro. */
+  scheduleInputFilterRefresh: (block: ComunicadoInputBlock) => void;
+  scheduleInputFilterRefreshById: (blockId: string) => void;
   setSpeakerNotes: (notes: string) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
@@ -249,6 +257,8 @@ export type ComunicadoEditorContextValue = {
   /** Fingerprint de dados mudou sem refetch — clicar em Atualizar visual. */
   isDataPreviewStale: boolean;
   staleSourceIds: string[];
+  /** Fontes com fetch em andamento (spinner do filtro). */
+  refreshingSourceIds: string[];
   refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
   globalRefreshSec: number;
   lastDataDisplayMode: ComunicadoDataDisplayMode;

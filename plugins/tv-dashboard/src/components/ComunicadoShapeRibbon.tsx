@@ -5,18 +5,23 @@ import {
   chartPartVisualPrimitive,
   defaultFrame,
   defaultStrokeWidthForPrimitive,
+  getInputPartState,
   getKpiPartState,
+  inputPartBoxChromeLabels,
   kpiPartBoxChromeLabels,
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
+  resolveInputShapeChromePartRef,
   resolveKpiShapeChromePartRef,
   resolveShapePrimitive,
   shapeHasAdjustments,
   shapeSupportsFill,
   shapeSupportsStroke,
+  upsertInputPartState,
   upsertKpiPartState,
   type ComunicadoChartViewBlock,
+  type ComunicadoInputBlock,
   type ComunicadoKpiViewBlock,
   type ComunicadoShapeKind,
   type ComunicadoTableViewBlock,
@@ -85,6 +90,8 @@ export function ComunicadoShapeRibbon() {
     ungroupSelected,
     connectSelected,
     clearKpiPartSelection,
+    clearInputPartSelection,
+    selectedInputPart,
   } = useComunicadoEditor();
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
@@ -94,6 +101,7 @@ export function ComunicadoShapeRibbon() {
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,
+    selectedInputPart,
   });
   const partChrome = isPartSelectionChrome(selectionChrome) ? selectionChrome : null;
 
@@ -155,6 +163,7 @@ export function ComunicadoShapeRibbon() {
   /** Chrome KPI: card global ou parte selecionada (title/value/hint/icon). */
   const isKpiChrome = selected?.type === "kpi_view";
   const isTableChrome = selected?.type === "table_view";
+  const isInputChrome = selected?.type === "input";
   const isDataViewBlock =
     selected?.type === "kpi_view" ||
     selected?.type === "table_view" ||
@@ -164,6 +173,7 @@ export function ComunicadoShapeRibbon() {
     isChartPartPrimitive ||
     isKpiChrome ||
     isTableChrome ||
+    isInputChrome ||
     isTextBox ||
     isMediaBlock ||
     textFormatTarget != null ||
@@ -183,6 +193,9 @@ export function ComunicadoShapeRibbon() {
     <div className="td-deck-ribbon__groups">
       {partChrome && partChrome.source === "kpi" ? (
         <PartSelectionNav chrome={partChrome} onBack={clearKpiPartSelection} />
+      ) : null}
+      {partChrome && partChrome.source === "input" ? (
+        <PartSelectionNav chrome={partChrome} onBack={clearInputPartSelection} />
       ) : null}
       {multiSelected ? (
         <FormatRibbonAlignSection
@@ -307,6 +320,48 @@ export function ComunicadoShapeRibbon() {
           </div>
         </DeckRibbonGroup>
       </>,
+    );
+  }
+
+  if (isInputChrome && selected?.type === "input") {
+    const block = selected as ComunicadoInputBlock;
+    const chromePart = resolveInputShapeChromePartRef(selectedInputPart) ?? { kind: "frame" as const };
+    const partState = getInputPartState(block.inputParts, chromePart);
+    const isFrameChrome = chromePart.kind === "frame";
+    const boxLabels = inputPartBoxChromeLabels(chromePart.kind);
+    const fillValue = partState?.style?.fill ?? (isFrameChrome ? DECK_COLOR_SURFACE : "transparent");
+    const strokeValue = partState?.style?.stroke ?? (isFrameChrome ? DECK_COLOR_BORDER : "transparent");
+    const strokeWidth = partState?.style?.strokeWidth ?? (isFrameChrome ? 1 : 0);
+
+    const patchChromeStyle = (style: Record<string, unknown>) => {
+      updateSelected({
+        inputParts: upsertInputPartState(block.inputParts, chromePart, {
+          style: style as never,
+        }),
+      } as Partial<ComunicadoBlock>);
+    };
+
+    return shell(
+      <DeckRibbonGroup label="Aparência" hint={H.shape}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+          <ShapeFillMenu
+            value={fillValue}
+            fillLabel={boxLabels.fillShort}
+            onChange={(color) => patchChromeStyle({ fill: color })}
+            onNoFill={() => patchChromeStyle({ fill: "transparent" })}
+          />
+          <ShapeOutlineMenu
+            color={strokeValue}
+            strokeWidth={strokeWidth}
+            minWidth={0}
+            maxWidth={20}
+            outlineLabel={boxLabels.strokeShort}
+            onColorChange={(color) => patchChromeStyle({ stroke: color })}
+            onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+            onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
+          />
+        </div>
+      </DeckRibbonGroup>,
     );
   }
 

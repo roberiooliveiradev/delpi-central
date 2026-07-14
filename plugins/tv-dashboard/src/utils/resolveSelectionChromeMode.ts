@@ -1,16 +1,18 @@
 import type {
   ComunicadoBlock,
   ComunicadoChartPartRef,
+  ComunicadoInputPartRef,
   ComunicadoKpiPartRef,
   ComunicadoTablePartRef,
 } from "@delpi/tv-dashboard-presentation";
 import {
   serializeChartPartRef,
+  serializeInputPartRef,
   serializeKpiPartRef,
   serializeTablePartRef,
 } from "@delpi/tv-dashboard-presentation";
 
-export type SelectionChromeSource = "chart" | "kpi" | "table";
+export type SelectionChromeSource = "chart" | "kpi" | "table" | "input";
 
 export type SelectionChromeMode =
   | { mode: "block" }
@@ -91,21 +93,40 @@ export function tablePartSelectionLabel(part: ComunicadoTablePartRef): string {
   }
 }
 
+export function inputPartSelectionLabel(part: ComunicadoInputPartRef): string {
+  switch (part.kind) {
+    case "frame":
+      return "Moldura";
+    case "icon":
+      return "Ícone";
+    case "label":
+      return "Rótulo";
+    case "badge":
+      return "Badge de escopo";
+    case "control":
+      return "Controle";
+    default:
+      return serializeInputPartRef(part);
+  }
+}
+
 /**
  * Decide chrome de ribbon/painel: bloco inteiro vs parte interna.
- * Uma regra para gráfico, KPI e tabela — sem misturar controles globais com item.
+ * Uma regra para gráfico, KPI, tabela e filtro — sem misturar controles globais com item.
  */
 export function resolveSelectionChromeMode(params: {
   selected: ComunicadoBlock | null;
   selectedChartPart?: ComunicadoChartPartRef | null;
   selectedKpiPart?: ComunicadoKpiPartRef | null;
   selectedTablePart?: ComunicadoTablePartRef | null;
+  selectedInputPart?: ComunicadoInputPartRef | null;
 }): SelectionChromeMode {
   const {
     selected,
     selectedChartPart = null,
     selectedKpiPart = null,
     selectedTablePart = null,
+    selectedInputPart = null,
   } = params;
   if (!selected) return { mode: "block" };
 
@@ -136,6 +157,16 @@ export function resolveSelectionChromeMode(params: {
       partLabel: tablePartSelectionLabel(selectedTablePart),
       backLabel: "Voltar à tabela",
       parentLabel: "Tabela",
+    };
+  }
+
+  if (selected.type === "input" && selectedInputPart) {
+    return {
+      mode: "part",
+      source: "input",
+      partLabel: inputPartSelectionLabel(selectedInputPart),
+      backLabel: "Voltar ao filtro",
+      parentLabel: "Filtro",
     };
   }
 

@@ -20,6 +20,7 @@ import {
   type ComunicadoConfig,
   type ComunicadoChartPartRef,
   type ComunicadoContentRun,
+  type ComunicadoInputPartRef,
   type ComunicadoKpiPartRef,
   type ComunicadoListType,
   type ComunicadoNamedTextStyle,
@@ -65,6 +66,7 @@ export function useComunicadoEditorSelection({
   const [selectedTablePart, setSelectedTablePart] = useState<ComunicadoTablePartRef | null>(null);
   const [selectedKpiPart, setSelectedKpiPart] = useState<ComunicadoKpiPartRef | null>(null);
   const [editingKpiPart, setEditingKpiPart] = useState<ComunicadoKpiPartRef | null>(null);
+  const [selectedInputPart, setSelectedInputPart] = useState<ComunicadoInputPartRef | null>(null);
   const [textEditSelection, setTextEditSelection] = useState<TextEditSelection | null>(null);
   const [textEditSelectionStyle, setTextEditSelectionStyle] = useState<
     ComunicadoEditorContextValue["textEditSelectionStyle"]
@@ -110,6 +112,7 @@ export function useComunicadoEditorSelection({
     setSelectedTablePart(null);
     setSelectedKpiPart(null);
     setEditingKpiPart(null);
+    setSelectedInputPart(null);
   }, []);
 
   const clearTextEditUi = useCallback(() => {
@@ -181,7 +184,8 @@ export function useComunicadoEditorSelection({
         selectedBlockType === "text" ||
         selectedBlockType === "image" ||
         selectedBlockType === "video" ||
-        selectedBlockType === "kpi_view"
+        selectedBlockType === "kpi_view" ||
+        selectedBlockType === "input"
       ) {
         requestRibbonTab("element");
       } else if (
@@ -209,6 +213,7 @@ export function useComunicadoEditorSelection({
       setSelectedTablePart(null);
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
+      setSelectedInputPart(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
       requestRibbonTab("element");
@@ -222,6 +227,7 @@ export function useComunicadoEditorSelection({
     setSelectedTablePart(null);
     setSelectedKpiPart(null);
     setEditingKpiPart(null);
+    setSelectedInputPart(null);
   }, []);
 
   const selectTablePart = useCallback(
@@ -233,6 +239,7 @@ export function useComunicadoEditorSelection({
       setEditingChartPart(null);
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
+      setSelectedInputPart(null);
       setSelectedTablePart(part);
       requestRibbonTab("element");
     },
@@ -251,6 +258,7 @@ export function useComunicadoEditorSelection({
       setSelectedChartPart(null);
       setEditingChartPart(null);
       setSelectedTablePart(null);
+      setSelectedInputPart(null);
       setSelectedKpiPart(part);
       setEditingKpiPart(null);
       requestRibbonTab("element");
@@ -261,6 +269,26 @@ export function useComunicadoEditorSelection({
   const clearKpiPartSelection = useCallback(() => {
     setSelectedKpiPart(null);
     setEditingKpiPart(null);
+  }, []);
+
+  const selectInputPart = useCallback(
+    (blockId: string, part: ComunicadoInputPartRef) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      setSelectedTablePart(null);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
+      setSelectedInputPart(part);
+      requestRibbonTab("element");
+    },
+    [flushActiveTextEdit, requestRibbonTab],
+  );
+
+  const clearInputPartSelection = useCallback(() => {
+    setSelectedInputPart(null);
   }, []);
 
   const beginEditChartPart = useCallback(
@@ -465,6 +493,10 @@ export function useComunicadoEditorSelection({
     setEditingKpiPart,
     beginEditKpiPart,
     cancelEditKpiPart,
+    selectedInputPart,
+    setSelectedInputPart,
+    selectInputPart,
+    clearInputPartSelection,
     editingTextId,
     setEditingTextId: setEditingTextIdWithSelection,
     textEditSelection,

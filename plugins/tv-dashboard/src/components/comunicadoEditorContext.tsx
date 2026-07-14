@@ -35,6 +35,7 @@ import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicad
 import { useComunicadoEditorSelection } from "../hooks/comunicadoEditor/useComunicadoEditorSelection";
 import { useComunicadoEditorStage } from "../hooks/comunicadoEditor/useComunicadoEditorStage";
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
+import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
@@ -72,9 +73,11 @@ function ComunicadoEditorKeyboardBridge() {
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,
+    selectedInputPart,
     clearChartPartSelection,
     clearKpiPartSelection,
     clearTablePartSelection,
+    clearInputPartSelection,
     undo,
     redo,
     canUndo,
@@ -90,11 +93,14 @@ function ComunicadoEditorKeyboardBridge() {
   useComunicadoEditorKeyboard({
     selectedIds,
     editingTextId,
-    hasPartSelection: Boolean(selectedChartPart || selectedKpiPart || selectedTablePart),
+    hasPartSelection: Boolean(
+      selectedChartPart || selectedKpiPart || selectedTablePart || selectedInputPart,
+    ),
     clearPartSelection: () => {
       clearChartPartSelection();
       clearKpiPartSelection();
       clearTablePartSelection();
+      clearInputPartSelection();
     },
     undo,
     redo,
@@ -151,10 +157,18 @@ export function ComunicadoEditorProvider({
     error: dataPreviewError,
     isDataPreviewStale,
     staleSourceIds,
+    refreshingSourceIds,
     refreshDataPreview,
+    clearStaleForSourceIds,
   } = useComunicadoDataPreview({
     playlistId,
     config,
+  });
+
+  const { scheduleInputFilterRefresh, scheduleInputFilterRefreshById } = useInputFilterDataRefresh({
+    blocks: config.blocks,
+    refreshDataPreview,
+    clearStaleForSourceIds,
   });
 
   const blocks = useMemo(() => {
@@ -409,6 +423,9 @@ export function ComunicadoEditorProvider({
     clearKpiPartSelection: selection.clearKpiPartSelection,
     editingKpiPart: selection.editingKpiPart,
     beginEditKpiPart: selection.beginEditKpiPart,
+    selectedInputPart: selection.selectedInputPart,
+    selectInputPart: selection.selectInputPart,
+    clearInputPartSelection: selection.clearInputPartSelection,
     commitKpiPartContent: blockActions.commitKpiPartContent,
     cancelEditKpiPart: selection.cancelEditKpiPart,
     editingTextId: selection.editingTextId,
@@ -524,7 +541,10 @@ export function ComunicadoEditorProvider({
     dataPreviewError,
     isDataPreviewStale,
     staleSourceIds,
+    refreshingSourceIds,
     refreshDataPreview,
+    scheduleInputFilterRefresh,
+    scheduleInputFilterRefreshById,
     globalRefreshSec,
     lastDataDisplayMode,
     setLastDataDisplayMode,

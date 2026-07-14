@@ -9,6 +9,7 @@ import {
   isValueAllowedByParamSchema,
   mergeFilterLayers,
   resolveInputParamSchemaField,
+  resolveInputRefreshSourceIds,
 } from "./comunicadoInputFilters";
 import type { ComunicadoBlock } from "./comunicadoTypes";
 
@@ -101,5 +102,40 @@ describe("comunicadoInputFilters", () => {
     const next = applyRuntimeInputValue(emptyInputFilterContributions(), block, "02");
     expect(next.bySourceId["src-a"]?.branch).toBe("02");
     expect(hasInputFilterContributions(next)).toBe(true);
+  });
+
+  it("resolveInputRefreshSourceIds: slide = todas fetchable; sources = só amarradas", () => {
+    const sources: ComunicadoBlock[] = [
+      {
+        id: "src-a",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        dataBinding: { operationId: "op_a", params: {} },
+      },
+      {
+        id: "src-b",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        dataBinding: { operationId: "op_b", params: {} },
+      },
+      {
+        id: "src-c",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 10, h: 10 },
+        dataBinding: { operationId: "op_c", params: {} },
+      },
+    ];
+    const slideInput = inputBlock("i-slide", {
+      paramKey: "branch",
+      targetScope: "slide",
+    }) as Extract<ComunicadoBlock, { type: "input" }>;
+    const sourcesInput = inputBlock("i-sources", {
+      paramKey: "branch",
+      targetScope: "sources",
+      targetSourceIds: ["src-a", "src-c", "missing"],
+    }) as Extract<ComunicadoBlock, { type: "input" }>;
+
+    expect(resolveInputRefreshSourceIds(slideInput, sources)).toEqual(["src-a", "src-b", "src-c"]);
+    expect(resolveInputRefreshSourceIds(sourcesInput, sources)).toEqual(["src-a", "src-c"]);
   });
 });

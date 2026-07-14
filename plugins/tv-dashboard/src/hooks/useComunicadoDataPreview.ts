@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildDataPreviewFingerprint,
+  isComunicadoInputBlock,
   isFetchableDataBlockType,
+  resolveInputRefreshSourceIds,
+  resolveStaleSourceIdsForPreviewChange,
   serializeComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoConfig,
@@ -66,6 +69,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     () => initialResolvedMap(playlistId, config),
   );
   const [staleSourceIds, setStaleSourceIds] = useState<string[]>([]);
+  const [refreshingSourceIds, setRefreshingSourceIds] = useState<string[]>([]);
   const [initialLoading, setInitialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -152,6 +156,9 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
 
       const requestId = ++requestIdRef.current;
       setError(null);
+      setRefreshingSourceIds([...targetIds]);
+      // Auto-refresh do filtro (e Atualizar visual) já cobre — não acusar stale nesses ids.
+      setStaleSourceIds((prev) => prev.filter((id) => !targetIds.has(id)));
 
       const nativeConfig = serializeComunicadoConfig(configRef.current);
       const fetchFingerprint = fingerprintRef.current;
@@ -181,6 +188,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       } finally {
         if (requestIdRef.current === requestId) {
           setInitialLoading(false);
+          setRefreshingSourceIds([]);
         }
       }
     },
@@ -221,7 +229,22 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
 
     if (dataFingerprint !== synced) {
       if (hasData || didInitialFetchRef.current) {
-        setStaleSourceIds(blocks.map((block) => block.id));
+        const allFetchableIds = blocks.map((block) => block.id);
+        const inputAffected = new Set<string>();
+        for (const block of configRef.current.blocks ?? []) {
+          if (!isComunicadoInputBlock(block)) continue;
+          for (const id of resolveInputRefreshSourceIds(block, configRef.current.blocks)) {
+            inputAffected.add(id);
+          }
+        }
+        setStaleSourceIds(
+          resolveStaleSourceIdsForPreviewChange({
+            previousFingerprint: synced,
+            nextFingerprint: dataFingerprint,
+            allFetchableIds,
+            inputAffectedSourceIds: [...inputAffected],
+          }),
+        );
         return;
       }
       didInitialFetchRef.current = true;
@@ -242,12 +265,20 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
 
   const isDataPreviewStale = staleSourceIds.length > 0;
 
+  const clearStaleForSourceIds = useCallback((blockIds: string[]) => {
+    if (blockIds.length === 0) return;
+    const idSet = new Set(blockIds);
+    setStaleSourceIds((prev) => prev.filter((id) => !idSet.has(id)));
+  }, []);
+
   return {
     resolvedByBlockId,
     loading: initialLoading,
     error,
     isDataPreviewStale,
     staleSourceIds,
+    refreshingSourceIds,
     refreshDataPreview,
+    clearStaleForSourceIds,
   };
 }

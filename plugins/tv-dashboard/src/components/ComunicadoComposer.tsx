@@ -102,6 +102,7 @@ export function ComunicadoComposerCanvas() {
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,
+    selectedInputPart,
     isBlockSelected,
     selectBlock,
     selectBlocksByIds,
@@ -412,6 +413,9 @@ export function ComunicadoComposerCanvas() {
     if (block?.type === "table_view" && selectedTablePart) {
       return false;
     }
+    if (block?.type === "input" && selectedInputPart) {
+      return false;
+    }
     return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
   };
 
@@ -476,7 +480,8 @@ export function ComunicadoComposerCanvas() {
               isPrimary &&
               ((block.type === "kpi_view" && Boolean(selectedKpiPart)) ||
                 (block.type === "chart_view" && Boolean(selectedChartPart)) ||
-                (block.type === "table_view" && Boolean(selectedTablePart)));
+                (block.type === "table_view" && Boolean(selectedTablePart)) ||
+                (block.type === "input" && Boolean(selectedInputPart)));
             const selectionRadius = isSelected
               ? resolveBlockSelectionBorderRadiusPx(block)
               : undefined;
