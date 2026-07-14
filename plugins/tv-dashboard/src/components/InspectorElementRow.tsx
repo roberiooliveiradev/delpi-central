@@ -7,12 +7,14 @@ type InspectorElementRowProps = {
   focused?: boolean;
   /** Se omitido, linha só seleciona (ex.: Moldura) — mantém coluna do toggle alinhada. */
   enabled?: boolean;
+  /** Checkbox visível mas não alterável (ex.: Controle do filtro). */
+  toggleDisabled?: boolean;
   onToggle?: (next: boolean) => void;
   onSelect: () => void;
 };
 
 /**
- * Linha canônica «Elementos do …» no inspetor (gráfico / tabela / KPI).
+ * Linha canônica «Elementos do …» no inspetor (gráfico / tabela / KPI / filtro).
  * Checkbox + rótulo — mesmo visual em todos os blocos de dados.
  */
 export function InspectorElementRow({
@@ -21,6 +23,7 @@ export function InspectorElementRow({
   hint,
   focused = false,
   enabled,
+  toggleDisabled = false,
   onToggle,
   onSelect,
 }: InspectorElementRowProps) {
@@ -37,6 +40,7 @@ export function InspectorElementRow({
           {canToggle ? (
             <NativeCheckboxControl
               checked={enabled}
+              disabled={toggleDisabled}
               aria-label={`Exibir ${label}`}
               onChange={onToggle}
             />

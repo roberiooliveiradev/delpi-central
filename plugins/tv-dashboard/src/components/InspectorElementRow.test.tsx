@@ -36,4 +36,20 @@ describe("InspectorElementRow", () => {
     expect(container.querySelector(".td-chart-element__toggle-spacer")).toBeTruthy();
     expect(container.querySelector('input[type="checkbox"]')).toBeNull();
   });
+
+  it("respeita toggleDisabled no checkbox", () => {
+    render(
+      <InspectorElementRow
+        id="td-control"
+        label="Controle"
+        enabled
+        toggleDisabled
+        onToggle={() => undefined}
+        onSelect={() => undefined}
+      />,
+    );
+    expect(
+      (screen.getByRole("checkbox", { name: /Exibir Controle/i }) as HTMLInputElement).disabled,
+    ).toBe(true);
+  });
 });
