@@ -1,4 +1,3 @@
-import { Move, PaintBucket } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   isDataBlockType,
@@ -6,7 +5,6 @@ import {
   isDataViewBlockType,
   isComunicadoVisualBoxBlock,
   normalizeHrefInput,
-  visualBoxSupportsShapeFormatting,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useEffect, useMemo, useState } from "react";
@@ -28,11 +26,6 @@ import { DeckInspectorLayout } from "./DeckInspectorLayout";
 import { DeckPropertySection } from "./DeckPropertySection";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
-
-const SHAPE_PANE_ICONS = [
-  { id: "forma", label: "Forma", Icon: PaintBucket },
-  { id: "size", label: "Tamanho e posição", Icon: Move },
-] as const;
 
 type Labels = Record<string, string>;
 
@@ -63,27 +56,18 @@ export function ComunicadoElementInspector({
   );
 
   const multiSelect = selectedIds.length > 1;
-  const isShapeBlock =
-    selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsShapeFormatting(selected);
+  const isVisualBox = selected ? isComunicadoVisualBoxBlock(selected) : false;
   const isIconBlock = selected?.type === "icon";
   const isMediaBlock = selected?.type === "image" || selected?.type === "video";
-  const isSidebarLinkBlock = isMediaBlock || isShapeBlock || isIconBlock;
+  const isSidebarLinkBlock = isMediaBlock || isVisualBox || isIconBlock;
   const isDataBlock = selected ? isDataBlockType(selected.type) || isDataSourceBlockType(selected.type) : false;
   const isViewBlock = selected ? isDataViewBlockType(selected.type) : false;
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
-  const [shapePaneIcon, setShapePaneIcon] = useState<(typeof SHAPE_PANE_ICONS)[number]["id"]>("forma");
-  const [shapeOptionsTab, setShapeOptionsTab] = useState<"shape" | "text">("shape");
 
   useEffect(() => {
     if (!isDataBlock) return;
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
   }, [isDataBlock]);
-
-  useEffect(() => {
-    if (!isShapeBlock || shapeOptionsTab !== "shape") return;
-    const el = document.getElementById(`td-shape-pane-${shapePaneIcon}`);
-    el?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [shapePaneIcon, isShapeBlock, shapeOptionsTab]);
 
   const selectedRoute = useMemo(() => {
     if (!isDataBlock || !selected || !("dataBinding" in selected)) return null;
@@ -105,64 +89,6 @@ export function ComunicadoElementInspector({
 
   return (
     <DeckInspectorLayout variant={placement}>
-      {!multiSelect && isShapeBlock ? (
-        <>
-          <div className="td-format-pane-subtabs" role="tablist" aria-label="Opções de forma ou texto">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={shapeOptionsTab === "shape"}
-              className={[
-                "td-format-pane-subtab",
-                shapeOptionsTab === "shape" ? "td-format-pane-subtab--active" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => setShapeOptionsTab("shape")}
-            >
-              Opções de Forma
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={shapeOptionsTab === "text"}
-              className={[
-                "td-format-pane-subtab",
-                shapeOptionsTab === "text" ? "td-format-pane-subtab--active" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => setShapeOptionsTab("text")}
-            >
-              Opções de Texto
-            </button>
-          </div>
-          {shapeOptionsTab === "shape" ? (
-            <div className="td-format-pane-icons" role="tablist" aria-label="Categorias de forma">
-              {SHAPE_PANE_ICONS.map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={shapePaneIcon === id}
-                  aria-label={label}
-                  title={label}
-                  className={[
-                    "td-format-pane-icons__btn",
-                    shapePaneIcon === id ? "td-format-pane-icons__btn--active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => setShapePaneIcon(id)}
-                >
-                  <Icon size={16} aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </>
-      ) : null}
-
       <DeckPropertySection
         pane={pane}
         title={labels.comunicadoBlocks ?? "Elemento selecionado"}
@@ -177,7 +103,7 @@ export function ComunicadoElementInspector({
           <p className="td-deck-inspector__meta">{typeLabel}</p>
         )}
 
-        {!multiSelect && isShapeBlock && shapeOptionsTab === "text" ? (
+        {!multiSelect && selected.type === "shape" ? (
           <DeckField id="td-shape-content" label="Texto na forma" hint={E.shapeText}>
             <NativeTextControl
               id="td-shape-content"
@@ -187,11 +113,6 @@ export function ComunicadoElementInspector({
             />
           </DeckField>
         ) : null}
-        {!multiSelect && isShapeBlock && shapeOptionsTab === "text" ? (
-          <p className="td-deck-inspector__hint">
-            Tipografia da forma abaixo (mesmas seções da faixa Elemento).
-          </p>
-        ) : null}
 
         {!multiSelect && isSidebarLinkBlock ? (
           <DeckField id="td-block-link" label="Link" hint={E.link}>
@@ -199,7 +120,7 @@ export function ComunicadoElementInspector({
               id="td-block-link"
               type="url"
               placeholder="https://…"
-              value={selected.href ?? ""}
+              value={"href" in selected ? (selected.href ?? "") : ""}
               onChange={(value) =>
                 updateBlockLink(selected.id, normalizeHrefInput(value) || undefined)
               }
@@ -264,23 +185,8 @@ export function ComunicadoElementInspector({
         <SelectionSectionsHost layout="pane" full labels={labels} />
       ) : null}
 
-      {!multiSelect && isShapeBlock && shapeOptionsTab === "text" ? (
-        <SelectionSectionsHost layout="pane" only={["typography"]} labels={labels} />
-      ) : null}
-
-      {!multiSelect && isShapeBlock && shapeOptionsTab === "shape" && !hasPartSelection ? (
-        <div id="td-shape-pane-size">
-          <SelectionTypedWithTailHost
-            layout="pane"
-            labels={labels}
-            typed={["shapeGallery", "shapeChrome"]}
-          />
-        </div>
-      ) : null}
-
-      {/* texto, heading, icon, media, canvas, kpi, input, data_source — host full */}
+      {/* Texto, forma, icon, media, canvas, kpi, input, data — host full (visualBox ordena tipografia→forma). */}
       {!multiSelect &&
-      !isShapeBlock &&
       selected.type !== "table_view" &&
       selected.type !== "chart_view" &&
       !hasPartSelection ? (

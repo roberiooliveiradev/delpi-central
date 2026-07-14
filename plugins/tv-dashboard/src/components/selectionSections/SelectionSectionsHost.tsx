@@ -35,6 +35,7 @@ import {
 } from "./TableLayoutSections";
 import { TextBoxSection } from "./TextBoxSection";
 import { TypographySection } from "./TypographySection";
+import { VisualBoxElementSections } from "./VisualBoxElementSections";
 import {
   resolveSelectionSections,
   SHARED_HOST_SECTIONS,
@@ -70,6 +71,8 @@ function renderSection(
       return <TypographySection key={id} layout={layout} />;
     case "textBox":
       return <TextBoxSection key={id} layout={layout} />;
+    case "visualBox":
+      return <VisualBoxElementSections key={id} layout={layout} />;
     case "shapeGallery":
       return <ShapeGallerySection key={id} layout={layout} />;
     case "shapeChrome":

@@ -29,8 +29,13 @@ export { OrganizeSection, AlignMultiSection } from "./OrganizeSection";
 export { DataSourceHintSection } from "./DataSourceHintSection";
 export { TypographySection } from "./TypographySection";
 export { TextBoxSection } from "./TextBoxSection";
+export { VisualBoxElementSections } from "./VisualBoxElementSections";
+export {
+  resolveVisualBoxElementCapabilities,
+  type VisualBoxElementCapabilities,
+} from "./visualBoxElementCapabilities";
 export { ShapeChromeSection } from "./ShapeChromeSection";
-export { ShapeGallerySection } from "./ShapeGallerySection";
+export { ShapeGallerySection, ShapeChangeControl } from "./ShapeGallerySection";
 export {
   TableBordersSection,
   TableStyleOptionsSection,

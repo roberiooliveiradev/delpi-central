@@ -132,6 +132,7 @@ export function resolveSelectedTextFormatTarget(params: {
         fontStyle: selected.style?.fontStyle,
         color: selected.style?.color,
         textDecoration: selected.style?.textDecoration,
+        textHighlight: selected.style?.textHighlight,
         textAlign: selected.style?.textAlign,
         verticalAlign: selected.style?.verticalAlign,
         textShadow: selected.style?.textShadow,

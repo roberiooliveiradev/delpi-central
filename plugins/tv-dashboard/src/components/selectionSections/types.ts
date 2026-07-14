@@ -13,6 +13,7 @@ export type SelectionSectionId =
   | "organize"
   | "typography"
   | "textBox"
+  | "visualBox"
   | "shapeChrome"
   | "shapeGallery"
   | "media"

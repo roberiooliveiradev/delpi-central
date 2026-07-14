@@ -183,6 +183,20 @@ describe("comunicadoHelpers", () => {
     }
   });
 
+  it("promove boxShadow da forma para --tdp-block-box-shadow (sombra segue o raio no fill)", () => {
+    const shadow = "0 8px 20px rgba(15, 23, 42, 0.28)";
+    const shape = createShapeBlock("rectangle");
+    shape.style = {
+      ...shape.style,
+      borderRadius: 26,
+      boxShadow: shadow,
+    };
+    const css = blockCssStyle(shape) as CSSProperties & Record<string, string>;
+    expect(css.boxShadow).toBeUndefined();
+    expect(css.borderRadius).toBeUndefined();
+    expect(css["--tdp-block-box-shadow"]).toBe(shadow);
+  });
+
   it("promove sombra inset e multi-camada para --tdp-block-box-shadow", () => {
     const cases = [
       "inset 0 2px 8px rgba(0, 0, 0, 0.28)",

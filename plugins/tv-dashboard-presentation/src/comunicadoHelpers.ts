@@ -1343,8 +1343,8 @@ function stripOuterChromeStyle(css: CSSProperties) {
 }
 
 /**
- * KPI/chart/tabela: sombra na moldura interna (já com fill + radius), não no wrapper.
- * Wrapper retangular + box-shadow cria “placa” extra e ignora o raio do card.
+ * KPI/chart/tabela/forma: sombra na moldura interna (já com fill + radius), não no wrapper.
+ * Wrapper retangular + box-shadow cria “placa” extra e ignora o raio do card/forma.
  */
 function promoteBlockShadowToInnerChrome(
   css: CSSProperties,
@@ -1399,8 +1399,11 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
   return css;
     }
 
-    /* Forma: fill/stroke/radius só no ComunicadoShapeGraphic — evita borda dupla no wrapper. */
+    /* Forma: fill/stroke/radius só no ComunicadoShapeGraphic — evita borda dupla no wrapper.
+     * Sombra também vai para o fill (via --tdp-block-box-shadow); no wrapper retangular
+     * o box-shadow ignora o raio dos cantos. */
     stripOuterChromeStyle(css);
+    promoteBlockShadowToInnerChrome(css, style);
     if (block.content) {
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
       const shapeFill = style.fill ?? DECK_SHAPE_DEFAULTS.fill;

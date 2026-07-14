@@ -393,6 +393,11 @@
   background: transparent;
 }
 
+/* Forma: sombra no fill (com border-radius); overflow no wrapper cortaria a sombra. */
+.tdp-comunicado__block.tdp-comunicado__visual-box--shape {
+  overflow: visible;
+}
+
 .tdp-comunicado__block--canvas_table,
 .tdp-comunicado__block--canvas-table {
   padding: 0;
@@ -551,6 +556,12 @@
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* Sombra acompanha o raio do fill (não o wrapper retangular). */
+.tdp-comunicado__shape-fill {
+  box-shadow: var(--tdp-block-box-shadow, none);
+  box-sizing: border-box;
 }
 
 .tdp-comunicado__shape-svg--line {

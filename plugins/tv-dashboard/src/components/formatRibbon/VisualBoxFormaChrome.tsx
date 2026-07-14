@@ -3,7 +3,6 @@ import {
   isComunicadoVisualBoxBlock,
   resolveShapePrimitive,
   resolveVisualBoxProfile,
-  shapeAdjustmentSpecs,
   shapeSupportsFill,
   shapeSupportsStroke,
   type ComunicadoBlockStyle,
@@ -25,7 +24,9 @@ import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { DeckRangeField } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { SelectionPaneSection } from "../selectionSections/SelectionPaneSection";
+import { ShapeChangeControl } from "../selectionSections/ShapeGallerySection";
 import type { SelectionSectionLayout } from "../selectionSections/types";
+import { resolveVisualBoxElementCapabilities } from "../selectionSections/visualBoxElementCapabilities";
 import { FormatRibbonOpacityFields } from "./FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "./ShapeMenuHint";
 
@@ -125,12 +126,15 @@ type VisualBoxFormaChromeProps = {
 };
 
 /**
- * Forma unificada (texto/título e shape) — Estilos, Sombra, Preench., Contorno,
- * Raio e Opacidade. Texto nasce sem fundo/contorno; opções são as mesmas.
+ * Forma unificada (texto/título e shape) — mesmas opções; flags via
+ * `resolveVisualBoxElementCapabilities` (ex.: Alterar forma só em shape).
  */
 export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChromeProps) {
   const { selected, updateSelectedStyle } = useComunicadoEditor();
   if (!selected || !isComunicadoVisualBoxBlock(selected)) return null;
+
+  const caps = resolveVisualBoxElementCapabilities(selected);
+  if (!caps?.shapeChrome) return null;
 
   const block = selected;
   const profile = resolveVisualBoxProfile(block);
@@ -143,12 +147,8 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
   const showFill = isTextMode || (primitive != null && shapeSupportsFill(primitive));
   const showStroke = isTextMode || (primitive != null && shapeSupportsStroke(primitive));
   const showCornerRadius = isTextMode || primitive !== "point";
-  const showShapeAdjustments =
-    block.type === "shape" &&
-    shapeAdjustmentSpecs(block.shape).some(
-      (spec) => spec.id !== "corner" && spec.id !== "round",
-    );
-  const showMarker = block.type === "shape" && primitive === "point";
+  const showShapeAdjustments = caps.shapeAdjustments && block.type === "shape";
+  const showMarker = caps.shapeMarker && block.type === "shape";
 
   const fillValue = resolveFormaFill(block, isTextMode);
   const strokeValue = resolveFormaStroke(block, isTextMode, primitive);
@@ -160,6 +160,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
 
   const stylesMenus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+      {caps.shapeGallery ? <ShapeChangeControl /> : null}
       <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
         <ShapeStyleMenu
           triggerLabel="Estilos"

@@ -18,7 +18,7 @@ function ctx(
 }
 
 describe("resolveSelectionSections", () => {
-  it("texto e título: tipografia → forma → exibição → organizar", () => {
+  it("texto e título: visualBox (tipografia→forma) → exibição → organizar", () => {
     const text = resolveSelectionSections(
       ctx({
         selected: {
@@ -30,13 +30,14 @@ describe("resolveSelectionSections", () => {
       }),
     );
     expect(text).toEqual(
-      expect.arrayContaining(["typography", "shapeChrome", "display", "organize", "actions"]),
+      expect.arrayContaining(["visualBox", "display", "organize", "actions"]),
     );
-    expect(text.indexOf("shapeChrome")).toBeLessThan(text.indexOf("display"));
+    expect(text.indexOf("visualBox")).toBeLessThan(text.indexOf("display"));
     expect(text.indexOf("display")).toBeLessThan(text.indexOf("organize"));
     expect(text.indexOf("organize")).toBeLessThan(text.indexOf("actions"));
     expect(text).not.toContain("frame");
     expect(text).not.toContain("textBox");
+    expect(text).not.toContain("shapeGallery");
   });
 
   it("ícone e imagem incluem display + organize + actions (não empty)", () => {
@@ -152,7 +153,7 @@ describe("resolveSelectionSections", () => {
     ).toEqual(expect.arrayContaining(["shapeChrome", "typography", "display", "organize", "actions"]));
   });
 
-  it("forma tipada: galeria + chrome + tipografia + display", () => {
+  it("forma tipada: mesma ordem visualBox (tipografia→forma) + display", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -165,9 +166,7 @@ describe("resolveSelectionSections", () => {
         }),
       ),
     ).toEqual([
-      "shapeGallery",
-      "shapeChrome",
-      "typography",
+      "visualBox",
       "display",
       "organize",
       "animation",
@@ -200,10 +199,11 @@ describe("resolveSelectionSections", () => {
     ]);
   });
 
-  it("host cobre tipografia, tabela, chart, kpi, media, partFormat e input", () => {
+  it("host cobre tipografia, visualBox, tabela, chart, kpi, media, partFormat e input", () => {
     for (const id of [
       "typography",
       "textBox",
+      "visualBox",
       "display",
       "shapeGallery",
       "shapeChrome",

@@ -58,10 +58,9 @@ export function resolveSelectionSections(
   switch (selected.type) {
     case "text":
     case "heading":
-      /* Mesmo chrome de forma que shape — texto nasce sem fundo. */
-      return withCommonTail(["typography", "shapeChrome"]);
     case "shape":
-      return withCommonTail(["shapeGallery", "shapeChrome", "typography"]);
+      /* Tipografia → Forma (flags por tipo via VisualBoxElementSections). */
+      return withCommonTail(["visualBox"]);
     case "icon":
       return withCommonTail(["shapeChrome"]);
     case "image":
@@ -113,6 +112,7 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "dataSourceHint",
   "typography",
   "textBox",
+  "visualBox",
   "shapeGallery",
   "shapeChrome",
   "tableStyleOptions",

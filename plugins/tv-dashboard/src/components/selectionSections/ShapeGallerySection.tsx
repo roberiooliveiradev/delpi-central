@@ -19,8 +19,8 @@ import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
-/** Galeria «Alterar forma» — ribbon (tile) e painel (accordion). */
-export function ShapeGallerySection({ layout }: { layout: SelectionSectionLayout }) {
+/** Tile «Alterar forma» — reutilizado dentro do grupo Forma (caixa visual). */
+export function ShapeChangeControl() {
   const { selected, updateSelected } = useComunicadoEditor();
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
@@ -53,7 +53,7 @@ export function ShapeGallerySection({ layout }: { layout: SelectionSectionLayout
     setChangeShapeOpen(false);
   };
 
-  const body = (
+  return (
     <div ref={changeShapeAnchorRef} className="td-composer__dropdown">
       <DeckRibbonTile
         icon={Replace}
@@ -72,18 +72,30 @@ export function ShapeGallerySection({ layout }: { layout: SelectionSectionLayout
       ) : null}
     </div>
   );
+}
+
+/**
+ * @deprecated Preferir `ShapeChangeControl` dentro de `VisualBoxFormaChrome`.
+ * Mantido para hosts que ainda resolvem seção `shapeGallery` isolada.
+ */
+export function ShapeGallerySection({ layout }: { layout: SelectionSectionLayout }) {
+  const body = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <ShapeChangeControl />
+    </div>
+  );
 
   if (layout === "pane") {
     return (
       <SelectionPaneSection title="Formas" hint={H.shapeChange} defaultOpen={false}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">{body}</div>
+        {body}
       </SelectionPaneSection>
     );
   }
 
   return (
     <DeckRibbonGroup label="Formas" hint={H.shapeChange}>
-      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">{body}</div>
+      {body}
     </DeckRibbonGroup>
   );
 }

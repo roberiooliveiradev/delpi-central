@@ -20,6 +20,8 @@ type Props = {
   onNamedStyle: (value: ComunicadoNamedTextStyle) => void;
   onLineHeight: (value: number) => void;
   onLetterSpacing: (value: number) => void;
+  /** Estilo nomeado (Título/Normal) — só em texto/título rico. */
+  showNamedStyle?: boolean;
   /**
    * `popover` — tile + painel ancorado (ribbon).
    * `inline` — campos embutidos (sidebar).
@@ -36,6 +38,7 @@ function ParagraphSpacingPanel({
   onNamedStyle,
   onLineHeight,
   onLetterSpacing,
+  showNamedStyle = true,
   idPrefix,
 }: PanelProps) {
   const styleId = `${idPrefix}-named-style`;
@@ -48,25 +51,27 @@ function ParagraphSpacingPanel({
       role="group"
       aria-label="Estilo e espaçamento do parágrafo"
     >
-      <span className="td-deck-ribbon__stack-field">
-        <FieldLabel
-          htmlFor={styleId}
-          label="Estilo"
-          hint={H.namedStyle}
-          className="td-deck-ribbon__field-label"
-        />
-        <TdRibbonSelect
-          id={styleId}
-          className="td-deck-ribbon__select td-deck-ribbon__select--style"
-          aria-label="Estilo de parágrafo"
-          value={namedStyleValue}
-          onChange={(value) => onNamedStyle(value as ComunicadoNamedTextStyle)}
-          options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
-            value: option.key,
-            label: option.label,
-          }))}
-        />
-      </span>
+      {showNamedStyle ? (
+        <span className="td-deck-ribbon__stack-field">
+          <FieldLabel
+            htmlFor={styleId}
+            label="Estilo"
+            hint={H.namedStyle}
+            className="td-deck-ribbon__field-label"
+          />
+          <TdRibbonSelect
+            id={styleId}
+            className="td-deck-ribbon__select td-deck-ribbon__select--style"
+            aria-label="Estilo de parágrafo"
+            value={namedStyleValue}
+            onChange={(value) => onNamedStyle(value as ComunicadoNamedTextStyle)}
+            options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
+              value: option.key,
+              label: option.label,
+            }))}
+          />
+        </span>
+      ) : null}
       <span className="td-deck-ribbon__stack-field">
         <FieldLabel
           htmlFor={lineId}
@@ -120,6 +125,7 @@ export function ParagraphSpacingMenu({
   onNamedStyle,
   onLineHeight,
   onLetterSpacing,
+  showNamedStyle = true,
   variant = "popover",
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -134,6 +140,7 @@ export function ParagraphSpacingMenu({
     onNamedStyle,
     onLineHeight,
     onLetterSpacing,
+    showNamedStyle,
     idPrefix: variant === "inline" ? `td-pane-ps-${reactId}` : `td-pop-ps-${reactId}`,
   };
 

@@ -29,6 +29,7 @@ import {
   listComunicadoFontFamilyOptions,
   defaultNamedStyleForBlockType,
   ensureComunicadoGoogleFontsLoaded,
+  defaultStyle,
   defaultTextBlockStyle,
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
@@ -56,6 +57,8 @@ import { TdRibbonIconButton, TdRibbonSelect } from "../tdRibbonUi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ParagraphSpacingMenu } from "./ParagraphSpacingMenu";
 import { TextEffectsMenu } from "./TextEffectsMenu";
+import type { VisualBoxElementCapabilities } from "../selectionSections/visualBoxElementCapabilities";
+import { resolveVisualBoxElementCapabilities } from "../selectionSections/visualBoxElementCapabilities";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
@@ -63,14 +66,17 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
  * Fonte + Parágrafo — só renderiza se o objeto selecionado admite tipografia
  * (texto, forma com texto, parte textual de KPI/gráfico).
  *
- * O tamanho exibido vem de `resolveSelectedTextFormatTarget` (defaults canônicos
- * por bloco/parte). Evita default fantasma 16 que não bate com o CSS do gráfico.
+ * Capacidades da caixa visual vêm de `resolveVisualBoxElementCapabilities`
+ * (ou `capabilities` explícitas) — mesma UI; flags mostram/ocultam por tipo.
  */
 export function FormatRibbonTypographySections({
   embed = false,
+  capabilities: capabilitiesProp,
 }: {
   /** Painel: legendas Fonte/Efeitos/Parágrafo acima, sem estilo ribbon abaixo. */
   embed?: boolean;
+  /** Override — ex.: host `visualBox` já resolveu o perfil. */
+  capabilities?: VisualBoxElementCapabilities | null;
 } = {}) {
   const {
     selected,
@@ -120,16 +126,29 @@ export function FormatRibbonTypographySections({
   });
   if (!textFormatTarget) return null;
 
+  const visualCaps =
+    capabilitiesProp ??
+    (selected ? resolveVisualBoxElementCapabilities(selected) : null);
+
   const textBlock =
     textFormatTarget.mode === "block" &&
     selected &&
     (selected.type === "heading" || selected.type === "text")
       ? selected
       : null;
+  const shapeBlock =
+    textFormatTarget.mode === "block" && selected?.type === "shape" ? selected : null;
+  const visualBoxBlock = textBlock ?? shapeBlock;
   const isTextBlock = textBlock != null;
   const isShapeTextTarget =
     textFormatTarget.mode === "block" && textFormatTarget.blockType === "shape";
   const showParagraphAlign = textFormatTargetSupportsParagraphAlign(textFormatTarget);
+  const showTextHighlight = visualCaps?.textHighlight ?? isTextBlock;
+  const showClearFormatting = visualCaps?.clearFormatting ?? isTextBlock;
+  const showParagraphJustify = visualCaps?.paragraphJustify ?? isTextBlock;
+  const showParagraphLists = visualCaps?.paragraphLists ?? isTextBlock;
+  const showParagraphSpacing = visualCaps?.paragraphSpacing ?? isTextBlock;
+  const showParagraphNamedStyle = visualCaps?.paragraphNamedStyle ?? isTextBlock;
   const formatStyle = textFormatTarget.style;
   const kpiPartKind =
     textFormatTarget.mode === "part" && textFormatTarget.source === "kpi"
@@ -222,6 +241,9 @@ export function FormatRibbonTypographySections({
       ? namedStyleSelection
       : defaultNamedStyleForBlockType(textBlock?.type === "heading" ? "heading" : "text");
 
+  const spacingSource = visualBoxBlock;
+  const currentLineHeight = spacingSource?.style?.lineHeight ?? 1.15;
+  const currentLetterSpacing = spacingSource?.style?.letterSpacing ?? 0;
   return (
     <>
       <DeckRibbonGroup
@@ -376,14 +398,14 @@ export function FormatRibbonTypographySections({
               <Strikethrough size={15} aria-hidden="true" />
             </TdRibbonIconButton>
             <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-            {isTextBlock && textBlock ? (
+            {showTextHighlight ? (
               <TvRibbonColorPicker
                 hint={H.textHighlight}
                 label="Realce"
                 ariaLabel="Realce do texto"
                 inline
                 variant="fill"
-                value={textBlock.style?.textHighlight ?? "#fef08a"}
+                value={formatStyle?.textHighlight ?? "#fef08a"}
                 onChange={(color) => updateSelectedTextFormatStyle({ textHighlight: color })}
                 onNoFill={() => updateSelectedTextFormatStyle({ textHighlight: "transparent" })}
               />
@@ -421,14 +443,51 @@ export function FormatRibbonTypographySections({
               }
               onChange={(color) => updateSelectedTextFormatStyle({ color })}
             />
-            {isTextBlock && textBlock ? (
+            {showClearFormatting && visualBoxBlock ? (
               <TdRibbonIconButton
                 hint={H.clearFormatting}
                 ariaLabel="Limpar formatação"
                 onClick={() => {
-                  const defaults = defaultTextBlockStyle(textBlock.type);
+                  if (visualBoxBlock.type === "heading" || visualBoxBlock.type === "text") {
+                    const defaults = defaultTextBlockStyle(visualBoxBlock.type);
+                    updateSelected({
+                      style: {
+                        ...defaults,
+                        zIndex: visualBoxBlock.style?.zIndex ?? defaults.zIndex,
+                        fill: visualBoxBlock.style?.fill ?? defaults.fill,
+                        backgroundColor:
+                          visualBoxBlock.style?.backgroundColor ?? defaults.backgroundColor,
+                        stroke: visualBoxBlock.style?.stroke ?? defaults.stroke,
+                        strokeWidth: visualBoxBlock.style?.strokeWidth ?? defaults.strokeWidth,
+                        borderWidth: visualBoxBlock.style?.borderWidth ?? defaults.borderWidth,
+                        borderColor: visualBoxBlock.style?.borderColor ?? defaults.borderColor,
+                        borderRadius: visualBoxBlock.style?.borderRadius,
+                        boxShadow: visualBoxBlock.style?.boxShadow,
+                        opacity: visualBoxBlock.style?.opacity,
+                      },
+                    } as Partial<ComunicadoBlock>);
+                    return;
+                  }
+                  const defaults = defaultStyle("shape", visualBoxBlock.shape);
                   updateSelected({
-                    style: { ...defaults, zIndex: textBlock.style?.zIndex ?? defaults.zIndex },
+                    style: {
+                      ...visualBoxBlock.style,
+                      fontFamily: defaults.fontFamily,
+                      fontSize: defaults.fontSize,
+                      fontWeight: defaults.fontWeight,
+                      fontStyle: undefined,
+                      color: defaults.color,
+                      textDecoration: undefined,
+                      textHighlight: undefined,
+                      textAlign: defaults.textAlign,
+                      verticalAlign: defaults.verticalAlign,
+                      lineHeight: defaults.lineHeight,
+                      letterSpacing: undefined,
+                      textShadow: undefined,
+                      textStrokeColor: undefined,
+                      textStrokeWidth: undefined,
+                      textReflection: undefined,
+                    },
                   } as Partial<ComunicadoBlock>);
                 }}
               >
@@ -462,7 +521,7 @@ export function FormatRibbonTypographySections({
                       { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
                       { align: "center" as const, icon: AlignCenter, label: "Centralizar", hint: H.alignCenter },
                       { align: "right" as const, icon: AlignRight, label: "Alinhar à direita", hint: H.alignRight },
-                      ...(isTextBlock
+                      ...(showParagraphJustify
                         ? ([
                             {
                               align: "justify" as const,
@@ -518,7 +577,7 @@ export function FormatRibbonTypographySections({
                       <Icon size={15} aria-hidden="true" />
                     </TdRibbonIconButton>
                   ))}
-                  {isTextBlock ? (
+                  {showParagraphLists ? (
                     <>
                       <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
                       <TdRibbonIconButton
@@ -541,13 +600,14 @@ export function FormatRibbonTypographySections({
                   ) : null}
                 </div>
               </div>
-              {isTextBlock && textBlock ? (
+              {showParagraphSpacing && spacingSource ? (
                 <div className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--spacing">
                   <ParagraphSpacingMenu
                     variant={embed ? "inline" : "popover"}
                     namedStyleValue={namedStyleValue}
-                    lineHeight={textBlock.style?.lineHeight ?? 1.15}
-                    letterSpacing={textBlock.style?.letterSpacing ?? 0}
+                    showNamedStyle={showParagraphNamedStyle}
+                    lineHeight={currentLineHeight}
+                    letterSpacing={currentLetterSpacing}
                     onNamedStyle={(value) => applySelectedNamedTextStyle(value)}
                     onLineHeight={(value) => updateSelectedStyle({ lineHeight: value })}
                     onLetterSpacing={(value) => updateSelectedStyle({ letterSpacing: value })}
