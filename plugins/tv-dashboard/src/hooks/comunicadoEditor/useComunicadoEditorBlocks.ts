@@ -47,6 +47,7 @@ import {
   type ComunicadoConfig,
   type ComunicadoDataDisplayMode,
   type ComunicadoDataFilters,
+  type ComunicadoInputBlock,
   type ComunicadoKpiPartRef,
   type ComunicadoShapeKind,
   type ComunicadoTablePartRef,
@@ -304,6 +305,40 @@ export function useComunicadoEditorBlocks({
         ...configRef.current,
         dataFilters: filters,
         version: Math.max(configRef.current.version ?? 3, 4),
+      });
+    },
+    [commitWithHistory, configRef],
+  );
+
+  /**
+   * Atualiza bloco `input` e, se alvo = slide, espelha defaultValue em dataFilters
+   * no mesmo commit (evita corrida updateSelected → setDataFilters).
+   */
+  const patchInputBlock = useCallback(
+    (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => {
+      const current = configRef.current;
+      let nextFilters = current.dataFilters;
+      const nextBlocks = (current.blocks ?? []).map((item) => {
+        if (item.id !== blockId || item.type !== "input") return item;
+        const nextInput = { ...item.input, ...inputPatch };
+        const scope = nextInput.targetScope === "sources" ? "sources" : "slide";
+        if (scope === "slide" && nextInput.paramKey) {
+          const filters = { ...(current.dataFilters ?? {}) };
+          const value = nextInput.defaultValue;
+          if (value === undefined || value === null || value === "") {
+            delete filters[nextInput.paramKey];
+          } else {
+            filters[nextInput.paramKey] = value;
+          }
+          nextFilters = Object.keys(filters).length > 0 ? filters : undefined;
+        }
+        return { ...item, input: nextInput } as ComunicadoBlock;
+      });
+      commitWithHistory({
+        ...current,
+        blocks: nextBlocks,
+        dataFilters: nextFilters,
+        version: Math.max(current.version ?? 3, 4),
       });
     },
     [commitWithHistory, configRef],
@@ -897,6 +932,7 @@ export function useComunicadoEditorBlocks({
     openDataPanel,
     openDataCatalog,
     setDataFilters,
+    patchInputBlock,
     addShape,
     addIconBlock,
     groupSelected,

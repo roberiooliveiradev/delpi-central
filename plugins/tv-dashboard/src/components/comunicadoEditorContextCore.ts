@@ -5,6 +5,7 @@ import type {
   ComunicadoBlock,
   ComunicadoConfig,
   ComunicadoDataFilters,
+  ComunicadoInputBlock,
   ComunicadoListType,
   ComunicadoNamedTextStyle,
   ComunicadoShapeKind,
@@ -150,6 +151,8 @@ export type ComunicadoEditorContextValue = {
   /** Liga os dois blocos selecionados com uma seta (MVP conector). */
   connectSelected: () => void;
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
+  /** Atualiza input + espelho dataFilters (escopo slide) num único commit. */
+  patchInputBlock: (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => void;
   setSpeakerNotes: (notes: string) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;

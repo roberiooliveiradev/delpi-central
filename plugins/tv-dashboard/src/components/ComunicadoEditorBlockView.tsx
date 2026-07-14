@@ -39,7 +39,6 @@ import {
   resolveInputTargetScope,
   type ComunicadoBlock,
   type ComunicadoChartPartFrame,
-  type ComunicadoDataFilters,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
   type ComunicadoChartViewBlock,
@@ -729,17 +728,13 @@ function EditorInputBlock({
   fontScale,
   className,
   configBlocks,
-  dataFilters,
-  updateBlock,
-  setDataFilters,
+  patchInputBlock,
 }: {
   block: ComunicadoInputBlock;
   fontScale?: number;
   className?: string;
   configBlocks: ComunicadoBlock[];
-  dataFilters: ComunicadoDataFilters | undefined;
-  updateBlock: (id: string, patch: Partial<ComunicadoBlock>) => void;
-  setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
+  patchInputBlock: (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => void;
 }) {
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   useEffect(() => {
@@ -790,16 +785,7 @@ function EditorInputBlock({
       embedded
       className={className}
       onInputValueChange={(_blockId, value) => {
-        const nextInput = { ...block.input, defaultValue: value };
-        updateBlock(block.id, { input: nextInput });
-        if (resolveInputTargetScope(nextInput) !== "slide" || !nextInput.paramKey) return;
-        const filters = { ...(dataFilters ?? {}) };
-        if (value === undefined || value === null || value === "") {
-          delete filters[nextInput.paramKey];
-        } else {
-          filters[nextInput.paramKey] = value;
-        }
-        setDataFilters(Object.keys(filters).length > 0 ? filters : undefined);
+        patchInputBlock(block.id, { defaultValue: value });
       }}
     />
   );
@@ -824,7 +810,7 @@ export function ComunicadoEditorBlockView({
   isEditingText = false,
   dataLoading = false,
 }: Props) {
-  const { updateBlock, config, setDataFilters } = useComunicadoEditor();
+  const { updateBlock, config, patchInputBlock } = useComunicadoEditor();
   const slideDataFilters = config.dataFilters ?? null;
   const dataParamLabelProps = useMemo(
     () => ({
@@ -915,9 +901,7 @@ export function ComunicadoEditorBlockView({
         fontScale={fontScale}
         className={className}
         configBlocks={config.blocks ?? []}
-        dataFilters={config.dataFilters}
-        updateBlock={updateBlock}
-        setDataFilters={setDataFilters}
+        patchInputBlock={patchInputBlock}
       />
     );
   }

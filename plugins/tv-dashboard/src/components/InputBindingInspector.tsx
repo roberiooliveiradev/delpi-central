@@ -9,6 +9,7 @@ import {
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
@@ -31,7 +32,7 @@ function schemasForTargets(
 }
 
 export function InputBindingInspector({ pane = false }: Props) {
-  const { selected, config, updateSelected, setDataFilters } = useComunicadoEditor();
+  const { selected, config, patchInputBlock } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
 
   useEffect(() => {
@@ -82,20 +83,19 @@ export function InputBindingInspector({ pane = false }: Props) {
   const sources = listDataSourceBlocks(config.blocks ?? []);
 
   const applyInputPatch = (patch: Partial<ComunicadoInputBlock["input"]>) => {
-    const nextInput = { ...block.input, ...patch };
-    updateSelected({ input: nextInput } as Partial<ComunicadoInputBlock>);
-    const scope = nextInput.targetScope === "sources" ? "sources" : "slide";
-    if (scope === "slide" && nextInput.paramKey) {
-      const filters = { ...(config.dataFilters ?? {}) };
-      const value = nextInput.defaultValue;
-      if (value === undefined || value === null || value === "") delete filters[nextInput.paramKey];
-      else filters[nextInput.paramKey] = value;
-      setDataFilters(Object.keys(filters).length > 0 ? filters : undefined);
-    }
+    patchInputBlock(block.id, patch);
   };
 
   const singleSchema: DataParamSchema =
     field && block.input.paramKey ? { [block.input.paramKey]: field } : {};
+
+  const labelByKey = (key: string): string => {
+    for (const schema of schemas) {
+      const label = schema[key]?.label;
+      if (typeof label === "string" && label.trim()) return label;
+    }
+    return key;
+  };
 
   return (
     <DeckPropertySection
@@ -111,6 +111,7 @@ export function InputBindingInspector({ pane = false }: Props) {
         <FormSelectControl
           id="td-input-scope"
           ariaLabel="Alvo do filtro"
+          portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           value={targetScope}
           onChange={(value) =>
             applyInputPatch({
@@ -166,13 +167,14 @@ export function InputBindingInspector({ pane = false }: Props) {
         <FormSelectControl
           id="td-input-param"
           ariaLabel="Parâmetro da rota"
+          portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           value={block.input.paramKey || ""}
           onChange={(value) => applyInputPatch({ paramKey: value, defaultValue: null })}
           options={[
             { value: "", label: "Selecione…" },
             ...paramKeys.map((key) => ({
               value: key,
-              label: (schemas[0]?.[key]?.label as string | undefined) || key,
+              label: labelByKey(key),
             })),
           ]}
         />
