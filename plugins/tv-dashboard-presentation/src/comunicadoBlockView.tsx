@@ -14,7 +14,7 @@ import {
   isComunicadoVisualBoxBlock,
   visualBoxBlockModifierClasses,
 } from "./comunicadoVisualBox";
-import type { ComunicadoBlock, ComunicadoDataBlock } from "./comunicadoTypes";
+import type { ComunicadoBlock, ComunicadoDataBlock, ComunicadoDataFilters } from "./comunicadoTypes";
 import { ChartViewBlockView } from "./chartViewBlockView";
 import { DataSourceBlockView } from "./dataSourceBlockView";
 import { KpiViewBlockView } from "./kpiViewBlockView";
@@ -29,6 +29,10 @@ type Props = {
   /** Quando true, o pai controla left/top/width/height. */
   embedded?: boolean;
   dataLoading?: boolean;
+  /** Filtros do slide — exibidos no cartão da fonte de dados. */
+  slideDataFilters?: ComunicadoDataFilters | null;
+  labelForDataParamKey?: (key: string) => string;
+  labelForDataParamValue?: (key: string, value: string) => string;
   /** Conteúdo de texto customizado (editor); só caixas visuais. */
   visualBoxTextContent?: ReactNode;
   visualBoxTextClassName?: string;
@@ -97,6 +101,9 @@ export function ComunicadoBlockView({
   interactive = false,
   embedded = false,
   dataLoading = false,
+  slideDataFilters = null,
+  labelForDataParamKey,
+  labelForDataParamValue,
   visualBoxTextContent,
   visualBoxTextClassName,
   visualBoxInnerStyle,
@@ -213,6 +220,9 @@ export function ComunicadoBlockView({
         interactive={interactive}
         loading={dataLoading}
         editorMode={interactive}
+        slideFilters={slideDataFilters}
+        labelForParamKey={labelForDataParamKey}
+        labelForParamValue={labelForDataParamValue}
       />,
     );
   }

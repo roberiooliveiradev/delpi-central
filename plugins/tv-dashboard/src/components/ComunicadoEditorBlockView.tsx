@@ -47,7 +47,10 @@ import {
   type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { useCallback, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useMemo, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+
+import { ENUM_OPTION_LABELS, resolveParamFieldLabel } from "../content/dataParamCatalog";
+import { DATE_RANGE_PRESET_OPTIONS } from "../utils/dateRangePresets";
 
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
@@ -714,6 +717,16 @@ function EditorKpiViewBlock({
   );
 }
 
+function resolveEditorDataParamValueLabel(key: string, value: string): string {
+  const fromEnum = ENUM_OPTION_LABELS[key]?.[value];
+  if (fromEnum) return fromEnum;
+  const fromPreset = DATE_RANGE_PRESET_OPTIONS.find((item) => item.value === value)?.label;
+  if (key === "dateRangePreset" && fromPreset) return fromPreset;
+  if (value === "true") return "Sim";
+  if (value === "false") return "Não";
+  return value;
+}
+
 /** Renderização de blocos no editor — mídia autenticada e controles de vídeo. */
 export function ComunicadoEditorBlockView({
   block,
@@ -723,7 +736,16 @@ export function ComunicadoEditorBlockView({
   isEditingText = false,
   dataLoading = false,
 }: Props) {
-  const { updateBlock } = useComunicadoEditor();
+  const { updateBlock, config } = useComunicadoEditor();
+  const slideDataFilters = config.dataFilters ?? null;
+  const dataParamLabelProps = useMemo(
+    () => ({
+      slideDataFilters,
+      labelForDataParamKey: (key: string) => resolveParamFieldLabel(key),
+      labelForDataParamValue: resolveEditorDataParamValueLabel,
+    }),
+    [slideDataFilters],
+  );
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
     position: "relative",
@@ -832,6 +854,7 @@ export function ComunicadoEditorBlockView({
       embedded
       className={className}
       dataLoading={dataLoading}
+      {...dataParamLabelProps}
     />
   );
 }

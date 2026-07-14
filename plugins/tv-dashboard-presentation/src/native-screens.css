@@ -1387,43 +1387,96 @@
 }
 
 .tdp-data-source {
+  --tdp-data-source-fg: var(--tdp-data-text, #0f172a);
+  container-type: size;
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 0.35em;
-  padding: 0.5em;
+  padding: 0.65em 0.7em;
   box-sizing: border-box;
+  overflow: hidden;
   border: 2px dashed color-mix(in srgb, var(--tdp-data-accent, #089bdb) 45%, transparent);
   border-radius: 12px;
   background: var(
     --tdp-data-source-bg,
-    color-mix(in srgb, var(--tdp-data-accent, #089bdb) 8%, var(--tdp-data-bg, #0b1520))
+    color-mix(in srgb, var(--tdp-data-accent, #089bdb) 8%, var(--tdp-data-bg, #ffffff))
   );
-  color: var(--tdp-data-accent-strong, #38bdf8);
-  text-align: center;
+  color: var(--tdp-data-source-fg);
+  text-align: left;
+  font-size: clamp(12px, 7.5cqmin, 32px);
 }
 
 .tdp-data-source--editor {
   cursor: default;
 }
 
+.tdp-data-source__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4em;
+  min-width: 0;
+}
+
+.tdp-data-source__icon {
+  flex: 0 0 auto;
+  width: 1.15em;
+  height: 1.15em;
+  stroke-width: 1.75;
+  color: inherit;
+}
+
 .tdp-data-source__label {
-  font-size: clamp(9px, 1vw, 11px);
-  font-weight: 600;
-  color: var(--tdp-data-text, #cbd5e1);
-  line-height: 1.2;
-  max-width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 1em;
+  font-weight: 700;
+  color: inherit;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  word-break: break-word;
+}
+
+.tdp-data-source__meta {
+  font-size: 0.72em;
+  font-weight: 500;
+  line-height: 1.25;
+  opacity: 0.78;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tdp-data-source__filters {
+  list-style: none;
+  margin: 0.15em 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  min-height: 0;
+  overflow: hidden;
+  font-size: 0.78em;
+  line-height: 1.3;
+  opacity: 0.9;
+}
+
+.tdp-data-source__filter {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .tdp-data-source__hint {
-  font-size: 0.75em;
-  color: var(--tdp-data-muted, #94a3b8);
+  font-size: 0.72em;
+  opacity: 0.75;
+  color: inherit;
 }
 
 .tdp-data-chart--typed {

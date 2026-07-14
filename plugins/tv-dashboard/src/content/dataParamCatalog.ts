@@ -33,6 +33,7 @@ export const PARAM_FIELD_LABELS: Record<string, string> = {
   "date": "Data",
   "date_end": "Data fim",
   "date_from": "Data início",
+  "dateRangePreset": "Período",
   "date_start": "Data início",
   "date_to": "Data fim",
   "department": "Departamento",

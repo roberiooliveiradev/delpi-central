@@ -458,6 +458,14 @@ export {
 export { TableViewBlockView } from "./tableViewBlockView";
 export { DataSourceBlockView } from "./dataSourceBlockView";
 export {
+  DATA_SOURCE_DATE_RANGE_PRESET_LABELS,
+  DATA_SOURCE_PARAM_LABELS,
+  formatDataSourceBindingSummary,
+  formatDataSourceFilterLines,
+  type DataSourceBindingSummary,
+  type FormatDataSourceBindingSummaryOptions,
+} from "./formatDataSourceBindingSummary";
+export {
   CHART_ELEMENT_CATALOG,
   isChartElementApplicable,
   isChartElementEnabled,

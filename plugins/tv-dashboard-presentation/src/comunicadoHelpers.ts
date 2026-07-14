@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 
 import {
   DECK_CHART_DEFAULTS,
-  DECK_COLOR_ACCENT,
+  AUTOMATIC_TEXT_COLOR,
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
   DECK_KPI_DEFAULTS,
@@ -174,7 +174,7 @@ export function createDataSourceBlock(
     id: newBlockId(),
     type: "data_source",
     frame: { x: 8, y: 30, w: 18, h: 18 },
-    style: { zIndex: 1, color: DECK_COLOR_ACCENT },
+    style: { zIndex: 1, color: AUTOMATIC_TEXT_COLOR },
     dataBinding: {
       operationId,
       params: { ...(options.defaultParams ?? {}) },
