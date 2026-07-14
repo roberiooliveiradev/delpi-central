@@ -18,7 +18,7 @@ function ctx(
 }
 
 describe("resolveSelectionSections", () => {
-  it("texto e título compartilham tipografia + frame + organize", () => {
+  it("texto e título: tipografia → caixa → exibição → posição → organizar", () => {
     const text = resolveSelectionSections(
       ctx({
         selected: {
@@ -30,11 +30,14 @@ describe("resolveSelectionSections", () => {
       }),
     );
     expect(text).toEqual(
-      expect.arrayContaining(["typography", "textBox", "frame", "organize"]),
+      expect.arrayContaining(["typography", "textBox", "display", "frame", "organize"]),
     );
+    expect(text.indexOf("textBox")).toBeLessThan(text.indexOf("display"));
+    expect(text.indexOf("display")).toBeLessThan(text.indexOf("frame"));
+    expect(text.indexOf("frame")).toBeLessThan(text.indexOf("organize"));
   });
 
-  it("ícone e imagem incluem frame + organize (não empty)", () => {
+  it("ícone e imagem incluem display + frame + organize (não empty)", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -46,7 +49,7 @@ describe("resolveSelectionSections", () => {
           } as SelectionSectionContext["selected"],
         }),
       ),
-    ).toEqual(expect.arrayContaining(["shapeChrome", "frame", "organize"]));
+    ).toEqual(expect.arrayContaining(["shapeChrome", "display", "frame", "organize"]));
 
     expect(
       resolveSelectionSections(
@@ -58,10 +61,10 @@ describe("resolveSelectionSections", () => {
           } as SelectionSectionContext["selected"],
         }),
       ),
-    ).toEqual(expect.arrayContaining(["media", "imageCrop", "frame", "organize"]));
+    ).toEqual(expect.arrayContaining(["media", "imageCrop", "display", "frame", "organize"]));
   });
 
-  it("fonte de dados aponta para hint + frame", () => {
+  it("fonte de dados aponta para hint + display + frame", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -72,7 +75,7 @@ describe("resolveSelectionSections", () => {
           } as SelectionSectionContext["selected"],
         }),
       ),
-    ).toEqual(expect.arrayContaining(["dataSourceHint", "frame", "organize"]));
+    ).toEqual(expect.arrayContaining(["dataSourceHint", "display", "frame", "organize"]));
   });
 
   it("multi-seleção: alinhar + organize", () => {
@@ -125,6 +128,7 @@ describe("resolveSelectionSections", () => {
         "chartLabels",
         "chartAxes",
         "chartSeries",
+        "display",
         "frame",
         "organize",
       ]),
@@ -143,10 +147,10 @@ describe("resolveSelectionSections", () => {
           selectedKpiPart: { kind: "title" },
         }),
       ),
-    ).toEqual(expect.arrayContaining(["shapeChrome", "typography", "organize"]));
+    ).toEqual(expect.arrayContaining(["shapeChrome", "typography", "display", "organize"]));
   });
 
-  it("forma tipada: galeria + chrome + tipografia + frame", () => {
+  it("forma tipada: galeria + chrome + tipografia + display + frame", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -162,6 +166,7 @@ describe("resolveSelectionSections", () => {
       "shapeGallery",
       "shapeChrome",
       "typography",
+      "display",
       "frame",
       "organize",
       "animation",
@@ -169,7 +174,7 @@ describe("resolveSelectionSections", () => {
     ]);
   });
 
-  it("tabela tipada: design + layout + frame", () => {
+  it("tabela tipada: design + layout + display + frame", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -187,6 +192,7 @@ describe("resolveSelectionSections", () => {
       "tableLayoutData",
       "tableLayoutDisplay",
       "tableLayoutAlign",
+      "display",
       "frame",
       "organize",
       "animation",
@@ -198,6 +204,7 @@ describe("resolveSelectionSections", () => {
     for (const id of [
       "typography",
       "textBox",
+      "display",
       "shapeGallery",
       "shapeChrome",
       "tableStyleOptions",

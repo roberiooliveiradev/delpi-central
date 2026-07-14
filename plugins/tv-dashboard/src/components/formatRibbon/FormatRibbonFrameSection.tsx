@@ -124,6 +124,7 @@ function FrameSizeGroup({
 }: FrameSizeGroupProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   useCloseOnOutside([rootRef, panelRef], open, () => setOpen(false));
 
@@ -151,6 +152,7 @@ function FrameSizeGroup({
       >
         <HintAction hint={hint} ariaLabel="Ajuda: Posição e tamanho">
           <button
+            ref={triggerRef}
             type="button"
             className={[
               "delpi-ui-shape-menu__trigger",
@@ -172,13 +174,15 @@ function FrameSizeGroup({
         {open ? (
           <AnchoredPanelPortal
             open={open}
-            anchorRef={rootRef}
+            anchorRef={triggerRef}
             panelRef={panelRef}
             portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
             className="td-frame-size-popover"
             role="dialog"
             aria-label="Posição e tamanho"
             preferredPlacement="bottom"
+            allowFlip={false}
+            gap={10}
           >
             {children}
           </AnchoredPanelPortal>

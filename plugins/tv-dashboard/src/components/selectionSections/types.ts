@@ -9,6 +9,7 @@ import type {
 /** Seções canônicas Elemento — mesma lista na ribbon e no painel. */
 export type SelectionSectionId =
   | "frame"
+  | "display"
   | "organize"
   | "typography"
   | "textBox"

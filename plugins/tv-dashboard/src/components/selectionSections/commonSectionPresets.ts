@@ -2,12 +2,17 @@ import type { SelectionSectionId, SelectionSectionLayout } from "./types";
 
 /**
  * Seções transversais Elemento — repetem em quase todo tipo.
- * Ribbon: compacta (posição + organizar).
+ * Ribbon: Exibição (após Caixa/chrome) → Posição → Organizar.
  * Pane: + animação + ações (remover / camada explícitas).
  */
-export const COMMON_RIBBON_TAIL = ["frame", "organize"] as const satisfies readonly SelectionSectionId[];
+export const COMMON_RIBBON_TAIL = [
+  "display",
+  "frame",
+  "organize",
+] as const satisfies readonly SelectionSectionId[];
 
 export const COMMON_PANE_TAIL = [
+  "display",
   "frame",
   "organize",
   "animation",
@@ -28,7 +33,7 @@ export function commonTailForLayout(
 
 /**
  * Anexa o rabo transversal a uma lista de seções tipadas.
- * `light`: só frame+organize (fontes de dados, parte sem animação).
+ * `light`: display+frame+organize (fontes de dados, parte sem animação).
  */
 export function withCommonTail(
   head: SelectionSectionId[],

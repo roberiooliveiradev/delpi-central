@@ -14,6 +14,7 @@ import {
 } from "./ChartDesignSections";
 import { ChartSeriesSection } from "./ChartSeriesSection";
 import { DataSourceHintSection } from "./DataSourceHintSection";
+import { DisplaySection } from "./DisplaySection";
 import { FrameSizeSection } from "./FrameSizeSection";
 import { ImageCropSection } from "./ImageCropSection";
 import { InputBindingSection } from "./InputBindingSection";
@@ -57,6 +58,8 @@ function renderSection(
   switch (id) {
     case "frame":
       return <FrameSizeSection key={id} layout={layout} />;
+    case "display":
+      return <DisplaySection key={id} layout={layout} />;
     case "organize":
       return <OrganizeSection key={id} layout={layout} labels={labels} />;
     case "alignMulti":

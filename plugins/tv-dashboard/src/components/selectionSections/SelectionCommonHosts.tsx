@@ -14,7 +14,7 @@ type CommonHostProps = {
 };
 
 /**
- * Host do rabo transversal: Posição · Organizar (ações) · Exibição · (pane) Animação · Ações.
+ * Host do rabo transversal: Exibição · Posição · Organizar · (pane) Animação · Ações.
  * Intersecta com `resolveSelectionSections` — só renderiza o que a seleção admite.
  */
 export function SelectionCommonTailHost({ layout, labels }: CommonHostProps) {
@@ -58,7 +58,7 @@ export function SelectionTypedWithTailHost({
   lightTail = false,
 }: CommonHostProps & {
   typed: SelectionSectionId[];
-  /** true → só frame+organize (sem animação/ações). */
+  /** true → só display+frame+organize (sem animação/ações). */
   lightTail?: boolean;
 }) {
   const tail: SelectionSectionId[] = lightTail

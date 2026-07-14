@@ -58,4 +58,20 @@ describe("resolveAnchoredPanelCoords", () => {
     expect(next.top).toBe(124);
     expect(next.left).toBe(100);
   });
+
+  it("allowFlip false mantém bottom mesmo sem espaço (clamp)", () => {
+    const next = resolveAnchoredPanelCoords({
+      anchor: { left: 40, top: 700, right: 80, bottom: 740, width: 40, height: 40 },
+      panelWidth: 200,
+      panelHeight: 200,
+      viewportWidth: 800,
+      viewportHeight: 800,
+      preferredPlacement: "bottom",
+      allowFlip: false,
+      gap: 4,
+      margin: 8,
+    });
+    expect(next.placement).toBe("bottom");
+    expect(next.top).toBe(800 - 200 - 8);
+  });
 });

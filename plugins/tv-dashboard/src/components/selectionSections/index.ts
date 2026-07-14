@@ -24,6 +24,7 @@ export {
   SelectionTypographyHost,
 } from "./SelectionCommonHosts";
 export { FrameSizeSection } from "./FrameSizeSection";
+export { DisplaySection } from "./DisplaySection";
 export { OrganizeSection, AlignMultiSection } from "./OrganizeSection";
 export { DataSourceHintSection } from "./DataSourceHintSection";
 export { TypographySection } from "./TypographySection";

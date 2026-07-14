@@ -14,18 +14,26 @@ export type AnchoredPanelPositionOptions = {
   matchAnchorWidth?: boolean;
   /** Preferência de lado; se não couber, tenta alternativas. */
   preferredPlacement?: AnchoredPanelPlacement;
+  /** false = não inverte bottom↔top (ribbon). Default true. */
+  allowFlip?: boolean;
 };
 
 function resolvePositionOptions(
   options: number | AnchoredPanelPositionOptions | undefined,
 ): Required<AnchoredPanelPositionOptions> {
   if (typeof options === "number") {
-    return { gap: options, matchAnchorWidth: false, preferredPlacement: "bottom" };
+    return {
+      gap: options,
+      matchAnchorWidth: false,
+      preferredPlacement: "bottom",
+      allowFlip: true,
+    };
   }
   return {
     gap: options?.gap ?? 4,
     matchAnchorWidth: Boolean(options?.matchAnchorWidth),
     preferredPlacement: options?.preferredPlacement ?? "bottom",
+    allowFlip: options?.allowFlip !== false,
   };
 }
 
@@ -35,7 +43,7 @@ export function useAnchoredPanelPosition(
   panelRef: RefObject<HTMLElement | null>,
   options: number | AnchoredPanelPositionOptions = 4,
 ): CSSProperties {
-  const { gap, matchAnchorWidth, preferredPlacement } = resolvePositionOptions(options);
+  const { gap, matchAnchorWidth, preferredPlacement, allowFlip } = resolvePositionOptions(options);
   const [style, setStyle] = useState<CSSProperties>({
     position: "fixed",
     top: -9999,
@@ -82,6 +90,7 @@ export function useAnchoredPanelPosition(
         viewportWidth: window.innerWidth,
         viewportHeight: window.innerHeight,
         preferredPlacement,
+        allowFlip,
       });
 
       setStyle({
@@ -116,7 +125,7 @@ export function useAnchoredPanelPosition(
       window.visualViewport?.removeEventListener("scroll", update);
       resizeObserver?.disconnect();
     };
-  }, [anchorRef, gap, matchAnchorWidth, open, panelRef, preferredPlacement]);
+  }, [allowFlip, anchorRef, gap, matchAnchorWidth, open, panelRef, preferredPlacement]);
 
   return style;
 }

@@ -12,7 +12,7 @@ import type { SelectionSectionContext, SelectionSectionId } from "./types";
 /**
  * Lista ordenada de seções Elemento para ribbon e painel (paridade).
  * Parte selecionada → prioriza seções da parte; bloco sem parte → seções do tipo.
- * O rabo transversal (frame/organize[/animation/actions]) vem de `withCommonTail`.
+ * O rabo transversal (display/frame/organize[/animation/actions]) vem de `withCommonTail`.
  */
 export function resolveSelectionSections(
   ctx: SelectionSectionContext,
@@ -32,7 +32,7 @@ export function resolveSelectionSections(
     if (chartPartAllowsFrame(ctx.selectedChartPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "organize"];
+    return [...head, "display", "organize"];
   }
 
   if (selected.type === "kpi_view" && ctx.selectedKpiPart) {
@@ -40,7 +40,7 @@ export function resolveSelectionSections(
     if (kpiPartAllowsFrame(ctx.selectedKpiPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "organize"];
+    return [...head, "display", "organize"];
   }
 
   if (selected.type === "table_view" && ctx.selectedTablePart) {
@@ -52,7 +52,7 @@ export function resolveSelectionSections(
     if (inputPartAllowsFrame(ctx.selectedInputPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "organize"];
+    return [...head, "display", "organize"];
   }
 
   switch (selected.type) {
@@ -106,6 +106,7 @@ export function resolveSelectionSections(
 /** Seções já migradas para host compartilhado (ribbon + pane). */
 export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "frame",
+  "display",
   "organize",
   "alignMulti",
   "dataSourceHint",

@@ -22,6 +22,10 @@ export type AnchoredPanelPortalProps = {
    * Ex.: `right` = ao lado do botão quando houver espaço.
    */
   preferredPlacement?: AnchoredPanelPlacement;
+  /** false = não inverte o lado preferido (ver `resolveAnchoredPanelCoords`). */
+  allowFlip?: boolean;
+  /** Folga em px entre âncora e painel. */
+  gap?: number;
   /**
    * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`).
    * Sem escopo, CSS do plugin sob `.dashboard-*` não aplica no body.
@@ -42,12 +46,16 @@ export function AnchoredPanelPortal({
   "aria-label": ariaLabel,
   matchAnchorWidth = false,
   preferredPlacement = "bottom",
+  allowFlip = true,
+  gap,
   portalScopeClassName,
   children,
 }: AnchoredPanelPortalProps) {
   const style = useAnchoredPanelPosition(open, anchorRef, panelRef, {
     matchAnchorWidth,
     preferredPlacement,
+    allowFlip,
+    ...(gap != null ? { gap } : null),
   });
   const theme = useDelpiUiPortalTheme(open, anchorRef);
 

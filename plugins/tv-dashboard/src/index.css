@@ -4004,9 +4004,12 @@ body.td-composer--marqueeing * {
 
 .dashboard-tv-dashboard .td-frame-size-popover.delpi-ui-shape-menu__panel,
 .dashboard-tv-dashboard .td-frame-size-popover {
+  position: fixed;
   min-width: min(468px, calc(100vw - 24px));
   max-width: min(520px, calc(100vw - 16px));
-  padding: 10px 12px;
+  padding: 12px 14px;
+  /* Evita herdar top/left absolutos do menu embutido quando o portal aplica coords. */
+  margin: 0;
 }
 
 .dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid {

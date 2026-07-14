@@ -41,16 +41,11 @@ type SectionProps = {
 };
 
 /**
- * Organizar = só ações (duplicar, camadas, mídia, remover).
- * Exibição = opacidade e ajuste da mídia (separado de ações).
+ * Compat: Organizar era ações+exibição no mesmo grupo.
+ * Preferir `FormatRibbonOrganizeActions` + seção `display` no host.
  */
 export function FormatRibbonOrganizeSection({ labels = {}, embed = false }: SectionProps) {
-  return (
-    <>
-      <FormatRibbonOrganizeActions labels={labels} embed={embed} />
-      <FormatRibbonOrganizeDisplay embed={embed} />
-    </>
-  );
+  return <FormatRibbonOrganizeActions labels={labels} embed={embed} />;
 }
 
 /** Ações do elemento: duplicar, recorte, biblioteca, camadas, remover. */

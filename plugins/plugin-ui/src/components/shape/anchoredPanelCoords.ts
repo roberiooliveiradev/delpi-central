@@ -10,6 +10,11 @@ export type AnchoredPanelCoordsInput = {
   viewportHeight: number;
   /** Preferência: usa se couber; senão tenta alternativas e cai para baixo/cima. */
   preferredPlacement?: AnchoredPanelPlacement;
+  /**
+   * Quando false, `bottom`/`top` não invertem o lado — só clamp no viewport.
+   * Útil na ribbon do editor (evita painel subir e cobrir a faixa).
+   */
+  allowFlip?: boolean;
 };
 
 export type AnchoredPanelCoords = {
@@ -45,6 +50,7 @@ function spaceAbove(anchor: AnchoredPanelCoordsInput["anchor"], gap: number): nu
 export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): AnchoredPanelCoords {
   const gap = input.gap ?? 4;
   const margin = input.margin ?? 8;
+  const allowFlip = input.allowFlip !== false;
   const { anchor, panelWidth, panelHeight, viewportWidth: vw, viewportHeight: vh } = input;
   const preferred = input.preferredPlacement ?? "bottom";
 
@@ -79,9 +85,12 @@ export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): Anc
   const tryBottom = (): AnchoredPanelCoords => {
     let top = anchor.bottom + gap;
     if (panelHeight > 0 && top + panelHeight > vh - margin) {
-      const above = anchor.top - panelHeight - gap;
-      top = above >= margin ? above : Math.max(margin, vh - panelHeight - margin);
-      return { placement: above >= margin ? "top" : "bottom", left: alignHorizontalBelow(), top };
+      if (allowFlip) {
+        const above = anchor.top - panelHeight - gap;
+        top = above >= margin ? above : Math.max(margin, vh - panelHeight - margin);
+        return { placement: above >= margin ? "top" : "bottom", left: alignHorizontalBelow(), top };
+      }
+      top = Math.max(margin, vh - panelHeight - margin);
     }
     return { placement: "bottom", left: alignHorizontalBelow(), top };
   };
@@ -89,9 +98,11 @@ export function resolveAnchoredPanelCoords(input: AnchoredPanelCoordsInput): Anc
   const tryTop = (): AnchoredPanelCoords => {
     let top = anchor.top - panelHeight - gap;
     if (panelHeight > 0 && top < margin) {
-      const below = anchor.bottom + gap;
-      if (below + panelHeight <= vh - margin || spaceBelow(anchor, gap, vh) >= spaceAbove(anchor, gap)) {
-        return { placement: "bottom", left: alignHorizontalBelow(), top: below };
+      if (allowFlip) {
+        const below = anchor.bottom + gap;
+        if (below + panelHeight <= vh - margin || spaceBelow(anchor, gap, vh) >= spaceAbove(anchor, gap)) {
+          return { placement: "bottom", left: alignHorizontalBelow(), top: below };
+        }
       }
       top = margin;
     }
