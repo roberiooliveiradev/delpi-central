@@ -8,7 +8,7 @@
 |------|--------|---------|
 | **1** | Concluída | MFE, API CRUD recursos/reservas, migrations V001, compose dev, smoke homolog |
 | **2** | Concluída | Compose prod, constraint anti-conflito V002, homolog API fase 2, testes unitários |
-| **3.1** | Concluída | Aprovação prévia (`requires_approval`), `approve.filial-*`, hold+TTL, notificações, fila MFE |
+| **3.1** | Concluída | Aprovação prévia (`requires_approval`), `approve.filial-*`, hold até `start_at`, notificações, fila MFE |
 | **3** | Planejada | Reagendar reserva, seed demo por filial, aprovação de série recorrente |
 
 ## Checklist produção

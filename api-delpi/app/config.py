@@ -243,6 +243,7 @@ class Settings:
     SCHEDULING_NOTIFICATIONS_ENABLED: bool = (
         _get_env("SCHEDULING_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
     )
+    # Legado: pendências expiram em start_at (não em TTL fixo). Mantido só por env compat.
     SCHEDULING_APPROVAL_TTL_HOURS: int = int(
         _get_env("SCHEDULING_APPROVAL_TTL_HOURS", default="24") or "24"
     )

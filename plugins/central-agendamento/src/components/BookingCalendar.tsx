@@ -88,9 +88,12 @@ function CalendarEventBlock({ event }: EventProps<CalendarEvent>) {
             {event.resourceName}
           </span>
           <span className="ca-cal-event__title">{event.title}</span>
-          <span className="ca-cal-event__meta">
+          <span className="ca-cal-event__meta ca-cal-event__meta--who">
             {event.status === "pending" ? "Pend. · " : ""}
             {event.bookedByName}
+          </span>
+          <span className="ca-cal-event__meta ca-cal-event__meta--when">
+            {format(event.originalStart, "HH:mm")}–{format(event.originalEnd, "HH:mm")}
           </span>
         </>
       ) : (
@@ -186,7 +189,7 @@ export function BookingCalendar({
           const item = event as CalendarEvent;
           const startLabel = format(item.originalStart, "dd/MM/yyyy HH:mm");
           const endLabel = format(item.originalEnd, "dd/MM/yyyy HH:mm");
-          return `${item.resourceName}\n${item.title}\n${startLabel} — ${endLabel}\n${resourceTypeLabel(item.resourceType)} · ${item.bookedByName}`;
+          return `${item.resourceName}\n${item.title}\nQuem: ${item.bookedByName}\nHorário: ${startLabel} — ${endLabel}\n${resourceTypeLabel(item.resourceType)}`;
         }}
       />
     </div>

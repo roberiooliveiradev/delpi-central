@@ -28,7 +28,7 @@ Doc completa: [api-delpi/docs/api/central-agendamento.md](../../api-delpi/docs/a
 2. Usuário com `view` solicita a reserva → status `pending` (ocupa o slot) + notificação aos aprovadores.
 3. Usuário com `approve` confirma ou rejeita (motivo obrigatório na rejeição).
 4. Solicitante recebe notificação com o resultado e quem decidiu.
-5. Sem decisão no TTL (`SCHEDULING_APPROVAL_TTL_HOURS`, default 24h) → `expired` e slot liberado.
+5. Sem decisão até o **início do horário solicitado** → `expired` e slot liberado.
 
 ## Migrations
 

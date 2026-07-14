@@ -40,7 +40,7 @@ Campo novo: `requires_approval` (boolean). Quando `true`, `POST /bookings` cria 
 `confirmed` · `pending` · `rejected` · `expired` · `cancelled`
 
 - `pending` e `confirmed` **ocupam** o horário (constraint exclusão).
-- TTL padrão: `SCHEDULING_APPROVAL_TTL_HOURS` (24h) → `expired` + notificação ao solicitante.
+- Expiração: `expires_at` = início do horário solicitado (`start_at`). Sem aprovação até lá → `expired` + notificação.
 - Recorrência **não** é permitida em recursos com `requires_approval`.
 - Autoaprovação bloqueada (exceto superadmin).
 

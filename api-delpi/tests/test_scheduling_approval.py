@@ -86,8 +86,32 @@ def test_create_booking_requires_approval_sets_pending() -> None:
     assert "aprovação" in message.lower()
     kwargs = repo.create_booking.call_args.kwargs
     assert kwargs["status"] == "pending"
-    assert kwargs["expires_at"] is not None
+    assert kwargs["expires_at"] == start
     notify.assert_called_once()
+
+
+def test_create_booking_rejects_past_start_when_requires_approval() -> None:
+    repo = MagicMock()
+    repo.expire_overdue_pending_bookings.return_value = []
+    repo.get_resource.return_value = {
+        "id": "res-1",
+        "branch_code": "ES",
+        "active": True,
+        "requires_approval": True,
+    }
+    start = datetime(2020, 1, 1, 10, 0, tzinfo=timezone.utc)
+
+    with pytest.raises(PluginsRepositoryError, match="já iniciou"):
+        CreateSchedulingBookingUseCase(repo).execute(
+            branch_code="ES",
+            resource_id="res-1",
+            title="Passado",
+            notes=None,
+            start_at=start,
+            end_at=start + timedelta(hours=1),
+            booked_by_user_id="user-1",
+            booked_by_name="Ana",
+        )
 
 
 def test_create_booking_blocks_recurrence_when_requires_approval() -> None:

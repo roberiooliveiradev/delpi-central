@@ -319,7 +319,10 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             UPDATE scheduling.bookings
                SET status = 'expired',
                    decided_at = NOW(),
-                   decision_reason = COALESCE(decision_reason, 'Prazo de aprovação expirado.'),
+                   decision_reason = COALESCE(
+                       decision_reason,
+                       'Prazo encerrado: o horário solicitado já iniciou sem aprovação.'
+                   ),
                    updated_at = NOW()
              WHERE id = ANY(%s)
                AND status = 'pending'

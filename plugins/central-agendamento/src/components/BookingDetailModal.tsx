@@ -99,14 +99,24 @@ export function BookingDetailModal({
           </button>
         </div>
 
+        <div className="ca-detail-highlights">
+          <div className="ca-detail-highlight">
+            <span className="ca-detail-highlight__label">Quem agendou</span>
+            <strong className="ca-detail-highlight__value">{event.bookedByName}</strong>
+          </div>
+          <div className="ca-detail-highlight">
+            <span className="ca-detail-highlight__label">Horário</span>
+            <strong className="ca-detail-highlight__value">
+              {format(event.originalStart, "dd/MM/yyyy HH:mm")} –{" "}
+              {format(event.originalEnd, "HH:mm")}
+            </strong>
+          </div>
+        </div>
+
         <dl className="ca-detail-list">
           <div>
             <dt>Recurso</dt>
             <dd>{event.resourceName}</dd>
-          </div>
-          <div>
-            <dt>Responsável</dt>
-            <dd>{event.bookedByName}</dd>
           </div>
           <div>
             <dt>Início</dt>
@@ -116,10 +126,13 @@ export function BookingDetailModal({
             <dt>Término</dt>
             <dd>{format(event.originalEnd, "dd/MM/yyyy HH:mm")}</dd>
           </div>
-          {event.status === "pending" && event.expiresAt ? (
+          {event.status === "pending" ? (
             <div>
-              <dt>Expira em</dt>
-              <dd>{format(new Date(event.expiresAt), "dd/MM/yyyy HH:mm")}</dd>
+              <dt>Aprovar até</dt>
+              <dd>
+                {format(event.originalStart, "dd/MM/yyyy HH:mm")}
+                <small className="ca-table__sub"> Início do horário solicitado</small>
+              </dd>
             </div>
           ) : null}
           {event.decidedByName ? (

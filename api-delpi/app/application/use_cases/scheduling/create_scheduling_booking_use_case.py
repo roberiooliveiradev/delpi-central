@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 
 from app.application.services.scheduling_portal_notification_service import (
@@ -9,7 +9,6 @@ from app.application.services.scheduling_portal_notification_service import (
 from app.application.use_cases.scheduling.expire_pending_scheduling_bookings_use_case import (
     ExpirePendingSchedulingBookingsUseCase,
 )
-from app.config import settings
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.infrastructure.persistence.plugins.repositories.scheduling.postgres_scheduling_repository import (
     BookingConflictError,
@@ -87,8 +86,14 @@ class CreateSchedulingBookingUseCase:
         status = "pending" if requires_approval else "confirmed"
         expires_at = None
         if requires_approval:
-            ttl_hours = max(1, int(settings.SCHEDULING_APPROVAL_TTL_HOURS or 24))
-            expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
+            # Expira no início do horário solicitado — após isso a reserva não faz sentido.
+            now = datetime.now(timezone.utc)
+            start_utc = start_at if start_at.tzinfo else start_at.replace(tzinfo=timezone.utc)
+            if start_utc <= now:
+                raise PluginsRepositoryError(
+                    "Não é possível solicitar aprovação para um horário que já iniciou."
+                )
+            expires_at = start_at
 
         data = self._repository.create_booking(
             resource_id=resource_id,

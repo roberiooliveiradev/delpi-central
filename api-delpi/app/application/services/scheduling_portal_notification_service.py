@@ -17,6 +17,27 @@ _CATEGORY = "central_agendamento"
 _APP_BASE = "/apps/central-agendamento"
 
 
+def _format_booking_window(booking: dict[str, Any]) -> str:
+    start_raw = booking.get("start_at")
+    end_raw = booking.get("end_at")
+    if not start_raw or not end_raw:
+        return ""
+    try:
+        from datetime import datetime
+
+        start = start_raw if isinstance(start_raw, datetime) else datetime.fromisoformat(
+            str(start_raw).replace("Z", "+00:00")
+        )
+        end = end_raw if isinstance(end_raw, datetime) else datetime.fromisoformat(
+            str(end_raw).replace("Z", "+00:00")
+        )
+        return (
+            f"{start.strftime('%d/%m/%Y %H:%M')} – {end.strftime('%H:%M')}"
+        )
+    except (TypeError, ValueError):
+        return ""
+
+
 def scheduling_portal_notifications_enabled() -> bool:
     if not settings.SCHEDULING_NOTIFICATIONS_ENABLED:
         return False
@@ -92,14 +113,16 @@ def notify_booking_approval_requested(
     resource_name = str(booking.get("resource_name") or "recurso")
     requester = str(booking.get("booked_by_name") or "Usuário")
     requester_id = str(booking.get("booked_by_user_id") or "").strip()
+    when_label = _format_booking_window(booking)
 
     payload: dict[str, Any] = {
         "permissionCodes": [approve_perm],
         "excludedUserIds": [requester_id] if requester_id and requester_id != "unknown" else [],
         "title": "Agendamento aguardando aprovação",
         "message": (
-            f"{requester} solicitou «{title}» em {resource_name}. "
-            "Abra a fila de aprovações para confirmar ou rejeitar."
+            f"{requester} solicitou «{title}» em {resource_name}"
+            + (f" para {when_label}" if when_label else "")
+            + ". Abra a fila de aprovações para confirmar ou rejeitar."
         ),
         "type": "warning",
         "category": _CATEGORY,
@@ -150,7 +173,7 @@ def notify_booking_decision(
         notif_type = "warning"
         notif_title = "Agendamento expirado"
         message = (
-            f"Sua solicitação «{title}» expirou sem aprovação no prazo. "
+            f"Sua solicitação «{title}» expirou sem aprovação até o início do horário. "
             "O horário foi liberado."
         )
     else:

@@ -1340,3 +1340,110 @@
     flex: 1;
   }
 }
+
+.ca-approvals__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.ca-approvals__resource {
+  margin: 0 0 12px;
+  color: var(--ca-muted);
+  font-size: 13px;
+}
+
+.ca-approvals__highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .ca-approvals__highlights {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ca-approvals__fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--ca-border);
+  background: color-mix(in srgb, var(--ca-accent) 6%, var(--ca-surface));
+}
+
+.ca-approvals__fact--person {
+  background: color-mix(in srgb, var(--ca-accent) 10%, var(--ca-surface));
+}
+
+.ca-approvals__fact--time {
+  background: color-mix(in srgb, var(--ca-warning, #f59e0b) 12%, var(--ca-surface));
+  border-color: color-mix(in srgb, var(--ca-warning, #f59e0b) 35%, var(--ca-border));
+}
+
+.ca-approvals__fact-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ca-muted);
+  margin-bottom: 2px;
+}
+
+.ca-approvals__fact-value {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ca-text);
+  line-height: 1.3;
+}
+
+.ca-detail-highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 640px) {
+  .ca-detail-highlights {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ca-detail-highlight {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--ca-border);
+  background: color-mix(in srgb, var(--ca-accent) 8%, var(--ca-surface));
+}
+
+.ca-detail-highlight__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--ca-muted);
+  margin-bottom: 4px;
+}
+
+.ca-detail-highlight__value {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ca-text);
+  line-height: 1.35;
+}
+
+.ca-cal-event__meta--who {
+  font-weight: 600;
+}
+
+.ca-cal-event__meta--when {
+  opacity: 0.92;
+}

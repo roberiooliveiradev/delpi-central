@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { CalendarClock, Check, UserRound, X } from "lucide-react";
 import { format } from "date-fns";
 
 import type { SchedulingBooking } from "../api/schedulingApi";
@@ -14,6 +14,19 @@ type Props = {
   onReject: (bookingId: string, reason: string) => Promise<void>;
   onRefresh: () => void;
 };
+
+function formatBookingWindow(startAt: string, endAt: string): string {
+  const start = new Date(startAt);
+  const end = new Date(endAt);
+  const sameDay =
+    start.getFullYear() === end.getFullYear() &&
+    start.getMonth() === end.getMonth() &&
+    start.getDate() === end.getDate();
+  if (sameDay) {
+    return `${format(start, "dd/MM/yyyy")} · ${format(start, "HH:mm")} – ${format(end, "HH:mm")}`;
+  }
+  return `${format(start, "dd/MM/yyyy HH:mm")} – ${format(end, "dd/MM/yyyy HH:mm")}`;
+}
 
 export function ApprovalsPanel({
   bookings,
@@ -89,20 +102,36 @@ export function ApprovalsPanel({
               className={`ca-approvals__item${isHighlight ? " ca-approvals__item--highlight" : ""}`}
             >
               <div className="ca-approvals__item-main">
-                <div>
+                <div className="ca-approvals__body">
                   <p className="ca-approvals__title">{booking.title}</p>
+                  <p className="ca-approvals__resource">{booking.resource_name ?? "Recurso"}</p>
+
+                  <div className="ca-approvals__highlights">
+                    <div className="ca-approvals__fact ca-approvals__fact--person">
+                      <UserRound size={18} aria-hidden="true" />
+                      <div>
+                        <span className="ca-approvals__fact-label">Quem solicitou</span>
+                        <strong className="ca-approvals__fact-value">{booking.booked_by_name}</strong>
+                      </div>
+                    </div>
+                    <div className="ca-approvals__fact ca-approvals__fact--time">
+                      <CalendarClock size={18} aria-hidden="true" />
+                      <div>
+                        <span className="ca-approvals__fact-label">Horário solicitado</span>
+                        <strong className="ca-approvals__fact-value">
+                          {formatBookingWindow(booking.start_at, booking.end_at)}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
                   <p className="ca-approvals__meta">
-                    {booking.resource_name ?? "Recurso"} · {booking.booked_by_name}
+                    Aprovação necessária até o início do horário
+                    {booking.expires_at
+                      ? ` (${format(new Date(booking.expires_at), "dd/MM/yyyy HH:mm")})`
+                      : ""}
+                    .
                   </p>
-                  <p className="ca-approvals__meta">
-                    {format(new Date(booking.start_at), "dd/MM/yyyy HH:mm")} —{" "}
-                    {format(new Date(booking.end_at), "dd/MM/yyyy HH:mm")}
-                  </p>
-                  {booking.expires_at ? (
-                    <p className="ca-approvals__meta">
-                      Expira em {format(new Date(booking.expires_at), "dd/MM/yyyy HH:mm")}
-                    </p>
-                  ) : null}
                   <span className="ca-status-badge ca-status-badge--pending">
                     {BOOKING_STATUS_LABELS.pending}
                   </span>
