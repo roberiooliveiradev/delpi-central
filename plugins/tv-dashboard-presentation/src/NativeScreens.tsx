@@ -32,10 +32,14 @@ export type NativeSlidePayload = {
   data: Record<string, unknown>;
 };
 
-function ErrorScreen({ message }: { message?: string }) {
+function ErrorScreen({ message, detail }: { message?: string; detail?: string }) {
+  const primary = (message || "").trim();
+  const secondary = (detail || "").trim();
+  const showSecondary = Boolean(secondary && secondary !== primary);
   return (
     <div className="tdp-native-screen tdp-native-screen--error">
-      <p>{message ?? "Dados indisponíveis."}</p>
+      <p>{primary || "Dados indisponíveis."}</p>
+      {showSecondary ? <p className="tdp-native-screen__error-detail">{secondary}</p> : null}
     </div>
   );
 }
@@ -83,7 +87,14 @@ function KpiDualScreen({
   secondaryValue: string;
   chartTitle?: string;
 }) {
-  if (data.error) return <ErrorScreen message={data.message} />;
+  if (data.error) {
+    return (
+      <ErrorScreen
+        message={typeof data.message === "string" ? data.message : undefined}
+        detail={typeof data.detail === "string" ? data.detail : undefined}
+      />
+    );
+  }
   const seriesPoints = normalizeSeriesPoints(data.seriesPoints);
   return (
     <div className={`tdp-native-screen tdp-oee${seriesPoints.length ? " tdp-oee--with-series" : ""}`}>
@@ -189,7 +200,14 @@ export function SuppliesStockValueScreen({
 }: {
   data: KpiScreenData & { stockValue?: unknown; currency?: string };
 }) {
-  if (data.error) return <ErrorScreen message={data.message} />;
+  if (data.error) {
+    return (
+      <ErrorScreen
+        message={typeof data.message === "string" ? data.message : undefined}
+        detail={typeof data.detail === "string" ? data.detail : undefined}
+      />
+    );
+  }
   return (
     <div className="tdp-native-screen tdp-oee">
       <header className="tdp-oee__header">
@@ -224,7 +242,14 @@ export function SuppliesStockAlertScreen({
 }: {
   data: KpiScreenData & { items?: StockAlertItem[]; itemLimit?: number };
 }) {
-  if (data.error) return <ErrorScreen message={data.message} />;
+  if (data.error) {
+    return (
+      <ErrorScreen
+        message={typeof data.message === "string" ? data.message : undefined}
+        detail={typeof data.detail === "string" ? data.detail : undefined}
+      />
+    );
+  }
   const items = Array.isArray(data.items) ? data.items.slice(0, 6) : [];
   return (
     <div className="tdp-native-screen tdp-stock-alert">
@@ -274,7 +299,14 @@ export function StrategicIndicatorsHeroScreen({
     competence?: string;
   };
 }) {
-  if (data.error) return <ErrorScreen message={data.message} />;
+  if (data.error) {
+    return (
+      <ErrorScreen
+        message={typeof data.message === "string" ? data.message : undefined}
+        detail={typeof data.detail === "string" ? data.detail : undefined}
+      />
+    );
+  }
   return (
     <div className="tdp-native-screen tdp-si-hero">
       <header className="tdp-si-hero__header">

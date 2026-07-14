@@ -1,4 +1,5 @@
 import type { ComunicadoDataBlock } from "./comunicadoTypes";
+import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import {
   resolveChartType,
   resolveEffectiveDisplayMode,
@@ -57,10 +58,11 @@ export function TvDataBlockView({ block, interactive = false, loading = false }:
   const label = binding.label ?? binding.operationId;
   const displayMode = resolveEffectiveDisplayMode(block);
 
-  if (resolved?.error) {
+  const errorText = resolveDataBlockErrorText(resolved);
+  if (errorText) {
     return (
       <div className="tdp-data-block tdp-data-block--error">
-        <span>{String(resolved.error)}</span>
+        <span>{errorText}</span>
       </div>
     );
   }

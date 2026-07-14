@@ -7,6 +7,7 @@ import {
   type ComunicadoKpiInteraction,
 } from "./comunicadoKpiParts";
 import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
+import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 
@@ -53,10 +54,11 @@ export function KpiViewBlockView({
   });
   const bound = Boolean(block.dataSourceId?.trim());
 
-  if (resolved?.error) {
+  const errorText = resolveDataBlockErrorText(resolved);
+  if (errorText) {
     return (
       <div className="tdp-data-block tdp-data-block--error">
-        <span>{String(resolved.error)}</span>
+        <span>{errorText}</span>
       </div>
     );
   }

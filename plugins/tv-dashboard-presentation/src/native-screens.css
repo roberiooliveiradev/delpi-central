@@ -967,6 +967,9 @@
   color: var(--tdp-data-error, #fca5a5);
   font-size: 0.85em;
   text-align: center;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 0.5em;
 }
 
 .tdp-data-block--placeholder {

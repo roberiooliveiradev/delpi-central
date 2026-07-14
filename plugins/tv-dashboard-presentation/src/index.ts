@@ -460,6 +460,10 @@ export {
 export { TableViewBlockView } from "./tableViewBlockView";
 export { DataSourceBlockView } from "./dataSourceBlockView";
 export {
+  resolveDataBlockErrorText,
+  type DataResolvedErrorFields,
+} from "./resolveDataBlockErrorText";
+export {
   DATA_SOURCE_DATE_RANGE_PRESET_LABELS,
   DATA_SOURCE_PARAM_LABELS,
   formatDataSourceBindingSummary,

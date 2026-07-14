@@ -24,10 +24,12 @@ def _optional_branch(cfg: dict[str, Any]) -> str | None:
     return None
 
 
-def _error(message: str, detail: str | None = None) -> dict[str, Any]:
-    payload: dict[str, Any] = {"error": True, "message": message}
-    if detail:
-        payload["detail"] = detail
+def _error(message_text: str, detail: str | None = None) -> dict[str, Any]:
+    """Erro de tela nativa: `message` genérico + `detail` com a causa da api-delpi."""
+    detail_text = (detail or "").strip()
+    payload: dict[str, Any] = {"error": True, "message": message_text}
+    if detail_text:
+        payload["detail"] = detail_text
     return payload
 
 

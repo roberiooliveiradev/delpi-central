@@ -3,6 +3,7 @@ import { tablePresetLabel } from "./comunicadoChartView";
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoTableInteraction } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
+import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
 import { applyTableViewDisplayLimits } from "./tableViewLimits";
 import { resolveTableColumns } from "./tvDataPresentation";
@@ -27,10 +28,11 @@ export function TableViewBlockView({
   const label = tablePresetLabel(block.tablePreset);
   const tableInteraction = interactive ? interaction : null;
 
-  if (resolved?.error) {
+  const errorText = resolveDataBlockErrorText(resolved);
+  if (errorText) {
     return (
       <div className="tdp-data-block tdp-data-block--error">
-        <span>{String(resolved.error)}</span>
+        <span>{errorText}</span>
       </div>
     );
   }

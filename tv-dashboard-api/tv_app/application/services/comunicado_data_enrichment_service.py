@@ -5,6 +5,7 @@ from typing import Any
 
 from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
+from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
 from tv_app.application.services.native_screen_cache_service import (
     native_data_cache_ttl_seconds,
@@ -561,10 +562,7 @@ class ComunicadoDataEnrichmentService:
         try:
             payload = self._fetch_cached(operation_id, merged_params, authorization)
         except Exception as exc:  # noqa: BLE001
-            result["resolved"] = {
-                "error": message("nativeDataUnavailable"),
-                "detail": str(exc),
-            }
+            result["resolved"] = resolve_data_fetch_error(exc)
             return result
 
         route_info = payload.get("route") or {}

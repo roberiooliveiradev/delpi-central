@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { sanitizeDataSourceStyle } from "./comunicadoHelpers";
 import { formatDataSourceBindingSummary } from "./formatDataSourceBindingSummary";
 import type { ComunicadoDataFilters, ComunicadoDataSourceBlock } from "./comunicadoTypes";
+import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 
 type Props = {
   block: ComunicadoDataSourceBlock;
@@ -48,11 +49,12 @@ export function DataSourceBlockView({
   });
   const paintStyle = resolveDataSourcePaintStyle(block);
 
-  if (block.resolved?.error) {
+  const errorText = resolveDataBlockErrorText(block.resolved);
+  if (errorText) {
     return (
       <div className="tdp-data-block tdp-data-block--error tdp-data-source" style={paintStyle}>
         <Database size={28} aria-hidden="true" />
-        <span>{String(block.resolved.error)}</span>
+        <span>{errorText}</span>
       </div>
     );
   }

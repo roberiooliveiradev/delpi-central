@@ -5,6 +5,7 @@ import {
 } from "./comunicadoChartView";
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
+import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
 import { TvDataSeriesChartWidget } from "./tvDataChartWidgets";
 
@@ -57,10 +58,11 @@ export function ChartViewBlockView({
   const chartInteraction = interactive ? interaction : null;
   const bound = Boolean(block.dataSourceId?.trim());
 
-  if (resolved?.error) {
+  const errorText = resolveDataBlockErrorText(resolved);
+  if (errorText) {
     return (
       <div className="tdp-data-block tdp-data-block--error">
-        <span>{String(resolved.error)}</span>
+        <span>{errorText}</span>
       </div>
     );
   }

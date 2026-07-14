@@ -336,6 +336,9 @@ export type ComunicadoDataResolved = {
   meta?: Record<string, unknown>;
   data?: unknown;
   error?: string | null;
+  /** Mensagem bruta da api-delpi / gateway (quando o error foi genérico legado). */
+  detail?: string | null;
+  statusCode?: number | null;
   displayMode?: string;
   label?: string;
   kpi?: { value?: unknown; label?: string };
