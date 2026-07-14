@@ -616,6 +616,23 @@ services:
     networks:
       - delpi-network
 
+  codigo-etica:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: codigo-etica/Dockerfile
+      target: production
+
+    container_name: delpi-codigo-etica
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   quality-labels:
     depends_on:
       - plugin-ui
@@ -1427,6 +1444,7 @@ services:
       - dashboard-production
       - eficiencia-fabril
       - cultura-delpi
+      - codigo-etica
       - pedidos-venda-abertos
       - propostas-comerciais
       - auditoria-5s

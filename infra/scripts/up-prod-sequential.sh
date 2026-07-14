@@ -124,6 +124,7 @@ FASE_MFE=(
   strategic-indicators
   customer-experience
   cultura-delpi
+  codigo-etica
   central-agendamento
   canal-denuncia
   quality-labels

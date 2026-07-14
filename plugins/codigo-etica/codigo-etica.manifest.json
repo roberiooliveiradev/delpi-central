@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "codigo-etica",
+  "name": "Código de Ética",
+  "description": "Consulta ao Código de Ética institucional da DELPI.",
+  "category": "Institucional",
+  "icon": "book-open",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/codigo-etica",
+  "entry": "/apps/codigo-etica/assets/remoteEntry.js",
+  "ui": {
+    "renderMode": "federated"
+  },
+  "permissions": [
+    {
+      "code": "codigo-etica.access",
+      "name": "Acessar Código de Ética",
+      "description": "Permite abrir e consultar o Código de Ética no portal.",
+      "module": "codigo-etica"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/codigo-etica",
+      "label": "Código de Ética",
+      "icon": "book-open",
+      "permission": "codigo-etica.access",
+      "showInMenu": true,
+      "order": 20
+    }
+  ]
+}
