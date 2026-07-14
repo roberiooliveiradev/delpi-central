@@ -3957,7 +3957,7 @@ body.td-composer--marqueeing * {
   max-width: min(420px, 92vw);
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal {
+.dashboard-tv-dashboard .td-text-effects-panel {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -3965,7 +3965,12 @@ body.td-composer--marqueeing * {
   padding: 4px 2px 8px;
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal__row {
+.dashboard-tv-dashboard .td-selection-section--pane-typography .td-text-effects-panel {
+  padding: 0;
+  gap: 12px;
+}
+
+.dashboard-tv-dashboard .td-text-effects-panel__row {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -3973,7 +3978,11 @@ body.td-composer--marqueeing * {
   gap: 14px 18px;
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal__field {
+.dashboard-tv-dashboard .td-selection-section--pane-typography .td-text-effects-panel__row {
+  justify-content: flex-start;
+}
+
+.dashboard-tv-dashboard .td-text-effects-panel__field {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -3981,22 +3990,22 @@ body.td-composer--marqueeing * {
   min-width: 0;
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal__field--shadow {
+.dashboard-tv-dashboard .td-text-effects-panel__field--shadow {
   min-width: 168px;
   flex: 1 1 168px;
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal .td-deck-ribbon__select--stroke-w {
+.dashboard-tv-dashboard .td-text-effects-panel .td-deck-ribbon__select--stroke-w {
   width: 96px;
   min-width: 88px;
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal .td-deck-ribbon__select--shadow {
+.dashboard-tv-dashboard .td-text-effects-panel .td-deck-ribbon__select--shadow {
   width: 100%;
   min-width: 160px;
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal__reflection {
+.dashboard-tv-dashboard .td-text-effects-panel__reflection {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -4011,12 +4020,12 @@ body.td-composer--marqueeing * {
   cursor: pointer;
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal__reflection:hover {
+.dashboard-tv-dashboard .td-text-effects-panel__reflection:hover {
   border-color: color-mix(in srgb, var(--td-accent) 55%, var(--td-border));
 }
 
-.dashboard-tv-dashboard .td-text-effects-modal__reflection--on,
-.dashboard-tv-dashboard .td-text-effects-modal__reflection[aria-pressed="true"] {
+.dashboard-tv-dashboard .td-text-effects-panel__reflection--on,
+.dashboard-tv-dashboard .td-text-effects-panel__reflection[aria-pressed="true"] {
   border-color: var(--td-accent);
   background: color-mix(in srgb, var(--td-accent) 18%, var(--td-surface));
 }

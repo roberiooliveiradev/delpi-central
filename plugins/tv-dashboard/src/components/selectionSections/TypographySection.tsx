@@ -3,7 +3,8 @@ import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 /**
- * Tipografia (Fonte / Efeitos / Parágrafo) — mesma fonte na ribbon e no painel.
+ * Tipografia (Fonte / Efeitos / Parágrafo) — ribbon e painel.
+ * Efeitos: modal na ribbon; conteúdo do modal embutido na sidebar.
  */
 export function TypographySection({ layout }: { layout: SelectionSectionLayout }) {
   if (layout === "pane") {
