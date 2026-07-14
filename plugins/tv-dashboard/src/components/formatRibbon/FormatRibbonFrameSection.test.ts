@@ -5,18 +5,18 @@ import { patchComunicadoFrame } from "@delpi/tv-dashboard-presentation";
 describe("patchComunicadoFrame", () => {
   const base = { x: 10, y: 20, w: 30, h: 40 };
 
-  it("ajusta largura e reclampa X para caber no palco", () => {
+  it("ajusta largura sem empurrar X de volta para o slide", () => {
     expect(patchComunicadoFrame(base, "w", 95)).toEqual({
-      x: 5,
+      x: 10,
       y: 20,
       w: 95,
       h: 40,
     });
   });
 
-  it("ajusta posição X sem ultrapassar o limite direito", () => {
+  it("permite posição X fora do slide", () => {
     expect(patchComunicadoFrame(base, "x", 90)).toEqual({
-      x: 70,
+      x: 90,
       y: 20,
       w: 30,
       h: 40,

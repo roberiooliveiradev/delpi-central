@@ -11,6 +11,7 @@ import {
   resolvePaintTextColor,
 } from "@delpi/plugin-ui/index";
 
+import { clampFramePositionPercent } from "./frameDesignPixels";
 import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
   COMUNICADO_MARKER_RADIUS_DEFAULT,
@@ -1123,9 +1124,10 @@ function normalizeFrame(value: unknown, type: ComunicadoBlock["type"]): Comunica
     const parsed = typeof raw === "number" ? raw : Number(raw);
     return Number.isFinite(parsed) ? parsed : fallback;
   };
+  // Posição pode ficar fora do slide (0–100%); só tamanho é limitado.
   return {
-    x: Math.max(0, Math.min(100, num("x", 5))),
-    y: Math.max(0, Math.min(100, num("y", 10))),
+    x: clampFramePositionPercent(num("x", 5)),
+    y: clampFramePositionPercent(num("y", 10)),
     w: Math.max(2, Math.min(100, num("w", 90))),
     h: Math.max(1, Math.min(100, num("h", 20))),
   };
@@ -1331,10 +1333,11 @@ export type ComunicadoScreenDataLike = {
   customFonts?: ComunicadoCustomFontRef[];
 };
 
+/** Limita tamanho; posição livre (pode ultrapassar o slide). */
 export function clampFrame(frame: ComunicadoFrame): ComunicadoFrame {
   return {
-    x: Math.max(0, Math.min(100 - frame.w, frame.x)),
-    y: Math.max(0, Math.min(100 - frame.h, frame.y)),
+    x: clampFramePositionPercent(frame.x),
+    y: clampFramePositionPercent(frame.y),
     w: Math.max(2, Math.min(100, frame.w)),
     h: Math.max(1, Math.min(100, frame.h)),
   };

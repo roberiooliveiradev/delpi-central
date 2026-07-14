@@ -33,7 +33,7 @@ export function designYBottomLeftToTopLeft(
   return pageHeight - yBottom - boxHeight;
 }
 
-/** Reaplica clamp 0–100% nos quatro eixos. */
+/** Normaliza tamanho e posição (posição pode ficar fora do slide). */
 function clampFramePercent(pct: ComunicadoFrame): ComunicadoFrame {
   let next: ComunicadoFrame = { x: 0, y: 0, w: 0.5, h: 0.5 };
   next = patchComunicadoFrame(next, "w", pct.w);

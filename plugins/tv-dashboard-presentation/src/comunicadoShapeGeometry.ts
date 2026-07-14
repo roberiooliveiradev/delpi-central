@@ -6,6 +6,7 @@ import type {
   ComunicadoGeometryVertex,
   ComunicadoShapeBlock,
 } from "./comunicadoTypes";
+import { clampFramePositionPercent } from "./frameDesignPixels";
 import {
   isLineShapeKind,
   isPointShapeKind,
@@ -144,8 +145,8 @@ export function shapeBlockAllowsResize(block: ComunicadoShapeBlock): boolean {
 export function clampFrameForShapeBlock(block: ComunicadoShapeBlock, frame: ComunicadoFrame): ComunicadoFrame {
   if (isPointShapeKind(block.shape)) {
     return {
-      x: Math.max(0, Math.min(100, frame.x)),
-      y: Math.max(0, Math.min(100, frame.y)),
+      x: clampFramePositionPercent(frame.x),
+      y: clampFramePositionPercent(frame.y),
       w: 0,
       h: 0,
     };
@@ -153,16 +154,16 @@ export function clampFrameForShapeBlock(block: ComunicadoShapeBlock, frame: Comu
 
   if (isLineShapeKind(block.shape)) {
     return {
-      x: Math.max(0, Math.min(100 - frame.w, frame.x)),
-      y: Math.max(0, Math.min(100 - frame.h, frame.y)),
+      x: clampFramePositionPercent(frame.x),
+      y: clampFramePositionPercent(frame.y),
       w: Math.max(1, Math.min(100, frame.w)),
       h: Math.max(0.5, Math.min(100, frame.h)),
     };
   }
 
   return {
-    x: Math.max(0, Math.min(100 - frame.w, frame.x)),
-    y: Math.max(0, Math.min(100 - frame.h, frame.y)),
+    x: clampFramePositionPercent(frame.x),
+    y: clampFramePositionPercent(frame.y),
     w: Math.max(2, Math.min(100, frame.w)),
     h: Math.max(1, Math.min(100, frame.h)),
   };
@@ -171,8 +172,8 @@ export function clampFrameForShapeBlock(block: ComunicadoShapeBlock, frame: Comu
 export function clampFrameForBlock(block: ComunicadoBlock, frame: ComunicadoFrame): ComunicadoFrame {
   if (block.type === "shape") return clampFrameForShapeBlock(block, frame);
   return {
-    x: Math.max(0, Math.min(100 - frame.w, frame.x)),
-    y: Math.max(0, Math.min(100 - frame.h, frame.y)),
+    x: clampFramePositionPercent(frame.x),
+    y: clampFramePositionPercent(frame.y),
     w: Math.max(2, Math.min(100, frame.w)),
     h: Math.max(1, Math.min(100, frame.h)),
   };

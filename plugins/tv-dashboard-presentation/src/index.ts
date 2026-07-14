@@ -27,8 +27,11 @@ export {
   type ViewportPixelSize,
 } from "./viewportPixelSize";
 export {
+  clampFramePositionPercent,
   designPxToPercent,
   formatDesignPx,
+  FRAME_POSITION_SOFT_MAX,
+  FRAME_POSITION_SOFT_MIN,
   frameDesignPxToPercent,
   framePercentToDesignPx,
   hostDesignSizeFromFramePercent,

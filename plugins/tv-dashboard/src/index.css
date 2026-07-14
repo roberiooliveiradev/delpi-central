@@ -1155,7 +1155,8 @@
   height: auto;
   aspect-ratio: auto;
   border-radius: 0;
-  overflow: hidden;
+  /* Objetos podem ficar fora da área da apresentação; a TV corta via DesignViewportStage. */
+  overflow: visible;
   /*
    * Conteúdo do slide ≠ chrome UI.
    * No tema escuro do host, --delpi-ui-text/--tdp-data-text ficam claros e

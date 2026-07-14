@@ -53,7 +53,19 @@ export function hostDesignSizeFromFramePercent(
   };
 }
 
-/** Ajusta eixo do frame mantendo o bloco dentro do palco (0–100%). */
+/**
+ * Soft bound de posição (% do slide) — evita valores patológicos; pode ficar fora
+ * do retângulo 0–100 (objeto parcialmente ou totalmente fora da tela da TV).
+ */
+export const FRAME_POSITION_SOFT_MIN = -500;
+export const FRAME_POSITION_SOFT_MAX = 500;
+
+export function clampFramePositionPercent(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(FRAME_POSITION_SOFT_MIN, Math.min(FRAME_POSITION_SOFT_MAX, value));
+}
+
+/** Ajusta eixo do frame: tamanho limitado; posição livre (fora do slide permitido). */
 export function patchComunicadoFrame(
   frame: ComunicadoFrame,
   key: keyof ComunicadoFrame,
@@ -62,16 +74,9 @@ export function patchComunicadoFrame(
   const value = Number.isFinite(raw) ? raw : frame[key];
   if (key === "w" || key === "h") {
     const size = Math.max(0.5, Math.min(100, value));
-    const next = { ...frame, [key]: size };
-    if (key === "w") {
-      next.x = Math.max(0, Math.min(100 - size, frame.x));
-    } else {
-      next.y = Math.max(0, Math.min(100 - size, frame.y));
-    }
-    return next;
+    return { ...frame, [key]: size };
   }
-  const max = key === "x" ? 100 - frame.w : 100 - frame.h;
-  return { ...frame, [key]: Math.max(0, Math.min(max, value)) };
+  return { ...frame, [key]: clampFramePositionPercent(value) };
 }
 
 /**
