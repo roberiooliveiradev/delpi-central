@@ -944,6 +944,24 @@
   color: var(--a5s-muted);
 }
 
+.a5s-auditor-picker__search-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.a5s-auditor-picker__search-row .a5s-auditor-picker__search {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.a5s-auditor-picker__self {
+  flex: 0 0 auto;
+  align-self: center;
+  white-space: nowrap;
+}
+
 .a5s-auditor-picker__search {
   display: flex;
   align-items: center;
@@ -4590,4 +4608,36 @@ button.a5s-criterion-photo__thumb:focus-visible {
   .a5s-nc-board-treat-dialog__body {
     padding: 14px 16px 16px;
   }
+}
+
+/* ── Administração ── */
+
+.dashboard-auditoria-5s .a5s-admin-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid var(--a5s-border, var(--border));
+  background: var(--a5s-surface, var(--surface));
+}
+
+.dashboard-auditoria-5s .a5s-admin-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.dashboard-auditoria-5s .a5s-admin-card__text {
+  margin: 0;
+  color: var(--a5s-muted);
+  line-height: 1.5;
+}
+
+.dashboard-auditoria-5s .a5s-admin-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }

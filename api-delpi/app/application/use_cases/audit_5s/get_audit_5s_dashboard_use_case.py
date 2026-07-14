@@ -19,7 +19,13 @@ from app.infrastructure.persistence.plugins.repositories.audit_5s.postgres_audit
 
 VALID_BRANCHES = ("01", "02")
 VALID_SHIFTS = ("TURNO_1", "TURNO_2", "TURNO_3", "ADMINISTRATIVO")
-VALID_STATUSES = ("draft", "evaluation_complete", "nc_in_progress", "closed")
+VALID_STATUSES = (
+    "draft",
+    "evaluation_complete",
+    "nc_in_progress",
+    "closed",
+    "closed_without_nc_treatment",
+)
 VALID_GRANULARITIES = ("day", "week", "month")
 MAX_DATE_RANGE_DAYS = 366
 MAX_PAGE_SIZE = 100

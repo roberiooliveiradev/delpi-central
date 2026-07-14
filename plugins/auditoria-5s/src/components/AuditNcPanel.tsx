@@ -14,6 +14,7 @@ import {
   type NcAttachmentType,
   type Nonconformity,
 } from "../api/audit5sApi";
+import { isAuditClosed } from "../constants/audit5s";
 import { AuditNcItemCard } from "./AuditNcItemCard";
 import {
   buildNcTreatmentItems,
@@ -59,7 +60,7 @@ export function AuditNcPanel({
   >({});
   const persistedFormsRef = useRef<Record<string, NcFormState>>({});
 
-  const readOnly = audit.status === "closed";
+  const readOnly = isAuditClosed(audit.status);
 
   const load = useCallback(async () => {
     setLoading(true);

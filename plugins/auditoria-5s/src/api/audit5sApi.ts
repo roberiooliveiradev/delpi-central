@@ -409,6 +409,14 @@ export async function completeNcAction(ncId: string) {
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
 }
 
+export async function reopenNcAction(ncId: string) {
+  const res = await httpPost<ApiEnvelope<Nonconformity>>(
+    `${API_BASE}/nonconformities/${ncId.trim()}/reopen-action`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
 export async function fetchNcActions(ncId: string) {
   const res = await httpGet<ApiEnvelope<NcAction[]>>(
     `${API_BASE}/nonconformities/${ncId}/actions`,
@@ -434,6 +442,14 @@ export async function addNcAction(
 export async function closeAudit(auditId: string) {
   const res = await httpPost<ApiEnvelope<AuditDetail>>(
     `${API_BASE}/audits/${auditId}/close`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");
+}
+
+export async function closeAuditWithoutNcTreatment(auditId: string) {
+  const res = await httpPost<ApiEnvelope<AuditDetail>>(
+    `${API_BASE}/audits/${auditId.trim()}/close-without-nc-treatment`,
     {},
   );
   return unwrapApiDelpiEnvelope(res, "Erro na API de auditoria 5S");

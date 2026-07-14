@@ -148,7 +148,7 @@ Critérios com nota 1 ou 3 **não exigem** NC obrigatória para fechar a auditor
 
 ### 7.1 Edição do cabeçalho
 
-O cabeçalho permanece **editável** enquanto a auditoria **não** estiver `closed` (`draft`, `evaluation_complete`, `nc_in_progress`). Após o encerramento, a edição é bloqueada na UI e na API.
+O cabeçalho permanece **editável** enquanto a auditoria **não** estiver em status terminal (`closed` ou `closed_without_nc_treatment`). Após o encerramento, a edição é bloqueada na UI e na API.
 
 ---
 
@@ -159,11 +159,22 @@ O cabeçalho permanece **editável** enquanto a auditoria **não** estiver `clos
 | `draft` | Cabeçalho e/ou avaliação em andamento |
 | `evaluation_complete` | Todos os critérios com nota; pronto para NC |
 | `nc_in_progress` | Fase de NC aberta |
-| `closed` | Auditoria encerrada |
+| `closed` | Auditoria encerrada (NCs tratadas ou score 100%) |
+| `closed_without_nc_treatment` | Encerrada por admin **sem** tratar NCs em aberto |
 
 ```text
 draft → evaluation_complete → nc_in_progress → closed
+                                     ↘ (admin) closed_without_nc_treatment
 ```
+
+### 8.1 Encerramento administrativo sem tratar NCs
+
+Usuários com permissão `auditoria-5s.admin.filial-01` ou `auditoria-5s.admin.filial-02` (rotas `/apps/auditoria-5s/filial-XX/admin`) podem, na filial correspondente, em auditorias `evaluation_complete` ou `nc_in_progress` com NC pendente:
+
+1. Cancelar todas as NCs `open` / `in_progress` (`status=cancelled`).
+2. Definir a auditoria como `closed_without_nc_treatment`.
+
+Endpoint: `POST /quality/audit-5s/audits/{id}/close-without-nc-treatment` (exige admin da filial da auditoria).
 
 ---
 
@@ -174,3 +185,4 @@ draft → evaluation_complete → nc_in_progress → closed
 | 2026-05-28 | Turnos: 1º, 2º, 3º, administrativo |
 | 2026-05-28 | Área auditada: cadastro sob demanda por filial |
 | 2026-05-28 | Validação: 100% dos critérios com nota (incl. NA) para concluir avaliação |
+| 2026-07-14 | Status `closed_without_nc_treatment` + admin por filial (`auditoria-5s.admin.filial-XX`) |

@@ -15,6 +15,7 @@ import {
   ListChecks,
   Lock,
   MoreHorizontal,
+  OctagonX,
   Pencil,
   Plus,
   RotateCcw,
@@ -31,11 +32,14 @@ import {
   auditStatusVariant,
   canAccessNc,
   canFinalizeWithoutNc,
+  canForceCloseUntreatedNcs,
   canReopenEvaluation,
+  isAuditClosed,
   listPrimaryActionLabel,
   ncActionLabel,
   shiftLabel,
 } from "../constants/audit5s";
+import { useAudit5sAdminPermission } from "../hooks/useAudit5sAdminPermission";
 import {
   EMPTY_AUDIT_LIST_FILTERS,
   buildAreaNameMap,
@@ -59,10 +63,12 @@ const STATUS_FILTER_OPTIONS = [
   { value: "evaluation_complete", label: "Pendente NC's" },
   { value: "nc_in_progress", label: "NC em andamento" },
   { value: "closed", label: "Encerrada" },
+  { value: "closed_without_nc_treatment", label: "Encerrado sem tratar NC's" },
 ];
 
 type Props = {
   branch: string;
+  pathname?: string;
   audits: AuditListItem[];
   areas: AuditArea[];
   loading: boolean;
@@ -74,6 +80,7 @@ type Props = {
   onOpenNc: (auditId: string) => void;
   onEditAudit: (auditId: string) => void;
   onFinalizeAudit: (auditId: string) => Promise<void>;
+  onForceCloseUntreatedNcs: (auditId: string) => Promise<void>;
   onReopenAudit: (auditId: string) => Promise<void>;
   onDeleteAudit: (auditId: string, status: string) => Promise<void>;
 };
@@ -88,7 +95,7 @@ function StatusBadge({
   const variant = auditStatusVariant(status, scorePct);
   const needsNc = auditRequiresNcTreatment(status, scorePct);
   const Icon =
-    status === "closed" ? (
+    isAuditClosed(status) ? (
       <Lock size={13} aria-hidden />
     ) : status === "draft" ? (
       <Clock3 size={13} aria-hidden />
@@ -106,16 +113,22 @@ function StatusBadge({
   );
 }
 
-function countRowMenuItems(item: AuditListItem): number {
-  let count = 4;
+function countRowMenuItems(item: AuditListItem, canAdmin: boolean): number {
+  // Ver avaliação + Exportar Excel + Exportar PDF
+  let count = 3;
   if (canAccessNc(item.status)) count += 1;
   if (canReopenEvaluation(item.status)) count += 1;
-  if (item.status !== "closed") count += 1;
+  if (!isAuditClosed(item.status)) count += 1;
+  if (canAdmin && canForceCloseUntreatedNcs(item.status, item.overall_score_pct)) {
+    count += 1;
+  }
+  if (canAdmin) count += 1; // Excluir auditoria
   return count;
 }
 
 export function AuditListView({
   branch,
+  pathname,
   audits,
   areas,
   loading,
@@ -127,18 +140,22 @@ export function AuditListView({
   onOpenNc,
   onEditAudit,
   onFinalizeAudit,
+  onForceCloseUntreatedNcs,
   onReopenAudit,
   onDeleteAudit,
 }: Props) {
+  const { canAdmin } = useAudit5sAdminPermission(branch, pathname);
   const [filters, setFilters] = useState<AuditListFilters>(EMPTY_AUDIT_LIST_FILTERS);
   const [page, setPage] = useState(1);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AuditListItem | null>(null);
   const [pendingReopen, setPendingReopen] = useState<AuditListItem | null>(null);
   const [pendingFinalize, setPendingFinalize] = useState<AuditListItem | null>(null);
+  const [pendingForceClose, setPendingForceClose] = useState<AuditListItem | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [reopening, setReopening] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [forceClosing, setForceClosing] = useState(false);
   const [exportingAuditId, setExportingAuditId] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -229,6 +246,20 @@ export function AuditListView({
     }
   };
 
+  const handleConfirmForceClose = async () => {
+    if (!pendingForceClose) return;
+    setForceClosing(true);
+    try {
+      await onForceCloseUntreatedNcs(pendingForceClose.id);
+      setPendingForceClose(null);
+      setOpenMenuId(null);
+    } catch {
+      // Erro exibido pelo Audit5sPage via banner.
+    } finally {
+      setForceClosing(false);
+    }
+  };
+
   const handleExport = async (item: AuditListItem, format: "excel" | "pdf") => {
     if (exportingAuditId) return;
     setExportError(null);
@@ -267,10 +298,12 @@ export function AuditListView({
           </p>
         </div>
         <div className="a5s-dashboard__actions">
-          <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenCatalog}>
-            <ListChecks size={16} aria-hidden />
-            Critérios
-          </button>
+          {canAdmin ? (
+            <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenCatalog}>
+              <ListChecks size={16} aria-hidden />
+              Critérios
+            </button>
+          ) : null}
           <button type="button" className="a5s-btn a5s-btn--ghost a5s-btn--header" onClick={onOpenNcBoard}>
             <AlertTriangle size={16} aria-hidden />
             Não conformidades
@@ -333,7 +366,8 @@ export function AuditListView({
           <Search size={16} aria-hidden />
           <NativeTextControl
             type="search"
-            placeholder="Buscar auditoria..."
+            placeholder="Buscar código, área, responsável ou auditor..."
+            aria-label="Buscar por código, área, responsável ou auditor"
             value={filters.search}
             onChange={(search) => updateFilters({ search })}
           />
@@ -465,7 +499,7 @@ export function AuditListView({
                               open={openMenuId === item.id}
                               onClose={() => setOpenMenuId(null)}
                               triggerRef={menuTriggerRef}
-                              itemCount={countRowMenuItems(item)}
+                              itemCount={countRowMenuItems(item, canAdmin)}
                             >
                               <button
                                 type="button"
@@ -514,7 +548,22 @@ export function AuditListView({
                                   Reabrir avaliação
                                 </button>
                               ) : null}
-                              {item.status !== "closed" ? (
+                              {canAdmin &&
+                              canForceCloseUntreatedNcs(item.status, item.overall_score_pct) ? (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="a5s-row-menu__item a5s-row-menu__danger"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setPendingForceClose(item);
+                                  }}
+                                >
+                                  <OctagonX size={14} aria-hidden />
+                                  Encerrar NC&apos;s em aberto
+                                </button>
+                              ) : null}
+                              {!isAuditClosed(item.status) ? (
                                 <button
                                   type="button"
                                   role="menuitem"
@@ -548,18 +597,20 @@ export function AuditListView({
                                 <FileText size={14} aria-hidden />
                                 Exportar PDF
                               </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                className="a5s-row-menu__danger"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  setPendingDelete(item);
-                                }}
-                              >
-                                <Trash2 size={14} aria-hidden />
-                                Excluir auditoria
-                              </button>
+                              {canAdmin ? (
+                                <button
+                                  type="button"
+                                  role="menuitem"
+                                  className="a5s-row-menu__danger"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setPendingDelete(item);
+                                  }}
+                                >
+                                  <Trash2 size={14} aria-hidden />
+                                  Excluir auditoria
+                                </button>
+                              ) : null}
                             </AuditRowMenuPortal>
                           </div>
                         </div>
@@ -694,6 +745,51 @@ export function AuditListView({
                 onClick={() => void handleConfirmReopen()}
               >
                 {reopening ? "Reabrindo..." : "Reabrir avaliação"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {pendingForceClose ? (
+        <div
+          className="a5s-confirm-overlay"
+          role="presentation"
+          onClick={() => !forceClosing && setPendingForceClose(null)}
+        >
+          <div
+            className="a5s-confirm-dialog"
+            role="alertdialog"
+            aria-labelledby="a5s-force-close-title"
+            aria-describedby="a5s-force-close-desc"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="a5s-force-close-title" className="a5s-confirm-dialog__title">
+              Encerrar NC&apos;s em aberto?
+            </h2>
+            <p id="a5s-force-close-desc" className="a5s-confirm-dialog__text">
+              A auditoria <strong>{pendingForceClose.audit_code}</strong> (
+              {formatAuditDate(pendingForceClose.audit_date)}, {pendingForceClose.area_name}) terá
+              todas as não conformidades em aberto canceladas e será encerrada com o status{" "}
+              <strong>Encerrado sem tratar NC&apos;s</strong>. Esta ação é administrativa e não pode
+              ser desfeita.
+            </p>
+            <div className="a5s-confirm-dialog__actions">
+              <button
+                type="button"
+                className="a5s-btn a5s-btn--ghost"
+                disabled={forceClosing}
+                onClick={() => setPendingForceClose(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="a5s-btn a5s-btn--danger"
+                disabled={forceClosing}
+                onClick={() => void handleConfirmForceClose()}
+              >
+                {forceClosing ? "Encerrando..." : "Encerrar NC's em aberto"}
               </button>
             </div>
           </div>

@@ -68,7 +68,7 @@ Arquivo: `me_controller.py` — todas exigem `@require_auth()`.
 | GET/PATCH/DELETE | `/me/portal-tour` | Progresso do tour gamificado do portal — ver [portal-tour.md](../06-portal-frontend/portal-tour.md) |
 | GET | `/me/portal-tour/catalog` | Catálogo de desafios disponíveis ao usuário (RBAC + novidades) |
 | GET | `/me/portal-tour/achievements` | Conquistas do tour (selos desbloqueados) |
-| GET | `/me/directory/users` | Busca usuários Delpi (exclui o caller); query `q`, `limit`, `app`, `permission` |
+| GET | `/me/directory/users` | Busca usuários Delpi (exclui o caller por padrão); query `q`, `limit`, `app`, `permission`, `include_self` |
 | POST | `/me/directory/users/lookup` | Resolve nomes por `{ "ids": ["uuid", ...] }` |
 
 Arquivo: `portal_tour_controller.py` (`portal_tour_bp`).

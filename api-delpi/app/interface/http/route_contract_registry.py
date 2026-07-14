@@ -555,10 +555,14 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     ),
     "attach_audit_5s_evidence": RouteContract("audit_5s_attachment", "scalar"),
     "complete_audit_5s_nc_action": RouteContract("audit_5s_nc_action", "scalar"),
+    "reopen_audit_5s_nc_action": RouteContract("audit_5s_nc_action", "scalar"),
     "get_audit_5s_analytics_dashboard": RouteContract(
         "audit_5s_analytics", "composite_analysis"
     ),
     "close_audit_5s_audit": RouteContract("audit_5s_audit", "scalar"),
+    "close_audit_5s_audit_without_nc_treatment": RouteContract(
+        "audit_5s_audit", "scalar"
+    ),
     # RH
     "list_hr_branches": RouteContract("hr_branch", "scalar"),
     "get_hr_snapshot": RouteContract("hr_snapshot", "composite_analysis"),

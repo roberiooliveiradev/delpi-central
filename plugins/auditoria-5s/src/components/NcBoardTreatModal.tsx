@@ -48,7 +48,7 @@ export function NcBoardTreatModal({ item, open, onClose, onSaved }: Props) {
   const [finalizing, setFinalizing] = useState(false);
   const [uploadingType, setUploadingType] = useState<NcAttachmentType | null>(null);
   const persistedFormRef = useRef<NcFormState | null>(null);
-  const readOnly = item?.status === "closed";
+  const readOnly = item?.status === "closed" || item?.status === "cancelled";
 
   const loadContext = useCallback(async (boardItem: NcBoardItem) => {
     setLoading(true);

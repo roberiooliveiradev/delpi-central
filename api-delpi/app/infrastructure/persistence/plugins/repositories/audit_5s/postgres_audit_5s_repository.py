@@ -14,6 +14,12 @@ from app.domain.services.audit_5s.audit_5s_nc_sla_service import (
     resolve_nc_due_sla,
     resolve_nc_workflow,
 )
+from app.domain.services.audit_5s.audit_5s_status import (
+    AUDIT_FORCE_CLOSE_UNTREATED_SOURCE_STATUSES,
+    AUDIT_STATUS_CLOSED_WITHOUT_NC_TREATMENT,
+    AUDIT_STATUS_NC_IN_PROGRESS,
+    is_audit_closed,
+)
 from app.application.services.audit_5s.scoring_service import (
     CriterionScoreInput,
     calculate_overall_percentual,
@@ -514,7 +520,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not audit:
             raise PluginsRepositoryError("Auditoria não encontrada.")
-        if audit["status"] == "closed":
+        if is_audit_closed(audit["status"]):
             raise PluginsRepositoryError(
                 "Auditoria encerrada — o cabeçalho não pode mais ser editado."
             )
@@ -1082,7 +1088,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         status = str(audit["status"])
         if status == "draft":
             raise PluginsRepositoryError("A auditoria já está em fase de avaliação.")
-        if status == "closed":
+        if is_audit_closed(status):
             raise PluginsRepositoryError(
                 "Auditorias encerradas não podem ser reabertas para avaliação."
             )
@@ -1471,7 +1477,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not audit:
             raise PluginsRepositoryError("Auditoria não encontrada.")
-        if audit["status"] == "closed":
+        if is_audit_closed(audit["status"]):
             raise PluginsRepositoryError("Auditoria encerrada — NC não pode ser alterada.")
         if nc["status"] == "closed":
             raise PluginsRepositoryError("NC finalizada — altere apenas visualizando as evidências.")
@@ -1745,7 +1751,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not audit:
             raise PluginsRepositoryError("Auditoria não encontrada.")
-        if audit["status"] == "closed":
+        if is_audit_closed(audit["status"]):
             raise PluginsRepositoryError("Auditoria encerrada.")
 
         row = self.execute_returning_one(
@@ -1845,7 +1851,7 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         )
         if not audit:
             raise PluginsRepositoryError("Auditoria não encontrada.")
-        if audit["status"] == "closed":
+        if is_audit_closed(audit["status"]):
             raise PluginsRepositoryError("Auditoria encerrada.")
 
         if not self._is_nc_plan_complete(nc):
@@ -1890,6 +1896,69 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         self.commit()
         return self._get_nonconformity_by_id(nonconformity_id) or row
 
+    def reopen_nc_action(
+        self,
+        *,
+        nonconformity_id: str,
+        actor_user_id: str,
+    ) -> dict[str, Any]:
+        """Admin: reabre NC concluída (closed → in_progress) e reabre auditoria se necessário."""
+        nc = self.fetch_one(
+            """
+            SELECT id,
+                   audit_id,
+                   status
+              FROM quality.audit_5s_nonconformities
+             WHERE id = %s
+            """,
+            (nonconformity_id,),
+        )
+        if not nc:
+            raise PluginsRepositoryError("NC não encontrada.")
+        if nc["status"] != "closed":
+            raise PluginsRepositoryError(
+                "Somente ações corretivas concluídas podem ser reabertas."
+            )
+
+        audit = self.fetch_one(
+            "SELECT id, status FROM quality.audit_5s_audits WHERE id = %s",
+            (nc["audit_id"],),
+        )
+        if not audit:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+
+        row = self._update_nonconformity_row(
+            nonconformity_id=nonconformity_id,
+            updates=["status = %s"],
+            params=["in_progress"],
+        )
+        if not row:
+            raise PluginsRepositoryError("Falha ao reabrir NC.")
+
+        self.execute(
+            """
+            INSERT INTO quality.audit_5s_nc_events (
+                nonconformity_id, event_type, payload, actor_user_id
+            ) VALUES (%s, 'action_reopened', '{}'::jsonb, %s)
+            """,
+            (nonconformity_id, actor_user_id),
+            auto_commit=False,
+        )
+
+        if is_audit_closed(audit["status"]) or audit["status"] == "evaluation_complete":
+            self.execute(
+                """
+                UPDATE quality.audit_5s_audits
+                   SET status = %s, updated_at = NOW()
+                 WHERE id = %s
+                """,
+                (AUDIT_STATUS_NC_IN_PROGRESS, str(nc["audit_id"])),
+                auto_commit=False,
+            )
+
+        self.commit()
+        return self._get_nonconformity_by_id(nonconformity_id) or row
+
     def close_audit(self, audit_id: str) -> dict[str, Any]:
         audit = self.get_audit(audit_id)
         if not audit:
@@ -1921,6 +1990,49 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         refreshed = self.get_audit(audit_id)
         if not refreshed:
             raise PluginsRepositoryError("Falha ao encerrar auditoria.")
+        return refreshed
+
+    def close_audit_without_nc_treatment(self, audit_id: str) -> dict[str, Any]:
+        """Cancela NCs abertas e encerra a auditoria sem tratar as ações corretivas."""
+        audit = self.get_audit(audit_id)
+        if not audit:
+            raise PluginsRepositoryError("Auditoria não encontrada.")
+        if is_audit_closed(audit["status"]):
+            raise PluginsRepositoryError("Auditoria já está encerrada.")
+        if audit["status"] not in AUDIT_FORCE_CLOSE_UNTREATED_SOURCE_STATUSES:
+            raise PluginsRepositoryError(
+                "Somente auditorias pendentes de NC ou com NC em andamento podem ser "
+                "encerradas sem tratar as não conformidades."
+            )
+
+        try:
+            self.execute(
+                """
+                UPDATE quality.audit_5s_nonconformities
+                   SET status = 'cancelled', updated_at = NOW()
+                 WHERE audit_id = %s
+                   AND status IN ('open', 'in_progress')
+                """,
+                (audit_id,),
+                auto_commit=False,
+            )
+            self.execute(
+                """
+                UPDATE quality.audit_5s_audits
+                   SET status = %s, updated_at = NOW()
+                 WHERE id = %s
+                """,
+                (AUDIT_STATUS_CLOSED_WITHOUT_NC_TREATMENT, audit_id),
+                auto_commit=False,
+            )
+            self.commit()
+        except Exception:
+            self.rollback()
+            raise
+
+        refreshed = self.get_audit(audit_id)
+        if not refreshed:
+            raise PluginsRepositoryError("Falha ao encerrar auditoria sem tratar NCs.")
         return refreshed
 
     def get_audit_delete_target(self, audit_id: str) -> dict[str, Any] | None:
@@ -2214,7 +2326,8 @@ class PostgresAudit5sRepository(PluginBaseRepository):
                        WHERE nc.status = 'closed'
                    )::int AS nc_closed,
                    COUNT(*) FILTER (
-                       WHERE nc.status != 'closed' AND nc.due_date < CURRENT_DATE
+                       WHERE nc.status NOT IN ('closed', 'cancelled')
+                         AND nc.due_date < CURRENT_DATE
                    )::int AS nc_overdue
               FROM quality.audit_5s_nonconformities nc
               JOIN quality.audit_5s_audits a ON a.id = nc.audit_id

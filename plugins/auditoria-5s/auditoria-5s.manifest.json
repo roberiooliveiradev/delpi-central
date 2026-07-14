@@ -4,7 +4,7 @@
   "name": "Auditoria 5S",
   "description": "Auditoria operacional 5S — avaliação colaborativa por filial",
   "icon": "clipboard-check-icon",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
   "basePath": "/apps/auditoria-5s",
   "entry": "/apps/auditoria-5s/assets/remoteEntry.js",
@@ -32,6 +32,18 @@
       "name": "Auditar 5S — Filial 02",
       "description": "Criar e editar auditorias 5S da filial 02",
       "module": "auditoria-5s"
+    },
+    {
+      "code": "auditoria-5s.admin.filial-01",
+      "name": "Administrar Auditoria 5S — Filial 01",
+      "description": "Encerrar NCs em aberto e auditorias sem tratar ações corretivas na filial 01",
+      "module": "auditoria-5s"
+    },
+    {
+      "code": "auditoria-5s.admin.filial-02",
+      "name": "Administrar Auditoria 5S — Filial 02",
+      "description": "Encerrar NCs em aberto e auditorias sem tratar ações corretivas na filial 02",
+      "module": "auditoria-5s"
     }
   ],
   "routes": [
@@ -49,6 +61,22 @@
       "permission": "auditoria-5s.view.filial-02",
       "icon": "clipboard-check-icon",
       "order": 19,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/auditoria-5s/filial-01/admin",
+      "label": "Admin 5S — Filial 01",
+      "permission": "auditoria-5s.admin.filial-01",
+      "icon": "clipboard-check-icon",
+      "order": 20,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/auditoria-5s/filial-02/admin",
+      "label": "Admin 5S — Filial 02",
+      "permission": "auditoria-5s.admin.filial-02",
+      "icon": "clipboard-check-icon",
+      "order": 21,
       "showInMenu": true
     }
   ],

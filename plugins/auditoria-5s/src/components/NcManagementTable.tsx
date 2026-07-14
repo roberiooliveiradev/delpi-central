@@ -1,5 +1,13 @@
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Eye, MessageSquarePlus, MoreHorizontal, Pencil } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  MessageSquarePlus,
+  MoreHorizontal,
+  Pencil,
+  RotateCcw,
+} from "lucide-react";
 
 import type { NcBoardItem, NcBoardPagination } from "../types/ncManagement";
 import {
@@ -14,10 +22,12 @@ import { NcWorkflowPill } from "./NcWorkflowPill";
 type Props = {
   items: NcBoardItem[];
   pagination: NcBoardPagination;
+  canAdmin?: boolean;
   onPageChange: (page: number) => void;
   onView: (item: NcBoardItem) => void;
   onEdit: (item: NcBoardItem) => void;
   onNotes: (item: NcBoardItem) => void;
+  onReopen?: (item: NcBoardItem) => void;
 };
 
 function truncateText(value: string | null | undefined, max = 72): string {
@@ -27,21 +37,30 @@ function truncateText(value: string | null | undefined, max = 72): string {
   return `${text.slice(0, max - 1)}…`;
 }
 
-const ROW_MENU_ITEM_COUNT = 3;
-
 export function NcManagementTable({
   items,
   pagination,
+  canAdmin = false,
   onPageChange,
   onView,
   onEdit,
   onNotes,
+  onReopen,
 }: Props) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const totalPages = pagination.total_pages || 1;
   const canPrev = pagination.page > 1;
   const canNext = pagination.page < totalPages;
+
+  function canReopenAction(item: NcBoardItem): boolean {
+    return (
+      canAdmin &&
+      Boolean(onReopen) &&
+      item.is_registered !== false &&
+      item.status === "closed"
+    );
+  }
 
   return (
     <section className="a5s-nc-board-table-section">
@@ -77,6 +96,8 @@ export function NcManagementTable({
             ) : (
               items.map((item) => {
                 const rowStatus = resolveNcBoardRowStatus(item);
+                const showReopen = canReopenAction(item);
+                const menuItemCount = 3 + (showReopen ? 1 : 0);
                 return (
                 <tr
                   key={item.id}
@@ -156,7 +177,7 @@ export function NcManagementTable({
                           open={openMenuId === item.id}
                           onClose={() => setOpenMenuId(null)}
                           triggerRef={menuTriggerRef}
-                          itemCount={ROW_MENU_ITEM_COUNT}
+                          itemCount={menuItemCount}
                         >
                           <button
                             type="button"
@@ -200,6 +221,20 @@ export function NcManagementTable({
                             <MessageSquarePlus size={14} aria-hidden />
                             Notas
                           </button>
+                          {showReopen ? (
+                            <button
+                              type="button"
+                              role="menuitem"
+                              className="a5s-row-menu__item"
+                              onClick={() => {
+                                setOpenMenuId(null);
+                                onReopen?.(item);
+                              }}
+                            >
+                              <RotateCcw size={14} aria-hidden />
+                              Reabrir ação
+                            </button>
+                          ) : null}
                         </AuditRowMenuPortal>
                       </div>
                     </div>

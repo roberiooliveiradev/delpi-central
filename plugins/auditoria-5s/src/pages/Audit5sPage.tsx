@@ -6,6 +6,7 @@ import {
   createArea,
   createAudit,
   closeAudit,
+  closeAuditWithoutNcTreatment,
   deleteAudit,
   forceDeleteAudit,
   deleteResponseAttachment,
@@ -46,6 +47,7 @@ import {
   auditViewFromPathname,
   branchFromPathname,
   canAccessNc,
+  isAuditClosed,
   isPerfectAuditScore,
   listPrimaryActionLabel,
   sensoName,
@@ -188,6 +190,29 @@ export function Audit5sPage({ pathname }: Props) {
     }
   };
 
+  const handleForceCloseUntreatedNcs = async (auditId: string) => {
+    setError(null);
+    setSuccess(null);
+    try {
+      const closed = await closeAuditWithoutNcTreatment(auditId);
+      if (selectedAudit?.id === auditId) {
+        setSelectedAudit(null);
+        setView("list");
+      }
+      await loadList();
+      setSuccess(
+        `Auditoria ${closed.audit_code} encerrada sem tratar NC's.`,
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Erro ao encerrar NC's em aberto.",
+      );
+      throw err;
+    }
+  };
+
   const openNc = async (auditId: string, fromView: View = "list") => {
     setLoading(true);
     setError(null);
@@ -255,7 +280,7 @@ export function Audit5sPage({ pathname }: Props) {
     setSuccess(null);
     try {
       const detail = await fetchAudit(auditId);
-      if (detail.status === "closed") {
+      if (isAuditClosed(detail.status)) {
         setError("Auditoria encerrada — o cabeçalho não pode mais ser editado.");
         return;
       }
@@ -527,7 +552,7 @@ export function Audit5sPage({ pathname }: Props) {
       <div className="dashboard-auditoria-5s dashboard-page a5s-app">
         <div className="a5s-app-shell">
           <div className="a5s-alert a5s-alert--error" role="alert">
-            Rota inválida. Use /apps/auditoria-5s/filial-01 ou filial-02.
+            Rota inválida. Use /apps/auditoria-5s/filial-01, filial-02 ou …/filial-XX/admin.
           </div>
         </div>
       </div>
@@ -590,6 +615,7 @@ export function Audit5sPage({ pathname }: Props) {
       {view === "list" && (
         <AuditListView
           branch={branch}
+          pathname={pathname}
           audits={audits}
           areas={areas}
           loading={loading}
@@ -601,6 +627,7 @@ export function Audit5sPage({ pathname }: Props) {
           onOpenNc={(auditId) => void openNc(auditId)}
           onEditAudit={(auditId) => void openEditAudit(auditId)}
           onFinalizeAudit={handleFinalizeAudit}
+          onForceCloseUntreatedNcs={handleForceCloseUntreatedNcs}
           onReopenAudit={handleReopenAudit}
           onDeleteAudit={handleDeleteAudit}
         />
@@ -616,10 +643,26 @@ export function Audit5sPage({ pathname }: Props) {
       )}
 
       {view === "nc-board" && (
-        <NcManagementPage branch={branch} areas={areas} audits={audits} />
+        <NcManagementPage
+          branch={branch}
+          pathname={pathname}
+          areas={areas}
+          audits={audits}
+        />
       )}
 
-      {view === "catalog" && <AuditCatalogPage branch={branch} />}
+      {view === "catalog" && (
+        <AuditCatalogPage
+          branch={branch}
+          pathname={pathname}
+          onDenied={() => {
+            setError(
+              "Critérios só podem ser editados na rota Admin 5S da filial.",
+            );
+            setView("list");
+          }}
+        />
+      )}
 
       {view === "new" && (
         <AuditHeaderForm

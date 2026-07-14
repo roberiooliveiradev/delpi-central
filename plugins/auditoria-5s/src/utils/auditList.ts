@@ -114,6 +114,7 @@ export function filterAuditList(
       item.audit_code,
       item.area_name,
       item.area_responsible,
+      item.auditor_names ?? "",
       item.shift,
     ]
       .join(" ")
