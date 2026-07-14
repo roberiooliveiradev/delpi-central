@@ -16,7 +16,6 @@ import {
   Strikethrough,
   Underline,
   Upload,
-  FlipVertical2,
 } from "lucide-react";
 import {
   COMUNICADO_FONT_FAMILIES,
@@ -38,9 +37,7 @@ import {
   resolveNamedStyleSelectionForBlock,
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
-  COMUNICADO_TEXT_SHADOW_PRESETS,
   resolveInputContrastBackground,
-  resolveTextShadowPresetId,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import {
@@ -61,11 +58,9 @@ import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonIconButton, TdRibbonSelect } from "../tdRibbonUi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { TextEffectsMenu } from "./TextEffectsMenu";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
-
-/** Espessuras do contorno tipográfico (pt), alinhado ao submenu Contorno do PPT. */
-const TEXT_STROKE_WIDTH_OPTIONS = [0, 0.5, 1, 1.5, 2, 3, 4, 6, 8] as const;
 
 /**
  * Fonte + Parágrafo — só renderiza se o objeto selecionado admite tipografia
@@ -452,104 +447,10 @@ export function FormatRibbonTypographySections({
         hint={H.textEffects}
         captionPlacement={captionPlacement}
       >
-        {/* Cluster compacto estilo WordArt (PPT): Contorno + Espessura / Sombra + Reflexo. */}
-        <div className="td-deck-ribbon__effects-cluster" role="group" aria-label="Efeitos de texto">
-          <div className="td-deck-ribbon__effects-row">
-            <TvRibbonColorPicker
-              hint={H.textStroke}
-              label="Contorno"
-              ariaLabel="Contorno do texto"
-              variant="outline"
-              value={formatStyle?.textStrokeColor ?? ""}
-              onChange={(color) =>
-                updateSelectedTextFormatStyle({
-                  textStrokeColor: color,
-                  textStrokeWidth:
-                    formatStyle?.textStrokeWidth && formatStyle.textStrokeWidth > 0
-                      ? formatStyle.textStrokeWidth
-                      : 1,
-                })
-              }
-              onNoFill={() =>
-                updateSelectedTextFormatStyle({
-                  textStrokeColor: undefined,
-                  textStrokeWidth: 0,
-                })
-              }
-            />
-            <span className="td-deck-ribbon__effects-field">
-              <FieldLabel
-                htmlFor="td-ribbon-text-stroke-w"
-                label="Espessura"
-                hint={H.textStroke}
-                className="td-deck-ribbon__field-label"
-              />
-              <TdRibbonSelect
-                id="td-ribbon-text-stroke-w"
-                className="td-deck-ribbon__select--stroke-w"
-                aria-label="Espessura do contorno"
-                value={String(formatStyle?.textStrokeWidth ?? 0)}
-                options={TEXT_STROKE_WIDTH_OPTIONS.map((width) => ({
-                  value: String(width),
-                  label: width === 0 ? "Sem" : `${width} pt`,
-                }))}
-                onChange={(value) => {
-                  const width = Math.max(0, Number(value) || 0);
-                  updateSelectedTextFormatStyle({
-                    textStrokeWidth: width,
-                    textStrokeColor:
-                      width > 0
-                        ? formatStyle?.textStrokeColor || formatStyle?.color || "#0f172a"
-                        : undefined,
-                  });
-                }}
-              />
-            </span>
-          </div>
-          <div className="td-deck-ribbon__effects-row">
-            <span className="td-deck-ribbon__effects-field td-deck-ribbon__effects-field--shadow">
-              <FieldLabel
-                htmlFor="td-ribbon-text-shadow"
-                label="Sombra"
-                hint={H.textEffects}
-                className="td-deck-ribbon__field-label"
-              />
-              <TdRibbonSelect
-                id="td-ribbon-text-shadow"
-                className="td-deck-ribbon__select--shadow"
-                aria-label="Sombra do texto"
-                value={resolveTextShadowPresetId(formatStyle?.textShadow)}
-                options={[
-                  ...COMUNICADO_TEXT_SHADOW_PRESETS.map((preset) => ({
-                    value: preset.id,
-                    label: preset.label,
-                  })),
-                  ...(resolveTextShadowPresetId(formatStyle?.textShadow) === "custom"
-                    ? [{ value: "custom", label: "Personalizada" }]
-                    : []),
-                ]}
-                onChange={(value) => {
-                  const preset = COMUNICADO_TEXT_SHADOW_PRESETS.find((item) => item.id === value);
-                  updateSelectedTextFormatStyle({
-                    textShadow: value === "none" ? "" : (preset?.value ?? formatStyle?.textShadow),
-                  });
-                }}
-              />
-            </span>
-            <TdRibbonIconButton
-              hint={H.textReflection}
-              ariaLabel="Reflexo tipográfico"
-              active={Boolean(formatStyle?.textReflection)}
-              onClick={() =>
-                updateSelectedTextFormatStyle({
-                  textReflection: !formatStyle?.textReflection,
-                })
-              }
-            >
-              <FlipVertical2 size={15} aria-hidden="true" />
-            </TdRibbonIconButton>
-          </div>
-        </div>
+        <TextEffectsMenu
+          formatStyle={formatStyle}
+          onUpdate={updateSelectedTextFormatStyle}
+        />
       </DeckRibbonGroup>
 
       {showParagraphAlign ? (
