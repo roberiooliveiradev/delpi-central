@@ -547,6 +547,7 @@ export function FormatRibbonTypographySections({
                   <FieldLabel
                     htmlFor="td-ribbon-named-style"
                     label="Estilo"
+                    hint={H.namedStyle}
                     className="td-deck-ribbon__field-label"
                   />
                   <TdRibbonSelect
@@ -567,6 +568,7 @@ export function FormatRibbonTypographySections({
                   <FieldLabel
                     htmlFor="td-ribbon-line-height"
                     label="Entrelinhas"
+                    hint={H.lineHeight}
                     className="td-deck-ribbon__field-label"
                   />
                   <TdRibbonSelect
@@ -585,6 +587,7 @@ export function FormatRibbonTypographySections({
                   <FieldLabel
                     htmlFor="td-ribbon-letter-spacing"
                     label="Espaçamento"
+                    hint={H.letterSpacing}
                     className="td-deck-ribbon__field-label"
                   />
                   <NativeTextControl

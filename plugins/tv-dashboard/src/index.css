@@ -3583,6 +3583,11 @@ body.td-composer--marqueeing * {
   padding-right: 0;
 }
 
+.dashboard-tv-dashboard .td-deck-ribbon__shape-menu-hint {
+  display: inline-flex;
+  vertical-align: top;
+}
+
 .dashboard-tv-dashboard .td-deck-ribbon__tiles--shape-menus,
 .dashboard-tv-dashboard .td-deck-ribbon__tiles--color-pickers {
   align-items: flex-start;
@@ -4054,7 +4059,8 @@ body.td-composer--marqueeing * {
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__toolbar-row--stack-fields {
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: flex-end;
+  /* Topo alinhado: select e input têm alturas diferentes; flex-end desalinhava rótulos (Espaçamento). */
+  align-items: flex-start;
   gap: 8px;
 }
 
@@ -4066,6 +4072,21 @@ body.td-composer--marqueeing * {
   width: auto;
   min-width: 0;
   flex: 0 0 auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar-row--stack-fields .td-deck-ribbon__field-label {
+  display: block;
+  min-height: 1.35em;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar-row--stack-fields .td-deck-ribbon__number,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar-row--stack-fields .td-deck-ribbon__number.delpi-ui-native-control {
+  height: 28px;
+  min-height: 28px;
+  box-sizing: border-box;
+  align-self: stretch;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__select--font-family {

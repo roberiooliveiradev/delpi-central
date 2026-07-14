@@ -1,4 +1,4 @@
-import { ShapeFillMenu, ShapeOutlineMenu } from "@delpi/plugin-ui/index";
+import { HintAction, ShapeFillMenu, ShapeOutlineMenu } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
@@ -21,42 +21,50 @@ export function FormatRibbonTextBoxChrome({ bare = false }: { bare?: boolean } =
 
   const menus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-      <ShapeFillMenu
-        value={fill === "transparent" ? undefined : fill}
-        fillLabel="Preench."
-        onChange={(color) =>
-          updateSelectedStyle({ fill: color, backgroundColor: color })
-        }
-        onNoFill={() =>
-          updateSelectedStyle({ fill: "transparent", backgroundColor: "transparent" })
-        }
-      />
-      <ShapeOutlineMenu
-        color={stroke === "transparent" ? undefined : stroke}
-        strokeWidth={strokeWidth}
-        minWidth={0}
-        maxWidth={12}
-        outlineLabel="Contorno"
-        onColorChange={(color) =>
-          updateSelectedStyle({
-            stroke: color,
-            borderColor: color,
-            strokeWidth: Math.max(1, strokeWidth || 1),
-            borderWidth: Math.max(1, strokeWidth || 1),
-          })
-        }
-        onNoOutline={() =>
-          updateSelectedStyle({
-            stroke: "transparent",
-            borderColor: "transparent",
-            strokeWidth: 0,
-            borderWidth: 0,
-          })
-        }
-        onStrokeWidthChange={(width) =>
-          updateSelectedStyle({ strokeWidth: width, borderWidth: width })
-        }
-      />
+      <HintAction hint={H.boxFill} ariaLabel="Ajuda: Preenchimento da caixa">
+        <div className="td-deck-ribbon__shape-menu-hint">
+          <ShapeFillMenu
+            value={fill === "transparent" ? undefined : fill}
+            fillLabel="Preench."
+            onChange={(color) =>
+              updateSelectedStyle({ fill: color, backgroundColor: color })
+            }
+            onNoFill={() =>
+              updateSelectedStyle({ fill: "transparent", backgroundColor: "transparent" })
+            }
+          />
+        </div>
+      </HintAction>
+      <HintAction hint={H.boxOutline} ariaLabel="Ajuda: Contorno da caixa">
+        <div className="td-deck-ribbon__shape-menu-hint">
+          <ShapeOutlineMenu
+            color={stroke === "transparent" ? undefined : stroke}
+            strokeWidth={strokeWidth}
+            minWidth={0}
+            maxWidth={12}
+            outlineLabel="Contorno"
+            onColorChange={(color) =>
+              updateSelectedStyle({
+                stroke: color,
+                borderColor: color,
+                strokeWidth: Math.max(1, strokeWidth || 1),
+                borderWidth: Math.max(1, strokeWidth || 1),
+              })
+            }
+            onNoOutline={() =>
+              updateSelectedStyle({
+                stroke: "transparent",
+                borderColor: "transparent",
+                strokeWidth: 0,
+                borderWidth: 0,
+              })
+            }
+            onStrokeWidthChange={(width) =>
+              updateSelectedStyle({ strokeWidth: width, borderWidth: width })
+            }
+          />
+        </div>
+      </HintAction>
     </div>
   );
 

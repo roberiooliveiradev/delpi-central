@@ -22,6 +22,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     textReflection: "Espelha o texto abaixo do bloco (melhor suporte em Chromium/TV).",
     paragraph:
       "Alinhamento horizontal e vertical, justificação, entrelinhas e espaçamento entre caracteres.",
+    namedStyle:
+      "Estilo tipográfico nomeado (título, subtítulo, corpo…). Ajusta tamanho e peso de uma vez.",
+    lineHeight: "Espaçamento vertical entre as linhas do parágrafo.",
+    letterSpacing: "Espaçamento horizontal entre caracteres, em pixels (pode ser negativo).",
+    boxFill: "Cor de preenchimento (fundo) da caixa de texto.",
+    boxOutline: "Cor e espessura do contorno da caixa de texto.",
     shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
     shapeChange: "Substitui a forma selecionada por outra da biblioteca, mantendo posição e estilo quando possível.",
     shapeSize: "Largura e altura da forma em percentual do slide (como no PowerPoint Online).",
