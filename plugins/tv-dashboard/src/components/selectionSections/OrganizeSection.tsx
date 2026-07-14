@@ -1,15 +1,22 @@
 import { canConnectBlocks } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { selectedHasGroup } from "../../utils/comunicadoGrouping";
 import { FormatRibbonAlignSection } from "../FormatRibbonAlignSection";
-import { FormatRibbonOrganizeSection } from "../formatRibbon/FormatRibbonOrganizeSection";
+import {
+  FormatRibbonOrganizeActions,
+  FormatRibbonOrganizeDisplay,
+  FormatRibbonOrganizeSection,
+} from "../formatRibbon/FormatRibbonOrganizeSection";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 type Labels = Record<string, string>;
 
-/** Organizar / opacidade — mesma seção na ribbon e no painel. */
+const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+
+/** Organizar (ações) + Exibição (opacidade/ajuste) — ribbon juntos; painel em seções separadas. */
 export function OrganizeSection({
   layout,
   labels = {},
@@ -19,11 +26,18 @@ export function OrganizeSection({
 }) {
   if (layout === "pane") {
     return (
-      <SelectionPaneSection title="Organizar" defaultOpen={false}>
-        <div className="td-selection-section td-selection-section--pane-organize">
-          <FormatRibbonOrganizeSection labels={labels} embed />
-        </div>
-      </SelectionPaneSection>
+      <>
+        <SelectionPaneSection title="Organizar" hint={H.organize} defaultOpen={false}>
+          <div className="td-selection-section td-selection-section--pane-organize">
+            <FormatRibbonOrganizeActions labels={labels} embed />
+          </div>
+        </SelectionPaneSection>
+        <SelectionPaneSection title="Exibição" hint={H.display} defaultOpen={false}>
+          <div className="td-selection-section td-selection-section--pane-display">
+            <FormatRibbonOrganizeDisplay embed />
+          </div>
+        </SelectionPaneSection>
+      </>
     );
   }
   return <FormatRibbonOrganizeSection labels={labels} />;

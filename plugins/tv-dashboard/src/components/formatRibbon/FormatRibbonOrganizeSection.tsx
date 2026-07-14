@@ -34,22 +34,30 @@ function clampOpacity(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-/** Organizar / opacidade — borda/contorno, sombra e raio ficam em Aparência e Posição e tamanho. */
-export function FormatRibbonOrganizeSection({
-  labels = {},
-  embed = false,
-}: {
+type SectionProps = {
   labels?: Labels;
   /** Painel: omite caption do ribbon (accordion já titulou). */
   embed?: boolean;
-}) {
+};
+
+/**
+ * Organizar = só ações (duplicar, camadas, mídia, remover).
+ * Exibição = opacidade e ajuste da mídia (separado de ações).
+ */
+export function FormatRibbonOrganizeSection({ labels = {}, embed = false }: SectionProps) {
+  return (
+    <>
+      <FormatRibbonOrganizeActions labels={labels} embed={embed} />
+      <FormatRibbonOrganizeDisplay embed={embed} />
+    </>
+  );
+}
+
+/** Ações do elemento: duplicar, recorte, biblioteca, camadas, remover. */
+export function FormatRibbonOrganizeActions({ labels = {}, embed = false }: SectionProps) {
   const {
     selected,
-    selectedKpiPart,
-    selectedChartPart,
     uploading,
-    updateSelected,
-    updateSelectedStyle,
     removeSelected,
     duplicateSelected,
     moveLayer,
@@ -61,62 +69,6 @@ export function FormatRibbonOrganizeSection({
 
   const isMediaBlock = selected.type === "image" || selected.type === "video";
   const isImageBlock = selected.type === "image";
-
-  const kpiChromePart =
-    selected.type === "kpi_view" ? resolveKpiShapeChromePartRef(selectedKpiPart) : null;
-  const kpiPartOpacity =
-    selected.type === "kpi_view" && kpiChromePart
-      ? (getKpiPartState((selected as ComunicadoKpiViewBlock).kpiParts, kpiChromePart)?.style
-          ?.opacity ?? 1)
-      : null;
-  const chartPartOpacity =
-    selected.type === "chart_view" && selectedChartPart
-      ? (getChartPartState((selected as ComunicadoChartViewBlock).chartParts, selectedChartPart)
-          ?.style?.opacity ?? 1)
-      : null;
-
-  const opacityValue = clampOpacity(
-    kpiPartOpacity != null
-      ? kpiPartOpacity
-      : chartPartOpacity != null
-        ? chartPartOpacity
-        : (selected.style?.opacity ?? 1),
-  );
-  const opacityPercent = Math.round(opacityValue * 100);
-
-  const setOpacity = (raw: number) => {
-    const opacity = clampOpacity(raw);
-    if (selected.type === "kpi_view" && kpiChromePart) {
-      const block = selected as ComunicadoKpiViewBlock;
-      const nextParts = upsertKpiPartState(block.kpiParts, kpiChromePart, {
-        style: { opacity },
-      });
-      const nextOptions = mergeComunicadoKpiOptions({
-        ...block.kpiOptions,
-        ...partsToKpiOptions(nextParts),
-      });
-      updateSelected({
-        kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
-        kpiOptions: nextOptions,
-      } as Partial<ComunicadoBlock>);
-      return;
-    }
-    if (selected.type === "chart_view" && selectedChartPart) {
-      const block = selected as ComunicadoChartViewBlock;
-      const nextParts = upsertChartPartState(block.chartParts, selectedChartPart, {
-        style: { opacity },
-      });
-      updateSelected({
-        chartParts: nextParts,
-        chartOptions: mergeComunicadoChartOptions({
-          ...block.chartOptions,
-          ...partsToChartOptions(nextParts),
-        }),
-      } as Partial<ComunicadoBlock>);
-      return;
-    }
-    updateSelectedStyle({ opacity });
-  };
 
   return (
     <DeckRibbonGroup
@@ -179,46 +131,126 @@ export function FormatRibbonOrganizeSection({
             </span>
           </ShortcutTip>
         </div>
-        <div className="td-deck-ribbon__organize-props">
-          <DeckRangeField
-            id="td-block-opacity"
-            label="Opacidade"
-            hint={H.opacity}
-            min={0}
-            max={100}
-            step={5}
-            value={opacityPercent}
-            displayValue={`${opacityPercent}%`}
-            density="full"
-            aria-label="Opacidade"
-            onChange={(value) => setOpacity(value / 100)}
-          />
-          {isMediaBlock ? (
-            <>
-              <FieldLabel
-                htmlFor="td-block-object-fit"
-                label="Ajuste"
-                hint={H.objectFit}
-                className="td-deck-ribbon__field-label"
-              />
-              <TdRibbonSelect
-                id="td-block-object-fit"
-                className="td-deck-ribbon__select td-deck-ribbon__select--compact"
-                aria-label="Ajuste"
-                value={selected.style?.objectFit ?? "cover"}
-                onChange={(value) =>
-                  updateSelectedStyle({
-                    objectFit: value as "cover" | "contain",
-                  })
-                }
-                options={[
-                  { value: "cover", label: "Preencher" },
-                  { value: "contain", label: "Conter" },
-                ]}
-              />
-            </>
-          ) : null}
-        </div>
+      </div>
+    </DeckRibbonGroup>
+  );
+}
+
+/** Exibição: opacidade e (em mídia) como o arquivo preenche o quadro. */
+export function FormatRibbonOrganizeDisplay({ embed = false }: Omit<SectionProps, "labels">) {
+  const {
+    selected,
+    selectedKpiPart,
+    selectedChartPart,
+    updateSelected,
+    updateSelectedStyle,
+  } = useComunicadoEditor();
+
+  if (!selected) return null;
+
+  const isMediaBlock = selected.type === "image" || selected.type === "video";
+
+  const kpiChromePart =
+    selected.type === "kpi_view" ? resolveKpiShapeChromePartRef(selectedKpiPart) : null;
+  const kpiPartOpacity =
+    selected.type === "kpi_view" && kpiChromePart
+      ? (getKpiPartState((selected as ComunicadoKpiViewBlock).kpiParts, kpiChromePart)?.style
+          ?.opacity ?? 1)
+      : null;
+  const chartPartOpacity =
+    selected.type === "chart_view" && selectedChartPart
+      ? (getChartPartState((selected as ComunicadoChartViewBlock).chartParts, selectedChartPart)
+          ?.style?.opacity ?? 1)
+      : null;
+
+  const opacityValue = clampOpacity(
+    kpiPartOpacity != null
+      ? kpiPartOpacity
+      : chartPartOpacity != null
+        ? chartPartOpacity
+        : (selected.style?.opacity ?? 1),
+  );
+  const opacityPercent = Math.round(opacityValue * 100);
+
+  const setOpacity = (raw: number) => {
+    const opacity = clampOpacity(raw);
+    if (selected.type === "kpi_view" && kpiChromePart) {
+      const block = selected as ComunicadoKpiViewBlock;
+      const nextParts = upsertKpiPartState(block.kpiParts, kpiChromePart, {
+        style: { opacity },
+      });
+      const nextOptions = mergeComunicadoKpiOptions({
+        ...block.kpiOptions,
+        ...partsToKpiOptions(nextParts),
+      });
+      updateSelected({
+        kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
+        kpiOptions: nextOptions,
+      } as Partial<ComunicadoBlock>);
+      return;
+    }
+    if (selected.type === "chart_view" && selectedChartPart) {
+      const block = selected as ComunicadoChartViewBlock;
+      const nextParts = upsertChartPartState(block.chartParts, selectedChartPart, {
+        style: { opacity },
+      });
+      updateSelected({
+        chartParts: nextParts,
+        chartOptions: mergeComunicadoChartOptions({
+          ...block.chartOptions,
+          ...partsToChartOptions(nextParts),
+        }),
+      } as Partial<ComunicadoBlock>);
+      return;
+    }
+    updateSelectedStyle({ opacity });
+  };
+
+  return (
+    <DeckRibbonGroup
+      label="Exibição"
+      hint={H.display}
+      captionPlacement={embed ? "none" : "below"}
+    >
+      <div className="td-deck-ribbon__organize-props">
+        <DeckRangeField
+          id="td-block-opacity"
+          label="Opacidade"
+          hint={H.opacity}
+          min={0}
+          max={100}
+          step={5}
+          value={opacityPercent}
+          displayValue={`${opacityPercent}%`}
+          density="full"
+          aria-label="Opacidade"
+          onChange={(value) => setOpacity(value / 100)}
+        />
+        {isMediaBlock ? (
+          <>
+            <FieldLabel
+              htmlFor="td-block-object-fit"
+              label="Ajuste"
+              hint={H.objectFit}
+              className="td-deck-ribbon__field-label"
+            />
+            <TdRibbonSelect
+              id="td-block-object-fit"
+              className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+              aria-label="Ajuste"
+              value={selected.style?.objectFit ?? "cover"}
+              onChange={(value) =>
+                updateSelectedStyle({
+                  objectFit: value as "cover" | "contain",
+                })
+              }
+              options={[
+                { value: "cover", label: "Preencher" },
+                { value: "contain", label: "Conter" },
+              ]}
+            />
+          </>
+        ) : null}
       </div>
     </DeckRibbonGroup>
   );

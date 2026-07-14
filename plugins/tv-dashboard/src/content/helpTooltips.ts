@@ -33,7 +33,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     shapeSize: "Largura e altura da forma em percentual do slide.",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
-      "Controla camadas e mídia do elemento selecionado: ordem (frente/fundo), troca de arquivo ou remoção.",
+      "Ações do elemento: duplicar, ordem das camadas (frente/fundo), mídia e remoção.",
+    display:
+      "Opacidade do elemento e, em imagens e vídeos, como a mídia preenche o quadro.",
     undo: "Desfazer a última alteração na programação ou no slide (Ctrl+Z).",
     redo: "Refazer alteração desfeita na programação ou no slide (Ctrl+Y ou Ctrl+Shift+Z).",
     zoomOut: "Diminuir zoom do palco no editor.",

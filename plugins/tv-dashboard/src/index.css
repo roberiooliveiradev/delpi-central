@@ -3555,12 +3555,14 @@ body.td-composer--marqueeing * {
   min-height: 0;
 }
 
+/* Exibição (opacidade / ajuste) — grupo próprio, não misturar com tiles de Organizar. */
 .dashboard-tv-dashboard .td-deck-ribbon__organize-props {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: flex-start;
-  gap: 2px 8px;
-  max-width: 340px;
+  gap: 8px 12px;
+  width: max-content;
+  max-width: none;
   max-height: none;
   min-width: 0;
   overflow: visible;
