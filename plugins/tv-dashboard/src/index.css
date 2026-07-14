@@ -3949,7 +3949,7 @@ body.td-composer--marqueeing * {
   min-width: 280px;
 }
 
-/* Efeitos de texto / Posição — tile + popover ancorado. */
+/* Efeitos / Posição / Estilo (parágrafo) — tile + popover ancorado. */
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-text-effects-entry) .td-deck-ribbon__body,
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-frame-size-entry) .td-deck-ribbon__body {
   align-items: center;
@@ -3957,9 +3957,49 @@ body.td-composer--marqueeing * {
 }
 
 .dashboard-tv-dashboard .td-text-effects-entry__trigger--active,
-.dashboard-tv-dashboard .td-frame-size-entry__trigger--active {
+.dashboard-tv-dashboard .td-frame-size-entry__trigger--active,
+.dashboard-tv-dashboard .td-paragraph-spacing-entry__trigger--active {
   border-color: color-mix(in srgb, var(--td-accent) 55%, var(--td-border));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--td-accent) 35%, transparent);
+}
+
+.dashboard-tv-dashboard .td-paragraph-spacing-popover.delpi-ui-shape-menu__panel,
+.dashboard-tv-dashboard .td-paragraph-spacing-popover {
+  min-width: 200px;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 10px 12px;
+}
+
+.dashboard-tv-dashboard .td-paragraph-spacing-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.dashboard-tv-dashboard .td-paragraph-spacing-panel .td-deck-ribbon__stack-field {
+  width: 100%;
+}
+
+.dashboard-tv-dashboard .td-paragraph-spacing-panel .td-deck-ribbon__select--style,
+.dashboard-tv-dashboard .td-paragraph-spacing-panel .td-deck-ribbon__select--compact,
+.dashboard-tv-dashboard .td-paragraph-spacing-panel .td-deck-ribbon__number--compact {
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-paragraph-spacing-panel .td-deck-ribbon__field-label {
+  display: block;
+  min-height: 1.35em;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.dashboard-tv-dashboard .td-paragraph-spacing-panel .td-deck-ribbon__number,
+.dashboard-tv-dashboard .td-paragraph-spacing-panel .td-deck-ribbon__number.delpi-ui-native-control {
+  height: 28px;
+  min-height: 28px;
+  box-sizing: border-box;
 }
 
 .dashboard-tv-dashboard .td-frame-size-popover.delpi-ui-shape-menu__panel,
@@ -4089,22 +4129,16 @@ body.td-composer--marqueeing * {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  justify-content: center;
   gap: 4px;
   flex: 0 0 auto;
-  min-width: 112px;
-  padding-left: 10px;
+  min-width: 0;
+  padding-left: 8px;
   border-left: 1px solid var(--td-border, color-mix(in srgb, currentColor 16%, transparent));
 }
 
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-col--spacing .td-deck-ribbon__stack-field {
-  width: 100%;
-}
-
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-col--spacing .td-deck-ribbon__select--style,
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-col--spacing .td-deck-ribbon__select--compact,
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-col--spacing .td-deck-ribbon__number--compact {
-  width: 100%;
-  min-width: 0;
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-cols:has(.td-paragraph-spacing-entry) {
+  align-items: center;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__toolbar-row {
@@ -4128,20 +4162,6 @@ body.td-composer--marqueeing * {
   width: auto;
   min-width: 0;
   flex: 0 0 auto;
-}
-
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-col--spacing .td-deck-ribbon__field-label {
-  display: block;
-  min-height: 1.35em;
-  line-height: 1.35;
-  margin: 0;
-}
-
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-col--spacing .td-deck-ribbon__number,
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__paragraph-col--spacing .td-deck-ribbon__number.delpi-ui-native-control {
-  height: 28px;
-  min-height: 28px;
-  box-sizing: border-box;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--text-stack .td-deck-ribbon__select--font-family {

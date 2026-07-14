@@ -22,8 +22,6 @@ import {
   COMUNICADO_FONT_SIZE_MIN,
   COMUNICADO_FONT_SIZE_PRESETS,
   COMUNICADO_FONT_SIZE_STEP,
-  COMUNICADO_LINE_HEIGHT_OPTIONS,
-  COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
   CHART_PART_FONT_SIZE_DEFAULTS,
   KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
@@ -42,9 +40,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 import {
   ComboboxNumberControl,
-  FieldLabel,
   HintAction,
-  NativeTextControl,
   isAutomaticTextColor,
 } from "@delpi/plugin-ui/index";
 import { useEffect, useMemo, useRef } from "react";
@@ -58,6 +54,7 @@ import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonIconButton, TdRibbonSelect } from "../tdRibbonUi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { ParagraphSpacingMenu } from "./ParagraphSpacingMenu";
 import { TextEffectsMenu } from "./TextEffectsMenu";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -545,72 +542,16 @@ export function FormatRibbonTypographySections({
                 </div>
               </div>
               {isTextBlock && textBlock ? (
-                <div
-                  className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--spacing"
-                  role="group"
-                  aria-label="Estilo e espaçamento do parágrafo"
-                >
-                  <span className="td-deck-ribbon__stack-field">
-                    <FieldLabel
-                      htmlFor="td-ribbon-named-style"
-                      label="Estilo"
-                      hint={H.namedStyle}
-                      className="td-deck-ribbon__field-label"
-                    />
-                    <TdRibbonSelect
-                      id="td-ribbon-named-style"
-                      className="td-deck-ribbon__select td-deck-ribbon__select--style"
-                      aria-label="Estilo de parágrafo"
-                      value={namedStyleValue}
-                      onChange={(value) =>
-                        applySelectedNamedTextStyle(value as typeof namedStyleValue)
-                      }
-                      options={COMUNICADO_NAMED_TEXT_STYLE_OPTIONS.map((option) => ({
-                        value: option.key,
-                        label: option.label,
-                      }))}
-                    />
-                  </span>
-                  <span className="td-deck-ribbon__stack-field">
-                    <FieldLabel
-                      htmlFor="td-ribbon-line-height"
-                      label="Entrelinhas"
-                      hint={H.lineHeight}
-                      className="td-deck-ribbon__field-label"
-                    />
-                    <TdRibbonSelect
-                      id="td-ribbon-line-height"
-                      className="td-deck-ribbon__select td-deck-ribbon__select--compact"
-                      aria-label="Entrelinhas"
-                      value={String(textBlock.style?.lineHeight ?? 1.15)}
-                      onChange={(value) => updateSelectedStyle({ lineHeight: Number(value) })}
-                      options={COMUNICADO_LINE_HEIGHT_OPTIONS.map((value) => ({
-                        value: String(value),
-                        label: value === 1 ? "Simples" : value === 1.15 ? "1,15" : String(value),
-                      }))}
-                    />
-                  </span>
-                  <span className="td-deck-ribbon__stack-field">
-                    <FieldLabel
-                      htmlFor="td-ribbon-letter-spacing"
-                      label="Espaçamento"
-                      hint={H.letterSpacing}
-                      className="td-deck-ribbon__field-label"
-                    />
-                    <NativeTextControl
-                      id="td-ribbon-letter-spacing"
-                      type="number"
-                      className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-                      aria-label="Espaçamento entre caracteres (px)"
-                      min={-2}
-                      max={24}
-                      step={0.5}
-                      value={textBlock.style?.letterSpacing ?? 0}
-                      onChange={(value) =>
-                        updateSelectedStyle({ letterSpacing: Number(value) || 0 })
-                      }
-                    />
-                  </span>
+                <div className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--spacing">
+                  <ParagraphSpacingMenu
+                    variant={embed ? "inline" : "popover"}
+                    namedStyleValue={namedStyleValue}
+                    lineHeight={textBlock.style?.lineHeight ?? 1.15}
+                    letterSpacing={textBlock.style?.letterSpacing ?? 0}
+                    onNamedStyle={(value) => applySelectedNamedTextStyle(value)}
+                    onLineHeight={(value) => updateSelectedStyle({ lineHeight: value })}
+                    onLetterSpacing={(value) => updateSelectedStyle({ letterSpacing: value })}
+                  />
                 </div>
               ) : null}
             </div>

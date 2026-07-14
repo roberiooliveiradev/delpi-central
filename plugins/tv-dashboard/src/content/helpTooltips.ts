@@ -26,6 +26,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Estilo tipográfico nomeado (título, subtítulo, corpo…). Ajusta tamanho e peso de uma vez.",
     lineHeight: "Espaçamento vertical entre as linhas do parágrafo.",
     letterSpacing: "Espaçamento horizontal entre caracteres, em pixels (pode ser negativo).",
+    paragraphSpacing:
+      "Estilo tipográfico nomeado, entrelinhas e espaçamento entre caracteres do parágrafo.",
     boxFill: "Cor de preenchimento (fundo) da caixa de texto.",
     boxOutline: "Cor e espessura do contorno da caixa de texto.",
     shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
