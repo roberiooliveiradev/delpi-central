@@ -57,7 +57,7 @@ export function DisplaySection({ layout }: { layout: SelectionSectionLayout }) {
   if (layout === "pane") {
     return (
       <SelectionPaneSection title="Tamanho e posição" hint={SIZE_POSITION_HINT} defaultOpen={false}>
-        <div className="td-selection-section td-selection-section--pane-display">
+        <div className="td-selection-section td-selection-section--pane-display td-selection-section--pane-frame">
           <FormatRibbonFrameSection density="full" embed includeOpacity={includeOpacity} />
         </div>
       </SelectionPaneSection>
