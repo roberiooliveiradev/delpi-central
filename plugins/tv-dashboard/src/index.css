@@ -3947,15 +3947,28 @@ body.td-composer--marqueeing * {
   min-width: 280px;
 }
 
-/* Efeitos de texto — tile + modal central. */
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-text-effects-entry) .td-deck-ribbon__body {
+/* Efeitos de texto / Posição — tile + popover ancorado. */
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-text-effects-entry) .td-deck-ribbon__body,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-frame-size-entry) .td-deck-ribbon__body {
   align-items: center;
   justify-content: center;
 }
 
-.dashboard-tv-dashboard .td-text-effects-entry__trigger--active {
+.dashboard-tv-dashboard .td-text-effects-entry__trigger--active,
+.dashboard-tv-dashboard .td-frame-size-entry__trigger--active {
   border-color: color-mix(in srgb, var(--td-accent) 55%, var(--td-border));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--td-accent) 35%, transparent);
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover.delpi-ui-shape-menu__panel,
+.dashboard-tv-dashboard .td-frame-size-popover {
+  min-width: min(468px, calc(100vw - 24px));
+  max-width: min(520px, calc(100vw - 16px));
+  padding: 10px 12px;
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid {
+  width: 100%;
 }
 
 /* Popover de efeitos — painel ancorado ao tile (como cores do Preench.). */
