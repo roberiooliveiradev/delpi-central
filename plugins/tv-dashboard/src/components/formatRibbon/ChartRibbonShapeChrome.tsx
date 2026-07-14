@@ -128,10 +128,20 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
               }
             />
           </ShapeMenuHint>
+          {showCorners ? (
+            <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
+              <ShapeShadowMenu
+                value={block.style?.boxShadow}
+                presets={SHADOW_MENU_PRESETS}
+                shadowLabel="Sombra"
+                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+              />
+            </ShapeMenuHint>
+          ) : null}
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Preenchimento" hint={H.shapeFill}>
+      <DeckRibbonGroup label="Preenchimento e linha" hint={H.shapeFillOutline}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showFill ? (
             <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento">
@@ -145,11 +155,6 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
           ) : (
             <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento neste primitivo.</p>
           )}
-        </div>
-      </DeckRibbonGroup>
-
-      <DeckRibbonGroup label="Contorno" hint={H.shapeOutline}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showStroke ? (
             <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
               <ShapeOutlineMenu
@@ -163,19 +168,9 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
                 onStrokeWidthChange={(width) => patchPartStyle({ strokeWidth: width })}
               />
             </ShapeMenuHint>
-          ) : (
+          ) : showFill ? null : (
             <p className="td-subtitle td-deck-ribbon__hint">Sem contorno neste primitivo.</p>
           )}
-          {showCorners ? (
-            <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
-              <ShapeShadowMenu
-                value={block.style?.boxShadow}
-                presets={SHADOW_MENU_PRESETS}
-                shadowLabel="Sombra"
-                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-              />
-            </ShapeMenuHint>
-          ) : null}
         </div>
       </DeckRibbonGroup>
 

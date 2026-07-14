@@ -162,11 +162,6 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
       ) : (
         <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento nesta forma.</p>
       )}
-    </div>
-  );
-
-  const strokeMenus = (
-    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
       {showStroke ? (
         <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno da forma">
           <ShapeOutlineMenu
@@ -183,7 +178,7 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
             onStrokeWidthChange={(width) => updateSelectedStyle({ strokeWidth: width })}
           />
         </ShapeMenuHint>
-      ) : (
+      ) : showFill ? null : (
         <p className="td-subtitle td-deck-ribbon__hint">Sem contorno nesta forma.</p>
       )}
     </div>
@@ -193,9 +188,8 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
     return (
       <>
         <div id="td-shape-pane-fill-line">
-          <SelectionPaneSection title="Preenchimento e linha" hint={H.shape} defaultOpen>
+          <SelectionPaneSection title="Preenchimento e linha" hint={H.shapeFillOutline} defaultOpen>
             {fillMenus}
-            {strokeMenus}
           </SelectionPaneSection>
         </div>
         <div id="td-shape-pane-effects">
@@ -262,11 +256,8 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
       <DeckRibbonGroup label="Estilos de forma" hint={H.shapeStyles}>
         {stylesMenus}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Preenchimento" hint={H.shapeFill}>
+      <DeckRibbonGroup label="Preenchimento e linha" hint={H.shapeFillOutline}>
         {fillMenus}
-      </DeckRibbonGroup>
-      <DeckRibbonGroup label="Contorno" hint={H.shapeOutline}>
-        {strokeMenus}
       </DeckRibbonGroup>
       {showShapeAdjustments ? (
         <ShapeAdjustmentsControl

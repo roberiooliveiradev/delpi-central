@@ -36,6 +36,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Aplica um preset visual (preenchimento, contorno e sombra) à forma selecionada.",
     shapeFill: "Cor de preenchimento (fundo) da forma ou da parte selecionada.",
     shapeOutline: "Cor e espessura do contorno da forma ou da parte selecionada.",
+    shapeFillOutline:
+      "Preenchimento e contorno da forma ou da parte selecionada (mesma seção da ribbon).",
     shapeChange: "Substitui a forma selecionada por outra da biblioteca, mantendo posição e estilo quando possível.",
     shapeSize: "Largura e altura da forma em percentual do slide.",
     markerRadius: "Raio do marcador (ponto) em pixels.",

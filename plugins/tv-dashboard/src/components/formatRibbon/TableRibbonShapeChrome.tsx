@@ -79,7 +79,7 @@ export function TableRibbonShapeChrome({ block }: { block: ComunicadoTableViewBl
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Preenchimento" hint={H.shapeFill}>
+      <DeckRibbonGroup label="Preenchimento e linha" hint={H.shapeFillOutline}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento">
             <ShapeFillMenu
@@ -89,11 +89,6 @@ export function TableRibbonShapeChrome({ block }: { block: ComunicadoTableViewBl
               onNoFill={() => patchChromeStyle({ fill: "transparent" })}
             />
           </ShapeMenuHint>
-        </div>
-      </DeckRibbonGroup>
-
-      <DeckRibbonGroup label="Contorno" hint={H.shapeOutline}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showStroke ? (
             <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
               <ShapeOutlineMenu
