@@ -1387,7 +1387,7 @@
 }
 
 .tdp-data-source {
-  /* Chrome da fonte no editor: azul Delpi (não contraste «Automático» preto/branco). */
+  /* Chrome tipográfico da fonte no palco (fundo claro): independente do tema escuro do shell. */
   --tdp-data-source-fg: var(--tdp-data-accent, #089bdb);
   container-type: size;
   width: 100%;
@@ -1402,10 +1402,8 @@
   overflow: hidden;
   border: 2px dashed color-mix(in srgb, var(--tdp-data-accent, #089bdb) 45%, transparent);
   border-radius: 12px;
-  background: var(
-    --tdp-data-source-bg,
-    color-mix(in srgb, var(--tdp-data-accent, #089bdb) 8%, var(--tdp-data-bg, #ffffff))
-  );
+  /* Wash claro fixo — `--td-surface` escuro do shell não pode virar o cartão navy. */
+  background: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 10%, #ffffff);
   color: var(--tdp-data-source-fg);
   text-align: left;
   font-size: clamp(12px, 7.5cqmin, 32px);

@@ -245,6 +245,8 @@ export {
   createBlock,
   createDataBlock,
   createDataSourceBlock,
+  isDataSourceInheritedChromeColor,
+  sanitizeDataSourceStyle,
   createChartViewBlock,
   createCanvasTableBlock,
   createTableViewBlock,

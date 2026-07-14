@@ -39,7 +39,8 @@
   /* Blocos de dados no palco do editor — tema claro/escuro do host */
   --tdp-data-bg: var(--td-surface);
   --tdp-data-surface: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
-  --tdp-data-source-bg: color-mix(in srgb, var(--td-accent) 6%, var(--td-surface));
+  /* Cartão da fonte no palco: wash claro (o CSS do presentation já fixa; variável só p/ legado). */
+  --tdp-data-source-bg: color-mix(in srgb, var(--td-accent) 10%, #ffffff);
   --tdp-data-text: var(--td-text);
   --tdp-data-text-strong: var(--td-text);
   --tdp-data-muted: var(--td-muted);
@@ -215,7 +216,7 @@
   --delpi-ui-muted: var(--td-muted);
   --tdp-data-bg: var(--td-surface);
   --tdp-data-surface: color-mix(in srgb, var(--td-accent) 12%, var(--td-surface));
-  --tdp-data-source-bg: color-mix(in srgb, var(--td-accent) 10%, var(--td-surface));
+  --tdp-data-source-bg: color-mix(in srgb, var(--td-accent) 10%, #ffffff);
   --tdp-data-text: var(--td-text);
   --tdp-data-text-strong: var(--td-text);
   --tdp-data-muted: var(--td-muted);

@@ -1,8 +1,7 @@
 import { Database } from "lucide-react";
 import type { CSSProperties } from "react";
 
-import { isAutomaticTextColor } from "@delpi/plugin-ui/index";
-
+import { sanitizeDataSourceStyle } from "./comunicadoHelpers";
 import { formatDataSourceBindingSummary } from "./formatDataSourceBindingSummary";
 import type { ComunicadoDataFilters, ComunicadoDataSourceBlock } from "./comunicadoTypes";
 
@@ -19,15 +18,13 @@ type Props = {
 };
 
 /**
- * Cor só quando o usuário escolheu um valor explícito.
- * «Automático» / ausente → azul do chrome da fonte (CSS `--tdp-data-accent`).
+ * Cor só quando o usuário escolheu um valor explícito (não default legacy / auto).
+ * Caso contrário → azul do chrome da fonte (CSS `--tdp-data-accent`).
  */
 function resolveDataSourcePaintStyle(
   block: ComunicadoDataSourceBlock,
 ): CSSProperties | undefined {
-  const raw = block.style?.color;
-  if (raw == null || isAutomaticTextColor(raw)) return undefined;
-  const color = raw.trim();
+  const color = sanitizeDataSourceStyle(block.style).color?.trim();
   if (!color) return undefined;
   return {
     color,

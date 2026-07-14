@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { createDataSourceBlock } from "./comunicadoHelpers";
+import {
+  createDataSourceBlock,
+  isDataSourceInheritedChromeColor,
+  parseComunicadoConfig,
+  serializeComunicadoConfig,
+} from "./comunicadoHelpers";
 import type { ComunicadoDataSourceBlock } from "./comunicadoTypes";
 import {
   formatDataSourceBindingSummary,
@@ -56,5 +61,32 @@ describe("formatDataSourceBindingSummary", () => {
   it("novas fontes não gravam cor automática (chrome usa accent no CSS)", () => {
     const block = createDataSourceBlock("op") as ComunicadoDataSourceBlock;
     expect(block.style?.color).toBeUndefined();
+  });
+});
+
+describe("sanitize / parse data_source color", () => {
+  it("remove TEXT_STRONG legado no roundtrip (causa do texto ilegível ao voltar)", () => {
+    expect(isDataSourceInheritedChromeColor("#0f172a")).toBe(true);
+    expect(isDataSourceInheritedChromeColor("#089bdb")).toBe(false);
+
+    const parsed = parseComunicadoConfig({
+      version: 3,
+      blocks: [
+        {
+          id: "ds1",
+          type: "data_source",
+          frame: { x: 8, y: 30, w: 18, h: 18 },
+          style: { zIndex: 2, color: "#0f172a" },
+          dataBinding: { operationId: "op", params: {}, displayMode: "auto" },
+        },
+      ],
+    });
+    const block = parsed.blocks?.[0] as ComunicadoDataSourceBlock;
+    expect(block.style?.color).toBeUndefined();
+
+    const saved = serializeComunicadoConfig(parsed);
+    const savedBlock = (saved.blocks as Array<Record<string, unknown>>)[0];
+    const savedStyle = savedBlock?.style as Record<string, unknown>;
+    expect(savedStyle?.color).toBeUndefined();
   });
 });

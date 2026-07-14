@@ -7,6 +7,7 @@ import {
   DECK_KPI_DEFAULTS,
   DECK_SHAPE_DEFAULTS,
   DECK_TABLE_DEFAULTS,
+  isAutomaticTextColor,
   resolvePaintTextColor,
 } from "@delpi/plugin-ui/index";
 
@@ -161,6 +162,32 @@ export function defaultDataBlockTypeForRoute(
   return "data_kpi";
 }
 
+/**
+ * Cores herdadas do default antigo / «auto» — não são escolha explícita do usuário.
+ * Remover no parse evita texto #0f172a ilegível no chrome da fonte.
+ */
+export function isDataSourceInheritedChromeColor(color?: string | null): boolean {
+  if (color == null) return true;
+  if (isAutomaticTextColor(color)) return true;
+  const normalized = color.trim().toLowerCase();
+  return (
+    normalized === DECK_COLOR_TEXT_STRONG.toLowerCase() ||
+    normalized === "#0f172a" ||
+    normalized === "rgb(15, 23, 42)" ||
+    normalized === "rgba(15, 23, 42, 1)"
+  );
+}
+
+export function sanitizeDataSourceStyle(
+  style: ComunicadoBlock["style"] | undefined,
+): NonNullable<ComunicadoBlock["style"]> {
+  const next: NonNullable<ComunicadoBlock["style"]> = { ...(style ?? {}) };
+  if (isDataSourceInheritedChromeColor(next.color)) {
+    delete next.color;
+  }
+  return next;
+}
+
 export function createDataSourceBlock(
   operationId: string,
   options: {
@@ -173,7 +200,7 @@ export function createDataSourceBlock(
     id: newBlockId(),
     type: "data_source",
     frame: { x: 8, y: 30, w: 18, h: 18 },
-    /* Sem color «auto»: o chrome usa azul de accent no CSS da fonte. */
+    /* Sem color: o chrome usa azul de accent no CSS da fonte. */
     style: { zIndex: 1 },
     dataBinding: {
       operationId,
@@ -438,7 +465,12 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "icon") {
     return { zIndex: 2, color: DECK_COLOR_SURFACE, strokeWidth: 2 };
   }
-  if (isDataBlockType(type) || isDataSourceBlockType(type)) {
+  if (isDataSourceBlockType(type)) {
+    /* Sem color: o chrome da fonte usa accent no CSS; injetar TEXT_STRONG
+     * sobrescrevia o azul ao sair/voltar (parse mergeia defaultStyle). */
+    return { zIndex: 2 };
+  }
+  if (isDataBlockType(type)) {
     return { zIndex: 2, color: DECK_COLOR_TEXT_STRONG };
   }
   if (isDataViewBlockType(type)) {
@@ -632,11 +664,15 @@ export function serializeComunicadoConfig(config: ComunicadoConfig): Record<stri
 }
 
 function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
+  const style =
+    block.type === "data_source"
+      ? sanitizeDataSourceStyle(block.style)
+      : (block.style ?? {});
   const base: Record<string, unknown> = {
     id: block.id,
     type: block.type,
     frame: block.frame,
-    style: block.style ?? {},
+    style,
   };
   if (block.groupId) base.groupId = block.groupId;
   const serializedAnimations = serializeBlockAnimations(block.animations);
@@ -901,7 +937,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         id,
         type: "data_source",
         frame,
-        style: { ...defaultStyle("data_source"), ...style },
+        style: sanitizeDataSourceStyle({ ...defaultStyle("data_source"), ...style }),
         groupId,
         dataBinding: {
           operationId: String(binding.operationId ?? ""),
