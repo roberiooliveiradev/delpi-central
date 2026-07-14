@@ -27,7 +27,7 @@ import {
   ShapeFillMenu,
   ShapeOutlineMenu,
   ShapeShadowMenu,
-  ShapeStyleRibbonStrip,
+  ShapeStyleMenu,
 } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -123,7 +123,8 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
 
   const stylesMenus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-      <ShapeStyleRibbonStrip
+      <ShapeStyleMenu
+        triggerLabel="Estilos"
         onSelect={(preset) =>
           updateSelectedStyle({
             fill: preset.fill,
@@ -197,7 +198,8 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
               onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
             />
             <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-              <ShapeStyleRibbonStrip
+              <ShapeStyleMenu
+                triggerLabel="Estilos"
                 onSelect={(preset) =>
                   updateSelectedStyle({
                     fill: preset.fill,
@@ -353,8 +355,8 @@ function KpiShapeChrome({
 
   const menus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-      <ShapeStyleRibbonStrip
-        maxVisible={5}
+      <ShapeStyleMenu
+        triggerLabel="Estilos"
         onSelect={(preset) =>
           patchChromeStyle({
             fill: preset.fill,

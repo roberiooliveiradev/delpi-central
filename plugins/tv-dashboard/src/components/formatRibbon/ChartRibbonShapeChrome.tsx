@@ -20,7 +20,7 @@ import {
   ShapeFillMenu,
   ShapeOutlineMenu,
   ShapeShadowMenu,
-  ShapeStyleRibbonStrip,
+  ShapeStyleMenu,
 } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
@@ -114,7 +114,8 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
     <>
       <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-          <ShapeStyleRibbonStrip
+          <ShapeStyleMenu
+            triggerLabel="Estilos"
             onSelect={(preset) =>
               patchPartStyle({
                 fill: preset.fill,

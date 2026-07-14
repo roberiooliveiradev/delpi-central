@@ -77,11 +77,14 @@ export function ShapeStyleGallery({
 }
 
 export type ShapeStyleMenuProps = ShapeStyleGalleryProps & {
-  /** Rótulo do botão (default: Estilo). Na faixa horizontal usa «Mais». */
+  /** Rótulo do botão do popover (default: Estilos). */
   triggerLabel?: string;
 };
 
-/** Faixa horizontal na ribbon (thumbs Abc + Mais → galeria completa). */
+/**
+ * Faixa horizontal legado (thumbs Abc + Mais). Preferir `ShapeStyleMenu` (só popover).
+ * @deprecated Use `ShapeStyleMenu`.
+ */
 export function ShapeStyleRibbonStrip({
   themePresets = DEFAULT_THEME_PRESETS,
   quickPresets = DEFAULT_QUICK_PRESETS,
@@ -149,8 +152,8 @@ export function ShapeStyleRibbonStrip({
   );
 }
 
-export function ShapeStyleMenu({ triggerLabel = "Estilo", ...props }: ShapeStyleMenuProps) {
-  const L = mergeShapeColorLabels(props.labels);
+/** Tile + galeria completa em popover ancorado (preset de forma). */
+export function ShapeStyleMenu({ triggerLabel = "Estilos", ...props }: ShapeStyleMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -161,7 +164,7 @@ export function ShapeStyleMenu({ triggerLabel = "Estilo", ...props }: ShapeStyle
       <button
         type="button"
         className="delpi-ui-shape-menu__trigger"
-        aria-label={L.themeStyles}
+        aria-label={triggerLabel}
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((prev) => !prev)}
