@@ -1634,9 +1634,10 @@ body.td-composer--marqueeing * {
    * Padding da seleção global: afasta outline + handles do conteúdo
    * para não confundir com outline/handles de partes (fundo, valor, etc.).
    * Espessura/tamanho via --td-selection-* (dinâmico com zoom no canvas).
+   * Cor via --td-selection-outline (contraste com o fundo do slide).
    */
   outline: var(--td-selection-outline-width, 2.5px) dashed
-    color-mix(in srgb, var(--td-accent) 70%, #fff);
+    var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff));
   outline-offset: var(--td-global-selection-pad, 14px);
   overflow: visible;
   isolation: isolate;
@@ -1763,13 +1764,21 @@ body.td-composer--marqueeing * {
 
 .dashboard-tv-dashboard .td-composer__block-wrap--multi {
   outline-style: dotted;
-  outline-color: color-mix(in srgb, var(--td-accent) 45%, #fff);
+  outline-color: var(
+    --td-selection-outline-multi,
+    color-mix(in srgb, var(--td-accent) 45%, #fff)
+  );
 }
 
 .dashboard-tv-dashboard .td-composer__marquee {
   position: absolute;
-  border: var(--td-selection-outline-width, 2.5px) dashed var(--td-accent, #089bdb);
-  background: color-mix(in srgb, var(--td-accent) 12%, transparent);
+  border: var(--td-selection-outline-width, 2.5px) dashed
+    var(--td-selection-marquee-border, var(--td-accent, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--td-selection-marquee-fill, var(--td-accent)) 12%,
+    transparent
+  );
   pointer-events: none;
   z-index: 50;
   box-sizing: border-box;
@@ -2051,9 +2060,11 @@ body.td-composer--marqueeing * {
   width: var(--td-selection-handle-size, 16px);
   height: var(--td-selection-handle-size, 16px);
   padding: 0;
-  border: 1px solid #fff;
+  border: 1px solid var(--td-selection-handle-border, #fff);
   border-radius: 2px;
-  background: var(--td-accent, #089bdb);
+  background: var(--td-selection-handle-fill, var(--td-accent, #089bdb));
+  /* Anel oposto ao fill: legível mesmo se o fill coincidir com o fundo local. */
+  box-shadow: 0 0 0 1px var(--td-selection-handle-border, #fff);
   pointer-events: auto;
   z-index: 21;
   box-sizing: border-box;
@@ -2120,9 +2131,10 @@ body.td-composer--marqueeing * {
   width: var(--td-selection-rotate-size, 16px);
   height: var(--td-selection-rotate-size, 16px);
   padding: 0;
-  border: 1px solid #fff;
+  border: 1px solid var(--td-selection-handle-border, #fff);
   border-radius: 50%;
-  background: var(--td-accent, #089bdb);
+  background: var(--td-selection-handle-fill, var(--td-accent, #089bdb));
+  box-shadow: 0 0 0 1px var(--td-selection-handle-border, #fff);
   pointer-events: auto;
   z-index: 22;
   cursor: grab;
@@ -2139,7 +2151,10 @@ body.td-composer--marqueeing * {
   border: 1px solid #7a5b00;
   border-radius: 2px;
   background: #f5c518;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.85);
+  /* Dual ring (escuro + claro) para legibilidade em qualquer fundo. */
+  box-shadow:
+    0 0 0 1px #7a5b00,
+    0 0 0 2px rgba(255, 255, 255, 0.95);
   pointer-events: auto;
   z-index: 23;
   cursor: grab;
@@ -2159,7 +2174,7 @@ body.td-composer--marqueeing * {
   width: max(1px, calc(var(--td-selection-outline-width, 2.5px) * 0.45));
   /* Liga o pivô ao outline global (já afastado por --td-global-selection-pad). */
   height: var(--td-selection-rotate-stem, 26px);
-  background: var(--td-accent, #089bdb);
+  background: var(--td-selection-stem, var(--td-accent, #089bdb));
   transform: translateX(-50%);
 }
 

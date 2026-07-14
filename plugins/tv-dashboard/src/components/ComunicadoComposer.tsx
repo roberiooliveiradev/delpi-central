@@ -30,6 +30,10 @@ import {
   type StageScrollPoint,
 } from "../utils/stagePan";
 import {
+  resolveSelectionChromeColors,
+  selectionChromeContrastCssVars,
+} from "../utils/selectionChromeContrast";
+import {
   resolveSelectionChromeMetrics,
   selectionChromeCssVars,
 } from "../utils/selectionChromeMetrics";
@@ -101,6 +105,7 @@ function MasterLogoOverlay() {
 export function ComunicadoComposerCanvas() {
   const {
     config,
+    background,
     blocks,
     selected,
     selectedId,
@@ -139,8 +144,11 @@ export function ComunicadoComposerCanvas() {
     [viewportProfile],
   );
   const selectionChromeStyle = useMemo(
-    () => selectionChromeCssVars(resolveSelectionChromeMetrics(stageZoom)),
-    [stageZoom],
+    () => ({
+      ...selectionChromeCssVars(resolveSelectionChromeMetrics(stageZoom)),
+      ...selectionChromeContrastCssVars(resolveSelectionChromeColors(background)),
+    }),
+    [background, stageZoom],
   );
   const gridSizePx = useMemo(
     () => stageGridSizePercentToDesignPx(stageGridSizePercent, designSize),
@@ -442,36 +450,38 @@ export function ComunicadoComposerCanvas() {
 
   const primarySelected = selectedId;
   const showResizeHandles = (blockId: string) => {
-    // Multi: handles só no primary — move/resize aplicam delta a toda a seleção.
-    if (blockId !== primarySelected || editingTextId === blockId) {
+    // Todos os itens selecionados mostram quadrados de edição (move/resize em grupo).
+    if (!isBlockSelected(blockId) || editingTextId === blockId) {
       return false;
     }
     const block = blocks.find((item) => item.id === blockId);
-    // Handles do wrap só no nível global — partes de conteúdo usam chrome próprio.
-    // Moldura (card/chartArea/frame) continua com handles do bloco.
-    if (
-      block?.type === "chart_view" &&
-      shouldUsePartChromeInsteadOfBlock(block.type, selectedChartPart)
-    ) {
-      return false;
-    }
-    if (
-      block?.type === "kpi_view" &&
-      shouldUsePartChromeInsteadOfBlock(block.type, selectedKpiPart)
-    ) {
-      return false;
-    }
-    if (
-      block?.type === "table_view" &&
-      shouldUsePartChromeInsteadOfBlock(block.type, selectedTablePart)
-    ) {
-      return false;
-    }
-    if (
-      block?.type === "input" &&
-      shouldUsePartChromeInsteadOfBlock(block.type, selectedInputPart)
-    ) {
-      return false;
+    // Handles do wrap só no nível global — partes de conteúdo usam chrome próprio
+    // no primary; moldura (card/chartArea/frame) continua com handles do bloco.
+    if (blockId === primarySelected) {
+      if (
+        block?.type === "chart_view" &&
+        shouldUsePartChromeInsteadOfBlock(block.type, selectedChartPart)
+      ) {
+        return false;
+      }
+      if (
+        block?.type === "kpi_view" &&
+        shouldUsePartChromeInsteadOfBlock(block.type, selectedKpiPart)
+      ) {
+        return false;
+      }
+      if (
+        block?.type === "table_view" &&
+        shouldUsePartChromeInsteadOfBlock(block.type, selectedTablePart)
+      ) {
+        return false;
+      }
+      if (
+        block?.type === "input" &&
+        shouldUsePartChromeInsteadOfBlock(block.type, selectedInputPart)
+      ) {
+        return false;
+      }
     }
     return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
   };

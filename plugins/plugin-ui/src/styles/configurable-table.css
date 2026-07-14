@@ -145,7 +145,10 @@
 .delpi-ui-config-table__part--selected,
 .delpi-ui-config-table [data-table-part][aria-selected="true"] {
   outline: var(--td-selection-outline-width, 2.5px) dashed
-    color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff);
+    var(
+      --td-selection-outline,
+      color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff)
+    );
   outline-offset: 0;
 }
 

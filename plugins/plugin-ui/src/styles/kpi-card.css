@@ -182,9 +182,13 @@
   width: var(--td-selection-handle-size, 16px);
   height: var(--td-selection-handle-size, 16px);
   padding: 0;
-  border: 1px solid #fff;
+  border: 1px solid var(--td-selection-handle-border, #fff);
   border-radius: 2px;
-  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: var(
+    --td-selection-handle-fill,
+    var(--delpi-ui-accent, var(--primary, #089bdb))
+  );
+  box-shadow: 0 0 0 1px var(--td-selection-handle-border, #fff);
   pointer-events: auto;
   z-index: 6;
   box-sizing: border-box;
@@ -321,7 +325,10 @@
 .delpi-kpi-card--part-selected {
   /* Mesmo padrão do wrap do bloco (td-composer__block-wrap--selected). */
   outline: var(--td-selection-outline-width, 2.5px) dashed
-    color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff);
+    var(
+      --td-selection-outline,
+      color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff)
+    );
   outline-offset: 0;
 }
 

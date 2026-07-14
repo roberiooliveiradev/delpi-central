@@ -1550,7 +1550,11 @@
 }
 
 .tdp-comunicado__input-block-part--selected {
-  outline: 2px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 80%, transparent);
+  outline: var(--td-selection-outline-width, 2px) solid
+    var(
+      --td-selection-outline,
+      color-mix(in srgb, var(--tdp-accent, #089bdb) 80%, transparent)
+    );
   outline-offset: 1px;
 }
 

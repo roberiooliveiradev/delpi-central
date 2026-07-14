@@ -1,0 +1,121 @@
+/**
+ * Cores do chrome de seleção (outline, handles, marquee) com contraste
+ * contra o fundo do slide — evita accent sumir em fundo da mesma família.
+ */
+import {
+  cssToColorValue,
+  hexToRgb,
+  relativeLuminance,
+  rgbToHex,
+} from "@delpi/plugin-ui/index";
+import type { ComunicadoBackground } from "@delpi/tv-dashboard-presentation";
+
+export type SelectionChromeColors = {
+  handleFill: string;
+  handleBorder: string;
+  outline: string;
+  outlineMulti: string;
+  marqueeBorder: string;
+  marqueeFill: string;
+  stem: string;
+};
+
+const ACCENT_DEFAULT = "#089bdb";
+const LIGHT = "#ffffff";
+const DARK = "#0f172a";
+/** Contraste mínimo WCAG aproximado para chrome de UI (não texto). */
+const MIN_CONTRAST = 3;
+
+function contrastRatio(aHex: string, bHex: string): number {
+  const a = relativeLuminance(aHex);
+  const b = relativeLuminance(bHex);
+  const hi = Math.max(a, b);
+  const lo = Math.min(a, b);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+function mixHex(a: string, b: string, ratio: number): string {
+  const left = hexToRgb(cssToColorValue(a).hex);
+  const right = hexToRgb(cssToColorValue(b).hex);
+  const t = Math.min(1, Math.max(0, ratio));
+  return rgbToHex(
+    left.r + (right.r - left.r) * t,
+    left.g + (right.g - left.g) * t,
+    left.b + (right.b - left.b) * t,
+  );
+}
+
+/**
+ * Amostra representativa do fundo do slide para decidir contraste do chrome.
+ * Imagem → cinza médio (força anel dual claro/escuro).
+ */
+export function resolveSlideBackgroundSample(
+  background: ComunicadoBackground | undefined,
+): string {
+  const bg = background ?? { type: "color" as const, value: "#ffffff" };
+  if (bg.type === "color") {
+    return cssToColorValue(bg.value || "#ffffff", "#ffffff").hex;
+  }
+  if (bg.type === "gradient") {
+    const from = cssToColorValue(bg.from || DARK, DARK).hex;
+    const to = cssToColorValue(bg.to || DARK, DARK).hex;
+    return mixHex(from, to, 0.5);
+  }
+  return "#6b7280";
+}
+
+function pickHandleFill(bgHex: string, accent: string): string {
+  const candidates = [accent, LIGHT, DARK];
+  let best = LIGHT;
+  let bestRatio = 0;
+  for (const candidate of candidates) {
+    const ratio = contrastRatio(cssToColorValue(candidate).hex, bgHex);
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      best = candidate;
+    }
+  }
+  if (contrastRatio(cssToColorValue(accent).hex, bgHex) >= MIN_CONTRAST) {
+    return accent;
+  }
+  return best;
+}
+
+function contrastingBorder(fillHex: string): string {
+  return relativeLuminance(fillHex) >= 0.55 ? DARK : LIGHT;
+}
+
+export function resolveSelectionChromeColors(
+  background: ComunicadoBackground | undefined,
+  accent: string = ACCENT_DEFAULT,
+): SelectionChromeColors {
+  const bgHex = resolveSlideBackgroundSample(background);
+  const accentHex = cssToColorValue(accent, ACCENT_DEFAULT).hex;
+  const fill = pickHandleFill(bgHex, accentHex);
+  const fillHex = cssToColorValue(fill).hex;
+  const border = contrastingBorder(fillHex);
+  return {
+    handleFill: fillHex,
+    handleBorder: border,
+    outline: fillHex,
+    outlineMulti: mixHex(fillHex, border, 0.35),
+    marqueeBorder: fillHex,
+    marqueeFill: fillHex,
+    stem: fillHex,
+  };
+}
+
+/** CSS custom properties para o canvas do composer. */
+export function selectionChromeContrastCssVars(
+  colors: SelectionChromeColors,
+): Record<string, string> {
+  return {
+    "--td-selection-handle-fill": colors.handleFill,
+    "--td-selection-handle-border": colors.handleBorder,
+    "--td-selection-outline": colors.outline,
+    "--td-selection-outline-multi": colors.outlineMulti,
+    "--td-selection-marquee-border": colors.marqueeBorder,
+    "--td-selection-marquee-fill": colors.marqueeFill,
+    "--td-selection-stem": colors.stem,
+  };
+}

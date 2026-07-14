@@ -249,7 +249,10 @@
 .delpi-ui-series-chart__part--selected,
 .delpi-ui-series-chart [data-chart-part][aria-selected="true"] {
   outline: var(--td-selection-outline-width, 2.5px) dashed
-    color-mix(in srgb, var(--primary, #089bdb) 70%, #fff);
+    var(
+      --td-selection-outline,
+      color-mix(in srgb, var(--primary, #089bdb) 70%, #fff)
+    );
   outline-offset: 0;
 }
 
@@ -274,9 +277,10 @@
   width: var(--td-selection-handle-size, 16px);
   height: var(--td-selection-handle-size, 16px);
   padding: 0;
-  border: 1px solid #fff;
+  border: 1px solid var(--td-selection-handle-border, #fff);
   border-radius: 2px;
-  background: var(--primary, #089bdb);
+  background: var(--td-selection-handle-fill, var(--primary, #089bdb));
+  box-shadow: 0 0 0 1px var(--td-selection-handle-border, #fff);
   pointer-events: auto;
   z-index: 5;
   box-sizing: border-box;
