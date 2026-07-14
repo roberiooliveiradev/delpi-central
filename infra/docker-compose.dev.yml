@@ -618,6 +618,22 @@ services:
     networks:
       - delpi-network
 
+  codigo-etica:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: codigo-etica/Dockerfile
+      target: production
+
+    container_name: delpi-codigo-etica
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   quality-labels:
     <<: *plugin-ui-federated
     build:
