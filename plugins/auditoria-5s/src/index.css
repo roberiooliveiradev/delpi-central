@@ -3822,6 +3822,13 @@ button.a5s-criterion-photo__thumb:focus-visible {
   background: color-mix(in srgb, var(--a5s-surface) 92%, var(--a5s-border));
 }
 
+.a5s-nc-board-filters__scope-hint {
+  flex: 1 0 100%;
+  margin: 0 0 2px;
+  font-size: 0.875rem;
+  color: var(--a5s-muted);
+}
+
 .a5s-nc-board-filters__period input,
 .a5s-nc-board-filters__select {
   box-sizing: border-box;

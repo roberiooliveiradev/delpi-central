@@ -6,6 +6,7 @@ import { formatPersonName } from "../utils/formatPersonName";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos os status" },
+  { value: "pending", label: "Em aberto" },
   ...NC_STATUS_OPTIONS.map((item) => ({ value: item.value, label: item.label })),
 ];
 
@@ -20,12 +21,14 @@ type Props = {
   overdueOnly: boolean;
   loading: boolean;
   lastUpdatedLabel?: string;
+  scopeHint?: string | null;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
   onAreaIdChange: (value: string) => void;
   onStatusChange: (value: string) => void;
   onResponsibleChange: (value: string) => void;
   onOverdueOnlyChange: (value: boolean) => void;
+  onClearDates: () => void;
   onReload: () => void;
 };
 
@@ -40,16 +43,25 @@ export function NcManagementFilters({
   overdueOnly,
   loading,
   lastUpdatedLabel,
+  scopeHint,
   onDateStartChange,
   onDateEndChange,
   onAreaIdChange,
   onStatusChange,
   onResponsibleChange,
   onOverdueOnlyChange,
+  onClearDates,
   onReload,
 }: Props) {
+  const datesOpen = !dateStart.trim() && !dateEnd.trim();
+
   return (
     <section className="a5s-nc-board-filters" aria-label="Filtros da gestão de NCs">
+      {scopeHint ? (
+        <p className="a5s-nc-board-filters__scope-hint" role="status">
+          {scopeHint}
+        </p>
+      ) : null}
       <div className="a5s-nc-board-filters__period">
         <input
           type="date"
@@ -64,6 +76,15 @@ export function NcManagementFilters({
           aria-label="Data final"
           onChange={(event) => onDateEndChange(event.target.value)}
         />
+        <button
+          type="button"
+          className={`a5s-nc-board-filters__chip${datesOpen ? " is-active" : ""}`}
+          aria-pressed={datesOpen}
+          title="Remover filtro de período e listar todas as datas"
+          onClick={onClearDates}
+        >
+          Todas as datas
+        </button>
       </div>
 
       <select

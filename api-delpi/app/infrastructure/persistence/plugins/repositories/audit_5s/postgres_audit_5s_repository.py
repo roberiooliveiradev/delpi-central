@@ -2679,27 +2679,32 @@ class PostgresAudit5sRepository(PluginBaseRepository):
 
     @staticmethod
     def _nc_board_includes_candidates(request: ListAudit5sNcBoardRequest) -> bool:
-        if request.overdue_only:
+        if request.overdue_only or request.pending_only:
             return False
-        if request.priority or request.responsible:
+        if request.priority or request.responsible or request.responsible_user_id:
             return False
         if request.status in ("in_progress", "closed", "cancelled"):
             return False
         return True
 
+    @staticmethod
+    def _nc_board_append_date_filter(
+        conditions: list[str],
+        params: list[Any],
+        request: ListAudit5sNcBoardRequest,
+    ) -> None:
+        if request.date_start is not None and request.date_end is not None:
+            conditions.append("a.audit_date BETWEEN %s AND %s")
+            params.append(request.date_start.isoformat())
+            params.append(request.date_end.isoformat())
+
     def _nc_board_candidate_filter_clause(
         self,
         request: ListAudit5sNcBoardRequest,
     ) -> tuple[str, list[Any]]:
-        conditions = [
-            "a.branch_code = %s",
-            "a.audit_date BETWEEN %s AND %s",
-        ]
-        params: list[Any] = [
-            request.branch_code,
-            request.date_start.isoformat(),
-            request.date_end.isoformat(),
-        ]
+        conditions = ["a.branch_code = %s"]
+        params: list[Any] = [request.branch_code]
+        self._nc_board_append_date_filter(conditions, params, request)
         if request.area_id:
             conditions.append("a.area_id = %s")
             params.append(request.area_id)
@@ -2800,15 +2805,9 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         self,
         request: ListAudit5sNcBoardRequest,
     ) -> tuple[str, list[Any]]:
-        conditions = [
-            "a.branch_code = %s",
-            "a.audit_date BETWEEN %s AND %s",
-        ]
-        params: list[Any] = [
-            request.branch_code,
-            request.date_start.isoformat(),
-            request.date_end.isoformat(),
-        ]
+        conditions = ["a.branch_code = %s"]
+        params: list[Any] = [request.branch_code]
+        self._nc_board_append_date_filter(conditions, params, request)
         if request.area_id:
             conditions.append("a.area_id = %s")
             params.append(request.area_id)
@@ -2818,10 +2817,15 @@ class PostgresAudit5sRepository(PluginBaseRepository):
         if request.status:
             conditions.append("nc.status = %s")
             params.append(request.status)
+        elif request.pending_only:
+            conditions.append("nc.status IN ('open', 'in_progress')")
         if request.priority:
             conditions.append("nc.priority = %s")
             params.append(request.priority)
-        if request.responsible:
+        if request.responsible_user_id:
+            conditions.append("nc.responsible_user_id = %s")
+            params.append(request.responsible_user_id.strip())
+        elif request.responsible:
             conditions.append("nc.responsible_name ILIKE %s")
             params.append(f"%{request.responsible.strip()}%")
         if request.overdue_only:

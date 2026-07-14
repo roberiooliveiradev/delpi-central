@@ -9,6 +9,7 @@ import { NcBoardViewModal } from "../components/NcBoardViewModal";
 import { NcManagementFilters } from "../components/NcManagementFilters";
 import { NcManagementKpis } from "../components/NcManagementKpis";
 import { NcManagementTable } from "../components/NcManagementTable";
+import { ncBoardScopeFromLocation } from "../constants/audit5s";
 import { useAudit5sAdminPermission } from "../hooks/useAudit5sAdminPermission";
 import { useAudit5sNcBoard } from "../hooks/useAudit5sNcBoard";
 import { useAudit5sNcBoardFilters } from "../hooks/useAudit5sNcBoardFilters";
@@ -16,6 +17,7 @@ import { useAudit5sNcBoardFilters } from "../hooks/useAudit5sNcBoardFilters";
 type Props = {
   branch: string;
   pathname?: string;
+  search?: string;
   areas: AuditArea[];
   audits: AuditListItem[];
 };
@@ -27,15 +29,25 @@ type NcBoardModalState = {
   item: NcBoardItem;
 } | null;
 
-export function NcManagementPage({ branch, pathname, areas, audits }: Props) {
+export function NcManagementPage({
+  branch,
+  pathname,
+  search,
+  areas,
+  audits,
+}: Props) {
   const [modalState, setModalState] = useState<NcBoardModalState>(null);
   const [pendingReopen, setPendingReopen] = useState<NcBoardItem | null>(null);
   const [reopening, setReopening] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const { canAdmin } = useAudit5sAdminPermission(branch, pathname);
-  const filters = useAudit5sNcBoardFilters(branch, audits);
+  const boardScope = ncBoardScopeFromLocation(pathname, search);
+  const filters = useAudit5sNcBoardFilters(branch, audits, boardScope);
+  const boardReady =
+    boardScope !== "my-pending" || Boolean(filters.filters.responsibleUserId.trim());
   const { data, loading, error, reload, lastUpdatedAt, isRefreshing } = useAudit5sNcBoard(
     filters.apiParams,
+    { enabled: boardReady },
   );
 
   const [knownResponsibles, setKnownResponsibles] = useState<string[]>([]);
@@ -89,12 +101,18 @@ export function NcManagementPage({ branch, pathname, areas, audits }: Props) {
         overdueOnly={filters.filters.overdueOnly}
         loading={loading}
         lastUpdatedLabel={formatRelativeUpdate(lastUpdatedAt)}
+        scopeHint={
+          boardScope === "my-pending"
+            ? "Exibindo suas ações em aberto (todas as datas)."
+            : null
+        }
         onDateStartChange={filters.setDateStart}
         onDateEndChange={filters.setDateEnd}
         onAreaIdChange={filters.setAreaId}
         onStatusChange={filters.setStatus}
         onResponsibleChange={filters.setResponsible}
         onOverdueOnlyChange={filters.setOverdueOnly}
+        onClearDates={filters.clearDates}
         onReload={reload}
       />
 

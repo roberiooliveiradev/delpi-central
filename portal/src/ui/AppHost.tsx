@@ -536,6 +536,7 @@ export const AppHost = () => {
     app?.renderMode,
     app?.basePath,
     location.pathname,
+    location.search,
     getAccessToken,
     route?.label,
     routeAlternateUrl,

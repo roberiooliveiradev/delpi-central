@@ -1242,14 +1242,16 @@ async def reopen_nc_action(nc_id: str):
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_5s_nonconformities_board(
     branch: str = Query(..., pattern="^(01|02)$"),
-    date_start: str = Query(..., alias="date_start"),
-    date_end: str = Query(..., alias="date_end"),
+    date_start: str | None = Query(None, alias="date_start"),
+    date_end: str | None = Query(None, alias="date_end"),
     area_id: str | None = Query(None),
     shift: str | None = Query(None, pattern="^(TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO)$"),
     status: str | None = Query(None, pattern="^(open|in_progress|closed|cancelled)$"),
     priority: str | None = Query(None, pattern="^(high|medium|low)$"),
     responsible: str | None = Query(None),
+    responsible_user_id: str | None = Query(None, alias="responsible_user_id"),
     overdue_only: bool = Query(False),
+    pending_only: bool = Query(False),
     senso_order: int | None = Query(None, ge=1, le=5),
     search: str | None = Query(None),
     page: int = Query(1, ge=1),
@@ -1262,13 +1264,25 @@ def list_audit_5s_nonconformities_board(
     denied = branch_access_error(branch)
     if denied is not None:
         return denied
-    try:
-        parsed_start = date.fromisoformat(date_start)
-        parsed_end = date.fromisoformat(date_end)
-    except ValueError:
-        return error_response("Período inválido.", status_code=400)
-    if parsed_start > parsed_end:
-        return error_response("Data inicial não pode ser maior que a final.", status_code=400)
+
+    raw_start = (date_start or "").strip()
+    raw_end = (date_end or "").strip()
+    parsed_start: date | None = None
+    parsed_end: date | None = None
+    if raw_start or raw_end:
+        if not raw_start or not raw_end:
+            return error_response(
+                "Informe data inicial e final, ou deixe ambas vazias para todos os períodos.",
+                status_code=400,
+            )
+        try:
+            parsed_start = date.fromisoformat(raw_start)
+            parsed_end = date.fromisoformat(raw_end)
+        except ValueError:
+            return error_response("Período inválido.", status_code=400)
+        if parsed_start > parsed_end:
+            return error_response("Data inicial não pode ser maior que a final.", status_code=400)
+
     try:
         repo = build_audit_5s_repository()
         request = ListAudit5sNcBoardRequest(
@@ -1280,7 +1294,9 @@ def list_audit_5s_nonconformities_board(
             status=status,
             priority=priority,
             responsible=responsible,
+            responsible_user_id=(responsible_user_id or "").strip() or None,
             overdue_only=overdue_only,
+            pending_only=pending_only and not status,
             senso_order=senso_order,
             search=search,
             page=page,

@@ -75,6 +75,25 @@ export function auditViewFromPathname(
   return null;
 }
 
+/**
+ * Escopo «minhas pendentes» vindo da notificação de responsável NC
+ * (`…/nc-board/my-pending` ou `?scope=my-pending`).
+ */
+export function ncBoardScopeFromLocation(
+  pathname?: string | null,
+  search?: string | null,
+): "my-pending" | null {
+  const normalizedPath = (pathname ?? "").replace(/\/+$/, "");
+  if (normalizedPath.includes("/nc-board/my-pending")) {
+    return "my-pending";
+  }
+  const params = new URLSearchParams((search ?? "").replace(/^\?/, ""));
+  if (params.get("scope") === "my-pending") {
+    return "my-pending";
+  }
+  return null;
+}
+
 export function shiftLabel(value: string): string {
   return SHIFTS.find((item) => item.value === value)?.label ?? value;
 }
