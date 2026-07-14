@@ -37,6 +37,18 @@ export {
   percentToDesignPx,
 } from "./frameDesignPixels";
 export {
+  TABLE_VIEW_DEFAULT_FONT_SIZE_PX,
+  scaleChartPartTypographyOnResize,
+  scaleChartPartsTypography,
+  scaleComplexBlockOnResize,
+  scaleFontPx,
+  scaleKpiPartTypographyOnResize,
+  scaleKpiPartsTypography,
+  scaleTableOptionsFontSize,
+  uniformFrameScale,
+  type FrameSize,
+} from "./scaleComplexBlockTypography";
+export {
   designYBottomLeftToTopLeft,
   designYTopLeftToBottomLeft,
   framePercentToPageBottomLeftPx,

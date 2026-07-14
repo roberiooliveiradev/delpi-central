@@ -22,6 +22,9 @@ import {
   patchHostRelativeFramePageBottomLeftPx,
   resolveBlockShapeChromeStyle,
   resolveViewportPixelSize,
+  scaleChartPartTypographyOnResize,
+  scaleComplexBlockOnResize,
+  scaleKpiPartTypographyOnResize,
   seedKpiPartsFreeLayoutFrames,
   upsertChartPartState,
   upsertKpiPartState,
@@ -124,7 +127,15 @@ export function FormatRibbonFrameSection() {
         slideDesign,
       );
       const nextFrame = clampKpiPartFrame(nextPct);
-      const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, { frame: nextFrame });
+      let nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, { frame: nextFrame });
+      if (key === "w" || key === "h") {
+        nextParts = scaleKpiPartTypographyOnResize(
+          nextParts,
+          kpiPartTarget,
+          partFrameFull,
+          { w: nextFrame.w ?? partFrameFull.w, h: nextFrame.h ?? partFrameFull.h },
+        );
+      }
       updateSelected({
         kpiParts: mergeKpiPartsWithOptions(nextParts, partsToKpiOptions(nextParts)),
       } as Partial<ComunicadoBlock>);
@@ -226,9 +237,17 @@ export function FormatRibbonFrameSection() {
         w: nextPct.w ?? partFrame.w ?? defaults.w,
         h: nextPct.h ?? partFrame.h ?? defaults.h,
       });
-      const nextParts = upsertChartPartState(block.chartParts, chartPartTarget, {
+      let nextParts = upsertChartPartState(block.chartParts, chartPartTarget, {
         frame: nextFrame,
       });
+      if (key === "w" || key === "h") {
+        nextParts = scaleChartPartTypographyOnResize(
+          nextParts,
+          chartPartTarget,
+          partFrameForPx,
+          { w: nextFrame.w ?? partFrameForPx.w, h: nextFrame.h ?? partFrameForPx.h },
+        );
+      }
       updateSelected({
         chartParts: mergeChartPartsWithOptions(nextParts, partsToChartOptions(nextParts)),
       } as Partial<ComunicadoBlock>);
@@ -272,9 +291,32 @@ export function FormatRibbonFrameSection() {
   const framePx = framePercentToPageBottomLeftPx(selected.frame, slideDesign);
 
   const setFrameKey = (key: "x" | "y" | "w" | "h", rawPx: number) => {
-    updateSelected({
-      frame: patchComunicadoFramePageBottomLeftPx(selected.frame, key, rawPx, slideDesign),
-    } as Partial<ComunicadoBlock>);
+    const nextFrame = patchComunicadoFramePageBottomLeftPx(
+      selected.frame,
+      key,
+      rawPx,
+      slideDesign,
+    );
+    if (
+      (key === "w" || key === "h") &&
+      (selected.type === "kpi_view" ||
+        selected.type === "chart_view" ||
+        selected.type === "table_view")
+    ) {
+      const scaled = scaleComplexBlockOnResize(
+        { ...selected, frame: nextFrame },
+        selected.frame,
+        nextFrame,
+      );
+      updateSelected({
+        frame: nextFrame,
+        ...(scaled.type === "kpi_view" ? { kpiParts: scaled.kpiParts } : {}),
+        ...(scaled.type === "chart_view" ? { chartParts: scaled.chartParts } : {}),
+        ...(scaled.type === "table_view" ? { tableOptions: scaled.tableOptions } : {}),
+      } as Partial<ComunicadoBlock>);
+      return;
+    }
+    updateSelected({ frame: nextFrame } as Partial<ComunicadoBlock>);
   };
 
   const axisMax = (key: "x" | "y" | "w" | "h", design: ViewportPixelSize) =>

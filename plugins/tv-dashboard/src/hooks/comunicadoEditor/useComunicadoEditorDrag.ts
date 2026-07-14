@@ -5,6 +5,7 @@ import {
   isConnectorShapeBlock,
   isLineShapeKind,
   reconcileConnectorsAfterDrag,
+  scaleComplexBlockOnResize,
   serializeComunicadoConfig,
   syncLineVerticesFromFrame,
   type ComunicadoBlock,
@@ -200,6 +201,12 @@ export function useComunicadoEditorDrag({
             ...updated,
             vertices: syncLineVerticesFromFrame(updated, snappedFrame),
           };
+        }
+        if (mode === "resize") {
+          const beforeBlock = before.blocks?.find((block) => block.id === id);
+          if (beforeBlock) {
+            updated = scaleComplexBlockOnResize(updated, beforeBlock.frame, snappedFrame);
+          }
         }
         nextBlocks[index] = updated;
       }

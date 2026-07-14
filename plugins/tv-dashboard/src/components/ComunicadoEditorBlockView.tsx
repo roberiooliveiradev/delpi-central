@@ -17,6 +17,8 @@ import {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartPartFrameRoot,
+  scaleChartPartTypographyOnResize,
+  scaleKpiPartTypographyOnResize,
   upsertChartPartState,
   KpiViewBlockView,
   KPI_ICON_DEFAULT_RADIUS_PX,
@@ -275,19 +277,27 @@ function EditorChartViewBlock({
       });
       const startClientX = event.clientX;
       const startClientY = event.clientY;
+      let lastFrame = origin;
       let lastParts = upsertChartPartState(block.chartParts, ref, { frame: origin });
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
         const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
-        const nextFrame = resizeChartPartFrame(origin, handle, dx, dy);
-        lastParts = upsertChartPartState(lastParts, ref, { frame: nextFrame });
+        lastFrame = resizeChartPartFrame(origin, handle, dx, dy);
+        lastParts = upsertChartPartState(block.chartParts, ref, { frame: lastFrame });
         updateBlock(block.id, { chartParts: lastParts } as Partial<ComunicadoBlock>);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        const scaled = scaleChartPartTypographyOnResize(
+          lastParts,
+          ref,
+          { w: origin.w ?? 20, h: origin.h ?? 20 },
+          { w: lastFrame.w ?? origin.w ?? 20, h: lastFrame.h ?? origin.h ?? 20 },
+        );
+        updateBlock(block.id, { chartParts: scaled } as Partial<ComunicadoBlock>);
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
@@ -573,20 +583,29 @@ function EditorKpiViewBlock({
       const startClientX = event.clientX;
       const startClientY = event.clientY;
       let resized = false;
+      let lastFrame = origin;
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
         const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
         if (!resized && Math.abs(dx) + Math.abs(dy) < 0.15) return;
         resized = true;
-        const nextFrame = resizeKpiPartFrame(origin, handle, dx, dy);
-        lastParts = upsertKpiPartState(lastParts, ref, { frame: nextFrame });
+        lastFrame = resizeKpiPartFrame(origin, handle, dx, dy);
+        lastParts = upsertKpiPartState(lastParts, ref, { frame: lastFrame });
         updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        if (!resized) return;
+        const scaled = scaleKpiPartTypographyOnResize(
+          lastParts,
+          ref,
+          { w: origin.w ?? 20, h: origin.h ?? 20 },
+          { w: lastFrame.w ?? origin.w ?? 20, h: lastFrame.h ?? origin.h ?? 20 },
+        );
+        updateBlock(block.id, { kpiParts: scaled } as Partial<ComunicadoBlock>);
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
