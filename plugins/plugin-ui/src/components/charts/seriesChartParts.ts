@@ -19,8 +19,15 @@ import {
   OFFICE_CHART_SERIES_COLOR,
   type SeriesChartKind,
 } from "./seriesChartOptions";
-import { DECK_CHART_DEFAULTS } from "../../theme/deckColorCatalog";
+import { DECK_CHART_DEFAULTS, DECK_THEME_DARK } from "../../theme/deckColorCatalog";
 import { resolveTextPartColumnBoxLayout } from "../../utils/textPartBoxLayout";
+
+/** Fill da área de plotagem a partir do tema / fundo flat (Estilo Claro/Escuro). */
+export function resolveChartPlotFillFromOptions(options?: SeriesChartOptions | null): string {
+  const config = mergeSeriesChartOptions(options);
+  if (config.backgroundColor?.trim()) return config.backgroundColor.trim();
+  return config.theme === "dark" ? DECK_THEME_DARK.bg : DECK_CHART_DEFAULTS.plotFill;
+}
 
 /** Atributo DOM para hit-test no editor (sem HTML livre). */
 export const CHART_PART_DATA_ATTR = "data-chart-part";
@@ -385,9 +392,25 @@ export function bindChartPartPointer(
 }
 
 /**
+ * Frames auto-gravados ao selecionar (legenda/título no fluxo) — removem o item
+ * do flex e sobrepõem o plot. Descarta faixa típica de materialização no select.
+ */
+export function looksLikeAutoMaterializedFlowFrame(
+  kind: "title" | "legend",
+  frame: ChartPartFrame,
+): boolean {
+  const w = frame.w ?? 0;
+  const h = frame.h ?? 0;
+  if (w < 40 || h <= 0 || h > 22) return false;
+  if (kind === "title") return frame.y <= 22;
+  return frame.y >= 70;
+}
+
+/**
  * Normaliza parts no load: garante projeção options→parts e desliga moldura
  * legada do plot (`strokeWidth: 1` era o default antigo que vazava eixos).
  * Remove frame da dataTable (sempre no fluxo) e plotArea com geometria inválida.
+ * Limpa frames title/legend tipicamente materializados só pela seleção.
  */
 export function normalizeChartPartsForLoad(
   parts: ChartPartsMap | null | undefined,
@@ -412,6 +435,14 @@ export function normalizeChartPartsForLoad(
   if (table?.frame) {
     const { frame: _dropTableFrame, ...tableRest } = table;
     merged[tableKey] = tableRest;
+  }
+  for (const kind of ["title", "legend"] as const) {
+    const key = serializeChartPartRef({ kind });
+    const state = merged[key];
+    if (state?.frame && looksLikeAutoMaterializedFlowFrame(kind, state.frame)) {
+      const { frame: _dropFlow, ...rest } = state;
+      merged[key] = rest;
+    }
   }
   return merged;
 }
@@ -569,7 +600,7 @@ export function chartOptionsToParts(options?: SeriesChartOptions | null): ChartP
   parts[serializeChartPartRef({ kind: "plotArea" })] = {
     visible: true,
     style: {
-      fill: DECK_CHART_DEFAULTS.plotFill,
+      fill: resolveChartPlotFillFromOptions(config),
       stroke: DECK_CHART_DEFAULTS.plotStroke,
       // Contorno do plot desligado por default — eixos já delimitam (evita moldura dupla).
       strokeWidth: 0,
@@ -640,6 +671,11 @@ export function mergeChartPartsWithOptions(
   const projected = chartOptionsToParts(options);
   const prev = parts ?? {};
   const merged: ChartPartsMap = { ...projected };
+  const prevChartAreaFill = prev.chartArea?.style?.fill;
+  const nextChartAreaFill = projected.chartArea?.style?.fill;
+  /** Estilo Claro/Escuro muda o fundo da moldura — plotArea precisa acompanhar (não ficar branco). */
+  const chartAreaFillChanged =
+    Boolean(nextChartAreaFill) && nextChartAreaFill !== prevChartAreaFill;
 
   for (const key of Object.keys(prev)) {
     const prevState = prev[key];
@@ -654,6 +690,9 @@ export function mergeChartPartsWithOptions(
           ...prevState.style,
           ...(key === "chartArea" && projectedState?.style?.fill
             ? { fill: projectedState.style.fill }
+            : {}),
+          ...(key === "plotArea" && chartAreaFillChanged && nextChartAreaFill
+            ? { fill: nextChartAreaFill }
             : {}),
         },
       };
@@ -1086,6 +1125,11 @@ export function nudgeChartPartFrame(
   return upsertChartPartState(parts, ref, { frame: next });
 }
 
+function clampChartPartOpacity(value: number | undefined): number | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined;
+  return Math.min(1, Math.max(0, value));
+}
+
 /** Format Chart Area (Excel) — preenchimento + contorno + cantos + sombra. */
 export function resolveChartAreaStyle(
   options: SeriesChartOptions,
@@ -1096,6 +1140,7 @@ export function resolveChartAreaStyle(
   strokeWidth: number;
   borderRadius: number;
   boxShadow: string;
+  opacity?: number;
 } {
   const area = getChartPartState(parts, { kind: "chartArea" });
   const style = area?.style;
@@ -1116,6 +1161,7 @@ export function resolveChartAreaStyle(
       : legacyOfficeChrome
         ? DECK_CHART_DEFAULTS.boxShadow
         : (style?.boxShadow ?? DECK_CHART_DEFAULTS.boxShadow),
+    opacity: clampChartPartOpacity(style?.opacity),
   };
 }
 
@@ -1125,6 +1171,7 @@ export function resolvePlotAreaStyle(parts?: ChartPartsMap | null): {
   stroke: string;
   strokeWidth: number;
   borderRadius: number;
+  opacity?: number;
 } {
   const area = getChartPartState(parts, { kind: "plotArea" });
   return {
@@ -1132,5 +1179,6 @@ export function resolvePlotAreaStyle(parts?: ChartPartsMap | null): {
     stroke: area?.style?.stroke ?? OFFICE_CHART_PLOT_STROKE,
     strokeWidth: area?.style?.strokeWidth ?? 0,
     borderRadius: area?.style?.borderRadius ?? 0,
+    opacity: clampChartPartOpacity(area?.style?.opacity),
   };
 }

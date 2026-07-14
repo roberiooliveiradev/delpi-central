@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Filter, Paintbrush, Plus } from "lucide-react";
 import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
 import {
@@ -18,6 +18,11 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
+import {
+  chartFrameShortSidePx,
+  resolveChartFloatToolbarMetrics,
+} from "../utils/chartFloatToolbarSize";
+import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { ChartAddElementMenu } from "./ChartAddElementMenu";
 import { ChartColorsStylesMenu } from "./ChartColorsStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -31,13 +36,40 @@ type FloatPanel = "elements" | "style" | "data" | null;
 /**
  * Coluna flutuante à direita do bbox do gráfico (+ / pincel / funil).
  * `+` e pincel reutilizam os mesmos menus da ribbon.
+ * Botões escalam com o lado curto do gráfico (design px).
+ * Menus ancoram no botão ativo e preferem abrir ao lado quando há espaço.
  */
 export function ChartSelectionFloatToolbar({ block }: Props) {
-  const { updateSelected, openDataPanel, selectChartPart, setSelectionPanelTab } =
-    useComunicadoEditor();
+  const {
+    updateSelected,
+    openDataPanel,
+    selectChartPart,
+    setSelectionPanelTab,
+    viewportProfile,
+  } = useComunicadoEditor();
   const [panel, setPanel] = useState<FloatPanel>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const elementsBtnRef = useRef<HTMLButtonElement>(null);
+  const styleBtnRef = useRef<HTMLButtonElement>(null);
+  const dataBtnRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  const floatMetrics = useMemo(() => {
+    const designSize = resolveViewportPixelSize(viewportProfile);
+    const shortSide = chartFrameShortSidePx(block.frame, designSize);
+    return resolveChartFloatToolbarMetrics(shortSide);
+  }, [block.frame.h, block.frame.w, viewportProfile]);
+
+  const floatStyle = useMemo(
+    (): CSSProperties =>
+      ({
+        "--td-float-btn-size": `${floatMetrics.btnSize}px`,
+        "--td-float-gap": `${floatMetrics.gap}px`,
+        "--td-float-offset": `${floatMetrics.offset}px`,
+        "--td-float-radius": `${floatMetrics.radius}px`,
+      }) as CSSProperties,
+    [floatMetrics],
+  );
 
   const chartKind = toSeriesChartKind(block.chartType) ?? "line";
   const options = mergeComunicadoChartOptions({
@@ -94,13 +126,19 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
     setPanel(null);
   };
 
+  const iconSize = floatMetrics.iconSize;
+  const activeAnchorRef =
+    panel === "elements" ? elementsBtnRef : panel === "style" ? styleBtnRef : dataBtnRef;
+
   return (
     <div
       className="td-chart-float"
       ref={rootRef}
+      style={floatStyle}
       onPointerDown={(event) => event.stopPropagation()}
     >
       <button
+        ref={elementsBtnRef}
         type="button"
         className={[
           "td-chart-float__btn",
@@ -112,9 +150,10 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
         aria-expanded={panel === "elements"}
         onClick={() => setPanel((prev) => (prev === "elements" ? null : "elements"))}
       >
-        <Plus size={16} aria-hidden="true" />
+        <Plus size={iconSize} aria-hidden="true" strokeWidth={2.25} />
       </button>
       <button
+        ref={styleBtnRef}
         type="button"
         className={[
           "td-chart-float__btn",
@@ -126,9 +165,10 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
         aria-expanded={panel === "style"}
         onClick={() => setPanel((prev) => (prev === "style" ? null : "style"))}
       >
-        <Paintbrush size={16} aria-hidden="true" />
+        <Paintbrush size={iconSize} aria-hidden="true" strokeWidth={2.25} />
       </button>
       <button
+        ref={dataBtnRef}
         type="button"
         className={[
           "td-chart-float__btn",
@@ -140,15 +180,16 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
         aria-expanded={panel === "data"}
         onClick={() => setPanel((prev) => (prev === "data" ? null : "data"))}
       >
-        <Filter size={16} aria-hidden="true" />
+        <Filter size={iconSize} aria-hidden="true" strokeWidth={2.25} />
       </button>
 
       {panel === "elements" ? (
         <AnchoredPanelPortal
           open
-          anchorRef={rootRef}
+          anchorRef={activeAnchorRef}
           panelRef={popoverRef}
           variant="bare"
+          preferredPlacement="right"
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           className="td-chart-float__portal"
           role="menu"
@@ -167,9 +208,10 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
       {panel === "style" ? (
         <AnchoredPanelPortal
           open
-          anchorRef={rootRef}
+          anchorRef={activeAnchorRef}
           panelRef={popoverRef}
           variant="bare"
+          preferredPlacement="right"
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           className="td-chart-float__portal"
           role="menu"
@@ -201,9 +243,10 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
       {panel === "data" ? (
         <AnchoredPanelPortal
           open
-          anchorRef={rootRef}
+          anchorRef={activeAnchorRef}
           panelRef={popoverRef}
           variant="bare"
+          preferredPlacement="right"
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           className="td-chart-float__portal"
           role="menu"

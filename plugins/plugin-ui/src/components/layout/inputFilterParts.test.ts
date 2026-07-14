@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   clearInputPartsFreeLayoutFrames,
   bindInputPartPointer,
+  findInputContentPartNearPoint,
   resolveInputBlockPaintCssVars,
   resolveInputContrastBackground,
   resolveInputControlPaintCssVars,
@@ -55,6 +56,29 @@ describe("inputFilterParts paint vs fundo do bloco", () => {
     expect(css.background).toBeUndefined();
     expect(css.backgroundColor).toBeUndefined();
     expect(css.border).toBeUndefined();
+  });
+
+  it("paint de fundo no control não aplica alignSelf flex-start (não desloca na linha)", () => {
+    const css = resolveInputPartLayoutStyle(
+      { style: { fill: "#a78bfa" } },
+      { partKind: "control" },
+    );
+    expect(css.alignSelf).toBeUndefined();
+    expect(css.flex).toBeUndefined();
+  });
+
+  it("frame retarget: ponto perto do control resolve a parte de conteúdo", () => {
+    const root = document.createElement("div");
+    root.className = "tdp-comunicado__input-block";
+    const control = document.createElement("span");
+    control.setAttribute("data-input-part", "control");
+    Object.defineProperty(control, "getBoundingClientRect", {
+      value: () => ({ left: 100, top: 40, right: 220, bottom: 70, width: 120, height: 30 }),
+    });
+    root.appendChild(control);
+    // Clique no outline (fora do box, dentro do pad).
+    expect(findInputContentPartNearPoint(root, 100 - 4, 55)).toEqual({ kind: "control" });
+    expect(findInputContentPartNearPoint(root, 10, 10)).toBeNull();
   });
 
   it("CSS vars resolvem fg claro em superfície escura", () => {
@@ -121,7 +145,7 @@ describe("inputFilterParts free-layout", () => {
     expect(onPartMovePointerDown).toHaveBeenCalled();
   });
 
-  it("bindInputPartPointer no control selecionado edita valor (sem drag)", () => {
+  it("bindInputPartPointer no control selecionado inicia drag da caixa (foco se sem arraste)", () => {
     const onPartPointerDown = vi.fn();
     const onPartMovePointerDown = vi.fn();
     const bind = bindInputPartPointer(
@@ -141,8 +165,40 @@ describe("inputFilterParts free-layout", () => {
       target: input,
     } as unknown as Parameters<NonNullable<typeof bind.onPointerDown>>[0]);
     expect(stopPropagation).toHaveBeenCalled();
-    expect(onPartPointerDown).not.toHaveBeenCalled();
-    expect(onPartMovePointerDown).not.toHaveBeenCalled();
+    expect(preventDefault).toHaveBeenCalled();
+    expect(onPartPointerDown).toHaveBeenCalledWith({ kind: "control" }, expect.anything());
+    expect(onPartMovePointerDown).toHaveBeenCalledWith({ kind: "control" }, expect.anything());
+  });
+
+  it("bindInputPartPointer na moldura redireciona clique perto do control", () => {
+    const onPartPointerDown = vi.fn();
+    const onPartMovePointerDown = vi.fn();
+    const root = document.createElement("div");
+    root.setAttribute("data-input-part", "frame");
+    const control = document.createElement("span");
+    control.setAttribute("data-input-part", "control");
+    Object.defineProperty(control, "getBoundingClientRect", {
+      value: () => ({ left: 50, top: 20, right: 150, bottom: 50, width: 100, height: 30 }),
+    });
+    root.appendChild(control);
+    const bind = bindInputPartPointer(
+      { kind: "frame" },
+      {
+        selectedPart: { kind: "control" },
+        onPartPointerDown,
+        onPartMovePointerDown,
+      },
+    );
+    bind.onPointerDown?.({
+      stopPropagation: vi.fn(),
+      preventDefault: vi.fn(),
+      target: root,
+      currentTarget: root,
+      clientX: 48,
+      clientY: 35,
+    } as unknown as Parameters<NonNullable<typeof bind.onPointerDown>>[0]);
+    expect(onPartPointerDown).toHaveBeenCalledWith({ kind: "control" }, expect.anything());
+    expect(onPartMovePointerDown).toHaveBeenCalledWith({ kind: "control" }, expect.anything());
   });
 
   it("bindInputPartPointer no control nativo sem seleção seleciona a parte", () => {

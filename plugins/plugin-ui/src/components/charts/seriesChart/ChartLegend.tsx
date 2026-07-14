@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import type { SeriesChartLegendPosition } from "../seriesChartOptions";
@@ -6,8 +6,8 @@ import {
   bindChartPartPointer,
   chartPartAllowsResize,
   chartPartTypographyStyle,
-  clampChartPartFrame,
   getChartPartState,
+  looksLikeAutoMaterializedFlowFrame,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -62,7 +62,9 @@ export function ChartLegend({
           : cn.legendBottom;
 
   const ref = { kind: "legend" as const };
-  const frame = getChartPartState(chartParts, ref)?.frame;
+  const rawFrame = getChartPartState(chartParts, ref)?.frame;
+  const frame =
+    rawFrame && looksLikeAutoMaterializedFlowFrame("legend", rawFrame) ? undefined : rawFrame;
   const partStyle = getChartPartState(chartParts, ref)?.style;
   const typographyStyle = chartPartTypographyStyle(chartParts, ref);
   const { selected, onPointerDown, onDoubleClick, ...dom } = bindChartPartPointer(ref, interaction);
@@ -86,29 +88,13 @@ export function ChartLegend({
       ? { ...frameStyle, ...typographyStyle, ...paintStyle }
       : undefined;
   const showResize = selected && chartPartAllowsResize(ref);
-  const hostRef = useRef<HTMLUListElement>(null);
-
-  useLayoutEffect(() => {
-    if (!showResize || frame?.w != null || !interaction?.onPartFrameChange || !hostRef.current) return;
-    const chartRoot = hostRef.current.closest(".delpi-ui-series-chart, .tdp-series-chart");
-    if (!chartRoot) return;
-    const rect = chartRoot.getBoundingClientRect();
-    const el = hostRef.current.getBoundingClientRect();
-    if (rect.width < 1 || rect.height < 1) return;
-    interaction.onPartFrameChange(
-      ref,
-      clampChartPartFrame({
-        x: ((el.left - rect.left) / rect.width) * 100,
-        y: ((el.top - rect.top) / rect.height) * 100,
-        w: Math.max(8, (el.width / rect.width) * 100),
-        h: Math.max(4, (el.height / rect.height) * 100),
-      }),
-    );
-  }, [showResize, frame?.w, interaction]);
+  /*
+   * Não materializar frame no select: absolute tira a legenda do flex e
+   * sobrepõe o plot (reflow). Move/resize no editor gravam o frame no 1º arraste.
+   */
 
   return (
     <ul
-      ref={hostRef}
       className={[
         cn.legend,
         frameStyle?.position === "absolute" ? "" : positionClass,

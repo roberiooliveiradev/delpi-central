@@ -27,6 +27,7 @@ import {
   partsToChartOptions,
   resizeChartPartFrame,
   resolveChartAreaStyle,
+  resolvePlotAreaStyle,
   resolveChartLinePartStroke,
   resolveChartPartFontSize,
   resolveMarkerStyle,
@@ -172,6 +173,29 @@ describe("seriesChartParts", () => {
     expect(resolveChartAreaStyle(options, parts).borderRadius).toBe(0);
   });
 
+  it("resolvePlotAreaStyle e resolveChartAreaStyle expõem opacity da parte", () => {
+    const options = mergeSeriesChartOptions({});
+    const base = chartOptionsToParts(options);
+    const withOpacity = upsertChartPartState(
+      upsertChartPartState(base, { kind: "plotArea" }, { style: { opacity: 0 } }),
+      { kind: "chartArea" },
+      { style: { opacity: 0.4 } },
+    );
+    expect(resolvePlotAreaStyle(withOpacity).opacity).toBe(0);
+    expect(resolveChartAreaStyle(options, withOpacity).opacity).toBe(0.4);
+  });
+
+  it("mergeChartPartsWithOptions preserva opacity do plotArea ao sync de fundo", () => {
+    const light = mergeSeriesChartOptions({ theme: "light", backgroundColor: "#ffffff" });
+    const prev = upsertChartPartState(chartOptionsToParts(light), { kind: "plotArea" }, {
+      style: { opacity: 0.25 },
+    });
+    const dark = mergeSeriesChartOptions({ theme: "dark", backgroundColor: "#0b1520" });
+    const merged = mergeChartPartsWithOptions(prev, dark);
+    expect(merged.plotArea?.style?.fill).toBe("#0b1520");
+    expect(merged.plotArea?.style?.opacity).toBe(0.25);
+  });
+
   it("mergeChartPartsWithOptions aplica seriesColor novo sobre stroke da série", () => {
     const base = chartOptionsToParts(mergeSeriesChartOptions({ seriesColor: "#089bdb" }));
     const customized = upsertChartPartState(base, { kind: "series", seriesIndex: 0 }, {
@@ -198,6 +222,30 @@ describe("seriesChartParts", () => {
     const effective = mergeSeriesChartOptionsWithParts(options, parts);
     expect(effective.theme).toBe("dark");
     expect(effective.backgroundColor).toBe("#0b1520");
+  });
+
+  it("estilo Escuro sincroniza fill do plotArea com a chartArea (não deixa plot branco)", () => {
+    const light = mergeSeriesChartOptions({ theme: "light", backgroundColor: "#ffffff" });
+    const prev = chartOptionsToParts(light);
+    expect(prev.plotArea?.style?.fill).toBe("#ffffff");
+
+    const dark = mergeSeriesChartOptions({ theme: "dark", backgroundColor: "#0b1520" });
+    const merged = mergeChartPartsWithOptions(prev, dark);
+    expect(merged.chartArea?.style?.fill).toBe("#0b1520");
+    expect(merged.plotArea?.style?.fill).toBe("#0b1520");
+  });
+
+  it("merge não sobrescreve plotArea custom quando o fundo da chartArea não muda", () => {
+    const base = chartOptionsToParts(mergeSeriesChartOptions({ backgroundColor: "#ffffff" }));
+    const customized = upsertChartPartState(base, { kind: "plotArea" }, {
+      style: { fill: "#ffe4e6" },
+    });
+    const merged = mergeChartPartsWithOptions(
+      customized,
+      mergeSeriesChartOptions({ backgroundColor: "#ffffff", seriesColor: "#0f766e" }),
+    );
+    expect(merged.plotArea?.style?.fill).toBe("#ffe4e6");
+    expect(merged["series:0"]?.style?.stroke).toBe("#0f766e");
   });
 
   it("mergeChartPartsWithOptions aplica categoryColors[1] no fill da série", () => {
@@ -328,6 +376,26 @@ describe("seriesChartParts", () => {
     const normalized = normalizeChartPartsForLoad(withFrames, mergeSeriesChartOptions({ showDataTable: true }));
     expect(normalized.dataTable?.frame).toBeUndefined();
     expect(normalized.plotArea?.frame).toBeUndefined();
+  });
+
+  it("normalizeChartPartsForLoad remove frames title/legend típicos de materialização no select", () => {
+    const withAuto = {
+      ...chartOptionsToParts(mergeSeriesChartOptions({})),
+      title: { visible: true, frame: { x: 12, y: 3, w: 76, h: 8 } },
+      legend: { visible: true, frame: { x: 15, y: 88, w: 70, h: 7 } },
+    };
+    const normalized = normalizeChartPartsForLoad(withAuto, mergeSeriesChartOptions({}));
+    expect(normalized.title?.frame).toBeUndefined();
+    expect(normalized.legend?.frame).toBeUndefined();
+  });
+
+  it("normalizeChartPartsForLoad preserva frame livre fora da faixa auto", () => {
+    const free = {
+      ...chartOptionsToParts(mergeSeriesChartOptions({})),
+      legend: { visible: true, frame: { x: 60, y: 40, w: 30, h: 12 } },
+    };
+    const normalized = normalizeChartPartsForLoad(free, mergeSeriesChartOptions({}));
+    expect(normalized.legend?.frame).toEqual({ x: 60, y: 40, w: 30, h: 12 });
   });
 
   it("isChartPartInteractionSelected destaca todos os rótulos no grupo dataLabels", () => {

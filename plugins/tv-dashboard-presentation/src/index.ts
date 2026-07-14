@@ -512,6 +512,7 @@ export {
   clampInputPartFrame,
   defaultInputPartFrame,
   defaultInputPartsMap,
+  findInputContentPartNearPoint,
   findInputPartFromTarget,
   getInputPartState,
   inputElementIdForPartRef,

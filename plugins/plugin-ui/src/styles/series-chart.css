@@ -1,10 +1,16 @@
-/* Shell = bbox do bloco (paridade KPI). Card branco posiciona dentro. */
+/* Shell = bbox do bloco (paridade KPI). Sombra na moldura do shell —
+   overflow:hidden no shell cortaria box-shadow do filho (.delpi-ui-series-chart). */
 .delpi-ui-series-chart-shell {
   position: relative;
   width: 100%;
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
+  border-radius: var(--delpi-ui-series-chart-radius, 16px);
+  box-shadow: var(
+    --tdp-block-box-shadow,
+    var(--delpi-ui-series-chart-shadow, none)
+  );
   /* Contém chartArea inset / partes na bbox do bloco. */
   overflow: hidden;
 }
@@ -24,16 +30,14 @@
   flex-direction: column;
   gap: 0.45rem;
   box-sizing: border-box;
-  /* radius/shadow via estilo inline (chartArea); clip padrão — abre com parte selecionada p/ handles. */
+  /* radius/fill via estilo inline (chartArea); clip padrão — abre com parte selecionada p/ handles. */
   border-radius: var(--delpi-ui-series-chart-radius, 16px);
   overflow: hidden;
   padding: 0.55rem 0.65rem;
   background: var(--delpi-ui-series-chart-bg, #ffffff);
   color: var(--delpi-ui-series-chart-text, #1e293b);
-  box-shadow: var(
-    --tdp-block-box-shadow,
-    var(--delpi-ui-series-chart-shadow, none)
-  );
+  /* Sombra fica no shell — evita clip por overflow:hidden deste card. */
+  box-shadow: none;
 }
 
 .delpi-ui-series-chart:has(.delpi-ui-series-chart__part--selected),
@@ -244,7 +248,8 @@
 
 .delpi-ui-series-chart__part--selected,
 .delpi-ui-series-chart [data-chart-part][aria-selected="true"] {
-  outline: 1px dashed color-mix(in srgb, var(--primary, #089bdb) 70%, #fff);
+  outline: var(--td-selection-outline-width, 2.5px) dashed
+    color-mix(in srgb, var(--primary, #089bdb) 70%, #fff);
   outline-offset: 0;
 }
 
@@ -255,13 +260,19 @@
 
 .delpi-ui-series-chart__part--resizable {
   position: relative;
+  /* Handles absolutos fora do box — sem alterar o tamanho do item no flex. */
   overflow: visible;
+}
+
+.delpi-ui-series-chart__legend.delpi-ui-series-chart__part--resizable,
+.delpi-ui-series-chart__title.delpi-ui-series-chart__part--resizable {
+  flex-shrink: 0;
 }
 
 .delpi-ui-series-chart__part-resize {
   position: absolute;
-  width: 9px;
-  height: 9px;
+  width: var(--td-selection-handle-size, 16px);
+  height: var(--td-selection-handle-size, 16px);
   padding: 0;
   border: 1px solid #fff;
   border-radius: 2px;
@@ -272,54 +283,54 @@
 }
 
 .delpi-ui-series-chart__part-resize--nw {
-  left: -5px;
-  top: -5px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nwse-resize;
 }
 
 .delpi-ui-series-chart__part-resize--n {
-  top: -5px;
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   left: 50%;
   transform: translateX(-50%);
   cursor: ns-resize;
 }
 
 .delpi-ui-series-chart__part-resize--ne {
-  right: -5px;
-  top: -5px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nesw-resize;
 }
 
 .delpi-ui-series-chart__part-resize--w {
-  left: -5px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
   top: 50%;
   transform: translateY(-50%);
   cursor: ew-resize;
 }
 
 .delpi-ui-series-chart__part-resize--e {
-  right: -5px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
   top: 50%;
   transform: translateY(-50%);
   cursor: ew-resize;
 }
 
 .delpi-ui-series-chart__part-resize--sw {
-  left: -5px;
-  bottom: -5px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nesw-resize;
 }
 
 .delpi-ui-series-chart__part-resize--s {
-  bottom: -5px;
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   left: 50%;
   transform: translateX(-50%);
   cursor: ns-resize;
 }
 
 .delpi-ui-series-chart__part-resize--se {
-  right: -5px;
-  bottom: -5px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nwse-resize;
 }
 

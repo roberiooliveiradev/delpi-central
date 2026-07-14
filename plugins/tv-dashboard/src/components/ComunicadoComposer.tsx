@@ -20,6 +20,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
+import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
 import { shouldUsePartChromeInsteadOfBlock } from "../utils/compositePartSelection";
 import {
@@ -28,6 +29,10 @@ import {
   stageScrollPreserveContentUnderViewportCenter,
   type StageScrollPoint,
 } from "../utils/stagePan";
+import {
+  resolveSelectionChromeMetrics,
+  selectionChromeCssVars,
+} from "../utils/selectionChromeMetrics";
 import { shouldRenderStageGrid } from "../utils/stageViewport";
 import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
@@ -112,6 +117,7 @@ export function ComunicadoComposerCanvas() {
     canvasRef,
     canvasWrapRef,
     startDrag,
+    armMultiDragSelection,
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
@@ -131,6 +137,10 @@ export function ComunicadoComposerCanvas() {
   const designSize = useMemo(
     () => resolveViewportPixelSize(viewportProfile),
     [viewportProfile],
+  );
+  const selectionChromeStyle = useMemo(
+    () => selectionChromeCssVars(resolveSelectionChromeMetrics(stageZoom)),
+    [stageZoom],
   );
   const gridSizePx = useMemo(
     () => stageGridSizePercentToDesignPx(stageGridSizePercent, designSize),
@@ -294,6 +304,8 @@ export function ComunicadoComposerCanvas() {
       marqueeStartClientRef.current = null;
       marqueeRectRef.current = null;
       setMarquee(null);
+      document.body.style.userSelect = "";
+      document.body.classList.remove("td-composer--marqueeing");
 
       if (!rect) return;
 
@@ -327,16 +339,36 @@ export function ComunicadoComposerCanvas() {
       mode: BlockDragMode,
     ) => {
       if (shouldDeferToStagePan(event, stagePanMode)) return;
+      // Handles do primary: arma a multi atual para move/resize em grupo.
+      if (isBlockSelected(block.id) && selectedIds.length > 1) {
+        armMultiDragSelection(selectedIds);
+      } else {
+        armMultiDragSelection([block.id]);
+      }
       startDrag(event, block, mode);
     },
-    [stagePanMode, startDrag],
+    [armMultiDragSelection, isBlockSelected, selectedIds, stagePanMode, startDrag],
   );
 
   const handleCanvasPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (shouldDeferToStagePan(event, stagePanMode)) return;
-      if (event.target !== event.currentTarget) return;
+      // Marquee só no fundo do slide — não iniciar sobre um bloco.
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        target !== event.currentTarget &&
+        target.closest("[data-block-id]")
+      ) {
+        return;
+      }
       if (editingTextId) return;
+
+      // Impede seleção nativa de texto enquanto o retângulo de marquee arrasta.
+      event.preventDefault();
+      window.getSelection()?.removeAllRanges();
+      document.body.style.userSelect = "none";
+      document.body.classList.add("td-composer--marqueeing");
 
       const additive = event.shiftKey;
       const origin = clientToCanvasPercent(event.clientX, event.clientY);
@@ -346,8 +378,13 @@ export function ComunicadoComposerCanvas() {
       marqueeRectRef.current = initial;
       setMarquee(initial);
 
+      function onSelectStart(selectEvent: Event) {
+        selectEvent.preventDefault();
+      }
+
       function onMove(moveEvent: PointerEvent) {
         if (!marqueeActiveRef.current || !marqueeStartClientRef.current) return;
+        moveEvent.preventDefault();
         const start = marqueeStartClientRef.current;
         const dx = Math.abs(moveEvent.clientX - start.x);
         const dy = Math.abs(moveEvent.clientY - start.y);
@@ -367,11 +404,16 @@ export function ComunicadoComposerCanvas() {
       function onUp() {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onUp);
+        document.removeEventListener("selectstart", onSelectStart, true);
+        window.getSelection()?.removeAllRanges();
         finishMarquee(additive);
       }
 
-      window.addEventListener("pointermove", onMove);
+      document.addEventListener("selectstart", onSelectStart, true);
+      window.addEventListener("pointermove", onMove, { passive: false });
       window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onUp);
     },
     [clientToCanvasPercent, editingTextId, finishMarquee, stagePanMode],
   );
@@ -400,7 +442,8 @@ export function ComunicadoComposerCanvas() {
 
   const primarySelected = selectedId;
   const showResizeHandles = (blockId: string) => {
-    if (blockId !== primarySelected || editingTextId === blockId || selectedIds.length > 1) {
+    // Multi: handles só no primary — move/resize aplicam delta a toda a seleção.
+    if (blockId !== primarySelected || editingTextId === blockId) {
       return false;
     }
     const block = blocks.find((item) => item.id === blockId);
@@ -456,10 +499,16 @@ export function ComunicadoComposerCanvas() {
       >
         <div
           ref={canvasRef}
-          className="td-composer__canvas"
+          className={[
+            "td-composer__canvas",
+            marquee ? "td-composer__canvas--marqueeing" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
           data-viewport={viewportProfile || "1080p"}
           style={{
             ...canvasStyle,
+            ...selectionChromeStyle,
             width: designSize.width,
             height: designSize.height,
             transform: `scale(${stageZoom})`,
@@ -547,14 +596,23 @@ export function ComunicadoComposerCanvas() {
                     updateBlock(selected.id, { dataSourceId: block.id } as Partial<ComunicadoBlock>);
                     return;
                   }
-                  selectBlock(block.id, { additive: event.shiftKey });
                   if (
                     editingTextId === block.id &&
                     (event.target as HTMLElement).closest(".td-composer__inline-text")
                   ) {
                     return;
                   }
-                  startDrag(event, block, "move");
+                  beginBlockStageMoveDrag({
+                    event,
+                    block,
+                    isBlockSelected,
+                    selectedIds,
+                    selectedId,
+                    selectBlock,
+                    selectBlocksByIds,
+                    armMultiDragSelection,
+                    startDrag,
+                  });
                 }}
               >
                 <ComunicadoEditorBlockView

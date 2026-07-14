@@ -1,7 +1,12 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { TabHintCell, TabPanelTransition } from "@delpi/plugin-ui/index";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
+import {
+  readDeckChromeCollapsed,
+  writeDeckChromeCollapsed,
+} from "../utils/deckChromeLayout";
 import {
   isSelectionPanelTab,
   normalizeSelectionRibbonTab,
@@ -119,6 +124,12 @@ export function DeckEditorChrome({
   const tabs = resolveDeckRibbonTabs(isCustomSlide, { hasSelection, isTableSelection });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
   const [layersModalOpen, setLayersModalOpen] = useState(false);
+  const [chromeCollapsed, setChromeCollapsed] = useState(() => readDeckChromeCollapsed());
+
+  function setCollapsed(next: boolean) {
+    setChromeCollapsed(next);
+    writeDeckChromeCollapsed(next);
+  }
 
   function openLayersModal() {
     setLayersModalOpen(true);
@@ -215,106 +226,158 @@ export function DeckEditorChrome({
     }
   }
 
-  const showRibbon = isRibbonTab(activeTab);
+  const showRibbon = isRibbonTab(activeTab) && !chromeCollapsed;
   const playlistChrome = slideDeck.playlistChrome;
+  const activeTabMeta = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
   return (
-    <section className="td-deck-chrome" aria-label="Editor da programação">
-      <div className="td-deck-chrome__head">
-        <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
-          <DeckHistoryTabActions />
-          {tabs.map((tab, index) => {
-            const contextual = isContextualDeckRibbonTab(tab);
-            const firstContextual =
-              contextual && tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
-            const tabActive =
-              activeTab === tab.id || (tab.id === "layers" && layersModalOpen);
-            return (
-              <DeckKeyTip key={tab.id} letter={DECK_TAB_KEYTIPS[tab.id]} scope="tabs" placement="bottom">
-                <TabHintCell
-                  label={tab.label}
-                  hint={tab.hint}
-                  icon={tab.icon}
-                  active={tabActive}
-                  disabled={tab.disabledWhenNoSlide ? !slide : false}
-                  onSelect={() => selectTab(tab.id)}
-                  cellClassName={[
-                    "td-deck-chrome__tab-cell",
-                    contextual ? "td-deck-chrome__tab-cell--contextual" : "",
-                    firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  tabClassName={[
-                    "td-deck-chrome__tab",
-                    contextual ? "td-deck-chrome__tab--contextual" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  tabActiveClassName={[
-                    "td-deck-chrome__tab--active",
-                    contextual ? "td-deck-chrome__tab--contextual-active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+    <section
+      className={[
+        "td-deck-chrome",
+        chromeCollapsed ? "td-deck-chrome--collapsed" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label="Editor da programação"
+    >
+      {chromeCollapsed ? (
+        <div className="td-deck-chrome__collapsed-rail">
+          <button
+            type="button"
+            className="td-deck-chrome__reopen"
+            onClick={() => setCollapsed(false)}
+            aria-label="Expandir barra superior"
+            title="Expandir faixa e ribbon"
+          >
+            <ChevronDown size={16} aria-hidden="true" />
+          </button>
+          <span className="td-deck-chrome__collapsed-label">
+            {activeTabMeta?.label ?? "Editor"}
+          </span>
+          {playlistChrome ? (
+            <DeckPlaylistIdentity
+              playlistName={playlistChrome.playlistName}
+              tvStatusLabel={playlistChrome.tvStatusLabel}
+              tvStatusClass={playlistChrome.tvStatusClass}
+            />
+          ) : null}
+        </div>
+      ) : (
+        <>
+          <div className="td-deck-chrome__head">
+            <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
+              <DeckHistoryTabActions />
+              {tabs.map((tab, index) => {
+                const contextual = isContextualDeckRibbonTab(tab);
+                const firstContextual =
+                  contextual &&
+                  tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
+                const tabActive =
+                  activeTab === tab.id || (tab.id === "layers" && layersModalOpen);
+                return (
+                  <DeckKeyTip
+                    key={tab.id}
+                    letter={DECK_TAB_KEYTIPS[tab.id]}
+                    scope="tabs"
+                    placement="bottom"
+                  >
+                    <TabHintCell
+                      label={tab.label}
+                      hint={tab.hint}
+                      icon={tab.icon}
+                      active={tabActive}
+                      disabled={tab.disabledWhenNoSlide ? !slide : false}
+                      onSelect={() => selectTab(tab.id)}
+                      cellClassName={[
+                        "td-deck-chrome__tab-cell",
+                        contextual ? "td-deck-chrome__tab-cell--contextual" : "",
+                        firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      tabClassName={[
+                        "td-deck-chrome__tab",
+                        contextual ? "td-deck-chrome__tab--contextual" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      tabActiveClassName={[
+                        "td-deck-chrome__tab--active",
+                        contextual ? "td-deck-chrome__tab--contextual-active" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    />
+                  </DeckKeyTip>
+                );
+              })}
+            </div>
+            <div className="td-deck-chrome__head-trail">
+              {playlistChrome ? (
+                <DeckPlaylistIdentity
+                  playlistName={playlistChrome.playlistName}
+                  tvStatusLabel={playlistChrome.tvStatusLabel}
+                  tvStatusClass={playlistChrome.tvStatusClass}
                 />
-              </DeckKeyTip>
-            );
-          })}
-        </div>
-        {playlistChrome ? (
-          <DeckPlaylistIdentity
-            playlistName={playlistChrome.playlistName}
-            tvStatusLabel={playlistChrome.tvStatusLabel}
-            tvStatusClass={playlistChrome.tvStatusClass}
-          />
-        ) : null}
-      </div>
+              ) : null}
+              <button
+                type="button"
+                className="td-deck-chrome__collapse"
+                onClick={() => setCollapsed(true)}
+                aria-label="Recolher barra superior"
+                title="Recolher faixa e ribbon"
+              >
+                <ChevronUp size={16} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
 
-      {showRibbon ? (
-        <div className="td-deck-chrome__ribbon">
-          <TabPanelTransition tabKey={activeTab} className="td-deck-chrome__ribbon-panel">
-            <DeckRibbonShell
-              density={ribbonDensityFor(activeTab)}
-              label={
-                activeTab === "playlist"
-                  ? "Programação"
-                  : activeTab === "slide"
-                    ? "Tela"
-                    : "Controles de slide"
-              }
-            >
-              {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
-              {isCustomSlide &&
-              (activeTab === "insert" ||
-                activeTab === "element" ||
-                activeTab === "tableDesign" ||
-                activeTab === "tableLayout" ||
-                activeTab === "data" ||
-                activeTab === "view") ? (
-                <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
-              ) : null}
-              {activeTab === "slide" || activeTab === "playlist" ? (
-                <div className="td-deck-ribbon__groups">
-                  {activeTab === "slide" && isCustomSlide ? (
-                    <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
+          {showRibbon ? (
+            <div className="td-deck-chrome__ribbon">
+              <TabPanelTransition tabKey={activeTab} className="td-deck-chrome__ribbon-panel">
+                <DeckRibbonShell
+                  density={ribbonDensityFor(activeTab)}
+                  label={
+                    activeTab === "playlist"
+                      ? "Programação"
+                      : activeTab === "slide"
+                        ? "Tela"
+                        : "Controles de slide"
+                  }
+                >
+                  {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
+                  {isCustomSlide &&
+                  (activeTab === "insert" ||
+                    activeTab === "element" ||
+                    activeTab === "tableDesign" ||
+                    activeTab === "tableLayout" ||
+                    activeTab === "data" ||
+                    activeTab === "view") ? (
+                    <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
                   ) : null}
-                  <DeckSettingsPanel
-                    activeTab={activeTab}
-                    playlist={playlist}
-                    slide={slide}
-                    catalog={catalog}
-                    branchScope={branchScope}
-                    slideTabExtra={slideTabExtra}
-                    onSavePlaylistSettings={onSavePlaylistSettings}
-                    onSaveSlide={onSaveSlide}
-                  />
-                </div>
-              ) : null}
-            </DeckRibbonShell>
-          </TabPanelTransition>
-        </div>
-      ) : null}
+                  {activeTab === "slide" || activeTab === "playlist" ? (
+                    <div className="td-deck-ribbon__groups">
+                      {activeTab === "slide" && isCustomSlide ? (
+                        <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
+                      ) : null}
+                      <DeckSettingsPanel
+                        activeTab={activeTab}
+                        playlist={playlist}
+                        slide={slide}
+                        catalog={catalog}
+                        branchScope={branchScope}
+                        slideTabExtra={slideTabExtra}
+                        onSavePlaylistSettings={onSavePlaylistSettings}
+                        onSaveSlide={onSaveSlide}
+                      />
+                    </div>
+                  ) : null}
+                </DeckRibbonShell>
+              </TabPanelTransition>
+            </div>
+          ) : null}
+        </>
+      )}
 
       <Modal
         open={layersModalOpen}

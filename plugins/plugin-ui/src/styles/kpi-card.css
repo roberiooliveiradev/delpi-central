@@ -6,6 +6,9 @@
   min-height: 0;
   display: flex;
   box-sizing: border-box;
+  border-radius: var(--delpi-kpi-card-radius, 16px);
+  /* Sombra no shell: overflow:hidden cortaria box-shadow do .delpi-kpi-card filho. */
+  box-shadow: var(--delpi-kpi-card-shadow, 0 12px 28px rgba(15, 23, 42, 0.1));
   /* Contém subitens na bbox do bloco; abre com parte selecionada (handles). */
   overflow: hidden;
 }
@@ -24,7 +27,7 @@
   border: var(--delpi-kpi-card-border-width, 1px) solid
     var(--delpi-kpi-card-border-color, var(--delpi-ui-border, #b4b4b4));
   background: var(--delpi-kpi-card-bg, #ffffff);
-  box-shadow: var(--delpi-kpi-card-shadow, 0 12px 28px rgba(15, 23, 42, 0.1));
+  box-shadow: none;
   box-sizing: border-box;
   opacity: var(--delpi-kpi-card-opacity, 1);
   /* Tipografia do card — tokens de conteúdo, NÃO tema chrome do host (evita branco em fundo claro). */
@@ -176,8 +179,8 @@
 
 .delpi-kpi-part-resize {
   position: absolute;
-  width: 9px;
-  height: 9px;
+  width: var(--td-selection-handle-size, 16px);
+  height: var(--td-selection-handle-size, 16px);
   padding: 0;
   border: 1px solid #fff;
   border-radius: 2px;
@@ -188,62 +191,62 @@
 }
 
 .delpi-kpi-part-resize--nw {
-  left: -5px;
-  top: -5px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nwse-resize;
 }
 
 .delpi-kpi-part-resize--n {
-  top: -5px;
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   left: 50%;
   transform: translateX(-50%);
   cursor: ns-resize;
 }
 
 .delpi-kpi-part-resize--ne {
-  right: -5px;
-  top: -5px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nesw-resize;
 }
 
 .delpi-kpi-part-resize--w {
-  left: -5px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
   top: 50%;
   transform: translateY(-50%);
   cursor: ew-resize;
 }
 
 .delpi-kpi-part-resize--e {
-  right: -5px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
   top: 50%;
   transform: translateY(-50%);
   cursor: ew-resize;
 }
 
 .delpi-kpi-part-resize--sw {
-  left: -5px;
-  bottom: -5px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nesw-resize;
 }
 
 .delpi-kpi-part-resize--s {
-  bottom: -5px;
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   left: 50%;
   transform: translateX(-50%);
   cursor: ns-resize;
 }
 
 .delpi-kpi-part-resize--se {
-  right: -5px;
-  bottom: -5px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nwse-resize;
 }
 
 .delpi-kpi-part-adjust {
   position: absolute;
   /* left/top via style inline (track de raio, igual td-composer__adjust) */
-  width: 10px;
-  height: 10px;
+  width: var(--td-selection-adjust-size, 16px);
+  height: var(--td-selection-adjust-size, 16px);
   padding: 0;
   margin: 0;
   border: 1px solid #7a5b00;
@@ -317,7 +320,8 @@
 .delpi-kpi-part--selected,
 .delpi-kpi-card--part-selected {
   /* Mesmo padrão do wrap do bloco (td-composer__block-wrap--selected). */
-  outline: 1px dashed color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff);
+  outline: var(--td-selection-outline-width, 2.5px) dashed
+    color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff);
   outline-offset: 0;
 }
 

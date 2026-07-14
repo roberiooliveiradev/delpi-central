@@ -428,6 +428,32 @@ export function findInputPartFromTarget(target: EventTarget | null): InputPartRe
   return parseInputPartRef(host.getAttribute(INPUT_PART_DATA_ATTR));
 }
 
+/**
+ * Hit perto de parte de conteúdo (ex.: outline da seleção, que não recebe pointer).
+ * Preferência: control → badge → label → icon.
+ */
+export function findInputContentPartNearPoint(
+  root: HTMLElement,
+  clientX: number,
+  clientY: number,
+  padPx = 6,
+): InputPartRef | null {
+  for (const kind of INPUT_FREE_LAYOUT_PART_KINDS) {
+    const el = root.querySelector(`[${INPUT_PART_DATA_ATTR}="${kind}"]`);
+    if (!(el instanceof HTMLElement)) continue;
+    const rect = el.getBoundingClientRect();
+    if (
+      clientX >= rect.left - padPx &&
+      clientX <= rect.right + padPx &&
+      clientY >= rect.top - padPx &&
+      clientY <= rect.bottom + padPx
+    ) {
+      return { kind };
+    }
+  }
+  return null;
+}
+
 /** Clique em `<input>`/`<select>` no controle = alvo do valor (não da moldura da parte). */
 export function isInputFilterFormControlTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
@@ -436,8 +462,8 @@ export function isInputFilterFormControlTarget(target: EventTarget | null): bool
 
 /**
  * Pointer da parte no editor.
- * Control: clique no valor só edita quando a parte já está selecionada;
- * senão o clique seleciona a caixa (borda/subitem). Kiosk sem interaction edita sempre.
+ * Control: 1º clique seleciona; com parte ativa, arraste move; clique sem drag foca o valor.
+ * Clique no outline (fora do host) não deve cair na moldura — retarget via near-point.
  */
 export function bindInputPartPointer(
   ref: InputPartRef,
@@ -449,11 +475,38 @@ export function bindInputPartPointer(
   if (!interaction) return {};
   const selected =
     Boolean(interaction.selectedPart) && isInputPartRefEqual(interaction.selectedPart, ref);
-  const moveWhenSelected = inputPartAllowsMove(ref);
+
+  const dispatchPartPointer = (partRef: InputPartRef, event: ReactPointerEvent) => {
+    const partSelected =
+      Boolean(interaction.selectedPart) &&
+      isInputPartRefEqual(interaction.selectedPart, partRef);
+    interaction.onPartPointerDown?.(partRef, event);
+    if (inputPartAllowsMove(partRef) && partSelected) {
+      interaction.onPartMovePointerDown?.(partRef, event);
+    }
+  };
+
   return {
     onPointerDown: (event) => {
       // Isolar do drag do bloco (contrato KPI) — sem isso o frame herda o pointer.
       event.stopPropagation();
+
+      // Moldura: clique no “vão” do outline de um subitem → retarget (não vira fundo global).
+      if (ref.kind === "frame" && event.target === event.currentTarget) {
+        const root =
+          event.currentTarget instanceof HTMLElement
+            ? event.currentTarget
+            : resolveInputPartFrameRoot(event.currentTarget as HTMLElement);
+        const near = root
+          ? findInputContentPartNearPoint(root, event.clientX, event.clientY)
+          : null;
+        if (near) {
+          event.preventDefault();
+          dispatchPartPointer(near, event);
+          return;
+        }
+      }
+
       if (ref.kind === "control" && isInputFilterFormControlTarget(event.target)) {
         if (!selected) {
           // Caixa ainda não selecionada: não focar o nativo — selecionar o subitem.
@@ -461,13 +514,12 @@ export function bindInputPartPointer(
           interaction.onPartPointerDown?.(ref, event);
           return;
         }
-        // Parte control ativa → editar valor (sem drag da parte).
+        // Parte ativa: prioriza arrastar a caixa; foco/edição se soltar sem drag.
+        event.preventDefault();
+        dispatchPartPointer(ref, event);
         return;
       }
-      interaction.onPartPointerDown?.(ref, event);
-      if (moveWhenSelected && selected) {
-        interaction.onPartMovePointerDown?.(ref, event);
-      }
+      dispatchPartPointer(ref, event);
     },
     onDoubleClick: (event) => {
       if (ref.kind === "control" && isInputFilterFormControlTarget(event.target)) {
@@ -640,7 +692,13 @@ export function resolveInputPartLayoutStyle(
     css.boxSizing = "border-box";
     css.margin = 0;
     css.overflow = "hidden";
-  } else if (inputPartHasBoxPaint(style) && options?.partKind !== "frame") {
+  } else if (
+    // Control: fill/stroke vão às CSS vars do nativo — NÃO alterar flex/alignSelf
+    // (antes: paint no style deslocava a caixa para o topo da linha).
+    options?.partKind !== "control" &&
+    options?.partKind !== "frame" &&
+    inputPartHasBoxPaint(style)
+  ) {
     css.flex = "0 0 auto";
     css.alignSelf = "flex-start";
     css.width = "fit-content";

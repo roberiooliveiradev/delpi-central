@@ -70,6 +70,7 @@ import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardA
 import { ENUM_OPTION_LABELS, resolveParamFieldLabel } from "../content/dataParamCatalog";
 import { DATE_RANGE_PRESET_OPTIONS } from "../utils/dateRangePresets";
 
+import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -144,9 +145,12 @@ function EditorChartViewBlock({
 }) {
   const {
     selectedId,
+    selectedIds,
+    isBlockSelected,
     selectedChartPart,
     editingChartPart,
     selectBlock,
+    selectBlocksByIds,
     selectChartPart,
     beginEditChartPart,
     commitChartPartContent,
@@ -154,6 +158,7 @@ function EditorChartViewBlock({
     requestRibbonTab,
     updateBlock,
     startDrag,
+    armMultiDragSelection,
   } = useComunicadoEditor();
 
   /**
@@ -163,6 +168,10 @@ function EditorChartViewBlock({
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
+      if (event.shiftKey) {
+        selectBlock(block.id, { additive: true });
+        return;
+      }
       const samePartSelected =
         selectedId === block.id &&
         Boolean(selectedChartPart && isChartPartRefEqual(selectedChartPart, ref));
@@ -172,10 +181,29 @@ function EditorChartViewBlock({
         partAllowsMove: chartPartAllowsMove(ref),
       });
       if (action === "part-move") return;
-      selectBlock(block.id);
-      startDrag(event, block, "move");
+      beginBlockStageMoveDrag({
+        event,
+        block,
+        isBlockSelected,
+        selectedIds,
+        selectedId,
+        selectBlock,
+        selectBlocksByIds,
+        armMultiDragSelection,
+        startDrag,
+      });
     },
-    [block, selectBlock, selectedChartPart, selectedId, startDrag],
+    [
+      armMultiDragSelection,
+      block,
+      isBlockSelected,
+      selectBlock,
+      selectBlocksByIds,
+      selectedChartPart,
+      selectedId,
+      selectedIds,
+      startDrag,
+    ],
   );
 
   /** Duplo clique: seleciona a parte; se já era a mesma e editável, abre inline. */
@@ -391,16 +419,24 @@ function EditorTableViewBlock({
 }) {
   const {
     selectedId,
+    selectedIds,
+    isBlockSelected,
     selectedTablePart,
     selectBlock,
+    selectBlocksByIds,
     selectTablePart,
     requestRibbonTab,
     startDrag,
+    armMultiDragSelection,
   } = useComunicadoEditor();
 
   const onPartPointerDown = useCallback(
     (ref: ComunicadoTablePartRef, event?: ReactPointerEvent) => {
       if (!event) return;
+      if (event.shiftKey) {
+        selectBlock(block.id, { additive: true });
+        return;
+      }
       const samePartSelected =
         selectedId === block.id &&
         Boolean(selectedTablePart && selectedTablePart.kind === ref.kind);
@@ -411,10 +447,29 @@ function EditorTableViewBlock({
         partAllowsMove: false,
       });
       if (action === "part-move") return;
-      selectBlock(block.id);
-      startDrag(event, block, "move");
+      beginBlockStageMoveDrag({
+        event,
+        block,
+        isBlockSelected,
+        selectedIds,
+        selectedId,
+        selectBlock,
+        selectBlocksByIds,
+        armMultiDragSelection,
+        startDrag,
+      });
     },
-    [block, selectBlock, selectedId, selectedTablePart, startDrag],
+    [
+      armMultiDragSelection,
+      block,
+      isBlockSelected,
+      selectBlock,
+      selectBlocksByIds,
+      selectedId,
+      selectedIds,
+      selectedTablePart,
+      startDrag,
+    ],
   );
 
   const onPartDoubleClick = useCallback(
@@ -466,7 +521,10 @@ function EditorKpiViewBlock({
     selectedId,
     selectedKpiPart,
     editingKpiPart,
+    selectedIds,
+    isBlockSelected,
     selectBlock,
+    selectBlocksByIds,
     selectKpiPart,
     beginEditKpiPart,
     commitKpiPartContent,
@@ -474,11 +532,16 @@ function EditorKpiViewBlock({
     requestRibbonTab,
     updateBlock,
     startDrag,
+    armMultiDragSelection,
   } = useComunicadoEditor();
 
   const onPartPointerDown = useCallback(
     (part: ComunicadoKpiPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
+      if (event.shiftKey) {
+        selectBlock(block.id, { additive: true });
+        return;
+      }
       const samePartSelected =
         selectedId === block.id &&
         Boolean(selectedKpiPart && selectedKpiPart.kind === part.kind);
@@ -488,10 +551,29 @@ function EditorKpiViewBlock({
         partAllowsMove: kpiPartAllowsMove(part),
       });
       if (action === "part-move") return;
-      selectBlock(block.id);
-      startDrag(event, block, "move");
+      beginBlockStageMoveDrag({
+        event,
+        block,
+        isBlockSelected,
+        selectedIds,
+        selectedId,
+        selectBlock,
+        selectBlocksByIds,
+        armMultiDragSelection,
+        startDrag,
+      });
     },
-    [block, selectBlock, selectedId, selectedKpiPart, startDrag],
+    [
+      armMultiDragSelection,
+      block,
+      isBlockSelected,
+      selectBlock,
+      selectBlocksByIds,
+      selectedId,
+      selectedIds,
+      selectedKpiPart,
+      startDrag,
+    ],
   );
 
   const onPartDoubleClick = useCallback(
@@ -754,12 +836,16 @@ function EditorInputBlock({
 }) {
   const {
     selectedId,
+    selectedIds,
+    isBlockSelected,
     selectedInputPart,
     selectBlock,
+    selectBlocksByIds,
     selectInputPart,
     requestRibbonTab,
     updateBlock,
     startDrag,
+    armMultiDragSelection,
   } = useComunicadoEditor();
 
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
@@ -815,6 +901,10 @@ function EditorInputBlock({
   const onPartPointerDown = useCallback(
     (part: ComunicadoInputPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
+      if (event.shiftKey) {
+        selectBlock(block.id, { additive: true });
+        return;
+      }
       const blockSelected = selectedId === block.id;
       const samePartSelected =
         blockSelected && Boolean(selectedInputPart && selectedInputPart.kind === part.kind);
@@ -830,15 +920,28 @@ function EditorInputBlock({
         requestRibbonTab("shape");
         return;
       }
-      selectBlock(block.id);
-      startDrag(event, block, "move");
+      beginBlockStageMoveDrag({
+        event,
+        block,
+        isBlockSelected,
+        selectedIds,
+        selectedId,
+        selectBlock,
+        selectBlocksByIds,
+        armMultiDragSelection,
+        startDrag,
+      });
     },
     [
+      armMultiDragSelection,
       block,
+      isBlockSelected,
       requestRibbonTab,
       selectBlock,
+      selectBlocksByIds,
       selectInputPart,
       selectedId,
+      selectedIds,
       selectedInputPart,
       startDrag,
     ],
@@ -893,6 +996,12 @@ function EditorInputBlock({
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        // Clique sem arrastar na caixa → foca o valor (edição).
+        if (!dragged && ref.kind === "control") {
+          const host = event.currentTarget as HTMLElement;
+          const form = host.querySelector("input, select, textarea");
+          if (form instanceof HTMLElement) form.focus();
+        }
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);

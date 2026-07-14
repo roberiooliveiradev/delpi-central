@@ -9,6 +9,8 @@ import {
   Grid3x3,
   Heading,
   ListOrdered,
+  MoveHorizontal,
+  MoveVertical,
   Table2,
   Tags,
   Type,
@@ -66,13 +68,13 @@ const ROOT_ORDER: Array<keyof typeof ROOT_META> = [
 
 const CHOICES_BY_ROOT: Record<keyof typeof ROOT_META, ChartAddElementFlyoutChoice[]> = {
   axes: [
-    { id: "axes:x", label: "Horizontal principal", icon: ArrowDown },
-    { id: "axes:y", label: "Vertical principal", icon: AlignLeft },
+    { id: "axes:x", label: "Horizontal principal", icon: MoveHorizontal },
+    { id: "axes:y", label: "Vertical principal", icon: MoveVertical },
     { id: "axes:none", label: "Nenhum", icon: X },
   ],
   axisTitles: [
-    { id: "axisTitles:x", label: "Horizontal principal", icon: ArrowDown },
-    { id: "axisTitles:y", label: "Vertical principal", icon: AlignLeft },
+    { id: "axisTitles:x", label: "Horizontal principal", icon: MoveHorizontal },
+    { id: "axisTitles:y", label: "Vertical principal", icon: MoveVertical },
     { id: "axisTitles:none", label: "Nenhum", icon: X },
   ],
   chartTitle: [
@@ -88,8 +90,8 @@ const CHOICES_BY_ROOT: Record<keyof typeof ROOT_META, ChartAddElementFlyoutChoic
     { id: "dataTable:show", label: "Mostrar", icon: Table2 },
   ],
   gridlines: [
-    { id: "grid:horizontal", label: "Horizontal principal", icon: ArrowDown },
-    { id: "grid:vertical", label: "Vertical principal", icon: AlignLeft },
+    { id: "grid:horizontal", label: "Horizontal principal", icon: MoveHorizontal },
+    { id: "grid:vertical", label: "Vertical principal", icon: MoveVertical },
     { id: "grid:none", label: "Nenhum", icon: X },
   ],
   legend: [

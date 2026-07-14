@@ -259,6 +259,7 @@ export function ComunicadoEditorProvider({
     canvasRef,
     startDrag,
     clearDragSnapshot,
+    armMultiDragSelection,
   } = useComunicadoEditorDrag({
     configRef,
     selectedIds: selection.selectedIds,
@@ -456,6 +457,7 @@ export function ComunicadoEditorProvider({
     background,
     canvasRef,
     startDrag,
+    armMultiDragSelection,
     addBlock: blockActions.addBlock,
     addDataBlock: blockActions.addDataBlock,
     addDataSourceBlock: blockActions.addDataSourceBlock,

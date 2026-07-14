@@ -175,12 +175,17 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
     setShowStageGuides,
     stagePanMode,
     setStagePanMode,
+    isDataPreviewStale,
+    dataPreviewError,
+    dataPreviewLoading,
+    refreshDataPreview,
   } = useComunicadoEditor();
 
   const zoomPercent = Math.round(stageZoom * 100);
+  const hasMessages = Boolean(isDataPreviewStale || dataPreviewError);
 
   return (
-    <div className="td-stage-statusbar" role="toolbar" aria-label="Zoom e exibição do palco">
+    <div className="td-stage-statusbar" role="toolbar" aria-label="Zoom, exibição e avisos do palco">
       <div className="td-stage-statusbar__toggles">
         <button
           type="button"
@@ -229,6 +234,41 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
             <Hand size={14} aria-hidden="true" />
           </button>
         </ShortcutTip>
+      </div>
+
+      <div
+        className="td-stage-statusbar__messages"
+        role="status"
+        aria-live="polite"
+        aria-label="Avisos e informações"
+      >
+        {isDataPreviewStale ? (
+          <button
+            type="button"
+            className={[
+              "td-stage-status-badge",
+              "td-stage-status-badge--warning",
+              dataPreviewLoading ? "td-stage-status-badge--busy" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            title={H.refreshVisual}
+            onClick={() => void refreshDataPreview({ force: true })}
+          >
+            Dados desatualizados — Atualizar visual
+          </button>
+        ) : null}
+        {dataPreviewError ? (
+          <span
+            className="td-stage-status-badge td-stage-status-badge--error"
+            title={dataPreviewError}
+          >
+            Erro no preview de dados
+          </span>
+        ) : null}
+        {!hasMessages ? (
+          <span className="td-stage-statusbar__messages-empty" aria-hidden="true" />
+        ) : null}
       </div>
 
       <div className="td-stage-statusbar__zoom">

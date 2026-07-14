@@ -127,6 +127,8 @@ export type ComunicadoEditorContextValue = {
   background: ComunicadoConfig["background"];
   canvasRef: RefObject<HTMLDivElement | null>;
   startDrag: (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => void;
+  /** Arma seleção multi antes do drag (evita race com setState). */
+  armMultiDragSelection: (ids: string[]) => void;
   addBlock: (type: ComunicadoBlock["type"]) => void;
   addDataBlock: (block: ComunicadoBlock) => void;
   addDataSourceBlock: (block: ComunicadoBlock) => void;

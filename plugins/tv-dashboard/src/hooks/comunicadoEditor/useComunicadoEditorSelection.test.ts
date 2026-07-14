@@ -56,4 +56,49 @@ describe("useComunicadoEditorSelection", () => {
     });
     expect(result.current.selectedIds).toEqual([]);
   });
+
+  it("additive (Shift) alterna ids na multi-seleção", () => {
+    const { result } = renderHook(() => {
+      const configRef = useRef<ComunicadoConfig>({ version: 2, blocks });
+      const updateBlockTextFieldsRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks,
+        updateBlockTextFieldsRef,
+      });
+    });
+
+    act(() => {
+      result.current.selectBlock("a");
+    });
+    act(() => {
+      result.current.selectBlock("b", { additive: true });
+    });
+    expect(result.current.selectedIds).toEqual(["a", "b"]);
+
+    act(() => {
+      result.current.selectBlock("a", { additive: true });
+    });
+    expect(result.current.selectedIds).toEqual(["b"]);
+  });
+
+  it("selectBlocksByIds substitui a seleção (marquee)", () => {
+    const { result } = renderHook(() => {
+      const configRef = useRef<ComunicadoConfig>({ version: 2, blocks });
+      const updateBlockTextFieldsRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks,
+        updateBlockTextFieldsRef,
+      });
+    });
+
+    act(() => {
+      result.current.selectBlock("a");
+    });
+    act(() => {
+      result.current.selectBlocksByIds(["a", "b"]);
+    });
+    expect(result.current.selectedIds).toEqual(["a", "b"]);
+  });
 });

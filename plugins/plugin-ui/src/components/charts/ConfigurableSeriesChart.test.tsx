@@ -36,6 +36,28 @@ describe("ConfigurableSeriesChart", () => {
     expect(screen.getByText("Receita")).toBeTruthy();
   });
 
+  it("coloca box-shadow no shell (não no card com overflow:hidden)", () => {
+    const shadow = "0 12px 28px rgba(15, 23, 42, 0.1)";
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="line"
+        points={[
+          { label: "jan/26", value: 10 },
+          { label: "fev/26", value: 20 },
+        ]}
+        options={{ title: "OEE", showLegend: false, legendPosition: "hidden" }}
+        chartParts={{
+          chartArea: { style: { boxShadow: shadow, borderRadius: 16 } },
+        }}
+      />,
+    );
+    const shell = container.querySelector(".delpi-ui-series-chart-shell") as HTMLElement;
+    const card = container.querySelector(".delpi-ui-series-chart") as HTMLElement;
+    expect(shell).toBeTruthy();
+    expect(shell.style.boxShadow).toBe(shadow);
+    expect(card.style.boxShadow === "" || card.style.boxShadow === "none").toBe(true);
+  });
+
   it("renderiza tabela de dados quando habilitada", () => {
     render(
       <ConfigurableSeriesChart
@@ -131,6 +153,25 @@ describe("ConfigurableSeriesChart", () => {
     expect(grid).toBeTruthy();
     const position = plot!.compareDocumentPosition(grid!);
     expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("aplica opacity da parte plotArea no rect SVG", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="area"
+        points={[
+          { label: "a", value: 90 },
+          { label: "b", value: 95 },
+        ]}
+        options={{ showLegend: false, legendPosition: "hidden" }}
+        chartParts={{
+          plotArea: { visible: true, style: { fill: "#ffffff", opacity: 0 } },
+        }}
+      />,
+    );
+    const plot = container.querySelector(".delpi-ui-series-chart__plot-area");
+    expect(plot).toBeTruthy();
+    expect(plot!.getAttribute("opacity")).toBe("0");
   });
 
   it("clipa cantos arredondados da chartArea (overflow hidden na raiz)", () => {

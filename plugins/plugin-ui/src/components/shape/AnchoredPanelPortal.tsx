@@ -1,6 +1,7 @@
 import { createPortal } from "react-dom";
 import { type ReactNode, type RefObject } from "react";
 
+import type { AnchoredPanelPlacement } from "./anchoredPanelCoords";
 import { resolveMfePortalScopeClassName } from "./delpiUiPortalTheme";
 import { useAnchoredPanelPosition } from "./useAnchoredPanelPosition";
 import { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
@@ -16,6 +17,11 @@ export type AnchoredPanelPortalProps = {
   "aria-label"?: string;
   /** Larga o painel no mínimo com a largura do gatilho. */
   matchAnchorWidth?: boolean;
+  /**
+   * Preferência de posição relativa ao âncora.
+   * Ex.: `right` = ao lado do botão quando houver espaço.
+   */
+  preferredPlacement?: AnchoredPanelPlacement;
   /**
    * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`).
    * Sem escopo, CSS do plugin sob `.dashboard-*` não aplica no body.
@@ -35,11 +41,13 @@ export function AnchoredPanelPortal({
   role,
   "aria-label": ariaLabel,
   matchAnchorWidth = false,
+  preferredPlacement = "bottom",
   portalScopeClassName,
   children,
 }: AnchoredPanelPortalProps) {
   const style = useAnchoredPanelPosition(open, anchorRef, panelRef, {
     matchAnchorWidth,
+    preferredPlacement,
   });
   const theme = useDelpiUiPortalTheme(open, anchorRef);
 

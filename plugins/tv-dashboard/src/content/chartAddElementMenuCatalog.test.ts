@@ -1,3 +1,4 @@
+import { MoveHorizontal, MoveVertical } from "lucide-react";
 import { describe, expect, it } from "vitest";
 
 import { resolveChartAddElementMenuRoots } from "./chartAddElementMenuCatalog";
@@ -19,6 +20,15 @@ describe("resolveChartAddElementMenuRoots", () => {
     expect(allIds).toContain("legend:left");
     expect(allIds).not.toContain("trendline");
     expect(allIds).not.toContain("errorBars");
+  });
+
+  it("ícones de Horizontal/Vertical alinham com o eixo (não seta/align)", () => {
+    const axes = resolveChartAddElementMenuRoots("line").find((r) => r.elementId === "axes");
+    expect(axes?.choices.find((c) => c.id === "axes:x")?.icon).toBe(MoveHorizontal);
+    expect(axes?.choices.find((c) => c.id === "axes:y")?.icon).toBe(MoveVertical);
+    const grid = resolveChartAddElementMenuRoots("line").find((r) => r.elementId === "gridlines");
+    expect(grid?.choices.find((c) => c.id === "grid:horizontal")?.icon).toBe(MoveHorizontal);
+    expect(grid?.choices.find((c) => c.id === "grid:vertical")?.icon).toBe(MoveVertical);
   });
 
   it("filtra marcadores fora de line/area", () => {

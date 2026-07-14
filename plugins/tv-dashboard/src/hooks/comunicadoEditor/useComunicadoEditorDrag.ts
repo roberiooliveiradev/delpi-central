@@ -16,6 +16,7 @@ import {
 import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHistoryContext";
 import { useCanvasBlockInteraction } from "../../components/useCanvasBlockInteraction";
 import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
+import { applyMultiFrameDelta } from "../../utils/multiFrameTransform";
 import { snapComunicadoFrame } from "../../utils/comunicadoSnap";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
@@ -46,6 +47,12 @@ export function useComunicadoEditorDrag({
 }: Options) {
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const multiDragRef = useRef<{ startFrames: Map<string, ComunicadoBlock["frame"]> } | null>(null);
+  /** Seleção efetiva no pointerdown (evita race do React antes do threshold do drag). */
+  const multiDragSelectionOverrideRef = useRef<string[] | null>(null);
+
+  const armMultiDragSelection = useCallback((ids: string[]) => {
+    multiDragSelectionOverrideRef.current = [...new Set(ids.filter(Boolean))];
+  }, []);
 
   const updateBlocksSilent = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
@@ -93,32 +100,18 @@ export function useComunicadoEditorDrag({
       const draggedIds = new Set<string>();
 
       if (multi && multi.startFrames.has(blockId)) {
-        const origin = multi.startFrames.get(blockId);
-        if (!origin) return;
-        const dx = frame.x - origin.x;
-        const dy = frame.y - origin.y;
-        const isResize = frame.w !== origin.w || frame.h !== origin.h;
+        const nextFrames = applyMultiFrameDelta(multi.startFrames, blockId, frame);
         nextBlocks = (configRef.current.blocks ?? []).map((block) => {
-          if (!multi.startFrames.has(block.id)) return block;
+          const nextFrame = nextFrames.get(block.id);
+          if (!nextFrame) return block;
           draggedIds.add(block.id);
+          const base = resolveBaseline(block.id) ?? block;
           const start = multi.startFrames.get(block.id)!;
-          if (block.id === blockId && isResize) {
-            const base = resolveBaseline(block.id) ?? block;
-            if (isComplexViewBlock(base)) {
-              return applyComplexBlockFrameWithTypography(base, frame);
-            }
-            return { ...block, frame };
+          const isResize = nextFrame.w !== start.w || nextFrame.h !== start.h;
+          if (isResize && isComplexViewBlock(base)) {
+            return applyComplexBlockFrameWithTypography(base, nextFrame);
           }
-          return {
-            ...block,
-            frame: {
-              ...start,
-              x: start.x + dx,
-              y: start.y + dy,
-              w: start.w,
-              h: start.h,
-            },
-          };
+          return { ...block, frame: nextFrame };
         });
       } else {
         draggedIds.add(blockId);
@@ -140,7 +133,16 @@ export function useComunicadoEditorDrag({
 
   const handleInteractionStart = useCallback(() => {
     dragSnapshotRef.current = snapshotConfig(configRef.current);
-    const baseIds = selectedIds.length > 0 ? selectedIds : selectedId ? [selectedId] : [];
+    const override = multiDragSelectionOverrideRef.current;
+    multiDragSelectionOverrideRef.current = null;
+    const baseIds =
+      override && override.length > 0
+        ? override
+        : selectedIds.length > 0
+          ? selectedIds
+          : selectedId
+            ? [selectedId]
+            : [];
     const activeIds = expandSelectionWithGroups(configRef.current.blocks ?? [], baseIds);
     if (activeIds.length > 1) {
       const startFrames = new Map<string, ComunicadoBlock["frame"]>();
@@ -263,6 +265,7 @@ export function useComunicadoEditorDrag({
 
   const clearDragSnapshot = useCallback(() => {
     dragSnapshotRef.current = null;
+    multiDragSelectionOverrideRef.current = null;
   }, []);
 
   const { canvasRef, startDrag } = useCanvasBlockInteraction({
@@ -278,5 +281,6 @@ export function useComunicadoEditorDrag({
     canvasRef,
     startDrag,
     clearDragSnapshot,
+    armMultiDragSelection,
   };
 }

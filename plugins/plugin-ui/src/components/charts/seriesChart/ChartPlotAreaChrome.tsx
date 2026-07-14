@@ -1,17 +1,16 @@
-import { useLayoutEffect, type CSSProperties } from "react";
+import { type CSSProperties } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartAllowsResize,
   chartPartDomProps,
-  clampChartPartFrame,
   getChartPartState,
   isChartPartRefEqual,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
 import { ChartPartResizeHandles } from "./ChartPartResizeHandles";
-import { chartPartFrameFromPlotLayout, type SeriesChartLayout } from "./layout";
+import type { SeriesChartLayout } from "./layout";
 
 export type ChartPlotAreaChromeProps = {
   layout: SeriesChartLayout;
@@ -30,11 +29,10 @@ export function ChartPlotAreaChrome({ layout, interaction, chartParts }: ChartPl
   const frame = getChartPartState(chartParts, ref)?.frame;
   const showResize = Boolean(selected && chartPartAllowsResize(ref) && interaction?.onPartResizePointerDown);
   const dom = chartPartDomProps(ref, interaction?.selectedPart);
-
-  useLayoutEffect(() => {
-    if (!showResize || frame?.w != null || !interaction?.onPartFrameChange) return;
-    interaction.onPartFrameChange(ref, clampChartPartFrame(chartPartFrameFromPlotLayout(layout)));
-  }, [showResize, frame?.w, interaction, layout]);
+  /*
+   * Overlay usa layout atual sem persistir frame no select — gravar no select
+   * alimentava `plotFrame` e reescrevia margens (gráfico “encolhia”).
+   */
 
   if (!showResize) return null;
 

@@ -37,7 +37,6 @@ export function CustomSlideEditorLayout({
     config,
     blocks,
     appliedSlideId,
-    dataPreviewError,
     isDataPreviewStale,
     dataPreviewLoading,
     refreshDataPreview,
@@ -92,16 +91,6 @@ export function CustomSlideEditorLayout({
 
   return (
     <>
-      {dataPreviewError ? (
-        <p className="td-deck-preview-banner td-deck-preview-banner--error" role="status">
-          Preview de dados: {dataPreviewError}
-        </p>
-      ) : null}
-      {isDataPreviewStale ? (
-        <p className="td-deck-preview-banner td-deck-preview-banner--stale" role="status">
-          Dados desatualizados — clique em «Atualizar visual» para buscar de novo.
-        </p>
-      ) : null}
       <DeckEditorChrome {...chromeWithSlideExtras} />
       <DataCatalogModalHost branchScope={chromeProps.branchScope} />
       <DeckWorkspace

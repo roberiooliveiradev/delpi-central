@@ -82,6 +82,22 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     showAltTip: true,
   },
   {
+    id: "multi-select-click",
+    group: "selecao",
+    label: "Multi-seleção (clique)",
+    keys: "Shift+Clique",
+    description: "Alterna o bloco na seleção",
+    showAltTip: false,
+  },
+  {
+    id: "multi-select-marquee",
+    group: "selecao",
+    label: "Caixa de seleção",
+    keys: "Arraste",
+    description: "No fundo vazio; Shift+arraste une à seleção",
+    showAltTip: false,
+  },
+  {
     id: "nudge",
     group: "selecao",
     label: "Mover 1%",

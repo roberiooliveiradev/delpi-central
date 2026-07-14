@@ -120,8 +120,17 @@ export function SeriesChartPrimitive({
   }, [usable.length, chartParts, options?.title, options?.showLegend, options?.legendPosition]);
 
   if (usable.length === 0) {
+    const emptyArea = resolveChartAreaStyle(config, chartParts);
     return (
-      <div className="delpi-ui-series-chart-shell">
+      <div
+        className="delpi-ui-series-chart-shell"
+        style={{
+          ["--delpi-ui-series-chart-radius" as string]: `${emptyArea.borderRadius}px`,
+          ["--delpi-ui-series-chart-shadow" as string]: emptyArea.boxShadow || "none",
+          boxShadow: emptyArea.boxShadow,
+          borderRadius: emptyArea.borderRadius,
+        }}
+      >
         <ChartContainer
           className={className}
           empty
@@ -189,16 +198,24 @@ export function SeriesChartPrimitive({
       boxSizing: "border-box",
     };
   })();
+  const shellStyle: CSSProperties = {
+    ["--delpi-ui-series-chart-radius" as string]: `${chartArea.borderRadius}px`,
+    ["--delpi-ui-series-chart-shadow" as string]: chartArea.boxShadow || "none",
+    // Sombra na moldura do shell (próprio box-shadow não é cortado pelo overflow:hidden).
+    boxShadow: chartArea.boxShadow,
+    borderRadius: chartArea.borderRadius,
+  };
   const themeStyle: CSSProperties = {
     ...seriesChartThemeStyle({ ...config, backgroundColor: chartArea.fill }),
     background: chartArea.fill,
     border: `${Math.max(0, chartArea.strokeWidth)}px solid ${chartArea.stroke}`,
     borderRadius: chartArea.borderRadius,
-    boxShadow: chartArea.boxShadow,
+    boxShadow: "none",
     boxSizing: "border-box",
     // Clip ao radius; com seleção do fundo libera overflow p/ handles.
     overflow: chartAreaSelected ? "visible" : "hidden",
     backgroundClip: "padding-box",
+    ...(chartArea.opacity != null ? { opacity: chartArea.opacity } : {}),
     ...chartAreaFrameCss,
   };
 
@@ -267,7 +284,7 @@ export function SeriesChartPrimitive({
     : undefined;
 
   return (
-    <div className="delpi-ui-series-chart-shell">
+    <div className="delpi-ui-series-chart-shell" style={shellStyle}>
       <ChartContainer
         className={rootClass}
         style={themeStyle}

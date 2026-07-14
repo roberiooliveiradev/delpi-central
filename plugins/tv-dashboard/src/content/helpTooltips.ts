@@ -283,7 +283,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   element: {
     panel:
-      "Clique em um elemento no palco ou arraste para reposicionar. Use as alças para redimensionar; segure Shift para manter a proporção largura/altura.",
+      "Clique em um elemento no palco ou arraste para reposicionar. Shift+clique alterna na multi-seleção; arraste no fundo vazio para a caixa de seleção (Shift+arraste une à seleção). Nas alças, Shift mantém a proporção largura/altura.",
     content: "Texto exibido no elemento. Títulos usam fonte maior na TV.",
     link: "URL aberta ao toque/clique na TV, quando o player suportar interação.",
     shapeText: "Texto opcional renderizado dentro da forma.",

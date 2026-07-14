@@ -26,8 +26,20 @@
   --td-ribbon-gallery-thumb: 44px;
   --td-pane-header-height: 40px;
   --td-pane-icon-tab-size: 28px;
-  --td-float-btn-size: 32px;
-  --td-float-radius: 4px;
+  /* Fallback; ChartSelectionFloatToolbar sobrescreve por lado curto do gráfico. */
+  --td-float-btn-size: 40px;
+  --td-float-gap: 6px;
+  --td-float-offset: 8px;
+  --td-float-radius: 6px;
+  /* Chrome de seleção — Composer sobrescreve por stageZoom (counter-scale). */
+  --td-selection-handle-size: 16px;
+  --td-selection-handle-half: 8px;
+  --td-selection-adjust-size: 16px;
+  --td-selection-rotate-size: 16px;
+  --td-selection-outline-width: 2.5px;
+  --td-global-selection-pad: 14px;
+  --td-selection-rotate-stem: 26px;
+  --td-selection-rotate-offset: 34px;
   --td-float-popover-bg: color-mix(in srgb, var(--td-text) 92%, var(--td-surface));
   --delpi-ui-accent: var(--td-accent);
   --delpi-ui-surface: var(--td-surface);
@@ -1157,6 +1169,8 @@
   border-radius: 0;
   /* Objetos podem ficar fora da área da apresentação; a TV corta via DesignViewportStage. */
   overflow: visible;
+  /* Evita arraste acidental marcar texto; editing contentEditable sobrescreve. */
+  user-select: none;
   /*
    * Conteúdo do slide ≠ chrome UI.
    * No tema escuro do host, --delpi-ui-text/--tdp-data-text ficam claros e
@@ -1194,6 +1208,23 @@
   cursor: text;
 }
 
+/* Marquee ativo: nada selecionável como texto nativo do browser. */
+.dashboard-tv-dashboard .td-composer__canvas--marqueeing,
+.dashboard-tv-dashboard .td-composer__canvas--marqueeing *,
+body.td-composer--marqueeing,
+body.td-composer--marqueeing * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+/* Edição inline de texto no palco — reabilita seleção só no campo ativo. */
+.dashboard-tv-dashboard .td-composer__inline-text[contenteditable="true"],
+.dashboard-tv-dashboard .td-composer__inline-text[contenteditable="true"] *,
+.dashboard-tv-dashboard .delpi-kpi-card__edit[contenteditable="true"],
+.dashboard-tv-dashboard [data-chart-part][contenteditable="true"] {
+  user-select: text;
+}
+
 /*
  * Partes tipográficas editáveis (KPI/gráfico/tabela/forma) e contentEditable:
  * não herdam `move` do bloco — sinalizam edição de texto.
@@ -1213,11 +1244,11 @@
   cursor: text;
 }
 
-/* KPI / gráfico / filtro: deixa a sombra do card escapar do bbox do bloco. */
+/* KPI / gráfico / filtro: deixa a sombra do shell escapar do bbox do bloco. */
 .dashboard-tv-dashboard .td-composer__block-wrap:has(.delpi-kpi-card-shell),
 .dashboard-tv-dashboard .td-composer__block:has(.delpi-kpi-card-shell),
-.dashboard-tv-dashboard .td-composer__block-wrap:has(.delpi-ui-series-chart),
-.dashboard-tv-dashboard .td-composer__block:has(.delpi-ui-series-chart),
+.dashboard-tv-dashboard .td-composer__block-wrap:has(.delpi-ui-series-chart-shell),
+.dashboard-tv-dashboard .td-composer__block:has(.delpi-ui-series-chart-shell),
 .dashboard-tv-dashboard .td-composer__block-wrap:has(.tdp-comunicado__input-block),
 .dashboard-tv-dashboard .td-composer__block:has(.tdp-comunicado__input-block) {
   overflow: visible;
@@ -1446,7 +1477,6 @@
 .dashboard-tv-dashboard .td-stage-statusbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 10px;
   min-height: 30px;
   padding: 4px 10px;
@@ -1458,7 +1488,62 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-right: auto;
+  flex-shrink: 0;
+}
+
+/* Faixa central de avisos / info (stale, erro de preview, etc.). */
+.dashboard-tv-dashboard .td-stage-statusbar__messages {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dashboard-tv-dashboard .td-stage-statusbar__messages-empty {
+  display: block;
+  width: 0;
+  height: 0;
+}
+
+.dashboard-tv-dashboard .td-stage-status-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  margin: 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.dashboard-tv-dashboard button.td-stage-status-badge {
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-stage-status-badge--warning {
+  color: #92400e;
+  background: color-mix(in srgb, #f59e0b 22%, var(--td-surface, #fff));
+  border-color: color-mix(in srgb, #f59e0b 45%, transparent);
+}
+
+.dashboard-tv-dashboard .td-stage-status-badge--error {
+  color: #b91c1c;
+  background: color-mix(in srgb, #ef4444 12%, var(--td-surface, #fff));
+  border-color: color-mix(in srgb, #ef4444 40%, transparent);
+}
+
+.dashboard-tv-dashboard .td-stage-status-badge--busy {
+  opacity: 0.75;
 }
 
 .dashboard-tv-dashboard .td-stage-statusbar__toggle,
@@ -1498,6 +1583,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .dashboard-tv-dashboard .td-stage-statusbar__slider {
@@ -1546,10 +1633,11 @@
   /*
    * Padding da seleção global: afasta outline + handles do conteúdo
    * para não confundir com outline/handles de partes (fundo, valor, etc.).
+   * Espessura/tamanho via --td-selection-* (dinâmico com zoom no canvas).
    */
-  --td-global-selection-pad: 12px;
-  outline: 1px dashed color-mix(in srgb, var(--td-accent) 70%, #fff);
-  outline-offset: var(--td-global-selection-pad);
+  outline: var(--td-selection-outline-width, 2.5px) dashed
+    color-mix(in srgb, var(--td-accent) 70%, #fff);
+  outline-offset: var(--td-global-selection-pad, 14px);
   overflow: visible;
   isolation: isolate;
 }
@@ -1680,7 +1768,7 @@
 
 .dashboard-tv-dashboard .td-composer__marquee {
   position: absolute;
-  border: 1px dashed var(--td-accent, #089bdb);
+  border: var(--td-selection-outline-width, 2.5px) dashed var(--td-accent, #089bdb);
   background: color-mix(in srgb, var(--td-accent) 12%, transparent);
   pointer-events: none;
   z-index: 50;
@@ -1960,76 +2048,77 @@
 
 .dashboard-tv-dashboard .td-composer__resize {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: var(--td-selection-handle-size, 16px);
+  height: var(--td-selection-handle-size, 16px);
   padding: 0;
   border: 1px solid #fff;
   border-radius: 2px;
   background: var(--td-accent, #089bdb);
   pointer-events: auto;
   z-index: 21;
+  box-sizing: border-box;
 }
 
 /* Handles alinhados à borda do layer já expandido por --td-global-selection-pad. */
 .dashboard-tv-dashboard .td-composer__resize--nw {
-  left: -6px;
-  top: -6px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nwse-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--n {
-  top: -6px;
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   left: 50%;
   transform: translateX(-50%);
   cursor: ns-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--ne {
-  right: -6px;
-  top: -6px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
+  top: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nesw-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--w {
-  left: -6px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
   top: 50%;
   transform: translateY(-50%);
   cursor: ew-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--e {
-  right: -6px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
   top: 50%;
   transform: translateY(-50%);
   cursor: ew-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--sw {
-  left: -6px;
-  bottom: -6px;
+  left: calc(-1 * var(--td-selection-handle-half, 8px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nesw-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--s {
-  bottom: -6px;
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   left: 50%;
   transform: translateX(-50%);
   cursor: ns-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__resize--se {
-  right: -6px;
-  bottom: -6px;
+  right: calc(-1 * var(--td-selection-handle-half, 8px));
+  bottom: calc(-1 * var(--td-selection-handle-half, 8px));
   cursor: nwse-resize;
 }
 
 .dashboard-tv-dashboard .td-composer__rotate {
   position: absolute;
-  top: -28px;
+  top: calc(-1 * var(--td-selection-rotate-offset, 34px));
   left: 50%;
   transform: translateX(-50%);
-  width: 14px;
-  height: 14px;
+  width: var(--td-selection-rotate-size, 16px);
+  height: var(--td-selection-rotate-size, 16px);
   padding: 0;
   border: 1px solid #fff;
   border-radius: 50%;
@@ -2037,13 +2126,14 @@
   pointer-events: auto;
   z-index: 22;
   cursor: grab;
+  box-sizing: border-box;
 }
 
 /* Handle amarelo estilo PowerPoint — ajustes de geometria da forma */
 .dashboard-tv-dashboard .td-composer__adjust {
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: var(--td-selection-adjust-size, 16px);
+  height: var(--td-selection-adjust-size, 16px);
   padding: 0;
   margin: 0;
   border: 1px solid #7a5b00;
@@ -2054,6 +2144,7 @@
   z-index: 23;
   cursor: grab;
   transform: translate(-50%, -50%) rotate(45deg);
+  box-sizing: border-box;
 }
 
 .dashboard-tv-dashboard .td-composer__adjust:active {
@@ -2065,9 +2156,9 @@
   position: absolute;
   left: 50%;
   top: 100%;
-  width: 1px;
+  width: max(1px, calc(var(--td-selection-outline-width, 2.5px) * 0.45));
   /* Liga o pivô ao outline global (já afastado por --td-global-selection-pad). */
-  height: calc(12px + var(--td-global-selection-pad, 12px));
+  height: var(--td-selection-rotate-stem, 26px);
   background: var(--td-accent, #089bdb);
   transform: translateX(-50%);
 }
@@ -2645,14 +2736,14 @@
   font-size: 11px;
 }
 
-/* Float gráfico (+ / pincel / funil) */
+/* Float gráfico (+ / pincel / funil) — tamanho via --td-float-* (dinâmico no componente). */
 .dashboard-tv-dashboard .td-chart-float {
   position: absolute;
   top: 0;
-  right: calc(-1 * (var(--td-float-btn-size) + 8px));
+  right: calc(-1 * (var(--td-float-btn-size) + var(--td-float-offset)));
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--td-float-gap);
   z-index: 6;
 }
 
@@ -2662,6 +2753,7 @@
   justify-content: center;
   width: var(--td-float-btn-size);
   height: var(--td-float-btn-size);
+  flex: 0 0 var(--td-float-btn-size);
   padding: 0;
   border: 1px solid var(--td-border);
   border-radius: var(--td-float-radius);
@@ -5264,6 +5356,71 @@
   overflow: visible;
 }
 
+.dashboard-tv-dashboard .td-deck-chrome__head-trail {
+  display: inline-flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__collapse,
+.dashboard-tv-dashboard .td-deck-chrome__reopen {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-height: var(--td-chrome-tab-height);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-left: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
+  background: transparent;
+  color: var(--td-muted);
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__collapse:hover,
+.dashboard-tv-dashboard .td-deck-chrome__reopen:hover {
+  color: var(--td-text);
+  background: color-mix(in srgb, var(--td-text) 6%, var(--td-surface));
+}
+
+.dashboard-tv-dashboard .td-deck-chrome--collapsed {
+  border-radius: var(--td-chrome-radius);
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__collapsed-rail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding-right: 8px;
+  background: color-mix(in srgb, var(--td-text) 3%, var(--td-surface));
+  border-radius: var(--td-chrome-radius);
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__collapsed-rail .td-deck-chrome__reopen {
+  border-left: none;
+  border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__collapsed-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--td-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-tv-dashboard .td-deck-chrome__collapsed-rail .td-deck-chrome__identity {
+  margin-left: 0;
+  border-left: none;
+  padding-right: 0;
+}
+
 .dashboard-tv-dashboard .td-deck-chrome__identity {
   display: inline-flex;
   align-items: center;
@@ -5271,7 +5428,6 @@
   flex-shrink: 0;
   min-width: 0;
   max-width: min(280px, 36vw);
-  margin-left: auto;
   padding: 0 12px 0 8px;
   border-left: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
 }

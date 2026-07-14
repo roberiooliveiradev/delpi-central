@@ -92,11 +92,6 @@ export function DeckHomePlaylistChrome({
               onClick={onRefreshVisual}
             />
           ) : null}
-          {dataPreviewStale ? (
-            <span className="td-deck-data-stale-badge" title={H.refreshVisual}>
-              Dados desatualizados
-            </span>
-          ) : null}
           <DeckRibbonTile
             icon={Keyboard}
             label="Atalhos"

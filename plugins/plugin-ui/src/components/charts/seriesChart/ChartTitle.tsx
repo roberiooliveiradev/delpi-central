@@ -1,12 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   bindChartPartPointer,
   chartPartAllowsResize,
   chartPartTypographyStyle,
-  clampChartPartFrame,
   getChartPartState,
+  looksLikeAutoMaterializedFlowFrame,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -44,7 +44,9 @@ function partFrameStyle(
 export function ChartTitle({ title, visible = true, interaction, chartParts }: ChartTitleProps) {
   const cn = useSeriesChartClasses();
   const ref = { kind: "title" as const };
-  const frame = getChartPartState(chartParts, ref)?.frame;
+  const rawFrame = getChartPartState(chartParts, ref)?.frame;
+  const frame =
+    rawFrame && looksLikeAutoMaterializedFlowFrame("title", rawFrame) ? undefined : rawFrame;
   const partStyle = getChartPartState(chartParts, ref)?.style;
   const pointer = bindChartPartPointer(ref, interaction);
   const { selected, editing, onPointerDown, onDoubleClick, ...dom } = pointer;
@@ -79,24 +81,10 @@ export function ChartTitle({ title, visible = true, interaction, chartParts }: C
 
   const hostRef = useRef<HTMLDivElement>(null);
   const editRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    if (!showResize || frame?.w != null || !interaction?.onPartFrameChange || !hostRef.current) return;
-    const chartRoot = hostRef.current.closest(".delpi-ui-series-chart, .tdp-series-chart");
-    if (!chartRoot) return;
-    const rect = chartRoot.getBoundingClientRect();
-    const el = hostRef.current.getBoundingClientRect();
-    if (rect.width < 1 || rect.height < 1) return;
-    interaction.onPartFrameChange(
-      ref,
-      clampChartPartFrame({
-        x: ((el.left - rect.left) / rect.width) * 100,
-        y: ((el.top - rect.top) / rect.height) * 100,
-        w: Math.max(8, (el.width / rect.width) * 100),
-        h: Math.max(4, (el.height / rect.height) * 100),
-      }),
-    );
-  }, [showResize, frame?.w, interaction, ref]);
+  /*
+   * Não materializar frame no select — absolute tira o título do fluxo e
+   * espreme/sobrepõe o plot. Move/resize gravam frame só no arraste.
+   */
 
   useEffect(() => {
     if (!editing || !editRef.current) return;
