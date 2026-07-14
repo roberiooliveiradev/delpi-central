@@ -234,7 +234,81 @@ export function FormatRibbonTypographySections({
         hint={H.font}
         captionPlacement={captionPlacement}
       >
-        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
+        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--font">
+          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
+            <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
+              <TdRibbonSelect
+                aria-label="Família da fonte"
+                className="td-deck-ribbon__select--font-family"
+                value={currentFontFamily}
+                onChange={(value) => {
+                  ensureComunicadoGoogleFontsLoaded([value]);
+                  updateSelectedTextFormatStyle({ fontFamily: value });
+                }}
+                options={fontFamilySelectOptions}
+              />
+            </HintAction>
+            <TdRibbonIconButton
+              hint={H.uploadFont}
+              ariaLabel="Enviar fonte personalizada"
+              disabled={uploading}
+              onClick={() => fontUploadInputRef.current?.click()}
+            >
+              <Upload size={15} aria-hidden="true" />
+            </TdRibbonIconButton>
+            <input
+              ref={fontUploadInputRef}
+              type="file"
+              hidden
+              accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void uploadCustomFont(file);
+              }}
+            />
+            <div className="td-deck-ribbon__font-size" role="group" aria-label="Tamanho da fonte">
+              <TdRibbonIconButton
+                hint={H.fontSizeDown}
+                ariaLabel="Diminuir fonte"
+                disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
+                onClick={() =>
+                  updateSelectedTextFormatStyle({
+                    fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
+                  })
+                }
+              >
+                <Minus size={16} aria-hidden="true" />
+              </TdRibbonIconButton>
+              <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
+                <ComboboxNumberControl
+                  className="td-deck-ribbon__font-size-combobox"
+                  compact
+                  square
+                  aria-label="Tamanho da fonte"
+                  value={currentFontSize}
+                  options={COMUNICADO_FONT_SIZE_PRESETS}
+                  min={COMUNICADO_FONT_SIZE_MIN}
+                  clamp={clampFontSize}
+                  portalScopeClassName="dashboard-tv-dashboard"
+                  onChange={(next) =>
+                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(next) })
+                  }
+                />
+              </HintAction>
+              <TdRibbonIconButton
+                hint={H.fontSizeUp}
+                ariaLabel="Aumentar fonte"
+                onClick={() =>
+                  updateSelectedTextFormatStyle({
+                    fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
+                  })
+                }
+              >
+                <Plus size={16} aria-hidden="true" />
+              </TdRibbonIconButton>
+            </div>
+          </div>
           <div className="td-deck-ribbon__toolbar-row">
             <TdRibbonIconButton
               hint={H.bold}
@@ -367,88 +441,12 @@ export function FormatRibbonTypographySections({
               </TdRibbonIconButton>
             ) : null}
           </div>
-          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
-            <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
-              <TdRibbonSelect
-                aria-label="Família da fonte"
-                className="td-deck-ribbon__select--font-family"
-                value={currentFontFamily}
-                onChange={(value) => {
-                  ensureComunicadoGoogleFontsLoaded([value]);
-                  updateSelectedTextFormatStyle({ fontFamily: value });
-                }}
-                options={fontFamilySelectOptions}
-              />
-            </HintAction>
-            <TdRibbonIconButton
-              hint={H.uploadFont}
-              ariaLabel="Enviar fonte personalizada"
-              disabled={uploading}
-              onClick={() => fontUploadInputRef.current?.click()}
-            >
-              <Upload size={15} aria-hidden="true" />
-            </TdRibbonIconButton>
-            <input
-              ref={fontUploadInputRef}
-              type="file"
-              hidden
-              accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.target.value = "";
-                if (file) void uploadCustomFont(file);
-              }}
-            />
-          </div>
-          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
-            <div className="td-deck-ribbon__font-size" role="group" aria-label="Tamanho da fonte">
-              <TdRibbonIconButton
-                hint={H.fontSizeDown}
-                ariaLabel="Diminuir fonte"
-                disabled={currentFontSize <= COMUNICADO_FONT_SIZE_MIN}
-                onClick={() =>
-                  updateSelectedTextFormatStyle({
-                    fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
-                  })
-                }
-              >
-                <Minus size={16} aria-hidden="true" />
-              </TdRibbonIconButton>
-              <HintAction hint={H.fontSize} ariaLabel="Ajuda: Tamanho da fonte">
-                <ComboboxNumberControl
-                  className="td-deck-ribbon__font-size-combobox"
-                  compact
-                  square
-                  aria-label="Tamanho da fonte"
-                  value={currentFontSize}
-                  options={COMUNICADO_FONT_SIZE_PRESETS}
-                  min={COMUNICADO_FONT_SIZE_MIN}
-                  clamp={clampFontSize}
-                  portalScopeClassName="dashboard-tv-dashboard"
-                  onChange={(next) =>
-                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(next) })
-                  }
-                />
-              </HintAction>
-              <TdRibbonIconButton
-                hint={H.fontSizeUp}
-                ariaLabel="Aumentar fonte"
-                onClick={() =>
-                  updateSelectedTextFormatStyle({
-                    fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
-                  })
-                }
-              >
-                <Plus size={16} aria-hidden="true" />
-              </TdRibbonIconButton>
-            </div>
-          </div>
         </div>
       </DeckRibbonGroup>
 
       <DeckRibbonGroup label="Efeitos" hint={H.textEffects} captionPlacement={captionPlacement}>
-        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
-          <div className="td-deck-ribbon__toolbar-row">
+        <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--effects">
+          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
             <TvRibbonColorPicker
               hint={H.textStroke}
               label="Contorno"
@@ -466,6 +464,29 @@ export function FormatRibbonTypographySections({
                 updateSelectedTextFormatStyle({
                   textStrokeColor: undefined,
                   textStrokeWidth: 0,
+                })
+              }
+            />
+            <FieldLabel
+              htmlFor="td-ribbon-text-stroke-w"
+              label="px"
+              hint={H.textStroke}
+              className="td-deck-ribbon__field-label"
+            />
+            <NativeTextControl
+              id="td-ribbon-text-stroke-w"
+              type="number"
+              className="td-deck-ribbon__number td-deck-ribbon__number--compact td-deck-ribbon__number--stroke-w"
+              min={0}
+              max={8}
+              step={0.5}
+              value={formatStyle?.textStrokeWidth ?? 0}
+              onChange={(value) =>
+                updateSelectedTextFormatStyle({
+                  textStrokeWidth: Math.max(0, Number(value) || 0),
+                  textStrokeColor:
+                    formatStyle?.textStrokeColor ||
+                    (Number(value) > 0 ? formatStyle?.color ?? "#0f172a" : undefined),
                 })
               }
             />
@@ -510,37 +531,12 @@ export function FormatRibbonTypographySections({
               }}
             />
           </div>
-          <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
-            <FieldLabel
-              htmlFor="td-ribbon-text-stroke-w"
-              label="px"
-              hint={H.textStroke}
-              className="td-deck-ribbon__field-label"
-            />
-            <NativeTextControl
-              id="td-ribbon-text-stroke-w"
-              type="number"
-              className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-              min={0}
-              max={8}
-              step={0.5}
-              value={formatStyle?.textStrokeWidth ?? 0}
-              onChange={(value) =>
-                updateSelectedTextFormatStyle({
-                  textStrokeWidth: Math.max(0, Number(value) || 0),
-                  textStrokeColor:
-                    formatStyle?.textStrokeColor ||
-                    (Number(value) > 0 ? formatStyle?.color ?? "#0f172a" : undefined),
-                })
-              }
-            />
-          </div>
         </div>
       </DeckRibbonGroup>
 
       {showParagraphAlign ? (
         <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} captionPlacement={captionPlacement}>
-          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
+          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--paragraph">
             <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento horizontal">
               {(
                 [
