@@ -6,6 +6,8 @@ export type HintActionProps = {
   hint: string;
   ariaLabel: string;
   placement?: "top" | "bottom";
+  /** Oculta o balão (ex.: popover do controle aberto). */
+  suppressed?: boolean;
   children: ReactElement;
 };
 
@@ -14,10 +16,17 @@ export function HintAction({
   hint,
   ariaLabel,
   placement = "bottom",
+  suppressed = false,
   children,
 }: HintActionProps): ReactNode {
   return (
-    <HelpTooltip content={hint} ariaLabel={ariaLabel} wrap placement={placement}>
+    <HelpTooltip
+      content={hint}
+      ariaLabel={ariaLabel}
+      wrap
+      placement={placement}
+      suppressed={suppressed}
+    >
       {children}
     </HelpTooltip>
   );

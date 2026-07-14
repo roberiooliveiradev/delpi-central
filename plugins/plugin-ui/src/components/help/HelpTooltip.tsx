@@ -24,6 +24,12 @@ export type HelpTooltipProps = {
   className?: string;
   wrap?: boolean;
   placement?: HelpTooltipPlacement;
+  /**
+   * Força ocultar o balão (ex.: menu aberto controlado pelo host).
+   * Com `wrap`, também omite automaticamente se houver descendente
+   * com `aria-expanded="true"` (popover/menu do gatilho).
+   */
+  suppressed?: boolean;
   children?: ReactNode;
 };
 
@@ -142,6 +148,12 @@ function mergeDescribedBy(existing: string | undefined, tooltipId: string): stri
   return `${existing} ${tooltipId}`;
 }
 
+/** Gatilho (ou antecessor) com menu/popover aberto — balão não deve competir. */
+function hasExpandedControl(root: ParentNode | null): boolean {
+  if (!root || !(root instanceof Element)) return false;
+  return Boolean(root.querySelector('[aria-expanded="true"]'));
+}
+
 function wrapChildWithHint(
   child: ReactNode,
   handlers: {
@@ -178,6 +190,7 @@ export function HelpTooltip({
   className,
   wrap = false,
   placement = "top",
+  suppressed = false,
   children,
 }: HelpTooltipProps) {
   const tooltipId = useId();
@@ -213,20 +226,54 @@ export function HelpTooltip({
     setPositioned(true);
   }, [placement]);
 
-  const showTooltip = useCallback(() => {
-    setPositioned(false);
-    setBubblePosition(null);
-    setVisible(true);
-  }, []);
-
   const hideTooltip = useCallback(() => {
     setVisible(false);
     setPositioned(false);
     setBubblePosition(null);
   }, []);
 
+  const isSuppressed = useCallback(() => {
+    if (suppressed) return true;
+    return wrap && hasExpandedControl(rootRef.current);
+  }, [suppressed, wrap]);
+
+  const showTooltip = useCallback(() => {
+    if (isSuppressed()) return;
+    setPositioned(false);
+    setBubblePosition(null);
+    setVisible(true);
+  }, [isSuppressed]);
+
+  useLayoutEffect(() => {
+    if (visible && isSuppressed()) {
+      hideTooltip();
+    }
+  });
+
+  useEffect(() => {
+    if (!wrap) return;
+    const root = rootRef.current;
+    if (!root) return;
+
+    const syncExpanded = () => {
+      if (hasExpandedControl(root)) hideTooltip();
+    };
+
+    const observer = new MutationObserver(syncExpanded);
+    observer.observe(root, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["aria-expanded"],
+    });
+    return () => observer.disconnect();
+  }, [wrap, hideTooltip]);
+
   useLayoutEffect(() => {
     if (!visible) return;
+    if (isSuppressed()) {
+      hideTooltip();
+      return;
+    }
 
     setPositioned(false);
     setBubblePosition({ top: -9999, left: -9999, placement });
@@ -241,7 +288,7 @@ export function HelpTooltip({
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
     };
-  }, [visible, updateBubblePosition, content, placement]);
+  }, [visible, updateBubblePosition, content, placement, isSuppressed, hideTooltip]);
 
   useEffect(() => {
     if (!visible) return;
@@ -317,7 +364,7 @@ export function HelpTooltip({
           <HelpCircle size={14} aria-hidden="true" />
         </button>
       )}
-      {visible ? createPortal(bubble, document.body) : null}
+      {visible && !isSuppressed() ? createPortal(bubble, document.body) : null}
     </span>
   );
 }
