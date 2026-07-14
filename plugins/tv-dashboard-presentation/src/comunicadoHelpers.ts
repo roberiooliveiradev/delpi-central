@@ -804,6 +804,17 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.valueField) base.valueField = block.valueField;
     if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
     if (block.kpiParts) base.kpiParts = { ...block.kpiParts };
+  } else if (block.type === "input") {
+    const input = block.input;
+    base.input = {
+      paramKey: input?.paramKey ?? "",
+      ...(input?.label ? { label: input.label } : {}),
+      defaultValue: input?.defaultValue ?? null,
+      targetScope: input?.targetScope === "sources" ? "sources" : "slide",
+      ...(input?.targetScope === "sources" && input.targetSourceIds?.length
+        ? { targetSourceIds: [...input.targetSourceIds] }
+        : {}),
+    };
   }
   return base;
 }
