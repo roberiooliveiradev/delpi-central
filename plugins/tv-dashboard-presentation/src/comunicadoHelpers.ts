@@ -2,7 +2,6 @@ import type { CSSProperties } from "react";
 
 import {
   DECK_CHART_DEFAULTS,
-  AUTOMATIC_TEXT_COLOR,
   DECK_COLOR_SURFACE,
   DECK_COLOR_TEXT_STRONG,
   DECK_KPI_DEFAULTS,
@@ -174,7 +173,8 @@ export function createDataSourceBlock(
     id: newBlockId(),
     type: "data_source",
     frame: { x: 8, y: 30, w: 18, h: 18 },
-    style: { zIndex: 1, color: AUTOMATIC_TEXT_COLOR },
+    /* Sem color «auto»: o chrome usa azul de accent no CSS da fonte. */
+    style: { zIndex: 1 },
     dataBinding: {
       operationId,
       params: { ...(options.defaultParams ?? {}) },

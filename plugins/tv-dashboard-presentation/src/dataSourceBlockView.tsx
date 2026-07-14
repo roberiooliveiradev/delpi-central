@@ -1,7 +1,7 @@
 import { Database } from "lucide-react";
-import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 
-import { resolvePaintTextColor } from "@delpi/plugin-ui/index";
+import { isAutomaticTextColor } from "@delpi/plugin-ui/index";
 
 import { formatDataSourceBindingSummary } from "./formatDataSourceBindingSummary";
 import type { ComunicadoDataFilters, ComunicadoDataSourceBlock } from "./comunicadoTypes";
@@ -18,16 +18,21 @@ type Props = {
   labelForParamValue?: (key: string, value: string) => string;
 };
 
-function resolveDataSourceContrastBackground(
+/**
+ * Cor só quando o usuário escolheu um valor explícito.
+ * «Automático» / ausente → azul do chrome da fonte (CSS `--tdp-data-accent`).
+ */
+function resolveDataSourcePaintStyle(
   block: ComunicadoDataSourceBlock,
-  computedBackground?: string,
-): string {
-  const fromStyle = block.style?.backgroundColor ?? block.style?.fill;
-  if (typeof fromStyle === "string" && fromStyle.trim()) return fromStyle;
-  if (computedBackground && computedBackground !== "rgba(0, 0, 0, 0)" && computedBackground !== "transparent") {
-    return computedBackground;
-  }
-  return "#ffffff";
+): CSSProperties | undefined {
+  const raw = block.style?.color;
+  if (raw == null || isAutomaticTextColor(raw)) return undefined;
+  const color = raw.trim();
+  if (!color) return undefined;
+  return {
+    color,
+    ["--tdp-data-source-fg" as string]: color,
+  };
 }
 
 export function DataSourceBlockView({
@@ -39,29 +44,12 @@ export function DataSourceBlockView({
   labelForParamKey,
   labelForParamValue,
 }: Props) {
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [autoColor, setAutoColor] = useState<string | undefined>();
-
   const summary = formatDataSourceBindingSummary(block, {
     slideFilters,
     labelForKey: labelForParamKey,
     labelForValue: labelForParamValue,
   });
-
-  useLayoutEffect(() => {
-    if (!(editorMode || interactive)) return;
-    const node = rootRef.current;
-    const computed = node ? getComputedStyle(node).backgroundColor : undefined;
-    const bg = resolveDataSourceContrastBackground(block, computed);
-    setAutoColor(resolvePaintTextColor(block.style?.color ?? "auto", bg));
-  }, [block, editorMode, interactive, block.style?.color, block.style?.backgroundColor, block.style?.fill]);
-
-  const paintStyle: CSSProperties | undefined = autoColor
-    ? {
-        color: autoColor,
-        ["--tdp-data-source-fg" as string]: autoColor,
-      }
-    : undefined;
+  const paintStyle = resolveDataSourcePaintStyle(block);
 
   if (block.resolved?.error) {
     return (
@@ -75,7 +63,6 @@ export function DataSourceBlockView({
   if (editorMode || interactive) {
     return (
       <div
-        ref={rootRef}
         className={`tdp-data-source tdp-data-source--editor${loading ? " tdp-data-block--loading" : ""}`}
         style={paintStyle}
         title={summary.title}

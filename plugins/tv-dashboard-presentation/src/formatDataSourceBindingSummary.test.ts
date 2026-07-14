@@ -53,8 +53,8 @@ describe("formatDataSourceBindingSummary", () => {
     expect(summary.title).toContain("getProductionConsumo");
   });
 
-  it("novas fontes usam cor automática", () => {
+  it("novas fontes não gravam cor automática (chrome usa accent no CSS)", () => {
     const block = createDataSourceBlock("op") as ComunicadoDataSourceBlock;
-    expect(block.style?.color).toBe("auto");
+    expect(block.style?.color).toBeUndefined();
   });
 });
