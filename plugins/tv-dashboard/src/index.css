@@ -1,7 +1,7 @@
 .dashboard-tv-dashboard {
   --td-accent: var(--primary, #089bdb);
-  /* Abas contextuais (Gráfico/Tabela/Forma) — distinto do azul das abas permanentes. */
-  --td-contextual-accent: #0f766e;
+  /* Mesmo azul padrão da aplicação (top bar + sidebar). */
+  --td-contextual-accent: var(--td-accent);
   --td-surface: var(--surface, #ffffff);
   --td-text: var(--text, #111111);
   --td-border: var(--border, #e5e7eb);
@@ -219,7 +219,7 @@
   --td-text: rgba(255, 255, 255, 0.88);
   --td-border: rgba(255, 255, 255, 0.1);
   --td-muted: rgba(255, 255, 255, 0.72);
-  --td-contextual-accent: #2dd4bf;
+  --td-contextual-accent: var(--td-accent);
   --td-stage-chrome: color-mix(in srgb, var(--td-text) 10%, var(--td-surface));
   --td-stage-preview: color-mix(in srgb, var(--td-text) 88%, var(--td-surface));
   --delpi-ui-surface: var(--td-surface);
@@ -3173,7 +3173,7 @@ body.td-composer--marqueeing * {
   padding: 6px 10px;
   min-height: var(--td-chrome-tab-height, 34px);
   font-size: 12px;
-  color: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 72%, var(--td-muted));
+  color: color-mix(in srgb, var(--td-accent) 72%, var(--td-muted));
   border-radius: 0;
   border-bottom-width: 2px;
   border-bottom-style: solid;
@@ -3181,14 +3181,14 @@ body.td-composer--marqueeing * {
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tab:hover {
-  color: var(--td-contextual-accent, var(--td-accent));
-  background: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 8%, transparent);
+  color: var(--td-accent);
+  background: color-mix(in srgb, var(--td-accent) 8%, transparent);
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tab--active {
-  color: var(--td-contextual-accent, var(--td-accent));
-  border-bottom-color: var(--td-contextual-accent, var(--td-accent));
-  background: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 8%, var(--td-surface));
+  color: var(--td-accent);
+  border-bottom-color: var(--td-accent);
+  background: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section {
@@ -5968,18 +5968,18 @@ body.td-composer--marqueeing * {
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__tab--contextual {
-  color: color-mix(in srgb, var(--td-contextual-accent) 72%, var(--td-muted));
+  color: color-mix(in srgb, var(--td-accent) 72%, var(--td-muted));
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__tab--contextual:hover:not(:disabled) {
-  color: var(--td-contextual-accent);
-  background: color-mix(in srgb, var(--td-contextual-accent) 8%, transparent);
+  color: var(--td-accent);
+  background: color-mix(in srgb, var(--td-accent) 8%, transparent);
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__tab--contextual-active {
-  color: var(--td-contextual-accent);
-  border-bottom-color: var(--td-contextual-accent);
-  background: color-mix(in srgb, var(--td-contextual-accent) 8%, var(--td-surface));
+  color: var(--td-accent);
+  border-bottom-color: var(--td-accent);
+  background: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
 }
 
 .dashboard-tv-dashboard .td-deck-chrome__tab:disabled {
