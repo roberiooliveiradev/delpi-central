@@ -209,12 +209,12 @@ export function kpiPartCornerAdjFromLocalX(localX: number): number {
   );
 }
 
-/** Tipografia padrão das partes — mesma base da ribbon Formatar. */
+/** Tipografia padrão das partes — mesma base da ribbon Formatar / slide TV. */
 export const KPI_PART_FONT_SIZE_DEFAULTS = {
-  title: 14,
-  /** Valor compacto p/ card padrão do deck (evita “100” estourando a altura). */
-  value: 32,
-  hint: 12,
+  title: 18,
+  /** Valor do card — legível no deck TV sem depender de FitText agressivo. */
+  value: 40,
+  hint: 14,
 } as const;
 
 export type KpiTextPartKind = keyof typeof KPI_PART_FONT_SIZE_DEFAULTS;

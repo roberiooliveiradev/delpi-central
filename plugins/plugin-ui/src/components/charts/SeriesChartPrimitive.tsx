@@ -25,6 +25,7 @@ import {
   isChartPartRefEqual,
   mergeSeriesChartOptionsWithParts,
   resolveChartAreaStyle,
+  resolveChartPartFontSize,
   resolveSeriesStrokeColor,
   resolveSeriesStrokeWidth,
   type ChartPartsMap,
@@ -129,6 +130,22 @@ export function SeriesChartPrimitive({
 
   const valueFormat = config.valueFormat ?? "auto";
   const plotFrame = getChartPartState(chartParts, { kind: "plotArea" })?.frame;
+  const axisXFont = resolveChartPartFontSize(
+    "axis",
+    getChartPartState(chartParts, { kind: "axis", axis: "x" })?.style,
+  );
+  const axisYFont = resolveChartPartFontSize(
+    "axis",
+    getChartPartState(chartParts, { kind: "axis", axis: "y" })?.style,
+  );
+  const axisTitleXFont = resolveChartPartFontSize(
+    "axisTitle",
+    getChartPartState(chartParts, { kind: "axisTitle", axis: "x" })?.style,
+  );
+  const axisTitleYFont = resolveChartPartFontSize(
+    "axisTitle",
+    getChartPartState(chartParts, { kind: "axisTitle", axis: "y" })?.style,
+  );
   const layout = buildSeriesChartLayout({
     points: usable,
     showXAxisLabels: config.showAxes !== false && config.showXAxisLabels !== false,
@@ -137,6 +154,10 @@ export function SeriesChartPrimitive({
     viewH: viewSize.h,
     categoryPaddingPercent: config.categoryPaddingPercent,
     plotFrame,
+    typography: {
+      axisFontSize: Math.max(axisXFont, axisYFont),
+      axisTitleFontSize: Math.max(axisTitleXFont, axisTitleYFont),
+    },
   });
 
   const seriesColor = resolveSeriesStrokeColor(config, chartParts);

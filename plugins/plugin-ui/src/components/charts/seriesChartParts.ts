@@ -442,12 +442,12 @@ export function getChartPartState(parts: ChartPartsMap | null | undefined, ref: 
 
 /** Tipografia padrão das partes textuais — alinhada ao CSS do gráfico (não ao 16 fantasma da ribbon). */
 export const CHART_PART_FONT_SIZE_DEFAULTS = {
-  title: 14,
-  legend: 10,
-  axis: 9,
-  axisTitle: 9,
-  dataLabel: 8,
-  dataLabels: 8,
+  title: 22,
+  legend: 16,
+  axis: 14,
+  axisTitle: 14,
+  dataLabel: 12,
+  dataLabels: 12,
 } as const;
 
 export type ChartTextPartKind = keyof typeof CHART_PART_FONT_SIZE_DEFAULTS;

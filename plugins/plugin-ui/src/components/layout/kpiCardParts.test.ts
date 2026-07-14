@@ -60,10 +60,10 @@ describe("kpiCardParts adapters", () => {
     expect(parts.card?.style?.borderRadius).toBe(DECK_KPI_DEFAULTS.borderRadius);
     expect(parts.card?.style?.boxShadow).toBe(DECK_KPI_DEFAULTS.boxShadow);
     expect(parts.card?.style?.stroke).toBe(DECK_KPI_DEFAULTS.borderColor);
-    expect(parts.title?.style?.fontSize).toBe(14);
+    expect(parts.title?.style?.fontSize).toBe(18);
     expect(parts.title?.style?.color).toBe("auto");
-    expect(parts.value?.style?.fontSize).toBe(32);
-    expect(parts.hint?.style?.fontSize).toBe(12);
+    expect(parts.value?.style?.fontSize).toBe(40);
+    expect(parts.hint?.style?.fontSize).toBe(14);
     const back = partsToKpiOptions(parts);
     expect(back.title).toBe("OEE");
     expect(back.subtitle).toBe("meta");
@@ -248,9 +248,9 @@ describe("kpi icon layout", () => {
   });
 
   it("resolveKpiPartFontSize usa defaults canônicos quando sem fontSize", () => {
-    expect(resolveKpiPartFontSize("title")).toBe(14);
-    expect(resolveKpiPartFontSize("value")).toBe(32);
-    expect(resolveKpiPartFontSize("hint")).toBe(12);
+    expect(resolveKpiPartFontSize("title")).toBe(18);
+    expect(resolveKpiPartFontSize("value")).toBe(40);
+    expect(resolveKpiPartFontSize("hint")).toBe(14);
     expect(resolveKpiPartFontSize("value", { fontSize: 72 })).toBe(72);
   });
 

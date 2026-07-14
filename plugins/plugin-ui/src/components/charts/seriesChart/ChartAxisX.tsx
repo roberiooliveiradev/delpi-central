@@ -2,7 +2,9 @@ import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
   chartPartTypographyStyle,
+  getChartPartState,
   isChartPartInteractionSelected,
+  resolveChartPartFontSize,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
@@ -31,9 +33,16 @@ export function ChartAxisX({
   const cn = useSeriesChartClasses();
   const { margin, plotH, viewH, xLabelsRotated, toX, plotW, visibleXLabelIndices } = layout;
   const xAxisY = margin.top + plotH;
-  const labelY = xLabelsRotated ? xAxisY + 18 : xAxisY + 14;
   const axisRef = { kind: "axis" as const, axis: "x" as const };
   const titleRef = { kind: "axisTitle" as const, axis: "x" as const };
+  const axisFontSize = resolveChartPartFontSize(
+    "axis",
+    getChartPartState(chartParts, axisRef)?.style,
+  );
+  const labelY = xLabelsRotated
+    ? xAxisY + Math.round(axisFontSize * 1.3)
+    : xAxisY + Math.round(axisFontSize * 1.05);
+  const hitH = Math.max(viewH - xAxisY, Math.round(axisFontSize * 1.6));
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const axisSelected = isChartPartInteractionSelected(axisRef, interaction?.selectedPart);
   const titleSelected = isChartPartInteractionSelected(titleRef, interaction?.selectedPart);
@@ -68,7 +77,7 @@ export function ChartAxisX({
           x={margin.left}
           y={xAxisY}
           width={plotW}
-          height={Math.max(viewH - xAxisY, 18)}
+          height={hitH}
           fill="transparent"
           pointerEvents="all"
         />

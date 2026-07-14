@@ -164,6 +164,32 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
       expect(indices[i]! - indices[i - 1]!).toBeGreaterThanOrEqual(1);
     }
   });
+
+  it("tipografia maior aumenta margens e step (não quebra rótulos no resize)", () => {
+    const points = Array.from({ length: 24 }, (_, i) => ({
+      value: i + 1,
+      label: `11/${String(i + 1).padStart(2, "0")}/26`,
+    }));
+    const small = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: true,
+      viewW: 400,
+      viewH: 220,
+      typography: { axisFontSize: 9, axisTitleFontSize: 9 },
+    });
+    const large = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: true,
+      viewW: 400,
+      viewH: 220,
+      typography: { axisFontSize: 28, axisTitleFontSize: 28 },
+    });
+    expect(large.margin.left).toBeGreaterThan(small.margin.left);
+    expect(large.margin.bottom).toBeGreaterThan(small.margin.bottom);
+    expect(large.xLabelStep).toBeGreaterThanOrEqual(small.xLabelStep);
+  });
 });
 
 describe("golden layout fixture OTD", () => {

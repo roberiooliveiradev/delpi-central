@@ -65,18 +65,18 @@ describe("selectedTextFormatTarget", () => {
     }
   });
 
-  it("resolve valor do KPI com default 32 quando sem fontSize persistido", () => {
+  it("resolve valor do KPI com default canônico quando sem fontSize persistido", () => {
     const target = resolveSelectedTextFormatTarget({
       selected: kpiBlock,
       selectedKpiPart: { kind: "value" },
     });
     expect(target?.mode).toBe("part");
     if (target?.mode === "part") {
-      expect(target.style.fontSize).toBe(32);
+      expect(target.style.fontSize).toBe(40);
     }
   });
 
-  it("resolve eixo do gráfico com default 9 quando sem fontSize persistido", () => {
+  it("resolve eixo do gráfico com default canônico quando sem fontSize persistido", () => {
     const bare = {
       ...chartBlock,
       chartParts: {},
@@ -92,8 +92,8 @@ describe("selectedTextFormatTarget", () => {
     expect(targetX?.mode).toBe("part");
     expect(targetY?.mode).toBe("part");
     if (targetX?.mode === "part" && targetY?.mode === "part") {
-      expect(targetX.style.fontSize).toBe(9);
-      expect(targetY.style.fontSize).toBe(9);
+      expect(targetX.style.fontSize).toBe(14);
+      expect(targetY.style.fontSize).toBe(14);
     }
   });
 
@@ -114,7 +114,7 @@ describe("selectedTextFormatTarget", () => {
     });
     if (targetX?.mode === "part" && targetY?.mode === "part") {
       expect(targetX.style.fontSize).toBe(16);
-      expect(targetY.style.fontSize).toBe(9);
+      expect(targetY.style.fontSize).toBe(14);
     }
   });
 

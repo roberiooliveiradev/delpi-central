@@ -40,6 +40,16 @@ export type SeriesChartLayout = {
   toY: (value: number) => number;
 };
 
+/**
+ * Tipografia efetiva dos eixos — usada para margens e densidade de rótulos.
+ * Sem isso, resize global escala fontSize no modelo mas as margens ficam
+ * calibradas para 9px e os itens internos “quebram”.
+ */
+export type SeriesChartLayoutTypography = {
+  axisFontSize?: number;
+  axisTitleFontSize?: number;
+};
+
 export type BuildSeriesChartLayoutInput = {
   points: SeriesChartPoint[];
   showXAxisLabels: boolean;
@@ -57,6 +67,8 @@ export type BuildSeriesChartLayoutInput = {
    * Quando `w`/`h` presentes, substitui as margens automáticas.
    */
   plotFrame?: ChartPartFrame | null;
+  /** Fontes efetivas (px user units). Default: calibração histórica (eixo 9). */
+  typography?: SeriesChartLayoutTypography | null;
 };
 
 /** Converte margens atuais do layout em frame % (materializar ao selecionar). */
@@ -98,33 +110,78 @@ export function marginsFromPlotFrame(
   };
 }
 
-const BASE_MARGIN: SeriesChartMargin = {
+/** Margens calibradas para eixo a 9px (referência histórica). */
+const BASE_MARGIN_AT_REF: SeriesChartMargin = {
   top: 22,
   right: 20,
   bottom: 30,
   left: 52,
 };
 
-function estimateLabelWidth(label: string): number {
-  return Math.max(label.length, 1) * 5.5;
+/** Tamanho de eixo em que `BASE_MARGIN_AT_REF` foi medido. */
+export const SERIES_CHART_LAYOUT_REF_AXIS_FONT = 9;
+
+function resolveAxisFontSize(typography?: SeriesChartLayoutTypography | null): number {
+  const fs = typography?.axisFontSize;
+  if (fs != null && Number.isFinite(fs) && fs > 0) return fs;
+  return SERIES_CHART_LAYOUT_REF_AXIS_FONT;
 }
 
-export function resolveXLabelStep(count: number, plotW: number, labels: string[]): number {
+function resolveAxisTitleFontSize(typography?: SeriesChartLayoutTypography | null): number {
+  const fs = typography?.axisTitleFontSize;
+  if (fs != null && Number.isFinite(fs) && fs > 0) return fs;
+  return resolveAxisFontSize(typography);
+}
+
+function marginScaleForAxisFont(axisFontSize: number): number {
+  return Math.max(0.85, Math.min(5, axisFontSize / SERIES_CHART_LAYOUT_REF_AXIS_FONT));
+}
+
+function scaledBaseMargin(axisFontSize: number): SeriesChartMargin {
+  const s = marginScaleForAxisFont(axisFontSize);
+  return {
+    top: Math.round(BASE_MARGIN_AT_REF.top * s),
+    right: Math.round(BASE_MARGIN_AT_REF.right * s),
+    bottom: Math.round(BASE_MARGIN_AT_REF.bottom * s),
+    left: Math.round(BASE_MARGIN_AT_REF.left * s),
+  };
+}
+
+/** Largura aproximada do rótulo em user units (proporcional ao font-size). */
+export function estimateLabelWidth(label: string, axisFontSize = SERIES_CHART_LAYOUT_REF_AXIS_FONT): number {
+  const fs = axisFontSize > 0 ? axisFontSize : SERIES_CHART_LAYOUT_REF_AXIS_FONT;
+  return Math.max(label.length, 1) * fs * 0.55;
+}
+
+export function resolveXLabelStep(
+  count: number,
+  plotW: number,
+  labels: string[],
+  axisFontSize = SERIES_CHART_LAYOUT_REF_AXIS_FONT,
+): number {
   if (count <= 1) return 1;
   const avgWidth =
-    labels.reduce((sum, label) => sum + estimateLabelWidth(label), 0) / Math.max(labels.length, 1);
-  const slotWidth = Math.max(avgWidth + 6, 28);
+    labels.reduce((sum, label) => sum + estimateLabelWidth(label, axisFontSize), 0) /
+    Math.max(labels.length, 1);
+  const slotWidth = Math.max(avgWidth + axisFontSize * 0.45, axisFontSize * 2.2);
   const maxVisible = Math.max(2, Math.floor(plotW / slotWidth));
   if (count <= maxVisible) return 1;
   return Math.ceil(count / maxVisible);
 }
 
-export function shouldRotateXLabels(count: number, step: number, plotW: number, labels: string[]): boolean {
+export function shouldRotateXLabels(
+  count: number,
+  step: number,
+  plotW: number,
+  labels: string[],
+  axisFontSize = SERIES_CHART_LAYOUT_REF_AXIS_FONT,
+): boolean {
   if (count <= 6) return false;
   const visibleCount = Math.ceil(count / step);
   const avgWidth =
-    labels.reduce((sum, label) => sum + estimateLabelWidth(label), 0) / Math.max(labels.length, 1);
-  return visibleCount * (avgWidth + 4) > plotW * 0.92;
+    labels.reduce((sum, label) => sum + estimateLabelWidth(label, axisFontSize), 0) /
+    Math.max(labels.length, 1);
+  return visibleCount * (avgWidth + axisFontSize * 0.3) > plotW * 0.92;
 }
 
 /**
@@ -172,13 +229,16 @@ function resolveBottomMargin(
   showXAxisLabels: boolean,
   showXAxisTitle: boolean,
   xLabelsRotated: boolean,
+  base: SeriesChartMargin,
+  axisFontSize: number,
+  axisTitleFontSize: number,
 ): number {
-  let bottom = BASE_MARGIN.bottom;
+  let bottom = base.bottom;
   if (showXAxisLabels) {
-    bottom += xLabelsRotated ? 22 : 14;
+    bottom += Math.round(axisFontSize * (xLabelsRotated ? 1.6 : 1.1));
   }
   if (showXAxisTitle) {
-    bottom += 12;
+    bottom += Math.round(axisTitleFontSize * 1.15);
   }
   return bottom;
 }
@@ -188,19 +248,28 @@ function resolveSideMargins(
   showXAxisLabels: boolean,
   labels: string[],
   visibleIndices: number[],
+  base: SeriesChartMargin,
+  axisFontSize: number,
 ): Pick<SeriesChartMargin, "left" | "right"> {
-  let left = BASE_MARGIN.left;
-  let right = BASE_MARGIN.right;
+  let left = base.left;
+  let right = base.right;
   if (!showXAxisLabels || labels.length === 0) {
     return { left, right };
   }
   const firstIdx = visibleIndices[0] ?? 0;
   const lastIdx = visibleIndices[visibleIndices.length - 1] ?? labels.length - 1;
   // Com textAnchor start/end nas bordas, basta folga pequena + inset.
-  const firstPad = Math.min(12, Math.ceil(estimateLabelWidth(labels[firstIdx] ?? "") * 0.15));
-  const lastPad = Math.min(28, Math.ceil(estimateLabelWidth(labels[lastIdx] ?? "") * 0.35) + 4);
-  left = Math.max(left, BASE_MARGIN.left + firstPad);
-  right = Math.max(right, BASE_MARGIN.right, lastPad);
+  const firstPad = Math.min(
+    Math.round(axisFontSize * 1.2),
+    Math.ceil(estimateLabelWidth(labels[firstIdx] ?? "", axisFontSize) * 0.15),
+  );
+  const lastPad = Math.min(
+    Math.round(axisFontSize * 2.2),
+    Math.ceil(estimateLabelWidth(labels[lastIdx] ?? "", axisFontSize) * 0.35) +
+      Math.round(axisFontSize * 0.3),
+  );
+  left = Math.max(left, base.left + firstPad);
+  right = Math.max(right, base.right, lastPad);
   return { left, right };
 }
 
@@ -215,6 +284,9 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
 
   const viewW = Math.max(120, input.viewW ?? SERIES_CHART_VIEW_W);
   const viewH = Math.max(80, input.viewH ?? SERIES_CHART_VIEW_H);
+  const axisFontSize = resolveAxisFontSize(input.typography);
+  const axisTitleFontSize = resolveAxisTitleFontSize(input.typography);
+  const baseMargin = scaledBaseMargin(axisFontSize);
 
   const labels = input.points.map((point, index) => String(point.label ?? index + 1));
   const framedEarly = marginsFromPlotFrame(input.plotFrame, viewW, viewH);
@@ -222,24 +294,37 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     40,
     framedEarly
       ? viewW - framedEarly.left - framedEarly.right
-      : viewW - BASE_MARGIN.left - BASE_MARGIN.right,
+      : viewW - baseMargin.left - baseMargin.right,
   );
   const xLabelStep = input.showXAxisLabels
-    ? resolveXLabelStep(input.points.length, plotWProbe, labels)
+    ? resolveXLabelStep(input.points.length, plotWProbe, labels, axisFontSize)
     : 1;
   const xLabelsRotated = input.showXAxisLabels
-    ? shouldRotateXLabels(input.points.length, xLabelStep, plotWProbe, labels)
+    ? shouldRotateXLabels(input.points.length, xLabelStep, plotWProbe, labels, axisFontSize)
     : false;
   const visibleXLabelIndices = input.showXAxisLabels
     ? resolveVisibleXLabelIndices(input.points.length, xLabelStep)
     : [];
 
-  const sides = resolveSideMargins(input.showXAxisLabels, labels, visibleXLabelIndices);
+  const sides = resolveSideMargins(
+    input.showXAxisLabels,
+    labels,
+    visibleXLabelIndices,
+    baseMargin,
+    axisFontSize,
+  );
   const autoMargin: SeriesChartMargin = {
-    top: BASE_MARGIN.top,
+    top: baseMargin.top,
     left: sides.left,
     right: sides.right,
-    bottom: resolveBottomMargin(input.showXAxisLabels, input.showXAxisTitle, xLabelsRotated),
+    bottom: resolveBottomMargin(
+      input.showXAxisLabels,
+      input.showXAxisTitle,
+      xLabelsRotated,
+      baseMargin,
+      axisFontSize,
+      axisTitleFontSize,
+    ),
   };
   const margin: SeriesChartMargin = framedEarly ?? autoMargin;
 

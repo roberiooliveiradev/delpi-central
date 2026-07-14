@@ -36,7 +36,8 @@ import type {
   ComunicadoTableViewBlock,
 } from "./comunicadoTypes";
 
-const FONT_PX_MIN = 6;
+/** Alinhado a `COMUNICADO_FONT_SIZE_MIN` — evita tipografia ilegível no resize. */
+const FONT_PX_MIN = 12;
 const STROKE_PX_MIN = 0.5;
 const STROKE_PX_MAX = 48;
 const ICON_PX_MIN = 8;
@@ -44,7 +45,7 @@ const ICON_PX_MAX = 240;
 const SCALE_EPSILON = 0.001;
 
 /** Default tipográfico da tabela quando `tableOptions.fontSize` está ausente. */
-export const TABLE_VIEW_DEFAULT_FONT_SIZE_PX = 12;
+export const TABLE_VIEW_DEFAULT_FONT_SIZE_PX = 16;
 
 export type FrameSize = Pick<ComunicadoFrame, "w" | "h">;
 
