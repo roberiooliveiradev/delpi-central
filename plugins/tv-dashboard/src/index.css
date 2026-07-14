@@ -4012,8 +4012,41 @@ body.td-composer--marqueeing * {
   margin: 0;
 }
 
+/*
+ * Portal no body não herda .td-deck-ribbon--compact: sem estas regras a grade
+ * fica em 72–88px e o RangeField (min 148px) “monta” em coluna única.
+ */
 .dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid {
+  display: grid;
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: repeat(3, minmax(120px, 148px));
+  gap: 6px 12px;
+  align-items: end;
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid .delpi-ui-range-field {
   width: 100%;
+  min-width: 0;
+  padding: 0;
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid .delpi-ui-range-field__label {
+  font-size: 10px;
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid .delpi-ui-range-field__input {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover .td-deck-ribbon__frame-grid .delpi-ui-range-field__input.delpi-ui-native-control--compact {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
 }
 
 /* Popover de efeitos — painel ancorado ao tile (como cores do Preench.). */
