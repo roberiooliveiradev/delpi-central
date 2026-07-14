@@ -20,5 +20,16 @@ export function normalizeSelectionRibbonTab(
 }
 
 export function isSelectionPanelTab(tab: string): tab is SelectionPanelTab {
-  return tab === "element" || tab === "data" || tab === "layers";
+  return (
+    tab === "element" ||
+    tab === "tableDesign" ||
+    tab === "tableLayout" ||
+    tab === "data" ||
+    tab === "layers"
+  );
+}
+
+/** Painel «Elemento» e o par Design/Layout de tabela (conteúdo de formatação). */
+export function isElementFormatPanelTab(tab: SelectionPanelTab): boolean {
+  return tab === "element" || tab === "tableDesign" || tab === "tableLayout";
 }

@@ -149,6 +149,10 @@ export function DeckEditorChrome({
       setActiveTab(normalized);
       return;
     }
+    if (normalized === "tableDesign" || normalized === "tableLayout") {
+      setActiveTab(normalized);
+      return;
+    }
     if (normalized === "element") {
       setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
@@ -176,7 +180,7 @@ export function DeckEditorChrome({
     }
   }, [isTableSelection, hasSelection, isCustomSlide, activeTab]);
 
-  /** Sync bidirecional: painel lateral espelha na faixa (incluindo Elemento). */
+  /** Sync bidirecional: painel lateral espelha na faixa (incluindo Elemento / Design·Layout). */
   useEffect(() => {
     const panelTab = editor?.selectionPanelTab;
     if (!isCustomSlide || !panelTab) return;
@@ -186,6 +190,10 @@ export function DeckEditorChrome({
     }
     if (panelTab === "data") {
       setActiveTab("data");
+      return;
+    }
+    if (panelTab === "tableDesign" || panelTab === "tableLayout") {
+      setActiveTab(panelTab);
       return;
     }
     if (panelTab === "element" && hasSelection) {
@@ -206,11 +214,6 @@ export function DeckEditorChrome({
       return;
     }
     setActiveTab(tab);
-    if (tab === "tableDesign" || tab === "tableLayout") {
-      editor?.setSelectionPanelTab("element");
-      editor?.setDataPanelOpen(false);
-      return;
-    }
     if (isSelectionPanelTab(tab)) {
       editor?.setSelectionPanelTab(tab);
       editor?.setDataPanelOpen(tab === "data");

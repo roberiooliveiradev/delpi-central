@@ -23,6 +23,8 @@ describe("normalizeSelectionRibbonTab", () => {
 
   it("reconhece abas do painel", () => {
     expect(isSelectionPanelTab("element")).toBe(true);
+    expect(isSelectionPanelTab("tableDesign")).toBe(true);
+    expect(isSelectionPanelTab("tableLayout")).toBe(true);
     expect(isSelectionPanelTab("insert")).toBe(false);
   });
 });

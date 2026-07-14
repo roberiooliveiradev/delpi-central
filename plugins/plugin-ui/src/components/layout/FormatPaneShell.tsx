@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { HintAction } from "../help/HintAction";
@@ -6,6 +6,8 @@ import { HintAction } from "../help/HintAction";
 export type FormatPaneTab = {
   id: string;
   label: string;
+  /** Ícone alinhado à top bar (chrome tabs). */
+  icon?: LucideIcon;
   /** Balão explicativo da aba (hover). */
   hint?: string;
 };
@@ -22,7 +24,33 @@ export type FormatPaneShellProps = {
   bodyClassName?: string;
 };
 
-/** Painel lateral estilo PowerPoint — título, fechar, abas com sublinhado e corpo rolável. */
+function FormatPaneTabButton({
+  tab,
+  active,
+  onTabChange,
+}: {
+  tab: FormatPaneTab;
+  active: boolean;
+  onTabChange?: (tabId: string) => void;
+}) {
+  const Icon = tab.icon;
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      className={["delpi-ui-format-pane__tab", active ? "delpi-ui-format-pane__tab--active" : ""]
+        .filter(Boolean)
+        .join(" ")}
+      onClick={() => onTabChange?.(tab.id)}
+    >
+      {Icon ? <Icon className="delpi-ui-format-pane__tab-icon" size={14} aria-hidden="true" /> : null}
+      {tab.label}
+    </button>
+  );
+}
+
+/** Painel lateral estilo PowerPoint — título, fechar, abas com sublinhado reto e corpo rolável. */
 export function FormatPaneShell({
   title,
   onClose,
@@ -57,21 +85,12 @@ export function FormatPaneShell({
             const active = tab.id === activeTabId;
             if (!tab.hint) {
               return (
-                <button
+                <FormatPaneTabButton
                   key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  className={[
-                    "delpi-ui-format-pane__tab",
-                    active ? "delpi-ui-format-pane__tab--active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => onTabChange?.(tab.id)}
-                >
-                  {tab.label}
-                </button>
+                  tab={tab}
+                  active={active}
+                  onTabChange={onTabChange}
+                />
               );
             }
             return (
@@ -81,20 +100,7 @@ export function FormatPaneShell({
                 ariaLabel={`Ajuda: ${tab.label}`}
                 placement="bottom"
               >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  className={[
-                    "delpi-ui-format-pane__tab",
-                    active ? "delpi-ui-format-pane__tab--active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => onTabChange?.(tab.id)}
-                >
-                  {tab.label}
-                </button>
+                <FormatPaneTabButton tab={tab} active={active} onTabChange={onTabChange} />
               </HintAction>
             );
           })}

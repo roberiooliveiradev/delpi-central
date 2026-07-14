@@ -123,4 +123,26 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
       resolveSelectionPanelTabs({ hasSelection: true, showDataTab: true }).map((t) => t.id),
     ).toEqual(["element", "data", "layers"]);
   });
+
+  it("painel lateral: tabela espelha Design + Layout da top bar", () => {
+    expect(
+      resolveSelectionPanelTabs({
+        hasSelection: true,
+        showDataTab: false,
+        isTableSelection: true,
+      }).map((t) => t.id),
+    ).toEqual(["tableDesign", "tableLayout", "layers"]);
+    expect(
+      resolveSelectionPanelTabs({
+        hasSelection: true,
+        showDataTab: true,
+        isTableSelection: true,
+      }).map((t) => ({ id: t.id, hasIcon: Boolean(t.icon) })),
+    ).toEqual([
+      { id: "tableDesign", hasIcon: true },
+      { id: "tableLayout", hasIcon: true },
+      { id: "data", hasIcon: true },
+      { id: "layers", hasIcon: true },
+    ]);
+  });
 });

@@ -3165,12 +3165,59 @@ body.td-composer--marqueeing * {
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tabs {
-  padding: 0 8px;
+  padding: 0 6px;
+  justify-content: flex-start;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tab {
-  padding: 8px 10px;
+  padding: 6px 10px;
+  min-height: var(--td-chrome-tab-height, 34px);
   font-size: 12px;
+  color: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 72%, var(--td-muted));
+  border-radius: 0;
+  border-bottom-width: 2px;
+  border-bottom-style: solid;
+  border-bottom-color: transparent;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tab:hover {
+  color: var(--td-contextual-accent, var(--td-accent));
+  background: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 8%, transparent);
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__tab--active {
+  color: var(--td-contextual-accent, var(--td-accent));
+  border-bottom-color: var(--td-contextual-accent, var(--td-accent));
+  background: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 8%, var(--td-surface));
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section {
+  margin: 8px 8px 0;
+  border-color: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 22%, var(--td-border));
+  background: color-mix(
+    in srgb,
+    var(--td-contextual-accent, var(--td-accent)) 6%,
+    var(--td-surface)
+  );
+  box-shadow: 0 1px 2px color-mix(in srgb, #000 12%, transparent);
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section-summary {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section[open] >
+.delpi-ui-format-pane__section-summary {
+  background: color-mix(
+    in srgb,
+    var(--td-contextual-accent, var(--td-accent)) 10%,
+    transparent
+  );
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section-summary::before {
+  color: var(--td-contextual-accent, var(--td-accent));
 }
 
 .dashboard-tv-dashboard .td-chart-style-menu {

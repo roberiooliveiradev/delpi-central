@@ -54,4 +54,23 @@ describe("FormatPaneShell", () => {
     expect(tabs.map((tab) => tab.textContent)).toEqual(["Elemento", "Camadas"]);
     expect(container.querySelectorAll(".delpi-ui-help-tooltip").length).toBe(2);
   });
+
+  it("renderiza ícone na aba quando informado", () => {
+    function DummyIcon(props: { size?: number; className?: string }) {
+      return <svg data-testid="tab-icon" width={props.size} height={props.size} className={props.className} />;
+    }
+
+    render(
+      <FormatPaneShell
+        title="Definir Forma"
+        tabs={[{ id: "element", label: "Elemento", icon: DummyIcon as never }]}
+        activeTabId="element"
+      >
+        <p>Corpo</p>
+      </FormatPaneShell>,
+    );
+
+    expect(screen.getByTestId("tab-icon")).toBeTruthy();
+    expect(screen.getByRole("tab", { name: /Elemento/ })).toBeTruthy();
+  });
 });

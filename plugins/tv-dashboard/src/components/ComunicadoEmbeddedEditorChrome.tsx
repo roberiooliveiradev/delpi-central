@@ -71,6 +71,10 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       setActiveTab(normalized);
       return;
     }
+    if (normalized === "tableDesign" || normalized === "tableLayout") {
+      setActiveTab(normalized);
+      return;
+    }
     if (normalized === "element") {
       setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
@@ -102,6 +106,13 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       setActiveTab("data");
       return;
     }
+    if (
+      editor.selectionPanelTab === "tableDesign" ||
+      editor.selectionPanelTab === "tableLayout"
+    ) {
+      setActiveTab(editor.selectionPanelTab);
+      return;
+    }
     if (editor.selectionPanelTab === "element" && hasSelection) {
       setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
@@ -124,11 +135,6 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
       return;
     }
     setActiveTab(tab);
-    if (tab === "tableDesign" || tab === "tableLayout") {
-      editor.setSelectionPanelTab("element");
-      editor.setDataPanelOpen(false);
-      return;
-    }
     if (isSelectionPanelTab(tab)) {
       editor.setSelectionPanelTab(tab);
       editor.setDataPanelOpen(tab === "data");

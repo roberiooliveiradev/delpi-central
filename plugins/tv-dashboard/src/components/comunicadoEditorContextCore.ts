@@ -52,12 +52,19 @@ export type ComunicadoRibbonTabRequest =
   | "table"
   | "shape"
   | "element"
+  | "tableDesign"
+  | "tableLayout"
   | "data"
   | "layers"
   | "view";
 
 /** Abas espelhadas entre top bar contextual e painel lateral. */
-export type SelectionPanelTab = "element" | "data" | "layers";
+export type SelectionPanelTab =
+  | "element"
+  | "tableDesign"
+  | "tableLayout"
+  | "data"
+  | "layers";
 
 /** Intenção ao abrir a aba Dados do painel lateral. */
 export type DataPanelIntent = "binding" | "catalog";

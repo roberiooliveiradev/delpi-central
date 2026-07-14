@@ -182,35 +182,57 @@ export type SelectionPanelTabMeta = {
   id: SelectionPanelTab;
   label: string;
   hint: string;
+  icon: typeof Home;
 };
 
 /**
- * Abas do painel lateral — mesma fonte de labels/hints da ribbon.
- * Sem seleção: só Camadas. Com seleção: Elemento (+ Dados se aplicável) + Camadas.
+ * Abas do painel lateral — mesma fonte de labels/hints/ícones da ribbon.
+ * Sem seleção: só Camadas.
+ * Seleção comum: Elemento (+ Dados) + Camadas.
+ * Tabela: Design da Tabela + Tabela Layout (+ Dados) + Camadas.
  */
 export function resolveSelectionPanelTabs(options: {
   hasSelection: boolean;
   showDataTab: boolean;
+  isTableSelection?: boolean;
 }): SelectionPanelTabMeta[] {
   const tabs: SelectionPanelTabMeta[] = [];
   if (options.hasSelection) {
-    tabs.push({
-      id: "element",
-      label: "Elemento",
-      hint: PANEL.element ?? "Propriedades e aparência do elemento selecionado.",
-    });
+    if (options.isTableSelection) {
+      tabs.push({
+        id: "tableDesign",
+        label: "Design da Tabela",
+        hint: T.tableDesign ?? "Estilos, opções de cabeçalho/listras, sombreamento e bordas.",
+        icon: Paintbrush,
+      });
+      tabs.push({
+        id: "tableLayout",
+        label: "Tabela Layout",
+        hint: T.tableLayout ?? "Tamanho da moldura, alinhamento, organizar e truncamento.",
+        icon: Table2,
+      });
+    } else {
+      tabs.push({
+        id: "element",
+        label: "Elemento",
+        hint: PANEL.element ?? "Propriedades e aparência do elemento selecionado.",
+        icon: MousePointer2,
+      });
+    }
   }
   if (options.showDataTab) {
     tabs.push({
       id: "data",
       label: "Dados",
       hint: PANEL.data ?? "Fonte e parâmetros do elemento selecionado.",
+      icon: Database,
     });
   }
   tabs.push({
     id: "layers",
     label: "Camadas",
     hint: PANEL.layers ?? "Ordem e construção das camadas do slide.",
+    icon: Layers,
   });
   return tabs;
 }

@@ -32,11 +32,17 @@ type Labels = Record<string, string>;
 export function ComunicadoElementInspector({
   labels = {},
   placement = "default",
+  panelFocus = "element",
   onOpenDataSources,
   branchScope = null,
 }: {
   labels?: Labels;
   placement?: "default" | "side";
+  /**
+   * Escopo do conteúdo no painel lateral — espelha as abas da top bar.
+   * `element` = tudo; `tableDesign` / `tableLayout` = fatia da tabela.
+   */
+  panelFocus?: "element" | "tableDesign" | "tableLayout";
   onOpenDataSources?: () => void;
   branchScope?: BranchScope | null;
 }) {
@@ -164,16 +170,24 @@ export function ComunicadoElementInspector({
           <SelectionTypedWithTailHost
             layout="pane"
             labels={labels}
-            typed={[
-              "tableStyleOptions",
-              "tableStyles",
-              "tableBorders",
-              "tableLayoutData",
-              "tableLayoutDisplay",
-              "tableLayoutAlign",
-            ]}
+            typed={
+              panelFocus === "tableLayout"
+                ? ["tableLayoutData", "tableLayoutDisplay", "tableLayoutAlign"]
+                : panelFocus === "tableDesign"
+                  ? ["tableStyleOptions", "tableStyles", "tableBorders"]
+                  : [
+                      "tableStyleOptions",
+                      "tableStyles",
+                      "tableBorders",
+                      "tableLayoutData",
+                      "tableLayoutDisplay",
+                      "tableLayoutAlign",
+                    ]
+            }
           />
-          <TableViewOptionsInspector pane={pane} omitDesignChrome omitCellAlign />
+          {panelFocus !== "tableDesign" ? (
+            <TableViewOptionsInspector pane={pane} omitDesignChrome omitCellAlign />
+          ) : null}
         </>
       ) : null}
 
