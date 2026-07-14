@@ -1,18 +1,7 @@
 import { ArrowLeft } from "lucide-react";
-import type {
-  ComunicadoChartViewBlock,
-  ComunicadoTableViewBlock,
-} from "@delpi/tv-dashboard-presentation";
 
 import type { SelectionChromeMode } from "../utils/resolveSelectionChromeMode";
-import { useComunicadoEditor } from "./comunicadoEditorContext";
-import {
-  FormatRibbonFrameSection,
-  FormatRibbonOrganizeSection,
-  FormatRibbonTypographySections,
-  TableRibbonShapeChrome,
-} from "./formatRibbon";
-import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
+import { SelectionSectionsHost } from "./selectionSections";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
@@ -23,42 +12,14 @@ type Props = {
 };
 
 /**
- * Ribbon quando uma **parte** (gráfico / KPI / tabela) está selecionada.
- * Oculta controles globais do bloco (layout, tipo, galeria, eixos…).
+ * Ribbon quando uma **parte** (gráfico / tabela) está selecionada.
+ * Delega ao host (partFormat + tipografia + frame/organize).
  */
 export function ComunicadoPartFormatRibbon({ chrome }: Props) {
-  const {
-    selected,
-    clearChartPartSelection,
-    clearKpiPartSelection,
-    clearTablePartSelection,
-  } = useComunicadoEditor();
-
-  const onBack = () => {
-    if (chrome.source === "chart") clearChartPartSelection();
-    else if (chrome.source === "kpi") clearKpiPartSelection();
-    else clearTablePartSelection();
-  };
-
+  void chrome;
   return (
     <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
-      <PartSelectionNav chrome={chrome} onBack={onBack} />
-      <FormatRibbonTypographySections />
-      <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--chrome-frame-organize">
-        {chrome.source === "chart" && selected?.type === "chart_view" ? (
-          <ChartRibbonShapeChrome block={selected as ComunicadoChartViewBlock} />
-        ) : null}
-        {chrome.source === "table" && selected?.type === "table_view" ? (
-          <TableRibbonShapeChrome block={selected as ComunicadoTableViewBlock} />
-        ) : null}
-        <FormatRibbonFrameSection />
-        <FormatRibbonOrganizeSection />
-      </div>
-      {chrome.source === "kpi" ? (
-        <p className="td-subtitle td-deck-ribbon__hint">
-          Preenchimento e tipografia finos também no painel Formatar → Parte: {chrome.partLabel}.
-        </p>
-      ) : null}
+      <SelectionSectionsHost layout="ribbon" full />
     </div>
   );
 }

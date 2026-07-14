@@ -1,12 +1,11 @@
-import { FolderOpen, Move, PaintBucket, Pentagon, Upload } from "lucide-react";
-import { HintAction, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { Move, PaintBucket, Pentagon } from "lucide-react";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isComunicadoVisualBoxBlock,
   normalizeHrefInput,
-  normalizeCanvasTableCells,
   visualBoxSupportsShapeFormatting,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -16,15 +15,11 @@ import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from ".
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
-import { InputBindingInspector } from "../InputBindingInspector";
-import { InputViewOptionsInspector } from "../InputViewOptionsInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
-import { KpiViewOptionsInspector } from "../KpiViewOptionsInspector";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectionSectionsHost } from "../selectionSections";
-import { ComunicadoImageCropPanel } from "./ComunicadoImageCropPanel";
 import { DeckField } from "./DeckField";
 import { DeckInspectorLayout } from "./DeckInspectorLayout";
 import { DeckPropertySection } from "./DeckPropertySection";
@@ -55,13 +50,15 @@ export function ComunicadoElementInspector({
     selectedIds,
     selectedKpiPart,
     selectedChartPart,
+    selectedTablePart,
     selectedInputPart,
-    uploading,
     updateSelected,
-    triggerUpload,
-    openMediaLibrary,
     updateBlockLink,
   } = useComunicadoEditor();
+
+  const hasPartSelection = Boolean(
+    selectedKpiPart || selectedChartPart || selectedTablePart || selectedInputPart,
+  );
 
   const multiSelect = selectedIds.length > 1;
   const isShapeBlock =
@@ -102,7 +99,6 @@ export function ComunicadoElementInspector({
   }
 
   const pane = placement === "side";
-
   const typeLabel = comunicadoBlockTypeLabel(selected.type);
 
   return (
@@ -203,89 +199,12 @@ export function ComunicadoElementInspector({
               placeholder="https://…"
               value={selected.href ?? ""}
               onChange={(value) =>
-                updateBlockLink(
-                  selected.id,
-                  normalizeHrefInput(value) || undefined,
-                )
+                updateBlockLink(selected.id, normalizeHrefInput(value) || undefined)
               }
             />
           </DeckField>
         ) : null}
-
-        {!multiSelect && isMediaBlock ? (
-          <div className="td-deck-inspector__actions">
-            <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: biblioteca de mídia">
-              <button
-                type="button"
-                className="td-btn td-btn--sm"
-                onClick={() => openMediaLibrary("block")}
-              >
-                <FolderOpen size={15} aria-hidden="true" />
-                Biblioteca
-              </button>
-            </HintAction>
-            <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: enviar arquivo">
-              <button
-                type="button"
-                className="td-btn td-btn--sm"
-                disabled={uploading}
-                onClick={() => triggerUpload("block")}
-              >
-                <Upload size={15} aria-hidden="true" />
-                {uploading ? "Enviando…" : labels.comunicadoUpload ?? "Enviar arquivo"}
-              </button>
-            </HintAction>
-          </div>
-        ) : null}
       </DeckPropertySection>
-
-      {/* Irmãos L1 — evita FormatPaneSection aninhado (4M.3). */}
-      {!multiSelect && selected.type === "canvas_table" ? (
-        <DeckPropertySection pane={pane} title="Tabela (canvas)" defaultOpen>
-          <DeckField id="td-canvas-table-rows" label="Linhas">
-            <NativeTextControl
-              id="td-canvas-table-rows"
-              type="number"
-              min={1}
-              max={20}
-              value={selected.rows}
-              onChange={(value) => {
-                const rows = Math.max(1, Math.min(20, Number(value) || 1));
-                updateSelected({
-                  rows,
-                  cells: normalizeCanvasTableCells(selected.cells, rows, selected.cols),
-                });
-              }}
-            />
-          </DeckField>
-          <DeckField id="td-canvas-table-cols" label="Colunas">
-            <NativeTextControl
-              id="td-canvas-table-cols"
-              type="number"
-              min={1}
-              max={12}
-              value={selected.cols}
-              onChange={(value) => {
-                const cols = Math.max(1, Math.min(12, Number(value) || 1));
-                updateSelected({
-                  cols,
-                  cells: normalizeCanvasTableCells(selected.cells, selected.rows, cols),
-                });
-              }}
-            />
-          </DeckField>
-          <NativeCheckboxControl
-            id="td-canvas-table-header-row"
-            className="td-deck-inspector__checkbox"
-            checked={selected.headerRow ?? false}
-            label="Primeira linha como cabeçalho"
-            onChange={(checked) => updateSelected({ headerRow: checked })}
-          />
-        </DeckPropertySection>
-      ) : null}
-
-      {!multiSelect && selected.type === "input" ? <InputBindingInspector pane={pane} /> : null}
-      {!multiSelect && selected.type === "input" ? <InputViewOptionsInspector pane={pane} /> : null}
 
       {!multiSelect && isDataBlock ? (
         <DataBindingInspector route={selectedRoute} pane={pane} branchScope={branchScope} />
@@ -297,10 +216,30 @@ export function ComunicadoElementInspector({
           onOpenDataSources={onOpenDataSources}
         />
       ) : null}
-      {!multiSelect && selected?.type === "chart_view" ? (
-        <ChartViewOptionsInspector pane={pane} />
+
+      {!multiSelect && selected.type === "chart_view" && !selectedChartPart ? (
+        <>
+          <SelectionSectionsHost
+            layout="pane"
+            only={[
+              "typography",
+              "chartLayout",
+              "chartStyles",
+              "chartType",
+              "chartLabels",
+              "chartAxes",
+              "frame",
+              "organize",
+              "animation",
+              "actions",
+            ]}
+            labels={labels}
+          />
+          <ChartViewOptionsInspector pane={pane} />
+        </>
       ) : null}
-      {!multiSelect && selected?.type === "table_view" ? (
+
+      {!multiSelect && selected.type === "table_view" && !selectedTablePart ? (
         <>
           <SelectionSectionsHost
             layout="pane"
@@ -318,14 +257,9 @@ export function ComunicadoElementInspector({
           <TableViewOptionsInspector pane={pane} omitDesignChrome />
         </>
       ) : null}
-      {!multiSelect && selected?.type === "kpi_view" ? (
-        <KpiViewOptionsInspector pane={pane} />
-      ) : null}
 
-      {!multiSelect && selected.type === "image" ? (
-        <div id="td-comunicado-crop-panel">
-          <ComunicadoImageCropPanel />
-        </div>
+      {!multiSelect && selected.type === "table_view" && selectedTablePart ? (
+        <TableViewOptionsInspector pane={pane} omitDesignChrome />
       ) : null}
 
       {multiSelect ? (
@@ -336,12 +270,7 @@ export function ComunicadoElementInspector({
         <SelectionSectionsHost layout="pane" only={["typography"]} labels={labels} />
       ) : null}
 
-      {!multiSelect &&
-      isShapeBlock &&
-      shapeOptionsTab === "shape" &&
-      !selectedKpiPart &&
-      !selectedChartPart &&
-      !selectedInputPart ? (
+      {!multiSelect && isShapeBlock && shapeOptionsTab === "shape" && !hasPartSelection ? (
         <div id="td-shape-pane-size">
           <SelectionSectionsHost
             layout="pane"
@@ -358,17 +287,16 @@ export function ComunicadoElementInspector({
         </div>
       ) : null}
 
+      {/* texto, heading, icon, media, canvas, kpi, input, data_source — host full */}
       {!multiSelect &&
       !isShapeBlock &&
       selected.type !== "table_view" &&
-      !selectedKpiPart &&
-      !selectedChartPart &&
-      !selectedInputPart ? (
+      selected.type !== "chart_view" &&
+      !hasPartSelection ? (
         <SelectionSectionsHost layout="pane" full labels={labels} />
       ) : null}
 
-      {!multiSelect &&
-      (selectedKpiPart || selectedChartPart || selectedInputPart) ? (
+      {!multiSelect && hasPartSelection ? (
         <SelectionSectionsHost layout="pane" full labels={labels} />
       ) : null}
     </DeckInspectorLayout>

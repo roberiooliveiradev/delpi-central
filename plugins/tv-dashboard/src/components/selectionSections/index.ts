@@ -20,5 +20,18 @@ export {
   TableStyleOptionsSection,
   TableStylesSection,
 } from "./TableDesignSections";
+export {
+  ChartAxesSection,
+  ChartLabelsSection,
+  ChartLayoutSection,
+  ChartStylesSection,
+  ChartTypeSection,
+} from "./ChartDesignSections";
+export { KpiAppearanceSection } from "./KpiAppearanceSection";
+export { MediaSection } from "./MediaSection";
+export { ImageCropSection } from "./ImageCropSection";
+export { CanvasTableSection } from "./CanvasTableSection";
+export { PartFormatSection } from "./PartFormatSection";
+export { InputBindingSection } from "./InputBindingSection";
 export { AnimationSection } from "./AnimationSection";
 export { ActionsSection } from "./ActionsSection";

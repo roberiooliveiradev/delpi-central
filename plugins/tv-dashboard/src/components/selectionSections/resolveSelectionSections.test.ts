@@ -89,7 +89,7 @@ describe("resolveSelectionSections", () => {
     ).toEqual(["alignMulti", "organize"]);
   });
 
-  it("parte de gráfico prioriza partFormat", () => {
+  it("parte de gráfico prioriza partFormat + tipografia", () => {
     const sections = resolveSelectionSections(
       ctx({
         selected: {
@@ -101,7 +101,33 @@ describe("resolveSelectionSections", () => {
       }),
     );
     expect(sections[0]).toBe("partFormat");
+    expect(sections).toContain("typography");
     expect(sections).toContain("organize");
+  });
+
+  it("gráfico tipado inclui layout/estilos/tipo/rótulos/eixos", () => {
+    expect(
+      resolveSelectionSections(
+        ctx({
+          selected: {
+            id: "c2",
+            type: "chart_view",
+            frame: { x: 0, y: 0, w: 40, h: 30 },
+          } as SelectionSectionContext["selected"],
+        }),
+      ),
+    ).toEqual(
+      expect.arrayContaining([
+        "typography",
+        "chartLayout",
+        "chartStyles",
+        "chartType",
+        "chartLabels",
+        "chartAxes",
+        "frame",
+        "organize",
+      ]),
+    );
   });
 
   it("forma tipada: galeria + chrome + tipografia + frame", () => {
@@ -149,7 +175,7 @@ describe("resolveSelectionSections", () => {
     ]);
   });
 
-  it("host cobre tipografia, caixa, chrome e design de tabela", () => {
+  it("host cobre tipografia, tabela, chart, kpi, media, partFormat e input", () => {
     for (const id of [
       "typography",
       "textBox",
@@ -158,6 +184,17 @@ describe("resolveSelectionSections", () => {
       "tableStyleOptions",
       "tableStyles",
       "tableBorders",
+      "chartLayout",
+      "chartStyles",
+      "chartType",
+      "chartLabels",
+      "chartAxes",
+      "kpiAppearance",
+      "media",
+      "imageCrop",
+      "canvasTable",
+      "partFormat",
+      "inputBinding",
       "animation",
       "actions",
     ] as const) {

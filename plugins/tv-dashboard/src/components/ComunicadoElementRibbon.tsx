@@ -5,13 +5,13 @@ import {
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoChartRibbon } from "./ComunicadoChartRibbon";
-import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
 import { ComunicadoShapeRibbon } from "./ComunicadoShapeRibbon";
 import { ComunicadoTableDesignRibbon } from "./ComunicadoTableDesignRibbon";
+import { SelectionSectionsHost } from "./selectionSections";
 
 /**
  * Aba Elemento (top bar) — tipografia, chrome e organização conforme o tipo.
- * Com parte selecionada: só chrome da parte (não misturar com layout global).
+ * Com parte chart/tabela: host full (partFormat).
  */
 export function ComunicadoElementRibbon() {
   const {
@@ -29,13 +29,17 @@ export function ComunicadoElementRibbon() {
     selectedTablePart,
     selectedInputPart,
   });
-  /* KPI/filtro parte → ShapeRibbon; chart/tabela → PartFormatRibbon. */
+  /* KPI/filtro parte → ShapeRibbon; chart/tabela → host partFormat. */
   if (
     isPartSelectionChrome(selectionChrome) &&
     selectionChrome.source !== "kpi" &&
     selectionChrome.source !== "input"
   ) {
-    return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
+    return (
+      <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
+        <SelectionSectionsHost layout="ribbon" full />
+      </div>
+    );
   }
 
   const kind = resolveObjectRibbonTab({

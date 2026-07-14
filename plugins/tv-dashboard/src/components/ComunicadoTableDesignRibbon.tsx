@@ -3,7 +3,6 @@ import {
   resolveSelectionChromeMode,
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
 import { SelectionSectionsHost } from "./selectionSections";
 
 /**
@@ -17,7 +16,11 @@ export function ComunicadoTableDesignRibbon() {
     selectedTablePart,
   });
   if (isPartSelectionChrome(selectionChrome)) {
-    return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
+    return (
+      <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
+        <SelectionSectionsHost layout="ribbon" full />
+      </div>
+    );
   }
 
   if (!selected || selected.type !== "table_view") {

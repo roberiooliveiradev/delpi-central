@@ -23,7 +23,7 @@ export function resolveSelectionSections(
   }
 
   if (selected.type === "chart_view" && ctx.selectedChartPart) {
-    const sections: SelectionSectionId[] = ["partFormat"];
+    const sections: SelectionSectionId[] = ["partFormat", "typography"];
     if (chartPartAllowsFrame(ctx.selectedChartPart)) {
       sections.push("frame");
     }
@@ -41,7 +41,7 @@ export function resolveSelectionSections(
   }
 
   if (selected.type === "table_view" && ctx.selectedTablePart) {
-    return ["partFormat", "frame", "organize"];
+    return ["partFormat", "typography", "frame", "organize"];
   }
 
   if (selected.type === "input" && ctx.selectedInputPart) {
@@ -95,6 +95,7 @@ export function resolveSelectionSections(
       return ["kpiAppearance", "frame", "organize", "animation", "actions"];
     case "chart_view":
       return [
+        "typography",
         "chartLayout",
         "chartStyles",
         "chartType",
@@ -139,6 +140,17 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "tableStyleOptions",
   "tableStyles",
   "tableBorders",
+  "chartLayout",
+  "chartStyles",
+  "chartType",
+  "chartLabels",
+  "chartAxes",
+  "kpiAppearance",
+  "media",
+  "imageCrop",
+  "canvasTable",
+  "partFormat",
+  "inputBinding",
   "animation",
   "actions",
 ]);

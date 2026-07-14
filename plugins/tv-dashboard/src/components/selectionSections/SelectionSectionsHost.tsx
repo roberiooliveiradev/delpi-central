@@ -4,8 +4,21 @@ import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ActionsSection } from "./ActionsSection";
 import { AlignMultiSection, OrganizeSection } from "./OrganizeSection";
 import { AnimationSection } from "./AnimationSection";
+import { CanvasTableSection } from "./CanvasTableSection";
+import {
+  ChartAxesSection,
+  ChartLabelsSection,
+  ChartLayoutSection,
+  ChartStylesSection,
+  ChartTypeSection,
+} from "./ChartDesignSections";
 import { DataSourceHintSection } from "./DataSourceHintSection";
 import { FrameSizeSection } from "./FrameSizeSection";
+import { ImageCropSection } from "./ImageCropSection";
+import { InputBindingSection } from "./InputBindingSection";
+import { KpiAppearanceSection } from "./KpiAppearanceSection";
+import { MediaSection } from "./MediaSection";
+import { PartFormatSection } from "./PartFormatSection";
 import { ShapeChromeSection } from "./ShapeChromeSection";
 import { ShapeGallerySection } from "./ShapeGallerySection";
 import {
@@ -26,15 +39,7 @@ type Labels = Record<string, string>;
 type Props = {
   layout: SelectionSectionLayout;
   labels?: Labels;
-  /**
-   * Se informado, renderiza só estes IDs (interseção com resolve).
-   * Útil para injetar frame/organize no ribbon legado sem duplicar o resto.
-   */
   only?: SelectionSectionId[];
-  /**
-   * Quando true, renderiza todas as seções resolvidas que já estão no host
-   * (`SHARED_HOST_SECTIONS`). Default também filtra por SHARED.
-   */
   full?: boolean;
 };
 
@@ -66,6 +71,28 @@ function renderSection(
       return <TableStylesSection key={id} layout={layout} />;
     case "tableBorders":
       return <TableBordersSection key={id} layout={layout} />;
+    case "chartLayout":
+      return <ChartLayoutSection key={id} layout={layout} />;
+    case "chartStyles":
+      return <ChartStylesSection key={id} layout={layout} />;
+    case "chartType":
+      return <ChartTypeSection key={id} layout={layout} />;
+    case "chartLabels":
+      return <ChartLabelsSection key={id} layout={layout} />;
+    case "chartAxes":
+      return <ChartAxesSection key={id} layout={layout} />;
+    case "kpiAppearance":
+      return <KpiAppearanceSection key={id} layout={layout} />;
+    case "media":
+      return <MediaSection key={id} layout={layout} labels={labels} />;
+    case "imageCrop":
+      return <ImageCropSection key={id} layout={layout} />;
+    case "canvasTable":
+      return <CanvasTableSection key={id} layout={layout} />;
+    case "partFormat":
+      return <PartFormatSection key={id} layout={layout} />;
+    case "inputBinding":
+      return <InputBindingSection key={id} layout={layout} />;
     case "animation":
       return <AnimationSection key={id} layout={layout} />;
     case "actions":
@@ -77,7 +104,6 @@ function renderSection(
 
 /**
  * Host de seções Elemento compartilhadas (ribbon | pane).
- * Tipografia, Caixa, forma, tabela Design, frame/organize, animação/ações (pane).
  */
 export function SelectionSectionsHost({
   layout,
@@ -107,7 +133,6 @@ export function SelectionSectionsHost({
       const allow = new Set(only);
       return resolved.filter((id) => allow.has(id) && SHARED_HOST_SECTIONS.has(id));
     }
-    // `full` e default: só seções já migradas (evita buracos null no ribbon).
     void full;
     return resolved.filter((id) => SHARED_HOST_SECTIONS.has(id));
   }, [
