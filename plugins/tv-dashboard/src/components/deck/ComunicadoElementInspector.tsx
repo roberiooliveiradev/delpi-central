@@ -232,9 +232,10 @@ export function ComunicadoElementInspector({
               "chartType",
               "chartLabels",
               "chartAxes",
+              "chartSeries",
             ]}
           />
-          <ChartViewOptionsInspector pane={pane} />
+          <ChartViewOptionsInspector pane={pane} omitSeries />
         </>
       ) : null}
 

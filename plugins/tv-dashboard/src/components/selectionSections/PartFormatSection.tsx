@@ -7,10 +7,10 @@ import {
   isPartSelectionChrome,
   resolveSelectionChromeMode,
 } from "../../utils/resolveSelectionChromeMode";
-import { PartSelectionNav } from "../ComunicadoPartFormatRibbon";
 import { ChartRibbonShapeChrome } from "../formatRibbon/ChartRibbonShapeChrome";
 import { TableRibbonShapeChrome } from "../formatRibbon/TableRibbonShapeChrome";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { PartSelectionNav } from "./PartSelectionNav";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 

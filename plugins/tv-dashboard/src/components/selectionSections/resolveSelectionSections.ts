@@ -78,6 +78,7 @@ export function resolveSelectionSections(
         "chartType",
         "chartLabels",
         "chartAxes",
+        "chartSeries",
       ]);
     case "table_view":
       return withCommonTail(["tableStyleOptions", "tableStyles", "tableBorders"]);
@@ -110,6 +111,7 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "chartType",
   "chartLabels",
   "chartAxes",
+  "chartSeries",
   "kpiAppearance",
   "media",
   "imageCrop",

@@ -1,29 +1,12 @@
 import { ArrowLeft } from "lucide-react";
 
-import type { SelectionChromeMode } from "../utils/resolveSelectionChromeMode";
-import { SelectionSectionsHost } from "./selectionSections";
-import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
-import { DeckRibbonTile } from "./deck/DeckRibbonTile";
+import type { SelectionChromeMode } from "../../utils/resolveSelectionChromeMode";
+import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
+import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 
 type PartChrome = Extract<SelectionChromeMode, { mode: "part" }>;
 
-type Props = {
-  chrome: PartChrome;
-};
-
-/**
- * Ribbon quando uma **parte** (gráfico / tabela) está selecionada.
- * Delega ao host (partFormat + tipografia + frame/organize).
- */
-export function ComunicadoPartFormatRibbon({ chrome }: Props) {
-  void chrome;
-  return (
-    <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
-      <SelectionSectionsHost layout="ribbon" full />
-    </div>
-  );
-}
-
+/** Nav «voltar à seleção do bloco» quando uma parte está ativa. */
 export function PartSelectionNav({
   chrome,
   onBack,

@@ -30,6 +30,8 @@ import { DeckPropertySection } from "./deck/DeckPropertySection";
 
 type Props = {
   pane?: boolean;
+  /** Quando true, omite aba/seção Série (já no SelectionSectionsHost). */
+  omitSeries?: boolean;
 };
 
 const CHART_PANE_ICONS = [
@@ -45,7 +47,7 @@ function updateChartOptions(
   return { ...mergeComunicadoChartOptions(current), ...patch };
 }
 
-export function ChartViewOptionsInspector({ pane = false }: Props) {
+export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: Props) {
   const { selected, updateSelected, selectChartPart, selectedChartPart } = useComunicadoEditor();
   const [paneIcon, setPaneIcon] = useState<(typeof CHART_PANE_ICONS)[number]["id"]>("elements");
 
@@ -58,6 +60,9 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
   });
   const chartKind = toSeriesChartKind(block.chartType) ?? "line";
   const hasPartSelection = Boolean(selectedChartPart);
+  const paneIcons = omitSeries
+    ? CHART_PANE_ICONS.filter((entry) => entry.id !== "series")
+    : CHART_PANE_ICONS;
 
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {
     updateSelected({
@@ -108,7 +113,7 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
       {!hasPartSelection ? (
         <>
           <div className="td-format-pane-icons" role="tablist" aria-label="Categorias do gráfico">
-            {CHART_PANE_ICONS.map(({ id, label, Icon }) => (
+            {paneIcons.map(({ id, label, Icon }) => (
               <button
                 key={id}
                 type="button"
@@ -186,18 +191,20 @@ export function ChartViewOptionsInspector({ pane = false }: Props) {
             </DeckPropertySection>
           </div>
 
-          <div id="td-chart-pane-series">
-            <DeckPropertySection pane={pane} title="Série" defaultOpen>
-              <DeckField id="td-chart-series-color" label="Cor da série">
-                <TvRibbonColorPicker
-                  inline
-                  label="Cor da série"
-                  value={options.seriesColor ?? OFFICE_CHART_SERIES_COLOR}
-                  onChange={(color) => setOptions({ seriesColor: color })}
-                />
-              </DeckField>
-            </DeckPropertySection>
-          </div>
+          {!omitSeries ? (
+            <div id="td-chart-pane-series">
+              <DeckPropertySection pane={pane} title="Série" defaultOpen>
+                <DeckField id="td-chart-series-color" label="Cor da série">
+                  <TvRibbonColorPicker
+                    inline
+                    label="Cor da série"
+                    value={options.seriesColor ?? OFFICE_CHART_SERIES_COLOR}
+                    onChange={(color) => setOptions({ seriesColor: color })}
+                  />
+                </DeckField>
+              </DeckPropertySection>
+            </div>
+          ) : null}
         </>
       ) : null}
     </>

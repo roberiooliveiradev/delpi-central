@@ -47,6 +47,7 @@ export function ComunicadoChartRibbon() {
           "chartType",
           "chartLabels",
           "chartAxes",
+          "chartSeries",
         ]}
       />
     </div>

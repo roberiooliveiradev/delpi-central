@@ -105,7 +105,7 @@ describe("resolveSelectionSections", () => {
     expect(sections).toContain("organize");
   });
 
-  it("gráfico tipado inclui layout/estilos/tipo/rótulos/eixos", () => {
+  it("gráfico tipado inclui layout/estilos/tipo/rótulos/eixos/série", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -124,10 +124,26 @@ describe("resolveSelectionSections", () => {
         "chartType",
         "chartLabels",
         "chartAxes",
+        "chartSeries",
         "frame",
         "organize",
       ]),
     );
+  });
+
+  it("parte de KPI inclui shapeChrome + tipografia", () => {
+    expect(
+      resolveSelectionSections(
+        ctx({
+          selected: {
+            id: "k1",
+            type: "kpi_view",
+            frame: { x: 0, y: 0, w: 20, h: 15 },
+          } as SelectionSectionContext["selected"],
+          selectedKpiPart: { kind: "title" },
+        }),
+      ),
+    ).toEqual(expect.arrayContaining(["shapeChrome", "typography", "organize"]));
   });
 
   it("forma tipada: galeria + chrome + tipografia + frame", () => {
@@ -189,6 +205,7 @@ describe("resolveSelectionSections", () => {
       "chartType",
       "chartLabels",
       "chartAxes",
+      "chartSeries",
       "kpiAppearance",
       "media",
       "imageCrop",

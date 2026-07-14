@@ -12,6 +12,7 @@ import {
   ChartStylesSection,
   ChartTypeSection,
 } from "./ChartDesignSections";
+import { ChartSeriesSection } from "./ChartSeriesSection";
 import { DataSourceHintSection } from "./DataSourceHintSection";
 import { FrameSizeSection } from "./FrameSizeSection";
 import { ImageCropSection } from "./ImageCropSection";
@@ -81,6 +82,8 @@ function renderSection(
       return <ChartLabelsSection key={id} layout={layout} />;
     case "chartAxes":
       return <ChartAxesSection key={id} layout={layout} />;
+    case "chartSeries":
+      return <ChartSeriesSection key={id} layout={layout} />;
     case "kpiAppearance":
       return <KpiAppearanceSection key={id} layout={layout} />;
     case "media":

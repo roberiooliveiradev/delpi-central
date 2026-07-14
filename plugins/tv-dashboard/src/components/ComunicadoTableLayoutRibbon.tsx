@@ -13,8 +13,7 @@ import {
   resolveSelectionChromeMode,
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
-import { SelectionCommonTailHost } from "./selectionSections";
+import { SelectionCommonTailHost, SelectionSectionsHost } from "./selectionSections";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
@@ -32,7 +31,11 @@ export function ComunicadoTableLayoutRibbon() {
     selectedTablePart,
   });
   if (isPartSelectionChrome(selectionChrome)) {
-    return <ComunicadoPartFormatRibbon chrome={selectionChrome} />;
+    return (
+      <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
+        <SelectionSectionsHost layout="ribbon" full />
+      </div>
+    );
   }
 
   if (!selected || selected.type !== "table_view") {

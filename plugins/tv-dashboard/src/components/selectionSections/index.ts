@@ -42,11 +42,13 @@ export {
   ChartStylesSection,
   ChartTypeSection,
 } from "./ChartDesignSections";
+export { ChartSeriesSection } from "./ChartSeriesSection";
 export { KpiAppearanceSection } from "./KpiAppearanceSection";
 export { MediaSection } from "./MediaSection";
 export { ImageCropSection } from "./ImageCropSection";
 export { CanvasTableSection } from "./CanvasTableSection";
 export { PartFormatSection } from "./PartFormatSection";
+export { PartSelectionNav } from "./PartSelectionNav";
 export { InputBindingSection } from "./InputBindingSection";
 export { AnimationSection } from "./AnimationSection";
 export { ActionsSection } from "./ActionsSection";
