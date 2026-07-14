@@ -3943,7 +3943,63 @@ body.td-composer--marqueeing * {
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--effects {
-  min-width: 200px;
+  min-width: 0;
+}
+
+/* Efeitos de texto — cluster centralizado (WordArt-like). */
+.dashboard-tv-dashboard .td-deck-ribbon__effects-cluster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 auto;
+  width: max-content;
+  max-width: 100%;
+  min-width: 168px;
+  padding: 2px 4px 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__effects-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  width: max-content;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__effects-field {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon__effects-field--shadow {
+  min-width: 128px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__effects-cluster .delpi-ui-color-picker-trigger--ribbon {
+  flex: 0 0 auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__select--stroke-w {
+  width: 72px;
+  min-width: 68px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__effects-cluster .td-deck-ribbon__select--shadow {
+  width: 128px;
+  min-width: 120px;
+  flex: 0 0 auto;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-deck-ribbon__effects-cluster) .td-deck-ribbon__body {
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__toolbar--paragraph {
