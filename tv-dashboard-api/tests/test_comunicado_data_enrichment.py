@@ -516,6 +516,60 @@ def test_enrich_sales_conversion_rate_resolves_kpi_and_chart_point():
     assert enriched[2]["resolved"]["chart"]["points"][0]["value"] == 13.9
 
 
+
+def test_enrich_input_overrides_source_date_range_preset():
+    """Input periodDays/end_date acima de dateRangePreset this_month da fonte."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "series"},
+        "data": {"points": [{"date": "2026-07-11", "value": 90}]},
+        "route": {
+            "label": "OEE — série temporal",
+            "paramStrategy": "direct",
+            "paramSchema": {
+                "start_date": {"type": "string", "format": "date"},
+                "end_date": {"type": "string", "format": "date", "label": "Data fim"},
+                "periodDays": {"type": "integer", "label": "Período (dias)"},
+                "branch": {"type": "string", "label": "Filial"},
+            },
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    source = {
+        "id": "src-oee",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_production_oee_series",
+            "displayMode": "chart",
+            "params": {"dateRangePreset": "this_month"},
+        },
+    }
+    cfg = {
+        "blocks": [
+            source,
+            {
+                "id": "inp-period",
+                "type": "input",
+                "input": {
+                    "paramKey": "periodDays",
+                    "defaultValue": 4,
+                    "targetScope": "sources",
+                    "targetSourceIds": ["src-oee"],
+                },
+            },
+        ]
+    }
+    service.enrich_blocks([source], cfg=cfg, authorization="Bearer x")
+    params = gateway.fetch_by_operation_id.call_args.kwargs["params"]
+    assert params.get("periodDays") == 4
+    assert "dateRangePreset" not in params
+
+
 def test_enrich_preview_applies_input_from_cfg_blocks():
     """POST /data/preview-block envia só a fonte em `blocks`; inputs vêm em nativeConfig.blocks."""
     reset_comunicado_data_block_cache()

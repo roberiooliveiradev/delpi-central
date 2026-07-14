@@ -226,9 +226,17 @@ class ComunicadoEnrichmentService:
         public_token: str | None,
     ) -> dict[str, Any]:
         block_type = str(block.get("type") or "text")
-        # Fonte + views: preservar config do editor (binding, chartType, parts…).
-        # Strip aqui quebrava prévia admin e link público (tela branca / sem gráfico).
-        if block_type in {"data_source", "chart_view", "table_view", "kpi_view"}:
+        # Fonte + views + input + canvas_table: preservar config do editor.
+        # Strip aqui quebrava prévia/apresentação (sem gráfico; filtro sem paramKey →
+        # «Parâmetro indisponível»).
+        if block_type in {
+            "data_source",
+            "chart_view",
+            "table_view",
+            "kpi_view",
+            "input",
+            "canvas_table",
+        }:
             enriched = dict(block)
             enriched["id"] = str(block.get("id") or "")
             enriched["type"] = block_type

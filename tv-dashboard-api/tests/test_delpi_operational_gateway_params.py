@@ -193,3 +193,21 @@ def test_direct_strategy_strips_date_aliases():
     assert query["date_end"] == "2026-03-31"
     assert "start_date" not in query
     assert "end_date" not in query
+
+
+def test_date_range_strategy_respects_partial_end_date():
+    """Só end_date do filtro — não recalcular fim=hoje."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "periodDays": {"type": "integer"},
+            },
+            "defaultParams": {"periodDays": 7},
+        },
+        {"end_date": "2026-07-10"},
+    )
+    assert query["end_date"] == "2026-07-10"
+    assert query["start_date"] == "2026-07-04"

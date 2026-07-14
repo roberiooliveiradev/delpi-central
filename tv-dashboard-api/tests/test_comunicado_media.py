@@ -181,3 +181,39 @@ def test_enrich_preserves_data_source_and_chart_view_for_preview():
     assert passed[1]["animations"]["entrance"] == "fade"
     data_enrichment.enrich_blocks.assert_called_once()
     assert data_enrichment.enrich_blocks.call_args.kwargs.get("authorization") is None
+
+
+def test_enrich_preserves_input_param_key_for_preview():
+    """Prévia/apresentação: não stripar input.paramKey (senão «Parâmetro indisponível»)."""
+    data_enrichment = MagicMock()
+    data_enrichment.enrich_blocks.side_effect = lambda blocks, **_kw: blocks
+    service = ComunicadoEnrichmentService(
+        media_repo=MagicMock(),
+        data_enrichment=data_enrichment,
+    )
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "input-1",
+                    "type": "input",
+                    "frame": {"x": 5, "y": 5, "w": 30, "h": 12},
+                    "input": {
+                        "paramKey": "branch",
+                        "label": "Filial",
+                        "defaultValue": "01",
+                        "targetScope": "slide",
+                    },
+                    "inputParts": {"control": {"visible": True}},
+                },
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    passed = data_enrichment.enrich_blocks.call_args.args[0]
+    assert passed[0]["type"] == "input"
+    assert passed[0]["input"]["paramKey"] == "branch"
+    assert passed[0]["input"]["label"] == "Filial"
+    assert passed[0]["inputParts"]["control"]["visible"] is True
+    assert data["blocks"][0]["input"]["paramKey"] == "branch"

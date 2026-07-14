@@ -36,6 +36,31 @@ def test_merge_data_params_slide_overrides_playlist_block_overrides_slide():
     assert merged["periodDays"] == 7
 
 
+def test_merge_data_params_input_overrides_block_and_clears_preset():
+    """Filtro interativo vence dateRangePreset/this_month da fonte."""
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"dateRangePreset": "this_month", "branch": "01"},
+        input_overrides={"periodDays": 4},
+    )
+    assert merged["periodDays"] == 4
+    assert merged["branch"] == "01"
+    assert "dateRangePreset" not in merged
+
+
+def test_merge_data_params_input_end_date_clears_preset_and_period_days():
+    merged = merge_data_params(
+        playlist_defaults=None,
+        slide_filters=None,
+        block_params={"dateRangePreset": "this_month", "periodDays": 30},
+        input_overrides={"end_date": "2026-07-10"},
+    )
+    assert merged["end_date"] == "2026-07-10"
+    assert "dateRangePreset" not in merged
+    assert "periodDays" not in merged
+
+
 def test_param_inherited_from_slide():
     assert param_inherited_from_slide(
         "branch",

@@ -419,7 +419,9 @@ class ComunicadoDataEnrichmentService:
             schema_by_source_id=schema_by_source_id,
             slide_schemas=slide_schemas,
         )
-        slide_with_inputs = merge_filter_layers(slide_filters, contributions.get("slide"))
+        slide_input_contrib = (
+            contributions.get("slide") if isinstance(contributions.get("slide"), dict) else {}
+        )
         by_source = (
             contributions.get("bySourceId")
             if isinstance(contributions.get("bySourceId"), dict)
@@ -436,11 +438,13 @@ class ComunicadoDataEnrichmentService:
             if block_type in DATA_BLOCK_TYPES:
                 source_id = str(block.get("id") or "")
                 source_contrib = by_source.get(source_id) if isinstance(by_source.get(source_id), dict) else {}
-                effective_slide = merge_filter_layers(slide_with_inputs, source_contrib)
+                # Inputs/runtime acima de dataBinding.params (preset relativo da fonte).
+                input_overrides = merge_filter_layers(slide_input_contrib, source_contrib)
                 enriched.append(
                     self._enrich_data_block(
                         block,
-                        slide_filters=effective_slide,
+                        slide_filters=slide_filters,
+                        input_overrides=input_overrides,
                         playlist_defaults=playlist_defaults,
                         authorization=authorization,
                         user=user,
@@ -654,6 +658,7 @@ class ComunicadoDataEnrichmentService:
         user: Any | None,
         force_refresh: bool = False,
         request_memo: dict[str, dict[str, Any]] | None = None,
+        input_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -671,6 +676,7 @@ class ComunicadoDataEnrichmentService:
             playlist_defaults=playlist_defaults,
             slide_filters=slide_filters,
             block_params=block_params,
+            input_overrides=input_overrides,
         )
 
         branch = merged_params.get("branch")

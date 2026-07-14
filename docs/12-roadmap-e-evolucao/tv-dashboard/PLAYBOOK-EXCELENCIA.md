@@ -1263,11 +1263,14 @@ Enriquecimentos manuais por `operationId` são **preservados** na regeneração 
 
 ```text
 playlist.dataDefaults
-  →  slide.dataFilters ∪ inputs targetScope=slide (+ overrides de sessão no kiosk)
-  →  contribuições de inputs targetScope=sources (por dataSourceId)
-  →  block.dataBinding.params
+  →  slide.dataFilters
+  →  block.dataBinding.params   (ex.: dateRangePreset da fonte)
+  →  inputs targetScope=slide (+ overrides de sessão no kiosk)
+     ∪ inputs targetScope=sources (por dataSourceId)
                               (herança)              (mais específico ganha)
 ```
+
+Filtro interativo (`input` / kiosk) **vence** o preset relativo da fonte: se o input fixa `periodDays` ou datas (`start_*`/`end_*`), o merge remove `dateRangePreset` da camada inferior para o intervalo do filtro valer no fetch.
 
 Bloco **`input`** (Inserir → Filtro): controle no palco ligado só a chaves do `paramSchema` das fontes alvo (interseção). No kiosk/prévia, overrides efêmeros via `GET …/present/{token}?filters=` (allowlist pelos blocos `input`); não gravam a playlist.
 
