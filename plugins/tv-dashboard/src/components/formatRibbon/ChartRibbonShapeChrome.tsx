@@ -10,6 +10,7 @@ import {
   partsToChartOptions,
   resolveChartAreaStyle,
   resolvePlotAreaStyle,
+  resolveBlockShapeChromeBoxShadow,
   upsertChartPartState,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
@@ -143,7 +144,7 @@ export function ChartRibbonShapeChrome({
           {showCorners ? (
             <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
               <ShapeShadowMenu
-                value={block.style?.boxShadow}
+                value={resolveBlockShapeChromeBoxShadow(block)}
                 presets={SHADOW_MENU_PRESETS}
                 shadowLabel="Sombra"
                 onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}

@@ -6,6 +6,7 @@ import {
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
   partsToKpiOptions,
+  resolveBlockShapeChromeBoxShadow,
   resolveInputShapeChromePartRef,
   resolveKpiShapeChromePartRef,
   upsertInputPartState,
@@ -217,7 +218,7 @@ function KpiShapeChrome({
       {isCardChrome ? (
         <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
           <ShapeShadowMenu
-            value={block.style?.boxShadow}
+            value={resolveBlockShapeChromeBoxShadow(block)}
             presets={SHADOW_MENU_PRESETS}
             shadowLabel="Sombra"
             onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
@@ -292,6 +293,7 @@ function InputShapeChrome({
   onClearPart: () => void;
   updateSelected: ReturnType<typeof useComunicadoEditor>["updateSelected"];
 }) {
+  const { updateSelectedStyle } = useComunicadoEditor();
   const chromePart = resolveInputShapeChromePartRef(selectedInputPart) ?? {
     kind: "frame" as const,
   };
@@ -316,10 +318,6 @@ function InputShapeChrome({
       }),
     } as Partial<ComunicadoBlock>);
   };
-
-  const frameShadow =
-    getInputPartState(block.inputParts, { kind: "frame" })?.style?.boxShadow ??
-    block.style?.boxShadow;
 
   const nav =
     partChrome && partChrome.source === "input" ? (
@@ -351,18 +349,10 @@ function InputShapeChrome({
       {isFrameChrome ? (
         <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
           <ShapeShadowMenu
-            value={typeof frameShadow === "string" ? frameShadow : undefined}
+            value={resolveBlockShapeChromeBoxShadow(block)}
             presets={SHADOW_MENU_PRESETS}
             shadowLabel="Sombra"
-            onChange={(boxShadow) => {
-              const nextShadow = boxShadow?.trim() ? boxShadow : undefined;
-              updateSelected({
-                inputParts: upsertInputPartState(block.inputParts, { kind: "frame" }, {
-                  style: { boxShadow: nextShadow },
-                }),
-                style: { ...block.style, boxShadow: nextShadow },
-              } as Partial<ComunicadoBlock>);
-            }}
+            onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
           />
         </ShapeMenuHint>
       ) : null}

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { createKpiViewBlock, createShapeBlock } from "@delpi/tv-dashboard-presentation";
+import {
+  createChartViewBlock,
+  createInputBlock,
+  createKpiViewBlock,
+  createShapeBlock,
+  getChartPartState,
+  getInputPartState,
+  getKpiPartState,
+} from "@delpi/tv-dashboard-presentation";
 
 import { applyComunicadoBlockStylePatch } from "./applyComunicadoBlockStylePatch";
 
@@ -17,7 +25,32 @@ describe("applyComunicadoBlockStylePatch", () => {
       ...createKpiViewBlock(),
       style: { zIndex: 2, boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)" },
     };
-    expect(applyComunicadoBlockStylePatch(kpi, { boxShadow: undefined }).style?.boxShadow).toBeUndefined();
+    const kpiNext = applyComunicadoBlockStylePatch(kpi, { boxShadow: undefined });
+    expect(kpiNext.style?.boxShadow).toBeUndefined();
+    expect(
+      getKpiPartState(kpiNext.type === "kpi_view" ? kpiNext.kpiParts : null, { kind: "card" })?.style
+        ?.boxShadow,
+    ).toBe("none");
+  });
+
+  it("grava sombra na moldura de chart e filtro (não só block.style)", () => {
+    const chart = createChartViewBlock("line");
+    const chartNext = applyComunicadoBlockStylePatch(chart, {
+      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+    });
+    expect(
+      getChartPartState(chartNext.type === "chart_view" ? chartNext.chartParts : null, {
+        kind: "chartArea",
+      })?.style?.boxShadow,
+    ).toBe("0 2px 8px rgba(0,0,0,0.2)");
+
+    const input = createInputBlock();
+    const inputCleared = applyComunicadoBlockStylePatch(input, { boxShadow: undefined });
+    expect(
+      getInputPartState(inputCleared.type === "input" ? inputCleared.inputParts : null, {
+        kind: "frame",
+      })?.style?.boxShadow,
+    ).toBe("none");
   });
 
   it("mantém outras chaves ao limpar só a sombra", () => {

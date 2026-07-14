@@ -1535,10 +1535,7 @@
   border: none;
   /* Mesmo raio padrão do gráfico/KPI (16) — evita sombra “achatada” por radius 8. */
   border-radius: 16px;
-  box-shadow: var(
-    --tdp-block-box-shadow,
-    var(--tdp-input-shadow, 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10))
-  );
+  box-shadow: var(--tdp-block-box-shadow, var(--tdp-input-shadow, none));
   color: var(--tdp-input-fg, #0f172a);
   /* Subitens (absolute/%) não pintam fora da moldura — handles usam overlay próprio. */
   overflow: hidden;

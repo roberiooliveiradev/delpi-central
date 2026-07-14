@@ -17,10 +17,12 @@ import {
   createShapeBlock,
   createTableViewBlock,
 } from "./comunicadoHelpers";
+import { getChartPartState } from "./comunicadoChartParts";
 import { getInputPartState } from "./comunicadoInputParts";
 import { getKpiPartState } from "./comunicadoKpiParts";
 import { getTablePartState } from "./comunicadoTableParts";
 import type {
+  ComunicadoChartViewBlock,
   ComunicadoInputBlock,
   ComunicadoKpiViewBlock,
   ComunicadoTableViewBlock,
@@ -109,6 +111,44 @@ describe("comunicadoBlockShapeChrome", () => {
     expect(control?.style?.strokeWidth).toBe(2);
     expect(getInputPartState(next.inputParts, { kind: "frame" })?.style?.fill).not.toBe(
       "#fef3c7",
+    );
+  });
+
+  it("applyBlockShapeChromeStyle grava e limpa sombra na moldura (sentinel none)", () => {
+    const kpi = createKpiViewBlock() as ComunicadoKpiViewBlock;
+    const withShadow = {
+      ...kpi,
+      ...applyBlockShapeChromeStyle(kpi, {
+        boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+      }),
+    } as ComunicadoKpiViewBlock;
+    expect(getKpiPartState(withShadow.kpiParts, { kind: "card" })?.style?.boxShadow).toBe(
+      "0 4px 12px rgba(0,0,0,0.25)",
+    );
+
+    const cleared = {
+      ...withShadow,
+      ...applyBlockShapeChromeStyle(withShadow, { boxShadow: undefined }),
+    } as ComunicadoKpiViewBlock;
+    expect(getKpiPartState(cleared.kpiParts, { kind: "card" })?.style?.boxShadow).toBe("none");
+    expect(cleared.style?.boxShadow).toBeUndefined();
+
+    const chart = createChartViewBlock("line") as ComunicadoChartViewBlock;
+    const chartCleared = {
+      ...chart,
+      ...applyBlockShapeChromeStyle(chart, { boxShadow: "" }),
+    } as ComunicadoChartViewBlock;
+    expect(getChartPartState(chartCleared.chartParts, { kind: "chartArea" })?.style?.boxShadow).toBe(
+      "none",
+    );
+
+    const input = createInputBlock() as ComunicadoInputBlock;
+    const inputCleared = {
+      ...input,
+      ...applyBlockShapeChromeStyle(input, { boxShadow: null }),
+    } as ComunicadoInputBlock;
+    expect(getInputPartState(inputCleared.inputParts, { kind: "frame" })?.style?.boxShadow).toBe(
+      "none",
     );
   });
 

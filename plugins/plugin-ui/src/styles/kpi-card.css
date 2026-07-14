@@ -8,7 +8,7 @@
   box-sizing: border-box;
   border-radius: var(--delpi-kpi-card-radius, 16px);
   /* Sombra no shell: overflow:hidden cortaria box-shadow do .delpi-kpi-card filho. */
-  box-shadow: var(--delpi-kpi-card-shadow, 0 12px 28px rgba(15, 23, 42, 0.1));
+  box-shadow: var(--delpi-kpi-card-shadow, none);
   /* Contém subitens na bbox do bloco; abre com parte selecionada (handles). */
   overflow: hidden;
 }

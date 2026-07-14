@@ -251,6 +251,11 @@ export type BlockShapeChromeStylePatch = {
   stroke?: string;
   fill?: string;
   backgroundColor?: string;
+  /**
+   * Sombra da moldura (chartArea / card / frame).
+   * Vazio / undefined / "none" → sentinel `"none"` (remove sombra; não reverte ao default Office).
+   */
+  boxShadow?: string | null;
 };
 
 export type ApplyBlockShapeChromeStyleOptions = {
@@ -258,8 +263,51 @@ export type ApplyBlockShapeChromeStyleOptions = {
   selectedInputPart?: ComunicadoInputPartRef | null;
 };
 
+/** Sentinel canônico: sem sombra na part (paint não reaplica DECK_*). */
+export const BLOCK_SHAPE_CHROME_NO_SHADOW = "none";
+
 /**
- * Aplica fill/stroke/radius na moldura interna (parts).
+ * Normaliza sombra da moldura: vazio → `"none"`; demais strings trimadas.
+ */
+export function normalizeBlockShapeChromeBoxShadow(
+  value: string | null | undefined,
+): string {
+  if (value == null) return BLOCK_SHAPE_CHROME_NO_SHADOW;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.toLowerCase() === BLOCK_SHAPE_CHROME_NO_SHADOW) {
+    return BLOCK_SHAPE_CHROME_NO_SHADOW;
+  }
+  return trimmed;
+}
+
+/**
+ * Sombra efetiva da moldura para o menu Forma (undefined = sem sombra / «Nenhuma»).
+ */
+export function resolveBlockShapeChromeBoxShadow(
+  block: ComunicadoBlock,
+): string | undefined {
+  let raw: string | undefined;
+  if (block.type === "kpi_view") {
+    raw = getKpiPartState(block.kpiParts, { kind: "card" })?.style?.boxShadow;
+  } else if (block.type === "table_view") {
+    raw = getTablePartState(block.tableParts, { kind: "frame" })?.style?.boxShadow;
+  } else if (block.type === "chart_view") {
+    raw = resolveChartAreaStyle(block.chartOptions ?? {}, block.chartParts).boxShadow;
+  } else if (block.type === "input") {
+    raw =
+      getInputPartState(block.inputParts, { kind: "frame" })?.style?.boxShadow ??
+      block.style?.boxShadow;
+  } else {
+    raw = block.style?.boxShadow;
+  }
+  if (typeof raw !== "string" || !raw.trim()) return undefined;
+  return normalizeBlockShapeChromeBoxShadow(raw) === BLOCK_SHAPE_CHROME_NO_SHADOW
+    ? undefined
+    : raw.trim();
+}
+
+/**
+ * Aplica fill/stroke/radius/sombra na moldura interna (parts).
  * Usado pela ribbon Organizar e por `updateSelectedStyle` para não gravar só em `block.style`
  * (que `stripOuterChromeStyle` descarta no KPI/chart/tabela).
  */
@@ -270,15 +318,16 @@ export function applyBlockShapeChromeStyle(
 ): Partial<ComunicadoBlock> | null {
   if (!blockUsesInnerShapeChrome(block)) return null;
 
-  const strokeWidth =
-    patch.strokeWidth ?? patch.borderWidth;
+  const strokeWidth = patch.strokeWidth ?? patch.borderWidth;
   const stroke = patch.stroke ?? patch.borderColor;
   const fill = patch.fill ?? patch.backgroundColor;
+  const hasBoxShadowKey = Object.prototype.hasOwnProperty.call(patch, "boxShadow");
   const partStyle: {
     borderRadius?: number;
     strokeWidth?: number;
     stroke?: string;
     fill?: string;
+    boxShadow?: string;
   } = {};
   if (typeof patch.borderRadius === "number") {
     partStyle.borderRadius = Math.max(0, patch.borderRadius);
@@ -292,7 +341,38 @@ export function applyBlockShapeChromeStyle(
   if (typeof fill === "string") {
     partStyle.fill = fill;
   }
+  if (hasBoxShadowKey) {
+    partStyle.boxShadow = normalizeBlockShapeChromeBoxShadow(patch.boxShadow);
+  }
   if (Object.keys(partStyle).length === 0) return null;
+
+  const mirrorShadow =
+    hasBoxShadowKey && partStyle.boxShadow !== BLOCK_SHAPE_CHROME_NO_SHADOW
+      ? partStyle.boxShadow
+      : undefined;
+  const clearShadowOnBlock = hasBoxShadowKey && partStyle.boxShadow === BLOCK_SHAPE_CHROME_NO_SHADOW;
+
+  const nextBlockStyle = (): ComunicadoBlock["style"] => {
+    const style = { ...block.style };
+    if (typeof partStyle.borderRadius === "number") style.borderRadius = partStyle.borderRadius;
+    if (typeof partStyle.strokeWidth === "number") {
+      style.borderWidth = partStyle.strokeWidth;
+      style.strokeWidth = partStyle.strokeWidth;
+    }
+    if (typeof stroke === "string") {
+      style.borderColor = stroke;
+      style.stroke = stroke;
+    }
+    if (typeof fill === "string") {
+      style.backgroundColor = fill;
+      style.fill = fill;
+    }
+    if (hasBoxShadowKey) {
+      if (clearShadowOnBlock) delete style.boxShadow;
+      else if (mirrorShadow) style.boxShadow = mirrorShadow;
+    }
+    return style;
+  };
 
   if (block.type === "kpi_view") {
     const nextParts = upsertKpiPartState(block.kpiParts, { kind: "card" }, { style: partStyle });
@@ -305,15 +385,7 @@ export function applyBlockShapeChromeStyle(
     return {
       kpiParts: mergeKpiPartsWithOptions(nextParts, nextOptions),
       kpiOptions: nextOptions,
-      style: {
-        ...block.style,
-        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
-        ...(typeof partStyle.strokeWidth === "number"
-          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
-          : {}),
-        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
-        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
-      },
+      style: nextBlockStyle(),
     };
   }
 
@@ -321,61 +393,59 @@ export function applyBlockShapeChromeStyle(
     const nextParts = upsertTablePartState(block.tableParts, { kind: "frame" }, { style: partStyle });
     return {
       tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
-      style: {
-        ...block.style,
-        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
-        ...(typeof partStyle.strokeWidth === "number"
-          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
-          : {}),
-        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
-        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
-      },
+      style: nextBlockStyle(),
     };
   }
 
   if (block.type === "chart_view") {
     return {
       chartParts: upsertChartPartState(block.chartParts, { kind: "chartArea" }, { style: partStyle }),
-      style: {
-        ...block.style,
-        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
-        ...(typeof partStyle.strokeWidth === "number"
-          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
-          : {}),
-        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
-        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
-      },
+      style: nextBlockStyle(),
     };
   }
 
   if (block.type === "input") {
     const chromePart = resolveInputShapeChromePartRef(options?.selectedInputPart);
-    const nextParts = upsertInputPartState(block.inputParts, chromePart, { style: partStyle });
-    const mirrorOnBlockStyle = chromePart.kind === "frame";
-    return {
-      inputParts: nextParts,
-      style: {
-        ...block.style,
-        ...(mirrorOnBlockStyle && typeof partStyle.borderRadius === "number"
-          ? { borderRadius: partStyle.borderRadius }
-          : {}),
-        ...(mirrorOnBlockStyle && typeof partStyle.strokeWidth === "number"
-          ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
-          : {}),
-        ...(mirrorOnBlockStyle && typeof stroke === "string"
-          ? { borderColor: stroke, stroke }
-          : {}),
-        ...(mirrorOnBlockStyle && typeof fill === "string"
-          ? { backgroundColor: fill, fill }
-          : {}),
-      },
-    };
+    const { boxShadow: shadowValue, ...chromeWithoutShadow } = partStyle;
+    let nextParts = block.inputParts;
+
+    if (Object.keys(chromeWithoutShadow).length > 0) {
+      nextParts = upsertInputPartState(nextParts, chromePart, { style: chromeWithoutShadow });
+    }
+    /** Sombra do filtro sempre na moldura (elemento base do agrupamento). */
+    if (hasBoxShadowKey && shadowValue != null) {
+      nextParts = upsertInputPartState(nextParts, { kind: "frame" }, {
+        style: { boxShadow: shadowValue },
+      });
+    }
+
+    const style = { ...block.style };
+    if (chromePart.kind === "frame") {
+      if (typeof partStyle.borderRadius === "number") style.borderRadius = partStyle.borderRadius;
+      if (typeof partStyle.strokeWidth === "number") {
+        style.borderWidth = partStyle.strokeWidth;
+        style.strokeWidth = partStyle.strokeWidth;
+      }
+      if (typeof stroke === "string") {
+        style.borderColor = stroke;
+        style.stroke = stroke;
+      }
+      if (typeof fill === "string") {
+        style.backgroundColor = fill;
+        style.fill = fill;
+      }
+    }
+    if (hasBoxShadowKey) {
+      if (clearShadowOnBlock) delete style.boxShadow;
+      else if (mirrorShadow) style.boxShadow = mirrorShadow;
+    }
+    return { inputParts: nextParts, style };
   }
 
   return null;
 }
 
-/** Chaves de estilo que, em KPI/chart/tabela, pertencem à moldura interna. */
+/** Chaves de estilo que, em KPI/chart/tabela/filtro, pertencem à moldura interna. */
 export function isInnerShapeChromeStyleKey(key: string): boolean {
   return (
     key === "borderRadius" ||
@@ -384,7 +454,8 @@ export function isInnerShapeChromeStyleKey(key: string): boolean {
     key === "strokeWidth" ||
     key === "stroke" ||
     key === "fill" ||
-    key === "backgroundColor"
+    key === "backgroundColor" ||
+    key === "boxShadow"
   );
 }
 

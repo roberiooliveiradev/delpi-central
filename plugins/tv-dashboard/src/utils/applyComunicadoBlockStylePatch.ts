@@ -24,7 +24,8 @@ export type ApplyComunicadoBlockStylePatchOptions = {
 };
 
 /**
- * Aplica patch de estilo ao bloco: chrome interno (KPI/chart/tabela) + limpeza de sombra etc.
+ * Aplica patch de estilo ao bloco: chrome interno (KPI/chart/tabela/filtro) + limpeza de sombra etc.
+ * Em complexos, `boxShadow` grava na moldura (`card` / `chartArea` / `frame`) com sentinel `"none"`.
  */
 export function applyComunicadoBlockStylePatch(
   block: ComunicadoBlock,
@@ -48,13 +49,18 @@ export function applyComunicadoBlockStylePatch(
     }
   }
 
+  /** Clear de sombra em complexo → sentinel na part (não só delete em block.style). */
+  if (blockUsesInnerShapeChrome(block) && clearKeys.includes("boxShadow")) {
+    chromePatch.boxShadow = "none";
+  }
+
   let next: ComunicadoBlock = block;
   if (Object.keys(chromePatch).length > 0) {
-    const applied = applyBlockShapeChromeStyle(block, chromePatch, {
+    const applied = applyBlockShapeChromeStyle(next, chromePatch, {
       selectedInputPart: options?.selectedInputPart,
     });
     if (applied) {
-      next = { ...block, ...applied } as ComunicadoBlock;
+      next = { ...next, ...applied } as ComunicadoBlock;
     }
   }
 

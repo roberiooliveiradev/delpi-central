@@ -1,5 +1,6 @@
 import {
   mergeTablePartsWithOptions,
+  resolveBlockShapeChromeBoxShadow,
   resolveTableFrameStyle,
   resolveTablePartPaintStyle,
   resolveTableShapeChromePartRef,
@@ -92,7 +93,7 @@ export function TableRibbonShapeChrome({
         </ShapeMenuHint>
         <ShapeMenuHint hint={H.tableFrameShadow} ariaLabel="Ajuda: Sombra da moldura">
           <ShapeShadowMenu
-            value={block.style?.boxShadow}
+            value={resolveBlockShapeChromeBoxShadow(block)}
             presets={SHADOW_MENU_PRESETS}
             shadowLabel="Sombra"
             onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}

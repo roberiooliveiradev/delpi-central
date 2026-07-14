@@ -21,7 +21,6 @@ import {
   resolveTableFrameStyle,
   setTableElementEnabled,
   tableElementPrimaryPartRef,
-  upsertTablePartState,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
@@ -83,6 +82,7 @@ function useTableDesignControls() {
     selected,
     selectedTablePart,
     updateSelected,
+    updateSelectedStyle,
     selectTablePart,
     openDataPanel,
   } = useComunicadoEditor();
@@ -138,17 +138,7 @@ function useTableDesignControls() {
   const shadeValue = shadeTarget === "header" ? options.headerBg : options.cellBg;
 
   const patchFrameShadow = (boxShadow: string | undefined) => {
-    const nextParts = upsertTablePartState(
-      block.tableParts,
-      { kind: "frame" },
-      {
-        style: { boxShadow: boxShadow?.trim() ? boxShadow : "none" },
-      },
-    );
-    updateSelected({
-      tableParts: mergeTablePartsWithOptions(nextParts, block.tableOptions),
-      style: { ...block.style, boxShadow: boxShadow?.trim() ? boxShadow : undefined },
-    } as Partial<ComunicadoBlock>);
+    updateSelectedStyle({ boxShadow });
   };
 
   const borderWidthOptions = BORDER_WIDTH_OPTIONS.some(

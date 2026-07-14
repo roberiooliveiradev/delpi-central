@@ -38,6 +38,12 @@ describe("inputFilterParts paint vs fundo do bloco", () => {
     expect(vars.color).toBe("#000000");
   });
 
+  it("boxShadow none na moldura não reverte ao default Office", () => {
+    const vars = resolveInputBlockPaintCssVars("#ffffff", { boxShadow: "none" });
+    expect(vars["--tdp-block-box-shadow" as keyof typeof vars]).toBe("none");
+    expect(vars["--tdp-input-shadow" as keyof typeof vars]).toBe("none");
+  });
+
   it("control.style vira CSS vars da caixa nativa (fill/stroke)", () => {
     const vars = resolveInputControlPaintCssVars({
       style: { fill: "#fef3c7", stroke: "#b45309", strokeWidth: 2, borderRadius: 8 },

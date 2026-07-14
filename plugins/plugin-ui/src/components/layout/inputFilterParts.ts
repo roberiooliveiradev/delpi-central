@@ -573,10 +573,14 @@ export function resolveInputBlockPaintCssVars(
   const muted = resolveComplexBlockForeground(AUTOMATIC_TEXT_COLOR, contrastBackground, {
     role: "muted",
   });
+  const shadowRaw = options?.boxShadow;
+  const shadowTrimmed = typeof shadowRaw === "string" ? shadowRaw.trim() : "";
   const shadow =
-    typeof options?.boxShadow === "string" && options.boxShadow.trim()
-      ? options.boxShadow.trim()
-      : DECK_INPUT_DEFAULTS.boxShadow;
+    shadowTrimmed.toLowerCase() === "none"
+      ? "none"
+      : shadowTrimmed
+        ? shadowTrimmed
+        : DECK_INPUT_DEFAULTS.boxShadow;
   return {
     ["--tdp-input-surface" as string]: contrastBackground,
     ["--tdp-input-fg" as string]: fg,
