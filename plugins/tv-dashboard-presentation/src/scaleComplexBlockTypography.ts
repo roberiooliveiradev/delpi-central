@@ -273,6 +273,9 @@ export function scaleTableOptionsFontSize(
 
 /**
  * Aplica escala tipográfica ao bloco complexo após mudança de w/h do frame.
+ * `block` deve ser o **baseline** (tipografia pré-resize) — nunca o estado já escalado
+ * do frame intermediário (senão o fator acumula a cada pointermove).
+ * O caller define `block.frame` (ou usa `applyComplexBlockFrameWithTypography`).
  * No-op se o tipo não for complexo ou se o fator for ~1.
  */
 export function scaleComplexBlockOnResize(
@@ -311,4 +314,15 @@ export function scaleComplexBlockOnResize(
       fontSize: nextFont,
     },
   };
+}
+
+/**
+ * Resize live / finalize: aplica `afterFrame` + tipografia a partir do baseline do arrasto.
+ */
+export function applyComplexBlockFrameWithTypography(
+  baseline: ComunicadoBlock,
+  afterFrame: ComunicadoFrame,
+): ComunicadoBlock {
+  const withFrame = { ...baseline, frame: afterFrame } as ComunicadoBlock;
+  return scaleComplexBlockOnResize(withFrame, baseline.frame, afterFrame);
 }

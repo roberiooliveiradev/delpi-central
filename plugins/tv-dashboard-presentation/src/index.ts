@@ -38,6 +38,7 @@ export {
 } from "./frameDesignPixels";
 export {
   TABLE_VIEW_DEFAULT_FONT_SIZE_PX,
+  applyComplexBlockFrameWithTypography,
   scaleChartPartTypographyOnResize,
   scaleChartPartsTypography,
   scaleComplexBlockOnResize,

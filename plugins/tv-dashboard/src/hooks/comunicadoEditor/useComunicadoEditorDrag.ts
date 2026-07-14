@@ -1,11 +1,11 @@
 import { useCallback, useRef, type MutableRefObject } from "react";
 
 import {
+  applyComplexBlockFrameWithTypography,
   clampFrameForBlock,
   isConnectorShapeBlock,
   isLineShapeKind,
   reconcileConnectorsAfterDrag,
-  scaleComplexBlockOnResize,
   serializeComunicadoConfig,
   syncLineVerticesFromFrame,
   type ComunicadoBlock,
@@ -29,6 +29,12 @@ type Options = {
   snapEnabledRef: MutableRefObject<boolean>;
   stageGridSizePercentRef: MutableRefObject<number>;
 };
+
+function isComplexViewBlock(
+  block: ComunicadoBlock,
+): block is Extract<ComunicadoBlock, { type: "kpi_view" | "chart_view" | "table_view" }> {
+  return block.type === "kpi_view" || block.type === "chart_view" || block.type === "table_view";
+}
 
 /**
  * Drag / resize / rotate no palco — handlers + `useCanvasBlockInteraction`.
@@ -80,11 +86,17 @@ export function useComunicadoEditorDrag({
     [configRef, updateBlocksSilent],
   );
 
+  const resolveBaseline = useCallback((blockId: string): ComunicadoBlock | undefined => {
+    return dragSnapshotRef.current?.blocks?.find((block) => block.id === blockId);
+  }, []);
+
   const handleUpdateFrame = useCallback(
     (blockId: string, frame: ComunicadoBlock["frame"]) => {
       const multi = multiDragRef.current;
+      const baseline = resolveBaseline(blockId);
       let nextBlocks: ComunicadoBlock[];
       const draggedIds = new Set<string>();
+
       if (multi && multi.startFrames.has(blockId)) {
         const origin = multi.startFrames.get(blockId);
         if (!origin) return;
@@ -96,6 +108,10 @@ export function useComunicadoEditorDrag({
           draggedIds.add(block.id);
           const start = multi.startFrames.get(block.id)!;
           if (block.id === blockId && isResize) {
+            const base = resolveBaseline(block.id) ?? block;
+            if (isComplexViewBlock(base)) {
+              return applyComplexBlockFrameWithTypography(base, frame);
+            }
             return { ...block, frame };
           }
           return {
@@ -111,13 +127,20 @@ export function useComunicadoEditorDrag({
         });
       } else {
         draggedIds.add(blockId);
-        nextBlocks = (configRef.current.blocks ?? []).map((block) =>
-          block.id === blockId ? { ...block, frame } : block,
-        );
+        nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+          if (block.id !== blockId) return block;
+          const base = baseline ?? block;
+          const isResize =
+            frame.w !== base.frame.w || frame.h !== base.frame.h;
+          if (isResize && isComplexViewBlock(base)) {
+            return applyComplexBlockFrameWithTypography(base, frame);
+          }
+          return { ...block, frame };
+        });
       }
       updateBlocksSilent(reconcileConnectorsAfterDrag(nextBlocks, draggedIds));
     },
-    [configRef, updateBlocksSilent],
+    [configRef, resolveBaseline, updateBlocksSilent],
   );
 
   const handleInteractionStart = useCallback(() => {
@@ -185,12 +208,21 @@ export function useComunicadoEditorDrag({
         const index = nextBlocks.findIndex((block) => block.id === id);
         if (index < 0) continue;
         const current = nextBlocks[index];
+        const beforeBlock = before.blocks?.find((block) => block.id === id);
         const snapMode = mode === "resize" ? "resize" : "move";
         const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
         const snappedFrame = snapEnabledRef.current
           ? snapComunicadoFrame(current, current.frame, snapMode, snapPercents)
           : clampFrameForBlock(current, current.frame);
-        let updated: ComunicadoBlock = { ...current, frame: snappedFrame };
+
+        let updated: ComunicadoBlock;
+        if (mode === "resize" && beforeBlock && isComplexViewBlock(beforeBlock)) {
+          /* Sempre baseline do início — tipografia live já tipificada; snap reescala do zero. */
+          updated = applyComplexBlockFrameWithTypography(beforeBlock, snappedFrame);
+        } else {
+          updated = { ...current, frame: snappedFrame };
+        }
+
         if (
           updated.type === "shape" &&
           isLineShapeKind(updated.shape) &&
@@ -201,12 +233,6 @@ export function useComunicadoEditorDrag({
             ...updated,
             vertices: syncLineVerticesFromFrame(updated, snappedFrame),
           };
-        }
-        if (mode === "resize") {
-          const beforeBlock = before.blocks?.find((block) => block.id === id);
-          if (beforeBlock) {
-            updated = scaleComplexBlockOnResize(updated, beforeBlock.frame, snappedFrame);
-          }
         }
         nextBlocks[index] = updated;
       }

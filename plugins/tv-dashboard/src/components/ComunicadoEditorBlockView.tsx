@@ -277,27 +277,28 @@ function EditorChartViewBlock({
       });
       const startClientX = event.clientX;
       const startClientY = event.clientY;
-      let lastFrame = origin;
-      let lastParts = upsertChartPartState(block.chartParts, ref, { frame: origin });
+      /** Tipografia pré-resize — base fixa para não acumular fator a cada move. */
+      const originParts = block.chartParts;
+      const originSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
+
+      const applyLive = (nextFrame: ReturnType<typeof resizeChartPartFrame>) => {
+        let nextParts = upsertChartPartState(originParts, ref, { frame: nextFrame });
+        nextParts = scaleChartPartTypographyOnResize(nextParts, ref, originSize, {
+          w: nextFrame.w ?? originSize.w,
+          h: nextFrame.h ?? originSize.h,
+        });
+        updateBlock(block.id, { chartParts: nextParts } as Partial<ComunicadoBlock>);
+      };
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
         const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
-        lastFrame = resizeChartPartFrame(origin, handle, dx, dy);
-        lastParts = upsertChartPartState(block.chartParts, ref, { frame: lastFrame });
-        updateBlock(block.id, { chartParts: lastParts } as Partial<ComunicadoBlock>);
+        applyLive(resizeChartPartFrame(origin, handle, dx, dy));
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
-        const scaled = scaleChartPartTypographyOnResize(
-          lastParts,
-          ref,
-          { w: origin.w ?? 20, h: origin.h ?? 20 },
-          { w: lastFrame.w ?? origin.w ?? 20, h: lastFrame.h ?? origin.h ?? 20 },
-        );
-        updateBlock(block.id, { chartParts: scaled } as Partial<ComunicadoBlock>);
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
@@ -582,30 +583,30 @@ function EditorKpiViewBlock({
       });
       const startClientX = event.clientX;
       const startClientY = event.clientY;
+      const originParts = lastParts;
+      const originSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
       let resized = false;
-      let lastFrame = origin;
+
+      const applyLive = (nextFrame: ReturnType<typeof resizeKpiPartFrame>) => {
+        let nextParts = upsertKpiPartState(originParts, ref, { frame: nextFrame });
+        nextParts = scaleKpiPartTypographyOnResize(nextParts, ref, originSize, {
+          w: nextFrame.w ?? originSize.w,
+          h: nextFrame.h ?? originSize.h,
+        });
+        updateBlock(block.id, { kpiParts: nextParts } as Partial<ComunicadoBlock>);
+      };
 
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
         const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
         if (!resized && Math.abs(dx) + Math.abs(dy) < 0.15) return;
         resized = true;
-        lastFrame = resizeKpiPartFrame(origin, handle, dx, dy);
-        lastParts = upsertKpiPartState(lastParts, ref, { frame: lastFrame });
-        updateBlock(block.id, { kpiParts: lastParts } as Partial<ComunicadoBlock>);
+        applyLive(resizeKpiPartFrame(origin, handle, dx, dy));
       };
 
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
-        if (!resized) return;
-        const scaled = scaleKpiPartTypographyOnResize(
-          lastParts,
-          ref,
-          { w: origin.w ?? 20, h: origin.h ?? 20 },
-          { w: lastFrame.w ?? origin.w ?? 20, h: lastFrame.h ?? origin.h ?? 20 },
-        );
-        updateBlock(block.id, { kpiParts: scaled } as Partial<ComunicadoBlock>);
       };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);

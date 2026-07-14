@@ -7,6 +7,7 @@ import type {
   ComunicadoTableViewBlock,
 } from "./comunicadoTypes";
 import {
+  applyComplexBlockFrameWithTypography,
   scaleChartPartTypographyOnResize,
   scaleComplexBlockOnResize,
   scaleFontPx,
@@ -106,5 +107,41 @@ describe("scalePartTypographyOnResize", () => {
 describe("scaleTableOptionsFontSize", () => {
   it("usa default quando ausente", () => {
     expect(scaleTableOptionsFontSize(undefined, 2)).toBe(24);
+  });
+});
+
+describe("applyComplexBlockFrameWithTypography (live a partir do baseline)", () => {
+  it("reescala KPI/chart/table do baseline; não dobrar fator no finalize", () => {
+    const kpi = createKpiViewBlock() as ComunicadoKpiViewBlock;
+    const mid = applyComplexBlockFrameWithTypography(kpi, {
+      ...kpi.frame,
+      w: kpi.frame.w * 1.5,
+      h: kpi.frame.h * 1.5,
+    }) as ComunicadoKpiViewBlock;
+    const endFrame = { ...kpi.frame, w: kpi.frame.w * 2, h: kpi.frame.h * 2 };
+    const end = applyComplexBlockFrameWithTypography(kpi, endFrame) as ComunicadoKpiViewBlock;
+    expect(mid.kpiParts?.value?.style?.fontSize).toBe(48);
+    expect(end.kpiParts?.value?.style?.fontSize).toBe(64);
+    /* Bug antigo: tipografia já escalada + fator origin→final → 64*2=128. */
+    const doubled = scaleComplexBlockOnResize(end, kpi.frame, endFrame) as ComunicadoKpiViewBlock;
+    expect(doubled.kpiParts?.value?.style?.fontSize).toBe(128);
+    const finalizeOk = applyComplexBlockFrameWithTypography(kpi, endFrame) as ComunicadoKpiViewBlock;
+    expect(finalizeOk.kpiParts?.value?.style?.fontSize).toBe(64);
+
+    const chart = createChartViewBlock("bar") as ComunicadoChartViewBlock;
+    const chartEnd = applyComplexBlockFrameWithTypography(chart, {
+      ...chart.frame,
+      w: chart.frame.w * 2,
+      h: chart.frame.h * 2,
+    }) as ComunicadoChartViewBlock;
+    expect(chartEnd.chartParts?.title?.style?.fontSize).toBe(28);
+
+    const table = createTableViewBlock(2, 2) as ComunicadoTableViewBlock;
+    const tableEnd = applyComplexBlockFrameWithTypography(table, {
+      ...table.frame,
+      w: table.frame.w * 2,
+      h: table.frame.h * 2,
+    }) as ComunicadoTableViewBlock;
+    expect(tableEnd.tableOptions?.fontSize).toBe(TABLE_VIEW_DEFAULT_FONT_SIZE_PX * 2);
   });
 });
