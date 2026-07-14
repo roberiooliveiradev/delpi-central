@@ -9,6 +9,7 @@ import {
 import {
   applyNamedStyleOnAllLines,
   defaultNamedStyleForBlockType,
+  isComunicadoVisualBoxBlock,
   resolveNamedStyleSelectionForBlock,
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
@@ -16,6 +17,7 @@ import {
   selectionRunStyleState,
   syncTextBlockFromRuns,
   toggleListTypeOnAllLines,
+  visualBoxEnsureRichTextBlock,
   type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoChartPartRef,
@@ -48,6 +50,8 @@ type Options = {
   updateBlockTextFieldsRef: MutableRefObject<
     (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => void
   >;
+  /** Substitui bloco inteiro (ex.: forma → texto rico ao aplicar lista). */
+  updateBlocksRef: MutableRefObject<(next: ComunicadoBlock[]) => void>;
 };
 
 /**
@@ -57,6 +61,7 @@ export function useComunicadoEditorSelection({
   configRef,
   blocks,
   updateBlockTextFieldsRef,
+  updateBlocksRef,
 }: Options) {
   /** Sem auto-seleção: Gerenciar / F5 abrem na Página Inicial, não em Elemento. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -420,13 +425,24 @@ export function useComunicadoEditorSelection({
   }, [editingTextId]);
 
   const toggleSelectedTextListType = useCallback((listType: ComunicadoListType) => {
-    const target =
+    let target: ComunicadoBlock | null =
       editingTextId != null
-        ? configRef.current.blocks?.find((block) => block.id === editingTextId)
-        : selected && (selected.type === "heading" || selected.type === "text")
+        ? configRef.current.blocks?.find((block) => block.id === editingTextId) ?? null
+        : selected && isComunicadoVisualBoxBlock(selected)
           ? selected
           : null;
-    if (!target || (target.type !== "heading" && target.type !== "text")) return;
+    if (!target || !isComunicadoVisualBoxBlock(target)) return;
+
+    if (target.type === "shape") {
+      const rich = visualBoxEnsureRichTextBlock(target);
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        block.id === rich.id ? rich : block,
+      );
+      updateBlocksRef.current(nextBlocks);
+      target = rich;
+    }
+
+    if (target.type !== "heading" && target.type !== "text") return;
 
     if (editingTextId === target.id) {
       const bridge = textEditorBridgesRef.current.get(editingTextId);
@@ -437,16 +453,27 @@ export function useComunicadoEditorSelection({
     const runs = resolveTextBlockDisplayRuns(target);
     const nextRuns = toggleListTypeOnAllLines(runs, listType);
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
-  }, [configRef, editingTextId, selected, updateBlockTextFieldsRef]);
+  }, [configRef, editingTextId, selected, updateBlockTextFieldsRef, updateBlocksRef]);
 
   const applySelectedNamedTextStyle = useCallback((namedStyle: ComunicadoNamedTextStyle) => {
-    const target =
+    let target: ComunicadoBlock | null =
       editingTextId != null
-        ? configRef.current.blocks?.find((block) => block.id === editingTextId)
-        : selected && (selected.type === "heading" || selected.type === "text")
+        ? configRef.current.blocks?.find((block) => block.id === editingTextId) ?? null
+        : selected && isComunicadoVisualBoxBlock(selected)
           ? selected
           : null;
-    if (!target || (target.type !== "heading" && target.type !== "text")) return;
+    if (!target || !isComunicadoVisualBoxBlock(target)) return;
+
+    if (target.type === "shape") {
+      const rich = visualBoxEnsureRichTextBlock(target);
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
+        block.id === rich.id ? rich : block,
+      );
+      updateBlocksRef.current(nextBlocks);
+      target = rich;
+    }
+
+    if (target.type !== "heading" && target.type !== "text") return;
 
     if (editingTextId === target.id) {
       const bridge = textEditorBridgesRef.current.get(editingTextId);
@@ -457,7 +484,7 @@ export function useComunicadoEditorSelection({
     const runs = resolveTextBlockDisplayRuns(target);
     const nextRuns = applyNamedStyleOnAllLines(runs, namedStyle);
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
-  }, [configRef, editingTextId, selected, updateBlockTextFieldsRef]);
+  }, [configRef, editingTextId, selected, updateBlockTextFieldsRef, updateBlocksRef]);
 
   /** Ao trocar de slide: limpa seleção (não auto-seleciona o 1º bloco). */
   const resetSelectionForSlide = useCallback(() => {

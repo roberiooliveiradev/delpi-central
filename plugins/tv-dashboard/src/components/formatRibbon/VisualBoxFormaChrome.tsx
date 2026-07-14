@@ -126,8 +126,8 @@ type VisualBoxFormaChromeProps = {
 };
 
 /**
- * Forma unificada (texto/título e shape) — mesmas opções; flags via
- * `resolveVisualBoxElementCapabilities` (ex.: Alterar forma só em shape).
+ * Forma unificada (texto/título e shape) — mesmas opções; Alterar forma e ajustes
+ * conforme o kind geométrico (`resolveVisualBoxShapeKind`).
  */
 export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChromeProps) {
   const { selected, updateSelectedStyle } = useComunicadoEditor();
@@ -139,16 +139,14 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
   const block = selected;
   const profile = resolveVisualBoxProfile(block);
   const isTextMode = profile.mode === "text";
-  const primitive =
-    profile.mode === "shape" && block.type === "shape"
-      ? resolveShapePrimitive(block.shape)
-      : undefined;
+  const primitive = profile.primitive;
+  const shapeKind = profile.shapeKind;
 
-  const showFill = isTextMode || (primitive != null && shapeSupportsFill(primitive));
-  const showStroke = isTextMode || (primitive != null && shapeSupportsStroke(primitive));
-  const showCornerRadius = isTextMode || primitive !== "point";
-  const showShapeAdjustments = caps.shapeAdjustments && block.type === "shape";
-  const showMarker = caps.shapeMarker && block.type === "shape";
+  const showFill = shapeSupportsFill(primitive);
+  const showStroke = shapeSupportsStroke(primitive);
+  const showCornerRadius = primitive !== "point";
+  const showShapeAdjustments = caps.shapeAdjustments;
+  const showMarker = caps.shapeMarker;
 
   const fillValue = resolveFormaFill(block, isTextMode);
   const strokeValue = resolveFormaStroke(block, isTextMode, primitive);
@@ -246,10 +244,10 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
   const extrasPane =
     showShapeAdjustments || showMarker ? (
       <>
-        {showShapeAdjustments && block.type === "shape" ? (
+        {showShapeAdjustments ? (
           <SelectionPaneSection title="Ajustes da forma" hint={H.shapeAdjustment} defaultOpen={false}>
             <ShapeAdjustmentsControl
-              kind={block.shape}
+              kind={shapeKind}
               style={block.style}
               onChange={(patch) => updateSelectedStyle(patch)}
               variant="inspector"
@@ -257,7 +255,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
             />
           </SelectionPaneSection>
         ) : null}
-        {showMarker && block.type === "shape" ? (
+        {showMarker ? (
           <SelectionPaneSection title="Marcador" hint={H.markerRadius} defaultOpen={false}>
             <DeckRangeField
               id="td-shape-marker-radius"
@@ -280,15 +278,15 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
   const extrasRibbon =
     showShapeAdjustments || showMarker ? (
       <>
-        {showShapeAdjustments && block.type === "shape" ? (
+        {showShapeAdjustments ? (
           <ShapeAdjustmentsControl
-            kind={block.shape}
+            kind={shapeKind}
             style={block.style}
             onChange={(patch) => updateSelectedStyle(patch)}
             variant="ribbon"
           />
         ) : null}
-        {showMarker && block.type === "shape" ? (
+        {showMarker ? (
           <DeckRibbonGroup label="Marcador" hint={H.markerRadius}>
             <DeckRangeField
               id="td-shape-marker-radius"

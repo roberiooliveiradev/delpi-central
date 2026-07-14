@@ -1,14 +1,14 @@
 import {
   isComunicadoVisualBoxBlock,
   resolveShapePrimitive,
-  resolveVisualBoxProfile,
+  resolveVisualBoxShapeKind,
   shapeAdjustmentSpecs,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 /**
  * Capacidades da faixa Elemento para caixa visual (texto / título / forma).
- * Um único perfil controla o que exibir — ordem fixa: tipografia → Forma → rabo.
+ * Texto = forma sem fundo por padrão — mesmas opções (tipografia + Forma + Alterar forma).
  */
 export type VisualBoxElementCapabilities = {
   textHighlight: boolean;
@@ -43,33 +43,23 @@ export function resolveVisualBoxElementCapabilities(
 ): VisualBoxElementCapabilities | null {
   if (!block || !isComunicadoVisualBoxBlock(block)) return null;
 
-  const profile = resolveVisualBoxProfile(block);
-  const isTextMode = profile.mode === "text";
-  const isShapeMode = profile.mode === "shape";
-  const primitive =
-    isShapeMode && block.type === "shape"
-      ? resolveShapePrimitive(block.shape)
-      : undefined;
-  const shapeAdjustments =
-    isShapeMode &&
-    block.type === "shape" &&
-    shapeAdjustmentSpecs(block.shape).some(
-      (spec) => spec.id !== "corner" && spec.id !== "round",
-    );
+  const shapeKind = resolveVisualBoxShapeKind(block);
+  const primitive = resolveShapePrimitive(shapeKind);
+  const shapeAdjustments = shapeAdjustmentSpecs(shapeKind).some(
+    (spec) => spec.id !== "corner" && spec.id !== "round",
+  );
 
   return {
-    /* Tipografia — mesmas opções; ocultar só o que o modelo não sustenta. */
     textHighlight: true,
     clearFormatting: true,
     paragraphJustify: true,
-    paragraphLists: isTextMode,
-    paragraphNamedStyle: isTextMode,
+    paragraphLists: true,
+    paragraphNamedStyle: true,
     paragraphSpacing: true,
-    /* Forma — chrome comum; galeria/ajustes só em shape. */
-    shapeGallery: isShapeMode,
+    shapeGallery: true,
     shapeChrome: true,
-    shapeAdjustments: Boolean(shapeAdjustments),
-    shapeMarker: isShapeMode && primitive === "point",
+    shapeAdjustments,
+    shapeMarker: primitive === "point",
   };
 }
 

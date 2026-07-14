@@ -3,7 +3,9 @@ import { Replace } from "lucide-react";
 import {
   defaultFrame,
   defaultStrokeWidthForPrimitive,
+  isComunicadoVisualBoxBlock,
   resolveShapePrimitive,
+  resolveVisualBoxShapeKind,
   type ComunicadoBlock,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
@@ -19,20 +21,22 @@ import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
-/** Tile «Alterar forma» — reutilizado dentro do grupo Forma (caixa visual). */
+/** Tile «Alterar forma» — texto e shape (texto = forma sem fundo). */
 export function ShapeChangeControl() {
   const { selected, updateSelected } = useComunicadoEditor();
   const changeShapeAnchorRef = useRef<HTMLDivElement>(null);
   const [changeShapeOpen, setChangeShapeOpen] = useState(false);
 
-  if (!selected || selected.type !== "shape") return null;
+  if (!selected || !isComunicadoVisualBoxBlock(selected)) return null;
 
   const block = selected;
+  const currentKind = resolveVisualBoxShapeKind(block);
 
   const applyShapeKind = (kind: ComunicadoShapeKind) => {
-    const prevPrimitive = resolveShapePrimitive(block.shape);
+    const prevPrimitive = resolveShapePrimitive(currentKind);
     const nextPrimitive = resolveShapePrimitive(kind);
     const patch: Record<string, unknown> = { shape: kind };
+
     if (prevPrimitive !== nextPrimitive) {
       const nextFrame = defaultFrame("shape", kind);
       patch.frame = {
@@ -42,12 +46,16 @@ export function ShapeChangeControl() {
       };
       patch.style = {
         ...block.style,
-        strokeWidth: defaultStrokeWidthForPrimitive(nextPrimitive),
+        strokeWidth:
+          block.type === "heading" || block.type === "text"
+            ? (block.style?.strokeWidth ?? block.style?.borderWidth ?? 0)
+            : defaultStrokeWidthForPrimitive(nextPrimitive),
         ...(nextPrimitive === "point"
           ? { markerRadius: block.style?.markerRadius ?? 8 }
           : {}),
       };
     }
+
     updateSelected(patch as Partial<ComunicadoBlock>);
     rememberComunicadoShape(kind);
     setChangeShapeOpen(false);

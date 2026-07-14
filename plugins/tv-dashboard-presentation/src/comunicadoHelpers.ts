@@ -1376,6 +1376,10 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
 
   if (isComunicadoVisualBoxBlock(block)) {
     const profile = resolveVisualBoxProfile(block);
+    /* Texto e forma: fill/stroke/radius no gráfico — sombra via --tdp-block-box-shadow. */
+    stripOuterChromeStyle(css);
+    promoteBlockShadowToInnerChrome(css, style);
+
     if (profile.mode === "text") {
       css.display = "flex";
       css.flexDirection = "column";
@@ -1393,17 +1397,12 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
       else if (style.color && style.color !== "auto") css.color = style.color;
       if (style.fontFamily) css.fontFamily = style.fontFamily;
       if (style.fontWeight) css.fontWeight = style.fontWeight;
-  if (style.fontStyle) css.fontStyle = style.fontStyle;
-  if (style.lineHeight != null) css.lineHeight = style.lineHeight;
-  applyComunicadoTextEffectsToCss(style, css);
-  return css;
+      if (style.fontStyle) css.fontStyle = style.fontStyle;
+      if (style.lineHeight != null) css.lineHeight = style.lineHeight;
+      applyComunicadoTextEffectsToCss(style, css);
+      return css;
     }
 
-    /* Forma: fill/stroke/radius só no ComunicadoShapeGraphic — evita borda dupla no wrapper.
-     * Sombra também vai para o fill (via --tdp-block-box-shadow); no wrapper retangular
-     * o box-shadow ignora o raio dos cantos. */
-    stripOuterChromeStyle(css);
-    promoteBlockShadowToInnerChrome(css, style);
     if (block.content) {
       if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
       const shapeFill = style.fill ?? DECK_SHAPE_DEFAULTS.fill;

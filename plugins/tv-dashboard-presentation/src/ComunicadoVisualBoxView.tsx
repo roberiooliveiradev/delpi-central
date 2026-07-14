@@ -56,7 +56,7 @@ function DefaultTextContent({
   );
 }
 
-/** Caminho único de render: chrome da forma (opcional) + texto interno. */
+/** Caminho único: chrome geométrico + texto interno (texto = forma sem fundo por padrão). */
 export function ComunicadoVisualBoxView({
   block,
   fontScale = 1,
@@ -65,19 +65,26 @@ export function ComunicadoVisualBoxView({
   innerStyleOverride,
   editorInteractive = false,
 }: Props) {
-  const profile = resolveVisualBoxProfile(block);
   const chrome = resolveVisualBoxChrome(block);
-  const contentLayoutStyle = resolveVisualBoxContentLayoutStyle(block, { fontScale, editorInteractive });
-  const innerStyle = innerStyleOverride ?? comunicadoTextInnerStyle(
-    block.type === "heading" || block.type === "text" ? block : {
-      id: block.id,
-      type: "text",
-      content: block.content ?? "",
-      frame: block.frame,
-      style: block.style,
-    },
-    { fontScale },
-  );
+  const contentLayoutStyle = resolveVisualBoxContentLayoutStyle(block, {
+    fontScale,
+    editorInteractive,
+  });
+  const innerStyle =
+    innerStyleOverride ??
+    comunicadoTextInnerStyle(
+      block.type === "heading" || block.type === "text"
+        ? block
+        : {
+            id: block.id,
+            type: "text",
+            content: block.content ?? "",
+            frame: block.frame,
+            style: block.style,
+            shape: block.shape,
+          },
+      { fontScale },
+    );
 
   const textNode =
     textContent !== undefined ? (
@@ -90,14 +97,6 @@ export function ComunicadoVisualBoxView({
         innerStyle={innerStyle}
       />
     );
-
-  if (profile.mode === "text") {
-    return (
-      <div className="tdp-comunicado__visual-box-content" style={contentLayoutStyle}>
-        {textNode}
-      </div>
-    );
-  }
 
   return (
     <>
@@ -114,7 +113,10 @@ export function ComunicadoVisualBoxView({
         />
       ) : null}
       {textNode ? (
-        <div className="tdp-comunicado__shape-text tdp-comunicado__visual-box-content" style={contentLayoutStyle}>
+        <div
+          className="tdp-comunicado__shape-text tdp-comunicado__visual-box-content"
+          style={contentLayoutStyle}
+        >
           {textNode}
         </div>
       ) : null}

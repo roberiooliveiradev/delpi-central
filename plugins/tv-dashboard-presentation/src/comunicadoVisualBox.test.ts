@@ -6,7 +6,9 @@ import {
   resolveVisualBoxChrome,
   resolveVisualBoxContentLayoutStyle,
   resolveVisualBoxProfile,
+  resolveVisualBoxShapeKind,
   visualBoxBlockModifierClasses,
+  visualBoxEnsureRichTextBlock,
   visualBoxSupportsInlineTextEditing,
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
@@ -22,23 +24,29 @@ describe("comunicadoVisualBox", () => {
     expect(isComunicadoVisualBoxBlock(image)).toBe(false);
   });
 
-  it("deriva perfil texto sem chrome gráfico", () => {
+  it("texto é forma (retângulo) sem fundo — chrome gráfico ativo", () => {
     const block = createBlock("text", "Corpo");
     expect(resolveVisualBoxProfile(block)).toEqual({
       mode: "text",
       variant: "text",
+      shapeKind: "rectangle",
+      primitive: "area",
       textTag: "p",
       isRichTextBlock: true,
     });
+    expect(resolveVisualBoxShapeKind(block)).toBe("rectangle");
     expect(resolveVisualBoxChrome(block)).toEqual({
-      showShapeGraphic: false,
+      showShapeGraphic: true,
       fill: "transparent",
       stroke: "transparent",
       strokeWidth: 0,
+      borderRadius: undefined,
+      shapeKind: "rectangle",
     });
     expect(visualBoxSupportsTextFormatting(block)).toBe(true);
-    expect(visualBoxSupportsShapeFormatting(block)).toBe(false);
+    expect(visualBoxSupportsShapeFormatting(block)).toBe(true);
     expect(visualBoxBlockModifierClasses(block)).toContain("tdp-comunicado__visual-box--text");
+    expect(visualBoxBlockModifierClasses(block)).toContain("tdp-comunicado__visual-box--shape");
   });
 
   it("caixa de texto nasce sem fundo/borda e com cor Automático", () => {
@@ -91,13 +99,14 @@ describe("comunicadoVisualBox", () => {
     expect(resolveVisualBoxChrome(block).borderRadius).toBe(12);
   });
 
-  it("texto usa flex coluna; forma com texto usa overlay absoluto", () => {
+  it("texto e forma usam overlay absoluto sobre o gráfico", () => {
     const text = createBlock("heading", "A");
     const shape = { ...createShapeBlock("rectangle"), content: "Dentro" };
     expect(resolveVisualBoxContentLayoutStyle(text).justifyContent).toBe("center");
-    expect(resolveVisualBoxContentLayoutStyle(text).position).toBeUndefined();
+    expect(resolveVisualBoxContentLayoutStyle(text).position).toBe("absolute");
     const shapeLayout = resolveVisualBoxContentLayoutStyle(shape);
     expect(shapeLayout.position).toBe("absolute");
+    expect(shapeLayout.inset).toBe(0);
     expect(shapeLayout.textAlign).toBe("center");
     expect(shapeLayout.justifyContent).toBe("center");
     expect(shapeLayout.pointerEvents).toBe("none");
@@ -155,5 +164,20 @@ describe("comunicadoVisualBox", () => {
     expect(visualBoxBlockModifierClasses(point)).toContain(
       "tdp-comunicado__visual-box--primitive-point",
     );
+  });
+
+  it("converte forma em texto rico preservando kind geométrico", () => {
+    const shape = { ...createShapeBlock("rounded-rect"), content: "Olá" };
+    const rich = visualBoxEnsureRichTextBlock(shape);
+    expect(rich.type).toBe("text");
+    expect(rich.shape).toBe("rounded-rect");
+    expect(rich.content).toBe("Olá");
+    expect(visualBoxSupportsInlineTextEditing(shape)).toBe(true);
+  });
+
+  it("texto com shape explícito altera o chrome", () => {
+    const block = { ...createBlock("text", "X"), shape: "ellipse" as const };
+    expect(resolveVisualBoxShapeKind(block)).toBe("ellipse");
+    expect(resolveVisualBoxChrome(block).shapeKind).toBe("ellipse");
   });
 });

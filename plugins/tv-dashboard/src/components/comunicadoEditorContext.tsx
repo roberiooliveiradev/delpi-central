@@ -15,6 +15,7 @@ import {
   serializeComunicadoConfig,
   sortBlocksByZIndex,
   type ComunicadoConfig,
+  type ComunicadoBlock,
   type ComunicadoDataDisplayMode,
   type ComunicadoTextBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -150,6 +151,7 @@ export function ComunicadoEditorProvider({
   const updateBlockTextFieldsRef = useRef<
     (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => void
   >(() => {});
+  const updateBlocksRef = useRef<(next: ComunicadoBlock[]) => void>(() => {});
 
   const {
     resolvedByBlockId,
@@ -209,6 +211,7 @@ export function ComunicadoEditorProvider({
     configRef,
     blocks,
     updateBlockTextFieldsRef,
+    updateBlocksRef,
   });
 
   // Troca de slide: sincroniza config no mesmo render (evita 1 frame com gráfico do slide anterior).
@@ -338,6 +341,8 @@ export function ComunicadoEditorProvider({
     updateBlockTextFieldsRef,
     onInputBlocksRemoved,
   });
+
+  updateBlocksRef.current = blockActions.updateBlocks;
 
   const setSpeakerNotes = useCallback(
     (speakerNotes: string) => {

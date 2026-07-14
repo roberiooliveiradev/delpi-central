@@ -15,7 +15,10 @@ import {
   type ComunicadoVisualPrimitive,
 } from "./comunicadoVisualPrimitive";
 
-/** Modo visual da caixa — texto sem preenchimento/contorno; forma com chrome gráfico. */
+/**
+ * Modo tipográfico vs. geométrico.
+ * Texto/título também desenham chrome de forma (retângulo transparente por padrão).
+ */
 export type ComunicadoVisualBoxMode = "text" | "shape";
 
 export type ComunicadoVisualBoxBlock = ComunicadoTextBlock | ComunicadoShapeBlock;
@@ -24,11 +27,13 @@ export type ComunicadoVisualBoxProfile = {
   mode: ComunicadoVisualBoxMode;
   /** heading | text no modo texto; kind da forma no modo shape. */
   variant: "heading" | "text" | ComunicadoShapeKind;
-  /** Primitivo geométrico — omitido no modo texto. */
-  primitive?: ComunicadoVisualPrimitive;
+  /** Kind geométrico canônico — texto padrão `rectangle`. */
+  shapeKind: ComunicadoShapeKind;
+  /** Primitivo geométrico. */
+  primitive: ComunicadoVisualPrimitive;
   /** Tag semântica do conteúdo interno. */
   textTag: "h1" | "p" | "span";
-  /** Bloco de texto com contentRuns ou heading/text (não forma com texto plano). */
+  /** Bloco com contentRuns / tipografia rica (heading/text). */
   isRichTextBlock: boolean;
 };
 
@@ -41,11 +46,13 @@ export type ComunicadoVisualBoxChrome = {
   shapeKind?: ComunicadoShapeKind;
 };
 
-const TEXT_BOX_DEFAULTS = {
+const TEXT_BOX_CHROME_DEFAULTS = {
   fill: "transparent",
   stroke: "transparent",
   strokeWidth: 0,
 } as const;
+
+const DEFAULT_TEXT_SHAPE_KIND: ComunicadoShapeKind = "rectangle";
 
 export function isComunicadoVisualBoxBlock(
   block: ComunicadoBlock,
@@ -53,18 +60,41 @@ export function isComunicadoVisualBoxBlock(
   return block.type === "heading" || block.type === "text" || block.type === "shape";
 }
 
+/** Kind geométrico da caixa visual — texto omitido → retângulo. */
+export function resolveVisualBoxShapeKind(block: ComunicadoVisualBoxBlock): ComunicadoShapeKind {
+  if (block.type === "shape") return block.shape;
+  return block.shape ?? DEFAULT_TEXT_SHAPE_KIND;
+}
+
 export function resolveVisualBoxProfile(block: ComunicadoVisualBoxBlock): ComunicadoVisualBoxProfile {
+  const shapeKind = resolveVisualBoxShapeKind(block);
+  const primitive = resolveShapePrimitive(shapeKind);
+
   if (block.type === "heading") {
-    return { mode: "text", variant: "heading", textTag: "h1", isRichTextBlock: true };
+    return {
+      mode: "text",
+      variant: "heading",
+      shapeKind,
+      primitive,
+      textTag: "h1",
+      isRichTextBlock: true,
+    };
   }
   if (block.type === "text") {
-    return { mode: "text", variant: "text", textTag: "p", isRichTextBlock: true };
+    return {
+      mode: "text",
+      variant: "text",
+      shapeKind,
+      primitive,
+      textTag: "p",
+      isRichTextBlock: true,
+    };
   }
-  const shapeBlock = block as ComunicadoShapeBlock;
   return {
     mode: "shape",
-    variant: shapeBlock.shape,
-    primitive: resolveShapePrimitive(shapeBlock.shape),
+    variant: shapeKind,
+    shapeKind,
+    primitive,
     textTag: "span",
     isRichTextBlock: false,
   };
@@ -72,33 +102,41 @@ export function resolveVisualBoxProfile(block: ComunicadoVisualBoxBlock): Comuni
 
 export function resolveVisualBoxChrome(block: ComunicadoVisualBoxBlock): ComunicadoVisualBoxChrome {
   const profile = resolveVisualBoxProfile(block);
-  if (profile.mode === "text") {
-    return { showShapeGraphic: false, ...TEXT_BOX_DEFAULTS };
-  }
+  const style = block.style ?? {};
+  const shapeKind = profile.shapeKind;
+  const primitive = profile.primitive;
+  const isTextChrome = profile.mode === "text";
 
-  const shapeBlock = block as ComunicadoShapeBlock;
-  const style = shapeBlock.style ?? {};
-  const shape = shapeBlock.shape;
-  const primitive = resolveShapePrimitive(shape);
+  const fill = isTextChrome
+    ? (style.fill ?? style.backgroundColor ?? TEXT_BOX_CHROME_DEFAULTS.fill)
+    : (style.fill ?? DECK_SHAPE_DEFAULTS.fill);
+  const stroke = isTextChrome
+    ? (style.stroke ?? style.borderColor ?? TEXT_BOX_CHROME_DEFAULTS.stroke)
+    : (style.stroke ??
+      (primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke));
+  const strokeWidth = isTextChrome
+    ? (style.strokeWidth ?? style.borderWidth ?? TEXT_BOX_CHROME_DEFAULTS.strokeWidth)
+    : primitive === "point"
+      ? 0
+      : (style.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive));
+
   return {
     showShapeGraphic: true,
-    fill: style.fill ?? DECK_SHAPE_DEFAULTS.fill,
-    stroke:
-      style.stroke ??
-      (primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke),
-    strokeWidth:
-      primitive === "point" ? 0 : (style.strokeWidth ?? defaultStrokeWidthForPrimitive(primitive)),
+    fill,
+    stroke,
+    strokeWidth,
     borderRadius: style.borderRadius,
-    shapeKind: shape,
+    shapeKind,
   };
 }
 
 export function visualBoxSupportsTextFormatting(block: ComunicadoVisualBoxBlock): boolean {
-  return resolveVisualBoxProfile(block).mode === "text";
+  return resolveVisualBoxProfile(block).isRichTextBlock || Boolean(block.content?.trim());
 }
 
-export function visualBoxSupportsShapeFormatting(block: ComunicadoVisualBoxBlock): boolean {
-  return resolveVisualBoxProfile(block).mode === "shape";
+/** Qualquer caixa visual admite chrome de forma (texto = forma sem fundo). */
+export function visualBoxSupportsShapeFormatting(_block: ComunicadoVisualBoxBlock): boolean {
+  return true;
 }
 
 /** Palco do editor: duplo clique para editar texto interno (heading, text, shape). */
@@ -106,18 +144,40 @@ export function visualBoxSupportsInlineTextEditing(block: ComunicadoVisualBoxBlo
   return true;
 }
 
+/**
+ * Converte forma em bloco de texto rico preservando kind geométrico e estilo —
+ * lista / estilo nomeado exigem contentRuns.
+ */
+export function visualBoxEnsureRichTextBlock(
+  block: ComunicadoVisualBoxBlock,
+): ComunicadoTextBlock {
+  if (block.type === "heading" || block.type === "text") return block;
+  return {
+    id: block.id,
+    type: "text",
+    content: block.content ?? "",
+    frame: block.frame,
+    style: block.style,
+    shape: block.shape,
+    href: block.href,
+    linkTarget: block.linkTarget,
+    groupId: block.groupId,
+    animations: block.animations,
+  };
+}
+
 export function visualBoxBlockModifierClasses(block: ComunicadoVisualBoxBlock): string[] {
   const profile = resolveVisualBoxProfile(block);
-  if (profile.mode === "text") {
-    return [`tdp-comunicado__block--${block.type}`, "tdp-comunicado__visual-box--text"];
-  }
-  const shapeBlock = block as ComunicadoShapeBlock;
-  const primitive = profile.primitive ?? resolveShapePrimitive(shapeBlock.shape);
-  return [
-    "tdp-comunicado__block--shape",
+  const primitive = profile.primitive;
+  const classes = [
+    `tdp-comunicado__block--${block.type}`,
     "tdp-comunicado__visual-box--shape",
     `tdp-comunicado__visual-box--primitive-${primitive}`,
   ];
+  if (profile.mode === "text") {
+    classes.push("tdp-comunicado__visual-box--text");
+  }
+  return classes;
 }
 
 export function comunicadoVerticalAlignToJustifyContent(
@@ -152,33 +212,37 @@ export function resolveVisualBoxContentLayoutStyle(
     boxSizing: "border-box",
   };
 
+  /* Texto na forma: layout absoluto sobre o gráfico — mesmo path para text e shape. */
+  const textAlign = style.textAlign ?? (profile.mode === "text" ? undefined : "center");
+  const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForVisualBox(block);
   if (profile.mode === "text") {
     css.alignItems = "stretch";
-    const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForVisualBox(block);
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     if (style.textAlign) css.textAlign = style.textAlign;
+    css.position = "absolute";
+    css.inset = 0;
+    css.padding = "0.4em";
+    css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   } else {
-    const textAlign = style.textAlign ?? "center";
-    const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForVisualBox(block);
     css.alignItems =
       textAlign === "left" ? "flex-start" : textAlign === "right" ? "flex-end" : "center";
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     css.position = "absolute";
     css.inset = 0;
     css.padding = "0.4em";
-    css.textAlign = textAlign;
+    if (textAlign) css.textAlign = textAlign;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   }
 
   if (style.fontSize) css.fontSize = `${Math.max(8, style.fontSize * fontScale)}px`;
   const fillForContrast =
-    profile.mode === "shape"
-      ? (style.fill && style.fill !== "transparent" ? style.fill : DECK_SHAPE_DEFAULTS.fill)
-      : (style.backgroundColor && style.backgroundColor !== "transparent"
-          ? style.backgroundColor
-          : style.fill && style.fill !== "transparent"
-            ? style.fill
-            : "#ffffff");
+    style.fill && style.fill !== "transparent"
+      ? style.fill
+      : style.backgroundColor && style.backgroundColor !== "transparent"
+        ? style.backgroundColor
+        : profile.mode === "shape"
+          ? DECK_SHAPE_DEFAULTS.fill
+          : "#ffffff";
   const paintColor = resolvePaintTextColor(style.color, fillForContrast, {
     unsetIsAutomatic: false,
   });

@@ -180,6 +180,11 @@ export type ComunicadoTextBlock = ComunicadoBlockBase & {
   content: string;
   /** Trechos com estilo inline opcional (4C); omitido quando equivalente a `content` plano. */
   contentRuns?: ComunicadoContentRun[];
+  /**
+   * Kind geométrico da caixa — texto é uma forma que nasce como retângulo sem fundo.
+   * Omitido = `rectangle`.
+   */
+  shape?: ComunicadoShapeKind;
   href?: string;
   linkTarget?: "_blank" | "_self";
 };
