@@ -42,6 +42,7 @@ class ComunicadoEnrichmentService:
         authorization: str | None = None,
         playlist_defaults: dict[str, Any] | None = None,
         user: Any | None = None,
+        filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         custom_fonts = self._enrich_custom_fonts(
             cfg.get("customFonts"),
@@ -106,6 +107,7 @@ class ComunicadoEnrichmentService:
             authorization=authorization,
             playlist_defaults=playlist_defaults,
             user=user,
+            filter_overrides=filter_overrides,
         )
         payload: dict[str, Any] = {
             "version": version,

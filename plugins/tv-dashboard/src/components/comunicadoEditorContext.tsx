@@ -430,6 +430,7 @@ export function ComunicadoEditorProvider({
     addDataSourceBlock: blockActions.addDataSourceBlock,
     addChartViewBlock: blockActions.addChartViewBlock,
     addCanvasTableBlock: blockActions.addCanvasTableBlock,
+    addInputBlock: blockActions.addInputBlock,
     addTableViewBlock: blockActions.addTableViewBlock,
     addKpiViewBlock: blockActions.addKpiViewBlock,
     openDataPanel: blockActions.openDataPanel,

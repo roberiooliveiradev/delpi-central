@@ -11,6 +11,7 @@ const TYPE_LABELS: Record<string, string> = {
   chart_view: "Gráfico",
   table_view: "Tabela",
   canvas_table: "Tabela (canvas)",
+  input: "Campo / Filtro",
   kpi_view: "KPI",
   data_kpi: "Dados — KPI",
   data_chart: "Dados — Gráfico",
@@ -38,6 +39,9 @@ export function comunicadoBlockSummary(block: ComunicadoBlock): string {
   }
   if (block.type === "icon") {
     return block.iconName;
+  }
+  if (block.type === "input") {
+    return block.input?.label?.trim() || block.input?.paramKey || comunicadoBlockTypeLabel(block.type);
   }
   return comunicadoBlockTypeLabel(block.type);
 }

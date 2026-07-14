@@ -74,7 +74,7 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
           key={playlistId}
           payload={payload}
           playlistId={playlistId}
-          onRefresh={() => getPreviewPayload(playlistId)}
+          onRefresh={(filters) => getPreviewPayload(playlistId, filters)}
         />
       ) : null}
     </div>

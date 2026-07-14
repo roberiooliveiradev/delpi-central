@@ -350,12 +350,26 @@ export function StrategicIndicatorsHeroScreen({
 export function CustomMessageScreen({
   data,
   fontScale = 1,
+  inputsInteractive = false,
+  inputRuntimeValues,
+  onInputValueChange,
 }: {
   data: ComunicadoScreenDataLike & { background?: ComunicadoBackground };
   fontScale?: number;
+  inputsInteractive?: boolean;
+  inputRuntimeValues?: Record<string, string | number | boolean | null>;
+  onInputValueChange?: (blockId: string, value: string | number | boolean | null) => void;
 }) {
   if (hasRichComunicado(data)) {
-    return <RichComunicadoScreen data={data} fontScale={fontScale} />;
+    return (
+      <RichComunicadoScreen
+        data={data}
+        fontScale={fontScale}
+        inputsInteractive={inputsInteractive}
+        inputRuntimeValues={inputRuntimeValues}
+        onInputValueChange={onInputValueChange}
+      />
+    );
   }
   return (
     <div className="tdp-native-screen tdp-message">
@@ -370,6 +384,9 @@ export function CustomMessageScreen({
 function RichComunicadoScreen({
   data,
   fontScale = 1,
+  inputsInteractive = false,
+  inputRuntimeValues,
+  onInputValueChange,
 }: {
   data: ComunicadoScreenDataLike & {
     background?: ComunicadoBackground;
@@ -385,6 +402,9 @@ function RichComunicadoScreen({
     };
   };
   fontScale?: number;
+  inputsInteractive?: boolean;
+  inputRuntimeValues?: Record<string, string | number | boolean | null>;
+  onInputValueChange?: (blockId: string, value: string | number | boolean | null) => void;
 }) {
   const normalized = useMemo(
     () =>
@@ -442,7 +462,18 @@ function RichComunicadoScreen({
       ) : null}
       <div className="tdp-comunicado__stage">
         {blocks.map((block) => (
-          <ComunicadoBlockView key={block.id} block={block} fontScale={fontScale} />
+          <ComunicadoBlockView
+            key={block.id}
+            block={block}
+            fontScale={fontScale}
+            inputsInteractive={inputsInteractive}
+            inputRuntimeValue={
+              inputRuntimeValues && block.id in inputRuntimeValues
+                ? inputRuntimeValues[block.id]
+                : undefined
+            }
+            onInputValueChange={onInputValueChange}
+          />
         ))}
       </div>
     </div>
@@ -452,10 +483,16 @@ function RichComunicadoScreen({
 export function NativeSlideView({
   native,
   comunicadoFontScale,
+  inputsInteractive = false,
+  inputRuntimeValues,
+  onInputValueChange,
 }: {
   native: NativeSlidePayload;
   /** Escala tipográfica do comunicado (miniatura / preview do editor). */
   comunicadoFontScale?: number;
+  inputsInteractive?: boolean;
+  inputRuntimeValues?: Record<string, string | number | boolean | null>;
+  onInputValueChange?: (blockId: string, value: string | number | boolean | null) => void;
 }) {
   const key = native.screenKey;
   const data = native.data as Record<string, unknown>;
@@ -525,6 +562,9 @@ export function NativeSlideView({
           }
         }
         fontScale={comunicadoFontScale}
+        inputsInteractive={inputsInteractive}
+        inputRuntimeValues={inputRuntimeValues}
+        onInputValueChange={onInputValueChange}
       />
     );
   }

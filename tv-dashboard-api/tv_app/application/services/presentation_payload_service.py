@@ -5,6 +5,10 @@ from uuid import UUID
 
 from tv_app.application.services.comunicado_enrichment_service import ComunicadoEnrichmentService
 from tv_app.application.services.native_screen_data_service import NativeScreenDataService
+from tv_app.application.services.public_filter_overrides_service import (
+    allowlist_filter_overrides,
+    collect_allowed_input_keys_from_playlist_slides,
+)
 from tv_app.application.services.tv_dashboard_content_service import (
     heartbeat_interval_sec,
     presentation_setting_int,
@@ -39,6 +43,7 @@ class PresentationPayloadService:
         authorization: str | None = None,
         track_view: bool = False,
         user: Any | None = None,
+        filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         playlist = self._repo.get_by_token(token)
         if not playlist or not playlist.get("isActive"):
@@ -53,6 +58,7 @@ class PresentationPayloadService:
             authorization=authorization,
             public_media_urls=True,
             user=user,
+            filter_overrides=filter_overrides,
         )
 
     def build_by_id(
@@ -61,6 +67,7 @@ class PresentationPayloadService:
         *,
         authorization: str | None = None,
         user: Any | None = None,
+        filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         playlist = self._repo.get_by_id(playlist_id)
         if not playlist:
@@ -70,6 +77,7 @@ class PresentationPayloadService:
             authorization=authorization,
             public_media_urls=False,
             user=user,
+            filter_overrides=filter_overrides,
         )
 
     def _assemble_payload(
@@ -79,6 +87,7 @@ class PresentationPayloadService:
         authorization: str | None,
         public_media_urls: bool = False,
         user: Any | None = None,
+        filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         slides = [
             slide
@@ -89,6 +98,12 @@ class PresentationPayloadService:
         playlist_id = str(playlist["id"])
         public_token = str(playlist["publicToken"]) if public_media_urls else None
         playlist_defaults = playlist.get("dataDefaults") if isinstance(playlist.get("dataDefaults"), dict) else {}
+        allowed_slide_keys, allowed_by_source = collect_allowed_input_keys_from_playlist_slides(slides)
+        safe_overrides = allowlist_filter_overrides(
+            filter_overrides,
+            allowed_slide_keys=allowed_slide_keys,
+            allowed_by_source=allowed_by_source,
+        )
         rendered_slides: list[dict[str, Any]] = []
         for slide in slides:
             duration = slide.get("durationSec") or default_duration
@@ -113,6 +128,7 @@ class PresentationPayloadService:
                         public_token=public_token,
                         user=user,
                         playlist_defaults=playlist_defaults,
+                        filter_overrides=safe_overrides,
                     ),
                 }
             else:

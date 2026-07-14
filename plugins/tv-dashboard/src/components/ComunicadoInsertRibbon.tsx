@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { BarChart3, Database, Gauge, Grid3X3, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
+import { BarChart3, Database, Filter, Gauge, Grid3X3, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
 import {
   AnchoredPanelPortal,
   ChartTypeCatalogPanel,
@@ -40,6 +40,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     addIconBlock,
     addChartViewBlock,
     addCanvasTableBlock,
+    addInputBlock,
     addTableViewBlock,
     addKpiViewBlock,
     openDataCatalog,
@@ -224,6 +225,12 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             hint={H.insertDataSource ?? H.insertIndicator}
             keyTip={K.dataSource}
             onClick={() => openDataCatalog()}
+          />
+          <DeckRibbonTile
+            icon={Filter}
+            label="Filtro"
+            hint="Campo no palco que filtra fontes (params da rota). Editável também na TV."
+            onClick={() => addInputBlock()}
           />
           <DeckRibbonTile
             icon={Gauge}

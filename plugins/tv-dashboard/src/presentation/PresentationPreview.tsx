@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   usePresentationEngine,
   useFullscreenStage,
@@ -8,6 +8,12 @@ import {
   DesignViewportStage,
   buildAdminPresentationWsUrl,
   resolveSlideTransitionStyle,
+  applyRuntimeInputValue,
+  emptyInputFilterContributions,
+  hasInputFilterContributions,
+  isComunicadoInputBlock,
+  type ComunicadoBlock,
+  type InputFilterContributions,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { PresentationPayload } from "../api/tvDashboardApi";
@@ -19,8 +25,14 @@ type Props = {
   payload: PresentationPayload;
   playlistId?: string;
   onClose?: () => void;
-  onRefresh?: () => Promise<PresentationPayload>;
+  onRefresh?: (filters?: InputFilterContributions | null) => Promise<PresentationPayload>;
 };
+
+function blocksFromNativeData(data: Record<string, unknown> | undefined): ComunicadoBlock[] {
+  if (!data || typeof data !== "object") return [];
+  const blocks = data.blocks;
+  return Array.isArray(blocks) ? (blocks as ComunicadoBlock[]) : [];
+}
 
 export function PresentationPreview({ payload: initial, playlistId, onRefresh }: Props) {
   const presenterMode = useMemo(
@@ -30,24 +42,44 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
   const { ref, toggleFullscreen } = useFullscreenStage();
   const [booting, setBooting] = useState(true);
   const { visible: chromeVisible } = usePresentationChromeVisibility();
+  const [runtimeOverrides, setRuntimeOverrides] = useState<InputFilterContributions>(() =>
+    emptyInputFilterContributions(),
+  );
+  const [inputRuntimeValues, setInputRuntimeValues] = useState<
+    Record<string, string | number | boolean | null>
+  >({});
+  const overridesRef = useRef(runtimeOverrides);
+  overridesRef.current = runtimeOverrides;
+  const debounceRef = useRef<number | null>(null);
+
   const wsUrl = useMemo(() => {
     if (!playlistId) return null;
     const token = getAccessToken();
     if (!token) return null;
     return buildAdminPresentationWsUrl(playlistId, token);
   }, [playlistId]);
+
+  const reloadWithFilters = useCallback(async () => {
+    if (!onRefresh) return null;
+    const filters = hasInputFilterContributions(overridesRef.current)
+      ? overridesRef.current
+      : null;
+    return onRefresh(filters);
+  }, [onRefresh]);
+
   const {
     index,
     slides,
     viewport,
     payload,
+    setPayload,
     paused,
     setPaused,
     goPrevious,
     goNext,
   } = usePresentationEngine({
     initialPayload: initial,
-    onRefresh,
+    onRefresh: onRefresh ? reloadWithFilters : undefined,
     enableHiddenPause: false,
     enableKeyboardControls: true,
     refreshNativeSlidesOnly: true,
@@ -66,6 +98,38 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
       window.cancelAnimationFrame(inner);
     };
   }, [playlistId, initial.playlist?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current != null) window.clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleInputValueChange = useCallback(
+    (blockId: string, value: string | number | boolean | null) => {
+      const slide = slides[index];
+      const block = blocksFromNativeData(
+        slide?.native?.data as Record<string, unknown> | undefined,
+      ).find((item) => item.id === blockId);
+      if (!block || !isComunicadoInputBlock(block)) return;
+
+      setInputRuntimeValues((prev) => ({ ...prev, [blockId]: value }));
+      setRuntimeOverrides((prev) => {
+        const next = applyRuntimeInputValue(prev, block, value);
+        overridesRef.current = next;
+        return next;
+      });
+
+      if (!onRefresh) return;
+      if (debounceRef.current != null) window.clearTimeout(debounceRef.current);
+      debounceRef.current = window.setTimeout(() => {
+        void reloadWithFilters().then((next) => {
+          if (next) setPayload(next);
+        });
+      }, 400);
+    },
+    [slides, index, onRefresh, reloadWithFilters, setPayload],
+  );
 
   if (!slides.length) {
     return (
@@ -116,7 +180,13 @@ export function PresentationPreview({ payload: initial, playlistId, onRefresh }:
               aria-hidden={!active}
             >
               {slide.slideType === "native" && slide.native ? (
-                <NativeSlideView native={slide.native} comunicadoFontScale={1} />
+                <NativeSlideView
+                  native={slide.native}
+                  comunicadoFontScale={1}
+                  inputsInteractive
+                  inputRuntimeValues={active ? inputRuntimeValues : undefined}
+                  onInputValueChange={active ? handleInputValueChange : undefined}
+                />
               ) : (
                 <ExternalSlidePreview
                   url={slide.external?.url}

@@ -85,6 +85,7 @@ import type {
   ComunicadoDataFilters,
   ComunicadoDataResolved,
   ComunicadoChartType,
+  ComunicadoInputBlock,
   ComunicadoTablePreset,
   ComunicadoFrame,
   ComunicadoGeometryVertex,
@@ -93,6 +94,7 @@ import type {
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
 } from "./comunicadoTypes";
+import { resolveInputTargetScope } from "./comunicadoInputFilters";
 import { COMUNICADO_FONT_SIZE_MIN } from "./comunicadoTypes";
 import {
   isDataBoundEditorBlockType,
@@ -281,6 +283,34 @@ export function normalizeCanvasTableCells(
   });
 }
 
+export function createInputBlock(options?: {
+  paramKey?: string;
+  label?: string;
+  targetScope?: "slide" | "sources";
+  targetSourceIds?: string[];
+  defaultValue?: string | number | boolean | null;
+}): ComunicadoInputBlock {
+  const paramKey = typeof options?.paramKey === "string" ? options.paramKey.trim() : "";
+  const targetScope = options?.targetScope === "sources" ? "sources" : "slide";
+  const targetSourceIds =
+    targetScope === "sources"
+      ? (options?.targetSourceIds ?? []).map((id) => String(id).trim()).filter(Boolean)
+      : undefined;
+  return {
+    id: newBlockId(),
+    type: "input",
+    frame: defaultFrame("input"),
+    style: defaultStyle("input"),
+    input: {
+      paramKey,
+      label: typeof options?.label === "string" && options.label.trim() ? options.label.trim() : undefined,
+      defaultValue: options?.defaultValue ?? null,
+      targetScope,
+      ...(targetSourceIds && targetSourceIds.length > 0 ? { targetSourceIds } : {}),
+    },
+  };
+}
+
 export function createCanvasTableBlock(rows = 3, cols = 3): ComunicadoCanvasTableBlock {
   const safeRows = clampCanvasTableDimension(
     rows,
@@ -370,6 +400,7 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "chart_view") return { x: 10, y: 28, w: 80, h: 45 };
   if (type === "table_view") return { x: 5, y: 55, w: 90, h: 35 };
   if (type === "canvas_table") return { x: 20, y: 30, w: 60, h: 30 };
+  if (type === "input") return { x: 8, y: 8, w: 28, h: 12 };
   if (type === "kpi_view") return { ...DECK_KPI_DEFAULTS.frame };
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
@@ -477,6 +508,19 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (isDataViewBlockType(type)) {
     return { zIndex: 2, color: DECK_COLOR_TEXT_STRONG };
   }
+  if (type === "input") {
+    return {
+      zIndex: 4,
+      color: DECK_COLOR_TEXT_STRONG,
+      backgroundColor: "#ffffff",
+      borderColor: "#94a3b8",
+      borderWidth: 1,
+      borderRadius: 6,
+      fontSize: 14,
+      fontFamily: "Inter, system-ui, sans-serif",
+      textAlign: "left" as const,
+    };
+  }
   if (type === "canvas_table") {
     return {
       zIndex: 2,
@@ -519,6 +563,9 @@ export function createBlock(
   }
   if (type === "icon") {
     return { ...base, type: "icon", iconName: content || "Star" };
+  }
+  if (type === "input") {
+    return createInputBlock({ paramKey: content || "" });
   }
   if (isDataBlockType(type)) {
     return createDataBlock("", { blockType: type });
@@ -1051,6 +1098,46 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         cells: normalizeCanvasTableCells(block.cells, rows, cols),
         headerRow: block.headerRow !== false,
       },
+      block,
+    );
+  }
+  if (type === "input") {
+    const rawInput = block.input && typeof block.input === "object" ? (block.input as Record<string, unknown>) : {};
+    const paramKey = typeof rawInput.paramKey === "string" ? rawInput.paramKey.trim() : "";
+    const targetScope = resolveInputTargetScope({
+      paramKey,
+      targetScope: rawInput.targetScope === "sources" ? "sources" : "slide",
+    });
+    const targetSourceIds = Array.isArray(rawInput.targetSourceIds)
+      ? rawInput.targetSourceIds.map((id) => String(id ?? "").trim()).filter(Boolean)
+      : [];
+    const defaultValue =
+      rawInput.defaultValue === null ||
+      typeof rawInput.defaultValue === "string" ||
+      typeof rawInput.defaultValue === "number" ||
+      typeof rawInput.defaultValue === "boolean"
+        ? rawInput.defaultValue
+        : null;
+    return attachBlockAnimations(
+      {
+        id,
+        type: "input",
+        frame,
+        style: { ...defaultStyle("input"), ...style },
+        groupId,
+        input: {
+          paramKey,
+          label:
+            typeof rawInput.label === "string" && rawInput.label.trim()
+              ? rawInput.label.trim()
+              : undefined,
+          defaultValue,
+          targetScope,
+          ...(targetScope === "sources" && targetSourceIds.length > 0
+            ? { targetSourceIds }
+            : {}),
+        },
+      } as ComunicadoInputBlock,
       block,
     );
   }

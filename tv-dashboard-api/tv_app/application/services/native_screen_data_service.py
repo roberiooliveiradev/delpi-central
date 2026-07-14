@@ -54,9 +54,11 @@ class NativeScreenDataService:
         public_token: str | None = None,
         user: Any | None = None,
         playlist_defaults: dict[str, Any] | None = None,
+        filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         cfg = config or {}
-        if screen_key != "custom_message":
+        # custom_message + overrides: sem cache (sessão do kiosk).
+        if screen_key != "custom_message" and not filter_overrides:
             cache_key = build_native_data_cache_key(
                 screen_key=screen_key,
                 config=cfg,
@@ -74,8 +76,9 @@ class NativeScreenDataService:
             public_token=public_token,
             user=user,
             playlist_defaults=playlist_defaults,
+            filter_overrides=filter_overrides,
         )
-        if screen_key != "custom_message" and not result.get("error"):
+        if screen_key != "custom_message" and not filter_overrides and not result.get("error"):
             cache_key = build_native_data_cache_key(
                 screen_key=screen_key,
                 config=cfg,
@@ -94,6 +97,7 @@ class NativeScreenDataService:
         public_token: str | None = None,
         user: Any | None = None,
         playlist_defaults: dict[str, Any] | None = None,
+        filter_overrides: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         try:
             if screen_key == "production_oee_overview":
@@ -143,6 +147,7 @@ class NativeScreenDataService:
                         authorization=authorization,
                         playlist_defaults=playlist_defaults,
                         user=user,
+                        filter_overrides=filter_overrides,
                     )
                 return {
                     "headline": str(cfg.get("headline") or message("comunicadoDefaultHeadline", "Comunicado")),

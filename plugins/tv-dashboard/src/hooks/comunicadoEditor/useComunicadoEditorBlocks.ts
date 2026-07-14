@@ -7,6 +7,7 @@ import {
   createBlock,
   createChartViewBlock,
   createCanvasTableBlock,
+  createInputBlock,
   createConnectorBlock,
   createIconBlock,
   createKpiViewBlock,
@@ -231,6 +232,13 @@ export function useComunicadoEditorBlocks({
     },
     [configRef, setSelectedId, updateBlocks],
   );
+
+  const addInputBlock = useCallback(() => {
+    const block = createInputBlock({ targetScope: "slide", paramKey: "" });
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    setSelectedId(block.id);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }, [configRef, setSelectedId, updateBlocks]);
 
   const addKpiViewBlock = useCallback(() => {
     const block = createKpiViewBlock();
@@ -883,6 +891,7 @@ export function useComunicadoEditorBlocks({
     addDataSourceBlock,
     addChartViewBlock,
     addCanvasTableBlock,
+    addInputBlock,
     addTableViewBlock,
     addKpiViewBlock,
     openDataPanel,

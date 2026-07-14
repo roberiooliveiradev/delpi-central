@@ -34,11 +34,16 @@ import {
   partsToKpiOptions,
   resolveKpiPartFrameRoot,
   upsertKpiPartState,
+  isFetchableDataBlockType,
+  resolveInputParamSchemaField,
+  resolveInputTargetScope,
   type ComunicadoBlock,
   type ComunicadoChartPartFrame,
+  type ComunicadoDataFilters,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
   type ComunicadoChartViewBlock,
+  type ComunicadoInputBlock,
   type ComunicadoKpiPartFrame,
   type ComunicadoKpiPartRef,
   type ComunicadoKpiPartResizeHandle,
@@ -46,9 +51,11 @@ import {
   type ComunicadoMediaBlock,
   type ComunicadoTablePartRef,
   type ComunicadoTableViewBlock,
+  type InputParamSchema,
 } from "@delpi/tv-dashboard-presentation";
-import { useCallback, useMemo, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 
+import { listDataRoutes, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { ENUM_OPTION_LABELS, resolveParamFieldLabel } from "../content/dataParamCatalog";
 import { DATE_RANGE_PRESET_OPTIONS } from "../utils/dateRangePresets";
 
@@ -717,6 +724,87 @@ function EditorKpiViewBlock({
   );
 }
 
+function EditorInputBlock({
+  block,
+  fontScale,
+  className,
+  configBlocks,
+  dataFilters,
+  updateBlock,
+  setDataFilters,
+}: {
+  block: ComunicadoInputBlock;
+  fontScale?: number;
+  className?: string;
+  configBlocks: ComunicadoBlock[];
+  dataFilters: ComunicadoDataFilters | undefined;
+  updateBlock: (id: string, patch: Partial<ComunicadoBlock>) => void;
+  setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
+}) {
+  const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
+  useEffect(() => {
+    void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
+  }, []);
+
+  const decorated = useMemo(() => {
+    const scope = resolveInputTargetScope(block.input);
+    const fetchable = configBlocks.filter((item) => isFetchableDataBlockType(item.type));
+    const targets =
+      scope === "slide"
+        ? fetchable
+        : fetchable.filter((item) => (block.input.targetSourceIds ?? []).includes(item.id));
+    const schemas: InputParamSchema[] = targets
+      .map((item) => {
+        const operationId =
+          "dataBinding" in item && item.dataBinding?.operationId
+            ? item.dataBinding.operationId
+            : "";
+        const route = routes.find((entry) => entry.operationId === operationId);
+        return (route?.paramSchema ?? {}) as InputParamSchema;
+      })
+      .filter((schema) => Object.keys(schema).length > 0);
+    const field = block.input.paramKey
+      ? resolveInputParamSchemaField(block.input.paramKey, schemas)
+      : null;
+    return {
+      ...block,
+      input: {
+        ...block.input,
+        resolvedField: field ?? undefined,
+        paramAvailable: Boolean(field),
+      },
+    } as ComunicadoInputBlock & {
+      input: ComunicadoInputBlock["input"] & {
+        resolvedField?: InputParamSchema[string];
+        paramAvailable?: boolean;
+      };
+    };
+  }, [block, configBlocks, routes]);
+
+  return (
+    <ComunicadoBlockView
+      block={decorated}
+      fontScale={fontScale}
+      interactive
+      inputsInteractive
+      embedded
+      className={className}
+      onInputValueChange={(_blockId, value) => {
+        const nextInput = { ...block.input, defaultValue: value };
+        updateBlock(block.id, { input: nextInput });
+        if (resolveInputTargetScope(nextInput) !== "slide" || !nextInput.paramKey) return;
+        const filters = { ...(dataFilters ?? {}) };
+        if (value === undefined || value === null || value === "") {
+          delete filters[nextInput.paramKey];
+        } else {
+          filters[nextInput.paramKey] = value;
+        }
+        setDataFilters(Object.keys(filters).length > 0 ? filters : undefined);
+      }}
+    />
+  );
+}
+
 function resolveEditorDataParamValueLabel(key: string, value: string): string {
   const fromEnum = ENUM_OPTION_LABELS[key]?.[value];
   if (fromEnum) return fromEnum;
@@ -736,7 +824,7 @@ export function ComunicadoEditorBlockView({
   isEditingText = false,
   dataLoading = false,
 }: Props) {
-  const { updateBlock, config } = useComunicadoEditor();
+  const { updateBlock, config, setDataFilters } = useComunicadoEditor();
   const slideDataFilters = config.dataFilters ?? null;
   const dataParamLabelProps = useMemo(
     () => ({
@@ -816,6 +904,20 @@ export function ComunicadoEditorBlockView({
           cells[row]![col] = value;
           updateBlock(block.id, { cells });
         }}
+      />
+    );
+  }
+
+  if (block.type === "input") {
+    return (
+      <EditorInputBlock
+        block={block as ComunicadoInputBlock}
+        fontScale={fontScale}
+        className={className}
+        configBlocks={config.blocks ?? []}
+        dataFilters={config.dataFilters}
+        updateBlock={updateBlock}
+        setDataFilters={setDataFilters}
       />
     );
   }

@@ -19,6 +19,7 @@ import { ChartViewBlockView } from "./chartViewBlockView";
 import { DataSourceBlockView } from "./dataSourceBlockView";
 import { KpiViewBlockView } from "./kpiViewBlockView";
 import { TableViewBlockView } from "./tableViewBlockView";
+import { ComunicadoInputBlockView } from "./ComunicadoInputBlockView";
 import { TvDataBlockView } from "./tvDataBlockView";
 
 type Props = {
@@ -26,6 +27,11 @@ type Props = {
   fontScale?: number;
   className?: string;
   interactive?: boolean;
+  /** Kiosk/editor: permite editar blocos `input` (filtros da sessão). */
+  inputsInteractive?: boolean;
+  /** Valor runtime do input (kiosk); se omitido usa defaultValue. */
+  inputRuntimeValue?: string | number | boolean | null;
+  onInputValueChange?: (blockId: string, value: string | number | boolean | null) => void;
   /** Quando true, o pai controla left/top/width/height. */
   embedded?: boolean;
   dataLoading?: boolean;
@@ -99,6 +105,9 @@ export function ComunicadoBlockView({
   fontScale = 1,
   className = "",
   interactive = false,
+  inputsInteractive = false,
+  inputRuntimeValue,
+  onInputValueChange,
   embedded = false,
   dataLoading = false,
   slideDataFilters = null,
@@ -260,6 +269,42 @@ export function ComunicadoBlockView({
       blockClass("tdp-comunicado__block--kpi-view"),
       style,
       <KpiViewBlockView block={block} interactive={interactive} loading={dataLoading} />,
+    );
+  }
+
+  if (block.type === "input") {
+    const resolvedField =
+      block.input &&
+      typeof block.input === "object" &&
+      "resolvedField" in block.input &&
+      block.input.resolvedField &&
+      typeof block.input.resolvedField === "object"
+        ? (block.input.resolvedField as {
+            type?: string;
+            label?: string;
+            description?: string;
+            enum?: Array<string | number | boolean>;
+            format?: string;
+          })
+        : null;
+    const paramAvailable =
+      !("paramAvailable" in (block.input ?? {})) || Boolean((block.input as { paramAvailable?: boolean }).paramAvailable);
+    const canEdit = interactive || inputsInteractive;
+    return mountBlockRoot(
+      blockClass("tdp-comunicado__block--input"),
+      style,
+      <ComunicadoInputBlockView
+        block={block}
+        field={resolvedField}
+        value={inputRuntimeValue}
+        interactive={canEdit}
+        paramAvailable={paramAvailable && Boolean(block.input?.paramKey)}
+        onChange={
+          onInputValueChange
+            ? (value) => onInputValueChange(block.id, value)
+            : undefined
+        }
+      />,
     );
   }
 

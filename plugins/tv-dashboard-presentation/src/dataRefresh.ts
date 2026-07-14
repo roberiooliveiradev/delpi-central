@@ -74,5 +74,24 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
           ? block.dataSourceId
           : undefined,
     }));
-  return JSON.stringify({ dataFilters, blocks: [...legacyBlocks, ...sourceBlocks], viewLinks });
+  const inputBlocks = (config.blocks ?? [])
+    .filter((block) => block.type === "input")
+    .map((block) =>
+      block.type === "input"
+        ? {
+            id: block.id,
+            paramKey: block.input?.paramKey ?? "",
+            defaultValue: block.input?.defaultValue ?? null,
+            targetScope: block.input?.targetScope ?? "slide",
+            targetSourceIds: block.input?.targetSourceIds ?? [],
+          }
+        : null,
+    )
+    .filter(Boolean);
+  return JSON.stringify({
+    dataFilters,
+    blocks: [...legacyBlocks, ...sourceBlocks],
+    viewLinks,
+    inputs: inputBlocks,
+  });
 }

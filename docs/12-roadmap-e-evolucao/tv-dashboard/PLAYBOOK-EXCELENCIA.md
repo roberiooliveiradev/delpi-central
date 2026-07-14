@@ -1262,9 +1262,14 @@ Enriquecimentos manuais por `operationId` são **preservados** na regeneração 
 **Ordem de merge (prioridade crescente):**
 
 ```text
-playlist.dataDefaults  →  slide.dataFilters  →  block.dataBinding.params
+playlist.dataDefaults
+  →  slide.dataFilters ∪ inputs targetScope=slide (+ overrides de sessão no kiosk)
+  →  contribuições de inputs targetScope=sources (por dataSourceId)
+  →  block.dataBinding.params
                               (herança)              (mais específico ganha)
 ```
+
+Bloco **`input`** (Inserir → Filtro): controle no palco ligado só a chaves do `paramSchema` das fontes alvo (interseção). No kiosk/prévia, overrides efêmeros via `GET …/present/{token}?filters=` (allowlist pelos blocos `input`); não gravam a playlist.
 
 Exemplo no `native_config` (v4):
 
@@ -1311,11 +1316,11 @@ Exemplo no `native_config` (v4):
 | Herança visual | Badge «Filial: herdada do slide» vs valor explícito no bloco |
 | Preview | Chama enrichment com merge real; gestor vê dados filtrados antes de publicar |
 
-**TV / link público — filtros são fixos**
+**TV / link público — filtros**
 
-- A TV **não** exibe slicers clicáveis (modo kiosk, autoplay).
-- Filtros são **congelados** na configuração salva; mudança = editar no admin + WebSocket atualiza a TV.
-- **Fora de escopo v1:** totem touch com filtro interativo para visitante (possível Onda futura).
+- Defaults vêm da playlist/slide; mudança estrutural = editar no admin (+ WebSocket).
+- Com bloco **`input`**, a TV/prévia permite ajuste de sessão (refetch com `filters`); valores não persistem.
+- Sem blocos `input`, o kiosk permanece com filtros fixos da programação.
 
 **Comparação rápida com Power BI**
 

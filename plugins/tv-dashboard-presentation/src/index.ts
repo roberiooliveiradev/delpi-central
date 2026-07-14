@@ -84,6 +84,8 @@ export type {
   ComunicadoBlockAnimationKind,
   ComunicadoBlockStyle,
   ComunicadoCanvasTableBlock,
+  ComunicadoInputBlock,
+  ComunicadoInputTargetScope,
   ComunicadoConfig,
   ComunicadoCustomFontRef,
   ComunicadoContentRun,
@@ -237,6 +239,23 @@ export {
   DATA_REFRESH_SEC_MIN,
   resolveDataBlockRefreshSec,
 } from "./dataRefresh";
+export {
+  applyRuntimeInputValue,
+  collectInputFilterContributions,
+  emptyInputFilterContributions,
+  hasInputFilterContributions,
+  intersectParamSchemaKeys,
+  isComunicadoInputBlock,
+  isInputBlockType,
+  isValueAllowedByParamSchema,
+  listFetchableSourceIds,
+  mergeFilterLayers,
+  resolveInputParamSchemaField,
+  resolveInputTargetScope,
+  type InputFilterContributions,
+  type InputParamSchema,
+  type InputParamSchemaField,
+} from "./comunicadoInputFilters";
 export type { DataPresentationOption } from "./comunicadoDataPresentation";
 export {
   blockCssStyle,
@@ -252,6 +271,7 @@ export {
   sanitizeDataSourceStyle,
   createChartViewBlock,
   createCanvasTableBlock,
+  createInputBlock,
   createTableViewBlock,
   createKpiViewBlock,
   createIconBlock,
@@ -288,6 +308,8 @@ export {
 } from "./comunicadoHelpers";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
 export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
+export { ComunicadoInputBlockView } from "./ComunicadoInputBlockView";
+export type { InputResolvedField } from "./ComunicadoInputBlockView";
 export { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
 export {
   type ComunicadoVisualBoxBlock,

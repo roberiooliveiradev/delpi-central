@@ -5,6 +5,10 @@ from typing import Any
 
 from tv_app.application.services.branch_policy_service import validate_native_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
+from tv_app.application.services.comunicado_input_filters_service import (
+    collect_input_filter_contributions,
+    merge_filter_layers,
+)
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
 from tv_app.application.services.native_screen_cache_service import (
@@ -383,8 +387,45 @@ class ComunicadoDataEnrichmentService:
         playlist_defaults: dict[str, Any] | None = None,
         user: Any | None = None,
         force_refresh: bool = False,
+        filter_overrides: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
+        schema_by_source_id: dict[str, dict[str, Any]] = {}
+        slide_schemas: list[dict[str, Any]] = []
+        for block in blocks:
+            if not isinstance(block, dict):
+                continue
+            if str(block.get("type") or "") not in DATA_BLOCK_TYPES:
+                continue
+            binding = block.get("dataBinding")
+            if not isinstance(binding, dict):
+                continue
+            operation_id = str(binding.get("operationId") or "").strip()
+            route = self._catalog.get_route(operation_id) if operation_id else None
+            schema = (
+                route.get("paramSchema")
+                if isinstance(route, dict) and isinstance(route.get("paramSchema"), dict)
+                else {}
+            )
+            source_id = str(block.get("id") or "")
+            if source_id:
+                schema_by_source_id[source_id] = schema
+            if schema:
+                slide_schemas.append(schema)
+
+        contributions = collect_input_filter_contributions(
+            blocks,
+            runtime_overrides=filter_overrides,
+            schema_by_source_id=schema_by_source_id,
+            slide_schemas=slide_schemas,
+        )
+        slide_with_inputs = merge_filter_layers(slide_filters, contributions.get("slide"))
+        by_source = (
+            contributions.get("bySourceId")
+            if isinstance(contributions.get("bySourceId"), dict)
+            else {}
+        )
+
         # Dedupe in-request: mesmas operationId+params ⇒ um fetch nesta montagem.
         request_memo: dict[str, dict[str, Any]] = {}
         enriched: list[dict[str, Any]] = []
@@ -393,10 +434,13 @@ class ComunicadoDataEnrichmentService:
                 continue
             block_type = str(block.get("type") or "")
             if block_type in DATA_BLOCK_TYPES:
+                source_id = str(block.get("id") or "")
+                source_contrib = by_source.get(source_id) if isinstance(by_source.get(source_id), dict) else {}
+                effective_slide = merge_filter_layers(slide_with_inputs, source_contrib)
                 enriched.append(
                     self._enrich_data_block(
                         block,
-                        slide_filters=slide_filters,
+                        slide_filters=effective_slide,
                         playlist_defaults=playlist_defaults,
                         authorization=authorization,
                         user=user,
@@ -408,8 +452,53 @@ class ComunicadoDataEnrichmentService:
             if block_type in DATA_VIEW_BLOCK_TYPES:
                 enriched.append(dict(block))
                 continue
+            if block_type == "input":
+                enriched.append(
+                    self._decorate_input_block(
+                        block,
+                        schema_by_source_id=schema_by_source_id,
+                        slide_schemas=slide_schemas,
+                    )
+                )
+                continue
             enriched.append(block)
         return self._link_view_blocks_to_sources(enriched)
+
+    def _decorate_input_block(
+        self,
+        block: dict[str, Any],
+        *,
+        schema_by_source_id: dict[str, dict[str, Any]],
+        slide_schemas: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Anexa resolvedField (snapshot do paramSchema) para UI do kiosk sem catálogo no cliente."""
+        from tv_app.application.services.comunicado_input_filters_service import (
+            resolve_input_param_schema_field,
+            resolve_input_target_scope,
+        )
+
+        result = dict(block)
+        input_cfg = dict(block.get("input")) if isinstance(block.get("input"), dict) else {}
+        param_key = str(input_cfg.get("paramKey") or "").strip()
+        scope = resolve_input_target_scope(input_cfg)
+        if scope == "slide":
+            schemas = slide_schemas
+        else:
+            ids = [
+                str(item).strip()
+                for item in (input_cfg.get("targetSourceIds") or [])
+                if str(item).strip()
+            ]
+            schemas = [schema_by_source_id[sid] for sid in ids if sid in schema_by_source_id]
+        field = resolve_input_param_schema_field(param_key, schemas) if param_key else None
+        if field:
+            input_cfg["resolvedField"] = field
+            input_cfg["paramAvailable"] = True
+        else:
+            input_cfg["paramAvailable"] = False
+            input_cfg.pop("resolvedField", None)
+        result["input"] = input_cfg
+        return result
 
     @staticmethod
     def _link_view_blocks_to_sources(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:

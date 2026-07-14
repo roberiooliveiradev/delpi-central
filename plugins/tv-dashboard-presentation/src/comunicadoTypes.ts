@@ -304,6 +304,28 @@ export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
   headerRow?: boolean;
 };
 
+/** Escopo do filtro no palco: slide inteiro ou fontes específicas. */
+export type ComunicadoInputTargetScope = "slide" | "sources";
+
+/**
+ * Campo de filtro no palco — alimenta params das fontes via paramSchema da rota.
+ * Não é fetchable; opções vêm do catálogo em runtime (não persistem enum/controlKind).
+ */
+export type ComunicadoInputBlock = ComunicadoBlockBase & {
+  type: "input";
+  input: {
+    /** Chave do paramSchema das fontes alvo (interseção). */
+    paramKey: string;
+    /** Rótulo na UI; vazio = label do schema. */
+    label?: string;
+    defaultValue?: string | number | boolean | null;
+    /** Padrão: slide. */
+    targetScope?: ComunicadoInputTargetScope;
+    /** Obrigatório se targetScope === "sources". */
+    targetSourceIds?: string[];
+  };
+};
+
 export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
   type: "kpi_view";
   dataSourceId?: string;
@@ -364,7 +386,8 @@ export type ComunicadoBlock =
   | ComunicadoChartViewBlock
   | ComunicadoTableViewBlock
   | ComunicadoCanvasTableBlock
-  | ComunicadoKpiViewBlock;
+  | ComunicadoKpiViewBlock
+  | ComunicadoInputBlock;
 
 export type ComunicadoDataFilters = Record<string, string | number | boolean | null>;
 

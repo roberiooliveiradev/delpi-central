@@ -1498,3 +1498,53 @@
 
 /* Paint do gráfico de séries: plugin-ui/src/styles/series-chart.css (prefixo delpi-ui-series-chart). */
 
+.tdp-comunicado__input-block {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  padding: 0.35em 0.5em;
+  background: color-mix(in srgb, var(--tdp-data-surface, #fff) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 45%, transparent);
+  border-radius: 6px;
+}
+
+.tdp-comunicado__input-block-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25em;
+  width: 100%;
+  min-width: 0;
+  font-size: clamp(11px, 1.1vw, 14px);
+  color: var(--tdp-data-text, #0f172a);
+}
+
+.tdp-comunicado__input-block-label-text {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.tdp-comunicado__input-block-control {
+  width: 100%;
+  min-height: 1.8em;
+  box-sizing: border-box;
+  padding: 0.2em 0.4em;
+  border: 1px solid color-mix(in srgb, var(--tdp-data-muted, #94a3b8) 55%, transparent);
+  border-radius: 4px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.tdp-comunicado__input-block-value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+.tdp-comunicado__input-block-unavailable {
+  font-size: 0.9em;
+  color: #b45309;
+}
+

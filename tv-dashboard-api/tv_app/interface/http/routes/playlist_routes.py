@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
@@ -11,6 +11,7 @@ from tv_app.application.services.playlist_access_service import PlaylistAccessSe
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.presentation_status_service import build_presentation_status
+from tv_app.application.services.public_filter_overrides_service import parse_filter_overrides_query
 from tv_app.application.services.qr_service import build_public_presentation_url, render_qr_png
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_dashboard_portal_notification_service import (
@@ -242,14 +243,28 @@ def activate_playlist(request: Request, playlist_id: UUID):
 
 
 @router.get("/{playlist_id}/preview-payload")
-def preview_payload(request: Request, playlist_id: UUID):
+def preview_payload(
+    request: Request,
+    playlist_id: UUID,
+    filters: str | None = Query(default=None, description="JSON { slide, bySourceId }"),
+):
     guarded = require_playlist_access(request, playlist_id, need="read")
     if is_access_error(guarded):
         return guarded
     user, _access_result = guarded
     auth = request.headers.get("Authorization")
+    df_params: dict[str, str] = {}
+    for key, value in request.query_params.multi_items():
+        if key.startswith("df.") and len(key) > 3:
+            df_params[key[3:]] = value
+    filter_overrides = parse_filter_overrides_query(filters, df_params or None)
     try:
-        payload = _present.build_by_id(playlist_id, authorization=auth, user=user)
+        payload = _present.build_by_id(
+            playlist_id,
+            authorization=auth,
+            user=user,
+            filter_overrides=filter_overrides,
+        )
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     return ok(payload)

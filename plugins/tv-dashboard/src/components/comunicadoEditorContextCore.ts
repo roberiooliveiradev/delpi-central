@@ -126,6 +126,7 @@ export type ComunicadoEditorContextValue = {
   addDataSourceBlock: (block: ComunicadoBlock) => void;
   addChartViewBlock: (chartType: ComunicadoChartType) => void;
   addCanvasTableBlock: (rows?: number, cols?: number) => void;
+  addInputBlock: () => void;
   addTableViewBlock: (rows: number, cols: number, preset: ComunicadoTablePreset) => void;
   addKpiViewBlock: () => void;
   openDataPanel: () => void;

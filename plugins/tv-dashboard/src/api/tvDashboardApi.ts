@@ -320,9 +320,25 @@ export async function duplicateSlide(playlistId: string, slideId: string) {
   );
 }
 
-export async function getPreviewPayload(id: string) {
+export type PreviewFilterOverrides = {
+  slide?: Record<string, string | number | boolean | null>;
+  bySourceId?: Record<string, Record<string, string | number | boolean | null>>;
+};
+
+export async function getPreviewPayload(id: string, filters?: PreviewFilterOverrides | null) {
+  const params = new URLSearchParams();
+  if (filters) {
+    const slide = filters.slide ?? {};
+    const bySourceId = filters.bySourceId ?? {};
+    if (Object.keys(slide).length > 0 || Object.keys(bySourceId).length > 0) {
+      params.set("filters", JSON.stringify({ slide, bySourceId }));
+    }
+  }
+  const qs = params.toString();
   return unwrap(
-    httpGet<ApiEnvelope<PresentationPayload>>(`${API_BASE}/playlists/${id}/preview-payload`),
+    httpGet<ApiEnvelope<PresentationPayload>>(
+      `${API_BASE}/playlists/${id}/preview-payload${qs ? `?${qs}` : ""}`,
+    ),
   );
 }
 
