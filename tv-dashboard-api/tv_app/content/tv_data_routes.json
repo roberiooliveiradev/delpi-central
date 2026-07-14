@@ -3037,11 +3037,12 @@
       "category": "production",
       "path": "/production/allocation-gaps",
       "allowedDisplayModes": [
+        "table",
         "kpi",
         "auto"
       ],
       "metaShape": "playbook_report",
-      "description": "Relatório operacional: «Componentes sem empenho (travamento)».",
+      "description": "Lista componentes com empenho zerado (travamento). Preferir tabela; KPI resume a quantidade.",
       "paramSchema": {
         "reference_date": {
           "type": "string",
@@ -3068,7 +3069,11 @@
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
         }
       },
-      "paramStrategy": "direct"
+      "paramStrategy": "direct",
+      "tableFields": "items",
+      "valueFields": [
+        "allocated_qty"
+      ]
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -3832,13 +3837,13 @@
       "defaultParams": {
         "periodDays": 7
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
       "fixedQueryParams": {
         "granularity": "day"
       },
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      }
+      "seriesField": "points"
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -4198,13 +4203,13 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
       "fixedQueryParams": {
         "granularity": "day"
       },
-      "seriesField": "points",
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      }
+      "seriesField": "points"
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -4749,14 +4754,14 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
       "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
+      },
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
       }
     },
     {
@@ -7879,11 +7884,11 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "description": "Indicador numérico para «Qualidade — PPM externo».",
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "description": "Indicador numérico para «Qualidade — PPM externo».",
       "valueFields": [
         "value",
         "ppm",
@@ -8060,11 +8065,11 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "description": "Indicador numérico para «Qualidade — PPM interno».",
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "description": "Indicador numérico para «Qualidade — PPM interno».",
       "valueFields": [
         "value",
         "ppm",

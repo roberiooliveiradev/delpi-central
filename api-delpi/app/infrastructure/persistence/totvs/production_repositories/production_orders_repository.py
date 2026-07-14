@@ -63,6 +63,7 @@ class ProductionOrdersRepository(
         FROM SC2010 OP WITH (NOLOCK)
         INNER JOIN SD4010 RE WITH (NOLOCK)
             ON RE.D4_OP = OP.C2_OP
+           AND RE.D4_FILIAL = OP.C2_FILIAL
            AND RE.D_E_L_E_T_ = ''
         INNER JOIN SB1010 P WITH (NOLOCK)
             ON P.B1_COD = OP.C2_PRODUTO
@@ -70,6 +71,7 @@ class ProductionOrdersRepository(
         INNER JOIN SH8010 OA WITH (NOLOCK)
             ON OA.H8_OP = RE.D4_OP
            AND OA.H8_OPER = RE.D4_OPERAC
+           AND OA.H8_FILIAL = OP.C2_FILIAL
            AND OA.D_E_L_E_T_ = ''
         WHERE OP.D_E_L_E_T_ = ''
           AND OP.C2_QUANT > OP.C2_QUJE
@@ -124,6 +126,7 @@ class ProductionOrdersRepository(
         FROM SC2010 OP WITH (NOLOCK)
         INNER JOIN SD4010 RE WITH (NOLOCK)
             ON RE.D4_OP = OP.C2_OP
+           AND RE.D4_FILIAL = OP.C2_FILIAL
            AND RE.D_E_L_E_T_ = ''
         INNER JOIN SB1010 P WITH (NOLOCK)
             ON P.B1_COD = OP.C2_PRODUTO
@@ -131,6 +134,7 @@ class ProductionOrdersRepository(
         INNER JOIN SH8010 OA WITH (NOLOCK)
             ON OA.H8_OP = RE.D4_OP
            AND OA.H8_OPER = RE.D4_OPERAC
+           AND OA.H8_FILIAL = OP.C2_FILIAL
            AND OA.D_E_L_E_T_ = ''
         WHERE OP.D_E_L_E_T_ = ''
           AND OP.C2_QUANT = OP.C2_QUJE
@@ -170,11 +174,13 @@ class ProductionOrdersRepository(
         )
         params = [reference_date, *extra_params]
 
+        # Componente = D4_COD (não D4_PRODUTO, que é o produto pai da OP).
+        # JOINs com filial evitam produto cartesiano entre filiais (timeout no consolidado).
         sql = f"""
         SELECT TOP {int(limit)}
             RE.D4_FILIAL AS branch,
             RE.D4_OP AS production_order,
-            RE.D4_PRODUTO AS component_code,
+            RE.D4_COD AS component_code,
             P.B1_DESC AS description,
             RE.D4_OPERAC AS operation,
             RE.D4_QUANT AS allocated_qty,
@@ -182,13 +188,15 @@ class ProductionOrdersRepository(
         FROM SD4010 RE WITH (NOLOCK)
         INNER JOIN SC2010 OP WITH (NOLOCK)
             ON OP.C2_OP = RE.D4_OP
+           AND OP.C2_FILIAL = RE.D4_FILIAL
            AND OP.D_E_L_E_T_ = ''
         INNER JOIN SB1010 P WITH (NOLOCK)
-            ON RE.D4_PRODUTO = P.B1_COD
+            ON P.B1_COD = RE.D4_COD
            AND P.D_E_L_E_T_ = ''
         INNER JOIN SH8010 OA WITH (NOLOCK)
-            ON RE.D4_OP = OA.H8_OP
-           AND RE.D4_OPERAC = OA.H8_OPER
+            ON OA.H8_OP = RE.D4_OP
+           AND OA.H8_OPER = RE.D4_OPERAC
+           AND OA.H8_FILIAL = RE.D4_FILIAL
            AND OA.D_E_L_E_T_ = ''
         WHERE RE.D_E_L_E_T_ = ''
           AND OP.C2_PRIOR = '500'
@@ -229,14 +237,16 @@ class ProductionOrdersRepository(
             OA.H8_CTRAB AS work_center
         FROM SC2010 OP WITH (NOLOCK)
         INNER JOIN SD4010 RE WITH (NOLOCK)
-            ON OP.C2_OP = RE.D4_OP
+            ON RE.D4_OP = OP.C2_OP
+           AND RE.D4_FILIAL = OP.C2_FILIAL
            AND RE.D_E_L_E_T_ = ''
         INNER JOIN SB1010 P WITH (NOLOCK)
-            ON OP.C2_PRODUTO = P.B1_COD
+            ON P.B1_COD = OP.C2_PRODUTO
            AND P.D_E_L_E_T_ = ''
         INNER JOIN SH8010 OA WITH (NOLOCK)
-            ON RE.D4_OP = OA.H8_OP
-           AND RE.D4_OPERAC = OA.H8_OPER
+            ON OA.H8_OP = RE.D4_OP
+           AND OA.H8_OPER = RE.D4_OPERAC
+           AND OA.H8_FILIAL = OP.C2_FILIAL
            AND OA.D_E_L_E_T_ = ''
         WHERE OP.D_E_L_E_T_ = ''
           AND OP.C2_PRIOR = '500'

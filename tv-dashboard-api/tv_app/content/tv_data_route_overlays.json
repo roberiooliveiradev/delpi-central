@@ -178,6 +178,12 @@
       "allowedDisplayModes": ["kpi", "bar_chart", "table", "auto"],
       "description": "KPIs agregados do painel de LMPs. Selecione quais métricas exibir no visual (KPI, gráfico ou tabela)."
     },
+    "get_production_allocation_gaps": {
+      "allowedDisplayModes": ["table", "kpi", "auto"],
+      "tableFields": "items",
+      "valueFields": ["allocated_qty"],
+      "description": "Lista componentes com empenho zerado (travamento). Preferir tabela; KPI resume a quantidade."
+    },
     "search_products": {
       "tableFields": "items",
       "tvConstraints": {
