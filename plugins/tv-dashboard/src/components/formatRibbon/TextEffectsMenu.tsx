@@ -1,16 +1,16 @@
 import { ALargeSmall, FlipVertical2 } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import {
   COMUNICADO_TEXT_SHADOW_PRESETS,
   resolveTextShadowPresetId,
 } from "@delpi/tv-dashboard-presentation";
-import { FieldLabel, HintAction } from "@delpi/plugin-ui/index";
+import { AnchoredPanelPortal, FieldLabel, HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import type { TextFormatStyleSnapshot } from "../../utils/selectedTextFormatTarget";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { TdRibbonSelect } from "../tdRibbonUi";
-import { Modal } from "../ui/Modal";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
@@ -21,10 +21,10 @@ type Props = {
   formatStyle: TextFormatStyleSnapshot | undefined;
   onUpdate: (patch: TextFormatStyleSnapshot) => void;
   /**
-   * `modal` — tile na ribbon + diálogo (padrão).
-   * `inline` — mesmo conteúdo embutido na sidebar (mesmo grupo).
+   * `popover` — tile + painel ancorado (como Preench./cores).
+   * `inline` — mesmo conteúdo embutido na sidebar.
    */
-  variant?: "modal" | "inline";
+  variant?: "popover" | "inline";
 };
 
 type PanelProps = {
@@ -33,7 +33,7 @@ type PanelProps = {
   idPrefix: string;
 };
 
-/** Controles de efeitos — compartilhados entre modal e sidebar. */
+/** Controles de efeitos — compartilhados entre popover e sidebar. */
 function TextEffectsPanel({ formatStyle, onUpdate, idPrefix }: PanelProps) {
   const strokeId = `${idPrefix}-stroke-w`;
   const shadowId = `${idPrefix}-shadow`;
@@ -144,19 +144,54 @@ function TextEffectsPanel({ formatStyle, onUpdate, idPrefix }: PanelProps) {
   );
 }
 
+function useCloseOnOutside(
+  refs: Array<RefObject<HTMLElement | null>>,
+  active: boolean,
+  onOutside: () => void,
+) {
+  useEffect(() => {
+    if (!active) return;
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (refs.some((ref) => ref.current?.contains(target))) return;
+      /* Popovers aninhados (cor do Contorno, selects) também ficam no body. */
+      if (
+        target instanceof Element &&
+        target.closest(
+          '[aria-modal="true"], .delpi-ui-shape-menu__panel, .delpi-ui-color-picker, .delpi-ui-select__panel, .delpi-ui-shape-dialog',
+        )
+      ) {
+        return;
+      }
+      onOutside();
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+    };
+  }, [active, onOutside, refs]);
+}
+
 /**
- * Ribbon: tile «Efeitos» + modal.
- * Sidebar (`inline`): mesmo conteúdo embutido na seção Efeitos de texto.
+ * Ribbon: tile «Efeitos» + popover ancorado (padrão Preench./cores).
+ * Sidebar (`inline`): mesmo conteúdo embutido na seção.
  */
-export function TextEffectsMenu({ formatStyle, onUpdate, variant = "modal" }: Props) {
+export function TextEffectsMenu({ formatStyle, onUpdate, variant = "popover" }: Props) {
   const [open, setOpen] = useState(false);
   const reactId = useId().replace(/:/g, "");
+  const rootRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const hasEffects = Boolean(
     formatStyle?.textStrokeColor ||
       (formatStyle?.textStrokeWidth ?? 0) > 0 ||
       formatStyle?.textShadow ||
       formatStyle?.textReflection,
   );
+
+  useCloseOnOutside([rootRef, panelRef], open, () => setOpen(false));
 
   if (variant === "inline") {
     return (
@@ -169,20 +204,23 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "modal" }: Pr
   }
 
   return (
-    <div className="td-text-effects-entry td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+    <div
+      ref={rootRef}
+      className="td-text-effects-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus"
+    >
       <HintAction hint={H.textEffects} ariaLabel="Ajuda: Efeitos de texto">
         <button
           type="button"
           className={[
             "delpi-ui-shape-menu__trigger",
-            hasEffects ? "td-text-effects-entry__trigger--active" : "",
+            hasEffects || open ? "td-text-effects-entry__trigger--active" : "",
           ]
             .filter(Boolean)
             .join(" ")}
           aria-label="Efeitos de texto"
-          aria-haspopup="dialog"
+          aria-haspopup="menu"
           aria-expanded={open}
-          onClick={() => setOpen(true)}
+          onClick={() => setOpen((prev) => !prev)}
         >
           <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
             <ALargeSmall size={18} strokeWidth={hasEffects ? 2.25 : 1.75} />
@@ -191,25 +229,24 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "modal" }: Pr
         </button>
       </HintAction>
 
-      <Modal
-        open={open}
-        title="Efeitos de texto"
-        onClose={() => setOpen(false)}
-        className="td-modal--text-effects"
-        footer={
-          <div className="td-modal-actions td-modal-actions--end">
-            <button type="button" className="td-btn td-btn--primary" onClick={() => setOpen(false)}>
-              Concluir
-            </button>
-          </div>
-        }
-      >
-        <TextEffectsPanel
-          formatStyle={formatStyle}
-          onUpdate={onUpdate}
-          idPrefix={`td-modal-fx-${reactId}`}
-        />
-      </Modal>
+      {open ? (
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+          className="td-text-effects-popover"
+          role="menu"
+          aria-label="Efeitos de texto"
+          preferredPlacement="bottom"
+        >
+          <TextEffectsPanel
+            formatStyle={formatStyle}
+            onUpdate={onUpdate}
+            idPrefix={`td-pop-fx-${reactId}`}
+          />
+        </AnchoredPanelPortal>
+      ) : null}
     </div>
   );
 }

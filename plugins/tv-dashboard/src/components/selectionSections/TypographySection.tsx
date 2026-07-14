@@ -4,7 +4,7 @@ import type { SelectionSectionLayout } from "./types";
 
 /**
  * Tipografia (Fonte / Efeitos / Parágrafo) — ribbon e painel.
- * Efeitos: modal na ribbon; conteúdo do modal embutido na sidebar.
+ * Efeitos: popover ancorado na ribbon (como Preench.); painel embutido na sidebar.
  */
 export function TypographySection({ layout }: { layout: SelectionSectionLayout }) {
   if (layout === "pane") {

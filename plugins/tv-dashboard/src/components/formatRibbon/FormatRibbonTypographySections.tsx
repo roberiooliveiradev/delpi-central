@@ -450,7 +450,7 @@ export function FormatRibbonTypographySections({
         <TextEffectsMenu
           formatStyle={formatStyle}
           onUpdate={updateSelectedTextFormatStyle}
-          variant={embed ? "inline" : "modal"}
+          variant={embed ? "inline" : "popover"}
         />
       </DeckRibbonGroup>
 
