@@ -466,6 +466,10 @@ def update_notification_preferences():
 # ==========================================================
 
 
+def _truthy_query_flag(raw: str | None) -> bool:
+    return (raw or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 @me_bp.route("/me/directory/users", methods=["GET"])
 @require_auth()
 def search_directory_users():
@@ -474,6 +478,10 @@ def search_directory_users():
     limit = request.args.get("limit", 10)
     app_id = (request.args.get("app") or "").strip() or None
     permission_code = (request.args.get("permission") or "").strip() or None
+    # Por padrão exclui o caller (menções/shares). include_self=true para
+    # atribuição de responsável (ex.: NC 5S, área) onde o próprio usuário é válido.
+    include_self = _truthy_query_flag(request.args.get("include_self"))
+    exclude_user_id = None if include_self else str(user.id)
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -482,7 +490,7 @@ def search_directory_users():
                 limit=int(limit),
                 app_id=app_id,
                 permission_code=permission_code,
-                exclude_user_id=str(user.id),
+                exclude_user_id=exclude_user_id,
             )
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)

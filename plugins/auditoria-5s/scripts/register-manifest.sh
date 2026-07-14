@@ -22,4 +22,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua auditoria-5s.view/audit.filial-XX aos perfis de qualidade."
+echo "[OK] Atribua auditoria-5s.view/audit/admin.filial-XX aos perfis (register com versão nova)."

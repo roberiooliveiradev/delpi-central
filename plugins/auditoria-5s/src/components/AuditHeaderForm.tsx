@@ -81,7 +81,7 @@ export function AuditHeaderForm({
         }}
         disabled={loading}
         label="Responsável pela área"
-        hint="Busque e selecione o responsável pela área auditada no Minha Delpi."
+        hint="Busque e selecione o responsável pela área auditada no Minha Delpi — você também pode se atribuir."
         searchAriaLabel="Buscar responsável da área por nome ou e-mail"
         onChange={(responsible) => onFormChange({ area_responsible: responsible.display_name })}
       />

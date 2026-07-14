@@ -14,7 +14,7 @@ export async function searchDirectoryUsers(
   query: string,
   limit = 10,
   signal?: AbortSignal,
-  options?: { minLength?: number },
+  options?: { minLength?: number; includeSelf?: boolean },
 ): Promise<DirectoryUser[]> {
   const normalized = query.trim();
   const minLength = options?.minLength ?? 2;
@@ -26,6 +26,9 @@ export async function searchDirectoryUsers(
     q: normalized,
     limit: String(limit),
   });
+  if (options?.includeSelf) {
+    params.set("include_self", "true");
+  }
 
   const payload = await httpGet<DirectorySearchResponse>(
     `/core-api/me/directory/users?${params.toString()}`,

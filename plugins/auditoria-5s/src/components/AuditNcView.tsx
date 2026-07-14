@@ -2,6 +2,7 @@ import { useState } from "react";
 import { CheckCircle2, CircleHelp, Clock3 } from "lucide-react";
 
 import type { AuditDetail } from "../api/audit5sApi";
+import { isAuditClosed } from "../constants/audit5s";
 import { formatRelativeUpdate, type NcTreatmentStats } from "../utils/auditNc";
 import { AuditNcGuidanceModal } from "./AuditNcGuidanceModal";
 import { AuditNcPanel } from "./AuditNcPanel";
@@ -30,7 +31,7 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
 
   // Sem candidatos a NC (ex.: 100%), ou todas as ações finalizadas.
   const canFinish =
-    audit.status !== "closed" &&
+    !isAuditClosed(audit.status) &&
     statsReady &&
     (stats.total === 0 || stats.finalized === stats.total);
 
@@ -63,7 +64,7 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
             <CircleHelp size={16} aria-hidden />
             Orientações
           </button>
-          {audit.status !== "closed" ? (
+          {!isAuditClosed(audit.status) ? (
             <button
               type="button"
               className="a5s-btn a5s-btn--header"
@@ -97,7 +98,7 @@ export function AuditNcView({ audit, onAuditUpdated, onClosed, onRequestClose }:
           <Clock3 size={15} aria-hidden />
           {formatRelativeUpdate(lastSavedAt)}
         </span>
-        {audit.status !== "closed" ? (
+        {!isAuditClosed(audit.status) ? (
           <button
             type="button"
             className="a5s-btn"

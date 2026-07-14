@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from app.interface.http.routes.quality.audit_5s_branch_access import (
     branch_access_error,
+    branch_admin_allowed,
     branch_audit_allowed,
     branch_view_allowed,
 )
@@ -42,5 +43,28 @@ def test_branch_access_error_returns_403_when_denied() -> None:
         return_value=False,
     ):
         response = branch_access_error("01")
+    assert response is not None
+    assert response.status_code == 403
+
+
+def test_branch_admin_allowed_for_matching_admin_permission() -> None:
+    user = SimpleNamespace(is_superadmin=False)
+    with patch(
+        "app.interface.http.routes.quality.audit_5s_branch_access.get_current_user",
+        return_value=user,
+    ), patch(
+        "app.interface.http.routes.quality.audit_5s_branch_access.has_permission",
+        side_effect=lambda _user, perm: perm == "auditoria-5s.admin.filial-01",
+    ):
+        assert branch_admin_allowed("01") is True
+        assert branch_admin_allowed("02") is False
+
+
+def test_branch_access_error_require_admin_returns_403() -> None:
+    with patch(
+        "app.interface.http.routes.quality.audit_5s_branch_access.branch_admin_allowed",
+        return_value=False,
+    ):
+        response = branch_access_error("01", require_admin=True)
     assert response is not None
     assert response.status_code == 403

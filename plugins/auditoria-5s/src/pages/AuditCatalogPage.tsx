@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Info } from "lucide-react";
 
 import {
@@ -8,6 +8,7 @@ import {
 } from "../api/audit5sApi";
 import { AuditCatalogEditor } from "../components/AuditCatalogEditor";
 import { AuditCatalogPublishBar } from "../components/AuditCatalogPublishBar";
+import { useAudit5sAdminPermission } from "../hooks/useAudit5sAdminPermission";
 import {
   addCriterionToSenso,
   buildPublishPayload,
@@ -24,10 +25,24 @@ import {
 
 type Props = {
   branch: string;
+  pathname?: string;
   onPublished?: () => void;
+  onDenied?: () => void;
 };
 
-export function AuditCatalogPage({ branch, onPublished }: Props) {
+export function AuditCatalogPage({
+  branch,
+  pathname,
+  onPublished,
+  onDenied,
+}: Props) {
+  const { canAdmin, loading: adminLoading } = useAudit5sAdminPermission(
+    branch,
+    pathname,
+  );
+  const onDeniedRef = useRef(onDenied);
+  onDeniedRef.current = onDenied;
+
   const [catalog, setCatalog] = useState<CatalogData | null>(null);
   const [baseline, setBaseline] = useState<EditableCriterion[]>([]);
   const [draft, setDraft] = useState<EditableCriterion[]>([]);
@@ -53,8 +68,13 @@ export function AuditCatalogPage({ branch, onPublished }: Props) {
   }, [branch]);
 
   useEffect(() => {
+    if (adminLoading) return;
+    if (!canAdmin) {
+      onDeniedRef.current?.();
+      return;
+    }
     void loadCatalog();
-  }, [loadCatalog]);
+  }, [adminLoading, canAdmin, loadCatalog]);
 
   const grouped = useMemo(() => groupCriteriaBySenso(draft), [draft]);
   const diff = useMemo(() => computeCatalogDiff(baseline, draft), [baseline, draft]);
@@ -104,6 +124,10 @@ export function AuditCatalogPage({ branch, onPublished }: Props) {
       setPublishing(false);
     }
   };
+
+  if (adminLoading || !canAdmin) {
+    return <p className="a5s-catalog-loading">Verificando permissão administrativa…</p>;
+  }
 
   if (loading && !catalog) {
     return <p className="a5s-catalog-loading">Carregando catálogo de critérios…</p>;

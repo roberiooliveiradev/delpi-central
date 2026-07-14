@@ -65,15 +65,39 @@ Ao criar a NC, a foto da avaliação é copiada automaticamente para a evidênci
 
 Storage: `AUDIT_5S_RESPONSE_UPLOAD_DIR` → volume `${DELPI_DATA_HOST_DIR}/audit-5s-responses`.
 
-### Exclusão de auditorias
+### Exclusão de auditorias (somente admin)
 
 | Método | Path | Uso |
 |--------|------|-----|
 | `POST` | `/audits/{id}/delete` | Exclui auditoria em **avaliação** (`draft`) |
 | `POST` | `/audits/{id}/force-delete` | Exclui auditoria em **qualquer status** (irreversível; remove respostas, fotos e NCs) |
-| `POST` | `/audits/{id}/reopen-evaluation` | Volta para fase **Em avaliação** (`draft`); bloqueado se já houver NC registrada |
 
-Permissão: `auditoria-5s.audit.filial-XX` da filial da auditoria.
+Permissão: `auditoria-5s.admin.filial-XX` da filial da auditoria.
+
+`POST /audits/{id}/reopen-evaluation` permanece com `auditoria-5s.audit.filial-XX`.
+
+### Catálogo de critérios (somente admin)
+
+Botão **Critérios** e `PUT /catalog/publish` exigem `auditoria-5s.admin.filial-XX`.
+
+### Administração — encerrar NCs em aberto
+
+Rotas do Portal (por filial):
+
+| Path | Permissão |
+|------|-----------|
+| `/apps/auditoria-5s/filial-01/admin` | `auditoria-5s.admin.filial-01` |
+| `/apps/auditoria-5s/filial-02/admin` | `auditoria-5s.admin.filial-02` |
+
+Ações administrativas na UI (**Critérios**, **Excluir auditoria**, **Encerrar NC's em aberto**) aparecem **somente** na rota `/filial-XX/admin` **e** com a permissão `auditoria-5s.admin.filial-XX`. Na rota normal `/filial-XX` esses botões ficam ocultos, mesmo para quem tem a permissão (a API continua exigindo a permissão admin).
+
+| Método | Path | Permissão |
+|--------|------|-----------|
+| `POST` | `/audits/{id}/close-without-nc-treatment` | `auditoria-5s.admin.filial-XX` da filial da auditoria |
+
+**Cadastro:** alterar permissões/rotas exige **nova versão** do manifesto (`register`, não “atualizar manifesto”). Versão atual: `0.2.0`.
+
+Migration: `V041__audit_5s_closed_without_nc_treatment.sql`.
 
 ### Exportação de resultados
 

@@ -11,6 +11,7 @@ from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
+    AUDIT_5S_ADMIN_PERMISSIONS,
     AUDIT_5S_READ_PERMISSIONS,
     AUDIT_5S_WRITE_PERMISSIONS,
 )
@@ -388,9 +389,9 @@ def list_catalog_publications(branch: str = Query(..., pattern="^(01|02)$")):
 
 
 @router.put("/catalog/publish")
-@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 def publish_catalog(body: PublishCatalogBody = Body(...)):
-    branch_error = branch_access_error(body.branch_code, require_audit=True)
+    branch_error = branch_access_error(body.branch_code, require_admin=True)
     if branch_error is not None:
         return branch_error
     try:
@@ -557,7 +558,7 @@ def get_audit(audit_id: str):
 
 
 @router.post("/audits/{audit_id}/delete")
-@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 def delete_audit(audit_id: str):
     audit_id = audit_id.strip()
     if not audit_id:
@@ -568,6 +569,11 @@ def delete_audit(audit_id: str):
         audit = repo.get_audit_delete_target(audit_id)
         if not audit:
             return error_response("Auditoria não encontrada.", status_code=404)
+
+        branch_error = branch_access_error(audit["branch_code"], require_admin=True)
+        if branch_error is not None:
+            return branch_error
+
         if audit["status"] != "draft":
             return error_response(
                 "Somente auditorias em avaliação podem ser excluídas.",
@@ -592,7 +598,7 @@ def delete_audit(audit_id: str):
 
 
 @router.post("/audits/{audit_id}/force-delete")
-@require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 def force_delete_audit(audit_id: str):
     audit_id = audit_id.strip()
     if not audit_id:
@@ -604,7 +610,7 @@ def force_delete_audit(audit_id: str):
         if not audit:
             return error_response("Auditoria não encontrada.", status_code=404)
 
-        branch_error = branch_access_error(audit["branch_code"], require_audit=True)
+        branch_error = branch_access_error(audit["branch_code"], require_admin=True)
         if branch_error is not None:
             return branch_error
 
@@ -1172,6 +1178,66 @@ async def complete_nc_action(nc_id: str):
         return error_response("Erro interno ao finalizar ação.", status_code=500)
 
 
+@router.post("/nonconformities/{nc_id}/reopen-action")
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
+async def reopen_nc_action(nc_id: str):
+    """Admin: reabre ação corretiva já concluída (closed → in_progress)."""
+    nc_id = nc_id.strip()
+    if not nc_id:
+        return error_response("Identificador da NC inválido.", status_code=400)
+
+    try:
+        repo = build_audit_5s_repository()
+        nc = repo.fetch_one(
+            """
+            SELECT n.id, n.audit_id, a.branch_code
+              FROM quality.audit_5s_nonconformities n
+              JOIN quality.audit_5s_audits a ON a.id = n.audit_id
+             WHERE n.id = %s
+            """,
+            (nc_id,),
+        )
+        if not nc:
+            return error_response("NC não encontrada.", status_code=404)
+
+        branch_error = branch_access_error(
+            nc["branch_code"],
+            require_admin=True,
+        )
+        if branch_error is not None:
+            return branch_error
+
+        data = repo.reopen_nc_action(
+            nonconformity_id=nc_id,
+            actor_user_id=_current_user_id(),
+        )
+        audit_id = str(data["audit_id"])
+        audit = repo.get_audit(audit_id)
+        if audit:
+            try:
+                await publish_audit_updated(
+                    audit_id=audit_id,
+                    audit=audit,
+                    event_type="nc_action_reopened",
+                    actor_user_id=_current_user_id(),
+                    actor_display_name=_current_user_name(),
+                )
+            except Exception as publish_exc:
+                log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
+        return api_delpi_success(
+            data,
+            operation_id="reopen_audit_5s_nc_action",
+            message="Ação corretiva reaberta com sucesso.",
+        )
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status_code = 404 if "não encontrada" in message.lower() else 422
+        return error_response(message, status_code=status_code)
+    except Exception as exc:
+        log_error(f"Erro ao reabrir ação NC 5S: {exc}")
+        return error_response("Erro interno ao reabrir ação.", status_code=500)
+
+
 @router.get("/nonconformities")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_5s_nonconformities_board(
@@ -1294,3 +1360,52 @@ async def close_audit(audit_id: str):
     except Exception as exc:
         log_error(f"Erro ao encerrar auditoria 5S: {exc}")
         return error_response("Erro interno ao encerrar auditoria.", status_code=500)
+
+
+@router.post("/audits/{audit_id}/close-without-nc-treatment")
+@require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
+async def close_audit_without_nc_treatment(audit_id: str):
+    """Admin: cancela NCs abertas e encerra a auditoria sem tratar ações corretivas."""
+    audit_id = audit_id.strip()
+    if not audit_id:
+        return error_response("Identificador da auditoria inválido.", status_code=400)
+
+    try:
+        repo = build_audit_5s_repository()
+        audit = repo.get_audit(audit_id)
+        if not audit:
+            return error_response("Auditoria não encontrada.", status_code=404)
+
+        branch_error = branch_access_error(
+            audit["branch_code"],
+            require_admin=True,
+        )
+        if branch_error is not None:
+            return branch_error
+
+        data = repo.close_audit_without_nc_treatment(audit_id)
+        try:
+            await publish_audit_updated(
+                audit_id=audit_id,
+                audit=data,
+                event_type="closed_without_nc_treatment",
+                actor_user_id=_current_user_id(),
+                actor_display_name=_current_user_name(),
+            )
+        except Exception as publish_exc:
+            log_error(f"Falha ao publicar evento realtime 5S: {publish_exc}")
+        return api_delpi_success(
+            data,
+            operation_id="close_audit_5s_audit_without_nc_treatment",
+            message="Auditoria encerrada sem tratar as não conformidades.",
+        )
+    except PluginsRepositoryError as exc:
+        message = str(exc)
+        status_code = 404 if "não encontrada" in message.lower() else 422
+        return error_response(message, status_code=status_code)
+    except Exception as exc:
+        log_error(f"Erro ao encerrar auditoria 5S sem tratar NCs: {exc}")
+        return error_response(
+            "Erro interno ao encerrar auditoria sem tratar NCs.",
+            status_code=500,
+        )

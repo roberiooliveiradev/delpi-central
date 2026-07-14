@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Search, UserRound, X } from "lucide-react";
 
 import { searchDirectoryUsers, type DirectoryUser } from "../api/directoryApi";
+import { fetchMeProfile, type MeProfile } from "../api/meApi";
 import type { AuditResponsibleSelection } from "../types/auditResponsible";
 import { formatPersonName } from "../utils/formatPersonName";
 
@@ -22,12 +23,28 @@ export function AuditResponsiblePicker({
   onCommit,
   disabled = false,
   label = "Responsável",
-  hint = "Busque e selecione um usuário do Minha Delpi — o nome não pode ser digitado manualmente.",
+  hint = "Busque e selecione um usuário do Minha Delpi — o nome não pode ser digitado manualmente. Você também pode se atribuir.",
   searchAriaLabel = "Buscar responsável por nome ou e-mail",
 }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DirectoryUser[]>([]);
   const [searching, setSearching] = useState(false);
+  const [me, setMe] = useState<MeProfile | null>(null);
+  const [assigningSelf, setAssigningSelf] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchMeProfile()
+      .then((profile) => {
+        if (!cancelled) setMe(profile);
+      })
+      .catch(() => {
+        if (!cancelled) setMe(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const normalized = query.trim();
@@ -39,7 +56,9 @@ export function AuditResponsiblePicker({
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => {
       setSearching(true);
-      void searchDirectoryUsers(normalized, 10, controller.signal)
+      void searchDirectoryUsers(normalized, 10, controller.signal, {
+        includeSelf: true,
+      })
         .then((items) => {
           if (!controller.signal.aborted) {
             setResults(items);
@@ -64,6 +83,7 @@ export function AuditResponsiblePicker({
   }, [query]);
 
   const selectedName = value.display_name.trim();
+  const isSelfSelected = Boolean(me?.id && value.user_id === me.id);
 
   const selectUser = (user: DirectoryUser) => {
     const displayName = formatPersonName(user.name.trim() || user.email) || user.email;
@@ -75,6 +95,26 @@ export function AuditResponsiblePicker({
     setQuery("");
     setResults([]);
     onCommit?.(next);
+  };
+
+  const assignSelf = () => {
+    if (disabled || assigningSelf) return;
+    setAssigningSelf(true);
+    void (async () => {
+      try {
+        const profile = me ?? (await fetchMeProfile());
+        setMe(profile);
+        selectUser({
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+        });
+      } catch {
+        /* keep current selection */
+      } finally {
+        setAssigningSelf(false);
+      }
+    })();
   };
 
   const clearSelection = () => {
@@ -109,16 +149,27 @@ export function AuditResponsiblePicker({
         <p className="a5s-auditor-picker__empty">Nenhum responsável selecionado.</p>
       )}
 
-      <div className="a5s-auditor-picker__search">
-        <Search size={16} aria-hidden />
-        <input
-          type="search"
-          value={query}
-          disabled={disabled}
-          placeholder="Buscar por nome ou e-mail…"
-          aria-label={searchAriaLabel}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+      <div className="a5s-auditor-picker__search-row">
+        <div className="a5s-auditor-picker__search">
+          <Search size={16} aria-hidden />
+          <input
+            type="search"
+            value={query}
+            disabled={disabled}
+            placeholder="Buscar por nome ou e-mail…"
+            aria-label={searchAriaLabel}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
+        <button
+          type="button"
+          className="a5s-btn a5s-btn--ghost a5s-btn--small a5s-auditor-picker__self"
+          disabled={disabled || assigningSelf || isSelfSelected}
+          onClick={assignSelf}
+        >
+          <UserRound size={14} aria-hidden />
+          {isSelfSelected ? "Você é o responsável" : assigningSelf ? "Atribuindo…" : "Atribuir a mim"}
+        </button>
       </div>
 
       {searching ? <p className="a5s-auditor-picker__status">Buscando…</p> : null}

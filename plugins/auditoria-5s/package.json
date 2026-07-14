@@ -1,7 +1,7 @@
 {
   "name": "auditoria-5s",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,8 @@
     "lint": "eslint .",
     "ci": "npm run lint && npm run build",
     "check:perfect-score": "node --experimental-strip-types scripts/check-audit-perfect-score.ts",
+    "check:force-close-untreated": "node --experimental-strip-types scripts/check-audit-force-close-untreated.ts",
+    "check:audit-list-search": "node --experimental-strip-types scripts/check-audit-list-search.ts",
     "preview": "vite preview"
   },
   "dependencies": {

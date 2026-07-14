@@ -62,7 +62,7 @@ Arquivo: `me_controller.py`.
 
 | Método | Path | Diferença vs S2S |
 |--------|------|------------------|
-| GET | `/me/directory/users` | Exclui o usuário autenticado (`exclude_user_id`); `app` opcional (sem default) |
+| GET | `/me/directory/users` | Exclui o usuário autenticado por padrão; `include_self=true` mantém o caller nos resultados (atribuição de responsável); `app` opcional (sem default) |
 | POST | `/me/directory/users/lookup` | Body `{ "ids": ["uuid", ...] }` — resolve nomes para shares/listas |
 
 Proxy chat: `minha-delpi-ai-api` → `GET /chat/users/search`.

@@ -8,6 +8,7 @@ from delpi_auth.request_context import get_current_user
 from app.application.security.api_delpi_permissions import (
     API_DELPI_ACCESS,
     API_DELPI_QUALITY_ACCESS,
+    AUDIT_5S_BRANCH_ADMIN_PERMS,
     AUDITORIA_5S_AUDIT_FILIAL_01,
     AUDITORIA_5S_AUDIT_FILIAL_02,
     AUDITORIA_5S_VIEW_FILIAL_01,
@@ -68,15 +69,33 @@ def branch_audit_allowed(branch_code: str) -> bool:
     return audit_perm is not None and has_permission(user, audit_perm)
 
 
-def branch_access_error(branch_code: str, *, require_audit: bool = False):
-    allowed = branch_audit_allowed(branch_code) if require_audit else branch_view_allowed(
-        branch_code
-    )
+def branch_admin_allowed(branch_code: str) -> bool:
+    if _is_superadmin() or _has_broad_quality_access():
+        return True
+
+    user = get_current_user()
+    if user is None:
+        return False
+
+    admin_perm = AUDIT_5S_BRANCH_ADMIN_PERMS.get(branch_code)
+    return admin_perm is not None and has_permission(user, admin_perm)
+
+
+def branch_access_error(
+    branch_code: str,
+    *,
+    require_audit: bool = False,
+    require_admin: bool = False,
+):
+    if require_admin:
+        allowed = branch_admin_allowed(branch_code)
+        message = "Sem permissão administrativa para esta filial da Auditoria 5S."
+    elif require_audit:
+        allowed = branch_audit_allowed(branch_code)
+        message = "Sem permissão para editar o catálogo desta filial."
+    else:
+        allowed = branch_view_allowed(branch_code)
+        message = "Sem permissão para acessar o catálogo desta filial."
     if allowed:
         return None
-    message = (
-        "Sem permissão para editar o catálogo desta filial."
-        if require_audit
-        else "Sem permissão para acessar o catálogo desta filial."
-    )
     return error_response(message, status_code=403)

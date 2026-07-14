@@ -53,6 +53,13 @@ export function branchFromPathname(pathname?: string): "01" | "02" | null {
   return null;
 }
 
+/** Entrada pelas rotas `/filial-XX/admin` do manifesto. */
+export function isAdminPath(pathname?: string): boolean {
+  if (!pathname) return false;
+  const normalized = pathname.replace(/\/+$/, "");
+  return /\/filial-0[12]\/admin(?:\/|$)/.test(normalized);
+}
+
 /** Deep link interno do MFE a partir da URL do portal. */
 export function auditViewFromPathname(
   pathname?: string,
@@ -77,7 +84,13 @@ const AUDIT_STATUS_LABELS: Record<string, string> = {
   evaluation_complete: "Pendente NC's",
   nc_in_progress: "NC em andamento",
   closed: "Encerrada",
+  closed_without_nc_treatment: "Encerrado sem tratar NC's",
 };
+
+/** Status terminais — cabeçalho e NCs ficam somente leitura. */
+export function isAuditClosed(status: string): boolean {
+  return status === "closed" || status === "closed_without_nc_treatment";
+}
 
 const NC_STATUS_LABELS: Record<string, string> = {
   open: "Plano em registro",
@@ -135,6 +148,7 @@ export function auditStatusVariant(
     case "nc_in_progress":
       return "nc";
     case "closed":
+    case "closed_without_nc_treatment":
       return "closed";
     default:
       return "default";
@@ -163,7 +177,19 @@ export function ncBoardStatusVariant(
 }
 
 export function canAccessNc(status: string): boolean {
-  return status === "evaluation_complete" || status === "nc_in_progress" || status === "closed";
+  return (
+    status === "evaluation_complete" ||
+    status === "nc_in_progress" ||
+    isAuditClosed(status)
+  );
+}
+
+/** Admin: encerrar NCs abertas e a auditoria sem tratar ações corretivas. */
+export function canForceCloseUntreatedNcs(
+  status: string,
+  scorePct?: number | null,
+): boolean {
+  return auditRequiresNcTreatment(status, scorePct);
 }
 
 export function canReopenEvaluation(status: string): boolean {
@@ -180,6 +206,7 @@ export function ncActionLabel(status: string, scorePct?: number | null): string 
     case "nc_in_progress":
       return "Continuar NC";
     case "closed":
+    case "closed_without_nc_treatment":
       return "Ver NC";
     default:
       return "NC";
