@@ -390,11 +390,11 @@ class ComunicadoDataEnrichmentService:
         filter_overrides: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
+        # Preview isola um data_source em `blocks`, mas inputs vivem no slide (`cfg.blocks`).
+        context_blocks = self._filter_context_blocks(blocks, cfg)
         schema_by_source_id: dict[str, dict[str, Any]] = {}
         slide_schemas: list[dict[str, Any]] = []
-        for block in blocks:
-            if not isinstance(block, dict):
-                continue
+        for block in context_blocks:
             if str(block.get("type") or "") not in DATA_BLOCK_TYPES:
                 continue
             binding = block.get("dataBinding")
@@ -414,7 +414,7 @@ class ComunicadoDataEnrichmentService:
                 slide_schemas.append(schema)
 
         contributions = collect_input_filter_contributions(
-            blocks,
+            context_blocks,
             runtime_overrides=filter_overrides,
             schema_by_source_id=schema_by_source_id,
             slide_schemas=slide_schemas,
@@ -463,6 +463,17 @@ class ComunicadoDataEnrichmentService:
                 continue
             enriched.append(block)
         return self._link_view_blocks_to_sources(enriched)
+
+    @staticmethod
+    def _filter_context_blocks(
+        blocks: list[dict[str, Any]],
+        cfg: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Blocos do slide para contribuições de input; fallback = lista enriquecida."""
+        cfg_blocks = cfg.get("blocks") if isinstance(cfg.get("blocks"), list) else None
+        if cfg_blocks:
+            return [block for block in cfg_blocks if isinstance(block, dict)]
+        return [block for block in blocks if isinstance(block, dict)]
 
     def _decorate_input_block(
         self,

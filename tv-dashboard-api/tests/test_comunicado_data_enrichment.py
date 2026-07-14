@@ -516,6 +516,51 @@ def test_enrich_sales_conversion_rate_resolves_kpi_and_chart_point():
     assert enriched[2]["resolved"]["chart"]["points"][0]["value"] == 13.9
 
 
+def test_enrich_preview_applies_input_from_cfg_blocks():
+    """POST /data/preview-block envia só a fonte em `blocks`; inputs vêm em nativeConfig.blocks."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_allocation_gaps", "shape": "playbook_report"},
+        "data": {"items": [{"branch": "01", "component_code": "X"}]},
+        "route": {
+            "label": "Componentes sem empenho (travamento)",
+            "tableFields": "items",
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    source = {
+        "id": "src-gaps",
+        "type": "data_source",
+        "dataBinding": {
+            "operationId": "get_production_allocation_gaps",
+            "displayMode": "table",
+        },
+    }
+    cfg = {
+        "blocks": [
+            source,
+            {
+                "id": "inp-branch",
+                "type": "input",
+                "input": {
+                    "paramKey": "branch",
+                    "defaultValue": "01",
+                    "targetScope": "sources",
+                    "targetSourceIds": ["src-gaps"],
+                },
+            },
+        ]
+    }
+    enriched = service.enrich_blocks([source], cfg=cfg, authorization="Bearer x")
+    assert gateway.fetch_by_operation_id.call_args.kwargs["params"]["branch"] == "01"
+    assert enriched[0]["resolved"]["table"]["rows"]
+
+
 def test_enrich_multi_metric_lmp_summary_all_and_selected():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()
