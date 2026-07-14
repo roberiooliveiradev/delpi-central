@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { TabHintCell, TabPanelTransition } from "@delpi/plugin-ui/index";
+import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
 import {
@@ -19,8 +20,6 @@ import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../a
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideDeckRibbon } from "./SlideDeckRibbon";
-import { ComunicadoLayersPanel } from "./deck/ComunicadoLayersPanel";
-import { Modal } from "./ui/Modal";
 import {
   ComunicadoSlideBackgroundRibbon,
   DeckHistoryTabActions,
@@ -70,7 +69,7 @@ type Props = {
   ) => void;
 };
 
-function isRibbonTab(
+function isRibbonContentTab(
   tab: DeckRibbonTabId,
 ): tab is
   | "home"
@@ -121,9 +120,17 @@ export function DeckEditorChrome({
   const editor = useOptionalComunicadoEditor();
   const hasSelection = Boolean(editor && editor.selectedIds.length > 0);
   const isTableSelection = editor?.selected?.type === "table_view";
-  const tabs = resolveDeckRibbonTabs(isCustomSlide, { hasSelection, isTableSelection });
+  const hasDataBoundSelection = Boolean(
+    editor?.selected && isDataBoundEditorBlockType(editor.selected.type),
+  );
+  const showDataTab = Boolean(editor?.dataPanelOpen) || hasDataBoundSelection;
+  const tabs = resolveDeckRibbonTabs(isCustomSlide, {
+    hasSelection,
+    isTableSelection,
+    hasDataBoundSelection,
+    showDataTab,
+  });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>("home");
-  const [layersModalOpen, setLayersModalOpen] = useState(false);
   const [chromeCollapsed, setChromeCollapsed] = useState(() => readDeckChromeCollapsed());
 
   function setCollapsed(next: boolean) {
@@ -131,43 +138,29 @@ export function DeckEditorChrome({
     writeDeckChromeCollapsed(next);
   }
 
-  function openLayersModal() {
-    setLayersModalOpen(true);
-    editor?.setSelectionPanelTab("layers");
-  }
-
-  function closeLayersModal() {
-    setLayersModalOpen(false);
-    if (editor?.selectionPanelTab === "layers") {
-      editor.setSelectionPanelTab("element");
-      setActiveTab("home");
-    }
-  }
-
   useComunicadoRibbonTabSync((tab) => {
     const normalized = normalizeSelectionRibbonTab(tab);
     if (normalized === "layers") {
-      openLayersModal();
+      editor?.openLayersPanel();
+      setActiveTab("layers");
       return;
     }
     if (normalized === "insert" || normalized === "data" || normalized === "view") {
-      setLayersModalOpen(false);
       setActiveTab(normalized);
       return;
     }
     if (normalized === "element") {
-      setLayersModalOpen(false);
       setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
   });
 
   useEffect(() => {
-    if (activeTab === "layers") {
-      setActiveTab("home");
-      return;
-    }
-    /* Aba contextual sumiu (ex.: limpou seleção) → Página Inicial. */
+    /* Aba sumiu (ex.: limpou seleção) → fallback. */
     if (!tabs.some((tab) => tab.id === activeTab)) {
+      if (tabs.some((tab) => tab.id === "layers") && activeTab === "element") {
+        setActiveTab("layers");
+        return;
+      }
       setActiveTab("home");
     }
   }, [activeTab, tabs]);
@@ -183,24 +176,22 @@ export function DeckEditorChrome({
     }
   }, [isTableSelection, hasSelection, isCustomSlide, activeTab]);
 
-  /**
-   * Painel lateral: só Camadas/Dados empurram a faixa.
-   * «element» não força a ribbon — senão Gerenciar/F5 e «Página Inicial»
-   * com seleção saltariam de volta para Elemento.
-   * Troca para Elemento: clique na aba ou requestRibbonTab (seleção no palco).
-   */
+  /** Sync bidirecional: painel lateral espelha na faixa (incluindo Elemento). */
   useEffect(() => {
     const panelTab = editor?.selectionPanelTab;
-    if (!hasSelection || !isCustomSlide || !panelTab) return;
+    if (!isCustomSlide || !panelTab) return;
     if (panelTab === "layers") {
-      setLayersModalOpen(true);
+      setActiveTab("layers");
       return;
     }
-    setLayersModalOpen(false);
     if (panelTab === "data") {
       setActiveTab("data");
+      return;
     }
-  }, [editor?.selectionPanelTab, hasSelection, isCustomSlide]);
+    if (panelTab === "element" && hasSelection) {
+      setActiveTab(isTableSelection ? "tableDesign" : "element");
+    }
+  }, [editor?.selectionPanelTab, hasSelection, isCustomSlide, isTableSelection]);
 
   useEffect(() => {
     if (activeTab === "slide" && !slide) {
@@ -210,10 +201,10 @@ export function DeckEditorChrome({
 
   function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {
-      openLayersModal();
+      editor?.openLayersPanel();
+      setActiveTab("layers");
       return;
     }
-    setLayersModalOpen(false);
     setActiveTab(tab);
     if (tab === "tableDesign" || tab === "tableLayout") {
       editor?.setSelectionPanelTab("element");
@@ -226,7 +217,7 @@ export function DeckEditorChrome({
     }
   }
 
-  const showRibbon = isRibbonTab(activeTab) && !chromeCollapsed;
+  const showRibbon = isRibbonContentTab(activeTab) && !chromeCollapsed;
   const playlistChrome = slideDeck.playlistChrome;
   const activeTabMeta = tabs.find((tab) => tab.id === activeTab) ?? tabs[0];
 
@@ -234,7 +225,7 @@ export function DeckEditorChrome({
     <section
       className={[
         "td-deck-chrome",
-        chromeCollapsed ? "td-deck-chrome--collapsed" : "",
+        chromeCollapsed ? "td-deck-chrome--truncated" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -272,8 +263,7 @@ export function DeckEditorChrome({
                 const firstContextual =
                   contextual &&
                   tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
-                const tabActive =
-                  activeTab === tab.id || (tab.id === "layers" && layersModalOpen);
+                const tabActive = activeTab === tab.id;
                 return (
                   <DeckKeyTip
                     key={tab.id}
@@ -378,15 +368,6 @@ export function DeckEditorChrome({
           ) : null}
         </>
       )}
-
-      <Modal
-        open={layersModalOpen}
-        title="Camadas"
-        onClose={closeLayersModal}
-        className="td-modal--wide td-modal--layers"
-      >
-        <ComunicadoLayersPanel layout="pane" pane />
-      </Modal>
     </section>
   );
 }

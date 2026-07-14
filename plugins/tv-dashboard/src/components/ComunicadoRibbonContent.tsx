@@ -17,7 +17,7 @@ export type ComunicadoRibbonContentTab =
   | "view";
 
 type Props = {
-  /** Camadas abre em modal no chrome — não renderiza na ribbon. */
+  /** Camadas abre o painel lateral — não renderiza faixa de conteúdo. */
   activeTab: ComunicadoRibbonContentTab;
   labels?: Labels;
 };

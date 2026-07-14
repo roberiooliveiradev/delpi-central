@@ -78,7 +78,7 @@ export function useComunicadoEditorSelection({
     ComunicadoEditorContextValue["textEditNamedStyleSelection"]
   >(null);
   const [ribbonTabRequest, setRibbonTabRequest] = useState<ComunicadoRibbonTabRequest | null>(null);
-  const [selectionPanelTab, setSelectionPanelTabState] = useState<SelectionPanelTab>("element");
+  const [selectionPanelTab, setSelectionPanelTabState] = useState<SelectionPanelTab>("layers");
 
   const setSelectionPanelTab = useCallback((tab: SelectionPanelTab) => {
     setSelectionPanelTabState(tab);
@@ -90,6 +90,11 @@ export function useComunicadoEditorSelection({
     if (isSelectionPanelTab(normalized)) {
       setSelectionPanelTabState(normalized);
     }
+  }, []);
+
+  const openLayersPanel = useCallback(() => {
+    setSelectionPanelTabState("layers");
+    setRibbonTabRequest("layers");
   }, []);
 
   const clearRibbonTabRequest = useCallback(() => {
@@ -512,6 +517,7 @@ export function useComunicadoEditorSelection({
     setRibbonTabRequest,
     requestRibbonTab,
     clearRibbonTabRequest,
+    openLayersPanel,
     selectionPanelTab,
     setSelectionPanelTab,
     resetSelectionForSlide,

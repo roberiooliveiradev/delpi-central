@@ -1,39 +1,12 @@
-import { ArrowDown, ArrowUp, FolderOpen, Move, PaintBucket, Pentagon, Trash2, Upload } from "lucide-react";
+import { FolderOpen, Move, PaintBucket, Pentagon, Upload } from "lucide-react";
+import { HintAction, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
-  FormSelectControl,
-  HintAction,
-  NativeCheckboxControl,
-  NativeTextControl,
-  ShapeFillMenu,
-  ShapeOutlineMenu,
-  ShapeShadowMenu,
-  DECK_COLOR_BORDER,
-  DECK_COLOR_SURFACE,
-} from "@delpi/plugin-ui/index";
-import {
-  BLOCK_ENTRANCE_DELAY_MAX_MS,
-  BLOCK_ENTRANCE_DELAY_MIN_MS,
-  BLOCK_ENTRANCE_DELAY_STEP_MS,
-  BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
-  BLOCK_ENTRANCE_DURATION_MAX_MS,
-  BLOCK_ENTRANCE_DURATION_MIN_MS,
-  BLOCK_ENTRANCE_DURATION_STEP_MS,
-  BLOCK_ENTRANCE_PRESET_OPTIONS,
-  entranceAnimationFromPreset,
-  entrancePresetValue,
-  formatDesignPx,
-  framePercentToPageBottomLeftPx,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isComunicadoVisualBoxBlock,
-  isPointShapeKind,
   normalizeHrefInput,
   normalizeCanvasTableCells,
-  patchComunicadoFramePageBottomLeftPx,
-  resolveEntranceAnimation,
-  resolveViewportPixelSize,
-  shapeHasAdjustments,
   visualBoxSupportsShapeFormatting,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -47,16 +20,14 @@ import { InputBindingInspector } from "../InputBindingInspector";
 import { InputViewOptionsInspector } from "../InputViewOptionsInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { KpiViewOptionsInspector } from "../KpiViewOptionsInspector";
-import { ShapeAdjustmentsControl } from "../ShapeAdjustmentsControl";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { SelectionSectionsHost } from "../selectionSections";
 import { ComunicadoImageCropPanel } from "./ComunicadoImageCropPanel";
-import { DeckActionRow } from "./DeckActionRow";
 import { DeckField } from "./DeckField";
 import { DeckInspectorLayout } from "./DeckInspectorLayout";
 import { DeckPropertySection } from "./DeckPropertySection";
-import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
@@ -65,20 +36,6 @@ const SHAPE_PANE_ICONS = [
   { id: "effects", label: "Efeitos", Icon: Pentagon },
   { id: "size", label: "Tamanho e posição", Icon: Move },
 ] as const;
-
-const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
-  id: preset.key,
-  label: preset.label,
-  value: preset.value,
-}));
-
-const FRAME_KEYS = ["x", "y", "w", "h"] as const;
-const FRAME_LABELS: Record<(typeof FRAME_KEYS)[number], string> = {
-  x: "X px",
-  y: "Y px",
-  w: "Largura px",
-  h: "Altura px",
-};
 
 type Labels = Record<string, string>;
 
@@ -101,16 +58,11 @@ export function ComunicadoElementInspector({
     selectedInputPart,
     uploading,
     updateSelected,
-    updateSelectedStyle,
-    removeSelected,
-    moveLayer,
     triggerUpload,
     openMediaLibrary,
     updateBlockLink,
-    viewportProfile,
   } = useComunicadoEditor();
 
-  const slideDesign = resolveViewportPixelSize(viewportProfile);
   const multiSelect = selectedIds.length > 1;
   const isShapeBlock =
     selected && isComunicadoVisualBoxBlock(selected) && visualBoxSupportsShapeFormatting(selected);
@@ -239,7 +191,7 @@ export function ComunicadoElementInspector({
         ) : null}
         {!multiSelect && isShapeBlock && shapeOptionsTab === "text" ? (
           <p className="td-deck-inspector__hint">
-            Fonte, tamanho e alinhamento ficam na faixa Página Inicial com o texto selecionado.
+            Tipografia da forma abaixo (mesmas seções da faixa Elemento).
           </p>
         ) : null}
 
@@ -349,7 +301,22 @@ export function ComunicadoElementInspector({
         <ChartViewOptionsInspector pane={pane} />
       ) : null}
       {!multiSelect && selected?.type === "table_view" ? (
-        <TableViewOptionsInspector pane={pane} />
+        <>
+          <SelectionSectionsHost
+            layout="pane"
+            only={[
+              "tableStyleOptions",
+              "tableStyles",
+              "tableBorders",
+              "frame",
+              "organize",
+              "animation",
+              "actions",
+            ]}
+            labels={labels}
+          />
+          <TableViewOptionsInspector pane={pane} omitDesignChrome />
+        </>
       ) : null}
       {!multiSelect && selected?.type === "kpi_view" ? (
         <KpiViewOptionsInspector pane={pane} />
@@ -361,214 +328,49 @@ export function ComunicadoElementInspector({
         </div>
       ) : null}
 
-      {!multiSelect ? (
-        <DeckPropertySection
-          pane={pane}
-          title="Animação de entrada"
-          hint={E.entranceAnimation}
-          defaultOpen={false}
-        >
-          <DeckField id="td-entrance-kind" label="Efeito" hint={E.entranceAnimation}>
-            <FormSelectControl
-              id="td-entrance-kind"
-              ariaLabel="Efeito"
-              value={entrancePresetValue(resolveEntranceAnimation(selected.animations))}
-              onChange={(value) => {
-                const entrance = resolveEntranceAnimation(selected.animations);
-                updateSelected({
-                  animations: entranceAnimationFromPreset(value, {
-                    delayMs: entrance?.delayMs ?? 0,
-                    durationMs: entrance?.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
-                  }),
-                } as Partial<ComunicadoBlock>);
-              }}
-              options={BLOCK_ENTRANCE_PRESET_OPTIONS.map((option) => ({
-                value: option.value,
-                label: option.label,
-              }))}
-            />
-          </DeckField>
-          {resolveEntranceAnimation(selected.animations) ? (
-            <>
-              <DeckField id="td-entrance-delay" label="Atraso (ms)" hint={E.entranceDelay}>
-                <NativeTextControl
-                  id="td-entrance-delay"
-                  type="number"
-                  min={BLOCK_ENTRANCE_DELAY_MIN_MS}
-                  max={BLOCK_ENTRANCE_DELAY_MAX_MS}
-                  step={BLOCK_ENTRANCE_DELAY_STEP_MS}
-                  value={resolveEntranceAnimation(selected.animations)?.delayMs ?? 0}
-                  onChange={(value) => {
-                    const entrance = resolveEntranceAnimation(selected.animations);
-                    if (!entrance) return;
-                    updateSelected({
-                      animations: entranceAnimationFromPreset(entrancePresetValue(entrance), {
-                        delayMs: Number(value),
-                        durationMs: entrance.durationMs ?? BLOCK_ENTRANCE_DURATION_DEFAULT_MS,
-                      }),
-                    } as Partial<ComunicadoBlock>);
-                  }}
-                />
-              </DeckField>
-              <DeckField id="td-entrance-duration" label="Duração (ms)" hint={E.entranceDuration}>
-                <NativeTextControl
-                  id="td-entrance-duration"
-                  type="number"
-                  min={BLOCK_ENTRANCE_DURATION_MIN_MS}
-                  max={BLOCK_ENTRANCE_DURATION_MAX_MS}
-                  step={BLOCK_ENTRANCE_DURATION_STEP_MS}
-                  value={
-                    resolveEntranceAnimation(selected.animations)?.durationMs ??
-                    BLOCK_ENTRANCE_DURATION_DEFAULT_MS
-                  }
-                  onChange={(value) => {
-                    const entrance = resolveEntranceAnimation(selected.animations);
-                    if (!entrance) return;
-                    updateSelected({
-                      animations: entranceAnimationFromPreset(entrancePresetValue(entrance), {
-                        delayMs: entrance.delayMs ?? 0,
-                        durationMs: Number(value),
-                      }),
-                    } as Partial<ComunicadoBlock>);
-                  }}
-                />
-              </DeckField>
-            </>
-          ) : null}
-        </DeckPropertySection>
+      {multiSelect ? (
+        <SelectionSectionsHost layout="pane" full labels={labels} />
       ) : null}
 
-      {!multiSelect && isShapeBlock && shapeOptionsTab === "shape" ? (
-        <>
-          <div id="td-shape-pane-fill-line">
-            <DeckPropertySection pane={pane} title="Preenchimento e linha" defaultOpen>
-              <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-                <ShapeFillMenu
-                  value={selected.style?.fill ?? DECK_COLOR_SURFACE}
-                  onChange={(color) => updateSelectedStyle({ fill: color })}
-                  onNoFill={() => updateSelectedStyle({ fill: "transparent" })}
-                />
-                <ShapeOutlineMenu
-                  color={selected.style?.stroke ?? DECK_COLOR_BORDER}
-                  strokeWidth={selected.style?.strokeWidth ?? 2}
-                  minWidth={0}
-                  maxWidth={20}
-                  onColorChange={(color) => updateSelectedStyle({ stroke: color })}
-                  onNoOutline={() => updateSelectedStyle({ stroke: "transparent", strokeWidth: 0 })}
-                  onStrokeWidthChange={(width) => updateSelectedStyle({ strokeWidth: width })}
-                />
-              </div>
-            </DeckPropertySection>
-          </div>
-          <div id="td-shape-pane-effects">
-            <DeckPropertySection pane={pane} title="Efeitos" defaultOpen={false}>
-              <ShapeShadowMenu
-                value={selected.style?.boxShadow}
-                presets={SHADOW_MENU_PRESETS}
-                shadowLabel="Sombra"
-                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-              />
-            </DeckPropertySection>
-          </div>
-        </>
+      {!multiSelect && isShapeBlock && shapeOptionsTab === "text" ? (
+        <SelectionSectionsHost layout="pane" only={["typography"]} labels={labels} />
       ) : null}
 
       {!multiSelect &&
+      isShapeBlock &&
+      shapeOptionsTab === "shape" &&
       !selectedKpiPart &&
       !selectedChartPart &&
-      !selectedInputPart &&
-      (!isShapeBlock || shapeOptionsTab === "shape") ? (
-        <div id={isShapeBlock ? "td-shape-pane-size" : undefined}>
-        <DeckPropertySection pane={pane} title="Posição e tamanho" hint={E.position} defaultOpen={false}>
-          {(() => {
-            const pointOnly =
-              selected.type === "shape" && isPointShapeKind(selected.shape);
-            const framePx = framePercentToPageBottomLeftPx(selected.frame, slideDesign);
-            return (
-              <>
-                <div className="td-deck-frame-grid">
-                  {(pointOnly ? (["x", "y"] as const) : FRAME_KEYS).map((key) => (
-                    <DeckField
-                      key={key}
-                      id={`td-frame-${key}`}
-                      label={FRAME_LABELS[key]}
-                      hint={E.position}
-                      className="td-field--compact"
-                    >
-                      <NativeTextControl
-                        id={`td-frame-${key}`}
-                        type="number"
-                        min={key === "w" || key === "h" ? 1 : 0}
-                        max={key === "x" || key === "w" ? slideDesign.width : slideDesign.height}
-                        step={1}
-                        value={String(formatDesignPx(framePx[key]))}
-                        onChange={(value) =>
-                          updateSelected({
-                            frame: patchComunicadoFramePageBottomLeftPx(
-                              selected.frame,
-                              key,
-                              Number(value),
-                              slideDesign,
-                            ),
-                          } as Partial<ComunicadoBlock>)
-                        }
-                      />
-                    </DeckField>
-                  ))}
-                </div>
-                <DeckField id="td-rotation" label="Rotação (°)" hint={E.rotation}>
-                  <NativeTextControl
-                    id="td-rotation"
-                    type="number"
-                    min={-180}
-                    max={180}
-                    step={1}
-                    value={selected.style?.rotation ?? 0}
-                    onChange={(value) => updateSelectedStyle({ rotation: Number(value) })}
-                  />
-                </DeckField>
-                {selected.type === "shape" && shapeHasAdjustments(selected.shape) ? (
-                  <ShapeAdjustmentsControl
-                    kind={selected.shape}
-                    style={selected.style}
-                    onChange={(patch) => updateSelectedStyle(patch)}
-                    variant="inspector"
-                    idPrefix="td-frame-shape-adj"
-                  />
-                ) : null}
-              </>
-            );
-          })()}
-        </DeckPropertySection>
+      !selectedInputPart ? (
+        <div id="td-shape-pane-size">
+          <SelectionSectionsHost
+            layout="pane"
+            only={[
+              "shapeGallery",
+              "shapeChrome",
+              "frame",
+              "organize",
+              "animation",
+              "actions",
+            ]}
+            labels={labels}
+          />
         </div>
       ) : null}
 
-      <DeckPropertySection pane={pane} title="Ações" hint={E.layerUp} defaultOpen={false}>
-        <DeckActionRow>
-          {!multiSelect ? (
-            <>
-              <HintAction hint={E.layerUp} ariaLabel="Ajuda: trazer frente">
-                <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("up")}>
-                  <ArrowUp size={15} aria-hidden="true" />
-                  Trazer frente
-                </button>
-              </HintAction>
-              <HintAction hint={E.layerDown} ariaLabel="Ajuda: enviar fundo">
-                <button type="button" className="td-btn td-btn--sm" onClick={() => moveLayer("down")}>
-                  <ArrowDown size={15} aria-hidden="true" />
-                  Enviar fundo
-                </button>
-              </HintAction>
-            </>
-          ) : null}
-          <HintAction hint={E.remove} ariaLabel="Ajuda: remover">
-            <button type="button" className="td-btn td-btn--danger td-btn--sm" onClick={removeSelected}>
-              <Trash2 size={15} aria-hidden="true" />
-              Remover
-            </button>
-          </HintAction>
-        </DeckActionRow>
-      </DeckPropertySection>
+      {!multiSelect &&
+      !isShapeBlock &&
+      selected.type !== "table_view" &&
+      !selectedKpiPart &&
+      !selectedChartPart &&
+      !selectedInputPart ? (
+        <SelectionSectionsHost layout="pane" full labels={labels} />
+      ) : null}
+
+      {!multiSelect &&
+      (selectedKpiPart || selectedChartPart || selectedInputPart) ? (
+        <SelectionSectionsHost layout="pane" full labels={labels} />
+      ) : null}
     </DeckInspectorLayout>
   );
 }

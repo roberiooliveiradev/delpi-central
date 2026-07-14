@@ -23,4 +23,6 @@ export {
   isContextualDeckRibbonTab,
   resolveDeckRibbonTabs,
   resolveEmbeddedComunicadoRibbonTabs,
+  resolveSelectionPanelTabs,
 } from "./deckRibbonTabMeta";
+export type { ResolveDeckRibbonTabsOptions, SelectionPanelTabMeta } from "./deckRibbonTabMeta";

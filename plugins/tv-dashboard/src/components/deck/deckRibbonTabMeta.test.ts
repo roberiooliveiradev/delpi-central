@@ -4,11 +4,16 @@ import {
   isContextualDeckRibbonTab,
   resolveDeckRibbonTabs,
   resolveEmbeddedComunicadoRibbonTabs,
+  resolveSelectionPanelTabs,
 } from "./deckRibbonTabMeta";
 
 describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
-  it("mostra abas Elemento, Dados e Camadas com seleção não-tabela", () => {
-    const tabs = resolveDeckRibbonTabs(true, { hasSelection: true, isTableSelection: false });
+  it("mostra abas Elemento, Dados e Camadas com seleção data-bound não-tabela", () => {
+    const tabs = resolveDeckRibbonTabs(true, {
+      hasSelection: true,
+      isTableSelection: false,
+      hasDataBoundSelection: true,
+    });
     expect(tabs.map((tab) => tab.id)).toEqual(
       expect.arrayContaining(["element", "data", "layers"]),
     );
@@ -16,8 +21,27 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     expect(tabs.find((tab) => tab.id === "element")?.label).toBe("Elemento");
   });
 
+  it("esconde Dados sem seleção data-bound (salvo showDataTab)", () => {
+    const hidden = resolveDeckRibbonTabs(true, {
+      hasSelection: true,
+      hasDataBoundSelection: false,
+    });
+    expect(hidden.some((tab) => tab.id === "data")).toBe(false);
+
+    const viaInsert = resolveDeckRibbonTabs(true, {
+      hasSelection: true,
+      hasDataBoundSelection: false,
+      showDataTab: true,
+    });
+    expect(viaInsert.some((tab) => tab.id === "data")).toBe(true);
+  });
+
   it("com tabela selecionada troca Elemento por Design + Layout", () => {
-    const tabs = resolveDeckRibbonTabs(true, { hasSelection: true, isTableSelection: true });
+    const tabs = resolveDeckRibbonTabs(true, {
+      hasSelection: true,
+      isTableSelection: true,
+      hasDataBoundSelection: true,
+    });
     const ids = tabs.map((tab) => tab.id);
     expect(ids).toEqual(expect.arrayContaining(["tableDesign", "tableLayout", "data", "layers"]));
     expect(ids).not.toContain("element");
@@ -25,13 +49,19 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     expect(tabs.find((tab) => tab.id === "tableLayout")?.label).toBe("Tabela Layout");
   });
 
-  it("esconde contextuais sem seleção", () => {
+  it("sem seleção mantém Camadas e esconde Elemento/Dados", () => {
     const tabs = resolveDeckRibbonTabs(true, { hasSelection: false });
-    expect(tabs.some((tab) => tab.selectionOnly)).toBe(false);
+    expect(tabs.some((tab) => tab.id === "layers")).toBe(true);
+    expect(tabs.some((tab) => tab.id === "element")).toBe(false);
+    expect(tabs.some((tab) => tab.id === "data")).toBe(false);
+    expect(isContextualDeckRibbonTab(tabs.find((t) => t.id === "layers")!)).toBe(true);
   });
 
   it("coloca contextuais depois das permanentes", () => {
-    const tabs = resolveDeckRibbonTabs(true, { hasSelection: true });
+    const tabs = resolveDeckRibbonTabs(true, {
+      hasSelection: true,
+      hasDataBoundSelection: true,
+    });
     const ids = tabs.map((tab) => tab.id);
     const playlistIdx = ids.indexOf("playlist");
     const elementIdx = ids.indexOf("element");
@@ -43,8 +73,11 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     expect(isContextualDeckRibbonTab(tabs.find((t) => t.id === "home")!)).toBe(false);
   });
 
-  it("chrome embutido inclui Inserir, Exibir e as contextuais", () => {
-    const both = resolveEmbeddedComunicadoRibbonTabs({ hasSelection: true });
+  it("chrome embutido inclui Inserir, Exibir, Camadas e contextuais", () => {
+    const both = resolveEmbeddedComunicadoRibbonTabs({
+      hasSelection: true,
+      hasDataBoundSelection: true,
+    });
     expect(both.map((tab) => tab.id)).toEqual([
       "insert",
       "view",
@@ -58,6 +91,7 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     const both = resolveEmbeddedComunicadoRibbonTabs({
       hasSelection: true,
       isTableSelection: true,
+      hasDataBoundSelection: true,
     });
     expect(both.map((tab) => tab.id)).toEqual([
       "insert",
@@ -69,12 +103,24 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     ]);
   });
 
-  it("sempre inclui Programação e Página Inicial", () => {
+  it("sempre inclui Programação, Página Inicial e Camadas em slide custom", () => {
     const tabs = resolveDeckRibbonTabs(true);
     expect(tabs.map((tab) => tab.id)).toEqual(
-      expect.arrayContaining(["home", "playlist", "slide", "insert"]),
+      expect.arrayContaining(["home", "playlist", "slide", "insert", "layers"]),
     );
     expect(tabs.find((tab) => tab.id === "playlist")?.label).toBe("Programação");
     expect(tabs.some((tab) => tab.id === "element")).toBe(false);
+  });
+
+  it("painel lateral: só Camadas sem seleção; Elemento+Camadas com seleção", () => {
+    expect(resolveSelectionPanelTabs({ hasSelection: false, showDataTab: false }).map((t) => t.id)).toEqual([
+      "layers",
+    ]);
+    expect(
+      resolveSelectionPanelTabs({ hasSelection: true, showDataTab: false }).map((t) => t.id),
+    ).toEqual(["element", "layers"]);
+    expect(
+      resolveSelectionPanelTabs({ hasSelection: true, showDataTab: true }).map((t) => t.id),
+    ).toEqual(["element", "data", "layers"]);
   });
 });

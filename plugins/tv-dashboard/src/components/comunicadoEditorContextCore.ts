@@ -138,6 +138,8 @@ export type ComunicadoEditorContextValue = {
   addTableViewBlock: (rows: number, cols: number, preset: ComunicadoTablePreset) => void;
   addKpiViewBlock: () => void;
   openDataPanel: () => void;
+  /** Abre o painel lateral na aba Camadas (sem modal). */
+  openLayersPanel: () => void;
   /** Abre o catálogo em modal (Inserir / Trocar rota). */
   openDataCatalog: (mode?: DataCatalogMode) => void;
   dataCatalogModalOpen: boolean;

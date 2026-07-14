@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { TabHintCell, TabPanelTransition } from "@delpi/plugin-ui/index";
+import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
 import {
@@ -7,10 +8,11 @@ import {
   normalizeSelectionRibbonTab,
 } from "../utils/normalizeSelectionRibbonTab";
 
-import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
+import {
+  ComunicadoRibbonContent,
+  type ComunicadoRibbonContentTab,
+} from "./ComunicadoRibbonContent";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { ComunicadoLayersPanel } from "./deck/ComunicadoLayersPanel";
-import { Modal } from "./ui/Modal";
 import {
   DeckRibbonShell,
   isContextualDeckRibbonTab,
@@ -26,7 +28,8 @@ type RibbonEmbeddedTab =
   | "tableDesign"
   | "tableLayout"
   | "data"
-  | "view";
+  | "view"
+  | "layers";
 
 type Props = {
   labels?: Labels;
@@ -36,50 +39,48 @@ function ribbonDensityFor(tab: RibbonEmbeddedTab): "band" | "fit" {
   return tab === "element" || tab === "tableDesign" || tab === "tableLayout" ? "fit" : "band";
 }
 
+function hasRibbonBody(tab: RibbonEmbeddedTab): boolean {
+  return tab !== "layers";
+}
+
 /** Chrome compacto do compositor embutido — mesmas faixas do deck. */
 export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   const editor = useComunicadoEditor();
   const hasSelection = editor.selectedIds.length > 0;
   const isTableSelection = editor.selected?.type === "table_view";
-  const tabs = resolveEmbeddedComunicadoRibbonTabs({ hasSelection, isTableSelection });
+  const hasDataBoundSelection = Boolean(
+    editor.selected && isDataBoundEditorBlockType(editor.selected.type),
+  );
+  const showDataTab = editor.dataPanelOpen || hasDataBoundSelection;
+  const tabs = resolveEmbeddedComunicadoRibbonTabs({
+    hasSelection,
+    isTableSelection,
+    hasDataBoundSelection,
+    showDataTab,
+  });
   const [activeTab, setActiveTab] = useState<RibbonEmbeddedTab>("insert");
-  const [layersModalOpen, setLayersModalOpen] = useState(false);
-
-  function openLayersModal() {
-    setLayersModalOpen(true);
-    editor.setSelectionPanelTab("layers");
-  }
-
-  function closeLayersModal() {
-    setLayersModalOpen(false);
-    if (editor.selectionPanelTab === "layers") {
-      editor.setSelectionPanelTab("element");
-      setActiveTab("insert");
-    }
-  }
 
   useComunicadoRibbonTabSync((tab) => {
     const normalized = normalizeSelectionRibbonTab(tab);
     if (normalized === "layers") {
-      openLayersModal();
+      editor.openLayersPanel();
+      setActiveTab("layers");
       return;
     }
     if (normalized === "insert" || normalized === "data" || normalized === "view") {
-      setLayersModalOpen(false);
       setActiveTab(normalized);
       return;
     }
     if (normalized === "element") {
-      setLayersModalOpen(false);
       setActiveTab(isTableSelection ? "tableDesign" : "element");
     }
   });
 
   useEffect(() => {
-    if (!tabs.some((tab) => tab.id === activeTab || (tab.id === "layers" && layersModalOpen))) {
-      setActiveTab("insert");
+    if (!tabs.some((tab) => tab.id === activeTab)) {
+      setActiveTab(tabs.some((t) => t.id === "layers") ? "layers" : "insert");
     }
-  }, [activeTab, tabs, layersModalOpen]);
+  }, [activeTab, tabs]);
 
   useEffect(() => {
     if (!hasSelection) return;
@@ -93,20 +94,23 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   }, [isTableSelection, hasSelection, activeTab]);
 
   useEffect(() => {
-    if (!hasSelection) return;
     if (editor.selectionPanelTab === "layers") {
-      setLayersModalOpen(true);
+      setActiveTab("layers");
       return;
     }
-    setLayersModalOpen(false);
     if (editor.selectionPanelTab === "data") {
       setActiveTab("data");
+      return;
     }
-  }, [editor.selectionPanelTab, hasSelection]);
+    if (editor.selectionPanelTab === "element" && hasSelection) {
+      setActiveTab(isTableSelection ? "tableDesign" : "element");
+    }
+  }, [editor.selectionPanelTab, hasSelection, isTableSelection]);
 
   function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {
-      openLayersModal();
+      editor.openLayersPanel();
+      setActiveTab("layers");
       return;
     }
     if (
@@ -119,7 +123,6 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     ) {
       return;
     }
-    setLayersModalOpen(false);
     setActiveTab(tab);
     if (tab === "tableDesign" || tab === "tableLayout") {
       editor.setSelectionPanelTab("element");
@@ -140,8 +143,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
             const contextual = isContextualDeckRibbonTab(tab);
             const firstContextual =
               contextual && tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
-            const tabActive =
-              activeTab === tab.id || (tab.id === "layers" && layersModalOpen);
+            const tabActive = activeTab === tab.id;
             return (
               <TabHintCell
                 key={tab.id}
@@ -175,22 +177,18 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
         </div>
       </div>
 
-      <div className="td-deck-chrome__ribbon">
-        <TabPanelTransition tabKey={activeTab} className="td-deck-chrome__ribbon-panel">
-          <DeckRibbonShell density={ribbonDensityFor(activeTab)}>
-            <ComunicadoRibbonContent activeTab={activeTab} labels={labels} />
-          </DeckRibbonShell>
-        </TabPanelTransition>
-      </div>
-
-      <Modal
-        open={layersModalOpen}
-        title="Camadas"
-        onClose={closeLayersModal}
-        className="td-modal--wide td-modal--layers"
-      >
-        <ComunicadoLayersPanel layout="pane" pane />
-      </Modal>
+      {hasRibbonBody(activeTab) && activeTab !== "layers" ? (
+        <div className="td-deck-chrome__ribbon">
+          <TabPanelTransition tabKey={activeTab} className="td-deck-chrome__ribbon-panel">
+            <DeckRibbonShell density={ribbonDensityFor(activeTab)}>
+              <ComunicadoRibbonContent
+                activeTab={activeTab as ComunicadoRibbonContentTab}
+                labels={labels}
+              />
+            </DeckRibbonShell>
+          </TabPanelTransition>
+        </div>
+      ) : null}
     </section>
   );
 }

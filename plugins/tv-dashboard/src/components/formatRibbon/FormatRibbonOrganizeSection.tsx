@@ -178,6 +178,7 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
             step={5}
             value={opacityPercent}
             displayValue={`${opacityPercent}%`}
+            density="compact"
             aria-label="Opacidade"
             onChange={(value) => setOpacity(value / 100)}
           />

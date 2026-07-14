@@ -467,6 +467,7 @@ export function ComunicadoEditorProvider({
     addTableViewBlock: blockActions.addTableViewBlock,
     addKpiViewBlock: blockActions.addKpiViewBlock,
     openDataPanel: blockActions.openDataPanel,
+    openLayersPanel: selection.openLayersPanel,
     openDataCatalog: blockActions.openDataCatalog,
     dataCatalogModalOpen,
     setDataCatalogModalOpen,

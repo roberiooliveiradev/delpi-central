@@ -46,9 +46,21 @@ import {
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { enableInputFreeLayoutFromDom } from "../../utils/enableInputFreeLayoutFromDom";
-import { DeckRangeField } from "../deck/DeckRangeField";
+import {
+  DeckRangeField,
+  type DeckRangeFieldProps,
+} from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+
+type FrameFieldDensity = NonNullable<DeckRangeFieldProps["density"]>;
+
+function FrameRangeField({
+  density,
+  ...props
+}: DeckRangeFieldProps & { density: FrameFieldDensity }) {
+  return <DeckRangeField density={density} {...props} />;
+}
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
@@ -77,8 +89,13 @@ export { patchComunicadoFrame };
  * Posição / tamanho / rotação / raio — bloco no palco ou parte do KPI/gráfico
  * (title/value/hint/icon ou title/legend/plotArea), espelhando o inspetor.
  * UI em px de design; modelo permanece em %.
+ * `density=compact` (padrão): só inputs — cabe na ribbon ~80px sem scroll.
  */
-export function FormatRibbonFrameSection() {
+export function FormatRibbonFrameSection({
+  density = "compact",
+}: {
+  density?: FrameFieldDensity;
+} = {}) {
   const {
     selected,
     selectedIds,
@@ -177,7 +194,8 @@ export function FormatRibbonFrameSection() {
         ) : (
           <div className="td-deck-ribbon__frame-grid">
             {frameKeys.map((key) => (
-              <DeckRangeField
+              <FrameRangeField
+                density={density}
                 key={key}
                 id={`td-ribbon-input-part-frame-${key}`}
                 label={FRAME_LABELS[key]}
@@ -191,7 +209,8 @@ export function FormatRibbonFrameSection() {
                 onChange={(value) => setPartFrameKey(key, value)}
               />
             ))}
-            <DeckRangeField
+            <FrameRangeField
+                density={density}
               id="td-ribbon-input-part-frame-radius"
               label="Raio px"
               hint={H.borderRadius}
@@ -284,7 +303,8 @@ export function FormatRibbonFrameSection() {
         ) : (
           <div className="td-deck-ribbon__frame-grid">
             {frameKeys.map((key) => (
-              <DeckRangeField
+              <FrameRangeField
+                density={density}
                 key={key}
                 id={`td-ribbon-kpi-part-frame-${key}`}
                 label={FRAME_LABELS[key]}
@@ -298,7 +318,8 @@ export function FormatRibbonFrameSection() {
                 onChange={(value) => setPartFrameKey(key, value)}
               />
             ))}
-            <DeckRangeField
+            <FrameRangeField
+                density={density}
               id="td-ribbon-kpi-part-frame-radius"
               label="Raio px"
               hint={H.borderRadius}
@@ -372,7 +393,8 @@ export function FormatRibbonFrameSection() {
       <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
         <div className="td-deck-ribbon__frame-grid">
           {frameKeys.map((key) => (
-            <DeckRangeField
+            <FrameRangeField
+                density={density}
               key={key}
               id={`td-ribbon-chart-part-frame-${key}`}
               label={FRAME_LABELS[key]}
@@ -441,7 +463,8 @@ export function FormatRibbonFrameSection() {
     <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
       <div className="td-deck-ribbon__frame-grid">
         {frameKeys.map((key) => (
-          <DeckRangeField
+          <FrameRangeField
+                density={density}
             key={key}
             id={`td-ribbon-frame-${key}`}
             label={FRAME_LABELS[key]}
@@ -455,7 +478,8 @@ export function FormatRibbonFrameSection() {
             onChange={(value) => setFrameKey(key, value)}
           />
         ))}
-        <DeckRangeField
+        <FrameRangeField
+                density={density}
           id="td-ribbon-frame-rotation"
           label="Rot. °"
           hint={H.frameRotation}
@@ -471,7 +495,8 @@ export function FormatRibbonFrameSection() {
           }
         />
         {showCornerRadius ? (
-          <DeckRangeField
+          <FrameRangeField
+                density={density}
             id="td-ribbon-frame-radius"
             label="Raio px"
             hint={H.borderRadius}

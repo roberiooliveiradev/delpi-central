@@ -18,6 +18,11 @@ export type RangeFieldProps = {
   step?: number;
   /** Valor exibido no input (quando difere do arredondamento padrão). */
   displayValue?: string;
+  /**
+   * `compact` — só rótulo + input (sem slider). Usado na ribbon do deck (~80px).
+   * `full` — slider + input (padrão painel / inspetor).
+   */
+  density?: "full" | "compact";
   "aria-label"?: string;
   className?: string;
 };
@@ -62,6 +67,7 @@ export function RangeField({
   max = 100,
   step = 1,
   displayValue,
+  density = "full",
   "aria-label": ariaLabel,
   className,
 }: RangeFieldProps) {
@@ -72,6 +78,7 @@ export function RangeField({
   const [draft, setDraft] = useState(shown);
   const [editing, setEditing] = useState(false);
   const negative = isNegativeShown(draft, value);
+  const compact = density === "compact";
 
   useEffect(() => {
     if (!editing) setDraft(formatShown(value, displayValue));
@@ -91,31 +98,34 @@ export function RangeField({
     <span
       className={mergeClassNames(
         RANGE_FIELD_CLASS,
+        compact ? `${RANGE_FIELD_CLASS}--compact` : null,
         negative ? `${RANGE_FIELD_CLASS}--negative` : null,
         className,
       )}
     >
       <FieldLabel
-        htmlFor={id}
+        htmlFor={compact ? `${id}-num` : id}
         label={label}
         hint={hint}
         className={`${RANGE_FIELD_CLASS}__label`}
       />
       <span className={`${RANGE_FIELD_CLASS}__row`}>
-        <NativeRangeControl
-          id={id}
-          className={`${RANGE_FIELD_CLASS}__slider`}
-          min={min}
-          max={max}
-          step={step}
-          value={clamped}
-          aria-label={ariaLabel ?? label}
-          style={{ ["--delpi-ui-range-progress" as string]: `${progress}%` }}
-          onChange={(next) => {
-            setEditing(false);
-            onChange(next);
-          }}
-        />
+        {!compact ? (
+          <NativeRangeControl
+            id={id}
+            className={`${RANGE_FIELD_CLASS}__slider`}
+            min={min}
+            max={max}
+            step={step}
+            value={clamped}
+            aria-label={ariaLabel ?? label}
+            style={{ ["--delpi-ui-range-progress" as string]: `${progress}%` }}
+            onChange={(next) => {
+              setEditing(false);
+              onChange(next);
+            }}
+          />
+        ) : null}
         <NativeTextControl
           id={`${id}-num`}
           type="text"

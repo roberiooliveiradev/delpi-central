@@ -28,6 +28,18 @@
   --delpi-ui-range-fill: var(--delpi-ui-range-negative);
 }
 
+/* Ribbon / faixa densa: só rótulo + input (sem slider). */
+.delpi-ui-range-field--compact {
+  width: 78px;
+  min-width: 64px;
+  gap: 2px;
+  padding: 0;
+}
+
+.delpi-ui-range-field--compact .delpi-ui-range-field__row {
+  flex-direction: row;
+}
+
 .delpi-ui-range-field__label {
   font-size: 10px;
   line-height: 1.2;

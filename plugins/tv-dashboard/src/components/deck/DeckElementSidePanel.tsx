@@ -1,10 +1,9 @@
 import { ChevronLeft, Database, Layers, MousePointer2 } from "lucide-react";
 import { FormatPaneShell } from "@delpi/plugin-ui/index";
-import { useEffect, useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties } from "react";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope } from "../../api/tvDashboardApi";
-import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useDeckSidePanelLayout } from "../../hooks/useDeckSidePanelLayout";
 import type { SelectionPanelTab } from "../comunicadoEditorContextCore";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -13,16 +12,9 @@ import { resolveSelectedDataContext } from "../../utils/selectedDataContext";
 import { resolveTableFormatPaneTitle } from "../../utils/resolveTableFormatPaneTitle";
 import { ComunicadoElementInspector } from "./ComunicadoElementInspector";
 import { ComunicadoLayersPanel } from "./ComunicadoLayersPanel";
+import { resolveSelectionPanelTabs } from "./deckRibbonTabMeta";
 
 type Labels = Record<string, string>;
-
-const T = TV_DASHBOARD_HELP_TOOLTIPS.tabs;
-
-const PANEL_TABS = [
-  { id: "element" as const, label: "Elemento", hint: T.element },
-  { id: "data" as const, label: "Dados", hint: T.data },
-  { id: "layers" as const, label: "Camadas", hint: T.layers },
-];
 
 type Props = {
   labels?: Labels;
@@ -50,10 +42,21 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   const { collapsed, setCollapsed, startResize, panelWidthPx, limits, width } =
     useDeckSidePanelLayout("inspector", { growDirection: "west" });
   const open = !collapsed;
+  const prevSelectionCount = useRef(selectedIds.length);
 
   const dataContext = useMemo(
     () => resolveSelectedDataContext(blocks, selectedIds),
     [blocks, selectedIds],
+  );
+
+  const hasSelection = selectedIds.length > 0;
+  const hasDataBoundSelection = Boolean(
+    selected && isDataBoundEditorBlockType(selected.type),
+  );
+  const showDataTab = dataPanelOpen || hasDataBoundSelection;
+  const panelTabs = useMemo(
+    () => resolveSelectionPanelTabs({ hasSelection, showDataTab }),
+    [hasSelection, showDataTab],
   );
 
   useEffect(() => {
@@ -66,6 +69,30 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
       setSelectionPanelTab("data");
     }
   }, [dataPanelOpen, setCollapsed, setSelectionPanelTab]);
+
+  /** Auto-aba: seleção → Elemento; desseleção → Camadas. */
+  useEffect(() => {
+    const prev = prevSelectionCount.current;
+    const next = selectedIds.length;
+    prevSelectionCount.current = next;
+    if (next > 0 && prev === 0) {
+      setSelectionPanelTab("element");
+      requestRibbonTab("element");
+      return;
+    }
+    if (next === 0 && prev > 0) {
+      setSelectionPanelTab("layers");
+      setDataPanelOpen(false);
+    }
+  }, [selectedIds.length, requestRibbonTab, setDataPanelOpen, setSelectionPanelTab]);
+
+  /** Se a aba ativa sumiu do set visível, cair para a primeira disponível. */
+  useEffect(() => {
+    if (!panelTabs.some((t) => t.id === selectionPanelTab)) {
+      const fallback = panelTabs[panelTabs.length - 1]?.id ?? "layers";
+      setSelectionPanelTab(fallback);
+    }
+  }, [panelTabs, selectionPanelTab, setSelectionPanelTab]);
 
   const tab = selectionPanelTab;
 
@@ -107,6 +134,9 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     "--td-side-panel-width": `${open ? width : panelWidthPx}px`,
   } as CSSProperties;
 
+  const railShowsElement = panelTabs.some((t) => t.id === "element");
+  const railShowsData = panelTabs.some((t) => t.id === "data");
+
   return (
     <aside
       className={[
@@ -136,7 +166,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
             title={panelTitle}
             closeLabel="Recolher painel de formatação"
             onClose={() => setCollapsed(true)}
-            tabs={PANEL_TABS}
+            tabs={panelTabs}
             activeTabId={tab}
             onTabChange={(id) => handleTabChange(id as SelectionPanelTab)}
             bodyClassName="td-deck-side-panel__pane-body"
@@ -170,30 +200,34 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
           >
             <ChevronLeft size={18} aria-hidden="true" />
           </button>
-          <button
-            type="button"
-            className={`td-deck-side-panel__rail-btn${tab === "element" ? " td-deck-side-panel__rail-btn--active" : ""}`}
-            onClick={() => {
-              setCollapsed(false);
-              handleTabChange("element");
-            }}
-            aria-label="Elemento"
-            title="Definir elemento"
-          >
-            <MousePointer2 size={16} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            className={`td-deck-side-panel__rail-btn${tab === "data" ? " td-deck-side-panel__rail-btn--active" : ""}`}
-            onClick={() => {
-              setCollapsed(false);
-              handleTabChange("data");
-            }}
-            aria-label="Dados"
-            title="Dados"
-          >
-            <Database size={16} aria-hidden="true" />
-          </button>
+          {railShowsElement ? (
+            <button
+              type="button"
+              className={`td-deck-side-panel__rail-btn${tab === "element" ? " td-deck-side-panel__rail-btn--active" : ""}`}
+              onClick={() => {
+                setCollapsed(false);
+                handleTabChange("element");
+              }}
+              aria-label="Elemento"
+              title="Definir elemento"
+            >
+              <MousePointer2 size={16} aria-hidden="true" />
+            </button>
+          ) : null}
+          {railShowsData ? (
+            <button
+              type="button"
+              className={`td-deck-side-panel__rail-btn${tab === "data" ? " td-deck-side-panel__rail-btn--active" : ""}`}
+              onClick={() => {
+                setCollapsed(false);
+                handleTabChange("data");
+              }}
+              aria-label="Dados"
+              title="Dados"
+            >
+              <Database size={16} aria-hidden="true" />
+            </button>
+          ) : null}
           <button
             type="button"
             className={`td-deck-side-panel__rail-btn${tab === "layers" ? " td-deck-side-panel__rail-btn--active" : ""}`}

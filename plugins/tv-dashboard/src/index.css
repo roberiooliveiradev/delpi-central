@@ -3512,16 +3512,29 @@ body.td-composer--marqueeing * {
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__frame-grid {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 10px 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(72px, 88px));
+  gap: 4px 10px;
   width: max-content;
   max-width: 100%;
-  align-items: flex-start;
-  overflow-x: auto;
-  overflow-y: visible;
-  scrollbar-width: thin;
-  padding-bottom: 2px;
+  align-items: end;
+  overflow: visible;
+}
+
+/* Ribbon: Posição compacta (só inputs) — sem scroll da faixa. */
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid {
+  grid-template-columns: repeat(3, minmax(64px, 78px));
+  gap: 2px 8px;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid .delpi-ui-range-field--compact {
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid .delpi-ui-range-field__input {
+  width: 100%;
+  min-width: 0;
+  max-width: 78px;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon__organize {
@@ -3700,14 +3713,15 @@ body.td-composer--marqueeing * {
   overflow: hidden;
 }
 
-/* Elemento / Dados / Design: uma faixa horizontal — Posição/Organizar seguem após Eixos (ou último grupo). */
+/*
+ * Elemento / Dados / Design: mesma altura fixa da ribbon (~80px).
+ * Conteúdo compactado (inputs sem slider) — sem scroll H/V da faixa.
+ */
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--fit {
-  --td-ribbon-height: auto;
-  height: auto;
-  min-height: 72px;
-  max-height: min(220px, 34vh);
-  overflow-x: auto;
-  overflow-y: hidden;
+  --td-ribbon-height: 80px;
+  height: var(--td-ribbon-height);
+  max-height: var(--td-ribbon-height);
+  overflow: hidden;
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups {
@@ -3863,8 +3877,7 @@ body.td-composer--marqueeing * {
 }
 
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__frame-grid {
-  flex-wrap: nowrap;
-  gap: 10px 16px;
+  /* grid definido em .td-deck-ribbon__frame-grid — mantém densidade 3 colunas. */
   width: max-content;
   max-width: none;
 }
@@ -6468,6 +6481,27 @@ body.td-composer--marqueeing * {
 
 .dashboard-tv-dashboard .td-deck-inspector__empty {
   margin-top: 8px;
+}
+
+/* Host de seções Elemento no painel — ribbon groups empilhados no accordion. */
+.dashboard-tv-dashboard .td-selection-sections--pane {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dashboard-tv-dashboard .td-selection-section--pane-typography .td-deck-ribbon__group,
+.dashboard-tv-dashboard .td-selection-section--pane-text-box .td-deck-ribbon__group,
+.dashboard-tv-dashboard .td-selection-section--pane-frame .td-deck-ribbon__group,
+.dashboard-tv-dashboard .td-selection-section--pane-organize .td-deck-ribbon__group {
+  min-width: 0;
+  width: 100%;
+}
+
+.dashboard-tv-dashboard .td-selection-section--pane-typography {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 @media (max-width: 1100px) {

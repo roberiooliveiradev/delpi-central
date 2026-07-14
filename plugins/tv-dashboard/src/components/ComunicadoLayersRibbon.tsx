@@ -1,10 +1,7 @@
-import { ComunicadoLayersPanel } from "./deck/ComunicadoLayersPanel";
-
-/** Aba Camadas na top bar — mesmo conteúdo do painel lateral, grade 1fr/1fr. */
+/**
+ * @deprecated Camadas abre o painel lateral (`openLayersPanel`) — não renderiza faixa.
+ * Mantido só para imports legados / testes.
+ */
 export function ComunicadoLayersRibbon() {
-  return (
-    <div className="td-deck-ribbon__groups td-deck-ribbon__groups--inspector">
-      <ComunicadoLayersPanel layout="ribbon" />
-    </div>
-  );
+  return null;
 }

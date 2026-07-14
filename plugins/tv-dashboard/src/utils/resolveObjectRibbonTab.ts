@@ -38,10 +38,13 @@ export function resolveObjectRibbonTab(params: {
   if (selected.type === "kpi_view") return "shape";
   if (
     selected.type === "shape" ||
+    selected.type === "icon" ||
     selected.type === "heading" ||
     selected.type === "text" ||
     selected.type === "image" ||
-    selected.type === "video"
+    selected.type === "video" ||
+    selected.type === "canvas_table" ||
+    selected.type === "input"
   ) {
     return "shape";
   }
