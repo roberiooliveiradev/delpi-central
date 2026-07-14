@@ -98,7 +98,7 @@ describe("inputFilterParts free-layout", () => {
     expect(onPartMovePointerDown).toHaveBeenCalled();
   });
 
-  it("bindInputPartPointer no control nativo não inicia drag da parte", () => {
+  it("bindInputPartPointer no control selecionado edita valor (sem drag)", () => {
     const onPartPointerDown = vi.fn();
     const onPartMovePointerDown = vi.fn();
     const bind = bindInputPartPointer(
@@ -110,13 +110,40 @@ describe("inputFilterParts free-layout", () => {
       },
     );
     const stopPropagation = vi.fn();
+    const preventDefault = vi.fn();
     const input = document.createElement("input");
     bind.onPointerDown?.({
       stopPropagation,
+      preventDefault,
       target: input,
     } as unknown as Parameters<NonNullable<typeof bind.onPointerDown>>[0]);
     expect(stopPropagation).toHaveBeenCalled();
     expect(onPartPointerDown).not.toHaveBeenCalled();
+    expect(onPartMovePointerDown).not.toHaveBeenCalled();
+  });
+
+  it("bindInputPartPointer no control nativo sem seleção seleciona a parte", () => {
+    const onPartPointerDown = vi.fn();
+    const onPartMovePointerDown = vi.fn();
+    const bind = bindInputPartPointer(
+      { kind: "control" },
+      {
+        selectedPart: null,
+        onPartPointerDown,
+        onPartMovePointerDown,
+      },
+    );
+    const stopPropagation = vi.fn();
+    const preventDefault = vi.fn();
+    const input = document.createElement("input");
+    bind.onPointerDown?.({
+      stopPropagation,
+      preventDefault,
+      target: input,
+    } as unknown as Parameters<NonNullable<typeof bind.onPointerDown>>[0]);
+    expect(stopPropagation).toHaveBeenCalled();
+    expect(preventDefault).toHaveBeenCalled();
+    expect(onPartPointerDown).toHaveBeenCalledWith({ kind: "control" }, expect.anything());
     expect(onPartMovePointerDown).not.toHaveBeenCalled();
   });
 });

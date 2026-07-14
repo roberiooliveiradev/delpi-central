@@ -815,19 +815,33 @@ function EditorInputBlock({
   const onPartPointerDown = useCallback(
     (part: ComunicadoInputPartRef, event?: ReactPointerEvent) => {
       if (!event) return;
+      const blockSelected = selectedId === block.id;
       const samePartSelected =
-        selectedId === block.id &&
-        Boolean(selectedInputPart && selectedInputPart.kind === part.kind);
+        blockSelected && Boolean(selectedInputPart && selectedInputPart.kind === part.kind);
       const action = resolveCompositePartPointerAction({
-        blockSelected: selectedId === block.id,
+        blockSelected,
         samePartSelected,
         partAllowsMove: inputPartAllowsMove(part),
       });
       if (action === "part-move") return;
+      // Conteúdo: clique na caixa/borda seleciona o subitem. Moldura → arrasta o bloco.
+      if (blockSelected && part.kind !== "frame" && !samePartSelected) {
+        selectInputPart(block.id, part);
+        requestRibbonTab("shape");
+        return;
+      }
       selectBlock(block.id);
       startDrag(event, block, "move");
     },
-    [block, selectBlock, selectedId, selectedInputPart, startDrag],
+    [
+      block,
+      requestRibbonTab,
+      selectBlock,
+      selectInputPart,
+      selectedId,
+      selectedInputPart,
+      startDrag,
+    ],
   );
 
   const onPartDoubleClick = useCallback(
@@ -936,14 +950,18 @@ function EditorInputBlock({
     [block.id, block.inputParts, updateBlock],
   );
 
+  /** Como gráfico/KPI: partes só com o grupo já selecionado (1º clique = bloco). */
   const interaction = useMemo(
-    () => ({
-      selectedPart: selectedId === block.id ? selectedInputPart : null,
-      onPartPointerDown,
-      onPartDoubleClick,
-      onPartMovePointerDown,
-      onPartResizePointerDown,
-    }),
+    () =>
+      selectedId === block.id
+        ? {
+            selectedPart: selectedInputPart,
+            onPartPointerDown,
+            onPartDoubleClick,
+            onPartMovePointerDown,
+            onPartResizePointerDown,
+          }
+        : null,
     [
       block.id,
       onPartDoubleClick,

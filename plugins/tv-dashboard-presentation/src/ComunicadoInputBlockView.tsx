@@ -191,10 +191,17 @@ export function ComunicadoInputBlockView({
     onChange?.(next === "" ? null : next);
   };
 
+  const selected = interaction?.selectedPart ?? null;
+  /** Editor com interaction: valor só clica quando a parte control está selecionada. */
+  const controlValueInteractive =
+    !interaction || isInputPartRefEqual(selected, { kind: "control" });
   const controlClass = [
     "tdp-comunicado__input-block-control",
     `tdp-comunicado__input-block-control--${controlKind}`,
-  ].join(" ");
+    controlValueInteractive ? null : "tdp-comunicado__input-block-control--hit-through",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   let controlNode: ReactNode = null;
   if (unavailable) {
@@ -202,10 +209,14 @@ export function ComunicadoInputBlockView({
       <span className="tdp-comunicado__input-block-unavailable">Parâmetro indisponível</span>
     );
   } else if (interactive) {
+    const controlPointerStyle: CSSProperties | undefined = controlValueInteractive
+      ? undefined
+      : { pointerEvents: "none" };
     if (controlKind === "select" || controlKind === "boolean") {
       controlNode = (
         <select
           className={controlClass}
+          style={controlPointerStyle}
           value={current === null || current === undefined ? "" : String(current)}
           onChange={handleSelect}
           onPointerDown={(event) => {
@@ -214,6 +225,7 @@ export function ComunicadoInputBlockView({
           }}
           aria-label={label}
           disabled={dataLoading}
+          tabIndex={controlValueInteractive ? undefined : -1}
         >
           <option value="">—</option>
           {options.map((option) => (
@@ -227,6 +239,7 @@ export function ComunicadoInputBlockView({
       controlNode = (
         <input
           className={controlClass}
+          style={controlPointerStyle}
           type={controlKind === "number" ? "number" : controlKind === "date" ? "date" : "text"}
           value={current === null || current === undefined ? "" : String(current)}
           onChange={handleText}
@@ -236,6 +249,8 @@ export function ComunicadoInputBlockView({
           aria-label={label}
           placeholder={effectiveField?.description || paramKey}
           disabled={dataLoading}
+          readOnly={!controlValueInteractive}
+          tabIndex={controlValueInteractive ? undefined : -1}
         />
       );
     }
@@ -247,7 +262,6 @@ export function ComunicadoInputBlockView({
     );
   }
 
-  const selected = interaction?.selectedPart ?? null;
   const hasAnyPartFrame = ["icon", "label", "badge", "control"].some((kind) =>
     Boolean(resolveInputPartFrame(getInputPartState(parts, { kind } as ComunicadoInputPartRef))),
   );

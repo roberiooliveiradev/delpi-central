@@ -1748,6 +1748,12 @@
   cursor: wait;
 }
 
+/* Editor: caixa control não selecionada — clique atravessa para selecionar o subitem. */
+.tdp-comunicado__input-block-control--hit-through {
+  pointer-events: none;
+  cursor: default;
+}
+
 .tdp-comunicado__input-block-control--select,
 .tdp-comunicado__input-block-control--boolean {
   cursor: pointer;

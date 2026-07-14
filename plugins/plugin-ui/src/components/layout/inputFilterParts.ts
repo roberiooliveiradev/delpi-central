@@ -432,12 +432,17 @@ export function findInputPartFromTarget(target: EventTarget | null): InputPartRe
   return parseInputPartRef(host.getAttribute(INPUT_PART_DATA_ATTR));
 }
 
-/** Clique em `<input>`/`<select>` no controle = editar valor, não arrastar a parte. */
+/** Clique em `<input>`/`<select>` no controle = alvo do valor (não da moldura da parte). */
 export function isInputFilterFormControlTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
   return Boolean(target.closest("input, select, textarea"));
 }
 
+/**
+ * Pointer da parte no editor.
+ * Control: clique no valor só edita quando a parte já está selecionada;
+ * senão o clique seleciona a caixa (borda/subitem). Kiosk sem interaction edita sempre.
+ */
 export function bindInputPartPointer(
   ref: InputPartRef,
   interaction?: InputFilterInteraction | null,
@@ -453,8 +458,14 @@ export function bindInputPartPointer(
     onPointerDown: (event) => {
       // Isolar do drag do bloco (contrato KPI) — sem isso o frame herda o pointer.
       event.stopPropagation();
-      // Subcomponente de valor: deixar foco/abrir o controle nativo.
       if (ref.kind === "control" && isInputFilterFormControlTarget(event.target)) {
+        if (!selected) {
+          // Caixa ainda não selecionada: não focar o nativo — selecionar o subitem.
+          event.preventDefault();
+          interaction.onPartPointerDown?.(ref, event);
+          return;
+        }
+        // Parte control ativa → editar valor (sem drag da parte).
         return;
       }
       interaction.onPartPointerDown?.(ref, event);
