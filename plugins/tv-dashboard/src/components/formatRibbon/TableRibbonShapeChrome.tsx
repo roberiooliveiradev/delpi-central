@@ -19,6 +19,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
+import { ShapeMenuHint } from "./ShapeMenuHint";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
@@ -57,63 +58,71 @@ export function TableRibbonShapeChrome({ block }: { block: ComunicadoTableViewBl
 
   return (
     <>
-      <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
+      <DeckRibbonGroup label="Estilos de forma" hint={H.shapeStyles}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-          <ShapeStyleMenu
-            triggerLabel="Estilos"
-            onSelect={(preset) =>
-              patchChromeStyle(
-                showStroke
-                  ? {
-                      fill: preset.fill,
-                      stroke: preset.stroke,
-                      strokeWidth: preset.strokeWidth,
-                    }
-                  : { fill: preset.fill },
-              )
-            }
-          />
+          <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
+            <ShapeStyleMenu
+              triggerLabel="Estilos"
+              onSelect={(preset) =>
+                patchChromeStyle(
+                  showStroke
+                    ? {
+                        fill: preset.fill,
+                        stroke: preset.stroke,
+                        strokeWidth: preset.strokeWidth,
+                      }
+                    : { fill: preset.fill },
+                )
+              }
+            />
+          </ShapeMenuHint>
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Preenchimento" hint={H.shape}>
+      <DeckRibbonGroup label="Preenchimento" hint={H.shapeFill}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-          <ShapeFillMenu
-            value={fillValue}
-            fillLabel="Preench."
-            onChange={(color) => patchChromeStyle({ fill: color })}
-            onNoFill={() => patchChromeStyle({ fill: "transparent" })}
-          />
+          <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento">
+            <ShapeFillMenu
+              value={fillValue}
+              fillLabel="Preench."
+              onChange={(color) => patchChromeStyle({ fill: color })}
+              onNoFill={() => patchChromeStyle({ fill: "transparent" })}
+            />
+          </ShapeMenuHint>
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Contorno" hint={H.strokeWidth}>
+      <DeckRibbonGroup label="Contorno" hint={H.shapeOutline}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showStroke ? (
-            <ShapeOutlineMenu
-              color={strokeValue}
-              strokeWidth={strokeWidth}
-              minWidth={0}
-              maxWidth={20}
-              outlineLabel="Contorno"
-              onColorChange={(color) => patchChromeStyle({ stroke: color })}
-              onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
-              onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
-            />
+            <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
+              <ShapeOutlineMenu
+                color={strokeValue}
+                strokeWidth={strokeWidth}
+                minWidth={0}
+                maxWidth={20}
+                outlineLabel="Contorno"
+                onColorChange={(color) => patchChromeStyle({ stroke: color })}
+                onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+                onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
+              />
+            </ShapeMenuHint>
           ) : (
             <p className="td-subtitle td-deck-ribbon__hint">Contorno só na moldura da tabela.</p>
           )}
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Efeitos" hint="Sombra da moldura da tabela.">
+      <DeckRibbonGroup label="Efeitos" hint={H.tableFrameShadow}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-          <ShapeShadowMenu
-            value={block.style?.boxShadow}
-            presets={SHADOW_MENU_PRESETS}
-            shadowLabel="Sombra"
-            onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-          />
+          <ShapeMenuHint hint={H.tableFrameShadow} ariaLabel="Ajuda: Sombra da moldura">
+            <ShapeShadowMenu
+              value={block.style?.boxShadow}
+              presets={SHADOW_MENU_PRESETS}
+              shadowLabel="Sombra"
+              onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+            />
+          </ShapeMenuHint>
         </div>
       </DeckRibbonGroup>
     </>

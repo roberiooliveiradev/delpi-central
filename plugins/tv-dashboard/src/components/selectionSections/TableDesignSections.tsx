@@ -33,6 +33,7 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { SelectionPaneSection } from "./SelectionPaneSection";
@@ -335,12 +336,14 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
 
   const effects = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-      <ShapeShadowMenu
-        value={ctrl.frame.boxShadow === "none" ? undefined : ctrl.frame.boxShadow}
-        presets={SHADOW_MENU_PRESETS}
-        shadowLabel="Sombra"
-        onChange={ctrl.patchFrameShadow}
-      />
+      <ShapeMenuHint hint={H.tableFrameShadow} ariaLabel="Ajuda: Sombra da moldura">
+        <ShapeShadowMenu
+          value={ctrl.frame.boxShadow === "none" ? undefined : ctrl.frame.boxShadow}
+          presets={SHADOW_MENU_PRESETS}
+          shadowLabel="Sombra"
+          onChange={ctrl.patchFrameShadow}
+        />
+      </ShapeMenuHint>
     </div>
   );
 
@@ -349,13 +352,13 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
       <DeckRibbonTile
         icon={Shapes}
         label="Forma"
-        hint="Seleciona a moldura e abre preenchimento/contorno (como Formatar Forma)."
+        hint={H.tableOpenFrameShape}
         onClick={ctrl.openFrameShapeChrome}
       />
       <DeckRibbonTile
         icon={Database}
         label="Selecionar dados"
-        hint="Abre o painel de fontes de dados."
+        hint={H.openDataPanel}
         onClick={() => ctrl.openDataPanel()}
       />
     </div>
@@ -364,17 +367,13 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
   if (layout === "pane") {
     return (
       <>
-        <SelectionPaneSection
-          title="Bordas"
-          hint="Visibilidade, cor, peso e estilo da grade (caneta)."
-          defaultOpen={false}
-        >
+        <SelectionPaneSection title="Bordas" hint={H.tableBorders} defaultOpen={false}>
           {borders}
         </SelectionPaneSection>
-        <SelectionPaneSection title="Efeitos" hint="Sombra da moldura da tabela." defaultOpen={false}>
+        <SelectionPaneSection title="Efeitos" hint={H.tableFrameShadow} defaultOpen={false}>
           {effects}
         </SelectionPaneSection>
-        <SelectionPaneSection title="Forma e dados" defaultOpen={false}>
+        <SelectionPaneSection title="Forma e dados" hint={H.tableFormat} defaultOpen={false}>
           {shortcuts}
         </SelectionPaneSection>
       </>
@@ -383,18 +382,18 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
 
   return (
     <>
-      <DeckRibbonGroup label="Bordas" hint="Visibilidade, cor, peso e estilo da grade (caneta).">
+      <DeckRibbonGroup label="Bordas" hint={H.tableBorders}>
         {borders}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Efeitos" hint="Sombra da moldura da tabela.">
+      <DeckRibbonGroup label="Efeitos" hint={H.tableFrameShadow}>
         {effects}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Forma" hint="Preenchimento e contorno da moldura da tabela.">
+      <DeckRibbonGroup label="Forma" hint={H.tableFrameChrome}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={Shapes}
             label="Forma"
-            hint="Seleciona a moldura e abre preenchimento/contorno (como Formatar Forma)."
+            hint={H.tableOpenFrameShape}
             onClick={ctrl.openFrameShapeChrome}
           />
         </div>
@@ -404,7 +403,7 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
           <DeckRibbonTile
             icon={Database}
             label="Selecionar dados"
-            hint="Abre o painel de fontes de dados."
+            hint={H.openDataPanel}
             onClick={() => ctrl.openDataPanel()}
           />
         </div>

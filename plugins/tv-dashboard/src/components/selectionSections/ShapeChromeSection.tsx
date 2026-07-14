@@ -37,6 +37,7 @@ import {
   resolveSelectionChromeMode,
 } from "../../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
 import { ShapeAdjustmentsControl } from "../ShapeAdjustmentsControl";
 import { DeckRangeField } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
@@ -123,35 +124,41 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
 
   const stylesMenus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-      <ShapeStyleMenu
-        triggerLabel="Estilos"
-        onSelect={(preset) =>
-          updateSelectedStyle({
-            fill: preset.fill,
-            stroke: preset.stroke,
-            strokeWidth: preset.strokeWidth,
-            boxShadow: preset.boxShadow,
-          })
-        }
-      />
-      <ShapeShadowMenu
-        value={block.style?.boxShadow}
-        presets={SHADOW_MENU_PRESETS}
-        shadowLabel="Sombra"
-        onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-      />
+      <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
+        <ShapeStyleMenu
+          triggerLabel="Estilos"
+          onSelect={(preset) =>
+            updateSelectedStyle({
+              fill: preset.fill,
+              stroke: preset.stroke,
+              strokeWidth: preset.strokeWidth,
+              boxShadow: preset.boxShadow,
+            })
+          }
+        />
+      </ShapeMenuHint>
+      <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra da forma">
+        <ShapeShadowMenu
+          value={block.style?.boxShadow}
+          presets={SHADOW_MENU_PRESETS}
+          shadowLabel="Sombra"
+          onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+        />
+      </ShapeMenuHint>
     </div>
   );
 
   const fillMenus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
       {showFill ? (
-        <ShapeFillMenu
-          value={block.style?.fill ?? DECK_SHAPE_DEFAULTS.fill}
-          fillLabel={primitive === "point" ? "Cor" : "Preench."}
-          onChange={(color) => updateSelectedStyle({ fill: color })}
-          onNoFill={() => updateSelectedStyle({ fill: "transparent" })}
-        />
+        <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento da forma">
+          <ShapeFillMenu
+            value={block.style?.fill ?? DECK_SHAPE_DEFAULTS.fill}
+            fillLabel={primitive === "point" ? "Cor" : "Preench."}
+            onChange={(color) => updateSelectedStyle({ fill: color })}
+            onNoFill={() => updateSelectedStyle({ fill: "transparent" })}
+          />
+        </ShapeMenuHint>
       ) : (
         <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento nesta forma.</p>
       )}
@@ -161,19 +168,21 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
   const strokeMenus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
       {showStroke ? (
-        <ShapeOutlineMenu
-          color={
-            block.style?.stroke ??
-            (primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke)
-          }
-          strokeWidth={defaultStrokeWidth}
-          minWidth={0}
-          maxWidth={primitive === "point" ? 8 : 20}
-          outlineLabel="Contorno"
-          onColorChange={(color) => updateSelectedStyle({ stroke: color })}
-          onNoOutline={() => updateSelectedStyle({ stroke: "transparent" })}
-          onStrokeWidthChange={(width) => updateSelectedStyle({ strokeWidth: width })}
-        />
+        <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno da forma">
+          <ShapeOutlineMenu
+            color={
+              block.style?.stroke ??
+              (primitive === "line" ? DECK_SHAPE_DEFAULTS.lineStroke : DECK_SHAPE_DEFAULTS.stroke)
+            }
+            strokeWidth={defaultStrokeWidth}
+            minWidth={0}
+            maxWidth={primitive === "point" ? 8 : 20}
+            outlineLabel="Contorno"
+            onColorChange={(color) => updateSelectedStyle({ stroke: color })}
+            onNoOutline={() => updateSelectedStyle({ stroke: "transparent" })}
+            onStrokeWidthChange={(width) => updateSelectedStyle({ strokeWidth: width })}
+          />
+        </ShapeMenuHint>
       ) : (
         <p className="td-subtitle td-deck-ribbon__hint">Sem contorno nesta forma.</p>
       )}
@@ -184,36 +193,40 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
     return (
       <>
         <div id="td-shape-pane-fill-line">
-          <SelectionPaneSection title="Preenchimento e linha" defaultOpen>
+          <SelectionPaneSection title="Preenchimento e linha" hint={H.shape} defaultOpen>
             {fillMenus}
             {strokeMenus}
           </SelectionPaneSection>
         </div>
         <div id="td-shape-pane-effects">
-          <SelectionPaneSection title="Efeitos" defaultOpen={false}>
-            <ShapeShadowMenu
-              value={block.style?.boxShadow}
-              presets={SHADOW_MENU_PRESETS}
-              shadowLabel="Sombra"
-              onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-            />
-            <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-              <ShapeStyleMenu
-                triggerLabel="Estilos"
-                onSelect={(preset) =>
-                  updateSelectedStyle({
-                    fill: preset.fill,
-                    stroke: preset.stroke,
-                    strokeWidth: preset.strokeWidth,
-                    boxShadow: preset.boxShadow,
-                  })
-                }
+          <SelectionPaneSection title="Efeitos" hint={H.boxShadow} defaultOpen={false}>
+            <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra da forma">
+              <ShapeShadowMenu
+                value={block.style?.boxShadow}
+                presets={SHADOW_MENU_PRESETS}
+                shadowLabel="Sombra"
+                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
               />
+            </ShapeMenuHint>
+            <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+              <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
+                <ShapeStyleMenu
+                  triggerLabel="Estilos"
+                  onSelect={(preset) =>
+                    updateSelectedStyle({
+                      fill: preset.fill,
+                      stroke: preset.stroke,
+                      strokeWidth: preset.strokeWidth,
+                      boxShadow: preset.boxShadow,
+                    })
+                  }
+                />
+              </ShapeMenuHint>
             </div>
           </SelectionPaneSection>
         </div>
         {showShapeAdjustments ? (
-          <SelectionPaneSection title="Ajustes da forma" defaultOpen={false}>
+          <SelectionPaneSection title="Ajustes da forma" hint={H.shapeAdjustment} defaultOpen={false}>
             <ShapeAdjustmentsControl
               kind={block.shape}
               style={block.style}
@@ -224,11 +237,11 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
           </SelectionPaneSection>
         ) : null}
         {primitive === "point" ? (
-          <SelectionPaneSection title="Marcador" hint={H.shapeSize} defaultOpen={false}>
+          <SelectionPaneSection title="Marcador" hint={H.markerRadius} defaultOpen={false}>
             <DeckRangeField
               id="td-shape-marker-radius"
               label="Raio px"
-              hint={H.shapeSize}
+              hint={H.markerRadius}
               min={2}
               max={48}
               step={1}
@@ -246,13 +259,13 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
 
   return (
     <>
-      <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
+      <DeckRibbonGroup label="Estilos de forma" hint={H.shapeStyles}>
         {stylesMenus}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Preenchimento" hint={H.shape}>
+      <DeckRibbonGroup label="Preenchimento" hint={H.shapeFill}>
         {fillMenus}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Contorno" hint={H.strokeWidth}>
+      <DeckRibbonGroup label="Contorno" hint={H.shapeOutline}>
         {strokeMenus}
       </DeckRibbonGroup>
       {showShapeAdjustments ? (
@@ -264,11 +277,11 @@ function ShapeBlockChrome({ layout }: { layout: SelectionSectionLayout }) {
         />
       ) : null}
       {primitive === "point" ? (
-        <DeckRibbonGroup label="Marcador" hint={H.shapeSize}>
+        <DeckRibbonGroup label="Marcador" hint={H.markerRadius}>
           <DeckRangeField
             id="td-shape-marker-radius"
             label="Raio px"
-            hint={H.shapeSize}
+            hint={H.markerRadius}
             min={2}
             max={48}
             step={1}
@@ -355,39 +368,47 @@ function KpiShapeChrome({
 
   const menus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-      <ShapeStyleMenu
-        triggerLabel="Estilos"
-        onSelect={(preset) =>
-          patchChromeStyle({
-            fill: preset.fill,
-            stroke: preset.stroke,
-            strokeWidth: preset.strokeWidth,
-          })
-        }
-      />
-      <ShapeFillMenu
-        value={fillValue}
-        fillLabel={boxLabels.fillShort}
-        onChange={(color) => patchChromeStyle({ fill: color })}
-        onNoFill={() => patchChromeStyle({ fill: "transparent" })}
-      />
-      <ShapeOutlineMenu
-        color={strokeValue}
-        strokeWidth={strokeWidth}
-        minWidth={0}
-        maxWidth={20}
-        outlineLabel={boxLabels.strokeShort}
-        onColorChange={(color) => patchChromeStyle({ stroke: color })}
-        onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
-        onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
-      />
-      {isCardChrome ? (
-        <ShapeShadowMenu
-          value={block.style?.boxShadow}
-          presets={SHADOW_MENU_PRESETS}
-          shadowLabel="Sombra"
-          onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+      <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
+        <ShapeStyleMenu
+          triggerLabel="Estilos"
+          onSelect={(preset) =>
+            patchChromeStyle({
+              fill: preset.fill,
+              stroke: preset.stroke,
+              strokeWidth: preset.strokeWidth,
+            })
+          }
         />
+      </ShapeMenuHint>
+      <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento">
+        <ShapeFillMenu
+          value={fillValue}
+          fillLabel={boxLabels.fillShort}
+          onChange={(color) => patchChromeStyle({ fill: color })}
+          onNoFill={() => patchChromeStyle({ fill: "transparent" })}
+        />
+      </ShapeMenuHint>
+      <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
+        <ShapeOutlineMenu
+          color={strokeValue}
+          strokeWidth={strokeWidth}
+          minWidth={0}
+          maxWidth={20}
+          outlineLabel={boxLabels.strokeShort}
+          onColorChange={(color) => patchChromeStyle({ stroke: color })}
+          onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+          onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
+        />
+      </ShapeMenuHint>
+      {isCardChrome ? (
+        <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
+          <ShapeShadowMenu
+            value={block.style?.boxShadow}
+            presets={SHADOW_MENU_PRESETS}
+            shadowLabel="Sombra"
+            onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+          />
+        </ShapeMenuHint>
       ) : null}
     </div>
   );
@@ -472,37 +493,43 @@ function InputShapeChrome({
 
   const menus = (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-      <ShapeFillMenu
-        value={fillValue}
-        fillLabel={boxLabels.fillShort}
-        onChange={(color) => patchChromeStyle({ fill: color })}
-        onNoFill={() => patchChromeStyle({ fill: "transparent" })}
-      />
-      <ShapeOutlineMenu
-        color={strokeValue}
-        strokeWidth={strokeWidth}
-        minWidth={0}
-        maxWidth={20}
-        outlineLabel={boxLabels.strokeShort}
-        onColorChange={(color) => patchChromeStyle({ stroke: color })}
-        onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
-        onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
-      />
-      {isFrameChrome ? (
-        <ShapeShadowMenu
-          value={typeof frameShadow === "string" ? frameShadow : undefined}
-          presets={SHADOW_MENU_PRESETS}
-          shadowLabel="Sombra"
-          onChange={(boxShadow) => {
-            const nextShadow = boxShadow?.trim() ? boxShadow : undefined;
-            updateSelected({
-              inputParts: upsertInputPartState(block.inputParts, { kind: "frame" }, {
-                style: { boxShadow: nextShadow },
-              }),
-              style: { ...block.style, boxShadow: nextShadow },
-            } as Partial<ComunicadoBlock>);
-          }}
+      <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento">
+        <ShapeFillMenu
+          value={fillValue}
+          fillLabel={boxLabels.fillShort}
+          onChange={(color) => patchChromeStyle({ fill: color })}
+          onNoFill={() => patchChromeStyle({ fill: "transparent" })}
         />
+      </ShapeMenuHint>
+      <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
+        <ShapeOutlineMenu
+          color={strokeValue}
+          strokeWidth={strokeWidth}
+          minWidth={0}
+          maxWidth={20}
+          outlineLabel={boxLabels.strokeShort}
+          onColorChange={(color) => patchChromeStyle({ stroke: color })}
+          onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
+          onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
+        />
+      </ShapeMenuHint>
+      {isFrameChrome ? (
+        <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
+          <ShapeShadowMenu
+            value={typeof frameShadow === "string" ? frameShadow : undefined}
+            presets={SHADOW_MENU_PRESETS}
+            shadowLabel="Sombra"
+            onChange={(boxShadow) => {
+              const nextShadow = boxShadow?.trim() ? boxShadow : undefined;
+              updateSelected({
+                inputParts: upsertInputPartState(block.inputParts, { kind: "frame" }, {
+                  style: { boxShadow: nextShadow },
+                }),
+                style: { ...block.style, boxShadow: nextShadow },
+              } as Partial<ComunicadoBlock>);
+            }}
+          />
+        </ShapeMenuHint>
       ) : null}
     </div>
   );

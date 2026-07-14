@@ -71,7 +71,7 @@ export function FormatRibbonTextBoxChrome({ bare = false }: { bare?: boolean } =
   if (bare) return menus;
 
   return (
-    <DeckRibbonGroup label="Caixa" hint={H.shape}>
+    <DeckRibbonGroup label="Caixa" hint={H.box}>
       {menus}
     </DeckRibbonGroup>
   );

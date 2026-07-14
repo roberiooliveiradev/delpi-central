@@ -28,6 +28,7 @@ import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPre
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { DeckRangeField } from "../deck/DeckRangeField";
+import { ShapeMenuHint } from "./ShapeMenuHint";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 
@@ -112,60 +113,68 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
 
   return (
     <>
-      <DeckRibbonGroup label="Estilos de forma" hint={H.shape}>
+      <DeckRibbonGroup label="Estilos de forma" hint={H.shapeStyles}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-          <ShapeStyleMenu
-            triggerLabel="Estilos"
-            onSelect={(preset) =>
-              patchPartStyle({
-                fill: preset.fill,
-                stroke: preset.stroke,
-                strokeWidth: preset.strokeWidth,
-                ...(showCorners ? { borderRadius: cornerRadius } : {}),
-              })
-            }
-          />
+          <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
+            <ShapeStyleMenu
+              triggerLabel="Estilos"
+              onSelect={(preset) =>
+                patchPartStyle({
+                  fill: preset.fill,
+                  stroke: preset.stroke,
+                  strokeWidth: preset.strokeWidth,
+                  ...(showCorners ? { borderRadius: cornerRadius } : {}),
+                })
+              }
+            />
+          </ShapeMenuHint>
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Preenchimento" hint={H.shape}>
+      <DeckRibbonGroup label="Preenchimento" hint={H.shapeFill}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showFill ? (
-            <ShapeFillMenu
-              value={fillValue}
-              fillLabel={chartPartPrimitive === "point" ? "Cor" : "Preench."}
-              onChange={(color) => patchPartStyle({ fill: color })}
-              onNoFill={() => patchPartStyle({ fill: "transparent" })}
-            />
+            <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento">
+              <ShapeFillMenu
+                value={fillValue}
+                fillLabel={chartPartPrimitive === "point" ? "Cor" : "Preench."}
+                onChange={(color) => patchPartStyle({ fill: color })}
+                onNoFill={() => patchPartStyle({ fill: "transparent" })}
+              />
+            </ShapeMenuHint>
           ) : (
             <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento neste primitivo.</p>
           )}
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Contorno" hint={H.strokeWidth}>
+      <DeckRibbonGroup label="Contorno" hint={H.shapeOutline}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showStroke ? (
-            <ShapeOutlineMenu
-              color={strokeValue}
-              strokeWidth={strokeWidth}
-              minWidth={0}
-              maxWidth={chartPartPrimitive === "point" ? 8 : 20}
-              outlineLabel="Contorno"
-              onColorChange={(color) => patchPartStyle({ stroke: color })}
-              onNoOutline={() => patchPartStyle({ stroke: "transparent", strokeWidth: 0 })}
-              onStrokeWidthChange={(width) => patchPartStyle({ strokeWidth: width })}
-            />
+            <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
+              <ShapeOutlineMenu
+                color={strokeValue}
+                strokeWidth={strokeWidth}
+                minWidth={0}
+                maxWidth={chartPartPrimitive === "point" ? 8 : 20}
+                outlineLabel="Contorno"
+                onColorChange={(color) => patchPartStyle({ stroke: color })}
+                onNoOutline={() => patchPartStyle({ stroke: "transparent", strokeWidth: 0 })}
+                onStrokeWidthChange={(width) => patchPartStyle({ strokeWidth: width })}
+              />
+            </ShapeMenuHint>
           ) : (
             <p className="td-subtitle td-deck-ribbon__hint">Sem contorno neste primitivo.</p>
           )}
           {showCorners ? (
-            <ShapeShadowMenu
-              value={block.style?.boxShadow}
-              presets={SHADOW_MENU_PRESETS}
-              shadowLabel="Sombra"
-              onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
-            />
+            <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra">
+              <ShapeShadowMenu
+                value={block.style?.boxShadow}
+                presets={SHADOW_MENU_PRESETS}
+                shadowLabel="Sombra"
+                onChange={(boxShadow) => updateSelectedStyle({ boxShadow })}
+              />
+            </ShapeMenuHint>
           ) : null}
         </div>
       </DeckRibbonGroup>
@@ -180,11 +189,12 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
       ) : null}
 
       {effectiveChartPart.kind === "marker" ? (
-        <DeckRibbonGroup label="Marcador" hint={H.shape}>
+        <DeckRibbonGroup label="Marcador" hint={H.markerRadius}>
           <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
             <DeckRangeField
               id="td-chart-marker-radius"
               label="Raio"
+              hint={H.markerRadius}
               min={1}
               max={12}
               step={0.5}
@@ -194,7 +204,7 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
             <DeckRibbonTile
               icon={Copy}
               label="Aplicar a todos"
-              hint="Replica o estilo do marcador em todos os pontos da série."
+              hint={H.applyMarkerStyleToAll}
               onClick={() => {
                 const nextParts = applyMarkerStyleToAll(
                   block.chartParts,

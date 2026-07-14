@@ -69,7 +69,7 @@ export function AlignMultiSection({ layout }: { layout: SelectionSectionLayout }
 
   if (layout === "pane") {
     return (
-      <SelectionPaneSection title="Alinhar" defaultOpen>
+      <SelectionPaneSection title="Alinhar" hint={H.alignSelection} defaultOpen>
         {body}
       </SelectionPaneSection>
     );

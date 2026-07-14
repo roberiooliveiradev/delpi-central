@@ -28,11 +28,20 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     letterSpacing: "Espaçamento horizontal entre caracteres, em pixels (pode ser negativo).",
     paragraphSpacing:
       "Estilo tipográfico nomeado, entrelinhas e espaçamento entre caracteres do parágrafo.",
+    box: "Preenchimento e contorno opcionais da caixa de texto (como uma forma sem fundo).",
     boxFill: "Cor de preenchimento (fundo) da caixa de texto.",
     boxOutline: "Cor e espessura do contorno da caixa de texto.",
     shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
+    shapeStyles:
+      "Aplica um preset visual (preenchimento, contorno e sombra) à forma selecionada.",
+    shapeFill: "Cor de preenchimento (fundo) da forma ou da parte selecionada.",
+    shapeOutline: "Cor e espessura do contorno da forma ou da parte selecionada.",
     shapeChange: "Substitui a forma selecionada por outra da biblioteca, mantendo posição e estilo quando possível.",
     shapeSize: "Largura e altura da forma em percentual do slide.",
+    markerRadius: "Raio do marcador (ponto) em pixels.",
+    applyMarkerStyleToAll: "Replica o estilo do marcador em todos os pontos da série.",
+    tableFrameShadow: "Sombra da moldura da tabela.",
+    textShadow: "Preset de sombra tipográfica no texto selecionado.",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
       "Ações do elemento: duplicar, ordem das camadas (frente/fundo), mídia e remoção.",
@@ -117,9 +126,15 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableStyleOptions:
       "Opções de estilo da tabela: cabeçalho, totais, listras, primeira/última coluna e bordas.",
     tableFormat: "Abre a aba Forma para moldura (preenchimento e contorno) da tabela.",
+    tableBorders: "Visibilidade, cor, peso e estilo da grade (caneta).",
+    tableOpenFrameShape: "Seleciona a moldura e abre preenchimento/contorno na aba Forma.",
+    tableFrameChrome: "Preenchimento e contorno da moldura da tabela.",
+    openDataPanel: "Abre o painel de fontes de dados.",
     chartLabels: "Título, legenda, rótulos de dados e tabela.",
     chartAxes: "Eixos e linhas de grade.",
     chartFormat: "Estilo, preenchimento, contorno e raio da área do gráfico na aba Elemento.",
+    chartSeriesColor: "Cor principal da série de dados do gráfico.",
+    canvasTable: "Linhas, colunas e opção de cabeçalho da tabela editável no palco.",
   },
   tabs: {
     element:

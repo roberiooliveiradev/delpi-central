@@ -98,7 +98,7 @@ function TextEffectsPanel({ formatStyle, onUpdate, idPrefix }: PanelProps) {
           <FieldLabel
             htmlFor={shadowId}
             label="Sombra"
-            hint={H.textEffects}
+            hint={H.textShadow}
             className="td-deck-ribbon__field-label"
           />
           <TdRibbonSelect

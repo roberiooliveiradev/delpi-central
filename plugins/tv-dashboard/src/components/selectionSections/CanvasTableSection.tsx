@@ -1,11 +1,14 @@
 import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { normalizeCanvasTableCells } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckField } from "../deck/DeckField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
+
+const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 /** Tabela canvas — linhas/colunas/cabeçalho. */
 export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout }) {
@@ -57,8 +60,16 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
   );
 
   if (layout === "pane") {
-    return <SelectionPaneSection title="Tabela (canvas)" defaultOpen>{body}</SelectionPaneSection>;
+    return (
+      <SelectionPaneSection title="Tabela (canvas)" hint={H.canvasTable} defaultOpen>
+        {body}
+      </SelectionPaneSection>
+    );
   }
 
-  return <DeckRibbonGroup label="Tabela (canvas)">{body}</DeckRibbonGroup>;
+  return (
+    <DeckRibbonGroup label="Tabela (canvas)" hint={H.canvasTable}>
+      {body}
+    </DeckRibbonGroup>
+  );
 }

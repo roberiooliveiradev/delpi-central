@@ -8,12 +8,15 @@ import {
   type ComunicadoChartViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { DeckField } from "../deck/DeckField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
+
+const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 /**
  * Série do gráfico (cor principal) — seção tipada ribbon + painel.
@@ -53,8 +56,8 @@ export function ChartSeriesSection({ layout }: { layout: SelectionSectionLayout 
   if (layout === "pane") {
     return (
       <div id="td-chart-pane-series">
-        <SelectionPaneSection title="Série" defaultOpen={false}>
-          <DeckField id="td-chart-series-color" label="Cor da série">
+        <SelectionPaneSection title="Série" hint={H.chartSeriesColor} defaultOpen={false}>
+          <DeckField id="td-chart-series-color" label="Cor da série" hint={H.chartSeriesColor}>
             {picker}
           </DeckField>
         </SelectionPaneSection>
@@ -63,7 +66,7 @@ export function ChartSeriesSection({ layout }: { layout: SelectionSectionLayout 
   }
 
   return (
-    <DeckRibbonGroup label="Série" hint="Cor principal da série de dados.">
+    <DeckRibbonGroup label="Série" hint={H.chartSeriesColor}>
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
         {picker}
       </div>
