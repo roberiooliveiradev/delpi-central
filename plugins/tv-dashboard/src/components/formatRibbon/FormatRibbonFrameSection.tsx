@@ -89,10 +89,11 @@ export { patchComunicadoFrame };
  * Posição / tamanho / rotação / raio — bloco no palco ou parte do KPI/gráfico
  * (title/value/hint/icon ou title/legend/plotArea), espelhando o inspetor.
  * UI em px de design; modelo permanece em %.
- * `density=compact` (padrão): só inputs — cabe na ribbon ~80px sem scroll.
+ * `density=full` (padrão): slider + input — ribbon fit cresce com o conteúdo.
+ * `density=compact`: só inputs (faixas muito densas / legado).
  */
 export function FormatRibbonFrameSection({
-  density = "compact",
+  density = "full",
   embed = false,
 }: {
   density?: FrameFieldDensity;

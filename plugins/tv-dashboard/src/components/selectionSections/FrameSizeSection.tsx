@@ -6,17 +6,17 @@ import type { SelectionSectionLayout } from "./types";
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 /**
- * Posição e tamanho — ribbon (compacto) e painel (accordion colapsável).
+ * Posição e tamanho — ribbon e painel com RangeField full (slider + input).
  */
 export function FrameSizeSection({ layout }: { layout: SelectionSectionLayout }) {
   if (layout === "pane") {
     return (
       <SelectionPaneSection title="Posição e tamanho" hint={E.position} defaultOpen={false}>
         <div className="td-selection-section td-selection-section--pane-frame">
-          <FormatRibbonFrameSection density="compact" embed />
+          <FormatRibbonFrameSection density="full" embed />
         </div>
       </SelectionPaneSection>
     );
   }
-  return <FormatRibbonFrameSection density="compact" />;
+  return <FormatRibbonFrameSection density="full" />;
 }
