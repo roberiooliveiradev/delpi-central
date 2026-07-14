@@ -1,8 +1,12 @@
 import { createPortal } from "react-dom";
-import { useEffect, type ReactNode, type RefObject } from "react";
+import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 
 import type { AnchoredPanelPlacement } from "./anchoredPanelCoords";
 import { resolveMfePortalScopeClassName } from "./delpiUiPortalTheme";
+import {
+  claimExclusiveAnchoredPanel,
+  releaseExclusiveAnchoredPanel,
+} from "./exclusiveAnchoredPanel";
 import { useAnchoredPanelPosition } from "./useAnchoredPanelPosition";
 import { useClickOutside } from "./useClickOutside";
 import { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
@@ -38,6 +42,11 @@ export type AnchoredPanelPortalProps = {
    * Recomendado em todo popover ancorado.
    */
   onDismiss?: () => void;
+  /**
+   * Quando true (padrão), abrir este painel fecha outros AnchoredPanelPortal
+   * exclusivos. Use false para overlays aninhados (select/combobox internos).
+   */
+  exclusive?: boolean;
   children: ReactNode;
 };
 
@@ -56,8 +65,18 @@ export function AnchoredPanelPortal({
   gap,
   portalScopeClassName,
   onDismiss,
+  exclusive = true,
   children,
 }: AnchoredPanelPortalProps) {
+  const reactId = useId();
+  const exclusiveIdRef = useRef<symbol | null>(null);
+  if (exclusiveIdRef.current == null) {
+    exclusiveIdRef.current = Symbol(`anchored-panel:${reactId}`);
+  }
+  const exclusiveId = exclusiveIdRef.current;
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
+
   const style = useAnchoredPanelPosition(open, anchorRef, panelRef, {
     matchAnchorWidth,
     preferredPlacement,
@@ -83,6 +102,17 @@ export function AnchoredPanelPortal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onDismiss]);
 
+  useEffect(() => {
+    if (!open || !exclusive || !onDismissRef.current) return;
+    const id = exclusiveId;
+    claimExclusiveAnchoredPanel(id, () => {
+      onDismissRef.current?.();
+    });
+    return () => {
+      releaseExclusiveAnchoredPanel(id);
+    };
+  }, [open, exclusive, exclusiveId]);
+
   if (!open || typeof document === "undefined") return null;
 
   const panelClass =
@@ -106,6 +136,7 @@ export function AnchoredPanelPortal({
       style={style}
       role={role}
       aria-label={ariaLabel}
+      data-delpi-anchored-exclusive={exclusive ? "true" : "false"}
     >
       {children}
     </div>

@@ -151,6 +151,7 @@ export function SelectControl({
         matchAnchorWidth
         role="presentation"
         portalScopeClassName={portalScopeClassName}
+        exclusive={false}
         onDismiss={closePanel}
       >
         {searchable ? (

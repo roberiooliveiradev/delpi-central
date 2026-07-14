@@ -3,15 +3,19 @@ import { useEffect, useRef, type RefObject } from "react";
 /**
  * Portais aninhados (cor, select, diálogo) vivem no body fora do panelRef —
  * clique neles não deve fechar o popover pai.
+ *
+ * Não incluir `.delpi-ui-shape-menu__panel`: painéis peer (Preench. × Contorno)
+ * também usam essa classe — tratá-los como “aninhados” deixa dois popovers abertos.
  */
 const NESTED_OVERLAY_SELECTOR = [
   '[aria-modal="true"]',
-  ".delpi-ui-shape-menu__panel",
   ".delpi-ui-color-picker",
   ".delpi-ui-select__panel",
   ".delpi-ui-shape-dialog",
   ".delpi-ui-help-tooltip",
   ".delpi-ui-combobox-number__panel",
+  /* Nested AnchoredPanelPortal marked non-exclusive (select/combobox inside menu). */
+  '[data-delpi-anchored-exclusive="false"]',
 ].join(", ");
 
 function isInsideNestedOverlay(target: Node): boolean {

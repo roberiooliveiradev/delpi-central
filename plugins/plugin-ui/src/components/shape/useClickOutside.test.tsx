@@ -1,8 +1,12 @@
-import { render } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { useRef, useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useClickOutside } from "./useClickOutside";
+
+afterEach(() => {
+  cleanup();
+});
 
 function Probe({
   onOutside,
@@ -94,13 +98,29 @@ describe("useClickOutside", () => {
     expect(onOutside).not.toHaveBeenCalled();
   });
 
-  it("não dispara ao clicar no painel", () => {
+  it("fecha ao clicar em painel peer (.delpi-ui-shape-menu__panel) — não é aninhado", () => {
     const onOutside = vi.fn();
-    render(<Probe onOutside={onOutside} />);
+    render(
+      <div>
+        <Probe onOutside={onOutside} />
+        <div className="delpi-ui-shape-menu__panel" data-testid="peer-panel">
+          <button type="button">peer</button>
+        </div>
+      </div>,
+    );
 
     document
-      .querySelector('[data-testid="panel"]')!
+      .querySelector('[data-testid="peer-panel"] button')!
       .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(onOutside).toHaveBeenCalledTimes(1);
+  });
+
+  it("não dispara ao clicar no painel", () => {
+    const onOutside = vi.fn();
+    const { getByTestId } = render(<Probe onOutside={onOutside} />);
+
+    fireEvent.pointerDown(getByTestId("panel"));
 
     expect(onOutside).not.toHaveBeenCalled();
   });
