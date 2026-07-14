@@ -3193,10 +3193,10 @@ body.td-composer--marqueeing * {
 
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section {
   margin: 8px 8px 0;
-  border-color: color-mix(in srgb, var(--td-contextual-accent, var(--td-accent)) 22%, var(--td-border));
+  border-color: color-mix(in srgb, var(--td-accent) 22%, var(--td-border));
   background: color-mix(
     in srgb,
-    var(--td-contextual-accent, var(--td-accent)) 6%,
+    var(--td-accent) 6%,
     var(--td-surface)
   );
   box-shadow: 0 1px 2px color-mix(in srgb, #000 12%, transparent);
@@ -3211,13 +3211,13 @@ body.td-composer--marqueeing * {
 .delpi-ui-format-pane__section-summary {
   background: color-mix(
     in srgb,
-    var(--td-contextual-accent, var(--td-accent)) 10%,
+    var(--td-accent) 10%,
     transparent
   );
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-format-pane__section-summary::before {
-  color: var(--td-contextual-accent, var(--td-accent));
+  color: var(--td-accent);
 }
 
 .dashboard-tv-dashboard .td-chart-style-menu {

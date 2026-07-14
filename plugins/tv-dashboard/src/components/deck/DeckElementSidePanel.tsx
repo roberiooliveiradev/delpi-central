@@ -200,7 +200,9 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
               <ComunicadoElementInspector
                 labels={labels}
                 placement="side"
-                panelFocus={tab}
+                panelFocus={
+                  tab === "tableDesign" || tab === "tableLayout" ? tab : "element"
+                }
                 branchScope={branchScope}
                 onOpenDataSources={() => openDataCatalog()}
               />

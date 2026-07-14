@@ -14,11 +14,15 @@ export function VisualBoxElementSections({ layout }: { layout: SelectionSectionL
   const caps = resolveVisualBoxElementCapabilities(selected);
   if (!caps) return null;
 
-  const embed = layout === "pane";
-
   return (
     <>
-      <FormatRibbonTypographySections embed={embed} capabilities={caps} />
+      {layout === "pane" ? (
+        <div className="td-selection-section td-selection-section--pane-typography">
+          <FormatRibbonTypographySections embed capabilities={caps} />
+        </div>
+      ) : (
+        <FormatRibbonTypographySections capabilities={caps} />
+      )}
       <VisualBoxFormaChrome layout={layout} />
     </>
   );

@@ -57,10 +57,40 @@ import { TdRibbonIconButton, TdRibbonSelect } from "../tdRibbonUi";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ParagraphSpacingMenu } from "./ParagraphSpacingMenu";
 import { TextEffectsMenu } from "./TextEffectsMenu";
+import { SelectionPaneSection } from "../selectionSections/SelectionPaneSection";
 import type { VisualBoxElementCapabilities } from "../selectionSections/visualBoxElementCapabilities";
 import { resolveVisualBoxElementCapabilities } from "../selectionSections/visualBoxElementCapabilities";
+import type { ReactNode } from "react";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
+
+/** No painel: cada grupo da ribbon vira accordion; na faixa, grupo com legenda. */
+function TypographyPaneOrGroup({
+  embed,
+  title,
+  hint,
+  defaultOpen = true,
+  children,
+}: {
+  embed: boolean;
+  title: string;
+  hint?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  if (embed) {
+    return (
+      <SelectionPaneSection title={title} hint={hint} defaultOpen={defaultOpen}>
+        {children}
+      </SelectionPaneSection>
+    );
+  }
+  return (
+    <DeckRibbonGroup label={title} hint={hint}>
+      {children}
+    </DeckRibbonGroup>
+  );
+}
 
 /**
  * Fonte + Parágrafo — só renderiza se o objeto selecionado admite tipografia
@@ -98,7 +128,6 @@ export function FormatRibbonTypographySections({
     uploadCustomFont,
     uploading,
   } = useComunicadoEditor();
-  const captionPlacement = embed ? "above" : "below";
   const fontUploadInputRef = useRef<HTMLInputElement>(null);
   const fontFamilySelectOptions = useMemo(
     () =>
@@ -244,13 +273,133 @@ export function FormatRibbonTypographySections({
   const spacingSource = visualBoxBlock;
   const currentLineHeight = spacingSource?.style?.lineHeight ?? 1.15;
   const currentLetterSpacing = spacingSource?.style?.letterSpacing ?? 0;
+  const fontTitle =
+    textFormatTarget.mode === "part" ? `Fonte · ${textFormatTarget.partLabel}` : "Fonte";
+
+  const paragraphAlignBody = (
+    <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--paragraph">
+      <div className="td-deck-ribbon__paragraph-cols">
+        <div className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--align">
+          <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento horizontal">
+            {(
+              [
+                { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
+                { align: "center" as const, icon: AlignCenter, label: "Centralizar", hint: H.alignCenter },
+                { align: "right" as const, icon: AlignRight, label: "Alinhar à direita", hint: H.alignRight },
+                ...(showParagraphJustify
+                  ? ([
+                      {
+                        align: "justify" as const,
+                        icon: AlignJustify,
+                        label: "Justificar",
+                        hint: H.alignJustify,
+                      },
+                    ] as const)
+                  : []),
+              ] as const
+            ).map(({ align, icon: Icon, label, hint }) => (
+              <TdRibbonIconButton
+                key={align}
+                hint={hint}
+                ariaLabel={label}
+                active={textAlignActive === align}
+                onClick={() => updateSelectedTextFormatStyle({ textAlign: align })}
+              >
+                <Icon size={15} aria-hidden="true" />
+              </TdRibbonIconButton>
+            ))}
+          </div>
+          <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento vertical e listas">
+            {(
+              [
+                {
+                  align: "top" as const,
+                  icon: AlignVerticalJustifyStart,
+                  label: "Alinhar ao topo",
+                  hint: H.alignTop,
+                },
+                {
+                  align: "middle" as const,
+                  icon: AlignVerticalJustifyCenter,
+                  label: "Centralizar verticalmente",
+                  hint: H.alignMiddle,
+                },
+                {
+                  align: "bottom" as const,
+                  icon: AlignVerticalJustifyEnd,
+                  label: "Alinhar à base",
+                  hint: H.alignBottom,
+                },
+              ] as const
+            ).map(({ align, icon: Icon, label, hint }) => (
+              <TdRibbonIconButton
+                key={align}
+                hint={hint}
+                ariaLabel={label}
+                active={textVerticalAlign === align}
+                onClick={() => updateSelectedTextFormatStyle({ verticalAlign: align })}
+              >
+                <Icon size={15} aria-hidden="true" />
+              </TdRibbonIconButton>
+            ))}
+            {showParagraphLists ? (
+              <>
+                <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
+                <TdRibbonIconButton
+                  hint={H.bulletList}
+                  ariaLabel="Marcadores"
+                  active={Boolean(bulletListActive)}
+                  onClick={() => toggleSelectedTextListType("bullet")}
+                >
+                  <List size={15} aria-hidden="true" />
+                </TdRibbonIconButton>
+                <TdRibbonIconButton
+                  hint={H.orderedList}
+                  ariaLabel="Lista numerada"
+                  active={Boolean(orderedListActive)}
+                  onClick={() => toggleSelectedTextListType("ordered")}
+                >
+                  <ListOrdered size={15} aria-hidden="true" />
+                </TdRibbonIconButton>
+              </>
+            ) : null}
+          </div>
+        </div>
+        {!embed && showParagraphSpacing && spacingSource ? (
+          <div className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--spacing">
+            <ParagraphSpacingMenu
+              variant="popover"
+              namedStyleValue={namedStyleValue}
+              showNamedStyle={showParagraphNamedStyle}
+              lineHeight={currentLineHeight}
+              letterSpacing={currentLetterSpacing}
+              onNamedStyle={(value) => applySelectedNamedTextStyle(value)}
+              onLineHeight={(value) => updateSelectedStyle({ lineHeight: value })}
+              onLetterSpacing={(value) => updateSelectedStyle({ letterSpacing: value })}
+            />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const spacingMenu =
+    showParagraphSpacing && spacingSource ? (
+      <ParagraphSpacingMenu
+        variant={embed ? "inline" : "popover"}
+        namedStyleValue={namedStyleValue}
+        showNamedStyle={showParagraphNamedStyle}
+        lineHeight={currentLineHeight}
+        letterSpacing={currentLetterSpacing}
+        onNamedStyle={(value) => applySelectedNamedTextStyle(value)}
+        onLineHeight={(value) => updateSelectedStyle({ lineHeight: value })}
+        onLetterSpacing={(value) => updateSelectedStyle({ letterSpacing: value })}
+      />
+    ) : null;
+
   return (
     <>
-      <DeckRibbonGroup
-        label={textFormatTarget.mode === "part" ? `Fonte · ${textFormatTarget.partLabel}` : "Fonte"}
-        hint={H.font}
-        captionPlacement={captionPlacement}
-      >
+      <TypographyPaneOrGroup embed={embed} title={fontTitle} hint={H.font}>
         <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--font">
           <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
             <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
@@ -496,127 +645,31 @@ export function FormatRibbonTypographySections({
             ) : null}
           </div>
         </div>
-      </DeckRibbonGroup>
+      </TypographyPaneOrGroup>
 
-      <DeckRibbonGroup
-        label="Efeitos de texto"
-        hint={H.textEffects}
-        captionPlacement={captionPlacement}
-      >
+      <TypographyPaneOrGroup embed={embed} title="Efeitos de texto" hint={H.textEffects} defaultOpen={false}>
         <TextEffectsMenu
           formatStyle={formatStyle}
           onUpdate={updateSelectedTextFormatStyle}
           variant={embed ? "inline" : "popover"}
         />
-      </DeckRibbonGroup>
+      </TypographyPaneOrGroup>
 
       {showParagraphAlign ? (
-        <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} captionPlacement={captionPlacement}>
-          <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--paragraph">
-            <div className="td-deck-ribbon__paragraph-cols">
-              <div className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--align">
-                <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento horizontal">
-                  {(
-                    [
-                      { align: "left" as const, icon: AlignLeft, label: "Alinhar à esquerda", hint: H.alignLeft },
-                      { align: "center" as const, icon: AlignCenter, label: "Centralizar", hint: H.alignCenter },
-                      { align: "right" as const, icon: AlignRight, label: "Alinhar à direita", hint: H.alignRight },
-                      ...(showParagraphJustify
-                        ? ([
-                            {
-                              align: "justify" as const,
-                              icon: AlignJustify,
-                              label: "Justificar",
-                              hint: H.alignJustify,
-                            },
-                          ] as const)
-                        : []),
-                    ] as const
-                  ).map(({ align, icon: Icon, label, hint }) => (
-                    <TdRibbonIconButton
-                      key={align}
-                      hint={hint}
-                      ariaLabel={label}
-                      active={textAlignActive === align}
-                      onClick={() => updateSelectedTextFormatStyle({ textAlign: align })}
-                    >
-                      <Icon size={15} aria-hidden="true" />
-                    </TdRibbonIconButton>
-                  ))}
-                </div>
-                <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento vertical e listas">
-                  {(
-                    [
-                      {
-                        align: "top" as const,
-                        icon: AlignVerticalJustifyStart,
-                        label: "Alinhar ao topo",
-                        hint: H.alignTop,
-                      },
-                      {
-                        align: "middle" as const,
-                        icon: AlignVerticalJustifyCenter,
-                        label: "Centralizar verticalmente",
-                        hint: H.alignMiddle,
-                      },
-                      {
-                        align: "bottom" as const,
-                        icon: AlignVerticalJustifyEnd,
-                        label: "Alinhar à base",
-                        hint: H.alignBottom,
-                      },
-                    ] as const
-                  ).map(({ align, icon: Icon, label, hint }) => (
-                    <TdRibbonIconButton
-                      key={align}
-                      hint={hint}
-                      ariaLabel={label}
-                      active={textVerticalAlign === align}
-                      onClick={() => updateSelectedTextFormatStyle({ verticalAlign: align })}
-                    >
-                      <Icon size={15} aria-hidden="true" />
-                    </TdRibbonIconButton>
-                  ))}
-                  {showParagraphLists ? (
-                    <>
-                      <span className="td-deck-ribbon__toolbar-sep" aria-hidden="true" />
-                      <TdRibbonIconButton
-                        hint={H.bulletList}
-                        ariaLabel="Marcadores"
-                        active={Boolean(bulletListActive)}
-                        onClick={() => toggleSelectedTextListType("bullet")}
-                      >
-                        <List size={15} aria-hidden="true" />
-                      </TdRibbonIconButton>
-                      <TdRibbonIconButton
-                        hint={H.orderedList}
-                        ariaLabel="Lista numerada"
-                        active={Boolean(orderedListActive)}
-                        onClick={() => toggleSelectedTextListType("ordered")}
-                      >
-                        <ListOrdered size={15} aria-hidden="true" />
-                      </TdRibbonIconButton>
-                    </>
-                  ) : null}
-                </div>
-              </div>
-              {showParagraphSpacing && spacingSource ? (
-                <div className="td-deck-ribbon__paragraph-col td-deck-ribbon__paragraph-col--spacing">
-                  <ParagraphSpacingMenu
-                    variant={embed ? "inline" : "popover"}
-                    namedStyleValue={namedStyleValue}
-                    showNamedStyle={showParagraphNamedStyle}
-                    lineHeight={currentLineHeight}
-                    letterSpacing={currentLetterSpacing}
-                    onNamedStyle={(value) => applySelectedNamedTextStyle(value)}
-                    onLineHeight={(value) => updateSelectedStyle({ lineHeight: value })}
-                    onLetterSpacing={(value) => updateSelectedStyle({ letterSpacing: value })}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </DeckRibbonGroup>
+        <TypographyPaneOrGroup embed={embed} title="Parágrafo" hint={H.paragraph} defaultOpen={false}>
+          {paragraphAlignBody}
+        </TypographyPaneOrGroup>
+      ) : null}
+
+      {embed && spacingMenu ? (
+        <TypographyPaneOrGroup
+          embed
+          title="Estilo"
+          hint={H.paragraphSpacing}
+          defaultOpen={false}
+        >
+          {spacingMenu}
+        </TypographyPaneOrGroup>
       ) : null}
     </>
   );
