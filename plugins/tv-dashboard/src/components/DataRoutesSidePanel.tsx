@@ -171,7 +171,7 @@ export function DataRoutesSidePanel({
           </DeckField>
           <DeckField
             id="td-data-source-refresh"
-            label="Atualizar a cada (s)"
+            label="Atualizar na TV a cada (s)"
             hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.dataBlockRefreshInterval}
           >
             <NativeTextControl

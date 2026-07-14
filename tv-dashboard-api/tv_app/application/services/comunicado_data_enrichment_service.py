@@ -382,8 +382,11 @@ class ComunicadoDataEnrichmentService:
         authorization: str | None = None,
         playlist_defaults: dict[str, Any] | None = None,
         user: Any | None = None,
+        force_refresh: bool = False,
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
+        # Dedupe in-request: mesmas operationId+params ⇒ um fetch nesta montagem.
+        request_memo: dict[str, dict[str, Any]] = {}
         enriched: list[dict[str, Any]] = []
         for block in blocks:
             if not isinstance(block, dict):
@@ -397,6 +400,8 @@ class ComunicadoDataEnrichmentService:
                         playlist_defaults=playlist_defaults,
                         authorization=authorization,
                         user=user,
+                        force_refresh=force_refresh,
+                        request_memo=request_memo,
                     )
                 )
                 continue
@@ -533,6 +538,8 @@ class ComunicadoDataEnrichmentService:
         playlist_defaults: dict[str, Any] | None,
         authorization: str | None,
         user: Any | None,
+        force_refresh: bool = False,
+        request_memo: dict[str, dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -560,7 +567,13 @@ class ComunicadoDataEnrichmentService:
             return result
 
         try:
-            payload = self._fetch_cached(operation_id, merged_params, authorization)
+            payload = self._fetch_cached(
+                operation_id,
+                merged_params,
+                authorization,
+                force_refresh=force_refresh,
+                request_memo=request_memo,
+            )
         except Exception as exc:  # noqa: BLE001
             result["resolved"] = resolve_data_fetch_error(exc)
             return result
@@ -613,15 +626,23 @@ class ComunicadoDataEnrichmentService:
         operation_id: str,
         params: dict[str, Any],
         authorization: str | None,
+        *,
+        force_refresh: bool = False,
+        request_memo: dict[str, dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         cache_key = _build_data_cache_key(
             operation_id=operation_id,
             params=params,
             authorization=authorization,
         )
-        cached = _data_block_cache.get(cache_key)
-        if cached is not None:
-            return cached
+        if request_memo is not None and cache_key in request_memo:
+            return request_memo[cache_key]
+        if not force_refresh:
+            cached = _data_block_cache.get(cache_key)
+            if cached is not None:
+                if request_memo is not None:
+                    request_memo[cache_key] = cached
+                return cached
         payload = self._gateway.fetch_by_operation_id(
             operation_id,
             params=params,
@@ -629,6 +650,8 @@ class ComunicadoDataEnrichmentService:
         )
         if not payload.get("error"):
             _data_block_cache.set(cache_key, payload)
+        if request_memo is not None:
+            request_memo[cache_key] = payload
         return payload
 
 

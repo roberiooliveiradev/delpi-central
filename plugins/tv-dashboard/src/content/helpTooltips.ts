@@ -165,6 +165,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   header: {
     back: "Voltar à lista de programações.",
     preview: "Abrir pré-visualização em tela cheia (← → slides, Espaço pausa; controles somem após inatividade).",
+    refreshVisual:
+      "No editor, os dados não atualizam sozinhos. Clique para buscar de novo na api-delpi (ignora cache). O badge «Dados desatualizados» some após o refresh.",
     share: "Colaboradores: convidar para editar (usuário Minha DELPI ou link de edição).",
     copyLink: "Copiar o link da TV (só apresentação, sem edição).",
     qr: "Gerar QR code do link da TV (apresentação).",
@@ -187,9 +189,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     defaultDuration:
       "Duração aplicada a novas telas e às que não tiverem tempo individual definido.",
     refreshInterval:
-      "Intervalo para atualizar dados ao vivo (KPIs, estoque etc.) sem recarregar a página inteira.",
+      "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor use «Atualizar visual» — não há poll automático.",
     dataBlockRefreshInterval:
-      "Intervalo deste bloco para atualizar o preview de dados. Vazio = usa o padrão da programação.",
+      "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview só atualiza em «Atualizar visual».",
     customSlideType:
       "Tela livre: monte o layout no palco com as abas Inserir, Exibir e as ferramentas contextuais do objeto (Forma, Gráfico, Tabela, Dados). O título acima é só o nome no filmstrip.",
     publicUrl:
@@ -200,7 +202,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   data: {
     catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",
-    sourceConfig: "Parâmetros da consulta e intervalo de atualização da fonte de dados.",
+    sourceConfig:
+      "Parâmetros da consulta e intervalo de atualização na TV. No editor, altere os filtros e clique em «Atualizar visual» para ver o efeito.",
     dateRangePreset:
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo.",
     dateRangeFixed:

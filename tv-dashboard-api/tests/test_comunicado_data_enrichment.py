@@ -120,6 +120,61 @@ def test_fetch_cached_reuses_ttl_cache():
     assert gateway.fetch_by_operation_id.call_count == 1
 
 
+def test_enrich_blocks_dedupes_identical_sources_in_one_request():
+    """Duas fontes iguais no mesmo assemble ⇒ um único fetch_by_operation_id."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct", "shape": "scalar"},
+        "data": {"summary": {"value": 78.4}},
+        "route": {
+            "label": "OEE",
+            "valueFields": ["value"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    binding = {
+        "operationId": "get_overall_equipment_effectiveness_pct",
+        "params": {"periodDays": 7},
+        "displayMode": "kpi",
+    }
+    blocks = [
+        {"id": "kpi-a", "type": "data_kpi", "dataBinding": dict(binding)},
+        {"id": "kpi-b", "type": "data_kpi", "dataBinding": dict(binding)},
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    assert gateway.fetch_by_operation_id.call_count == 1
+    assert enriched[0]["resolved"]["kpi"]["value"] == 78.4
+    assert enriched[1]["resolved"]["kpi"]["value"] == 78.4
+
+
+def test_fetch_cached_force_refresh_bypasses_ttl():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_overall_equipment_effectiveness_pct"},
+        "data": {"summary": {"value": 1}},
+        "route": {"valueFields": ["value"], "tvConstraints": {}},
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    params = {"branch": "01", "periodDays": 7}
+    service._fetch_cached("get_overall_equipment_effectiveness_pct", params, "Bearer x")
+    service._fetch_cached(
+        "get_overall_equipment_effectiveness_pct",
+        params,
+        "Bearer x",
+        force_refresh=True,
+    )
+    assert gateway.fetch_by_operation_id.call_count == 2
+
+
 def test_extract_series_periodo_and_branch_specific_field():
     payload = {
         "points": [

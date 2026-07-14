@@ -242,6 +242,10 @@ export type ComunicadoEditorContextValue = {
   uploadCustomFont: (file: File) => Promise<void>;
   dataPreviewLoading: boolean;
   dataPreviewError: string | null;
+  /** Fingerprint de dados mudou sem refetch — clicar em Atualizar visual. */
+  isDataPreviewStale: boolean;
+  staleSourceIds: string[];
+  refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
   globalRefreshSec: number;
   lastDataDisplayMode: ComunicadoDataDisplayMode;
   setLastDataDisplayMode: (mode: ComunicadoDataDisplayMode) => void;

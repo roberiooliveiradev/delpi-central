@@ -357,7 +357,7 @@ export function DeckSettingsPanel({
             />
             <DeckRangeField
               id="td-refresh"
-              label="Atualizar dados (s)"
+              label="Atualizar dados na TV (s)"
               hint={F.refreshInterval}
               min={30}
               max={3600}

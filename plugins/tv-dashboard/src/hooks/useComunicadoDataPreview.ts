@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildDataPreviewFingerprint,
   isFetchableDataBlockType,
-  resolveDataBlockRefreshSec,
   serializeComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoConfig,
@@ -13,11 +12,15 @@ import {
 import { previewDataBlockV2 } from "../api/tvDashboardApi";
 import { readDataPreviewCache, writeDataPreviewCache } from "../utils/editorSessionCache";
 
+export type RefreshDataPreviewOptions = {
+  /** Bypass cache no servidor (clique em Atualizar visual). */
+  force?: boolean;
+  blockIds?: string[];
+};
+
 type Options = {
   playlistId: string;
   config: ComunicadoConfig;
-  globalRefreshSec?: number;
-  debounceMs?: number;
 };
 
 type FetchableBlock = Extract<ComunicadoBlock, { dataBinding: ComunicadoDataBinding }>;
@@ -47,19 +50,22 @@ function initialResolvedMap(
   return { ...fromSession, ...fromBlocks };
 }
 
+function hasAnyResolved(
+  map: Record<string, ComunicadoDataResolved>,
+  blocks: FetchableBlock[],
+): boolean {
+  return blocks.some((block) => map[block.id] !== undefined);
+}
+
 /**
- * Preview de dados do editor — cache por blockId sobrevive à troca de slide e ao F5
- * (sessionStorage + equality no merge). Não zerar o mapa ao abrir um slide sem fontes.
+ * Preview de dados do editor — pull manual.
+ * Sem poll e sem refetch ao editar binding; fingerprint muda ⇒ stale até «Atualizar visual».
  */
-export function useComunicadoDataPreview({
-  playlistId,
-  config,
-  globalRefreshSec,
-  debounceMs = 650,
-}: Options) {
+export function useComunicadoDataPreview({ playlistId, config }: Options) {
   const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>(
     () => initialResolvedMap(playlistId, config),
   );
+  const [staleSourceIds, setStaleSourceIds] = useState<string[]>([]);
   const [initialLoading, setInitialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,6 +77,9 @@ export function useComunicadoDataPreview({
   resolvedRef.current = resolvedByBlockId;
   const playlistIdRef = useRef(playlistId);
   const fingerprintRef = useRef(buildDataPreviewFingerprint(config));
+  /** Fingerprint da última carga bem-sucedida (ou hidratada do session). */
+  const syncedFingerprintRef = useRef(buildDataPreviewFingerprint(config));
+  const didInitialFetchRef = useRef(false);
 
   const dataFingerprint = useMemo(() => buildDataPreviewFingerprint(config), [config]);
   fingerprintRef.current = dataFingerprint;
@@ -84,15 +93,20 @@ export function useComunicadoDataPreview({
     [],
   );
 
-  // Troca de playlist: recarrega seed da sessão; cache da playlist anterior não se aplica.
+  // Troca de playlist: recarrega seed da sessão.
   useEffect(() => {
     if (playlistIdRef.current === playlistId) return;
     playlistIdRef.current = playlistId;
     const seeded = initialResolvedMap(playlistId, configRef.current);
+    const fp = buildDataPreviewFingerprint(configRef.current);
     setResolvedByBlockId(seeded);
+    setStaleSourceIds([]);
     setInitialLoading(false);
     setError(null);
     requestIdRef.current += 1;
+    fingerprintRef.current = fp;
+    syncedFingerprintRef.current = fp;
+    didInitialFetchRef.current = false;
   }, [playlistId]);
 
   const mergeResolved = useCallback(
@@ -116,7 +130,10 @@ export function useComunicadoDataPreview({
   );
 
   const fetchBlocks = useCallback(
-    async (blocks: FetchableBlock[], options: { showLoading: boolean; blockIds?: Set<string> }) => {
+    async (
+      blocks: FetchableBlock[],
+      options: { showLoading: boolean; blockIds?: Set<string>; force?: boolean },
+    ) => {
       if (blocks.length === 0) {
         setInitialLoading(false);
         setError(null);
@@ -129,7 +146,6 @@ export function useComunicadoDataPreview({
         (block) => resolvedRef.current[block.id] !== undefined,
       );
 
-      // Só banner/placeholder quando o palco ainda não tem nada para mostrar.
       if (options.showLoading && !hasExistingData) {
         setInitialLoading(true);
       }
@@ -138,6 +154,7 @@ export function useComunicadoDataPreview({
       setError(null);
 
       const nativeConfig = serializeComunicadoConfig(configRef.current);
+      const fetchFingerprint = fingerprintRef.current;
 
       try {
         const pairs = await Promise.all(
@@ -146,6 +163,7 @@ export function useComunicadoDataPreview({
               block: stripResolved(block),
               nativeConfig,
               playlistId: playlistIdRef.current,
+              forceRefresh: Boolean(options.force),
             });
             const resolved = response.block?.resolved;
             return [block.id, resolved] as const;
@@ -155,10 +173,11 @@ export function useComunicadoDataPreview({
         if (requestIdRef.current !== requestId) return;
 
         mergeResolved(pairs);
+        syncedFingerprintRef.current = fetchFingerprint;
+        setStaleSourceIds((prev) => prev.filter((id) => !targetIds.has(id)));
       } catch (err) {
         if (requestIdRef.current !== requestId) return;
         setError(err instanceof Error ? err.message : "Falha ao carregar dados.");
-        // Mantém cache anterior nos blocos afetados — evita apagar o gráfico na tela.
       } finally {
         if (requestIdRef.current === requestId) {
           setInitialLoading(false);
@@ -168,45 +187,67 @@ export function useComunicadoDataPreview({
     [mergeResolved],
   );
 
+  const refreshDataPreview = useCallback(
+    async (options?: RefreshDataPreviewOptions) => {
+      const blocks = readDataBlocks();
+      if (blocks.length === 0) {
+        setStaleSourceIds([]);
+        setError(null);
+        return;
+      }
+      const blockIds = options?.blockIds?.length
+        ? new Set(options.blockIds)
+        : new Set(blocks.map((block) => block.id));
+      await fetchBlocks(blocks, {
+        showLoading: true,
+        blockIds,
+        force: options?.force !== false,
+      });
+    },
+    [fetchBlocks, readDataBlocks],
+  );
+
+  // Fingerprint: stale se binding mudou; carga inicial só se ainda não há dados.
   useEffect(() => {
     const blocks = readDataBlocks();
     if (blocks.length === 0) {
-      // Slide sem fontes: não limpar resolved de outros slides (volta ao gráfico sem piscar).
-      setInitialLoading(false);
+      setStaleSourceIds([]);
       setError(null);
       return;
     }
 
-    const timer = window.setTimeout(() => {
-      void fetchBlocks(blocks, { showLoading: true });
-    }, debounceMs);
+    const hasData = hasAnyResolved(resolvedRef.current, blocks);
+    const synced = syncedFingerprintRef.current;
 
-    return () => window.clearTimeout(timer);
-  }, [playlistId, dataFingerprint, debounceMs, fetchBlocks, readDataBlocks]);
-
-  useEffect(() => {
-    const blocks = readDataBlocks();
-    if (blocks.length === 0) return;
-
-    const timers = blocks.map((block) => {
-      const refreshSec = resolveDataBlockRefreshSec(block.dataBinding, globalRefreshSec);
-      return window.setInterval(() => {
-        if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
-        const latest = readDataBlocks().find((item) => item.id === block.id);
-        if (!latest) return;
-        void fetchBlocks([latest], {
-          showLoading: false,
-          blockIds: new Set([block.id]),
-        });
-      }, refreshSec * 1000);
-    });
-
-    return () => {
-      for (const timer of timers) {
-        window.clearInterval(timer);
+    if (dataFingerprint !== synced) {
+      if (hasData || didInitialFetchRef.current) {
+        setStaleSourceIds(blocks.map((block) => block.id));
+        return;
       }
-    };
-  }, [playlistId, dataFingerprint, globalRefreshSec, fetchBlocks, readDataBlocks]);
+      didInitialFetchRef.current = true;
+      void fetchBlocks(blocks, { showLoading: true, force: false });
+      return;
+    }
 
-  return { resolvedByBlockId, loading: initialLoading, error };
+    setStaleSourceIds([]);
+    if (hasData) {
+      didInitialFetchRef.current = true;
+      return;
+    }
+    if (!didInitialFetchRef.current) {
+      didInitialFetchRef.current = true;
+      void fetchBlocks(blocks, { showLoading: true, force: false });
+    }
+  }, [playlistId, dataFingerprint, fetchBlocks, readDataBlocks]);
+
+  const isDataPreviewStale = staleSourceIds.length > 0;
+
+  return {
+    resolvedByBlockId,
+    loading: initialLoading,
+    error,
+    isDataPreviewStale,
+    staleSourceIds,
+    refreshDataPreview,
+  };
 }

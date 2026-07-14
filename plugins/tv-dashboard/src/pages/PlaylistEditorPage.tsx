@@ -222,12 +222,13 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
     return serializeComunicadoConfig(parseComunicadoConfig(selectedSlide.nativeConfig ?? {}));
   }, [selectedSlide]);
 
-  const slidesPreviewKey = useMemo(
+  /** Estrutura do filmstrip (sem nativeConfig) — evita re-enrich operacional a cada autosave. */
+  const slidesStructureKey = useMemo(
     () =>
       slides
         .map(
           (slide) =>
-            `${slide.id}:${slide.title}:${slide.slideType}:${slide.nativeScreenKey ?? ""}:${slide.externalUrl ?? ""}:${JSON.stringify(slide.nativeConfig ?? {})}:${slide.isActive}`,
+            `${slide.id}:${slide.title}:${slide.slideType}:${slide.nativeScreenKey ?? ""}:${slide.externalUrl ?? ""}:${slide.isActive}`,
         )
         .join("|"),
     [slides],
@@ -298,7 +299,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
 
   useEffect(() => {
     void refreshPreviewThumbnails();
-  }, [refreshPreviewThumbnails, slidesPreviewKey]);
+  }, [refreshPreviewThumbnails, playlistId, slidesStructureKey]);
 
   useEffect(() => {
     setSelectedSlideId(null);
@@ -753,6 +754,9 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       linkActive: playlist.isActive,
       onBack,
       onPreview,
+      onRefreshVisual: () => {
+        void refreshPreviewThumbnails();
+      },
       onShare,
       onCopyLink: copyLink,
       onQr: openQr,

@@ -26,6 +26,7 @@ class PreviewDataBlockBody(BaseModel):
     block: dict[str, Any]
     nativeConfig: dict[str, Any] = Field(default_factory=dict)
     playlistId: str | None = None
+    forceRefresh: bool = False
 
 
 class ValidateDataConfigBody(BaseModel):
@@ -99,6 +100,7 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
             authorization=auth,
             user=user,
             playlist_defaults=playlist_defaults,
+            force_refresh=bool(body.forceRefresh),
         )
     except ValueError as exc:
         return fail(str(exc), 422)

@@ -354,6 +354,8 @@ export async function previewDataBlockV2(body: {
   block: Record<string, unknown>;
   nativeConfig: Record<string, unknown>;
   playlistId?: string;
+  /** Bypass TTL cache no servidor (Atualizar visual). */
+  forceRefresh?: boolean;
 }) {
   return unwrap(
     httpPost<ApiEnvelope<{ block: Record<string, unknown> }>>(

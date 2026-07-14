@@ -33,7 +33,16 @@ export function CustomSlideEditorLayout({
   chromeProps,
   adminLabels,
 }: Props) {
-  const { config, blocks, appliedSlideId, dataPreviewError, setSpeakerNotes } = useComunicadoEditor();
+  const {
+    config,
+    blocks,
+    appliedSlideId,
+    dataPreviewError,
+    isDataPreviewStale,
+    dataPreviewLoading,
+    refreshDataPreview,
+    setSpeakerNotes,
+  } = useComunicadoEditor();
   /** Cache de print do filmstrip (com `resolved`) — sobrevive à troca de slide. */
   const thumbnailCacheRef = useRef<Record<string, Record<string, unknown>>>({});
 
@@ -61,13 +70,36 @@ export function CustomSlideEditorLayout({
     </div>
   );
 
-  const chromeWithSlideExtras = { ...chromeProps, slideTabExtra };
+  const playlistChrome = chromeProps.slideDeck?.playlistChrome
+    ? {
+        ...chromeProps.slideDeck.playlistChrome,
+        onRefreshVisual: () => {
+          void refreshDataPreview({ force: true });
+          chromeProps.slideDeck?.playlistChrome?.onRefreshVisual?.();
+        },
+        dataPreviewStale: isDataPreviewStale,
+        dataPreviewLoading,
+      }
+    : chromeProps.slideDeck?.playlistChrome;
+
+  const chromeWithSlideExtras = {
+    ...chromeProps,
+    slideTabExtra,
+    slideDeck: chromeProps.slideDeck
+      ? { ...chromeProps.slideDeck, playlistChrome }
+      : chromeProps.slideDeck,
+  };
 
   return (
     <>
       {dataPreviewError ? (
         <p className="td-deck-preview-banner td-deck-preview-banner--error" role="status">
           Preview de dados: {dataPreviewError}
+        </p>
+      ) : null}
+      {isDataPreviewStale ? (
+        <p className="td-deck-preview-banner td-deck-preview-banner--stale" role="status">
+          Dados desatualizados — clique em «Atualizar visual» para buscar de novo.
         </p>
       ) : null}
       <DeckEditorChrome {...chromeWithSlideExtras} />

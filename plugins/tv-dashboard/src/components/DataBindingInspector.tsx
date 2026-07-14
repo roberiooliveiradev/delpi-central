@@ -315,7 +315,7 @@ export function DataBindingInspector({
       ) : null}
       <DeckField
         id="td-data-refresh"
-        label="Atualizar a cada (s)"
+        label="Atualizar na TV a cada (s)"
         hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.dataBlockRefreshInterval}
       >
         {isRibbon ? (
@@ -422,6 +422,9 @@ export function DataBindingInspector({
         ) : null}
         {activeSections.includes("refresh") ? (
           <RibbonZone title="Atualização">
+            <p className="td-deck-inspector__hint">
+              No editor o preview não atualiza sozinho — use «Atualizar visual». O intervalo abaixo vale só na TV.
+            </p>
             <div className="td-deck-ribbon__field-grid">{refreshFields}</div>
           </RibbonZone>
         ) : null}
@@ -435,7 +438,7 @@ export function DataBindingInspector({
       <DeckPropertySection
         pane={pane}
         title={editingLinkedSource ? "Parâmetros da fonte" : "Dados"}
-        hint="Parâmetros deste bloco sobrescrevem filtros do slide."
+        hint="Parâmetros deste bloco sobrescrevem filtros do slide. No editor o preview não autoatualiza — use «Atualizar visual»; o intervalo de refresh vale só na TV."
       >
         {connectionFields}
         {refreshFields}

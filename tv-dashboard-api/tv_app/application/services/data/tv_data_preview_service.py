@@ -24,6 +24,7 @@ class TvDataPreviewService:
         authorization: str | None = None,
         user: Any | None = None,
         playlist_defaults: dict[str, Any] | None = None,
+        force_refresh: bool = False,
     ) -> dict[str, Any]:
         block_type = str(block.get("type") or "")
         binding = block.get("dataBinding")
@@ -36,5 +37,6 @@ class TvDataPreviewService:
             authorization=authorization,
             playlist_defaults=playlist_defaults,
             user=user,
+            force_refresh=force_refresh,
         )
         return enriched[0] if enriched else block

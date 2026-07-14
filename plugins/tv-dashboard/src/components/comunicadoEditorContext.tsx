@@ -145,12 +145,17 @@ export function ComunicadoEditorProvider({
     (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => void
   >(() => {});
 
-  const { resolvedByBlockId, loading: dataPreviewLoading, error: dataPreviewError } =
-    useComunicadoDataPreview({
-      playlistId,
-      config,
-      globalRefreshSec,
-    });
+  const {
+    resolvedByBlockId,
+    loading: dataPreviewLoading,
+    error: dataPreviewError,
+    isDataPreviewStale,
+    staleSourceIds,
+    refreshDataPreview,
+  } = useComunicadoDataPreview({
+    playlistId,
+    config,
+  });
 
   const blocks = useMemo(() => {
     const sorted = sortBlocksByZIndex(config.blocks ?? []);
@@ -512,6 +517,9 @@ export function ComunicadoEditorProvider({
     uploadCustomFont: media.uploadCustomFont,
     dataPreviewLoading,
     dataPreviewError,
+    isDataPreviewStale,
+    staleSourceIds,
+    refreshDataPreview,
     globalRefreshSec,
     lastDataDisplayMode,
     setLastDataDisplayMode,

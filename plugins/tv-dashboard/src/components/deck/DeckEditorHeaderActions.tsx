@@ -29,6 +29,10 @@ export type DeckHomePlaylistChromeProps = DeckPlaylistIdentityProps & {
   linkActive: boolean;
   onBack: () => void;
   onPreview: () => void;
+  /** Refresh dos dados no editor (não o link público). */
+  onRefreshVisual?: () => void;
+  dataPreviewStale?: boolean;
+  dataPreviewLoading?: boolean;
   onShare: () => void;
   onCopyLink: () => void;
   onQr: () => void;
@@ -61,6 +65,9 @@ export function DeckHomePlaylistChrome({
   linkActive,
   onBack,
   onPreview,
+  onRefreshVisual,
+  dataPreviewStale = false,
+  dataPreviewLoading = false,
   onShare,
   onCopyLink,
   onQr,
@@ -76,6 +83,20 @@ export function DeckHomePlaylistChrome({
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--playlist">
           <DeckRibbonTile icon={ArrowLeft} label="Voltar" hint={H.back} onClick={onBack} />
           <DeckRibbonTile icon={Eye} label="Prévia" hint={H.preview} onClick={onPreview} />
+          {onRefreshVisual ? (
+            <DeckRibbonTile
+              icon={RefreshCw}
+              label="Atualizar visual"
+              hint={H.refreshVisual}
+              active={dataPreviewStale || dataPreviewLoading}
+              onClick={onRefreshVisual}
+            />
+          ) : null}
+          {dataPreviewStale ? (
+            <span className="td-deck-data-stale-badge" title={H.refreshVisual}>
+              Dados desatualizados
+            </span>
+          ) : null}
           <DeckRibbonTile
             icon={Keyboard}
             label="Atalhos"
