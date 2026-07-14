@@ -32,6 +32,18 @@
       "name": "Gerenciar recursos — Filial SC",
       "description": "Cadastrar e editar recursos agendáveis na Filial SC",
       "module": "central-agendamento"
+    },
+    {
+      "code": "central-agendamento.approve.filial-es",
+      "name": "Aprovar agendamentos — Filial ES",
+      "description": "Confirmar ou rejeitar reservas que exigem aprovação prévia na Filial ES",
+      "module": "central-agendamento"
+    },
+    {
+      "code": "central-agendamento.approve.filial-sc",
+      "name": "Aprovar agendamentos — Filial SC",
+      "description": "Confirmar ou rejeitar reservas que exigem aprovação prévia na Filial SC",
+      "module": "central-agendamento"
     }
   ],
   "routes": [

@@ -21,6 +21,8 @@ def test_kpi_access_lists_include_api_delpi_access() -> None:
 def test_scheduling_branch_maps_use_central_constants() -> None:
     assert perms.SCHEDULING_BRANCH_VIEW_PERMS["ES"] == perms.CENTRAL_AGENDAMENTO_VIEW_FILIAL_ES
     assert perms.SCHEDULING_BRANCH_MANAGE_PERMS["SC"] == perms.CENTRAL_AGENDAMENTO_MANAGE_FILIAL_SC
+    assert perms.SCHEDULING_BRANCH_APPROVE_PERMS["ES"] == perms.CENTRAL_AGENDAMENTO_APPROVE_FILIAL_ES
+    assert perms.CENTRAL_AGENDAMENTO_APPROVE_FILIAL_SC in perms.SCHEDULING_APPROVE_PERMISSIONS
 
 
 def test_retrabalho_branch_maps_use_filial_constants() -> None:

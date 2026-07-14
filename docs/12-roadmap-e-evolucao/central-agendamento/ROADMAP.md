@@ -8,7 +8,8 @@
 |------|--------|---------|
 | **1** | Concluída | MFE, API CRUD recursos/reservas, migrations V001, compose dev, smoke homolog |
 | **2** | Concluída | Compose prod, constraint anti-conflito V002, homolog API fase 2, testes unitários |
-| **3** | Planejada | Reagendar reserva, notificações, seed demo por filial |
+| **3.1** | Concluída | Aprovação prévia (`requires_approval`), `approve.filial-*`, hold+TTL, notificações, fila MFE |
+| **3** | Planejada | Reagendar reserva, seed demo por filial, aprovação de série recorrente |
 
 ## Checklist produção
 
@@ -17,8 +18,9 @@
 - [x] Build CI: `./scripts/ci/build-central-agendamento.sh`
 - [x] Smoke: `./scripts/homologacao/check-central-agendamento.sh`
 - [x] API E2E: `./scripts/homologacao/check-scheduling-api.sh` (requer `TOKEN` com permissão manage)
-- [ ] Registro Core API + RBAC (`register-manifest.sh`)
-- [ ] Migration em prod: `run_plugins_migrations.py --plugin scheduling`
+- [ ] Registro Core API + RBAC (`register-manifest.sh`) — reexecutar para registrar `approve.*`
+- [ ] Migration em prod: `run_plugins_migrations.py --plugin scheduling` (inclui V004)
+- [ ] Atribuir `approve.filial-*` nos papéis aprovadores (combinar com `view`)
 
 ## Comandos úteis
 
@@ -38,7 +40,9 @@ docker compose -f infra/docker-compose.dev.yml exec api-delpi \
 
 | Código | Uso |
 |--------|-----|
-| `central-agendamento.view.filial-es` | Ver calendário e reservar (ES) |
-| `central-agendamento.view.filial-sc` | Ver calendário e reservar (SC) |
+| `central-agendamento.view.filial-es` | Ver calendário e reservar/solicitar (ES) |
+| `central-agendamento.view.filial-sc` | Ver calendário e reservar/solicitar (SC) |
 | `central-agendamento.manage.filial-es` | CRUD recursos (ES) |
 | `central-agendamento.manage.filial-sc` | CRUD recursos (SC) |
+| `central-agendamento.approve.filial-es` | Aprovar/rejeitar pendências (ES) |
+| `central-agendamento.approve.filial-sc` | Aprovar/rejeitar pendências (SC) |

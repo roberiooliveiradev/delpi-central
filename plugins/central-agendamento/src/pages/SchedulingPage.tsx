@@ -1,19 +1,24 @@
-import { useMemo, useState } from "react";
-import { CalendarPlus, RefreshCw, Settings2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CalendarPlus, ClipboardCheck, RefreshCw, Settings2 } from "lucide-react";
 import type { View } from "react-big-calendar";
 import type { SlotInfo } from "react-big-calendar";
 import { isSameDay } from "date-fns";
 
 import {
+  approveBooking,
   cancelBooking,
   createBooking,
   createResource,
+  fetchPendingBookings,
   fetchResources,
   isRecurringBookingResult,
+  rejectBooking,
   updateResource,
   type CancelScope,
+  type SchedulingBooking,
   type SchedulingResource,
 } from "../api/schedulingApi";
+import { ApprovalsPanel } from "../components/ApprovalsPanel";
 import { BookingCalendar, type CalendarEvent } from "../components/BookingCalendar";
 import { BookingDetailModal } from "../components/BookingDetailModal";
 import { BookingModal } from "../components/BookingModal";
@@ -29,7 +34,12 @@ type Props = {
   pathname?: string;
 };
 
-type ActiveView = "calendar" | "admin";
+type ActiveView = "calendar" | "admin" | "approvals";
+
+function readQueryParam(name: string): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get(name);
+}
 
 export function SchedulingPage({ pathname }: Props) {
   const branch = branchFromPathname(pathname);
@@ -44,10 +54,13 @@ export function SchedulingPage({ pathname }: Props) {
   const [selectedResourceId, setSelectedResourceId] = useState<string | undefined>();
   const [editingResource, setEditingResource] = useState<SchedulingResource | null>(null);
   const [adminResources, setAdminResources] = useState<SchedulingResource[]>([]);
+  const [pendingBookings, setPendingBookings] = useState<SchedulingBooking[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [highlightBookingId, setHighlightBookingId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const { canManage, currentUserId } = useBranchPermission(branch);
+  const { canManage, canApprove, currentUserId } = useBranchPermission(branch);
   const {
     resources,
     bookings,
@@ -73,10 +86,43 @@ export function SchedulingPage({ pathname }: Props) {
     setAdminResources(data);
   }
 
+  async function loadPendingBookings() {
+    if (!branch || !canApprove) {
+      setPendingBookings([]);
+      return;
+    }
+    setPendingLoading(true);
+    try {
+      const data = await fetchPendingBookings(branch, false);
+      setPendingBookings(data);
+    } finally {
+      setPendingLoading(false);
+    }
+  }
+
   async function openAdminView() {
     setActiveView("admin");
     await loadAdminResources();
   }
+
+  async function openApprovalsView(bookingId?: string | null) {
+    setActiveView("approvals");
+    if (bookingId) setHighlightBookingId(bookingId);
+    await loadPendingBookings();
+  }
+
+  useEffect(() => {
+    if (!canApprove || !branch) return;
+    void loadPendingBookings();
+    const tab = readQueryParam("tab");
+    const bookingId = readQueryParam("bookingId");
+    if (tab === "approvals") {
+      void openApprovalsView(bookingId);
+    } else if (bookingId) {
+      setHighlightBookingId(bookingId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deep link on mount / canApprove
+  }, [canApprove, branch]);
 
   function openBookingModal(start?: Date, end?: Date, resourceId?: string) {
     setSlotSelection(start && end ? { start, end } : null);
@@ -114,10 +160,13 @@ export function SchedulingPage({ pathname }: Props) {
         } else {
           setSuccess(`Série recorrente criada com ${result.total_created} reserva(s).`);
         }
+      } else if (result.status === "pending") {
+        setSuccess("Solicitação enviada. Aguarde a aprovação.");
       } else {
         setSuccess("Reserva confirmada com sucesso.");
       }
       await reload();
+      if (canApprove) await loadPendingBookings();
     } finally {
       setActionLoading(false);
     }
@@ -131,6 +180,7 @@ export function SchedulingPage({ pathname }: Props) {
       const count = result.cancelled_count ?? 1;
       setSuccess(count > 1 ? `${count} reservas canceladas.` : "Reserva cancelada.");
       await reload();
+      if (canApprove) await loadPendingBookings();
     } finally {
       setActionLoading(false);
     }
@@ -142,6 +192,7 @@ export function SchedulingPage({ pathname }: Props) {
     description?: string;
     capacity?: number;
     metadata?: Record<string, unknown>;
+    requires_approval?: boolean;
   }) {
     if (!branch) return;
     setActionLoading(true);
@@ -170,6 +221,28 @@ export function SchedulingPage({ pathname }: Props) {
     }
   }
 
+  async function handleApprove(bookingId: string) {
+    setActionLoading(true);
+    try {
+      await approveBooking(bookingId);
+      setSuccess("Reserva confirmada.");
+      await Promise.all([reload(), loadPendingBookings()]);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleReject(bookingId: string, reason: string) {
+    setActionLoading(true);
+    try {
+      await rejectBooking(bookingId, reason);
+      setSuccess("Reserva rejeitada. O solicitante foi notificado.");
+      await Promise.all([reload(), loadPendingBookings()]);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   if (!branch) {
     return (
       <div className="dashboard-central-agendamento dashboard-page ca-app">
@@ -184,134 +257,162 @@ export function SchedulingPage({ pathname }: Props) {
 
   const canCancelSelected =
     Boolean(selectedEvent) &&
-    (canManage || selectedEvent?.bookedByUserId === currentUserId);
+    (selectedEvent?.status === "confirmed" || selectedEvent?.status === "pending") &&
+    (canManage || canApprove || selectedEvent?.bookedByUserId === currentUserId);
 
   return (
     <div className="dashboard-central-agendamento dashboard-page ca-app">
       <div className="ca-app-shell">
-      <SchedulingPageHeader
-        eyebrow={BRANCH_LABELS[branch]}
-        title="Central de Agendamento"
-        subtitle="Consulte disponibilidade e reserve salas, treinamentos e veículos."
-        actions={
-          <>
-            <button
-              type="button"
-              className={`ca-btn ca-btn--ghost ${activeView === "calendar" ? "ca-btn--active" : ""}`}
-              onClick={() => setActiveView("calendar")}
-            >
-              Calendário
-            </button>
-            {canManage ? (
+        <SchedulingPageHeader
+          eyebrow={BRANCH_LABELS[branch]}
+          title="Central de Agendamento"
+          subtitle="Consulte disponibilidade e reserve salas, treinamentos e veículos."
+          actions={
+            <>
               <button
                 type="button"
-                className={`ca-btn ca-btn--ghost ${activeView === "admin" ? "ca-btn--active" : ""}`}
-                onClick={() => void openAdminView()}
+                className={`ca-btn ca-btn--ghost ${activeView === "calendar" ? "ca-btn--active" : ""}`}
+                onClick={() => setActiveView("calendar")}
               >
-                <Settings2 size={16} />
-                Gerenciar recursos
+                Calendário
               </button>
-            ) : null}
-            <button type="button" className="ca-btn ca-btn--ghost" onClick={() => void reload()}>
-              <RefreshCw size={16} className={loading ? "ca-spin" : ""} />
-              Atualizar
-            </button>
-            <button
-              type="button"
-              className="ca-btn ca-btn--primary"
-              onClick={() => openBookingModal()}
-            >
-              <CalendarPlus size={16} />
-              Nova reserva
-            </button>
-          </>
-        }
-      />
-
-      {success ? (
-        <div className="ca-alert ca-alert--success">
-          {success}
-          <button type="button" className="ca-link-btn" onClick={() => setSuccess(null)}>
-            Fechar
-          </button>
-        </div>
-      ) : null}
-
-      {error ? <div className="ca-alert ca-alert--error">{error}</div> : null}
-
-      {activeView === "calendar" ? (
-        <div className="ca-layout">
-          <ResourceSidebar
-            resources={filteredResources}
-            bookingsCountToday={bookingsToday.length}
-            selectedTypes={selectedTypes}
-            selectedResourceIds={selectedResourceIds}
-            onToggleType={toggleType}
-            onToggleResource={toggleResource}
-            onClearFilters={clearFilters}
-          />
-
-          <div className="ca-main-panel">
-            {loading && resources.length === 0 ? (
-              <div className="ca-loading">Carregando calendário...</div>
-            ) : (
-              <BookingCalendar
-                bookings={bookings}
-                resources={filteredResources}
-                currentDate={currentDate}
-                view={calendarView}
-                onViewChange={setCalendarView}
-                onNavigate={setCurrentDate}
-                onSelectEvent={handleSelectEvent}
-                onSelectSlot={handleSelectSlot}
-              />
-            )}
-          </div>
-        </div>
-      ) : (
-        <ResourceAdminPanel
-          resources={adminResources}
-          onCreate={() => {
-            setEditingResource(null);
-            setResourceModalOpen(true);
-          }}
-          onEdit={(resource) => {
-            setEditingResource(resource);
-            setResourceModalOpen(true);
-          }}
-          onToggleActive={handleToggleActive}
+              {canApprove ? (
+                <button
+                  type="button"
+                  className={`ca-btn ca-btn--ghost ${activeView === "approvals" ? "ca-btn--active" : ""}`}
+                  onClick={() => void openApprovalsView()}
+                >
+                  <ClipboardCheck size={16} />
+                  Aprovações
+                  {pendingBookings.length > 0 ? (
+                    <span className="ca-badge-count">{pendingBookings.length}</span>
+                  ) : null}
+                </button>
+              ) : null}
+              {canManage ? (
+                <button
+                  type="button"
+                  className={`ca-btn ca-btn--ghost ${activeView === "admin" ? "ca-btn--active" : ""}`}
+                  onClick={() => void openAdminView()}
+                >
+                  <Settings2 size={16} />
+                  Gerenciar recursos
+                </button>
+              ) : null}
+              <button type="button" className="ca-btn ca-btn--ghost" onClick={() => void reload()}>
+                <RefreshCw size={16} className={loading ? "ca-spin" : ""} />
+                Atualizar
+              </button>
+              <button
+                type="button"
+                className="ca-btn ca-btn--primary"
+                onClick={() => openBookingModal()}
+              >
+                <CalendarPlus size={16} />
+                Nova reserva
+              </button>
+            </>
+          }
         />
-      )}
 
-      <BookingModal
-        open={bookingModalOpen}
-        branch={branch}
-        resources={resources}
-        defaultResourceId={selectedResourceId}
-        defaultStart={slotSelection?.start}
-        defaultEnd={slotSelection?.end}
-        loading={actionLoading}
-        onClose={() => setBookingModalOpen(false)}
-        onSubmit={handleCreateBooking}
-      />
+        {success ? (
+          <div className="ca-alert ca-alert--success">
+            {success}
+            <button type="button" className="ca-link-btn" onClick={() => setSuccess(null)}>
+              Fechar
+            </button>
+          </div>
+        ) : null}
 
-      <BookingDetailModal
-        open={detailModalOpen}
-        event={selectedEvent}
-        canCancel={canCancelSelected}
-        loading={actionLoading}
-        onClose={() => setDetailModalOpen(false)}
-        onCancel={handleCancelBooking}
-      />
+        {error ? <div className="ca-alert ca-alert--error">{error}</div> : null}
 
-      <ResourceFormModal
-        open={resourceModalOpen}
-        branch={branch}
-        resource={editingResource}
-        loading={actionLoading}
-        onClose={() => setResourceModalOpen(false)}
-        onSubmit={handleSaveResource}
-      />
+        {activeView === "calendar" ? (
+          <div className="ca-layout">
+            <ResourceSidebar
+              resources={filteredResources}
+              bookingsCountToday={bookingsToday.length}
+              selectedTypes={selectedTypes}
+              selectedResourceIds={selectedResourceIds}
+              onToggleType={toggleType}
+              onToggleResource={toggleResource}
+              onClearFilters={clearFilters}
+            />
+
+            <div className="ca-main-panel">
+              {loading && resources.length === 0 ? (
+                <div className="ca-loading">Carregando calendário...</div>
+              ) : (
+                <BookingCalendar
+                  bookings={bookings}
+                  resources={filteredResources}
+                  currentDate={currentDate}
+                  view={calendarView}
+                  onViewChange={setCalendarView}
+                  onNavigate={setCurrentDate}
+                  onSelectEvent={handleSelectEvent}
+                  onSelectSlot={handleSelectSlot}
+                />
+              )}
+            </div>
+          </div>
+        ) : null}
+
+        {activeView === "admin" ? (
+          <ResourceAdminPanel
+            resources={adminResources}
+            onCreate={() => {
+              setEditingResource(null);
+              setResourceModalOpen(true);
+            }}
+            onEdit={(resource) => {
+              setEditingResource(resource);
+              setResourceModalOpen(true);
+            }}
+            onToggleActive={handleToggleActive}
+          />
+        ) : null}
+
+        {activeView === "approvals" ? (
+          <ApprovalsPanel
+            bookings={pendingBookings}
+            highlightBookingId={highlightBookingId}
+            loading={pendingLoading}
+            actionLoading={actionLoading}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            onRefresh={() => void loadPendingBookings()}
+          />
+        ) : null}
+
+        <BookingModal
+          open={bookingModalOpen}
+          branch={branch}
+          resources={resources}
+          defaultResourceId={selectedResourceId}
+          defaultStart={slotSelection?.start}
+          defaultEnd={slotSelection?.end}
+          loading={actionLoading}
+          onClose={() => setBookingModalOpen(false)}
+          onSubmit={handleCreateBooking}
+        />
+
+        <BookingDetailModal
+          open={detailModalOpen}
+          event={selectedEvent}
+          canCancel={canCancelSelected}
+          loading={actionLoading}
+          onClose={() => setDetailModalOpen(false)}
+          onCancel={handleCancelBooking}
+        />
+
+        <ResourceFormModal
+          open={resourceModalOpen}
+          branch={branch}
+          resource={editingResource}
+          loading={actionLoading}
+          onClose={() => setResourceModalOpen(false)}
+          onSubmit={handleSaveResource}
+        />
       </div>
     </div>
   );

@@ -38,7 +38,8 @@ class DispatchNotificationsUseCase:
         target_user_ids = self._resolve_target_user_ids(request)
         if not target_user_ids:
             raise DispatchNotificationsValidationError(
-                "at least one recipient is required (broadcast, userIds, emails, roleIds or groupIds)"
+                "at least one recipient is required "
+                "(broadcast, userIds, emails, roleIds, groupIds or permissionCodes)"
             )
 
         dispatch_category = (request.category or "system").strip().lower()

@@ -11,19 +11,29 @@ from delpi_auth.authorization import require_any_permission
 from delpi_auth.request_context import get_current_user
 
 from app.application.security.api_delpi_permissions import (
+    SCHEDULING_APPROVE_PERMISSIONS,
+    SCHEDULING_BRANCH_APPROVE_PERMS,
     SCHEDULING_BRANCH_MANAGE_PERMS,
     SCHEDULING_BRANCH_VIEW_PERMS,
     SCHEDULING_MANAGE_PERMISSIONS,
     SCHEDULING_READ_PERMISSIONS,
 )
-
+from app.application.use_cases.scheduling.create_scheduling_booking_use_case import (
+    CreateSchedulingBookingUseCase,
+)
+from app.application.use_cases.scheduling.decide_scheduling_booking_use_case import (
+    DecideSchedulingBookingUseCase,
+)
+from app.application.use_cases.scheduling.expire_pending_scheduling_bookings_use_case import (
+    ExpirePendingSchedulingBookingsUseCase,
+)
 from app.composition.scheduling_composer import build_scheduling_repository
 from app.core.responses import error_response
-from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.infrastructure.persistence.plugins.repositories.scheduling.postgres_scheduling_repository import (
     BookingConflictError,
 )
+from app.interface.http.route_response_helpers import api_delpi_success
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
 
@@ -40,6 +50,7 @@ class CreateResourceBody(BaseModel):
     description: str | None = Field(default=None, max_length=2000)
     capacity: int | None = Field(default=None, ge=1, le=9999)
     metadata: dict[str, Any] | None = None
+    requires_approval: bool = False
 
 
 class UpdateResourceBody(BaseModel):
@@ -52,6 +63,7 @@ class UpdateResourceBody(BaseModel):
     capacity: int | None = Field(default=None, ge=1, le=9999)
     metadata: dict[str, Any] | None = None
     active: bool | None = None
+    requires_approval: bool | None = None
 
 
 class RecurrenceBody(BaseModel):
@@ -68,6 +80,10 @@ class CreateBookingBody(BaseModel):
     start_at: datetime
     end_at: datetime
     recurrence: RecurrenceBody | None = None
+
+
+class RejectBookingBody(BaseModel):
+    reason: str = Field(..., min_length=3, max_length=2000)
 
 
 def _current_user_id() -> str:
@@ -97,7 +113,12 @@ def _branch_view_allowed(branch: str) -> bool:
         return False
     view_perm = SCHEDULING_BRANCH_VIEW_PERMS[branch]
     manage_perm = SCHEDULING_BRANCH_MANAGE_PERMS[branch]
-    return has_permission(user, view_perm) or has_permission(user, manage_perm)
+    approve_perm = SCHEDULING_BRANCH_APPROVE_PERMS[branch]
+    return (
+        has_permission(user, view_perm)
+        or has_permission(user, manage_perm)
+        or has_permission(user, approve_perm)
+    )
 
 
 def _branch_manage_allowed(branch: str) -> bool:
@@ -109,15 +130,32 @@ def _branch_manage_allowed(branch: str) -> bool:
     return has_permission(user, SCHEDULING_BRANCH_MANAGE_PERMS[branch])
 
 
-def _branch_access_error(branch: str, *, require_manage: bool = False):
-    allowed = _branch_manage_allowed(branch) if require_manage else _branch_view_allowed(branch)
+def _branch_approve_allowed(branch: str) -> bool:
+    if _is_superadmin():
+        return True
+    user = get_current_user()
+    if user is None:
+        return False
+    return has_permission(user, SCHEDULING_BRANCH_APPROVE_PERMS[branch])
+
+
+def _branch_access_error(
+    branch: str,
+    *,
+    require_manage: bool = False,
+    require_approve: bool = False,
+):
+    if require_approve:
+        allowed = _branch_approve_allowed(branch)
+        message = "Sem permissão para aprovar agendamentos nesta filial."
+    elif require_manage:
+        allowed = _branch_manage_allowed(branch)
+        message = "Sem permissão para gerenciar recursos nesta filial."
+    else:
+        allowed = _branch_view_allowed(branch)
+        message = "Sem permissão para acessar esta filial."
     if allowed:
         return None
-    message = (
-        "Sem permissão para gerenciar recursos nesta filial."
-        if require_manage
-        else "Sem permissão para acessar esta filial."
-    )
     return error_response(message, status_code=403)
 
 
@@ -171,6 +209,7 @@ def create_resource(body: CreateResourceBody):
             capacity=body.capacity,
             metadata=body.metadata,
             created_by_user_id=_current_user_id(),
+            requires_approval=body.requires_approval,
         )
         return api_delpi_success(
             data,
@@ -205,6 +244,7 @@ def update_resource(resource_id: str, body: UpdateResourceBody):
             capacity=body.capacity,
             metadata=body.metadata,
             active=body.active,
+            requires_approval=body.requires_approval,
         )
         return api_delpi_success(
             data,
@@ -239,6 +279,7 @@ def list_bookings(
 
     try:
         repo = build_scheduling_repository()
+        ExpirePendingSchedulingBookingsUseCase(repo).execute(branch_code=branch)
         data = repo.list_bookings(
             branch,
             from_at=start,
@@ -249,6 +290,33 @@ def list_bookings(
     except Exception as exc:
         log_error(f"Erro ao listar reservas: {exc}")
         return error_response("Erro interno ao listar reservas.", status_code=500)
+
+
+@router.get("/bookings/pending")
+@require_any_permission(SCHEDULING_READ_PERMISSIONS)
+def list_pending_bookings(
+    branch: str = Query(..., pattern="^(ES|SC)$"),
+    mine: bool = Query(False),
+):
+    branch_error = _branch_access_error(branch)
+    if branch_error:
+        return branch_error
+
+    if not mine and not _branch_approve_allowed(branch):
+        return error_response(
+            "Sem permissão para listar aprovações pendentes desta filial.",
+            status_code=403,
+        )
+
+    try:
+        repo = build_scheduling_repository()
+        ExpirePendingSchedulingBookingsUseCase(repo).execute(branch_code=branch)
+        booked_by = _current_user_id() if mine else None
+        data = repo.list_pending_bookings(branch, booked_by_user_id=booked_by)
+        return api_delpi_success(data, operation_id="list_pending_scheduling_bookings")
+    except Exception as exc:
+        log_error(f"Erro ao listar reservas pendentes: {exc}")
+        return error_response("Erro interno ao listar pendências.", status_code=500)
 
 
 @router.post("/bookings")
@@ -263,63 +331,25 @@ def create_booking(body: CreateBookingBody):
 
     try:
         repo = build_scheduling_repository()
-        resource = repo.get_resource(body.resource_id)
-        if not resource:
-            return error_response("Recurso não encontrado.", status_code=404)
-        if str(resource["branch_code"]) != body.branch_code:
-            return error_response("Recurso não pertence à filial informada.", status_code=400)
-        if not resource.get("active", True):
-            return error_response("Recurso inativo.", status_code=400)
-
+        recurrence = None
         if body.recurrence:
-            if body.recurrence.until < body.start_at:
-                return error_response(
-                    "A data final da recorrência deve ser igual ou posterior ao início.",
-                    status_code=400,
-                )
-            data = repo.create_recurring_bookings(
-                resource_id=body.resource_id,
-                branch_code=body.branch_code,
-                title=body.title,
-                notes=body.notes,
-                start_at=body.start_at,
-                end_at=body.end_at,
-                booked_by_user_id=_current_user_id(),
-                booked_by_name=_current_user_name(),
-                frequency=body.recurrence.frequency,
-                until=body.recurrence.until,
-                interval=body.recurrence.interval,
-            )
-            created_count = int(data.get("total_created", 0))
-            skipped_count = int(data.get("total_skipped", 0))
-            if skipped_count:
-                message = (
-                    f"Série recorrente criada com {created_count} reserva(s). "
-                    f"{skipped_count} horário(s) ignorado(s) por conflito."
-                )
-            else:
-                message = f"Série recorrente criada com {created_count} reserva(s)."
-            return api_delpi_success(
-                data,
-                operation_id="create_scheduling_recurring_booking",
-                message=message,
-            )
-
-        data = repo.create_booking(
-            resource_id=body.resource_id,
+            recurrence = {
+                "frequency": body.recurrence.frequency,
+                "until": body.recurrence.until,
+                "interval": body.recurrence.interval,
+            }
+        data, operation_id, message = CreateSchedulingBookingUseCase(repo).execute(
             branch_code=body.branch_code,
+            resource_id=body.resource_id,
             title=body.title,
             notes=body.notes,
             start_at=body.start_at,
             end_at=body.end_at,
             booked_by_user_id=_current_user_id(),
             booked_by_name=_current_user_name(),
+            recurrence=recurrence,
         )
-        return api_delpi_success(
-            data,
-            operation_id="create_scheduling_booking",
-            message="Reserva confirmada com sucesso.",
-        )
+        return api_delpi_success(data, operation_id=operation_id, message=message)
     except BookingConflictError as exc:
         return error_response(str(exc), status_code=409)
     except PluginsRepositoryError as exc:
@@ -327,6 +357,79 @@ def create_booking(body: CreateBookingBody):
     except Exception as exc:
         log_error(f"Erro ao criar reserva: {exc}")
         return error_response("Erro interno ao criar reserva.", status_code=500)
+
+
+@router.post("/bookings/{booking_id}/approve")
+@require_any_permission(SCHEDULING_APPROVE_PERMISSIONS)
+def approve_booking(booking_id: str):
+    try:
+        repo = build_scheduling_repository()
+        booking = repo.get_booking(booking_id)
+        if not booking:
+            return error_response("Reserva não encontrada.", status_code=404)
+
+        branch_error = _branch_access_error(
+            str(booking["branch_code"]),
+            require_approve=True,
+        )
+        if branch_error:
+            return branch_error
+
+        data = DecideSchedulingBookingUseCase(repo).execute(
+            booking_id=booking_id,
+            action="approve",
+            actor_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+            is_superadmin=_is_superadmin(),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="approve_scheduling_booking",
+            message="Reserva confirmada com sucesso.",
+        )
+    except PluginsRepositoryError as exc:
+        status = 403 if "própria solicitação" in str(exc) else 400
+        return error_response(str(exc), status_code=status)
+    except Exception as exc:
+        log_error(f"Erro ao aprovar reserva: {exc}")
+        return error_response("Erro interno ao aprovar reserva.", status_code=500)
+
+
+@router.post("/bookings/{booking_id}/reject")
+@require_any_permission(SCHEDULING_APPROVE_PERMISSIONS)
+def reject_booking(booking_id: str, body: RejectBookingBody):
+    try:
+        repo = build_scheduling_repository()
+        booking = repo.get_booking(booking_id)
+        if not booking:
+            return error_response("Reserva não encontrada.", status_code=404)
+
+        branch_error = _branch_access_error(
+            str(booking["branch_code"]),
+            require_approve=True,
+        )
+        if branch_error:
+            return branch_error
+
+        data = DecideSchedulingBookingUseCase(repo).execute(
+            booking_id=booking_id,
+            action="reject",
+            actor_user_id=_current_user_id(),
+            actor_name=_current_user_name(),
+            reason=body.reason,
+            is_superadmin=_is_superadmin(),
+        )
+        return api_delpi_success(
+            data,
+            operation_id="reject_scheduling_booking",
+            message="Reserva rejeitada.",
+        )
+    except PluginsRepositoryError as exc:
+        status = 403 if "própria solicitação" in str(exc) else 400
+        return error_response(str(exc), status_code=status)
+    except Exception as exc:
+        log_error(f"Erro ao rejeitar reserva: {exc}")
+        return error_response("Erro interno ao rejeitar reserva.", status_code=500)
 
 
 @router.patch("/bookings/{booking_id}/cancel")
@@ -349,11 +452,12 @@ def cancel_booking(
         user_id = _current_user_id()
         is_owner = str(booking["booked_by_user_id"]) == user_id
         can_manage = _branch_manage_allowed(branch)
-        if not is_owner and not can_manage and not _is_superadmin():
+        can_approve = _branch_approve_allowed(branch)
+        if not is_owner and not can_manage and not can_approve and not _is_superadmin():
             return error_response("Sem permissão para cancelar esta reserva.", status_code=403)
 
-        if booking.get("status") == "cancelled":
-            return error_response("Reserva já cancelada.", status_code=400)
+        if booking.get("status") in {"cancelled", "rejected", "expired"}:
+            return error_response("Reserva já encerrada.", status_code=400)
 
         if scope in ("future", "all") and not booking.get("recurrence_series_id"):
             return error_response(

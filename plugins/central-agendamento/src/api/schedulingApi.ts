@@ -1,4 +1,4 @@
-import type { BranchCode, ResourceType } from "../constants/scheduling";
+import type { BookingStatus, BranchCode, ResourceType } from "../constants/scheduling";
 import { API_BASE } from "../constants/scheduling";
 import {
   type ApiEnvelope,
@@ -17,6 +17,7 @@ export type SchedulingResource = {
   capacity: number | null;
   metadata: Record<string, unknown>;
   active: boolean;
+  requires_approval?: boolean;
   created_by_user_id: string | null;
   created_at: string;
   updated_at: string;
@@ -34,13 +35,19 @@ export type SchedulingBooking = {
   end_at: string;
   booked_by_user_id: string;
   booked_by_name: string;
-  status: "confirmed" | "cancelled";
+  status: BookingStatus;
   recurrence_series_id?: string | null;
   recurrence_frequency?: RecurrenceFrequency | null;
+  decided_by_user_id?: string | null;
+  decided_by_name?: string | null;
+  decided_at?: string | null;
+  decision_reason?: string | null;
+  expires_at?: string | null;
   created_at: string;
   updated_at: string;
   resource_name?: string;
   resource_type?: ResourceType;
+  requires_approval?: boolean;
 };
 
 export type RecurrencePayload = {
@@ -104,6 +111,7 @@ export async function createResource(payload: {
   description?: string;
   capacity?: number;
   metadata?: Record<string, unknown>;
+  requires_approval?: boolean;
 }): Promise<SchedulingResource> {
   const envelope = await httpPost<ApiEnvelope<SchedulingResource>>(
     `${API_BASE}/resources`,
@@ -121,6 +129,7 @@ export async function updateResource(
     capacity: number | null;
     metadata: Record<string, unknown>;
     active: boolean;
+    requires_approval: boolean;
   }>,
 ): Promise<SchedulingResource> {
   const envelope = await httpPatch<ApiEnvelope<SchedulingResource>>(
@@ -166,6 +175,36 @@ export async function cancelBooking(
   const envelope = await httpPatch<ApiEnvelope<SchedulingBooking & { cancelled_count?: number }>>(
     `${API_BASE}/bookings/${bookingId}/cancel?${params.toString()}`,
     {},
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
+}
+
+export async function fetchPendingBookings(
+  branch: BranchCode,
+  mine = false,
+): Promise<SchedulingBooking[]> {
+  const params = new URLSearchParams({ branch, mine: String(mine) });
+  const envelope = await httpGet<ApiEnvelope<SchedulingBooking[]>>(
+    `${API_BASE}/bookings/pending?${params.toString()}`,
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
+}
+
+export async function approveBooking(bookingId: string): Promise<SchedulingBooking> {
+  const envelope = await httpPost<ApiEnvelope<SchedulingBooking>>(
+    `${API_BASE}/bookings/${bookingId}/approve`,
+    {},
+  );
+  return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
+}
+
+export async function rejectBooking(
+  bookingId: string,
+  reason: string,
+): Promise<SchedulingBooking> {
+  const envelope = await httpPost<ApiEnvelope<SchedulingBooking>>(
+    `${API_BASE}/bookings/${bookingId}/reject`,
+    { reason },
   );
   return unwrapApiDelpiEnvelope(envelope, "Erro na API de agendamento");
 }

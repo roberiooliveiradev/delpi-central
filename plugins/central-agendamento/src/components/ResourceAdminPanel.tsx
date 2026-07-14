@@ -46,6 +46,7 @@ export function ResourceAdminPanel({
                 <th>Nome</th>
                 <th>Tipo</th>
                 <th>Capacidade</th>
+                <th>Aprovação</th>
                 <th>Status</th>
                 <th>Ações</th>
               </tr>
@@ -61,6 +62,13 @@ export function ResourceAdminPanel({
                   </td>
                   <td data-label="Tipo">{resourceTypeLabel(resource.resource_type)}</td>
                   <td data-label="Capacidade">{resource.capacity ?? "—"}</td>
+                  <td data-label="Aprovação">
+                    <span
+                      className={`ca-badge ${resource.requires_approval ? "ca-badge--warning" : "ca-badge--muted"}`}
+                    >
+                      {resource.requires_approval ? "Prévia" : "Imediata"}
+                    </span>
+                  </td>
                   <td data-label="Status">
                     <span
                       className={`ca-badge ${resource.active ? "ca-badge--success" : "ca-badge--muted"}`}

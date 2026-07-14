@@ -1,22 +1,34 @@
 # Central de Agendamento
 
-Plugin microfrontend para reserva de salas, salas de treinamento, veículos e outros recursos por filial (ES / SC).
+Plugin microfrontend para reserva de salas, salas de treinamento, veículos e outros recursos por filial (ES / SC), com fluxo opcional de **aprovação prévia**.
 
 ## Rotas
 
 - `/apps/central-agendamento/filial-es`
 - `/apps/central-agendamento/filial-sc`
+- Deep link de aprovação: `...?tab=approvals&bookingId={uuid}`
 
 ## API
 
 Base: `/apps/api-delpi/scheduling`
 
 - `GET /resources?branch=ES|SC`
-- `POST /resources` (gestores)
-- `PATCH /resources/{id}` (gestores)
+- `POST /resources` / `PATCH /resources/{id}` (gestores) — inclui `requires_approval`
 - `GET /bookings?branch=ES|SC&from=&to=`
-- `POST /bookings`
+- `GET /bookings/pending?branch=&mine=`
+- `POST /bookings` — confirma imediatamente ou cria `pending`
+- `POST /bookings/{id}/approve` / `reject`
 - `PATCH /bookings/{id}/cancel`
+
+Doc completa: [api-delpi/docs/api/central-agendamento.md](../../api-delpi/docs/api/central-agendamento.md).
+
+## Fluxo de aprovação
+
+1. Gestor marca o recurso com **Exige aprovação prévia**.
+2. Usuário com `view` solicita a reserva → status `pending` (ocupa o slot) + notificação aos aprovadores.
+3. Usuário com `approve` confirma ou rejeita (motivo obrigatório na rejeição).
+4. Solicitante recebe notificação com o resultado e quem decidiu.
+5. Sem decisão no TTL (`SCHEDULING_APPROVAL_TTL_HOURS`, default 24h) → `expired` e slot liberado.
 
 ## Migrations
 
@@ -25,7 +37,7 @@ docker compose -f infra/docker-compose.dev.yml exec api-delpi \
   python scripts/run_plugins_migrations.py up --plugin scheduling
 ```
 
-Inclui constraint `V002` que impede reservas confirmadas sobrepostas no mesmo recurso.
+Inclui `V004` (aprovação, hold de `pending`, auditoria).
 
 ## Registro
 
@@ -34,51 +46,41 @@ export TOKEN="<jwt>"
 ./plugins/central-agendamento/scripts/register-manifest.sh
 ```
 
-## Dev local
+Reatribuir RBAC: papéis de aprovador precisam de `central-agendamento.approve.filial-*` (idealmente combinado com `view`).
 
-Stack mínima (da **raiz** do repositório):
+## Dev local
 
 ```bash
 docker compose -f infra/docker-compose.dev.yml up --build -d api-delpi central-agendamento
 ```
 
-Build isolado do plugin:
+Build isolado:
 
 ```bash
-cd plugins/central-agendamento && npm run dev
+cd plugins/central-agendamento && npm run build
 ```
-
-## Produção
-
-O serviço `central-agendamento` está em `infra/docker-compose.yml` (`delpi-central-agendamento`, `target: production`) e listado no `depends_on` do gateway.
-
-Deploy:
-
-1. Subir/rebuild o container `central-agendamento`
-2. Rodar migrations `--plugin scheduling`
-3. Registrar manifesto na Core API (se ainda não registrado)
-4. Atribuir permissões RBAC por filial
 
 ## Homologação
 
 ```bash
-bash ./scripts/homologacao/check-central-agendamento.sh          # Fase 1 — smoke
+bash ./scripts/homologacao/check-central-agendamento.sh
 export TOKEN="<jwt>"
-bash ./scripts/homologacao/check-scheduling-api.sh               # Fase 2 — API E2E
+bash ./scripts/homologacao/check-scheduling-api.sh
 ```
+
+Cenários manuais de aprovação: recurso com `requires_approval` → pending → approve/reject → notificação; overlap com pending; 403 sem `approve`; TTL.
 
 ## Permissões
 
 | Código | Uso |
 |---|---|
-| `central-agendamento.view.filial-es` | Ver e reservar (ES) |
-| `central-agendamento.view.filial-sc` | Ver e reservar (SC) |
-| `central-agendamento.manage.filial-es` | CRUD recursos (ES) |
-| `central-agendamento.manage.filial-sc` | CRUD recursos (SC) |
+| `central-agendamento.view.filial-es` / `…-sc` | Ver e reservar / solicitar |
+| `central-agendamento.manage.filial-es` / `…-sc` | CRUD recursos |
+| `central-agendamento.approve.filial-es` / `…-sc` | Confirmar ou rejeitar pendências |
 
 ## UI
 
-Calendário com `react-big-calendar` (semana/dia/mês), sidebar de filtros por tipo/recurso, modais de reserva e painel administrativo para gestores.
+Calendário (`react-big-calendar`), sidebar de filtros, aba **Aprovações** (só com `approve`), painel administrativo (só com `manage`), eventos pendentes em destaque âmbar.
 
 ## Roadmap
 

@@ -21,5 +21,6 @@ class DispatchNotificationsRequest:
     emails: list[str]
     role_ids: list[str]
     group_ids: list[str]
+    permission_codes: list[str] = field(default_factory=list)
     excluded_user_ids: list[str] = field(default_factory=list)
     source_app: str | None = None

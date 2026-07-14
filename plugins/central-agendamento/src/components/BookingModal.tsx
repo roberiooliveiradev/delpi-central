@@ -149,6 +149,18 @@ export function BookingModal({
 
   if (!open) return null;
 
+  const selectedResource = resources.find((item) => item.id === resourceId);
+  const requiresApproval = Boolean(selectedResource?.requires_approval);
+  const effectiveRecurrenceMode = requiresApproval ? "none" : recurrenceMode;
+
+  function handleResourceChange(value: string) {
+    setResourceId(value);
+    const next = resources.find((item) => item.id === value);
+    if (next?.requires_approval) {
+      setRecurrenceMode("none");
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
@@ -170,7 +182,7 @@ export function BookingModal({
     }
 
     let recurrence: RecurrencePayload | undefined;
-    if (recurrenceMode !== "none") {
+    if (!requiresApproval && effectiveRecurrenceMode !== "none") {
       if (!untilDate) {
         setError("Informe até quando a reserva deve se repetir.");
         return;
@@ -185,7 +197,7 @@ export function BookingModal({
         return;
       }
       recurrence = {
-        frequency: recurrenceMode,
+        frequency: effectiveRecurrenceMode,
         until: until.toISOString(),
       };
     }
@@ -229,14 +241,22 @@ export function BookingModal({
             id="ca-booking-resource"
             label="Recurso"
             value={resourceId}
-            onChange={setResourceId}
+            onChange={handleResourceChange}
             required
             placeholderOption="Selecione..."
             options={resources.map((resource) => ({
               value: resource.id,
-              label: resource.name,
+              label: resource.requires_approval
+                ? `${resource.name} (exige aprovação)`
+                : resource.name,
             }))}
           />
+
+          {requiresApproval ? (
+            <p className="ca-alert ca-alert--warning">
+              Este recurso exige aprovação prévia. Sua solicitação ficará pendente até a confirmação.
+            </p>
+          ) : null}
 
           <CaNativeTextField
             id="ca-booking-title-field"
@@ -266,53 +286,61 @@ export function BookingModal({
             />
           </div>
 
-          <fieldset className="ca-fieldset">
-            <legend>Repetir</legend>
-            <div className="ca-recurrence-options" role="radiogroup" aria-label="Repetição">
-              {RECURRENCE_CHOICES.map(({ mode, label, hint, icon: Icon }) => {
-                const selected = recurrenceMode === mode;
-                return (
-                  <label
-                    key={mode}
-                    className={`ca-recurrence-option${selected ? " ca-recurrence-option--selected" : ""}`}
-                  >
-                    <input
-                      type="radio"
-                      className="ca-recurrence-option__input"
-                      name="recurrence"
-                      value={mode}
-                      checked={selected}
-                      onChange={() => handleRecurrenceModeChange(mode)}
-                    />
-                    <span className="ca-recurrence-option__icon" aria-hidden="true">
-                      <Icon size={18} strokeWidth={1.75} />
-                    </span>
-                    <span className="ca-recurrence-option__text">
-                      <span className="ca-recurrence-option__label">{label}</span>
-                      <span className="ca-recurrence-option__hint">{hint}</span>
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
+          {!requiresApproval ? (
+            <>
+              <fieldset className="ca-fieldset">
+                <legend>Repetir</legend>
+                <div className="ca-recurrence-options" role="radiogroup" aria-label="Repetição">
+                  {RECURRENCE_CHOICES.map(({ mode, label, hint, icon: Icon }) => {
+                    const selected = effectiveRecurrenceMode === mode;
+                    return (
+                      <label
+                        key={mode}
+                        className={`ca-recurrence-option${selected ? " ca-recurrence-option--selected" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          className="ca-recurrence-option__input"
+                          name="recurrence"
+                          value={mode}
+                          checked={selected}
+                          onChange={() => handleRecurrenceModeChange(mode)}
+                        />
+                        <span className="ca-recurrence-option__icon" aria-hidden="true">
+                          <Icon size={18} strokeWidth={1.75} />
+                        </span>
+                        <span className="ca-recurrence-option__text">
+                          <span className="ca-recurrence-option__label">{label}</span>
+                          <span className="ca-recurrence-option__hint">{hint}</span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
 
-          {recurrenceMode !== "none" ? (
-            <div>
-              <CaNativeTextField
-                id="ca-booking-until"
-                label="Repetir até"
-                type="date"
-                value={untilDate}
-                onChange={setUntilDate}
-                required
-              />
-              <p className="ca-muted ca-field-hint">
-                A reserva será criada {RECURRENCE_LABELS[recurrenceMode].toLowerCase()} no mesmo
-                horário até a data informada.
-              </p>
-            </div>
-          ) : null}
+              {effectiveRecurrenceMode !== "none" ? (
+                <div>
+                  <CaNativeTextField
+                    id="ca-booking-until"
+                    label="Repetir até"
+                    type="date"
+                    value={untilDate}
+                    onChange={setUntilDate}
+                    required
+                  />
+                  <p className="ca-muted ca-field-hint">
+                    A reserva será criada {RECURRENCE_LABELS[effectiveRecurrenceMode].toLowerCase()} no
+                    mesmo horário até a data informada.
+                  </p>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <p className="ca-muted ca-field-hint">
+              Recorrência indisponível para recursos que exigem aprovação.
+            </p>
+          )}
 
           <CaNativeTextAreaField
             id="ca-booking-notes"
@@ -339,10 +367,12 @@ export function BookingModal({
             </button>
             <button type="submit" className="ca-btn ca-btn--primary" disabled={loading}>
               {loading
-                ? "Reservando..."
-                : recurrenceMode === "none"
-                  ? "Confirmar reserva"
-                  : "Confirmar série recorrente"}
+                ? "Enviando..."
+                : requiresApproval
+                  ? "Solicitar aprovação"
+                  : effectiveRecurrenceMode === "none"
+                    ? "Confirmar reserva"
+                    : "Confirmar série recorrente"}
             </button>
           </div>
         </form>

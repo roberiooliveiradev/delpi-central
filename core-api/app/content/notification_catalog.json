@@ -74,6 +74,14 @@
       "kind": "app",
       "sourceApps": ["auditoria-5s"],
       "pluginId": "auditoria-5s"
+    },
+    "central_agendamento": {
+      "label": "Central de Agendamento",
+      "icon": "calendar",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["central-agendamento"],
+      "pluginId": "central-agendamento"
     }
   },
   "legacyCategoryAliases": {

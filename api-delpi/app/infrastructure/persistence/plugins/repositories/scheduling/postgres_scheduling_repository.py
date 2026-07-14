@@ -7,7 +7,6 @@ from typing import Any, Literal
 from psycopg.errors import ExclusionViolation
 
 from app.domain.services.scheduling_recurrence_service import (
-    RecurrenceFrequency,
     RecurrenceValidationError,
     expand_recurrence_slots,
 )
@@ -17,6 +16,22 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import (
 )
 
 CancelScope = Literal["occurrence", "future", "all"]
+BookingDecision = Literal["confirmed", "rejected", "expired", "cancelled"]
+
+_RESOURCE_RETURNING = """
+    id,
+    branch_code,
+    name,
+    resource_type,
+    description,
+    capacity,
+    metadata,
+    active,
+    requires_approval,
+    created_by_user_id,
+    created_at,
+    updated_at
+"""
 
 _BOOKING_SELECT = """
     SELECT b.id,
@@ -30,16 +45,43 @@ _BOOKING_SELECT = """
            b.booked_by_name,
            b.status,
            b.recurrence_series_id,
+           b.decided_by_user_id,
+           b.decided_by_name,
+           b.decided_at,
+           b.decision_reason,
+           b.expires_at,
            b.created_at,
            b.updated_at,
            r.name AS resource_name,
            r.resource_type,
+           r.requires_approval,
            rs.frequency AS recurrence_frequency
+"""
+
+_BOOKING_RETURNING = """
+    id,
+    resource_id,
+    branch_code,
+    title,
+    notes,
+    start_at,
+    end_at,
+    booked_by_user_id,
+    booked_by_name,
+    status,
+    recurrence_series_id,
+    decided_by_user_id,
+    decided_by_name,
+    decided_at,
+    decision_reason,
+    expires_at,
+    created_at,
+    updated_at
 """
 
 
 class BookingConflictError(PluginsRepositoryError):
-    """Reserva conflita com outro agendamento confirmado."""
+    """Reserva conflita com outro agendamento confirmado ou pendente."""
 
 
 class PostgresSchedulingRepository(PluginBaseRepository):
@@ -49,18 +91,8 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         *,
         active_only: bool = True,
     ) -> list[dict[str, Any]]:
-        query = """
-            SELECT id,
-                   branch_code,
-                   name,
-                   resource_type,
-                   description,
-                   capacity,
-                   metadata,
-                   active,
-                   created_by_user_id,
-                   created_at,
-                   updated_at
+        query = f"""
+            SELECT {_RESOURCE_RETURNING}
               FROM scheduling.resources
              WHERE branch_code = %s
         """
@@ -72,18 +104,8 @@ class PostgresSchedulingRepository(PluginBaseRepository):
 
     def get_resource(self, resource_id: str) -> dict[str, Any] | None:
         return self.fetch_one(
-            """
-            SELECT id,
-                   branch_code,
-                   name,
-                   resource_type,
-                   description,
-                   capacity,
-                   metadata,
-                   active,
-                   created_by_user_id,
-                   created_at,
-                   updated_at
+            f"""
+            SELECT {_RESOURCE_RETURNING}
               FROM scheduling.resources
              WHERE id = %s
             """,
@@ -100,9 +122,10 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         capacity: int | None,
         metadata: dict[str, Any] | None,
         created_by_user_id: str | None,
+        requires_approval: bool = False,
     ) -> dict[str, Any]:
         row = self.execute_returning_one(
-            """
+            f"""
             INSERT INTO scheduling.resources (
                 branch_code,
                 name,
@@ -110,19 +133,10 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                 description,
                 capacity,
                 metadata,
-                created_by_user_id
-            ) VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s)
-            RETURNING id,
-                      branch_code,
-                      name,
-                      resource_type,
-                      description,
-                      capacity,
-                      metadata,
-                      active,
-                      created_by_user_id,
-                      created_at,
-                      updated_at
+                created_by_user_id,
+                requires_approval
+            ) VALUES (%s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+            RETURNING {_RESOURCE_RETURNING}
             """,
             (
                 branch_code,
@@ -132,6 +146,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                 capacity,
                 json.dumps(metadata or {}),
                 created_by_user_id,
+                requires_approval,
             ),
         )
         if not row:
@@ -148,6 +163,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         capacity: int | None = None,
         metadata: dict[str, Any] | None = None,
         active: bool | None = None,
+        requires_approval: bool | None = None,
     ) -> dict[str, Any] | None:
         fields: list[str] = []
         params: list[Any] = []
@@ -170,6 +186,9 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         if active is not None:
             fields.append("active = %s")
             params.append(active)
+        if requires_approval is not None:
+            fields.append("requires_approval = %s")
+            params.append(requires_approval)
 
         if not fields:
             return self.get_resource(resource_id)
@@ -182,17 +201,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             UPDATE scheduling.resources
                SET {", ".join(fields)}
              WHERE id = %s
-            RETURNING id,
-                      branch_code,
-                      name,
-                      resource_type,
-                      description,
-                      capacity,
-                      metadata,
-                      active,
-                      created_by_user_id,
-                      created_at,
-                      updated_at
+            RETURNING {_RESOURCE_RETURNING}
             """,
             tuple(params),
         )
@@ -204,7 +213,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         from_at: datetime,
         to_at: datetime,
         resource_id: str | None = None,
-        include_cancelled: bool = False,
+        statuses: list[str] | None = None,
     ) -> list[dict[str, Any]]:
         query = f"""
             {_BOOKING_SELECT}
@@ -219,8 +228,30 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         if resource_id:
             query += " AND b.resource_id = %s"
             params.append(resource_id)
-        if not include_cancelled:
-            query += " AND b.status = 'confirmed'"
+        active_statuses = statuses or ["confirmed", "pending"]
+        query += " AND b.status = ANY(%s)"
+        params.append(active_statuses)
+        query += " ORDER BY b.start_at ASC"
+        return self.fetch_all(query, tuple(params))
+
+    def list_pending_bookings(
+        self,
+        branch_code: str,
+        *,
+        booked_by_user_id: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query = f"""
+            {_BOOKING_SELECT}
+              FROM scheduling.bookings b
+              JOIN scheduling.resources r ON r.id = b.resource_id
+              LEFT JOIN scheduling.recurrence_series rs ON rs.id = b.recurrence_series_id
+             WHERE b.branch_code = %s
+               AND b.status = 'pending'
+        """
+        params: list[Any] = [branch_code]
+        if booked_by_user_id:
+            query += " AND b.booked_by_user_id = %s"
+            params.append(booked_by_user_id)
         query += " ORDER BY b.start_at ASC"
         return self.fetch_all(query, tuple(params))
 
@@ -248,7 +279,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             SELECT 1
               FROM scheduling.bookings
              WHERE resource_id = %s
-               AND status = 'confirmed'
+               AND status IN ('confirmed', 'pending')
                AND start_at < %s
                AND end_at > %s
         """
@@ -258,6 +289,53 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             params.append(exclude_booking_id)
         query += " LIMIT 1"
         return self.fetch_one(query, tuple(params)) is not None
+
+    def expire_overdue_pending_bookings(
+        self,
+        *,
+        branch_code: str | None = None,
+    ) -> list[dict[str, Any]]:
+        query = f"""
+            {_BOOKING_SELECT}
+              FROM scheduling.bookings b
+              JOIN scheduling.resources r ON r.id = b.resource_id
+              LEFT JOIN scheduling.recurrence_series rs ON rs.id = b.recurrence_series_id
+             WHERE b.status = 'pending'
+               AND b.expires_at IS NOT NULL
+               AND b.expires_at < NOW()
+        """
+        params: list[Any] = []
+        if branch_code:
+            query += " AND b.branch_code = %s"
+            params.append(branch_code)
+
+        overdue = self.fetch_all(query, tuple(params))
+        if not overdue:
+            return []
+
+        expired_ids = [str(row["id"]) for row in overdue]
+        self.execute(
+            """
+            UPDATE scheduling.bookings
+               SET status = 'expired',
+                   decided_at = NOW(),
+                   decision_reason = COALESCE(decision_reason, 'Prazo de aprovação expirado.'),
+                   updated_at = NOW()
+             WHERE id = ANY(%s)
+               AND status = 'pending'
+            """,
+            (expired_ids,),
+        )
+        result: list[dict[str, Any]] = []
+        for booking_id, previous in zip(expired_ids, overdue, strict=False):
+            current = self.get_booking(booking_id)
+            if current:
+                result.append(current)
+            else:
+                previous = dict(previous)
+                previous["status"] = "expired"
+                result.append(previous)
+        return result
 
     def create_booking(
         self,
@@ -270,13 +348,15 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         end_at: datetime,
         booked_by_user_id: str,
         booked_by_name: str,
+        status: str = "confirmed",
+        expires_at: datetime | None = None,
     ) -> dict[str, Any]:
         if self.has_booking_conflict(resource_id, start_at, end_at):
             raise BookingConflictError("Recurso já reservado neste horário.")
 
         try:
             row = self.execute_returning_one(
-                """
+                f"""
                 INSERT INTO scheduling.bookings (
                     resource_id,
                     branch_code,
@@ -285,21 +365,11 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                     start_at,
                     end_at,
                     booked_by_user_id,
-                    booked_by_name
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING id,
-                          resource_id,
-                          branch_code,
-                          title,
-                          notes,
-                          start_at,
-                          end_at,
-                          booked_by_user_id,
-                          booked_by_name,
-                          status,
-                          recurrence_series_id,
-                          created_at,
-                          updated_at
+                    booked_by_name,
+                    status,
+                    expires_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING {_BOOKING_RETURNING}
                 """,
                 (
                     resource_id,
@@ -310,6 +380,8 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                     end_at,
                     booked_by_user_id,
                     booked_by_name,
+                    status,
+                    expires_at,
                 ),
                 auto_commit=False,
             )
@@ -323,11 +395,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
 
         if not row:
             raise PluginsRepositoryError("Falha ao criar reserva.")
-        resource = self.get_resource(resource_id)
-        if resource:
-            row["resource_name"] = resource["name"]
-            row["resource_type"] = resource["resource_type"]
-        return row
+        return self.get_booking(str(row["id"])) or row
 
     def create_recurring_bookings(
         self,
@@ -423,7 +491,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
 
                 try:
                     row = self.execute_returning_one(
-                        """
+                        f"""
                         INSERT INTO scheduling.bookings (
                             resource_id,
                             branch_code,
@@ -435,19 +503,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                             booked_by_name,
                             recurrence_series_id
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id,
-                                  resource_id,
-                                  branch_code,
-                                  title,
-                                  notes,
-                                  start_at,
-                                  end_at,
-                                  booked_by_user_id,
-                                  booked_by_name,
-                                  status,
-                                  recurrence_series_id,
-                                  created_at,
-                                  updated_at
+                        RETURNING {_BOOKING_RETURNING}
                         """,
                         (
                             resource_id,
@@ -473,10 +529,8 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                     continue
 
                 if row:
-                    row["resource_name"] = resource["name"]
-                    row["resource_type"] = resource["resource_type"]
-                    row["recurrence_frequency"] = frequency
-                    created.append(row)
+                    full = self.get_booking(str(row["id"]))
+                    created.append(full or row)
 
             if not created:
                 self.rollback()
@@ -501,6 +555,42 @@ class PostgresSchedulingRepository(PluginBaseRepository):
             "total_skipped": len(skipped),
         }
 
+    def decide_booking(
+        self,
+        booking_id: str,
+        *,
+        status: BookingDecision,
+        decided_by_user_id: str | None,
+        decided_by_name: str | None,
+        decision_reason: str | None = None,
+    ) -> dict[str, Any] | None:
+        row = self.execute_returning_one(
+            f"""
+            UPDATE scheduling.bookings
+               SET status = %s,
+                   decided_by_user_id = %s,
+                   decided_by_name = %s,
+                   decided_at = NOW(),
+                   decision_reason = %s,
+                   expires_at = CASE WHEN %s = 'confirmed' THEN NULL ELSE expires_at END,
+                   updated_at = NOW()
+             WHERE id = %s
+               AND status = 'pending'
+            RETURNING {_BOOKING_RETURNING}
+            """,
+            (
+                status,
+                decided_by_user_id,
+                decided_by_name,
+                decision_reason,
+                status,
+                booking_id,
+            ),
+        )
+        if not row:
+            return None
+        return self.get_booking(booking_id)
+
     def cancel_booking(
         self,
         booking_id: str,
@@ -510,19 +600,17 @@ class PostgresSchedulingRepository(PluginBaseRepository):
         booking = self.get_booking(booking_id)
         if not booking:
             raise PluginsRepositoryError("Reserva não encontrada.")
-        if booking.get("status") == "cancelled":
-            raise PluginsRepositoryError("Reserva já cancelada.")
+        if booking.get("status") in {"cancelled", "rejected", "expired"}:
+            raise PluginsRepositoryError("Reserva não pode ser cancelada neste status.")
 
         series_id = booking.get("recurrence_series_id")
         if not series_id or scope == "occurrence":
             row = self._cancel_single_booking(booking_id)
             if not row:
                 raise PluginsRepositoryError("Não foi possível cancelar a reserva.")
-            row["resource_name"] = booking.get("resource_name")
-            row["resource_type"] = booking.get("resource_type")
-            row["recurrence_frequency"] = booking.get("recurrence_frequency")
-            row["cancelled_count"] = 1
-            return row
+            full = self.get_booking(booking_id) or row
+            full["cancelled_count"] = 1
+            return full
 
         if scope == "future":
             rows = self.fetch_all(
@@ -531,7 +619,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                    SET status = 'cancelled',
                        updated_at = NOW()
                  WHERE recurrence_series_id = %s
-                   AND status = 'confirmed'
+                   AND status IN ('confirmed', 'pending')
                    AND start_at >= %s
                 RETURNING id
                 """,
@@ -544,7 +632,7 @@ class PostgresSchedulingRepository(PluginBaseRepository):
                    SET status = 'cancelled',
                        updated_at = NOW()
                  WHERE recurrence_series_id = %s
-                   AND status = 'confirmed'
+                   AND status IN ('confirmed', 'pending')
                 RETURNING id
                 """,
                 (series_id,),
@@ -555,33 +643,18 @@ class PostgresSchedulingRepository(PluginBaseRepository):
 
         cancelled_count = len(rows)
         row = self.get_booking(booking_id) or booking
-        row["resource_name"] = booking.get("resource_name")
-        row["resource_type"] = booking.get("resource_type")
-        row["recurrence_frequency"] = booking.get("recurrence_frequency")
         row["cancelled_count"] = cancelled_count
         return row
 
     def _cancel_single_booking(self, booking_id: str) -> dict[str, Any] | None:
         return self.execute_returning_one(
-            """
+            f"""
             UPDATE scheduling.bookings
                SET status = 'cancelled',
                    updated_at = NOW()
              WHERE id = %s
-               AND status = 'confirmed'
-            RETURNING id,
-                      resource_id,
-                      branch_code,
-                      title,
-                      notes,
-                      start_at,
-                      end_at,
-                      booked_by_user_id,
-                      booked_by_name,
-                      status,
-                      recurrence_series_id,
-                      created_at,
-                      updated_at
+               AND status IN ('confirmed', 'pending')
+            RETURNING {_BOOKING_RETURNING}
             """,
             (booking_id,),
         )

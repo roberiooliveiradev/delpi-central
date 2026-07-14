@@ -20,6 +20,7 @@ type Props = {
     description?: string;
     capacity?: number;
     metadata?: Record<string, unknown>;
+    requires_approval?: boolean;
   }) => Promise<void>;
 };
 
@@ -36,6 +37,7 @@ export function ResourceFormModal({
   const [description, setDescription] = useState("");
   const [capacity, setCapacity] = useState("");
   const [plate, setPlate] = useState("");
+  const [requiresApproval, setRequiresApproval] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export function ResourceFormModal({
     setDescription(resource?.description ?? "");
     setCapacity(resource?.capacity ? String(resource.capacity) : "");
     setPlate(String(resource?.metadata?.plate ?? ""));
+    setRequiresApproval(Boolean(resource?.requires_approval));
     setError(null);
   }, [open, resource]);
 
@@ -71,6 +74,7 @@ export function ResourceFormModal({
         description: description.trim() || undefined,
         capacity: capacity ? Number(capacity) : undefined,
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        requires_approval: requiresApproval,
       });
       onClose();
     } catch (err) {
@@ -151,6 +155,18 @@ export function ResourceFormModal({
               />
             ) : null}
           </div>
+
+          <label className="ca-checkbox">
+            <input
+              type="checkbox"
+              checked={requiresApproval}
+              onChange={(event) => setRequiresApproval(event.target.checked)}
+            />
+            <span>
+              Exige aprovação prévia
+              <small>Reservas ficam pendentes até um aprovador confirmar.</small>
+            </span>
+          </label>
 
           {error ? <p className="ca-alert ca-alert--error">{error}</p> : null}
 

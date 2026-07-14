@@ -42,3 +42,22 @@ export function managePermissionForBranch(branch: BranchCode): string {
 export function viewPermissionForBranch(branch: BranchCode): string {
   return `central-agendamento.view.filial-${branch.toLowerCase()}`;
 }
+
+export function approvePermissionForBranch(branch: BranchCode): string {
+  return `central-agendamento.approve.filial-${branch.toLowerCase()}`;
+}
+
+export type BookingStatus =
+  | "confirmed"
+  | "cancelled"
+  | "pending"
+  | "rejected"
+  | "expired";
+
+export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
+  confirmed: "Confirmada",
+  cancelled: "Cancelada",
+  pending: "Aguardando aprovação",
+  rejected: "Rejeitada",
+  expired: "Expirada",
+};

@@ -177,7 +177,7 @@ Declaradas no manifesto e persistidas na Core API:
 | dash-lmps | `dash-lmps.access` |
 | dashboard-quality | `dashboard-quality.view` (+ `api-delpi.quality.access` na API) |
 | minha-delpi-chat | `minha-delpi.chat.access`, `minha-delpi.chat.ask`, … |
-| central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc` |
+| central-agendamento | `central-agendamento.view.filial-es|sc`, `central-agendamento.manage.filial-es|sc`, `central-agendamento.approve.filial-es|sc` |
 | inspecoes-entrada | `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` |
 | inspecoes-processo | `inspecoes-processo.view`, `inspecoes-processo.view.filial-01`, `inspecoes-processo.view.filial-02` |
 | controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |

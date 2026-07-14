@@ -8,7 +8,7 @@ import {
   startOfDay,
 } from "date-fns";
 
-import type { ResourceType } from "../constants/scheduling";
+import type { BookingStatus, ResourceType } from "../constants/scheduling";
 
 export const CALENDAR_DAY_START_HOUR = 7;
 export const CALENDAR_DAY_END_HOUR = 20;
@@ -33,6 +33,10 @@ export type CalendarEvent = {
   bookedByName: string;
   notes: string | null;
   bookedByUserId: string;
+  status: BookingStatus;
+  decidedByName?: string | null;
+  decisionReason?: string | null;
+  expiresAt?: string | null;
   recurrenceSeriesId?: string | null;
   recurrenceFrequency?: "weekly" | "monthly" | null;
   multiDaySegment?: MultiDaySegmentMeta;

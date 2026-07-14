@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import type { CancelScope } from "../api/schedulingApi";
 import type { CalendarEvent } from "./BookingCalendar";
-import { resourceTypeLabel } from "../constants/scheduling";
+import { BOOKING_STATUS_LABELS, resourceTypeLabel } from "../constants/scheduling";
 
 type Props = {
   open: boolean;
@@ -90,6 +90,9 @@ export function BookingDetailModal({
                 Série {frequencyLabels[event.recurrenceFrequency].toLowerCase()}
               </p>
             ) : null}
+            <p className={`ca-status-badge ca-status-badge--${event.status}`}>
+              {BOOKING_STATUS_LABELS[event.status]}
+            </p>
           </div>
           <button type="button" className="ca-icon-btn" onClick={onClose} aria-label="Fechar">
             ×
@@ -113,6 +116,21 @@ export function BookingDetailModal({
             <dt>Término</dt>
             <dd>{format(event.originalEnd, "dd/MM/yyyy HH:mm")}</dd>
           </div>
+          {event.status === "pending" && event.expiresAt ? (
+            <div>
+              <dt>Expira em</dt>
+              <dd>{format(new Date(event.expiresAt), "dd/MM/yyyy HH:mm")}</dd>
+            </div>
+          ) : null}
+          {event.decidedByName ? (
+            <div>
+              <dt>Decisão</dt>
+              <dd>
+                {event.decidedByName}
+                {event.decisionReason ? ` — ${event.decisionReason}` : ""}
+              </dd>
+            </div>
+          ) : null}
           {event.notes ? (
             <div>
               <dt>Observações</dt>

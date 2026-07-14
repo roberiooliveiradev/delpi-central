@@ -72,12 +72,12 @@ OVERLAP_ISO="$(python3 -c "from datetime import datetime, timedelta, timezone; s
 
 echo "=== check-scheduling-api (filial ${BRANCH}) ==="
 
-echo "[1/7] GET /core-api/me"
+echo "[1/9] GET /core-api/me"
 ME_JSON="$(curl_json GET "${CORE_API}/me")"
 USER_NAME="$(python3 -c "import json,sys; print(json.load(sys.stdin)['name'])" <<<"$ME_JSON")"
 echo "      usuário: ${USER_NAME}"
 
-echo "[2/7] POST /resources (recurso homolog ${SUFFIX})"
+echo "[2/9] POST /resources (recurso homolog ${SUFFIX})"
 RESOURCE_JSON="$(curl_json POST "${API}/resources" "$(cat <<EOF
 {
   "branch_code": "${BRANCH}",
@@ -92,11 +92,11 @@ assert_success_json "$RESOURCE_JSON"
 RESOURCE_ID="$(python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])" <<<"$RESOURCE_JSON")"
 echo "      resource_id: ${RESOURCE_ID}"
 
-echo "[3/7] GET /resources?branch=${BRANCH}"
+echo "[3/9] GET /resources?branch=${BRANCH}"
 LIST_JSON="$(curl_json GET "${API}/resources?branch=${BRANCH}")"
 assert_success_json "$LIST_JSON"
 
-echo "[4/7] POST /bookings (reserva principal)"
+echo "[4/9] POST /bookings (reserva principal)"
 BOOKING_JSON="$(curl_json POST "${API}/bookings" "$(cat <<EOF
 {
   "branch_code": "${BRANCH}",
@@ -112,7 +112,7 @@ assert_success_json "$BOOKING_JSON"
 BOOKING_ID="$(python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])" <<<"$BOOKING_JSON")"
 echo "      booking_id: ${BOOKING_ID}"
 
-echo "[5/7] POST /bookings (conflito esperado 409)"
+echo "[5/9] POST /bookings (conflito esperado 409)"
 curl_json POST "${API}/bookings" "$(cat <<EOF
 {
   "branch_code": "${BRANCH}",
@@ -124,12 +124,50 @@ curl_json POST "${API}/bookings" "$(cat <<EOF
 EOF
 )" "409" >/dev/null
 
-echo "[6/7] PATCH /bookings/${BOOKING_ID}/cancel"
+echo "[6/9] PATCH /bookings/${BOOKING_ID}/cancel"
 CANCEL_JSON="$(curl_json PATCH "${API}/bookings/${BOOKING_ID}/cancel")"
 assert_success_json "$CANCEL_JSON"
 
-echo "[7/7] PATCH /resources/${RESOURCE_ID} (desativar)"
+echo "[7/9] PATCH /resources/${RESOURCE_ID} (desativar)"
 DEACTIVATE_JSON="$(curl_json PATCH "${API}/resources/${RESOURCE_ID}" '{"active": false}')"
 assert_success_json "$DEACTIVATE_JSON"
+
+echo "[8/9] POST /resources (com requires_approval)"
+APPROVAL_RESOURCE_JSON="$(curl_json POST "${API}/resources" "$(cat <<EOF
+{
+  "branch_code": "${BRANCH}",
+  "name": "Sala Aprovacao ${SUFFIX}",
+  "resource_type": "meeting_room",
+  "capacity": 4,
+  "requires_approval": true
+}
+EOF
+)")"
+assert_success_json "$APPROVAL_RESOURCE_JSON"
+APPROVAL_RESOURCE_ID="$(python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])" <<<"$APPROVAL_RESOURCE_JSON")"
+
+APPROVAL_START="$(python3 -c "from datetime import datetime, timedelta, timezone; s=datetime.now(timezone.utc)+timedelta(days=8); s=s.replace(hour=14, minute=0, second=0, microsecond=0); print(s.isoformat().replace('+00:00','Z'))")"
+APPROVAL_END="$(python3 -c "from datetime import datetime, timedelta, timezone; s=datetime.now(timezone.utc)+timedelta(days=8); s=s.replace(hour=15, minute=0, second=0, microsecond=0); print(s.isoformat().replace('+00:00','Z'))")"
+
+echo "[9/9] POST /bookings (pending esperado)"
+PENDING_JSON="$(curl_json POST "${API}/bookings" "$(cat <<EOF
+{
+  "branch_code": "${BRANCH}",
+  "resource_id": "${APPROVAL_RESOURCE_ID}",
+  "title": "Pendente ${SUFFIX}",
+  "start_at": "${APPROVAL_START}",
+  "end_at": "${APPROVAL_END}"
+}
+EOF
+)")"
+assert_success_json "$PENDING_JSON"
+PENDING_STATUS="$(python3 -c "import json,sys; print(json.load(sys.stdin)['data']['status'])" <<<"$PENDING_JSON")"
+PENDING_ID="$(python3 -c "import json,sys; print(json.load(sys.stdin)['data']['id'])" <<<"$PENDING_JSON")"
+[ "$PENDING_STATUS" = "pending" ] || fail "status esperado pending, obtido ${PENDING_STATUS}"
+echo "      pending booking_id: ${PENDING_ID}"
+
+# Cancelamento da pendência (dono) para limpar o slot
+curl_json PATCH "${API}/bookings/${PENDING_ID}/cancel" >/dev/null
+curl_json PATCH "${API}/resources/${APPROVAL_RESOURCE_ID}" '{"active": false}' >/dev/null
 
 echo "[OK] check-scheduling-api"

@@ -50,6 +50,14 @@ def resolve_notification_recipient_ids(
             group_id = _normalize_user_id(raw_group_id)
             resolved_set.update(uow.rbac_queries.list_user_ids_by_group(UUID(group_id)))
 
+        for permission_code in request.permission_codes:
+            code = (permission_code or "").strip()
+            if not code:
+                continue
+            resolved_set.update(
+                uow.rbac_queries.list_user_ids_by_permission_code(code)
+            )
+
         resolved = _filter_active_user_ids(uow, resolved_set)
 
     excluded = {_normalize_user_id(item) for item in request.excluded_user_ids if item}

@@ -94,3 +94,24 @@ class SqlAlchemyRbacQueryRepository(RbacQueryPort):
         rows = direct_permissions.union(group_permissions).all()
 
         return list({p for (p,) in rows})
+
+    def list_user_ids_by_permission_code(self, permission_code: str) -> List[str]:
+        code = (permission_code or "").strip()
+        if not code:
+            return []
+
+        direct_users = (
+            self.session.query(user_roles.c.user_id)
+            .join(role_permissions, role_permissions.c.role_id == user_roles.c.role_id)
+            .join(Permission, Permission.id == role_permissions.c.permission_id)
+            .filter(Permission.code == code)
+        )
+        group_users = (
+            self.session.query(user_groups.c.user_id)
+            .join(group_roles, group_roles.c.group_id == user_groups.c.group_id)
+            .join(role_permissions, role_permissions.c.role_id == group_roles.c.role_id)
+            .join(Permission, Permission.id == role_permissions.c.permission_id)
+            .filter(Permission.code == code)
+        )
+        rows = direct_users.union(group_users).all()
+        return [str(uid) for (uid,) in rows]

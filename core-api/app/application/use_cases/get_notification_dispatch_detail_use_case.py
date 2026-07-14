@@ -125,6 +125,9 @@ class GetNotificationDispatchDetailUseCase:
             "emails": [str(item) for item in (payload.get("emails") or []) if item],
             "roleIds": [str(item) for item in (payload.get("roleIds") or []) if item],
             "groupIds": [str(item) for item in (payload.get("groupIds") or []) if item],
+            "permissionCodes": [
+                str(item) for item in (payload.get("permissionCodes") or []) if item
+            ],
             "excludedUserIds": [
                 str(item) for item in (payload.get("excludedUserIds") or []) if item
             ],

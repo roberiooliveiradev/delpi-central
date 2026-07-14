@@ -127,6 +127,9 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
     emails = payload.get("emails") or []
     role_ids = payload.get("roleIds") or payload.get("role_ids") or []
     group_ids = payload.get("groupIds") or payload.get("group_ids") or []
+    permission_codes = (
+        payload.get("permissionCodes") or payload.get("permission_codes") or []
+    )
 
     if not isinstance(user_ids, list):
         user_ids = []
@@ -136,6 +139,8 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
         role_ids = []
     if not isinstance(group_ids, list):
         group_ids = []
+    if not isinstance(permission_codes, list):
+        permission_codes = []
 
     action_type, action_label, action_target = _parse_action(payload)
 
@@ -175,6 +180,7 @@ def _parse_dispatch_body(data: dict | None) -> DispatchNotificationsRequest:
         emails=[str(item) for item in emails if item],
         role_ids=[str(item) for item in role_ids if item],
         group_ids=[str(item) for item in group_ids if item],
+        permission_codes=[str(item).strip() for item in permission_codes if item],
         excluded_user_ids=[str(item) for item in excluded_user_ids if item],
         source_app=payload.get("sourceApp") or payload.get("source_app"),
     )

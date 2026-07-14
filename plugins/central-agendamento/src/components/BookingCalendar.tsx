@@ -65,6 +65,10 @@ function toEvent(booking: SchedulingBooking, resources: SchedulingResource[]): C
     bookedByName: booking.booked_by_name,
     notes: booking.notes,
     bookedByUserId: booking.booked_by_user_id,
+    status: booking.status,
+    decidedByName: booking.decided_by_name,
+    decisionReason: booking.decision_reason,
+    expiresAt: booking.expires_at,
     recurrenceSeriesId: booking.recurrence_series_id,
     recurrenceFrequency: booking.recurrence_frequency,
   };
@@ -84,7 +88,10 @@ function CalendarEventBlock({ event }: EventProps<CalendarEvent>) {
             {event.resourceName}
           </span>
           <span className="ca-cal-event__title">{event.title}</span>
-          <span className="ca-cal-event__meta">{event.bookedByName}</span>
+          <span className="ca-cal-event__meta">
+            {event.status === "pending" ? "Pend. · " : ""}
+            {event.bookedByName}
+          </span>
         </>
       ) : (
         <>
@@ -113,19 +120,21 @@ export function BookingCalendar({
   }, [bookings, resources, view]);
 
   const eventStyleGetter = (event: CalendarEvent) => {
-    const color = RESOURCE_TYPE_COLORS[event.resourceType];
+    const baseColor = RESOURCE_TYPE_COLORS[event.resourceType];
+    const color = event.status === "pending" ? "#b45309" : baseColor;
     const segment = event.multiDaySegment;
     const isSingleDaySegment = !segment || (segment.isFirst && segment.isLast);
 
     return {
-      className: segmentEventClassName(event),
+      className: `${segmentEventClassName(event)}${event.status === "pending" ? " ca-cal-event--pending" : ""}`,
       style: {
         backgroundColor: color,
         borderColor: color,
         color: "#fff",
-        border: "none",
+        border: event.status === "pending" ? "1px dashed rgba(255,255,255,0.7)" : "none",
         fontSize: "11px",
         padding: "4px 6px",
+        opacity: event.status === "pending" ? 0.92 : 1,
         ...(isSingleDaySegment ? { borderRadius: "6px" } : {}),
       },
     };
