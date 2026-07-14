@@ -1,5 +1,5 @@
 import { Move } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   blockUsesInnerShapeChrome,
   chartPartAllowsFrame,
@@ -72,36 +72,6 @@ const POSITION_GROUP_HINT =
   E.position ??
   "Posição e tamanho em pixels de design da página, com origem no canto inferior esquerdo.";
 
-function useCloseOnOutside(
-  refs: Array<RefObject<HTMLElement | null>>,
-  active: boolean,
-  onOutside: () => void,
-) {
-  useEffect(() => {
-    if (!active) return;
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      if (refs.some((ref) => ref.current?.contains(target))) return;
-      if (
-        target instanceof Element &&
-        target.closest(
-          '[aria-modal="true"], .delpi-ui-shape-menu__panel, .delpi-ui-color-picker, .delpi-ui-select__panel, .delpi-ui-shape-dialog, .delpi-ui-help-tooltip',
-        )
-      ) {
-        return;
-      }
-      onOutside();
-    };
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
-    };
-  }, [active, onOutside, refs]);
-}
-
 type FrameSizeGroupProps = {
   embed: boolean;
   captionPlacement: "below" | "none";
@@ -126,7 +96,6 @@ function FrameSizeGroup({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useCloseOnOutside([rootRef, panelRef], open, () => setOpen(false));
 
   if (embed || emptyAction) {
     return (
@@ -183,6 +152,7 @@ function FrameSizeGroup({
             preferredPlacement="bottom"
             allowFlip={false}
             gap={10}
+            onDismiss={() => setOpen(false)}
           >
             {children}
           </AnchoredPanelPortal>

@@ -5,7 +5,6 @@ import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
-import { useClickOutside } from "./useClickOutside";
 
 export type ShapeEffectItem = {
   id: string;
@@ -40,10 +39,11 @@ export function ShapeEffectsMenu({ items, onSelect, labels }: ShapeEffectsMenuPr
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useClickOutside([rootRef, panelRef], open, () => {
+
+  const dismiss = () => {
     setOpen(false);
     setActiveSubmenu(null);
-  });
+  };
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -67,6 +67,7 @@ export function ShapeEffectsMenu({ items, onSelect, labels }: ShapeEffectsMenuPr
           panelRef={panelRef}
           className="delpi-ui-shape-menu__panel--narrow"
           role="menu"
+          onDismiss={dismiss}
         >
           <ul className="delpi-ui-shape-effects__list">
             {resolvedItems.map((item) => (

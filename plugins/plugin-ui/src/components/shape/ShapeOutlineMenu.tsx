@@ -7,7 +7,6 @@ import { ColorPickerPopover } from "./ColorPickerPopover";
 import { cssToColorValue } from "./colorUtils";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
-import { useClickOutside } from "./useClickOutside";
 
 export type ShapeOutlineMenuProps = {
   color?: string;
@@ -45,10 +44,11 @@ export function ShapeOutlineMenu({
   const [submenu, setSubmenu] = useState<"thickness" | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useClickOutside([rootRef, panelRef], open, () => {
+
+  const dismiss = () => {
     setOpen(false);
     setSubmenu(null);
-  });
+  };
 
   const previewColor = color && cssToColorValue(color).alpha > 0 ? color : "transparent";
 
@@ -72,7 +72,13 @@ export function ShapeOutlineMenu({
         <span className="delpi-ui-shape-menu__trigger-label">{outlineLabel ?? L.outline}</span>
       </button>
       {open ? (
-        <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          role="menu"
+          onDismiss={dismiss}
+        >
           <ColorPickerPopover
             variant="outline"
             value={color}

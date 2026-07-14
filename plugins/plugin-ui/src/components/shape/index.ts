@@ -1,3 +1,4 @@
+export { useClickOutside } from "./useClickOutside";
 export { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 export type { AnchoredPanelPortalProps } from "./AnchoredPanelPortal";
 export type { AnchoredPanelPlacement } from "./anchoredPanelCoords";

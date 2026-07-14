@@ -17,9 +17,10 @@ type Props = {
   open: boolean;
   anchorRef: React.RefObject<HTMLDivElement | null>;
   onSelect: (kind: ComunicadoShapeKind) => void;
+  onDismiss: () => void;
 };
 
-export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect }: Props) {
+export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismiss }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const recent = readRecentComunicadoShapes();
 
@@ -33,6 +34,7 @@ export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect }: Props)
       className="td-shape-library td-shape-library--portal"
       role="menu"
       aria-label="Biblioteca de formas"
+      onDismiss={onDismiss}
     >
       {recent.length ? (
         <section className="td-shape-library__section">

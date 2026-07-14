@@ -97,19 +97,6 @@ export function SelectControl({
   }, [options, query]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-      if (wrapperRef.current?.contains(target)) return;
-      if (panelRef.current?.contains(target)) return;
-      setOpen(false);
-      setQuery("");
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
     if (disabled) {
       setOpen(false);
       setQuery("");
@@ -164,6 +151,7 @@ export function SelectControl({
         matchAnchorWidth
         role="presentation"
         portalScopeClassName={portalScopeClassName}
+        onDismiss={closePanel}
       >
         {searchable ? (
           <input

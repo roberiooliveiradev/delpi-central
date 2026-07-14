@@ -1,9 +1,28 @@
 import { useEffect, useRef, type RefObject } from "react";
 
-function isInsideNestedModal(target: Node): boolean {
-  return target instanceof Element && Boolean(target.closest('[aria-modal="true"]'));
+/**
+ * Portais aninhados (cor, select, diálogo) vivem no body fora do panelRef —
+ * clique neles não deve fechar o popover pai.
+ */
+const NESTED_OVERLAY_SELECTOR = [
+  '[aria-modal="true"]',
+  ".delpi-ui-shape-menu__panel",
+  ".delpi-ui-color-picker",
+  ".delpi-ui-select__panel",
+  ".delpi-ui-shape-dialog",
+  ".delpi-ui-help-tooltip",
+  ".delpi-ui-combobox-number__panel",
+].join(", ");
+
+function isInsideNestedOverlay(target: Node): boolean {
+  return target instanceof Element && Boolean(target.closest(NESTED_OVERLAY_SELECTOR));
 }
 
+/**
+ * Fecha overlay ao interagir fora dos refs.
+ * Usa fase de captura para não depender do bubble (palco/editores costumam
+ * chamar stopPropagation em pointerdown/mousedown).
+ */
 export function useClickOutside<T extends HTMLElement>(
   refs: RefObject<T | null>[],
   active: boolean,
@@ -11,23 +30,23 @@ export function useClickOutside<T extends HTMLElement>(
 ): void {
   const onOutsideRef = useRef(onOutside);
   onOutsideRef.current = onOutside;
+  const refsRef = useRef(refs);
+  refsRef.current = refs;
 
   useEffect(() => {
     if (!active) return;
 
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+    const handlePointerDown = (event: Event) => {
       const target = event.target as Node | null;
       if (!target) return;
-      const inside = refs.some((ref) => ref.current?.contains(target));
-      if (inside || isInsideNestedModal(target)) return;
+      const inside = refsRef.current.some((ref) => ref.current?.contains(target));
+      if (inside || isInsideNestedOverlay(target)) return;
       onOutsideRef.current();
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown, true);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown, true);
     };
-  }, [active, refs]);
+  }, [active]);
 }

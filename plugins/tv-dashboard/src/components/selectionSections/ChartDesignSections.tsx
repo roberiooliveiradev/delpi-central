@@ -207,6 +207,7 @@ export function ChartLayoutSection({ layout }: { layout: SelectionSectionLayout 
             className="td-chart-add-element-portal"
             role="menu"
             aria-label="Adicionar elemento de gráfico"
+            onDismiss={() => ctrl.setAddElementOpen(false)}
           >
             <div>
               <ChartAddElementMenu
@@ -241,6 +242,7 @@ export function ChartLayoutSection({ layout }: { layout: SelectionSectionLayout 
             className="td-chart-quick-layout-portal"
             role="menu"
             aria-label="Layout rápido"
+            onDismiss={() => ctrl.setLayoutOpen(false)}
           >
             <div className="td-chart-quick-layout">
               {CHART_QUICK_LAYOUTS.map((item) => (
@@ -294,6 +296,7 @@ export function ChartStylesSection({ layout }: { layout: SelectionSectionLayout 
           className="td-chart-colors-portal"
           role="menu"
           aria-label="Alterar cores e estilos"
+          onDismiss={() => ctrl.setColorsOpen(false)}
         >
           <div className="td-chart-float__popover td-chart-float__popover--style">
             <ChartColorsStylesMenu

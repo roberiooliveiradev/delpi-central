@@ -29,4 +29,29 @@ describe("ContextMenu", () => {
     fireEvent.click(screen.getByRole("button", { name: "Recortar" }));
     expect(onCut).toHaveBeenCalledTimes(1);
   });
+
+  it("fecha ao clicar fora (captura, mesmo com stopPropagation)", () => {
+    const onClose = vi.fn();
+
+    render(
+      <div>
+        <button
+          type="button"
+          data-testid="outside"
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          fora
+        </button>
+        <ContextMenu open position={{ x: 40, y: 40 }} onClose={onClose} aria-label="Menu">
+          <ContextMenuItem label="Copiar" onSelect={() => undefined} />
+        </ContextMenu>
+      </div>,
+    );
+
+    document
+      .querySelector('[data-testid="outside"]')!
+      .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });

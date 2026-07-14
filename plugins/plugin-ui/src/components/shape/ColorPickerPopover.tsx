@@ -8,7 +8,6 @@ import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
 import { cssToColorValue, resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR } from "./colorUtils";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
-import { useClickOutside } from "./useClickOutside";
 
 /** Perfil do seletor: fill/outline sempre oferecem «sem…»; text oferece «Automático». */
 export type ColorPickerVariant = "default" | "fill" | "outline" | "text";
@@ -221,10 +220,11 @@ export function ColorPickerPopoverTrigger({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useClickOutside([rootRef, panelRef], open, () => {
+
+  const dismiss = () => {
     setOpen(false);
     onClose?.();
-  });
+  };
 
   const previewColor = value && cssToColorValue(value).alpha > 0 ? value : "transparent";
 
@@ -256,6 +256,7 @@ export function ColorPickerPopoverTrigger({
           className="delpi-ui-color-picker-trigger__panel--portal"
           role="dialog"
           aria-label={triggerLabel}
+          onDismiss={dismiss}
         >
           <ColorPickerPopover
             {...popoverProps}
@@ -298,7 +299,6 @@ export function ShapeFillMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useClickOutside([rootRef, panelRef], open, () => setOpen(false));
 
   const previewColor = value && cssToColorValue(value).alpha > 0 ? value : "transparent";
 
@@ -322,7 +322,13 @@ export function ShapeFillMenu({
         <span className="delpi-ui-shape-menu__trigger-label">{fillLabel ?? L.fill}</span>
       </button>
       {open ? (
-        <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          role="menu"
+          onDismiss={() => setOpen(false)}
+        >
           <ColorPickerPopover
             variant="fill"
             value={value}

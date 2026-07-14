@@ -5,7 +5,6 @@ import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels, ShapeStylePreset } from "./types";
-import { useClickOutside } from "./useClickOutside";
 
 export type ShapeStyleGalleryProps = {
   themePresets?: ShapeStylePreset[];
@@ -157,7 +156,6 @@ export function ShapeStyleMenu({ triggerLabel = "Estilos", ...props }: ShapeStyl
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useClickOutside([rootRef, panelRef], open, () => setOpen(false));
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -175,7 +173,13 @@ export function ShapeStyleMenu({ triggerLabel = "Estilos", ...props }: ShapeStyl
         <span className="delpi-ui-shape-menu__trigger-label">{triggerLabel}</span>
       </button>
       {open ? (
-        <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          role="menu"
+          onDismiss={() => setOpen(false)}
+        >
           <ShapeStyleGallery
             {...props}
             onSelect={(preset) => {

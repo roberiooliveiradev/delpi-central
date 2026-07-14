@@ -67,6 +67,7 @@ export function ShapeGallerySection({ layout }: { layout: SelectionSectionLayout
           open={changeShapeOpen}
           anchorRef={changeShapeAnchorRef}
           onSelect={applyShapeKind}
+          onDismiss={() => setChangeShapeOpen(false)}
         />
       ) : null}
     </div>

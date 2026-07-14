@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { BarChart3, Database, Filter, Gauge, Grid3X3, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
 import {
   AnchoredPanelPortal,
@@ -57,35 +57,12 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   const [chartMenuOpen, setChartMenuOpen] = useState(false);
   const [tableMenuOpen, setTableMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (!shapeMenuOpen && !iconMenuOpen && !chartMenuOpen && !tableMenuOpen) return undefined;
-
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as Node;
-      if (
-        shapeAnchorRef.current?.contains(target) ||
-        iconAnchorRef.current?.contains(target) ||
-        chartAnchorRef.current?.contains(target) ||
-        tableAnchorRef.current?.contains(target)
-      ) {
-        return;
-      }
-      if (
-        (target as HTMLElement).closest?.(
-          ".td-shape-library--portal, .td-icon-library-portal, .td-chart-catalog-portal, .td-table-catalog-portal, .delpi-ui-lucide-icon-grid, .delpi-ui-chart-catalog, .delpi-ui-table-insert-catalog",
-        )
-      ) {
-        return;
-      }
-      setShapeMenuOpen(false);
-      setIconMenuOpen(false);
-      setChartMenuOpen(false);
-      setTableMenuOpen(false);
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [chartMenuOpen, iconMenuOpen, setShapeMenuOpen, shapeMenuOpen, tableMenuOpen]);
+  const closeInsertMenus = () => {
+    setShapeMenuOpen(false);
+    setIconMenuOpen(false);
+    setChartMenuOpen(false);
+    setTableMenuOpen(false);
+  };
 
   function insertShape(kind: ComunicadoShapeKind) {
     addShape(kind);
@@ -164,6 +141,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 open={shapeMenuOpen}
                 anchorRef={shapeAnchorRef}
                 onSelect={insertShape}
+                onDismiss={closeInsertMenus}
               />
             ) : null}
           </div>
@@ -191,6 +169,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 className="td-icon-library-portal"
                 role="menu"
                 aria-label="Biblioteca de ícones"
+                onDismiss={closeInsertMenus}
               >
                 <LucideIconGridPanel
                   title="Ícones"
@@ -263,6 +242,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 className="td-chart-catalog-portal"
                 role="menu"
                 aria-label="Catálogo de gráficos"
+                onDismiss={closeInsertMenus}
               >
                 <ChartTypeCatalogPanel onSelect={insertChart} />
               </AnchoredPanelPortal>
@@ -292,6 +272,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 className="td-table-catalog-portal"
                 role="menu"
                 aria-label="Catálogo de tabelas"
+                onDismiss={closeInsertMenus}
               >
                 <TableInsertCatalogPanel onSelect={insertTable} />
               </AnchoredPanelPortal>

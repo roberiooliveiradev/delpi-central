@@ -1,9 +1,10 @@
 import { createPortal } from "react-dom";
-import { type ReactNode, type RefObject } from "react";
+import { useEffect, type ReactNode, type RefObject } from "react";
 
 import type { AnchoredPanelPlacement } from "./anchoredPanelCoords";
 import { resolveMfePortalScopeClassName } from "./delpiUiPortalTheme";
 import { useAnchoredPanelPosition } from "./useAnchoredPanelPosition";
+import { useClickOutside } from "./useClickOutside";
 import { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 
 export type AnchoredPanelPortalProps = {
@@ -32,6 +33,11 @@ export type AnchoredPanelPortalProps = {
    * Se omitido, infere o ancestral `.dashboard-*` do âncora.
    */
   portalScopeClassName?: string;
+  /**
+   * Fecha o painel ao clicar fora (âncora + painel) ou pressionar Escape.
+   * Recomendado em todo popover ancorado.
+   */
+  onDismiss?: () => void;
   children: ReactNode;
 };
 
@@ -49,6 +55,7 @@ export function AnchoredPanelPortal({
   allowFlip = true,
   gap,
   portalScopeClassName,
+  onDismiss,
   children,
 }: AnchoredPanelPortalProps) {
   const style = useAnchoredPanelPosition(open, anchorRef, panelRef, {
@@ -58,6 +65,23 @@ export function AnchoredPanelPortal({
     ...(gap != null ? { gap } : null),
   });
   const theme = useDelpiUiPortalTheme(open, anchorRef);
+
+  useClickOutside([anchorRef, panelRef], Boolean(open && onDismiss), () => {
+    onDismiss?.();
+  });
+
+  useEffect(() => {
+    const dismiss = onDismiss;
+    if (!open || !dismiss) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        dismiss();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onDismiss]);
 
   if (!open || typeof document === "undefined") return null;
 

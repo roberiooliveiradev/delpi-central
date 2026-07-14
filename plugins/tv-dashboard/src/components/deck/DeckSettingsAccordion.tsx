@@ -1,5 +1,5 @@
 import { AnchoredPanelPortal } from "@delpi/plugin-ui/index";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 
@@ -14,21 +14,6 @@ export function DeckSettingsAccordion({ summary, ariaLabel, children }: Props) {
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handlePointerDown = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      const inside =
-        anchorRef.current?.contains(target) || panelRef.current?.contains(target);
-      if (!inside) setOpen(false);
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [open]);
 
   return (
     <div className="td-deck-settings-accordion" ref={anchorRef}>
@@ -50,6 +35,7 @@ export function DeckSettingsAccordion({ summary, ariaLabel, children }: Props) {
         className="td-deck-settings-accordion__body td-deck-settings-accordion__body--portal"
         role="dialog"
         aria-label={ariaLabel}
+        onDismiss={() => setOpen(false)}
       >
         {children}
       </AnchoredPanelPortal>

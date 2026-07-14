@@ -193,6 +193,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
           className="td-chart-float__portal"
           role="menu"
+          onDismiss={() => setPanel(null)}
         >
           <div className="td-chart-float__popover td-chart-float__popover--cascade">
             <ChartAddElementMenu
@@ -216,6 +217,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           className="td-chart-float__portal"
           role="menu"
           aria-label="Cores e estilos do gráfico"
+          onDismiss={() => setPanel(null)}
         >
           <div className="td-chart-float__popover td-chart-float__popover--style">
             <ChartColorsStylesMenu
@@ -251,6 +253,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
           className="td-chart-float__portal"
           role="menu"
           aria-label="Dados do gráfico"
+          onDismiss={() => setPanel(null)}
         >
           <div className="td-chart-float__popover td-chart-float__popover--actions">
             <button

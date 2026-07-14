@@ -1,5 +1,5 @@
 import { ALargeSmall, FlipVertical2 } from "lucide-react";
-import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { useId, useRef, useState } from "react";
 import {
   COMUNICADO_TEXT_SHADOW_PRESETS,
   resolveTextShadowPresetId,
@@ -144,37 +144,6 @@ function TextEffectsPanel({ formatStyle, onUpdate, idPrefix }: PanelProps) {
   );
 }
 
-function useCloseOnOutside(
-  refs: Array<RefObject<HTMLElement | null>>,
-  active: boolean,
-  onOutside: () => void,
-) {
-  useEffect(() => {
-    if (!active) return;
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      if (refs.some((ref) => ref.current?.contains(target))) return;
-      /* Popovers aninhados (cor do Contorno, selects) também ficam no body. */
-      if (
-        target instanceof Element &&
-        target.closest(
-          '[aria-modal="true"], .delpi-ui-shape-menu__panel, .delpi-ui-color-picker, .delpi-ui-select__panel, .delpi-ui-shape-dialog',
-        )
-      ) {
-        return;
-      }
-      onOutside();
-    };
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
-    };
-  }, [active, onOutside, refs]);
-}
-
 /**
  * Ribbon: tile «Efeitos» + popover ancorado (padrão Preench./cores).
  * Sidebar (`inline`): mesmo conteúdo embutido na seção.
@@ -190,8 +159,6 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "popover" }: 
       formatStyle?.textShadow ||
       formatStyle?.textReflection,
   );
-
-  useCloseOnOutside([rootRef, panelRef], open, () => setOpen(false));
 
   if (variant === "inline") {
     return (
@@ -239,6 +206,7 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "popover" }: 
           role="menu"
           aria-label="Efeitos de texto"
           preferredPlacement="bottom"
+          onDismiss={() => setOpen(false)}
         >
           <TextEffectsPanel
             formatStyle={formatStyle}

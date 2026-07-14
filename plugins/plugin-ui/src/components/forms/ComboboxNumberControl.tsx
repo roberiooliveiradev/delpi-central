@@ -70,18 +70,6 @@ export function ComboboxNumberControl({
   }, [value]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      const target = event.target as Node;
-      if (wrapperRef.current?.contains(target)) return;
-      if (panelRef.current?.contains(target)) return;
-      setOpen(false);
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
     if (disabled) setOpen(false);
   }, [disabled]);
 
@@ -188,6 +176,7 @@ export function ComboboxNumberControl({
         matchAnchorWidth
         role="presentation"
         portalScopeClassName={portalScopeClassName}
+        onDismiss={() => setOpen(false)}
         className={mergeClassNames(
           "delpi-ui-combobox-number__panel",
           "delpi-ui-combobox-number__panel--portal",

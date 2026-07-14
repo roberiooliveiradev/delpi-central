@@ -16,7 +16,6 @@ import { ColorPickerPopover } from "./ColorPickerPopover";
 import { colorToCss, cssToColorValue } from "./colorUtils";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
-import { useClickOutside } from "./useClickOutside";
 
 export type ShapeShadowPreset = {
   id: string;
@@ -56,10 +55,11 @@ export function ShapeShadowMenu({
   const [layerIndex, setLayerIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useClickOutside([rootRef, panelRef], open, () => {
+
+  const dismiss = () => {
     setOpen(false);
     setColorOpen(false);
-  });
+  };
 
   const hasShadow = Boolean(value?.trim());
   const stack = resolveBoxShadowStack(value);
@@ -145,6 +145,7 @@ export function ShapeShadowMenu({
           panelRef={panelRef}
           className="delpi-ui-shape-menu__panel--shadow"
           role="menu"
+          onDismiss={dismiss}
         >
           <ul className="delpi-ui-shape-effects__list delpi-ui-shape-shadow__presets">
             {presets.map((preset) => {

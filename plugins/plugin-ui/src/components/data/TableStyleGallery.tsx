@@ -2,7 +2,6 @@ import { Table2 } from "lucide-react";
 import { useRef, useState, type CSSProperties } from "react";
 
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
-import { useClickOutside } from "../shape/useClickOutside";
 
 export type TableStylePresetCategory = "light" | "medium" | "dark" | string;
 
@@ -142,8 +141,6 @@ export function TableStyleMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useClickOutside([rootRef, panelRef], open, () => setOpen(false));
-
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
       <button
@@ -160,7 +157,13 @@ export function TableStyleMenu({
         <span className="delpi-ui-shape-menu__trigger-label">{triggerLabel ?? L.more}</span>
       </button>
       {open ? (
-        <AnchoredPanelPortal open={open} anchorRef={rootRef} panelRef={panelRef} role="menu">
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          role="menu"
+          onDismiss={() => setOpen(false)}
+        >
           <TableStyleGallery
             {...galleryProps}
             labels={labels}

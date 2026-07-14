@@ -1,5 +1,5 @@
 import { BetweenVerticalStart } from "lucide-react";
-import { useEffect, useId, useRef, useState, type RefObject } from "react";
+import { useId, useRef, useState } from "react";
 import {
   COMUNICADO_LINE_HEIGHT_OPTIONS,
   COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
@@ -109,36 +109,6 @@ function ParagraphSpacingPanel({
   );
 }
 
-function useCloseOnOutside(
-  refs: Array<RefObject<HTMLElement | null>>,
-  active: boolean,
-  onOutside: () => void,
-) {
-  useEffect(() => {
-    if (!active) return;
-    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      if (refs.some((ref) => ref.current?.contains(target))) return;
-      if (
-        target instanceof Element &&
-        target.closest(
-          '[aria-modal="true"], .delpi-ui-shape-menu__panel, .delpi-ui-color-picker, .delpi-ui-select__panel, .delpi-ui-shape-dialog, .delpi-ui-help-tooltip',
-        )
-      ) {
-        return;
-      }
-      onOutside();
-    };
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("touchstart", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("touchstart", handlePointerDown);
-    };
-  }, [active, onOutside, refs]);
-}
-
 /**
  * Ribbon: tile «Estilo» + Estilo/Entrelinhas/Espaçamento no popover.
  * Sidebar (`inline`): mesmos campos embutidos.
@@ -156,7 +126,6 @@ export function ParagraphSpacingMenu({
   const reactId = useId().replace(/:/g, "");
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  useCloseOnOutside([rootRef, panelRef], open, () => setOpen(false));
 
   const panelProps: PanelProps = {
     namedStyleValue,
@@ -208,6 +177,7 @@ export function ParagraphSpacingMenu({
           role="dialog"
           aria-label="Estilo e espaçamento do parágrafo"
           preferredPlacement="bottom"
+          onDismiss={() => setOpen(false)}
         >
           <ParagraphSpacingPanel {...panelProps} />
         </AnchoredPanelPortal>
