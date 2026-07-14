@@ -10,11 +10,19 @@ type DirectorySearchResponse = {
   items: DirectoryUser[];
 };
 
-/** Busca usuários cadastrados na Minha DELPI (core-api). Persistência de share usa só `id`. */
+export type SearchDirectoryUsersOptions = {
+  /** Filtra quem já tem a app no portal (mesma regra de /me/apps). */
+  appId?: string;
+  /** Ex.: `tv-dashboard.write` quando o papel do share for Editor. */
+  permission?: string;
+};
+
+/** Busca usuários da Minha DELPI (core-api). Persistência de share usa só `id`. */
 export async function searchDirectoryUsers(
   query: string,
   limit = 10,
   signal?: AbortSignal,
+  options?: SearchDirectoryUsersOptions,
 ): Promise<DirectoryUser[]> {
   const normalized = query.trim();
   if (normalized.length < 2) return [];
@@ -23,6 +31,10 @@ export async function searchDirectoryUsers(
     q: normalized,
     limit: String(limit),
   });
+  const appId = (options?.appId ?? "tv-dashboard").trim();
+  if (appId) params.set("app", appId);
+  const permission = options?.permission?.trim();
+  if (permission) params.set("permission", permission);
 
   const payload = await httpGet<DirectorySearchResponse>(
     `/core-api/me/directory/users?${params.toString()}`,

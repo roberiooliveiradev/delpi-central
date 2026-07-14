@@ -72,7 +72,12 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
     if (!isOwner) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      void searchDirectoryUsers(query, 8, controller.signal)
+      const permission =
+        shareRole === "editor" ? "tv-dashboard.write" : "tv-dashboard.read";
+      void searchDirectoryUsers(query, 8, controller.signal, {
+        appId: "tv-dashboard",
+        permission,
+      })
         .then(setSuggestions)
         .catch(() => setSuggestions([]));
     }, 250);
@@ -80,7 +85,7 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [isOwner, query]);
+  }, [isOwner, query, shareRole]);
 
   const presentUrl = playlist?.publicUrl ?? "";
 
@@ -133,7 +138,10 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
       setSuggestions([]);
       setShareLabels((prev) => new Map(prev).set(user.id, user));
       setShares(await listPlaylistShares(playlistId));
-      tvDashboardNotice(`Compartilhado com ${user.name || user.email}.`);
+      const roleLabel = shareRole === "viewer" ? "somente leitura" : "editor";
+      tvDashboardNotice(
+        `Compartilhado com ${user.name || user.email} (${roleLabel}). A pessoa foi notificada.`,
+      );
     } catch (err) {
       tvDashboardNotice(err instanceof Error ? err.message : "Erro ao compartilhar.");
     }
@@ -246,7 +254,8 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
           <div className="td-card" style={{ maxWidth: 720, marginBottom: 16 }}>
             <h2 style={{ marginTop: 0 }}>Colaboradores (edição)</h2>
             <p className="td-subtitle">
-              Convide quem pode editar ou ver esta programação. O acesso fica no ID do usuário (não no e-mail).
+              Só aparecem usuários que já têm acesso ao Painéis TV. Ao compartilhar, a pessoa
+              recebe uma notificação com o privilégio (editor ou somente leitura).
             </p>
             <div className="td-toolbar" style={{ gap: 8, flexWrap: "wrap" }}>
               <div style={{ flex: "1 1 220px" }}>
@@ -282,6 +291,10 @@ export function PlaylistSharePage({ playlistId, onBack }: Props) {
                   </li>
                 ))}
               </ul>
+            ) : query.trim().length >= 2 ? (
+              <p className="td-subtitle" style={{ marginTop: 8 }}>
+                Nenhum usuário com acesso ao Painéis TV encontrado para essa busca.
+              </p>
             ) : null}
             <ul style={{ listStyle: "none", padding: 0, marginTop: 16 }}>
               {shareList.length === 0 ? (

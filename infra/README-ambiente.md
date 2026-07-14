@@ -478,7 +478,9 @@ O `public-hub` é o **irmão público do portal**: um único SPA estático que r
 | Admin MFE | `delpi-tv-dashboard` | `/apps/tv-dashboard/` |
 | Apresentação TV | `delpi-public-hub` | `/p/tv-dashboard/present/{token}` |
 
-Variáveis: `PUBLIC_BASE_URL` (URL copiada no admin), `PLUGINS_DB_*`, `TV_DASHBOARD_RUN_MIGRATIONS_ON_STARTUP`.
+Variáveis: `PUBLIC_BASE_URL` (URL copiada no admin), `PLUGINS_DB_*`, `TV_DASHBOARD_RUN_MIGRATIONS_ON_STARTUP`,
+`CORE_API_BASE_URL`, `CORE_API_INTEGRATIONS_SERVICE_TOKEN`, `TV_DASHBOARD_NOTIFICATIONS_ENABLED`
+(notificação no sino ao compartilhar programação com colaborador).
 
 Após alterar view pública ou pacote `tv-dashboard-presentation`: `docker compose … up --build -d public-hub`.
 

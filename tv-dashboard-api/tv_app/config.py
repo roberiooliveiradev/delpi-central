@@ -54,5 +54,15 @@ class Settings:
         default="/app/data/tv-dashboard/media",
     )
 
+    CORE_API_BASE_URL: str = _get_env("CORE_API_BASE_URL", default="http://core-api:8000")
+    CORE_API_INTEGRATIONS_SERVICE_TOKEN: str = _get_env(
+        "CORE_API_INTEGRATIONS_SERVICE_TOKEN",
+        default="",
+    )
+    TV_DASHBOARD_NOTIFICATIONS_ENABLED: bool = (
+        str(_get_env("TV_DASHBOARD_NOTIFICATIONS_ENABLED", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+
 
 settings = Settings()

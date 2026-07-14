@@ -13,6 +13,9 @@ from tv_app.application.services.presentation_payload_service import Presentatio
 from tv_app.application.services.presentation_status_service import build_presentation_status
 from tv_app.application.services.qr_service import build_public_presentation_url, render_qr_png
 from tv_app.application.services.tv_dashboard_content_service import message
+from tv_app.application.services.tv_dashboard_portal_notification_service import (
+    notify_playlist_share_granted,
+)
 from tv_app.core.responses import fail, ok
 from tv_app.core.security import TV_ADMIN, TV_READ, TV_WRITE, assert_permission, can
 from tv_app.infrastructure.persistence.repositories.playlist_repository import (
@@ -126,6 +129,15 @@ def accept_edit_invite(request: Request, body: RedeemEditInviteBody):
     result = _repo.redeem_edit_invite(body.token, redeemed_by=actor)
     if not result:
         return fail("Convite inválido, expirado ou revogado.", 404)
+    pl_id_raw = str(result.get("playlistId") or "").strip()
+    playlist = _repo.get_by_id(UUID(pl_id_raw)) if pl_id_raw else None
+    notify_playlist_share_granted(
+        target_user_id=actor,
+        playlist_id=pl_id_raw,
+        playlist_name=str((playlist or {}).get("name") or ""),
+        role=str(result.get("role") or "editor"),
+        actor_user_id=None,
+    )
     return ok(result, message="Acesso concedido.")
 
 
@@ -335,7 +347,7 @@ def upsert_share(request: Request, playlist_id: UUID, body: SharePlaylistBody):
     guarded = require_playlist_access(request, playlist_id, need="manage")
     if is_access_error(guarded):
         return guarded
-    user, _ = guarded
+    user, access = guarded
     actor = _actor_id(user)
     target = body.targetUserId.strip()
     if not target:
@@ -347,6 +359,14 @@ def upsert_share(request: Request, playlist_id: UUID, body: SharePlaylistBody):
         target_user_id=target,
         role=body.role,
         created_by=actor,
+    )
+    playlist = (access.playlist if access else None) or _repo.get_by_id(playlist_id) or {}
+    notify_playlist_share_granted(
+        target_user_id=target,
+        playlist_id=playlist_id,
+        playlist_name=str(playlist.get("name") or ""),
+        role=body.role,
+        actor_user_id=actor,
     )
     return ok(share, message="Compartilhamento atualizado.")
 

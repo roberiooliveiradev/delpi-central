@@ -1311,6 +1311,9 @@ services:
       PLUGINS_DB_USER: ${PLUGINS_DB_USER}
       PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
       TV_DASHBOARD_MEDIA_UPLOAD_DIR: ${TV_DASHBOARD_MEDIA_UPLOAD_DIR:-/app/data/tv-dashboard/media}
+      CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
+      CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
+      TV_DASHBOARD_NOTIFICATIONS_ENABLED: ${TV_DASHBOARD_NOTIFICATIONS_ENABLED:-true}
 
     volumes:
       - ../tv-dashboard-api:/app
@@ -1322,6 +1325,7 @@ services:
       - postgres-plugins
       - api-delpi
       - strategic-indicators-api
+      - core-api
 
     networks:
       - delpi-network
