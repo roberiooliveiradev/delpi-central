@@ -248,6 +248,25 @@ class Settings:
         _get_env("SCHEDULING_APPROVAL_TTL_HOURS", default="24") or "24"
     )
 
+    # ==========================
+    # Microsoft Graph — Canal de Denúncia (e-mail)
+    # ==========================
+    GRAPH_TENANT_ID: str | None = _get_env("GRAPH_TENANT_ID")
+    GRAPH_CLIENT_ID: str | None = _get_env("GRAPH_CLIENT_ID")
+    GRAPH_CLIENT_SECRET: str | None = _get_env("GRAPH_CLIENT_SECRET")
+    GRAPH_MAIL_SENDER: str = _get_env(
+        "GRAPH_MAIL_SENDER",
+        default="canal-denuncia@delpi.com.br",
+    )
+    GRAPH_MAIL_RECIPIENT: str = _get_env(
+        "GRAPH_MAIL_RECIPIENT",
+        default="ouvidoria@delpi.com.br",
+    )
+    GRAPH_HTTP_TIMEOUT_SECONDS: str = _get_env(
+        "GRAPH_HTTP_TIMEOUT_SECONDS",
+        default="15",
+    )
+
     OLLAMA_BASE_URL: str | None = _get_env("OLLAMA_BASE_URL", default="http://ollama:11434")
     EMBEDDING_MODEL: str = _get_env("EMBEDDING_MODEL", default="bge-m3")
     EMBEDDING_DIMENSIONS: int = int(_get_env("EMBEDDING_DIMENSIONS", default="1024") or "1024")

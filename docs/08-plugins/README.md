@@ -74,6 +74,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/inspecoes-processo` | `inspecoes-processo` | microfrontend | plugin | `/apps/inspecoes-processo` | `delpi-inspecoes-processo` |
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
+| `plugins/canal-denuncia` | `canal-denuncia` | microfrontend | plugin | `/apps/canal-denuncia` | `delpi-canal-denuncia` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
@@ -162,6 +163,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | inspecoes-entrada | `inspecoes-entrada` |
 | inspecoes-processo | `inspecoes-processo` |
 | controle-retrabalhos | `controle-retrabalhos` |
+| canal-denuncia | `canal-denuncia` |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -181,6 +183,7 @@ Declaradas no manifesto e persistidas na Core API:
 | inspecoes-entrada | `inspecoes-entrada.view`, `inspecoes-entrada.view.filial-01`, `inspecoes-entrada.view.filial-02` |
 | inspecoes-processo | `inspecoes-processo.view`, `inspecoes-processo.view.filial-01`, `inspecoes-processo.view.filial-02` |
 | controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |
+| canal-denuncia | `canal-denuncia.access` |
 | cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
@@ -201,6 +204,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Inspeções de Entrada | [Plugin README](../../plugins/inspecoes-entrada/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/inspecoes-entrada/ROADMAP.md) · [Status](../../docs/12-roadmap-e-volucao/inspecoes-entrada/status-atual.md) · [Doc técnica](../../plugins/inspecoes-entrada/docs/DOCUMENTACAO.md) · [API](../../api-delpi/docs/api/inspecoes-entrada.md) |
 | Inspeções de Processo | [Plugin README](../../plugins/inspecoes-processo/README.md) · [Auditoria](../../docs/12-roadmap-e-evolucao/inspecoes-processo/ESPECIFICACAO-AUDITORIA-APONTAMENTOS.md) · [API](../../api-delpi/docs/api/inspecoes-processo.md) |
 | Controle de Retrabalhos | [Plugin README](../../plugins/controle-retrabalhos/README.md) · [Roadmap](../../docs/12-roadmap-e-evolucao/controle-retrabalhos/README.md) · [API](../../api-delpi/docs/api/controle-retrabalhos.md) |
+| Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) |
 
 ---
 

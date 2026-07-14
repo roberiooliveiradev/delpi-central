@@ -125,6 +125,7 @@ FASE_MFE=(
   customer-experience
   cultura-delpi
   central-agendamento
+  canal-denuncia
   quality-labels
   tv-dashboard
   public-hub

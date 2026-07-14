@@ -53,6 +53,9 @@ CENTRAL_AGENDAMENTO_APPROVE_FILIAL_SC = "central-agendamento.approve.filial-sc"
 CULTURA_DELPI_VIEW = "cultura-delpi.view"
 CULTURA_DELPI_MANAGE = "cultura-delpi.manage"
 
+# --- canal de denúncia ---
+CANAL_DENUNCIA_ACCESS = "canal-denuncia.access"
+
 # --- etiquetas da qualidade ---
 QUALITY_LABELS_VIEW = "quality-labels.view"
 QUALITY_LABELS_WRITE = "quality-labels.write"
@@ -291,6 +294,10 @@ CULTURA_DELPI_READ_PERMISSIONS = [
 
 CULTURA_DELPI_WRITE_PERMISSIONS = [
     CULTURA_DELPI_MANAGE,
+]
+
+CANAL_DENUNCIA_SUBMIT_PERMISSIONS = [
+    CANAL_DENUNCIA_ACCESS,
 ]
 
 QUALITY_LABELS_READ_PERMISSIONS = [

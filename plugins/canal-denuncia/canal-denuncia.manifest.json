@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "canal-denuncia",
+  "name": "Canal de Denúncia",
+  "description": "Canal sigiloso para envio de denúncias à Ouvidoria da DELPI.",
+  "version": "1.0.0",
+  "type": "microfrontend",
+  "basePath": "/apps/canal-denuncia",
+  "entry": "/apps/canal-denuncia/assets/remoteEntry.js",
+  "icon": "shield-alert",
+  "ui": {
+    "renderMode": "federated"
+  },
+  "permissions": [
+    {
+      "code": "canal-denuncia.access",
+      "name": "Acessar Canal de Denúncia",
+      "description": "Permite acessar e enviar denúncias anônimas.",
+      "module": "canal-denuncia"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/canal-denuncia",
+      "label": "Canal de Denúncia",
+      "icon": "shield-alert",
+      "permission": "canal-denuncia.access",
+      "showInMenu": true,
+      "order": 90
+    }
+  ]
+}

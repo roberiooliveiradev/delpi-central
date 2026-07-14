@@ -9,6 +9,8 @@ def test_core_permissions_are_stable_strings() -> None:
     assert perms.AUDITORIA_5S_ADMIN_FILIAL_02 == "auditoria-5s.admin.filial-02"
     assert perms.AUDITORIA_5S_ADMIN_FILIAL_01 in perms.AUDIT_5S_ADMIN_PERMISSIONS
     assert perms.AUDIT_5S_BRANCH_ADMIN_PERMS["02"] == perms.AUDITORIA_5S_ADMIN_FILIAL_02
+    assert perms.CANAL_DENUNCIA_ACCESS == "canal-denuncia.access"
+    assert perms.CANAL_DENUNCIA_SUBMIT_PERMISSIONS == [perms.CANAL_DENUNCIA_ACCESS]
 
 
 def test_kpi_access_lists_include_api_delpi_access() -> None:
