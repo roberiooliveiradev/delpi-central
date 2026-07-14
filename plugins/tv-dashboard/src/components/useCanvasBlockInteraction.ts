@@ -14,6 +14,8 @@ import {
   type ComunicadoFrame,
 } from "@delpi/tv-dashboard-presentation";
 
+import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
+
 export type BlockDragMode =
   | "move"
   | "rotate"
@@ -75,57 +77,6 @@ function parseAdjustIndex(mode: BlockDragMode): number | null {
   if (!isAdjustMode(mode)) return null;
   const index = Number(mode.slice("adjust-".length));
   return Number.isFinite(index) ? index : null;
-}
-
-function resizeFrame(
-  frame: ComunicadoFrame,
-  dx: number,
-  dy: number,
-  mode: BlockDragMode,
-  aspectRatio: number,
-  lockAspect: boolean,
-): ComunicadoFrame {
-  let next: ComunicadoFrame;
-  switch (mode) {
-    case "resize-se":
-      next = { ...frame, w: frame.w + dx, h: frame.h + dy };
-      break;
-    case "resize-e":
-      next = { ...frame, w: frame.w + dx };
-      break;
-    case "resize-s":
-      next = { ...frame, h: frame.h + dy };
-      break;
-    case "resize-n":
-      next = { ...frame, y: frame.y + dy, h: frame.h - dy };
-      break;
-    case "resize-w":
-      next = { ...frame, x: frame.x + dx, w: frame.w - dx };
-      break;
-    case "resize-ne":
-      next = { ...frame, y: frame.y + dy, w: frame.w + dx, h: frame.h - dy };
-      break;
-    case "resize-nw":
-      next = { ...frame, x: frame.x + dx, y: frame.y + dy, w: frame.w - dx, h: frame.h - dy };
-      break;
-    case "resize-sw":
-      next = { ...frame, x: frame.x + dx, w: frame.w - dx, h: frame.h + dy };
-      break;
-    default:
-      return frame;
-  }
-
-  if (!lockAspect || aspectRatio <= 0) {
-    return next;
-  }
-
-  const dominant = Math.abs(dx) >= Math.abs(dy) ? "w" : "h";
-  if (dominant === "w") {
-    next.h = next.w / aspectRatio;
-  } else {
-    next.w = next.h * aspectRatio;
-  }
-  return next;
 }
 
 function normalizeRotation(value: number): number {
@@ -242,7 +193,7 @@ export function useCanvasBlockInteraction({
       drag.blockId,
       clampDragFrame(
         drag.blockId,
-        resizeFrame(frame, dx, dy, drag.mode, drag.aspectRatio, lockAspect),
+        resizeFrameWithOptionalAspect(frame, dx, dy, drag.mode, drag.aspectRatio, lockAspect),
       ),
     );
   };

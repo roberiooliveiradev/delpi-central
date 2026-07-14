@@ -15,7 +15,6 @@ import {
   isComunicadoVisualBoxBlock,
   mergeComunicadoChartOptions,
   partsToChartOptions,
-  resizeChartPartFrame,
   resolveChartPartFrameRoot,
   scaleChartPartTypographyOnResize,
   scaleKpiPartTypographyOnResize,
@@ -33,7 +32,6 @@ import {
   kpiPartCornerAdjFromLocalX,
   materializeMissingKpiPartFramesFromRoot,
   partsToKpiOptions,
-  resizeKpiPartFrame,
   resolveKpiPartFrameRoot,
   upsertKpiPartState,
   type ComunicadoBlock,
@@ -50,6 +48,8 @@ import {
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+
+import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { resolveCompositePartPointerAction } from "../utils/compositePartSelection";
@@ -280,8 +280,9 @@ function EditorChartViewBlock({
       /** Tipografia pré-resize — base fixa para não acumular fator a cada move. */
       const originParts = block.chartParts;
       const originSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
+      const aspectRatio = originSize.w / Math.max(originSize.h, 0.1);
 
-      const applyLive = (nextFrame: ReturnType<typeof resizeChartPartFrame>) => {
+      const applyLive = (nextFrame: ReturnType<typeof clampChartPartFrame>) => {
         let nextParts = upsertChartPartState(originParts, ref, { frame: nextFrame });
         nextParts = scaleChartPartTypographyOnResize(nextParts, ref, originSize, {
           w: nextFrame.w ?? originSize.w,
@@ -293,7 +294,15 @@ function EditorChartViewBlock({
       const onMove = (ev: PointerEvent) => {
         const dx = ((ev.clientX - startClientX) / Math.max(rect.width, 1)) * 100;
         const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
-        applyLive(resizeChartPartFrame(origin, handle, dx, dy));
+        const next = resizeFrameWithOptionalAspect(
+          { x: origin.x, y: origin.y, w: originSize.w, h: originSize.h },
+          dx,
+          dy,
+          handle,
+          aspectRatio,
+          ev.shiftKey,
+        );
+        applyLive(clampChartPartFrame(next));
       };
 
       const onUp = () => {
@@ -585,9 +594,10 @@ function EditorKpiViewBlock({
       const startClientY = event.clientY;
       const originParts = lastParts;
       const originSize = { w: origin.w ?? 20, h: origin.h ?? 20 };
+      const aspectRatio = originSize.w / Math.max(originSize.h, 0.1);
       let resized = false;
 
-      const applyLive = (nextFrame: ReturnType<typeof resizeKpiPartFrame>) => {
+      const applyLive = (nextFrame: ReturnType<typeof clampKpiPartFrame>) => {
         let nextParts = upsertKpiPartState(originParts, ref, { frame: nextFrame });
         nextParts = scaleKpiPartTypographyOnResize(nextParts, ref, originSize, {
           w: nextFrame.w ?? originSize.w,
@@ -601,7 +611,15 @@ function EditorKpiViewBlock({
         const dy = ((ev.clientY - startClientY) / Math.max(rect.height, 1)) * 100;
         if (!resized && Math.abs(dx) + Math.abs(dy) < 0.15) return;
         resized = true;
-        applyLive(resizeKpiPartFrame(origin, handle, dx, dy));
+        const next = resizeFrameWithOptionalAspect(
+          { x: origin.x, y: origin.y, w: originSize.w, h: originSize.h },
+          dx,
+          dy,
+          handle,
+          aspectRatio,
+          ev.shiftKey,
+        );
+        applyLive(clampKpiPartFrame(next));
       };
 
       const onUp = () => {
