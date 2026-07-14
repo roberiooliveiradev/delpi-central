@@ -71,7 +71,12 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
  * O tamanho exibido vem de `resolveSelectedTextFormatTarget` (defaults canônicos
  * por bloco/parte). Evita default fantasma 16 que não bate com o CSS do gráfico.
  */
-export function FormatRibbonTypographySections() {
+export function FormatRibbonTypographySections({
+  embed = false,
+}: {
+  /** Painel: legendas Fonte/Efeitos/Parágrafo acima, sem estilo ribbon abaixo. */
+  embed?: boolean;
+} = {}) {
   const {
     selected,
     config,
@@ -92,6 +97,7 @@ export function FormatRibbonTypographySections() {
     uploadCustomFont,
     uploading,
   } = useComunicadoEditor();
+  const captionPlacement = embed ? "above" : "below";
   const fontUploadInputRef = useRef<HTMLInputElement>(null);
   const fontFamilySelectOptions = useMemo(
     () =>
@@ -226,6 +232,7 @@ export function FormatRibbonTypographySections() {
       <DeckRibbonGroup
         label={textFormatTarget.mode === "part" ? `Fonte · ${textFormatTarget.partLabel}` : "Fonte"}
         hint={H.font}
+        captionPlacement={captionPlacement}
       >
         <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
           <div className="td-deck-ribbon__toolbar-row">
@@ -439,7 +446,7 @@ export function FormatRibbonTypographySections() {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Efeitos" hint={H.textEffects}>
+      <DeckRibbonGroup label="Efeitos" hint={H.textEffects} captionPlacement={captionPlacement}>
         <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
           <div className="td-deck-ribbon__toolbar-row">
             <TvRibbonColorPicker
@@ -532,7 +539,7 @@ export function FormatRibbonTypographySections() {
       </DeckRibbonGroup>
 
       {showParagraphAlign ? (
-        <DeckRibbonGroup label="Parágrafo" hint={H.paragraph}>
+        <DeckRibbonGroup label="Parágrafo" hint={H.paragraph} captionPlacement={captionPlacement}>
           <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack">
             <div className="td-deck-ribbon__toolbar-row" role="group" aria-label="Alinhamento horizontal">
               {(

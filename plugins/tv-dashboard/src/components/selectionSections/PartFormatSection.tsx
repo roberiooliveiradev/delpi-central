@@ -11,7 +11,7 @@ import { PartSelectionNav } from "../ComunicadoPartFormatRibbon";
 import { ChartRibbonShapeChrome } from "../formatRibbon/ChartRibbonShapeChrome";
 import { TableRibbonShapeChrome } from "../formatRibbon/TableRibbonShapeChrome";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 /**
@@ -59,7 +59,7 @@ export function PartFormatSection({ layout }: { layout: SelectionSectionLayout }
 
   if (layout === "pane") {
     return (
-      <DeckPropertySection
+      <SelectionPaneSection
         title={`Parte · ${chromeMode.partLabel}`}
         hint={`Controles desta parte do ${chromeMode.parentLabel.toLowerCase()}.`}
         defaultOpen
@@ -68,7 +68,7 @@ export function PartFormatSection({ layout }: { layout: SelectionSectionLayout }
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {chromeBody}
         </div>
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
 

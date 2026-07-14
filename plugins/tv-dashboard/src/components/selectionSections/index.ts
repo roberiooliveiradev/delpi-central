@@ -16,6 +16,7 @@ export {
   withCommonTail,
 } from "./commonSectionPresets";
 export { SelectionSectionsHost } from "./SelectionSectionsHost";
+export { SelectionPaneSection } from "./SelectionPaneSection";
 export {
   SelectionCommonTailHost,
   SelectionFrameHost,

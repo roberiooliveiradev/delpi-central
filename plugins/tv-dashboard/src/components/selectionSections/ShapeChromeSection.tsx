@@ -16,10 +16,10 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { DeckRangeField } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { ShapeAdjustmentsControl } from "../ShapeAdjustmentsControl";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -107,13 +107,13 @@ export function ShapeChromeSection({ layout }: { layout: SelectionSectionLayout 
     return (
       <>
         <div id="td-shape-pane-fill-line">
-          <DeckPropertySection title="Preenchimento e linha" defaultOpen>
+          <SelectionPaneSection title="Preenchimento e linha" defaultOpen>
             {fillMenus}
             {strokeMenus}
-          </DeckPropertySection>
+          </SelectionPaneSection>
         </div>
         <div id="td-shape-pane-effects">
-          <DeckPropertySection title="Efeitos" defaultOpen={false}>
+          <SelectionPaneSection title="Efeitos" defaultOpen={false}>
             <ShapeShadowMenu
               value={block.style?.boxShadow}
               presets={SHADOW_MENU_PRESETS}
@@ -132,10 +132,10 @@ export function ShapeChromeSection({ layout }: { layout: SelectionSectionLayout 
                 }
               />
             </div>
-          </DeckPropertySection>
+          </SelectionPaneSection>
         </div>
         {showShapeAdjustments ? (
-          <DeckPropertySection title="Ajustes da forma" defaultOpen={false}>
+          <SelectionPaneSection title="Ajustes da forma" defaultOpen={false}>
             <ShapeAdjustmentsControl
               kind={block.shape}
               style={block.style}
@@ -143,10 +143,10 @@ export function ShapeChromeSection({ layout }: { layout: SelectionSectionLayout 
               variant="inspector"
               idPrefix="td-frame-shape-adj"
             />
-          </DeckPropertySection>
+          </SelectionPaneSection>
         ) : null}
         {primitive === "point" ? (
-          <DeckPropertySection title="Marcador" hint={H.shapeSize} defaultOpen={false}>
+          <SelectionPaneSection title="Marcador" hint={H.shapeSize} defaultOpen={false}>
             <DeckRangeField
               id="td-shape-marker-radius"
               label="Raio px"
@@ -160,7 +160,7 @@ export function ShapeChromeSection({ layout }: { layout: SelectionSectionLayout 
                 updateSelectedStyle({ markerRadius: Math.max(2, Math.min(48, value || 8)) })
               }
             />
-          </DeckPropertySection>
+          </SelectionPaneSection>
         ) : null}
       </>
     );

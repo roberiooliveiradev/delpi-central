@@ -1,10 +1,10 @@
 import { canConnectBlocks } from "@delpi/tv-dashboard-presentation";
 
 import { selectedHasGroup } from "../../utils/comunicadoGrouping";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { FormatRibbonAlignSection } from "../FormatRibbonAlignSection";
 import { FormatRibbonOrganizeSection } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 type Labels = Record<string, string>;
@@ -19,11 +19,11 @@ export function OrganizeSection({
 }) {
   if (layout === "pane") {
     return (
-      <DeckPropertySection title="Organizar" defaultOpen={false}>
+      <SelectionPaneSection title="Organizar" defaultOpen={false}>
         <div className="td-selection-section td-selection-section--pane-organize">
-          <FormatRibbonOrganizeSection labels={labels} />
+          <FormatRibbonOrganizeSection labels={labels} embed />
         </div>
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
   return <FormatRibbonOrganizeSection labels={labels} />;
@@ -66,9 +66,9 @@ export function AlignMultiSection({ layout }: { layout: SelectionSectionLayout }
 
   if (layout === "pane") {
     return (
-      <DeckPropertySection title="Alinhar" defaultOpen>
+      <SelectionPaneSection title="Alinhar" defaultOpen>
         {body}
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
   return body;

@@ -93,9 +93,13 @@ export { patchComunicadoFrame };
  */
 export function FormatRibbonFrameSection({
   density = "compact",
+  embed = false,
 }: {
   density?: FrameFieldDensity;
+  /** Painel: omite caption do ribbon (accordion já titulou). */
+  embed?: boolean;
 } = {}) {
+  const captionPlacement = embed ? ("none" as const) : ("below" as const);
   const {
     selected,
     selectedIds,
@@ -186,6 +190,7 @@ export function FormatRibbonFrameSection({
       <DeckRibbonGroup
         label="Posição e tamanho"
         hint="Posição absoluta na página (px de design), origem no canto inferior esquerdo."
+        captionPlacement={captionPlacement}
       >
         {!explicitFrame ? (
           <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -295,6 +300,7 @@ export function FormatRibbonFrameSection({
       <DeckRibbonGroup
         label="Posição e tamanho"
         hint="Posição absoluta na página (px de design), origem no canto inferior esquerdo."
+        captionPlacement={captionPlacement}
       >
         {!explicitFrame ? (
           <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -390,7 +396,11 @@ export function FormatRibbonFrameSection({
     };
 
     return (
-      <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
+      <DeckRibbonGroup
+        label="Posição e tamanho"
+        hint={E.position ?? H.shapeSize}
+        captionPlacement={captionPlacement}
+      >
         <div className="td-deck-ribbon__frame-grid">
           {frameKeys.map((key) => (
             <FrameRangeField
@@ -460,7 +470,11 @@ export function FormatRibbonFrameSection({
     key === "x" || key === "w" ? design.width : design.height;
 
   return (
-    <DeckRibbonGroup label="Posição e tamanho" hint={E.position ?? H.shapeSize}>
+    <DeckRibbonGroup
+      label="Posição e tamanho"
+      hint={E.position ?? H.shapeSize}
+      captionPlacement={captionPlacement}
+    >
       <div className="td-deck-ribbon__frame-grid">
         {frameKeys.map((key) => (
           <FrameRangeField

@@ -1,6 +1,6 @@
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 /** Fonte de dados: atalho para a aba Dados (conteúdo completo fica lá). */
@@ -22,9 +22,9 @@ export function DataSourceHintSection({ layout }: { layout: SelectionSectionLayo
 
   if (layout === "pane") {
     return (
-      <DeckPropertySection title="Elementos" defaultOpen>
+      <SelectionPaneSection title="Elementos" defaultOpen>
         {body}
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
 

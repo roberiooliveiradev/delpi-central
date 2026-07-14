@@ -12,9 +12,9 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { rememberComunicadoShape } from "../../utils/comunicadoRecentShapes";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ComunicadoShapeLibraryMenu } from "../ComunicadoShapeLibraryMenu";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -74,9 +74,9 @@ export function ShapeGallerySection({ layout }: { layout: SelectionSectionLayout
 
   if (layout === "pane") {
     return (
-      <DeckPropertySection title="Formas" hint={H.shapeChange} defaultOpen={false}>
+      <SelectionPaneSection title="Formas" hint={H.shapeChange} defaultOpen={false}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">{body}</div>
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
 

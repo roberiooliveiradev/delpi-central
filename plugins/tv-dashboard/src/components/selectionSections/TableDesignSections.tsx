@@ -33,9 +33,9 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -180,9 +180,9 @@ function wrapPane(
 ) {
   if (layout === "pane") {
     return (
-      <DeckPropertySection title={title} hint={hint} defaultOpen={false}>
+      <SelectionPaneSection title={title} hint={hint} defaultOpen={false}>
         {body}
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
   return (
@@ -251,12 +251,16 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
   if (layout === "pane") {
     return (
       <>
-        <DeckPropertySection title="Estilos de tabela" hint={H.tableStyles} defaultOpen>
+        <SelectionPaneSection title="Estilos de tabela" hint={H.tableStyles} defaultOpen>
           {gallery}
-        </DeckPropertySection>
-        <DeckPropertySection title="Sombreamento" hint="Cor de fundo do cabeçalho ou das células." defaultOpen={false}>
+        </SelectionPaneSection>
+        <SelectionPaneSection
+          title="Sombreamento"
+          hint="Cor de fundo do cabeçalho ou das células."
+          defaultOpen={false}
+        >
           {shade}
-        </DeckPropertySection>
+        </SelectionPaneSection>
       </>
     );
   }
@@ -360,19 +364,19 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
   if (layout === "pane") {
     return (
       <>
-        <DeckPropertySection
+        <SelectionPaneSection
           title="Bordas"
           hint="Visibilidade, cor, peso e estilo da grade (caneta)."
           defaultOpen={false}
         >
           {borders}
-        </DeckPropertySection>
-        <DeckPropertySection title="Efeitos" hint="Sombra da moldura da tabela." defaultOpen={false}>
+        </SelectionPaneSection>
+        <SelectionPaneSection title="Efeitos" hint="Sombra da moldura da tabela." defaultOpen={false}>
           {effects}
-        </DeckPropertySection>
-        <DeckPropertySection title="Forma e dados" defaultOpen={false}>
+        </SelectionPaneSection>
+        <SelectionPaneSection title="Forma e dados" defaultOpen={false}>
           {shortcuts}
-        </DeckPropertySection>
+        </SelectionPaneSection>
       </>
     );
   }

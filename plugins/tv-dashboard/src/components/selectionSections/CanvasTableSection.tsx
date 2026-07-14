@@ -3,8 +3,8 @@ import { normalizeCanvasTableCells } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckField } from "../deck/DeckField";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 /** Tabela canvas — linhas/colunas/cabeçalho. */
@@ -57,11 +57,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
   );
 
   if (layout === "pane") {
-    return (
-      <DeckPropertySection title="Tabela (canvas)" defaultOpen>
-        {body}
-      </DeckPropertySection>
-    );
+    return <SelectionPaneSection title="Tabela (canvas)" defaultOpen>{body}</SelectionPaneSection>;
   }
 
   return <DeckRibbonGroup label="Tabela (canvas)">{body}</DeckRibbonGroup>;

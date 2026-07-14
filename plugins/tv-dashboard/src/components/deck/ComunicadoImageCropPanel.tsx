@@ -20,7 +20,7 @@ const CROP_KEYS: Array<{ key: keyof ComunicadoImageCrop; label: string; max: num
   { key: "h", label: "Altura visível %", max: 100 },
 ];
 
-export function ComunicadoImageCropPanel() {
+export function ComunicadoImageCropPanel({ pane = true }: { pane?: boolean } = {}) {
   const { selected, updateSelected } = useComunicadoEditor();
   if (!selected || selected.type !== "image" || !selected.url) return null;
 
@@ -37,7 +37,7 @@ export function ComunicadoImageCropPanel() {
   }
 
   return (
-    <DeckPropertySection title="Recorte da imagem" hint={E.uploadMedia}>
+    <DeckPropertySection pane={pane} title="Recorte da imagem" hint={E.uploadMedia} defaultOpen={false}>
       <div className="td-deck-frame-grid">
         {CROP_KEYS.map(({ key, label, max }) => (
           <DeckField key={key} id={`td-crop-${key}`} label={label} className="td-field--compact">

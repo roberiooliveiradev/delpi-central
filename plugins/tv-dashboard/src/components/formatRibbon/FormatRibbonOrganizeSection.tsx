@@ -35,7 +35,14 @@ function clampOpacity(value: number): number {
 }
 
 /** Organizar / opacidade — borda/contorno, sombra e raio ficam em Aparência e Posição e tamanho. */
-export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }) {
+export function FormatRibbonOrganizeSection({
+  labels = {},
+  embed = false,
+}: {
+  labels?: Labels;
+  /** Painel: omite caption do ribbon (accordion já titulou). */
+  embed?: boolean;
+}) {
   const {
     selected,
     selectedKpiPart,
@@ -112,7 +119,11 @@ export function FormatRibbonOrganizeSection({ labels = {} }: { labels?: Labels }
   };
 
   return (
-    <DeckRibbonGroup label="Organizar" hint={H.organize}>
+    <DeckRibbonGroup
+      label="Organizar"
+      hint={H.organize}
+      captionPlacement={embed ? "none" : "below"}
+    >
       <div className="td-deck-ribbon__organize">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <ShortcutTip shortcutId="duplicate">

@@ -3,9 +3,9 @@ import { HintAction } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
@@ -23,7 +23,7 @@ export function MediaSection({
 
   if (layout === "pane") {
     return (
-      <DeckPropertySection title="Mídia" hint={E.uploadMedia} defaultOpen>
+      <SelectionPaneSection title="Mídia" hint={E.uploadMedia} defaultOpen>
         <div className="td-deck-inspector__actions">
           <HintAction hint={E.uploadMedia} ariaLabel="Ajuda: biblioteca de mídia">
             <button
@@ -47,7 +47,7 @@ export function MediaSection({
             </button>
           </HintAction>
         </div>
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
 

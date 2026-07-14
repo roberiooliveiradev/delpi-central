@@ -6483,25 +6483,63 @@ body.td-composer--marqueeing * {
   margin-top: 8px;
 }
 
-/* Host de seções Elemento no painel — ribbon groups empilhados no accordion. */
+/* Host de seções Elemento no painel — accordion + grupo ribbon embutido. */
 .dashboard-tv-dashboard .td-selection-sections--pane {
   display: flex;
   flex-direction: column;
   gap: 0;
 }
 
+.dashboard-tv-dashboard .td-selection-sections--pane .td-deck-ribbon__group,
 .dashboard-tv-dashboard .td-selection-section--pane-typography .td-deck-ribbon__group,
 .dashboard-tv-dashboard .td-selection-section--pane-text-box .td-deck-ribbon__group,
 .dashboard-tv-dashboard .td-selection-section--pane-frame .td-deck-ribbon__group,
 .dashboard-tv-dashboard .td-selection-section--pane-organize .td-deck-ribbon__group {
   min-width: 0;
   width: 100%;
+  flex: none;
+  border-inline-end: none;
+  padding-inline: 0;
 }
 
 .dashboard-tv-dashboard .td-selection-section--pane-typography {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+}
+
+.dashboard-tv-dashboard .td-selection-sections--pane .td-deck-ribbon__caption--above,
+.dashboard-tv-dashboard .td-selection-section--pane-typography .td-deck-ribbon__caption--above {
+  justify-content: flex-start;
+  padding: 0 0 4px;
+  border-block-start: none;
+  border-block-end: 1px solid color-mix(in srgb, var(--td-border, #334155) 70%, transparent);
+  margin-block-end: 6px;
+}
+
+.dashboard-tv-dashboard .td-selection-sections--pane .td-deck-ribbon__caption--above .td-deck-ribbon__caption-text,
+.dashboard-tv-dashboard .td-selection-section--pane-typography .td-deck-ribbon__caption--above .td-deck-ribbon__caption-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.85;
+}
+
+.dashboard-tv-dashboard .td-selection-sections--pane .td-deck-ribbon__group--no-caption .td-deck-ribbon__body,
+.dashboard-tv-dashboard .td-selection-section--pane-frame .td-deck-ribbon__body,
+.dashboard-tv-dashboard .td-selection-section--pane-organize .td-deck-ribbon__body,
+.dashboard-tv-dashboard .td-selection-section--pane-text-box .td-deck-ribbon__body {
+  width: 100%;
+}
+
+.dashboard-tv-dashboard .td-selection-section--pane-frame .td-deck-ribbon__frame-grid {
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-tv-dashboard .td-selection-section--pane-organize .td-deck-ribbon__organize {
+  width: 100%;
 }
 
 @media (max-width: 1100px) {

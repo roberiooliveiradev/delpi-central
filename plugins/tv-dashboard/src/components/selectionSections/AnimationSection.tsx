@@ -17,13 +17,13 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckField } from "../deck/DeckField";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 /**
- * Animação de entrada — painel (ribbon omite para manter faixa compacta).
+ * Animação de entrada — painel colapsável (ribbon omite).
  */
 export function AnimationSection({ layout }: { layout: SelectionSectionLayout }) {
   const { selected, selectedIds, updateSelected } = useComunicadoEditor();
@@ -33,7 +33,7 @@ export function AnimationSection({ layout }: { layout: SelectionSectionLayout })
   const entrance = resolveEntranceAnimation(selected.animations);
 
   return (
-    <DeckPropertySection title="Animação de entrada" hint={E.entranceAnimation} defaultOpen={false}>
+    <SelectionPaneSection title="Animação de entrada" hint={E.entranceAnimation} defaultOpen={false}>
       <DeckField id="td-entrance-kind" label="Efeito" hint={E.entranceAnimation}>
         <FormSelectControl
           id="td-entrance-kind"
@@ -98,6 +98,6 @@ export function AnimationSection({ layout }: { layout: SelectionSectionLayout })
           </DeckField>
         </>
       ) : null}
-    </DeckPropertySection>
+    </SelectionPaneSection>
   );
 }

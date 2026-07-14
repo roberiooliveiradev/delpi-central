@@ -40,10 +40,10 @@ import { ChartAddElementMenu } from "../ChartAddElementMenu";
 import { ChartChangeTypeDialog } from "../ChartChangeTypeDialog";
 import { ChartColorsStylesMenu } from "../ChartColorsStylesMenu";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
-import { DeckPropertySection } from "../deck/DeckPropertySection";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonLargeButton } from "../deck/DeckRibbonLargeButton";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -57,9 +57,9 @@ function wrapPane(
 ) {
   if (layout === "pane") {
     return (
-      <DeckPropertySection title={title} hint={hint} defaultOpen={false}>
+      <SelectionPaneSection title={title} hint={hint} defaultOpen={false}>
         {body}
-      </DeckPropertySection>
+      </SelectionPaneSection>
     );
   }
   return (
@@ -323,12 +323,16 @@ export function ChartStylesSection({ layout }: { layout: SelectionSectionLayout 
   if (layout === "pane") {
     return (
       <>
-        <DeckPropertySection title="Estilos" hint="Cores da série e presets de tema/grade." defaultOpen={false}>
+        <SelectionPaneSection
+          title="Estilos"
+          hint="Cores da série e presets de tema/grade."
+          defaultOpen={false}
+        >
           {styles}
-        </DeckPropertySection>
-        <DeckPropertySection title="Dados" hint={H.chartData} defaultOpen={false}>
+        </SelectionPaneSection>
+        <SelectionPaneSection title="Dados" hint={H.chartData} defaultOpen={false}>
           {data}
-        </DeckPropertySection>
+        </SelectionPaneSection>
       </>
     );
   }
