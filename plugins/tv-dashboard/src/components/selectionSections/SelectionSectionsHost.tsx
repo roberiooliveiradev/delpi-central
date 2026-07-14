@@ -27,6 +27,11 @@ import {
   TableStyleOptionsSection,
   TableStylesSection,
 } from "./TableDesignSections";
+import {
+  TableLayoutAlignSection,
+  TableLayoutDataSection,
+  TableLayoutDisplaySection,
+} from "./TableLayoutSections";
 import { TextBoxSection } from "./TextBoxSection";
 import { TypographySection } from "./TypographySection";
 import {
@@ -72,6 +77,12 @@ function renderSection(
       return <TableStylesSection key={id} layout={layout} />;
     case "tableBorders":
       return <TableBordersSection key={id} layout={layout} />;
+    case "tableLayoutData":
+      return <TableLayoutDataSection key={id} layout={layout} />;
+    case "tableLayoutDisplay":
+      return <TableLayoutDisplaySection key={id} layout={layout} />;
+    case "tableLayoutAlign":
+      return <TableLayoutAlignSection key={id} layout={layout} />;
     case "chartLayout":
       return <ChartLayoutSection key={id} layout={layout} />;
     case "chartStyles":

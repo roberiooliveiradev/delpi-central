@@ -169,7 +169,7 @@ describe("resolveSelectionSections", () => {
     ]);
   });
 
-  it("tabela tipada: opções + estilos + bordas + frame", () => {
+  it("tabela tipada: design + layout + frame", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -184,6 +184,9 @@ describe("resolveSelectionSections", () => {
       "tableStyleOptions",
       "tableStyles",
       "tableBorders",
+      "tableLayoutData",
+      "tableLayoutDisplay",
+      "tableLayoutAlign",
       "frame",
       "organize",
       "animation",
@@ -200,6 +203,9 @@ describe("resolveSelectionSections", () => {
       "tableStyleOptions",
       "tableStyles",
       "tableBorders",
+      "tableLayoutData",
+      "tableLayoutDisplay",
+      "tableLayoutAlign",
       "chartLayout",
       "chartStyles",
       "chartType",

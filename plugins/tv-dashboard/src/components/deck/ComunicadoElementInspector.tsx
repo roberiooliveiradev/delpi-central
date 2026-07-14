@@ -244,9 +244,16 @@ export function ComunicadoElementInspector({
           <SelectionTypedWithTailHost
             layout="pane"
             labels={labels}
-            typed={["tableStyleOptions", "tableStyles", "tableBorders"]}
+            typed={[
+              "tableStyleOptions",
+              "tableStyles",
+              "tableBorders",
+              "tableLayoutData",
+              "tableLayoutDisplay",
+              "tableLayoutAlign",
+            ]}
           />
-          <TableViewOptionsInspector pane={pane} omitDesignChrome />
+          <TableViewOptionsInspector pane={pane} omitDesignChrome omitCellAlign />
         </>
       ) : null}
 

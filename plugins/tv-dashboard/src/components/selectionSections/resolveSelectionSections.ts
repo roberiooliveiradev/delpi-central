@@ -18,9 +18,12 @@ export function resolveSelectionSections(
   ctx: SelectionSectionContext,
 ): SelectionSectionId[] {
   const { selected, selectedIds } = ctx;
-  if (!selected || selectedIds.length === 0) return [];
+  if (!selected) return [];
+  /* Seleção única sem ids (mocks / race) → trata o bloco selecionado. */
+  const ids =
+    selectedIds && selectedIds.length > 0 ? selectedIds : [selected.id];
 
-  if (selectedIds.length >= 2) {
+  if (ids.length >= 2) {
     return ["alignMulti", "organize"];
   }
 
@@ -81,7 +84,14 @@ export function resolveSelectionSections(
         "chartSeries",
       ]);
     case "table_view":
-      return withCommonTail(["tableStyleOptions", "tableStyles", "tableBorders"]);
+      return withCommonTail([
+        "tableStyleOptions",
+        "tableStyles",
+        "tableBorders",
+        "tableLayoutData",
+        "tableLayoutDisplay",
+        "tableLayoutAlign",
+      ]);
     default:
       if (isFetchableDataBlockType(selected.type) || selected.type === "data_source") {
         return withCommonTail(["dataSourceHint"], "light");
@@ -106,6 +116,9 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "tableStyleOptions",
   "tableStyles",
   "tableBorders",
+  "tableLayoutData",
+  "tableLayoutDisplay",
+  "tableLayoutAlign",
   "chartLayout",
   "chartStyles",
   "chartType",

@@ -36,6 +36,11 @@ export {
   TableStylesSection,
 } from "./TableDesignSections";
 export {
+  TableLayoutAlignSection,
+  TableLayoutDataSection,
+  TableLayoutDisplaySection,
+} from "./TableLayoutSections";
+export {
   ChartAxesSection,
   ChartLabelsSection,
   ChartLayoutSection,

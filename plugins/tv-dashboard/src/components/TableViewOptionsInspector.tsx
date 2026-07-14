@@ -33,6 +33,8 @@ type Props = {
   pane?: boolean;
   /** Quando true, omite elementos/aparência já cobertos pelo SelectionSectionsHost (Design). */
   omitDesignChrome?: boolean;
+  /** Quando true, omite alinhamento (já em tableLayoutAlign no host). */
+  omitCellAlign?: boolean;
 };
 
 const TABLE_PANE_ICONS = [
@@ -52,6 +54,7 @@ function updateTableOptions(
 export function TableViewOptionsInspector({
   pane = false,
   omitDesignChrome = false,
+  omitCellAlign = false,
 }: Props) {
   const { selected, selectedTablePart, selectTablePart, updateSelected } = useComunicadoEditor();
   const [paneIcon, setPaneIcon] = useState<(typeof TABLE_PANE_ICONS)[number]["id"]>(
@@ -135,8 +138,8 @@ export function TableViewOptionsInspector({
             </p>
           ) : (
             <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
-              Opções de estilo e bordas ficam acima (paridade com Design da Tabela). Aqui: células e
-              formato de valores.
+              Design e layout (incluindo alinhamento) ficam acima. Aqui: células e formato de
+              valores.
             </p>
           )}
 
@@ -196,20 +199,22 @@ export function TableViewOptionsInspector({
                   }))}
                 />
               </DeckField>
-              <DeckField id="td-table-text-align" label="Alinhamento">
-                <FormSelectControl
-                  id="td-table-text-align"
-                  ariaLabel="Alinhamento"
-                  value={options.textAlign ?? "left"}
-                  onChange={(value) =>
-                    setOptions({ textAlign: value as ComunicadoTableOptions["textAlign"] })
-                  }
-                  options={TABLE_TEXT_ALIGN_OPTIONS.map((entry) => ({
-                    value: entry.value,
-                    label: entry.label,
-                  }))}
-                />
-              </DeckField>
+              {!omitCellAlign ? (
+                <DeckField id="td-table-text-align" label="Alinhamento">
+                  <FormSelectControl
+                    id="td-table-text-align"
+                    ariaLabel="Alinhamento"
+                    value={options.textAlign ?? "left"}
+                    onChange={(value) =>
+                      setOptions({ textAlign: value as ComunicadoTableOptions["textAlign"] })
+                    }
+                    options={TABLE_TEXT_ALIGN_OPTIONS.map((entry) => ({
+                      value: entry.value,
+                      label: entry.label,
+                    }))}
+                  />
+                </DeckField>
+              ) : null}
               <DeckField id="td-table-font-size" label="Tamanho da fonte (px)">
                 <NativeTextControl
                   id="td-table-font-size"

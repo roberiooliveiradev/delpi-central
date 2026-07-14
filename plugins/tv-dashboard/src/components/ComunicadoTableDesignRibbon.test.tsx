@@ -25,6 +25,7 @@ const openDataPanel = vi.fn();
 vi.mock("./comunicadoEditorContext", () => ({
   useComunicadoEditor: () => ({
     selected: tableBlock,
+    selectedIds: [tableBlock.id],
     selectedTablePart: null,
     updateSelected,
     selectTablePart,
