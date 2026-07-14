@@ -841,6 +841,22 @@ services:
     networks:
       - delpi-network
 
+  canal-denuncia:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: canal-denuncia/Dockerfile
+      target: production
+
+    container_name: delpi-canal-denuncia
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     <<: *plugin-ui-federated
     build:
@@ -1026,6 +1042,14 @@ services:
       QUALITY_LABELS_QR_DIR: ${QUALITY_LABELS_QR_DIR:-/app/data/quality-labels/qr}
       QUALITY_LABELS_SIGNATURE_DIR: ${QUALITY_LABELS_SIGNATURE_DIR:-/app/data/quality-labels/signatures}
       QUALITY_LABELS_CERTIFICATE_DIR: ${QUALITY_LABELS_CERTIFICATE_DIR:-/app/data/quality-labels/certificates}
+
+      # Microsoft Graph — Canal de Denúncia
+      GRAPH_TENANT_ID: ${GRAPH_TENANT_ID:-}
+      GRAPH_CLIENT_ID: ${GRAPH_CLIENT_ID:-}
+      GRAPH_CLIENT_SECRET: ${GRAPH_CLIENT_SECRET:-}
+      GRAPH_MAIL_SENDER: ${GRAPH_MAIL_SENDER:-canal-denuncia@delpi.com.br}
+      GRAPH_MAIL_RECIPIENT: ${GRAPH_MAIL_RECIPIENT:-ouvidoria@delpi.com.br}
+      GRAPH_HTTP_TIMEOUT_SECONDS: ${GRAPH_HTTP_TIMEOUT_SECONDS:-15}
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
