@@ -348,6 +348,10 @@ export function ComunicadoShapeRibbon() {
       } as Partial<ComunicadoBlock>);
     };
 
+    const frameShadow =
+      getInputPartState(block.inputParts, { kind: "frame" })?.style?.boxShadow ??
+      block.style?.boxShadow;
+
     return shell(
       <DeckRibbonGroup label="Aparência" hint={H.shape}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
@@ -367,6 +371,22 @@ export function ComunicadoShapeRibbon() {
             onNoOutline={() => patchChromeStyle({ stroke: "transparent", strokeWidth: 0 })}
             onStrokeWidthChange={(width) => patchChromeStyle({ strokeWidth: width })}
           />
+          {isFrameChrome ? (
+            <ShapeShadowMenu
+              value={typeof frameShadow === "string" ? frameShadow : undefined}
+              presets={SHADOW_MENU_PRESETS}
+              shadowLabel="Sombra"
+              onChange={(boxShadow) => {
+                const nextShadow = boxShadow?.trim() ? boxShadow : undefined;
+                updateSelected({
+                  inputParts: upsertInputPartState(block.inputParts, { kind: "frame" }, {
+                    style: { boxShadow: nextShadow },
+                  }),
+                  style: { ...block.style, boxShadow: nextShadow },
+                } as Partial<ComunicadoBlock>);
+              }}
+            />
+          ) : null}
         </div>
       </DeckRibbonGroup>,
     );

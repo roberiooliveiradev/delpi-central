@@ -5,6 +5,7 @@ import {
   bindInputPartPointer,
   resolveInputBlockPaintCssVars,
   resolveInputContrastBackground,
+  resolveInputControlPaintCssVars,
   resolveInputPartFrame,
   clampInputPartFrame,
   resolveInputPartLayoutStyle,
@@ -29,9 +30,31 @@ describe("inputFilterParts paint vs fundo do bloco", () => {
     const vars = resolveInputBlockPaintCssVars("#ffffff");
     expect(vars["--tdp-input-surface" as keyof typeof vars]).toBe("#ffffff");
     expect(vars["--tdp-input-fg" as keyof typeof vars]).toBe("#000000");
-    expect(vars["--tdp-input-control-border" as keyof typeof vars]).toBe("#000000");
+    expect(vars["--tdp-input-border" as keyof typeof vars]).toBe(
+      vars["--tdp-input-muted" as keyof typeof vars],
+    );
     expect(vars["--tdp-block-box-shadow" as keyof typeof vars]).toBeTruthy();
     expect(vars.color).toBe("#000000");
+  });
+
+  it("control.style vira CSS vars da caixa nativa (fill/stroke)", () => {
+    const vars = resolveInputControlPaintCssVars({
+      style: { fill: "#fef3c7", stroke: "#b45309", strokeWidth: 2, borderRadius: 8 },
+    });
+    expect(vars["--tdp-input-control-surface" as keyof typeof vars]).toBe("#fef3c7");
+    expect(vars["--tdp-input-control-border" as keyof typeof vars]).toBe("#b45309");
+    expect(vars["--tdp-input-control-border-width" as keyof typeof vars]).toBe("2px");
+    expect(vars["--tdp-input-control-radius" as keyof typeof vars]).toBe("8px");
+  });
+
+  it("layout da parte control não pinta fill/stroke no host (só vars no nativo)", () => {
+    const css = resolveInputPartLayoutStyle(
+      { style: { fill: "#fef3c7", stroke: "#000", strokeWidth: 2 } },
+      { partKind: "control" },
+    );
+    expect(css.background).toBeUndefined();
+    expect(css.backgroundColor).toBeUndefined();
+    expect(css.border).toBeUndefined();
   });
 
   it("CSS vars resolvem fg claro em superfície escura", () => {

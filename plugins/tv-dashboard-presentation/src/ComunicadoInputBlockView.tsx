@@ -12,6 +12,7 @@ import {
   isInputPartVisible,
   inputPartAllowsResize,
   resolveInputBlockPaintCssVars,
+  resolveInputControlPaintCssVars,
   resolveInputContrastBackground,
   resolveInputFrameStateWithDefaults,
   resolveInputIconBoxStyle,
@@ -206,7 +207,9 @@ export function ComunicadoInputBlockView({
   let controlNode: ReactNode = null;
   if (unavailable) {
     controlNode = (
-      <span className="tdp-comunicado__input-block-unavailable">Parâmetro indisponível</span>
+      <span className="tdp-comunicado__input-block-unavailable">
+        Selecione o parâmetro no inspetor
+      </span>
     );
   } else if (interactive) {
     const controlPointerStyle: CSSProperties | undefined = controlValueInteractive
@@ -410,6 +413,7 @@ export function ComunicadoInputBlockView({
               partKind: "control",
               contrastBackground,
             }),
+            ...resolveInputControlPaintCssVars(controlState),
             fontSize: `${controlFont}px`,
           }}
           {...{ [INPUT_PART_DATA_ATTR]: "control" }}

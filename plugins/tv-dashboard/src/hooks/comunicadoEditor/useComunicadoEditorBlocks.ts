@@ -51,6 +51,7 @@ import {
   type ComunicadoDataDisplayMode,
   type ComunicadoDataFilters,
   type ComunicadoInputBlock,
+  type ComunicadoInputPartRef,
   type ComunicadoKpiPartRef,
   type ComunicadoShapeKind,
   type ComunicadoTablePartRef,
@@ -92,6 +93,7 @@ type Options = {
   selectedChartPart: ComunicadoChartPartRef | null;
   selectedTablePart: ComunicadoTablePartRef | null;
   selectedKpiPart: ComunicadoKpiPartRef | null;
+  selectedInputPart: ComunicadoInputPartRef | null;
   editingChartPart: ComunicadoChartPartRef | null;
   editingKpiPart: ComunicadoKpiPartRef | null;
   setSelectedId: (id: string | null) => void;
@@ -131,6 +133,7 @@ export function useComunicadoEditorBlocks({
   selectedChartPart,
   selectedTablePart,
   selectedKpiPart,
+  selectedInputPart,
   editingChartPart,
   editingKpiPart,
   setSelectedId,
@@ -319,6 +322,7 @@ export function useComunicadoEditorBlocks({
   /**
    * Atualiza bloco `input` e, se alvo = slide, espelha defaultValue em dataFilters
    * no mesmo commit (evita corrida updateSelected → setDataFilters).
+   * Trocar/limpar paramKey remove a chave antiga de dataFilters.
    */
   const patchInputBlock = useCallback(
     (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => {
@@ -326,15 +330,22 @@ export function useComunicadoEditorBlocks({
       let nextFilters = current.dataFilters;
       const nextBlocks = (current.blocks ?? []).map((item) => {
         if (item.id !== blockId || item.type !== "input") return item;
+        const prevKey = String(item.input?.paramKey || "").trim();
         const nextInput = { ...item.input, ...inputPatch };
+        const nextKey = String(nextInput.paramKey || "").trim();
         const scope = nextInput.targetScope === "sources" ? "sources" : "slide";
-        if (scope === "slide" && nextInput.paramKey) {
+        if (scope === "slide") {
           const filters = { ...(current.dataFilters ?? {}) };
-          const value = nextInput.defaultValue;
-          if (value === undefined || value === null || value === "") {
-            delete filters[nextInput.paramKey];
-          } else {
-            filters[nextInput.paramKey] = value;
+          if (prevKey && prevKey !== nextKey) {
+            delete filters[prevKey];
+          }
+          if (nextKey) {
+            const value = nextInput.defaultValue;
+            if (value === undefined || value === null || value === "") {
+              delete filters[nextKey];
+            } else {
+              filters[nextKey] = value;
+            }
           }
           nextFilters = Object.keys(filters).length > 0 ? filters : undefined;
         }
@@ -529,11 +540,15 @@ export function useComunicadoEditorBlocks({
       if (targets.length === 0) return;
       const idSet = new Set(targets.map((block) => block.id));
       const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
-        idSet.has(block.id) ? applyComunicadoBlockStylePatch(block, patch) : block,
+        idSet.has(block.id)
+          ? applyComunicadoBlockStylePatch(block, patch, {
+              selectedInputPart: block.type === "input" ? selectedInputPart : null,
+            })
+          : block,
       );
       updateBlocks(nextBlocks);
     },
-    [configRef, selected, selectedBlocks, updateBlocks],
+    [configRef, selected, selectedBlocks, selectedInputPart, updateBlocks],
   );
 
   /** Tipografia da ribbon Formatar — bloco text/heading ou parte textual KPI/chart. */

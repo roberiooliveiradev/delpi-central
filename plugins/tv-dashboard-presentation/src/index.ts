@@ -535,6 +535,7 @@ export {
   parseInputPartRef,
   resizeInputPartFrame,
   resolveInputBlockPaintCssVars,
+  resolveInputControlPaintCssVars,
   resolveInputContrastBackground,
   resolveInputFrameStateWithDefaults,
   resolveInputIconBoxStyle,

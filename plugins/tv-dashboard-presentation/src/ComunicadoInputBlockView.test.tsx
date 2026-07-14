@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   ComunicadoInputBlockView,
@@ -77,7 +77,7 @@ describe("ComunicadoInputBlockView", () => {
     ).toBeTruthy();
   });
 
-  it("sem paramKey mostra indisponível; com paramKey e schema ausente ainda edita", () => {
+  it("sem paramKey pede seleção no inspetor; com paramKey e schema ausente ainda edita", () => {
     const { rerender, container } = render(
       <ComunicadoInputBlockView
         block={makeBlock({ paramKey: "", targetScope: "slide" })}
@@ -85,7 +85,7 @@ describe("ComunicadoInputBlockView", () => {
         paramAvailable={false}
       />,
     );
-    expect(screen.getByText("Parâmetro indisponível")).toBeTruthy();
+    expect(screen.getByText("Selecione o parâmetro no inspetor")).toBeTruthy();
 
     rerender(
       <ComunicadoInputBlockView
@@ -98,9 +98,34 @@ describe("ComunicadoInputBlockView", () => {
         paramAvailable={false}
       />,
     );
-    expect(screen.queryByText("Parâmetro indisponível")).toBeNull();
+    expect(screen.queryByText("Selecione o parâmetro no inspetor")).toBeNull();
     expect(screen.getAllByText("Filial").length).toBeGreaterThan(0);
     expect(container.querySelector("input.tdp-comunicado__input-block-control")).toBeTruthy();
     expect(screen.getByText("Valor livre")).toBeTruthy();
   });
+
+  it("com interaction e parte control não selecionada, nativo fica hit-through", () => {
+    const onPartPointerDown = vi.fn();
+    const { container } = render(
+      <ComunicadoInputBlockView
+        block={makeBlock({
+          paramKey: "branch",
+          label: "Filial",
+          targetScope: "slide",
+          defaultValue: "01",
+        })}
+        field={{ type: "string", label: "Filial" }}
+        interactive
+        interaction={{
+          selectedPart: null,
+          onPartPointerDown,
+        }}
+      />,
+    );
+    const input = container.querySelector("input.tdp-comunicado__input-block-control");
+    expect(input?.classList.contains("tdp-comunicado__input-block-control--hit-through")).toBe(
+      true,
+    );
+  });
 });
+

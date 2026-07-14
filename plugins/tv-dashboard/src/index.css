@@ -1213,11 +1213,13 @@
   cursor: text;
 }
 
-/* KPI / gráfico: deixa a sombra do card escapar do bbox do bloco. */
+/* KPI / gráfico / filtro: deixa a sombra do card escapar do bbox do bloco. */
 .dashboard-tv-dashboard .td-composer__block-wrap:has(.delpi-kpi-card-shell),
 .dashboard-tv-dashboard .td-composer__block:has(.delpi-kpi-card-shell),
 .dashboard-tv-dashboard .td-composer__block-wrap:has(.delpi-ui-series-chart),
-.dashboard-tv-dashboard .td-composer__block:has(.delpi-ui-series-chart) {
+.dashboard-tv-dashboard .td-composer__block:has(.delpi-ui-series-chart),
+.dashboard-tv-dashboard .td-composer__block-wrap:has(.tdp-comunicado__input-block),
+.dashboard-tv-dashboard .td-composer__block:has(.tdp-comunicado__input-block) {
   overflow: visible;
 }
 

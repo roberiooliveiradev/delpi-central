@@ -13,7 +13,9 @@ import {
 } from "./comunicadoChartParts";
 import {
   getInputPartState,
+  resolveInputShapeChromePartRef,
   upsertInputPartState,
+  type ComunicadoInputPartRef,
 } from "./comunicadoInputParts";
 import {
   getKpiPartState,
@@ -251,6 +253,11 @@ export type BlockShapeChromeStylePatch = {
   backgroundColor?: string;
 };
 
+export type ApplyBlockShapeChromeStyleOptions = {
+  /** Filtro: parte ativa da ribbon/inspetor (default: moldura). */
+  selectedInputPart?: ComunicadoInputPartRef | null;
+};
+
 /**
  * Aplica fill/stroke/radius na moldura interna (parts).
  * Usado pela ribbon Organizar e por `updateSelectedStyle` para não gravar só em `block.style`
@@ -259,6 +266,7 @@ export type BlockShapeChromeStylePatch = {
 export function applyBlockShapeChromeStyle(
   block: ComunicadoBlock,
   patch: BlockShapeChromeStylePatch,
+  options?: ApplyBlockShapeChromeStyleOptions,
 ): Partial<ComunicadoBlock> | null {
   if (!blockUsesInnerShapeChrome(block)) return null;
 
@@ -341,16 +349,25 @@ export function applyBlockShapeChromeStyle(
   }
 
   if (block.type === "input") {
+    const chromePart = resolveInputShapeChromePartRef(options?.selectedInputPart);
+    const nextParts = upsertInputPartState(block.inputParts, chromePart, { style: partStyle });
+    const mirrorOnBlockStyle = chromePart.kind === "frame";
     return {
-      inputParts: upsertInputPartState(block.inputParts, { kind: "frame" }, { style: partStyle }),
+      inputParts: nextParts,
       style: {
         ...block.style,
-        ...(typeof partStyle.borderRadius === "number" ? { borderRadius: partStyle.borderRadius } : {}),
-        ...(typeof partStyle.strokeWidth === "number"
+        ...(mirrorOnBlockStyle && typeof partStyle.borderRadius === "number"
+          ? { borderRadius: partStyle.borderRadius }
+          : {}),
+        ...(mirrorOnBlockStyle && typeof partStyle.strokeWidth === "number"
           ? { borderWidth: partStyle.strokeWidth, strokeWidth: partStyle.strokeWidth }
           : {}),
-        ...(typeof stroke === "string" ? { borderColor: stroke, stroke } : {}),
-        ...(typeof fill === "string" ? { backgroundColor: fill, fill } : {}),
+        ...(mirrorOnBlockStyle && typeof stroke === "string"
+          ? { borderColor: stroke, stroke }
+          : {}),
+        ...(mirrorOnBlockStyle && typeof fill === "string"
+          ? { backgroundColor: fill, fill }
+          : {}),
       },
     };
   }

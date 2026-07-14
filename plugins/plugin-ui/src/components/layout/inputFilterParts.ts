@@ -8,11 +8,7 @@ import type {
   PointerEvent as ReactPointerEvent,
 } from "react";
 
-import {
-  DECK_COLOR_SHAPE_STROKE,
-  DECK_COLOR_SURFACE,
-  DECK_INPUT_DEFAULTS,
-} from "../../theme/deckColorCatalog";
+import { DECK_COLOR_SURFACE, DECK_INPUT_DEFAULTS } from "../../theme/deckColorCatalog";
 import {
   AUTOMATIC_TEXT_COLOR,
   resolveComplexBlockForeground,
@@ -512,6 +508,8 @@ export function resolveInputContrastBackground(
 /**
  * CSS vars do bloco filtro — paint independente do tema chrome.
  * Consumidores: native-screens.css (`--tdp-input-*`).
+ * Vars da caixa (`--tdp-input-control-*`) vêm de `resolveInputControlPaintCssVars`
+ * na parte control — não fixar branco/preto aqui.
  */
 export function resolveInputBlockPaintCssVars(
   contrastBackground: string,
@@ -532,11 +530,50 @@ export function resolveInputBlockPaintCssVars(
     ["--tdp-input-fg" as string]: fg,
     ["--tdp-input-muted" as string]: muted,
     ["--tdp-input-border" as string]: muted,
-    ["--tdp-input-control-border" as string]: DECK_COLOR_SHAPE_STROKE,
-    ["--tdp-input-control-surface" as string]: DECK_COLOR_SURFACE,
     ["--tdp-input-shadow" as string]: shadow,
     ["--tdp-block-box-shadow" as string]: shadow,
     color: fg,
+  };
+}
+
+function isTransparentPaint(value: string | null | undefined): boolean {
+  const trimmed = value?.trim().toLowerCase();
+  return !trimmed || trimmed === "transparent" || trimmed === "none";
+}
+
+/**
+ * Uma superfície da caixa de valor: `control.style` → CSS vars do `<input>`/`<select>`.
+ * Ribbon «Fundo caixa» / «Borda caixa» pintam o form nativo (não só o wrapper).
+ */
+export function resolveInputControlPaintCssVars(
+  state: InputPartState | null | undefined,
+): CSSProperties {
+  const style = state?.style;
+  const fill = style?.fill?.trim();
+  const stroke = style?.stroke?.trim();
+  const strokeWidth =
+    style?.strokeWidth != null && Number.isFinite(style.strokeWidth)
+      ? Math.max(0, style.strokeWidth)
+      : DECK_INPUT_DEFAULTS.controlBorderWidth;
+  const borderRadius =
+    style?.borderRadius != null && Number.isFinite(style.borderRadius)
+      ? Math.max(0, style.borderRadius)
+      : DECK_INPUT_DEFAULTS.controlBorderRadius;
+
+  const surface = isTransparentPaint(fill)
+    ? DECK_INPUT_DEFAULTS.controlFill
+    : (fill as string);
+  const borderColor = isTransparentPaint(stroke)
+    ? strokeWidth > 0
+      ? DECK_INPUT_DEFAULTS.controlBorderColor
+      : "transparent"
+    : (stroke as string);
+
+  return {
+    ["--tdp-input-control-surface" as string]: surface,
+    ["--tdp-input-control-border" as string]: borderColor,
+    ["--tdp-input-control-border-width" as string]: `${strokeWidth}px`,
+    ["--tdp-input-control-radius" as string]: `${borderRadius}px`,
   };
 }
 
@@ -558,20 +595,22 @@ export function resolveInputPartLayoutStyle(
       ? style.fill
       : contrastBg;
 
-  if (style?.fill != null && style.fill !== "") css.background = style.fill;
+  // Parte control: fill/stroke ficam nas CSS vars do nativo (evita caixa dupla).
+  const paintOnHost = options?.partKind !== "control";
+  if (paintOnHost && style?.fill != null && style.fill !== "") css.background = style.fill;
   const fg = resolveComplexBlockForeground(style?.color, partFill, {
     role: options?.partKind === "badge" ? "muted" : "emphasis",
   });
   css.color = fg;
-  if (style?.stroke != null && style.stroke !== "") {
+  if (paintOnHost && style?.stroke != null && style.stroke !== "") {
     css.borderColor = style.stroke;
     css.borderStyle = "solid";
   }
-  if (style?.strokeWidth != null) {
+  if (paintOnHost && style?.strokeWidth != null) {
     css.borderWidth = `${Math.max(0, style.strokeWidth)}px`;
     if (style.strokeWidth > 0 && !css.borderStyle) css.borderStyle = "solid";
   }
-  if (style?.borderRadius != null) {
+  if (paintOnHost && style?.borderRadius != null) {
     css.borderRadius = `${Math.max(0, style.borderRadius)}px`;
   }
   if (style?.boxShadow != null && style.boxShadow !== "") {
@@ -681,10 +720,12 @@ export function materializeInputPartsFreeLayoutFromRoot(
   root: HTMLElement,
   parts: InputPartsMap | null | undefined,
 ): InputPartsMap {
-  return materializeMissingInputPartFramesFromRoot(
+  const measured = materializeMissingInputPartFramesFromRoot(
     root,
     clearInputPartsFreeLayoutFrames(parts),
   );
+  /* Garante frames em todas as partes de conteúdo visíveis (sem híbrido flex+absolute). */
+  return seedInputPartsFreeLayoutFrames(measured);
 }
 
 /** Localiza o host do filtro no compose (`data-block-id`). */
@@ -726,11 +767,10 @@ export function inputPartBoxChromeLabels(kind: InputPartRef["kind"]): {
   };
 }
 
-/** Resolve parte de chrome Preench./Contorno — frame ou null (global). */
+/** Parte de chrome Preench./Contorno: sem seleção → moldura; senão a parte ativa. */
 export function resolveInputShapeChromePartRef(
   selectedPart: InputPartRef | null | undefined,
-): InputPartRef | null {
-  if (!selectedPart) return null;
-  if (selectedPart.kind === "frame") return selectedPart;
+): InputPartRef {
+  if (!selectedPart) return { kind: "frame" };
   return selectedPart;
 }

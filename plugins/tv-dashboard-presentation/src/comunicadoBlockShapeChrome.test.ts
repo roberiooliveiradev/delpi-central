@@ -12,13 +12,19 @@ import {
 } from "./comunicadoBlockShapeChrome";
 import {
   createChartViewBlock,
+  createInputBlock,
   createKpiViewBlock,
   createShapeBlock,
   createTableViewBlock,
 } from "./comunicadoHelpers";
+import { getInputPartState } from "./comunicadoInputParts";
 import { getKpiPartState } from "./comunicadoKpiParts";
 import { getTablePartState } from "./comunicadoTableParts";
-import type { ComunicadoKpiViewBlock, ComunicadoTableViewBlock } from "./comunicadoTypes";
+import type {
+  ComunicadoInputBlock,
+  ComunicadoKpiViewBlock,
+  ComunicadoTableViewBlock,
+} from "./comunicadoTypes";
 
 describe("comunicadoBlockShapeChrome", () => {
   it("herda handles de cantos em KPI, tabela e chart (além da forma)", () => {
@@ -86,6 +92,24 @@ describe("comunicadoBlockShapeChrome", () => {
     expect(card?.style?.stroke).toBe("#089bdb");
     expect(resolveBlockShapeChromeCornerPx(next)).toBe(37);
     expect(resolveBlockShapeChromeStyle(next)?.borderRadius).toBe(37);
+  });
+
+  it("applyBlockShapeChromeStyle no filtro respeita a parte selecionada (control)", () => {
+    const block = createInputBlock() as ComunicadoInputBlock;
+    const patch = applyBlockShapeChromeStyle(
+      block,
+      { fill: "#fef3c7", stroke: "#b45309", strokeWidth: 2 },
+      { selectedInputPart: { kind: "control" } },
+    );
+    expect(patch).toBeTruthy();
+    const next = { ...block, ...patch } as ComunicadoInputBlock;
+    const control = getInputPartState(next.inputParts, { kind: "control" });
+    expect(control?.style?.fill).toBe("#fef3c7");
+    expect(control?.style?.stroke).toBe("#b45309");
+    expect(control?.style?.strokeWidth).toBe(2);
+    expect(getInputPartState(next.inputParts, { kind: "frame" })?.style?.fill).not.toBe(
+      "#fef3c7",
+    );
   });
 
   it("createTableViewBlock não grava maxRows a partir do picker", () => {

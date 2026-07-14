@@ -11,15 +11,22 @@ function applyPatchInputBlock(
   let nextFilters = current.dataFilters;
   const nextBlocks = (current.blocks ?? []).map((item) => {
     if (item.id !== blockId || item.type !== "input") return item;
+    const prevKey = String(item.input?.paramKey || "").trim();
     const nextInput = { ...item.input, ...inputPatch };
+    const nextKey = String(nextInput.paramKey || "").trim();
     const scope = nextInput.targetScope === "sources" ? "sources" : "slide";
-    if (scope === "slide" && nextInput.paramKey) {
+    if (scope === "slide") {
       const filters = { ...(current.dataFilters ?? {}) };
-      const value = nextInput.defaultValue;
-      if (value === undefined || value === null || value === "") {
-        delete filters[nextInput.paramKey];
-      } else {
-        filters[nextInput.paramKey] = value;
+      if (prevKey && prevKey !== nextKey) {
+        delete filters[prevKey];
+      }
+      if (nextKey) {
+        const value = nextInput.defaultValue;
+        if (value === undefined || value === null || value === "") {
+          delete filters[nextKey];
+        } else {
+          filters[nextKey] = value;
+        }
       }
       nextFilters = Object.keys(filters).length > 0 ? filters : undefined;
     }
@@ -68,5 +75,31 @@ describe("patchInputBlock atomic", () => {
       expect(block.input.defaultValue).toBe("02");
       expect(block.input.targetSourceIds).toEqual(["src-a"]);
     }
+  });
+
+  it("ao trocar paramKey remove a chave antiga de dataFilters", () => {
+    const withBranch: ComunicadoInputBlock = {
+      ...input,
+      input: { paramKey: "branch", targetScope: "slide", defaultValue: "01" },
+    };
+    const next = applyPatchInputBlock(
+      { version: 4, blocks: [withBranch], dataFilters: { branch: "01", periodDays: 30 } },
+      "inp-1",
+      { paramKey: "periodDays", defaultValue: 7 },
+    );
+    expect(next.dataFilters).toEqual({ periodDays: 7 });
+  });
+
+  it("ao limpar paramKey remove a chave antiga de dataFilters", () => {
+    const withBranch: ComunicadoInputBlock = {
+      ...input,
+      input: { paramKey: "branch", targetScope: "slide", defaultValue: "01" },
+    };
+    const next = applyPatchInputBlock(
+      { version: 4, blocks: [withBranch], dataFilters: { branch: "01" } },
+      "inp-1",
+      { paramKey: "" },
+    );
+    expect(next.dataFilters).toBeUndefined();
   });
 });

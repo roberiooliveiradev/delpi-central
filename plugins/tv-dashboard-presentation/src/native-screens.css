@@ -1523,22 +1523,13 @@
     var(--tdp-input-shadow, 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10))
   );
   color: var(--tdp-input-fg, #0f172a);
-  /* Subitens (absolute/%) não pintam fora da moldura. */
+  /* Subitens (absolute/%) não pintam fora da moldura — handles usam overlay próprio. */
   overflow: hidden;
-}
-
-/* Parte selecionada: libera overflow só para handles — controle continua com max 100%. */
-.tdp-comunicado__input-block:has(.tdp-comunicado__input-block-part--selected) {
-  overflow: visible;
 }
 
 .tdp-comunicado__input-block--free-layout {
   display: block;
   overflow: hidden;
-}
-
-.tdp-comunicado__input-block--free-layout:has(.tdp-comunicado__input-block-part--selected) {
-  overflow: visible;
 }
 
 /* Heading deixa de ser caixa flex — filhos framed posicionam no host do filtro. */
@@ -1571,8 +1562,8 @@
 }
 
 .tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--selected {
-  /* Handles na borda — o controle interno ainda respeita max-width/min-width. */
-  overflow: visible;
+  /* Clip estável: não liberar overflow no host (badge não cruza a moldura). */
+  overflow: hidden;
 }
 
 .tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--control .tdp-comunicado__input-block-control,
@@ -1601,7 +1592,9 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 5;
+  z-index: 6;
+  /* Overlay de handles — não força overflow:visible no host do filtro. */
+  overflow: visible;
 }
 
 .tdp-comunicado__input-part-handle {
@@ -1736,8 +1729,9 @@
   min-height: 2em;
   box-sizing: border-box;
   padding: 0.28em 0.5em;
-  border: 1px solid var(--tdp-input-control-border, #000000);
-  border-radius: 6px;
+  border: var(--tdp-input-control-border-width, 1px) solid
+    var(--tdp-input-control-border, #000000);
+  border-radius: var(--tdp-input-control-radius, 6px);
   background: var(--tdp-input-control-surface, #ffffff);
   color: var(--tdp-input-fg, #0f172a);
   font: inherit;

@@ -4,6 +4,7 @@ import {
   isInnerShapeChromeStyleKey,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
+  type ComunicadoInputPartRef,
 } from "@delpi/tv-dashboard-presentation";
 
 /**
@@ -18,12 +19,17 @@ function shouldClearStyleValue(key: string, value: unknown): boolean {
   return typeof value === "string" && value.trim() === "";
 }
 
+export type ApplyComunicadoBlockStylePatchOptions = {
+  selectedInputPart?: ComunicadoInputPartRef | null;
+};
+
 /**
  * Aplica patch de estilo ao bloco: chrome interno (KPI/chart/tabela) + limpeza de sombra etc.
  */
 export function applyComunicadoBlockStylePatch(
   block: ComunicadoBlock,
   patch: Partial<ComunicadoBlockStyle>,
+  options?: ApplyComunicadoBlockStylePatchOptions,
 ): ComunicadoBlock {
   const chromePatch: Record<string, unknown> = {};
   const restPatch: Record<string, unknown> = {};
@@ -44,7 +50,9 @@ export function applyComunicadoBlockStylePatch(
 
   let next: ComunicadoBlock = block;
   if (Object.keys(chromePatch).length > 0) {
-    const applied = applyBlockShapeChromeStyle(block, chromePatch);
+    const applied = applyBlockShapeChromeStyle(block, chromePatch, {
+      selectedInputPart: options?.selectedInputPart,
+    });
     if (applied) {
       next = { ...block, ...applied } as ComunicadoBlock;
     }

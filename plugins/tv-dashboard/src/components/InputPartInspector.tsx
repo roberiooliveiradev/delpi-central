@@ -137,7 +137,11 @@ export function InputPartInspector({ pane = false, block }: Props) {
         hideDanger
       />
 
-      {selectedInputPart.kind === "frame" || selectedInputPart.kind === "icon" ? (
+      {selectedInputPart.kind === "frame" ||
+      selectedInputPart.kind === "icon" ||
+      selectedInputPart.kind === "control" ||
+      selectedInputPart.kind === "label" ||
+      selectedInputPart.kind === "badge" ? (
         <>
           <DeckField id="td-input-part-fill" label={boxLabels.fill}>
             <TvRibbonColorPicker

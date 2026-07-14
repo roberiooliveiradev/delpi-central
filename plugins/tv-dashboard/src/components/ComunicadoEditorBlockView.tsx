@@ -950,18 +950,19 @@ function EditorInputBlock({
     [block.id, block.inputParts, updateBlock],
   );
 
-  /** Como gráfico/KPI: partes só com o grupo já selecionado (1º clique = bloco). */
+  /**
+   * Interaction sempre ligada no editor: 1º clique no valor (hit-through) seleciona o bloco;
+   * com o grupo ativo, clique na caixa seleciona a parte; parte control ativa → edita.
+   * Kiosk/presentação passa `inputInteraction` null e edita direto.
+   */
   const interaction = useMemo(
-    () =>
-      selectedId === block.id
-        ? {
-            selectedPart: selectedInputPart,
-            onPartPointerDown,
-            onPartDoubleClick,
-            onPartMovePointerDown,
-            onPartResizePointerDown,
-          }
-        : null,
+    () => ({
+      selectedPart: selectedId === block.id ? selectedInputPart : null,
+      onPartPointerDown,
+      onPartDoubleClick,
+      onPartMovePointerDown,
+      onPartResizePointerDown,
+    }),
     [
       block.id,
       onPartDoubleClick,
