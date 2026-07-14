@@ -19,7 +19,10 @@ import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
-import { SelectionSectionsHost } from "../selectionSections";
+import {
+  SelectionSectionsHost,
+  SelectionTypedWithTailHost,
+} from "../selectionSections";
 import { DeckField } from "./DeckField";
 import { DeckInspectorLayout } from "./DeckInspectorLayout";
 import { DeckPropertySection } from "./DeckPropertySection";
@@ -219,21 +222,17 @@ export function ComunicadoElementInspector({
 
       {!multiSelect && selected.type === "chart_view" && !selectedChartPart ? (
         <>
-          <SelectionSectionsHost
+          <SelectionTypedWithTailHost
             layout="pane"
-            only={[
+            labels={labels}
+            typed={[
               "typography",
               "chartLayout",
               "chartStyles",
               "chartType",
               "chartLabels",
               "chartAxes",
-              "frame",
-              "organize",
-              "animation",
-              "actions",
             ]}
-            labels={labels}
           />
           <ChartViewOptionsInspector pane={pane} />
         </>
@@ -241,18 +240,10 @@ export function ComunicadoElementInspector({
 
       {!multiSelect && selected.type === "table_view" && !selectedTablePart ? (
         <>
-          <SelectionSectionsHost
+          <SelectionTypedWithTailHost
             layout="pane"
-            only={[
-              "tableStyleOptions",
-              "tableStyles",
-              "tableBorders",
-              "frame",
-              "organize",
-              "animation",
-              "actions",
-            ]}
             labels={labels}
+            typed={["tableStyleOptions", "tableStyles", "tableBorders"]}
           />
           <TableViewOptionsInspector pane={pane} omitDesignChrome />
         </>
@@ -272,17 +263,10 @@ export function ComunicadoElementInspector({
 
       {!multiSelect && isShapeBlock && shapeOptionsTab === "shape" && !hasPartSelection ? (
         <div id="td-shape-pane-size">
-          <SelectionSectionsHost
+          <SelectionTypedWithTailHost
             layout="pane"
-            only={[
-              "shapeGallery",
-              "shapeChrome",
-              "frame",
-              "organize",
-              "animation",
-              "actions",
-            ]}
             labels={labels}
+            typed={["shapeGallery", "shapeChrome"]}
           />
         </div>
       ) : null}

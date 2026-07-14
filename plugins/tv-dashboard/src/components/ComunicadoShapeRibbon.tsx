@@ -39,7 +39,12 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ChartRibbonShapeChrome } from "./formatRibbon/ChartRibbonShapeChrome";
 import { TableRibbonShapeChrome } from "./formatRibbon/TableRibbonShapeChrome";
 import { PartSelectionNav } from "./ComunicadoPartFormatRibbon";
-import { SelectionSectionsHost } from "./selectionSections";
+import {
+  SelectionCommonTailHost,
+  SelectionFrameHost,
+  SelectionSectionsHost,
+  SelectionTypographyHost,
+} from "./selectionSections";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
@@ -159,13 +164,14 @@ export function ComunicadoShapeRibbon() {
       {partChrome && partChrome.source === "input" ? (
         <PartSelectionNav chrome={partChrome} onBack={clearInputPartSelection} />
       ) : null}
-      <SelectionSectionsHost layout="ribbon" only={["typography", "textBox"]} />
+      <SelectionTypographyHost layout="ribbon" />
       <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--chrome-frame-organize">
         {chrome}
-        <SelectionSectionsHost
-          layout="ribbon"
-          only={opts?.organize === false ? ["frame"] : ["frame", "organize"]}
-        />
+        {opts?.organize === false ? (
+          <SelectionFrameHost layout="ribbon" />
+        ) : (
+          <SelectionCommonTailHost layout="ribbon" />
+        )}
       </div>
     </div>
   );

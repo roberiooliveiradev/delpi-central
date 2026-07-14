@@ -3,10 +3,13 @@ import {
   resolveSelectionChromeMode,
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { SelectionSectionsHost } from "./selectionSections";
+import {
+  SelectionSectionsHost,
+  SelectionTypedWithTailHost,
+} from "./selectionSections";
 
 /**
- * Aba contextual «Design da Tabela» — seções compartilhadas (host).
+ * Aba contextual «Design da Tabela» — tipado + rabo comum (host).
  */
 export function ComunicadoTableDesignRibbon() {
   const { selected, selectedTablePart } = useComunicadoEditor();
@@ -35,15 +38,9 @@ export function ComunicadoTableDesignRibbon() {
 
   return (
     <div className="td-deck-ribbon__groups">
-      <SelectionSectionsHost
+      <SelectionTypedWithTailHost
         layout="ribbon"
-        only={[
-          "tableStyleOptions",
-          "tableStyles",
-          "tableBorders",
-          "frame",
-          "organize",
-        ]}
+        typed={["tableStyleOptions", "tableStyles", "tableBorders"]}
       />
     </div>
   );

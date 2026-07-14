@@ -14,7 +14,7 @@ import {
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoPartFormatRibbon } from "./ComunicadoPartFormatRibbon";
-import { SelectionSectionsHost } from "./selectionSections";
+import { SelectionCommonTailHost } from "./selectionSections";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 
@@ -143,7 +143,7 @@ export function ComunicadoTableLayoutRibbon() {
       </DeckRibbonGroup>
 
       <div className="td-deck-ribbon__group-cluster td-deck-ribbon__group-cluster--frame-organize">
-        <SelectionSectionsHost layout="ribbon" only={["frame", "organize"]} />
+        <SelectionCommonTailHost layout="ribbon" />
       </div>
     </div>
   );

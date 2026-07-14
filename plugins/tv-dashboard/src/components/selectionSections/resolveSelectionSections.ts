@@ -6,11 +6,13 @@ import {
   kpiPartAllowsFrame,
 } from "@delpi/tv-dashboard-presentation";
 
+import { withCommonTail } from "./commonSectionPresets";
 import type { SelectionSectionContext, SelectionSectionId } from "./types";
 
 /**
  * Lista ordenada de seções Elemento para ribbon e painel (paridade).
  * Parte selecionada → prioriza seções da parte; bloco sem parte → seções do tipo.
+ * O rabo transversal (frame/organize[/animation/actions]) vem de `withCommonTail`.
  */
 export function resolveSelectionSections(
   ctx: SelectionSectionContext,
@@ -23,107 +25,70 @@ export function resolveSelectionSections(
   }
 
   if (selected.type === "chart_view" && ctx.selectedChartPart) {
-    const sections: SelectionSectionId[] = ["partFormat", "typography"];
+    const head: SelectionSectionId[] = ["partFormat", "typography"];
     if (chartPartAllowsFrame(ctx.selectedChartPart)) {
-      sections.push("frame");
+      return withCommonTail(head, "light");
     }
-    sections.push("organize");
-    return sections;
+    return [...head, "organize"];
   }
 
   if (selected.type === "kpi_view" && ctx.selectedKpiPart) {
-    const sections: SelectionSectionId[] = ["shapeChrome", "typography"];
+    const head: SelectionSectionId[] = ["shapeChrome", "typography"];
     if (kpiPartAllowsFrame(ctx.selectedKpiPart)) {
-      sections.push("frame");
+      return withCommonTail(head, "light");
     }
-    sections.push("organize");
-    return sections;
+    return [...head, "organize"];
   }
 
   if (selected.type === "table_view" && ctx.selectedTablePart) {
-    return ["partFormat", "typography", "frame", "organize"];
+    return withCommonTail(["partFormat", "typography"], "light");
   }
 
   if (selected.type === "input" && ctx.selectedInputPart) {
-    const sections: SelectionSectionId[] = ["shapeChrome", "inputBinding"];
+    const head: SelectionSectionId[] = ["shapeChrome", "inputBinding"];
     if (inputPartAllowsFrame(ctx.selectedInputPart)) {
-      sections.push("frame");
+      return withCommonTail(head, "light");
     }
-    sections.push("organize");
-    return sections;
+    return [...head, "organize"];
   }
 
   switch (selected.type) {
     case "text":
     case "heading":
-      return [
-        "typography",
-        "textBox",
-        "frame",
-        "organize",
-        "animation",
-        "actions",
-      ];
+      return withCommonTail(["typography", "textBox"]);
     case "shape":
-      return [
-        "shapeGallery",
-        "shapeChrome",
-        "typography",
-        "frame",
-        "organize",
-        "animation",
-        "actions",
-      ];
+      return withCommonTail(["shapeGallery", "shapeChrome", "typography"]);
     case "icon":
-      return ["shapeChrome", "frame", "organize", "animation", "actions"];
+      return withCommonTail(["shapeChrome"]);
     case "image":
-      return ["media", "imageCrop", "frame", "organize", "animation", "actions"];
+      return withCommonTail(["media", "imageCrop"]);
     case "video":
-      return ["media", "frame", "organize", "animation", "actions"];
+      return withCommonTail(["media"]);
     case "canvas_table":
-      return ["canvasTable", "frame", "organize", "animation", "actions"];
+      return withCommonTail(["canvasTable"]);
     case "input":
-      return [
-        "shapeChrome",
-        "inputBinding",
-        "frame",
-        "organize",
-        "animation",
-        "actions",
-      ];
+      return withCommonTail(["shapeChrome", "inputBinding"]);
     case "kpi_view":
-      return ["kpiAppearance", "frame", "organize", "animation", "actions"];
+      return withCommonTail(["kpiAppearance"]);
     case "chart_view":
-      return [
+      return withCommonTail([
         "typography",
         "chartLayout",
         "chartStyles",
         "chartType",
         "chartLabels",
         "chartAxes",
-        "frame",
-        "organize",
-        "animation",
-        "actions",
-      ];
+      ]);
     case "table_view":
-      return [
-        "tableStyleOptions",
-        "tableStyles",
-        "tableBorders",
-        "frame",
-        "organize",
-        "animation",
-        "actions",
-      ];
+      return withCommonTail(["tableStyleOptions", "tableStyles", "tableBorders"]);
     default:
       if (isFetchableDataBlockType(selected.type) || selected.type === "data_source") {
-        return ["dataSourceHint", "frame", "organize"];
+        return withCommonTail(["dataSourceHint"], "light");
       }
       if (isDataBoundEditorBlockType(selected.type)) {
-        return ["frame", "organize"];
+        return withCommonTail([], "light");
       }
-      return ["frame", "organize", "animation", "actions"];
+      return withCommonTail([]);
   }
 }
 

@@ -3,10 +3,13 @@ import {
   resolveSelectionChromeMode,
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { SelectionSectionsHost } from "./selectionSections";
+import {
+  SelectionSectionsHost,
+  SelectionTypedWithTailHost,
+} from "./selectionSections";
 
 /**
- * Faixa Elemento para gráfico — seções no SelectionSectionsHost.
+ * Faixa Elemento para gráfico — seções tipadas + rabo comum no host.
  */
 export function ComunicadoChartRibbon() {
   const { selected, selectedChartPart } = useComunicadoEditor();
@@ -35,17 +38,15 @@ export function ComunicadoChartRibbon() {
 
   return (
     <div className="td-deck-ribbon__groups">
-      <SelectionSectionsHost
+      <SelectionTypedWithTailHost
         layout="ribbon"
-        only={[
+        typed={[
           "typography",
           "chartLayout",
           "chartStyles",
           "chartType",
           "chartLabels",
           "chartAxes",
-          "frame",
-          "organize",
         ]}
       />
     </div>

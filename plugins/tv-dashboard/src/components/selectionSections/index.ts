@@ -7,7 +7,21 @@ export {
   resolveSelectionSections,
   SHARED_HOST_SECTIONS,
 } from "./resolveSelectionSections";
+export {
+  COMMON_PANE_TAIL,
+  COMMON_RIBBON_TAIL,
+  COMMON_TYPOGRAPHY_PREFIX,
+  appendSectionIds,
+  commonTailForLayout,
+  withCommonTail,
+} from "./commonSectionPresets";
 export { SelectionSectionsHost } from "./SelectionSectionsHost";
+export {
+  SelectionCommonTailHost,
+  SelectionFrameHost,
+  SelectionTypedWithTailHost,
+  SelectionTypographyHost,
+} from "./SelectionCommonHosts";
 export { FrameSizeSection } from "./FrameSizeSection";
 export { OrganizeSection, AlignMultiSection } from "./OrganizeSection";
 export { DataSourceHintSection } from "./DataSourceHintSection";
