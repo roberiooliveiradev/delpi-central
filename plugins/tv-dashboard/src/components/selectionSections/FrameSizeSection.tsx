@@ -1,22 +1,10 @@
-import { FormatRibbonFrameSection } from "../formatRibbon/FormatRibbonFrameSection";
-import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { SelectionPaneSection } from "./SelectionPaneSection";
+import { DisplaySection } from "./DisplaySection";
 import type { SelectionSectionLayout } from "./types";
 
-const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
-
 /**
- * Posição e tamanho — ribbon e painel com RangeField full (slider + input).
+ * @deprecated Absorvido por `DisplaySection` (Exibição). Mantido para hosts que
+ * ainda pedem `only={["frame"]}` — delega ao mesmo UI.
  */
 export function FrameSizeSection({ layout }: { layout: SelectionSectionLayout }) {
-  if (layout === "pane") {
-    return (
-      <SelectionPaneSection title="Posição e tamanho" hint={E.position} defaultOpen={false}>
-        <div className="td-selection-section td-selection-section--pane-frame">
-          <FormatRibbonFrameSection density="full" embed />
-        </div>
-      </SelectionPaneSection>
-    );
-  }
-  return <FormatRibbonFrameSection density="full" />;
+  return <DisplaySection layout={layout} />;
 }

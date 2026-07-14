@@ -3,7 +3,7 @@ import { canConnectBlocks } from "@delpi/tv-dashboard-presentation";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { selectedHasGroup } from "../../utils/comunicadoGrouping";
 import { FormatRibbonAlignSection } from "../FormatRibbonAlignSection";
-import { FormatRibbonOrganizeActions } from "../formatRibbon/FormatRibbonOrganizeSection";
+import { FormatRibbonOrganizeLayers } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
@@ -12,10 +12,9 @@ type Labels = Record<string, string>;
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
-/** Organizar — só ações (Exibição é seção `display` à parte). */
+/** Organizar — frente / fundo (camadas). */
 export function OrganizeSection({
   layout,
-  labels = {},
 }: {
   layout: SelectionSectionLayout;
   labels?: Labels;
@@ -24,12 +23,12 @@ export function OrganizeSection({
     return (
       <SelectionPaneSection title="Organizar" hint={H.organize} defaultOpen={false}>
         <div className="td-selection-section td-selection-section--pane-organize">
-          <FormatRibbonOrganizeActions labels={labels} embed />
+          <FormatRibbonOrganizeLayers embed />
         </div>
       </SelectionPaneSection>
     );
   }
-  return <FormatRibbonOrganizeActions labels={labels} />;
+  return <FormatRibbonOrganizeLayers />;
 }
 
 /** Multi-seleção: alinhamento/grupo. */

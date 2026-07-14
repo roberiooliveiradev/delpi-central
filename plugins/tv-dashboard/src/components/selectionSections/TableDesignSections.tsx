@@ -1,14 +1,18 @@
 import type { ReactNode } from "react";
-import { Database, Grid3x3, Square, Shapes } from "lucide-react";
+import { useRef, useState } from "react";
+import { Database, Grid3x3, ListChecks, Square, Shapes } from "lucide-react";
 import {
+  AnchoredPanelPortal,
   ColorPickerPopoverTrigger,
   CONFIGURABLE_TABLE_BORDER_STYLE_OPTIONS,
   CONFIGURABLE_TABLE_BORDER_WIDTH_PRESETS,
+  HintAction,
   ShapeShadowMenu,
   TableStyleRibbonStrip,
   ToolbarSelectField,
   type TableStylePreset,
 } from "@delpi/plugin-ui/index";
+import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import {
   isTableElementEnabled,
   mergeComunicadoTableOptions,
@@ -193,21 +197,23 @@ function wrapPane(
   );
 }
 
-/** Opções de estilo da tabela (checkboxes). */
-export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionLayout }) {
-  const ctrl = useTableDesignControls();
-  if (!ctrl) return null;
-
-  const body = (
-    <div className="td-deck-ribbon__style-checks">
+function TableStyleOptionsChecks({
+  options,
+  onToggle,
+}: {
+  options: ComunicadoTableOptions;
+  onToggle: (id: TableElementId, enabled: boolean) => void;
+}) {
+  return (
+    <div className="td-deck-ribbon__style-checks" role="group" aria-label="Opções de estilo">
       {STYLE_OPTION_CHECKS.map((item) => {
-        const checked = isTableElementEnabled(item.id, ctrl.options);
+        const checked = isTableElementEnabled(item.id, options);
         return (
           <label key={item.id} className="td-deck-ribbon__style-check" title={item.hint}>
             <input
               type="checkbox"
               checked={checked}
-              onChange={() => ctrl.toggleElement(item.id, !checked)}
+              onChange={() => onToggle(item.id, !checked)}
             />
             <span>{item.label}</span>
           </label>
@@ -215,8 +221,72 @@ export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionL
       })}
     </div>
   );
+}
 
-  return wrapPane("Opções de estilo", H.tableStyleOptions, layout, body);
+/**
+ * Opções de estilo da tabela (checkboxes).
+ * Ribbon: tile «Opções» + popover; painel: checkboxes embutidos.
+ */
+export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionLayout }) {
+  const ctrl = useTableDesignControls();
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  if (!ctrl) return null;
+
+  const checks = (
+    <TableStyleOptionsChecks options={ctrl.options} onToggle={ctrl.toggleElement} />
+  );
+
+  if (layout === "pane") {
+    return wrapPane("Opções de estilo", H.tableStyleOptions, layout, checks);
+  }
+
+  return (
+    <DeckRibbonGroup label="Opções de estilo" hint={H.tableStyleOptions}>
+      <div className="td-table-style-options-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+        <HintAction hint={H.tableStyleOptions} ariaLabel="Ajuda: Opções de estilo">
+          <button
+            ref={triggerRef}
+            type="button"
+            className={[
+              "delpi-ui-shape-menu__trigger",
+              open ? "td-table-style-options-entry__trigger--active" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-label="Opções de estilo"
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            onClick={() => setOpen((prev) => !prev)}
+          >
+            <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
+              <ListChecks size={18} />
+            </span>
+            <span className="delpi-ui-shape-menu__trigger-label">Opções</span>
+          </button>
+        </HintAction>
+        {open ? (
+          <AnchoredPanelPortal
+            open={open}
+            anchorRef={triggerRef}
+            panelRef={panelRef}
+            portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+            className="td-table-style-options-popover"
+            role="dialog"
+            aria-label="Opções de estilo"
+            preferredPlacement="bottom"
+            allowFlip={false}
+            gap={10}
+            onDismiss={() => setOpen(false)}
+          >
+            {checks}
+          </AnchoredPanelPortal>
+        ) : null}
+      </div>
+    </DeckRibbonGroup>
+  );
 }
 
 /** Galeria + sombreamento. */

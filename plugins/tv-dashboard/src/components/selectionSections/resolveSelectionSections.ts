@@ -12,7 +12,7 @@ import type { SelectionSectionContext, SelectionSectionId } from "./types";
 /**
  * Lista ordenada de seções Elemento para ribbon e painel (paridade).
  * Parte selecionada → prioriza seções da parte; bloco sem parte → seções do tipo.
- * O rabo transversal (display/frame/organize[/animation/actions]) vem de `withCommonTail`.
+ * O rabo transversal (display/organize[/animation/actions]) vem de `withCommonTail`.
  */
 export function resolveSelectionSections(
   ctx: SelectionSectionContext,
@@ -24,7 +24,7 @@ export function resolveSelectionSections(
     selectedIds && selectedIds.length > 0 ? selectedIds : [selected.id];
 
   if (ids.length >= 2) {
-    return ["alignMulti", "organize"];
+    return ["alignMulti", "organize", "actions"];
   }
 
   if (selected.type === "chart_view" && ctx.selectedChartPart) {
@@ -32,7 +32,7 @@ export function resolveSelectionSections(
     if (chartPartAllowsFrame(ctx.selectedChartPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "display", "organize"];
+    return [...head, "display", "organize", "actions"];
   }
 
   if (selected.type === "kpi_view" && ctx.selectedKpiPart) {
@@ -40,7 +40,7 @@ export function resolveSelectionSections(
     if (kpiPartAllowsFrame(ctx.selectedKpiPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "display", "organize"];
+    return [...head, "display", "organize", "actions"];
   }
 
   if (selected.type === "table_view" && ctx.selectedTablePart) {
@@ -52,13 +52,14 @@ export function resolveSelectionSections(
     if (inputPartAllowsFrame(ctx.selectedInputPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "display", "organize"];
+    return [...head, "display", "organize", "actions"];
   }
 
   switch (selected.type) {
     case "text":
     case "heading":
-      return withCommonTail(["typography", "textBox"]);
+      /* Mesmo chrome de forma que shape — texto nasce sem fundo. */
+      return withCommonTail(["typography", "shapeChrome"]);
     case "shape":
       return withCommonTail(["shapeGallery", "shapeChrome", "typography"]);
     case "icon":

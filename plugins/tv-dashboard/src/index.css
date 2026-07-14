@@ -3555,7 +3555,7 @@ body.td-composer--marqueeing * {
   min-height: 0;
 }
 
-/* Exibição (opacidade / ajuste) — grupo próprio, não misturar com tiles de Organizar. */
+/* Exibição/Forma — opacidade e ajuste de mídia. */
 .dashboard-tv-dashboard .td-deck-ribbon__organize-props {
   display: flex;
   flex-wrap: nowrap;
@@ -3566,6 +3566,17 @@ body.td-composer--marqueeing * {
   max-height: none;
   min-width: 0;
   overflow: visible;
+}
+
+.dashboard-tv-dashboard .td-forma-opacity {
+  margin-left: 4px;
+  padding-left: 10px;
+  border-left: 1px solid color-mix(in srgb, var(--delpi-ui-border, #3a4558) 80%, transparent);
+  align-self: stretch;
+}
+
+.dashboard-tv-dashboard .td-forma-opacity__slot {
+  display: contents;
 }
 
 /* legado — preferir .td-deck-ribbon__panel */
@@ -3949,16 +3960,18 @@ body.td-composer--marqueeing * {
   min-width: 280px;
 }
 
-/* Efeitos / Posição / Estilo (parágrafo) — tile + popover ancorado. */
+/* Efeitos / Posição / Estilo (parágrafo) / Opções de tabela — tile + popover ancorado. */
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-text-effects-entry) .td-deck-ribbon__body,
-.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-frame-size-entry) .td-deck-ribbon__body {
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-frame-size-entry) .td-deck-ribbon__body,
+.dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__group:has(.td-table-style-options-entry) .td-deck-ribbon__body {
   align-items: center;
   justify-content: center;
 }
 
 .dashboard-tv-dashboard .td-text-effects-entry__trigger--active,
 .dashboard-tv-dashboard .td-frame-size-entry__trigger--active,
-.dashboard-tv-dashboard .td-paragraph-spacing-entry__trigger--active {
+.dashboard-tv-dashboard .td-paragraph-spacing-entry__trigger--active,
+.dashboard-tv-dashboard .td-table-style-options-entry__trigger--active {
   border-color: color-mix(in srgb, var(--td-accent) 55%, var(--td-border));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--td-accent) 35%, transparent);
 }
@@ -4012,6 +4025,23 @@ body.td-composer--marqueeing * {
   margin: 0;
 }
 
+.dashboard-tv-dashboard .td-table-style-options-popover.delpi-ui-shape-menu__panel,
+.dashboard-tv-dashboard .td-table-style-options-popover {
+  position: fixed;
+  min-width: min(520px, calc(100vw - 24px));
+  max-width: min(640px, calc(100vw - 16px));
+  padding: 12px 14px;
+  margin: 0;
+}
+
+.dashboard-tv-dashboard .td-table-style-options-popover .td-deck-ribbon__style-checks {
+  display: grid;
+  grid-template-columns: repeat(4, max-content);
+  gap: 6px 16px;
+  width: max-content;
+  max-width: 100%;
+}
+
 /*
  * Portal no body não herda .td-deck-ribbon--compact: sem estas regras a grade
  * fica em 72–88px e o RangeField (min 148px) “monta” em coluna única.
@@ -4047,6 +4077,24 @@ body.td-composer--marqueeing * {
   padding-top: 0;
   padding-bottom: 0;
   line-height: 1.2;
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover .td-frame-size-popover__opacity {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--delpi-ui-border, #3a4558) 80%, transparent);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 148px));
+  gap: 6px 12px;
+  align-items: end;
+  width: max-content;
+  max-width: 100%;
+}
+
+.dashboard-tv-dashboard .td-frame-size-popover .td-frame-size-popover__opacity .delpi-ui-range-field {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
 }
 
 /* Popover de efeitos — painel ancorado ao tile (como cores do Preench.). */

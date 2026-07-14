@@ -12,10 +12,9 @@ describe("commonSectionPresets", () => {
   it("rabo ribbon vs pane", () => {
     expect(commonTailForLayout("ribbon")).toEqual([...COMMON_RIBBON_TAIL]);
     expect(commonTailForLayout("pane")).toEqual([...COMMON_PANE_TAIL]);
-    expect(COMMON_RIBBON_TAIL).toEqual(["display", "frame", "organize"]);
+    expect(COMMON_RIBBON_TAIL).toEqual(["display", "organize", "actions"]);
     expect(COMMON_PANE_TAIL).toEqual([
       "display",
-      "frame",
       "organize",
       "animation",
       "actions",
@@ -23,23 +22,22 @@ describe("commonSectionPresets", () => {
   });
 
   it("withCommonTail full anexa animação e ações", () => {
-    expect(withCommonTail(["typography", "textBox"])).toEqual([
+    expect(withCommonTail(["typography", "shapeChrome"])).toEqual([
       "typography",
-      "textBox",
+      "shapeChrome",
       "display",
-      "frame",
       "organize",
       "animation",
       "actions",
     ]);
   });
 
-  it("withCommonTail light só display+frame+organize", () => {
+  it("withCommonTail light só display+organize+actions", () => {
     expect(withCommonTail(["dataSourceHint"], "light")).toEqual([
       "dataSourceHint",
       "display",
-      "frame",
       "organize",
+      "actions",
     ]);
   });
 

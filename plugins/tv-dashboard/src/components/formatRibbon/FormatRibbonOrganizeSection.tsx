@@ -41,21 +41,51 @@ type SectionProps = {
 };
 
 /**
- * Compat: Organizar era ações+exibição no mesmo grupo.
- * Preferir `FormatRibbonOrganizeActions` + seção `display` no host.
+ * Compat: Organizar era ações+camadas no mesmo grupo.
+ * Preferir `FormatRibbonOrganizeLayers` + `FormatRibbonElementActions`.
  */
 export function FormatRibbonOrganizeSection({ labels = {}, embed = false }: SectionProps) {
-  return <FormatRibbonOrganizeActions labels={labels} embed={embed} />;
+  return (
+    <>
+      <FormatRibbonOrganizeLayers embed={embed} />
+      <FormatRibbonElementActions labels={labels} embed={embed} />
+    </>
+  );
 }
 
-/** Ações do elemento: duplicar, recorte, biblioteca, camadas, remover. */
-export function FormatRibbonOrganizeActions({ labels = {}, embed = false }: SectionProps) {
+/** Organizar — ordem de camadas (frente / fundo). */
+export function FormatRibbonOrganizeLayers({ embed = false }: Omit<SectionProps, "labels">) {
+  const { selected, moveLayer } = useComunicadoEditor();
+  if (!selected) return null;
+
+  return (
+    <DeckRibbonGroup
+      label="Organizar"
+      hint={H.organize}
+      captionPlacement={embed ? "none" : "below"}
+    >
+      <div className="td-deck-ribbon__organize">
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile icon={ArrowUp} label="Frente" hint={E.layerUp} onClick={() => moveLayer("up")} />
+          <DeckRibbonTile
+            icon={ArrowDown}
+            label="Fundo"
+            hint={E.layerDown}
+            onClick={() => moveLayer("down")}
+          />
+        </div>
+      </div>
+    </DeckRibbonGroup>
+  );
+}
+
+/** Ações — duplicar, remoção e atalhos de mídia. */
+export function FormatRibbonElementActions({ labels = {}, embed = false }: SectionProps) {
   const {
     selected,
     uploading,
     removeSelected,
     duplicateSelected,
-    moveLayer,
     triggerUpload,
     openMediaLibrary,
   } = useComunicadoEditor();
@@ -67,8 +97,8 @@ export function FormatRibbonOrganizeActions({ labels = {}, embed = false }: Sect
 
   return (
     <DeckRibbonGroup
-      label="Organizar"
-      hint={H.organize}
+      label="Ações"
+      hint={H.actions ?? H.duplicateBlock}
       captionPlacement={embed ? "none" : "below"}
     >
       <div className="td-deck-ribbon__organize">
@@ -113,13 +143,6 @@ export function FormatRibbonOrganizeActions({ labels = {}, embed = false }: Sect
               />
             </>
           ) : null}
-          <DeckRibbonTile icon={ArrowUp} label="Frente" hint={E.layerUp} onClick={() => moveLayer("up")} />
-          <DeckRibbonTile
-            icon={ArrowDown}
-            label="Fundo"
-            hint={E.layerDown}
-            onClick={() => moveLayer("down")}
-          />
           <ShortcutTip shortcutId="delete">
             <span>
               <DeckRibbonTile icon={Trash2} label="Remover" hint={E.remove} onClick={removeSelected} />
@@ -131,8 +154,20 @@ export function FormatRibbonOrganizeActions({ labels = {}, embed = false }: Sect
   );
 }
 
-/** Exibição: opacidade e (em mídia) como o arquivo preenche o quadro. */
-export function FormatRibbonOrganizeDisplay({ embed = false }: Omit<SectionProps, "labels">) {
+/** @deprecated Preferir `FormatRibbonElementActions`. */
+export function FormatRibbonOrganizeActions(props: SectionProps) {
+  return <FormatRibbonElementActions {...props} />;
+}
+
+/**
+ * Campos de opacidade (+ ajuste de mídia) — usados dentro do popover Exibição
+ * (posição/tamanho/raio) ou sozinhos quando não há geometria editável.
+ */
+export function FormatRibbonOpacityFields({
+  className = "td-deck-ribbon__organize-props",
+}: {
+  className?: string;
+} = {}) {
   const {
     selected,
     selectedKpiPart,
@@ -202,51 +237,58 @@ export function FormatRibbonOrganizeDisplay({ embed = false }: Omit<SectionProps
   };
 
   return (
+    <div className={className}>
+      <DeckRangeField
+        id="td-block-opacity"
+        label="Opacidade"
+        hint={H.opacity}
+        min={0}
+        max={100}
+        step={5}
+        value={opacityPercent}
+        displayValue={`${opacityPercent}%`}
+        density="full"
+        aria-label="Opacidade"
+        onChange={(value) => setOpacity(value / 100)}
+      />
+      {isMediaBlock ? (
+        <>
+          <FieldLabel
+            htmlFor="td-block-object-fit"
+            label="Ajuste"
+            hint={H.objectFit}
+            className="td-deck-ribbon__field-label"
+          />
+          <TdRibbonSelect
+            id="td-block-object-fit"
+            className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+            aria-label="Ajuste"
+            value={selected.style?.objectFit ?? "cover"}
+            onChange={(value) =>
+              updateSelectedStyle({
+                objectFit: value as "cover" | "contain",
+              })
+            }
+            options={[
+              { value: "cover", label: "Preencher" },
+              { value: "contain", label: "Conter" },
+            ]}
+          />
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+/** @deprecated Preferir seção `display` (= FormatRibbonFrameSection / Tamanho e posição). */
+export function FormatRibbonOrganizeDisplay({ embed = false }: Omit<SectionProps, "labels">) {
+  return (
     <DeckRibbonGroup
-      label="Exibição"
-      hint={H.display}
+      label="Tamanho e posição"
+      hint={H.sizePosition ?? H.display}
       captionPlacement={embed ? "none" : "below"}
     >
-      <div className="td-deck-ribbon__organize-props">
-        <DeckRangeField
-          id="td-block-opacity"
-          label="Opacidade"
-          hint={H.opacity}
-          min={0}
-          max={100}
-          step={5}
-          value={opacityPercent}
-          displayValue={`${opacityPercent}%`}
-          density="full"
-          aria-label="Opacidade"
-          onChange={(value) => setOpacity(value / 100)}
-        />
-        {isMediaBlock ? (
-          <>
-            <FieldLabel
-              htmlFor="td-block-object-fit"
-              label="Ajuste"
-              hint={H.objectFit}
-              className="td-deck-ribbon__field-label"
-            />
-            <TdRibbonSelect
-              id="td-block-object-fit"
-              className="td-deck-ribbon__select td-deck-ribbon__select--compact"
-              aria-label="Ajuste"
-              value={selected.style?.objectFit ?? "cover"}
-              onChange={(value) =>
-                updateSelectedStyle({
-                  objectFit: value as "cover" | "contain",
-                })
-              }
-              options={[
-                { value: "cover", label: "Preencher" },
-                { value: "contain", label: "Conter" },
-              ]}
-            />
-          </>
-        ) : null}
-      </div>
+      <FormatRibbonOpacityFields />
     </DeckRibbonGroup>
   );
 }

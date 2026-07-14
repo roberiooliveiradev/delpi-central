@@ -1,4 +1,4 @@
-import { Move, PaintBucket, Pentagon } from "lucide-react";
+import { Move, PaintBucket } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   isDataBlockType,
@@ -30,8 +30,7 @@ import { DeckPropertySection } from "./DeckPropertySection";
 const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
 
 const SHAPE_PANE_ICONS = [
-  { id: "fill-line", label: "Preenchimento e linha", Icon: PaintBucket },
-  { id: "effects", label: "Efeitos", Icon: Pentagon },
+  { id: "forma", label: "Forma", Icon: PaintBucket },
   { id: "size", label: "Tamanho e posição", Icon: Move },
 ] as const;
 
@@ -72,7 +71,7 @@ export function ComunicadoElementInspector({
   const isDataBlock = selected ? isDataBlockType(selected.type) || isDataSourceBlockType(selected.type) : false;
   const isViewBlock = selected ? isDataViewBlockType(selected.type) : false;
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
-  const [shapePaneIcon, setShapePaneIcon] = useState<(typeof SHAPE_PANE_ICONS)[number]["id"]>("fill-line");
+  const [shapePaneIcon, setShapePaneIcon] = useState<(typeof SHAPE_PANE_ICONS)[number]["id"]>("forma");
   const [shapeOptionsTab, setShapeOptionsTab] = useState<"shape" | "text">("shape");
 
   useEffect(() => {

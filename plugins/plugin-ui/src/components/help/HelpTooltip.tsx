@@ -132,16 +132,6 @@ function bubbleLayoutStyle(position: BubblePosition | null, positioned: boolean)
   };
 }
 
-function mergeHandler<T extends (...args: never[]) => void>(
-  existing: T | undefined,
-  next: T,
-): T {
-  return ((...args) => {
-    existing?.(...args);
-    next(...args);
-  }) as T;
-}
-
 function mergeDescribedBy(existing: string | undefined, tooltipId: string): string {
   if (!existing) return tooltipId;
   if (existing.split(/\s+/).includes(tooltipId)) return existing;
@@ -154,31 +144,17 @@ function hasExpandedControl(root: ParentNode | null): boolean {
   return Boolean(root.querySelector('[aria-expanded="true"]'));
 }
 
-function wrapChildWithHint(
-  child: ReactNode,
-  handlers: {
-    onMouseEnter: () => void;
-    onMouseLeave: () => void;
-    onFocus: () => void;
-    onBlur: () => void;
-  },
-  tooltipId: string,
-): ReactNode {
+/** Só `aria-describedby` — handlers de hover/foco ficam no hit-target (span),
+ * porque muitos gatilhos (`RibbonColorPicker`, menus de forma) não encaminham
+ * props de evento de `cloneElement` até o botão DOM. */
+function wrapChildDescribedBy(child: ReactNode, tooltipId: string): ReactNode {
   if (!isValidElement(child)) return child;
 
   const element = child as ReactElement<{
-    onMouseEnter?: (event: React.MouseEvent) => void;
-    onMouseLeave?: (event: React.MouseEvent) => void;
-    onFocus?: (event: React.FocusEvent) => void;
-    onBlur?: (event: React.FocusEvent) => void;
     "aria-describedby"?: string;
   }>;
 
   return cloneElement(element, {
-    onMouseEnter: mergeHandler(element.props.onMouseEnter, handlers.onMouseEnter),
-    onMouseLeave: mergeHandler(element.props.onMouseLeave, handlers.onMouseLeave),
-    onFocus: mergeHandler(element.props.onFocus, handlers.onFocus),
-    onBlur: mergeHandler(element.props.onBlur, handlers.onBlur),
     "aria-describedby": mergeDescribedBy(element.props["aria-describedby"], tooltipId),
   });
 }
@@ -347,9 +323,20 @@ export function HelpTooltip({
   };
 
   return (
-    <span ref={rootRef} className={rootClass}>
+    <span
+      ref={rootRef}
+      className={rootClass}
+      {...(wrap
+        ? {
+            onMouseEnter: showTooltip,
+            onMouseLeave: hideTooltip,
+            onFocus: showTooltip,
+            onBlur: hideTooltip,
+          }
+        : {})}
+    >
       {wrap ? (
-        wrapChildWithHint(children, interactionHandlers, tooltipId)
+        wrapChildDescribedBy(children, tooltipId)
       ) : (
         <button
           ref={triggerRef}

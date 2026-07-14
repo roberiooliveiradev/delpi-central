@@ -113,7 +113,7 @@ function renderSection(
     case "animation":
       return <AnimationSection key={id} layout={layout} />;
     case "actions":
-      return <ActionsSection key={id} layout={layout} />;
+      return <ActionsSection key={id} layout={layout} labels={labels} />;
     default:
       return null;
   }

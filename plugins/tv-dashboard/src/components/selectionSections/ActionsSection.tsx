@@ -1,32 +1,29 @@
-import { Trash2 } from "lucide-react";
-import { HintAction } from "@delpi/plugin-ui/index";
-
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { useComunicadoEditor } from "../comunicadoEditorContext";
-import { DeckActionRow } from "../deck/DeckActionRow";
+import { FormatRibbonElementActions } from "../formatRibbon/FormatRibbonOrganizeSection";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
-const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
+const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 /**
- * Ações do painel — só Remover (camada/duplicar ficam em Organizar).
+ * Ações — duplicar, remover (+ mídia: recorte/biblioteca/upload).
+ * Ribbon e painel.
  */
-export function ActionsSection({ layout }: { layout: SelectionSectionLayout }) {
-  const { selectedIds, removeSelected } = useComunicadoEditor();
-  if (layout === "ribbon") return null;
-  if (selectedIds.length === 0) return null;
-
-  return (
-    <SelectionPaneSection title="Ações" hint={E.remove} defaultOpen={false}>
-      <DeckActionRow>
-        <HintAction hint={E.remove} ariaLabel="Ajuda: remover">
-          <button type="button" className="td-btn td-btn--danger td-btn--sm" onClick={removeSelected}>
-            <Trash2 size={15} aria-hidden="true" />
-            Remover
-          </button>
-        </HintAction>
-      </DeckActionRow>
-    </SelectionPaneSection>
-  );
+export function ActionsSection({
+  layout,
+  labels = {},
+}: {
+  layout: SelectionSectionLayout;
+  labels?: Record<string, string>;
+}) {
+  if (layout === "pane") {
+    return (
+      <SelectionPaneSection title="Ações" hint={H.actions ?? H.duplicateBlock} defaultOpen={false}>
+        <div className="td-selection-section td-selection-section--pane-actions">
+          <FormatRibbonElementActions labels={labels} embed />
+        </div>
+      </SelectionPaneSection>
+    );
+  }
+  return <FormatRibbonElementActions labels={labels} />;
 }

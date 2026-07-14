@@ -28,6 +28,7 @@ import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPre
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { DeckRangeField } from "../deck/DeckRangeField";
+import { FormatRibbonOpacityFields } from "./FormatRibbonOrganizeSection";
 import { ShapeMenuHint } from "./ShapeMenuHint";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
@@ -113,7 +114,7 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
 
   return (
     <>
-      <DeckRibbonGroup label="Estilos de forma" hint={H.shapeStyles}>
+      <DeckRibbonGroup label="Forma" hint={H.shapeForma}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
             <ShapeStyleMenu
@@ -138,11 +139,6 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
               />
             </ShapeMenuHint>
           ) : null}
-        </div>
-      </DeckRibbonGroup>
-
-      <DeckRibbonGroup label="Preenchimento e linha" hint={H.shapeFillOutline}>
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           {showFill ? (
             <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento">
               <ShapeFillMenu
@@ -152,9 +148,7 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
                 onNoFill={() => patchPartStyle({ fill: "transparent" })}
               />
             </ShapeMenuHint>
-          ) : (
-            <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento neste primitivo.</p>
-          )}
+          ) : null}
           {showStroke ? (
             <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno">
               <ShapeOutlineMenu
@@ -168,20 +162,23 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
                 onStrokeWidthChange={(width) => patchPartStyle({ strokeWidth: width })}
               />
             </ShapeMenuHint>
-          ) : showFill ? null : (
-            <p className="td-subtitle td-deck-ribbon__hint">Sem contorno neste primitivo.</p>
-          )}
+          ) : null}
+        </div>
+        {!showFill && !showStroke ? (
+          <p className="td-subtitle td-deck-ribbon__hint">Sem preenchimento nem contorno neste primitivo.</p>
+        ) : null}
+        <div className="td-deck-ribbon__organize-props td-forma-opacity">
+          {showCorners ? (
+            <ShapeCornerRadiusControl
+              id="td-chart-area-corner-radius"
+              value={cornerRadius}
+              onChange={(radius) => patchPartStyle({ borderRadius: radius })}
+              embedded
+            />
+          ) : null}
+          <FormatRibbonOpacityFields className="td-forma-opacity__slot" />
         </div>
       </DeckRibbonGroup>
-
-      {showCorners ? (
-        <ShapeCornerRadiusControl
-          id="td-chart-area-corner-radius"
-          label="Cantos"
-          value={cornerRadius}
-          onChange={(radius) => patchPartStyle({ borderRadius: radius })}
-        />
-      ) : null}
 
       {effectiveChartPart.kind === "marker" ? (
         <DeckRibbonGroup label="Marcador" hint={H.markerRadius}>

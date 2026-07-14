@@ -28,16 +28,18 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     letterSpacing: "Espaçamento horizontal entre caracteres, em pixels (pode ser negativo).",
     paragraphSpacing:
       "Estilo tipográfico nomeado, entrelinhas e espaçamento entre caracteres do parágrafo.",
-    box: "Preenchimento e contorno opcionais da caixa de texto (como uma forma sem fundo).",
+    box: "Estilos, sombra, preenchimento, contorno, raio e opacidade da caixa de texto.",
     boxFill: "Cor de preenchimento (fundo) da caixa de texto.",
     boxOutline: "Cor e espessura do contorno da caixa de texto.",
-    shape: "Ajusta preenchimento, contorno e espessura da forma selecionada.",
+    shape: "Ajusta estilos, sombra, preenchimento, contorno, raio e opacidade da forma selecionada.",
+    shapeForma:
+      "Estilos, sombra, preenchimento, contorno, raio e opacidade da forma ou caixa de texto.",
     shapeStyles:
       "Aplica um preset visual (preenchimento, contorno e sombra) à forma selecionada.",
     shapeFill: "Cor de preenchimento (fundo) da forma ou da parte selecionada.",
     shapeOutline: "Cor e espessura do contorno da forma ou da parte selecionada.",
     shapeFillOutline:
-      "Preenchimento e contorno da forma ou da parte selecionada (mesma seção da ribbon).",
+      "Preenchimento e contorno da forma ou da parte selecionada (seção Forma).",
     shapeChange: "Substitui a forma selecionada por outra da biblioteca, mantendo posição e estilo quando possível.",
     shapeSize: "Largura e altura da forma em percentual do slide.",
     markerRadius: "Raio do marcador (ponto) em pixels.",
@@ -46,9 +48,13 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     textShadow: "Preset de sombra tipográfica no texto selecionado.",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
-      "Ações do elemento: duplicar, ordem das camadas (frente/fundo), mídia e remoção.",
+      "Ordem das camadas: trazer para frente ou enviar para o fundo.",
+    actions:
+      "Ações do elemento: duplicar, remover e, em mídia, biblioteca/recorte/upload.",
     display:
-      "Opacidade do elemento e, em imagens e vídeos, como a mídia preenche o quadro.",
+      "Posição, tamanho e rotação do elemento. Opacidade e raio ficam na seção Forma quando houver chrome de forma.",
+    sizePosition:
+      "Posição (X/Y), tamanho (largura/altura) e rotação em pixels de design da página, com origem no canto inferior esquerdo.",
     undo: "Desfazer a última alteração na programação ou no slide (Ctrl+Z).",
     redo: "Refazer alteração desfeita na programação ou no slide (Ctrl+Y ou Ctrl+Shift+Z).",
     zoomOut: "Diminuir zoom do palco no editor.",

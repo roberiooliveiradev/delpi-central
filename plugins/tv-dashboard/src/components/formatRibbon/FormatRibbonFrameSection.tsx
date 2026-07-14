@@ -1,7 +1,6 @@
 import { Move } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import {
-  blockUsesInnerShapeChrome,
   chartPartAllowsFrame,
   clampChartPartFrame,
   clampInputPartFrame,
@@ -27,7 +26,6 @@ import {
   patchComunicadoFrame,
   patchComunicadoFramePageBottomLeftPx,
   patchHostRelativeFramePageBottomLeftPx,
-  resolveBlockShapeChromeStyle,
   resolveViewportPixelSize,
   scaleChartPartTypographyOnResize,
   scaleComplexBlockOnResize,
@@ -56,6 +54,7 @@ import {
 } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import { FormatRibbonOpacityFields } from "./FormatRibbonOrganizeSection";
 
 type FrameFieldDensity = NonNullable<DeckRangeFieldProps["density"]>;
 
@@ -67,10 +66,9 @@ function FrameRangeField({
 }
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
-const E = TV_DASHBOARD_HELP_TOOLTIPS.element;
-const POSITION_GROUP_HINT =
-  E.position ??
-  "Posição e tamanho em pixels de design da página, com origem no canto inferior esquerdo.";
+const SIZE_POSITION_GROUP_HINT =
+  H.sizePosition ??
+  "Posição, tamanho e rotação em pixels de design da página (origem no canto inferior esquerdo).";
 
 type FrameSizeGroupProps = {
   embed: boolean;
@@ -78,18 +76,21 @@ type FrameSizeGroupProps = {
   hint?: string;
   /** Ação fora do painel (ex.: «Posicionar livremente…») — ribbon e painel sem popover. */
   emptyAction?: ReactNode;
-  children: ReactNode;
+  /** Quando false, só geometria. Padrão false — opacidade fica na seção Forma. */
+  includeOpacity?: boolean;
+  children?: ReactNode;
 };
 
 /**
- * Ribbon: tile «Posição» + grade no popover ancorado.
- * Embed (sidebar): grade embutida na seção do accordion.
+ * Ribbon: tile «Posição» + grade (posição/tamanho/rotação) no popover.
+ * Embed (sidebar): campos embutidos na seção do accordion.
  */
 function FrameSizeGroup({
   embed,
   captionPlacement,
-  hint = POSITION_GROUP_HINT,
+  hint = SIZE_POSITION_GROUP_HINT,
   emptyAction,
+  includeOpacity = false,
   children,
 }: FrameSizeGroupProps) {
   const [open, setOpen] = useState(false);
@@ -97,29 +98,37 @@ function FrameSizeGroup({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const opacityFields = includeOpacity ? (
+    <FormatRibbonOpacityFields className="td-deck-ribbon__organize-props td-frame-size-popover__opacity" />
+  ) : null;
+
+  const body = emptyAction ? (
+    <>
+      {emptyAction}
+      {opacityFields}
+    </>
+  ) : (
+    <>
+      {children}
+      {opacityFields}
+    </>
+  );
+
   if (embed || emptyAction) {
     return (
-      <DeckRibbonGroup
-        label="Posição e tamanho"
-        hint={hint}
-        captionPlacement={captionPlacement}
-      >
-        {emptyAction ?? children}
+      <DeckRibbonGroup label="Tamanho e posição" hint={hint} captionPlacement={captionPlacement}>
+        {body}
       </DeckRibbonGroup>
     );
   }
 
   return (
-    <DeckRibbonGroup
-      label="Posição e tamanho"
-      hint={hint}
-      captionPlacement={captionPlacement}
-    >
+    <DeckRibbonGroup label="Tamanho e posição" hint={hint} captionPlacement={captionPlacement}>
       <div
         ref={rootRef}
         className="td-frame-size-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus"
       >
-        <HintAction hint={hint} ariaLabel="Ajuda: Posição e tamanho">
+        <HintAction hint={hint} ariaLabel="Ajuda: Tamanho e posição">
           <button
             ref={triggerRef}
             type="button"
@@ -129,7 +138,7 @@ function FrameSizeGroup({
             ]
               .filter(Boolean)
               .join(" ")}
-            aria-label="Posição e tamanho"
+            aria-label="Tamanho e posição"
             aria-haspopup="dialog"
             aria-expanded={open}
             onClick={() => setOpen((prev) => !prev)}
@@ -148,13 +157,13 @@ function FrameSizeGroup({
             portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
             className="td-frame-size-popover"
             role="dialog"
-            aria-label="Posição e tamanho"
+            aria-label="Tamanho e posição"
             preferredPlacement="bottom"
             allowFlip={false}
             gap={10}
             onDismiss={() => setOpen(false)}
           >
-            {children}
+            {body}
           </AnchoredPanelPortal>
         ) : null}
       </div>
@@ -183,19 +192,21 @@ const FRAME_HINTS: Record<"x" | "y" | "w" | "h", string> = {
 export { patchComunicadoFrame };
 
 /**
- * Posição / tamanho / rotação / raio — bloco no palco ou parte do KPI/gráfico
- * (title/value/hint/icon ou title/legend/plotArea), espelhando o inspetor.
- * UI em px de design; modelo permanece em %.
- * Ribbon: tile + grade no popover ancorado; sidebar (`embed`): grade embutida.
- * `density=full` (padrão): slider + input; `density=compact`: só inputs.
+ * Tamanho e posição: X/Y / largura / altura / rotação — bloco no palco ou
+ * parte do KPI/gráfico. UI em px de design; modelo permanece em %.
+ * Ribbon: tile + grade no popover; sidebar (`embed`): grade embutida.
+ * Opacidade e raio ficam na seção Forma.
  */
 export function FormatRibbonFrameSection({
   density = "full",
   embed = false,
+  includeOpacity = true,
 }: {
   density?: FrameFieldDensity;
   /** Painel: omite caption do ribbon (accordion já titulou). */
   embed?: boolean;
+  /** Inclui opacidade (+ ajuste de mídia) no mesmo grupo Exibição. */
+  includeOpacity?: boolean;
 } = {}) {
   const captionPlacement = embed ? ("none" as const) : ("below" as const);
   const {
@@ -213,13 +224,16 @@ export function FormatRibbonFrameSection({
 
   if (!selected || selectedIds.length > 1) return null;
 
-  /* Parte de gráfico sem geometria própria (rótulos, série, eixos…) — não editar o frame do bloco. */
+  /* Parte de gráfico sem geometria própria — só opacidade no grupo Exibição. */
   if (
     selected.type === "chart_view" &&
     selectedChartPart &&
     !chartPartAllowsFrame(selectedChartPart)
   ) {
-    return null;
+    if (!includeOpacity) return null;
+    return (
+      <FrameSizeGroup embed={embed} captionPlacement={captionPlacement} includeOpacity />
+    );
   }
 
   const inputPartTarget =
@@ -234,7 +248,6 @@ export function FormatRibbonFrameSection({
     const partFrame = clampInputPartFrame(
       explicitFrame ?? defaultInputPartFrame(inputPartTarget.kind),
     );
-    const borderRadius = partState?.style?.borderRadius ?? 0;
     const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
     const partFrameFull: ComunicadoFrame = {
       x: partFrame.x,
@@ -271,13 +284,6 @@ export function FormatRibbonFrameSection({
       updateSelected({ inputParts: nextParts } as Partial<ComunicadoBlock>);
     };
 
-    const setPartRadius = (raw: number) => {
-      const nextParts = upsertInputPartState(block.inputParts, inputPartTarget, {
-        style: { borderRadius: Math.max(0, Math.min(64, Number(raw) || 0)) },
-      });
-      updateSelected({ inputParts: nextParts } as Partial<ComunicadoBlock>);
-    };
-
     const enableFreePosition = () => {
       enableInputFreeLayoutFromDom(block.id, block.inputParts, (next) => {
         updateSelected({ inputParts: next } as Partial<ComunicadoBlock>);
@@ -288,6 +294,7 @@ export function FormatRibbonFrameSection({
       <FrameSizeGroup
         embed={embed}
         captionPlacement={captionPlacement}
+        includeOpacity={includeOpacity}
         emptyAction={
           !explicitFrame ? (
             <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -313,18 +320,6 @@ export function FormatRibbonFrameSection({
               onChange={(value) => setPartFrameKey(key, value)}
             />
           ))}
-          <FrameRangeField
-            density={density}
-            id="td-ribbon-input-part-frame-radius"
-            label="Raio px"
-            hint={H.borderRadius}
-            min={0}
-            max={64}
-            step={1}
-            value={borderRadius}
-            aria-label="Raio dos cantos em pixels"
-            onChange={(value) => setPartRadius(value)}
-          />
         </div>
       </FrameSizeGroup>
     );
@@ -341,7 +336,6 @@ export function FormatRibbonFrameSection({
     const frameKind = kpiPartTarget.kind as KpiFramePartKind;
     const explicitFrame = resolveKpiPartFrame(partState);
     const partFrame = clampKpiPartFrame(explicitFrame ?? defaultKpiPartFrame(frameKind));
-    const borderRadius = partState?.style?.borderRadius ?? 0;
     const frameKeys = [...POSITION_KEYS, ...SIZE_KEYS] as const;
     const partFrameFull: ComunicadoFrame = {
       x: partFrame.x,
@@ -378,15 +372,6 @@ export function FormatRibbonFrameSection({
       } as Partial<ComunicadoBlock>);
     };
 
-    const setPartRadius = (raw: number) => {
-      const nextParts = upsertKpiPartState(block.kpiParts, kpiPartTarget, {
-        style: { borderRadius: Math.max(0, Math.min(64, Number(raw) || 0)) },
-      });
-      updateSelected({
-        kpiParts: mergeKpiPartsWithOptions(nextParts, partsToKpiOptions(nextParts)),
-      } as Partial<ComunicadoBlock>);
-    };
-
     const enableFreePosition = () => {
       const nextParts = seedKpiPartsFreeLayoutFrames(block.kpiParts);
       updateSelected({
@@ -398,6 +383,7 @@ export function FormatRibbonFrameSection({
       <FrameSizeGroup
         embed={embed}
         captionPlacement={captionPlacement}
+        includeOpacity={includeOpacity}
         emptyAction={
           !explicitFrame ? (
             <button type="button" className="td-btn td-btn--sm" onClick={enableFreePosition}>
@@ -423,18 +409,6 @@ export function FormatRibbonFrameSection({
               onChange={(value) => setPartFrameKey(key, value)}
             />
           ))}
-          <FrameRangeField
-            density={density}
-            id="td-ribbon-kpi-part-frame-radius"
-            label="Raio px"
-            hint={H.borderRadius}
-            min={0}
-            max={64}
-            step={1}
-            value={borderRadius}
-            aria-label="Raio dos cantos em pixels"
-            onChange={(value) => setPartRadius(value)}
-          />
         </div>
       </FrameSizeGroup>
     );
@@ -494,7 +468,11 @@ export function FormatRibbonFrameSection({
     };
 
     return (
-      <FrameSizeGroup embed={embed} captionPlacement={captionPlacement}>
+      <FrameSizeGroup
+        embed={embed}
+        captionPlacement={captionPlacement}
+        includeOpacity={includeOpacity}
+      >
         <div className="td-deck-ribbon__frame-grid">
           {frameKeys.map((key) => (
             <FrameRangeField
@@ -522,12 +500,6 @@ export function FormatRibbonFrameSection({
   const frameKeys = pointOnly
     ? POSITION_KEYS
     : ([...POSITION_KEYS, ...SIZE_KEYS] as const);
-
-  const innerChrome = blockUsesInnerShapeChrome(selected)
-    ? resolveBlockShapeChromeStyle(selected)
-    : null;
-  const borderRadius = innerChrome?.borderRadius ?? selected.style?.borderRadius ?? 0;
-  const showCornerRadius = !pointOnly && selected.type !== "chart_view";
 
   const framePx = framePercentToPageBottomLeftPx(selected.frame, slideDesign);
 
@@ -564,7 +536,11 @@ export function FormatRibbonFrameSection({
     key === "x" || key === "w" ? design.width : design.height;
 
   return (
-    <FrameSizeGroup embed={embed} captionPlacement={captionPlacement}>
+    <FrameSizeGroup
+      embed={embed}
+      captionPlacement={captionPlacement}
+      includeOpacity={includeOpacity}
+    >
       <div className="td-deck-ribbon__frame-grid">
         {frameKeys.map((key) => (
           <FrameRangeField
@@ -598,24 +574,6 @@ export function FormatRibbonFrameSection({
             })
           }
         />
-        {showCornerRadius ? (
-          <FrameRangeField
-            density={density}
-            id="td-ribbon-frame-radius"
-            label="Raio px"
-            hint={H.borderRadius}
-            min={0}
-            max={64}
-            step={1}
-            value={borderRadius}
-            aria-label="Raio dos cantos em pixels"
-            onChange={(value) =>
-              updateSelectedStyle({
-                borderRadius: Math.max(0, Math.min(64, value)),
-              })
-            }
-          />
-        ) : null}
       </div>
     </FrameSizeGroup>
   );

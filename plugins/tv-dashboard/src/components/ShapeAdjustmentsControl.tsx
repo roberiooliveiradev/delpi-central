@@ -18,10 +18,16 @@ type Props = {
   /** Layout compacto na faixa Forma; campos empilhados no inspetor. */
   variant?: "ribbon" | "inspector";
   idPrefix?: string;
+  /**
+   * Omite corner/round (raio) — já editável na seção Exibição.
+   * Default true para evitar controle duplicado.
+   */
+  omitCornerRadius?: boolean;
 };
 
 /**
  * Controles contínuos dos ajustes de geometria (handles amarelos).
+ * Raio/cantos ficam na seção Exibição (posição/tamanho) — omitidos aqui.
  */
 export function ShapeAdjustmentsControl({
   kind,
@@ -29,8 +35,12 @@ export function ShapeAdjustmentsControl({
   onChange,
   variant = "ribbon",
   idPrefix = "td-shape-adj",
+  omitCornerRadius = true,
 }: Props) {
-  const specs = shapeAdjustmentSpecs(kind);
+  const specs = shapeAdjustmentSpecs(kind).filter(
+    (spec) =>
+      !(omitCornerRadius && (spec.id === "corner" || spec.id === "round")),
+  );
   if (specs.length === 0) return null;
 
   const values = resolveShapeAdjustments(kind, style);

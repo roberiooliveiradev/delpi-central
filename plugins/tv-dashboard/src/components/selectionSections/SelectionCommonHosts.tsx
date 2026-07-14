@@ -14,7 +14,7 @@ type CommonHostProps = {
 };
 
 /**
- * Host do rabo transversal: Exibição · Posição · Organizar · (pane) Animação · Ações.
+ * Host do rabo transversal: Tamanho e posição · Organizar · Ações · (pane) Animação.
  * Intersecta com `resolveSelectionSections` — só renderiza o que a seleção admite.
  */
 export function SelectionCommonTailHost({ layout, labels }: CommonHostProps) {
@@ -35,7 +35,7 @@ export function SelectionFrameHost({ layout, labels }: CommonHostProps) {
 }
 
 /**
- * Tipografia + Caixa — prefixo compartilhado da faixa Forma / texto.
+ * Tipografia + Forma — prefixo compartilhado (texto/heading = mesmo chrome que shape).
  */
 export function SelectionTypographyHost({ layout, labels }: CommonHostProps) {
   return (
@@ -58,7 +58,7 @@ export function SelectionTypedWithTailHost({
   lightTail = false,
 }: CommonHostProps & {
   typed: SelectionSectionId[];
-  /** true → só display+frame+organize (sem animação/ações). */
+  /** true → só display+organize+actions (sem animação). */
   lightTail?: boolean;
 }) {
   const tail: SelectionSectionId[] = lightTail
