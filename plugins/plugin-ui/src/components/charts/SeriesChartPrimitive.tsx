@@ -115,7 +115,8 @@ export function SeriesChartPrimitive({
     const observer = new ResizeObserver(update);
     observer.observe(node);
     return () => observer.disconnect();
-  }, [usable.length]);
+    // Tipografia live no resize do bloco muda title/legend → host flex muda de altura.
+  }, [usable.length, chartParts, options?.title, options?.showLegend, options?.legendPosition]);
 
   if (usable.length === 0) {
     return (

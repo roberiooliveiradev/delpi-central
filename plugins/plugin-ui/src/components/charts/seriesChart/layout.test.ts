@@ -6,6 +6,8 @@ import {
   resolveVisibleXLabelIndices,
   resolveXLabelStep,
   resolveXLabelTextAnchor,
+  SERIES_CHART_MIN_PLOT_FRACTION,
+  SERIES_CHART_MIN_PLOT_PX,
   SERIES_CHART_PLOT_INSET,
 } from "./layout";
 import { OTD_SERIES_LAYOUT_GOLDEN as otdGolden } from "./__fixtures__/otdSeriesLayout.golden";
@@ -189,6 +191,28 @@ describe("buildSeriesChartLayout viewBox dinâmico", () => {
     expect(large.margin.left).toBeGreaterThan(small.margin.left);
     expect(large.margin.bottom).toBeGreaterThan(small.margin.bottom);
     expect(large.xLabelStep).toBeGreaterThanOrEqual(small.xLabelStep);
+  });
+
+  it("tipografia extrema no resize mantém plot utilizável (não blank)", () => {
+    const points = Array.from({ length: 14 }, (_, i) => ({
+      value: 60 + i,
+      label: `${String(i + 1).padStart(2, "0")}/07/26`,
+    }));
+    const layout = buildSeriesChartLayout({
+      points,
+      showXAxisLabels: true,
+      showXAxisTitle: true,
+      viewW: 360,
+      viewH: 200,
+      typography: { axisFontSize: 48, axisTitleFontSize: 44 },
+    });
+    expect(layout.plotW).toBeGreaterThanOrEqual(Math.round(360 * SERIES_CHART_MIN_PLOT_FRACTION));
+    expect(layout.plotH).toBeGreaterThanOrEqual(Math.round(200 * SERIES_CHART_MIN_PLOT_FRACTION));
+    expect(layout.plotH).toBeGreaterThanOrEqual(SERIES_CHART_MIN_PLOT_PX);
+    const yTop = layout.toY(layout.axisMax);
+    const yBot = layout.toY(layout.axisMin);
+    expect(yTop).toBeGreaterThanOrEqual(layout.margin.top);
+    expect(yBot).toBeLessThanOrEqual(layout.margin.top + layout.plotH);
   });
 });
 

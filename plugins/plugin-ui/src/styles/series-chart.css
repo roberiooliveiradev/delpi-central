@@ -26,6 +26,9 @@
 }
 
 .delpi-ui-series-chart__title {
+  flex: 0 1 auto;
+  max-height: 22%;
+  overflow: hidden;
   text-align: center;
   font-weight: 600;
   font-size: var(--delpi-ui-series-chart-title-font-size, 22px);
@@ -34,8 +37,8 @@
 }
 
 .delpi-ui-series-chart__body {
-  flex: 1 1 0;
-  min-height: 0;
+  flex: 1 1 auto;
+  min-height: 42%;
   display: flex;
   align-items: stretch;
   gap: 0.5rem;
@@ -45,7 +48,8 @@
   position: relative;
   flex: 1;
   min-width: 0;
-  min-height: 0;
+  /* Piso DOM: tipografia HTML (title/legend) não pode espremer o SVG a 0px. */
+  min-height: max(48px, 40%);
   display: flex;
 }
 
@@ -111,6 +115,9 @@
 }
 
 .delpi-ui-series-chart__legend {
+  flex: 0 1 auto;
+  max-height: 18%;
+  overflow: hidden;
   display: flex;
   flex-wrap: wrap;
   align-items: center;

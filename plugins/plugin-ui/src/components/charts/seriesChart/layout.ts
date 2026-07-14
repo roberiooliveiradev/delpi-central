@@ -134,7 +134,64 @@ function resolveAxisTitleFontSize(typography?: SeriesChartLayoutTypography | nul
 }
 
 function marginScaleForAxisFont(axisFontSize: number): number {
-  return Math.max(0.85, Math.min(5, axisFontSize / SERIES_CHART_LAYOUT_REF_AXIS_FONT));
+  // Cap moderado: tipografia live no resize do bloco pode subir muito;
+  // o piso do plot (`clampMarginsForUsablePlot`) é a defesa final.
+  return Math.max(0.85, Math.min(2.75, axisFontSize / SERIES_CHART_LAYOUT_REF_AXIS_FONT));
+}
+
+/** Fração mínima do viewBox reservada ao plot (evita série clipada a ~1px). */
+export const SERIES_CHART_MIN_PLOT_FRACTION = 0.38;
+
+/** Piso absoluto do plot em user units. */
+export const SERIES_CHART_MIN_PLOT_PX = 48;
+
+/**
+ * Comprime margens proporcionalmente quando o plot colapsaria.
+ * Canônico para qualquer consumidor de `buildSeriesChartLayout` (TV / editor).
+ */
+export function clampMarginsForUsablePlot(
+  margin: SeriesChartMargin,
+  viewW: number,
+  viewH: number,
+  options?: { minPlotFraction?: number; minPlotPx?: number },
+): SeriesChartMargin {
+  const minFrac = options?.minPlotFraction ?? SERIES_CHART_MIN_PLOT_FRACTION;
+  const minPx = options?.minPlotPx ?? SERIES_CHART_MIN_PLOT_PX;
+  const minPlotW = Math.min(viewW, Math.max(minPx, Math.round(viewW * minFrac)));
+  const minPlotH = Math.min(viewH, Math.max(minPx, Math.round(viewH * minFrac)));
+
+  let { top, right, bottom, left } = margin;
+
+  const shrinkAxis = (
+    a: number,
+    b: number,
+    maxSum: number,
+  ): [number, number] => {
+    const sum = a + b;
+    if (sum <= maxSum || sum <= 0) return [Math.max(0, a), Math.max(0, b)];
+    const s = maxSum / sum;
+    let nextA = Math.round(a * s);
+    let nextB = Math.round(b * s);
+    let over = nextA + nextB - maxSum;
+    if (over > 0) {
+      if (nextB >= over) nextB -= over;
+      else {
+        over -= nextB;
+        nextB = 0;
+        nextA = Math.max(0, nextA - over);
+      }
+    }
+    return [nextA, nextB];
+  };
+
+  if (viewW - left - right < minPlotW) {
+    [left, right] = shrinkAxis(left, right, Math.max(0, viewW - minPlotW));
+  }
+  if (viewH - top - bottom < minPlotH) {
+    [top, bottom] = shrinkAxis(top, bottom, Math.max(0, viewH - minPlotH));
+  }
+
+  return { top, right, bottom, left };
 }
 
 function scaledBaseMargin(axisFontSize: number): SeriesChartMargin {
@@ -326,7 +383,11 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
       axisTitleFontSize,
     ),
   };
-  const margin: SeriesChartMargin = framedEarly ?? autoMargin;
+  const margin: SeriesChartMargin = clampMarginsForUsablePlot(
+    framedEarly ?? autoMargin,
+    viewW,
+    viewH,
+  );
 
   const plotW = Math.max(1, viewW - margin.left - margin.right);
   const plotH = Math.max(1, viewH - margin.top - margin.bottom);
