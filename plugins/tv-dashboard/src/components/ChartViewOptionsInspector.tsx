@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   CHART_ELEMENT_CATALOG,
@@ -18,7 +17,6 @@ import {
   type ChartElementId,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { ChartColumn, Layers, Palette } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { ChartPartInspector } from "./ChartPartInspector";
@@ -34,12 +32,6 @@ type Props = {
   omitSeries?: boolean;
 };
 
-const CHART_PANE_ICONS = [
-  { id: "elements", label: "Elementos", Icon: Layers },
-  { id: "appearance", label: "Aparência", Icon: Palette },
-  { id: "series", label: "Série", Icon: ChartColumn },
-] as const;
-
 function updateChartOptions(
   current: ComunicadoChartOptions | undefined,
   patch: Partial<ComunicadoChartOptions>,
@@ -49,7 +41,6 @@ function updateChartOptions(
 
 export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: Props) {
   const { selected, updateSelected, selectChartPart, selectedChartPart } = useComunicadoEditor();
-  const [paneIcon, setPaneIcon] = useState<(typeof CHART_PANE_ICONS)[number]["id"]>("elements");
 
   if (!selected || selected.type !== "chart_view") return null;
 
@@ -60,9 +51,6 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
   });
   const chartKind = toSeriesChartKind(block.chartType) ?? "line";
   const hasPartSelection = Boolean(selectedChartPart);
-  const paneIcons = omitSeries
-    ? CHART_PANE_ICONS.filter((entry) => entry.id !== "series")
-    : CHART_PANE_ICONS;
 
   const persistOptions = (nextOptions: ComunicadoChartOptions) => {
     updateSelected({
@@ -99,11 +87,6 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
     }
   };
 
-  const scrollToPane = (id: (typeof CHART_PANE_ICONS)[number]["id"]) => {
-    setPaneIcon(id);
-    document.getElementById(`td-chart-pane-${id}`)?.scrollIntoView({ block: "nearest" });
-  };
-
   const elements = CHART_ELEMENT_CATALOG.filter((entry) => isChartElementApplicable(entry, chartKind));
 
   return (
@@ -112,28 +95,6 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
 
       {!hasPartSelection ? (
         <>
-          <div className="td-format-pane-icons" role="tablist" aria-label="Categorias do gráfico">
-            {paneIcons.map(({ id, label, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={paneIcon === id}
-                aria-label={label}
-                title={label}
-                className={[
-                  "td-format-pane-icons__btn",
-                  paneIcon === id ? "td-format-pane-icons__btn--active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onClick={() => scrollToPane(id)}
-              >
-                <Icon size={16} aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-
           <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
             Clique no palco ou use a faixa Gráfico para ligar partes. Detalhes abrem ao selecionar a
             parte.
@@ -172,7 +133,7 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
               pane={pane}
               title="Aparência"
               hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAppearance}
-              defaultOpen
+              defaultOpen={false}
             >
               <DeckField id="td-chart-value-format" label="Formato dos valores">
                 <FormSelectControl
@@ -193,7 +154,7 @@ export function ChartViewOptionsInspector({ pane = false, omitSeries = false }: 
 
           {!omitSeries ? (
             <div id="td-chart-pane-series">
-              <DeckPropertySection pane={pane} title="Série" defaultOpen>
+              <DeckPropertySection pane={pane} title="Série" defaultOpen={false}>
                 <DeckField id="td-chart-series-color" label="Cor da série">
                   <TvRibbonColorPicker
                     inline

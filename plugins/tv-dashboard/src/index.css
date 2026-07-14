@@ -3236,6 +3236,41 @@ body.td-composer--marqueeing * {
   flex-wrap: wrap;
   width: 100%;
   max-width: 100%;
+  min-width: 0;
+}
+
+/* RangeField: default plugin-ui tem min-width 148px — força contenção na sidebar. */
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-range-field {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 auto;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-range-field__row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-range-field__slider,
+.dashboard-tv-dashboard .td-deck-side-panel
+  input.delpi-ui-native-range.delpi-ui-range-field__slider {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dashboard-tv-dashboard .td-deck-side-panel .delpi-ui-range-field__input {
+  flex: 0 0 3.75rem;
+  width: 3.75rem;
+  min-width: 3.75rem;
+  max-width: 3.75rem;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .td-forma-opacity,
@@ -3250,40 +3285,21 @@ body.td-composer--marqueeing * {
   border-left: none;
   overflow: hidden;
   align-items: start;
+  box-sizing: border-box;
 }
 
-.dashboard-tv-dashboard .td-deck-side-panel .td-forma-opacity .delpi-ui-range-field,
-.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__organize-props .delpi-ui-range-field {
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__toolbar--inline {
+  display: flex;
+  flex-wrap: wrap;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
-  max-width: none;
-  padding: 0;
-}
-
-.dashboard-tv-dashboard .td-deck-side-panel .td-forma-opacity .delpi-ui-range-field__row,
-.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__organize-props .delpi-ui-range-field__row {
-  flex-direction: row;
-  align-items: center;
   gap: 8px;
 }
 
-.dashboard-tv-dashboard .td-deck-side-panel .td-forma-opacity .delpi-ui-range-field__slider,
-.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__organize-props .delpi-ui-range-field__slider,
-.dashboard-tv-dashboard .td-deck-side-panel .td-forma-opacity
-  input.delpi-ui-native-range.delpi-ui-range-field__slider,
-.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__organize-props
-  input.delpi-ui-native-range.delpi-ui-range-field__slider {
-  flex: 1 1 auto;
-  width: auto;
+.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__toolbar--inline .delpi-ui-range-field {
+  flex: 1 1 8rem;
   min-width: 0;
-}
-
-.dashboard-tv-dashboard .td-deck-side-panel .td-forma-opacity .delpi-ui-range-field__input,
-.dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__organize-props .delpi-ui-range-field__input {
-  flex: 0 0 3.75rem;
-  width: 3.75rem;
-  min-width: 3.75rem;
-  max-width: 3.75rem;
 }
 
 .dashboard-tv-dashboard .td-deck-side-panel .td-deck-ribbon__toolbar,

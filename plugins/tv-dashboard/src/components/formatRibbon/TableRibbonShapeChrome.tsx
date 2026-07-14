@@ -35,7 +35,14 @@ const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
  * Chrome de forma da tabela (moldura / parte) — estilos, preenchimento, contorno, sombra e opacidade.
  * Usado na ribbon de parte e pelo botão Forma do Design da Tabela.
  */
-export function TableRibbonShapeChrome({ block }: { block: ComunicadoTableViewBlock }) {
+export function TableRibbonShapeChrome({
+  block,
+  embed = false,
+}: {
+  block: ComunicadoTableViewBlock;
+  /** Painel lateral: omite caption da ribbon (accordion já titulou). */
+  embed?: boolean;
+}) {
   const { selectedTablePart, updateSelected, updateSelectedStyle } = useComunicadoEditor();
   const chromePart = resolveTableShapeChromePartRef(selectedTablePart);
   const isFrameChrome = chromePart.kind === "frame";
@@ -61,7 +68,11 @@ export function TableRibbonShapeChrome({ block }: { block: ComunicadoTableViewBl
   };
 
   return (
-    <DeckRibbonGroup label="Forma" hint={H.shapeForma}>
+    <DeckRibbonGroup
+      label="Forma"
+      hint={H.shapeForma}
+      captionPlacement={embed ? "none" : "below"}
+    >
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
         <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
           <ShapeStyleMenu

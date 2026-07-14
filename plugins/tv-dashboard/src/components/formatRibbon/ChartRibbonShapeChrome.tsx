@@ -64,7 +64,14 @@ function resolveEffectiveChartPart(
  * Chrome de forma do gráfico na aba Elemento (estilo / preenchimento / contorno / raio).
  * Alvo: parte selecionada com primitivo visual, ou chartArea por padrão.
  */
-export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBlock }) {
+export function ChartRibbonShapeChrome({
+  block,
+  embed = false,
+}: {
+  block: ComunicadoChartViewBlock;
+  /** Painel lateral: omite caption da ribbon (accordion já titulou). */
+  embed?: boolean;
+}) {
   const { selectedChartPart, updateSelected, updateSelectedStyle } = useComunicadoEditor();
   const effectiveChartPart = resolveEffectiveChartPart(selectedChartPart);
   const chartPartPrimitive =
@@ -114,7 +121,11 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
 
   return (
     <>
-      <DeckRibbonGroup label="Forma" hint={H.shapeForma}>
+      <DeckRibbonGroup
+        label="Forma"
+        hint={H.shapeForma}
+        captionPlacement={embed ? "none" : "below"}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
           <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos de forma">
             <ShapeStyleMenu
@@ -181,7 +192,11 @@ export function ChartRibbonShapeChrome({ block }: { block: ComunicadoChartViewBl
       </DeckRibbonGroup>
 
       {effectiveChartPart.kind === "marker" ? (
-        <DeckRibbonGroup label="Marcador" hint={H.markerRadius}>
+        <DeckRibbonGroup
+          label="Marcador"
+          hint={H.markerRadius}
+          captionPlacement={embed ? "none" : "below"}
+        >
           <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--inline">
             <DeckRangeField
               id="td-chart-marker-radius"

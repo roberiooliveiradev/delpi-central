@@ -49,10 +49,16 @@ export function PartFormatSection({ layout }: { layout: SelectionSectionLayout }
   const chromeBody = (
     <>
       {chromeMode.source === "chart" && selected?.type === "chart_view" ? (
-        <ChartRibbonShapeChrome block={selected as ComunicadoChartViewBlock} />
+        <ChartRibbonShapeChrome
+          block={selected as ComunicadoChartViewBlock}
+          embed={layout === "pane"}
+        />
       ) : null}
       {chromeMode.source === "table" && selected?.type === "table_view" ? (
-        <TableRibbonShapeChrome block={selected as ComunicadoTableViewBlock} />
+        <TableRibbonShapeChrome
+          block={selected as ComunicadoTableViewBlock}
+          embed={layout === "pane"}
+        />
       ) : null}
     </>
   );
@@ -65,9 +71,8 @@ export function PartFormatSection({ layout }: { layout: SelectionSectionLayout }
         defaultOpen
       >
         <PartSelectionNav chrome={chromeMode} onBack={onBack} />
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
-          {chromeBody}
-        </div>
+        {/* Chromes já trazem tiles + sliders — não reenvolver em __tiles (vazava Raio/Opacidade). */}
+        {chromeBody}
       </SelectionPaneSection>
     );
   }

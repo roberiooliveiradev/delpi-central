@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   FormSelectControl,
   NativeCheckboxControl,
@@ -19,7 +18,6 @@ import {
   type TableElementId,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { AlignLeft, Layers, Palette } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -37,12 +35,6 @@ type Props = {
   omitCellAlign?: boolean;
 };
 
-const TABLE_PANE_ICONS = [
-  { id: "elements", label: "Elementos", Icon: Layers },
-  { id: "cells", label: "Células", Icon: AlignLeft },
-  { id: "appearance", label: "Aparência", Icon: Palette },
-] as const;
-
 function updateTableOptions(
   current: ComunicadoTableOptions | undefined,
   preset: ComunicadoTableViewBlock["tablePreset"],
@@ -57,18 +49,12 @@ export function TableViewOptionsInspector({
   omitCellAlign = false,
 }: Props) {
   const { selected, selectedTablePart, selectTablePart, updateSelected } = useComunicadoEditor();
-  const [paneIcon, setPaneIcon] = useState<(typeof TABLE_PANE_ICONS)[number]["id"]>(
-    omitDesignChrome ? "cells" : "elements",
-  );
 
   if (!selected || selected.type !== "table_view") return null;
 
   const block = selected as ComunicadoTableViewBlock;
   const options = mergeComunicadoTableOptions(block.tableOptions, block.tablePreset);
   const hasPartSelection = Boolean(selectedTablePart);
-  const paneIcons = omitDesignChrome
-    ? TABLE_PANE_ICONS.filter((entry) => entry.id === "cells")
-    : TABLE_PANE_ICONS;
 
   const setOptions = (patch: Partial<ComunicadoTableOptions>) => {
     const nextOptions = updateTableOptions(block.tableOptions, block.tablePreset, patch);
@@ -97,40 +83,12 @@ export function TableViewOptionsInspector({
     return selectedTablePart.kind === primary.kind;
   };
 
-  const scrollToPane = (id: (typeof TABLE_PANE_ICONS)[number]["id"]) => {
-    setPaneIcon(id);
-    document.getElementById(`td-table-pane-${id}`)?.scrollIntoView({ block: "nearest" });
-  };
-
   return (
     <>
       <TablePartInspector pane={pane} block={block} />
 
       {!hasPartSelection ? (
         <>
-          {paneIcons.length > 1 ? (
-            <div className="td-format-pane-icons" role="tablist" aria-label="Categorias da tabela">
-              {paneIcons.map(({ id, label, Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  aria-selected={paneIcon === id}
-                  aria-label={label}
-                  title={label}
-                  className={[
-                    "td-format-pane-icons__btn",
-                    paneIcon === id ? "td-format-pane-icons__btn--active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  onClick={() => scrollToPane(id)}
-                >
-                  <Icon size={16} aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-          ) : null}
           {!omitDesignChrome ? (
             <p className="td-deck-inspector__hint td-deck-inspector__hint--stage">
               Duplo clique no palco para selecionar título, cabeçalho ou célula. Moldura: aba Forma
