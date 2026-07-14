@@ -92,10 +92,7 @@ import type {
   ComunicadoTextDecoration,
   ComunicadoVerticalAlign,
 } from "./comunicadoTypes";
-import {
-  COMUNICADO_FONT_SIZE_MAX,
-  COMUNICADO_FONT_SIZE_MIN,
-} from "./comunicadoTypes";
+import { COMUNICADO_FONT_SIZE_MIN } from "./comunicadoTypes";
 import {
   isDataBoundEditorBlockType,
   isDataSourceBlockType,
@@ -1117,11 +1114,10 @@ export function defaultTextBlockStyle(type: "heading" | "text"): ComunicadoBlock
   return { ...(defaultStyle(type) as ComunicadoBlockStyle) };
 }
 
+/** Só piso mínimo — sem teto (usuário pode digitar qualquer tamanho ≥ min). */
 export function clampFontSize(size: number): number {
-  return Math.max(
-    COMUNICADO_FONT_SIZE_MIN,
-    Math.min(COMUNICADO_FONT_SIZE_MAX, Math.round(size)),
-  );
+  if (!Number.isFinite(size)) return COMUNICADO_FONT_SIZE_MIN;
+  return Math.max(COMUNICADO_FONT_SIZE_MIN, Math.round(size));
 }
 
 export function parseTextDecorationFlags(

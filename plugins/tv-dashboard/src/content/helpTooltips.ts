@@ -54,7 +54,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     uploadFont: "Envia uma fonte WOFF2, TTF ou OTF para esta playlist.",
     fontSizeDown: "Diminuir tamanho da fonte.",
     fontSizeUp: "Aumentar tamanho da fonte.",
-    fontSize: "Escolha um tamanho da lista ou digite o valor em pixels (12–120).",
+    fontSize: "Escolha um tamanho da lista ou digite o valor em pixels (mínimo 12).",
     mediaLibrary: "Escolher arquivo já enviado à playlist.",
     duplicateBlock: "Duplicar elemento selecionado (Ctrl+D).",
     cropImage: "Abrir painel de recorte da imagem no inspetor lateral.",

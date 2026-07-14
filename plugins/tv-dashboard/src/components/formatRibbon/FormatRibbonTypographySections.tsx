@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import {
   COMUNICADO_FONT_FAMILIES,
-  COMUNICADO_FONT_SIZE_MAX,
   COMUNICADO_FONT_SIZE_MIN,
   COMUNICADO_FONT_SIZE_PRESETS,
   COMUNICADO_FONT_SIZE_STEP,
@@ -410,7 +409,6 @@ export function FormatRibbonTypographySections() {
                   value={currentFontSize}
                   options={COMUNICADO_FONT_SIZE_PRESETS}
                   min={COMUNICADO_FONT_SIZE_MIN}
-                  max={COMUNICADO_FONT_SIZE_MAX}
                   clamp={clampFontSize}
                   portalScopeClassName="dashboard-tv-dashboard"
                   onChange={(next) =>
@@ -421,7 +419,6 @@ export function FormatRibbonTypographySections() {
               <TdRibbonIconButton
                 hint={H.fontSizeUp}
                 ariaLabel="Aumentar fonte"
-                disabled={currentFontSize >= COMUNICADO_FONT_SIZE_MAX}
                 onClick={() =>
                   updateSelectedTextFormatStyle({
                     fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),

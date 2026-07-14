@@ -37,7 +37,6 @@ import type {
 } from "./comunicadoTypes";
 
 const FONT_PX_MIN = 6;
-const FONT_PX_MAX = 200;
 const STROKE_PX_MIN = 0.5;
 const STROKE_PX_MAX = 48;
 const ICON_PX_MIN = 8;
@@ -66,7 +65,7 @@ export function scaleFontPx(px: number, scale: number): number {
     return Math.round(px);
   }
   if (!(px > 0) || !Number.isFinite(px)) return FONT_PX_MIN;
-  return Math.max(FONT_PX_MIN, Math.min(FONT_PX_MAX, Math.round(px * scale)));
+  return Math.max(FONT_PX_MIN, Math.round(px * scale));
 }
 
 function scaleStrokePx(px: number, scale: number): number {

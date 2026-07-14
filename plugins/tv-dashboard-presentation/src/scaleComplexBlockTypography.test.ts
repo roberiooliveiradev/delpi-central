@@ -32,10 +32,10 @@ describe("uniformFrameScale", () => {
 });
 
 describe("scaleFontPx", () => {
-  it("aplica fator e clamp", () => {
+  it("aplica fator e só piso mínimo", () => {
     expect(scaleFontPx(32, 2)).toBe(64);
     expect(scaleFontPx(10, 0.5)).toBe(6); // min 6
-    expect(scaleFontPx(180, 2)).toBe(200); // max 200
+    expect(scaleFontPx(180, 2)).toBe(360); // sem teto
   });
 });
 

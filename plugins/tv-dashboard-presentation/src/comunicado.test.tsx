@@ -218,13 +218,14 @@ describe("comunicadoHelpers", () => {
 
   it("limita tamanho da fonte", () => {
     expect(clampFontSize(8)).toBe(12);
-    expect(clampFontSize(200)).toBe(120);
+    expect(clampFontSize(200)).toBe(200);
+    expect(clampFontSize(480)).toBe(480);
   });
 
   it("presets de fonte cobrem min/max em ordem crescente", async () => {
     const { COMUNICADO_FONT_SIZE_PRESETS } = await import("./comunicadoTypes");
     expect(COMUNICADO_FONT_SIZE_PRESETS[0]).toBe(12);
-    expect(COMUNICADO_FONT_SIZE_PRESETS.at(-1)).toBe(120);
+    expect(COMUNICADO_FONT_SIZE_PRESETS.at(-1)).toBe(288);
     for (let i = 1; i < COMUNICADO_FONT_SIZE_PRESETS.length; i += 1) {
       expect(COMUNICADO_FONT_SIZE_PRESETS[i]).toBeGreaterThan(COMUNICADO_FONT_SIZE_PRESETS[i - 1]!);
     }

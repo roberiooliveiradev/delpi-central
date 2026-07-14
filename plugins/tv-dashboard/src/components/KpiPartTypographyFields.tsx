@@ -99,13 +99,12 @@ export function KpiPartTypographyFields({
             id={`td-kpi-typo-${partKind}-size`}
             type="number"
             min={8}
-            max={120}
             value={fontSize}
             onChange={(value) => {
               const next = Number(value);
               if (!Number.isFinite(next)) return;
               onPatch({
-                fontSize: Math.max(8, Math.min(120, Math.round(next))),
+                fontSize: Math.max(8, Math.round(next)),
               });
             }}
             placeholder={String(KPI_PART_FONT_SIZE_DEFAULTS[partKind])}
