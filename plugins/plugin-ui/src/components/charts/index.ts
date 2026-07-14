@@ -134,6 +134,7 @@ export {
   chartPartTypographyStyle,
   isChartPartRefEqual,
   isChartPartInteractionSelected,
+  isFullBleedChartAreaFrame,
   mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,
   normalizeChartPartsForLoad,

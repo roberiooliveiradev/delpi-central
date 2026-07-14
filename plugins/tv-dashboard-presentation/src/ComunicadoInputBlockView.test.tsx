@@ -76,4 +76,31 @@ describe("ComunicadoInputBlockView", () => {
       container.querySelector("input.tdp-comunicado__input-block-control--date[type='date']"),
     ).toBeTruthy();
   });
+
+  it("sem paramKey mostra indisponível; com paramKey e schema ausente ainda edita", () => {
+    const { rerender, container } = render(
+      <ComunicadoInputBlockView
+        block={makeBlock({ paramKey: "", targetScope: "slide" })}
+        interactive
+        paramAvailable={false}
+      />,
+    );
+    expect(screen.getByText("Parâmetro indisponível")).toBeTruthy();
+
+    rerender(
+      <ComunicadoInputBlockView
+        block={makeBlock({
+          paramKey: "branch",
+          label: "Filial",
+          targetScope: "slide",
+        })}
+        interactive
+        paramAvailable={false}
+      />,
+    );
+    expect(screen.queryByText("Parâmetro indisponível")).toBeNull();
+    expect(screen.getAllByText("Filial").length).toBeGreaterThan(0);
+    expect(container.querySelector("input.tdp-comunicado__input-block-control")).toBeTruthy();
+    expect(screen.getByText("Valor livre")).toBeTruthy();
+  });
 });

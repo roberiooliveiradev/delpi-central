@@ -16,7 +16,6 @@ import {
   resolveInputPartFontSize,
   resolveInputPartFrame,
   resolveViewportPixelSize,
-  seedInputPartsFreeLayoutFrames,
   upsertInputPartState,
   type ComunicadoFrame,
   type ComunicadoInputBlock,
@@ -25,12 +24,13 @@ import {
   type InputTextPartKind,
 } from "@delpi/tv-dashboard-presentation";
 
+import { enableInputFreeLayoutFromDom } from "../utils/enableInputFreeLayoutFromDom";
+import { inputPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
-import { inputPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 
 type Props = {
   pane?: boolean;
@@ -100,9 +100,9 @@ export function InputPartInspector({ pane = false, block }: Props) {
   };
 
   const enableFreePosition = () => {
-    updateSelected({
-      inputParts: seedInputPartsFreeLayoutFrames(block.inputParts),
-    } as Partial<typeof block>);
+    enableInputFreeLayoutFromDom(block.id, block.inputParts, (next) => {
+      updateSelected({ inputParts: next } as Partial<typeof block>);
+    });
   };
 
   const clearFreePosition = () => {

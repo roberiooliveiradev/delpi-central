@@ -21,6 +21,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
+import { shouldUsePartChromeInsteadOfBlock } from "../utils/compositePartSelection";
 import {
   resolveStagePanGutterPx,
   shouldDeferToStagePan,
@@ -403,17 +404,30 @@ export function ComunicadoComposerCanvas() {
       return false;
     }
     const block = blocks.find((item) => item.id === blockId);
-    // Handles do bloco só no nível global — com qualquer parte selecionada, chrome da parte manda.
-    if (block?.type === "chart_view" && selectedChartPart) {
+    // Handles do wrap só no nível global — partes de conteúdo usam chrome próprio.
+    // Moldura (card/chartArea/frame) continua com handles do bloco.
+    if (
+      block?.type === "chart_view" &&
+      shouldUsePartChromeInsteadOfBlock(block.type, selectedChartPart)
+    ) {
       return false;
     }
-    if (block?.type === "kpi_view" && selectedKpiPart) {
+    if (
+      block?.type === "kpi_view" &&
+      shouldUsePartChromeInsteadOfBlock(block.type, selectedKpiPart)
+    ) {
       return false;
     }
-    if (block?.type === "table_view" && selectedTablePart) {
+    if (
+      block?.type === "table_view" &&
+      shouldUsePartChromeInsteadOfBlock(block.type, selectedTablePart)
+    ) {
       return false;
     }
-    if (block?.type === "input" && selectedInputPart) {
+    if (
+      block?.type === "input" &&
+      shouldUsePartChromeInsteadOfBlock(block.type, selectedInputPart)
+    ) {
       return false;
     }
     return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
@@ -476,18 +490,25 @@ export function ComunicadoComposerCanvas() {
             }
             const isSelected = isBlockSelected(block.id);
             const isPrimary = block.id === primarySelected;
+            const partForChrome =
+              block.type === "kpi_view"
+                ? selectedKpiPart
+                : block.type === "chart_view"
+                  ? selectedChartPart
+                  : block.type === "table_view"
+                    ? selectedTablePart
+                    : block.type === "input"
+                      ? selectedInputPart
+                      : null;
             const hasPartChrome =
-              isPrimary &&
-              ((block.type === "kpi_view" && Boolean(selectedKpiPart)) ||
-                (block.type === "chart_view" && Boolean(selectedChartPart)) ||
-                (block.type === "table_view" && Boolean(selectedTablePart)) ||
-                (block.type === "input" && Boolean(selectedInputPart)));
+              isPrimary && shouldUsePartChromeInsteadOfBlock(block.type, partForChrome);
             const selectionRadius = isSelected
               ? resolveBlockSelectionBorderRadiusPx(block)
               : undefined;
             return (
               <div
                 key={block.id}
+                data-block-id={block.id}
                 className={[
                   "td-composer__block-wrap",
                   isSelected ? "td-composer__block-wrap--selected" : "",

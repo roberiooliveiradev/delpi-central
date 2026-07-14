@@ -380,13 +380,14 @@
   overflow: hidden;
 }
 
-/* KPI/chart/tabela: moldura no card/chartArea/frame — sem padding/overflow no wrapper. */
+/* KPI/chart/tabela/filtro: moldura no card/chartArea/frame — sem padding/overflow no wrapper. */
 .tdp-comunicado__block--kpi_view,
 .tdp-comunicado__block--chart_view,
 .tdp-comunicado__block--table_view,
 .tdp-comunicado__block--kpi-view,
 .tdp-comunicado__block--chart-view,
-.tdp-comunicado__block--table-view {
+.tdp-comunicado__block--table-view,
+.tdp-comunicado__block--input {
   padding: 0;
   overflow: visible;
   background: transparent;
@@ -1515,16 +1516,29 @@
   /* Fundo branco + sombra na moldura; contorno vem do frame (inline) — sem borda CSS extra. */
   background: var(--tdp-input-surface, #ffffff);
   border: none;
-  border-radius: 8px;
+  /* Mesmo raio padrão do gráfico/KPI (16) — evita sombra “achatada” por radius 8. */
+  border-radius: 16px;
   box-shadow: var(
     --tdp-block-box-shadow,
     var(--tdp-input-shadow, 0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10))
   );
   color: var(--tdp-input-fg, #0f172a);
+  /* Subitens (absolute/%) não pintam fora da moldura. */
+  overflow: hidden;
+}
+
+/* Parte selecionada: libera overflow só para handles — controle continua com max 100%. */
+.tdp-comunicado__input-block:has(.tdp-comunicado__input-block-part--selected) {
+  overflow: visible;
 }
 
 .tdp-comunicado__input-block--free-layout {
   display: block;
+  overflow: hidden;
+}
+
+.tdp-comunicado__input-block--free-layout:has(.tdp-comunicado__input-block-part--selected) {
+  overflow: visible;
 }
 
 /* Heading deixa de ser caixa flex — filhos framed posicionam no host do filtro. */
@@ -1541,6 +1555,46 @@
 .tdp-comunicado__input-block-part--selected {
   outline: 2px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 80%, transparent);
   outline-offset: 1px;
+}
+
+/* Free-layout: host framed = bbox clipada à moldura (nunca ultrapassa o fundo global). */
+.tdp-comunicado__input-block-part--framed {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--selected {
+  /* Handles na borda — o controle interno ainda respeita max-width/min-width. */
+  overflow: visible;
+}
+
+.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--control .tdp-comunicado__input-block-control,
+.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--control .tdp-comunicado__input-block-value {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--label {
+  align-items: center;
+}
+
+.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--badge {
+  align-items: center;
+  justify-content: center;
 }
 
 .tdp-comunicado__input-part-handles {
@@ -1676,6 +1730,9 @@
 
 .tdp-comunicado__input-block-control {
   width: 100%;
+  max-width: 100%;
+  /* Sem isso o min-width intrínseco do <input> estoura o host framed. */
+  min-width: 0;
   min-height: 2em;
   box-sizing: border-box;
   padding: 0.28em 0.5em;
@@ -1704,5 +1761,17 @@
 .tdp-comunicado__input-block-unavailable {
   font-size: 0.9em;
   color: #b45309;
+}
+
+.tdp-comunicado__input-block-schema-hint {
+  position: absolute;
+  right: 0.35em;
+  bottom: 0.15em;
+  font-size: 0.65em;
+  font-weight: 600;
+  line-height: 1;
+  color: #b45309;
+  pointer-events: none;
+  opacity: 0.85;
 }
 

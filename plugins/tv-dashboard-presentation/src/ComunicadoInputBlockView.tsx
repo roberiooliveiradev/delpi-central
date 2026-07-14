@@ -117,12 +117,23 @@ export function ComunicadoInputBlockView({
 }: Props) {
   const parts = block.inputParts;
   const paramKey = block.input?.paramKey ?? "";
-  const label = block.input?.label?.trim() || field?.label || paramKey || "Filtro";
+  /** Sem paramKey = filtro não ligado. Schema ausente no enrich não bloqueia o controle. */
+  const unavailable = !paramKey.trim();
+  const effectiveField: InputResolvedField | null =
+    field ??
+    (!unavailable
+      ? {
+          type: "string",
+          label: block.input?.label?.trim() || paramKey,
+        }
+      : null);
+  const label =
+    block.input?.label?.trim() || effectiveField?.label || paramKey || "Filtro";
   const current = value !== undefined ? value : (block.input?.defaultValue ?? null);
-  const options = enumOptions(field);
-  const unavailable = !paramAvailable || !paramKey;
+  const options = enumOptions(effectiveField);
   const scope = resolveInputTargetScope(block.input);
-  const controlKind = resolveInputControlKind(paramKey, field);
+  const controlKind = resolveInputControlKind(paramKey, effectiveField);
+  const schemaMissing = Boolean(paramKey.trim()) && !paramAvailable;
   const iconName = block.input?.iconName?.trim();
   const Icon = iconName ? resolveComunicadoLucideIcon(iconName) : null;
   const showIcon = Boolean(Icon) && isInputPartVisible(parts, { kind: "icon" });
@@ -159,7 +170,7 @@ export function ComunicadoInputBlockView({
 
   const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
     const next = event.target.value;
-    if (field?.type === "boolean") {
+    if (effectiveField?.type === "boolean") {
       onChange?.(next === "true");
       return;
     }
@@ -168,7 +179,7 @@ export function ComunicadoInputBlockView({
 
   const handleText = (event: ChangeEvent<HTMLInputElement>) => {
     const next = event.target.value;
-    if (field?.type === "integer" || field?.type === "number") {
+    if (effectiveField?.type === "integer" || effectiveField?.type === "number") {
       if (next === "") {
         onChange?.(null);
         return;
@@ -198,8 +209,8 @@ export function ComunicadoInputBlockView({
           value={current === null || current === undefined ? "" : String(current)}
           onChange={handleSelect}
           onPointerDown={(event) => {
-            // No editor, o wrapper da parte precisa receber o pointer (move/select).
-            if (!interaction) event.stopPropagation();
+            // Isolar do drag do bloco / da parte — o clique deve abrir o seletor.
+            event.stopPropagation();
           }}
           aria-label={label}
           disabled={dataLoading}
@@ -220,10 +231,10 @@ export function ComunicadoInputBlockView({
           value={current === null || current === undefined ? "" : String(current)}
           onChange={handleText}
           onPointerDown={(event) => {
-            if (!interaction) event.stopPropagation();
+            event.stopPropagation();
           }}
           aria-label={label}
-          placeholder={field?.description || paramKey}
+          placeholder={effectiveField?.description || paramKey}
           disabled={dataLoading}
         />
       );
@@ -391,6 +402,11 @@ export function ComunicadoInputBlockView({
           {...controlBind}
         >
           {controlNode}
+          {schemaMissing ? (
+            <span className="tdp-comunicado__input-block-schema-hint" title="Schema da rota ausente no enrich — valor livre">
+              Valor livre
+            </span>
+          ) : null}
           {renderPartChrome({ kind: "control" })}
         </span>
       ) : null}

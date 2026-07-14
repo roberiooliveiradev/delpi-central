@@ -31,7 +31,6 @@ import {
   scaleComplexBlockOnResize,
   scaleInputPartTypographyOnResize,
   scaleKpiPartTypographyOnResize,
-  seedInputPartsFreeLayoutFrames,
   seedKpiPartsFreeLayoutFrames,
   upsertChartPartState,
   upsertInputPartState,
@@ -46,6 +45,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { enableInputFreeLayoutFromDom } from "../../utils/enableInputFreeLayoutFromDom";
 import { DeckRangeField } from "../deck/DeckRangeField";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -160,9 +160,9 @@ export function FormatRibbonFrameSection() {
     };
 
     const enableFreePosition = () => {
-      updateSelected({
-        inputParts: seedInputPartsFreeLayoutFrames(block.inputParts),
-      } as Partial<ComunicadoBlock>);
+      enableInputFreeLayoutFromDom(block.id, block.inputParts, (next) => {
+        updateSelected({ inputParts: next } as Partial<ComunicadoBlock>);
+      });
     };
 
     return (

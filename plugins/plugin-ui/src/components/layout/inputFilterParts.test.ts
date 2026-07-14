@@ -6,6 +6,7 @@ import {
   resolveInputBlockPaintCssVars,
   resolveInputContrastBackground,
   resolveInputPartFrame,
+  clampInputPartFrame,
   resolveInputPartLayoutStyle,
   seedInputPartsFreeLayoutFrames,
 } from "./inputFilterParts";
@@ -90,9 +91,55 @@ describe("inputFilterParts free-layout", () => {
     const stopPropagation = vi.fn();
     bind.onPointerDown?.({
       stopPropagation,
+      target: document.createElement("span"),
     } as unknown as Parameters<NonNullable<typeof bind.onPointerDown>>[0]);
     expect(stopPropagation).toHaveBeenCalled();
     expect(onPartPointerDown).toHaveBeenCalled();
     expect(onPartMovePointerDown).toHaveBeenCalled();
   });
+
+  it("bindInputPartPointer no control nativo não inicia drag da parte", () => {
+    const onPartPointerDown = vi.fn();
+    const onPartMovePointerDown = vi.fn();
+    const bind = bindInputPartPointer(
+      { kind: "control" },
+      {
+        selectedPart: { kind: "control" },
+        onPartPointerDown,
+        onPartMovePointerDown,
+      },
+    );
+    const stopPropagation = vi.fn();
+    const input = document.createElement("input");
+    bind.onPointerDown?.({
+      stopPropagation,
+      target: input,
+    } as unknown as Parameters<NonNullable<typeof bind.onPointerDown>>[0]);
+    expect(stopPropagation).toHaveBeenCalled();
+    expect(onPartPointerDown).not.toHaveBeenCalled();
+    expect(onPartMovePointerDown).not.toHaveBeenCalled();
+  });
+});
+
+describe("inputFilterParts containment", () => {
+  it("frame % no layout nunca ultrapassa a moldura (max 100% + min 0)", () => {
+    const css = resolveInputPartLayoutStyle(
+      { frame: { x: 10, y: 20, w: 80, h: 50 } },
+      { partKind: "control" },
+    );
+    expect(css.position).toBe("absolute");
+    expect(css.width).toBe("80%");
+    expect(css.height).toBe("50%");
+    expect(css.maxWidth).toBe("100%");
+    expect(css.maxHeight).toBe("100%");
+    expect(css.minWidth).toBe(0);
+    expect(css.overflow).toBe("hidden");
+  });
+
+  it("clampInputPartFrame mantém x+w e y+h dentro de 0–100", () => {
+    const clipped = clampInputPartFrame({ x: 90, y: 90, w: 50, h: 50 });
+    expect(clipped.x + (clipped.w ?? 0)).toBeLessThanOrEqual(100);
+    expect(clipped.y + (clipped.h ?? 0)).toBeLessThanOrEqual(100);
+  });
+
 });

@@ -493,17 +493,31 @@ class ComunicadoDataEnrichmentService:
         param_key = str(input_cfg.get("paramKey") or "").strip()
         scope = resolve_input_target_scope(input_cfg)
         if scope == "slide":
-            schemas = slide_schemas
+            # Já só entra schema non-empty em slide_schemas; reforça filtro.
+            schemas = [schema for schema in slide_schemas if isinstance(schema, dict) and schema]
         else:
             ids = [
                 str(item).strip()
                 for item in (input_cfg.get("targetSourceIds") or [])
                 if str(item).strip()
             ]
-            schemas = [schema_by_source_id[sid] for sid in ids if sid in schema_by_source_id]
+            # Paridade editor: schemas vazios não entram na interseção.
+            schemas = [
+                schema_by_source_id[sid]
+                for sid in ids
+                if sid in schema_by_source_id
+                and isinstance(schema_by_source_id[sid], dict)
+                and schema_by_source_id[sid]
+            ]
         field = resolve_input_param_schema_field(param_key, schemas) if param_key else None
         if field:
             input_cfg["resolvedField"] = field
+            input_cfg["paramAvailable"] = True
+        elif param_key:
+            # paramKey ligado mas schema ausente no catálogo/enrich — libera controle texto
+            # (UI kiosk não fica em "Parâmetro indisponível" por assimetria de schemas).
+            label = str(input_cfg.get("label") or "").strip() or param_key
+            input_cfg["resolvedField"] = {"type": "string", "label": label}
             input_cfg["paramAvailable"] = True
         else:
             input_cfg["paramAvailable"] = False

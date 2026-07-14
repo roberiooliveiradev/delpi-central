@@ -17,6 +17,8 @@ import {
   findChartPartFromTarget,
   isChartPartInteractionSelected,
   isChartPartRefEqual,
+  isFullBleedChartAreaFrame,
+  resolveChartPartFrameRoot,
   mergeChartPartsWithOptions,
   mergeSeriesChartOptionsWithParts,
   normalizeChartPartsForLoad,
@@ -268,6 +270,25 @@ describe("seriesChartParts", () => {
     expect(defaultChartPartFrame({ kind: "title" }).w).toBe(80);
     expect(defaultChartPartFrame({ kind: "plotArea" }).h).toBe(84);
     expect(defaultChartPartFrame({ kind: "legend" }).y).toBe(85);
+  });
+
+  it("isFullBleedChartAreaFrame trata null e ≈100% como fluído", () => {
+    expect(isFullBleedChartAreaFrame(null)).toBe(true);
+    expect(isFullBleedChartAreaFrame(undefined)).toBe(true);
+    expect(isFullBleedChartAreaFrame({ x: 0, y: 0, w: 100, h: 100 })).toBe(true);
+    expect(isFullBleedChartAreaFrame({ x: 0, y: 0, w: 99.5, h: 99.5 })).toBe(true);
+    expect(isFullBleedChartAreaFrame({ x: 5, y: 5, w: 80, h: 80 })).toBe(false);
+  });
+
+  it("resolveChartPartFrameRoot prioriza shell para chartArea", () => {
+    const shell = document.createElement("div");
+    shell.className = "delpi-ui-series-chart-shell";
+    const chart = document.createElement("div");
+    chart.className = "delpi-ui-series-chart";
+    shell.appendChild(chart);
+    document.body.appendChild(shell);
+    expect(resolveChartPartFrameRoot({ kind: "chartArea" }, chart)).toBe(shell);
+    shell.remove();
   });
 
   it("resizeChartPartFrame ajusta se e nw com clamp", () => {

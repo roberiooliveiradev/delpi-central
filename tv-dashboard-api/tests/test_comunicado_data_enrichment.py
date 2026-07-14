@@ -639,3 +639,105 @@ def test_enrich_multi_metric_lmp_summary_all_and_selected():
     ]
     assert selected[0]["resolved"]["kpi"]["value"] == 81.5
     assert selected[0]["resolved"]["kpi"]["label"] == "% no prazo"
+
+
+def test_decorate_input_resolves_branch_from_slide_schemas():
+    gateway = MagicMock()
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "src-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_production_oee_series",
+                    "displayMode": "chart",
+                },
+            },
+            {
+                "id": "input-1",
+                "type": "input",
+                "input": {
+                    "paramKey": "branch",
+                    "label": "Filial",
+                    "targetScope": "slide",
+                },
+            },
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    input_block = next(item for item in enriched if item["id"] == "input-1")
+    assert input_block["input"]["paramAvailable"] is True
+    assert input_block["input"]["resolvedField"]["type"]
+
+
+def test_decorate_input_ignores_empty_source_schemas_and_keeps_param():
+    """Escopo sources: schema {} não zera a interseção (paridade editor)."""
+    gateway = MagicMock()
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "src-ok",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_production_oee_series",
+                    "displayMode": "chart",
+                },
+            },
+            {
+                "id": "src-empty",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "",
+                    "displayMode": "chart",
+                },
+            },
+            {
+                "id": "input-1",
+                "type": "input",
+                "input": {
+                    "paramKey": "branch",
+                    "label": "Filial",
+                    "targetScope": "sources",
+                    "targetSourceIds": ["src-ok", "src-empty"],
+                },
+            },
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    input_block = next(item for item in enriched if item["id"] == "input-1")
+    assert input_block["input"]["paramAvailable"] is True
+    assert input_block["input"]["resolvedField"]["label"] == "Filial"
+    assert input_block["input"]["resolvedField"]["type"] == "string"
+
+
+def test_decorate_input_fallback_when_param_key_without_schemas():
+    gateway = MagicMock()
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "input-1",
+                "type": "input",
+                "input": {"paramKey": "branch", "label": "Filial", "targetScope": "slide"},
+            },
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    input_block = enriched[0]
+    assert input_block["input"]["paramAvailable"] is True
+    assert input_block["input"]["resolvedField"]["type"] == "string"
+    assert input_block["input"]["resolvedField"]["label"] == "Filial"

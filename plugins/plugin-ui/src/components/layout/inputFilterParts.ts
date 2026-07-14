@@ -90,12 +90,13 @@ const INPUT_PART_KIND_CAPABILITIES: Record<InputPartRef["kind"], InputPartCapabi
   control: { movable: true, editable: false, deletable: false, resizable: true },
 };
 
+/** Fallback % só se o DOM não puder materializar — fila horizontal (rótulo|badge|campo). */
 export const INPUT_PART_DEFAULT_FRAMES: Record<InputPartRef["kind"], InputPartFrame> = {
   frame: { x: 0, y: 0, w: 100, h: 100 },
-  icon: { x: 2, y: 18, w: 12, h: 64 },
-  label: { x: 16, y: 8, w: 52, h: 36 },
-  badge: { x: 70, y: 8, w: 28, h: 28 },
-  control: { x: 16, y: 48, w: 80, h: 44 },
+  icon: { x: 2, y: 20, w: 10, h: 60 },
+  label: { x: 14, y: 22, w: 22, h: 56 },
+  badge: { x: 38, y: 26, w: 18, h: 48 },
+  control: { x: 58, y: 18, w: 40, h: 64 },
 };
 
 /**
@@ -342,6 +343,15 @@ export function normalizeInputPartsForLoad(
       state.style && typeof state.style === "object"
         ? ({ ...(state.style as InputPartStyle) } as InputPartStyle)
         : undefined;
+    // Legado: moldura salva com raio 8 → alinhar a KPI/gráfico (16) para a sombra ler igual.
+    if (
+      ref.kind === "frame" &&
+      style &&
+      style.borderRadius === 8 &&
+      DECK_INPUT_DEFAULTS.borderRadius === 16
+    ) {
+      style.borderRadius = DECK_INPUT_DEFAULTS.borderRadius;
+    }
     const frameRaw = state.frame;
     const frame =
       frameRaw && typeof frameRaw === "object"
@@ -422,6 +432,12 @@ export function findInputPartFromTarget(target: EventTarget | null): InputPartRe
   return parseInputPartRef(host.getAttribute(INPUT_PART_DATA_ATTR));
 }
 
+/** Clique em `<input>`/`<select>` no controle = editar valor, não arrastar a parte. */
+export function isInputFilterFormControlTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest("input, select, textarea"));
+}
+
 export function bindInputPartPointer(
   ref: InputPartRef,
   interaction?: InputFilterInteraction | null,
@@ -437,12 +453,20 @@ export function bindInputPartPointer(
     onPointerDown: (event) => {
       // Isolar do drag do bloco (contrato KPI) — sem isso o frame herda o pointer.
       event.stopPropagation();
+      // Subcomponente de valor: deixar foco/abrir o controle nativo.
+      if (ref.kind === "control" && isInputFilterFormControlTarget(event.target)) {
+        return;
+      }
       interaction.onPartPointerDown?.(ref, event);
       if (moveWhenSelected && selected) {
         interaction.onPartMovePointerDown?.(ref, event);
       }
     },
     onDoubleClick: (event) => {
+      if (ref.kind === "control" && isInputFilterFormControlTarget(event.target)) {
+        event.stopPropagation();
+        return;
+      }
       event.stopPropagation();
       event.preventDefault();
       interaction.onPartDoubleClick?.(ref, event);
@@ -557,10 +581,15 @@ export function resolveInputPartLayoutStyle(
     css.top = `${frame.y}%`;
     css.width = `${frame.w}%`;
     css.height = `${frame.h}%`;
+    css.maxWidth = "100%";
+    css.maxHeight = "100%";
+    css.minWidth = 0;
+    css.minHeight = 0;
     css.alignSelf = "auto";
     css.zIndex = 2;
     css.boxSizing = "border-box";
     css.margin = 0;
+    css.overflow = "hidden";
   } else if (inputPartHasBoxPaint(style) && options?.partKind !== "frame") {
     css.flex = "0 0 auto";
     css.alignSelf = "flex-start";
@@ -630,6 +659,30 @@ export function materializeMissingInputPartFramesFromRoot(
     });
   }
   return next;
+}
+
+/**
+ * Mede o layout flex atual e aplica frames a todas as partes de conteúdo.
+ * Pré-condição: host sem free-layout (frames de conteúdo limpos no estado que
+ * gerou o DOM corrente). Preferir a defaults % do seed.
+ */
+export function materializeInputPartsFreeLayoutFromRoot(
+  root: HTMLElement,
+  parts: InputPartsMap | null | undefined,
+): InputPartsMap {
+  return materializeMissingInputPartFramesFromRoot(
+    root,
+    clearInputPartsFreeLayoutFrames(parts),
+  );
+}
+
+/** Localiza o host do filtro no compose (`data-block-id`). */
+export function findInputBlockHostInDocument(blockId: string): HTMLElement | null {
+  if (typeof document === "undefined" || !blockId) return null;
+  const wrap = document.querySelector(`[data-block-id="${CSS.escape(blockId)}"]`);
+  if (!(wrap instanceof HTMLElement)) return null;
+  const host = wrap.querySelector(".tdp-comunicado__input-block");
+  return host instanceof HTMLElement ? host : null;
 }
 
 export function inputPartBoxChromeLabels(kind: InputPartRef["kind"]): {

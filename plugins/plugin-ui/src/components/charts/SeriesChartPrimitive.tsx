@@ -23,6 +23,7 @@ import {
   clampChartPartFrame,
   getChartPartState,
   isChartPartRefEqual,
+  isFullBleedChartAreaFrame,
   mergeSeriesChartOptionsWithParts,
   resolveChartAreaStyle,
   resolveChartPartFontSize,
@@ -120,12 +121,14 @@ export function SeriesChartPrimitive({
 
   if (usable.length === 0) {
     return (
-      <ChartContainer
-        className={className}
-        empty
-        emptyMessage={emptyMessage}
-        style={seriesChartThemeStyle(config)}
-      />
+      <div className="delpi-ui-series-chart-shell">
+        <ChartContainer
+          className={className}
+          empty
+          emptyMessage={emptyMessage}
+          style={seriesChartThemeStyle(config)}
+        />
+      </div>
     );
   }
 
@@ -172,19 +175,20 @@ export function SeriesChartPrimitive({
   const chartAreaRef = { kind: "chartArea" as const };
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
   const chartAreaFrame = getChartPartState(chartParts, chartAreaRef)?.frame;
-  const chartAreaFrameCss: CSSProperties | undefined = chartAreaFrame
-    ? (() => {
-        const f = clampChartPartFrame(chartAreaFrame);
-        return {
-          position: "absolute",
-          left: `${f.x}%`,
-          top: `${f.y}%`,
-          width: f.w != null ? `${f.w}%` : "100%",
-          height: f.h != null ? `${f.h}%` : "100%",
-          boxSizing: "border-box",
-        };
-      })()
-    : undefined;
+  const chartAreaFrameCss: CSSProperties | undefined = (() => {
+    if (!chartAreaFrame || isFullBleedChartAreaFrame(chartAreaFrame)) {
+      return { width: "100%", height: "100%", boxSizing: "border-box" };
+    }
+    const f = clampChartPartFrame(chartAreaFrame);
+    return {
+      position: "absolute",
+      left: `${f.x}%`,
+      top: `${f.y}%`,
+      width: f.w != null ? `${f.w}%` : "100%",
+      height: f.h != null ? `${f.h}%` : "100%",
+      boxSizing: "border-box",
+    };
+  })();
   const themeStyle: CSSProperties = {
     ...seriesChartThemeStyle({ ...config, backgroundColor: chartArea.fill }),
     background: chartArea.fill,
@@ -263,51 +267,54 @@ export function SeriesChartPrimitive({
     : undefined;
 
   return (
-    <ChartContainer
-      className={rootClass}
-      style={themeStyle}
-      onPointerDown={onChartAreaPointerDown}
-      onDoubleClick={onChartAreaDoubleClick}
-      {...(interactive ? chartPartDomProps(chartAreaRef, interaction?.selectedPart) : {})}
-    >
-      <ChartTitle
-        title={title}
-        visible={config.showTitle !== false}
-        interaction={interaction}
-        chartParts={chartParts}
-      />
-      {config.legendPosition === "top" ? legend : null}
+    <div className="delpi-ui-series-chart-shell">
+      <ChartContainer
+        className={rootClass}
+        style={themeStyle}
+        onPointerDown={onChartAreaPointerDown}
+        onDoubleClick={onChartAreaDoubleClick}
+        {...(interactive ? chartPartDomProps(chartAreaRef, interaction?.selectedPart) : {})}
+      >
+        <ChartTitle
+          title={title}
+          visible={config.showTitle !== false}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+        {config.legendPosition === "top" ? legend : null}
 
-      <div className={cn.body}>
-        {config.legendPosition === "left" ? legend : null}
-        <div className={cn.plotHost} ref={plotHostRef}>
-          <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
-            {renderPlotArea(plotProps)}
-          </ChartFrame>
-          <ChartPlotAreaChrome layout={layout} interaction={interaction} chartParts={chartParts} />
+        <div className={cn.body}>
+          {config.legendPosition === "left" ? legend : null}
+          <div className={cn.plotHost} ref={plotHostRef}>
+            <ChartFrame viewW={layout.viewW} viewH={layout.viewH} ariaLabel={ariaLabel}>
+              {renderPlotArea(plotProps)}
+            </ChartFrame>
+            <ChartPlotAreaChrome layout={layout} interaction={interaction} chartParts={chartParts} />
+          </div>
+          {config.legendPosition === "right" ? legend : null}
         </div>
-        {config.legendPosition === "right" ? legend : null}
-      </div>
 
-      {config.legendPosition === "bottom" ? legend : null}
-      <ChartDataTable
-        points={usable}
-        seriesName={seriesName}
-        valueFormat={valueFormat}
-        visible={Boolean(config.showDataTable)}
-        interaction={interaction}
-        chartParts={chartParts}
-      />
-      <ChartPartResizeHandles
-        visible={
-          chartAreaSelected &&
-          chartPartAllowsResize(chartAreaRef) &&
-          Boolean(interaction?.onPartResizePointerDown)
-        }
-        onResizePointerDown={(handle, event) =>
-          interaction?.onPartResizePointerDown?.(chartAreaRef, event, handle)
-        }
-      />
-    </ChartContainer>
+        {config.legendPosition === "bottom" ? legend : null}
+        <ChartDataTable
+          points={usable}
+          seriesName={seriesName}
+          valueFormat={valueFormat}
+          visible={Boolean(config.showDataTable)}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
+        <ChartPartResizeHandles
+          visible={
+            chartAreaSelected &&
+            !isFullBleedChartAreaFrame(chartAreaFrame) &&
+            chartPartAllowsResize(chartAreaRef) &&
+            Boolean(interaction?.onPartResizePointerDown)
+          }
+          onResizePointerDown={(handle, event) =>
+            interaction?.onPartResizePointerDown?.(chartAreaRef, event, handle)
+          }
+        />
+      </ChartContainer>
+    </div>
   );
 }

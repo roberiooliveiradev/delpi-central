@@ -397,10 +397,18 @@ export function resolveKpiPartLayoutStyle(
     css.top = `${frame.y}%`;
     css.width = `${frame.w}%`;
     css.height = `${frame.h}%`;
+    css.maxWidth = "100%";
+    css.maxHeight = "100%";
+    css.minWidth = 0;
+    css.minHeight = 0;
     css.alignSelf = "auto";
     css.zIndex = 2;
     css.boxSizing = "border-box";
     css.margin = 0;
+    // Moldura `card` recebe overflow via CSS do host; conteúdo framed clipa no card.
+    if (options?.partKind !== "card") {
+      css.overflow = "hidden";
+    }
   } else if (kpiPartHasBoxPaint(style) && options?.partKind !== "card") {
     // Evita que fill do valor (flex:1) pinte o card inteiro.
     css.flex = "0 0 auto";

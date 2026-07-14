@@ -921,9 +921,18 @@ export function defaultChartPartFrame(ref: ChartPartRef): ChartPartFrame {
   }
 }
 
+/** Frame que cobre o shell (≈100%) — layout fluído, sem absolute. */
+export function isFullBleedChartAreaFrame(frame?: ChartPartFrame | null): boolean {
+  if (!frame) return true;
+  const f = clampChartPartFrame(frame);
+  const w = f.w ?? 100;
+  const h = f.h ?? 100;
+  return f.x <= 0.5 && f.y <= 0.5 && w >= 99 && h >= 99;
+}
+
 /**
  * Raiz de geometria para move/resize de `frame`.
- * `chartArea` = bloco do gráfico; `plotArea` = host do SVG; demais = raiz do gráfico.
+ * `chartArea` = shell (preenche o bloco); `plotArea` = host do SVG; demais = raiz do gráfico.
  */
 export function resolveChartPartFrameRoot(
   ref: ChartPartRef,
@@ -931,6 +940,7 @@ export function resolveChartPartFrameRoot(
 ): Element | null {
   if (ref.kind === "chartArea") {
     return (
+      from.closest(".delpi-ui-series-chart-shell") ??
       from.closest(".tdp-comunicado__block--chart-view, .td-composer__chart-view") ??
       from.parentElement
     );

@@ -527,6 +527,8 @@ export {
   isInputPartRefEqual,
   isInputPartVisible,
   isInputTextPartKind,
+  findInputBlockHostInDocument,
+  materializeInputPartsFreeLayoutFromRoot,
   materializeMissingInputPartFramesFromRoot,
   mergeInputParts,
   normalizeInputPartsForLoad,

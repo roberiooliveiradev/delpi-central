@@ -131,7 +131,8 @@ export const DECK_INPUT_DEFAULTS = {
   backgroundColor: DECK_COLOR_SURFACE,
   borderColor: DECK_COLOR_BORDER,
   borderWidth: 1,
-  borderRadius: 8,
+  /** Paridade de moldura com gráfico/KPI — mesma curva → mesma leitura da sombra. */
+  borderRadius: 16,
   boxShadow:
     "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
   controlFill: DECK_COLOR_SURFACE,
