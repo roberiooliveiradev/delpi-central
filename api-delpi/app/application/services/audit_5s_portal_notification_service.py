@@ -34,8 +34,9 @@ def audit_5s_portal_notifications_enabled() -> bool:
 def branch_portal_route(branch_code: str | None) -> str:
     code = str(branch_code or "").strip()
     filial = "filial-02" if code == "02" else "filial-01"
-    # Deep link: filial + tela de gestão de NCs (MFE lê /nc-board no pathname).
-    return f"{_APP_BASE}/{filial}/nc-board"
+    # Deep link: gestão de NCs no escopo «minhas pendentes»
+    # (sem filtro de dia; responsável = usuário; status aberto/em andamento).
+    return f"{_APP_BASE}/{filial}/nc-board/my-pending"
 
 
 def responsible_assigned_dedupe_key(*, nc_id: str, user_id: str) -> str:

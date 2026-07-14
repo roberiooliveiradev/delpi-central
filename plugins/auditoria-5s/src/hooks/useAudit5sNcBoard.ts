@@ -5,7 +5,11 @@ import type { NcBoardData, NcBoardFilterParams } from "../types/ncManagement";
 
 const POLL_INTERVAL_MS = 30_000;
 
-export function useAudit5sNcBoard(apiParams: NcBoardFilterParams) {
+export function useAudit5sNcBoard(
+  apiParams: NcBoardFilterParams,
+  options?: { enabled?: boolean },
+) {
+  const enabled = options?.enabled !== false;
   const [data, setData] = useState<NcBoardData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +21,7 @@ export function useAudit5sNcBoard(apiParams: NcBoardFilterParams) {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
 
     async function load() {
@@ -48,11 +53,11 @@ export function useAudit5sNcBoard(apiParams: NcBoardFilterParams) {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [apiParams, reloadKey]);
+  }, [apiParams, reloadKey, enabled]);
 
   return {
     data,
-    loading,
+    loading: enabled ? loading : true,
     error,
     reload,
     lastUpdatedAt,

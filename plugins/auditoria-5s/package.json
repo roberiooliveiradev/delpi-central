@@ -11,6 +11,7 @@
     "check:perfect-score": "node --experimental-strip-types scripts/check-audit-perfect-score.ts",
     "check:force-close-untreated": "node --experimental-strip-types scripts/check-audit-force-close-untreated.ts",
     "check:audit-list-search": "node --experimental-strip-types scripts/check-audit-list-search.ts",
+    "check:nc-board-my-pending": "node --experimental-strip-types scripts/check-nc-board-my-pending-scope.ts",
     "preview": "vite preview"
   },
   "dependencies": {

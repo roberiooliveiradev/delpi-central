@@ -8,14 +8,16 @@ export type NcBoardSort =
 
 export type NcBoardFilterParams = {
   branch: string;
-  date_start: string;
-  date_end: string;
+  date_start?: string;
+  date_end?: string;
   area_id?: string;
   shift?: string;
   status?: string;
   priority?: string;
   responsible?: string;
+  responsible_user_id?: string;
   overdue_only?: boolean;
+  pending_only?: boolean;
   senso_order?: number;
   search?: string;
   sort?: NcBoardSort;

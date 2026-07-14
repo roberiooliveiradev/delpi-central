@@ -481,16 +481,20 @@ export async function fetchAudit5sDashboard(params: AuditDashboardFilterParams) 
 function buildNcBoardQuery(params: NcBoardFilterParams): string {
   const search = new URLSearchParams();
   search.set("branch", params.branch);
-  search.set("date_start", params.date_start);
-  search.set("date_end", params.date_end);
   search.set("page", String(params.page));
   search.set("page_size", String(params.page_size));
+  if (params.date_start) search.set("date_start", params.date_start);
+  if (params.date_end) search.set("date_end", params.date_end);
   if (params.area_id) search.set("area_id", params.area_id);
   if (params.shift) search.set("shift", params.shift);
   if (params.status) search.set("status", params.status);
   if (params.priority) search.set("priority", params.priority);
   if (params.responsible) search.set("responsible", params.responsible);
+  if (params.responsible_user_id) {
+    search.set("responsible_user_id", params.responsible_user_id);
+  }
   if (params.overdue_only) search.set("overdue_only", "true");
+  if (params.pending_only) search.set("pending_only", "true");
   if (params.senso_order != null) search.set("senso_order", String(params.senso_order));
   if (params.search) search.set("search", params.search);
   if (params.sort) search.set("sort", params.sort);

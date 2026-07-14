@@ -61,11 +61,12 @@ import { AuditPageHeader } from "../components/AuditPageHeader";
 
 type Props = {
   pathname?: string;
+  search?: string;
 };
 
 type View = "list" | "new" | "edit" | "audit" | "nc" | "dashboard" | "catalog" | "nc-board";
 
-export function Audit5sPage({ pathname }: Props) {
+export function Audit5sPage({ pathname, search }: Props) {
   const branch = branchFromPathname(pathname);
   const [view, setView] = useState<View>(() => auditViewFromPathname(pathname) ?? "list");
   const [audits, setAudits] = useState<AuditListItem[]>([]);
@@ -642,14 +643,15 @@ export function Audit5sPage({ pathname }: Props) {
         />
       )}
 
-      {view === "nc-board" && (
+      {view === "nc-board" && branch ? (
         <NcManagementPage
           branch={branch}
           pathname={pathname}
+          search={search}
           areas={areas}
           audits={audits}
         />
-      )}
+      ) : null}
 
       {view === "catalog" && (
         <AuditCatalogPage

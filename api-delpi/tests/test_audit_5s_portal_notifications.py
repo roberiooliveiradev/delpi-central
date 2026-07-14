@@ -61,8 +61,8 @@ def test_should_notify_skips_same_user_and_self_assign() -> None:
 
 
 def test_branch_portal_route() -> None:
-    assert branch_portal_route("01") == "/apps/auditoria-5s/filial-01/nc-board"
-    assert branch_portal_route("02") == "/apps/auditoria-5s/filial-02/nc-board"
+    assert branch_portal_route("01") == "/apps/auditoria-5s/filial-01/nc-board/my-pending"
+    assert branch_portal_route("02") == "/apps/auditoria-5s/filial-02/nc-board/my-pending"
 
 
 def test_send_audit_5s_portal_notification_posts_to_core_api() -> None:
@@ -131,7 +131,7 @@ def test_notify_nc_responsible_assigned_sends_on_change() -> None:
     assert result is True
     kwargs = send.call_args.kwargs
     assert kwargs["recipient_user_id"] == "user-42"
-    assert kwargs["action_target"] == "/apps/auditoria-5s/filial-02/nc-board"
+    assert kwargs["action_target"] == "/apps/auditoria-5s/filial-02/nc-board/my-pending"
     assert "Comprar ferramentas" in kwargs["title"]
     assert "Comprar ferramentas" in kwargs["message"]
     assert "20/07/2026" in kwargs["message"]
@@ -241,7 +241,7 @@ def test_notify_nc_note_mentions_sends_html_payload() -> None:
     assert sent == 1
     kwargs = send.call_args.kwargs
     assert kwargs["recipient_user_id"] == "user-42"
-    assert kwargs["action_target"] == "/apps/auditoria-5s/filial-01/nc-board"
+    assert kwargs["action_target"] == "/apps/auditoria-5s/filial-01/nc-board/my-pending"
     assert kwargs["dedupe_key"] == "audit5s:nc_mention:act-9:user-42"
     assert kwargs["html_content"]
     assert "Segue o combinado da visita." in kwargs["message"]
