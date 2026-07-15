@@ -262,7 +262,7 @@ export function selectFieldTransformometroClasses(prefix: string): {
   return {
     field: {
       root: delpiUiClass(`${prefix}-filter-box`, "delpi-ui-filter-box"),
-      fieldLabel: "tm-field__label",
+      fieldLabel: delpiUiClass("tm-field__label", "delpi-ui-field-label"),
       required: `${prefix}-field__required`,
     },
     control: selectControlBemClasses(prefix),

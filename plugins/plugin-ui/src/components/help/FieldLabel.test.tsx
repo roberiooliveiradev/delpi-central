@@ -21,4 +21,11 @@ describe("FieldLabel", () => {
     expect(labelText.className).toContain("delpi-ui-field-label__text");
     expect(labelText.getAttribute("aria-describedby")).toBeTruthy();
   });
+
+  it("preserva className do MFE e mantém a classe canônica delpi-ui-field-label", () => {
+    render(<FieldLabel label="Buscar" className="tm-field__label" />);
+    const root = screen.getByText("Buscar").closest(".tm-field__label");
+    expect(root?.className).toContain("tm-field__label");
+    expect(root?.className).toContain("delpi-ui-field-label");
+  });
 });

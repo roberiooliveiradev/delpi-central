@@ -3,7 +3,12 @@ import { ArrowDownAZ, ArrowUpAZ, Grid2X2, LayoutGrid, LayoutList, Rows3 } from "
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { DataTable } from "../../components/DataTable";
-import { FieldLabel, HelpTooltip } from "@delpi/plugin-ui/index";
+import {
+  dataTableSectionBemClasses,
+  ensureDelpiUiClass,
+  FieldLabel,
+  HelpTooltip,
+} from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { Pagination } from "../../components/Pagination";
@@ -33,7 +38,10 @@ import {
   type ProcessoListViewMode,
 } from "./processoListViewMode";
 
+const SECTION_CN = dataTableSectionBemClasses("ds");
+
 type Props = {
+  /** Se omitido, não renderiza h2 (ex.: página já tem PageHeader). */
   title?: string;
   hint?: string;
   items: Processo[];
@@ -114,7 +122,7 @@ function ProcessoFolderCard({ processo, iconSize, visibility, href, onNavigate }
 }
 
 export function ProcessoFolderBrowser({
-  title = "Processos",
+  title,
   hint,
   items,
   loading = false,
@@ -173,43 +181,63 @@ export function ProcessoFolderBrowser({
 
   const currentMode = PROCESSO_LIST_VIEW_MODES.find((mode) => mode.id === viewMode)!;
   const sortDirectionLabel = sort.direction === "asc" ? "Menor → maior" : "Maior → menor";
+  const showSectionHeading = Boolean(title || hint);
 
   return (
-    <section className={`ds-table-section tm-processo-browser${refreshing ? " tm-processo-browser--refreshing" : ""}`}>
-      <div className="ds-table-section__header tm-processo-browser__header">
-        <div>
-          <h2 className="ds-section-title">{title}</h2>
-          {hint ? <p className="ds-hint">{hint}</p> : null}
-        </div>
-        <div className="tm-processo-browser__toolbar">
-          <div className="tm-processo-browser__sort" aria-label="Ordenação da lista">
-            <SelectField
-              id="tm-proc-sort-field"
-              label="Ordenar por"
-              hint={P.ordenacaoCampo}
-              value={sort.key}
-              onChange={handleSortFieldChange}
-              options={PROCESSO_LIST_SORT_OPTIONS}
-              className="tm-processo-browser__sort-field"
-            />
-            <div className="tm-processo-browser__sort-direction">
-              <FieldLabel className="tm-field__label tm-processo-browser__sort-direction-label" label="Ordem" hint={P.ordenacaoDirecao} />
-              <button
-                type="button"
-                className="tm-processo-browser__sort-direction-btn"
-                aria-label={`Ordem: ${sortDirectionLabel}. Clique para alternar.`}
-                title={sortDirectionLabel}
-                onClick={toggleSortDirection}
-              >
-                {sort.direction === "asc" ? (
-                  <ArrowDownAZ size={16} aria-hidden="true" />
-                ) : (
-                  <ArrowUpAZ size={16} aria-hidden="true" />
-                )}
-                <span>{sort.direction === "asc" ? "Menor" : "Maior"}</span>
-              </button>
-            </div>
+    <section
+      className={ensureDelpiUiClass(
+        `ds-table-section tm-processo-browser${refreshing ? " tm-processo-browser--refreshing" : ""}`,
+        "delpi-ui-table-section",
+      )}
+    >
+      {showSectionHeading ? (
+        <div className={`${SECTION_CN.header} tm-processo-browser__header`}>
+          <div>
+            {title ? <h2 className={SECTION_CN.title}>{title}</h2> : null}
+            {hint ? <p className="ds-hint">{hint}</p> : null}
           </div>
+        </div>
+      ) : null}
+
+      {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
+
+      <div
+        className={`${SECTION_CN.toolbar} tm-processo-browser__toolbar`}
+        aria-label="Configuração da listagem"
+      >
+        <div className="tm-processo-browser__sort" aria-label="Ordenação da lista">
+          <SelectField
+            id="tm-proc-sort-field"
+            label="Ordenar por"
+            hint={P.ordenacaoCampo}
+            value={sort.key}
+            onChange={handleSortFieldChange}
+            options={PROCESSO_LIST_SORT_OPTIONS}
+            className="tm-processo-browser__sort-field"
+          />
+          <div className="tm-processo-browser__sort-direction">
+            <FieldLabel
+              className="tm-field__label tm-processo-browser__sort-direction-label"
+              label="Ordem"
+              hint={P.ordenacaoDirecao}
+            />
+            <button
+              type="button"
+              className="tm-processo-browser__sort-direction-btn"
+              aria-label={`Ordem: ${sortDirectionLabel}. Clique para alternar.`}
+              title={sortDirectionLabel}
+              onClick={toggleSortDirection}
+            >
+              {sort.direction === "asc" ? (
+                <ArrowDownAZ size={16} aria-hidden="true" />
+              ) : (
+                <ArrowUpAZ size={16} aria-hidden="true" />
+              )}
+              <span>{sort.direction === "asc" ? "Menor" : "Maior"}</span>
+            </button>
+          </div>
+        </div>
+        <div className={`${SECTION_CN.toolbarExtra} tm-processo-browser__toolbar-extra`}>
           <div className="tm-processo-browser__view-modes" role="group" aria-label="Modo de visualização">
             {PROCESSO_LIST_VIEW_MODES.map((mode) => {
               const Icon = viewModeIcon(mode.id);
@@ -229,13 +257,11 @@ export function ProcessoFolderBrowser({
               );
             })}
           </div>
-          <span className="ds-hint tm-processo-browser__count">
+          <span className={`${SECTION_CN.meta} tm-processo-browser__count`}>
             {total} registro{total === 1 ? "" : "s"}
           </span>
         </div>
       </div>
-
-      {filters ? <div className="tm-processo-browser__filters">{filters}</div> : null}
 
       {loading ? (
         <p className="ds-hint">Carregando processos…</p>

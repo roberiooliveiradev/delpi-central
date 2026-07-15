@@ -226,8 +226,6 @@ export function ProcessosPage({
       ) : null}
 
       <ProcessoFolderBrowser
-        title="Processos"
-        hint="Filtros acima aplicam na API · clique na pasta para abrir o processo"
         items={items}
         loading={loading}
         refreshing={refreshing}
