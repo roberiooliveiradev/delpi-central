@@ -224,7 +224,7 @@
   justify-content: flex-end;
 }
 
-.dashboard-cadastro-kaizen .kz-filter-box input,
+.dashboard-cadastro-kaizen .kz-filter-box input:not([type="checkbox"]),
 .dashboard-cadastro-kaizen .kz-filter-box select {
   min-height: var(--kz-control-height);
   border-radius: var(--kz-control-radius);
@@ -546,7 +546,7 @@
   color: var(--kz-text-muted);
 }
 
-.dashboard-cadastro-kaizen .kz-field input,
+.dashboard-cadastro-kaizen .kz-field input:not([type="checkbox"]),
 .dashboard-cadastro-kaizen .kz-field select,
 .dashboard-cadastro-kaizen .kz-field textarea {
   min-height: var(--kz-control-height);

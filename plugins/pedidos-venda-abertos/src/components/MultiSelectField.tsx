@@ -1,9 +1,9 @@
 import {
   createDashboardMultiSelectField,
+  multiSelectBemClasses,
   type DashboardMultiSelectFieldProps,
   type MultiSelectFieldLabels,
   type MultiSelectOption,
-  multiSelectBemClasses,
 } from "@delpi/plugin-ui/index";
 
 const LABELS = {
@@ -15,14 +15,12 @@ const LABELS = {
   multipleSelected: (count: number) => `${count} clientes selecionados`,
 } satisfies MultiSelectFieldLabels;
 
-const base = multiSelectBemClasses("pva");
-
+/* FilterBar já estruturado — root sem pva-filter-box para não aninhar cards. */
 export const MultiSelectField = createDashboardMultiSelectField({
   labels: LABELS,
   classNames: {
-    ...base,
+    ...multiSelectBemClasses("pva"),
     root: "pva-field pva-field--clients",
-    actionButton: "pva-btn pva-btn--ghost pva-btn--sm",
   },
 });
 

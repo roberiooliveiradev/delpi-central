@@ -331,7 +331,7 @@
   color: var(--dp-text-muted);
 }
 
-.dashboard-production .dp-filter-box input,
+.dashboard-production .dp-filter-box input:not([type="checkbox"]),
 .dashboard-production .dp-filter-box select {
   min-height: var(--dp-control-height);
   border-radius: var(--dp-control-radius);
@@ -728,11 +728,6 @@
   position: relative;
 }
 
-.dashboard-production .dp-field span {
-  color: var(--dp-text-muted);
-  font-weight: 600;
-}
-
 .dashboard-production .dp-multi-select {
   position: relative;
   min-width: 0;
@@ -851,6 +846,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  color: var(--dp-text);
 }
 
 .dashboard-production .dp-multi-select__empty {

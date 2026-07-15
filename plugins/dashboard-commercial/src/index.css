@@ -586,7 +586,7 @@
   color: var(--dc-text-muted);
 }
 
-.dashboard-commercial .dc-filter-box input,
+.dashboard-commercial .dc-filter-box input:not([type="checkbox"]),
 .dashboard-commercial .dc-filter-box select {
   min-height: var(--dc-control-height);
   border-radius: var(--dc-control-radius);

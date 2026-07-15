@@ -276,7 +276,7 @@
   color: var(--ds-text-muted);
 }
 
-.dashboard-engineering .ds-filter-box input,
+.dashboard-engineering .ds-filter-box input:not([type="checkbox"]),
 .dashboard-engineering .ds-filter-box select {
   min-height: var(--ds-control-height);
   border-radius: var(--ds-control-radius);
