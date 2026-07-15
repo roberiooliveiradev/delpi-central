@@ -338,6 +338,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-quality:Audit5sPage:auditorias:v1"
         title="Auditorias"
         columns={columns}
         rows={items}

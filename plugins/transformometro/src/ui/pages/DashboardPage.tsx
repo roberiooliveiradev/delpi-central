@@ -958,6 +958,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
 
       {porFamilia.length > 0 ? (
         <DataTableSection
+          columnPreferencesKey="transformometro:DashboardPage:resumo-por-fam-lia:v1"
           title="Resumo por família"
           titleHint={TM_HELP_TOOLTIPS.dashboard.charts.familia}
           hint="Processos com família preenchida no cadastro"
@@ -971,6 +972,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
       ) : null}
 
       <DataTableSection
+        columnPreferencesKey="transformometro:DashboardPage:processos-no-recorte-1:v1"
         title="Processos no recorte"
         titleHint={TM_HELP_TOOLTIPS.dashboard.charts.processos}
         hint="Competência mais recente ou período filtrado"

@@ -209,6 +209,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
       </p>
 
       <DataTableSection
+        columnPreferencesKey="transformometro:RecursosPage:cat-logo-de-recursos:v1"
         title="Catálogo de recursos"
         columns={columns}
         rows={items}

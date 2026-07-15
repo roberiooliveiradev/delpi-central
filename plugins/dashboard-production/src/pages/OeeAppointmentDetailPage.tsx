@@ -494,6 +494,7 @@ export function OeeAppointmentDetailPage({
           </section>
 
           <DataTableSection
+            columnPreferencesKey="dashboard-production:OeeAppointmentDetailPage:roteiro-de-produ-o:v1"
             title="Roteiro de produção"
             hint="SG2010 — operação do apontamento destacada"
             columns={routingColumns}

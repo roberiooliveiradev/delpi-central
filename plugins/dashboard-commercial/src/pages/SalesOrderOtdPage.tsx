@@ -441,6 +441,7 @@ export function SalesOrderOtdPage({ pathname }: SalesOrderOtdPageProps) {
       </div>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-commercial:SalesOrderOtdPage:linhas-de-pedido-de-venda:v1"
         title="Linhas de pedido de venda"
         titleHint={COMMERCIAL_HELP_TOOLTIPS.otd.table.section}
         hint="Clique em uma linha para abrir o detalhe do pedido."

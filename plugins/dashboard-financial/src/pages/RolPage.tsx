@@ -131,6 +131,7 @@ export function RolPage({ pathname }: RolPageProps) {
         />
       </section>
       <DataTableSection
+        columnPreferencesKey="dashboard-financial:RolPage:detalhamento-da-rol:v1"
         title="Detalhamento da ROL"
         hint={periodLabel}
         columns={columns}

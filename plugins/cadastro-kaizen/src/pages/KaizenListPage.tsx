@@ -288,6 +288,7 @@ export function KaizenListPage({ onNavigate }: Props) {
       {success ? <StateAlert variant="success">{success}</StateAlert> : null}
 
       <DataTableSection
+        columnPreferencesKey="cadastro-kaizen:KaizenListPage:kaizens-cadastrados:v1"
         title="Kaizens cadastrados"
         hint="Dados persistidos no PostgreSQL"
         columns={columns}

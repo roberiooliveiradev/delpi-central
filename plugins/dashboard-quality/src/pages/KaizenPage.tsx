@@ -445,6 +445,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-quality:KaizenPage:lista-de-kaizens:v1"
         title="Lista de kaizens"
         hint="Todos os kaizens implantados, independente do período filtrado."
         columns={columns}

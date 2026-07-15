@@ -3,7 +3,12 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useClientPagination } from "../../hooks/useClientPagination";
 import { sortRows } from "../../utils/dataTableSort";
 import { DataTable } from "./DataTable";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
+import {
+  DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  HelpTooltip,
+  TableColumnVisibilityMenu,
+  useTableColumnVisibility,
+} from "@delpi/plugin-ui/index";
 import { Pagination } from "./Pagination";
 import type { DataTableColumn, ServerPaginationConfig, ServerTableConfig } from "./types";
 
@@ -37,6 +42,8 @@ type DataTableSectionProps<T> = {
   hidePaginationWhenSinglePage?: boolean;
   /** Classe extra no container da seção (ex.: variantes mobile). */
   className?: string;
+  columnPreferencesKey?: string;
+  onVisibleColumnKeysChange?: (keys: string[]) => void;
 };
 
 export function DataTableSection<T>({
@@ -62,12 +69,40 @@ export function DataTableSection<T>({
   defaultSortDirection = "asc",
   hidePaginationWhenSinglePage = false,
   className,
+  columnPreferencesKey,
+  onVisibleColumnKeysChange,
 }: DataTableSectionProps<T>) {
   const serverMode = serverTable ?? serverPagination;
   const isFullServerTable = Boolean(serverTable);
 
   const [sortKey, setSortKey] = useState<string | null>(defaultSortKey ?? null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSortDirection);
+
+  const columnCatalog = useMemo(
+    () => columns.map((column) => ({ key: column.key, label: column.header })),
+    [columns],
+  );
+  const columnVisibilityEnabled = Boolean(columnPreferencesKey);
+  const {
+    visibility,
+    visibleKeys,
+    setColumnVisible,
+    reset: resetColumnVisibility,
+    filterColumns,
+  } = useTableColumnVisibility({
+    storageKey: columnPreferencesKey ?? "",
+    columns: columnCatalog,
+    enabled: columnVisibilityEnabled,
+  });
+  const visibleColumns = useMemo(
+    () => (columnVisibilityEnabled ? filterColumns(columns) : columns),
+    [columnVisibilityEnabled, columns, filterColumns],
+  );
+
+  useEffect(() => {
+    if (!columnVisibilityEnabled || !onVisibleColumnKeysChange) return;
+    onVisibleColumnKeysChange(visibleKeys);
+  }, [columnVisibilityEnabled, onVisibleColumnKeysChange, visibleKeys]);
 
   useEffect(() => {
     if (isFullServerTable) return;
@@ -129,13 +164,26 @@ export function DataTableSection<T>({
           <h3 className="dm-section-header__title">
             {title}
             {titleHint ? (
-              <HelpTooltip content={titleHint} ariaLabel={`Ajuda: ${title}`} className="dm-section-header__help" />
+              <HelpTooltip
+                content={titleHint}
+                ariaLabel={`Ajuda: ${title}`}
+                className="dm-section-header__help"
+              />
             ) : null}
           </h3>
           {hint ? <p className="dm-section-header__hint">{hint}</p> : null}
         </div>
         <div className="dm-section-header__meta">
           <span className="dm-badge">{resolvedBadge}</span>
+          {columnVisibilityEnabled ? (
+            <TableColumnVisibilityMenu
+              columns={columnCatalog}
+              visibility={visibility}
+              onToggleColumn={setColumnVisible}
+              onReset={resetColumnVisibility}
+              labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+            />
+          ) : null}
           {actions}
         </div>
       </div>
@@ -143,7 +191,7 @@ export function DataTableSection<T>({
       {toolbar ? <div className="dm-section-toolbar">{toolbar}</div> : null}
 
       <DataTable
-        columns={columns}
+        columns={visibleColumns}
         rows={displayRows}
         loading={loading}
         emptyMessage={emptyMessage}
@@ -169,11 +217,19 @@ export function DataTableSection<T>({
 
   if (embedded) {
     return (
-      <section className={["dm-table-section", "dm-table-section--embedded", className].filter(Boolean).join(" ")}>
+      <section
+        className={["dm-table-section", "dm-table-section--embedded", className]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {content}
       </section>
     );
   }
 
-  return <section className={["dm-card", "dm-table-section", className].filter(Boolean).join(" ")}>{content}</section>;
+  return (
+    <section className={["dm-card", "dm-table-section", className].filter(Boolean).join(" ")}>
+      {content}
+    </section>
+  );
 }

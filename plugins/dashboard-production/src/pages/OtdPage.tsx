@@ -390,6 +390,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
       </div>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-production:OtdPage:ordens-de-produ-o:v1"
         title="Ordens de produção"
         titleHint={DP_HELP_TOOLTIPS.otd.table.section}
         hint="Clique em uma linha para abrir o detalhe da OP e do produto."

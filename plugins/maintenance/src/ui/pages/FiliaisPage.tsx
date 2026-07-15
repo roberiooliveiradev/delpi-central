@@ -302,6 +302,7 @@ export function FiliaisPage({
       ) : null}
 
       <DataTableSection
+        columnPreferencesKey="maintenance:FiliaisPage:cat-logo-de-filiais:v1"
         title="Catálogo de filiais"
         hint="Filial inativa não aparece no seletor operacional. Exclusão só é permitida sem motivos, status ou reposições vinculados."
         toolbar={

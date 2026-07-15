@@ -209,6 +209,17 @@ export {
   type TableColumnVisibilityMenuProps,
 } from "./TableColumnVisibilityMenu";
 
+export { DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS } from "./tableColumnVisibilityLabels";
+
+export {
+  createDefaultColumnVisibility,
+  loadColumnVisibilityPreferences,
+  saveColumnVisibilityPreferences,
+  sanitizeColumnVisibility,
+  type TableColumnVisibilityMap,
+  type TableColumnVisibilityPreferences,
+} from "../../utils/tableColumnVisibilityPreferences";
+
 export {
   TreeGuideRails,
   type TreeGuideRailsProps,

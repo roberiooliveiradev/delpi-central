@@ -405,6 +405,7 @@ export function AppointmentsTables({
 
       {viewMode === "work_centers" ? (
         <DataTableSection
+          columnPreferencesKey="production-appointments:AppointmentsTables:resumo-por-centro-de-trabalho:v1"
           title="Resumo por centro de trabalho"
           titleHint={activeMode.hint}
           columns={workCenterColumns}
@@ -429,6 +430,7 @@ export function AppointmentsTables({
 
       {viewMode === "appointments" ? (
         <DataTableSection
+          columnPreferencesKey="production-appointments:AppointmentsTables:apontamentos-1:v1"
           title="Apontamentos"
           titleHint={activeMode.hint}
           columns={appointmentColumns}
@@ -461,6 +463,7 @@ export function AppointmentsTables({
 
       {viewMode === "by_op" ? (
         <DataTableSection
+          columnPreferencesKey="production-appointments:AppointmentsTables:por-ordem-de-produ-o-2:v1"
           title="Por ordem de produção"
           titleHint={activeMode.hint}
           columns={byOpColumns}

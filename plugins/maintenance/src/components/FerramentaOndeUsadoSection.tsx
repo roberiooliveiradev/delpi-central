@@ -116,6 +116,7 @@ export function FerramentaOndeUsadoSection({
     <>
       {error ? <p className="dm-inline-error">{error}</p> : null}
       <DataTableSection
+        columnPreferencesKey="maintenance:FerramentaOndeUsadoSection:onde-usado:v1"
         title="Onde é usado"
         titleHint="Produtos pai (PA/PI) que utilizam esta ferramenta na estrutura vigente."
         countBadgeLabel="produto(s)"

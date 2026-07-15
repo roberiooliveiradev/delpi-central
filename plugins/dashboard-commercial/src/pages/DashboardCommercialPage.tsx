@@ -829,6 +829,7 @@ export function DashboardCommercialPage({
           </div>
         ) : (
           <DataTableSection
+            columnPreferencesKey="dashboard-commercial:DashboardCommercialPage:propostas-do-per-odo:v1"
             title="Propostas do período"
             titleHint={COMMERCIAL_HELP_TOOLTIPS.table.section}
             hint={`${proposalStatusHint} ${branchLabel ?? consolidatedOtherKpisLabel} · ${periodLabel}`}

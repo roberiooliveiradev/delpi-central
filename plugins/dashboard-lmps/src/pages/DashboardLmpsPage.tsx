@@ -722,6 +722,7 @@ export function DashboardLmpsPage({
           ) : null}
 
       <DataTableSection
+        columnPreferencesKey="dashboard-lmps:DashboardLmpsPage:registros-filtrados:v1"
         title="Registros filtrados"
         titleHint={LMPS_HELP_TOOLTIPS.table.section}
         hint={periodLabel}

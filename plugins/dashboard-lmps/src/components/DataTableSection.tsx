@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
-import { HelpTooltip, NativeTextControl, dataTableSectionBemClasses } from "@delpi/plugin-ui/index";
+import {
+  DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS,
+  HelpTooltip,
+  NativeTextControl,
+  TableColumnVisibilityMenu,
+  dataTableSectionBemClasses,
+  useTableColumnVisibility,
+} from "@delpi/plugin-ui/index";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   useLoadingProgress,
@@ -62,6 +69,8 @@ export type DataTableSectionProps<T> = {
   clientSort?: ClientSortConfig;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
+  columnPreferencesKey?: string;
+  onVisibleColumnKeysChange?: (keys: string[]) => void;
 };
 
 export function DataTableSection<T>({
@@ -83,8 +92,36 @@ export function DataTableSection<T>({
   clientSort,
   onRowClick,
   getRowClassName,
+  columnPreferencesKey,
+  onVisibleColumnKeysChange,
 }: DataTableSectionProps<T>) {
   const [search, setSearch] = useState("");
+
+  const columnCatalog = useMemo(
+    () => columns.map((column) => ({ key: column.key, label: column.header })),
+    [columns],
+  );
+  const columnVisibilityEnabled = Boolean(columnPreferencesKey);
+  const {
+    visibility,
+    visibleKeys,
+    setColumnVisible,
+    reset: resetColumnVisibility,
+    filterColumns,
+  } = useTableColumnVisibility({
+    storageKey: columnPreferencesKey ?? "",
+    columns: columnCatalog,
+    enabled: columnVisibilityEnabled,
+  });
+  const visibleColumns = useMemo(
+    () => (columnVisibilityEnabled ? filterColumns(columns) : columns),
+    [columnVisibilityEnabled, columns, filterColumns],
+  );
+
+  useEffect(() => {
+    if (!columnVisibilityEnabled || !onVisibleColumnKeysChange) return;
+    onVisibleColumnKeysChange(visibleKeys);
+  }, [columnVisibilityEnabled, onVisibleColumnKeysChange, visibleKeys]);
 
   const filteredRows = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -139,6 +176,8 @@ export function DataTableSection<T>({
     refreshFetchProgress
   );
 
+  const showToolbar = !hideSearch || columnVisibilityEnabled;
+
   return (
     <section
       className={LMPS_SECTION.section}
@@ -181,31 +220,46 @@ export function DataTableSection<T>({
         />
       ) : (
         <>
-          {!hideSearch ? (
+          {showToolbar ? (
             <div className={LMPS_SECTION.toolbar}>
-              <div className={LMPS_SECTION.search} role="search">
-                <Search size={16} aria-hidden="true" className={LMPS_SECTION.searchIcon} />
-                <NativeTextControl
-                  type="search"
-                  className={LMPS_SECTION.searchInput}
-                  value={search}
-                  placeholder={searchPlaceholder}
-                  onChange={setSearch}
-                  aria-label="Filtrar registros da tabela"
-                />
-              </div>
-              {searchHint ? (
-                <HelpTooltip
-                  content={searchHint}
-                  ariaLabel="Ajuda: busca na tabela"
-                  className={LMPS_SECTION.searchHelp}
-                />
+              {!hideSearch ? (
+                <>
+                  <div className={LMPS_SECTION.search} role="search">
+                    <Search size={16} aria-hidden="true" className={LMPS_SECTION.searchIcon} />
+                    <NativeTextControl
+                      type="search"
+                      className={LMPS_SECTION.searchInput}
+                      value={search}
+                      placeholder={searchPlaceholder}
+                      onChange={setSearch}
+                      aria-label="Filtrar registros da tabela"
+                    />
+                  </div>
+                  {searchHint ? (
+                    <HelpTooltip
+                      content={searchHint}
+                      ariaLabel="Ajuda: busca na tabela"
+                      className={LMPS_SECTION.searchHelp}
+                    />
+                  ) : null}
+                </>
+              ) : null}
+              {columnVisibilityEnabled ? (
+                <div className={LMPS_SECTION.toolbarExtra}>
+                  <TableColumnVisibilityMenu
+                    columns={columnCatalog}
+                    visibility={visibility}
+                    onToggleColumn={setColumnVisible}
+                    onReset={resetColumnVisibility}
+                    labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+                  />
+                </div>
               ) : null}
             </div>
           ) : null}
 
           <DataTable
-            columns={columns}
+            columns={visibleColumns}
             rows={displayRows}
             rowKey={rowKey}
             emptyMessage={emptyMessage}

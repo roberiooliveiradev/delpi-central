@@ -426,6 +426,15 @@ Tabela genérica com sort, empty/loading e seção completa (busca, page size, p
 
 Helpers: `dataTableBemClasses`, `dataTableSectionBemClasses`, `createDashboardDataTableKit`.
 
+Props relevantes de `DataTableSection`:
+
+| Prop | Descrição |
+|------|-----------|
+| `columnPreferencesKey` | Chave `localStorage` — ativa menu “Colunas” e filtra a tabela |
+| `onVisibleColumnKeysChange` | Callback com as keys visíveis (ex.: export Excel) |
+
+Hook: `useTableColumnVisibility` (mesmo motor do menu; MFEs com tabela própria também podem usar).
+
 ### `TableColumnVisibilityMenu`
 
 Menu da toolbar de tabela para exibir/ocultar colunas (checkboxes). Tokens `--delpi-ui-*` — funciona em claro e escuro.
@@ -435,10 +444,10 @@ Menu da toolbar de tabela para exibir/ocultar colunas (checkboxes). Tokens `--de
 | `columns` | `{ key, label }[]` |
 | `visibility` | `Record<string, boolean>` |
 | `onToggleColumn` / `onReset` | Callbacks |
-| `labels` | Textos PT (`trigger`, `panelTitle`, `reset`, `hint`, `columnAriaLabel`) |
+| `labels` | Textos PT (`trigger`, `panelTitle`, `reset`, `hint`, `columnAriaLabel`) — default: `DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS` |
 | `keepAtLeastOne` | Impede desmarcar a última coluna (default `true`) |
 
-CSS: `styles/table-column-visibility.css`. Consumidor: `pedidos-venda-abertos` (`TableColumnSettings` fino).
+CSS: `styles/table-column-visibility.css`. Integrado em `DataTableSection` via `columnPreferencesKey`; consumidor legado: `pedidos-venda-abertos`.
 
 ### `TreeGuideRails`
 

@@ -109,6 +109,7 @@ export function FerramentaAuditoriaSection({
     <>
       {error ? <p className="dm-inline-error">{error}</p> : null}
       <DataTableSection
+        columnPreferencesKey="maintenance:FerramentaAuditoriaSection:auditoria-da-ferramenta:v1"
         title="Auditoria da ferramenta"
         titleHint="Registro cronológico de reposições e revisões programadas desta ferramenta."
         countBadgeLabel="evento(s)"

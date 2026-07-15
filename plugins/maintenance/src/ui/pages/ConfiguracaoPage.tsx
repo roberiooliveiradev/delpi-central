@@ -539,6 +539,7 @@ export function ConfiguracaoPage({
       ) : null}
 
       <DataTableSection
+        columnPreferencesKey="maintenance:ConfiguracaoPage:motivos-de-reposi-o:v1"
         className="dm-table-section--editable-config"
         title="Motivos de reposição"
         titleHint={CONFIG_TOOLTIPS.motivosSection}
@@ -585,6 +586,7 @@ export function ConfiguracaoPage({
       />
 
       <DataTableSection
+        columnPreferencesKey="maintenance:ConfiguracaoPage:status-preventivo-1:v1"
         className="dm-table-section--editable-config dm-table-section--editable-status"
         title="Status preventivo"
         titleHint={CONFIG_TOOLTIPS.statusSection}

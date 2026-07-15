@@ -932,6 +932,7 @@ export function RelatorioPage({
         <div key={activeTab} className="dm-content-transition">
           {activeTab === "alertas" ? (
             <DataTableSection
+              columnPreferencesKey="maintenance:RelatorioPage:ranking-preventivo:v1"
               embedded
               title="Ranking preventivo"
               hint="Clique em uma linha para abrir a aba Detalhe preventivo."
@@ -958,6 +959,7 @@ export function RelatorioPage({
 
           {activeTab === "revisoes" ? (
             <DataTableSection
+              columnPreferencesKey="maintenance:RelatorioPage:revis-es-programadas-1:v1"
               embedded
               title="Revisões programadas"
               hint="Clique em uma linha para abrir a ferramenta. Marque a revisão como feita para reprogramar a próxima."
@@ -981,6 +983,7 @@ export function RelatorioPage({
 
           {activeTab === "ultimas" ? (
             <DataTableSection
+              columnPreferencesKey="maintenance:RelatorioPage:ltimas-reposi-es-por-pe-a-2:v1"
               embedded
               title="Últimas reposições por peça"
               hint="Clique em uma linha para abrir o detalhe preventivo."

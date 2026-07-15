@@ -336,6 +336,7 @@ export function OtdOrderDetailPage({
           </DetailCard>
 
           <DataTableSection
+            columnPreferencesKey="dashboard-production:OtdOrderDetailPage:otdorderdetailpage:v1"
             title={
               order?.product_type === "PI"
                 ? "OPs vinculadas (mesmo C2_NUM)"
@@ -359,6 +360,7 @@ export function OtdOrderDetailPage({
 
           {stockItems.length > 0 ? (
             <DataTableSection
+              columnPreferencesKey="dashboard-production:OtdOrderDetailPage:estoque-do-produto-1:v1"
               title="Estoque do produto"
               hint="Saldos por unidade e armazém"
               columns={stockColumns}
@@ -373,6 +375,7 @@ export function OtdOrderDetailPage({
 
           {priceItems.length > 0 ? (
             <DataTableSection
+              columnPreferencesKey="dashboard-production:OtdOrderDetailPage:pre-os-do-produto-2:v1"
               title="Preços do produto"
               hint="Tabelas de preço cadastradas"
               columns={priceColumns}

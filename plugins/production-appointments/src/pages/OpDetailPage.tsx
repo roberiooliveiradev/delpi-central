@@ -218,6 +218,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
             />
             {totals ? <SummaryCards totals={totals} /> : null}
             <DataTableSection
+              columnPreferencesKey="production-appointments:OpDetailPage:apontamentos-da-op:v1"
               title="Apontamentos da OP"
               columns={columns}
               rows={appointments}

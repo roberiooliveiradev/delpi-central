@@ -182,6 +182,7 @@ export function EbitdaPage({ pathname }: EbitdaPageProps) {
 
       {branchRows.length > 0 ? (
         <DataTableSection
+          columnPreferencesKey="dashboard-financial:EbitdaPage:por-unidade:v1"
           title="Por unidade"
           hint={periodLabel}
           columns={columns}

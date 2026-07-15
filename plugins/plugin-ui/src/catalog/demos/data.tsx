@@ -157,12 +157,17 @@ export const dataCatalogEntries: CatalogEntryDraft[] = [
     title: "DataTableSection",
     description: "Shell com título, busca, paginação e DataTable — padrão listagem operacional.",
     docAnchor: "datatablesection",
-    propsSummary: ["title", "columns", "rows", "search", "Pagination"],
+    propsSummary: ["title", "columns", "rows", "search", "Pagination", "columnPreferencesKey"],
     demos: [
       {
         id: "default",
         label: "Com busca",
         render: () => <DataTableSectionDemo />,
+      },
+      {
+        id: "columns",
+        label: "Seletor de colunas",
+        render: () => <DataTableSectionColumnsDemo />,
       },
     ],
   },
@@ -448,6 +453,29 @@ function DataTableSectionDemo() {
     <DataTableSection
       title="Itens (estilo dashboard)"
       titleHint="Listagem com busca e paginação client-side"
+      columns={COLUMNS}
+      rows={MOCK_ROWS}
+      rowKey={(row) => row.codigo}
+      defaultPageSize={3}
+      tablePageSizeOptions={TABLE_PAGE_SIZE_OPTIONS}
+      sectionClassNames={sectionCn}
+      tableClassNames={tableCn}
+      labels={TABLE_LABELS}
+      LoadingActivityCard={LoadingActivity}
+      Pagination={pageKit.Pagination}
+      TablePageSizeSelect={pageKit.TablePageSizeSelect}
+      useLoadingProgress={useLoadingProgress}
+      useTrackedSingleFetchProgress={useTrackedSingleFetchProgress}
+    />
+  );
+}
+
+function DataTableSectionColumnsDemo() {
+  return (
+    <DataTableSection
+      title="Itens com seletor de colunas"
+      titleHint="Preferência salva em localStorage neste navegador"
+      columnPreferencesKey="plugin-ui-catalog:datatable-section-demo:v1"
       columns={COLUMNS}
       rows={MOCK_ROWS}
       rowKey={(row) => row.codigo}

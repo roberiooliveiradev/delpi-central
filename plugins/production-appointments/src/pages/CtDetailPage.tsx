@@ -245,6 +245,7 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
               />
               {totals ? <SummaryCards totals={totals} /> : null}
               <DataTableSection
+                columnPreferencesKey="production-appointments:CtDetailPage:apontamentos-do-ct:v1"
                 title="Apontamentos do CT"
                 titleHint={PA_HELP_TOOLTIPS.tables.ctDetailAppointments}
                 columns={columns}

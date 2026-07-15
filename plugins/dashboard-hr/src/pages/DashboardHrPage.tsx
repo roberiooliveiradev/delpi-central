@@ -561,6 +561,7 @@ export function DashboardHrPage() {
       ) : null}
 
       <DataTableSection
+        columnPreferencesKey="dashboard-hr:DashboardHrPage:detalhamento-por-unidade:v1"
         title="Detalhamento por unidade"
         titleHint={HR_HELP_TOOLTIPS.table.section}
         hint={periodLabel}

@@ -442,6 +442,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-quality:PpmPage:registros-de-ppm:v1"
         title={`Registros de PPM ${typeLabel}`}
         titleHint={QUALITY_HELP_TOOLTIPS.table.section}
         hint={`${periodLabel} · clique na linha para ver o detalhe`}

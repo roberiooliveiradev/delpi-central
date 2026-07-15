@@ -252,6 +252,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:CpvPage:top-produtos-por-cpv:v1"
         title="Top produtos por CPV"
         columns={productColumns}
         rows={data?.top_products ?? []}
@@ -263,6 +264,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
       />
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:CpvPage:detalhamento-por-cfop-1:v1"
         title="Detalhamento por CFOP"
         columns={cfopColumns}
         rows={data?.by_cfop ?? []}

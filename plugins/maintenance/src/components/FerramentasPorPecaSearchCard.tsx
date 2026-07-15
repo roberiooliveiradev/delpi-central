@@ -209,6 +209,7 @@ export function FerramentasPorPecaSearchCard({
           </FilterBar>
 
           <DataTableSection
+            columnPreferencesKey="maintenance:FerramentasPorPecaSearchCard:pe-as-amarradas:v1"
             title="Peças amarradas"
             countBadgeLabel="peça(s)"
             columns={columns}

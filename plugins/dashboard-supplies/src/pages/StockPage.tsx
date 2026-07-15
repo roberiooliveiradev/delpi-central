@@ -293,6 +293,7 @@ export function StockPage({ pathname }: StockPageProps) {
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:StockPage:saldo-por-localiza-o:v1"
         title="Saldo por localização"
         columns={locationColumns}
         rows={data?.by_location ?? []}
@@ -303,6 +304,7 @@ export function StockPage({ pathname }: StockPageProps) {
       />
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:StockPage:top-produtos-por-valor-em-estoque-1:v1"
         title="Top produtos por valor em estoque"
         columns={productColumns}
         rows={data?.top_products ?? []}

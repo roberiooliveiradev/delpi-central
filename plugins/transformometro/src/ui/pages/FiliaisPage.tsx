@@ -192,6 +192,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
       </p>
 
       <DataTableSection
+        columnPreferencesKey="transformometro:FiliaisPage:cat-logo-de-unidades:v1"
         title="Catálogo de unidades"
         filters={
           <NativeCheckboxControl

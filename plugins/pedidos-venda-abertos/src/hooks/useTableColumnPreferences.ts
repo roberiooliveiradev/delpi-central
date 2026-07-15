@@ -1,68 +1,55 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useTableColumnVisibility } from "@delpi/plugin-ui/index";
 
 import {
-  createDefaultColumnPreferences,
   TABLE_COLUMNS,
   type TableColumnDef,
   type TableColumnKey,
   type TableColumnPreferences,
 } from "../utils/tableColumns";
-import {
-  loadTableColumnPreferences,
-  saveTableColumnPreferences,
-} from "../utils/tableColumnPreferences";
+
+const STORAGE_KEY = "pedidos-venda-abertos:table-columns:v4";
+const LEGACY_STORAGE_KEY = "pedidos-venda-abertos:table-columns:v1";
+
+const COLUMN_ITEMS = TABLE_COLUMNS.map((column) => ({
+  key: column.key,
+  label: column.label,
+}));
 
 export function useTableColumnPreferences() {
-  const [preferences, setPreferences] = useState<TableColumnPreferences>(() =>
-    loadTableColumnPreferences(),
+  const {
+    visibility,
+    visibleColumnCount,
+    setColumnVisible: setVisible,
+    reset,
+    filterColumns,
+  } = useTableColumnVisibility({
+    storageKey: STORAGE_KEY,
+    columns: COLUMN_ITEMS,
+    emptyFallbackKeys: ["nome_cliente", "status"],
+    legacyStorageKeys: [LEGACY_STORAGE_KEY],
+  });
+
+  const preferences: TableColumnPreferences = useMemo(
+    () => ({
+      visibility: visibility as Record<TableColumnKey, boolean>,
+    }),
+    [visibility],
   );
-
-  useEffect(() => {
-    const handle = window.setTimeout(() => {
-      saveTableColumnPreferences(preferences);
-    }, 200);
-
-    return () => window.clearTimeout(handle);
-  }, [preferences]);
 
   const visibleColumns = useMemo(
-    () => TABLE_COLUMNS.filter((column) => preferences.visibility[column.key]),
-    [preferences.visibility],
+    () => filterColumns(TABLE_COLUMNS) as TableColumnDef[],
+    [filterColumns],
   );
-
-  const visibleColumnCount = visibleColumns.length;
-
-  const setColumnVisible = useCallback((key: TableColumnKey, visible: boolean) => {
-    setPreferences((current) => {
-      if (!visible) {
-        const visibleCount = TABLE_COLUMNS.filter(
-          (column) => current.visibility[column.key],
-        ).length;
-        if (visibleCount <= 1 && current.visibility[key]) {
-          return current;
-        }
-      }
-
-      return {
-        ...current,
-        visibility: {
-          ...current.visibility,
-          [key]: visible,
-        },
-      };
-    });
-  }, []);
-
-  const resetPreferences = useCallback(() => {
-    setPreferences(createDefaultColumnPreferences());
-  }, []);
 
   return {
     preferences,
     visibleColumns,
     visibleColumnCount,
-    setColumnVisible,
-    resetPreferences,
+    setColumnVisible: (key: TableColumnKey, visible: boolean) => {
+      setVisible(key, visible);
+    },
+    resetPreferences: reset,
   };
 }
 

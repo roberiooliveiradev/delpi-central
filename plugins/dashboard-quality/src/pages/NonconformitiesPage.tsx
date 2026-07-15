@@ -433,6 +433,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-quality:NonconformitiesPage:registros:v1"
         title="Registros"
         titleHint={QUALITY_HELP_TOOLTIPS.table.section}
         hint="Clique na linha para abrir o detalhe do registro."

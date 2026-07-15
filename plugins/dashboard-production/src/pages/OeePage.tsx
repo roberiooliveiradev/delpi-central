@@ -555,6 +555,7 @@ export function OeePage({ pathname }: OeePageProps) {
       </p>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-production:OeePage:apontamentos-de-produ-o:v1"
         title="Apontamentos de produção"
         titleHint={DP_HELP_TOOLTIPS.oee.table.section}
         hint="Clique em uma linha para abrir roteiro, estrutura e análise de tempos."

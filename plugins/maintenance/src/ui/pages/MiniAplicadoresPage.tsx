@@ -986,6 +986,7 @@ export function MiniAplicadoresPage({
           ) : null}
 
           <DataTableSection
+            columnPreferencesKey="maintenance:MiniAplicadoresPage:miniaplicadorespage:v1"
             title={
               selectedPecaCodigo
                 ? `Ferramentas com peça ${formatPecaLabel({
@@ -1216,6 +1217,7 @@ export function MiniAplicadoresPage({
 
           <div ref={historicoSectionRef} className="dm-historico-anchor">
             <DataTableSection
+              columnPreferencesKey="maintenance:MiniAplicadoresPage:hist-rico-de-reposi-es-1:v1"
               title="Histórico de reposições"
             actions={
               <div className="dm-row-actions">
@@ -1294,6 +1296,7 @@ export function MiniAplicadoresPage({
           </div>
 
           <DataTableSection
+            columnPreferencesKey="maintenance:MiniAplicadoresPage:componentes-e-estoque-2:v1"
             title="Componentes e estoque"
             countBadgeLabel="item(ns)"
             columns={componentesColumns}

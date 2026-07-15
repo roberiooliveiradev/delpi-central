@@ -745,6 +745,7 @@ export function ProcessoInstanciasPanel({
           </button>
         </div>
         <DataTableSection
+          columnPreferencesKey="transformometro:ProcessoInstanciasPanel:processoinstanciaspanel:v1"
           embedded
           title=""
           columns={columns}

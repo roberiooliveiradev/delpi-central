@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { useTableColumnVisibility } from "../../hooks/useTableColumnVisibility";
 import { buildDataTableSearchText } from "../../utils/dataTableSearch";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { useClientPagination } from "../../utils/useClientPagination";
@@ -14,6 +15,8 @@ import {
   type DataTableLabels,
   type DashboardDataTableProps,
 } from "./DataTable";
+import { DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS } from "./tableColumnVisibilityLabels";
+import { TableColumnVisibilityMenu } from "./TableColumnVisibilityMenu";
 
 export type {
   DataTableColumn,
@@ -123,6 +126,13 @@ export type DataTableSectionProps<T> = {
   serverSort?: ServerSortConfig;
   serverSearch?: ServerSearchConfig;
   toolbarExtra?: ReactNode;
+  /**
+   * Chave estável de localStorage para preferências de colunas.
+   * Quando definida, exibe o menu “Colunas” e filtra a tabela.
+   */
+  columnPreferencesKey?: string;
+  /** Notifica chaves visíveis (export Excel, etc.). */
+  onVisibleColumnKeysChange?: (keys: string[]) => void;
   onRowClick?: (row: T) => void;
   getRowClassName?: (row: T) => string | undefined;
   headerActions?: ReactNode;
@@ -244,6 +254,8 @@ export function DataTableSection<T>({
   serverSort,
   serverSearch,
   toolbarExtra,
+  columnPreferencesKey,
+  onVisibleColumnKeysChange,
   onRowClick,
   getRowClassName,
   headerActions,
@@ -277,6 +289,33 @@ export function DataTableSection<T>({
   const pageSizeOptions = serverPagination?.pageSizeOptions ?? tablePageSizeOptions;
   const tableLabels: DataTableLabels = labels;
   const resolvedInteractive = interactive ?? Boolean(onRowClick);
+
+  const columnCatalog = useMemo(
+    () => columns.map((column) => ({ key: column.key, label: column.header })),
+    [columns],
+  );
+  const columnVisibilityEnabled = Boolean(columnPreferencesKey);
+  const {
+    visibility,
+    visibleKeys,
+    setColumnVisible,
+    reset: resetColumnVisibility,
+    filterColumns,
+  } = useTableColumnVisibility({
+    storageKey: columnPreferencesKey ?? "",
+    columns: columnCatalog,
+    enabled: columnVisibilityEnabled,
+  });
+
+  const visibleColumns = useMemo(
+    () => (columnVisibilityEnabled ? filterColumns(columns) : columns),
+    [columnVisibilityEnabled, columns, filterColumns],
+  );
+
+  useEffect(() => {
+    if (!columnVisibilityEnabled || !onVisibleColumnKeysChange) return;
+    onVisibleColumnKeysChange(visibleKeys);
+  }, [columnVisibilityEnabled, onVisibleColumnKeysChange, visibleKeys]);
 
   useEffect(() => {
     setLocalSortKey(defaultSortKey);
@@ -382,7 +421,11 @@ export function DataTableSection<T>({
     .join(" ");
 
   const showHeader = Boolean(title.trim() || hint);
-  const showToolbar = !hidePageSizeSelect || !hideSearch || Boolean(toolbarExtra);
+  const showToolbar =
+    !hidePageSizeSelect ||
+    !hideSearch ||
+    Boolean(toolbarExtra) ||
+    columnVisibilityEnabled;
 
   return (
     <section className={sectionClass || sectionClassNames.section} aria-busy={loading || refreshing}>
@@ -469,14 +512,25 @@ export function DataTableSection<T>({
               </div>
             ) : null}
 
-            {toolbarExtra ? (
-              <div className={sectionClassNames.toolbarExtra}>{toolbarExtra}</div>
+            {columnVisibilityEnabled || toolbarExtra ? (
+              <div className={sectionClassNames.toolbarExtra}>
+                {columnVisibilityEnabled ? (
+                  <TableColumnVisibilityMenu
+                    columns={columnCatalog}
+                    visibility={visibility}
+                    onToggleColumn={setColumnVisible}
+                    onReset={resetColumnVisibility}
+                    labels={DEFAULT_TABLE_COLUMN_VISIBILITY_LABELS}
+                  />
+                ) : null}
+                {toolbarExtra}
+              </div>
             ) : null}
             </div>
           ) : null}
 
           <DataTable
-            columns={columns}
+            columns={visibleColumns}
             rows={displayRows}
             rowKey={(row, _index) => rowKey(row)}
             emptyMessage={emptyMessage}

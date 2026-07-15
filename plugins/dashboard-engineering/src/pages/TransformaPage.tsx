@@ -384,6 +384,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
       ) : null}
 
       <DataTableSection
+        columnPreferencesKey="dashboard-engineering:TransformaPage:lista-de-processos:v1"
         title="Lista de processos"
         hint={periodLabel}
         columns={columns}

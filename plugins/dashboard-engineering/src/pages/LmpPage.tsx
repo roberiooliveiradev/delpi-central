@@ -502,6 +502,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
       ) : null}
 
       <DataTableSection
+        columnPreferencesKey="dashboard-engineering:LmpPage:registros-filtrados:v1"
         title="Registros filtrados"
         titleHint={ENGINEERING_HELP_TOOLTIPS.table.section}
         hint={`${periodLabel} · clique na linha para abrir o detalhe da proposta`}

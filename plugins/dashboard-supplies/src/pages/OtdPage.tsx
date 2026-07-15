@@ -299,6 +299,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:OtdPage:ranking-de-fornecedores-em-atraso:v1"
         title="Ranking de fornecedores em atraso"
         columns={supplierColumns}
         rows={data?.top_late_suppliers ?? []}
@@ -311,6 +312,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
       />
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:OtdPage:entregas-em-atraso-amostra-1:v1"
         title="Entregas em atraso (amostra)"
         hint="Linhas com DIAS negativo na view de pontualidade."
         columns={deliveryColumns}

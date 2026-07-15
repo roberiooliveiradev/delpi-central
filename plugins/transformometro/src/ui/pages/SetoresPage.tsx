@@ -206,6 +206,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate, embedded = f
       </p>
 
       <DataTableSection
+        columnPreferencesKey="transformometro:SetoresPage:cat-logo-de-departamentos:v1"
         title="Catálogo de departamentos"
         filters={
           <div className={DS_FILTERS_ROW}>

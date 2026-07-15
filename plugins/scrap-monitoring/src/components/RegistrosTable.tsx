@@ -45,6 +45,7 @@ export function RegistrosTable({
   onExportError,
 }: RegistrosTableProps) {
   const [exporting, setExporting] = useState(false);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState<string[]>([]);
 
   const columns = useMemo<DataTableColumn<ScrapRegistroItem>[]>(
     () => [
@@ -135,7 +136,7 @@ export function RegistrosTable({
     setExporting(true);
     try {
       const allItems = await fetchAllScrapRegistros(filters);
-      await exportRegistrosExcel(allItems, filters);
+      await exportRegistrosExcel(allItems, filters, visibleColumnKeys);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Não foi possível exportar o Excel.";
@@ -143,13 +144,15 @@ export function RegistrosTable({
     } finally {
       setExporting(false);
     }
-  }, [exporting, filters, onExportError, total]);
+  }, [exporting, filters, onExportError, total, visibleColumnKeys]);
 
   return (
     <DataTableSection
       title="Registros de refugo"
       titleHint={T.section}
       hint={`${total.toLocaleString("pt-BR")} registro(s) no período`}
+      columnPreferencesKey="scrap-monitoring:registros:v1"
+      onVisibleColumnKeysChange={setVisibleColumnKeys}
       columns={columns}
       rows={items}
       rowKey={(row) =>

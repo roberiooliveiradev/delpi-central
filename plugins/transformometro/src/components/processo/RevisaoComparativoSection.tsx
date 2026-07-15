@@ -134,6 +134,7 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
         bodyClassName="tm-comparativo-table__body"
       >
         <DataTableSection
+          columnPreferencesKey="transformometro:RevisaoComparativoSection:revisaocomparativosection:v1"
           title=""
           columns={columns}
           rows={items}

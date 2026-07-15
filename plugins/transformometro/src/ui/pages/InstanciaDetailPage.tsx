@@ -590,6 +590,7 @@ export function InstanciaDetailPage({
       ) : null}
 
       <DataTableSection
+        columnPreferencesKey="transformometro:InstanciaDetailPage:revis-es:v1"
         title={`Revisões (${revisoes.length})`}
         columns={revisaoColumns}
         rows={revisoes}

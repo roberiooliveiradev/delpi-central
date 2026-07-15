@@ -250,6 +250,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
       </section>
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:NegotiationSavingsPage:totais-por-unidade:v1"
         title="Totais por unidade"
         columns={branchColumns}
         rows={data?.branches ?? []}
@@ -260,6 +261,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
       />
 
       <DataTableSection
+        columnPreferencesKey="dashboard-supplies:NegotiationSavingsPage:lan-amentos-da-planilha-1:v1"
         title="Lançamentos da planilha"
         hint="Cada linha corresponde a um registro de economia em negociação."
         columns={entryColumns}
