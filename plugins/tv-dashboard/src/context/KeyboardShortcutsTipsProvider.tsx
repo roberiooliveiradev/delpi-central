@@ -14,6 +14,7 @@ import {
   getKeyboardShortcut,
   type KeyboardShortcutEntry,
 } from "../content/keyboardShortcuts";
+import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 
 type KeyboardShortcutsTipsContextValue = {
   altTipsActive: boolean;
@@ -25,12 +26,6 @@ type KeyboardShortcutsTipsContextValue = {
 };
 
 const KeyboardShortcutsTipsContext = createContext<KeyboardShortcutsTipsContextValue | null>(null);
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
-}
 
 export function isAltKey(event: Pick<KeyboardEvent, "key" | "code">): boolean {
   return event.key === "Alt" || event.code === "AltLeft" || event.code === "AltRight";
@@ -46,42 +41,43 @@ export function KeyboardShortcutsTipsProvider({ children }: { children: ReactNod
 
   const clearTips = useCallback(() => setAltTipsActive(false), []);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
+  useEditorShortcut(
+    "deck-alt-tips",
+    (event) => {
       if (event.key === "Escape" && altTipsActive) {
         setAltTipsActive(false);
-        return;
+        return { handled: true };
       }
 
       if (!isAltKey(event)) {
-        // Combinação Ctrl/⌘ em uso: esconde os balões.
         if (altTipsActive && (event.ctrlKey || event.metaKey)) {
           setAltTipsActive(false);
         }
         return;
       }
       if (event.ctrlKey || event.metaKey || event.shiftKey) return;
-      if (isEditableTarget(event.target)) return;
+      if (isEditableKeyboardTarget(event.target)) return;
       if (event.repeat) return;
       // Impede menu do navegador / foco na barra ao tocar Alt (KeyTips).
-      event.preventDefault();
       setAltTipsActive((prev) => !prev);
-    }
+      return { handled: true };
+    },
+    { phase: "capture", priority: 90 },
+  );
 
+  useEffect(() => {
     function onVisibility() {
       if (document.visibilityState !== "visible") clearTips();
     }
 
-    window.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("blur", clearTips);
     document.addEventListener("visibilitychange", onVisibility);
 
     return () => {
-      window.removeEventListener("keydown", onKeyDown, true);
       window.removeEventListener("blur", clearTips);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [altTipsActive, clearTips]);
+  }, [clearTips]);
 
   const value = useMemo<KeyboardShortcutsTipsContextValue>(
     () => ({

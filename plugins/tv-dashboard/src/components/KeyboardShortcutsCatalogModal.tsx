@@ -17,7 +17,8 @@ export function KeyboardShortcutsCatalogModal() {
       <p className="td-shortcuts-catalog__lead">
         Toque <kbd className="td-shortcuts-catalog__kbd">Alt</kbd> para ligar/desligar os balões de
         atalho (Ctrl nos controles e <kbd className="td-shortcuts-catalog__kbd">F1</kbd>–
-        <kbd className="td-shortcuts-catalog__kbd">F8</kbd> nas abas). Com Alt ativo, F1–F8 abrem a
+        <kbd className="td-shortcuts-catalog__kbd">F10</kbd> nas abas, só com Alt ativo). Sem Alt,
+        teclas do navegador (F5, F11, F12) permanecem livres. Com Alt ativo, F1–F10 abrem a
         aba; depois uma letra dispara a ação da ribbon (
         <kbd className="td-shortcuts-catalog__kbd">Esc</kbd> sai). No Mac, Ctrl vira ⌘.
       </p>

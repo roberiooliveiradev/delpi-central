@@ -45,6 +45,24 @@ describe("deckKeyTips", () => {
       } as KeyboardEvent),
     ).toBe(false);
     expect(
+      isDeckKeyTipFunctionKey({
+        key: "F12",
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: false,
+      } as KeyboardEvent),
+    ).toBe(false);
+    expect(
+      isDeckKeyTipFunctionKey({
+        key: "F11",
+        ctrlKey: false,
+        metaKey: false,
+        altKey: false,
+        shiftKey: false,
+      } as KeyboardEvent),
+    ).toBe(false);
+    expect(
       isDeckKeyTipActionKey({
         key: "n",
         ctrlKey: false,

@@ -1,12 +1,5 @@
-import { useEffect } from "react";
-
 import type { ComunicadoEditorKeyboardActions } from "../components/comunicadoEditorTypes";
-
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  const tag = target.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
-}
+import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
 
 /** Atalhos do editor — recebe ações do provider (sem importar o contexto, evita ciclo ESM). */
 export function useComunicadoEditorKeyboard({
@@ -29,101 +22,78 @@ export function useComunicadoEditorKeyboard({
 }: ComunicadoEditorKeyboardActions & { enableHistoryShortcuts?: boolean }) {
   const hasSelection = selectedIds.length > 0;
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (isEditableTarget(event.target)) return;
+  useEditorShortcut(
+    "comunicado-editor",
+    (event) => {
+      if (isEditableKeyboardTarget(event.target)) return;
       if (editingTextId) return;
 
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
 
       if (event.key === "Escape" && hasPartSelection) {
-        event.preventDefault();
         clearPartSelection?.();
-        return;
+        return { handled: true };
       }
 
       if (mod && key === "z" && !event.shiftKey) {
         if (!enableHistoryShortcuts || !canUndo) return;
-        event.preventDefault();
         undo();
-        return;
+        return { handled: true };
       }
 
       if ((mod && key === "y") || (mod && event.shiftKey && key === "z")) {
         if (!enableHistoryShortcuts || !canRedo) return;
-        event.preventDefault();
         redo();
-        return;
+        return { handled: true };
       }
 
       if (mod && key === "x" && hasSelection) {
-        event.preventDefault();
         cutSelected();
-        return;
+        return { handled: true };
       }
 
       if (mod && key === "c" && hasSelection) {
-        event.preventDefault();
         copySelected();
-        return;
+        return { handled: true };
       }
 
       if (mod && key === "v" && canPaste) {
-        event.preventDefault();
         pasteSelected();
-        return;
+        return { handled: true };
       }
 
       if (mod && key === "d") {
         if (!hasSelection) return;
-        event.preventDefault();
         duplicateSelected();
-        return;
+        return { handled: true };
       }
 
       if ((event.key === "Delete" || event.key === "Backspace") && hasSelection) {
-        event.preventDefault();
         removeSelected();
-        return;
+        return { handled: true };
       }
 
       if (!hasSelection) return;
 
       const step = event.shiftKey ? 10 : 1;
       if (event.key === "ArrowLeft") {
-        event.preventDefault();
         nudgeSelected(-step, 0);
-      } else if (event.key === "ArrowRight") {
-        event.preventDefault();
-        nudgeSelected(step, 0);
-      } else if (event.key === "ArrowUp") {
-        event.preventDefault();
-        nudgeSelected(0, -step);
-      } else if (event.key === "ArrowDown") {
-        event.preventDefault();
-        nudgeSelected(0, step);
+        return { handled: true };
       }
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [
-    canPaste,
-    canRedo,
-    canUndo,
-    clearPartSelection,
-    copySelected,
-    cutSelected,
-    duplicateSelected,
-    editingTextId,
-    hasPartSelection,
-    hasSelection,
-    enableHistoryShortcuts,
-    nudgeSelected,
-    pasteSelected,
-    redo,
-    removeSelected,
-    undo,
-  ]);
+      if (event.key === "ArrowRight") {
+        nudgeSelected(step, 0);
+        return { handled: true };
+      }
+      if (event.key === "ArrowUp") {
+        nudgeSelected(0, -step);
+        return { handled: true };
+      }
+      if (event.key === "ArrowDown") {
+        nudgeSelected(0, step);
+        return { handled: true };
+      }
+    },
+    { phase: "bubble", priority: 40 },
+  );
 }

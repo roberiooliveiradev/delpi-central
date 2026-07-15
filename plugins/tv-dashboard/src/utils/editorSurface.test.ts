@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { shouldKeepEditorUnderPreview } from "./App";
+import { isDeckEditorSurfaceActive, shouldKeepEditorUnderPreview } from "./editorSurface";
 
 describe("shouldKeepEditorUnderPreview", () => {
   it("mantém editor na rota edit", () => {
@@ -20,5 +20,13 @@ describe("shouldKeepEditorUnderPreview", () => {
   it("não mantém editor em list/share", () => {
     expect(shouldKeepEditorUnderPreview("list", undefined, "pl-1")).toBe(false);
     expect(shouldKeepEditorUnderPreview("share", "pl-1", "pl-1")).toBe(false);
+  });
+});
+
+describe("isDeckEditorSurfaceActive", () => {
+  it("só ativa atalhos na superfície de edição", () => {
+    expect(isDeckEditorSurfaceActive("edit")).toBe(true);
+    expect(isDeckEditorSurfaceActive("preview")).toBe(false);
+    expect(isDeckEditorSurfaceActive("list")).toBe(false);
   });
 });

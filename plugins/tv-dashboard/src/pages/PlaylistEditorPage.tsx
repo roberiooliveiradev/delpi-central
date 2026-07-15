@@ -46,6 +46,7 @@ import {
 } from "../context/deckEditorHistoryContext";
 import { KeyboardShortcutsTipsProvider } from "../context/KeyboardShortcutsTipsProvider";
 import { DeckKeyTipsProvider } from "../context/DeckKeyTipsProvider";
+import { EditorShortcutsProvider } from "../keyboard";
 import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCatalogModal";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
@@ -90,12 +91,20 @@ type DeckSettingsProps = {
 
 type Props = {
   playlistId: string;
+  /** false quando o editor fica montado sob a prévia (atalhos não capturam teclas). */
+  editorActive?: boolean;
   onBack: () => void;
   onPreview: () => void;
   onShare: () => void;
 };
 
-export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: Props) {
+export function PlaylistEditorPage({
+  playlistId,
+  editorActive = true,
+  onBack,
+  onPreview,
+  onShare,
+}: Props) {
   const confirm = useConfirm();
   const [playlist, setPlaylist] = useState<Playlist | null>(() => readPlaylistShell(playlistId));
   const [catalog, setCatalog] = useState<NativeScreenCatalogItem[]>([]);
@@ -803,6 +812,7 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
   };
 
   return (
+    <EditorShortcutsProvider active={editorActive}>
     <DeckEditorHistoryProvider value={deckHistoryValue}>
       <KeyboardShortcutsTipsProvider>
       <DeckKeyTipsProvider>
@@ -860,5 +870,6 @@ export function PlaylistEditorPage({ playlistId, onBack, onPreview, onShare }: P
       </DeckKeyTipsProvider>
       </KeyboardShortcutsTipsProvider>
     </DeckEditorHistoryProvider>
+    </EditorShortcutsProvider>
   );
 }

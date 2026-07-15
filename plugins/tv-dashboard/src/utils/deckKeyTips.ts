@@ -55,8 +55,19 @@ export const DECK_INSERT_ACTION_KEYTIPS = {
 
 const FUNCTION_KEY_RE = /^F([1-9]|1[0-2])$/i;
 
+/** Máximo de F-keys de aba (ordem de `DECK_RIBBON_TABS`). F11/F12 do browser nunca entram aqui. */
+export const DECK_TAB_FUNCTION_KEY_COUNT = DECK_RIBBON_TABS.length;
+
 export function isDeckFunctionKeyName(raw: string): boolean {
   return FUNCTION_KEY_RE.test(raw.trim());
+}
+
+/** Tecla F-n mapeada a uma aba do ribbon (F1…F{nTabs}), sem F11/F12 do navegador. */
+export function isDeckTabFunctionKeyName(raw: string): boolean {
+  const match = raw.trim().match(/^F([1-9]|1[0-2])$/i);
+  if (!match) return false;
+  const index = Number(match[1]);
+  return index >= 1 && index <= DECK_TAB_FUNCTION_KEY_COUNT;
 }
 
 export function normalizeKeyTipLetter(raw: string): string {
@@ -67,10 +78,13 @@ export function normalizeKeyTipLetter(raw: string): string {
   return trimmed.length === 1 ? trimmed.toUpperCase() : trimmed.toUpperCase();
 }
 
-/** Tecla F1–F12 (sem modificadores) para KeyTips de aba. */
+/**
+ * Tecla de função de aba para KeyTips — só F1…F{n} do ribbon, sem modificadores.
+ * Não engole F5/F11/F12 do browser.
+ */
 export function isDeckKeyTipFunctionKey(event: KeyboardEvent): boolean {
   if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return false;
-  return isDeckFunctionKeyName(event.key);
+  return isDeckTabFunctionKeyName(event.key);
 }
 
 /** Tecla de ação válida para KeyTips da ribbon (letra, dígito). */

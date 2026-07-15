@@ -17,25 +17,17 @@ import {
   playlistPreviewPath,
   playlistSharePath,
 } from "./routing";
+import {
+  isDeckEditorSurfaceActive,
+  shouldKeepEditorUnderPreview,
+} from "./utils/editorSurface";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
 };
 
-/**
- * Mantém o editor montado sob a prévia da mesma playlist para não piscar
- * «Carregando programação…» nem refetch ao Voltar.
- */
-export function shouldKeepEditorUnderPreview(
-  view: string,
-  playlistId: string | undefined,
-  editorSessionPlaylistId: string | null,
-): boolean {
-  if (view === "edit" && playlistId) return true;
-  if (view === "preview" && playlistId && editorSessionPlaylistId === playlistId) return true;
-  return false;
-}
+export { isDeckEditorSurfaceActive, shouldKeepEditorUnderPreview } from "./utils/editorSurface";
 
 export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
   configureHttpClient(() => getAccessToken?.());
@@ -123,6 +115,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
               >
                 <PlaylistEditorPage
                   playlistId={playlistId}
+                  editorActive={isDeckEditorSurfaceActive(route.view)}
                   onBack={() => navigate("/apps/tv-dashboard")}
                   onPreview={() => navigate(playlistPreviewPath(playlistId))}
                   onShare={() => navigate(playlistSharePath(playlistId))}
