@@ -342,6 +342,76 @@ def test_enrich_table_accepts_bare_list_payload_like_eficiencia_appointments():
     assert any(column["key"] == "appointment_id" for column in columns)
 
 
+def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
+    """Catálogo gerado às vezes usa valueFields fantasma; discovery deve preencher o KPI."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+        "data": {
+            "branch": "02",
+            "rol": 1000.0,
+            "target": 900.0,
+            "rol_target_pct": 111.1,
+        },
+        "route": {
+            "label": "Meta ROL",
+            "valueFields": ["branch_rol_target_pct", "value"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "kpi-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_branch_rol_target_pct",
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    metrics = enriched[0]["resolved"]["kpiMetrics"]
+    fields = {metric["field"] for metric in metrics}
+    assert "rol_target_pct" in fields
+    assert enriched[0]["resolved"]["kpi"]["value"] is not None
+
+
+def test_enrich_table_reads_branches_and_ranking_list_keys():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "list_hr_branches", "shape": "scalar"},
+        "data": {"branches": ["01", "02"]},
+        "route": {"label": "Filiais RH", "tvConstraints": {"maxRows": 10}},
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "br-1",
+                "type": "data_source",
+                "dataBinding": {"operationId": "list_hr_branches", "displayMode": "table"},
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) == 2
+    assert rows[0]["value"] == "01"
+
+
 def test_enrich_scalar_route_as_line_chart():
     gateway = MagicMock()
     gateway.fetch_by_operation_id.return_value = {

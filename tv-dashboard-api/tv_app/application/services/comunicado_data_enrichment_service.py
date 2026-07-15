@@ -206,26 +206,22 @@ def _lookup_scalar_field(data: Any, field: str) -> Any:
     return None
 
 
-def _extract_kpi_metrics(
-    data: Any,
-    *,
-    route_info: dict[str, Any],
-    binding: dict[str, Any],
-) -> list[dict[str, Any]]:
-    """Extrai todas as métricas escalares disponíveis e aplica seleção do binding."""
-    labels = _value_field_labels(route_info)
-    catalog = _catalog_value_fields(route_info)
-    if catalog:
-        candidates = catalog
-    else:
-        candidates: list[str] = []
-        seen: set[str] = set()
-        for payload in _scalar_payloads(data):
-            for key in _discover_numeric_field_keys(payload):
-                if key not in seen:
-                    seen.add(key)
-                    candidates.append(key)
+def _discover_candidates(data: Any) -> list[str]:
+    candidates: list[str] = []
+    seen: set[str] = set()
+    for payload in _scalar_payloads(data):
+        for key in _discover_numeric_field_keys(payload):
+            if key not in seen:
+                seen.add(key)
+                candidates.append(key)
+    return candidates
 
+
+def _metrics_from_candidates(
+    data: Any,
+    candidates: list[str],
+    labels: dict[str, str],
+) -> list[dict[str, Any]]:
     metrics: list[dict[str, Any]] = []
     for field in candidates:
         value = _lookup_scalar_field(data, field)
@@ -238,6 +234,21 @@ def _extract_kpi_metrics(
                 "label": _humanize_value_field(field, labels),
             }
         )
+    return metrics
+
+
+def _extract_kpi_metrics(
+    data: Any,
+    *,
+    route_info: dict[str, Any],
+    binding: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Extrai métricas escalares; se valueFields do catálogo erram o payload, cai na discovery."""
+    labels = _value_field_labels(route_info)
+    catalog = _catalog_value_fields(route_info)
+    metrics = _metrics_from_candidates(data, catalog, labels) if catalog else []
+    if not metrics:
+        metrics = _metrics_from_candidates(data, _discover_candidates(data), labels)
 
     selected = _binding_selected_fields(binding)
     if selected is None:
@@ -277,29 +288,50 @@ def _extract_series(
 ) -> list[dict[str, Any]]:
     return extract_series_points(data, series_field, branch=branch)
 
+_TABLE_LIST_KEYS = (
+    "items",
+    "top_products",
+    "branches",
+    "ranking",
+    "serie",
+    "series",
+    "points",
+    "levelData",
+    "statusData",
+    "leadByLevel",
+    "suites",
+    "routes",
+    "centros_custo",
+    "fornecedores",
+    "valores",
+)
+
+
 def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
-    """Extrai linhas para tabela: `items`/`tableField`, fallbacks e lista bare (ex.: bulk appointments)."""
+    """Extrai linhas para tabela: lista bare, `items`/`tableField` e chaves list comuns."""
     if isinstance(data, list):
         return data
     if not isinstance(data, dict):
         return []
-    key = table_field or "items"
-    raw = data.get(key)
-    if isinstance(raw, list):
-        return raw
+
+    keys: list[str] = []
+    if table_field and str(table_field).strip():
+        keys.append(str(table_field).strip())
+    for key in _TABLE_LIST_KEYS:
+        if key not in keys:
+            keys.append(key)
+
+    for key in keys:
+        raw = data.get(key)
+        if isinstance(raw, list) and raw:
+            return raw
+
     # Envelope api-delpi às vezes chega com data aninhado (lista ou {items}).
     nested = data.get("data")
-    if isinstance(nested, list):
+    if isinstance(nested, list) and nested:
         return nested
     if isinstance(nested, dict):
-        nested_raw = nested.get(key) if key else None
-        if isinstance(nested_raw, list):
-            return nested_raw
-        if isinstance(nested.get("items"), list):
-            return nested["items"]
-    raw = data.get("top_products")
-    if isinstance(raw, list):
-        return raw
+        return _list_from_data(nested, table_field)
     return []
 
 
@@ -355,6 +387,34 @@ def _series_to_table_rows(
     return rows, columns
 
 
+def _scalar_object_as_table_rows(
+    data: Any,
+    *,
+    max_rows: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    """Objeto só com escalares (health, inspector) → tabela campo/valor para preview TV."""
+    if not isinstance(data, dict):
+        return [], []
+    rows: list[dict[str, Any]] = []
+    for key, value in data.items():
+        if not isinstance(key, str):
+            continue
+        if isinstance(value, (dict, list)) or value is None or value == "":
+            continue
+        if _is_kpi_meta_field(key):
+            continue
+        rows.append({"campo": key, "valor": value})
+        if len(rows) >= max_rows:
+            break
+    if not rows:
+        return [], []
+    columns = [
+        {"key": "campo", "label": "Campo"},
+        {"key": "valor", "label": "Valor"},
+    ]
+    return rows, columns
+
+
 def _extract_table_rows(
     data: Any,
     table_field: str | None,
@@ -370,6 +430,8 @@ def _extract_table_rows(
     for row in raw_rows[:max_rows]:
         if isinstance(row, dict):
             rows.append(dict(row))
+        elif isinstance(row, (str, int, float, bool)):
+            rows.append({"value": row})
     columns = _build_table_columns(meta or {}, rows)
     if rows:
         return rows, columns
@@ -384,7 +446,7 @@ def _extract_table_rows(
     if series_rows:
         return series_rows, series_columns
 
-    return rows, columns
+    return _scalar_object_as_table_rows(data, max_rows=max_rows)
 
 
 def _scalar_as_chart_points(value: Any, label: str | None = None) -> list[dict[str, Any]]:

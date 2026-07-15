@@ -26,3 +26,14 @@ def test_extract_series_points_branch_filial_fields():
         branch="01",
     )
     assert points[0]["value"] == 70
+
+
+def test_extract_series_points_from_serie_and_ranking():
+    serie = extract_series_points({"serie": [{"periodo": "2026-06", "value": 1000}]})
+    assert serie == [{"label": "2026-06", "value": 1000}]
+
+    ranking = extract_series_points(
+        {"ranking": [{"centro_custo": "ADM", "total": 550}]},
+    )
+    assert ranking[0]["label"] == "ADM"
+    assert ranking[0]["value"] == 550
