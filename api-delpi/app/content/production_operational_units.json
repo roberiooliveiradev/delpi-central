@@ -16,6 +16,8 @@
     "pending_qty",
     "order_planned_qty",
     "order_produced_qty",
-    "lost_qty"
+    "lost_qty",
+    "qty_produced",
+    "qty_lost"
   ]
 }

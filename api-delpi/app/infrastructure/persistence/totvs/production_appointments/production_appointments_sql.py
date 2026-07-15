@@ -1,12 +1,20 @@
 """SQL builders — Apontamento de Produção (SH6010 → SH1010 → SHB010).
 
 Validado na Fase 0 (jul/2026): docs/12-roadmap-e-evolucao/production-appointments/
+
+Quantidades H6 em MI: conversão para UN via ``ProductionOperationalQuantityService``
+(`production_operational_units.json` → displayUnitFactor). Listagens/by-op
+trazem ``unit`` (B1_UM) e o use case normaliza; agregações aplicam o fator no SQL
+por linha (CASE B1_UM vazia ou MI).
 """
 
 from __future__ import annotations
 
 from app.domain.production.production_appointments.production_appointments_scope import (
     CT_INSPECAO_NOME_SQL_LIKE,
+)
+from app.domain.services.production.production_operational_quantity_service import (
+    ProductionOperationalQuantityService,
 )
 
 _CT_JOIN = """
@@ -35,6 +43,21 @@ FROM SH6010 SH6 WITH (NOLOCK)
 {_CT_JOIN}
 {_PRODUCT_JOIN}
 """
+
+
+def _mi_display_factor() -> float:
+    return ProductionOperationalQuantityService.resolve("MI").display_unit_factor
+
+
+def _qty_display_expr(column_sql: str) -> str:
+    """H6 qty → unidade de exibição (MI ou UM vazia × displayUnitFactor; demais inalteradas)."""
+    factor = _mi_display_factor()
+    um = "UPPER(LTRIM(RTRIM(ISNULL(SB1.B1_UM, ''))))"
+    return (
+        f"(CAST({column_sql} AS FLOAT) * CASE "
+        f"WHEN {um} IN ('', 'MI') THEN {factor:g} "
+        f"ELSE 1.0 END)"
+    )
 
 
 def build_appointments_where(
@@ -111,6 +134,7 @@ def build_appointments_list_query(
         LTRIM(RTRIM(SH6.H6_PRODUTO)) AS product,
         LTRIM(RTRIM(SB1.B1_TIPO)) AS product_type,
         LTRIM(RTRIM(SB1.B1_DESC)) AS product_description,
+        LTRIM(RTRIM(SB1.B1_UM)) AS unit,
         LTRIM(RTRIM(SH1.H1_CTRAB)) AS work_center,
         LTRIM(RTRIM(HB.HB_NOME)) AS work_center_name,
         {_IS_FINAL_INSPECTION_EXPR} AS is_final_inspection,
@@ -170,14 +194,16 @@ def build_summary_by_ct_query(
         op=op,
         product=product,
     )
+    qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
+    qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
     sql = f"""
     SELECT
         LTRIM(RTRIM(SH1.H1_CTRAB)) AS work_center,
         LTRIM(RTRIM(HB.HB_NOME)) AS work_center_name,
         {_IS_FINAL_INSPECTION_EXPR} AS is_final_inspection,
         COUNT(*) AS appointment_count,
-        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced,
-        SUM(CAST(SH6.H6_QTDPERD AS FLOAT)) AS qty_lost,
+        SUM({qty_prod}) AS qty_produced,
+        SUM({qty_lost}) AS qty_lost,
         COUNT(DISTINCT LTRIM(RTRIM(SH6.H6_OP))) AS op_count
     {_BASE_FROM}
     WHERE {where}
@@ -204,11 +230,13 @@ def build_summary_totals_query(
         op=op,
         product=product,
     )
+    qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
+    qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
     sql = f"""
     SELECT
         COUNT(*) AS appointment_count,
-        SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced,
-        SUM(CAST(SH6.H6_QTDPERD AS FLOAT)) AS qty_lost,
+        SUM({qty_prod}) AS qty_produced,
+        SUM({qty_lost}) AS qty_lost,
         COUNT(DISTINCT LTRIM(RTRIM(SH6.H6_OP))) AS op_count,
         COUNT(DISTINCT LTRIM(RTRIM(SH1.H1_CTRAB))) AS work_center_count
     {_BASE_FROM}
@@ -235,6 +263,8 @@ def build_series_query(
         op=op,
         product=product,
     )
+    qty_prod = _qty_display_expr("SH6.H6_QTDPROD")
+    qty_lost = _qty_display_expr("SH6.H6_QTDPERD")
     if group_by == "day_work_center":
         sql = f"""
         SELECT
@@ -243,8 +273,8 @@ def build_series_query(
             LTRIM(RTRIM(HB.HB_NOME)) AS work_center_name,
             {_IS_FINAL_INSPECTION_EXPR} AS is_final_inspection,
             COUNT(*) AS appointment_count,
-            SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced,
-            SUM(CAST(SH6.H6_QTDPERD AS FLOAT)) AS qty_lost
+            SUM({qty_prod}) AS qty_produced,
+            SUM({qty_lost}) AS qty_lost
         {_BASE_FROM}
         WHERE {where}
         GROUP BY SH6.H6_DTAPONT, SH1.H1_CTRAB, HB.HB_NOME
@@ -255,8 +285,8 @@ def build_series_query(
         SELECT
             LTRIM(RTRIM(SH6.H6_DTAPONT)) AS appointment_date,
             COUNT(*) AS appointment_count,
-            SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced,
-            SUM(CAST(SH6.H6_QTDPERD AS FLOAT)) AS qty_lost
+            SUM({qty_prod}) AS qty_produced,
+            SUM({qty_lost}) AS qty_lost
         {_BASE_FROM}
         WHERE {where}
         GROUP BY SH6.H6_DTAPONT
@@ -290,6 +320,7 @@ def build_by_op_query(
         LTRIM(RTRIM(SH6.H6_PRODUTO)) AS product,
         LTRIM(RTRIM(SB1.B1_TIPO)) AS product_type,
         LTRIM(RTRIM(SB1.B1_DESC)) AS product_description,
+        MAX(LTRIM(RTRIM(SB1.B1_UM))) AS unit,
         COUNT(*) AS appointment_count,
         COUNT(DISTINCT LTRIM(RTRIM(SH1.H1_CTRAB))) AS work_center_count,
         SUM(CAST(SH6.H6_QTDPROD AS FLOAT)) AS qty_produced,

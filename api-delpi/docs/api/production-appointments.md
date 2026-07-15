@@ -50,6 +50,17 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 `data.totals` e `data.items[]` (por CT) incluem `qty_produced`, `qty_lost`, `appointment_count`; itens trazem `is_final_inspection` quando aplicável.
 
+## Unidades (MI → UN)
+
+`H6_QTDPROD` / `H6_QTDPERD` vêm do Protheus em milheiro quando `B1_UM = MI` (ou UM vazia, tratada como MI). A API converte para peças (`UN`) antes de responder:
+
+| Endpoint | Onde aplica |
+|----------|-------------|
+| Lista / by-op | `ProductionOperationalQuantityService.normalize_items` (`qty_produced`, `qty_lost`; `unit` → `UN`) |
+| Summary / series | Fator no SQL (`CASE` × `displayUnitFactor` de `production_operational_units.json`) |
+
+Playbook: [`docs/roadmaps/playbook-conversao-unidades-protheus.md`](../roadmaps/playbook-conversao-unidades-protheus.md). O MFE **não** multiplica nem rotula “milheiro”.
+
 ## SQL
 
 Builders: `app/infrastructure/persistence/totvs/production_appointments/production_appointments_sql.py`  

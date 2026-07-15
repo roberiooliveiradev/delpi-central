@@ -62,3 +62,17 @@ def test_normalize_items_preserves_order() -> None:
 
     assert items[0]["planned_qty"] == 3.0
     assert items[1]["planned_qty"] == 12
+
+
+def test_normalize_appointment_qty_fields_mi_to_un() -> None:
+    normalized = ProductionOperationalQuantityService.normalize_item(
+        {
+            "qty_produced": 3.836,
+            "qty_lost": 0.01,
+            "unit": "MI",
+        }
+    )
+
+    assert normalized["qty_produced"] == 3836.0
+    assert normalized["qty_lost"] == 10.0
+    assert normalized["unit"] == "UN"

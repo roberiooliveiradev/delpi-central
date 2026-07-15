@@ -40,7 +40,7 @@ def test_work_centers_catalog_marks_final_inspection() -> None:
     assert params == ("01",)
 
 
-def test_summary_by_ct_uses_sh6_sh1_shb_nolock() -> None:
+def test_summary_by_ct_converts_mi_with_display_factor() -> None:
     query, params = build_summary_by_ct_query(
         date_start="20260615",
         date_end_exclusive="20260716",
@@ -50,7 +50,21 @@ def test_summary_by_ct_uses_sh6_sh1_shb_nolock() -> None:
     assert "SH1010 SH1 WITH (NOLOCK)" in query
     assert "SHB010 HB WITH (NOLOCK)" in query
     assert "GROUP BY SH1.H1_CTRAB, HB.HB_NOME" in query
+    assert "IN ('', 'MI')" in query
+    assert "THEN 1000" in query
     assert params[0] == "01"
+
+
+def test_by_op_exposes_unit_for_normalize() -> None:
+    query, _params = build_by_op_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        offset=0,
+        page_size=25,
+    )
+    assert "MAX(LTRIM(RTRIM(SB1.B1_UM))) AS unit" in query
+    assert "OFFSET 0 ROWS FETCH NEXT 25 ROWS ONLY" in query
 
 
 def test_series_day_work_center_groups_both() -> None:
@@ -62,6 +76,7 @@ def test_series_day_work_center_groups_both() -> None:
     )
     assert "GROUP BY SH6.H6_DTAPONT, SH1.H1_CTRAB, HB.HB_NOME" in query
     assert "work_center" in query
+    assert "THEN 1000" in query
 
 
 def test_by_op_uses_offset_fetch() -> None:
