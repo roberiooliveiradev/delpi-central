@@ -348,6 +348,8 @@ Utils: `buildMultiSelectTriggerLabel` em `src/utils/multiSelectLabel.ts`.
 
 Helpers: `multiSelectBemClasses(prefix)` e `createDashboardMultiSelectField({ prefix, labels })`.
 
+Estilos canônicos das ações do painel (`Marcar visíveis` / `Limpar`): `delpi-ui-multi-select__*` em `styles/multi-select.css` (não usar `{prefix}-ghost-btn` nas actions — o ghost de toolbar sobrescreve densidade).
+
 ### `FiltersRow` / `FilterInputField` / `FilterSelectField` (FilterBar)
 
 Shell da linha de filtros (`{prefix}-filters-row`) e campos label+controle reutilizáveis.

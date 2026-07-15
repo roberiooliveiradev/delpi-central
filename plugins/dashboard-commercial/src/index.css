@@ -1159,6 +1159,15 @@
   cursor: not-allowed;
 }
 
+/* MultiSelect: ghost de toolbar não deve vencer ações compactas do plugin-ui */
+.dashboard-commercial .dc-multi-select__actions .dc-ghost-btn,
+.dashboard-commercial .dc-multi-select__actions .delpi-ui-multi-select__action {
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: var(--dc-font-xs);
+  transform: none;
+}
+
 .dashboard-commercial .dc-ppm-toolbar {
   display: flex;
   flex-wrap: wrap;

@@ -1,0 +1,68 @@
+/**
+ * MultiSelectField — ações do painel (Marcar visíveis / Limpar).
+ * Classe canônica independente de `{prefix}-ghost-btn` dos dashboards,
+ * para o CSS de toolbar não sobrescrever densidade/compactação.
+ *
+ * Tokens: --delpi-ui-* (plugins mapeiam no `.dashboard-*`).
+ */
+
+.delpi-ui-multi-select__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.delpi-ui-multi-select__panel {
+  box-sizing: border-box;
+  width: max(100%, 240px);
+}
+
+.delpi-ui-multi-select__action.delpi-ui-multi-select__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-sizing: border-box;
+  margin: 0;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: var(--delpi-ui-radius-sm, 8px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+  cursor: pointer;
+  transform: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.delpi-ui-multi-select__action.delpi-ui-multi-select__action:hover:not(:disabled) {
+  transform: none;
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 6%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-multi-select__action.delpi-ui-multi-select__action:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+.delpi-ui-multi-select__action.delpi-ui-multi-select__action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

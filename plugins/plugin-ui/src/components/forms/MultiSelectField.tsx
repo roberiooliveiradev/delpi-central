@@ -73,10 +73,11 @@ export function multiSelectBemClasses(prefix: string): MultiSelectFieldClassName
     multiSelectOpen: `${prefix}-multi-select ${prefix}-multi-select--open`,
     trigger: `${prefix}-multi-select__trigger`,
     triggerLabel: `${prefix}-multi-select__trigger-label`,
-    panel: `${prefix}-multi-select__panel`,
+    panel: `${prefix}-multi-select__panel delpi-ui-multi-select__panel`,
     search: `${prefix}-multi-select__search`,
-    actions: `${prefix}-multi-select__actions`,
-    actionButton: `${prefix}-ghost-btn ${prefix}-btn--sm`,
+    actions: `${prefix}-multi-select__actions delpi-ui-multi-select__actions`,
+    /* Compacto canônico — não usar `{prefix}-ghost-btn` (toolbar sobrescreve btn--sm). */
+    actionButton: "delpi-ui-multi-select__action",
     list: `${prefix}-multi-select__list`,
     empty: `${prefix}-multi-select__empty`,
     option: `${prefix}-multi-select__option`,
@@ -243,6 +244,12 @@ export function MultiSelectField({
   };
 
   const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const actionButtonClass = [
+    "delpi-ui-multi-select__action",
+    classNames.actionButton !== "delpi-ui-multi-select__action" ? classNames.actionButton : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const emptyListMessage =
     filteredOptions.length === 0 && canCreate && labels.emptyOptionsCreatable
       ? labels.emptyOptionsCreatable
@@ -309,7 +316,7 @@ export function MultiSelectField({
 
             {!showBulkActions && canCreate ? (
               <div className={classNames.actions}>
-                <button type="button" className={classNames.actionButton} onClick={handleCreate}>
+                <button type="button" className={actionButtonClass} onClick={handleCreate}>
                   {(labels.createOption ?? ((value: string) => `Adicionar "${value}"`))(
                     normalizedQuery,
                   )}
@@ -331,10 +338,10 @@ export function MultiSelectField({
 
             {showBulkActions ? (
               <div className={classNames.actions}>
-                <button type="button" className={classNames.actionButton} onClick={selectVisible}>
+                <button type="button" className={actionButtonClass} onClick={selectVisible}>
                   {labels.selectVisible}
                 </button>
-                <button type="button" className={classNames.actionButton} onClick={() => onChange([])}>
+                <button type="button" className={actionButtonClass} onClick={() => onChange([])}>
                   {labels.clear}
                 </button>
               </div>

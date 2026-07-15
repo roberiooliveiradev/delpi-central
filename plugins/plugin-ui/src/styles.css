@@ -11,6 +11,7 @@
 @import "./styles/format-pane.css";
 @import "./styles/native-controls.css";
 @import "./styles/select-control.css";
+@import "./styles/multi-select.css";
 @import "./styles/table-column-visibility.css";
 @import "./styles/combobox-number.css";
 @import "./styles/range-field.css";
