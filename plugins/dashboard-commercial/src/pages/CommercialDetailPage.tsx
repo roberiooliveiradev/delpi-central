@@ -299,6 +299,7 @@ export function CommercialDetailPage({
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.customerSection}
           icon={<UserRound size={20} />}
           hint="SA1010 / SA3010"
+          className="dc-detail-card--full"
         >
           <DetailFieldGrid
             fields={[
@@ -336,6 +337,7 @@ export function CommercialDetailPage({
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.productsSection}
           hint={`${products.length} item(ns) vinculado(s)`}
           icon={<Building2 size={20} aria-hidden />}
+          className="dc-detail-card--full"
           headerActions={
             <CommercialExportButtons
               variant="table"
