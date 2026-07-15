@@ -31,5 +31,18 @@ describe("dataRouteCatalogHelpers", () => {
         metaShape: "scalar",
       }),
     ).toBe("Texto de negócio.");
+    expect(
+      resolveRouteAudienceDescription({
+        whenToUse: "Use no plantão para OEE.",
+        description: "Indicador numérico para «OEE — visão geral».",
+        metaShape: "scalar",
+      }),
+    ).toBe("Use no plantão para OEE.");
+    expect(
+      resolveRouteAudienceDescription({
+        description: "Indicador numérico para «OEE — visão geral».",
+        metaShape: "scalar",
+      }),
+    ).toMatch(/KPI/);
   });
 });

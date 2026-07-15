@@ -241,6 +241,7 @@ export function DataRoutesSidePanel({
           label: route.label,
           category: route.category,
           description: route.description,
+          whenToUse: route.whenToUse,
           path: route.path,
           httpMethod: "GET",
           metaShape: route.metaShape,

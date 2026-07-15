@@ -347,6 +347,8 @@ export type TvDataRouteCatalogItem = {
   label: string;
   category: string;
   description?: string;
+  /** Texto de audiência curado (overlay) — prioridade sobre description no catálogo. */
+  whenToUse?: string;
   path?: string;
   allowedDisplayModes?: string[];
   suggestedDisplayModes?: string[];

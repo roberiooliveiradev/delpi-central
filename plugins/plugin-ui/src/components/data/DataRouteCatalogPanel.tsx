@@ -22,6 +22,8 @@ export type DataRouteCatalogItem = {
   /** Formas de apresentação sugeridas (kpi / series / table). */
   displayKinds?: DataRouteDisplayKind[];
   metaShape?: string;
+  /** Orientação de uso curada (overlay TV) — tem prioridade na prosa «para que serve». */
+  whenToUse?: string;
   /** Parâmetros já rotulados para a UI (sem path técnico no card). */
   params?: DataRouteParamFieldSummary[];
 };
@@ -449,6 +451,7 @@ export {
   formatParamHintLine,
   humanizeMetaShape,
   isParamFieldOptional,
+  isTemplatedRouteDescription,
   resolveRouteAudienceDescription,
   summarizeRouteParams,
   truncateText,

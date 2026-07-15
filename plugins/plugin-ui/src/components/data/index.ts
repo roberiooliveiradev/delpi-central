@@ -170,6 +170,7 @@ export {
   formatParamHintLine,
   humanizeMetaShape,
   isParamFieldOptional,
+  isTemplatedRouteDescription,
   resolveRouteAudienceDescription,
   summarizeRouteParams,
   truncateText,

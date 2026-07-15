@@ -34,6 +34,7 @@ TV_OVERLAYS_PATH = ROOT / "tv-dashboard-api" / "tv_app" / "content" / "tv_data_r
 OVERLAY_KEYS = frozenset(
     {
         "valueFields",
+        "valueFieldLabels",
         "seriesField",
         "defaultParams",
         "tvConstraints",
@@ -42,6 +43,7 @@ OVERLAY_KEYS = frozenset(
         "fixedQueryParams",
         "tableFields",
         "description",
+        "whenToUse",
         "label",
         "category",
         "paramSchema",  # merge profundo com schema OpenAPI
@@ -764,6 +766,8 @@ def seed_overlays_from_catalog(
             "paramStrategy",
             "defaultParams",
             "paramSchema",
+            "whenToUse",
+            "valueFieldLabels",
         }
         if any(key in overlay for key in tv_keys):
             # Mantém label/description/category se já curados junto.

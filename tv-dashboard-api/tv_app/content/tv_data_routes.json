@@ -151,7 +151,7 @@
     {
       "operationId": "get_sales_conversion_rate",
       "httpMethod": "GET",
-      "label": "Indicador — Taxa de fechamento comercial",
+      "label": "Comercial — taxa de fechamento",
       "category": "commercial",
       "path": "/commercial/closing-rate",
       "allowedDisplayModes": [
@@ -159,7 +159,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Taxa de fechamento comercial».",
+      "description": "Percentual de propostas convertidas em venda no período.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -205,14 +205,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
       },
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
-      ]
+      "whenToUse": "KPI comercial na TV: um número de taxa de fechamento. Prefira filtros de período e, se quiser, segmento."
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -1420,7 +1421,7 @@
     {
       "operationId": "get_lmps_dashboard_summary",
       "httpMethod": "GET",
-      "label": "KPIs resumidos do painel de LMPs",
+      "label": "LMPs — resumo do painel",
       "category": "engineering",
       "path": "/engineering/lmps/dashboard/summary",
       "allowedDisplayModes": [
@@ -1430,7 +1431,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "KPIs agregados do painel de LMPs. Selecione quais métricas exibir no visual (KPI, gráfico ou tabela).",
+      "description": "KPIs agregados do painel de LMPs (volume, prazo e lead time).",
       "paramSchema": {
         "date_start": {
           "type": "string",
@@ -1477,7 +1478,14 @@
         "percent_dentro_prazo",
         "avg_lead_time",
         "total_items"
-      ]
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens"
+      },
+      "whenToUse": "Quando a TV deve mostrar o pulso das LMPs: totais e % no prazo. Depois escolha no visual quais métricas exibir."
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -3042,7 +3050,7 @@
         "auto"
       ],
       "metaShape": "playbook_report",
-      "description": "Lista componentes com empenho zerado (travamento). Preferir tabela; KPI resume a quantidade.",
+      "description": "Lista componentes com empenho zerado que travam a produção.",
       "paramSchema": {
         "reference_date": {
           "type": "string",
@@ -3073,7 +3081,8 @@
       "tableFields": "items",
       "valueFields": [
         "allocated_qty"
-      ]
+      ],
+      "whenToUse": "Use na TV de programação/PCP quando precisar enxergar a fila de travamentos — tabela com OP e componente; KPI só conta a quantidade."
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -3801,7 +3810,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «OEE — série temporal».",
+      "description": "Evolução diária do OEE ao longo do período.",
       "paramSchema": {
         "start_date": {
           "type": "string",
@@ -3840,10 +3849,11 @@
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
       },
-      "seriesField": "points"
+      "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia."
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -3856,7 +3866,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «OTD — produção».",
+      "description": "Percentual de entregas no prazo (On-Time Delivery) no período.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -3900,7 +3910,8 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "whenToUse": "Use no plantão ou painel diário quando a TV precisa mostrar um único número de pontualidade de entrega."
     },
     {
       "operationId": "get_production_order_by_op",
@@ -4167,7 +4178,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «OTD — série temporal».",
+      "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",
       "paramSchema": {
         "start_date": {
           "type": "string",
@@ -4206,10 +4217,11 @@
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
       },
-      "seriesField": "points"
+      "whenToUse": "Use para gráfico de pontualidade ao longo dos dias — útil em reuniões de produção/logística na TV."
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -4222,7 +4234,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «OEE — visão geral».",
+      "description": "Eficiência global dos equipamentos (OEE) consolidada no período.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -4266,7 +4278,8 @@
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "whenToUse": "Ideal para um card KPI grande na TV da fábrica: um número que resume disponibilidade × performance × qualidade."
     },
     {
       "operationId": "get_production_planned_vs_real_time",
@@ -4696,7 +4709,7 @@
         "auto"
       ],
       "metaShape": "paged_list",
-      "description": "Listagem paginada de «Produtos — busca» para uso em tabela ou gráfico no TV.",
+      "description": "Lista produtos filtrados por descrição ou grupo (poucas linhas na TV).",
       "paramSchema": {
         "code": {
           "type": "string",
@@ -4754,15 +4767,16 @@
         }
       },
       "paramStrategy": "direct",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
+      },
       "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
       },
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      }
+      "whenToUse": "Tabela auxiliar na TV para localizar códigos/descrições. Não é o lugar para um KPI único — prefira filtro de descrição e limite de linhas."
     },
     {
       "operationId": "get_product_detail",
@@ -7884,16 +7898,17 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "description": "Indicador numérico para «Qualidade — PPM externo».",
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ]
+      ],
+      "description": "PPM de reclamações/defeitos externos (cliente) no período.",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "whenToUse": "Mostre na TV de qualidade quando quiser um KPI de reclamações de campo, sem tabela detalhada."
     },
     {
       "operationId": "list_ppm_internal",
@@ -8065,16 +8080,17 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "description": "Indicador numérico para «Qualidade — PPM interno».",
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ]
+      ],
+      "description": "PPM de não conformidades internas no período.",
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
+      "whenToUse": "Use para o indicador de qualidade interna na TV — um número de ppm, não a lista de NCs."
     },
     {
       "operationId": "get_produced_quantity",
@@ -8934,7 +8950,7 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Suprimentos — valor de estoque».",
+      "description": "Valor total em estoque e ranking dos principais itens.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -9004,15 +9020,16 @@
         "periodDays": 30
       },
       "tableFields": "top_products",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
+      "whenToUse": "Painel de suprimentos: KPI do valor total e/ou tabela com os TOP itens que mais carregam estoque."
     },
     {
       "operationId": "get_caller_stats_system_caller_stats_get",

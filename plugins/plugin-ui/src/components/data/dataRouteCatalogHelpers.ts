@@ -96,15 +96,27 @@ export function humanizeMetaShape(metaShape?: string | null): string | null {
   return META_SHAPE_SHORT[metaShape] ?? metaShape;
 }
 
-/** Texto «para que serve» — description da rota ou fallback pelo shape. */
+export function isTemplatedRouteDescription(description: string): boolean {
+  const trimmed = description.trim();
+  return (
+    /^Indicador numérico para «.+»\.?$/u.test(trimmed) ||
+    /^Listagem paginada de «.+»/u.test(trimmed)
+  );
+}
+
+/** Texto «para que serve» — whenToUse > description útil > fallback pelo shape. */
 export function resolveRouteAudienceDescription(item: {
+  whenToUse?: string | null;
   description?: string | null;
   metaShape?: string | null;
 }): string {
+  const whenToUse = item.whenToUse?.trim();
+  if (whenToUse) return whenToUse;
   const description = item.description?.trim();
-  if (description) return description;
+  if (description && !isTemplatedRouteDescription(description)) return description;
   const shape = item.metaShape?.trim();
   if (shape && META_SHAPE_BLURB[shape]) return META_SHAPE_BLURB[shape];
+  if (description) return description;
   return "Fonte de dados da api-delpi para montar KPI, gráfico ou tabela na TV.";
 }
 
