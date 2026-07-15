@@ -59,6 +59,7 @@ import { InstanciaDiagramEscopoSection } from "../../components/diagram/Instanci
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
 import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
 import { InstanciaMatrizRevisoesSection } from "../instancia/InstanciaMatrizRevisoesSection";
+import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -295,7 +296,7 @@ export function InstanciaDetailPage({
           {showRevisaoForm ? (
             <button
               type="button"
-              className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
+              className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
               onClick={closeNovaRevisaoForm}
             >
               Cancelar revisão
@@ -312,7 +313,7 @@ export function InstanciaDetailPage({
           )}
           <button
             type="button"
-            className="ds-ghost-btn ds-ghost-btn--danger tm-processo-workspace-sidebar__action-btn"
+            className={`${dsGhostBtn('danger')} tm-processo-workspace-sidebar__action-btn`}
             onClick={() => {
               void (async () => {
                 const confirmed = await confirm({
@@ -364,7 +365,7 @@ export function InstanciaDetailPage({
     const errorView = (
       <div className="ds-state ds-state--error" role="alert">
         <p>{error ?? "Instância não encontrada."}</p>
-        <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
+        <button type="button" className={DS_GHOST_BTN} onClick={() => onNavigate(buildProcessoPath(processoId))}>
           Voltar ao processo
         </button>
       </div>
@@ -563,7 +564,7 @@ export function InstanciaDetailPage({
             </div>
             <div className="ds-cadastro-form__actions">
               <button type="submit" className="ds-primary-btn">Salvar revisão</button>
-              <button type="button" className="ds-ghost-btn" onClick={closeNovaRevisaoForm}>
+              <button type="button" className={DS_GHOST_BTN} onClick={closeNovaRevisaoForm}>
                 Cancelar
               </button>
             </div>
@@ -598,7 +599,7 @@ export function InstanciaDetailPage({
         onRowClick={(r) => onNavigate(buildProcessoPath(processoId, r.revisao_id, instanciaId))}
         headerActions={
           showRevisaoForm ? (
-            <button type="button" className="ds-ghost-btn" onClick={closeNovaRevisaoForm}>
+            <button type="button" className={DS_GHOST_BTN} onClick={closeNovaRevisaoForm}>
               Cancelar revisão
             </button>
           ) : (
@@ -628,7 +629,7 @@ export function InstanciaDetailPage({
           onNavigate={onNavigate}
           actions={
             <>
-              <button type="button" className="ds-ghost-btn" onClick={() => onNavigate(buildProcessoPath(processoId))}>
+              <button type="button" className={DS_GHOST_BTN} onClick={() => onNavigate(buildProcessoPath(processoId))}>
                 <ArrowLeft size={16} />
                 Processo
               </button>
@@ -638,7 +639,7 @@ export function InstanciaDetailPage({
               </button>
               <button
                 type="button"
-                className="ds-ghost-btn"
+                className={DS_GHOST_BTN}
                 onClick={() => {
                   void (async () => {
                     const confirmed = await confirm({

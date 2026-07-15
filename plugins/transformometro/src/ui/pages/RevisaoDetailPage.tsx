@@ -25,6 +25,7 @@ import { cenarioLabel } from "../../content/cenarioLabels";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 import { ProcessoWorkspaceShell, useRevisaoWorkspaceSection } from "../processos/ProcessoWorkspaceShell";
 import { resolveActiveWorkspaceNodeId, type RevisaoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -116,7 +117,7 @@ export function RevisaoDetailPage({
         <p>{error ?? "Revisão não encontrada."}</p>
         <button
           type="button"
-          className="ds-ghost-btn"
+          className={DS_GHOST_BTN}
           onClick={() => onNavigate(buildInstanciaPath(processoId, instanciaId))}
         >
           Voltar à instância
@@ -155,7 +156,7 @@ export function RevisaoDetailPage({
           actions={
             <button
               type="button"
-              className="ds-ghost-btn"
+              className={DS_GHOST_BTN}
               onClick={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
             >
               <ArrowLeft size={16} />

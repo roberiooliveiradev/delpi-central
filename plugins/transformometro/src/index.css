@@ -1194,11 +1194,17 @@
   margin-bottom: 10px;
 }.dashboard-transformometro .tm-decomposition-editor__drag-hint{
   margin: 0;
-}/* Rich tree — mapeamento WBS (padrão dashboard commercial) */.dashboard-transformometro .tm-rich-tree{
+}/* Rich tree — mapeamento WBS (padrão dashboard commercial).
+   Tokens de guia da árvore no host (sem seletor de classe do kit no MFE). */
+.dashboard-transformometro .tm-rich-tree{
+  --delpi-ui-tree-guide-color: color-mix(in srgb, var(--ds-text-muted) 42%, transparent);
+  --delpi-ui-border: var(--ds-card-border);
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
   overflow: hidden;
   background: color-mix(in srgb, var(--ds-card-bg) 96%, var(--ds-accent) 4%);
+}:root[data-theme="dark"] .dashboard-transformometro .tm-rich-tree{
+  --delpi-ui-tree-guide-color: color-mix(in srgb, var(--ds-text-muted) 55%, transparent);
 }.dashboard-transformometro .tm-rich-tree__scroll{
   overflow: auto;
   padding: 0.35rem 0;
@@ -1214,11 +1220,6 @@
   padding: 0.35rem 0.5rem 0.35rem 0.35rem;
   border-radius: var(--ds-radius-sm);
   position: relative;
-}.dashboard-transformometro .tm-rich-tree .delpi-ui-tree-guides{
-  --delpi-ui-tree-guide-color: color-mix(in srgb, var(--ds-text-muted) 42%, transparent);
-  --delpi-ui-border: var(--ds-card-border);
-}:root[data-theme="dark"] .dashboard-transformometro .tm-rich-tree .delpi-ui-tree-guides{
-  --delpi-ui-tree-guide-color: color-mix(in srgb, var(--ds-text-muted) 55%, transparent);
 }.dashboard-transformometro .tm-rich-tree__drag-handle,
 .dashboard-transformometro .tm-rich-tree__drag-spacer{
   flex: 0 0 1.25rem;
@@ -1777,31 +1778,6 @@
   justify-content: center;
   color: var(--ds-text-muted);
   font-size: var(--ds-font-sm);
-}.dashboard-transformometro .ds-table td .ds-ghost-btn,
-.dashboard-transformometro .ds-table .ds-table__actions .ds-ghost-btn{
-  min-height: 32px;
-  height: 32px;
-  padding: 0 12px;
-  font-size: var(--ds-font-xs);
-  font-weight: 600;
-  border-radius: 10px;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
-}.dashboard-transformometro .ds-table td .ds-ghost-btn:hover:not(:disabled),
-.dashboard-transformometro .ds-table .ds-table__actions .ds-ghost-btn:hover:not(:disabled){
-  border-color: color-mix(in srgb, var(--ds-accent) 45%, var(--ds-card-border));
-  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
-}.dashboard-transformometro .ds-table td .ds-ghost-btn--danger,
-.dashboard-transformometro .ds-table .ds-table__actions .ds-ghost-btn--danger{
-  border-color: color-mix(in srgb, var(--ds-danger-fg) 35%, var(--ds-card-border));
-  color: var(--ds-danger-fg);
-}.dashboard-transformometro .ds-table td .ds-ghost-btn--danger:hover:not(:disabled),
-.dashboard-transformometro .ds-table .ds-table__actions .ds-ghost-btn--danger:hover:not(:disabled){
-  border-color: color-mix(in srgb, var(--ds-danger-fg) 55%, var(--ds-card-border));
-  background: var(--ds-danger-bg);
-  color: var(--ds-danger-fg);
 }.dashboard-transformometro .ds-table td .ds-link-btn{
   font-size: var(--ds-font-xs);
   font-weight: 600;
@@ -2388,10 +2364,6 @@
   flex-wrap: nowrap;
 }.dashboard-transformometro .tm-field__label{
   gap: 6px;
-}@media print{.delpi-ui-help-tooltip__trigger,
-  .delpi-ui-help-tooltip__bubble{
-    display: none !important;
-  }
 }/* ── Evidências de revisão ─────────────────────────────────────── */.dashboard-transformometro .tm-evidence-panel{
   display: flex;
   flex-direction: column;

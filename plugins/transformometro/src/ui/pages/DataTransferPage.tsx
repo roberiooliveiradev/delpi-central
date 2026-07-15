@@ -20,6 +20,7 @@ import {
   type JsonImportPreview,
 } from "../../data/api/transformometroApi";
 import "./DataTransferPage.css";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -256,7 +257,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
               </button>
               <button
                 type="button"
-                className="ds-ghost-btn"
+                className={DS_GHOST_BTN}
                 disabled={busy !== null}
                 onClick={() => void onExportJson()}
               >
@@ -358,7 +359,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
                 </span>
                 <button
                   type="button"
-                  className="ds-ghost-btn"
+                  className={DS_GHOST_BTN}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   Escolher arquivo
@@ -369,7 +370,7 @@ export function DataTransferPage({ getAccessToken, pathname, onNavigate }: Props
             <div className="tm-data-transfer__toolbar">
               <button
                 type="button"
-                className="ds-ghost-btn"
+                className={DS_GHOST_BTN}
                 disabled={!hasImportFile || busy !== null}
                 onClick={() => void onPreview()}
               >

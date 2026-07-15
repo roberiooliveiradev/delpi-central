@@ -24,6 +24,7 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { RevisaoEvidence } from "../../types/revisaoEvidence";
 import { isSpreadsheetAttachedFile } from "../../utils/evidenceFilePreview";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
+import { DS_GHOST_BTN } from "../ghostChrome";
 
 const R = TM_HELP_TOOLTIPS.revisao;
 
@@ -209,7 +210,7 @@ function EvidenceCard({
         {previewable || evidence.tipo === "link" ? (
           <button
             type="button"
-            className="ds-ghost-btn"
+            className={DS_GHOST_BTN}
             onClick={(event) => handlePreview(event)}
             aria-label="Abrir evidência"
           >
@@ -219,7 +220,7 @@ function EvidenceCard({
         {evidence.tipo !== "link" ? (
           <button
             type="button"
-            className="ds-ghost-btn"
+            className={DS_GHOST_BTN}
             onClick={() => void downloadEvidence(revisaoId, evidence, getAccessToken)}
             aria-label="Baixar evidência"
           >
@@ -490,7 +491,7 @@ export function RevisaoEvidencePanel({
           ) : (
             <button
               type="button"
-              className="ds-ghost-btn tm-evidence-upload__link-toggle"
+              className={`${DS_GHOST_BTN} tm-evidence-upload__link-toggle`}
               onClick={() => setShowLink(true)}
             >
               <Plus size={14} aria-hidden="true" />

@@ -32,6 +32,7 @@ import {
 } from "../../utils/matrizImpactoPoints";
 import { matrizSeriesColor } from "../../utils/matrizImpactoSeriesColors";
 import { buildProcessoPath } from "../../utils/routeParser";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = {
   processoId: string;
@@ -130,7 +131,7 @@ export function ProcessoMatrizImpactoSection({
         toolbar={
           <button
             type="button"
-            className="ds-ghost-btn"
+            className={DS_GHOST_BTN}
             disabled={loading || pontos.length === 0}
             onClick={() =>
               exportImpactEffortMatrixPlotPng(plotRef.current, `matriz-${processoId}`, () =>

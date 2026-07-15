@@ -309,7 +309,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — overrides `.delpi-ui-*` | ✅ |
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` — chrome espelho / residual kit | ✅ |
 | **7.3** | `minha-delpi-chat` admin — **B** domínio isolado (`mdc-admin-*` / `mdc-audit-*`); overrides kit zerados | ✅ |
-| **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ⏳ |
+| **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ✅ |
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ⏳ |
 | **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ⏳ |
 | **7.7** | Gate CI anti-reintrodução (opcional) | ⏳ backlog |
@@ -323,11 +323,11 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `quality-action-plans` | 7.2 | ✅ | headers dual `PAC_SECTION` | ✅ | ghost/state/section/table → kit; domain leftovers OK |
 | `controle-retrabalhos` | 7.2 | ✅ | — | ✅ | stack-safe margin no kit; sem `.cr-card:not` / state-box mirror |
 | `minha-delpi-chat` | 7.3 | ✅ | ✅ Admin* domínio (`mdc-admin-*` KPI/table; `mdc-audit-*` paginação) — **path B** (não kit shell) | ✅ checkboxes/switch/toolbar via kit + tokens; `delpi-ui-native-switch--compact` no kit |
-| `cadastro-kaizen` | 7.4 | ⏳ | — | ⏳ dataTableUi | section-card CSS |
-| `auditoria-5s` | 7.4 | ⏳ | ⏳ KPI/pag inline | ⏳ filtersUi | |
-| `maintenance` | 7.4 | ⏳ | ⏳ StateBox/KPI | ⏳ | |
-| `transformometro` | 7.4 | ⏳ | — | ⏳ | ghost/print |
-| `financeiro-inadimplencia` | 7.4 | ⏳ | ⏳ hero KPI | ⏳ | |
+| `cadastro-kaizen` | 7.4 | ✅ | ghost dual `KZ_GHOST_BTN` | ✅ `dataTableBemClasses` | section-card só gap; chrome no kit |
+| `auditoria-5s` | 7.4 | ✅ | hero/list → `createAnalyticsKpiCard`; paginação domínio `a5s-list-pagination` | ✅ filtersUi dual filter-box | analytics-kpi CSS no kit; list table/filters-card domínio |
+| `maintenance` | 7.4 | ✅ | StateBox dual kit; KPI factory + atalhos `dm-shortcut-*` | ✅ | DataTable.css domínio; filter-kpi toggle dual |
+| `transformometro` | 7.4 | ✅ | ghost dual `DS_GHOST_BTN` | ✅ `dataTableBemClasses` | print help-tooltip + table ghost compact no kit; tree tokens no host |
+| `financeiro-inadimplencia` | 7.4 | ✅ | secondary `createSimpleKpiCard`; hero/ranking domínio `fi-kpi-hero*` | ✅ | sem dual-class parcial no hero |
 | `inspecoes-processo` | 7.5 | — | ⏳ Pagination/Empty | ⏳ | |
 | `strategic-indicators` | 7.5 | — | ⏳ DataTable | ⏳ | |
 | `dashboard-*` (8) | 7.6 | ⏳ | — | ✅ wrappers | state-box/table/print |
@@ -340,6 +340,17 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 - [ ] Layout de página apenas (`*-page-stack`, gap, grids de seção)
 - [ ] Sem Pagination/DataTable/EmptyState/KPI markup local quando o kit cobre
 - [ ] Smoke claro/escuro no portal; rebuild remote antes se o kit mudou
+
+### Onda 7.4 — o que foi para o kit vs. leftovers de domínio
+
+| Para o kit (`plugin-ui/src/styles/`) | Leftovers de domínio (OK no MFE) |
+|-------------------------------------|----------------------------------|
+| `@media print` hide help-tooltip | `a5s-list-pagination*` (badge de página) |
+| `analytics-kpi.css` + dual `simpleKpiAnalyticsBemClasses` | `a5s-filters-card` / `a5s-table*` (listagem) |
+| state-box `--inline` / `--success` / dismiss | `dm-shortcut-card*`, `dm-filter-kpi.is-active` |
+| ghost `--active`; table ghost compact | `fi-kpi-hero*` (hero + ranking clicável) |
+| section-card title/header densidades | `kz-section-card` só `margin-bottom` (gap) |
+| | `tm-rich-tree*` + tokens de guia no host |
 
 ---
 

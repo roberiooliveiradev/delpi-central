@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 import { PageHeader, pageHeaderBrandBemClasses } from "./ui";
+import { KZ_GHOST_BTN } from "./ui/ghostChrome";
 
 const LABELS = {
   refresh: "Atualizar",
@@ -30,7 +31,7 @@ export function KaizenPageHeader({
   const mergedActions =
     showBack && onBack ? (
       <>
-        <button type="button" className="kz-ghost-btn" onClick={onBack}>
+        <button type="button" className={KZ_GHOST_BTN} onClick={onBack}>
           <ArrowLeft size={16} aria-hidden="true" />
           Voltar
         </button>

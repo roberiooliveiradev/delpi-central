@@ -33,6 +33,7 @@ import {
 } from "../utils/dashboardFilterUrl";
 import { formatCurrency, formatDate, formatInteger } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
+import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -186,7 +187,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
           <>
             <button
               type="button"
-              className="kz-ghost-btn"
+              className={KZ_GHOST_BTN}
               onClick={() => void load()}
               disabled={loading}
             >
@@ -203,7 +204,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
         ariaLabel="Filtros do painel"
         trailing={
           hasFilters ? (
-            <button type="button" className="kz-ghost-btn" onClick={clearFilters}>
+            <button type="button" className={KZ_GHOST_BTN} onClick={clearFilters}>
               Limpar filtros
             </button>
           ) : undefined

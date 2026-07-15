@@ -326,6 +326,20 @@
   color: var(--delpi-ui-danger, var(--danger, #c0392b));
 }
 
+.delpi-ui-ghost-btn--active {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 55%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
 .delpi-ui-table-page-size {
   display: inline-flex;
   flex-direction: row;

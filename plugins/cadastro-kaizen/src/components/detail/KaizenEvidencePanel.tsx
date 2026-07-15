@@ -25,6 +25,7 @@ import {
   type EvidencePreviewSource,
   type KaizenPendingUpload,
 } from "../evidence";
+import { KZ_GHOST_BTN } from "../ui/ghostChrome";
 import {
   EmptyHint,
   FormGrid,
@@ -159,7 +160,7 @@ function EvidenceCard({
         {previewable ? (
           <button
             type="button"
-            className="kz-ghost-btn"
+            className={KZ_GHOST_BTN}
             onClick={() => onPreview(evidence)}
             aria-label="Pré-visualizar evidência"
           >
@@ -169,7 +170,7 @@ function EvidenceCard({
         {evidence.type !== "link" ? (
           <button
             type="button"
-            className="kz-ghost-btn"
+            className={KZ_GHOST_BTN}
             onClick={() => void downloadEvidence(kaizenId, evidence)}
             aria-label="Baixar evidência"
           >
@@ -472,7 +473,7 @@ export function KaizenEvidencePanel({
           ) : (
             <button
               type="button"
-              className="kz-ghost-btn kz-evidence-upload__link-toggle"
+              className={`${KZ_GHOST_BTN} kz-evidence-upload__link-toggle`}
               onClick={() => setShowLink(true)}
             >
               <Plus size={14} aria-hidden="true" />

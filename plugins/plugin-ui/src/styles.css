@@ -20,6 +20,7 @@
 @import "./styles/card-shell.css";
 @import "./styles/section-card.css";
 @import "./styles/departmental-kpi.css";
+@import "./styles/analytics-kpi.css";
 @import "./styles/chart-card.css";
 @import "./styles/loading-activity.css";
 @import "./styles/loading-activity-badge.css";
@@ -81,6 +82,15 @@
   line-height: 1.4;
   box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
   transition: opacity 0.15s ease;
+}
+
+/* Impressão — esconde triggers/balões (onda 7.1/7.4; sem seletor no MFE). */
+@media print {
+  .delpi-ui-help-tooltip,
+  .delpi-ui-help-tooltip__trigger,
+  .delpi-ui-help-tooltip__bubble {
+    display: none !important;
+  }
 }
 
 /* --- KeyTip (atalhos Alt / letras F) --- */

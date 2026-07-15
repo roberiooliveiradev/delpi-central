@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { DS_GHOST_BTN } from "./ghostChrome";
 
 type ChartSeriesViewportProps = {
   navigable: boolean;
@@ -65,7 +66,7 @@ export function ChartSeriesViewport({
           <div className="ds-chart-nav__actions">
             <button
               type="button"
-              className="ds-ghost-btn ds-chart-nav__btn"
+              className={`${DS_GHOST_BTN} ds-chart-nav__btn`}
               onClick={onStart}
               disabled={atStart}
               aria-label="Início da série"
@@ -75,7 +76,7 @@ export function ChartSeriesViewport({
             </button>
             <button
               type="button"
-              className="ds-ghost-btn ds-chart-nav__btn"
+              className={`${DS_GHOST_BTN} ds-chart-nav__btn`}
               onClick={onPrevPage}
               disabled={atStart}
               aria-label="Período anterior"
@@ -85,7 +86,7 @@ export function ChartSeriesViewport({
             </button>
             <button
               type="button"
-              className="ds-ghost-btn ds-chart-nav__btn"
+              className={`${DS_GHOST_BTN} ds-chart-nav__btn`}
               onClick={onNextPage}
               disabled={atEnd}
               aria-label="Próximo período"
@@ -95,7 +96,7 @@ export function ChartSeriesViewport({
             </button>
             <button
               type="button"
-              className="ds-ghost-btn ds-chart-nav__btn"
+              className={`${DS_GHOST_BTN} ds-chart-nav__btn`}
               onClick={onEnd}
               disabled={atEnd}
               aria-label="Fim da série"

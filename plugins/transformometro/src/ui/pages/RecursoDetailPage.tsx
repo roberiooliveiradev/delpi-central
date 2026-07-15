@@ -36,6 +36,7 @@ import type { RecursoWorkspaceSectionId } from "../configuracoes/configuracoesWo
 import { defaultRecursoSection } from "../configuracoes/configuracoesWorkspaceNav";
 import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
 import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
   emptyRecursoForm,
   payloadFromRecursoForm,
@@ -296,7 +297,7 @@ export function RecursoDetailPage({
     const errorView = (
       <div className="ds-state ds-state--error" role="alert">
         <p>{error ?? "Recurso não encontrado."}</p>
-        <button type="button" className="ds-ghost-btn" onClick={onBack}>
+        <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
           Voltar à lista
         </button>
       </div>
@@ -325,7 +326,7 @@ export function RecursoDetailPage({
             </p>
           </div>
           {!isCreate ? (
-            <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRecurso()}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDeleteRecurso()}>
               <Trash2 size={16} />
               Excluir
             </button>
@@ -536,7 +537,7 @@ export function RecursoDetailPage({
                                   <button type="submit" className="ds-primary-btn">
                                     Salvar vínculo
                                   </button>
-                                  <button type="button" className="ds-ghost-btn" onClick={cancelEditVinculo}>
+                                  <button type="button" className={DS_GHOST_BTN} onClick={cancelEditVinculo}>
                                     Cancelar
                                   </button>
                                 </div>
@@ -572,14 +573,14 @@ export function RecursoDetailPage({
                             <td className="ds-table__actions-col">
                               <button
                                 type="button"
-                                className="ds-ghost-btn"
+                                className={DS_GHOST_BTN}
                                 onClick={() => startEditVinculo(row)}
                               >
                                 Editar
                               </button>
                               <button
                                 type="button"
-                                className="ds-ghost-btn"
+                                className={DS_GHOST_BTN}
                                 onClick={() => void handleDeleteVinculo(row)}
                               >
                                 Desvincular
@@ -616,12 +617,12 @@ export function RecursoDetailPage({
         onNavigate={onNavigate}
         actions={
           <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
+            <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
               <ArrowLeft size={16} />
               Lista
             </button>
             {!isCreate ? (
-              <button type="button" className="ds-ghost-btn" onClick={() => void handleDeleteRecurso()}>
+              <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDeleteRecurso()}>
                 <Trash2 size={16} />
                 Excluir
               </button>

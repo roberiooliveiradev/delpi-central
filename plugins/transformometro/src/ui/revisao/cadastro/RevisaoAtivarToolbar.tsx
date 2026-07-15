@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Revisao } from "../../../data/api/transformometroApi";
 import { cenarioLabel } from "../../../content/cenarioLabels";
+import { DS_GHOST_BTN } from "../../../components/ghostChrome";
 
 type Props = {
   revisao: Revisao;
@@ -48,7 +49,7 @@ export function RevisaoAtivarToolbar({ revisao, onError, onActivate, onDelete }:
         {onDelete ? (
           <button
             type="button"
-            className="ds-ghost-btn"
+            className={DS_GHOST_BTN}
             disabled={busy}
             onClick={() => void onDelete()}
           >

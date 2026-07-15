@@ -1,4 +1,5 @@
 import { Printer } from "lucide-react";
+import { DS_GHOST_BTN } from "./ghostChrome";
 
 type PrintReportButtonProps = {
   disabled?: boolean;
@@ -27,7 +28,7 @@ export function PrintReportButton({
   return (
     <button
       type="button"
-      className="ds-ghost-btn ds-no-print"
+      className={`${DS_GHOST_BTN} ds-no-print`}
       onClick={triggerPrint}
       disabled={disabled}
       aria-label="Imprimir ou salvar relatório em PDF"

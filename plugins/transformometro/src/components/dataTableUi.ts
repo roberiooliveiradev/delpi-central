@@ -2,7 +2,6 @@ import {
   createDashboardDataTableKit,
   dataTableBemClasses,
   dataTableSectionBemClasses,
-  type DataTableClassNames,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 
@@ -24,14 +23,8 @@ function TablePageSizeSelect(_props: {
   return null;
 }
 
-const DS_TABLE_CLASS_NAMES: DataTableClassNames = {
-  ...dataTableBemClasses("ds"),
-  wrapSection: "ds-table-wrap",
-  wrapEmbedded: "ds-table-wrap",
-  headerLabel: "ds-table__header-cell",
-  headerText: "ds-table__header-cell",
-  sortButtonActive: "ds-table__sort-button",
-};
+/** Dual-class completo do kit — sem overrides que removam classes canônicas. */
+const DS_TABLE_CLASS_NAMES = dataTableBemClasses("ds");
 
 const LABELS = {
   emptyMessage: "Nenhum registro encontrado.",
