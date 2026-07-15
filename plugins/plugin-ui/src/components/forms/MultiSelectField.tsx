@@ -73,7 +73,10 @@ export function multiSelectBemClasses(prefix: string): MultiSelectFieldClassName
     local === canonical ? canonical : delpiUiClass(local, canonical);
 
   return {
-    root: `${prefix}-filter-box ${prefix}-field ${prefix}-field--multi-select`,
+    root: delpiUiClass(
+      `${prefix}-filter-box ${prefix}-field ${prefix}-field--multi-select`,
+      "delpi-ui-filter-box",
+    ),
     fieldLabel: `${prefix}-field__label`,
     multiSelect: pair(ms, ui),
     multiSelectOpen: pair(`${ms} ${ms}--open`, `${ui} ${ui}--open`),
@@ -91,11 +94,11 @@ export function multiSelectBemClasses(prefix: string): MultiSelectFieldClassName
   };
 }
 
-/** Multi-select em formulário PAC (sem filter-box). */
+/** Multi-select em formulário PAC (mantém dual filter-box canônico). */
 export function multiSelectPacClasses(prefix: string): MultiSelectFieldClassNames {
   return {
     ...multiSelectBemClasses(prefix),
-    root: `${prefix}-field ${prefix}-field--multi`,
+    root: delpiUiClass(`${prefix}-field ${prefix}-field--multi`, "delpi-ui-filter-box"),
   };
 }
 
@@ -103,7 +106,10 @@ export function multiSelectPacClasses(prefix: string): MultiSelectFieldClassName
 export function multiSelectCreatablePacClasses(prefix: string): MultiSelectFieldClassNames {
   return {
     ...multiSelectBemClasses(prefix),
-    root: `${prefix}-field ${prefix}-field--creatable-multi`,
+    root: delpiUiClass(
+      `${prefix}-field ${prefix}-field--creatable-multi`,
+      "delpi-ui-filter-box",
+    ),
     tagList: `${prefix}-tag-list`,
     tagChip: `${prefix}-tag-chip`,
     tagRemove: `${prefix}-tag-chip__remove`,

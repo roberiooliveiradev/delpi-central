@@ -9,6 +9,7 @@ import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TableHeaderCell } from "./TableHeaderCell";
 import { Modal } from "./Modal";
 import { TextField } from "./TextField";
+import { PAC_TABLE } from "./tableChrome";
 
 const CUSTOMER_SEARCH_PAGE_SIZE = 20;
 const T = PAC_HELP_TOOLTIPS.tables;
@@ -182,8 +183,8 @@ export function DelpiCustomerSearchModal({
               <p className="pac-customer-search-modal__results-header">
                 {items.length} resultado{items.length === 1 ? "" : "s"} (máx. {CUSTOMER_SEARCH_PAGE_SIZE})
               </p>
-              <div className="pac-table-wrap pac-customer-search-modal__table">
-                <table className="pac-table">
+              <div className={`${PAC_TABLE.wrap} pac-customer-search-modal__table`}>
+                <table className={PAC_TABLE.table}>
                   <thead>
                     <tr>
                       <TableHeaderCell label="Código" hint={T.customerCode} />

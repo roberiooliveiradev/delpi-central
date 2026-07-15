@@ -159,3 +159,31 @@
   font: inherit;
   width: 100%;
 }
+
+
+/** Bridge: fields/`filter-box` dentro de FiltersRow (PAC e afins). */
+.delpi-ui-filters-row [class$="-field"],
+.delpi-ui-filters-row .delpi-ui-filter-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.delpi-ui-filters-row [class$="-field"] label,
+.delpi-ui-filters-row [class$="-field"] [class*="__label"],
+.delpi-ui-filters-row .delpi-ui-filter-box .delpi-ui-field-label,
+.delpi-ui-filters-row .delpi-ui-filter-box label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-filters-row [class$="-field"] input:not([type="checkbox"]):not([type="radio"]),
+.delpi-ui-filters-row [class$="-field"] select,
+.delpi-ui-filters-row .delpi-ui-filter-box input:not([type="checkbox"]):not([type="radio"]),
+.delpi-ui-filters-row .delpi-ui-filter-box select {
+  min-height: var(--delpi-ui-control-height, 42px);
+  box-sizing: border-box;
+  width: 100%;
+}

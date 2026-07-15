@@ -36,6 +36,7 @@ import {
 } from "../utils/actionResponsibles";
 import { formatDate } from "../utils/format";
 import type { TeamMember } from "../types/rnc8d";
+import { PAC_TABLE } from "./ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -237,8 +238,8 @@ export function PlanActionsPanel({
       <RequiredEvidenceAlert actions={actions} evidences={evidences} />
 
       {actions.length ? (
-        <div className="pac-table-wrap">
-          <table className="pac-table">
+        <div className={PAC_TABLE.wrap}>
+          <table className={PAC_TABLE.table}>
             <thead>
               <tr>
                 <TableHeaderCell label="Tipo" hint={T.actionType} />

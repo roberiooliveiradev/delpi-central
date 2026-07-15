@@ -1,6 +1,7 @@
 import { useId } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type TextFieldClassNames = {
   root: string;
@@ -28,7 +29,7 @@ export type TextFieldProps = {
 
 export function textFieldBemClasses(prefix: string): TextFieldClassNames {
   return {
-    root: `${prefix}-field`,
+    root: delpiUiClass(`${prefix}-field`, "delpi-ui-filter-box"),
     labelWrapper: `${prefix}-field__label`,
     fieldLabel: "",
     control: `${prefix}-field__control`,

@@ -5,6 +5,7 @@ import { branchLabel, detailPath } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { RecurrenceGroup } from "../types/recurrence";
 import { formatDateTime } from "../utils/format";
+import { PAC_TABLE } from "./ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -25,8 +26,8 @@ export function RecurrenceTable({ items, loading, emptyMessage, onNavigate }: Pr
   }
 
   return (
-    <div className="pac-table-wrap">
-      <table className="pac-table">
+    <div className={PAC_TABLE.wrap}>
+      <table className={PAC_TABLE.table}>
         <thead>
           <tr>
             <TableHeaderCell label="Filial" hint={T.branch} />

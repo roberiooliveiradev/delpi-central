@@ -30,6 +30,14 @@
   --delpi-ui-text: var(--pac-text);
   --delpi-ui-border: var(--pac-card-border);
   --delpi-ui-muted: var(--pac-text-muted);
+  --delpi-ui-text-muted: var(--pac-text-muted);
+  --delpi-ui-card-padding: var(--pac-card-padding);
+  --delpi-ui-radius: var(--pac-card-radius);
+  --delpi-ui-grid-gap: var(--pac-grid-gap);
+  --delpi-ui-section-gap: var(--pac-section-gap);
+  --delpi-ui-control-height: var(--pac-control-height);
+  --delpi-ui-control-radius: var(--pac-control-radius);
+  --delpi-ui-filter-radius: var(--pac-filter-radius);
 }.dashboard-quality-action-plans button,
 .dashboard-quality-action-plans input,
 .dashboard-quality-action-plans select{

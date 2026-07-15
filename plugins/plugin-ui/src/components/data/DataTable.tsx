@@ -20,6 +20,8 @@ export type DataTableColumn<T> = {
 export type DataTableClassNames = {
   wrapSection: string;
   wrapEmbedded: string;
+  /** Wrapper padrão (sem --section/--embedded). */
+  wrap?: string;
   /** Container externo opcional (ex.: dm-datatable). */
   outerRoot?: string;
   /** Área com scroll horizontal opcional (ex.: dm-datatable__scroll). */
@@ -71,6 +73,7 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
   const wrap = `${prefix}-table-wrap`;
   const uiWrap = "delpi-ui-table-wrap";
   return {
+    wrap: delpiUiClass(wrap, uiWrap),
     wrapSection: delpiUiClass(
       `${wrap} ${wrap}--section`,
       `${uiWrap} ${uiWrap}--section`,

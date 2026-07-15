@@ -21,6 +21,7 @@ import {
 import { EvidencePreviewModal } from "./EvidencePreviewModal";
 import { EvidenceEditModal } from "./EvidenceEditModal";
 import { canPreviewEvidence } from "./evidencePreviewUtils";
+import { PAC_TABLE } from "../ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -67,8 +68,8 @@ export function EvidenceListTable({
   return (
     <>
       {error ? <p className="pac-muted pac-evidence-list__error">{error}</p> : null}
-      <div className={`pac-table-wrap${compact || readOnly ? " pac-table-wrap--compact-read" : ""}`}>
-        <table className={`pac-table${compact || readOnly ? " pac-table--compact-read" : ""}`}>
+      <div className={`${PAC_TABLE.wrap}${compact || readOnly ? " pac-table-wrap--compact-read" : ""}`}>
+        <table className={`${PAC_TABLE.table}${compact || readOnly ? " pac-table--compact-read" : ""}`}>
           <thead>
             <tr>
               <TableHeaderCell label="Arquivo" hint={T.file} />

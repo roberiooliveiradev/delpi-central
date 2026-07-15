@@ -1,35 +1,10 @@
 import type { ReactNode } from "react";
 
-import {
-  MetricKpiCard,
-  metricKpiCardBemClasses,
-  type MetricKpiCardClassNames,
-  type MetricKpiCardTone,
-} from "@delpi/plugin-ui/index";
+import { createMetricKpiCard, type MetricKpiCardTone } from "@delpi/plugin-ui/index";
 
 import type { KpiTone } from "../../constants/dashboardKpis";
 
-const PAC_KPI_CLASS_NAMES: MetricKpiCardClassNames = {
-  ...metricKpiCardBemClasses("pac"),
-  article: "pac-card pac-kpi-card",
-  articleTone: (tone) => {
-    const pacTone =
-      tone === "negative"
-        ? "danger"
-        : tone === "positive"
-          ? "success"
-          : tone === "warning"
-            ? "warning"
-            : "";
-    return pacTone
-      ? `pac-card pac-kpi-card pac-kpi-card--${pacTone}`
-      : "pac-card pac-kpi-card";
-  },
-  header: "pac-kpi-card__header",
-  label: "pac-kpi-card__label",
-  value: "pac-kpi-card__value",
-  icon: "pac-kpi-card__icon",
-};
+const MetricKpi = createMetricKpiCard("pac");
 
 function toMetricTone(tone: KpiTone): MetricKpiCardTone {
   if (tone === "danger") return "negative";
@@ -49,13 +24,12 @@ type KpiCardProps = {
 
 export function KpiCard({ label, value, tone = "default", icon, hint, loading = false }: KpiCardProps) {
   return (
-    <MetricKpiCard
+    <MetricKpi
       label={label}
       titleHint={hint}
       value={loading ? "…" : String(value)}
       icon={icon}
       tone={toMetricTone(tone)}
-      classNames={PAC_KPI_CLASS_NAMES}
     />
   );
 }

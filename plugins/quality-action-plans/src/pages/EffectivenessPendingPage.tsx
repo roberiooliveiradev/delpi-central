@@ -24,6 +24,7 @@ import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
 import { formatEffectivenessSubmittedBy } from "../utils/actorDisplay";
 import { usePacPermissions } from "../context/PacPermissionsContext";
+import { PAC_TABLE } from "../components/ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -164,8 +165,8 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
         ) : !items.length ? (
           <p className="pac-muted">Nenhuma submissão de eficácia aguardando aprovação.</p>
         ) : (
-          <div className="pac-table-wrap">
-            <table className="pac-table">
+          <div className={PAC_TABLE.wrap}>
+            <table className={PAC_TABLE.table}>
               <thead>
                 <tr>
                   <TableHeaderCell label="Código" hint={T.code} />

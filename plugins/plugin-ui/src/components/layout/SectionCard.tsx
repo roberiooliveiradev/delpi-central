@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type SectionCardClassNames = {
   section: string;
@@ -28,25 +29,29 @@ export type SectionCardProps = {
 
 export function sectionCardPacBemClasses(prefix: string): SectionCardClassNames {
   const section = `${prefix}-section-card`;
+  const ui = "delpi-ui-section-card";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    section: `${prefix}-card ${section}`,
-    header: `${section}__header`,
-    title: `${prefix}-section-title`,
-    titleWithHelp: `${prefix}-title-with-help`,
-    subtitle: `${prefix}-muted ${prefix}-section-subtitle`,
-    actions: `${section}__actions`,
+    section: pair(`${prefix}-card ${section}`, `delpi-ui-card ${ui}`),
+    header: pair(`${section}__header`, `${ui}__header`),
+    title: pair(`${prefix}-section-title`, "delpi-ui-section-title"),
+    titleWithHelp: pair(`${prefix}-title-with-help`, `${ui}__title-with-help`),
+    subtitle: pair(`${prefix}-muted ${prefix}-section-subtitle`, `${ui}__subtitle`),
+    actions: pair(`${section}__actions`, `${ui}__actions`),
   };
 }
 
 export function sectionCardKaizenBemClasses(prefix: string): SectionCardClassNames {
   const section = `${prefix}-section-card`;
+  const ui = "delpi-ui-section-card";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    section: `${prefix}-card ${section}`,
-    header: `${section}__header`,
-    title: `${section}__title`,
-    titleWithHelp: `${prefix}-title-with-help`,
-    subtitle: `${section}__desc`,
-    actions: `${section}__actions`,
+    section: pair(`${prefix}-card ${section}`, `delpi-ui-card ${ui}`),
+    header: pair(`${section}__header`, `${ui}__header`),
+    title: pair(`${section}__title`, `${ui}__title`),
+    titleWithHelp: pair(`${prefix}-title-with-help`, `${ui}__title-with-help`),
+    subtitle: pair(`${section}__desc`, `${ui}__subtitle`),
+    actions: pair(`${section}__actions`, `${ui}__actions`),
   };
 }
 

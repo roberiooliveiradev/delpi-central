@@ -28,6 +28,7 @@ import { ISHIKAWA_CATEGORY_KEYS } from "../../utils/ishikawaCauses";
 import { ActionResponsiblesChips } from "../ActionResponsiblesChips";
 import { formatDate } from "../../utils/format";
 import type { PlanStatus } from "../../types/actionPlan";
+import { PAC_TABLE } from "../ui/tableChrome";
 
 const CONTAINMENT_AREA_LABELS: Record<string, string> = {
   end_customer: "Cliente final",
@@ -428,8 +429,8 @@ export function Rnc8dContainmentRead({ value }: { value: Rnc8dReportPayload }) {
   }
 
   return (
-    <div className="pac-table-wrap">
-      <table className="pac-table pac-table--compact-read">
+    <div className={PAC_TABLE.wrap}>
+      <table className={`${PAC_TABLE.table} pac-table--compact-read`}>
         <thead>
           <tr>
             <th>Área</th>
@@ -539,8 +540,8 @@ export function PlanActionsReadContent({ actions }: { actions: PlanAction[] }) {
   }
 
   return (
-    <div className="pac-table-wrap">
-      <table className="pac-table pac-table--compact-read">
+    <div className={PAC_TABLE.wrap}>
+      <table className={`${PAC_TABLE.table} pac-table--compact-read`}>
         <thead>
           <tr>
             <th>Tipo</th>
@@ -610,8 +611,8 @@ export function Rnc8dPreventiveRead({ value }: { value: Rnc8dReportPayload }) {
       <section className="pac-ficha-section">
         <h3 className="pac-subsection-title">Atualização de documentos</h3>
         {docs.some((doc) => doc.document?.trim() || doc.responsible?.trim()) ? (
-          <div className="pac-table-wrap">
-            <table className="pac-table pac-table--compact-read">
+          <div className={PAC_TABLE.wrap}>
+            <table className={`${PAC_TABLE.table} pac-table--compact-read`}>
               <thead>
                 <tr>
                   <th>Documento</th>

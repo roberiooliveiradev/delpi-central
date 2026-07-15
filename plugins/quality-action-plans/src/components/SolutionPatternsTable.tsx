@@ -2,6 +2,7 @@ import { TableHeaderCell } from "./ui/TableHeaderCell";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { SolutionPattern } from "../types/solutionPattern";
 import { formatEffectivenessRate } from "../utils/symptomTags";
+import { PAC_TABLE } from "./ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -21,8 +22,8 @@ export function SolutionPatternsTable({ items, loading, emptyMessage }: Props) {
   }
 
   return (
-    <div className="pac-table-wrap">
-      <table className="pac-table">
+    <div className={PAC_TABLE.wrap}>
+      <table className={PAC_TABLE.table}>
         <thead>
           <tr>
             <TableHeaderCell label="Título" hint={T.title} />

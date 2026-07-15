@@ -6,6 +6,7 @@ import { evidenceSectionLabel } from "../constants/evidence";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EvidenceSearchHit } from "../types/evidenceSearch";
 import { formatDateTime } from "../utils/format";
+import { PAC_TABLE } from "./ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -26,8 +27,8 @@ export function EvidenceSearchTable({ items, loading, emptyMessage, onNavigate }
   }
 
   return (
-    <div className="pac-table-wrap">
-      <table className="pac-table">
+    <div className={PAC_TABLE.wrap}>
+      <table className={PAC_TABLE.table}>
         <thead>
           <tr>
             <TableHeaderCell label="Arquivo" hint={T.file} />

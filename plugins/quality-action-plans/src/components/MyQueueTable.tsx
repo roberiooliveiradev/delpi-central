@@ -18,6 +18,7 @@ import {
   queueItemMissingRequiredEvidence,
 } from "../utils/myQueueEvidence";
 import { MyQueueEvidenceModal } from "./MyQueueEvidenceModal";
+import { PAC_TABLE } from "./ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -142,8 +143,8 @@ export function MyQueueTable({
           }
         }}
       />
-      <div className="pac-table-wrap">
-      <table className="pac-table">
+      <div className={PAC_TABLE.wrap}>
+      <table className={PAC_TABLE.table}>
         <thead>
           <tr>
             <TableHeaderCell label="Plano" hint={T.plan} />

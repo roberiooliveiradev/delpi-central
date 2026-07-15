@@ -28,6 +28,12 @@
   min-width: 0;
 }
 
+/** MetricKpiCard — body + ícone no header canônico. */
+.delpi-ui-kpi-header .delpi-ui-kpi-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
 .delpi-ui-kpi-header {
   display: flex;
   justify-content: space-between;

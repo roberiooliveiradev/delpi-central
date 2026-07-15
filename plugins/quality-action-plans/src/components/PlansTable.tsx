@@ -7,6 +7,7 @@ import type { ActionPlanSummary } from "../types/actionPlan";
 import { formatDateTime } from "../utils/format";
 import { PlanSlaBadge } from "./PlanSlaBadge";
 import { ScopeBadge, SeverityBadge, StatusBadge } from "./StatusBadge";
+import { PAC_TABLE } from "./ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -27,8 +28,8 @@ export function PlansTable({ items, loading, emptyMessage, onNavigate }: Props) 
   }
 
   return (
-    <div className="pac-table-wrap">
-      <table className="pac-table">
+    <div className={PAC_TABLE.wrap}>
+      <table className={PAC_TABLE.table}>
         <thead>
           <tr>
             <TableHeaderCell label="Código" hint={T.code} />

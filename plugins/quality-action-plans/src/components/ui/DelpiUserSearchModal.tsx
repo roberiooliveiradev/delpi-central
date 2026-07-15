@@ -7,6 +7,7 @@ import { formatPersonName } from "../../utils/formatPersonName";
 import { TableHeaderCell } from "./TableHeaderCell";
 import { Modal } from "./Modal";
 import { TextField } from "./TextField";
+import { PAC_TABLE } from "./tableChrome";
 
 const USER_SEARCH_PAGE_SIZE = 20;
 const T = PAC_HELP_TOOLTIPS.tables;
@@ -161,8 +162,8 @@ export function DelpiUserSearchModal({
                   ? ` · ${hiddenLinkedCount} já vinculado${hiddenLinkedCount === 1 ? "" : "s"} oculto${hiddenLinkedCount === 1 ? "" : "s"}`
                   : ""}
               </p>
-              <div className="pac-table-wrap pac-customer-search-modal__table">
-                <table className="pac-table">
+              <div className={`${PAC_TABLE.wrap} pac-customer-search-modal__table`}>
+                <table className={PAC_TABLE.table}>
                   <thead>
                     <tr>
                       <TableHeaderCell label="Nome" hint={T.directoryUserName} />

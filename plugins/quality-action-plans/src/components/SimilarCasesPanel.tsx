@@ -8,6 +8,7 @@ import type { PlanSimilarCasesResult } from "../types/similarCases";
 import { detailPath } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatDate } from "../utils/format";
+import { PAC_TABLE } from "./ui/tableChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -59,8 +60,8 @@ export function SimilarCasesPanel({ planId, onNavigate }: Props) {
         </p>
       ) : null}
       {cases.length > 0 ? (
-        <div className="pac-table-wrap">
-          <table className="pac-table pac-table--compact">
+        <div className={PAC_TABLE.wrap}>
+          <table className={`${PAC_TABLE.table} pac-table--compact`}>
             <thead>
               <tr>
                 <TableHeaderCell label="Plano" hint={T.planRef} />

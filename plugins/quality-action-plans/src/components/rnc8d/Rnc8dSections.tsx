@@ -40,6 +40,7 @@ import { TextAreaField } from "../ui/TextAreaField";
 import { TextField } from "../ui/TextField";
 import { Rnc8dQuantityUnitField } from "./Rnc8dQuantityUnitField";
 import {
+import { PAC_TABLE } from "../ui/tableChrome";
   parseQuantityValue,
   quantityInputValue,
   unitInputValue,
@@ -573,8 +574,8 @@ export function Rnc8dContainmentSection({
       readContent={<Rnc8dContainmentRead value={value} />}
       editContent={
         <>
-      <div className="pac-table-wrap">
-        <table className="pac-table pac-table--containment">
+      <div className={PAC_TABLE.wrap}>
+        <table className={`${PAC_TABLE.table} pac-table--containment`}>
           <thead>
             <tr>
               <th className="pac-table__drag-col" scope="col">
@@ -898,8 +899,8 @@ export function Rnc8dPreventiveSection({
       <p className="pac-muted pac-rnc8d-doc-hint">
         <FieldLabel label="Atualização de documentos" hint={PAC_HELP_TOOLTIPS.rnc8d.documentation} />
       </p>
-      <div className="pac-table-wrap">
-        <table className="pac-table pac-table--documentation">
+      <div className={PAC_TABLE.wrap}>
+        <table className={`${PAC_TABLE.table} pac-table--documentation`}>
           <thead>
             <tr>
               <th className="pac-table__drag-col" scope="col">

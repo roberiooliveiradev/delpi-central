@@ -179,6 +179,15 @@ Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField`
 | `LoadingActivityInline` (LMPS/SI) | ✅ kit `createDashboardLoadingActivityCard`; CSS local removido |
 | Poda MFEs | ✅ chrome estrutural removido; `kpi-grid` / layout de página permanece |
 
+### Hotfix — PAC wiring sem dual-class (jul/2026)
+
+| Problema | Correção |
+|----------|----------|
+| KPI `MetricKpiCard` sem `delpi-ui-*` + override PAC | Dual-class + `body` no kit; PAC usa `createMetricKpiCard("pac")` |
+| Tabelas raw `pac-table` | `PAC_TABLE = dataTableBemClasses("pac")` |
+| SectionCard / MultiSelect / TextField sem filter-box dual | Dual no kit + `section-card.css` |
+| FiltersRow fields apertados | Bridge em `dashboard-filters.css` |
+
 ### Hotfix — shell card / FilterBar / SimpleKpi (jul/2026)
 
 Regressão pós-Onda 3 (PA, scrap, CR…): filtros em 1 coluna, KPI/chart/tabela sem padding.
