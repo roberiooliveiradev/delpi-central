@@ -15,8 +15,7 @@ import {
 import {
   formatInteger,
   formatProtheusDate,
-  formatQuantityMilheiro,
-  quantityColumnHeader,
+  formatQuantity,
 } from "../utils/formatters";
 import {
   exportAppointmentsExcel,
@@ -173,19 +172,19 @@ export function AppointmentsTables({
       },
       {
         key: "qty_produced",
-        header: quantityColumnHeader("Produzida"),
+        header: "Produzida",
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantityMilheiro(row.qty_produced),
+        render: (row) => formatQuantity(row.qty_produced),
       },
       {
         key: "qty_lost",
-        header: quantityColumnHeader("Perdida"),
+        header: "Perdida",
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantityMilheiro(row.qty_lost),
+        render: (row) => formatQuantity(row.qty_lost),
       },
       {
         key: "op_count",
@@ -235,19 +234,19 @@ export function AppointmentsTables({
       },
       {
         key: "qty_produced",
-        header: quantityColumnHeader("Produzida"),
+        header: "Produzida",
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantityMilheiro(row.qty_produced),
+        render: (row) => formatQuantity(row.qty_produced),
       },
       {
         key: "qty_lost",
-        header: quantityColumnHeader("Perdida"),
+        header: "Perdida",
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantityMilheiro(row.qty_lost),
+        render: (row) => formatQuantity(row.qty_lost),
       },
     ],
     [],
@@ -289,11 +288,11 @@ export function AppointmentsTables({
       },
       {
         key: "qty_produced",
-        header: quantityColumnHeader("Produzida"),
+        header: "Produzida",
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantityMilheiro(row.qty_produced),
+        render: (row) => formatQuantity(row.qty_produced),
       },
       {
         key: "period",

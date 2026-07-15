@@ -18,14 +18,6 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
   year: "numeric",
 });
 
-/** Unidade canônica de H6_QTDPROD / H6_QTDPERDA (Protheus MI). */
-export const QUANTITY_UNIT_SHORT = "mil";
-export const QUANTITY_UNIT_LABEL = "milheiro";
-
-export function quantityColumnHeader(base: string): string {
-  return `${base} (${QUANTITY_UNIT_SHORT})`;
-}
-
 export function formatCurrencyBrl(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return currencyFormatter.format(0);
   return currencyFormatter.format(value);
@@ -36,15 +28,10 @@ export function formatInteger(value: number | null | undefined): string {
   return integerFormatter.format(value);
 }
 
-/** Formata número na escala SH6 (milheiro), sem sufixo. */
+/** Quantidade já convertida pela API (MI → UN). Apenas formatação de exibição. */
 export function formatQuantity(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return decimalFormatter.format(0);
   return decimalFormatter.format(value);
-}
-
-/** Quantidade em milheiro com unidade explícita (ex.: `3,836 mil`). */
-export function formatQuantityMilheiro(value: number | null | undefined): string {
-  return `${formatQuantity(value)} ${QUANTITY_UNIT_SHORT}`;
 }
 
 export function formatDatePtBr(value: string | null | undefined): string {

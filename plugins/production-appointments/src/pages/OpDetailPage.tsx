@@ -19,8 +19,7 @@ import {
   formatDatePtBr,
   formatInteger,
   formatProtheusDate,
-  formatQuantityMilheiro,
-  quantityColumnHeader,
+  formatQuantity,
 } from "../utils/formatters";
 import { exportAppointmentsExcel } from "../utils/exportTables";
 import { navigateAppointmentsBack } from "../utils/navigation";
@@ -117,19 +116,19 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
       },
       {
         key: "qty_produced",
-        header: quantityColumnHeader("Produzida"),
+        header: "Produzida",
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantityMilheiro(row.qty_produced),
+        render: (row) => formatQuantity(row.qty_produced),
       },
       {
         key: "qty_lost",
-        header: quantityColumnHeader("Perdida"),
+        header: "Perdida",
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantityMilheiro(row.qty_lost),
+        render: (row) => formatQuantity(row.qty_lost),
       },
     ],
     [],
@@ -202,12 +201,12 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
                   value: formatInteger(opSummary?.work_center_count ?? 0),
                 },
                 {
-                  label: quantityColumnHeader("Produzida"),
-                  value: formatQuantityMilheiro(opSummary?.qty_produced ?? totals?.qty_produced),
+                  label: "Produzida",
+                  value: formatQuantity(opSummary?.qty_produced ?? totals?.qty_produced),
                 },
                 {
-                  label: quantityColumnHeader("Perdida"),
-                  value: formatQuantityMilheiro(opSummary?.qty_lost ?? totals?.qty_lost),
+                  label: "Perdida",
+                  value: formatQuantity(opSummary?.qty_lost ?? totals?.qty_lost),
                 },
               ]}
             />

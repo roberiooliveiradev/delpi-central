@@ -4,21 +4,16 @@ import {
   formatCurrencyBrl,
   formatDatePtBr,
   formatProtheusDate,
-  formatQuantityMilheiro,
-  quantityColumnHeader,
+  formatQuantity,
 } from "./formatters";
 import { getThisMonthRange, validatePeriodRange } from "./dateRange";
 
 describe("formatters", () => {
-  it("formata moeda e data", () => {
+  it("formata moeda, data e quantidade (sem conversão de unidade)", () => {
     expect(formatCurrencyBrl(10.5)).toMatch(/R\$/);
     expect(formatDatePtBr("2026-04-27")).toBe("27/04/2026");
     expect(formatProtheusDate("20260715")).toBe("15/07/2026");
-  });
-
-  it("exibe quantidade em milheiro com unidade", () => {
-    expect(formatQuantityMilheiro(3.836)).toBe("3,836 mil");
-    expect(quantityColumnHeader("Produzida")).toBe("Produzida (mil)");
+    expect(formatQuantity(3836)).toBe("3.836,00");
   });
 });
 

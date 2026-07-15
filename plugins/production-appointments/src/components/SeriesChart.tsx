@@ -12,7 +12,7 @@ import {
 import { CHART_AXIS_TICK, CHART_COLORS, CHART_GRID_STROKE } from "../constants/chartTheme";
 import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { SeriesPoint } from "../types/appointments";
-import { formatProtheusDate, formatQuantityMilheiro, quantityColumnHeader } from "../utils/formatters";
+import { formatProtheusDate, formatQuantity } from "../utils/formatters";
 import { ChartCard } from "./ChartCard";
 
 type SeriesChartProps = {
@@ -42,13 +42,13 @@ export function SeriesChart({ points }: SeriesChartProps) {
               <YAxis tick={CHART_AXIS_TICK} width={64} />
               <Tooltip
                 contentStyle={{ borderRadius: 10 }}
-                formatter={(value) => formatQuantityMilheiro(Number(value))}
+                formatter={(value) => formatQuantity(Number(value))}
               />
               <Legend />
               <Line
                 type="monotone"
                 dataKey="qty_produced"
-                name={quantityColumnHeader("Produzida")}
+                name={"Produzida"}
                 stroke={CHART_COLORS.primary}
                 strokeWidth={2}
                 dot={false}
@@ -56,7 +56,7 @@ export function SeriesChart({ points }: SeriesChartProps) {
               <Line
                 type="monotone"
                 dataKey="qty_lost"
-                name={quantityColumnHeader("Perdida")}
+                name={"Perdida"}
                 stroke={CHART_COLORS.accent}
                 strokeWidth={2}
                 dot={false}

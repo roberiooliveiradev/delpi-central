@@ -10,7 +10,6 @@ import type { AppointmentTotals } from "../types/appointments";
 import {
   formatInteger,
   formatQuantity,
-  QUANTITY_UNIT_LABEL,
 } from "../utils/formatters";
 import { KpiCard } from "./KpiCard";
 
@@ -29,13 +28,13 @@ export function SummaryCards({ totals, loading = false }: SummaryCardsProps) {
         loading={loading}
       />
       <KpiCard
-        title={`Qtd. produzida (${QUANTITY_UNIT_LABEL})`}
+        title="Qtd. produzida"
         value={formatQuantity(totals?.qty_produced)}
         icon={<Package size={20} />}
         loading={loading}
       />
       <KpiCard
-        title={`Qtd. perdida (${QUANTITY_UNIT_LABEL})`}
+        title="Qtd. perdida"
         value={formatQuantity(totals?.qty_lost)}
         icon={<PackageX size={20} />}
         loading={loading}

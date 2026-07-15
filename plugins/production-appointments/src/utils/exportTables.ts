@@ -9,8 +9,7 @@ import type {
 import {
   formatInteger,
   formatProtheusDate,
-  formatQuantityMilheiro,
-  quantityColumnHeader,
+  formatQuantity,
 } from "./formatters";
 
 function safeDate(value: string): string {
@@ -37,8 +36,8 @@ export async function exportWorkCentersExcel(
       "Nome",
       "Inspeção final",
       "Apontamentos",
-      quantityColumnHeader("Produzida"),
-      quantityColumnHeader("Perdida"),
+      "Produzida",
+      "Perdida",
       "OPs",
     ],
     rows: items.map((row) => [
@@ -46,8 +45,8 @@ export async function exportWorkCentersExcel(
       row.work_center_name || "",
       isInspection(row.is_final_inspection) ? "Sim" : "Não",
       formatInteger(row.appointment_count),
-      formatQuantityMilheiro(row.qty_produced),
-      formatQuantityMilheiro(row.qty_lost),
+      formatQuantity(row.qty_produced),
+      formatQuantity(row.qty_lost),
       formatInteger(row.op_count),
     ]),
   };
@@ -68,8 +67,8 @@ export async function exportAppointmentsExcel(
       "Tipo",
       "CT",
       "Nome CT",
-      quantityColumnHeader("Produzida"),
-      quantityColumnHeader("Perdida"),
+      "Produzida",
+      "Perdida",
     ],
     rows: items.map((row) => [
       formatProtheusDate(row.appointment_date),
@@ -78,8 +77,8 @@ export async function exportAppointmentsExcel(
       row.product_type || "",
       row.work_center,
       row.work_center_name || "",
-      formatQuantityMilheiro(row.qty_produced),
-      formatQuantityMilheiro(row.qty_lost),
+      formatQuantity(row.qty_produced),
+      formatQuantity(row.qty_lost),
     ]),
   };
   exportMatrixToXlsx(table, buildFilename("apontamentos-lista", filters));
@@ -98,8 +97,8 @@ export async function exportByOpExcel(
       "Tipo",
       "Apontamentos",
       "CTs",
-      quantityColumnHeader("Produzida"),
-      quantityColumnHeader("Perdida"),
+      "Produzida",
+      "Perdida",
       "Primeira data",
       "Última data",
     ],
@@ -109,8 +108,8 @@ export async function exportByOpExcel(
       row.product_type || "",
       formatInteger(row.appointment_count),
       formatInteger(row.work_center_count),
-      formatQuantityMilheiro(row.qty_produced),
-      formatQuantityMilheiro(row.qty_lost),
+      formatQuantity(row.qty_produced),
+      formatQuantity(row.qty_lost),
       formatProtheusDate(row.first_date),
       formatProtheusDate(row.last_date),
     ]),
