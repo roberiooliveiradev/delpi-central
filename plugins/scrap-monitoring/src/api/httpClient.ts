@@ -42,8 +42,11 @@ export async function httpGet<T>(url: string, options: RequestOptions = {}): Pro
     } catch {
       // keep fallback
     }
+    if (response.status === 401 || response.status === 403) {
+      message = "Sem permissão para acessar este painel ou sessão expirada.";
+    }
     throw new Error(message);
   }
 
-  return (await response.json()) as T;
+  return response.json() as Promise<T>;
 }
