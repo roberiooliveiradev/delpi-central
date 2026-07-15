@@ -57,7 +57,8 @@ Fonte de verdade: **api-delpi OpenAPI completo** → `openapi_baseline.json` (v2
 |---|---|
 | `api-delpi/app/content/openapi_baseline.json` | Inventário GET + query params + `x-delpi.shape` |
 | `tv-dashboard-api/.../tv_data_routes.json` | Catálogo servido ao editor (`GET /data/routes`) |
-| `tv_data_route_overlays.json` | Curadoria TV (`valueFields`, `valueFieldLabels`, `tvConstraints`, labels, `paramStrategy`) |
+| `tv_data_route_overlays.json` | Curadoria TV (`valueFields`, `valueFieldLabels`, `tvConstraints`, labels, `whenToUse`, `paramStrategy`) |
+| `api-delpi/.../tv_route_audience.json` | Audiência TV → `x-delpi.tv` no OpenAPI (gerador lê `whenToUse`/`label`/`description`) |
 
 ### Multi-métrica (escalares)
 

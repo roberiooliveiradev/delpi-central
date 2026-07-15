@@ -46,6 +46,32 @@ def test_manual_enrichment_preserved_for_oee():
     assert oee["label"] == "OEE — visão geral"
     assert oee.get("valueFields")
     assert oee.get("paramSchema")
+    assert oee.get("whenToUse")
+
+
+def test_build_base_route_reads_x_delpi_tv_audience():
+    gen = _load_generator_module()
+    route = gen.build_base_route(
+        {
+            "operationId": "demo_tv_route",
+            "path": "/demo/tv",
+            "summary": "Demo",
+            "description": "Descrição OpenAPI.",
+            "tags": ["Produção"],
+            "xDelpi": {
+                "shape": "scalar",
+                "tv": {
+                    "whenToUse": "Use na TV do plantão para um KPI único.",
+                    "label": "Demo TV",
+                    "description": "KPI de demonstração para painel.",
+                },
+            },
+        }
+    )
+    assert route["label"] == "Demo TV"
+    assert route["description"] == "KPI de demonstração para painel."
+    assert route["whenToUse"] == "Use na TV do plantão para um KPI único."
+    assert route["metaShape"] == "scalar"
 
 
 def test_openapi_parameters_become_param_schema_for_closing_rate():

@@ -27,6 +27,16 @@ def test_build_x_delpi_extension_scalar_stays_as_delivered():
     }
 
 
+def test_build_x_delpi_extension_includes_tv_audience_when_curated():
+    extension = build_x_delpi_extension("get_overall_equipment_effectiveness_pct")
+
+    assert extension["entity"]
+    assert extension["shape"]
+    tv = extension.get("tv") or {}
+    assert "whenToUse" in tv
+    assert "OEE" in tv["whenToUse"] or "oee" in tv["whenToUse"].lower() or "KPI" in tv["whenToUse"]
+
+
 def test_inject_delpi_extensions_on_operations_with_operation_id():
     schema = {
         "paths": {

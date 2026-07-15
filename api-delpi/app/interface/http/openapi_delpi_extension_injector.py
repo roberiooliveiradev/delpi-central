@@ -9,6 +9,7 @@ from app.interface.http.route_contract_registry import (
     presentation_strategy_for_entity,
     resolve_contract,
 )
+from app.interface.http.tv_route_audience import tv_audience_for_operation
 
 HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
 
@@ -23,11 +24,15 @@ def build_x_delpi_extension(operation_id: str) -> dict[str, Any]:
 
     strategy = presentation_strategy_for_entity(entity)
 
-    return {
+    extension: dict[str, Any] = {
         "entity": entity,
         "shape": shape,
         "presentation": {"strategy": strategy},
     }
+    tv = tv_audience_for_operation(operation_id)
+    if tv:
+        extension["tv"] = tv
+    return extension
 
 
 def inject_delpi_extensions(openapi_schema: dict[str, Any]) -> dict[str, int]:

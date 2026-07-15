@@ -8,11 +8,12 @@ Fonte de verdade (como o registry operacional do chat):
 
 Campos do OpenAPI (sempre regenerados / mergeados):
   operationId, path, httpMethod, paramSchema, paramStrategy (inferido),
-  metaShape (x-delpi.shape quando houver)
+  metaShape (x-delpi.shape quando houver),
+  whenToUse/label/description de audiência (x-delpi.tv quando houver)
 
 Overlays TV (preservados / arquivo overlays):
   valueFields, seriesField, tableFields, tvConstraints, fixedQueryParams,
-  defaultParams, label, description, category, allowedDisplayModes,
+  defaultParams, label, description, whenToUse, category, allowedDisplayModes,
   paramStrategy (se explícito), ajustes pontuais de paramSchema
 """
 
@@ -602,6 +603,23 @@ def merge_param_schema(
     return merged
 
 
+def extract_tv_audience(operation: dict[str, Any]) -> dict[str, Any]:
+    """Campos de audiência TV a partir de x-delpi.tv (baseline / OpenAPI)."""
+    x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    tv = x_delpi.get("tv") if isinstance(x_delpi.get("tv"), dict) else {}
+    audience: dict[str, Any] = {}
+    when_to_use = str(tv.get("whenToUse") or "").strip()
+    if when_to_use:
+        audience["whenToUse"] = when_to_use
+    label = str(tv.get("label") or "").strip()
+    if label:
+        audience["label"] = label
+    description = str(tv.get("description") or "").strip()
+    if description:
+        audience["description"] = description
+    return audience
+
+
 def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     operation_id = str(operation.get("operationId") or "").strip()
     summary = str(operation.get("summary") or "").strip()
@@ -609,17 +627,21 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     param_schema, param_strategy, date_range_keys = build_param_schema_from_openapi(
         operation.get("parameters")
     )
+    tv_audience = extract_tv_audience(operation)
     route: dict[str, Any] = {
         "operationId": operation_id,
         "httpMethod": "GET",
-        "label": summary or format_operation_id_label(operation_id),
+        "label": tv_audience.get("label") or summary or format_operation_id_label(operation_id),
         "category": resolve_category(operation),
         "path": str(operation.get("path") or "").strip(),
         "allowedDisplayModes": infer_allowed_display_modes(operation),
         "metaShape": infer_meta_shape(operation),
     }
-    if description:
-        route["description"] = description
+    route_description = tv_audience.get("description") or description
+    if route_description:
+        route["description"] = route_description
+    if tv_audience.get("whenToUse"):
+        route["whenToUse"] = tv_audience["whenToUse"]
     if param_schema:
         route["paramSchema"] = param_schema
         route["paramStrategy"] = param_strategy
