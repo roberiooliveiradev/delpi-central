@@ -68,6 +68,7 @@ import { horasEconomizadasDiaria } from "../../utils/calcRules";
 import { suggestGranularity } from "../../utils/periodBuckets";
 import { TRANSFORMOMETRO_ROUTES } from "../../constants/routes";
 import { buildProcessoPath } from "../../utils/routeParser";
+import { DS_FILTERS_ROW, DS_FILTER_BOX, DS_FILTER_BOX_PLAIN } from "../../components/filterChrome";
 import {
   buildDashboardQueryParams,
   canSelectConsolidatedView,
@@ -572,8 +573,8 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
         }
       />
 
-      <section className="ds-filters-row ds-no-print">
-          <div className="ds-filter-box">
+      <section className={`${DS_FILTERS_ROW} ds-no-print`}>
+          <div className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Visão" hint={TM_HELP_TOOLTIPS.dashboard.view} />
             <SegmentToggle
             ariaLabel="Visão analítica do dashboard"
@@ -599,7 +600,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
             }}
           />
           </div>
-          <label className="ds-filter-box ds-field">
+          <label className={DS_FILTER_BOX}>
             <FieldLabel className="tm-field__label"
               label="Competência"
               hint={TM_HELP_TOOLTIPS.dashboard.competencia}

@@ -4,6 +4,7 @@ import { TmNativeTextField } from "../../components/ui/tmNativeFormFields";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import type { FilialFormState } from "./filialCatalogForm";
+import { DS_FILTERS_ROW_EXTENDED, DS_FILTER_BOX_WIDE_MOD } from "../../components/filterChrome";
 
 type Props = {
   form: FilialFormState;
@@ -16,7 +17,7 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
   const set = (patch: Partial<FilialFormState>) => onChange({ ...form, ...patch });
 
   return (
-    <div className="ds-filters-row ds-filters-row--extended">
+    <div className={DS_FILTERS_ROW_EXTENDED}>
       <TmNativeTextField
         id="tm-filial-codigo"
         label="Código TOTVS *"
@@ -31,7 +32,7 @@ export function FilialFormFields({ form, options, editing, onChange }: Props) {
         id="tm-filial-nome"
         label="Nome da unidade *"
         hint={TM_HELP_TOOLTIPS.filiais.nome}
-        className="ds-filter-box--wide"
+        className={DS_FILTER_BOX_WIDE_MOD}
         required
         value={form.nome_filial}
         onChange={(nome_filial) => set({ nome_filial })}

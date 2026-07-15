@@ -60,6 +60,7 @@ import { InstanciaDecompositionEscopoSection } from "../../components/decomposit
 import { InstanciaContextoSection } from "../../components/decomposition/InstanciaContextoSection";
 import { InstanciaMatrizRevisoesSection } from "../instancia/InstanciaMatrizRevisoesSection";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN } from "../../components/filterChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -510,8 +511,8 @@ export function InstanciaDetailPage({
         <section className="ds-card ds-cadastro-form">
           <h2 className="ds-section-title">Nova revisão</h2>
           <form onSubmit={handleCreateRevisao}>
-            <div className="ds-filters-row">
-              <div className="ds-filter-box">
+            <div className={DS_FILTERS_ROW}>
+              <div className={DS_FILTER_BOX_PLAIN}>
                 <FieldLabel className="tm-field__label" label="Versão" hint={TM_HELP_TOOLTIPS.revisao.versao} />
                 <NativeTextControl
                   id="tm-rev-versao"
@@ -551,7 +552,7 @@ export function InstanciaDetailPage({
                   options={referenciaOptions}
                 />
               ) : null}
-              <div className="ds-filter-box">
+              <div className={DS_FILTER_BOX_PLAIN}>
                 <FieldLabel className="tm-field__label" label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
                 <NativeTextControl
                   id="tm-rev-inicio"

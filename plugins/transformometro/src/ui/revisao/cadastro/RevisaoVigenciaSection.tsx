@@ -8,6 +8,7 @@ import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { optionalDateField, toDateInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
 import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../../components/filterChrome";
 
 const R = TM_HELP_TOOLTIPS.revisao;
 
@@ -112,8 +113,8 @@ export function RevisaoVigenciaSection({
 
   const form = (
       <form onSubmit={onSubmit}>
-        <div className="ds-filters-row">
-          <label className="ds-filter-box">
+        <div className={DS_FILTERS_ROW}>
+          <label className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Versão *" hint={R.versao} />
             <NativeTextControl
               required
@@ -153,7 +154,7 @@ export function RevisaoVigenciaSection({
               options={referenciaOptions}
             />
           ) : null}
-          <label className="ds-filter-box">
+          <label className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Início vigência *" hint={R.inicioVigencia} />
             <NativeTextControl
               type="date"
@@ -164,7 +165,7 @@ export function RevisaoVigenciaSection({
               }
             />
           </label>
-          <label className="ds-filter-box">
+          <label className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Implantação" hint={R.implantacao} />
             <NativeTextControl
               type="date"
@@ -174,7 +175,7 @@ export function RevisaoVigenciaSection({
               }
             />
           </label>
-          <label className="ds-filter-box">
+          <label className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Fim vigência" hint={R.fimVigencia} />
             <NativeTextControl
               type="date"
@@ -199,7 +200,7 @@ export function RevisaoVigenciaSection({
             </span>}
           />
         </div>
-        <label className="ds-filter-box ds-filter-box--wide">
+        <label className={DS_FILTER_BOX_WIDE}>
           <FieldLabel className="tm-field__label" label="Descrição da revisão" hint={R.descricao} />
           <NativeTextControl
             value={revisaoVigencia.descricao_revisao}
@@ -209,7 +210,7 @@ export function RevisaoVigenciaSection({
             placeholder="Ex.: Automação do fechamento mensal"
           />
         </label>
-        <label className="ds-filter-box ds-filter-box--wide">
+        <label className={DS_FILTER_BOX_WIDE}>
           <FieldLabel className="tm-field__label" label="Motivo da revisão" hint={R.motivo} />
           <NativeTextControl
             value={revisaoVigencia.motivo_revisao}

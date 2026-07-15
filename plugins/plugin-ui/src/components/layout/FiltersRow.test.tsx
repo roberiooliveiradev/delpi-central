@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
-import { FilterInputField, FilterSelectField, FiltersRow } from "./FiltersRow";
+import { FilterInputField, FilterSelectField, FiltersRow, filterBoxBemClasses, filtersRowBemClasses } from "./FiltersRow";
 import { selectControlBemClasses } from "../forms/SelectField";
 
 const classNames = {
@@ -12,6 +12,15 @@ const classNames = {
 };
 
 const selectClassNames = selectControlBemClasses("dp");
+
+describe("filtersRowBemClasses / filterBoxBemClasses", () => {
+  it("emite dual-class do kit", () => {
+    const cn = filtersRowBemClasses("ds");
+    expect(cn.row).toBe("ds-filters-row delpi-ui-filters-row");
+    expect(cn.filterBox).toContain("delpi-ui-filter-box");
+    expect(filterBoxBemClasses("ds", "wide")).toContain("delpi-ui-filter-box--wide");
+  });
+});
 
 describe("FiltersRow", () => {
   it("renderiza section com aria-label", () => {

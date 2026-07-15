@@ -39,6 +39,7 @@ import {
 import { formatDateTime } from "../../utils/format";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import { DS_FILTERS_ROW_EXTENDED, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -235,8 +236,8 @@ export function ProcessosPage({
         onOpen={(row) => onOpenProcesso(row.processo_id)}
         onNavigate={onNavigate}
         filters={
-          <section className="ds-filters-row ds-filters-row--extended">
-            <div className="ds-filter-box ds-filter-box--wide">
+          <section className={DS_FILTERS_ROW_EXTENDED}>
+            <div className={DS_FILTER_BOX_WIDE}>
               <FieldLabel className="tm-field__label" label="Buscar" hint={P.busca} />
               <NativeTextControl
                 id="tm-proc-q"

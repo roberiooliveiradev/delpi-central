@@ -69,13 +69,27 @@ export type ChartToolbarProps<T extends string = string> = {
 
 export type DashboardChartToolbarLabels = ChartToolbarLabels & ChartGranularityToggleLabels;
 
+/** Monta classNames BEM `{prefix}-segment-toggle*` + `.delpi-ui-segment-toggle*`. */
+export function segmentToggleBemClasses(prefix: string): ChartGranularityToggleClassNames {
+  const seg = `${prefix}-segment-toggle`;
+  const ui = "delpi-ui-segment-toggle";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+  return {
+    root: pair(seg, ui),
+    button: pair(`${seg}__btn`, `${ui}__btn`),
+    buttonActive: pair(
+      `${seg}__btn ${seg}__btn--active`,
+      `${ui}__btn ${ui}__btn--active`,
+    ),
+  };
+}
+
 /** Monta classNames BEM `{prefix}-chart-toolbar*` + `.delpi-ui-chart-toolbar*`. */
 export function chartToolbarBemClasses(prefix: string) {
   const tb = `${prefix}-chart-toolbar`;
   const ui = "delpi-ui-chart-toolbar";
-  const seg = `${prefix}-segment-toggle`;
-  const uiSeg = "delpi-ui-segment-toggle";
   const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+  const segment = segmentToggleBemClasses(prefix);
 
   return {
     toolbar: pair(tb, ui),
@@ -90,12 +104,9 @@ export function chartToolbarBemClasses(prefix: string) {
       `delpi-ui-ghost-btn ${ui}__export`,
     ),
     fieldLabel: `${prefix}-field__label`,
-    segmentToggle: pair(seg, uiSeg),
-    segmentButton: pair(`${seg}__btn`, `${uiSeg}__btn`),
-    segmentButtonActive: pair(
-      `${seg}__btn ${seg}__btn--active`,
-      `${uiSeg}__btn ${uiSeg}__btn--active`,
-    ),
+    segmentToggle: segment.root,
+    segmentButton: segment.button,
+    segmentButtonActive: segment.buttonActive,
   };
 }
 

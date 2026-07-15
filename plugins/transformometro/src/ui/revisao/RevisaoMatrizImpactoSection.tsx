@@ -8,6 +8,7 @@ import {
   ImpactEffortMatrixLegend,
   NativeTextControl,
   impactEffortMatrixTransformometroClasses,
+  segmentToggleBemClasses,
   type ImpactEffortMatrixMode,
   type ImpactEffortPoint,
 } from "@delpi/plugin-ui/index";
@@ -17,6 +18,8 @@ import { CollapsiblePanel } from "../../components/CollapsiblePanel";
 import { TmNativeTextAreaField } from "../../components/ui/tmNativeFormFields";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
 import { SegmentToggle } from "../../components/SegmentToggle";
+import { DS_FILTER_BOX_PLAIN } from "../../components/filterChrome";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { Revisao } from "../../data/api/transformometroApi";
 import {
@@ -36,7 +39,8 @@ import {
   MATRIZ_QUADRANTE_LABELS_GRAFICO,
 } from "../../content/matrizImpactoLabels";
 import { exportImpactEffortMatrixPlotPng } from "../../utils/exportImpactEffortMatrixPng";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
+
+const SEGMENT = segmentToggleBemClasses("ds");
 
 type Props = {
   revisao: Revisao;
@@ -102,17 +106,19 @@ type ScaleFieldProps = {
 
 function ScaleField({ label, hint, value, onChange, idPrefix }: ScaleFieldProps) {
   return (
-    <div className="tm-matrix-scale-field ds-filter-box">
+    <div className={`tm-matrix-scale-field ${DS_FILTER_BOX_PLAIN}`}>
       <FieldLabel className="tm-field__label" label={label} hint={hint} />
-      <div className="ds-segment-toggle tm-matrix-scale-field__buttons" role="group" aria-label={label}>
+      <div
+        className={`${SEGMENT.root} tm-matrix-scale-field__buttons`}
+        role="group"
+        aria-label={label}
+      >
         {[1, 2, 3, 4, 5].map((score) => (
           <button
             key={score}
             id={`${idPrefix}-${score}`}
             type="button"
-            className={`ds-segment-toggle__btn${
-              value === score ? " ds-segment-toggle__btn--active" : ""
-            }`}
+            className={value === score ? SEGMENT.buttonActive : SEGMENT.button}
             aria-pressed={value === score}
             onClick={() => onChange(score)}
           >
@@ -404,7 +410,7 @@ export function RevisaoMatrizImpactoSection({
                   value={inputs.dependencias_externas}
                   onChange={(value) => setInputs((prev) => ({ ...prev, dependencias_externas: value }))}
                 />
-                <label className="ds-filter-box tm-field">
+                <label className={`${DS_FILTER_BOX_PLAIN} tm-field`}>
                   <FieldLabel className="tm-field__label" label="Pessoas afetadas" hint={M.pessoasAfetadas} />
                   <NativeTextControl
                     type="number"

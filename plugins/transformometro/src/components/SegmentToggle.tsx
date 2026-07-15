@@ -1,3 +1,5 @@
+import { segmentToggleBemClasses } from "@delpi/plugin-ui/index";
+
 type SegmentOption<T extends string> = {
   value: T;
   label: string;
@@ -11,6 +13,8 @@ type SegmentToggleProps<T extends string> = {
   ariaLabel: string;
 };
 
+const SEGMENT = segmentToggleBemClasses("ds");
+
 export function SegmentToggle<T extends string>({
   options,
   value,
@@ -19,15 +23,13 @@ export function SegmentToggle<T extends string>({
   ariaLabel,
 }: SegmentToggleProps<T>) {
   return (
-    <div className="ds-segment-toggle" role="group" aria-label={ariaLabel}>
+    <div className={SEGMENT.root} role="group" aria-label={ariaLabel}>
       {options.map((option) => (
         <button
           key={option.value}
           id={`${idPrefix}-${option.value}`}
           type="button"
-          className={`ds-segment-toggle__btn${
-            value === option.value ? " ds-segment-toggle__btn--active" : ""
-          }`}
+          className={value === option.value ? SEGMENT.buttonActive : SEGMENT.button}
           onClick={() => onChange(option.value)}
           aria-pressed={value === option.value}
         >

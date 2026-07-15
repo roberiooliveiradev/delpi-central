@@ -5,6 +5,7 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
 import { filterSetoresByFilial, resolveSetorIdForFilial } from "../../utils/setores";
 import type { ProcessoFormState } from "./processoForm";
+import { DS_FILTERS_ROW_EXTENDED, DS_FILTER_BOX_WIDE_MOD } from "../../components/filterChrome";
 
 type Props = {
   form: ProcessoFormState;
@@ -33,7 +34,7 @@ export function ProcessoFormFields({
   }
 
   return (
-    <div className="ds-filters-row ds-filters-row--extended">
+    <div className={DS_FILTERS_ROW_EXTENDED}>
       {codigoProcesso ? (
         <TmNativeTextField
           id="tm-proc-codigo"
@@ -48,7 +49,7 @@ export function ProcessoFormFields({
         id="tm-proc-nome"
         label="Nome do processo *"
         hint={TM_HELP_TOOLTIPS.processos.nome}
-        className="ds-filter-box--wide"
+        className={DS_FILTER_BOX_WIDE_MOD}
         value={form.nome_processo}
         onChange={(nome_processo) => set({ nome_processo })}
         required
@@ -117,7 +118,7 @@ export function ProcessoFormFields({
         id="tm-proc-objetivo"
         label="Objetivo"
         hint={TM_HELP_TOOLTIPS.processos.objetivo}
-        className="ds-filter-box--wide"
+        className={DS_FILTER_BOX_WIDE_MOD}
         span={false}
         rows={2}
         value={form.objetivo_processo}
@@ -127,7 +128,7 @@ export function ProcessoFormFields({
         id="tm-proc-descricao"
         label="Descrição"
         hint={TM_HELP_TOOLTIPS.processos.descricao}
-        className="ds-filter-box--wide"
+        className={DS_FILTER_BOX_WIDE_MOD}
         span={false}
         rows={2}
         value={form.descricao_processo}

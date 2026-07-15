@@ -14,6 +14,7 @@ import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils
 import { formatCurrency } from "../../utils/format";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;
@@ -186,8 +187,8 @@ export function RecursoCustosSection({
                   <tr key={c.recurso_custo_id} className="ds-table__row--editing">
                     <td colSpan={5}>
                       <form onSubmit={handleSaveEdit}>
-                        <div className="ds-filters-row">
-                          <label className="ds-filter-box">
+                        <div className={DS_FILTERS_ROW}>
+                          <label className={DS_FILTER_BOX_PLAIN}>
                             <FieldLabel className="tm-field__label" label="Valor (R$)" hint={C.valorMes} />
                             <NativeTextControl
                               type="number"
@@ -200,7 +201,7 @@ export function RecursoCustosSection({
                               }
                             />
                           </label>
-                          <label className="ds-filter-box">
+                          <label className={DS_FILTER_BOX_PLAIN}>
                             <FieldLabel className="tm-field__label" label="Início *" hint={C.inicio} />
                             <NativeTextControl
                               type="date"
@@ -214,7 +215,7 @@ export function RecursoCustosSection({
                               }
                             />
                           </label>
-                          <label className="ds-filter-box">
+                          <label className={DS_FILTER_BOX_PLAIN}>
                             <FieldLabel className="tm-field__label" label="Fim" hint={C.fim} />
                             <NativeTextControl
                               type="date"
@@ -225,7 +226,7 @@ export function RecursoCustosSection({
                             />
                           </label>
                         </div>
-                        <label className="ds-filter-box ds-filter-box--wide">
+                        <label className={DS_FILTER_BOX_WIDE}>
                           <FieldLabel className="tm-field__label" label="Observações" hint={C.observacoes} />
                           <NativeTextControl
                             value={editForm.observacoes}
@@ -288,8 +289,8 @@ export function RecursoCustosSection({
       {!readOnly ? (
         <form className="ds-cadastro-subsection" onSubmit={handleReajuste}>
           <h4 className="ds-cadastro-subsection__title">Registrar reajuste</h4>
-          <div className="ds-filters-row">
-            <label className="ds-filter-box">
+          <div className={DS_FILTERS_ROW}>
+            <label className={DS_FILTER_BOX_PLAIN}>
               <FieldLabel className="tm-field__label" label="Novo valor mensal (R$) *" hint={R.reajusteValor} />
               <NativeTextControl
                 type="number"
@@ -300,7 +301,7 @@ export function RecursoCustosSection({
               onChange={(valor_mensal) => setReajuste({ ...reajuste, valor_mensal })}
               />
             </label>
-            <label className="ds-filter-box">
+            <label className={DS_FILTER_BOX_PLAIN}>
               <FieldLabel className="tm-field__label" label="Vigente a partir de *" hint={R.reajusteDesde} />
               <NativeTextControl
                 type="date"
@@ -310,7 +311,7 @@ export function RecursoCustosSection({
               />
             </label>
           </div>
-          <label className="ds-filter-box ds-filter-box--wide">
+          <label className={DS_FILTER_BOX_WIDE}>
             <FieldLabel className="tm-field__label" label="Observações" hint={C.observacoes} />
             <NativeTextControl
               value={reajuste.observacoes}

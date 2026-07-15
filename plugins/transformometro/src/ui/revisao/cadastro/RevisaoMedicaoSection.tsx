@@ -4,6 +4,7 @@ import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { toMonthInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
 import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN } from "../../../components/filterChrome";
 
 const R = TM_HELP_TOOLTIPS.revisao;
 
@@ -59,8 +60,8 @@ export function RevisaoMedicaoSection({
 
   const form = (
     <form onSubmit={onSubmit}>
-      <div className="ds-filters-row">
-        <label className="ds-filter-box">
+      <div className={DS_FILTERS_ROW}>
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Volume mensal" hint={R.volumeMensal} />
           <NativeTextControl
             type="number"
@@ -70,7 +71,7 @@ export function RevisaoMedicaoSection({
             onChange={(value) => onChange({ ...medicao, volume_mensal: Number(value) })}
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Tempo médio (min)" hint={R.tempoMedio} />
           <NativeTextControl
             type="number"
@@ -82,7 +83,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Tempo retrabalho (min)" hint={R.tempoRetrabalho} />
           <NativeTextControl
             type="number"
@@ -94,7 +95,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Custo hora MO (R$)" hint={R.custoHoraMo} />
           <NativeTextControl
             type="number"
@@ -106,7 +107,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="% retrabalho" hint={R.percentualRetrabalho} />
           <NativeTextControl
             type="number"
@@ -118,7 +119,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="% erro" hint={R.percentualErro} />
           <NativeTextControl
             type="number"
@@ -128,7 +129,7 @@ export function RevisaoMedicaoSection({
             onChange={(value) => onChange({ ...medicao, percentual_erro: Number(value) })}
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Qtd. erros/mês" hint={R.quantidadeErros} />
           <NativeTextControl
             type="number"
@@ -140,7 +141,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Custo unit. erro (R$)" hint={R.custoUnitarioErro} />
           <NativeTextControl
             type="number"
@@ -152,7 +153,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Custo unit. retrabalho (R$)" hint={R.custoUnitarioRetrabalho} />
           <NativeTextControl
             type="number"
@@ -164,7 +165,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Outros desperdícios (R$/mês)" hint={R.outrosDesperdicios} />
           <NativeTextControl
             type="number"
@@ -176,7 +177,7 @@ export function RevisaoMedicaoSection({
             }
           />
         </label>
-        <label className="ds-filter-box">
+        <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Mês de referência" hint={R.mesReferencia} />
           <NativeTextControl
             type="month"

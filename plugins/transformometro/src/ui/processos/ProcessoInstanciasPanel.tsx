@@ -31,6 +31,7 @@ import { TmNativeTextAreaField } from "../../components/ui/tmNativeFormFields";
 import { filterSetoresByFilial } from "../../utils/setores";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
+import { DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_CHECKBOX } from "../../components/filterChrome";
 
 function renderInstanciaUnidade(row: ProcessoInstancia, activeFilialCount: number) {
   if (!row.todas_filiais_ativas) {
@@ -606,7 +607,7 @@ export function ProcessoInstanciasPanel({
       : createCount > 0;
 
   const unidadesGrid = (
-    <div className="ds-filter-box tm-inst-form__field--full">
+    <div className={`${DS_FILTER_BOX_PLAIN} tm-inst-form__field--full`}>
       <span className="ds-field-label">
         <FieldLabel className="tm-field__label" label="Unidades *" hint={TM_HELP_TOOLTIPS.instancias.unidades} />
       </span>
@@ -624,7 +625,7 @@ export function ProcessoInstanciasPanel({
   );
 
   const setoresGrid = (
-    <div className="ds-filter-box tm-inst-form__field--full">
+    <div className={`${DS_FILTER_BOX_PLAIN} tm-inst-form__field--full`}>
       <span className="ds-field-label">
         <FieldLabel className="tm-field__label" label="Departamentos *" hint={TM_HELP_TOOLTIPS.instancias.setores} />
       </span>
@@ -660,7 +661,7 @@ export function ProcessoInstanciasPanel({
         onChange={setResumoMelhoria}
       />
       <div className="tm-inst-form__row">
-        <div className="ds-filter-box">
+        <div className={DS_FILTER_BOX_PLAIN}>
           <label htmlFor="tm-melhoria-responsavel">
             <FieldLabel className="tm-field__label" label="Responsável local" hint={TM_HELP_TOOLTIPS.instancias.responsavel} />
           </label>
@@ -681,7 +682,7 @@ export function ProcessoInstanciasPanel({
         />
       </div>
       <div className="tm-inst-form__row">
-        <div className="ds-filter-box">
+        <div className={DS_FILTER_BOX_PLAIN}>
           <label htmlFor="tm-melhoria-data-alvo">
             <FieldLabel className="tm-field__label" label="Data-alvo de go-live" hint={TM_HELP_TOOLTIPS.instancias.dataAlvo} />
           </label>
@@ -705,7 +706,7 @@ export function ProcessoInstanciasPanel({
   );
 
   const rotuloField = (
-    <div className="ds-filter-box tm-inst-form__field--full">
+    <div className={`${DS_FILTER_BOX_PLAIN} tm-inst-form__field--full`}>
       <label htmlFor="tm-inst-rotulo">
         <FieldLabel className="tm-field__label" label="Título (opcional)" hint={TM_HELP_TOOLTIPS.instancias.rotulo} />
       </label>
@@ -782,7 +783,7 @@ export function ProcessoInstanciasPanel({
               {isCreate ? (
                 <>
                   {processoTemEscopo ? (
-                    <div className="ds-filter-box ds-filter-box--checkbox tm-inst-form__field--full">
+                    <div className={`${DS_FILTER_BOX_CHECKBOX} tm-inst-form__field--full`}>
                       <NativeCheckboxControl
                         className="ds-check-label"
                         checked={usarEscopoProcesso}
@@ -799,7 +800,7 @@ export function ProcessoInstanciasPanel({
 
                   {!usarEscopoProcesso || !processoTemEscopo ? (
                     <>
-                      <div className="ds-filter-box ds-filter-box--checkbox">
+                      <div className={DS_FILTER_BOX_CHECKBOX}>
                         <NativeCheckboxControl
                           className="ds-check-label"
                           checked={todasFiliais}
@@ -864,7 +865,7 @@ export function ProcessoInstanciasPanel({
 
               {editingInstanciaId ? (
                 <>
-                  <div className="ds-filter-box ds-filter-box--checkbox">
+                  <div className={DS_FILTER_BOX_CHECKBOX}>
                     <NativeCheckboxControl
                       className="ds-check-label"
                       checked={todasFiliais}

@@ -8,7 +8,7 @@ import {
   type SelectControlClassNames,
   type SelectControlLabels,
 } from "../forms/SelectField";
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 
 export type FiltersRowClassNames = {
   row: string;
@@ -88,6 +88,12 @@ export type DashboardFiltersKit = {
     props: Omit<FilterSelectFieldProps, "classNames" | "selectClassNames" | "selectLabels">,
   ) => ReactNode;
 };
+
+/** Base `{prefix}-filter-box` + `.delpi-ui-filter-box`, com modificadores BEM opcionais. */
+export function filterBoxBemClasses(prefix: string, ...modifiers: string[]): string {
+  const base = delpiUiClass(`${prefix}-filter-box`, "delpi-ui-filter-box");
+  return modifiers.reduce((classNames, modifier) => withBemModifier(classNames, modifier), base);
+}
 
 /** Monta classNames BEM `{prefix}-filters-row` + `.delpi-ui-filters-row*`. */
 export function filtersRowBemClasses(prefix: string): FiltersRowClassNames & FilterInputFieldClassNames {

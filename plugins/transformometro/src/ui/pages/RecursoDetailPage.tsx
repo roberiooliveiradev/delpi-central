@@ -37,6 +37,7 @@ import { defaultRecursoSection } from "../configuracoes/configuracoesWorkspaceNa
 import { RecursoCatalogFormFields } from "../recursos/RecursoCatalogFormFields";
 import { RecursoCustosSection } from "../recursos/RecursoCustosSection";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE } from "../../components/filterChrome";
 import {
   emptyRecursoForm,
   payloadFromRecursoForm,
@@ -472,8 +473,8 @@ export function RecursoDetailPage({
                                 <h4 className="ds-cadastro-subsection__title">
                                   Editar vínculo — {row.codigo_processo ?? "—"} · {row.nome_processo ?? "—"}
                                 </h4>
-                                <div className="ds-filters-row">
-                                  <label className="ds-filter-box">
+                                <div className={DS_FILTERS_ROW}>
+                                  <label className={DS_FILTER_BOX_PLAIN}>
                                     <FieldLabel className="tm-field__label" label="Início do uso" hint={R.vinculoInicio} />
                                     <NativeTextControl
                                       type="date"
@@ -486,7 +487,7 @@ export function RecursoDetailPage({
                                       }
                                     />
                                   </label>
-                                  <label className="ds-filter-box">
+                                  <label className={DS_FILTER_BOX_PLAIN}>
                                     <FieldLabel className="tm-field__label" label="Fim do uso" hint={R.vinculoFim} />
                                     <NativeTextControl
                                       type="date"
@@ -499,7 +500,7 @@ export function RecursoDetailPage({
                                       }
                                     />
                                   </label>
-                                  <label className="ds-filter-box">
+                                  <label className={DS_FILTER_BOX_PLAIN}>
                                     <FieldLabel className="tm-field__label" label="Peso do rateio" hint={R.peso} />
                                     <NativeTextControl
                                       type="number"
@@ -521,7 +522,7 @@ export function RecursoDetailPage({
                                     label={<span className="tm-field__label">Vínculo ativo <HelpTooltip content={R.vinculoAtivo} ariaLabel="Ajuda: Vínculo ativo" /></span>}
                                   />
                                 </div>
-                                <label className="ds-filter-box ds-filter-box--wide">
+                                <label className={DS_FILTER_BOX_WIDE}>
                                   <FieldLabel className="tm-field__label" label="Observações" hint={R.vinculoObservacoes} />
                                   <NativeTextControl
                                     value={editVinculoForm.observacoes}

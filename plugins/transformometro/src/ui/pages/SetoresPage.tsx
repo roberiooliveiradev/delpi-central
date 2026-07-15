@@ -30,6 +30,7 @@ import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
+import { DS_FILTERS_ROW } from "../../components/filterChrome";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const S = TM_HELP_TOOLTIPS.setores;
@@ -207,7 +208,7 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate, embedded = f
       <DataTableSection
         title="Catálogo de departamentos"
         filters={
-          <div className="ds-filters-row">
+          <div className={DS_FILTERS_ROW}>
             <SelectField
               id="tm-setor-list-filial"
               label="Unidade"

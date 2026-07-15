@@ -2,6 +2,7 @@ import { FieldLabel, HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui
 
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData } from "../../data/api/transformometroApi";
+import { DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_CHECKBOX } from "../../components/filterChrome";
 import {
   defaultSetorIdsForFilial,
   setoresDisponiveisForEscopo,
@@ -65,7 +66,7 @@ export function ProcessoEscopoFields({
   return (
     <>
       {showTodasFiliais ? (
-        <div className="ds-filter-box ds-filter-box--checkbox tm-inst-form__field--full">
+        <div className={`${DS_FILTER_BOX_CHECKBOX} tm-inst-form__field--full`}>
           <NativeCheckboxControl
             className="ds-check-label"
             checked={value.todas_filiais_ativas}
@@ -97,7 +98,7 @@ export function ProcessoEscopoFields({
       ) : null}
 
       {!value.todas_filiais_ativas ? (
-        <div className="ds-filter-box tm-inst-form__field--full">
+        <div className={`${DS_FILTER_BOX_PLAIN} tm-inst-form__field--full`}>
           <span className="ds-field-label">
             <FieldLabel
               className="tm-field__label"
@@ -118,7 +119,7 @@ export function ProcessoEscopoFields({
         </div>
       ) : null}
 
-      <div className="ds-filter-box tm-inst-form__field--full">
+      <div className={`${DS_FILTER_BOX_PLAIN} tm-inst-form__field--full`}>
         <span className="ds-field-label">
           <FieldLabel
             className="tm-field__label"

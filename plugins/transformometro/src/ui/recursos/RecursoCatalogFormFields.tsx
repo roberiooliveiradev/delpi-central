@@ -9,6 +9,7 @@ import {
   labelEscopoRecurso,
 } from "../../utils/catalogLabels";
 import type { RecursoCatalogFormState } from "./recursoCatalogForm";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_WIDE_MOD } from "../../components/filterChrome";
 
 const R = TM_HELP_TOOLTIPS.recursos;
 
@@ -40,8 +41,8 @@ export function RecursoCatalogFormFields({
 
   return (
     <>
-      <div className="ds-filters-row">
-        <TmNativeTextField label="Nome *" hint={R.nome} className="ds-filter-box--wide" required value={form.nome_recurso} onChange={(nome_recurso) => onChange({ ...form, nome_recurso })} />
+      <div className={DS_FILTERS_ROW}>
+        <TmNativeTextField label="Nome *" hint={R.nome} className={DS_FILTER_BOX_WIDE_MOD} required value={form.nome_recurso} onChange={(nome_recurso) => onChange({ ...form, nome_recurso })} />
         <SelectField
           label="Categoria"
           hint={R.categoria}
@@ -125,7 +126,7 @@ export function RecursoCatalogFormFields({
         <TmNativeTextField label="Início vigência do recurso" hint={R.inicioVigencia} type="date" value={form.data_inicio_vigencia} onChange={(data_inicio_vigencia) => onChange({ ...form, data_inicio_vigencia })} />
         <TmNativeTextField label="Fim vigência do recurso" hint={R.fimVigencia} type="date" value={form.data_fim_vigencia} onChange={(data_fim_vigencia) => onChange({ ...form, data_fim_vigencia })} />
       </div>
-      <TmNativeTextField label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} className="ds-filter-box--wide" value={form.observacoes} onChange={(observacoes) => onChange({ ...form, observacoes })} />
+      <TmNativeTextField label="Observações" hint={TM_HELP_TOOLTIPS.columns.observacoes} className={DS_FILTER_BOX_WIDE_MOD} value={form.observacoes} onChange={(observacoes) => onChange({ ...form, observacoes })} />
       {hideSubmit ? null : (
         <button type="submit" className="ds-primary-btn">
           {submitLabel}

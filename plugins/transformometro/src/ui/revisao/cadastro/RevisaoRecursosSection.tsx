@@ -27,6 +27,7 @@ import { useClientPagination } from "../../../hooks/useClientPagination";
 import { CadastroSection } from "./CadastroSection";
 import { RecursoPreviewCard } from "./RecursoPreviewCard";
 import { DS_GHOST_BTN } from "../../../components/ghostChrome";
+import { DS_FILTERS_ROW, DS_FILTER_BOX_PLAIN, DS_FILTER_BOX_WIDE, DS_FILTER_BOX_WIDE_MOD } from "../../../components/filterChrome";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
 const C = TM_HELP_TOOLTIPS.columns;
@@ -199,8 +200,8 @@ export function RevisaoRecursosSection({
                         <h4 className="ds-cadastro-subsection__title">
                           Editar vínculo — {v.codigo_recurso}
                         </h4>
-                        <div className="ds-filters-row">
-                          <label className="ds-filter-box">
+                        <div className={DS_FILTERS_ROW}>
+                          <label className={DS_FILTER_BOX_PLAIN}>
                             <FieldLabel className="tm-field__label" label="Início do uso" hint={R.vinculoInicio} />
                             <NativeTextControl
                               type="date"
@@ -213,7 +214,7 @@ export function RevisaoRecursosSection({
                               }
                             />
                           </label>
-                          <label className="ds-filter-box">
+                          <label className={DS_FILTER_BOX_PLAIN}>
                             <FieldLabel className="tm-field__label" label="Fim do uso" hint={R.vinculoFim} />
                             <NativeTextControl
                               type="date"
@@ -226,7 +227,7 @@ export function RevisaoRecursosSection({
                               }
                             />
                           </label>
-                          <label className="ds-filter-box">
+                          <label className={DS_FILTER_BOX_PLAIN}>
                             <FieldLabel className="tm-field__label" label="Peso" hint={R.peso} />
                             <NativeTextControl
                               type="number"
@@ -251,7 +252,7 @@ export function RevisaoRecursosSection({
                             </span>}
                           />
                         </div>
-                        <label className="ds-filter-box ds-filter-box--wide">
+                        <label className={DS_FILTER_BOX_WIDE}>
                           <FieldLabel className="tm-field__label" label="Observações" hint={R.vinculoObservacoes} />
                           <NativeTextControl
                             value={editVinculoForm.observacoes}
@@ -341,9 +342,9 @@ export function RevisaoRecursosSection({
         <>
       <form className="ds-cadastro-subsection" onSubmit={handleAddVinculo}>
         <h4 className="ds-cadastro-subsection__title">Vincular recurso à revisão</h4>
-        <div className="ds-filters-row">
+        <div className={DS_FILTERS_ROW}>
           <SelectField
-            className="ds-filter-box--wide"
+            className={DS_FILTER_BOX_WIDE_MOD}
             label="Recurso do catálogo"
             hint={R.catalogoVinculo}
             required
@@ -359,7 +360,7 @@ export function RevisaoRecursosSection({
                 `${r.codigo_recurso} — ${r.nome_recurso} (${formatCurrency(r.valor_total_recorrente)}/mês)`
             )}
           />
-          <label className="ds-filter-box">
+          <label className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Início do uso" hint={R.vinculoInicio} />
             <NativeTextControl
               type="date"
@@ -369,7 +370,7 @@ export function RevisaoRecursosSection({
               }
             />
           </label>
-          <label className="ds-filter-box">
+          <label className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Fim do uso" hint={R.vinculoFim} />
             <NativeTextControl
               type="date"
@@ -377,7 +378,7 @@ export function RevisaoRecursosSection({
             onChange={(data_fim_uso) => setVinculoForm({ ...vinculoForm, data_fim_uso })}
             />
           </label>
-          <label className="ds-filter-box">
+          <label className={DS_FILTER_BOX_PLAIN}>
             <FieldLabel className="tm-field__label" label="Peso do rateio" hint={R.peso} />
             <NativeTextControl
               type="number"
@@ -400,7 +401,7 @@ export function RevisaoRecursosSection({
             </span>}
           />
         </div>
-        <label className="ds-filter-box ds-filter-box--wide">
+        <label className={DS_FILTER_BOX_WIDE}>
           <FieldLabel className="tm-field__label" label="Observações do vínculo" hint={R.vinculoObservacoes} />
           <NativeTextControl
             placeholder="Ex.: uso apenas nesta automação"
