@@ -18,10 +18,10 @@
 }
 
 /**
- * SimpleKpiCard (ícone à esquerda / body) — sem header MetricKpi.
- * Sempre `min-width: 0` para respeitar o track do grid (nunca max-content).
+ * SimpleKpiCard layout iconStart — ícone à esquerda do body.
+ * Layout iconEnd usa `.delpi-ui-kpi-card__header` (abaixo).
  */
-.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) {
+.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)):not(:has(.delpi-ui-kpi-card__header)) {
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -37,10 +37,33 @@
   gap: 4px;
 }
 
-.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) .delpi-ui-kpi-card__body,
-.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
+.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)):not(:has(.delpi-ui-kpi-card__header)) .delpi-ui-kpi-card__body,
+.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)):not(:has(.delpi-ui-kpi-card__header))
+  > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/**
+ * SimpleKpiCard layout iconEnd — body à esquerda, ícone no canto superior direito.
+ */
+.delpi-ui-kpi-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.delpi-ui-kpi-card__header .delpi-ui-kpi-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.delpi-ui-kpi-card__header .delpi-ui-kpi-icon {
+  flex-shrink: 0;
+  align-self: flex-start;
 }
 
 /** MetricKpiCard — body + ícone no header canônico. */
@@ -52,6 +75,7 @@
 .delpi-ui-kpi-header {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 12px;
 }
 
