@@ -380,7 +380,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | Plugin | Violações típicas | Onda sugerida |
 |--------|-------------------|---------------|
 | `tv-dashboard` | ~96 seletores `.delpi-ui-*` (format-pane, ribbon, catalog, help-tooltip) → ✅ onda 7.1 | **7.1** |
-| `quality-action-plans` | ghost, state-box, section-card header, table modal, help-tooltip | **7.2** |
+| `quality-action-plans` | ghost, state-box, section-card header, table modal, help-tooltip → ✅ onda 7.2 | **7.2** |
 | `minha-delpi-chat` | Admin KPI/filter/table/pagination local + CSS; overrides toolbar/checkbox | **7.3** (avaliar: migrar ao kit **ou** renomear DS admin como domínio fora do dual-class) |
 | `tv-dashboard-presentation` | config-table, series-chart-shell, kpi-card TV → ✅ onda 7.1 | **7.1** (junto TV) |
 
@@ -402,7 +402,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 |----------------|-------------------|---------------|
 | `dashboard-{production,commercial,quality,financial,hr,engineering,supplies,lmps}` | state-box, table mobile, print, ghost | **7.6** |
 | `scrap-monitoring`, `production-appointments`, `inspecoes-entrada`, `pedidos-venda-abertos`, `eficiencia-fabril`, `propostas-comerciais`, financeiros | filters/state-box/pagination CSS; filtersUi MEDIUM | **7.6** |
-| `controle-retrabalhos` | residual `.delpi-ui-filter-bar` / loading margin; `.cr-card:not(.delpi-ui-card)` | **7.2** (junto PAC — quick win) |
+| `controle-retrabalhos` | residual margin / `.cr-card:not` → ✅ onda 7.2 (stack-safe no kit) | **7.2** |
 
 #### Limpos (referência — sem chrome das patterns)
 
@@ -414,7 +414,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 |------|--------|------------|--------|
 | **7.0** | Doc + regra Cursor (este § + migration-catalog + `plugins-reusable-components.mdc`) | Regra absoluta publicada | ✅ |
 | **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — zerar/mover overrides `.delpi-ui-*` | 0 seletores `.delpi-ui-*` em CSS do MFE (exceto justificativa doc) | ✅ `data-delpi-ui-density="compact"` + `host-density-compact.css` / `format-pane--compact` / `--fill` |
-| **7.2** | `quality-action-plans` + `controle-retrabalhos` | 0 chrome espelho; tokens+layout only | ⏳ |
+| **7.2** | `quality-action-plans` + `controle-retrabalhos` | 0 chrome espelho; tokens+layout only | ✅ kit ghost/state/section stack-safe + dual-class PAC; CR sem `.delpi-ui-*` |
 | **7.3** | `minha-delpi-chat` admin UI — decisão kit vs domínio renomeado | Sem classes que fingem dual-class do shell dashboard **ou** migrado ao kit | ⏳ |
 | **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ⏳ |
 | **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ⏳ |

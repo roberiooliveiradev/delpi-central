@@ -54,15 +54,18 @@
   height: 20px;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
   cursor: help;
-  transition: color 0.15s ease, background 0.15s ease;
+  opacity: 0.72;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background 0.15s ease, opacity 0.15s ease;
 }
 
 .delpi-ui-help-tooltip__trigger:hover,
 .delpi-ui-help-tooltip__trigger:focus-visible {
+  opacity: 1;
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, transparent);
   outline: none;

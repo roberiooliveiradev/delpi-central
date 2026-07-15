@@ -12,6 +12,7 @@ import { FilterBar } from "../ui/FilterBar";
 import { FieldLabel, NativeCheckboxControl, filtersRowBemClasses } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../ui/MultiSelectField";
 import { TextField } from "../ui/TextField";
+import { PAC_GHOST_BTN } from "../ui/ghostChrome";
 
 const PAC_FILTER_CLASSES = filtersRowBemClasses("pac");
 
@@ -49,7 +50,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
           {hasActiveFilters(filters) ? (
             <button
               type="button"
-              className="pac-ghost-btn"
+              className={PAC_GHOST_BTN}
               disabled={loading}
               onClick={() => onChange(EMPTY_PLANS_FILTERS)}
             >

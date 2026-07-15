@@ -6,6 +6,7 @@ import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { formatPersonName } from "../utils/formatPersonName";
 import { DelpiUserSearchModal } from "./ui/DelpiUserSearchModal";
 import { TextField } from "./ui/TextField";
+import { PAC_GHOST_BTN, pacGhostBtn } from "./ui/ghostChrome";
 
 type Props = {
   idPrefix: string;
@@ -58,7 +59,7 @@ export function DelpiUserLinkSection({
           <button
             id={`${idPrefix}-search-trigger`}
             type="button"
-            className="pac-ghost-btn"
+            className={PAC_GHOST_BTN}
             aria-label="Pesquisar usuário na Delpi"
             onClick={() => setModalOpen(true)}
           >
@@ -66,7 +67,7 @@ export function DelpiUserLinkSection({
             Pesquisar usuário na Delpi
           </button>
           {userId ? (
-            <button type="button" className="pac-ghost-btn pac-ghost-btn--danger" onClick={handleUnlink}>
+            <button type="button" className={pacGhostBtn("danger")} onClick={handleUnlink}>
               Limpar vínculo
             </button>
           ) : null}

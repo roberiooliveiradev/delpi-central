@@ -2,13 +2,22 @@
  * SectionCard — .delpi-ui-section-card* (shell via .delpi-ui-card).
  */
 
+.delpi-ui-section-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .delpi-ui-section-card__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 12px;
+}
+
+.delpi-ui-section-card__header .delpi-ui-section-title {
+  margin: 0;
 }
 
 .delpi-ui-section-card__actions {

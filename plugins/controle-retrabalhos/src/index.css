@@ -74,13 +74,6 @@
 .dashboard-controle-retrabalhos a:focus-visible{
   outline: 2px solid var(--cr-accent);
   outline-offset: 2px;
-}/* Page stack: gap do layout — sem margin extra dos shells canônicos */.dashboard-controle-retrabalhos.dashboard-page > .delpi-ui-filter-bar,
-.dashboard-controle-retrabalhos.dashboard-page > .delpi-ui-loading-activity,
-.dashboard-controle-retrabalhos.cr-page > .delpi-ui-filter-bar,
-.dashboard-controle-retrabalhos.cr-page > .delpi-ui-loading-activity{
-  margin-bottom: 0;
-}.dashboard-controle-retrabalhos .delpi-ui-table-section .delpi-ui-loading-activity{
-  margin-bottom: 12px;
 }.dashboard-controle-retrabalhos .cr-page-header,
 .dashboard-controle-retrabalhos .cr-page__header{
   display: flex;
@@ -99,11 +92,6 @@
   margin: 0.35rem 0 0;
   color: var(--cr-text-muted);
   font-size: var(--cr-font-md);
-}.dashboard-controle-retrabalhos .cr-card:not(.delpi-ui-card){
-  background: var(--cr-surface);
-  border: 1px solid var(--cr-border);
-  border-radius: var(--cr-card-radius);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--cr-title) 6%, transparent);
 }.dashboard-controle-retrabalhos .cr-filters__error{
   margin: 0;
   color: var(--cr-danger);
@@ -207,8 +195,6 @@
   min-height: 0;
   padding: 14px 16px 20px;
   overflow: auto;
-}.dashboard-controle-retrabalhos .cr-state-box--error{
-  border-color: var(--cr-danger-border);
 }/* Recharts — tooltip legível nos dois temas */.dashboard-controle-retrabalhos .recharts-default-tooltip{
   background: var(--cr-surface) !important;
   border: 1px solid var(--cr-border) !important;

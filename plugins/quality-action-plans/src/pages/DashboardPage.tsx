@@ -26,6 +26,7 @@ import {
   type DashboardFilterState,
 } from "../utils/dashboardFilters";
 import { usePacPermissions } from "../context/PacPermissionsContext";
+import { PAC_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -96,13 +97,13 @@ export function DashboardPage({ onNavigate }: Props) {
         subtitle="Indicadores consolidados dos planos de ação de qualidade."
         actions={
           <>
-            <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(listPath())}>
+            <button type="button" className={PAC_GHOST_BTN} onClick={() => onNavigate(listPath())}>
               Ver todos os planos
             </button>
-            <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(overduePath())}>
+            <button type="button" className={PAC_GHOST_BTN} onClick={() => onNavigate(overduePath())}>
               Ver atrasados
             </button>
-            <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(recurrencePath())}>
+            <button type="button" className={PAC_GHOST_BTN} onClick={() => onNavigate(recurrencePath())}>
               Ver recorrência
             </button>
           </>

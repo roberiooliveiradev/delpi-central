@@ -22,6 +22,7 @@ import {
   buildBreakdownChartData,
 } from "../../utils/chartData";
 import { ChartCard } from "../ui/ChartCard";
+import { PAC_STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 type Props = {
   breakdowns?: DashboardBreakdowns | null;
@@ -59,7 +60,7 @@ function BreakdownBarChart({ data }: { data: ChartPoint[] }) {
 }
 
 function EmptyChart({ message }: { message: string }) {
-  return <div className="pac-state-box">{message}</div>;
+  return <div className={PAC_STATE_BOX_EMPTY}>{message}</div>;
 }
 
 export function DashboardBreakdownCharts({ breakdowns }: Props) {

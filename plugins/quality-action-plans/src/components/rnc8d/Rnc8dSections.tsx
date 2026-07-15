@@ -45,6 +45,7 @@ import {
   quantityInputValue,
   unitInputValue,
 } from "../../utils/rnc8dQuantityFields";
+import { PAC_GHOST_BTN } from "../ui/ghostChrome";
 
 export type Rnc8dSectionsProps = {
   value: Rnc8dReportPayload;
@@ -130,7 +131,7 @@ function Rnc8dSectionToolbar({
 } & Rnc8dSectionSaveProps) {
   return (
     <div className="pac-section-toolbar">
-      <button type="button" className="pac-ghost-btn" onClick={onAdd}>
+      <button type="button" className={PAC_GHOST_BTN} onClick={onAdd}>
         {addLabel}
       </button>
       {onSave ? (

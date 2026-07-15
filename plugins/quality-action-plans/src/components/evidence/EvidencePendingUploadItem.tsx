@@ -14,6 +14,7 @@ import { TextField } from "../ui/TextField";
 import { formatEvidenceFileSize, linkedActionLabel } from "./evidenceAttachmentUtils";
 import { EvidenceLocalPreviewModal } from "./EvidenceLocalPreviewModal";
 import { EvidencePendingFileThumb } from "./EvidencePendingFileThumb";
+import { pacGhostBtn } from "../ui/ghostChrome";
 
 export type EvidencePendingUpload = {
   id: string;
@@ -69,7 +70,7 @@ export function EvidencePendingUploadItem({
             <div className="pac-evidence-pending-item__actions">
               <button
                 type="button"
-                className="pac-ghost-btn pac-ghost-btn--icon"
+                className={pacGhostBtn("icon")}
                 aria-label={`Pré-visualizar ${item.file.name}`}
                 title="Pré-visualizar"
                 disabled={disabled}
@@ -79,7 +80,7 @@ export function EvidencePendingUploadItem({
               </button>
               <button
                 type="button"
-                className="pac-ghost-btn pac-ghost-btn--icon"
+                className={pacGhostBtn("icon")}
                 aria-label={expanded ? "Recolher detalhes" : "Preencher detalhes"}
                 title={expanded ? "Recolher" : "Preencher"}
                 disabled={disabled}
@@ -89,7 +90,7 @@ export function EvidencePendingUploadItem({
               </button>
               <button
                 type="button"
-                className="pac-ghost-btn pac-ghost-btn--icon"
+                className={pacGhostBtn("icon")}
                 aria-label={`Remover ${item.file.name} da fila`}
                 title="Remover da fila"
                 disabled={disabled}

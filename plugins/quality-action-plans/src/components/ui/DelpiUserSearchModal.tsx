@@ -8,6 +8,7 @@ import { TableHeaderCell } from "./TableHeaderCell";
 import { Modal } from "./Modal";
 import { TextField } from "./TextField";
 import { PAC_TABLE } from "./tableChrome";
+import { PAC_GHOST_BTN } from "./ghostChrome";
 
 const USER_SEARCH_PAGE_SIZE = 20;
 const T = PAC_HELP_TOOLTIPS.tables;
@@ -124,7 +125,7 @@ export function DelpiUserSearchModal({
         <div className="pac-customer-search-modal__toolbar">
           <button
             type="button"
-            className="pac-ghost-btn"
+            className={PAC_GHOST_BTN}
             disabled={loading}
             onClick={clearFilters}
           >
@@ -162,7 +163,7 @@ export function DelpiUserSearchModal({
                   ? ` · ${hiddenLinkedCount} já vinculado${hiddenLinkedCount === 1 ? "" : "s"} oculto${hiddenLinkedCount === 1 ? "" : "s"}`
                   : ""}
               </p>
-              <div className={`${PAC_TABLE.wrap} pac-customer-search-modal__table`}>
+              <div className={`${PAC_TABLE.wrapEmbedded} pac-customer-search-modal__table`}>
                 <table className={PAC_TABLE.table}>
                   <thead>
                     <tr>
@@ -194,7 +195,7 @@ export function DelpiUserSearchModal({
                         <td className="pac-customer-search-modal__select-cell">
                           <button
                             type="button"
-                            className="pac-ghost-btn pac-customer-search-modal__select"
+                            className={`${PAC_GHOST_BTN} pac-customer-search-modal__select`}
                             onClick={(event) => {
                               event.stopPropagation();
                               handleSelect(item);

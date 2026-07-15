@@ -5,6 +5,7 @@ import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { DashboardStalledAlert } from "../../types/actionPlan";
 import { KpiCard } from "../ui/KpiCard";
 import { SectionCard } from "../ui/SectionCard";
+import { PAC_GHOST_BTN } from "../ui/ghostChrome";
 
 type Props = {
   alert?: DashboardStalledAlert | null;
@@ -58,7 +59,7 @@ export function DashboardStalledAlertCard({ alert, loading = false, onNavigate }
                 </div>
                 <button
                   type="button"
-                  className="pac-ghost-btn"
+                  className={PAC_GHOST_BTN}
                   onClick={() => onNavigate(detailPath(plan.id))}
                 >
                   Abrir plano

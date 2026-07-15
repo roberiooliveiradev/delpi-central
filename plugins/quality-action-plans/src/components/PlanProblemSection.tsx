@@ -30,6 +30,7 @@ import {
 import { RNC8D_SHARED_FIELD_LABELS } from "../constants/rnc8dSharedFields";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { serializeTaggedList } from "../utils/taggedList";
+import { PAC_GHOST_BTN, pacGhostBtn } from "./ui/ghostChrome";
 
 export type PlanIdentificationFormState = {
   title: string;
@@ -179,7 +180,7 @@ export function PlanProblemSection({
         <div className="pac-customer-section__toolbar">
           <button
             type="button"
-            className="pac-ghost-btn"
+            className={PAC_GHOST_BTN}
             onClick={() => setCustomerSearchOpen(true)}
           >
             <Search size={16} aria-hidden="true" />
@@ -190,7 +191,7 @@ export function PlanProblemSection({
           identificationForm.customer_name ? (
             <button
               type="button"
-              className="pac-ghost-btn pac-ghost-btn--danger"
+              className={pacGhostBtn("danger")}
               onClick={() =>
                 onIdentificationChange((current) => ({
                   ...current,

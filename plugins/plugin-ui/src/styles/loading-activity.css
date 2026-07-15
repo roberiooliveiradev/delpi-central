@@ -19,6 +19,19 @@
   box-sizing: border-box;
 }
 
+/**
+ * Stack-safe: páginas com `dashboard-page` + gap já espaçam filhos —
+ * evita margem dupla (filter/loading) no filho direto.
+ */
+.dashboard-page > .delpi-ui-loading-activity {
+  margin-bottom: 0;
+}
+
+/** Loading embutido em table-section (sem gap de page-stack). */
+.delpi-ui-table-section .delpi-ui-loading-activity {
+  margin-bottom: 12px;
+}
+
 .delpi-ui-loading-activity--sticky {
   position: sticky;
   top: 12px;

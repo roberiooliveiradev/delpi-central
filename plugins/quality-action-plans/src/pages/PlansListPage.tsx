@@ -16,6 +16,7 @@ import {
   needsClientSideFilter,
   type PlansFilterState,
 } from "../utils/planFilters";
+import { PAC_SECTION } from "../components/ui/stateChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -98,8 +99,8 @@ export function PlansListPage({ onNavigate }: Props) {
       />
 
       <section className="pac-card">
-        <div className="pac-section-card__header pac-table-header">
-          <h2 className="pac-section-title">Resultados</h2>
+        <div className={`${PAC_SECTION.header} pac-table-header`}>
+          <h2 className={PAC_SECTION.title}>Resultados</h2>
           <span className="pac-muted pac-table-header__count">
             {visibleItems.length} plano(s)
           </span>

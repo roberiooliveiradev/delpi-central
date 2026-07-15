@@ -22,6 +22,7 @@ import { EvidencePreviewModal } from "./EvidencePreviewModal";
 import { EvidenceEditModal } from "./EvidenceEditModal";
 import { canPreviewEvidence } from "./evidencePreviewUtils";
 import { PAC_TABLE } from "../ui/tableChrome";
+import { pacGhostBtn } from "../ui/ghostChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -111,7 +112,7 @@ export function EvidenceListTable({
                       {canPreviewEvidence(evidence) ? (
                         <button
                           type="button"
-                          className="pac-ghost-btn pac-ghost-btn--icon"
+                          className={pacGhostBtn("icon")}
                           aria-label="Pré-visualizar evidência"
                           title="Pré-visualizar"
                           onClick={() => setPreviewEvidence(evidence)}
@@ -121,7 +122,7 @@ export function EvidenceListTable({
                       ) : null}
                       <button
                         type="button"
-                        className="pac-ghost-btn pac-ghost-btn--icon"
+                        className={pacGhostBtn("icon")}
                         aria-label="Baixar evidência"
                         title="Baixar"
                         onClick={() =>
@@ -138,7 +139,7 @@ export function EvidenceListTable({
                         <>
                           <button
                             type="button"
-                            className="pac-ghost-btn pac-ghost-btn--icon"
+                            className={pacGhostBtn("icon")}
                             aria-label="Editar evidência"
                             title="Editar"
                             onClick={() => setEditEvidence(evidence)}
@@ -147,7 +148,7 @@ export function EvidenceListTable({
                           </button>
                           <button
                             type="button"
-                            className="pac-ghost-btn pac-ghost-btn--icon"
+                            className={pacGhostBtn("icon")}
                             aria-label="Remover evidência"
                             title="Remover"
                             onClick={() => void handleDelete(evidence.id)}

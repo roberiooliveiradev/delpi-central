@@ -28,6 +28,7 @@ import {
   buildStatusDistribution,
 } from "../../utils/chartData";
 import { ChartCard } from "../ui/ChartCard";
+import { PAC_STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 type Props = {
   summary: DashboardSummary;
@@ -35,7 +36,7 @@ type Props = {
 };
 
 function EmptyChart({ message }: { message: string }) {
-  return <div className="pac-state-box">{message}</div>;
+  return <div className={PAC_STATE_BOX_EMPTY}>{message}</div>;
 }
 
 export function DashboardCharts({ summary, plans }: Props) {

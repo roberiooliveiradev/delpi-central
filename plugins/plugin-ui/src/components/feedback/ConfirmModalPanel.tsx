@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type ConfirmModalClassNames = {
   message: string;
   actions: string;
@@ -32,7 +34,7 @@ export function confirmModalBemClasses(
   return {
     message: `${prefix}-confirm-modal__message`,
     actions: `${prefix}-${actionsBlock} ${prefix}-${actionsBlock}--${actionsAlign}`,
-    cancelButton: `${prefix}-ghost-btn`,
+    cancelButton: delpiUiClass(`${prefix}-ghost-btn`, "delpi-ui-ghost-btn"),
     confirmButton: `${prefix}-primary-btn`,
     confirmButtonDanger: `${prefix}-danger-btn`,
   };

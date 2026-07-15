@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
 
 export type ModalShellClassNames = {
@@ -42,12 +43,16 @@ export type ModalShellProps = {
 };
 
 export function modalShellBemClasses(prefix: string): ModalShellClassNames {
+  const ghostIcon = withBemModifier(
+    delpiUiClass(`${prefix}-ghost-btn`, "delpi-ui-ghost-btn"),
+    "icon",
+  );
   return {
     overlay: `${prefix}-modal-overlay`,
     dialog: `${prefix}-modal`,
     header: `${prefix}-modal__header`,
     title: `${prefix}-modal__title`,
-    closeButton: `${prefix}-ghost-btn ${prefix}-ghost-btn--icon ${prefix}-modal__close`,
+    closeButton: `${ghostIcon} ${prefix}-modal__close`,
     body: `${prefix}-modal__body`,
     footer: `${prefix}-modal__footer`,
   };

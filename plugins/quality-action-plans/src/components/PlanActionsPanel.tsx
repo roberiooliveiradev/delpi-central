@@ -37,6 +37,7 @@ import {
 import { formatDate } from "../utils/format";
 import type { TeamMember } from "../types/rnc8d";
 import { PAC_TABLE } from "./ui/tableChrome";
+import { PAC_GHOST_BTN, pacGhostBtn } from "./ui/ghostChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -291,7 +292,7 @@ export function PlanActionsPanel({
                     <div className="pac-table-actions">
                     <button
                       type="button"
-                      className="pac-ghost-btn pac-ghost-btn--icon"
+                      className={pacGhostBtn("icon")}
                       title="Editar ação"
                       disabled={Boolean(saving)}
                       onClick={() => startEdit(action)}
@@ -300,7 +301,7 @@ export function PlanActionsPanel({
                     </button>
                     <button
                       type="button"
-                      className="pac-ghost-btn pac-ghost-btn--icon pac-ghost-btn--danger"
+                      className={pacGhostBtn("icon", "danger")}
                       title="Excluir ação"
                       disabled={Boolean(saving)}
                       onClick={() => void handleDelete(action)}
@@ -322,7 +323,7 @@ export function PlanActionsPanel({
         {isEditing ? (
           <div className="pac-new-action-form__banner">
             <span>Editando ação selecionada</span>
-            <button type="button" className="pac-ghost-btn" onClick={resetForm}>
+            <button type="button" className={PAC_GHOST_BTN} onClick={resetForm}>
               <X size={16} aria-hidden="true" />
               <span>Cancelar</span>
             </button>
@@ -417,7 +418,7 @@ export function PlanActionsPanel({
             {formBusy ? "Salvando…" : isEditing ? "Salvar alterações" : "Adicionar ação"}
           </button>
           {isEditing ? (
-            <button type="button" className="pac-ghost-btn" disabled={formBusy} onClick={resetForm}>
+            <button type="button" className={PAC_GHOST_BTN} disabled={formBusy} onClick={resetForm}>
               Cancelar
             </button>
           ) : null}

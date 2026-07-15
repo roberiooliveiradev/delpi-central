@@ -19,6 +19,7 @@ import {
 } from "../utils/myQueueEvidence";
 import { MyQueueEvidenceModal } from "./MyQueueEvidenceModal";
 import { PAC_TABLE } from "./ui/tableChrome";
+import { pacGhostBtn } from "./ui/ghostChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -221,7 +222,7 @@ export function MyQueueTable({
                 {item.action_status !== "completed" && item.action_status !== "cancelled" ? (
                   <button
                     type="button"
-                    className="pac-ghost-btn pac-ghost-btn--icon"
+                    className={pacGhostBtn("icon")}
                     title={
                       item.evidence_required
                         ? "Anexar evidência obrigatória"

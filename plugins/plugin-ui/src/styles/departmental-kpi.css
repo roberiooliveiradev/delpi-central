@@ -8,11 +8,17 @@
   min-width: 0;
 }
 
-/** SimpleKpiCard (ícone à esquerda / body) — sem header dept. */
+/**
+ * SimpleKpiCard (ícone à esquerda / body) — sem header dept.
+ * Largura mínima acompanha o valor (números longos não esmagam o card).
+ */
 .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  width: 100%;
+  min-width: min(100%, max-content);
+  box-sizing: border-box;
 }
 
 .delpi-ui-kpi-card__body {
@@ -23,9 +29,10 @@
   gap: 4px;
 }
 
+.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) .delpi-ui-kpi-card__body,
 .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: max-content;
 }
 
 /** MetricKpiCard — body + ícone no header canônico. */
@@ -60,7 +67,25 @@
   font-size: var(--delpi-ui-font-kpi, clamp(1.5rem, 2.2vw, 2rem));
   line-height: 1.1;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
   color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-kpi-value {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) .delpi-ui-kpi-card__body,
+  .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
+    min-width: 0;
+  }
+
+  .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) {
+    min-width: 0;
+  }
 }
 
 .delpi-ui-kpi-value--per-unit {

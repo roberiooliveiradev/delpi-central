@@ -12,6 +12,7 @@ import { MultiSelectField } from "../components/ui/MultiSelectField";
 import { PAC_BRANCH_OPTIONS } from "../constants/actionPlans";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { MyQueueItem, MyQueueSummary } from "../types/myQueue";
+import { PAC_SECTION } from "../components/ui/stateChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -136,8 +137,8 @@ export function MyQueuePage({ onNavigate }: Props) {
         </FilterBar>
 
         <section className="pac-card">
-          <div className="pac-section-card__header pac-table-header">
-            <h2 className="pac-section-title">
+          <div className={`${PAC_SECTION.header} pac-table-header`}>
+            <h2 className={PAC_SECTION.title}>
               <TitleWithHelp title="Suas ações" hint={PAC_HELP_TOOLTIPS.sections.myQueue} />
             </h2>
             <span className="pac-muted pac-table-header__count">

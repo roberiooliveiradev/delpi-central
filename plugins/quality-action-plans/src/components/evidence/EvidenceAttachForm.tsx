@@ -13,6 +13,7 @@ import {
 import { EvidenceFileDropzone } from "./EvidenceFileDropzone";
 import { EvidencePendingUploadList } from "./EvidencePendingUploadList";
 import type { EvidencePendingUpload } from "./EvidencePendingUploadItem";
+import { PAC_GHOST_BTN } from "../ui/ghostChrome";
 
 type Props = {
   planId: string;
@@ -129,7 +130,7 @@ export function EvidenceAttachForm({
           {onClose ? (
             <button
               type="button"
-              className="pac-ghost-btn"
+              className={PAC_GHOST_BTN}
               disabled={uploading}
               onClick={onClose}
             >

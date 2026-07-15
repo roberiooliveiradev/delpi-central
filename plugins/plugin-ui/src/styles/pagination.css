@@ -245,33 +245,50 @@
 }
 
 .delpi-ui-ghost-btn {
-  min-height: 36px;
+  height: var(--delpi-ui-control-height, 36px);
+  min-height: var(--delpi-ui-control-height, 36px);
   width: auto;
   max-width: 100%;
-  border-radius: 12px;
-  padding: 8px 14px;
+  margin: 0;
+  border-radius: var(--delpi-ui-control-radius, 12px);
+  padding: 0 14px;
   display: inline-flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 8px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  background: transparent;
   color: var(--delpi-ui-text, var(--text, #111111));
   cursor: pointer;
   font: inherit;
   font-weight: 600;
+  line-height: 1.2;
   white-space: nowrap;
   box-sizing: border-box;
   flex-shrink: 0;
+  box-shadow: none;
+  transform: none;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .delpi-ui-ghost-btn:hover:not(:disabled) {
   border-color: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
     var(--delpi-ui-border, var(--border, #e6e6e6))
   );
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  color: var(--delpi-ui-text, var(--text, #111111));
+  box-shadow: none;
+  transform: none;
 }
 
 .delpi-ui-ghost-btn:focus-visible {
@@ -282,6 +299,31 @@
 .delpi-ui-ghost-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.delpi-ui-ghost-btn--icon {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  justify-content: center;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-ghost-btn--icon svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.delpi-ui-ghost-btn--danger {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, var(--danger, #c0392b)) 40%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+  color: var(--delpi-ui-danger, var(--danger, #c0392b));
 }
 
 .delpi-ui-table-page-size {

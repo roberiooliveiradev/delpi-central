@@ -8,6 +8,7 @@ import { FormActions } from "../ui/FormActions";
 import { Modal } from "../ui/Modal";
 import { formatEvidenceFileSize } from "./evidenceAttachmentUtils";
 import { EvidenceMetadataForm } from "./EvidenceMetadataForm";
+import { PAC_GHOST_BTN } from "../ui/ghostChrome";
 
 type Props = {
   planId: string;
@@ -96,7 +97,7 @@ export function EvidenceEditModal({
             onDescriptionChange={setDescription}
           />
           <FormActions align="end">
-            <button type="button" className="pac-ghost-btn" disabled={saving} onClick={onClose}>
+            <button type="button" className={PAC_GHOST_BTN} disabled={saving} onClick={onClose}>
               Cancelar
             </button>
             <button

@@ -5,6 +5,7 @@ import { PAC_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { DashboardRecurrenceAlert } from "../../types/actionPlan";
 import { KpiCard } from "../ui/KpiCard";
 import { SectionCard } from "../ui/SectionCard";
+import { PAC_GHOST_BTN } from "../ui/ghostChrome";
 
 type Props = {
   alert?: DashboardRecurrenceAlert | null;
@@ -42,7 +43,7 @@ export function DashboardRecurrenceAlertCard({ alert, loading = false, onNavigat
         hint={PAC_HELP_TOOLTIPS.alerts.recurrence}
         subtitle={`Mesmo produto + modo de falha com ≥ 2 aberturas nos últimos ${windowMonths} meses.`}
         actions={
-          <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(recurrencePath())}>
+          <button type="button" className={PAC_GHOST_BTN} onClick={() => onNavigate(recurrencePath())}>
             Ver painel de recorrência
           </button>
         }

@@ -307,7 +307,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 |------|--------|--------|
 | **7.0** | Regra Cursor + docs (roadmap § 8, este catálogo, architecture/contributing) | ✅ |
 | **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — overrides `.delpi-ui-*` | ✅ |
-| **7.2** | `quality-action-plans` + `controle-retrabalhos` — chrome espelho / residual kit | ⏳ |
+| **7.2** | `quality-action-plans` + `controle-retrabalhos` — chrome espelho / residual kit | ✅ |
 | **7.3** | `minha-delpi-chat` admin (kit **ou** renomear DS domínio) | ⏳ |
 | **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ⏳ |
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ⏳ |
@@ -320,8 +320,8 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 |--------|------|----------------|----------------------------|---------------|-------|
 | `tv-dashboard` | 7.1 | ✅ | — | ✅ | density `data-delpi-ui-density` + format-pane--compact |
 | `tv-dashboard-presentation` | 7.1 | ✅ | — | ✅ | fill modifiers no kit (`--fill`) |
-| `quality-action-plans` | 7.2 | ⏳ | MEDIUM headers | ⏳ | ghost/state/section/table |
-| `controle-retrabalhos` | 7.2 | ⏳ | — | ✅ wrappers | residual margin `.delpi-ui-*` |
+| `quality-action-plans` | 7.2 | ✅ | headers dual `PAC_SECTION` | ✅ | ghost/state/section/table → kit; domain leftovers OK |
+| `controle-retrabalhos` | 7.2 | ✅ | — | ✅ | stack-safe margin no kit; sem `.cr-card:not` / state-box mirror |
 | `minha-delpi-chat` | 7.3 | ⏳ | ⏳ Admin* | ⏳ | decisão kit vs domínio |
 | `cadastro-kaizen` | 7.4 | ⏳ | — | ⏳ dataTableUi | section-card CSS |
 | `auditoria-5s` | 7.4 | ⏳ | ⏳ KPI/pag inline | ⏳ filtersUi | |

@@ -86,6 +86,12 @@
   box-sizing: border-box;
 }
 
+/** Stack-safe — ver loading-activity.css (mesmo contrato dashboard-page + gap). */
+.dashboard-page > .delpi-ui-filter-bar,
+.dashboard-page > .delpi-ui-filters-row {
+  margin-bottom: 0;
+}
+
 /** Shell quando o kit não emite `.delpi-ui-card` (embedded / blocos sem card). */
 .delpi-ui-filter-bar:not(.delpi-ui-card) {
   padding: 14px 1.25rem;

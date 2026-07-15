@@ -12,6 +12,7 @@ import { TextAreaField } from "./ui/TextAreaField";
 import { PacWhysFlowTextArea } from "./ui/PacWhysFlowTextArea";
 import type { FiveWhysForm, FiveWhyStep } from "../utils/fiveWhys";
 import { isFilledWhyStep, serializeFiveWhysForm } from "../utils/fiveWhys";
+import { pacGhostBtn } from "./ui/ghostChrome";
 
 const CONFIDENCE_OPTIONS = [
   { value: "low", label: "Baixa" },
@@ -127,7 +128,7 @@ function WhysFlowTrack({
                   <span className="pac-whys-flow__step-index">{index + 1}</span>
                   <button
                     type="button"
-                    className="pac-ghost-btn pac-ghost-btn--icon pac-ghost-btn--danger"
+                    className={pacGhostBtn("icon", "danger")}
                     title="Remover porquê"
                     disabled={disabled || (steps.length === 1 && !isFilledWhyStep(step))}
                     onClick={() => removeStep(index)}

@@ -25,6 +25,8 @@ import { formatDateTime } from "../utils/format";
 import { formatEffectivenessSubmittedBy } from "../utils/actorDisplay";
 import { usePacPermissions } from "../context/PacPermissionsContext";
 import { PAC_TABLE } from "../components/ui/tableChrome";
+import { PAC_GHOST_BTN, pacGhostBtn } from "../components/ui/ghostChrome";
+import { PAC_SECTION } from "../components/ui/stateChrome";
 
 const T = PAC_HELP_TOOLTIPS.tables;
 
@@ -138,7 +140,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
           <div style={{ marginTop: "0.75rem" }}>
             <button
               type="button"
-              className="pac-ghost-btn"
+              className={PAC_GHOST_BTN}
               onClick={() => onNavigate(dashboardPath())}
             >
               Voltar ao resumo
@@ -153,8 +155,8 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
 
       {canValidateEffectiveness ? (
       <section className="pac-card">
-        <div className="pac-section-card__header pac-table-header">
-          <h2 className="pac-section-title">Pendentes</h2>
+        <div className={`${PAC_SECTION.header} pac-table-header`}>
+          <h2 className={PAC_SECTION.title}>Pendentes</h2>
           <span className="pac-muted pac-table-header__count">
             {loading ? "…" : `${items.length} plano(s)`}
           </span>
@@ -224,7 +226,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                           </button>
                           <button
                             type="button"
-                            className={`pac-ghost-btn pac-btn--sm${
+                            className={`${PAC_GHOST_BTN} pac-btn--sm${
                               rejectPlanId === plan.id ? " pac-btn--active" : ""
                             }`}
                             disabled={savingId === plan.id}
@@ -249,7 +251,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                               </div>
                               <button
                                 type="button"
-                                className="pac-ghost-btn pac-ghost-btn--icon"
+                                className={pacGhostBtn("icon")}
                                 aria-label="Fechar formulário de rejeição"
                                 title="Fechar"
                                 disabled={savingId === plan.id}
@@ -271,7 +273,7 @@ export function EffectivenessPendingPage({ onNavigate }: Props) {
                             <div className="pac-effectiveness-reject-panel__actions">
                               <button
                                 type="button"
-                                className="pac-ghost-btn"
+                                className={PAC_GHOST_BTN}
                                 disabled={savingId === plan.id}
                                 onClick={closeRejectForm}
                               >

@@ -9,6 +9,7 @@ import { FieldLabel, NativeCheckboxControl, NativeTextControl } from "@delpi/plu
 import { DragHandle, type DragHandleProps, RemoveRowButton } from "./ui/RowActions";
 import { TextField } from "./ui/TextField";
 import { DelpiUserSearchModal } from "./ui/DelpiUserSearchModal";
+import { PAC_GHOST_BTN } from "./ui/ghostChrome";
 
 type RowDropProps = {
   onDragOver: (event: DragEvent) => void;
@@ -106,7 +107,7 @@ export function TeamMemberRow({
           <div className="pac-team-card__trail">
             <button
               type="button"
-              className="pac-ghost-btn pac-team-card__delpi-btn"
+              className={`${PAC_GHOST_BTN} pac-team-card__delpi-btn`}
               aria-label="Pesquisar usuário na Delpi"
               onClick={() => setModalOpen(true)}
             >

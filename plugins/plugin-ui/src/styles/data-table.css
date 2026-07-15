@@ -31,6 +31,12 @@
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
 
+.delpi-ui-table-wrap--embedded table.delpi-ui-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 table.delpi-ui-table {
   width: max-content;
   min-width: 100%;

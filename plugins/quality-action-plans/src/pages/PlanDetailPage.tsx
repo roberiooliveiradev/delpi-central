@@ -113,6 +113,7 @@ import { withExpectedPlanRevision } from "../utils/planRevisionLock";
 import { resolveEffectivenessUiPermissions } from "../utils/pacPermissions";
 import { usePacPermissions } from "../context/PacPermissionsContext";
 import { parseStoredTaggedList } from "../utils/taggedList";
+import { PAC_GHOST_BTN, pacGhostBtn } from "../components/ui/ghostChrome";
 
 type Props = {
   planId: string;
@@ -674,14 +675,14 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
         subtitle={plan?.code ? `Código ${plan.code}` : "Carregando…"}
         actions={
           <>
-            <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(listPath())}>
+            <button type="button" className={PAC_GHOST_BTN} onClick={() => onNavigate(listPath())}>
               <ArrowLeft size={16} />
               Voltar à lista
             </button>
-            <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(dashboardPath())}>
+            <button type="button" className={PAC_GHOST_BTN} onClick={() => onNavigate(dashboardPath())}>
               Resumo
             </button>
-            <button type="button" className="pac-ghost-btn" onClick={() => void handleExportPlanPdf()}>
+            <button type="button" className={PAC_GHOST_BTN} onClick={() => void handleExportPlanPdf()}>
               <Download size={16} />
               PDF resumo
             </button>
@@ -706,7 +707,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
                   <Download size={16} />
                   Excel 8D
                 </button>
-                <button type="button" className="pac-ghost-btn" onClick={() => void handleExportRnc8dPdf()}>
+                <button type="button" className={PAC_GHOST_BTN} onClick={() => void handleExportRnc8dPdf()}>
                   <Download size={16} />
                   PDF 8D
                 </button>
@@ -715,7 +716,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
             {planDeleteAllowed ? (
               <button
                 type="button"
-                className="pac-ghost-btn pac-ghost-btn--danger"
+                className={pacGhostBtn("danger")}
                 disabled={deleting}
                 title="Excluir plano de ação"
                 onClick={() => void handleDeletePlan()}
@@ -1234,7 +1235,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               {effectivenessUi.canReject ? (
                 <button
                   type="button"
-                  className="pac-ghost-btn"
+                  className={PAC_GHOST_BTN}
                   disabled={
                     saving === "effectiveness-reject"
                     || effectivenessRejectionReason.trim().length < 5
@@ -1255,7 +1256,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               {effectivenessUi.canRecordDirect ? (
                 <button
                   type="button"
-                  className="pac-ghost-btn"
+                  className={PAC_GHOST_BTN}
                   disabled={saving === "effectiveness"}
                   onClick={() =>
                     void runSave("effectiveness", async () => {
@@ -1274,7 +1275,7 @@ export function PlanDetailPage({ planId, onNavigate }: Props) {
               {["effective", "partially_effective"].includes(plan.effectiveness_status ?? "") ? (
                 <button
                   type="button"
-                  className="pac-ghost-btn"
+                  className={PAC_GHOST_BTN}
                   title={PAC_HELP_TOOLTIPS.detail.promotePattern}
                   disabled={saving === "promote-pattern"}
                   onClick={() =>

@@ -21,6 +21,7 @@ import {
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { SectionCard } from "./ui/SectionCard";
 import { FieldLabel } from "@delpi/plugin-ui/index";
+import { PAC_STATE_BOX_EMPTY } from "./ui/stateChrome";
 
 type Props = {
   detail: ActionPlanDetail;
@@ -99,7 +100,7 @@ export function PlanTimeline({ detail }: Props) {
           ))}
         </ol>
       ) : (
-        <div className="pac-state-box">
+        <div className={PAC_STATE_BOX_EMPTY}>
           <CircleDot size={18} aria-hidden="true" />
           <span>Nenhum evento neste filtro.</span>
         </div>

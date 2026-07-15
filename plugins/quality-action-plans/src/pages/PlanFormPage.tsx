@@ -22,6 +22,7 @@ import { RNC8D_SHARED_FIELD_LABELS } from "../constants/rnc8dSharedFields";
 import { PAC_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { emptyPlanFormValues, formValuesToPayload, type PlanFormValues } from "../types/planForm";
 import { emptyRnc8dPayload } from "../types/rnc8d";
+import { PAC_GHOST_BTN } from "../components/ui/ghostChrome";
 
 const CUSTOMER_TEMPLATE_OPTIONS = [
   { value: "generic", label: "Padrão PAC" },
@@ -82,7 +83,7 @@ export function PlanFormPage({ onNavigate }: Props) {
         title="Novo plano de ação"
         subtitle="Registre um problema de qualidade para acompanhamento PAC."
         actions={
-          <button type="button" className="pac-ghost-btn" onClick={() => onNavigate(listPath())}>
+          <button type="button" className={PAC_GHOST_BTN} onClick={() => onNavigate(listPath())}>
             Cancelar
           </button>
         }

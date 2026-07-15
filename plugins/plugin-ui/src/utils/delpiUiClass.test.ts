@@ -26,6 +26,15 @@ describe("withBemModifier", () => {
   });
 });
 
+describe("ghostBtnBemClasses", () => {
+  it("emite dual-class e modificadores", async () => {
+    const { ghostBtnBemClasses, ghostBtnWithModifiers } = await import("./ghostBtnBem");
+    expect(ghostBtnBemClasses("pac")).toBe("pac-ghost-btn delpi-ui-ghost-btn");
+    expect(ghostBtnWithModifiers("pac", "icon", "danger")).toContain("delpi-ui-ghost-btn--icon");
+    expect(ghostBtnWithModifiers("pac", "icon", "danger")).toContain("pac-ghost-btn--danger");
+  });
+});
+
 describe("kits DataTable/Pagination — classes delpi-ui", () => {
   it("Pagination expõe controles em linha via delpi-ui-pagination*", () => {
     const { pagination, tablePageSize } = paginationBemClasses("dc");

@@ -36,6 +36,7 @@ import {
   revisionScopeLabel,
 } from "../utils/planRevisionLabels";
 import { SectionCard } from "./ui/SectionCard";
+import { PAC_GHOST_BTN } from "./ui/ghostChrome";
 
 const REVISION_RETENTION_LIMIT = 50;
 
@@ -324,7 +325,7 @@ export function PlanRevisionsSection({
                       {!isCurrent ? (
                         <button
                           type="button"
-                          className={`pac-ghost-btn pac-btn--sm${isExpanded ? " pac-btn--active" : ""}`}
+                          className={`${PAC_GHOST_BTN} pac-btn--sm${isExpanded ? " pac-btn--active" : ""}`}
                           onClick={() => void toggleDiff(revision.revision_number)}
                         >
                           {isExpanded ? <ChevronUp size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}

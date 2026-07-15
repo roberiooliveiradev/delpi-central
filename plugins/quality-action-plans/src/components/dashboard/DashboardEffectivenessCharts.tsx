@@ -22,6 +22,7 @@ import type { DashboardEffectivenessByActionType } from "../../types/actionPlan"
 import { buildEffectivenessByActionTypeData } from "../../utils/chartData";
 import { ChartCard } from "../ui/ChartCard";
 import { KpiCard } from "../ui/KpiCard";
+import { PAC_STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 type Props = {
   effectiveness?: DashboardEffectivenessByActionType | null;
@@ -86,7 +87,7 @@ export function DashboardEffectivenessCharts({ effectiveness, loading = false }:
         hint={`${PAC_HELP_TOOLTIPS.charts.effectivenessByAction} (${windowMonths} meses).`}
       >
         {loading ? (
-          <div className="pac-state-box">Carregando taxas de eficácia…</div>
+          <div className={PAC_STATE_BOX_EMPTY}>Carregando taxas de eficácia…</div>
         ) : chartData.length ? (
           <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
             <BarChart data={chartData} layout="vertical" margin={{ left: 8, right: 16, top: 8, bottom: 8 }}>
@@ -118,7 +119,7 @@ export function DashboardEffectivenessCharts({ effectiveness, loading = false }:
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="pac-state-box">Sem revisões de eficácia vinculadas a tipos de ação no período.</div>
+          <div className={PAC_STATE_BOX_EMPTY}>Sem revisões de eficácia vinculadas a tipos de ação no período.</div>
         )}
       </ChartCard>
     </section>

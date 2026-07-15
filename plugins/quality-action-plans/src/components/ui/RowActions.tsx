@@ -1,5 +1,6 @@
 import { GripVertical, X } from "lucide-react";
 import type { DragEvent, HTMLAttributes } from "react";
+import { pacGhostBtn } from "./ghostChrome";
 
 export type DragHandleProps = {
   draggable: boolean;
@@ -48,7 +49,7 @@ export function RowActions({
       {dragProps?.draggable ? <DragHandle dragProps={dragProps} /> : null}
       <button
         type="button"
-        className="pac-ghost-btn pac-ghost-btn--icon"
+        className={pacGhostBtn("icon")}
         aria-label={removeAriaLabel}
         disabled={removeDisabled}
         title={removeTitle}
@@ -70,7 +71,7 @@ export function RemoveRowButton({
   return (
     <button
       type="button"
-      className={["pac-ghost-btn pac-ghost-btn--icon", className].filter(Boolean).join(" ")}
+      className={[pacGhostBtn("icon"), className].filter(Boolean).join(" ")}
       aria-label={removeAriaLabel}
       disabled={removeDisabled}
       title={removeTitle}

@@ -11,6 +11,7 @@ import type { DashboardEffectivenessPendingAlert } from "../../types/actionPlan"
 import { formatEffectivenessSubmittedBy } from "../../utils/actorDisplay";
 import { KpiCard } from "../ui/KpiCard";
 import { SectionCard } from "../ui/SectionCard";
+import { PAC_GHOST_BTN } from "../ui/ghostChrome";
 
 type Props = {
   alert?: DashboardEffectivenessPendingAlert | null;
@@ -60,7 +61,7 @@ export function DashboardEffectivenessPendingCard({
           pendingCount > 0 ? (
             <button
               type="button"
-              className="pac-ghost-btn"
+              className={PAC_GHOST_BTN}
               onClick={() => onNavigate(effectivenessPendingPath())}
             >
               Abrir fila
@@ -88,7 +89,7 @@ export function DashboardEffectivenessPendingCard({
                 </div>
                 <button
                   type="button"
-                  className="pac-ghost-btn"
+                  className={PAC_GHOST_BTN}
                   onClick={() => onNavigate(detailPath(plan.id))}
                 >
                   Abrir plano

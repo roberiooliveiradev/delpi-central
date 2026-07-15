@@ -1,16 +1,33 @@
 /**
  * Empty / loading / error state cards — .delpi-ui-state-box*
- * Shell de padding/borda via .delpi-ui-card.
+ * Shell de padding/borda via .delpi-ui-card (quando presente).
+ * Variant --empty: placeholder de gráfico/lista (borda tracejada).
  */
 
 .delpi-ui-state-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--delpi-ui-card-padding, 20px);
   text-align: center;
   color: var(--delpi-ui-text, var(--text, #111111));
+  box-sizing: border-box;
 }
 
 .delpi-ui-state-box--empty {
+  gap: 8px;
+  min-height: var(--delpi-ui-state-box-min-height, 200px);
+  padding: 16px;
+  border-radius: var(--delpi-ui-control-radius, 12px);
+  border: 1px dashed var(--delpi-ui-border, var(--border, #e6e6e6));
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  font-size: 13px;
+}
+
+/** Com shell card, a borda tracejada cede ao card sólido. */
+.delpi-ui-card.delpi-ui-state-box--empty {
+  border-style: solid;
+  min-height: 0;
 }
 
 .delpi-ui-state-box--error {
