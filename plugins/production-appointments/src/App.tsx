@@ -30,11 +30,13 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   return (
     <div className="pa-app-shell">
       {dashboardMounted ? (
-        <ProductionAppointmentsPage
-          branchRoute={route.branchRoute}
-          totvsBranch={totvsBranch}
-          isActive={showDashboard}
-        />
+        <div hidden={!showDashboard} aria-hidden={!showDashboard} className="pa-app-shell__dashboard">
+          <ProductionAppointmentsPage
+            branchRoute={route.branchRoute}
+            totvsBranch={totvsBranch}
+            isActive={showDashboard}
+          />
+        </div>
       ) : null}
 
       {showDetail && route.productionOrder ? (

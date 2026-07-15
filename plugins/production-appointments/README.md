@@ -29,7 +29,7 @@ Doc: [api-delpi/docs/api/production-appointments.md](../../api-delpi/docs/api/pr
 
 ## Estado desta entrega
 
-MFE com filtros (período, CT, OP, produto), KPIs, série temporal, tabela por CT, lista de apontamentos e agregado por OP.
+MFE com filtros (período, CT, OP, produto), KPIs, série temporal e uma tabela com modos de visualização (por CT, apontamentos, por OP).
 
 ## UI (`@delpi/plugin-ui`)
 

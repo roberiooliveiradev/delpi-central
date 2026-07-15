@@ -9,7 +9,8 @@ import type {
 import {
   formatInteger,
   formatProtheusDate,
-  formatQuantity,
+  formatQuantityMilheiro,
+  quantityColumnHeader,
 } from "./formatters";
 
 function safeDate(value: string): string {
@@ -31,14 +32,22 @@ export async function exportWorkCentersExcel(
   const table: MatrixExportTable = {
     title: "Apontamento de Produção — Resumo por CT",
     sheetName: "Por CT",
-    headers: ["CT", "Nome", "Inspeção final", "Apontamentos", "Produzida", "Perdida", "OPs"],
+    headers: [
+      "CT",
+      "Nome",
+      "Inspeção final",
+      "Apontamentos",
+      quantityColumnHeader("Produzida"),
+      quantityColumnHeader("Perdida"),
+      "OPs",
+    ],
     rows: items.map((row) => [
       row.work_center,
       row.work_center_name || "",
       isInspection(row.is_final_inspection) ? "Sim" : "Não",
       formatInteger(row.appointment_count),
-      formatQuantity(row.qty_produced),
-      formatQuantity(row.qty_lost),
+      formatQuantityMilheiro(row.qty_produced),
+      formatQuantityMilheiro(row.qty_lost),
       formatInteger(row.op_count),
     ]),
   };
@@ -52,7 +61,16 @@ export async function exportAppointmentsExcel(
   const table: MatrixExportTable = {
     title: "Apontamento de Produção — Apontamentos",
     sheetName: "Apontamentos",
-    headers: ["Data", "OP", "Produto", "Tipo", "CT", "Nome CT", "Produzida", "Perdida"],
+    headers: [
+      "Data",
+      "OP",
+      "Produto",
+      "Tipo",
+      "CT",
+      "Nome CT",
+      quantityColumnHeader("Produzida"),
+      quantityColumnHeader("Perdida"),
+    ],
     rows: items.map((row) => [
       formatProtheusDate(row.appointment_date),
       row.production_order,
@@ -60,8 +78,8 @@ export async function exportAppointmentsExcel(
       row.product_type || "",
       row.work_center,
       row.work_center_name || "",
-      formatQuantity(row.qty_produced),
-      formatQuantity(row.qty_lost),
+      formatQuantityMilheiro(row.qty_produced),
+      formatQuantityMilheiro(row.qty_lost),
     ]),
   };
   exportMatrixToXlsx(table, buildFilename("apontamentos-lista", filters));
@@ -80,8 +98,8 @@ export async function exportByOpExcel(
       "Tipo",
       "Apontamentos",
       "CTs",
-      "Produzida",
-      "Perdida",
+      quantityColumnHeader("Produzida"),
+      quantityColumnHeader("Perdida"),
       "Primeira data",
       "Última data",
     ],
@@ -91,8 +109,8 @@ export async function exportByOpExcel(
       row.product_type || "",
       formatInteger(row.appointment_count),
       formatInteger(row.work_center_count),
-      formatQuantity(row.qty_produced),
-      formatQuantity(row.qty_lost),
+      formatQuantityMilheiro(row.qty_produced),
+      formatQuantityMilheiro(row.qty_lost),
       formatProtheusDate(row.first_date),
       formatProtheusDate(row.last_date),
     ]),

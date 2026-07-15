@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
+import { HelpTooltip } from "@delpi/plugin-ui/index";
 
 import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type {
   AppointmentRow,
   AppointmentsQueryFilters,
   ByOpRow,
+  WorkCenterSummaryRow,
 } from "../types/appointments";
 import {
   fetchAllAppointments,
@@ -13,16 +15,43 @@ import {
 import {
   formatInteger,
   formatProtheusDate,
-  formatQuantity,
+  formatQuantityMilheiro,
+  quantityColumnHeader,
 } from "../utils/formatters";
 import {
   exportAppointmentsExcel,
   exportByOpExcel,
+  exportWorkCentersExcel,
 } from "../utils/exportTables";
 import { DataTableSection, type DataTableColumn } from "./dataTableUi";
 import { ExportExcelButton } from "./ExportExcelButton";
 
+export type AppointmentsTableViewMode = "work_centers" | "appointments" | "by_op";
+
+const VIEW_MODES: ReadonlyArray<{
+  id: AppointmentsTableViewMode;
+  label: string;
+  hint: string;
+}> = [
+  {
+    id: "work_centers",
+    label: "Por CT",
+    hint: PA_HELP_TOOLTIPS.tables.byWorkCenter,
+  },
+  {
+    id: "appointments",
+    label: "Apontamentos",
+    hint: PA_HELP_TOOLTIPS.tables.appointments,
+  },
+  {
+    id: "by_op",
+    label: "Por OP",
+    hint: PA_HELP_TOOLTIPS.tables.byOp,
+  },
+];
+
 type AppointmentsTablesProps = {
+  workCenters: WorkCenterSummaryRow[];
   appointments: AppointmentRow[];
   byOp: ByOpRow[];
   filters: AppointmentsQueryFilters;
@@ -33,6 +62,7 @@ type AppointmentsTablesProps = {
   listPageSize: number;
   byOpPageSize: number;
   loading?: boolean;
+  workCentersLoading?: boolean;
   onListPageChange: (page: number) => void;
   onByOpPageChange: (page: number) => void;
   onListPageSizeChange: (pageSize: number) => void;
@@ -41,6 +71,10 @@ type AppointmentsTablesProps = {
 };
 
 type SortDir = "asc" | "desc";
+
+function isInspection(value: number | boolean | undefined): boolean {
+  return value === true || value === 1;
+}
 
 function compareValues(a: unknown, b: unknown): number {
   if (typeof a === "number" && typeof b === "number") return a - b;
@@ -77,6 +111,7 @@ function toggleSort(
 }
 
 export function AppointmentsTables({
+  workCenters,
   appointments,
   byOp,
   filters,
@@ -87,18 +122,82 @@ export function AppointmentsTables({
   listPageSize,
   byOpPageSize,
   loading = false,
+  workCentersLoading = false,
   onListPageChange,
   onByOpPageChange,
   onListPageSizeChange,
   onByOpPageSizeChange,
   onOpenOp,
 }: AppointmentsTablesProps) {
-  const [exportingList, setExportingList] = useState(false);
-  const [exportingByOp, setExportingByOp] = useState(false);
+  const [viewMode, setViewMode] = useState<AppointmentsTableViewMode>("appointments");
+  const [exporting, setExporting] = useState(false);
+
   const [listSortKey, setListSortKey] = useState<string | null>("appointment_date");
   const [listSortDir, setListSortDir] = useState<SortDir>("desc");
   const [byOpSortKey, setByOpSortKey] = useState<string | null>("qty_produced");
   const [byOpSortDir, setByOpSortDir] = useState<SortDir>("desc");
+  const [ctSortKey, setCtSortKey] = useState<string | null>("qty_produced");
+  const [ctSortDir, setCtSortDir] = useState<SortDir>("desc");
+
+  const workCenterColumns = useMemo<DataTableColumn<WorkCenterSummaryRow>[]>(
+    () => [
+      {
+        key: "work_center",
+        header: "CT",
+        sortable: true,
+        sortValue: (row) => row.work_center,
+        render: (row) => (
+          <>
+            {row.work_center}
+            {isInspection(row.is_final_inspection) ? (
+              <span className="pa-badge">Inspeção final</span>
+            ) : null}
+          </>
+        ),
+      },
+      {
+        key: "work_center_name",
+        header: "Nome",
+        sortable: true,
+        sortValue: (row) => row.work_center_name || "",
+        className: "pa-table__col--wide",
+        render: (row) => row.work_center_name,
+      },
+      {
+        key: "appointment_count",
+        header: "Apont.",
+        sortable: true,
+        sortValue: (row) => row.appointment_count,
+        className: "pa-table__col--numeric",
+        render: (row) => formatInteger(row.appointment_count),
+      },
+      {
+        key: "qty_produced",
+        header: quantityColumnHeader("Produzida"),
+        sortable: true,
+        sortValue: (row) => row.qty_produced,
+        className: "pa-table__col--numeric",
+        render: (row) => formatQuantityMilheiro(row.qty_produced),
+      },
+      {
+        key: "qty_lost",
+        header: quantityColumnHeader("Perdida"),
+        sortable: true,
+        sortValue: (row) => row.qty_lost,
+        className: "pa-table__col--numeric",
+        render: (row) => formatQuantityMilheiro(row.qty_lost),
+      },
+      {
+        key: "op_count",
+        header: "OPs",
+        sortable: true,
+        sortValue: (row) => row.op_count,
+        className: "pa-table__col--numeric",
+        render: (row) => formatInteger(row.op_count),
+      },
+    ],
+    [],
+  );
 
   const appointmentColumns = useMemo<DataTableColumn<AppointmentRow>[]>(
     () => [
@@ -136,19 +235,19 @@ export function AppointmentsTables({
       },
       {
         key: "qty_produced",
-        header: "Produzida",
+        header: quantityColumnHeader("Produzida"),
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_produced),
+        render: (row) => formatQuantityMilheiro(row.qty_produced),
       },
       {
         key: "qty_lost",
-        header: "Perdida",
+        header: quantityColumnHeader("Perdida"),
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_lost),
+        render: (row) => formatQuantityMilheiro(row.qty_lost),
       },
     ],
     [],
@@ -190,11 +289,11 @@ export function AppointmentsTables({
       },
       {
         key: "qty_produced",
-        header: "Produzida",
+        header: quantityColumnHeader("Produzida"),
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_produced),
+        render: (row) => formatQuantityMilheiro(row.qty_produced),
       },
       {
         key: "period",
@@ -208,6 +307,10 @@ export function AppointmentsTables({
     [],
   );
 
+  const sortedWorkCenters = useMemo(
+    () => sortRows(workCenters, workCenterColumns, ctSortKey, ctSortDir),
+    [workCenters, workCenterColumns, ctSortKey, ctSortDir],
+  );
   const sortedAppointments = useMemo(
     () => sortRows(appointments, appointmentColumns, listSortKey, listSortDir),
     [appointments, appointmentColumns, listSortKey, listSortDir],
@@ -217,99 +320,156 @@ export function AppointmentsTables({
     [byOp, byOpColumns, byOpSortKey, byOpSortDir],
   );
 
-  const handleExportList = async () => {
-    setExportingList(true);
+  const activeMode = VIEW_MODES.find((mode) => mode.id === viewMode) ?? VIEW_MODES[1];
+
+  const handleExport = async () => {
+    setExporting(true);
     try {
+      if (viewMode === "work_centers") {
+        await exportWorkCentersExcel(workCenters, filters);
+        return;
+      }
+      if (viewMode === "by_op") {
+        const items = await fetchAllAppointmentsByOp(filters);
+        await exportByOpExcel(items, filters);
+        return;
+      }
       const items = await fetchAllAppointments(filters);
       await exportAppointmentsExcel(items, filters);
     } finally {
-      setExportingList(false);
+      setExporting(false);
     }
   };
 
-  const handleExportByOp = async () => {
-    setExportingByOp(true);
-    try {
-      const items = await fetchAllAppointmentsByOp(filters);
-      await exportByOpExcel(items, filters);
-    } finally {
-      setExportingByOp(false);
-    }
-  };
+  const exportDisabled =
+    viewMode === "work_centers"
+      ? workCenters.length === 0
+      : viewMode === "by_op"
+        ? byOpTotal === 0
+        : listTotal === 0;
+
+  const viewSwitcher = (
+    <div className="pa-table-view-modes" role="tablist" aria-label="Modo de visualização da tabela">
+      {VIEW_MODES.map((mode) => (
+        <button
+          key={mode.id}
+          type="button"
+          role="tab"
+          aria-selected={viewMode === mode.id}
+          className={`pa-table-view-modes__btn${
+            viewMode === mode.id ? " pa-table-view-modes__btn--active" : ""
+          }`}
+          onClick={() => setViewMode(mode.id)}
+        >
+          {mode.label}
+          <HelpTooltip
+            content={mode.hint}
+            ariaLabel={`Ajuda: ${mode.label}`}
+            className="pa-table-view-modes__help"
+          />
+        </button>
+      ))}
+    </div>
+  );
+
+  const exportAction = (
+    <ExportExcelButton
+      disabled={exportDisabled}
+      exporting={exporting}
+      onExport={handleExport}
+    />
+  );
 
   return (
-    <div className="pa-tables-stack">
-      <DataTableSection
-        title="Apontamentos"
-        titleHint={PA_HELP_TOOLTIPS.tables.appointments}
-        columns={appointmentColumns}
-        rows={sortedAppointments}
-        rowKey={(row) => String(row.appointment_id)}
-        loading={loading}
-        onRowClick={(row) => onOpenOp(row.production_order)}
-        headerActions={
-          <ExportExcelButton
-            disabled={listTotal === 0}
-            exporting={exportingList}
-            onExport={handleExportList}
-          />
-        }
-        serverSort={{
-          sortKey: listSortKey,
-          sortDirection: listSortDir,
-          onSortChange: (columnKey) => {
-            const next = toggleSort(listSortKey, listSortDir, columnKey);
-            setListSortKey(next.key);
-            setListSortDir(next.direction);
-          },
-        }}
-        serverPagination={{
-          page: listPage,
-          pageSize: listPageSize,
-          total: listTotal,
-          onPageChange: onListPageChange,
-          onPageSizeChange: (size) => {
-            onListPageSizeChange(size);
-            onListPageChange(1);
-          },
-        }}
-      />
+    <section className="pa-tables-panel" aria-label="Tabelas de apontamento">
+      {viewSwitcher}
 
-      <DataTableSection
-        title="Por ordem de produção"
-        titleHint={PA_HELP_TOOLTIPS.tables.byOp}
-        columns={byOpColumns}
-        rows={sortedByOp}
-        rowKey={(row) => `${row.production_order}-${row.product}`}
-        loading={loading}
-        onRowClick={(row) => onOpenOp(row.production_order)}
-        headerActions={
-          <ExportExcelButton
-            disabled={byOpTotal === 0}
-            exporting={exportingByOp}
-            onExport={handleExportByOp}
-          />
-        }
-        serverSort={{
-          sortKey: byOpSortKey,
-          sortDirection: byOpSortDir,
-          onSortChange: (columnKey) => {
-            const next = toggleSort(byOpSortKey, byOpSortDir, columnKey);
-            setByOpSortKey(next.key);
-            setByOpSortDir(next.direction);
-          },
-        }}
-        serverPagination={{
-          page: byOpPage,
-          pageSize: byOpPageSize,
-          total: byOpTotal,
-          onPageChange: onByOpPageChange,
-          onPageSizeChange: (size) => {
-            onByOpPageSizeChange(size);
-            onByOpPageChange(1);
-          },
-        }}
-      />
-    </div>
+      {viewMode === "work_centers" ? (
+        <DataTableSection
+          title="Resumo por centro de trabalho"
+          titleHint={activeMode.hint}
+          columns={workCenterColumns}
+          rows={sortedWorkCenters}
+          rowKey={(row) => row.work_center}
+          loading={workCentersLoading}
+          defaultSortKey={ctSortKey ?? "qty_produced"}
+          defaultSortDirection={ctSortDir}
+          headerActions={exportAction}
+          serverSort={{
+            sortKey: ctSortKey,
+            sortDirection: ctSortDir,
+            onSortChange: (columnKey) => {
+              const next = toggleSort(ctSortKey, ctSortDir, columnKey);
+              setCtSortKey(next.key);
+              setCtSortDir(next.direction);
+            },
+          }}
+        />
+      ) : null}
+
+      {viewMode === "appointments" ? (
+        <DataTableSection
+          title="Apontamentos"
+          titleHint={activeMode.hint}
+          columns={appointmentColumns}
+          rows={sortedAppointments}
+          rowKey={(row) => String(row.appointment_id)}
+          loading={loading}
+          onRowClick={(row) => onOpenOp(row.production_order)}
+          headerActions={exportAction}
+          serverSort={{
+            sortKey: listSortKey,
+            sortDirection: listSortDir,
+            onSortChange: (columnKey) => {
+              const next = toggleSort(listSortKey, listSortDir, columnKey);
+              setListSortKey(next.key);
+              setListSortDir(next.direction);
+            },
+          }}
+          serverPagination={{
+            page: listPage,
+            pageSize: listPageSize,
+            total: listTotal,
+            onPageChange: onListPageChange,
+            onPageSizeChange: (size) => {
+              onListPageSizeChange(size);
+              onListPageChange(1);
+            },
+          }}
+        />
+      ) : null}
+
+      {viewMode === "by_op" ? (
+        <DataTableSection
+          title="Por ordem de produção"
+          titleHint={activeMode.hint}
+          columns={byOpColumns}
+          rows={sortedByOp}
+          rowKey={(row) => `${row.production_order}-${row.product}`}
+          loading={loading}
+          onRowClick={(row) => onOpenOp(row.production_order)}
+          headerActions={exportAction}
+          serverSort={{
+            sortKey: byOpSortKey,
+            sortDirection: byOpSortDir,
+            onSortChange: (columnKey) => {
+              const next = toggleSort(byOpSortKey, byOpSortDir, columnKey);
+              setByOpSortKey(next.key);
+              setByOpSortDir(next.direction);
+            },
+          }}
+          serverPagination={{
+            page: byOpPage,
+            pageSize: byOpPageSize,
+            total: byOpTotal,
+            onPageChange: onByOpPageChange,
+            onPageSizeChange: (size) => {
+              onByOpPageSizeChange(size);
+              onByOpPageChange(1);
+            },
+          }}
+        />
+      ) : null}
+    </section>
   );
 }

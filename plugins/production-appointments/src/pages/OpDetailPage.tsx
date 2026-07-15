@@ -19,7 +19,8 @@ import {
   formatDatePtBr,
   formatInteger,
   formatProtheusDate,
-  formatQuantity,
+  formatQuantityMilheiro,
+  quantityColumnHeader,
 } from "../utils/formatters";
 import { exportAppointmentsExcel } from "../utils/exportTables";
 import { navigateAppointmentsBack } from "../utils/navigation";
@@ -116,19 +117,19 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
       },
       {
         key: "qty_produced",
-        header: "Produzida",
+        header: quantityColumnHeader("Produzida"),
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_produced),
+        render: (row) => formatQuantityMilheiro(row.qty_produced),
       },
       {
         key: "qty_lost",
-        header: "Perdida",
+        header: quantityColumnHeader("Perdida"),
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_lost),
+        render: (row) => formatQuantityMilheiro(row.qty_lost),
       },
     ],
     [],
@@ -145,6 +146,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
 
   return (
     <div className="dashboard-production-appointments dashboard-page pa-page pa-detail-page">
+      <div className="pa-page-shell">
       <div className="pa-detail-toolbar">
         <button
           type="button"
@@ -200,12 +202,12 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
                   value: formatInteger(opSummary?.work_center_count ?? 0),
                 },
                 {
-                  label: "Produzida",
-                  value: formatQuantity(opSummary?.qty_produced ?? totals?.qty_produced),
+                  label: quantityColumnHeader("Produzida"),
+                  value: formatQuantityMilheiro(opSummary?.qty_produced ?? totals?.qty_produced),
                 },
                 {
-                  label: "Perdida",
-                  value: formatQuantity(opSummary?.qty_lost ?? totals?.qty_lost),
+                  label: quantityColumnHeader("Perdida"),
+                  value: formatQuantityMilheiro(opSummary?.qty_lost ?? totals?.qty_lost),
                 },
               ]}
             />
@@ -221,6 +223,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
           </>
         ) : null}
       </DetailCard>
+      </div>
     </div>
   );
 }

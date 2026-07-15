@@ -7,7 +7,11 @@ import {
 } from "lucide-react";
 
 import type { AppointmentTotals } from "../types/appointments";
-import { formatInteger, formatQuantity } from "../utils/formatters";
+import {
+  formatInteger,
+  formatQuantity,
+  QUANTITY_UNIT_LABEL,
+} from "../utils/formatters";
 import { KpiCard } from "./KpiCard";
 
 type SummaryCardsProps = {
@@ -25,13 +29,13 @@ export function SummaryCards({ totals, loading = false }: SummaryCardsProps) {
         loading={loading}
       />
       <KpiCard
-        title="Qtd. produzida"
+        title={`Qtd. produzida (${QUANTITY_UNIT_LABEL})`}
         value={formatQuantity(totals?.qty_produced)}
         icon={<Package size={20} />}
         loading={loading}
       />
       <KpiCard
-        title="Qtd. perdida"
+        title={`Qtd. perdida (${QUANTITY_UNIT_LABEL})`}
         value={formatQuantity(totals?.qty_lost)}
         icon={<PackageX size={20} />}
         loading={loading}

@@ -8,7 +8,6 @@ import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { PageHeader } from "../components/PageHeader";
 import { SeriesChart } from "../components/SeriesChart";
 import { SummaryCards } from "../components/SummaryCards";
-import { WorkCenterSummaryTable } from "../components/WorkCenterSummaryTable";
 import {
   BRANCH_ROUTE_LABELS,
   type BranchRouteCode,
@@ -109,9 +108,9 @@ function ProductionAppointmentsContent({
     totvsBranch,
   ]);
 
-  const dashboard = useAppointmentsDashboard(appliedFilters);
+  const dashboard = useAppointmentsDashboard(isActive ? appliedFilters : null);
   const tables = useAppointmentsTables(
-    appliedFilters,
+    isActive ? appliedFilters : null,
     listPage,
     byOpPage,
     listPageSize,
@@ -172,6 +171,7 @@ function ProductionAppointmentsContent({
       hidden={!isActive}
       aria-hidden={!isActive}
     >
+      <div className="pa-page-shell">
       <PageHeader
         title={`Apontamento de Produção — ${branchLabel}`}
         subtitle={
@@ -233,12 +233,8 @@ function ProductionAppointmentsContent({
         <>
           <SummaryCards totals={summary.totals} loading={dashboard.loading} />
           <SeriesChart points={dashboard.data.series?.points ?? []} />
-          <WorkCenterSummaryTable
-            items={summary.items}
-            filters={appliedFilters}
-            loading={dashboard.loading}
-          />
           <AppointmentsTables
+            workCenters={summary.items}
             appointments={tables.list?.items ?? []}
             byOp={tables.byOp?.items ?? []}
             filters={appliedFilters}
@@ -249,6 +245,7 @@ function ProductionAppointmentsContent({
             listPageSize={listPageSize}
             byOpPageSize={byOpPageSize}
             loading={tables.loading}
+            workCentersLoading={dashboard.loading}
             onListPageChange={setListPage}
             onByOpPageChange={setByOpPage}
             onListPageSizeChange={setListPageSize}
@@ -261,6 +258,7 @@ function ProductionAppointmentsContent({
       {!permissionDenied && tables.error ? (
         <ErrorState message={tables.error} onRetry={tables.reload} />
       ) : null}
+      </div>
     </div>
   );
 }
