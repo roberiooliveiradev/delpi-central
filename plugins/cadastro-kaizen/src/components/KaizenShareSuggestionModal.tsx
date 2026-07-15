@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Download, QrCode } from "lucide-react";
 
 import { Modal } from "./ui";
 import {
+  downloadKaizenSuggestionQrPng,
   kaizenSuggestionQrImageUrl,
   resolveKaizenPublicSuggestionUrl,
 } from "../utils/kaizenPublicSuggestionLink";
@@ -16,6 +17,8 @@ export function KaizenShareSuggestionModal({ open, onClose }: Props) {
   const url = useMemo(() => resolveKaizenPublicSuggestionUrl(), []);
   const qrSrc = useMemo(() => kaizenSuggestionQrImageUrl(url), [url]);
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   async function copyLink() {
     try {
@@ -27,6 +30,18 @@ export function KaizenShareSuggestionModal({ open, onClose }: Props) {
     }
   }
 
+  async function exportPng() {
+    setExportError(null);
+    setExporting(true);
+    try {
+      await downloadKaizenSuggestionQrPng(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Falha ao exportar PNG.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <Modal open={open} title="Compartilhar formulário de sugestão" onClose={onClose}>
       <div className="kz-share-modal">
@@ -34,22 +49,56 @@ export function KaizenShareSuggestionModal({ open, onClose }: Props) {
           Qualquer pessoa com o link pode enviar uma sugestão. O registro entra com status{" "}
           <strong>Recebido</strong> e notifica quem tiver a permissão de alertas.
         </p>
-        <div className="kz-share-modal__qr">
-          <img src={qrSrc} alt="QR code do formulário de sugestão Kaizen" width={240} height={240} />
-        </div>
-        <label className="kz-share-modal__link-label" htmlFor="kz-share-url">
-          Link de acesso
-        </label>
-        <div className="kz-share-modal__link-row">
-          <input id="kz-share-url" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
+
+        <div className="kz-share-modal__qr-panel">
+          <div className="kz-share-modal__qr-badge">
+            <QrCode size={14} aria-hidden="true" />
+            QR code
+          </div>
+          <div className="kz-share-modal__qr">
+            <img
+              src={qrSrc}
+              alt="QR code do formulário de sugestão Kaizen"
+              width={240}
+              height={240}
+            />
+          </div>
           <button
             type="button"
-            className="kz-ghost-btn kz-share-modal__copy"
-            onClick={() => void copyLink()}
+            className="kz-primary-btn kz-share-modal__export"
+            onClick={() => void exportPng()}
+            disabled={exporting}
           >
-            {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-            {copied ? "Copiado" : "Copiar"}
+            <Download size={16} aria-hidden="true" />
+            {exporting ? "Gerando PNG…" : "Exportar PNG"}
           </button>
+          {exportError ? (
+            <p className="kz-share-modal__error" role="alert">
+              {exportError}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="kz-share-modal__link-block">
+          <label className="kz-share-modal__link-label" htmlFor="kz-share-url">
+            Link de acesso
+          </label>
+          <div className="kz-share-modal__link-row">
+            <input
+              id="kz-share-url"
+              readOnly
+              value={url}
+              onFocus={(e) => e.currentTarget.select()}
+            />
+            <button
+              type="button"
+              className="kz-ghost-btn kz-share-modal__copy"
+              onClick={() => void copyLink()}
+            >
+              {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+              {copied ? "Copiado" : "Copiar"}
+            </button>
+          </div>
         </div>
       </div>
     </Modal>
