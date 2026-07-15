@@ -1,16 +1,20 @@
 /**
  * LoadingActivityCard — .delpi-ui-loading-activity* (inclui bloco *-loading-activity-inline).
+ * Tokens: --delpi-ui-surface / --delpi-ui-text / --delpi-ui-accent (nunca branco fixo).
  */
 
 .delpi-ui-loading-activity {
   display: grid;
   align-items: center;
   gap: 14px;
-  border-radius: 18px;
+  border-radius: var(--delpi-ui-radius, 18px);
   border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
   color: var(--delpi-ui-text, var(--text, #111111));
-  box-shadow: var(--delpi-ui-shadow, var(--shadow, 0 10px 24px rgba(0, 0, 0, 0.06)));
+  box-shadow: var(
+    --delpi-ui-shadow,
+    var(--shadow, 0 10px 24px color-mix(in srgb, var(--delpi-ui-text, #111) 8%, transparent))
+  );
   margin-bottom: var(--delpi-ui-section-gap, 16px);
   box-sizing: border-box;
 }
@@ -36,12 +40,16 @@
 .delpi-ui-loading-activity--info {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 6%, var(--delpi-ui-surface, #fff)),
+    color-mix(
+      in srgb,
+      var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+      var(--delpi-ui-surface, var(--surface, #ffffff))
+    ),
     var(--delpi-ui-surface, var(--surface, #ffffff))
   );
   border-color: color-mix(
     in srgb,
-    var(--delpi-ui-accent, var(--primary, #089bdb)) 20%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 22%,
     var(--delpi-ui-border, var(--border, #e6e6e6))
   );
 }
@@ -50,7 +58,8 @@
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  border: 3px solid color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 16%, transparent);
+  border: 3px solid
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 16%, transparent);
   border-top-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   animation: delpi-ui-loading-spin 0.9s linear infinite;
   flex: 0 0 auto;
@@ -96,7 +105,11 @@
   width: 100%;
   height: 6px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--delpi-ui-border, #e6e6e6) 82%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 70%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
   overflow: hidden;
 }
 
@@ -107,7 +120,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 84%, white),
+    var(--delpi-ui-accent, var(--primary, #089bdb)),
     transparent
   );
   animation: delpi-ui-loading-slide 1.3s ease-in-out infinite;
@@ -116,7 +129,7 @@
 .delpi-ui-loading-activity__progress-indicator--determinate {
   width: 0;
   animation: none;
-  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 88%, white);
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
   transition: width 0.35s ease;
 }
 

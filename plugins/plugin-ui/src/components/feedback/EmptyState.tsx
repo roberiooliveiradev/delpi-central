@@ -1,3 +1,5 @@
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type EmptyStateClassNames = {
   root: string;
   withTitle: boolean;
@@ -13,7 +15,10 @@ export type EmptyStateProps = {
 
 export function emptyStateCardBemClasses(prefix: string): EmptyStateClassNames {
   return {
-    root: `${prefix}-card ${prefix}-state-box ${prefix}-state-box--empty`,
+    root: delpiUiClass(
+      `${prefix}-card ${prefix}-state-box ${prefix}-state-box--empty`,
+      "delpi-ui-card delpi-ui-state-box delpi-ui-state-box--empty",
+    ),
     withTitle: false,
   };
 }
@@ -85,7 +90,10 @@ export type LoadingStateProps = {
 
 export function loadingStateCardBemClasses(prefix: string): LoadingStateClassNames {
   return {
-    root: `${prefix}-card ${prefix}-state-box`,
+    root: delpiUiClass(
+      `${prefix}-card ${prefix}-state-box`,
+      "delpi-ui-card delpi-ui-state-box",
+    ),
   };
 }
 

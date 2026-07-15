@@ -20,10 +20,14 @@
 }
 
 .delpi-ui-loading-activity-badge--neutral {
-  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 94%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 94%,
+    transparent
+  );
   border-color: color-mix(
     in srgb,
-    var(--delpi-ui-border, #e6e6e6) 84%,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 84%,
     var(--delpi-ui-accent, var(--primary, #089bdb))
   );
 }
@@ -32,12 +36,12 @@
   background: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
-    var(--delpi-ui-surface, #fff)
+    var(--delpi-ui-surface, var(--surface, #ffffff))
   );
   border-color: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 24%,
-    var(--delpi-ui-border, #e6e6e6)
+    var(--delpi-ui-border, var(--border, #e6e6e6))
   );
 }
 
@@ -78,7 +82,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 78%, white),
+    var(--delpi-ui-accent, var(--primary, #089bdb)),
     transparent
   );
   animation: delpi-ui-loading-slide 1.4s ease-in-out infinite;

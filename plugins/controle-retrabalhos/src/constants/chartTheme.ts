@@ -1,9 +1,9 @@
-/** Paleta alinhada ao portal (`--primary`, `--secundary`, `--chart-*`). */
+/** Paleta e tipografia alinhadas aos tokens do dashboard (claro/escuro). */
 export const CHART_COLORS = {
-  primary: "#089bdb",
-  secondary: "#003866",
-  accent: "#7e14ff",
-  muted: "#64748b",
+  primary: "var(--primary, #089bdb)",
+  secondary: "var(--secundary, #003866)",
+  accent: "var(--chart-4, #7e14ff)",
+  muted: "var(--cr-chart-axis, #64748b)",
 } as const;
 
 export const CHART_HEIGHT = 340;

@@ -1,4 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+
+import {
+  DataTable,
+  dataTableBemClasses,
+  dataTableSectionBemClasses,
+  type DataTableColumn,
+} from "@delpi/plugin-ui/index";
 
 import { fetchAllRetrabalhoDetalhes } from "../api/fetchAllRetrabalhoDetalhes";
 import type { RetrabalhoDetalheItem, RetrabalhoDetalhesData, RetrabalhoQueryFilters } from "../types/retrabalho";
@@ -16,6 +23,16 @@ import {
   useLoadingProgress,
   useTrackedSingleFetchProgress,
 } from "../utils/loadingProgress";
+
+const SECTION = dataTableSectionBemClasses("cr");
+const TABLE = dataTableBemClasses("cr");
+
+const TABLE_LABELS = {
+  emptyMessage: "Nenhum registro nesta página.",
+  loadingMessage: "Carregando…",
+  sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
+  headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
+};
 
 type DetalhesTableProps = {
   data: RetrabalhoDetalhesData | null;
@@ -44,6 +61,42 @@ export function DetalhesTable({
   const initialLoadingProgress = useLoadingProgress(showInitialLoading, initialFetchProgress);
   const refreshLoadingProgress = useLoadingProgress(showRefreshLoading, refreshFetchProgress);
 
+  const columns = useMemo<DataTableColumn<RetrabalhoDetalheItem>[]>(
+    () => [
+      {
+        key: "data",
+        header: "Data",
+        render: (item) => formatDatePtBr(item.dataReferencia),
+      },
+      {
+        key: "recurso",
+        header: "Recurso",
+        render: (item) => item.recurso || "—",
+      },
+      {
+        key: "operador",
+        header: "Operador",
+        render: (item) => item.nomeOperador || "—",
+      },
+      {
+        key: "horas",
+        header: "Horas",
+        render: (item) => formatHours(item.tempoHoras),
+      },
+      {
+        key: "custo",
+        header: "Custo",
+        render: (item) => formatCurrencyBrl(item.valorParada),
+      },
+      {
+        key: "motivo",
+        header: "Motivo / obs.",
+        render: (item) => joinMotivoObservacao(item.motivo, item.observacao),
+      },
+    ],
+    [],
+  );
+
   const handleExportExcel = useCallback(async () => {
     if (exporting || total <= 0) return;
 
@@ -61,17 +114,18 @@ export function DetalhesTable({
   }, [exporting, filters, onExportError, total]);
 
   return (
-    <section className="cr-card cr-table-card" aria-busy={loading}>
-      <header className="cr-table-card__header">
+    <section className={SECTION.section} aria-busy={loading}>
+      <header className={SECTION.header}>
         <div>
-          <h2>Detalhes dos apontamentos</h2>
+          <h2 className={SECTION.title}>Detalhes dos apontamentos</h2>
           {data ? (
-            <p>
-              Página {data.page} de {data.totalPages} — {data.total.toLocaleString("pt-BR")} registro(s)
+            <p className={SECTION.meta}>
+              Página {data.page} de {data.totalPages} — {data.total.toLocaleString("pt-BR")}{" "}
+              registro(s)
             </p>
           ) : null}
         </div>
-        <div className="cr-table-card__actions">
+        <div className={SECTION.actions}>
           <ExportExcelButton
             disabled={loading || total <= 0}
             exporting={exporting}
@@ -96,40 +150,14 @@ export function DetalhesTable({
           progressPercent={initialLoadingProgress}
         />
       ) : (
-      <div className="cr-table-wrap">
-        <table className="cr-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Recurso</th>
-              <th>Operador</th>
-              <th>Horas</th>
-              <th>Custo</th>
-              <th>Motivo / obs.</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="cr-table__empty">
-                  Nenhum registro nesta página.
-                </td>
-              </tr>
-            ) : (
-              items.map((item) => (
-                <tr key={`${item.recno}-${item.dataReferencia}`}>
-                  <td>{formatDatePtBr(item.dataReferencia)}</td>
-                  <td>{item.recurso || "—"}</td>
-                  <td>{item.nomeOperador || "—"}</td>
-                  <td>{formatHours(item.tempoHoras)}</td>
-                  <td>{formatCurrencyBrl(item.valorParada)}</td>
-                  <td>{joinMotivoObservacao(item.motivo, item.observacao)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+        <DataTable
+          columns={columns}
+          rows={items}
+          rowKey={(item) => `${item.recno}-${item.dataReferencia}`}
+          classNames={TABLE}
+          labels={TABLE_LABELS}
+          layout="section"
+        />
       )}
 
       {data ? (
@@ -139,6 +167,7 @@ export function DetalhesTable({
           total={total}
           totalPages={totalPages}
           onPageChange={onPageChange}
+          footerClassName={SECTION.footer}
         />
       ) : null}
     </section>

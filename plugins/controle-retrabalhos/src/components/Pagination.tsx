@@ -12,20 +12,23 @@ const LABELS = {
   navigationAriaLabel: "Paginação dos detalhes",
 };
 
-const classNames = {
-  ...compactPaginationBemClasses("cr", {
-    ghostBtn: "cr-btn cr-btn--secondary",
-  }),
-  root: "cr-pagination cr-table-card__footer",
+const classNames = compactPaginationBemClasses("cr", {
+  ghostBtn: "cr-btn cr-btn--secondary",
+});
+
+type PaginationProps = DashboardCompactPaginationProps & {
+  footerClassName?: string;
 };
 
-export function Pagination(props: DashboardCompactPaginationProps) {
+export function Pagination({ footerClassName, ...props }: PaginationProps) {
   return (
-    <CompactPagination
-      classNames={classNames}
-      labels={LABELS}
-      layout="flat"
-      {...props}
-    />
+    <div className={footerClassName}>
+      <CompactPagination
+        classNames={classNames}
+        labels={LABELS}
+        layout="flat"
+        {...props}
+      />
+    </div>
   );
 }

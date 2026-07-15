@@ -1,0 +1,30 @@
+/**
+ * Empty / loading / error state cards — .delpi-ui-state-box*
+ * Shell de padding/borda via .delpi-ui-card.
+ */
+
+.delpi-ui-state-box {
+  padding: var(--delpi-ui-card-padding, 20px);
+  text-align: center;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-state-box--empty {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-state-box--error {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, var(--danger, #b42318)) 35%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+}
+
+.delpi-ui-state-box p {
+  margin: 0 0 12px;
+}
+
+.delpi-ui-state-box p:last-child {
+  margin-bottom: 0;
+}
