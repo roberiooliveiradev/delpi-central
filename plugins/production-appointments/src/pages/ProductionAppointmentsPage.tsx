@@ -20,11 +20,7 @@ import type { FilterFormState } from "../types/appointments";
 import {
   createDefaultFilterFormState,
   filtersFromFormState,
-  getDefaultLast30DaysRange,
-  getDefaultLast6MonthsRange,
-  getThisMonthRange,
-  getThisWeekRange,
-  getTodayRange,
+  resolveQuickRangePreset,
   validatePeriodRange,
 } from "../utils/dateRange";
 import { formatDatePtBr } from "../utils/formatters";
@@ -124,18 +120,10 @@ function ProductionAppointmentsContent({
   };
 
   const handleQuickRange = (preset: QuickRangePreset) => {
-    const referenceDate = new Date();
-    const range =
-      preset === "today"
-        ? getTodayRange(referenceDate)
-        : preset === "thisWeek"
-          ? getThisWeekRange(referenceDate)
-          : preset === "6m"
-            ? getDefaultLast6MonthsRange(referenceDate)
-            : preset === "30d"
-              ? getDefaultLast30DaysRange(referenceDate)
-              : getThisMonthRange(referenceDate);
-    setDraftFilters((current) => ({ ...current, ...range }));
+    setDraftFilters((current) => ({
+      ...current,
+      ...resolveQuickRangePreset(preset),
+    }));
   };
 
   const handleOpenOp = (productionOrder: string) => {

@@ -6,6 +6,7 @@ import {
   buildCtDetailPath,
   buildOpDetailPath,
   parseAppointmentsPath,
+  withDetailPeriodParams,
 } from "./routes";
 
 describe("parseAppointmentsPath", () => {
@@ -77,6 +78,21 @@ describe("buildCtDetailPath", () => {
       }),
     ).toBe(
       "/apps/production-appointments/sc/ct/CT-70?date_start=2026-06-16&date_end=2026-07-15",
+    );
+  });
+});
+
+describe("withDetailPeriodParams", () => {
+  it("atualiza date_start/date_end na query", () => {
+    expect(
+      withDetailPeriodParams(
+        "/apps/production-appointments/sc/ct/CT-70",
+        "?date_start=2026-01-01&date_end=2026-01-31",
+        "2026-07-01",
+        "2026-07-15",
+      ),
+    ).toBe(
+      "/apps/production-appointments/sc/ct/CT-70?date_start=2026-07-01&date_end=2026-07-15",
     );
   });
 });

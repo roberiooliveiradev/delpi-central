@@ -1,22 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
-import {
-  fetchAllAppointments,
-  fetchAppointmentsByOp,
-  fetchAppointmentsSummary,
-} from "../api/appointmentsApi";
-import type {
-  AppointmentRow,
-  AppointmentsQueryFilters,
-  ByOpRow,
-  WorkCenterSummaryRow,
-} from "../types/appointments";
+import type { AppointmentRow } from "../types/appointments";
 import type { BranchRouteCode } from "../constants/branches";
 import { BRANCH_ROUTE_LABELS, totvsBranchFromRoute } from "../constants/branches";
-import { buildOpDetailPath, readDetailPeriodFromUrl } from "../constants/routes";
-import { createDefaultFilterFormState } from "../utils/dateRange";
+import { buildOpDetailPath } from "../constants/routes";
 import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { useAppointmentsDetailQuery } from "../hooks/useAppointmentsDetailQuery";
 import {
   formatDatePtBr,
   formatInteger,
@@ -31,7 +21,9 @@ import { DataTableSection, type DataTableColumn } from "../components/dataTableU
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { ExportExcelButton } from "../components/ExportExcelButton";
+import { FiltersBar } from "../components/FiltersBar";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
+import { SeriesChart } from "../components/SeriesChart";
 import { SummaryCards } from "../components/SummaryCards";
 
 type CtDetailPageProps = {
@@ -45,67 +37,22 @@ function isInspection(value: number | boolean | undefined): boolean {
 
 export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
   const totvsBranch = totvsBranchFromRoute(branchRoute);
-  const defaults = useMemo(() => createDefaultFilterFormState(), []);
-  const period = readDetailPeriodFromUrl() ?? {
-    dateStart: defaults.dateStart,
-    dateEnd: defaults.dateEnd,
-  };
-
-  const filters = useMemo<AppointmentsQueryFilters>(
-    () => ({
-      branch: totvsBranch,
-      dateStart: period.dateStart,
-      dateEnd: period.dateEnd,
-      workCenter,
-    }),
-    [totvsBranch, period.dateStart, period.dateEnd, workCenter],
-  );
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
-  const [byOpRows, setByOpRows] = useState<ByOpRow[]>([]);
-  const [ctSummary, setCtSummary] = useState<WorkCenterSummaryRow | null>(null);
-  const [totals, setTotals] = useState<Awaited<
-    ReturnType<typeof fetchAppointmentsSummary>
-  >["totals"] | null>(null);
+  const query = useAppointmentsDetailQuery({
+    totvsBranch,
+    locked: { workCenter },
+  });
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    async function run() {
-      try {
-        setLoading(true);
-        setError(null);
-        const [items, byOp, summary] = await Promise.all([
-          fetchAllAppointments(filters, { signal: controller.signal }),
-          fetchAppointmentsByOp(filters, 1, 200, { signal: controller.signal }),
-          fetchAppointmentsSummary(filters, { signal: controller.signal }),
-        ]);
-        setAppointments(items);
-        setByOpRows(byOp.items);
-        const match =
-          summary.items.find(
-            (row) => row.work_center.trim().toUpperCase() === workCenter.trim().toUpperCase(),
-          ) ??
-          summary.items[0] ??
-          null;
-        setCtSummary(match);
-        setTotals(summary.totals);
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err.message : "Falha ao carregar detalhe do CT.");
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }
-    void run();
-    return () => controller.abort();
-  }, [filters, workCenter]);
+  const ctSummary =
+    query.summaryItems.find(
+      (row) => row.work_center.trim().toUpperCase() === workCenter.trim().toUpperCase(),
+    ) ??
+    query.summaryItems[0] ??
+    null;
 
   const ctName =
     ctSummary?.work_center_name ||
-    appointments[0]?.work_center_name ||
+    query.appointments[0]?.work_center_name ||
     "";
 
   const columns = useMemo<DataTableColumn<AppointmentRow>[]>(
@@ -158,9 +105,10 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
   );
 
   const handleExport = async () => {
+    if (!query.appliedFilters) return;
     setExporting(true);
     try {
-      await exportAppointmentsExcel(appointments, filters);
+      await exportAppointmentsExcel(query.appointments, query.appliedFilters);
     } finally {
       setExporting(false);
     }
@@ -168,12 +116,11 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
 
   const handleOpenOp = (productionOrder: string) => {
     navigateAppointments(
-      buildOpDetailPath(branchRoute, productionOrder, {
-        dateStart: period.dateStart,
-        dateEnd: period.dateEnd,
-      }),
+      buildOpDetailPath(branchRoute, productionOrder, query.period),
     );
   };
+
+  const hasData = query.appointments.length > 0;
 
   return (
     <div className="dashboard-production-appointments dashboard-page pa-page pa-detail-page">
@@ -189,31 +136,41 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
           </button>
         </div>
 
+        <FiltersBar
+          filters={query.draftFilters}
+          workCenters={query.workCenters}
+          validationError={query.validationError}
+          loading={query.loading}
+          hiddenFields={["workCenter"]}
+          onChange={query.handleFiltersChange}
+          onQuickRange={query.handleQuickRange}
+        />
+
         <DetailCard
           title={`CT ${workCenter}${ctName ? ` — ${ctName}` : ""}`}
-          hint={`Apontamento de Produção — ${BRANCH_ROUTE_LABELS[branchRoute]} · Filial TOTVS ${totvsBranch} · ${formatDatePtBr(period.dateStart)} — ${formatDatePtBr(period.dateEnd)}`}
+          hint={`Apontamento de Produção — ${BRANCH_ROUTE_LABELS[branchRoute]} · Filial TOTVS ${totvsBranch} · ${formatDatePtBr(query.period.dateStart)} — ${formatDatePtBr(query.period.dateEnd)}`}
           headerActions={
             <ExportExcelButton
-              disabled={appointments.length === 0}
+              disabled={!hasData}
               exporting={exporting}
               onExport={handleExport}
             />
           }
         >
-          {loading ? (
+          {query.loading ? (
             <LoadingActivityCard
               title="Carregando detalhe do CT"
-              description="Consultando apontamentos filtrados pelo centro de trabalho."
+              description="Consultando resumo, série e apontamentos do centro de trabalho."
             />
           ) : null}
 
-          {error ? <ErrorState message={error} /> : null}
+          {query.error ? <ErrorState message={query.error} /> : null}
 
-          {!loading && !error && appointments.length === 0 ? (
+          {!query.loading && !query.error && !hasData ? (
             <EmptyState message="Nenhum apontamento encontrado para este CT no período." />
           ) : null}
 
-          {!loading && !error && appointments.length > 0 ? (
+          {!query.loading && !query.error && hasData ? (
             <>
               <DetailFieldGrid
                 fields={[
@@ -226,30 +183,33 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
                   {
                     label: "Apontamentos",
                     value: formatInteger(
-                      ctSummary?.appointment_count ?? appointments.length,
+                      ctSummary?.appointment_count ?? query.appointments.length,
                     ),
                   },
                   {
                     label: "OPs",
-                    value: formatInteger(ctSummary?.op_count ?? byOpRows.length),
+                    value: formatInteger(ctSummary?.op_count ?? query.byOpRows.length),
                   },
                   {
                     label: "Produzida",
-                    value: formatQuantity(ctSummary?.qty_produced ?? totals?.qty_produced),
+                    value: formatQuantity(
+                      ctSummary?.qty_produced ?? query.totals?.qty_produced,
+                    ),
                   },
                   {
                     label: "Perdida",
-                    value: formatQuantity(ctSummary?.qty_lost ?? totals?.qty_lost),
+                    value: formatQuantity(ctSummary?.qty_lost ?? query.totals?.qty_lost),
                   },
                 ]}
               />
-              {totals ? <SummaryCards totals={totals} /> : null}
+              {query.totals ? <SummaryCards totals={query.totals} /> : null}
+              <SeriesChart points={query.seriesPoints} />
               <DataTableSection
                 columnPreferencesKey="production-appointments:CtDetailPage:apontamentos-do-ct:v1"
                 title="Apontamentos do CT"
                 titleHint={PA_HELP_TOOLTIPS.tables.ctDetailAppointments}
                 columns={columns}
-                rows={appointments}
+                rows={query.appointments}
                 rowKey={(row) => String(row.appointment_id)}
                 defaultSortKey="appointment_date"
                 defaultSortDirection="desc"

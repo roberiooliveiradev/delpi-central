@@ -10,6 +10,7 @@ import {
   getThisMonthRange,
   getThisWeekRange,
   getTodayRange,
+  resolveQuickRangePreset,
   validatePeriodRange,
 } from "./dateRange";
 
@@ -46,5 +47,12 @@ describe("dateRange", () => {
       dateStart: "2026-07-06",
       dateEnd: "2026-07-12",
     });
+  });
+
+  it("resolveQuickRangePreset cobre atalhos do FiltersBar", () => {
+    const ref = new Date(2026, 6, 15);
+    expect(resolveQuickRangePreset("today", ref)).toEqual(getTodayRange(ref));
+    expect(resolveQuickRangePreset("thisWeek", ref)).toEqual(getThisWeekRange(ref));
+    expect(resolveQuickRangePreset("thisMonth", ref)).toEqual(getThisMonthRange(ref));
   });
 });

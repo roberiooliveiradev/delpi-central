@@ -95,17 +95,18 @@ export function useAppointmentsDetailQuery({
       return;
     }
 
+    const filters = appliedFilters;
     const controller = new AbortController();
     async function run() {
       try {
         setLoading(true);
         setError(null);
         const [items, byOp, summary, series, centers] = await Promise.all([
-          fetchAllAppointments(appliedFilters, { signal: controller.signal }),
-          fetchAppointmentsByOp(appliedFilters, 1, 200, { signal: controller.signal }),
-          fetchAppointmentsSummary(appliedFilters, { signal: controller.signal }),
-          fetchAppointmentsSeries(appliedFilters, "day", { signal: controller.signal }),
-          fetchWorkCenters(appliedFilters.branch, { signal: controller.signal }),
+          fetchAllAppointments(filters, { signal: controller.signal }),
+          fetchAppointmentsByOp(filters, 1, 200, { signal: controller.signal }),
+          fetchAppointmentsSummary(filters, { signal: controller.signal }),
+          fetchAppointmentsSeries(filters, "day", { signal: controller.signal }),
+          fetchWorkCenters(filters.branch, { signal: controller.signal }),
         ]);
         setAppointments(items);
         setByOpRows(byOp.items);

@@ -82,12 +82,27 @@ export function readDetailPeriodFromUrl(): { dateStart: string; dateEnd: string 
 }
 
 /** Atualiza só a query de período sem empilhar histórico. */
+export function withDetailPeriodParams(
+  pathname: string,
+  currentSearch: string,
+  dateStart: string,
+  dateEnd: string,
+): string {
+  const raw = currentSearch.startsWith("?") ? currentSearch.slice(1) : currentSearch;
+  const params = new URLSearchParams(raw);
+  params.set("date_start", dateStart);
+  params.set("date_end", dateEnd);
+  return `${pathname}?${params.toString()}`;
+}
+
 export function replaceDetailPeriodInUrl(dateStart: string, dateEnd: string): void {
   if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
-  url.searchParams.set("date_start", dateStart);
-  url.searchParams.set("date_end", dateEnd);
-  const next = `${url.pathname}?${url.searchParams.toString()}`;
+  const next = withDetailPeriodParams(
+    window.location.pathname,
+    window.location.search,
+    dateStart,
+    dateEnd,
+  );
   const current = `${window.location.pathname}${window.location.search}`;
   if (next === current) return;
   window.history.replaceState(window.history.state, "", next);
