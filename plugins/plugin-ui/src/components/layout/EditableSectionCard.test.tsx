@@ -18,6 +18,17 @@ afterEach(() => {
   cleanup();
 });
 
+describe("editableSectionCardBemClasses", () => {
+  it("emite dual-class do kit (header + ghost) para layout e botão", () => {
+    const classes = editableSectionCardBemClasses("kz");
+    expect(classes.section).toContain("delpi-ui-card");
+    expect(classes.section).toContain("delpi-ui-section-card");
+    expect(classes.header).toContain("delpi-ui-section-card__header");
+    expect(classes.actions).toContain("delpi-ui-section-card__actions");
+    expect(classes.ghostButton).toBe("kz-ghost-btn delpi-ui-ghost-btn");
+  });
+});
+
 describe("EditableSectionCard", () => {
   it("renderiza conteúdo de leitura e botão editar", () => {
     render(
@@ -35,7 +46,9 @@ describe("EditableSectionCard", () => {
 
     expect(screen.getByText("Identificação")).toBeTruthy();
     expect(screen.getByText("Leitura")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Editar/i })).toBeTruthy();
+    const edit = screen.getByRole("button", { name: /Editar/i });
+    expect(edit).toBeTruthy();
+    expect(edit.className).toContain("delpi-ui-ghost-btn");
   });
 
   it("exibe ações de salvar e cancelar em modo edição", () => {

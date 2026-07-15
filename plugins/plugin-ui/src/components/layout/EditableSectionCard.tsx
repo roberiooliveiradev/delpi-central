@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { Pencil, Save, X, type LucideIcon } from "lucide-react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass } from "../../utils/delpiUiClass";
+import { ghostBtnBemClasses } from "../../utils/ghostBtnBem";
 import { SectionCard, sectionCardPacBemClasses, type SectionCardLabels } from "./SectionCard";
 
 export type EditableSectionCardClassNames = {
@@ -49,30 +51,34 @@ export function editableSectionCardBemClasses(
 ): EditableSectionCardClassNames {
   const card = options?.cardClass ?? `${prefix}-card`;
   const section = options?.sectionBlock ?? `${prefix}-section-card`;
+  const ui = "delpi-ui-section-card";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    section: `${card} ${section}`,
-    header: `${section}__header`,
-    title: `${section}__title`,
-    description: `${section}__desc`,
-    actions: `${section}__actions`,
+    section: pair(`${card} ${section}`, `delpi-ui-card ${ui}`),
+    header: pair(`${section}__header`, `${ui}__header`),
+    title: pair(`${section}__title`, `${ui}__title`),
+    description: pair(`${section}__desc`, `${ui}__subtitle`),
+    actions: pair(`${section}__actions`, `${ui}__actions`),
     readContent: `${prefix}-section-read`,
     editContent: `${prefix}-section-edit`,
-    ghostButton: `${prefix}-ghost-btn`,
+    ghostButton: ghostBtnBemClasses(prefix),
     primaryButton: `${prefix}-primary-btn`,
   };
 }
 
 export function editableSectionCardTransformometroClasses(prefix: string): EditableSectionCardClassNames {
   const section = `${prefix}-editable-section`;
+  const ui = "delpi-ui-section-card";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    section: `${prefix}-card ${section}`,
-    header: `${section}__header`,
-    title: `${prefix}-section-title`,
-    description: `${prefix}-hint`,
-    actions: `${section}__actions`,
+    section: pair(`${prefix}-card ${section}`, `delpi-ui-card ${ui}`),
+    header: pair(`${section}__header`, `${ui}__header`),
+    title: pair(`${prefix}-section-title`, "delpi-ui-section-title"),
+    description: pair(`${prefix}-hint`, `${ui}__subtitle`),
+    actions: pair(`${section}__actions`, `${ui}__actions`),
     readContent: `${section}__read`,
     editContent: `${section}__edit`,
-    ghostButton: `${prefix}-ghost-btn`,
+    ghostButton: ghostBtnBemClasses(prefix),
     primaryButton: `${prefix}-primary-btn`,
   };
 }
