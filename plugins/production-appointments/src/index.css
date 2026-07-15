@@ -1,10 +1,8 @@
 .dashboard-production-appointments,
-.dashboard-production-appointments * {
+.dashboard-production-appointments *{
   box-sizing: border-box;
-}
-
-/* Tokens no escopo root (também cobrem painéis Select portaled no body). */
-.dashboard-production-appointments {
+}/* Tokens no escopo root (também cobrem painéis Select portaled no body). */
+.dashboard-production-appointments{
   --pa-page-padding: 24px;
   --pa-section-gap: 20px;
   --pa-grid-gap: 16px;
@@ -35,9 +33,7 @@
   --delpi-ui-border: var(--pa-border);
   --delpi-ui-muted: var(--pa-text-muted);
   --delpi-ui-text-muted: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments.dashboard-page {
+}.dashboard-production-appointments.dashboard-page{
   display: flex;
   flex-direction: column;
   gap: var(--pa-section-gap);
@@ -53,9 +49,7 @@
     color-mix(in srgb, var(--pa-accent) 4%, var(--app-canvas, var(--bg, #f4f7fb))),
     var(--app-canvas, var(--bg, #f4f7fb)) 220px
   );
-}
-
-:root[data-theme="dark"] .dashboard-production-appointments {
+}:root[data-theme="dark"] .dashboard-production-appointments{
   --pa-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
   --pa-text: rgba(255, 255, 255, 0.88);
   --pa-text-muted: rgba(255, 255, 255, 0.72);
@@ -70,113 +64,79 @@
   --delpi-ui-border: var(--pa-border);
   --delpi-ui-muted: var(--pa-text-muted);
   --delpi-ui-text-muted: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments button,
+}.dashboard-production-appointments button,
 .dashboard-production-appointments input,
-.dashboard-production-appointments select {
+.dashboard-production-appointments select{
   font: inherit;
-}
-
-.dashboard-production-appointments button:focus-visible,
-.dashboard-production-appointments a:focus-visible {
+}.dashboard-production-appointments button:focus-visible,
+.dashboard-production-appointments a:focus-visible{
   outline: 2px solid var(--pa-accent);
   outline-offset: 2px;
-}
-
-.dashboard-production-appointments .pa-page-header {
+}.dashboard-production-appointments .pa-page-header{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--pa-grid-gap);
-}
-
-.dashboard-production-appointments .pa-page-header__title h1 {
+}.dashboard-production-appointments .pa-page-header__title h1{
   margin: 0;
   font-size: var(--pa-font-hero);
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--pa-title);
-}
-
-.dashboard-production-appointments .pa-page-header__title p {
+}.dashboard-production-appointments .pa-page-header__title p{
   margin: 0.35rem 0 0;
   color: var(--pa-text-muted);
   font-size: var(--pa-font-md);
-}
-
-.dashboard-production-appointments .pa-page-header__actions {
+}.dashboard-production-appointments .pa-page-header__actions{
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   flex-shrink: 0;
-}
-
-.dashboard-production-appointments .pa-spin {
+}.dashboard-production-appointments .pa-spin{
   animation: pa-loading-spin 0.9s linear infinite;
-}
-
-.dashboard-production-appointments .pa-card {
+}.dashboard-production-appointments .pa-card{
   background: var(--pa-surface);
   border: 1px solid var(--pa-border);
   border-radius: var(--pa-card-radius);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--pa-title) 6%, transparent);
-}
-
-.dashboard-production-appointments .pa-filter-bar,
-.dashboard-production-appointments .pa-filters {
+}.dashboard-production-appointments .pa-filter-bar,
+.dashboard-production-appointments .pa-filters{
   padding: 1rem 1.25rem;
-}
-
-.dashboard-production-appointments .pa-filter-bar__grid,
-.dashboard-production-appointments .pa-filters__grid {
+}.dashboard-production-appointments .pa-filter-bar__grid,
+.dashboard-production-appointments .pa-filters__grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem 1rem;
-}
-
-.dashboard-production-appointments .pa-field {
+}.dashboard-production-appointments .pa-field{
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   font-size: var(--pa-font-md);
   min-width: 0;
-}
-
-.dashboard-production-appointments .pa-field span,
-.dashboard-production-appointments .pa-field__label {
+}.dashboard-production-appointments .pa-field span,
+.dashboard-production-appointments .pa-field__label{
   color: var(--pa-text-muted);
   font-weight: 500;
-}
-
-.dashboard-production-appointments .pa-field input {
+}.dashboard-production-appointments .pa-field input{
   border: 1px solid var(--pa-border);
   border-radius: var(--pa-control-radius);
   padding: 0.5rem 0.65rem;
   min-height: var(--pa-control-height);
   background: var(--pa-surface);
   color: var(--pa-text);
-}
-
-.dashboard-production-appointments .pa-field input:focus-visible {
+}.dashboard-production-appointments .pa-field input:focus-visible{
   border-color: color-mix(in srgb, var(--pa-accent) 55%, var(--pa-border));
-}
-
-.dashboard-production-appointments .pa-filters__error {
+}.dashboard-production-appointments .pa-filters__error{
   margin: 0.75rem 0 0;
   color: var(--pa-danger);
   font-size: var(--pa-font-md);
-}
-
-.dashboard-production-appointments .pa-filter-bar__actions,
-.dashboard-production-appointments .pa-filters__actions {
+}.dashboard-production-appointments .pa-filter-bar__actions,
+.dashboard-production-appointments .pa-filters__actions{
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
   margin-top: 1rem;
-}
-
-.dashboard-production-appointments .pa-btn {
+}.dashboard-production-appointments .pa-btn{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -186,36 +146,24 @@
   padding: 0.5rem 0.9rem;
   min-height: 44px;
   cursor: pointer;
-}
-
-.dashboard-production-appointments .pa-btn:disabled {
+}.dashboard-production-appointments .pa-btn:disabled{
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-.dashboard-production-appointments .pa-btn--primary {
+}.dashboard-production-appointments .pa-btn--primary{
   background: var(--pa-accent);
   color: #fff;
-}
-
-.dashboard-production-appointments .pa-btn--secondary {
+}.dashboard-production-appointments .pa-btn--secondary{
   background: var(--pa-surface);
   border-color: var(--pa-border);
   color: var(--pa-text);
-}
-
-.dashboard-production-appointments .pa-btn--secondary:hover:not(:disabled) {
+}.dashboard-production-appointments .pa-btn--secondary:hover:not(:disabled){
   background: color-mix(in srgb, var(--pa-accent) 8%, var(--pa-surface));
   border-color: color-mix(in srgb, var(--pa-accent) 35%, var(--pa-border));
-}
-
-/* SelectControl (FilterSelectField) */
-.dashboard-production-appointments .pa-select {
+}/* SelectControl (FilterSelectField) */
+.dashboard-production-appointments .pa-select{
   position: relative;
   min-width: 0;
-}
-
-.dashboard-production-appointments .pa-select__trigger {
+}.dashboard-production-appointments .pa-select__trigger{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -230,24 +178,16 @@
   cursor: pointer;
   text-align: left;
   font: inherit;
-}
-
-.dashboard-production-appointments .pa-select__trigger:disabled {
+}.dashboard-production-appointments .pa-select__trigger:disabled{
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-.dashboard-production-appointments .pa-select--open .pa-select__trigger {
+}.dashboard-production-appointments .pa-select--open .pa-select__trigger{
   border-color: color-mix(in srgb, var(--pa-accent) 45%, var(--pa-border));
-}
-
-.dashboard-production-appointments .pa-select__trigger-label {
+}.dashboard-production-appointments .pa-select__trigger-label{
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.dashboard-production-appointments .pa-select__panel {
+}.dashboard-production-appointments .pa-select__panel{
   position: absolute;
   z-index: 1200;
   top: calc(100% + 4px);
@@ -262,18 +202,14 @@
   background: var(--pa-surface, var(--surface, #ffffff));
   color: var(--pa-text, var(--text, #111111));
   box-shadow: 0 12px 32px color-mix(in srgb, var(--pa-text, #111111) 14%, transparent);
-}
-
-.dashboard-production-appointments .pa-select__panel--portal {
+}.dashboard-production-appointments .pa-select__panel--portal{
   position: fixed;
   z-index: 1200;
   right: auto;
   top: auto;
   left: auto;
   background: var(--pa-surface, var(--surface, #ffffff));
-}
-
-.dashboard-production-appointments .pa-select__search {
+}.dashboard-production-appointments .pa-select__search{
   min-height: var(--pa-control-height);
   padding: 0 12px;
   border: 1px solid var(--pa-border);
@@ -281,17 +217,13 @@
   background: var(--pa-surface);
   color: var(--pa-text);
   font: inherit;
-}
-
-.dashboard-production-appointments .pa-select__list {
+}.dashboard-production-appointments .pa-select__list{
   list-style: none;
   margin: 0;
   padding: 0;
   max-height: 220px;
   overflow: auto;
-}
-
-.dashboard-production-appointments .pa-select__option {
+}.dashboard-production-appointments .pa-select__option{
   display: block;
   width: 100%;
   padding: 8px 10px;
@@ -302,34 +234,24 @@
   text-align: left;
   cursor: pointer;
   font: inherit;
-}
-
-.dashboard-production-appointments .pa-select__option:hover,
-.dashboard-production-appointments .pa-select__option--active {
+}.dashboard-production-appointments .pa-select__option:hover,
+.dashboard-production-appointments .pa-select__option--active{
   background: color-mix(in srgb, var(--pa-accent) 12%, transparent);
-}
-
-.dashboard-production-appointments .pa-select__empty {
+}.dashboard-production-appointments .pa-select__empty{
   margin: 0;
   padding: 8px;
   color: var(--pa-text-muted);
   font-size: var(--pa-font-sm);
-}
-
-.dashboard-production-appointments .pa-kpi-grid {
+}.dashboard-production-appointments .pa-kpi-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--pa-grid-gap);
-}
-
-.dashboard-production-appointments .pa-kpi-card {
+}.dashboard-production-appointments .pa-kpi-card{
   display: flex;
   gap: 0.85rem;
   padding: var(--pa-card-padding);
   align-items: flex-start;
-}
-
-.dashboard-production-appointments .pa-kpi-card__icon {
+}.dashboard-production-appointments .pa-kpi-card__icon{
   display: flex;
   align-items: center;
   justify-content: center;
@@ -339,47 +261,31 @@
   background: color-mix(in srgb, var(--pa-accent) 12%, transparent);
   color: var(--pa-accent);
   flex-shrink: 0;
-}
-
-.dashboard-production-appointments .pa-kpi-card__title {
+}.dashboard-production-appointments .pa-kpi-card__title{
   margin: 0;
   font-size: var(--pa-font-sm);
   color: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments .pa-kpi-card__value {
+}.dashboard-production-appointments .pa-kpi-card__value{
   margin: 0.25rem 0 0;
   font-size: clamp(1.05rem, 2vw, 1.35rem);
   font-weight: 700;
   line-height: 1.3;
   color: var(--pa-text);
-}
-
-.dashboard-production-appointments .pa-chart-card {
+}.dashboard-production-appointments .pa-chart-card{
   padding: 1rem 1.1rem 0.5rem;
-}
-
-.dashboard-production-appointments .pa-chart-card--featured {
+}.dashboard-production-appointments .pa-chart-card--featured{
   box-shadow: 0 2px 10px color-mix(in srgb, var(--pa-title) 8%, transparent);
-}
-
-.dashboard-production-appointments .pa-chart-card--featured .pa-chart-card__title {
+}.dashboard-production-appointments .pa-chart-card--featured .pa-chart-card__title{
   font-size: 1.0625rem;
   font-weight: 700;
-}
-
-.dashboard-production-appointments .pa-chart-card__header {
+}.dashboard-production-appointments .pa-chart-card__header{
   margin-bottom: 0.5rem;
-}
-
-.dashboard-production-appointments .pa-chart-card__header-row {
+}.dashboard-production-appointments .pa-chart-card__header-row{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 0.75rem;
-}
-
-.dashboard-production-appointments .pa-chart-card__title {
+}.dashboard-production-appointments .pa-chart-card__title{
   margin: 0;
   font-size: 1rem;
   font-weight: 650;
@@ -387,32 +293,22 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-}
-
-.dashboard-production-appointments .pa-chart-card__hint {
+}.dashboard-production-appointments .pa-chart-card__hint{
   margin: 0.35rem 0 0;
   color: var(--pa-text-muted);
   font-size: var(--pa-font-sm);
-}
-
-.dashboard-production-appointments .pa-chart-card__body {
+}.dashboard-production-appointments .pa-chart-card__body{
   min-height: 0;
   padding-bottom: 0.5rem;
-}
-
-.dashboard-production-appointments .pa-chart-card__empty {
+}.dashboard-production-appointments .pa-chart-card__empty{
   margin: 48px 0;
   text-align: center;
   color: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments .pa-tables-stack {
+}.dashboard-production-appointments .pa-tables-stack{
   display: flex;
   flex-direction: column;
   gap: var(--pa-section-gap);
-}
-
-.dashboard-production-appointments .pa-badge {
+}.dashboard-production-appointments .pa-badge{
   display: inline-block;
   margin-left: 8px;
   padding: 2px 8px;
@@ -420,26 +316,16 @@
   font-size: var(--pa-font-xs);
   background: color-mix(in srgb, var(--pa-accent) 14%, transparent);
   color: var(--pa-title);
-}
-
-.dashboard-production-appointments .pa-state-box {
+}.dashboard-production-appointments .pa-state-box{
   padding: 1.25rem 1.35rem;
-}
-
-.dashboard-production-appointments .pa-state-box p {
+}.dashboard-production-appointments .pa-state-box p{
   margin: 0 0 0.85rem;
   color: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments .pa-state-box--error {
+}.dashboard-production-appointments .pa-state-box--error{
   border-color: var(--pa-danger-border);
-}
-
-.dashboard-production-appointments .pa-state-box--empty p {
+}.dashboard-production-appointments .pa-state-box--empty p{
   margin: 0;
-}
-
-.dashboard-production-appointments .pa-loading-activity {
+}.dashboard-production-appointments .pa-loading-activity{
   display: grid;
   align-items: center;
   gap: 14px;
@@ -449,133 +335,86 @@
   color: var(--pa-text);
   box-shadow: var(--shadow, 0 10px 24px rgba(0, 0, 0, 0.06));
   margin-bottom: 12px;
-}
-
-.dashboard-production-appointments .pa-loading-activity--sticky {
+}.dashboard-production-appointments .pa-loading-activity--sticky{
   position: sticky;
   top: 12px;
   z-index: 8;
   backdrop-filter: blur(10px);
-}
-
-.dashboard-production-appointments .pa-loading-activity--panel {
+}.dashboard-production-appointments .pa-loading-activity--panel{
   grid-template-columns: auto minmax(0, 1fr);
   padding: 18px 20px;
-}
-
-.dashboard-production-appointments .pa-loading-activity--compact {
+}.dashboard-production-appointments .pa-loading-activity--compact{
   grid-template-columns: auto minmax(0, 1fr);
   padding: 12px 14px;
   border-radius: 14px;
-}
-
-.dashboard-production-appointments .pa-loading-activity--info {
+}.dashboard-production-appointments .pa-loading-activity--info{
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--pa-accent) 6%, var(--pa-surface)),
     var(--pa-surface)
   );
   border-color: color-mix(in srgb, var(--pa-accent) 20%, var(--pa-border));
-}
-
-.dashboard-production-appointments .pa-loading-activity__spinner {
+}.dashboard-production-appointments .pa-loading-activity__spinner{
   width: 22px;
   height: 22px;
   border-radius: 999px;
   border: 3px solid color-mix(in srgb, var(--pa-accent) 16%, transparent);
   border-top-color: var(--pa-accent);
   animation: pa-loading-spin 0.9s linear infinite;
-}
-
-.dashboard-production-appointments .pa-loading-activity__content {
+}.dashboard-production-appointments .pa-loading-activity__content{
   min-width: 0;
   display: grid;
   gap: 10px;
-}
-
-.dashboard-production-appointments .pa-loading-activity__title {
+}.dashboard-production-appointments .pa-loading-activity__title{
   color: var(--pa-title);
   font-size: 0.96rem;
   line-height: 1.35;
-}
-
-.dashboard-production-appointments .pa-loading-activity__description {
+}.dashboard-production-appointments .pa-loading-activity__description{
   margin: 0;
   color: var(--pa-text-muted);
   font-size: 0.9rem;
   line-height: 1.45;
-}
-
-.dashboard-production-appointments .pa-loading-activity__progress {
+}.dashboard-production-appointments .pa-loading-activity__progress{
   width: 100%;
   height: 6px;
   border-radius: 999px;
   background: color-mix(in srgb, var(--pa-border) 82%, transparent);
   overflow: hidden;
-}
-
-.dashboard-production-appointments .pa-loading-activity__progress-wrap {
+}.dashboard-production-appointments .pa-loading-activity__progress-wrap{
   display: grid;
   gap: 6px;
-}
-
-.dashboard-production-appointments .pa-loading-activity__progress-label {
+}.dashboard-production-appointments .pa-loading-activity__progress-label{
   font-size: var(--pa-font-xs);
   color: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments .pa-loading-activity__progress-indicator {
+}.dashboard-production-appointments .pa-loading-activity__progress-indicator{
   display: block;
   height: 100%;
   width: 35%;
   border-radius: inherit;
   background: var(--pa-accent);
   animation: pa-loading-indeterminate 1.2s ease-in-out infinite;
-}
-
-.dashboard-production-appointments .pa-loading-activity__progress-indicator--determinate {
+}.dashboard-production-appointments .pa-loading-activity__progress-indicator--determinate{
   width: var(--pa-progress, 0%);
   animation: none;
   transition: width 0.25s ease;
-}
-
-@keyframes pa-loading-spin {
+}@keyframes pa-loading-spin{
   to {
     transform: rotate(360deg);
   }
-}
-
-@keyframes pa-loading-indeterminate {
+}@keyframes pa-loading-indeterminate{
   0% {
     transform: translateX(-100%);
   }
   100% {
     transform: translateX(350%);
   }
-}
-
-/* Branding local sobre DataTable/Detail (estilos estruturais vêm do @delpi/plugin-ui). */
-.dashboard-production-appointments .pa-table-section.pa-card,
-.dashboard-production-appointments .pa-detail-card.pa-card {
-  padding: var(--pa-card-padding);
-}
-
-.dashboard-production-appointments .pa-section-title,
-.dashboard-production-appointments .pa-detail-card__title {
-  color: var(--pa-title);
-}
-
-.dashboard-production-appointments .pa-export-actions {
+}.dashboard-production-appointments .pa-export-actions{
   display: inline-flex;
   align-items: center;
-}
-
-.dashboard-production-appointments .pa-detail-toolbar {
+}.dashboard-production-appointments .pa-detail-toolbar{
   display: flex;
   justify-content: flex-start;
-}
-
-@media (max-width: 768px) {
+}@media (max-width: 768px){
   .dashboard-production-appointments.dashboard-page {
     --pa-page-padding: 16px;
   }
@@ -596,9 +435,7 @@
   .dashboard-production-appointments .pa-filters__actions .pa-btn {
     width: 100%;
   }
-}
-
-#root:has(> .dashboard-production-appointments),
-#root:has(> .pa-app-shell) {
+}#root:has(> .dashboard-production-appointments),
+#root:has(> .pa-app-shell){
   min-height: 100vh;
 }

@@ -32,6 +32,10 @@
   gap: 6px;
 }
 
+.delpi-ui-detail-card__title-help {
+  flex-shrink: 0;
+}
+
 .delpi-ui-detail-card__hint {
   margin: 0.35rem 0 0;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
@@ -56,18 +60,46 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px 16px;
+  margin: 0;
 }
 
+.delpi-ui-detail-grid__item {
+  margin: 0;
+  min-width: 0;
+}
+
+.delpi-ui-detail-grid__item--wide {
+  grid-column: 1 / -1;
+}
+
+.delpi-ui-detail-grid dt,
 .delpi-ui-detail-grid__label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  margin: 0 0 4px;
   font-size: 12px;
+  font-weight: 600;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
-  margin-bottom: 4px;
 }
 
+.delpi-ui-detail-grid dt {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+}
+
+.delpi-ui-detail-grid dd,
 .delpi-ui-detail-grid__value {
+  margin: 0;
   font-weight: 600;
+  font-size: 14px;
   color: var(--delpi-ui-text, var(--text, #111111));
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.delpi-ui-detail__empty {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  font-size: 14px;
 }

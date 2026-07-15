@@ -2,13 +2,11 @@
    MINHA DELPI CHAT — TOKENS LOCAIS DO PLUGIN
    Prefixo: --mdc-*
    Regra: não sobrescrever tokens globais do Portal.
-========================================= */
-
-@import "./ui/layout/chat-transitions.css";
+========================================= */@import "./ui/layout/chat-transitions.css";
 @import "./ui/layout/workspace-responsive.css";
 @import "./ui/styles/index.css";
 
-:root {
+:root{
   --mdc-font-family:
     Inter,
     ui-sans-serif,
@@ -154,33 +152,25 @@
   --mdc-sidebar-rail: 4.75rem;
   --mdc-content-max: 100%;
   --mdc-chat-column-max: 52rem;
-}
-
-@media (max-width: 767px) {
+}@media (max-width: 767px){
   :root {
     --mdc-chat-column-max: 100%;
     --mdc-content-max: 100%;
   }
-}
-
-@media (max-width: 480px) {
+}@media (max-width: 480px){
   :root {
     --mdc-chat-column-max: 100%;
     --mdc-content-max: 100%;
   }
-}
-
-/* =========================================
+}/* =========================================
    ESCOPO DO PLUGIN
    Não estilizar body/html/#root globalmente.
 ========================================= */
 
 .minha-delpi-chat,
-.minha-delpi-chat * {
+.minha-delpi-chat *{
   box-sizing: border-box;
-}
-
-.minha-delpi-chat {
+}.minha-delpi-chat{
   width: 100%;
   min-height: 100%;
   color: var(--mdc-text);
@@ -188,16 +178,12 @@
   color-scheme: light;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-}
-
-.minha-delpi-chat button,
+}.minha-delpi-chat button,
 .minha-delpi-chat input,
 .minha-delpi-chat select,
-.minha-delpi-chat textarea {
+.minha-delpi-chat textarea{
   font: inherit;
-}
-
-.minha-delpi-chat button {
+}.minha-delpi-chat button{
   color: var(--mdc-control-text);
   background: var(--mdc-control-bg);
   border: 1px solid var(--mdc-control-border);
@@ -209,92 +195,61 @@
     background var(--mdc-motion-duration-fast) var(--mdc-motion-ease),
     box-shadow var(--mdc-motion-duration) var(--mdc-motion-ease),
     transform var(--mdc-motion-duration-fast) var(--mdc-motion-ease);
-}
-
-.minha-delpi-chat button:hover:not(:disabled) {
+}.minha-delpi-chat button:hover:not(:disabled){
   border-color: var(--mdc-primary);
   color: var(--mdc-primary);
   background: var(--mdc-bg-soft);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--mdc-primary) 12%, transparent);
-}
-
-.minha-delpi-chat button:disabled {
+}.minha-delpi-chat button:disabled{
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-.minha-delpi-chat input,
+}.minha-delpi-chat input,
 .minha-delpi-chat select,
-.minha-delpi-chat textarea {
+.minha-delpi-chat textarea{
   color: var(--mdc-control-text);
   background: var(--mdc-control-bg);
   border: 1px solid var(--mdc-control-border);
   border-radius: var(--mdc-radius-sm);
-}
-
-.minha-delpi-chat input::placeholder,
-.minha-delpi-chat textarea::placeholder {
+}.minha-delpi-chat input::placeholder,
+.minha-delpi-chat textarea::placeholder{
   color: var(--mdc-control-placeholder);
-}
-
-.minha-delpi-chat :focus-visible {
+}.minha-delpi-chat :focus-visible{
   outline: none;
   box-shadow: var(--mdc-focus-ring);
-}
-
-.minha-delpi-chat a {
+}.minha-delpi-chat a{
   color: inherit;
   text-decoration: none;
-}
-
-.minha-delpi-chat img,
-.minha-delpi-chat svg {
+}.minha-delpi-chat img,
+.minha-delpi-chat svg{
   display: block;
-}
-
-.minha-delpi-chat ::selection {
+}.minha-delpi-chat ::selection{
   background: color-mix(in srgb, var(--mdc-primary) 24%, transparent);
-}
+}/* Scrollbar apenas dentro do plugin */
 
-/* Scrollbar apenas dentro do plugin */
-
-.minha-delpi-chat {
+.minha-delpi-chat{
   scrollbar-width: thin;
   scrollbar-color:
     color-mix(in srgb, var(--mdc-primary) 38%, transparent)
     transparent;
-}
-
-.minha-delpi-chat * {
+}.minha-delpi-chat *{
   scrollbar-width: thin;
   scrollbar-color:
     color-mix(in srgb, var(--mdc-primary) 38%, transparent)
     transparent;
-}
-
-.minha-delpi-chat *::-webkit-scrollbar {
+}.minha-delpi-chat *::-webkit-scrollbar{
   width: 10px;
   height: 10px;
-}
-
-.minha-delpi-chat *::-webkit-scrollbar-track {
+}.minha-delpi-chat *::-webkit-scrollbar-track{
   background: transparent;
-}
-
-.minha-delpi-chat *::-webkit-scrollbar-thumb {
+}.minha-delpi-chat *::-webkit-scrollbar-thumb{
   background: color-mix(in srgb, var(--mdc-primary) 38%, transparent);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
-}
-
-.minha-delpi-chat *::-webkit-scrollbar-thumb:hover {
+}.minha-delpi-chat *::-webkit-scrollbar-thumb:hover{
   background: color-mix(in srgb, var(--mdc-primary) 52%, transparent);
   background-clip: padding-box;
-}
-
-
-.minha-delpi-chat__loading-page {
+}.minha-delpi-chat__loading-page{
   display: grid;
   place-items: center;
   min-height: 100vh;

@@ -8,23 +8,15 @@ import {
 import type { DataTableColumn } from "./types";
 import "./DataTable.css";
 
+const kit = dataTableBemClasses("dm");
+
+/** Kit canônico + outer/scroll de domínio (cards mobile / escopo CSS). */
 const DM_TABLE_CLASS_NAMES: DataTableClassNames = {
-  ...dataTableBemClasses("dm"),
+  ...kit,
   outerRoot: "dm-datatable",
-  scrollWrap: "dm-datatable__scroll",
-  wrapSection: "dm-datatable__scroll",
-  wrapEmbedded: "dm-datatable__scroll",
-  table: "dm-datatable__table",
-  tableClickable: "dm-datatable__table dm-datatable__table--clickable",
-  sortableColumn: "dm-datatable__col--sortable",
-  empty: "dm-datatable__empty",
-  emptyInnerWrapper: true,
-  headerLabel: "dm-datatable__header-label",
-  headerText: "dm-datatable__header-label",
-  sortButton: "dm-datatable__sort-button",
-  sortButtonActive: "dm-datatable__sort-button",
-  sortIndicator: "dm-datatable__sort-indicator",
-  rowClickable: "is-clickable",
+  scrollWrap: "dm-datatable__scroll dm-table-wrap delpi-ui-table-wrap",
+  sortableColumn: "dm-table__col--sortable delpi-ui-table__col--sortable",
+  rowClickable: `${kit.rowClickable} is-clickable`,
 };
 
 const LABELS = {

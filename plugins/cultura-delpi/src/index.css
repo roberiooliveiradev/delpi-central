@@ -1,13 +1,9 @@
-* {
+*{
   box-sizing: border-box;
-}
-
-.cultura-delpi,
-.cultura-delpi * {
+}.cultura-delpi,
+.cultura-delpi *{
   box-sizing: border-box;
-}
-
-.cultura-delpi {
+}.cultura-delpi{
   --cd-page-padding: 24px;
   --cd-page-padding-left: 56px;
   --cd-gap: 20px;
@@ -24,9 +20,7 @@
   --cd-font-md: 15px;
   --cd-font-lg: clamp(30px, 2.6vw, 42px);
   --cd-shadow: 0 12px 32px rgba(0, 56, 102, 0.07);
-}
-
-.cultura-delpi-page {
+}.cultura-delpi-page{
   width: 100%;
   min-height: 100%;
   padding: 32px 28px 40px var(--cd-page-padding-left);
@@ -38,9 +32,7 @@
     var(--app-canvas, var(--bg, #ffffff)) 360px
   );
   animation: cd-view-fade-in 0.2s ease-out;
-}
-
-@keyframes cd-view-fade-in {
+}@keyframes cd-view-fade-in{
   from {
     opacity: 0;
     transform: translateY(4px);
@@ -49,27 +41,19 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.cultura-delpi-panel__inner {
+}.cultura-delpi-panel__inner{
   width: 100%;
   max-width: 1280px;
-}
-
-.cultura-delpi-panel__hero {
+}.cultura-delpi-panel__hero{
   margin-bottom: 28px;
-}
-
-.cultura-delpi-panel__eyebrow {
+}.cultura-delpi-panel__eyebrow{
   margin: 0;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--cd-accent);
-}
-
-.cultura-delpi-panel__eyebrow-mark {
+}.cultura-delpi-panel__eyebrow-mark{
   display: block;
   width: 34px;
   height: 3px;
@@ -80,49 +64,37 @@
     var(--cd-accent),
     color-mix(in srgb, var(--cd-accent) 45%, white)
   );
-}
-
-.cultura-delpi-panel__title {
+}.cultura-delpi-panel__title{
   margin: 0 0 10px;
   font-size: var(--cd-font-lg);
   line-height: 1.12;
   font-weight: 800;
   letter-spacing: -0.02em;
   color: var(--cd-title);
-}
-
-.cultura-delpi-panel__subtitle {
+}.cultura-delpi-panel__subtitle{
   margin: 0;
   max-width: 760px;
   font-size: 16px;
   line-height: 1.65;
   color: var(--cd-muted);
-}
-
-.cultura-delpi-panel__notice {
+}.cultura-delpi-panel__notice{
   margin: 0 0 18px;
   padding: 12px 16px;
   border: 1px solid color-mix(in srgb, var(--cd-accent) 24%, var(--cd-border));
   border-radius: var(--cd-radius-sm);
   background: color-mix(in srgb, var(--cd-accent) 7%, var(--cd-surface));
-}
-
-.cultura-delpi-panel__notice p {
+}.cultura-delpi-panel__notice p{
   margin: 0;
   font-size: var(--cd-font-sm);
   color: var(--cd-muted);
-}
-
-.cultura-delpi-panel__label {
+}.cultura-delpi-panel__label{
   margin: 0 0 8px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--cd-accent);
-}
-
-.cultura-delpi-panel__purpose {
+}.cultura-delpi-panel__purpose{
   position: relative;
   overflow: hidden;
   margin-bottom: var(--cd-gap);
@@ -130,9 +102,7 @@
   border-radius: calc(var(--cd-radius) + 2px);
   background: var(--cd-surface);
   box-shadow: var(--cd-shadow);
-}
-
-.cultura-delpi-panel__purpose-accent {
+}.cultura-delpi-panel__purpose-accent{
   position: absolute;
   top: 0;
   left: 0;
@@ -143,23 +113,17 @@
     var(--cd-accent),
     color-mix(in srgb, var(--cd-accent) 55%, var(--cd-title))
   );
-}
-
-.cultura-delpi-panel__purpose-body {
+}.cultura-delpi-panel__purpose-body{
   position: relative;
   z-index: 1;
   display: flex;
   align-items: flex-start;
   gap: 22px;
   padding: 28px 30px;
-}
-
-.cultura-delpi-panel__purpose-copy {
+}.cultura-delpi-panel__purpose-copy{
   flex: 1;
   min-width: 0;
-}
-
-.cultura-delpi-panel__purpose-text {
+}.cultura-delpi-panel__purpose-text{
   margin: 0;
   max-width: 760px;
   font-size: clamp(22px, 2.1vw, 30px);
@@ -167,9 +131,7 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--cd-title);
-}
-
-.cultura-delpi-panel__purpose-decor {
+}.cultura-delpi-panel__purpose-decor{
   position: absolute;
   top: 0;
   right: 0;
@@ -183,9 +145,7 @@
     color-mix(in srgb, var(--cd-accent) 18%, white) 100%
   );
   opacity: 0.85;
-}
-
-.cultura-delpi-panel__purpose-dots {
+}.cultura-delpi-panel__purpose-dots{
   position: absolute;
   inset: 18% 12% 12% 28%;
   border-radius: 24px;
@@ -195,25 +155,19 @@
   );
   background-size: 14px 14px;
   opacity: 0.55;
-}
-
-.cultura-delpi-panel__duo {
+}.cultura-delpi-panel__duo{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--cd-gap);
   margin-bottom: var(--cd-gap);
-}
-
-.cultura-delpi-panel__card {
+}.cultura-delpi-panel__card{
   position: relative;
   overflow: hidden;
   border: 1px solid var(--cd-border);
   border-radius: var(--cd-radius);
   background: var(--cd-surface);
   box-shadow: var(--cd-shadow);
-}
-
-.cultura-delpi-panel__card-accent {
+}.cultura-delpi-panel__card-accent{
   position: absolute;
   top: 18px;
   bottom: 18px;
@@ -225,28 +179,20 @@
     var(--cd-accent),
     color-mix(in srgb, var(--cd-accent) 45%, var(--cd-title))
   );
-}
-
-.cultura-delpi-panel__card-body {
+}.cultura-delpi-panel__card-body{
   display: flex;
   align-items: flex-start;
   gap: 18px;
   padding: 24px 24px 24px 22px;
-}
-
-.cultura-delpi-panel__card-copy {
+}.cultura-delpi-panel__card-copy{
   flex: 1;
   min-width: 0;
-}
-
-.cultura-delpi-panel__card-text {
+}.cultura-delpi-panel__card-text{
   margin: 0;
   font-size: var(--cd-font-md);
   line-height: 1.65;
   color: var(--cd-text);
-}
-
-.cultura-delpi-panel__icon-ring {
+}.cultura-delpi-panel__icon-ring{
   flex: 0 0 auto;
   display: grid;
   place-items: center;
@@ -255,47 +201,33 @@
   border-radius: 999px;
   background: var(--cd-accent-soft);
   color: var(--cd-accent);
-}
-
-.cultura-delpi-panel__icon-ring--lg {
+}.cultura-delpi-panel__icon-ring--lg{
   width: 58px;
   height: 58px;
-}
-
-.cultura-delpi-panel__icon {
+}.cultura-delpi-panel__icon{
   width: 26px;
   height: 26px;
   flex: 0 0 auto;
-}
-
-.cultura-delpi-panel__values-section {
+}.cultura-delpi-panel__values-section{
   margin-bottom: 8px;
-}
-
-.cultura-delpi-panel__values-heading {
+}.cultura-delpi-panel__values-heading{
   margin: 0 0 14px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--cd-accent);
-}
-
-.cultura-delpi-panel__values-shell {
+}.cultura-delpi-panel__values-shell{
   padding: 22px;
   border: 1px solid var(--cd-border);
   border-radius: calc(var(--cd-radius) + 2px);
   background: var(--cd-surface);
   box-shadow: var(--cd-shadow);
-}
-
-.cultura-delpi-panel__values-grid {
+}.cultura-delpi-panel__values-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
-}
-
-.cultura-delpi-panel__value-card {
+}.cultura-delpi-panel__value-card{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -309,9 +241,7 @@
     color-mix(in srgb, var(--cd-accent) 4%, var(--cd-surface)),
     var(--cd-surface)
   );
-}
-
-.cultura-delpi-panel__value-icon-wrap {
+}.cultura-delpi-panel__value-icon-wrap{
   display: grid;
   place-items: center;
   width: 46px;
@@ -320,90 +250,66 @@
   border-radius: 999px;
   background: var(--cd-accent-soft);
   color: var(--cd-accent);
-}
-
-.cultura-delpi-panel__value-icon {
+}.cultura-delpi-panel__value-icon{
   width: 22px;
   height: 22px;
-}
-
-.cultura-delpi-panel__value-title {
+}.cultura-delpi-panel__value-title{
   margin: 0 0 8px;
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--cd-accent);
-}
-
-.cultura-delpi-panel__value-desc {
+}.cultura-delpi-panel__value-desc{
   margin: 0;
   font-size: 13px;
   line-height: 1.55;
   color: var(--cd-muted);
-}
-
-.cultura-delpi-panel__values-empty {
+}.cultura-delpi-panel__values-empty{
   margin: 0;
   font-size: var(--cd-font-md);
   line-height: 1.6;
   color: var(--cd-muted);
-}
-
-.cultura-delpi-panel__footer {
+}.cultura-delpi-panel__footer{
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 22px;
   padding-top: 4px;
-}
-
-.cultura-delpi-panel__footer-icon {
+}.cultura-delpi-panel__footer-icon{
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
   color: var(--cd-accent);
-}
-
-.cultura-delpi-panel__footer p {
+}.cultura-delpi-panel__footer p{
   margin: 0;
   font-size: 12px;
   line-height: 1.5;
   color: var(--cd-muted);
-}
-
-/* Hero legado — usado pela tela admin */
-.cultura-delpi__hero {
+}/* Hero legado — usado pela tela admin */
+.cultura-delpi__hero{
   max-width: 960px;
   margin-bottom: calc(var(--cd-gap) + 8px);
-}
-
-.cultura-delpi__eyebrow {
+}.cultura-delpi__eyebrow{
   margin: 0 0 8px;
   font-size: var(--cd-font-sm);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--cd-accent);
-}
-
-.cultura-delpi__title {
+}.cultura-delpi__title{
   margin: 0 0 12px;
   font-size: var(--cd-font-lg);
   line-height: 1.15;
   font-weight: 700;
   color: var(--cd-title);
-}
-
-.cultura-delpi__subtitle {
+}.cultura-delpi__subtitle{
   margin: 0;
   max-width: 720px;
   font-size: var(--cd-font-md);
   line-height: 1.6;
   color: var(--cd-muted);
-}
-
-:root[data-theme="dark"] .cultura-delpi {
+}:root[data-theme="dark"] .cultura-delpi{
   --cd-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
   --cd-text: rgba(255, 255, 255, 0.88);
   --cd-muted: rgba(255, 255, 255, 0.72);
@@ -411,13 +317,9 @@
   --cd-border: rgba(255, 255, 255, 0.1);
   --cd-accent-soft: color-mix(in srgb, var(--cd-accent) 18%, transparent);
   --cd-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
-}
-
-:root[data-theme="dark"] .cultura-delpi .cultura-delpi-panel__purpose-decor {
+}:root[data-theme="dark"] .cultura-delpi .cultura-delpi-panel__purpose-decor{
   display: none;
-}
-
-@media (max-width: 900px) {
+}@media (max-width: 900px){
   .cultura-delpi-panel__duo {
     grid-template-columns: 1fr;
   }
@@ -426,9 +328,7 @@
     width: 36%;
     opacity: 0.55;
   }
-}
-
-@media (max-width: 640px) {
+}@media (max-width: 640px){
   .cultura-delpi-page {
     padding: 20px 16px 28px 20px;
   }
@@ -449,76 +349,52 @@
   .cultura-delpi-panel__purpose-decor {
     display: none;
   }
-}
-
-.cultura-delpi__state {
+}.cultura-delpi__state{
   margin: 8px 0 20px;
   padding: 16px 18px;
   border: 1px solid var(--cd-border);
   border-radius: 14px;
   background: color-mix(in srgb, var(--cd-surface) 92%, var(--cd-accent) 8%);
-}
-
-.cultura-delpi__state p {
+}.cultura-delpi__state p{
   margin: 0;
   font-size: var(--cd-font-md);
   line-height: 1.5;
-}
-
-.cultura-delpi__state-hint {
+}.cultura-delpi__state-hint{
   margin-top: 8px !important;
   font-size: var(--cd-font-sm) !important;
   color: var(--cd-muted) !important;
-}
-
-.cultura-delpi__state--error {
+}.cultura-delpi__state--error{
   border-color: color-mix(in srgb, #c62828 35%, var(--cd-border));
   background: color-mix(in srgb, #c62828 8%, var(--cd-surface));
-}
-
-.cultura-delpi__state--forbidden {
+}.cultura-delpi__state--forbidden{
   border-color: color-mix(in srgb, #ef6c00 35%, var(--cd-border));
   background: color-mix(in srgb, #ef6c00 10%, var(--cd-surface));
-}
-
-.cultura-delpi__state--success {
+}.cultura-delpi__state--success{
   border-color: color-mix(in srgb, #2e7d32 35%, var(--cd-border));
   background: color-mix(in srgb, #2e7d32 10%, var(--cd-surface));
-}
-
-.cultura-delpi-admin__form {
+}.cultura-delpi-admin__form{
   display: grid;
   gap: 20px;
   max-width: 960px;
-}
-
-.cultura-delpi-admin__section {
+}.cultura-delpi-admin__section{
   display: grid;
   gap: 10px;
-}
-
-.cultura-delpi-admin__section-header {
+}.cultura-delpi-admin__section-header{
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.cultura-delpi-admin__section-title {
+}.cultura-delpi-admin__section-title{
   margin: 0;
   font-size: 18px;
   font-weight: 700;
   color: var(--cd-title);
-}
-
-.cultura-delpi-admin__label {
+}.cultura-delpi-admin__label{
   font-size: var(--cd-font-sm);
   font-weight: 600;
   color: var(--cd-title);
-}
-
-.cultura-delpi-admin__textarea,
-.cultura-delpi-admin__input {
+}.cultura-delpi-admin__textarea,
+.cultura-delpi-admin__input{
   width: 100%;
   padding: 12px 14px;
   border: 1px solid var(--cd-border);
@@ -528,77 +404,55 @@
   font: inherit;
   line-height: 1.5;
   resize: vertical;
-}
-
-.cultura-delpi-admin__textarea:focus,
-.cultura-delpi-admin__input:focus {
+}.cultura-delpi-admin__textarea:focus,
+.cultura-delpi-admin__input:focus{
   outline: 2px solid color-mix(in srgb, var(--cd-accent) 45%, transparent);
   outline-offset: 1px;
-}
-
-.cultura-delpi-admin__values {
+}.cultura-delpi-admin__values{
   display: grid;
   gap: 10px;
-}
-
-.cultura-delpi-admin__value-row {
+}.cultura-delpi-admin__value-row{
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
-}
-
-.cultura-delpi-admin__primary-button,
+}.cultura-delpi-admin__primary-button,
 .cultura-delpi-admin__secondary-button,
-.cultura-delpi-admin__icon-button {
+.cultura-delpi-admin__icon-button{
   border: 0;
   border-radius: 999px;
   font: inherit;
   cursor: pointer;
   transition: opacity 0.15s ease;
-}
-
-.cultura-delpi-admin__primary-button {
+}.cultura-delpi-admin__primary-button{
   padding: 12px 22px;
   background: var(--cd-accent);
   color: #fff;
   font-weight: 600;
-}
-
-.cultura-delpi-admin__secondary-button {
+}.cultura-delpi-admin__secondary-button{
   padding: 8px 14px;
   background: color-mix(in srgb, var(--cd-accent) 12%, var(--cd-surface));
   color: var(--cd-title);
   font-size: var(--cd-font-sm);
   font-weight: 600;
-}
-
-.cultura-delpi-admin__icon-button {
+}.cultura-delpi-admin__icon-button{
   padding: 10px 14px;
   background: transparent;
   color: var(--cd-muted);
   font-size: var(--cd-font-sm);
-}
-
-.cultura-delpi-admin__primary-button:disabled,
+}.cultura-delpi-admin__primary-button:disabled,
 .cultura-delpi-admin__secondary-button:disabled,
-.cultura-delpi-admin__icon-button:disabled {
+.cultura-delpi-admin__icon-button:disabled{
   opacity: 0.55;
   cursor: not-allowed;
-}
-
-.cultura-delpi-admin__actions {
+}.cultura-delpi-admin__actions{
   display: flex;
   justify-content: flex-start;
-}
-
-.cultura-delpi-admin__meta {
+}.cultura-delpi-admin__meta{
   margin: 0;
   font-size: var(--cd-font-sm);
   color: var(--cd-muted);
-}
-
-@media (max-width: 640px) {
+}@media (max-width: 640px){
   .cultura-delpi-admin__value-row {
     grid-template-columns: 1fr;
   }

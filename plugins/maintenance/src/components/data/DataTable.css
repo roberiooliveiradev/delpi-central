@@ -1,87 +1,24 @@
+/**
+ * Domínio maintenance — chrome estrutural vem de plugin-ui (delpi-ui-table*).
+ * Aqui: container, estados blocked, células de negócio e layout mobile card.
+ */
+
 .dashboard-maintenance .dm-datatable {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.dashboard-maintenance .dm-datatable__scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--dm-card-border);
-  border-radius: calc(var(--dm-card-radius) - 4px);
-  background: var(--dm-card-bg);
-}
-
-.dashboard-maintenance .dm-datatable__table {
-  width: 100%;
-  min-width: min(100%, var(--dm-table-min-width, 520px));
-  border-collapse: collapse;
-  font-size: var(--dm-font-sm);
-}
-
-.dashboard-maintenance .dm-datatable__table thead {
-  background: color-mix(in srgb, var(--dm-accent) 8%, var(--dm-card-bg));
-}
-
-.dashboard-maintenance .dm-datatable__table th {
-  padding: 12px 14px;
-  text-align: left;
-  font-size: var(--dm-font-xs);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--dm-text-muted);
-  white-space: nowrap;
-  border-bottom: 1px solid var(--dm-card-border);
-}
-
-.dashboard-maintenance .dm-datatable__table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--dm-card-border);
-  color: var(--dm-text);
-  vertical-align: middle;
-}
-
-.dashboard-maintenance .dm-datatable__table td[data-align="right"] {
-  text-align: right;
-}
-
-.dashboard-maintenance .dm-datatable__table td[data-align="center"] {
-  text-align: center;
-}
-
-.dashboard-maintenance .dm-datatable__table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.dashboard-maintenance .dm-datatable__table tbody tr.is-clickable {
-  cursor: pointer;
-}
-
-.dashboard-maintenance .dm-datatable__table tbody tr.is-clickable:focus-visible {
-  outline: 2px solid var(--dm-accent);
-  outline-offset: -2px;
-}
-
-.dashboard-maintenance .dm-datatable__table tbody tr:hover,
-.dashboard-maintenance .dm-datatable__table tbody tr.is-clickable:hover {
-  background: color-mix(in srgb, var(--dm-accent) 5%, var(--dm-card-bg));
-}
-
-.dashboard-maintenance .dm-datatable__table tbody tr.is-selected {
-  background: color-mix(in srgb, var(--dm-accent) 10%, var(--dm-card-bg));
-}
-
-.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked {
+.dashboard-maintenance .dm-datatable table.dm-table tbody tr.is-blocked {
   background: color-mix(in srgb, var(--dm-text-muted) 7%, var(--dm-card-bg));
 }
 
-.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked td {
+.dashboard-maintenance .dm-datatable table.dm-table tbody tr.is-blocked td {
   color: color-mix(in srgb, var(--dm-text-muted) 88%, var(--dm-text));
 }
 
-.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked:hover,
-.dashboard-maintenance .dm-datatable__table tbody tr.is-blocked.is-clickable:hover {
+.dashboard-maintenance .dm-datatable table.dm-table tbody tr.is-blocked:hover,
+.dashboard-maintenance .dm-datatable table.dm-table tbody tr.is-blocked.is-clickable:hover {
   background: color-mix(in srgb, var(--dm-text-muted) 11%, var(--dm-card-bg));
 }
 
@@ -123,127 +60,37 @@
   padding-inline: 8px;
 }
 
-.dashboard-maintenance .dm-datatable__empty {
-  padding: 24px 16px;
-  text-align: center;
-  color: var(--dm-text-muted);
-}
-
 .dashboard-maintenance .dm-datatable__cell-indent {
   display: inline-block;
 }
 
-.dashboard-maintenance .dm-datatable__col--sortable {
-  cursor: pointer;
-}
-
-.dashboard-maintenance .dm-datatable__table th[data-align="right"] {
-  text-align: right;
-}
-
-.dashboard-maintenance .dm-datatable__table th[data-align="center"] {
-  text-align: center;
-}
-
-.dashboard-maintenance .dm-datatable__sort-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  text-align: inherit;
-  cursor: pointer;
-}
-
-.dashboard-maintenance .dm-datatable__table th[data-align="right"] .dm-datatable__sort-button {
-  justify-content: flex-end;
-}
-
-.dashboard-maintenance .dm-datatable__table th[data-align="center"] .dm-datatable__sort-button {
-  justify-content: center;
-}
-
-.dashboard-maintenance .dm-datatable__sort-button .dm-datatable__header-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-
-.dashboard-maintenance .dm-datatable__table th[data-align="right"] .dm-datatable__header-label {
-  justify-content: flex-end;
-}
-
-.dashboard-maintenance .dm-datatable__sort-button:hover,
-.dashboard-maintenance .dm-datatable__sort-button:focus-visible {
-  color: var(--dm-text);
-}
-
-.dashboard-maintenance .dm-datatable__sort-indicator {
-  color: var(--dm-text-muted);
-  font-size: 0.85em;
-  flex: none;
-}
-
-.dashboard-maintenance .dm-pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--dm-card-border);
-}
-
-.dashboard-maintenance .dm-pagination__info {
-  margin: 0;
-  font-size: var(--dm-font-sm);
-  color: var(--dm-text-muted);
-}
-
-.dashboard-maintenance .dm-pagination__current {
-  color: var(--dm-accent);
-  font-weight: 700;
-}
-
-.dashboard-maintenance .dm-pagination__nav:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 @media (max-width: 768px) {
-  .dashboard-maintenance .dm-datatable__table,
-  .dashboard-maintenance .dm-datatable__table tbody,
-  .dashboard-maintenance .dm-datatable__table tr,
-  .dashboard-maintenance .dm-datatable__table td {
+  .dashboard-maintenance .dm-datatable table.dm-table,
+  .dashboard-maintenance .dm-datatable table.dm-table tbody,
+  .dashboard-maintenance .dm-datatable table.dm-table tr,
+  .dashboard-maintenance .dm-datatable table.dm-table td {
     display: block;
     width: 100%;
   }
 
-  .dashboard-maintenance .dm-datatable__table {
+  .dashboard-maintenance .dm-datatable table.dm-table {
     min-width: 0;
   }
 
-  .dashboard-maintenance .dm-datatable__table thead {
+  .dashboard-maintenance .dm-datatable table.dm-table thead {
     display: none;
   }
 
-  .dashboard-maintenance .dm-datatable__table tbody tr {
+  .dashboard-maintenance .dm-datatable table.dm-table tbody tr {
     padding: 14px;
     border-bottom: 1px solid var(--dm-card-border);
   }
 
-  .dashboard-maintenance .dm-datatable__table tbody tr:last-child {
+  .dashboard-maintenance .dm-datatable table.dm-table tbody tr:last-child {
     border-bottom: 0;
   }
 
-  .dashboard-maintenance .dm-datatable__table td {
+  .dashboard-maintenance .dm-datatable table.dm-table td {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -253,7 +100,7 @@
     text-align: left;
   }
 
-  .dashboard-maintenance .dm-datatable__table td::before {
+  .dashboard-maintenance .dm-datatable table.dm-table td::before {
     content: attr(data-label);
     flex: none;
     width: auto;
@@ -262,21 +109,21 @@
     color: var(--dm-text-muted);
   }
 
-  .dashboard-maintenance .dm-datatable__table td[data-align="right"] {
+  .dashboard-maintenance .dm-datatable table.dm-table td[data-align="right"] {
     text-align: left;
   }
 
-  .dashboard-maintenance .dm-datatable__table td > * {
+  .dashboard-maintenance .dm-datatable table.dm-table td > * {
     min-width: 0;
     max-width: 100%;
   }
 
-  .dashboard-maintenance .dm-datatable__table td[data-label=""]::before,
-  .dashboard-maintenance .dm-datatable__table td:not([data-label])::before {
+  .dashboard-maintenance .dm-datatable table.dm-table td[data-label=""]::before,
+  .dashboard-maintenance .dm-datatable table.dm-table td:not([data-label])::before {
     content: none;
   }
 
-  .dashboard-maintenance .dm-datatable__table .dm-row-actions {
+  .dashboard-maintenance .dm-datatable table.dm-table .dm-row-actions {
     justify-content: flex-start;
     flex-wrap: wrap;
   }
@@ -296,11 +143,11 @@
     flex-shrink: 0;
   }
 
-  .dashboard-maintenance .dm-datatable__table .dm-editable-cell {
+  .dashboard-maintenance .dm-datatable table.dm-table .dm-editable-cell {
     align-items: stretch;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table tbody tr {
     display: grid;
     grid-template-columns: 1fr auto;
     grid-template-areas:
@@ -311,7 +158,7 @@
     padding: 12px 14px;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr {
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable table.dm-table tbody tr {
     grid-template-areas:
       "desc desc"
       "oper pct"
@@ -319,49 +166,49 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table tbody tr > td {
     display: block;
     padding: 0;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td::before {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table tbody tr > td::before {
     display: block;
     margin-bottom: 4px;
     font-size: var(--dm-font-xs);
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td:nth-child(1) {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table tbody tr > td:nth-child(1) {
     grid-area: desc;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td:nth-child(2) {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table tbody tr > td:nth-child(2) {
     grid-area: flag;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table tbody tr > td:nth-child(3) {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table tbody tr > td:nth-child(3) {
     grid-area: actions;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr > td:nth-child(2) {
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable table.dm-table tbody tr > td:nth-child(2) {
     grid-area: oper;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr > td:nth-child(3) {
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable table.dm-table tbody tr > td:nth-child(3) {
     grid-area: pct;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table tbody tr > td:nth-child(4) {
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable table.dm-table tbody tr > td:nth-child(4) {
     grid-area: actions;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table td[data-label="Ignora preventiva"]::before,
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table td[data-label="Ações"]::before,
-  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable__table td[data-label="Descrição"]::before {
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table td[data-label="Ignora preventiva"]::before,
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table td[data-label="Ações"]::before,
+  .dashboard-maintenance .dm-table-section--editable-config .dm-datatable table.dm-table td[data-label="Descrição"]::before {
     display: none;
   }
 
-  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table td[data-label="Operador"]::before,
-  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable__table td[data-label="Percentual"]::before {
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable table.dm-table td[data-label="Operador"]::before,
+  .dashboard-maintenance .dm-table-section--editable-config.dm-table-section--editable-status .dm-datatable table.dm-table td[data-label="Percentual"]::before {
     display: block;
   }
 

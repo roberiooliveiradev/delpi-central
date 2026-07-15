@@ -159,19 +159,20 @@ Após migração:
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
-Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField` (~20 linhas); CSS permanece no plugin.
+Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField` (~20 linhas); **CSS shell ainda no MFE** (Onda 2 do plano de centralização CSS).
 
-## Status — Fase 3 (formulários e detalhe)
+### Onda 1 — CSS estrutural DataTable / Detail / Pagination (jul/2026)
 
-| Plugin | DetailFieldGrid | Notas |
-|--------|-----------------|-------|
-| `dashboard-production` | ✅ | `valueFallback: "—"`; sem empty state |
-| `dashboard-commercial` | ✅ | hints + `wrapLabels` |
-| `dashboard-quality` | ✅ | empty state "Sem dados." |
-| `dashboard-lmps` | ✅ | hints + `wrapLabels` |
-| `eficiencia-fabril` | ✅ | empty state "Sem dados." |
+Poda nos MFEs dos blocos BEM espelho cobertos por `data-table.css`, `detail-card.css` e `pagination.css` (classes estáveis `.delpi-ui-*`). Kits emitem `prefix` + `delpi-ui` via `delpiUiClass`.
 
-Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGrid` (~12 linhas); CSS `{prefix}-detail-grid*` permanece no plugin.
+| Item | Status |
+|------|--------|
+| Dashboards dept. + EF/TM/scrap/CR/financeiros/inspeções/auditoria/kaizen | ✅ chrome de tabela/detalhe/paginação podado; print/composição/domínio permanece |
+| `maintenance` DataTable | ✅ `dataTableBemClasses("dm")` + CSS de domínio só (`DataTable.css`) |
+
+Resíduos justificados: `@media print`, `.detail-card .table*`, colunas de domínio (`a5s-table--dashboard`, `ef-table--routing`, actions), paginação custom (`a5s-pagination`, `ip-pagination`).
+
+Após migração DetailFieldGrid: wrapper fino com `createDashboardDetailFieldGrid` (~12 linhas); **chrome de grid no pacote** (`detail-card.css`); MFE só tema/composição.
 
 | Plugin | EditableSectionCard | Notas |
 |--------|---------------------|-------|
