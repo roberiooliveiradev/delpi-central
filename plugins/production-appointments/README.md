@@ -31,6 +31,16 @@ Doc: [api-delpi/docs/api/production-appointments.md](../../api-delpi/docs/api/pr
 
 MFE com filtros (período, CT, OP, produto), KPIs, série temporal, tabela por CT, lista de apontamentos e agregado por OP.
 
+## UI (`@delpi/plugin-ui`)
+
+Alinhado ao padrão canônico de [controle-retrabalhos](../controle-retrabalhos/README.md):
+
+- `createDashboardPageHeader` / `createSimpleKpiCard` / `ChartCard`
+- `createFilterBarShell` + `FilterInputField` / `FilterSelectField`
+- `CompactPagination`, `LoadingActivityCard`, empty/error states
+- Textos de ajuda em `src/content/helpTooltips.ts` (não no pacote plugin-ui)
+- Tokens `--delpi-ui-*` no escopo `.dashboard-production-appointments`
+
 ## Dev
 
 ```bash

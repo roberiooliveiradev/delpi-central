@@ -1,56 +1,24 @@
-import type { AppointmentRow, ByOpRow, Pagination } from "../types/appointments";
+import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
+import type { AppointmentRow, ByOpRow, Pagination as PaginationMeta } from "../types/appointments";
 import {
   formatInteger,
   formatProtheusDate,
   formatQuantity,
 } from "../utils/formatters";
+import { ChartCard } from "./ChartCard";
+import { Pagination } from "./Pagination";
 
 type AppointmentsTablesProps = {
   appointments: AppointmentRow[];
   byOp: ByOpRow[];
-  listPagination: Pagination | null;
-  byOpPagination: Pagination | null;
+  listPagination: PaginationMeta | null;
+  byOpPagination: PaginationMeta | null;
   listPage: number;
   byOpPage: number;
+  pageSize: number;
   onListPageChange: (page: number) => void;
   onByOpPageChange: (page: number) => void;
 };
-
-function Pager({
-  pagination,
-  page,
-  onChange,
-}: {
-  pagination: Pagination | null;
-  page: number;
-  onChange: (page: number) => void;
-}) {
-  if (!pagination || pagination.total_pages <= 1) return null;
-  return (
-    <div className="pa-pager">
-      <button
-        type="button"
-        className="pa-btn pa-btn--secondary"
-        disabled={page <= 1}
-        onClick={() => onChange(page - 1)}
-      >
-        Anterior
-      </button>
-      <span className="pa-muted">
-        Página {page} de {pagination.total_pages} ({formatInteger(pagination.total)}{" "}
-        registros)
-      </span>
-      <button
-        type="button"
-        className="pa-btn pa-btn--secondary"
-        disabled={page >= pagination.total_pages}
-        onClick={() => onChange(page + 1)}
-      >
-        Próxima
-      </button>
-    </div>
-  );
-}
 
 export function AppointmentsTables({
   appointments,
@@ -59,15 +27,13 @@ export function AppointmentsTables({
   byOpPagination,
   listPage,
   byOpPage,
+  pageSize,
   onListPageChange,
   onByOpPageChange,
 }: AppointmentsTablesProps) {
   return (
     <div className="pa-tables-stack">
-      <section className="pa-card">
-        <header className="pa-chart-card__header">
-          <h2 className="pa-chart-card__title">Apontamentos</h2>
-        </header>
+      <ChartCard title="Apontamentos" titleHint={PA_HELP_TOOLTIPS.tables.appointments}>
         <div className="pa-table-wrap">
           <table className="pa-table">
             <thead>
@@ -112,13 +78,18 @@ export function AppointmentsTables({
             </tbody>
           </table>
         </div>
-        <Pager pagination={listPagination} page={listPage} onChange={onListPageChange} />
-      </section>
+        {listPagination ? (
+          <Pagination
+            page={listPage}
+            pageSize={pageSize}
+            total={listPagination.total}
+            totalPages={listPagination.total_pages}
+            onPageChange={onListPageChange}
+          />
+        ) : null}
+      </ChartCard>
 
-      <section className="pa-card">
-        <header className="pa-chart-card__header">
-          <h2 className="pa-chart-card__title">Por ordem de produção</h2>
-        </header>
+      <ChartCard title="Por ordem de produção" titleHint={PA_HELP_TOOLTIPS.tables.byOp}>
         <div className="pa-table-wrap">
           <table className="pa-table">
             <thead>
@@ -165,8 +136,16 @@ export function AppointmentsTables({
             </tbody>
           </table>
         </div>
-        <Pager pagination={byOpPagination} page={byOpPage} onChange={onByOpPageChange} />
-      </section>
+        {byOpPagination ? (
+          <Pagination
+            page={byOpPage}
+            pageSize={pageSize}
+            total={byOpPagination.total}
+            totalPages={byOpPagination.total_pages}
+            onPageChange={onByOpPageChange}
+          />
+        ) : null}
+      </ChartCard>
     </div>
   );
 }

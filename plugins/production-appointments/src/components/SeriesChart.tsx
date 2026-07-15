@@ -10,8 +10,10 @@ import {
 } from "recharts";
 
 import { CHART_AXIS_TICK, CHART_COLORS, CHART_GRID_STROKE } from "../constants/chartTheme";
+import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { SeriesPoint } from "../types/appointments";
 import { formatProtheusDate, formatQuantity } from "../utils/formatters";
+import { ChartCard } from "./ChartCard";
 
 type SeriesChartProps = {
   points: SeriesPoint[];
@@ -24,14 +26,15 @@ export function SeriesChart({ points }: SeriesChartProps) {
   }));
 
   return (
-    <section className="pa-card pa-chart-card">
-      <div className="pa-chart-card__header">
-        <h2 className="pa-chart-card__title">Produção no tempo</h2>
-      </div>
+    <ChartCard
+      title="Produção no tempo"
+      titleHint={PA_HELP_TOOLTIPS.charts.series}
+      variant="featured"
+    >
       {data.length === 0 ? (
         <p className="pa-chart-card__empty">Sem pontos na série para o período.</p>
       ) : (
-        <div style={{ width: "100%", height: 320 }}>
+        <div className="pa-chart-card__body" style={{ width: "100%", height: 320 }}>
           <ResponsiveContainer>
             <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
               <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
@@ -62,6 +65,6 @@ export function SeriesChart({ points }: SeriesChartProps) {
           </ResponsiveContainer>
         </div>
       )}
-    </section>
+    </ChartCard>
   );
 }

@@ -1,27 +1,12 @@
-type PageHeaderProps = {
-  title: string;
-  subtitle: string;
-  refreshing?: boolean;
-  onRefresh?: () => void;
-};
+import { createDashboardPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui/index";
 
-export function PageHeader({ title, subtitle, refreshing, onRefresh }: PageHeaderProps) {
-  return (
-    <header className="pa-page-header">
-      <div>
-        <h1 className="pa-page-header__title">{title}</h1>
-        <p className="pa-page-header__subtitle">{subtitle}</p>
-      </div>
-      {onRefresh ? (
-        <button
-          type="button"
-          className="pa-btn pa-btn--secondary"
-          onClick={onRefresh}
-          disabled={refreshing}
-        >
-          {refreshing ? "Atualizando…" : "Atualizar"}
-        </button>
-      ) : null}
-    </header>
-  );
-}
+export const PageHeader = createDashboardPageHeader({
+  layout: "titleRow",
+  classNames: pageHeaderTitleRowBemClasses("pa", {
+    buttonClass: "pa-btn pa-btn--secondary",
+  }),
+  labels: {
+    refresh: "Atualizar",
+    refreshing: "Atualizando…",
+  },
+});

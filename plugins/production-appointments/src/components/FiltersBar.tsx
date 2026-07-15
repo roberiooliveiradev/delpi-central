@@ -1,5 +1,7 @@
 import type { FilterFormState, WorkCenterItem } from "../types/appointments";
+import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { validatePeriodRange } from "../utils/dateRange";
+import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
 
 export type QuickRangePreset = "30d" | "6m" | "thisMonth";
 
@@ -13,6 +15,10 @@ type FiltersBarProps = {
   onQuickRange: (preset: QuickRangePreset) => void;
 };
 
+function isInspection(value: number | boolean | undefined): boolean {
+  return value === true || value === 1;
+}
+
 export function FiltersBar({
   filters,
   workCenters,
@@ -24,75 +30,67 @@ export function FiltersBar({
 }: FiltersBarProps) {
   const localError = validatePeriodRange(filters.dateStart, filters.dateEnd);
 
+  const workCenterOptions = workCenters.map((ct) => ({
+    value: ct.work_center,
+    label: `${ct.work_center} — ${ct.name}${
+      isInspection(ct.is_final_inspection) ? " (inspeção final)" : ""
+    }`,
+  }));
+
   return (
-    <section className="pa-filter-bar pa-card">
-      <div className="pa-filter-bar__grid">
-        <label className="pa-field" htmlFor="pa-filter-start">
-          <span className="pa-field__label">Data inicial</span>
-          <input
-            id="pa-filter-start"
-            className="pa-field__input"
-            type="date"
-            value={filters.dateStart}
-            onChange={(event) => onChange({ dateStart: event.target.value })}
-          />
-        </label>
-        <label className="pa-field" htmlFor="pa-filter-end">
-          <span className="pa-field__label">Data final</span>
-          <input
-            id="pa-filter-end"
-            className="pa-field__input"
-            type="date"
-            value={filters.dateEnd}
-            onChange={(event) => onChange({ dateEnd: event.target.value })}
-          />
-        </label>
-        <label className="pa-field" htmlFor="pa-filter-ct">
-          <span className="pa-field__label">Centro de trabalho</span>
-          <select
-            id="pa-filter-ct"
-            className="pa-field__input"
-            value={filters.workCenter}
-            onChange={(event) => onChange({ workCenter: event.target.value })}
-          >
-            <option value="">Todos</option>
-            {workCenters.map((ct) => (
-              <option key={ct.work_center} value={ct.work_center}>
-                {ct.work_center} — {ct.name}
-                {ct.is_final_inspection === 1 || ct.is_final_inspection === true
-                  ? " (inspeção final)"
-                  : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="pa-field" htmlFor="pa-filter-op">
-          <span className="pa-field__label">OP</span>
-          <input
-            id="pa-filter-op"
-            className="pa-field__input"
-            value={filters.op}
-            onChange={(event) => onChange({ op: event.target.value })}
-            placeholder="Opcional"
-          />
-        </label>
-        <label className="pa-field" htmlFor="pa-filter-product">
-          <span className="pa-field__label">Produto</span>
-          <input
-            id="pa-filter-product"
-            className="pa-field__input"
-            value={filters.product}
-            onChange={(event) => onChange({ product: event.target.value })}
-            placeholder="Opcional"
-          />
-        </label>
+    <FilterBarShell>
+      <div className="pa-filter-bar__grid pa-filters__grid">
+        <FilterInputField
+          id="pa-filter-start"
+          label="Data inicial"
+          hint={PA_HELP_TOOLTIPS.filters.dateStart}
+          type="date"
+          value={filters.dateStart}
+          onChange={(value) => onChange({ dateStart: value })}
+        />
+        <FilterInputField
+          id="pa-filter-end"
+          label="Data final"
+          hint={PA_HELP_TOOLTIPS.filters.dateEnd}
+          type="date"
+          value={filters.dateEnd}
+          onChange={(value) => onChange({ dateEnd: value })}
+        />
+        <FilterSelectField
+          id="pa-filter-ct"
+          label="Centro de trabalho"
+          hint={PA_HELP_TOOLTIPS.filters.workCenter}
+          value={filters.workCenter}
+          onChange={(value) => onChange({ workCenter: value })}
+          options={workCenterOptions}
+          placeholderOption="Todos"
+          searchable
+        />
+        <FilterInputField
+          id="pa-filter-op"
+          label="OP"
+          hint={PA_HELP_TOOLTIPS.filters.op}
+          type="text"
+          value={filters.op}
+          onChange={(value) => onChange({ op: value })}
+          placeholder="Opcional"
+        />
+        <FilterInputField
+          id="pa-filter-product"
+          label="Produto"
+          hint={PA_HELP_TOOLTIPS.filters.product}
+          type="text"
+          value={filters.product}
+          onChange={(value) => onChange({ product: value })}
+          placeholder="Opcional"
+        />
       </div>
       {validationError || localError ? (
         <p className="pa-filters__error" role="alert">
           {validationError ?? localError}
         </p>
       ) : null}
-      <div className="pa-filter-bar__actions">
+      <div className="pa-filter-bar__actions pa-filters__actions">
         <button
           type="button"
           className="pa-btn pa-btn--primary"
@@ -126,6 +124,6 @@ export function FiltersBar({
           6 meses
         </button>
       </div>
-    </section>
+    </FilterBarShell>
   );
 }

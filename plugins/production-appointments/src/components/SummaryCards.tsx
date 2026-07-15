@@ -1,27 +1,53 @@
+import {
+  ClipboardList,
+  Factory,
+  Layers,
+  Package,
+  PackageX,
+} from "lucide-react";
+
 import type { AppointmentTotals } from "../types/appointments";
 import { formatInteger, formatQuantity } from "../utils/formatters";
+import { KpiCard } from "./KpiCard";
 
 type SummaryCardsProps = {
   totals: AppointmentTotals | null;
+  loading?: boolean;
 };
 
-export function SummaryCards({ totals }: SummaryCardsProps) {
-  const cards = [
-    { label: "Apontamentos", value: formatInteger(totals?.appointment_count) },
-    { label: "Qtd. produzida", value: formatQuantity(totals?.qty_produced) },
-    { label: "Qtd. perdida", value: formatQuantity(totals?.qty_lost) },
-    { label: "OPs", value: formatInteger(totals?.op_count) },
-    { label: "CTs", value: formatInteger(totals?.work_center_count) },
-  ];
-
+export function SummaryCards({ totals, loading = false }: SummaryCardsProps) {
   return (
     <section className="pa-kpi-grid" aria-label="Resumo do período">
-      {cards.map((card) => (
-        <article key={card.label} className="pa-card pa-kpi-card">
-          <p className="pa-kpi-card__title">{card.label}</p>
-          <p className="pa-kpi-card__value">{card.value}</p>
-        </article>
-      ))}
+      <KpiCard
+        title="Apontamentos"
+        value={formatInteger(totals?.appointment_count)}
+        icon={<ClipboardList size={20} />}
+        loading={loading}
+      />
+      <KpiCard
+        title="Qtd. produzida"
+        value={formatQuantity(totals?.qty_produced)}
+        icon={<Package size={20} />}
+        loading={loading}
+      />
+      <KpiCard
+        title="Qtd. perdida"
+        value={formatQuantity(totals?.qty_lost)}
+        icon={<PackageX size={20} />}
+        loading={loading}
+      />
+      <KpiCard
+        title="OPs"
+        value={formatInteger(totals?.op_count)}
+        icon={<Layers size={20} />}
+        loading={loading}
+      />
+      <KpiCard
+        title="CTs"
+        value={formatInteger(totals?.work_center_count)}
+        icon={<Factory size={20} />}
+        loading={loading}
+      />
     </section>
   );
 }

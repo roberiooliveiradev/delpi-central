@@ -1,5 +1,7 @@
+import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { WorkCenterSummaryRow } from "../types/appointments";
 import { formatInteger, formatQuantity } from "../utils/formatters";
+import { ChartCard } from "./ChartCard";
 
 type WorkCenterSummaryTableProps = {
   items: WorkCenterSummaryRow[];
@@ -11,10 +13,10 @@ function isInspection(value: number | boolean | undefined): boolean {
 
 export function WorkCenterSummaryTable({ items }: WorkCenterSummaryTableProps) {
   return (
-    <section className="pa-card">
-      <header className="pa-chart-card__header">
-        <h2 className="pa-chart-card__title">Resumo por centro de trabalho</h2>
-      </header>
+    <ChartCard
+      title="Resumo por centro de trabalho"
+      titleHint={PA_HELP_TOOLTIPS.tables.byWorkCenter}
+    >
       <div className="pa-table-wrap">
         <table className="pa-table">
           <thead>
@@ -60,6 +62,6 @@ export function WorkCenterSummaryTable({ items }: WorkCenterSummaryTableProps) {
           </tbody>
         </table>
       </div>
-    </section>
+    </ChartCard>
   );
 }

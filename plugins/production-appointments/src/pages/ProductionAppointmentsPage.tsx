@@ -1,10 +1,12 @@
 import { useMemo, useState } from "react";
 
 import { AppointmentsTables } from "../components/AppointmentsTables";
+import { EmptyState } from "../components/EmptyState";
+import { ErrorState } from "../components/ErrorState";
 import { FiltersBar, type QuickRangePreset } from "../components/FiltersBar";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { PageHeader } from "../components/PageHeader";
 import { SeriesChart } from "../components/SeriesChart";
-import { EmptyState, ErrorState, LoadingState } from "../components/StateBoxes";
 import { SummaryCards } from "../components/SummaryCards";
 import { WorkCenterSummaryTable } from "../components/WorkCenterSummaryTable";
 import {
@@ -102,8 +104,13 @@ function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProp
   const summary = dashboard.data.summary;
   const hasDashboardData = summary !== null;
   const showInitialLoading = dashboard.loading && !hasDashboardData;
+  const showRefreshLoading = dashboard.refreshing && hasDashboardData;
   const initialLoadingPercent = useLoadingProgress(
     showInitialLoading,
+    dashboard.requestProgress,
+  );
+  const refreshLoadingPercent = useLoadingProgress(
+    showRefreshLoading,
     dashboard.requestProgress,
   );
 
@@ -137,34 +144,43 @@ function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProp
         onQuickRange={handleQuickRange}
       />
 
-      {showInitialLoading ? (
-        <LoadingState
-          title="Carregando apontamentos…"
-          message={
-            initialLoadingPercent > 0
-              ? `${initialLoadingPercent}%`
-              : "Consultando api-delpi"
-          }
-        />
+      {permissionDenied ? (
+        <ErrorState message={dashboardError ?? "Sem permissão para acessar este painel."} />
       ) : null}
 
-      {dashboardError ? (
+      {!permissionDenied && dashboardError ? (
         <ErrorState
-          title={permissionDenied ? "Sem permissão" : "Falha ao carregar"}
           message={dashboardError}
+          onRetry={() => {
+            dashboard.reload();
+            tables.reload();
+          }}
         />
       ) : null}
 
-      {isEmpty ? (
-        <EmptyState
-          title="Sem apontamentos"
-          message="Não há apontamentos de produção no período e filtros selecionados."
+      {showRefreshLoading ? (
+        <LoadingActivityCard
+          title="Atualizando apontamentos"
+          description="Recalculando resumo, série e rankings com o período selecionado."
+          variant="compact"
+          sticky
+          progressPercent={refreshLoadingPercent}
         />
       ) : null}
 
-      {summary ? (
+      {showInitialLoading ? (
+        <LoadingActivityCard
+          title="Carregando apontamentos"
+          description="Consultando resumo, centros de trabalho e série temporal na api-delpi."
+          progressPercent={initialLoadingPercent}
+        />
+      ) : null}
+
+      {!showInitialLoading && !dashboardError && isEmpty ? <EmptyState /> : null}
+
+      {!showInitialLoading && !dashboardError && !isEmpty && summary ? (
         <>
-          <SummaryCards totals={summary.totals} />
+          <SummaryCards totals={summary.totals} loading={dashboard.loading} />
           <SeriesChart points={dashboard.data.series?.points ?? []} />
           <WorkCenterSummaryTable items={summary.items} />
           <AppointmentsTables
@@ -174,14 +190,15 @@ function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProp
             byOpPagination={tables.byOp?.pagination ?? null}
             listPage={listPage}
             byOpPage={byOpPage}
+            pageSize={tables.pageSize}
             onListPageChange={setListPage}
             onByOpPageChange={setByOpPage}
           />
         </>
       ) : null}
 
-      {tables.error ? (
-        <ErrorState title="Falha nas tabelas" message={tables.error} />
+      {!permissionDenied && tables.error ? (
+        <ErrorState message={tables.error} onRetry={tables.reload} />
       ) : null}
     </div>
   );
