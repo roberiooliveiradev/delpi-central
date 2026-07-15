@@ -619,6 +619,87 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "reject_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "cancel_scheduling_booking": RouteContract("scheduling_booking", "scalar"),
     "create_canal_denuncia": RouteContract("canal_denuncia", "scalar"),
+    "list_guias_procedimentos_departments": RouteContract(
+        "guias_procedimentos_department", "paged_list"
+    ),
+    "get_guias_procedimentos_department": RouteContract(
+        "guias_procedimentos_department", "scalar"
+    ),
+    "get_guias_procedimentos_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "list_guias_procedimentos_admin_departments": RouteContract(
+        "guias_procedimentos_department", "paged_list"
+    ),
+    "get_guias_procedimentos_admin_department": RouteContract(
+        "guias_procedimentos_department", "scalar"
+    ),
+    "create_guias_procedimentos_admin_department": RouteContract(
+        "guias_procedimentos_department", "scalar"
+    ),
+    "update_guias_procedimentos_admin_department": RouteContract(
+        "guias_procedimentos_department", "scalar"
+    ),
+    "list_guias_procedimentos_admin_procedures": RouteContract(
+        "guias_procedimentos_procedure", "paged_list"
+    ),
+    "get_guias_procedimentos_admin_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "create_guias_procedimentos_admin_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "update_guias_procedimentos_admin_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "publish_guias_procedimentos_admin_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "unpublish_guias_procedimentos_admin_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "archive_guias_procedimentos_admin_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "restore_guias_procedimentos_admin_procedure": RouteContract(
+        "guias_procedimentos_procedure", "scalar"
+    ),
+    "list_guias_procedimentos_admin_procedure_media": RouteContract(
+        "guias_procedimentos_media", "paged_list"
+    ),
+    "list_guias_procedimentos_admin_procedure_attachments": RouteContract(
+        "guias_procedimentos_attachment", "paged_list"
+    ),
+    "upload_guias_procedimentos_admin_procedure_image": RouteContract(
+        "guias_procedimentos_media", "scalar"
+    ),
+    "upload_guias_procedimentos_admin_procedure_video": RouteContract(
+        "guias_procedimentos_media", "scalar"
+    ),
+    "create_guias_procedimentos_admin_external_video": RouteContract(
+        "guias_procedimentos_media", "scalar"
+    ),
+    "upload_guias_procedimentos_admin_procedure_attachment": RouteContract(
+        "guias_procedimentos_attachment", "scalar"
+    ),
+    "update_guias_procedimentos_admin_media": RouteContract(
+        "guias_procedimentos_media", "scalar"
+    ),
+    "archive_guias_procedimentos_admin_media": RouteContract(
+        "guias_procedimentos_media", "scalar"
+    ),
+    "update_guias_procedimentos_admin_attachment": RouteContract(
+        "guias_procedimentos_attachment", "scalar"
+    ),
+    "archive_guias_procedimentos_admin_attachment": RouteContract(
+        "guias_procedimentos_attachment", "scalar"
+    ),
+    "list_guias_procedimentos_procedure_media": RouteContract(
+        "guias_procedimentos_media", "paged_list"
+    ),
+    "list_guias_procedimentos_procedure_attachments": RouteContract(
+        "guias_procedimentos_attachment", "paged_list"
+    ),
     # Sistema (metadados Protheus)
     "search_tables_by_description": RouteContract("protheus_table", "paged_list"),
     "get_protheus_table": RouteContract("protheus_table", "scalar"),

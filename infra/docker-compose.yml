@@ -633,6 +633,23 @@ services:
     networks:
       - delpi-network
 
+  guias-procedimentos:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: guias-procedimentos/Dockerfile
+      target: production
+
+    container_name: delpi-guias-procedimentos
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   quality-labels:
     depends_on:
       - plugin-ui
@@ -1119,6 +1136,7 @@ services:
       RUN_PLUGINS_MIGRATIONS_ON_STARTUP: ${RUN_PLUGINS_MIGRATIONS_ON_STARTUP:-true}
       PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
+      GUIAS_PROCEDIMENTOS_UPLOAD_DIR: ${GUIAS_PROCEDIMENTOS_UPLOAD_DIR:-/app/data/guias-procedimentos}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
@@ -1152,6 +1170,7 @@ services:
       # Evidências PAC e anexos Auditoria 5S — persistir fora do container (sobrevive a deploy)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/kaizen-evidences:/app/data/kaizen-evidences
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/guias-procedimentos:/app/data/guias-procedimentos
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-nc:/app/data/audit-5s-nc
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/audit-5s-responses:/app/data/audit-5s-responses
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/quality-labels/qr:/app/data/quality-labels/qr
@@ -1493,6 +1512,7 @@ services:
       - eficiencia-fabril
       - cultura-delpi
       - codigo-etica
+      - guias-procedimentos
       - pedidos-venda-abertos
       - propostas-comerciais
       - auditoria-5s

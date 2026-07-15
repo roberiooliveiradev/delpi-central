@@ -1,0 +1,60 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "guias-procedimentos",
+  "name": "Guias e Procedimentos",
+  "description": "Central de orientações para consulta de procedimentos e atividades do dia a dia na DELPI.",
+  "category": "Institucional",
+  "icon": "book-open",
+  "version": "1.2.0",
+  "type": "microfrontend",
+  "basePath": "/apps/guias-procedimentos",
+  "entry": "/apps/guias-procedimentos/assets/remoteEntry.js",
+  "ui": {
+    "renderMode": "federated"
+  },
+  "permissions": [
+    {
+      "code": "guias-procedimentos.access",
+      "name": "Acessar Guias e Procedimentos",
+      "description": "Permite consultar os guias e procedimentos disponíveis.",
+      "module": "guias-procedimentos"
+    },
+    {
+      "code": "guias-procedimentos.manage",
+      "name": "Gerenciar Guias e Procedimentos",
+      "description": "Permite administrar os conteúdos de Guias e Procedimentos.",
+      "module": "guias-procedimentos"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/guias-procedimentos",
+      "label": "Guias e Procedimentos",
+      "icon": "book-open",
+      "permission": "guias-procedimentos.access",
+      "showInMenu": true,
+      "order": 21
+    },
+    {
+      "path": "/apps/guias-procedimentos/guias/emissao-nota-fiscal",
+      "label": "Emissão de nota fiscal",
+      "icon": "book-open",
+      "permission": "guias-procedimentos.access",
+      "showInMenu": false,
+      "order": 22
+    },
+    {
+      "path": "/apps/guias-procedimentos/admin",
+      "label": "Administrar Guias e Procedimentos",
+      "icon": "settings",
+      "permission": "guias-procedimentos.manage",
+      "showInMenu": false,
+      "order": 23
+    }
+  ],
+  "metadata": {
+    "owner": "DELPI",
+    "department": "TI",
+    "contentOwner": "Faturamento"
+  }
+}

@@ -117,6 +117,10 @@ class Settings:
         "KAIZEN_EVIDENCE_UPLOAD_DIR",
         default="/app/data/kaizen-evidences",
     )
+    GUIAS_PROCEDIMENTOS_UPLOAD_DIR: str = _get_env(
+        "GUIAS_PROCEDIMENTOS_UPLOAD_DIR",
+        default="/app/data/guias-procedimentos",
+    )
     QUALITY_LABELS_QR_DIR: str = _get_env(
         "QUALITY_LABELS_QR_DIR",
         default="/app/data/quality-labels/qr",
