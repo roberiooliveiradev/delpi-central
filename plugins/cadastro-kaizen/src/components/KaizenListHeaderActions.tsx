@@ -27,7 +27,7 @@ export function KaizenListHeaderActions({
       {onShare ? (
         <button type="button" className={KZ_GHOST_BTN} onClick={onShare}>
           <Share2 size={16} aria-hidden="true" />
-          Compartilhar
+          Compartilhar sugestão
         </button>
       ) : null}
       {onExport ? (

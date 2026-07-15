@@ -36,7 +36,7 @@ Navegação interna via estado do MFE (`CadastroKaizenPage`); o Portal monta o p
 
 ## Formulário público de sugestão
 
-- Link compartilhado (botão **Compartilhar** na listagem): `/p/kaizen/sugestao/aberto` (public-hub)
+- Link compartilhado (botão **Compartilhar sugestão** na listagem): `/p/kaizen/sugestao/aberto` (public-hub)
 - API: `POST /apps/api-delpi/public/kaizen/suggestions` (sem JWT)
 - Status inicial: `recebido`
 - Permissão de alerta: `cadastro-kaizen.notify-suggestions` (sino do portal)
