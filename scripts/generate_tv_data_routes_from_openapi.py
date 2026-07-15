@@ -406,6 +406,9 @@ KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {
 
 KNOWN_PARAM_DEFAULTS: dict[str, Any] = {
     "granularity": "day",
+    "branch": "01",
+    "filial": "01",
+    "branch_code": "01",
 }
 
 
@@ -647,7 +650,8 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
         route["paramStrategy"] = param_strategy
         if date_range_keys:
             route["dateRangeKeys"] = list(date_range_keys)
-        if param_strategy == "date_range":
+            route["defaultParams"] = {"periodDays": 30}
+        elif param_strategy == "date_range":
             route["defaultParams"] = {"periodDays": 30}
     value_fields = infer_value_fields(operation_id)
     if value_fields:

@@ -6,6 +6,9 @@ from typing import Any, Mapping
 from delpi_api_client import DelpiApiClient
 from delpi_auth.service_token import internal_service_authorization
 
+from tv_app.application.services.data.tv_data_param_defaults_service import (
+    apply_catalog_param_defaults,
+)
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_date_range_preset_service import (
@@ -24,8 +27,9 @@ def _build_query_params(
     strategy = str(route.get("paramStrategy") or "direct")
     schema = route.get("paramSchema") if isinstance(route.get("paramSchema"), dict) else {}
     date_range_keys = route.get("dateRangeKeys")
+    with_defaults = apply_catalog_param_defaults(params, route)
     merged = apply_date_range_preset(
-        dict(params),
+        with_defaults,
         schema_keys=schema,
         date_range_keys=date_range_keys,
         strategy=strategy,
@@ -81,7 +85,7 @@ def _build_query_params(
             if value is None or value == "":
                 continue
             query[str(key)] = str(value)
-        return query
+        return _filter_query_to_route_schema(query, schema=schema, fixed=fixed, always_allow={start_key, end_key, "branch"})
 
     # direct: emite schema + extras, mas se há par de datas canônico, remove aliases
     pair = resolve_output_date_range_keys(
@@ -90,6 +94,7 @@ def _build_query_params(
         strategy=None,
     )
     drop_aliases: set[str] = set()
+    always_allow: set[str] = set()
     if pair:
         start_key, end_key = pair
         start, end = read_date_range_values(merged, start_key, end_key)
@@ -98,6 +103,7 @@ def _build_query_params(
         if end:
             merged[end_key] = end
         drop_aliases = set(date_alias_keys(keep=(start_key, end_key))) - {start_key, end_key}
+        always_allow = {start_key, end_key}
 
     for key, value in merged.items():
         if key == PERIOD_DAYS_KEY and key not in schema:
@@ -107,7 +113,25 @@ def _build_query_params(
         if value is None or value == "":
             continue
         query[str(key)] = str(value)
-    return query
+    return _filter_query_to_route_schema(query, schema=schema, fixed=fixed, always_allow=always_allow)
+
+
+def _filter_query_to_route_schema(
+    query: dict[str, str],
+    *,
+    schema: Mapping[str, Any],
+    fixed: Mapping[str, Any] | None,
+    always_allow: set[str] | None = None,
+) -> dict[str, str]:
+    """Evita 422 da api-delpi por params de período/UI ausentes no OpenAPI da rota."""
+    if not schema:
+        return query
+    allowed = set(schema.keys())
+    if isinstance(fixed, Mapping):
+        allowed |= {str(key) for key in fixed.keys()}
+    if always_allow:
+        allowed |= always_allow
+    return {key: value for key, value in query.items() if key in allowed}
 
 
 class DelpiOperationalGateway:

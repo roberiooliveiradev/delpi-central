@@ -31,11 +31,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
-import {
-  DATE_RANGE_PRESET_PARAM,
-  defaultDateRangePreset,
-  findDateRangeKeys,
-} from "../utils/dateRangePresets";
+import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
 
 const CATEGORY_ORDER = [
   "production",
@@ -71,23 +67,6 @@ function CategoryIcon({ category }: { category: string }) {
   if (category === "quality") return <ShieldCheck size={16} aria-hidden />;
   if (category === "supplies" || category === "products") return <Package size={16} aria-hidden />;
   return <Factory size={16} aria-hidden />;
-}
-
-function buildRouteDefaultParams(route: TvDataRouteCatalogItem): NonNullable<ComunicadoDataBinding["params"]> {
-  const defaults: NonNullable<ComunicadoDataBinding["params"]> = Object.fromEntries(
-    Object.entries(route.paramSchema ?? {})
-      .map(([key, schema]) => {
-        const def = (schema as { default?: string | number }).default;
-        return def !== undefined ? [key, def] : null;
-      })
-      .filter(Boolean) as Array<[string, string | number]>,
-  );
-  const pair = findDateRangeKeys(Object.keys(route.paramSchema ?? {}));
-  const preset = defaultDateRangePreset(pair);
-  if (preset) {
-    defaults[DATE_RANGE_PRESET_PARAM] = preset;
-  }
-  return defaults;
 }
 
 type Props = {
