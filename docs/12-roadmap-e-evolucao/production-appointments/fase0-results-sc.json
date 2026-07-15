@@ -1,0 +1,547 @@
+{
+  "period": {
+    "date_start": "20260615",
+    "date_end_exclusive": "20260716"
+  },
+  "branch": "01",
+  "sample_ct": "CT-70",
+  "results": [
+    {
+      "name": "catalog_cts",
+      "rows": 84,
+      "elapsed_ms": 10.3,
+      "sample": [
+        {
+          "branch": "01",
+          "work_center": "CT- 53",
+          "name": "MONTAGEM CHICOTES DIVERSOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-00",
+          "name": "MONTAGEM - REVISAR",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-01A",
+          "name": "CORTE E DECAPE",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-01B",
+          "name": "CORTAR E DECAPAR CABO",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-01C",
+          "name": "CORTAR E DECAPAR CABO",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-02",
+          "name": "APLICAÇÃO DE TERMINAIS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-02A",
+          "name": "CORTE DE CABOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-02B",
+          "name": "APLICAR TERMINAL",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-03",
+          "name": "APLICAÇÃO DE TERMINAIS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "01",
+          "work_center": "CT-04",
+          "name": "MONTAGEM DE ISOLADOR",
+          "is_final_inspection": 0
+        }
+      ]
+    },
+    {
+      "name": "cts_inspecao_final",
+      "rows": 2,
+      "elapsed_ms": 18.2,
+      "sample": [
+        {
+          "branch": "01",
+          "work_center": "CT-70",
+          "name": "INSPEÇÃO FINAL"
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-99",
+          "name": "INSPECAO FINAL"
+        }
+      ]
+    },
+    {
+      "name": "appointments_sample",
+      "rows": 20,
+      "elapsed_ms": 231.0,
+      "sample": [
+        {
+          "branch": "01",
+          "production_order": "24620601001",
+          "product": "90264227",
+          "product_type": "PA",
+          "work_center": "CT-70",
+          "work_center_name": "INSPEÇÃO FINAL",
+          "operation": "03",
+          "resource": "CT-70",
+          "qty_produced": 0.4,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429281
+        },
+        {
+          "branch": "01",
+          "production_order": "24659601001",
+          "product": "90300064",
+          "product_type": "PA",
+          "work_center": "CT-70",
+          "work_center_name": "INSPEÇÃO FINAL",
+          "operation": "04",
+          "resource": "CT-70",
+          "qty_produced": 1.0,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429280
+        },
+        {
+          "branch": "01",
+          "production_order": "24660701001",
+          "product": "90300020",
+          "product_type": "PA",
+          "work_center": "CT-60",
+          "work_center_name": "RESISTOR",
+          "operation": "01",
+          "resource": "CT-60",
+          "qty_produced": 0.513,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429279
+        },
+        {
+          "branch": "01",
+          "production_order": "24604501001",
+          "product": "90300071",
+          "product_type": "PA",
+          "work_center": "CT-60",
+          "work_center_name": "RESISTOR",
+          "operation": "02",
+          "resource": "CT-60",
+          "qty_produced": 0.135,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429278
+        },
+        {
+          "branch": "01",
+          "production_order": "24621001002",
+          "product": "50215425",
+          "product_type": "PI",
+          "work_center": "CT-01A",
+          "work_center_name": "CORTE E DECAPE",
+          "operation": "01",
+          "resource": "CT-01A",
+          "qty_produced": 0.4,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429276
+        },
+        {
+          "branch": "01",
+          "production_order": "24655801017",
+          "product": "70260033",
+          "product_type": "PA",
+          "work_center": "CT-35",
+          "work_center_name": "APLICAÇÃO DE TERMINAIS",
+          "operation": "07",
+          "resource": "CT-35",
+          "qty_produced": 0.001,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429273
+        },
+        {
+          "branch": "01",
+          "production_order": "24655801017",
+          "product": "70260033",
+          "product_type": "PA",
+          "work_center": "CT-35",
+          "work_center_name": "APLICAÇÃO DE TERMINAIS",
+          "operation": "06",
+          "resource": "CT-35",
+          "qty_produced": 0.001,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429272
+        },
+        {
+          "branch": "01",
+          "production_order": "24659601001",
+          "product": "90300064",
+          "product_type": "PA",
+          "work_center": "CT-60",
+          "work_center_name": "RESISTOR",
+          "operation": "03",
+          "resource": "CT-60",
+          "qty_produced": 0.7,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429271
+        },
+        {
+          "branch": "01",
+          "production_order": "24577601001",
+          "product": "90262401",
+          "product_type": "PA",
+          "work_center": "CT-12",
+          "work_center_name": "MONTAGEM WEG",
+          "operation": "02",
+          "resource": "CT-12",
+          "qty_produced": 0.03,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429268
+        },
+        {
+          "branch": "01",
+          "production_order": "24655501001",
+          "product": "90264168",
+          "product_type": "PA",
+          "work_center": "CT-35",
+          "work_center_name": "APLICAÇÃO DE TERMINAIS",
+          "operation": "04",
+          "resource": "CT-35",
+          "qty_produced": 0.001,
+          "qty_lost": 0.0,
+          "appointment_date": "20260715",
+          "appointment_id": 429266
+        }
+      ]
+    },
+    {
+      "name": "summary_by_ct",
+      "rows": 24,
+      "elapsed_ms": 190.6,
+      "sample": [
+        {
+          "work_center": "CT-70",
+          "work_center_name": "INSPEÇÃO FINAL",
+          "is_final_inspection": 1,
+          "appointment_count": 702,
+          "qty_produced": 144.89100000000022,
+          "qty_lost": 0.01,
+          "op_count": 686
+        },
+        {
+          "work_center": "CT-01A",
+          "work_center_name": "CORTE E DECAPE",
+          "is_final_inspection": 0,
+          "appointment_count": 212,
+          "qty_produced": 97.80000000000025,
+          "qty_lost": 0.0,
+          "op_count": 194
+        },
+        {
+          "work_center": "CT-19",
+          "work_center_name": "CENTRAL DE IMPRESSAO",
+          "is_final_inspection": 0,
+          "appointment_count": 439,
+          "qty_produced": 54.98599999999998,
+          "qty_lost": 0.0,
+          "op_count": 396
+        },
+        {
+          "work_center": "CT-23",
+          "work_center_name": "CORTE/APLICAÇÃO AUTOMATICA",
+          "is_final_inspection": 0,
+          "appointment_count": 197,
+          "qty_produced": 50.104999999999976,
+          "qty_lost": 0.0,
+          "op_count": 188
+        },
+        {
+          "work_center": "CT-02",
+          "work_center_name": "APLICAÇÃO DE TERMINAIS",
+          "is_final_inspection": 0,
+          "appointment_count": 55,
+          "qty_produced": 42.0,
+          "qty_lost": 0.0,
+          "op_count": 34
+        },
+        {
+          "work_center": "CT-60",
+          "work_center_name": "RESISTOR",
+          "is_final_inspection": 0,
+          "appointment_count": 202,
+          "qty_produced": 41.343999999999994,
+          "qty_lost": 0.0,
+          "op_count": 59
+        },
+        {
+          "work_center": "CT-35",
+          "work_center_name": "APLICAÇÃO DE TERMINAIS",
+          "is_final_inspection": 0,
+          "appointment_count": 565,
+          "qty_produced": 31.965000000000067,
+          "qty_lost": 0.0,
+          "op_count": 399
+        },
+        {
+          "work_center": "CT-85",
+          "work_center_name": "MONTAGEM VENTILADORES",
+          "is_final_inspection": 0,
+          "appointment_count": 129,
+          "qty_produced": 30.03999999999996,
+          "qty_lost": 0.0,
+          "op_count": 74
+        },
+        {
+          "work_center": "CT-14",
+          "work_center_name": "ENROLAR FIO RESISTOR",
+          "is_final_inspection": 0,
+          "appointment_count": 33,
+          "qty_produced": 27.0,
+          "qty_lost": 0.0,
+          "op_count": 27
+        },
+        {
+          "work_center": "CT-12",
+          "work_center_name": "MONTAGEM WEG",
+          "is_final_inspection": 0,
+          "appointment_count": 266,
+          "qty_produced": 21.50900000000004,
+          "qty_lost": 0.0,
+          "op_count": 197
+        }
+      ]
+    },
+    {
+      "name": "series_by_day",
+      "rows": 23,
+      "elapsed_ms": 201.0,
+      "sample": [
+        {
+          "appointment_date": "20260615",
+          "appointment_count": 366,
+          "qty_produced": 26.598000000000127,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260616",
+          "appointment_count": 239,
+          "qty_produced": 29.989,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260617",
+          "appointment_count": 221,
+          "qty_produced": 28.32999999999996,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260618",
+          "appointment_count": 150,
+          "qty_produced": 23.304,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260619",
+          "appointment_count": 167,
+          "qty_produced": 27.911999999999995,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260622",
+          "appointment_count": 174,
+          "qty_produced": 23.531000000000002,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260623",
+          "appointment_count": 152,
+          "qty_produced": 22.77,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260624",
+          "appointment_count": 137,
+          "qty_produced": 28.803,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260625",
+          "appointment_count": 203,
+          "qty_produced": 35.17799999999998,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260626",
+          "appointment_count": 188,
+          "qty_produced": 30.879,
+          "qty_lost": 0.0
+        }
+      ]
+    },
+    {
+      "name": "drilldown_by_op",
+      "rows": 30,
+      "elapsed_ms": 183.9,
+      "sample": [
+        {
+          "production_order": "24656001002",
+          "product": "50233324",
+          "appointment_count": 4,
+          "work_center_count": 2,
+          "qty_produced": 10.65,
+          "qty_lost": 0.0,
+          "first_date": "20260713",
+          "last_date": "20260714"
+        },
+        {
+          "production_order": "24656101002",
+          "product": "50233325",
+          "appointment_count": 6,
+          "work_center_count": 2,
+          "qty_produced": 7.7,
+          "qty_lost": 0.0,
+          "first_date": "20260713",
+          "last_date": "20260715"
+        },
+        {
+          "production_order": "24659501001",
+          "product": "90300063",
+          "appointment_count": 8,
+          "work_center_count": 2,
+          "qty_produced": 4.4,
+          "qty_lost": 0.0,
+          "first_date": "20260713",
+          "last_date": "20260714"
+        },
+        {
+          "production_order": "24601501001",
+          "product": "90430011",
+          "appointment_count": 2,
+          "work_center_count": 2,
+          "qty_produced": 4.2,
+          "qty_lost": 0.0,
+          "first_date": "20260625",
+          "last_date": "20260625"
+        },
+        {
+          "production_order": "24634701002",
+          "product": "50320064",
+          "appointment_count": 5,
+          "work_center_count": 3,
+          "qty_produced": 4.0,
+          "qty_lost": 0.0,
+          "first_date": "20260629",
+          "last_date": "20260714"
+        },
+        {
+          "production_order": "24659601001",
+          "product": "90300064",
+          "appointment_count": 8,
+          "work_center_count": 2,
+          "qty_produced": 3.9999999999999996,
+          "qty_lost": 0.0,
+          "first_date": "20260714",
+          "last_date": "20260715"
+        },
+        {
+          "production_order": "24631301001",
+          "product": "90430012",
+          "appointment_count": 2,
+          "work_center_count": 2,
+          "qty_produced": 3.6,
+          "qty_lost": 0.0,
+          "first_date": "20260625",
+          "last_date": "20260625"
+        },
+        {
+          "production_order": "24605301001",
+          "product": "90430009",
+          "appointment_count": 2,
+          "work_center_count": 2,
+          "qty_produced": 3.6,
+          "qty_lost": 0.0,
+          "first_date": "20260624",
+          "last_date": "20260625"
+        },
+        {
+          "production_order": "24569601001",
+          "product": "90280027",
+          "appointment_count": 3,
+          "work_center_count": 3,
+          "qty_produced": 3.5999999999999996,
+          "qty_lost": 0.0,
+          "first_date": "20260617",
+          "last_date": "20260624"
+        },
+        {
+          "production_order": "24582001001",
+          "product": "90280027",
+          "appointment_count": 3,
+          "work_center_count": 3,
+          "qty_produced": 3.5999999999999996,
+          "qty_lost": 0.0,
+          "first_date": "20260617",
+          "last_date": "20260624"
+        }
+      ]
+    },
+    {
+      "name": "filter_one_ct",
+      "rows": 1,
+      "elapsed_ms": 15.9,
+      "sample": [
+        {
+          "work_center": "CT-70",
+          "appointment_count": 702,
+          "qty_produced": 144.89100000000022
+        }
+      ]
+    },
+    {
+      "name": "sh6_without_resource_ct",
+      "rows": 1,
+      "elapsed_ms": 105.0,
+      "sample": [
+        {
+          "appointments_missing_ct_link": 0
+        }
+      ]
+    },
+    {
+      "name": "produced_qty_inspection_ct",
+      "rows": 1,
+      "elapsed_ms": 37.3,
+      "sample": [
+        {
+          "work_center": "CT-70",
+          "work_center_name": "INSPEÇÃO FINAL",
+          "qty_produced": 144.8909999999998,
+          "appointment_count": 702
+        }
+      ]
+    }
+  ]
+}

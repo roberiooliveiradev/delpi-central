@@ -1,0 +1,268 @@
+{
+  "period": {
+    "date_start": "20260615",
+    "date_end_exclusive": "20260716"
+  },
+  "branch": "02",
+  "sample_ct": "CT-00",
+  "results": [
+    {
+      "name": "catalog_cts",
+      "rows": 60,
+      "elapsed_ms": 2.6,
+      "sample": [
+        {
+          "branch": "02",
+          "work_center": "CT-00",
+          "name": "MONTAGEM - REVISAR",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-01",
+          "name": "CORTE E APLICACAO DE CABOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-01A",
+          "name": "CORTE E APLICACAO DE CABOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-01B",
+          "name": "CORTE E APLICACAO DE CABOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-01C",
+          "name": "CORTE E APLICACAO DE CABOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-01D",
+          "name": "CORTE",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-01E",
+          "name": "MAQ DE CORTE E APLIC DE PLUGUE",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-02",
+          "name": "CORTE DE CABOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-02A",
+          "name": "CORTE DE CABOS",
+          "is_final_inspection": 0
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-02B",
+          "name": "MÁQUINA DE CORTE CABO PP",
+          "is_final_inspection": 0
+        }
+      ]
+    },
+    {
+      "name": "cts_inspecao_final",
+      "rows": 2,
+      "elapsed_ms": 4.7,
+      "sample": [
+        {
+          "branch": "01",
+          "work_center": "CT-70",
+          "name": "INSPEÇÃO FINAL"
+        },
+        {
+          "branch": "02",
+          "work_center": "CT-99",
+          "name": "INSPECAO FINAL"
+        }
+      ]
+    },
+    {
+      "name": "summary_by_ct",
+      "rows": 28,
+      "elapsed_ms": 183.4,
+      "sample": [
+        {
+          "work_center": "CT-00",
+          "work_center_name": "MONTAGEM - REVISAR",
+          "is_final_inspection": 0,
+          "appointment_count": 2402,
+          "qty_produced": 3367.686000000014,
+          "qty_lost": 0.0,
+          "op_count": 1224
+        },
+        {
+          "work_center": "CT-01C",
+          "work_center_name": "CORTE E APLICACAO DE CABOS",
+          "is_final_inspection": 0,
+          "appointment_count": 351,
+          "qty_produced": 1046.4300000000005,
+          "qty_lost": 0.0,
+          "op_count": 283
+        },
+        {
+          "work_center": "CT-01A",
+          "work_center_name": "CORTE E APLICACAO DE CABOS",
+          "is_final_inspection": 0,
+          "appointment_count": 318,
+          "qty_produced": 944.8519999999997,
+          "qty_lost": 0.0,
+          "op_count": 246
+        },
+        {
+          "work_center": "CT-99",
+          "work_center_name": "INSPECAO FINAL",
+          "is_final_inspection": 1,
+          "appointment_count": 670,
+          "qty_produced": 677.4849999999988,
+          "qty_lost": 0.0,
+          "op_count": 525
+        },
+        {
+          "work_center": "CT-01B",
+          "work_center_name": "CORTE E APLICACAO DE CABOS",
+          "is_final_inspection": 0,
+          "appointment_count": 936,
+          "qty_produced": 512.1019999999991,
+          "qty_lost": 0.0,
+          "op_count": 857
+        },
+        {
+          "work_center": "CT-01D",
+          "work_center_name": "CORTE",
+          "is_final_inspection": 0,
+          "appointment_count": 102,
+          "qty_produced": 151.651,
+          "qty_lost": 0.0,
+          "op_count": 29
+        },
+        {
+          "work_center": "CT-02A",
+          "work_center_name": "CORTE DE CABOS",
+          "is_final_inspection": 0,
+          "appointment_count": 77,
+          "qty_produced": 140.249,
+          "qty_lost": 0.0,
+          "op_count": 76
+        },
+        {
+          "work_center": "CT-03A",
+          "work_center_name": "MONTAGEM DE ISOLADORES",
+          "is_final_inspection": 0,
+          "appointment_count": 22,
+          "qty_produced": 83.76,
+          "qty_lost": 0.0,
+          "op_count": 22
+        },
+        {
+          "work_center": "CT-11A",
+          "work_center_name": "MONTAGEM MOLEX",
+          "is_final_inspection": 0,
+          "appointment_count": 60,
+          "qty_produced": 66.23499999999999,
+          "qty_lost": 0.0,
+          "op_count": 45
+        },
+        {
+          "work_center": "CT-01E",
+          "work_center_name": "MAQ DE CORTE E APLIC DE PLUGUE",
+          "is_final_inspection": 0,
+          "appointment_count": 266,
+          "qty_produced": 57.900000000000006,
+          "qty_lost": 0.0,
+          "op_count": 19
+        }
+      ]
+    },
+    {
+      "name": "series_by_day",
+      "rows": 31,
+      "elapsed_ms": 162.9,
+      "sample": [
+        {
+          "appointment_date": "20260615",
+          "appointment_count": 308,
+          "qty_produced": 287.59099999999967,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260616",
+          "appointment_count": 313,
+          "qty_produced": 272.8859999999998,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260617",
+          "appointment_count": 257,
+          "qty_produced": 247.635,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260618",
+          "appointment_count": 298,
+          "qty_produced": 367.60299999999967,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260619",
+          "appointment_count": 238,
+          "qty_produced": 280.39800000000014,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260620",
+          "appointment_count": 36,
+          "qty_produced": 63.660000000000004,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260621",
+          "appointment_count": 30,
+          "qty_produced": 51.7,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260622",
+          "appointment_count": 287,
+          "qty_produced": 346.6300000000004,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260623",
+          "appointment_count": 232,
+          "qty_produced": 275.15299999999985,
+          "qty_lost": 0.0
+        },
+        {
+          "appointment_date": "20260624",
+          "appointment_count": 258,
+          "qty_produced": 289.18800000000016,
+          "qty_lost": 0.0
+        }
+      ]
+    },
+    {
+      "name": "sh6_without_resource_ct",
+      "rows": 1,
+      "elapsed_ms": 117.1,
+      "sample": [
+        {
+          "appointments_missing_ct_link": 3
+        }
+      ]
+    }
+  ]
+}

@@ -25,6 +25,14 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [minha-delpi-chat/homologacao-vllm-producao.md](./minha-delpi-chat/homologacao-vllm-producao.md) | vLLM produção |
 | [minha-delpi-chat/gpu-l4-retomada-homologacao.md](./minha-delpi-chat/gpu-l4-retomada-homologacao.md) | Plano retomada GPU L4 + modelos (jun/2026) |
 
+### Apontamento de Produção
+
+| Arquivo | Conteúdo |
+|---|---|
+| [production-appointments/README.md](./production-appointments/README.md) | Índice do módulo |
+| [production-appointments/ESPECIFICACAO.md](./production-appointments/ESPECIFICACAO.md) | Escopo e rotas previstas |
+| [production-appointments/FASE0-VALIDACAO.md](./production-appointments/FASE0-VALIDACAO.md) | Validação SQL Fase 0 (jul/2026) |
+
 ### Eficiência Fabril
 
 | Arquivo | Conteúdo |
