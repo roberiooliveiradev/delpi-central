@@ -1,7 +1,9 @@
 # Roadmap de refatoração — componentes compartilhados (`@delpi/plugin-ui`)
 
-> **Objetivo:** eliminar duplicação de UI transversal entre plugins MFE, centralizando em `plugins/plugin-ui/` sem quebrar builds, Docker nem tema claro/escuro no portal federado.  
+> **Objetivo:** eliminar duplicação de UI transversal entre plugins MFE, centralizando em `plugins/plugin-ui/` (TSX **e** CSS `.delpi-ui-*`) sem quebrar builds, Docker nem tema claro/escuro no portal federado.  
+> **Regra absoluta (jul/2026):** **zero CSS de componente do kit no MFE** — ver Cursor `plugins-reusable-components.mdc`. MFE só: tokens `--delpi-ui-*` + layout de página + UI fora do kit.  
 > **Baseline:** jul/2026 · **Consumidores:** 27 MFEs via Module Federation (`pluginUiRemote()` + `preparePluginUiRemote()`) — rollout MF **concluído**; ver [module-federation.md](./module-federation.md).
+> **Próxima frente:** § 8 — **Fase 7** (compliance CSS + cópias/markup residual). **Não implementar** lotes da Fase 7 sem atualizar o tracking neste doc + [migration-catalog.md](./migration-catalog.md).
 
 ---
 
@@ -118,11 +120,12 @@ Para **novos plugins**, usar Module Federation desde o início — [novo-plugin-
 
 Componentes em `plugin-ui` usam:
 
-- Classes base `delpi-ui-*` no pacote
-- Props `className`, `*ClassName` para o plugin continuar com prefixo local (`dp-`, `dc-`, `kz-`, …)
-- Tokens `--delpi-ui-accent|surface|text|border|muted` mapeados no `.dashboard-{nome}` do plugin
+- Classes canônicas `.delpi-ui-*` (+ dual-class `{prefix}-*` via `delpiUiClass` / `*BemClasses`)
+- Tokens `--delpi-ui-*` (mapeados no `.dashboard-{nome}` do MFE)
+- CSS **somente** em `plugins/plugin-ui/src/styles/**`
 
-O pacote **não** importa CSS do plugin consumidor.
+O pacote **não** importa CSS do plugin consumidor.  
+O MFE **não escreve CSS** de componente do kit **em hipótese alguma** (nem BEM local espelho, nem override `.delpi-ui-*`) — Cursor `plugins-reusable-components.mdc`.
 
 ### 2.3 Textos PT-BR
 
@@ -145,10 +148,13 @@ Checklist: [novo-plugin-mfe-checklist.md](../../docs/05-plugin-system/novo-plugi
 ### 2.5 Definition of Done (por plugin)
 
 - [ ] Zero `HelpTooltip.tsx` local (Fase 1)
+- [ ] Dual-class presente no DOM (`prefix` + `delpi-ui-*`) nos exports do kit
+- [ ] Tokens `--delpi-ui-*` mapeados (+ dark scoped)
+- [ ] **Zero** seletor CSS de componente do kit no MFE (Fase 7) — só tokens + layout de página
+- [ ] Sem cópia local / markup inline de KPI, Pagination, DataTable, EmptyState quando o kit cobre
 - [ ] `npm run build` verde
-- [ ] Smoke visual: tooltip, aba com ?, campo com label
-- [ ] Tema escuro no portal (não só Vite dev)
-- [ ] Docker build verde (se aplicável)
+- [ ] Smoke visual claro + escuro no portal federado
+- [ ] Docker/MF ok (se aplicável)
 - [ ] Linha atualizada em [migration-catalog.md](./migration-catalog.md)
 
 ---
@@ -296,12 +302,13 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 ## 6. Métricas de sucesso
 
-| Métrica | Hoje | Meta pós-F1 | Meta pós-F2 |
-|---------|------|-------------|-------------|
-| Arquivos `HelpTooltip.tsx` locais | 1 (portal) | 0 nos plugins | 0 |
-| Plugins consumindo `@delpi/plugin-ui` | 27 (MF) | 27 ✅ | 27+ |
-| LOC duplicada (help only) | ~3.800 | ~0 | ~0 |
-| Componentes shell duplicados | ~80 arquivos | ~80 | ≤15 |
+| Métrica | Hoje (pós F1–F6) | Meta pós-F7 |
+|---------|------------------|-------------|
+| Arquivos `HelpTooltip.tsx` locais | 1 (portal) | 0 nos plugins |
+| Plugins consumindo `@delpi/plugin-ui` | 27 (MF) | 27+ |
+| MFEs com CSS `.delpi-ui-*` / espelho BEM de kit | ~28 (auditoria) | 0 |
+| Cópias Pagination/DataTable/EmptyState fora do kit | várias (IP, SI, chat admin) | 0 |
+| Gate CI anti-reintrodução CSS kit no MFE | — | ⏳ 7.7 |
 
 ---
 
@@ -323,6 +330,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Prioridade ROI | Item | Notas |
 |----------------|------|--------|
+| **Ativa — Fase 7** | Zero CSS de componente do kit nos MFEs | § 8 · [migration-catalog.md](./migration-catalog.md) § Fase 7 |
 | Baixa | Varredura CI `<select>`/`textarea` | ✅ concluída — 0 nativos nos MFE; gate `audit_plugin_ui_native_form_controls.py --check` |
 | Backlog E4 | CSV Excel-aware (drawing) | Só se 2+ consumidores |
 | Fora | **portal** HelpTooltip / shell | Explícito fora de escopo |
@@ -345,15 +353,96 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 ### Próximo lote sugerido (quando retomar)
 
 1. ~~Consolidar estilos `SelectControl` compacto no `plugin-ui`~~ ✅ `ToolbarSelectField` / `ToolbarSelectControl`
-2. **api-delpi-console** — não consome `@delpi/plugin-ui`. **public-hub** — MF para plugin-ui; bundled só `tv-dashboard-presentation`.
+2. **Fase 7 — zero CSS de componente do kit no MFE** → § 8 (auditoria jul/2026). **Implementar só após** tracking neste doc + [migration-catalog.md](./migration-catalog.md).
+3. **api-delpi-console** — ainda não consome `@delpi/plugin-ui` (avaliar). **public-hub** — MF para plugin-ui; bundled só `tv-dashboard-presentation`.
+
+---
+
+## 8. Fase 7 — Zero CSS de componente do kit no MFE (jul/2026)
+
+> **Status:** planejado · **Não iniciar implementação** sem marcar ondas abaixo e atualizar [migration-catalog.md](./migration-catalog.md) § Fase 7.  
+> **Regra:** Cursor `plugins-reusable-components.mdc` — se a UI vem do kit, **zero CSS** no MFE (hipótese alguma).  
+> **Auditoria:** varredura monorepo jul/2026 (~28 plugins com violação CSS e/ou TSX).
+
+### 8.1 Tipos de violação
+
+| Tipo | Exemplos | Ação canônica |
+|------|----------|---------------|
+| **A — Override `.delpi-ui-*`** | `tv-dashboard` format-pane/ribbon; PAC help-tooltip no modal; CR `margin` em filter-bar/loading | Mover utilitário ao kit **ou** apagar; layout via tokens/página |
+| **B — Espelho BEM dual-class** | `.pac-ghost-btn`, `.kz-section-card*`, `.dm-state-box`, `.fi-kpi-*`, tabela th/td | Remover CSS do MFE; garantir CSS no kit + dual-class |
+| **C — Cópia TSX / markup inline** | `inspecoes-processo` Pagination/EmptyState; SI DataTable; chat AdminKpi/DataTable; KPI/paginação inline (a5s, EF, maintenance) | Thin wrapper / factory do kit; apagar cópia |
+| **D — Dual-class incompleto** | `filtersUi` IE/PVA/a5s sem `filtersRowBemClasses`; kaizen `dataTableUi` override remove `delpi-ui-*` | Restaurar `*BemClasses` sem override que apague o par |
+
+### 8.2 Inventário P0 / P1 / P2
+
+#### P0 — críticos (muitos `.delpi-ui-*` ou chrome massivo)
+
+| Plugin | Violações típicas | Onda sugerida |
+|--------|-------------------|---------------|
+| `tv-dashboard` | ~96 seletores `.delpi-ui-*` (format-pane, ribbon, catalog, help-tooltip) | **7.1** |
+| `quality-action-plans` | ghost, state-box, section-card header, table modal, help-tooltip | **7.2** |
+| `minha-delpi-chat` | Admin KPI/filter/table/pagination local + CSS; overrides toolbar/checkbox | **7.3** (avaliar: migrar ao kit **ou** renomear DS admin como domínio fora do dual-class) |
+| `tv-dashboard-presentation` | config-table, series-chart-shell, kpi-card TV | **7.1** (junto TV) |
+
+#### P1 — espelho BEM / cópia nomeada
+
+| Plugin | Violações típicas | Onda sugerida |
+|--------|-------------------|---------------|
+| `cadastro-kaizen` | `.kz-section-card*`; `dataTableUi` dual incompleto | **7.4** |
+| `auditoria-5s` | table/filters CSS; KPI/paginação **inline** | **7.4** |
+| `maintenance` | StateBox local + DataTable.css + KPI inline | **7.4** |
+| `transformometro` | ghost, table-section, tree-guides/help print | **7.4** |
+| `financeiro-inadimplencia` | CSS/markup `fi-kpi-*` | **7.4** |
+| `inspecoes-processo` | Pagination + EmptyState **cópia local** | **7.5** |
+| `strategic-indicators` | DataTable **cópia local** | **7.5** |
+
+#### P2 — família dashboard + parciais
+
+| Plugin / grupo | Violações típicas | Onda sugerida |
+|----------------|-------------------|---------------|
+| `dashboard-{production,commercial,quality,financial,hr,engineering,supplies,lmps}` | state-box, table mobile, print, ghost | **7.6** |
+| `scrap-monitoring`, `production-appointments`, `inspecoes-entrada`, `pedidos-venda-abertos`, `eficiencia-fabril`, `propostas-comerciais`, financeiros | filters/state-box/pagination CSS; filtersUi MEDIUM | **7.6** |
+| `controle-retrabalhos` | residual `.delpi-ui-filter-bar` / loading margin; `.cr-card:not(.delpi-ui-card)` | **7.2** (junto PAC — quick win) |
+
+#### Limpos (referência — sem chrome das patterns)
+
+`canal-denuncia`, `codigo-etica`, `cultura-delpi`, `quality-labels` (+ `public-hub` sem CSS relevante).
+
+### 8.3 Ondas de execução (plano — ⏳)
+
+| Onda | Escopo | DoD mínimo | Status |
+|------|--------|------------|--------|
+| **7.0** | Doc + regra Cursor (este § + migration-catalog + `plugins-reusable-components.mdc`) | Regra absoluta publicada | ✅ |
+| **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — zerar/mover overrides `.delpi-ui-*` | 0 seletores `.delpi-ui-*` em CSS do MFE (exceto justificativa doc) | ⏳ |
+| **7.2** | `quality-action-plans` + `controle-retrabalhos` | 0 chrome espelho; tokens+layout only | ⏳ |
+| **7.3** | `minha-delpi-chat` admin UI — decisão kit vs domínio renomeado | Sem classes que fingem dual-class do shell dashboard **ou** migrado ao kit | ⏳ |
+| **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ⏳ |
+| **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ⏳ |
+| **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ⏳ |
+| **7.7** | Gate CI opcional (`audit` seletores `.delpi-ui-` / BEM espelho em `plugins/*/src/**/*.css`) | Falha CI se reintroduzir | ⏳ backlog |
+
+### 8.4 Ordem operacional por PR
+
+1. **1 onda = 1+ PRs** (preferir 1 plugin crítico por PR em 7.1–7.5).
+2. Se o gap visual for no kit → alterar `plugins/plugin-ui/src/styles/` **primeiro**, rebuild remote (`up-*-sequential.sh --fase remote --build plugin-ui`), depois MFE.
+3. Não “voltar” CSS podado no MFE.
+4. Atualizar checkbox da onda em [migration-catalog.md](./migration-catalog.md) § Fase 7 ao concluir.
+
+### 8.5 Fora de Fase 7 (não confundir)
+
+| Item | Nota |
+|------|------|
+| UI 100% domínio (fishbone PAC, presentation SI PanZoom, …) | CSS no MFE **ok** se **não** for export/dual-class do kit |
+| `@media print` hide de help-tooltip | Preferir utilitário no kit (onda 7.1/7.6); não deixar seletor `.delpi-ui-*` permanente no MFE |
+| Admin chat se permanecer domínio | Renomear classes para **não** parecer shell KPI/filter do kit |
 
 ---
 
 ## Referências
 
 - [component-catalog.md](./component-catalog.md) — API atual
-- [migration-catalog.md](./migration-catalog.md) — tracking por plugin (Fase 1)
-- [architecture.md](./architecture.md) — tokens, Vite, Docker
+- [migration-catalog.md](./migration-catalog.md) — tracking por plugin + **Fase 7**
+- [architecture.md](./architecture.md) — tokens, CSS canônico vs MFE, Vite, Docker
 - [contributing.md](./contributing.md) — critérios para novo componente
-- [plugins-reusable-components.mdc](../../../.cursor/rules/plugins-reusable-components.mdc)
+- [plugins-reusable-components.mdc](../../../.cursor/rules/plugins-reusable-components.mdc) — **zero CSS do kit no MFE**
 - [plugins-visual-design-system.mdc](../../../.cursor/rules/plugins-visual-design-system.mdc)

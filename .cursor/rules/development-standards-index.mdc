@@ -61,7 +61,7 @@ Doc: `infra/README-ambiente.md`.
 
 | Regra | Escopo |
 |-------|--------|
-| `plugins-reusable-components.mdc` | **`@delpi/plugin-ui`** — zero CSS de componentes do kit no MFE (sem exceção) |
+| `plugins-reusable-components.mdc` | **`@delpi/plugin-ui`** — zero CSS de componentes do kit no MFE; plano Fase 7 em `plugin-ui/docs/refactoring-roadmap.md` § 8 |
 | `chat-prose-rendering.mdc` | Markdown, streaming, títulos do assistente (`minha-delpi-chat`) |
 | `plugins-visual-design-system.mdc` | Tokens, layout de página, **escopo CSS anti-vazamento**, claro/escuro; sem espelho `.delpi-ui-*` |
 | `plugins-frontend-build.mdc` | Build MFE, checklist CSS antes de commit |
@@ -81,8 +81,9 @@ Texto novo ao usuário   → assistant-content-json
 Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)
 Upload / anexo em disco     → persistent-upload-storage → volume Compose + DELPI_DATA_HOST_DIR
 Novo plugin / UI MFE        → novo-plugin-mfe-checklist → plugins-reusable-components → plugins-documentation → plugins-visual-design-system → plugins-frontend-build
-Componente UI transversal   → plugins/plugin-ui (TSX + CSS delpi-ui; não espelhar no MFE) → migration-catalog.md
-Bug visual de KPI/card/tabela/loading → plugin-ui/src/styles (não index.css do MFE) → dual-class + tokens
+Componente UI transversal   → plugins/plugin-ui (TSX + CSS delpi-ui; zero CSS no MFE) → migration-catalog + refactoring-roadmap § 8
+Bug visual de KPI/card/tabela/loading → plugin-ui/src/styles (não index.css do MFE) → dual-class + tokens → Fase 7
+Limpeza CSS espelho nos MFEs       → refactoring-roadmap § 8 ondas 7.1–7.6 (atualizar tracking antes de implementar)
 Plugin importa bib. irmã   → shared-libraries.manifest.json → check_plugin_docker_shared_libraries.py
 API dashboard multi-filial → api-delpi-response-contract § RBAC filial → manifest `.view.filial-*`
 Deploy / subir stack / rebuild Docker → infra-sequential-container-startup → up-*-sequential.sh

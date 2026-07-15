@@ -2,6 +2,8 @@
 
 Objetivo: **uma implementação** de balões explicativos e primitivos de label/aba nos **plugins MFE**. O **portal** (shell) permanece fora de escopo — não consome `@delpi/plugin-ui`.
 
+**Frente ativa (jul/2026):** [Fase 7 — zero CSS de componente do kit no MFE](#fase-7--zero-css-de-componente-do-kit-no-mfe-jul2026) · plano [refactoring-roadmap.md § 8](./refactoring-roadmap.md).
+
 ## Status — Fase 1 (help)
 
 | Plugin | Arquivo local | Status | Notas |
@@ -48,7 +50,8 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 
 ## Roadmap completo
 
-Fases 0–5, matriz por plugin, riscos e métricas: **[refactoring-roadmap.md](./refactoring-roadmap.md)**.
+Fases 0–6: **[refactoring-roadmap.md](./refactoring-roadmap.md)** (§ 1–7).  
+**Frente ativa — Fase 7** (zero CSS kit no MFE): roadmap **§ 8** + [seção abaixo](#fase-7--zero-css-de-componente-do-kit-no-mfe-jul2026). Regra Cursor: `plugins-reusable-components.mdc`.
 
 ## Componentes futuros no pacote
 
@@ -292,4 +295,52 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 
 ---
 
-Commits de referência (jul/2026): série `refactor(cadastro-kaizen): … via plugin-ui` até barrels `ui`/`data`/`form`/`detail`/`evidence` e limpeza de shims.
+## Fase 7 — Zero CSS de componente do kit no MFE (jul/2026)
+
+> **Plano canônico:** [refactoring-roadmap.md § 8](./refactoring-roadmap.md).  
+> **Regra:** Cursor `plugins-reusable-components.mdc` — **zero** CSS de export/dual-class do kit no MFE.  
+> **Implementação:** só após marcar onda ⏳ → ✅ aqui e no roadmap.
+
+### Tracking de ondas
+
+| Onda | Escopo | Status |
+|------|--------|--------|
+| **7.0** | Regra Cursor + docs (roadmap § 8, este catálogo, architecture/contributing) | ✅ |
+| **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — overrides `.delpi-ui-*` | ⏳ |
+| **7.2** | `quality-action-plans` + `controle-retrabalhos` — chrome espelho / residual kit | ⏳ |
+| **7.3** | `minha-delpi-chat` admin (kit **ou** renomear DS domínio) | ⏳ |
+| **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ⏳ |
+| **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ⏳ |
+| **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ⏳ |
+| **7.7** | Gate CI anti-reintrodução (opcional) | ⏳ backlog |
+
+### Checklist por plugin (preencher ao fechar onda)
+
+| Plugin | Onda | CSS kit zerado | TSX cópia/inline resolvido | Dual-class ok | Notas |
+|--------|------|----------------|----------------------------|---------------|-------|
+| `tv-dashboard` | 7.1 | ⏳ | — | ⏳ | ~96× `.delpi-ui-*` |
+| `tv-dashboard-presentation` | 7.1 | ⏳ | — | ⏳ | |
+| `quality-action-plans` | 7.2 | ⏳ | MEDIUM headers | ⏳ | ghost/state/section/table |
+| `controle-retrabalhos` | 7.2 | ⏳ | — | ✅ wrappers | residual margin `.delpi-ui-*` |
+| `minha-delpi-chat` | 7.3 | ⏳ | ⏳ Admin* | ⏳ | decisão kit vs domínio |
+| `cadastro-kaizen` | 7.4 | ⏳ | — | ⏳ dataTableUi | section-card CSS |
+| `auditoria-5s` | 7.4 | ⏳ | ⏳ KPI/pag inline | ⏳ filtersUi | |
+| `maintenance` | 7.4 | ⏳ | ⏳ StateBox/KPI | ⏳ | |
+| `transformometro` | 7.4 | ⏳ | — | ⏳ | ghost/print |
+| `financeiro-inadimplencia` | 7.4 | ⏳ | ⏳ hero KPI | ⏳ | |
+| `inspecoes-processo` | 7.5 | — | ⏳ Pagination/Empty | ⏳ | |
+| `strategic-indicators` | 7.5 | — | ⏳ DataTable | ⏳ | |
+| `dashboard-*` (8) | 7.6 | ⏳ | — | ✅ wrappers | state-box/table/print |
+| P2 demais | 7.6 | ⏳ | filtersUi MEDIUM | ⏳ | SM, PA, IE, PVA, EF, PC, … |
+
+### DoD de um plugin na Fase 7
+
+- [ ] `index.css` (e CSS satélites) sem seletores `.delpi-ui-*` e sem BEM espelho de exports do kit
+- [ ] Tokens `--delpi-ui-*` mapeados (+ dark)
+- [ ] Layout de página apenas (`*-page-stack`, gap, grids de seção)
+- [ ] Sem Pagination/DataTable/EmptyState/KPI markup local quando o kit cobre
+- [ ] Smoke claro/escuro no portal; rebuild remote antes se o kit mudou
+
+---
+
+Commits de referência (jul/2026): série `refactor(cadastro-kaizen): … via plugin-ui` até barrels `ui`/`data`/`form`/`detail`/`evidence` e limpeza de shims; docs Fase 7 (`docs(plugin-ui): proíbe CSS…`).
