@@ -6,19 +6,27 @@
 
 .delpi-ui-card.delpi-ui-kpi-card {
   min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  container-type: inline-size;
+  container-name: delpi-ui-kpi;
+}
+
+/** Em grid (`1fr`), `--wide` ocupa 2 colunas — valor longo (ex.: R$) respira. */
+.delpi-ui-kpi-card--wide {
+  grid-column: span 2;
 }
 
 /**
- * SimpleKpiCard (ícone à esquerda / body) — sem header dept.
- * Largura mínima acompanha o valor (números longos não esmagam o card).
+ * SimpleKpiCard (ícone à esquerda / body) — sem header MetricKpi.
+ * Sempre `min-width: 0` para respeitar o track do grid (nunca max-content).
  */
 .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   width: 100%;
-  min-width: min(100%, max-content);
-  box-sizing: border-box;
+  min-width: 0;
 }
 
 .delpi-ui-kpi-card__body {
@@ -32,7 +40,7 @@
 .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) .delpi-ui-kpi-card__body,
 .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
   flex: 1 1 auto;
-  min-width: max-content;
+  min-width: 0;
 }
 
 /** MetricKpiCard — body + ícone no header canônico. */
@@ -64,27 +72,34 @@
 
 .delpi-ui-kpi-value {
   margin: 0 0 4px;
-  font-size: var(--delpi-ui-font-kpi, clamp(1.5rem, 2.2vw, 2rem));
+  /* cqi: escala com a largura do card (grid); evita vazamento de R$ milhares. */
+  font-size: var(--delpi-ui-font-kpi, clamp(1.15rem, 12cqi, 2rem));
   line-height: 1.1;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+}
+
+@supports not (font-size: 1cqi) {
+  .delpi-ui-kpi-value {
+    font-size: var(--delpi-ui-font-kpi, clamp(1.15rem, 1.8vw, 1.85rem));
+  }
 }
 
 @media (max-width: 768px) {
   .delpi-ui-kpi-value {
     white-space: normal;
     overflow-wrap: anywhere;
+    text-overflow: unset;
+    overflow: visible;
   }
 
-  .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) .delpi-ui-kpi-card__body,
-  .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
-    min-width: 0;
-  }
-
-  .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) {
-    min-width: 0;
+  .delpi-ui-kpi-card--wide {
+    grid-column: auto;
   }
 }
 

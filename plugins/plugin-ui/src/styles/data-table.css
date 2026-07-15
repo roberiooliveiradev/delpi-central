@@ -41,7 +41,7 @@ table.delpi-ui-table {
   width: max-content;
   min-width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--delpi-ui-table-font-size, 13px);
   color: var(--delpi-ui-text, var(--text, #111111));
 }
 
@@ -148,6 +148,11 @@ table.delpi-ui-table tbody tr:last-child td {
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.delpi-ui-table__col--compact {
+  white-space: nowrap;
+  width: 1%;
 }
 
 .delpi-ui-table__col--numeric .delpi-ui-table__sort-button {

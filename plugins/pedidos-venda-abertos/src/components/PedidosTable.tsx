@@ -16,9 +16,8 @@ import { OpPrevisaoModal } from "./OpPrevisaoModal";
 import { StatusBadge } from "./StatusBadge";
 import { TableColumnSettings } from "./TableColumnSettings";
 import { TableFontSizeControls } from "./TableFontSizeControls";
-import { ExcelExportButton, dataTableBemClasses } from "@delpi/plugin-ui/index";
-
-const PVA_TABLE = dataTableBemClasses("pva");
+import { ExcelExportButton, withBemModifier } from "@delpi/plugin-ui/index";
+import { PVA_TABLE } from "../ui/tableChrome";
 
 type PedidosTableProps = {
   rows: PedidosVendaAbertosItem[];
@@ -149,6 +148,7 @@ export function PedidosTable({
 
   const tableStyle = {
     "--pva-table-font-size": `${fontSize}px`,
+    "--delpi-ui-table-font-size": `${fontSize}px`,
     "--pva-table-font-size-muted": `${Math.max(10, fontSize - 1)}px`,
     "--pva-table-badge-font-size": `${Math.max(10, fontSize - 1)}px`,
   } as CSSProperties;
@@ -199,7 +199,7 @@ export function PedidosTable({
         </div>
 
         <div className={PVA_TABLE.wrap}>
-          <table className="pva-table">
+          <table className={withBemModifier(PVA_TABLE.table, "sortable")}>
             <thead>
               <tr>
                 {visibleColumns.map((column) => (
@@ -207,7 +207,11 @@ export function PedidosTable({
                     {column.sortable ? (
                       <button
                         type="button"
-                        className="pva-table__sort-btn"
+                        className={
+                          sortKey === column.key
+                            ? PVA_TABLE.sortButtonActive
+                            : PVA_TABLE.sortButton
+                        }
                         onClick={() => {
                           if (isSortableTableColumnKey(column.key)) {
                             onSort(column.key);
@@ -215,7 +219,7 @@ export function PedidosTable({
                         }}
                       >
                         <span>{column.label}</span>
-                        <span aria-hidden="true">
+                        <span className={PVA_TABLE.sortIndicator} aria-hidden="true">
                           {sortIndicator(sortKey === column.key, sortDirection)}
                         </span>
                       </button>
@@ -229,13 +233,13 @@ export function PedidosTable({
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={visibleColumnCount} className="pva-table__empty">
+                  <td colSpan={visibleColumnCount} className={PVA_TABLE.empty}>
                     Carregando…
                   </td>
                 </tr>
               ) : rows.length === 0 ? (
                 <tr>
-                  <td colSpan={visibleColumnCount} className="pva-table__empty">
+                  <td colSpan={visibleColumnCount} className={PVA_TABLE.empty}>
                     {emptyMessage}
                   </td>
                 </tr>

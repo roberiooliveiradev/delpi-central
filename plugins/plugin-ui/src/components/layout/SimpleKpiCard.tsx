@@ -67,7 +67,7 @@ export function simpleKpiCardVariantClass(prefix: string, variant: string, block
 }
 
 export function simpleKpiCardWideClass(prefix: string, block = "kpi-card") {
-  return `${prefix}-${block}--wide`;
+  return delpiUiClass(`${prefix}-${block}--wide`, "delpi-ui-kpi-card--wide");
 }
 
 export function simpleKpiKaizenBemClasses(prefix: string): SimpleKpiCardClassNames {

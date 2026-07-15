@@ -1,4 +1,4 @@
-import { dataTableBemClasses } from "@delpi/plugin-ui/index";
+import { PVA_COL_NUMERIC, PVA_TABLE } from "../ui/tableChrome";
 import { PVA_STATE_BOX } from "../ui/stateChrome";
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { formatDisplayDate, resolveOpVsPedidoPrazo } from "../utils/dates";
@@ -7,9 +7,6 @@ import { getLineOpPrevisao } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { PvaModal } from "./PvaModal";
 import { StatusBadge } from "./StatusBadge";
-
-const PVA_TABLE = dataTableBemClasses("pva");
-
 
 type OpPrevisaoModalProps = {
   item: PedidosVendaAbertosItem | null;
@@ -74,12 +71,12 @@ export function OpPrevisaoModal({ item, open, onClose }: OpPrevisaoModalProps) {
 
         {previsao.opsUtilizadas.length > 0 ? (
           <div className={`${PVA_TABLE.wrap} pva-op-modal__table-wrap`}>
-            <table className="pva-table pva-op-modal__table">
+            <table className={`${PVA_TABLE.table} pva-op-modal__table`}>
               <thead>
                 <tr>
                   <th>Número OP</th>
-                  <th className="pva-table__col--numeric">Saldo OP</th>
-                  <th className="pva-table__col--numeric">Alocado p/ o pedido</th>
+                  <th className={PVA_COL_NUMERIC}>Saldo OP</th>
+                  <th className={PVA_COL_NUMERIC}>Alocado p/ o pedido</th>
                   <th>Fim previsto</th>
                   <th>Status</th>
                   <th>Observação</th>
@@ -92,8 +89,8 @@ export function OpPrevisaoModal({ item, open, onClose }: OpPrevisaoModalProps) {
                   return (
                   <tr key={entry.numero_op}>
                     <td>{entry.numero_op || "—"}</td>
-                    <td className="pva-table__col--numeric">{formatQuantity(entry.saldo_op_total)}</td>
-                    <td className="pva-table__col--numeric">{formatQuantity(entry.saldo_alocado)}</td>
+                    <td className={PVA_COL_NUMERIC}>{formatQuantity(entry.saldo_op_total)}</td>
+                    <td className={PVA_COL_NUMERIC}>{formatQuantity(entry.saldo_alocado)}</td>
                     <td>
                       {entry.data_fim_prevista_op
                         ? formatDisplayDate(entry.data_fim_prevista_op)
