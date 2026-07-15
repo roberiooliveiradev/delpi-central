@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { chartsGridBemClasses } from "@delpi/plugin-ui/index";
 
 import {
   MonthlyEvolutionChart,
@@ -88,7 +89,7 @@ export function DespesasCentroCustoPage() {
         <>
           <SummaryCards resumo={dashboard.data.resumo} loading={dashboard.isLoading} />
 
-          <div className="fcc-charts-grid">
+          <div className={chartsGridBemClasses("fcc")}>
             <MonthlyEvolutionChart serie={dashboard.data.serie} loading={dashboard.isLoading} />
             {!appliedFilters.costCenter ? (
               <RankingCentrosChart

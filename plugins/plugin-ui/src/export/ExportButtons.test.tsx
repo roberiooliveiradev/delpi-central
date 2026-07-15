@@ -31,6 +31,15 @@ describe("TabularExportButtons", () => {
     expect(onExport).toHaveBeenCalledWith("xlsx");
     expect(onExport).toHaveBeenCalledWith("pdf");
   });
+
+  it("injeta delpi-ui-export-actions quando o MFE passa só o prefixo", () => {
+    const { container } = render(
+      <TabularExportButtons className="dc-export-actions" onExport={vi.fn()} />,
+    );
+    expect((container.firstChild as HTMLElement).className).toContain(
+      "delpi-ui-export-actions",
+    );
+  });
 });
 
 describe("DocumentExportActions", () => {
@@ -47,6 +56,19 @@ describe("DocumentExportActions", () => {
     const group = screen.getByRole("group", { name: "Exportar documento" });
     const busy = within(group).getByRole("button", { name: /Exportando/i });
     expect(busy).toHaveProperty("disabled", true);
+  });
+
+  it("injeta delpi-ui-export-actions com className prefix-only", () => {
+    const { container } = render(
+      <DocumentExportActions
+        className="ef-export-actions"
+        onExportExcel={() => undefined}
+        onExportPdf={() => undefined}
+      />,
+    );
+    expect((container.firstChild as HTMLElement).className).toContain(
+      "delpi-ui-export-actions",
+    );
   });
 });
 

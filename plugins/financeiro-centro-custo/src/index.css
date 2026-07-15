@@ -20,6 +20,13 @@ select{
   padding: 1.25rem 1.5rem 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  /* Tokens do kit — dual-class usa --delpi-ui-* */
+  --delpi-ui-accent: var(--primary, #2563eb);
+  --delpi-ui-surface: var(--card, #ffffff);
+  --delpi-ui-text: var(--foreground, #0f172a);
+  --delpi-ui-text-muted: var(--muted-foreground, #64748b);
+  --delpi-ui-border: var(--border, #e2e8f0);
+  --delpi-ui-grid-gap: 0.85rem;
 }.fcc-page-header,
 .fcc-page__header{
   display: flex;

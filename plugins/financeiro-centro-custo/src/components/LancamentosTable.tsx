@@ -1,4 +1,10 @@
 import { useEffect, useState } from "react";
+import {
+  NativeTextControl,
+  dataTableBemClasses,
+  dataTableSectionBemClasses,
+  ghostBtnBemClasses,
+} from "@delpi/plugin-ui/index";
 import type {
   DespesasLancamentoItem,
   DespesasLancamentosData,
@@ -15,9 +21,10 @@ import { EmptyState } from "./EmptyState";
 import { ErrorState } from "./ErrorState";
 import { LoadingState } from "./LoadingState";
 import { Pagination } from "./Pagination";
-import { NativeTextControl, dataTableBemClasses } from "@delpi/plugin-ui/index";
 
 const FCC_TABLE = dataTableBemClasses("fcc");
+const FCC_SECTION = dataTableSectionBemClasses("fcc");
+const FCC_GHOST_BTN = ghostBtnBemClasses("fcc");
 
 type ColumnDef = {
   label: string;
@@ -62,7 +69,7 @@ function renderRow(item: DespesasLancamentoItem) {
       <td>{item.pedido || "—"}</td>
       <td>{item.produto_descricao || item.produto_codigo || "—"}</td>
       <td>{item.observacoes || "—"}</td>
-      <td className="fcc-table__numeric">{formatCurrencyBrl(item.valor_total)}</td>
+      <td className={FCC_TABLE.colNumeric}>{formatCurrencyBrl(item.valor_total)}</td>
     </tr>
   );
 }
@@ -100,19 +107,19 @@ export function LancamentosTable({
   };
 
   return (
-    <section className="fcc-card fcc-table-section" aria-label="Lançamentos">
-      <header className="fcc-table-section__header">
+    <section className={FCC_SECTION.section} aria-label="Lançamentos">
+      <header className={FCC_SECTION.header}>
         <div>
-          <h2 className="fcc-table-section__title">Lançamentos</h2>
+          <h2 className={FCC_SECTION.title}>Lançamentos</h2>
           {pagination ? (
-            <p className="fcc-table-section__meta">
+            <p className={FCC_SECTION.meta}>
               {pagination.total_items} registro(s) · página {pagination.page} de {totalPages}
             </p>
           ) : null}
         </div>
 
         <form
-          className="fcc-table-search"
+          className={FCC_SECTION.actions}
           onSubmit={(event) => {
             event.preventDefault();
             onSearchChange(draftSearch);
@@ -126,7 +133,7 @@ export function LancamentosTable({
             onChange={setDraftSearch}
             aria-label="Buscar lançamentos"
           />
-          <button type="submit" className="fcc-btn fcc-btn--secondary">
+          <button type="submit" className={FCC_GHOST_BTN}>
             Buscar
           </button>
         </form>
@@ -142,7 +149,7 @@ export function LancamentosTable({
 
       {items.length > 0 ? (
         <div className={FCC_TABLE.wrap}>
-          <table className="fcc-table">
+          <table className={FCC_TABLE.sortableTable ?? FCC_TABLE.table}>
             <thead>
               <tr>
                 {columns.map((column) => {
@@ -151,15 +158,21 @@ export function LancamentosTable({
                   return (
                     <th
                       key={column.label}
-                      className={column.align === "right" ? "fcc-table__numeric" : undefined}
+                      className={
+                        column.align === "right" ? FCC_TABLE.colNumeric : undefined
+                      }
                     >
                       {sortKey ? (
                         <button
                           type="button"
-                          className={`fcc-table-sort${isActive ? " fcc-table-sort--active" : ""}`}
+                          className={
+                            isActive ? FCC_TABLE.sortButtonActive : FCC_TABLE.sortButton
+                          }
                           onClick={() => toggleSort(sortKey)}
                         >
-                          {column.label}
+                          <span className={FCC_TABLE.headerLabel}>
+                            <span className={FCC_TABLE.headerText}>{column.label}</span>
+                          </span>
                           {isActive ? (sortDir === "asc" ? " ↑" : " ↓") : null}
                         </button>
                       ) : (

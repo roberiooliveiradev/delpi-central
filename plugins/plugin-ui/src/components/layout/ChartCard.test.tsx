@@ -67,4 +67,17 @@ describe("ChartCard", () => {
     const header = document.querySelector(pick(classNames.header));
     expect(header?.querySelector(pick(classNames.hint))?.textContent).toBe("Top 10");
   });
+
+  it("injeta delpi-ui-chart-card--wide quando className vem só com prefixo", () => {
+    const { container } = render(
+      <ChartCard
+        title="Wide"
+        classNames={chartCardBemClasses("fcc")}
+        className="fcc-chart-card--wide"
+      >
+        <span>body</span>
+      </ChartCard>,
+    );
+    expect(container.querySelector("section")?.className).toContain("delpi-ui-chart-card--wide");
+  });
 });

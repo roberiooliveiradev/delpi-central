@@ -1,6 +1,8 @@
 export {
   ChartCard,
   chartCardBemClasses,
+  chartCardWideBemClasses,
+  chartsGridBemClasses,
   type ChartCardClassNames,
   type ChartCardProps,
 } from "./ChartCard";

@@ -66,6 +66,7 @@ export {
   DocumentExportActions,
   ExcelExportButton,
   createDashboardTabularExportButtons,
+  documentExportActionsBemClasses,
   type TabularExportButtonsProps,
   type DocumentExportActionsProps,
   type ExcelExportButtonProps,

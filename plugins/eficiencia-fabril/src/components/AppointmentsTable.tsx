@@ -1,6 +1,10 @@
-import { EF_GHOST_BTN } from "../ui/ghostChrome";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import {
+  createTablePaginationNav,
+  dataTableBemClasses,
+  HelpTooltip,
+} from "@delpi/plugin-ui/index";
 import { resolveEficienciaFabrilAppointmentStatus } from "../utils/appointmentStatus";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
@@ -9,9 +13,19 @@ import { formatDisplayDate } from "../utils/dates";
 import { exportAppointmentsExcel, exportAppointmentsPdf } from "../utils/exportAppointments";
 import { ExportActions } from "./ExportActions";
 import { formatCurrency, formatPercent, formatProductionQuantity } from "../utils/format";
-import { dataTableBemClasses, HelpTooltip } from "@delpi/plugin-ui/index";
 
 const EF_TABLE = dataTableBemClasses("ef");
+
+const AppointmentsPaginationNav = createTablePaginationNav({
+  prefix: "ef",
+  labels: {
+    previous: "Anterior",
+    next: "Próxima",
+    navigationAriaLabel: "Paginação de apontamentos",
+    infoBeforeCurrent: "Página ",
+    infoAfterCurrent: (totalPages) => ` de ${totalPages}`,
+  },
+});
 
 type SortableColumn = {
   id: AppointmentsSortColumn;
@@ -65,13 +79,13 @@ function SortIndicator({
   sortDir: SortDirection;
 }) {
   if (column !== sortBy) {
-    return <ArrowUpDown size={14} className="ef-sortable-th__icon ef-sortable-th__icon--idle" />;
+    return <ArrowUpDown size={14} className={EF_TABLE.sortIndicator} aria-hidden />;
   }
 
   return sortDir === "asc" ? (
-    <ArrowUp size={14} className="ef-sortable-th__icon" aria-hidden />
+    <ArrowUp size={14} className={EF_TABLE.sortIndicator} aria-hidden />
   ) : (
-    <ArrowDown size={14} className="ef-sortable-th__icon" aria-hidden />
+    <ArrowDown size={14} className={EF_TABLE.sortIndicator} aria-hidden />
   );
 }
 
@@ -92,6 +106,12 @@ export function AppointmentsTable({
   disabled = false,
 }: AppointmentsTableProps) {
   const [exporting, setExporting] = useState(false);
+
+  /** TablePaginationNav deriva totalPages de total/pageSize — reconstituir size estável. */
+  const pageSize = useMemo(() => {
+    if (totalPages <= 0) return Math.max(items.length, 1);
+    return Math.max(1, Math.ceil(total / Math.max(totalPages, 1)));
+  }, [items.length, total, totalPages]);
 
   const handleExportExcel = useCallback(async () => {
     if (exporting || total <= 0) return;
@@ -145,50 +165,42 @@ export function AppointmentsTable({
             onExportPdf={handleExportPdf}
             excelLabel="Excel"
           />
-          <div className="ef-pagination">
-            <button
-              type="button"
-              className={EF_GHOST_BTN}
-              disabled={disabled || page <= 1}
-              onClick={() => onPageChange(page - 1)}
-            >
-              Anterior
-            </button>
-            <span>
-              Página {page} de {Math.max(totalPages, 1)}
-            </span>
-            <button
-              type="button"
-              className={EF_GHOST_BTN}
-              disabled={disabled || page >= totalPages}
-              onClick={() => onPageChange(page + 1)}
-            >
-              Próxima
-            </button>
-          </div>
+          <AppointmentsPaginationNav
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={onPageChange}
+          />
         </div>
       </header>
 
       <div className={EF_TABLE.wrap}>
-        <table className="ef-table ef-table--sortable">
+        <table className={EF_TABLE.sortableTable ?? EF_TABLE.table}>
           <thead>
             <tr>
               {SORTABLE_COLUMNS.map((column) => {
                 const isActive = sortBy === column.id;
                 return (
-                  <th key={column.id} scope="col" aria-sort={isActive ? (sortDir === "asc" ? "ascending" : "descending") : "none"}>
+                  <th
+                    key={column.id}
+                    scope="col"
+                    aria-sort={
+                      isActive ? (sortDir === "asc" ? "ascending" : "descending") : "none"
+                    }
+                  >
                     <button
                       type="button"
-                      className={`ef-sortable-th${isActive ? " ef-sortable-th--active" : ""}`}
+                      className={isActive ? EF_TABLE.sortButtonActive : EF_TABLE.sortButton}
                       disabled={disabled}
                       onClick={() => onSortChange(column.id)}
                     >
-                      <span className="ef-sortable-th__label">
-                        <span>{column.label}</span>
+                      <span className={EF_TABLE.headerLabel}>
+                        <span className={EF_TABLE.headerText}>{column.label}</span>
                         {column.hint ? (
                           <HelpTooltip
                             content={column.hint}
                             ariaLabel={`Ajuda: ${column.label}`}
+                            className={EF_TABLE.headerHelp}
                           />
                         ) : null}
                       </span>
@@ -202,7 +214,7 @@ export function AppointmentsTable({
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={12} className="ef-table__empty">
+                <td colSpan={12} className={EF_TABLE.empty}>
                   Nenhum apontamento para os filtros selecionados.
                 </td>
               </tr>

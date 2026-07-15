@@ -1,7 +1,17 @@
 import { useId, type ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, ensureDelpiUiClass } from "../../utils/delpiUiClass";
+
+/** Dual `{prefix}-charts-grid` + `.delpi-ui-charts-grid` (span 6/12 no kit). */
+export function chartsGridBemClasses(prefix: string): string {
+  return delpiUiClass(`${prefix}-charts-grid`, "delpi-ui-charts-grid");
+}
+
+/** Dual `{prefix}-chart-card--wide` + `.delpi-ui-chart-card--wide`. */
+export function chartCardWideBemClasses(prefix: string): string {
+  return delpiUiClass(`${prefix}-chart-card--wide`, "delpi-ui-chart-card--wide");
+}
 
 export type ChartCardClassNames = {
   section: string;
@@ -37,6 +47,8 @@ export function chartCardBemClasses(
     cardModifier?: string;
     /** `titleRow`: título e ações na mesma linha; hint abaixo. */
     headerLayout?: "default" | "titleRow";
+    /** Card ocupa a linha inteira no `.delpi-ui-charts-grid`. */
+    wide?: boolean;
   },
 ): ChartCardClassNames {
   const cardModifier = options?.cardModifier ?? "card";
@@ -46,9 +58,13 @@ export function chartCardBemClasses(
   const withHeading = options?.withHeading ?? headerLayout === "default";
   const withActions = options?.withActions ?? true;
   const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+  const sectionBase = pair(`${card} ${prefix}-chart-card`, `delpi-ui-card ${ui}`);
+  const section = options?.wide
+    ? `${sectionBase} ${chartCardWideBemClasses(prefix)}`
+    : sectionBase;
 
   return {
-    section: pair(`${card} ${prefix}-chart-card`, `delpi-ui-card ${ui}`),
+    section,
     header: pair(`${prefix}-chart-card__header`, `${ui}__header`),
     heading:
       headerLayout === "default" && withHeading
@@ -83,7 +99,12 @@ export function ChartCard({
 }: ChartCardProps) {
   const titleId = useId();
   const TitleTag = titleLevel === 3 ? "h3" : "h2";
-  const sectionClass = [classNames.section, className].filter(Boolean).join(" ");
+  // Aceita `{prefix}-chart-card--wide` sem dual e injeta `.delpi-ui-chart-card--wide`.
+  const extraClass =
+    className && /(?:^|\s)[\w-]*chart-card--wide(?:\s|$)/.test(className)
+      ? ensureDelpiUiClass(className, "delpi-ui-chart-card--wide")
+      : className;
+  const sectionClass = [classNames.section, extraClass].filter(Boolean).join(" ");
 
   const titleNode = (
     <TitleTag id={titleId} className={classNames.title}>

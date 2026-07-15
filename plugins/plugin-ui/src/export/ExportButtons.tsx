@@ -1,7 +1,19 @@
 import type { ReactNode } from "react";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 
+import { delpiUiClass, ensureDelpiUiClass } from "../utils/delpiUiClass";
 import { TABULAR_EXPORT_ACTIONS, type ExportAction, type TabularExportFormat } from "./types";
+
+/** Dual `{prefix}-export-actions` + `.delpi-ui-export-actions`. */
+export function documentExportActionsBemClasses(prefix: string): {
+  root: string;
+  button: string;
+} {
+  return {
+    root: delpiUiClass(`${prefix}-export-actions`, "delpi-ui-export-actions"),
+    button: delpiUiClass(`${prefix}-ghost-btn`, "delpi-ui-ghost-btn"),
+  };
+}
 
 export type TabularExportButtonsProps = {
   /** Ações exibidas (default: CSV / Excel / PDF). */
@@ -36,15 +48,17 @@ export function TabularExportButtons({
   onExport,
 }: TabularExportButtonsProps) {
   const isDisabled = disabled || exporting;
+  const rootClass = ensureDelpiUiClass(className, "delpi-ui-export-actions");
+  const btnClass = ensureDelpiUiClass(buttonClassName, "delpi-ui-export-actions__btn");
 
   return (
-    <div className={className} role="group" aria-label={groupAriaLabel}>
+    <div className={rootClass} role="group" aria-label={groupAriaLabel}>
       {leading}
       {actions.map((action) => (
         <button
           key={action.format}
           type="button"
-          className={buttonClassName}
+          className={btnClass}
           title={action.title}
           aria-label={action.title}
           disabled={isDisabled}
@@ -86,12 +100,14 @@ export function DocumentExportActions({
   exportingLabel = "Exportando…",
 }: DocumentExportActionsProps) {
   const isDisabled = disabled || exporting;
+  const rootClass = ensureDelpiUiClass(className, "delpi-ui-export-actions");
+  const btnClass = ensureDelpiUiClass(buttonClassName, "delpi-ui-ghost-btn");
 
   return (
-    <div className={className} role="group" aria-label="Exportar documento">
+    <div className={rootClass} role="group" aria-label="Exportar documento">
       <button
         type="button"
-        className={buttonClassName}
+        className={btnClass}
         onClick={() => void onExportExcel()}
         disabled={isDisabled}
         aria-busy={exporting || undefined}
@@ -101,7 +117,7 @@ export function DocumentExportActions({
       </button>
       <button
         type="button"
-        className={buttonClassName}
+        className={btnClass}
         onClick={() => void onExportPdf()}
         disabled={isDisabled}
         aria-busy={exporting || undefined}

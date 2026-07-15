@@ -17,6 +17,21 @@ describe("delpiUiClass", () => {
   });
 });
 
+describe("ensureDelpiUiClass", () => {
+  it("injeta canônico quando o MFE passa só o prefixo", async () => {
+    const { ensureDelpiUiClass } = await import("./delpiUiClass");
+    expect(ensureDelpiUiClass("ef-export-actions", "delpi-ui-export-actions")).toBe(
+      "ef-export-actions delpi-ui-export-actions",
+    );
+    expect(ensureDelpiUiClass("delpi-ui-export-actions", "delpi-ui-export-actions")).toBe(
+      "delpi-ui-export-actions",
+    );
+    expect(ensureDelpiUiClass(undefined, "delpi-ui-export-actions")).toBe(
+      "delpi-ui-export-actions",
+    );
+  });
+});
+
 describe("withBemModifier", () => {
   it("aplica modificador em cada token BEM", async () => {
     const { withBemModifier } = await import("./delpiUiClass");
@@ -60,5 +75,7 @@ describe("kits DataTable/Pagination — classes delpi-ui", () => {
     const table = dataTableBemClasses("dp");
     expect(table.sortButton).toContain("delpi-ui-table__sort-button");
     expect(table.wrapSection).toContain("delpi-ui-table-wrap--section");
+    expect(table.sortableTable).toContain("delpi-ui-table--sortable");
+    expect(table.colNumeric).toContain("delpi-ui-table__col--numeric");
   });
 });

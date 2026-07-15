@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 
 export type DataTableColumn<T> = {
   key: string;
@@ -41,6 +41,10 @@ export type DataTableClassNames = {
   sortButtonActive: string;
   sortIndicator: string;
   rowClickable: string;
+  /** Tabela com `--sortable` dual (prefix + delpi-ui). */
+  sortableTable?: string;
+  /** Célula/coluna numérica alinhada à direita. */
+  colNumeric?: string;
 };
 
 export type DataTableLabels = {
@@ -72,6 +76,7 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
   const ui = "delpi-ui-table";
   const wrap = `${prefix}-table-wrap`;
   const uiWrap = "delpi-ui-table-wrap";
+  const tableDual = delpiUiClass(table, ui);
   return {
     wrap: delpiUiClass(wrap, uiWrap),
     wrapSection: delpiUiClass(
@@ -82,7 +87,9 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
       `${wrap} ${wrap}--embedded`,
       `${uiWrap} ${uiWrap}--embedded`,
     ),
-    table: delpiUiClass(table, ui),
+    table: tableDual,
+    sortableTable: withBemModifier(tableDual, "sortable"),
+    colNumeric: delpiUiClass(`${table}__col--numeric`, `${ui}__col--numeric`),
     empty: delpiUiClass(`${table}__empty`, `${ui}__empty`),
     headerLabel: delpiUiClass(`${table}__header-label`, `${ui}__header-label`),
     headerText: delpiUiClass(`${table}__header-text`, `${ui}__header-text`),

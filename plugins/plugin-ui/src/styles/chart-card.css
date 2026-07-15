@@ -9,6 +9,33 @@
   min-width: 0;
 }
 
+/**
+ * Grade 12 colunas — cards ocupam span 12 (mobile) / span 6 (desktop),
+ * `--wide` volta a ocupar a linha inteira. Evita collapse pós-Onda 3.
+ */
+.delpi-ui-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--delpi-ui-grid-gap, 0.85rem);
+  width: 100%;
+  min-width: 0;
+}
+
+.delpi-ui-charts-grid > .delpi-ui-chart-card {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .delpi-ui-charts-grid > .delpi-ui-chart-card:not(.delpi-ui-chart-card--wide) {
+    grid-column: span 6;
+  }
+
+  .delpi-ui-charts-grid > .delpi-ui-chart-card.delpi-ui-chart-card--wide {
+    grid-column: 1 / -1;
+  }
+}
+
 .delpi-ui-chart-card__header {
   display: flex;
   align-items: flex-start;
