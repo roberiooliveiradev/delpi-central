@@ -1519,22 +1519,29 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-width: 420px;
+  max-width: 440px;
+  color: var(--kz-text);
 }
 .dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__hint,
 .kz-modal-overlay .kz-share-modal__hint{
   margin: 0;
-  color: var(--kz-text-muted, #64748b);
-  font-size: var(--kz-font-sm, 0.875rem);
-  line-height: 1.45;
+  color: var(--kz-text-muted);
+  font-size: var(--kz-font-sm);
+  line-height: 1.5;
+}
+.dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__hint strong,
+.kz-modal-overlay .kz-share-modal__hint strong{
+  color: var(--kz-text);
+  font-weight: 650;
 }
 .dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__qr,
 .kz-modal-overlay .kz-share-modal__qr{
   display: flex;
   justify-content: center;
-  padding: 12px;
-  border: 1px solid var(--kz-card-border, #e2e8f0);
-  border-radius: 12px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--kz-card-border);
+  border-radius: 14px;
   background: #fff;
 }
 .dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__qr img,
@@ -1545,23 +1552,40 @@
 }
 .dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__link-label,
 .kz-modal-overlay .kz-share-modal__link-label{
-  font-size: var(--kz-font-sm, 0.875rem);
+  margin: 2px 0 0;
+  font-size: var(--kz-font-sm);
   font-weight: 600;
+  color: var(--kz-text);
 }
 .dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__link-row,
 .kz-modal-overlay .kz-share-modal__link-row{
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: stretch;
 }
 .dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__link-row input,
 .kz-modal-overlay .kz-share-modal__link-row input{
   flex: 1;
   min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--kz-card-border, #e2e8f0);
-  border-radius: var(--kz-control-radius, 8px);
-  background: var(--kz-input-bg, #fff);
-  color: var(--kz-text, #0f172a);
-  font-size: var(--kz-font-sm, 0.875rem);
+  min-height: var(--kz-control-height);
+  padding: 10px 12px;
+  border: 1px solid var(--kz-input-border);
+  border-radius: var(--kz-control-radius);
+  background: var(--kz-input-bg);
+  color: var(--kz-input-text);
+  font-size: var(--kz-font-sm);
+  line-height: 1.35;
+}
+.dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__link-row input:focus-visible,
+.kz-modal-overlay .kz-share-modal__link-row input:focus-visible{
+  outline: none;
+  border-color: var(--kz-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
+}
+.dashboard-cadastro-kaizen.kz-modal-overlay .kz-share-modal__copy,
+.kz-modal-overlay .kz-share-modal__copy{
+  flex-shrink: 0;
+  min-height: var(--kz-control-height);
+  padding-inline: 14px;
+  white-space: nowrap;
 }

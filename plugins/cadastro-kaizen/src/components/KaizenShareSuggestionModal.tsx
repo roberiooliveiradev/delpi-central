@@ -42,7 +42,11 @@ export function KaizenShareSuggestionModal({ open, onClose }: Props) {
         </label>
         <div className="kz-share-modal__link-row">
           <input id="kz-share-url" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
-          <button type="button" className="kz-ghost-btn" onClick={() => void copyLink()}>
+          <button
+            type="button"
+            className="kz-ghost-btn kz-share-modal__copy"
+            onClick={() => void copyLink()}
+          >
             {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
             {copied ? "Copiado" : "Copiar"}
           </button>

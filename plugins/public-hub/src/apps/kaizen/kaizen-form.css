@@ -1,11 +1,18 @@
-/* Formulário público Kaizen — layout próprio; palco/fundo vem do shell. */
+/* Formulário público Kaizen — tokens canônicos do shell (brand-tokens.css). */
 
 .kz-pub-form,
 .kz-pub-done {
   width: min(720px, 100%);
   margin: 0 auto;
-  padding: 24px 20px 40px;
-  color: var(--pub-text, #0f172a);
+  padding: 8px 4px 32px;
+  color: var(--pub-text-body);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kz-pub-form__header {
+  margin-bottom: 4px;
 }
 
 .kz-pub-form__eyebrow {
@@ -14,7 +21,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--pub-accent, #089bdb);
+  color: var(--pub-accent);
 }
 
 .kz-pub-form__header h1,
@@ -22,86 +29,179 @@
   margin: 0 0 8px;
   font-size: clamp(1.5rem, 2.5vw, 1.85rem);
   line-height: 1.2;
+  color: var(--pub-text);
 }
 
 .kz-pub-form__lead,
 .kz-pub-done p {
-  margin: 0 0 24px;
-  color: var(--pub-muted, #64748b);
+  margin: 0;
+  color: var(--pub-text-soft);
   line-height: 1.5;
 }
 
-.kz-pub-form__section {
-  margin: 0 0 20px;
-  padding: 16px;
-  border: 1px solid var(--pub-border, #e2e8f0);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--pub-surface, #fff) 92%, transparent);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.kz-pub-done {
+  background: var(--pub-card-bg);
+  border: 1px solid var(--pub-card-border);
+  border-radius: 16px;
+  box-shadow: var(--pub-card-shadow);
+  padding: 28px 24px;
 }
 
-.kz-pub-form__section > legend {
-  padding: 0 6px;
-  font-weight: 650;
-  font-size: 0.95rem;
+.kz-pub-done strong {
+  color: var(--pub-text);
+}
+
+.kz-pub-card {
+  margin: 0;
+  padding: 20px 18px;
+  border: 1px solid var(--pub-card-border);
+  border-radius: 16px;
+  background: var(--pub-card-bg);
+  box-shadow: var(--pub-card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--pub-text-body);
+}
+
+.kz-pub-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--pub-text);
+  line-height: 1.3;
 }
 
 .kz-pub-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 0.9rem;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.kz-pub-label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--pub-text);
+  line-height: 1.35;
+}
+
+.kz-pub-req {
+  color: var(--pub-danger);
+  font-weight: 700;
 }
 
 .kz-pub-field input,
 .kz-pub-field textarea,
 .kz-pub-field__nested {
-  border: 1px solid var(--pub-border, #cbd5e1);
-  border-radius: 10px;
-  padding: 10px 12px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--pub-input-border);
+  border-radius: 12px;
+  padding: 11px 14px;
   font: inherit;
-  background: var(--pub-surface, #fff);
-  color: inherit;
+  font-size: 15px;
+  background: var(--pub-input-bg);
+  color: var(--pub-input-text);
+  color-scheme: inherit;
 }
 
-.kz-pub-field--group {
-  gap: 8px;
+.kz-pub-field textarea {
+  resize: vertical;
+  min-height: 96px;
 }
 
-.kz-pub-field--group > legend {
-  padding: 0;
-  font-size: 0.9rem;
-  font-weight: 500;
+.kz-pub-field input::placeholder,
+.kz-pub-field textarea::placeholder,
+.kz-pub-field__nested::placeholder {
+  color: var(--pub-placeholder);
 }
 
-.kz-pub-radio {
+.kz-pub-field input:focus,
+.kz-pub-field textarea:focus,
+.kz-pub-field__nested:focus {
+  outline: none;
+  border-color: var(--pub-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pub-accent) 25%, transparent);
+}
+
+.kz-pub-field input:-webkit-autofill,
+.kz-pub-field input:-webkit-autofill:hover,
+.kz-pub-field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--pub-input-text);
+  -webkit-box-shadow: 0 0 0 1000px var(--pub-input-bg) inset;
+  box-shadow: 0 0 0 1000px var(--pub-input-bg) inset;
+}
+
+.kz-pub-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kz-pub-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--pub-input-border);
+  background: var(--pub-option-bg);
+  color: var(--pub-text-body);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.kz-pub-option:has(input:checked) {
+  border-color: var(--pub-accent);
+  background: color-mix(in srgb, var(--pub-accent) 16%, var(--pub-option-bg));
+}
+
+.kz-pub-option input {
+  width: auto;
+  margin: 0;
+  accent-color: var(--pub-accent);
+  flex-shrink: 0;
+}
+
+.kz-pub-field__nested {
+  margin-top: 2px;
 }
 
 .kz-pub-form__submit {
   width: 100%;
   border: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 14px 16px;
   font: inherit;
   font-weight: 650;
-  color: #fff;
-  background: var(--pub-accent, #089bdb);
+  color: var(--pub-on-brand);
+  background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
   cursor: pointer;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--pub-accent) 28%, transparent);
+}
+
+.kz-pub-form__submit:hover:not(:disabled) {
+  filter: brightness(1.04);
 }
 
 .kz-pub-form__submit:disabled {
-  opacity: 0.7;
+  opacity: 0.72;
   cursor: wait;
+  filter: none;
+  box-shadow: none;
 }
 
 .kz-pub-form__error {
-  margin: 0 0 12px;
-  color: #b91c1c;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--pub-danger) 35%, var(--pub-card-border));
+  background: color-mix(in srgb, var(--pub-danger) 10%, var(--pub-card-bg));
+  color: var(--pub-danger);
   font-size: 0.9rem;
 }
 
