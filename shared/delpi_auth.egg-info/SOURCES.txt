@@ -22,6 +22,7 @@ delpi_auth.egg-info/requires.txt
 delpi_auth.egg-info/top_level.txt
 delpi_auth/middleware/fastapi_auth.py
 delpi_auth/middleware/flask_auth.py
+delpi_auth/tests/test_fastapi_auth_public_paths.py
 strategic_indicators_client/__init__.py
 strategic_indicators_client/client.py
 transformometro_client/__init__.py
