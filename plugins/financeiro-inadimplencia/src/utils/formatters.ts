@@ -71,6 +71,23 @@ export function formatMonthYearPtBr(value: string | null | undefined): string {
   return value;
 }
 
+
+export function formatPeriodRangeLabel(
+  startInclusive: string | null | undefined,
+  endExclusive: string | null | undefined,
+): string | null {
+  if (!startInclusive || !endExclusive) return null;
+  const start = parseDateInput(startInclusive);
+  const endExclusiveDate = parseDateInput(endExclusive);
+  if (!start || !endExclusiveDate) return null;
+  const endInclusive = new Date(
+    endExclusiveDate.getFullYear(),
+    endExclusiveDate.getMonth(),
+    endExclusiveDate.getDate() - 1,
+  );
+  return `${dateFormatter.format(start)} a ${dateFormatter.format(endInclusive)}`;
+}
+
 export function formatTituloLabel(prefixo: string, numero: string, parcela: string): string {
   return [prefixo, numero, parcela]
     .map((part) => part.trim())

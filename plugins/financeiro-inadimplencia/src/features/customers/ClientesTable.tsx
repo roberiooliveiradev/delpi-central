@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ExcelExportButton } from "@delpi/plugin-ui/index";
 
 import { ErrorState } from "../../components/ErrorState";
 import { EmptyState } from "../../components/EmptyState";
@@ -8,6 +9,7 @@ import type {
   ClientesSortBy,
   InadimplenciaClienteItem,
   InadimplenciaClientesData,
+  PeriodFilter,
   SortDirection,
 } from "../../types/inadimplencia";
 import { CLIENTES_SORT_OPTIONS } from "../../types/inadimplencia";
@@ -15,9 +17,13 @@ import {
   formatCurrencyBrl,
   formatInteger,
   formatPercent,
+  formatPeriodRangeLabel,
 } from "../../utils/formatters";
+import { exportClientesExcel } from "../../utils/exportClientesExcel";
 
 type ClientesTableProps = {
+  period: PeriodFilter;
+  periodLabel?: string;
   data: InadimplenciaClientesData | null;
   loading?: boolean;
   error?: string | null;
@@ -34,6 +40,8 @@ type ClientesTableProps = {
 };
 
 export function ClientesTable({
+  period,
+  periodLabel,
   data,
   loading = false,
   error = null,
@@ -50,6 +58,8 @@ export function ClientesTable({
 }: ClientesTableProps) {
   const [draftSearch, setDraftSearch] = useState(search);
   const [prevSearch, setPrevSearch] = useState(search);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   // Sincroniza rascunho quando a busca externa muda (padrão React: ajustar state na renderização).
   if (search !== prevSearch) {
@@ -69,16 +79,51 @@ export function ClientesTable({
   const pagination = data?.pagination;
   const items = data?.items ?? [];
   const totalPages = pagination?.total_pages ?? 1;
+  const canExport = (pagination?.total_items ?? items.length) > 0;
+  const resolvedPeriodLabel = data?.periodo?.rotulo?.trim() || periodLabel?.trim() || null;
+  const periodRangeLabel = formatPeriodRangeLabel(
+    data?.periodo?.data_inicio ?? period.startDate,
+    data?.periodo?.data_fim_exclusiva ?? period.endDate,
+  );
+
+  const handleExportExcel = async () => {
+    if (exporting || !canExport) return;
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportClientesExcel({
+        ...period,
+        search,
+        sortBy,
+        sortDir,
+        onlyWithDelays,
+      });
+    } catch (err) {
+      setExportError(
+        err instanceof Error ? err.message : "Não foi possível exportar o Excel.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <section className="fi-card fi-table-section" aria-label="Clientes com maior impacto">
       <header className="fi-table-section__header">
         <div>
           <h2 className="fi-table-section__title">Clientes com maior impacto</h2>
-          {pagination ? (
+          {resolvedPeriodLabel || periodRangeLabel || pagination ? (
             <p className="fi-table-section__meta">
-              {formatInteger(pagination.total_items)} cliente(s) · página {pagination.page} de{" "}
-              {totalPages}
+              {resolvedPeriodLabel || periodRangeLabel ? (
+                <>
+                  Período: {resolvedPeriodLabel || periodRangeLabel}
+                  {resolvedPeriodLabel && periodRangeLabel ? ` (${periodRangeLabel})` : ""}
+                  {pagination ? " · " : ""}
+                </>
+              ) : null}
+              {pagination
+                ? `${formatInteger(pagination.total_items)} cliente(s) · página ${pagination.page} de ${totalPages}`
+                : null}
             </p>
           ) : null}
         </div>
@@ -134,8 +179,24 @@ export function ClientesTable({
             />
             Somente com atraso
           </label>
+
+          <ExcelExportButton
+            disabled={!canExport || loading}
+            exporting={exporting}
+            onExport={handleExportExcel}
+            className="fi-export-actions fi-no-print"
+            buttonClassName="fi-btn fi-btn--secondary"
+            label="Excel"
+            exportingLabel="Exportando…"
+          />
         </div>
       </header>
+
+      {exportError ? (
+        <p className="fi-filters__error" role="alert">
+          {exportError}
+        </p>
+      ) : null}
 
       {error ? <ErrorState message={error} onRetry={onRetry} /> : null}
 

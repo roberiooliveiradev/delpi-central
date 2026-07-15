@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ExcelExportButton } from "@delpi/plugin-ui/index";
 
 import { ErrorState } from "../../components/ErrorState";
 import { EmptyState } from "../../components/EmptyState";
@@ -22,6 +23,7 @@ import {
   formatInteger,
   formatTituloLabel,
 } from "../../utils/formatters";
+import { exportTitulosExcel } from "../../utils/exportTitulosExcel";
 
 type CustomerTitlesModalProps = {
   open: boolean;
@@ -42,6 +44,8 @@ type TitlesModalBodyProps = {
 function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
   const [tableState, setTableState] = useState<TitulosTableState>(defaultTitulosTableState);
   const [draftSearch, setDraftSearch] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -65,6 +69,31 @@ function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
   const items = titulos.data?.items ?? [];
   const pagination = titulos.data?.pagination;
   const totalPages = pagination?.total_pages ?? 1;
+  const canExport = (pagination?.total_items ?? items.length) > 0;
+
+  const handleExportExcel = async () => {
+    if (exporting || !canExport) return;
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportTitulosExcel({
+        ...period,
+        customerCode: customer.cliente_codigo,
+        storeCode: customer.loja,
+        search: tableState.search,
+        sortBy: tableState.sortBy,
+        sortDir: tableState.sortDir,
+        status: tableState.status,
+        delayRange: tableState.delayRange,
+      });
+    } catch (err) {
+      setExportError(
+        err instanceof Error ? err.message : "Não foi possível exportar o Excel.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <>
@@ -116,7 +145,23 @@ function TitlesModalBody({ customer, period }: TitlesModalBodyProps) {
             onChange={(event) => setDraftSearch(event.target.value)}
           />
         </label>
+
+        <ExcelExportButton
+          disabled={!canExport || titulos.isLoading}
+          exporting={exporting}
+          onExport={handleExportExcel}
+          className="fi-export-actions fi-no-print"
+          buttonClassName="fi-btn fi-btn--secondary"
+          label="Excel"
+          exportingLabel="Exportando…"
+        />
       </div>
+
+      {exportError ? (
+        <p className="fi-filters__error" role="alert">
+          {exportError}
+        </p>
+      ) : null}
 
       {titulos.error ? (
         <ErrorState message={titulos.error} onRetry={titulos.reload} />

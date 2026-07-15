@@ -18,6 +18,8 @@ class InadimplenciaRepositoryPort(Protocol):
         end_date_exclusive: str,
         customer_code: str | None = None,
         store_code: str | None = None,
+        customer_pairs: tuple[tuple[str, str], ...] | None = None,
+        novos_negocios: bool = False,
     ) -> list[dict]: ...
 
     def get_faixas_atraso(

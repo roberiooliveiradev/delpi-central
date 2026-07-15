@@ -25,9 +25,14 @@ import {
   formatMonthYearPtBr,
   formatPercent,
 } from "../../utils/formatters";
+import {
+  isExcludedCustomer,
+  isNovosNegociosCustomer,
+} from "../../utils/customerScope";
 import { ChartCard } from "../../components/ChartCard";
 import { EmptyState } from "../../components/EmptyState";
 import { LoadingState } from "../../components/LoadingState";
+import { MultiSelectField } from "../../components/MultiSelectField";
 
 type MonthlyEvolutionChartProps = {
   period: PeriodFilter;
@@ -62,14 +67,14 @@ function encodeCustomerKey(codigo: string, loja: string): string {
   return `${codigo}::${loja}`;
 }
 
-function parseCustomerKey(key: string): { customerCode: string; storeCode: string } | null {
-  if (!key) return null;
+function customerParamFromKey(key: string): string | null {
   const [customerCode, storeCode] = key.split("::");
   if (!customerCode || storeCode == null || storeCode === "") return null;
-  return { customerCode, storeCode };
+  return `${customerCode}/${storeCode}`;
 }
 
-function toCustomerOption(item: InadimplenciaClienteItem): CustomerOption {
+function toCustomerOption(item: InadimplenciaClienteItem): CustomerOption | null {
+  if (isExcludedCustomer(item.cliente_codigo)) return null;
   const shortName = item.nome_reduzido?.trim() || item.nome_cliente?.trim() || "—";
   return {
     key: encodeCustomerKey(item.cliente_codigo, item.loja),
@@ -77,6 +82,37 @@ function toCustomerOption(item: InadimplenciaClienteItem): CustomerOption {
     loja: item.loja,
     label: `${shortName} (${item.cliente_codigo}/${item.loja})`,
   };
+}
+
+async function fetchAllCustomerOptions(
+  periodStart: string,
+  periodEnd: string,
+): Promise<CustomerOption[]> {
+  const pageSize = 100;
+  let page = 1;
+  const items: CustomerOption[] = [];
+
+  while (true) {
+    const response = await fetchInadimplenciaClientes({
+      startDate: periodStart || undefined,
+      endDate: periodEnd || undefined,
+      page,
+      pageSize,
+      sortBy: "customer_name",
+      sortDir: "asc",
+      onlyWithDelays: false,
+    });
+    for (const item of response.items) {
+      const option = toCustomerOption(item);
+      if (option) items.push(option);
+    }
+    if (items.length >= response.total_items || response.items.length < pageSize) {
+      break;
+    }
+    page += 1;
+  }
+
+  return items;
 }
 
 function MonthlyTooltip({ active, payload }: { active?: boolean; payload?: TooltipPayloadItem[] }) {
@@ -130,7 +166,9 @@ export function MonthlyEvolutionChart({
   const periodStart = period.startDate ?? "";
   const periodEnd = period.endDate ?? "";
 
-  const [customerKey, setCustomerKey] = useState("");
+  const [novosNegocios, setNovosNegocios] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [selectionSyncedFor, setSelectionSyncedFor] = useState("");
   const [optionsPeriodKey, setOptionsPeriodKey] = useState(`${periodStart}|${periodEnd}`);
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
   const [optionsLoading, setOptionsLoading] = useState(false);
@@ -141,12 +179,12 @@ export function MonthlyEvolutionChart({
   const periodKey = `${periodStart}|${periodEnd}`;
   if (periodKey !== optionsPeriodKey) {
     setOptionsPeriodKey(periodKey);
-    setCustomerKey("");
+    setSelectedKeys([]);
+    setSelectionSyncedFor("");
+    setNovosNegocios(false);
     setFilteredMensal(null);
     setFilteredError(null);
   }
-
-  const selectedCustomer = useMemo(() => parseCustomerKey(customerKey), [customerKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,17 +193,9 @@ export function MonthlyEvolutionChart({
       void (async () => {
         setOptionsLoading(true);
         try {
-          const response = await fetchInadimplenciaClientes({
-            startDate: periodStart || undefined,
-            endDate: periodEnd || undefined,
-            page: 1,
-            pageSize: 100,
-            sortBy: "customer_name",
-            sortDir: "asc",
-            onlyWithDelays: false,
-          });
+          const options = await fetchAllCustomerOptions(periodStart, periodEnd);
           if (cancelled) return;
-          setCustomerOptions(response.items.map(toCustomerOption));
+          setCustomerOptions(options);
         } catch {
           if (cancelled) return;
           setCustomerOptions([]);
@@ -180,8 +210,49 @@ export function MonthlyEvolutionChart({
     };
   }, [periodStart, periodEnd]);
 
+  const visibleOptions = useMemo(
+    () =>
+      novosNegocios
+        ? customerOptions.filter((option) => isNovosNegociosCustomer(option.cliente_codigo))
+        : customerOptions,
+    [customerOptions, novosNegocios],
+  );
+
+  const visibleKeys = useMemo(
+    () => visibleOptions.map((option) => option.key),
+    [visibleOptions],
+  );
+
   useEffect(() => {
-    if (!selectedCustomer) {
+    if (!customerOptions.length) return;
+    if (selectionSyncedFor === periodKey) return;
+    setSelectedKeys(customerOptions.map((option) => option.key));
+    setSelectionSyncedFor(periodKey);
+  }, [customerOptions, periodKey, selectionSyncedFor]);
+
+  const allSelected =
+    visibleKeys.length > 0 &&
+    selectedKeys.length === visibleKeys.length &&
+    visibleKeys.every((key) => selectedKeys.includes(key));
+  const noneSelected = selectedKeys.length === 0;
+  const isPartialSelection = !allSelected && !noneSelected;
+  const needsCustomFetch = novosNegocios || isPartialSelection;
+
+  const customersFilter = useMemo(() => {
+    if (!isPartialSelection) return null;
+    return selectedKeys
+      .map(customerParamFromKey)
+      .filter((value): value is string => Boolean(value));
+  }, [isPartialSelection, selectedKeys]);
+
+  useEffect(() => {
+    if (!needsCustomFetch) {
+      return;
+    }
+    if (noneSelected) {
+      return;
+    }
+    if (isPartialSelection && !customersFilter?.length) {
       return;
     }
 
@@ -194,8 +265,8 @@ export function MonthlyEvolutionChart({
           const response = await fetchInadimplenciaMensal({
             startDate: periodStart || undefined,
             endDate: periodEnd || undefined,
-            customerCode: selectedCustomer.customerCode,
-            storeCode: selectedCustomer.storeCode,
+            customers: customersFilter ?? undefined,
+            novosNegocios: novosNegocios || undefined,
           });
           if (cancelled) return;
           setFilteredMensal(response);
@@ -203,7 +274,7 @@ export function MonthlyEvolutionChart({
           if (cancelled) return;
           setFilteredMensal(null);
           setFilteredError(
-            err instanceof Error ? err.message : "Falha ao carregar série do cliente.",
+            err instanceof Error ? err.message : "Falha ao carregar série dos clientes.",
           );
         } finally {
           if (!cancelled) setFilteredLoading(false);
@@ -214,51 +285,100 @@ export function MonthlyEvolutionChart({
     return () => {
       cancelled = true;
     };
-  }, [selectedCustomer, periodStart, periodEnd]);
+  }, [
+    needsCustomFetch,
+    noneSelected,
+    isPartialSelection,
+    customersFilter,
+    novosNegocios,
+    periodStart,
+    periodEnd,
+  ]);
 
-  const activeMensal = selectedCustomer ? filteredMensal : mensal;
-  const isLoading = selectedCustomer ? filteredLoading : loading;
-  const items = activeMensal?.items ?? [];
+  const activeMensal = needsCustomFetch ? filteredMensal : mensal;
+  const isLoading = optionsLoading || (needsCustomFetch ? filteredLoading : loading);
+  const items = noneSelected ? [] : (activeMensal?.items ?? []);
   const chartData: ChartPoint[] = items.map((item) => ({
     ...item,
     mesLabel: formatMonthYearPtBr(item.ano_mes || item.mes),
     percentLabel: formatPercent(item.percentual_em_dia_qtd),
   }));
 
-  const selectedOption = customerOptions.find((option) => option.key === customerKey);
-  const hint = selectedOption
-    ? `Pontualidade por quantidade de ${selectedOption.label}.`
-    : "Pontualidade por quantidade (todos os clientes). Passe o ponteiro sobre o mês para ver o detalhamento.";
+  const multiOptions = visibleOptions.map((option) => ({
+    value: option.key,
+    label: option.label,
+  }));
+
+  const hint = novosNegocios
+    ? allSelected || (!visibleOptions.length && !optionsLoading)
+      ? "Pontualidade por quantidade — somente Novos Negócios (exceto WEG 000001)."
+      : noneSelected
+        ? "Nenhum cliente de Novos Negócios selecionado."
+        : `Pontualidade por quantidade — Novos Negócios (${selectedKeys.length} cliente(s)).`
+    : allSelected || (!customerOptions.length && !optionsLoading)
+      ? "Pontualidade por quantidade (todos os clientes). Passe o ponteiro sobre o mês para ver o detalhamento."
+      : noneSelected
+        ? "Nenhum cliente selecionado. Marque ao menos um cliente para ver a evolução."
+        : `Pontualidade por quantidade de ${selectedKeys.length} cliente(s) selecionado(s).`;
 
   return (
     <ChartCard
       title="Evolução mensal"
       hint={hint}
       headerActions={
-        <label className="fi-field fi-field--chart-filter">
-          <span>Cliente</span>
-          <select
-            value={customerKey}
-            disabled={optionsLoading || loading}
-            onChange={(event) => {
-              const nextKey = event.target.value;
-              setCustomerKey(nextKey);
-              if (!nextKey) {
-                setFilteredMensal(null);
-                setFilteredError(null);
-                setFilteredLoading(false);
-              }
-            }}
-            aria-label="Filtrar evolução mensal por cliente"
-          >
-            <option value="">Todos os clientes</option>
-            {customerOptions.map((option) => (
-              <option key={option.key} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="fi-chart-filters">
+          <div className="fi-field--chart-filter">
+            <MultiSelectField
+              label="Clientes"
+              options={multiOptions}
+              selectedValues={selectedKeys}
+              totalOptionsCount={visibleOptions.length}
+              onChange={(values) => {
+                setSelectedKeys(values);
+                setSelectionSyncedFor(periodKey);
+                if (
+                  values.length === 0 ||
+                  (!novosNegocios &&
+                    customerOptions.length > 0 &&
+                    values.length === customerOptions.length)
+                ) {
+                  if (!novosNegocios) {
+                    setFilteredMensal(null);
+                    setFilteredError(null);
+                    setFilteredLoading(false);
+                  }
+                }
+              }}
+              searchable
+              disabled={optionsLoading || loading}
+              className="fi-field--chart-filter-multi"
+            />
+          </div>
+          <label className="fi-check fi-check--novos-negocios">
+            <input
+              type="checkbox"
+              checked={novosNegocios}
+              disabled={optionsLoading || loading}
+              onChange={(event) => {
+                const enabled = event.target.checked;
+                setNovosNegocios(enabled);
+                setSelectionSyncedFor(periodKey);
+                const nextKeys = enabled
+                  ? customerOptions
+                      .filter((option) => isNovosNegociosCustomer(option.cliente_codigo))
+                      .map((option) => option.key)
+                  : customerOptions.map((option) => option.key);
+                setSelectedKeys(nextKeys);
+                if (!enabled) {
+                  setFilteredMensal(null);
+                  setFilteredError(null);
+                  setFilteredLoading(false);
+                }
+              }}
+            />
+            <span>Novos Negócios</span>
+          </label>
+        </div>
       }
     >
       {isLoading ? <LoadingState message="Carregando série mensal…" /> : null}
@@ -271,9 +391,11 @@ export function MonthlyEvolutionChart({
         <EmptyState
           title="Sem evolução no período"
           message={
-            selectedCustomer
-              ? "Nenhum título encontrado para este cliente no período selecionado."
-              : "Nenhum título encontrado para o período selecionado."
+            noneSelected
+              ? "Marque ao menos um cliente para visualizar a evolução mensal."
+              : needsCustomFetch
+                ? "Nenhum título encontrado para o filtro atual no período selecionado."
+                : "Nenhum título encontrado para o período selecionado."
           }
         />
       ) : null}
@@ -323,7 +445,8 @@ export function MonthlyEvolutionChart({
             {items.length} mês(es) com{" "}
             {formatInteger(items.reduce((acc, item) => acc + item.total_titulos, 0))} títulos
             liquidados
-            {selectedOption ? ` · ${selectedOption.label}` : ""}.
+            {novosNegocios ? " · Novos Negócios" : ""}
+            {isPartialSelection ? ` · ${selectedKeys.length} cliente(s)` : ""}.
           </p>
         </>
       ) : null}

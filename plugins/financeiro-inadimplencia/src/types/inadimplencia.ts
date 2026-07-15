@@ -159,6 +159,10 @@ export type PeriodFilter = {
 export type MensalQueryParams = PeriodFilter & {
   customerCode?: string;
   storeCode?: string;
+  /** Lista `CODIGO/LOJA` para filtro multiplo. */
+  customers?: string[];
+  /** Exclui WEG (000001) — somente Novos Negócios. */
+  novosNegocios?: boolean;
 };
 
 export type ClientesQueryParams = PeriodFilter & {

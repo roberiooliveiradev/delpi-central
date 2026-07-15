@@ -20,8 +20,15 @@ export function buildPeriodQuery(filters: PeriodFilter): URLSearchParams {
 
 export function buildMensalQuery(input: MensalQueryParams): URLSearchParams {
   const params = buildPeriodQuery(input);
-  if (input.customerCode) params.set("customer_code", input.customerCode);
-  if (input.storeCode) params.set("store_code", input.storeCode);
+  if (input.customers?.length) {
+    params.set("customers", input.customers.join(","));
+  } else {
+    if (input.customerCode) params.set("customer_code", input.customerCode);
+    if (input.storeCode) params.set("store_code", input.storeCode);
+  }
+  if (input.novosNegocios) {
+    params.set("novos_negocios", "true");
+  }
   return params;
 }
 

@@ -97,6 +97,16 @@ Base: `/apps/api-delpi/financeiro/inadimplencia`
 | `start_date` | date | período padrão | inclusivo |
 | `end_date` | date | período padrão | exclusivo |
 
+### `/mensal`
+
+| Param | Default | Notas |
+|---|---|---|
+| `customer_code` / `store_code` | — | filtro de um cliente |
+| `customers` | — | multi-cliente: `CODIGO/LOJA,CODIGO/LOJA` (tem prioridade sobre o par único) |
+| `novos_negocios` | `false` | se `true`, exclui o cliente-chave WEG (`000001`) |
+
+> Escopo fixo do módulo: cliente `000207` é sempre excluído. WEG = `000001` (todas as lojas); demais clientes = Novos Negócios.
+
 ### `/clientes`
 
 | Param | Default | Notas |

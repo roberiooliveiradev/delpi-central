@@ -93,12 +93,7 @@ export function PeriodFilters({
         <p className="fi-filters__error" role="alert">
           {validationError}
         </p>
-      ) : (
-        <p className="fi-filters__hint">
-          Períodos padrão incluem o mês corrente (ainda incompleto). O limite final
-          é exclusivo.
-        </p>
-      )}
+      ) : null}
     </section>
   );
 }

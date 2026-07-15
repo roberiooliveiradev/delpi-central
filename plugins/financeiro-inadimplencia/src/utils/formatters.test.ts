@@ -5,6 +5,7 @@ import {
   formatInteger,
   formatMonthYearPtBr,
   formatPercent,
+  formatPeriodRangeLabel,
   formatTituloLabel,
 } from "./formatters";
 
@@ -23,5 +24,11 @@ describe("formatters", () => {
   it("monta título sem barras vazias", () => {
     expect(formatTituloLabel("02", "014413", "")).toBe("02 / 014413");
     expect(formatTituloLabel("02", "014413", "A")).toBe("02 / 014413 / A");
+  });
+
+  it("formata faixa de período com fim exclusivo", () => {
+    expect(formatPeriodRangeLabel("2025-07-01", "2026-07-01")).toBe(
+      "01/07/2025 a 30/06/2026",
+    );
   });
 });
