@@ -7,12 +7,12 @@ import type {
   AppointmentsQueryFilters,
 } from "../types/appointments";
 
-const PAGE_SIZE = 50;
-
 export function useAppointmentsTables(
   appliedFilters: AppointmentsQueryFilters | null,
   listPage: number,
   byOpPage: number,
+  listPageSize: number,
+  byOpPageSize: number,
 ) {
   const [list, setList] = useState<AppointmentsListData | null>(null);
   const [byOp, setByOp] = useState<AppointmentsByOpData | null>(null);
@@ -37,10 +37,10 @@ export function useAppointmentsTables(
         setLoading(true);
         setError(null);
         const [listData, byOpData] = await Promise.all([
-          fetchAppointmentsList(filters, listPage, PAGE_SIZE, {
+          fetchAppointmentsList(filters, listPage, listPageSize, {
             signal: controller.signal,
           }),
-          fetchAppointmentsByOp(filters, byOpPage, PAGE_SIZE, {
+          fetchAppointmentsByOp(filters, byOpPage, byOpPageSize, {
             signal: controller.signal,
           }),
         ]);
@@ -56,7 +56,7 @@ export function useAppointmentsTables(
 
     void run();
     return () => controller.abort();
-  }, [appliedFilters, listPage, byOpPage, reloadKey]);
+  }, [appliedFilters, listPage, byOpPage, listPageSize, byOpPageSize, reloadKey]);
 
-  return { list, byOp, loading, error, reload, pageSize: PAGE_SIZE };
+  return { list, byOp, loading, error, reload };
 }

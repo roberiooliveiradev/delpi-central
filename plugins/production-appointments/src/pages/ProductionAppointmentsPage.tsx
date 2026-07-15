@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AppointmentsTables } from "../components/AppointmentsTables";
 import { EmptyState } from "../components/EmptyState";
@@ -11,12 +11,12 @@ import { SummaryCards } from "../components/SummaryCards";
 import { WorkCenterSummaryTable } from "../components/WorkCenterSummaryTable";
 import {
   BRANCH_ROUTE_LABELS,
-  branchRouteFromPathname,
-  totvsBranchFromRoute,
   type BranchRouteCode,
 } from "../constants/branches";
+import { buildOpDetailPath } from "../constants/routes";
 import { useAppointmentsDashboard } from "../hooks/useAppointmentsDashboard";
 import { useAppointmentsTables } from "../hooks/useAppointmentsTables";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import type { FilterFormState } from "../types/appointments";
 import {
   createDefaultFilterFormState,
@@ -28,9 +28,12 @@ import {
 } from "../utils/dateRange";
 import { formatDatePtBr } from "../utils/formatters";
 import { useLoadingProgress } from "../utils/loadingProgress";
+import { navigateAppointments } from "../utils/navigation";
 
 type ProductionAppointmentsPageProps = {
-  pathname?: string;
+  branchRoute: BranchRouteCode;
+  totvsBranch: string;
+  isActive?: boolean;
 };
 
 function isPermissionError(message: string | null): boolean {
@@ -38,15 +41,17 @@ function isPermissionError(message: string | null): boolean {
   return /sem permissão|403|forbidden|sessão expirada/i.test(message);
 }
 
-export function ProductionAppointmentsPage({ pathname }: ProductionAppointmentsPageProps) {
-  const branchRoute = branchRouteFromPathname(pathname);
-  const totvsBranch = totvsBranchFromRoute(branchRoute);
-
+export function ProductionAppointmentsPage({
+  branchRoute,
+  totvsBranch,
+  isActive = true,
+}: ProductionAppointmentsPageProps) {
   return (
     <ProductionAppointmentsContent
       key={totvsBranch}
       branchRoute={branchRoute}
       totvsBranch={totvsBranch}
+      isActive={isActive}
     />
   );
 }
@@ -54,40 +59,67 @@ export function ProductionAppointmentsPage({ pathname }: ProductionAppointmentsP
 type ContentProps = {
   branchRoute: BranchRouteCode;
   totvsBranch: string;
+  isActive: boolean;
 };
 
-function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProps) {
+function ProductionAppointmentsContent({
+  branchRoute,
+  totvsBranch,
+  isActive,
+}: ContentProps) {
   const defaultFilters = useMemo(() => createDefaultFilterFormState(), []);
   const [draftFilters, setDraftFilters] = useState<FilterFormState>(defaultFilters);
-  const [appliedFilters, setAppliedFilters] = useState(() =>
-    filtersFromFormState(totvsBranch, defaultFilters),
-  );
   const [validationError, setValidationError] = useState<string | null>(null);
   const [listPage, setListPage] = useState(1);
   const [byOpPage, setByOpPage] = useState(1);
+  const [listPageSize, setListPageSize] = useState(20);
+  const [byOpPageSize, setByOpPageSize] = useState(20);
+
+  const debouncedOp = useDebouncedValue(draftFilters.op, 350);
+  const debouncedProduct = useDebouncedValue(draftFilters.product, 350);
+
+  const autoFilters = useMemo(
+    () => ({
+      ...draftFilters,
+      op: debouncedOp,
+      product: debouncedProduct,
+    }),
+    [draftFilters, debouncedOp, debouncedProduct],
+  );
+
+  const appliedFilters = useMemo(() => {
+    const error = validatePeriodRange(autoFilters.dateStart, autoFilters.dateEnd);
+    if (error) return null;
+    return filtersFromFormState(totvsBranch, autoFilters);
+  }, [autoFilters, totvsBranch]);
+
+  useEffect(() => {
+    setValidationError(validatePeriodRange(draftFilters.dateStart, draftFilters.dateEnd));
+  }, [draftFilters.dateStart, draftFilters.dateEnd]);
+
+  useEffect(() => {
+    setListPage(1);
+    setByOpPage(1);
+  }, [
+    appliedFilters?.dateStart,
+    appliedFilters?.dateEnd,
+    appliedFilters?.workCenter,
+    appliedFilters?.op,
+    appliedFilters?.product,
+    totvsBranch,
+  ]);
 
   const dashboard = useAppointmentsDashboard(appliedFilters);
-  const tables = useAppointmentsTables(appliedFilters, listPage, byOpPage);
+  const tables = useAppointmentsTables(
+    appliedFilters,
+    listPage,
+    byOpPage,
+    listPageSize,
+    byOpPageSize,
+  );
 
-  const handleApply = () => {
-    const error = validatePeriodRange(draftFilters.dateStart, draftFilters.dateEnd);
-    if (error) {
-      setValidationError(error);
-      return;
-    }
-    setValidationError(null);
-    setAppliedFilters(filtersFromFormState(totvsBranch, draftFilters));
-    setListPage(1);
-    setByOpPage(1);
-  };
-
-  const applyFilterRange = (range: Pick<FilterFormState, "dateStart" | "dateEnd">) => {
-    const next = { ...draftFilters, ...range };
-    setDraftFilters(next);
-    setValidationError(null);
-    setAppliedFilters(filtersFromFormState(totvsBranch, next));
-    setListPage(1);
-    setByOpPage(1);
+  const handleFiltersChange = (patch: Partial<FilterFormState>) => {
+    setDraftFilters((current) => ({ ...current, ...patch }));
   };
 
   const handleQuickRange = (preset: QuickRangePreset) => {
@@ -98,7 +130,17 @@ function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProp
         : preset === "30d"
           ? getDefaultLast30DaysRange(referenceDate)
           : getThisMonthRange(referenceDate);
-    applyFilterRange(range);
+    setDraftFilters((current) => ({ ...current, ...range }));
+  };
+
+  const handleOpenOp = (productionOrder: string) => {
+    if (!appliedFilters) return;
+    navigateAppointments(
+      buildOpDetailPath(branchRoute, productionOrder, {
+        dateStart: appliedFilters.dateStart,
+        dateEnd: appliedFilters.dateEnd,
+      }),
+    );
   };
 
   const summary = dashboard.data.summary;
@@ -120,13 +162,23 @@ function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProp
   const dashboardError = dashboard.state === "error" ? dashboard.error : null;
   const permissionDenied = isPermissionError(dashboardError);
   const branchLabel = BRANCH_ROUTE_LABELS[branchRoute];
-  const periodoLabel = `${formatDatePtBr(appliedFilters.dateStart)} — ${formatDatePtBr(appliedFilters.dateEnd)}`;
+  const periodoLabel = appliedFilters
+    ? `${formatDatePtBr(appliedFilters.dateStart)} — ${formatDatePtBr(appliedFilters.dateEnd)}`
+    : "";
 
   return (
-    <div className="dashboard-production-appointments dashboard-page pa-page">
+    <div
+      className="dashboard-production-appointments dashboard-page pa-page"
+      hidden={!isActive}
+      aria-hidden={!isActive}
+    >
       <PageHeader
         title={`Apontamento de Produção — ${branchLabel}`}
-        subtitle={`Filial TOTVS ${totvsBranch} · Período ${periodoLabel}`}
+        subtitle={
+          periodoLabel
+            ? `Filial TOTVS ${totvsBranch} · Período ${periodoLabel}`
+            : `Filial TOTVS ${totvsBranch}`
+        }
         refreshing={dashboard.refreshing}
         onRefresh={() => {
           dashboard.reload();
@@ -139,8 +191,7 @@ function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProp
         workCenters={dashboard.data.workCenters}
         validationError={validationError}
         loading={dashboard.loading || dashboard.refreshing}
-        onChange={(patch) => setDraftFilters((current) => ({ ...current, ...patch }))}
-        onApply={handleApply}
+        onChange={handleFiltersChange}
         onQuickRange={handleQuickRange}
       />
 
@@ -178,21 +229,31 @@ function ProductionAppointmentsContent({ branchRoute, totvsBranch }: ContentProp
 
       {!showInitialLoading && !dashboardError && isEmpty ? <EmptyState /> : null}
 
-      {!showInitialLoading && !dashboardError && !isEmpty && summary ? (
+      {!showInitialLoading && !dashboardError && !isEmpty && summary && appliedFilters ? (
         <>
           <SummaryCards totals={summary.totals} loading={dashboard.loading} />
           <SeriesChart points={dashboard.data.series?.points ?? []} />
-          <WorkCenterSummaryTable items={summary.items} />
+          <WorkCenterSummaryTable
+            items={summary.items}
+            filters={appliedFilters}
+            loading={dashboard.loading}
+          />
           <AppointmentsTables
             appointments={tables.list?.items ?? []}
             byOp={tables.byOp?.items ?? []}
-            listPagination={tables.list?.pagination ?? null}
-            byOpPagination={tables.byOp?.pagination ?? null}
+            filters={appliedFilters}
+            listTotal={tables.list?.pagination.total ?? 0}
+            byOpTotal={tables.byOp?.pagination.total ?? 0}
             listPage={listPage}
             byOpPage={byOpPage}
-            pageSize={tables.pageSize}
+            listPageSize={listPageSize}
+            byOpPageSize={byOpPageSize}
+            loading={tables.loading}
             onListPageChange={setListPage}
             onByOpPageChange={setByOpPage}
+            onListPageSizeChange={setListPageSize}
+            onByOpPageSizeChange={setByOpPageSize}
+            onOpenOp={handleOpenOp}
           />
         </>
       ) : null}

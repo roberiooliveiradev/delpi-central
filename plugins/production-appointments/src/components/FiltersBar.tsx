@@ -11,7 +11,6 @@ type FiltersBarProps = {
   validationError: string | null;
   loading?: boolean;
   onChange: (patch: Partial<FilterFormState>) => void;
-  onApply: () => void;
   onQuickRange: (preset: QuickRangePreset) => void;
 };
 
@@ -25,7 +24,6 @@ export function FiltersBar({
   validationError,
   loading = false,
   onChange,
-  onApply,
   onQuickRange,
 }: FiltersBarProps) {
   const localError = validatePeriodRange(filters.dateStart, filters.dateEnd);
@@ -91,14 +89,6 @@ export function FiltersBar({
         </p>
       ) : null}
       <div className="pa-filter-bar__actions pa-filters__actions">
-        <button
-          type="button"
-          className="pa-btn pa-btn--primary"
-          onClick={onApply}
-          disabled={loading || Boolean(localError)}
-        >
-          Aplicar
-        </button>
         <button
           type="button"
           className="pa-btn pa-btn--secondary"

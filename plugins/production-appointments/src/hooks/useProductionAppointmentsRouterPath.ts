@@ -1,18 +1,21 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
-import { branchRouteFromPathname } from "../constants/branches";
-
-/**
- * Prefer pathname do host (portal); fallback para window.location.
- */
 export function useProductionAppointmentsRouterPath(pathnameFromHost?: string): string {
-  return useMemo(() => {
-    if (pathnameFromHost) return pathnameFromHost;
-    if (typeof window !== "undefined") return window.location.pathname;
-    return "";
-  }, [pathnameFromHost]);
-}
+  const [pathname, setPathname] = useState(
+    () => pathnameFromHost ?? (typeof window !== "undefined" ? window.location.pathname : ""),
+  );
 
-export function useBranchFromPath(pathname?: string) {
-  return branchRouteFromPathname(pathname);
+  useEffect(() => {
+    if (!pathnameFromHost) return;
+    setPathname(pathnameFromHost);
+  }, [pathnameFromHost]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sync = () => setPathname(window.location.pathname);
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+
+  return pathname;
 }

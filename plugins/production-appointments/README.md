@@ -33,13 +33,14 @@ MFE com filtros (período, CT, OP, produto), KPIs, série temporal, tabela por C
 
 ## UI (`@delpi/plugin-ui`)
 
-Alinhado ao padrão canônico de [controle-retrabalhos](../controle-retrabalhos/README.md):
+Alinhado ao padrão canônico de [controle-retrabalhos](../controle-retrabalhos/README.md) e tabelas do [dashboard-commercial](../dashboard-commercial/README.md):
 
 - `createDashboardPageHeader` / `createSimpleKpiCard` / `ChartCard`
-- `createFilterBarShell` + `FilterInputField` / `FilterSelectField`
-- `CompactPagination`, `LoadingActivityCard`, empty/error states
-- Textos de ajuda em `src/content/helpTooltips.ts` (não no pacote plugin-ui)
-- Tokens `--delpi-ui-*` no escopo `.dashboard-production-appointments`
+- `createFilterBarShell` + `FilterInputField` / `FilterSelectField` (filtros auto-aplicados)
+- `createDashboardDataTableKit` + ordenação + paginação + Excel
+- Detalhe da OP em `/apps/production-appointments/{sc|es}/op/:op`
+- Textos de ajuda em `src/content/helpTooltips.ts`
+- Tokens `--delpi-ui-*` no escopo `.dashboard-production-appointments` (inclui portal do select)
 
 ## Dev
 

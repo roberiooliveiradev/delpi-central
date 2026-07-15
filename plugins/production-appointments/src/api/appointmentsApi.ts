@@ -1,11 +1,13 @@
 import { httpGet } from "./httpClient";
 import { unwrapApiDelpiEnvelope } from "../types/api";
 import type {
+  AppointmentRow,
   AppointmentsByOpData,
   AppointmentsListData,
   AppointmentsQueryFilters,
   AppointmentsSeriesData,
   AppointmentsSummaryData,
+  ByOpRow,
   WorkCenterItem,
 } from "../types/appointments";
 import { queryString } from "../utils/queryParams";
@@ -75,6 +77,43 @@ export async function fetchAppointmentsByOp(
 ): Promise<AppointmentsByOpData> {
   return getEnvelope(
     `/by-op${queryString({ ...baseQuery(filters), page, page_size: pageSize })}`,
+    options,
+  );
+}
+
+const EXPORT_PAGE_SIZE = 200;
+
+async function fetchAllPages<T>(
+  fetchPage: (page: number, pageSize: number) => Promise<{ items: T[]; pagination: { total_pages: number } }>,
+  options: RequestOptions = {},
+): Promise<T[]> {
+  const first = await fetchPage(1, EXPORT_PAGE_SIZE);
+  const items = [...first.items];
+  const totalPages = Math.max(1, first.pagination.total_pages);
+  for (let page = 2; page <= totalPages; page += 1) {
+    if (options.signal?.aborted) break;
+    const next = await fetchPage(page, EXPORT_PAGE_SIZE);
+    items.push(...next.items);
+  }
+  return items;
+}
+
+export async function fetchAllAppointments(
+  filters: AppointmentsQueryFilters,
+  options: RequestOptions = {},
+): Promise<AppointmentRow[]> {
+  return fetchAllPages(
+    (page, pageSize) => fetchAppointmentsList(filters, page, pageSize, options),
+    options,
+  );
+}
+
+export async function fetchAllAppointmentsByOp(
+  filters: AppointmentsQueryFilters,
+  options: RequestOptions = {},
+): Promise<ByOpRow[]> {
+  return fetchAllPages(
+    (page, pageSize) => fetchAppointmentsByOp(filters, page, pageSize, options),
     options,
   );
 }
