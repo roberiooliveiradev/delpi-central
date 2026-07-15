@@ -490,6 +490,16 @@
   color: #b42318;
 }
 
+.delpi-ui-data-route-preview__kpi-single {
+  display: block;
+}
+
+.delpi-ui-data-route-preview__kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
 .delpi-ui-data-route-preview__kpi {
   display: flex;
   flex-direction: column;
@@ -497,18 +507,29 @@
   padding: 8px 10px;
   border-radius: 6px;
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+  min-width: 0;
 }
 
 .delpi-ui-data-route-preview__kpi-label {
   font-size: 11px;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .delpi-ui-data-route-preview__kpi-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 1.1;
   color: var(--delpi-ui-text, var(--text, #111));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-data-route-preview__kpi-grid .delpi-ui-data-route-preview__kpi-value {
+  font-size: 16px;
 }
 
 .delpi-ui-data-route-preview__table-wrap {

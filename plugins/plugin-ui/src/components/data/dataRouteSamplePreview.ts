@@ -1,9 +1,13 @@
 export type DataRouteDisplayKind = "kpi" | "series" | "table";
 
+export type DataRoutePreviewMetric = { label: string; value: string };
+
 export type DataRoutePreviewPayload = {
   kind: DataRouteDisplayKind;
   title?: string;
-  kpi?: { label: string; value: string };
+  kpi?: DataRoutePreviewMetric;
+  /** Resumo com várias métricas (rotas `*_summary` / valueFields). */
+  metrics?: DataRoutePreviewMetric[];
   table?: {
     columns: Array<{ key: string; label: string }>;
     rows: Array<Record<string, string | number>>;
@@ -15,17 +19,33 @@ export type DataRoutePreviewPayload = {
 
 const SAMPLE_MAX_ROWS = 4;
 const LIVE_MAX_ROWS = 5;
+const LIVE_MAX_METRICS = 6;
 
 /** Exemplo estático tipado — sem chamada HTTP. */
 export function buildSampleDataRoutePreview(input: {
   id: string;
   label: string;
   kind: DataRouteDisplayKind;
+  /** When true (or metaShape scalar/summary), shows multi-metric summary sample. */
+  kpiSummary?: boolean;
 }): DataRoutePreviewPayload {
   const title = input.label || input.id;
   const { kind } = input;
 
   if (kind === "kpi") {
+    if (input.kpiSummary) {
+      return {
+        kind: "kpi",
+        title,
+        source: "sample",
+        metrics: [
+          { label: "Total", value: "128" },
+          { label: "% no prazo", value: "87,4%" },
+          { label: "Lead time", value: "3,2" },
+        ],
+        kpi: { label: "Total", value: "128" },
+      };
+    }
     return {
       kind: "kpi",
       title,
@@ -143,16 +163,18 @@ function mapTableRows(
   return { columns, rows };
 }
 
-function mapKpiMetrics(
+function mapKpiMetricList(
   kpiMetrics: unknown[],
   title: string | undefined,
-): DataRoutePreviewPayload["kpi"] | null {
-  if (kpiMetrics.length === 0) return null;
-  const firstMetric = asRecord(kpiMetrics[0]) ?? {};
-  return {
-    label: String(firstMetric.label ?? title ?? "KPI"),
-    value: formatKpiValue(firstMetric.value),
-  };
+): DataRoutePreviewMetric[] {
+  return kpiMetrics.slice(0, LIVE_MAX_METRICS).map((metric, index) => {
+    const row = asRecord(metric) ?? {};
+    const fallback = index === 0 && title ? title : `Métrica ${index + 1}`;
+    return {
+      label: String(row.label ?? row.field ?? fallback),
+      value: formatKpiValue(row.value),
+    };
+  });
 }
 
 /**
@@ -213,23 +235,19 @@ export function mapEnrichedBlockToDataRoutePreview(
   if (preferred === "table") {
     const mapped = mapTableRows(table, rowsRaw);
     if (mapped) return { kind: "table", title, source: "live", table: mapped };
-    const metricsAsTable =
-      kpiMetrics.length > 0
-        ? {
-            columns: [
-              { key: "metric", label: "Indicador" },
-              { key: "value", label: "Valor" },
-            ],
-            rows: kpiMetrics.slice(0, LIVE_MAX_ROWS).map((metric) => {
-              const row = asRecord(metric) ?? {};
-              return {
-                metric: String(row.label ?? row.field ?? "—"),
-                value: formatKpiValue(row.value),
-              };
-            }),
-          }
-        : null;
-    if (metricsAsTable) return { kind: "table", title, source: "live", table: metricsAsTable };
+    const metricsList = mapKpiMetricList(kpiMetrics, title);
+    if (metricsList.length > 1) {
+      return {
+        kind: "kpi",
+        title,
+        source: "live",
+        metrics: metricsList,
+        kpi: metricsList[0],
+      };
+    }
+    if (metricsList.length === 1) {
+      return { kind: "kpi", title, source: "live", kpi: metricsList[0] };
+    }
     if (kpi?.value != null) {
       return {
         kind: "kpi",
@@ -249,9 +267,24 @@ export function mapEnrichedBlockToDataRoutePreview(
     };
   }
 
-  const metricKpi = mapKpiMetrics(kpiMetrics, title);
-  if (metricKpi) {
-    return { kind: "kpi", title, source: "live", kpi: metricKpi };
+  const metricsList = mapKpiMetricList(kpiMetrics, title);
+  if (metricsList.length > 1) {
+    return {
+      kind: "kpi",
+      title,
+      source: "live",
+      metrics: metricsList,
+      kpi: metricsList[0],
+    };
+  }
+  if (metricsList.length === 1) {
+    return { kind: "kpi", title, source: "live", kpi: metricsList[0] };
+  }
+
+  const mappedTable = mapTableRows(table, rowsRaw);
+  // Preferência KPI sem métrica de negócio: usar ranking/tabela do playbook quando houver.
+  if (mappedTable) {
+    return { kind: "table", title, source: "live", table: mappedTable };
   }
 
   if (kpi?.value != null || typeof kpi?.label === "string") {
@@ -268,11 +301,6 @@ export function mapEnrichedBlockToDataRoutePreview(
 
   if (chartPoints.length > 0) {
     return { kind: "series", title, source: "live", series: mapSeriesPoints(chartPoints) };
-  }
-
-  const mappedTable = mapTableRows(table, rowsRaw);
-  if (mappedTable) {
-    return { kind: "table", title, source: "live", table: mappedTable };
   }
 
   return {

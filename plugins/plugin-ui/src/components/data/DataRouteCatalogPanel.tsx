@@ -35,6 +35,8 @@ export type DataRouteCatalogItem = {
   /** Formas de apresentação sugeridas (kpi / series / table). */
   displayKinds?: DataRouteDisplayKind[];
   metaShape?: string;
+  /** Campos escalares curados (resumo multi-métrica / KPI summary). */
+  valueFields?: string[];
   /** Orientação de uso curada (overlay TV) — tem prioridade na prosa «para que serve». */
   whenToUse?: string;
   /** Parâmetros já rotulados para a UI (sem path técnico no card). */
@@ -239,10 +241,16 @@ export function DataRouteCatalogPanel({
 
   const samplePreview = useMemo(() => {
     if (!selected) return null;
+    const kpiSummary =
+      selected.primaryKind === "kpi" &&
+      ((selected.valueFields?.length ?? 0) > 1 ||
+        /\bsummary\b/i.test(selected.id) ||
+        /\bresumo\b/i.test(selected.label));
     return buildSampleDataRoutePreview({
       id: selected.id,
       label: selected.label,
       kind: selected.primaryKind,
+      kpiSummary,
     });
   }, [selected]);
 
@@ -313,6 +321,10 @@ export function DataRouteCatalogPanel({
             id: selected.id,
             label: selected.label,
             kind: selected.primaryKind,
+            kpiSummary:
+              (selected.valueFields?.length ?? 0) > 1 ||
+              /\bsummary\b/i.test(selected.id) ||
+              /\bresumo\b/i.test(selected.label),
           }),
           source: "live",
         });

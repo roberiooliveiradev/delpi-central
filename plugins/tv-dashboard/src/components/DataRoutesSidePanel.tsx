@@ -305,6 +305,7 @@ export function DataRoutesSidePanel({
           path: route.path,
           httpMethod: "GET",
           metaShape: route.metaShape,
+          valueFields: route.valueFields,
           displayKinds: resolveDataRouteDisplayKinds({
             metaShape: route.metaShape,
             allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,

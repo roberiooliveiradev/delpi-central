@@ -13,6 +13,18 @@ describe("buildSampleDataRoutePreview", () => {
       kpi: { label: "OEE", value: "87,4%" },
     });
 
+    expect(
+      buildSampleDataRoutePreview({ id: "summary", label: "Resumo LMP", kind: "kpi", kpiSummary: true }),
+    ).toMatchObject({
+      kind: "kpi",
+      source: "sample",
+      metrics: [
+        { label: "Total", value: "128" },
+        { label: "% no prazo", value: "87,4%" },
+        { label: "Lead time", value: "3,2" },
+      ],
+    });
+
     const table = buildSampleDataRoutePreview({ id: "b", label: "Lista", kind: "table" });
     expect(table.table?.rows).toHaveLength(4);
     expect(table.table?.columns[0]?.key).toBe("code");
@@ -80,7 +92,45 @@ describe("mapEnrichedBlockToDataRoutePreview", () => {
       },
       "table",
     );
-    expect(metricsAsTable.kind).toBe("table");
-    expect(metricsAsTable.table?.rows).toHaveLength(2);
+    expect(metricsAsTable.kind).toBe("kpi");
+    expect(metricsAsTable.metrics).toHaveLength(2);
+  });
+
+  it("mapeia kpi summary multi-métrica e cai em tabela quando não há KPI de negócio", () => {
+    const summary = mapEnrichedBlockToDataRoutePreview(
+      {
+        resolved: {
+          kpi: { label: "Total de LMPs", value: 42 },
+          kpiMetrics: [
+            { field: "total_lmps", label: "Total de LMPs", value: 42 },
+            { field: "percent_dentro_prazo", label: "% no prazo", value: 81.5 },
+            { field: "avg_lead_time", label: "Lead time médio", value: 3.2 },
+          ],
+        },
+      },
+      "kpi",
+    );
+    expect(summary.kind).toBe("kpi");
+    expect(summary.metrics).toHaveLength(3);
+    expect(summary.metrics?.[1]).toMatchObject({ label: "% no prazo", value: "81,5" });
+
+    const playbook = mapEnrichedBlockToDataRoutePreview(
+      {
+        resolved: {
+          kpi: { label: "total records", value: 10 },
+          kpiMetrics: [],
+          table: {
+            columns: [
+              { key: "item_code", label: "Código" },
+              { key: "real_consumption_qty", label: "Consumo" },
+            ],
+            rows: [{ item_code: "A1", real_consumption_qty: 12 }],
+          },
+        },
+      },
+      "kpi",
+    );
+    expect(playbook.kind).toBe("table");
+    expect(playbook.table?.rows).toHaveLength(1);
   });
 });

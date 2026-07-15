@@ -1,4 +1,4 @@
-import type { DataRoutePreviewPayload } from "./dataRouteSamplePreview";
+import type { DataRoutePreviewMetric, DataRoutePreviewPayload } from "./dataRouteSamplePreview";
 
 type Props = {
   payload: DataRoutePreviewPayload;
@@ -38,8 +38,23 @@ function SeriesMiniChart({ points }: { points: Array<{ label: string; value: num
   );
 }
 
+function KpiMetricCard({ metric }: { metric: DataRoutePreviewMetric }) {
+  return (
+    <div className="delpi-ui-data-route-preview__kpi">
+      <span className="delpi-ui-data-route-preview__kpi-label">{metric.label}</span>
+      <span className="delpi-ui-data-route-preview__kpi-value">{metric.value}</span>
+    </div>
+  );
+}
+
 export function DataRouteSamplePreview({ payload, className = "" }: Props) {
   const sourceLabel = payload.source === "live" ? "Resultado do teste" : "Exemplo de uso";
+  const metrics =
+    payload.metrics && payload.metrics.length > 1
+      ? payload.metrics
+      : payload.kpi
+        ? [payload.kpi]
+        : [];
 
   return (
     <div
@@ -54,10 +69,18 @@ export function DataRouteSamplePreview({ payload, className = "" }: Props) {
         </p>
       ) : null}
 
-      {!payload.error && payload.kind === "kpi" && payload.kpi ? (
-        <div className="delpi-ui-data-route-preview__kpi" aria-label="Prévia KPI">
-          <span className="delpi-ui-data-route-preview__kpi-label">{payload.kpi.label}</span>
-          <span className="delpi-ui-data-route-preview__kpi-value">{payload.kpi.value}</span>
+      {!payload.error && payload.kind === "kpi" && metrics.length > 0 ? (
+        <div
+          className={
+            metrics.length > 1
+              ? "delpi-ui-data-route-preview__kpi-grid"
+              : "delpi-ui-data-route-preview__kpi-single"
+          }
+          aria-label={metrics.length > 1 ? "Prévia KPI summary" : "Prévia KPI"}
+        >
+          {metrics.map((metric, index) => (
+            <KpiMetricCard key={`${metric.label}-${index}`} metric={metric} />
+          ))}
         </div>
       ) : null}
 
