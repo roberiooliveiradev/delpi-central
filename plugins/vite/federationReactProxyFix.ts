@@ -112,6 +112,9 @@ export function resolveBundledReactBridgeName(code: string): string | null {
 /**
  * App/recharts importam React bundled (index-*.js) fora do importShared.
  * Shims cacheiam `var e=Nu()` na 1ª execução — redireciona para o global canônico.
+ *
+ * Usa lookbehind de identificador: bridge curto (`rs`) não pode casar o sufixo de
+ * `getSelectors()` / `getHours()` — isso gerava `get selecto((…` → Unexpected token '('.
  */
 export function patchBundledReactConsumerChunk(code: string): string {
   const reactBridge = resolveBundledReactBridgeName(code);
@@ -119,7 +122,15 @@ export function patchBundledReactConsumerChunk(code: string): string {
     return code;
   }
   const resolveExpr = `(${DELPI_MF_REACT_RESOLVE}${reactBridge}())`;
-  return code.replace(new RegExp(`${escapeRegExp(reactBridge)}\\(\\)`, "g"), resolveExpr);
+  const callRe = new RegExp(`(?<![\\w$])${escapeRegExp(reactBridge)}\\(\\)`, "g");
+  return code.replace(callRe, (match, offset: number) => {
+    // Idempotente: não re-envolver o fallback já emitido (`…?globalThis.X:rs()`).
+    const start = offset - DELPI_MF_REACT_RESOLVE.length;
+    if (start >= 0 && code.startsWith(DELPI_MF_REACT_RESOLVE, start)) {
+      return match;
+    }
+    return resolveExpr;
+  });
 }
 
 function replaceFlattenElseBranch(code: string): string {

@@ -101,6 +101,23 @@ function testAppChunkPrefersDollarReactBridgeOverReactDom() {
   assert.ok(!out.includes("p=(globalThis.__DELPI_MF_REACT__"), "p não vira React global");
 }
 
+/**
+ * Regressão dashboard-hr: bridge minificado `rs` — replace ingênuo de `rs()`
+ * quebrava `getSelectors()` / `getHours()` → SyntaxError Unexpected token '('.
+ */
+function testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix() {
+  const raw = String.raw`import{r as rs}from"./index-DDrCcACP.js?v=5";function boot(){var e=rs();return e.useRef}function slice(d,getSelectors){return{reducerPath:b,getSelectors:x,api:getSelectors(),hours:d.getHours(),utc:d.getUTCHours()}}`;
+  assert.equal(resolveBundledReactBridgeName(raw), "rs");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes("var e=("), "redireciona chamada rs() isolada");
+  assert.ok(out.includes("api:getSelectors()"), "preserva getSelectors()");
+  assert.ok(!out.includes("get selecto(("), "não corrompe getSelectors()");
+  assert.ok(out.includes("d.getHours()"), "preserva getHours()");
+  assert.ok(out.includes("d.getUTCHours()"), "preserva getUTCHours()");
+  const twice = patchBundledReactConsumerChunk(out);
+  assert.equal(twice, out, "patch é idempotente");
+}
+
 function testUpgradeUnconditionalPublish() {
   const raw = String.raw`t==="react"&&(globalThis.__DELPI_MF_REACT__=w[t])`;
   const out = upgradeUnconditionalReactGlobalPublish(raw);
@@ -130,7 +147,8 @@ testBrokenReactNotUsable();
 testUpgradeUnconditionalPublish();
 testAppChunkReactBridgeFallback();
 testAppChunkPrefersDollarReactBridgeOverReactDom();
+testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 11 testes passaram");
+console.log("OK: federationReactProxyFix — 12 testes passaram");
