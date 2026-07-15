@@ -319,9 +319,11 @@ export function DataRouteCatalogPanel({
         return;
       }
       const payload = await onTestRoute(selected);
-      setLivePreview(payload);
       if (payload.error) {
         setTestError(payload.error);
+        setLivePreview(null);
+      } else {
+        setLivePreview(payload);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao testar a rota.";

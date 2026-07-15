@@ -152,6 +152,32 @@ describe("DataRouteCatalogPanel", () => {
     expect(screen.getByText("91,2%")).toBeTruthy();
     expect(screen.queryByText("Exemplo de uso")).toBeNull();
   });
+
+  it("mantém exemplo de uso quando o teste da rota falha", async () => {
+    const onTestRoute = vi.fn().mockResolvedValue({
+      kind: "kpi",
+      source: "live",
+      error: "[500] Erro interno",
+    });
+
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={vi.fn()}
+        onTestRoute={onTestRoute}
+        density="comfortable"
+        categoryLabels={{ production: "Produção", products: "Produtos" }}
+        categoryOrder={["production", "products"]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("OEE geral"));
+    fireEvent.click(screen.getByRole("button", { name: "Testar rota" }));
+
+    await waitFor(() => expect(screen.getByText("[500] Erro interno")).toBeTruthy());
+    expect(screen.getByText("Exemplo de uso")).toBeTruthy();
+    expect(screen.getByLabelText("Prévia KPI")).toBeTruthy();
+  });
   it("filtra por categoria e forma (KPI)", () => {
     const { container } = render(
       <DataRouteCatalogPanel
