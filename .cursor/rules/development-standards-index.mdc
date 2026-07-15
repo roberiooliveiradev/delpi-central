@@ -61,9 +61,9 @@ Doc: `infra/README-ambiente.md`.
 
 | Regra | Escopo |
 |-------|--------|
-| `plugins-reusable-components.mdc` | **`@delpi/plugin-ui`** — tooltips, labels; proibir duplicação entre plugins |
+| `plugins-reusable-components.mdc` | **`@delpi/plugin-ui`** — zero CSS de componentes do kit no MFE (sem exceção) |
 | `chat-prose-rendering.mdc` | Markdown, streaming, títulos do assistente (`minha-delpi-chat`) |
-| `plugins-visual-design-system.mdc` | Tokens, layout, **escopo CSS anti-vazamento**, claro/escuro |
+| `plugins-visual-design-system.mdc` | Tokens, layout de página, **escopo CSS anti-vazamento**, claro/escuro; sem espelho `.delpi-ui-*` |
 | `plugins-frontend-build.mdc` | Build MFE, checklist CSS antes de commit |
 | `plugins-documentation.mdc` | **README + doc API + inventário** — todo plugin documentado |
 | [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) | **Scaffold MF** — vite, bootstrap, Docker, compose |
@@ -81,7 +81,8 @@ Texto novo ao usuário   → assistant-content-json
 Regex / limite / constante → assistant-content-json (bundle + *ContentService / *PatternsService)
 Upload / anexo em disco     → persistent-upload-storage → volume Compose + DELPI_DATA_HOST_DIR
 Novo plugin / UI MFE        → novo-plugin-mfe-checklist → plugins-reusable-components → plugins-documentation → plugins-visual-design-system → plugins-frontend-build
-Componente UI transversal   → plugins/plugin-ui (extrair antes de duplicar) → migration-catalog.md
+Componente UI transversal   → plugins/plugin-ui (TSX + CSS delpi-ui; não espelhar no MFE) → migration-catalog.md
+Bug visual de KPI/card/tabela/loading → plugin-ui/src/styles (não index.css do MFE) → dual-class + tokens
 Plugin importa bib. irmã   → shared-libraries.manifest.json → check_plugin_docker_shared_libraries.py
 API dashboard multi-filial → api-delpi-response-contract § RBAC filial → manifest `.view.filial-*`
 Deploy / subir stack / rebuild Docker → infra-sequential-container-startup → up-*-sequential.sh

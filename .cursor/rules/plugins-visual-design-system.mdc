@@ -46,11 +46,24 @@ MFE carrega CSS no **mesmo documento** do portal. Estilo global **vaza** para me
 5. **Preview standalone (vite dev):** estilos mínimos só em `#root:has(> .dashboard-{nome})`, nunca `body` global.
 6. **Gráficos Recharts:** eixos/labels/grid via vars CSS (`--{prefix}-chart-axis`, `--{prefix}-chart-label`) ou `CHART_COLORS` do portal; tooltip estilizado dentro do escopo do dashboard.
 
+### CSS de `@delpi/plugin-ui` — zero no MFE (sem exceção)
+
+Se a UI vem do kit (export + dual-class `delpi-ui-*`), **não há CSS desse componente no MFE** — em hipótese alguma (nem BEM local, nem override `.delpi-ui-*`, nem “ajuste pontual”).
+
+| Permitido no MFE | Proibido |
+|------------------|----------|
+| Tokens `--{prefix}-*` → `--delpi-ui-*` | Qualquer seletor de componente do kit |
+| Layout de página (`*-page-stack`, `*-detail-grid`, gap **entre** seções) | Espelho `.pac-kpi-card`, `.cr-section-card__header`, tabela/loading/filter do kit |
+| CSS só de UI **fora** do kit (domínio puro) | Fix visual do kit «só neste MFE» |
+
+Regra: **`plugins-reusable-components.mdc`** § CSS do kit. Bug → `plugins/plugin-ui/src/styles/` + rebuild remote.
+
 ### Checklist antes de merge (plugin UI)
 
 - [ ] Zero ocorrência de `body {`, `:root {` (exceto dark scoped) ou `* {` global no CSS do plugin?
 - [ ] Todas as classes de componente prefixadas e escopadas em `.dashboard-{nome}`?
 - [ ] Tokens `--{prefix}-*` + overrides em `:root[data-theme="dark"] .dashboard-{nome}`?
+- [ ] Zero CSS de componente do kit no MFE (`.delpi-ui-*` ou BEM dual-class do export)?
 - [ ] Validado visualmente em **claro e escuro** no portal federado (não só vite dev)?
 - [ ] `npm run build` do plugin verde?
 
@@ -148,19 +161,20 @@ Toda tela deve funcionar em **qualquer largura** — sem scroll horizontal invol
 - Tamanhos: header **28** (`strokeWidth={1.75}`), KPI **22**, botão/toolbar **16**, banner **18**.
 - Container decorativo: `aria-hidden="true"`; fundo accent 10–12%, `border-radius: 14px`.
 
-### Balões explicativos e labels de ajuda
+### Balões explicativos, labels e chrome do kit
 
 Ver regra dedicada **`plugins-reusable-components.mdc`** — resumo:
 
-- **Obrigatório:** `@delpi/plugin-ui` para tooltips, `FieldLabel`, abas com ajuda.
-- **Proibido:** `HelpTooltip.tsx` local; copiar componente de outro plugin.
-- Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md).
+- **Obrigatório:** `@delpi/plugin-ui` para tooltips, `FieldLabel`, abas, KPI, cards, filtros, tabela, loading.
+- **Proibido:** `HelpTooltip.tsx` local; copiar componente de outro plugin; **qualquer CSS** de componente `.delpi-ui-*` / BEM do kit no MFE (zero, sem exceção).
+- Doc: [plugins/plugin-ui/README.md](../../plugins/plugin-ui/README.md) · [architecture.md](../../plugins/plugin-ui/docs/architecture.md) § CSS.
 - **Não** usar outras libs de ícone nem emojis como substituto visual.
 
 ## O que NÃO fazer
 
 - **Vazamento CSS:** `body`, `:root`, `*` global, classes sem `.dashboard-{nome}` — ver § Anti-vazamento CSS.
 - CSS global fora do root do plugin; estilos do template Vite (`#root { max-width: 1280px }`, etc.).
+- **CSS de componente do kit no MFE:** zero, em hipótese alguma — ver § CSS de `@delpi/plugin-ui`.
 - Componentes com aparência Material/Ant/Bootstrap desalinhada do portal.
 - Gráficos com paleta aleatória, eixos `#64748b` fixos ou sem legenda/estado vazio no escuro.
 - Ignorar dark mode ou testar só em um tema.
@@ -168,10 +182,10 @@ Ver regra dedicada **`plugins-reusable-components.mdc`** — resumo:
 
 ## O que fazer (novo plugin)
 
-1. Copiar esqueleto de `dashboard-production` (`index.css`, header, shell, KPI/chart cards).
-2. Integrar **`@delpi/plugin-ui`** — alias Vite, `styles.css`, tokens `--delpi-ui-*` (ver `plugins-reusable-components.mdc`).
-3. Definir tokens locais mapeando para vars do portal.
-4. Incluir media queries `1100px` e `768px` para grids, header, toolbars e tabelas.
+1. Copiar esqueleto de `dashboard-production` (`index.css` com tokens + layout; componentes via kit).
+2. Integrar **`@delpi/plugin-ui`** — MF + `preparePluginUiRemote()`, dual-class, tokens `--delpi-ui-*` (ver `plugins-reusable-components.mdc`).
+3. Definir tokens locais mapeando para vars do portal — **sem** recriar CSS estrutural do kit.
+4. Incluir media queries `1100px` e `768px` para grids de **página**, header, toolbars.
 5. Validar visualmente em **claro e escuro** e em **mobile** (viewport ≤ 768px ou DevTools).
 6. `npm run build` do plugin antes de entregar (ver regra `plugins-frontend-build`).
 

@@ -24,7 +24,7 @@ alwaysApply: false
 | 5 | **Roadmap / spec** — view TOTVS, regras de negócio, validação Fase 0 | `docs/12-roadmap-e-evolucao/{id}/` |
 | 6 | **Inventário plugins** — linha na tabela + backend + caller header + doc link | `docs/08-plugins/README.md` |
 | 7 | **Compose / infra** — `<<: *plugin-ui-federated`, `depends_on: plugin-ui`, scripts sequenciais | `infra/docker-compose*.yml` |
-| 8 | **UI compartilhada** — `@delpi/plugin-ui/index` via MF; `preparePluginUiRemote()`; sem `HelpTooltip.tsx` local | `plugins-reusable-components.mdc` |
+| 8 | **UI compartilhada** — `@delpi/plugin-ui/index` via MF; `preparePluginUiRemote()`; sem `HelpTooltip.tsx` local **nem CSS espelho** de `.delpi-ui-*` | `plugins-reusable-components.mdc` |
 
 ---
 
@@ -58,6 +58,7 @@ Se o plugin tem rotas SC/ES (ou filiais TOTVS distintas):
 - Omitir plugin do inventário `docs/08-plugins/README.md`
 - Documentação só em comentário de PR (deve persistir no repo)
 - Duplicar `HelpTooltip` ou primitivos de UI que já existem em `@delpi/plugin-ui`
+- Recriar CSS de chrome do kit (KPI, card, tabela, filtros, loading) no `index.css` do MFE — fonte única é o remote
 - Criar MFE com `COPY plugin-ui` no Dockerfile ou sem `preparePluginUiRemote()` — ver [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md)
 
 ---

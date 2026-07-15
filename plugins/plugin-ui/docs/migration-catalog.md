@@ -27,7 +27,11 @@ Objetivo: **uma implementação** de balões explicativos e primitivos de label/
 | Prefixo antigo | Ação na migração |
 |----------------|------------------|
 | `*-help-tooltip*` | Remover do plugin; estilos em `plugin-ui/src/styles.css` (`delpi-ui-*`) |
+| `*-kpi-card` / `*-section-card` / chrome de card/filtro/tabela/loading | Remover do plugin se dual-class + `.delpi-ui-*` cobrem; mapear só tokens `--delpi-ui-*` |
 | `*-field__label` | Manter no plugin como `className` em `FieldLabel` |
+| Layout de página (`*-page-stack`, `*-detail-grid`) | **Manter** no MFE — não é chrome de componente |
+
+**Regra:** nunca recolocar no MFE o CSS estrutural que foi podado ao migrar para o kit. Bug visual → `plugins/plugin-ui/src/styles/` + rebuild remote. Ver [architecture.md](./architecture.md) § CSS · Cursor `plugins-reusable-components.mdc`.
 
 ## Ordem sugerida de migração (concluída Fase 1)
 

@@ -1,5 +1,5 @@
 ---
-description: Plugins MFE devem consumir @delpi/plugin-ui — proibir duplicação de componentes transversais
+description: Plugins MFE devem consumir @delpi/plugin-ui — zero CSS de componentes do kit no MFE (sem exceção)
 globs: plugins/**/*
 alwaysApply: false
 ---
@@ -10,6 +10,8 @@ alwaysApply: false
 
 **Plugins MFE devem usar componentes compartilhados** antes de criar UI local. A fonte canônica é **`plugins/plugin-ui/`** (`@delpi/plugin-ui`).
 
+CSS canônico dos componentes do kit fica só em `plugins/plugin-ui/src/styles/**` (classes `.delpi-ui-*`). Em hipótese alguma o MFE escreve CSS de componente do `plugin-ui` — nem espelho BEM local (`.pac-kpi-card`, `.cr-section-card__header`, …), nem override de `.delpi-ui-*`, nem “ajuste pontual”. O MFE só mapeia tokens `--delpi-ui-*` e faz layout de página (stack/gap entre seções).
+
 **Dois modos de integração (jul/2026):**
 
 | Modo | Quando | Doc |
@@ -19,6 +21,64 @@ alwaysApply: false
 
 Complementa: `plugins-visual-design-system.mdc`, `plugins-frontend-build.mdc`, `clean-code-architecture-guardrails.mdc`.
 
+---
+
+## CSS do kit — zero no MFE (sem exceção)
+
+**Regra absoluta:** se o pedaço de UI vem de `@delpi/plugin-ui` (ou dual-class `prefix` + `delpi-ui-*`), **não existe CSS desse componente no MFE**. Em hipótese alguma.
+
+Contrato canônico (jul/2026 — dual-class):
+
+1. O componente emite **prefixo do plugin** + **`.delpi-ui-*`** (`delpiUiClass` / `*BemClasses`).
+2. A **única** fonte de verdade visual do componente é o CSS do remote (`preparePluginUiRemote()` → `@delpi/plugin-ui/styles`).
+3. O MFE mapeia tokens no root e só escreve layout de **página** (não do componente).
+
+| No MFE (`index.css`) | No `plugin-ui` |
+|----------------------|----------------|
+| Tokens `--{prefix}-*` + mapeamento `--delpi-ui-*` | Todo visual do componente (padding, borda, tipografia interna, estados) |
+| Layout de **página**: `dashboard-page`, stacks (`*-page-stack`, `*-detail-grid`), gap **entre** seções | `SectionCard`, KPI, `FilterBarShell`, `DataTable`, `LoadingActivityCard`, paginação, state box, … |
+| CSS de UI **que não é** do kit (domínio puro: fishbone, badge PAC próprio, diagrama) | Qualquer regra compartilhada ou que estilize export do kit |
+
+### Proibido no MFE (hipótese alguma)
+
+- Qualquer seletor em `.delpi-ui-*` ou que estilize chrome de export do kit.
+- Espelho BEM local do mesmo componente (`.cr-kpi-card`, `.pac-section-card__header`, `.pac-table`, `.cr-loading-activity`, …).
+- Override “só neste plugin” / “só neste tema” / “até o próximo PR”.
+- «Corrigir» aparência do kit no `index.css` do MFE — **só** em `plugins/plugin-ui/src/styles/*.css` (+ teste/demo) e rebuild do remote.
+- Hardcode `#fff` / gradientes em cima de componente do kit.
+
+### Permitido no MFE (e só isto relativo ao kit)
+
+```css
+.dashboard-{nome} {
+  --{prefix}-accent: var(--primary, #089bdb);
+  --{prefix}-card-bg: var(--surface, #ffffff);
+  /* … */
+  --delpi-ui-accent: var(--{prefix}-accent);
+  --delpi-ui-surface: var(--{prefix}-card-bg);
+  --delpi-ui-text: var(--{prefix}-text);
+  --delpi-ui-border: var(--{prefix}-card-border);
+  --delpi-ui-muted: var(--{prefix}-text-muted);
+  --delpi-ui-card-padding: var(--{prefix}-card-padding);
+  --delpi-ui-section-gap: var(--{prefix}-section-gap);
+  --delpi-ui-grid-gap: var(--{prefix}-grid-gap);
+}
+:root[data-theme="dark"] .dashboard-{nome} { /* sobrescreve --{prefix}-* */ }
+
+/* Layout de página — nunca seletor de componente do kit */
+.dashboard-{nome} .{prefix}-page-stack,
+.dashboard-{nome} .{prefix}-detail-grid {
+  display: flex; /* ou grid */
+  flex-direction: column;
+  gap: var(--{prefix}-section-gap);
+}
+```
+
+CSS de domínio no MFE só vale para elementos **não** providos pelo `plugin-ui`. Se o mesmo trecho for (ou deveria ser) export do kit → o CSS vai para o kit, zero no MFE.
+
+### Sintoma típico (anti-padrão documentado)
+
+Onda de poda remove CSS local **sem** dual-class/tokens → cards colados, loading «prateado» no escuro. **Correção:** tokens + CSS no kit; **jamais** recolocar CSS do componente no MFE.
 ---
 
 ## O que usar do pacote (hoje)
@@ -111,6 +171,8 @@ Consumidor de **`@delpi/plugin-ui`**: ver [novo-plugin-mfe-checklist.md](../docs
 - Duplicar lógica de posicionamento de tooltip, `FieldLabel` ou padrão aba+ajuda.
 - Embutir strings PT de ajuda no pacote `plugin-ui`.
 - Bypass do pacote «só neste PR» quando o componente já existe ou será o segundo consumidor.
+- **Qualquer CSS** de componente do kit no MFE — **zero, em hipótese alguma** (ver § CSS do kit).
+- Factory/`*BemClasses` sem emitir `delpi-ui-*` (dual-class quebrado → pressão para compensar com CSS local — também proibido).
 
 ---
 
@@ -119,20 +181,27 @@ Consumidor de **`@delpi/plugin-ui`**: ver [novo-plugin-mfe-checklist.md](../docs
 ### UI nova em plugin existente
 
 1. Verificar [component-catalog.md](../plugins/plugin-ui/docs/component-catalog.md) — já existe export?
-2. Se sim → importar de `@delpi/plugin-ui`.
-3. Se não, mas **igual ou muito parecido** com outro plugin → **extrair** para `plugin-ui` e migrar os dois.
-4. Se **específico do domínio** (ex.: card de OEE, árvore de estrutura) → fica no plugin.
+2. Se sim → importar de `@delpi/plugin-ui` + `*BemClasses` / factory; **CSS do componente = zero no MFE** (só tokens + layout de página).
+3. Se não, mas **igual ou muito parecido** com outro plugin → **extrair** para `plugin-ui` (TSX + CSS `delpi-ui-*`) e migrar os dois — o MFE **não** fica com CSS desse visual.
+4. Se **específico do domínio e fora do kit** (ex.: diagrama Ishikawa, badge PAC próprio) → componente + CSS **só** desse domínio no plugin. Se amanhã virar export do kit, o CSS migra para o kit e some do MFE.
+
+### Bug visual em componente do kit
+
+1. Reproduzir claro/escuro no portal federado.
+2. Conferir dual-class (`delpi-ui-*` no DOM) e tokens `--delpi-ui-*` no `.dashboard-{nome}`.
+3. Corrigir em `plugins/plugin-ui/src/styles/` (ou no componente) — **não** no `index.css` do MFE.
+4. Rebuild: fase `remote` (`plugin-ui`) **antes** do MFE (`infra-sequential-container-startup.mdc`).
 
 ### Segundo plugin precisa do mesmo primitivo
 
-1. Implementar **uma vez** em `plugins/plugin-ui/src/components/{familia}/`.
+1. Implementar **uma vez** em `plugins/plugin-ui/src/components/{familia}/` + CSS canônico.
 2. Documentar em `component-catalog.md` + `contributing.md`.
 3. Adicionar teste mínimo em `plugin-ui`.
 4. Atualizar [migration-catalog.md](../plugins/plugin-ui/docs/migration-catalog.md).
 
 ### Plugin com cópia legada
 
-Migrar conforme [migration-catalog.md](../plugins/plugin-ui/docs/migration-catalog.md) — remover arquivo local e CSS `*-help-tooltip*`.
+Migrar conforme [migration-catalog.md](../plugins/plugin-ui/docs/migration-catalog.md) — remover arquivo local **e** CSS espelho (`*-kpi-card`, `*-help-tooltip*`, etc.).
 
 ---
 
@@ -143,19 +212,23 @@ Migrar conforme [migration-catalog.md](../plugins/plugin-ui/docs/migration-catal
 | 2+ consumidores (ou duplicata no monorepo) | ✅ | ❌ |
 | Sem dependência de API/domínio | ✅ | — |
 | Textos configuráveis via props | ✅ | — |
-| Layout/card de entidade de negócio | — | ✅ |
-| Uso único e sem duplicata conhecida | — | ✅ |
+| Qualquer CSS do componente (card/KPI/tabela/filtro/loading/…) | ✅ só `delpi-ui-*` | ❌ **zero** no MFE |
+| Layout de página / stack / grid entre seções | — | ✅ (não estiliza o componente) |
+| UI 100% fora do kit (fishbone, badge PAC próprio, …) | — | ✅ TSX + CSS de domínio |
+| Uso único e sem duplicata conhecida | — | ✅ (se não for do kit) |
 
-Na dúvida: preferir extrair — duplicação entre dashboards é o anti-padrão mais comum.
+Na dúvida: extrair para o kit. Duplicar TSX **ou** CSS de componente do kit no MFE é anti-padrão — **sem hipótese de CSS no MFE**.
 
 ---
 
 ## Checklist antes de merge (plugin UI)
 
-- [ ] Tooltips/labels/abas usam `@delpi/plugin-ui/index` (não cópia local)?
+- [ ] Tooltips/labels/abas/KPI/tabela/filtros/loading usam `@delpi/plugin-ui/index` (não cópia local)?
 - [ ] `preparePluginUiRemote()` no `bootstrap.tsx`?
 - [ ] `vite.config.ts` com `pluginUiRemote()` + `FEDERATION_SHARED_REACT`?
-- [ ] Tokens `--delpi-ui-*` mapeados no `.dashboard-{nome}`?
+- [ ] Tokens `--delpi-ui-*` mapeados no `.dashboard-{nome}` (+ dark scoped)?
+- [ ] `index.css` do MFE com **zero** seletor de componente do kit (`.delpi-ui-*` ou BEM dual-class do export)?
+- [ ] Dual-class presente no DOM (`prefix` + `delpi-ui-*`)?
 - [ ] Textos de ajuda em `content/helpTooltips.ts` do plugin?
 - [ ] Novo primitivo transversal documentado em `plugin-ui` (se aplicável)?
 - [ ] `npm run build` do plugin verde?

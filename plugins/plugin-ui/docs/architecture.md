@@ -55,6 +55,8 @@ plugins/plugin-ui/
 ## CSS e tema
 
 - **Prefixo de classe:** `delpi-ui-*` (evita colisão com portal e outros MFEs).
+- **Fonte única do chrome:** todo padding, borda, tipografia estrutural de KPI/card/tabela/filtros/loading vive em `src/styles/**` deste pacote — **nunca** recriado no `index.css` do MFE consumidor.
+- **Dual-class:** factories/`*BemClasses` emitem `{prefix}-…` + `delpi-ui-…`. O MFE pode manter classes locais só para layout/domínio; o visual estrutural vem do CSS remote.
 - **Tokens opcionais** no root do dashboard consumidor:
 
 ```css
@@ -64,11 +66,16 @@ plugins/plugin-ui/
   --delpi-ui-text: var(--meu-text, var(--text, #111));
   --delpi-ui-border: var(--meu-border, var(--border, #e5e7eb));
   --delpi-ui-muted: var(--meu-muted);
+  --delpi-ui-card-padding: var(--meu-card-padding, 20px);
+  --delpi-ui-section-gap: var(--meu-section-gap, 20px);
+  --delpi-ui-grid-gap: var(--meu-grid-gap, 16px);
 }
 ```
 
 - **MF:** `preparePluginUiRemote()` no `bootstrap.tsx` carrega `@delpi/plugin-ui/styles` (dynamic import).
-- Seguir [plugins-visual-design-system.mdc](../../.cursor/rules/plugins-visual-design-system.mdc): escopo `.dashboard-{nome}`, sem `body`/`:root` global no MFE.
+- **MFE pode ter no CSS:** tokens, dark scoped, layout de página (`*-page-stack`, gap entre seções), CSS de UI **que não é** do kit.
+- **MFE não pode — em hipótese alguma:** CSS de componente do `plugin-ui` (nem `.delpi-ui-*`, nem BEM local do mesmo export). Bug visual → corrigir neste pacote + rebuild do remote (`up-*-sequential.sh --fase remote --build plugin-ui`).
+- Seguir [plugins-visual-design-system.mdc](../../.cursor/rules/plugins-visual-design-system.mdc) e [plugins-reusable-components.mdc](../../.cursor/rules/plugins-reusable-components.mdc) § CSS do kit (zero no MFE).
 
 ## Integração — Module Federation (padrão)
 

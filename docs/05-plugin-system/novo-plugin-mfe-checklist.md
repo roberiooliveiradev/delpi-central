@@ -236,9 +236,9 @@ VITE_PLUGIN_UI_DEV=1 npm run dev
 
 ## 10. UI compartilhada e tokens CSS
 
-- Tooltips, labels e abas → `@delpi/plugin-ui/index` ([component-catalog.md](../../plugins/plugin-ui/docs/component-catalog.md))
+- Tooltips, labels, abas, KPI, cards, filtros, tabela, loading → `@delpi/plugin-ui/index` ([component-catalog.md](../../plugins/plugin-ui/docs/component-catalog.md))
 - Textos PT-BR → `src/content/helpTooltips.ts` **do plugin** (nunca no pacote compartilhado)
-- Tokens no root do dashboard:
+- Tokens no root do dashboard (**sem** CSS espelho do chrome `.delpi-ui-*`):
 
 ```css
 .dashboard-meu-plugin {
@@ -247,12 +247,14 @@ VITE_PLUGIN_UI_DEV=1 npm run dev
   --delpi-ui-text: var(--prefix-text, var(--text, #111));
   --delpi-ui-border: var(--prefix-border, var(--border, #e5e7eb));
   --delpi-ui-muted: var(--prefix-muted);
+  --delpi-ui-card-padding: var(--prefix-card-padding, 20px);
+  --delpi-ui-section-gap: var(--prefix-section-gap, 20px);
+  --delpi-ui-grid-gap: var(--prefix-grid-gap, 16px);
 }
 ```
 
-Regra Cursor: [plugins-reusable-components.mdc](../../.cursor/rules/plugins-reusable-components.mdc).
-
----
+- Layout de página (`*-page-stack`, gap) pode ficar no MFE; **CSS de componente do kit = zero no MFE** (sem exceção).
+- Regra Cursor: [plugins-reusable-components.mdc](../../.cursor/rules/plugins-reusable-components.mdc) § CSS do kit.---
 
 ## 11. Manifesto e registro
 
@@ -314,6 +316,7 @@ curl -sI http://localhost/apps/plugin-ui/assets/remoteEntry.js | head -3
 | `export * from "@delpi/plugin-ui/index"` | Build MF instável |
 | `docker compose up --build gateway` manual | Rebuild em cascata de 30+ MFEs |
 | `HelpTooltip.tsx` local | Duplicação — usar `@delpi/plugin-ui` |
+| CSS de componente `@delpi/plugin-ui` no MFE (BEM local ou `.delpi-ui-*`) | Zero — em hipótese alguma; fonte única é o remote |
 
 ---
 

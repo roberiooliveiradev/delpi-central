@@ -4,7 +4,7 @@
 
 1. O componente será usado em **pelo menos dois plugins**, ou substitui **cópias já duplicadas** no monorepo?
 2. Não acopla domínio (sem strings PT fixas, sem chamadas HTTP, sem rotas)?
-3. Estilos usam prefixo `delpi-ui-*` e tokens CSS documentados?
+3. Estilos usam prefixo `delpi-ui-*` e tokens CSS documentados (consumidor **não** espelha esse CSS)?
 4. Funciona em tema claro/escuro via vars do portal?
 
 Se alguma resposta for não, o componente pertence ao plugin específico — não ao pacote compartilhado.
@@ -108,7 +108,7 @@ const { default: App } = await import("./App");
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 ```
 
-### 2. Tokens no dashboard
+### 2. Tokens no dashboard (sem CSS de chrome)
 
 ```css
 .dashboard-meu-plugin {
@@ -117,23 +117,31 @@ import { HelpTooltip } from "@delpi/plugin-ui/index";
   --delpi-ui-text: var(--prefix-text);
   --delpi-ui-border: var(--prefix-border);
   --delpi-ui-muted: var(--prefix-muted);
+  --delpi-ui-card-padding: var(--prefix-card-padding);
+  --delpi-ui-section-gap: var(--prefix-section-gap);
+  --delpi-ui-grid-gap: var(--prefix-grid-gap);
 }
 ```
 
+**Proibido — em hipótese alguma** no `index.css` do MFE: qualquer CSS de componente deste pacote (KPI, card, filter bar, tabela, loading, section card, state box — inclusive BEM local dual-class). O remote entrega `.delpi-ui-*`. No MFE só tokens + layout de página + UI **fora** do kit.
+
+Bug visual no componente → alterar `src/styles/*.css` (ou o TSX) **aqui**, não no consumidor. Rebuild: fase `remote` antes do MFE.
+
+Ver [architecture.md](./architecture.md) § CSS e tema · regra Cursor `plugins-reusable-components.mdc` (zero CSS do kit no MFE).
 ### 3. Textos de ajuda
 
 Criar `src/content/helpTooltips.ts` no plugin (padrão `assistant-content` / dashboards).
 
 ### 4. Remover duplicata local
 
-Apagar `components/HelpTooltip.tsx` (ou equivalente) e atualizar imports para `@delpi/plugin-ui`.
-
+Apagar `components/HelpTooltip.tsx` (ou equivalente) **e** CSS espelho (`*-help-tooltip*`, `*-kpi-card { padding… }`, etc.). Atualizar imports para `@delpi/plugin-ui` + `*BemClasses` / factory com dual-class.
 ## Checklist antes do merge
 
 - [ ] Export documentado em `component-catalog.md`
 - [ ] Entrada em `src/catalog/visualComponents.ts` (+ demo preferencial)
 - [ ] Demo no catálogo visual (`src/catalog/`) ou stub aceito temporariamente
 - [ ] Estilos `delpi-ui-*` sem vazar para `body` / `:root` global
+- [ ] Consumidores **não** ganharam CSS espelho do chrome (só tokens + layout de página)
 - [ ] `npm test` verde em `plugin-ui`
 - [ ] `npm run build` verde em pelo menos um consumidor alterado
 - [ ] `migration-catalog.md` atualizado
@@ -145,8 +153,9 @@ Ver lista completa em [migration-catalog.md](./migration-catalog.md).
 
 Passos típicos:
 
-1. Adicionar alias + import CSS no plugin
+1. MF + `preparePluginUiRemote()` (não alias Vite de `plugin-ui` em prod)
 2. Substituir `import { HelpTooltip } from "./HelpTooltip"` → `@delpi/plugin-ui`
-3. Trocar classes `kz-help-tooltip` / `lmps-help-tooltip` por tokens `--delpi-ui-*` (remover CSS duplicado do plugin)
+3. Remover CSS duplicado do plugin (`*-help-tooltip*`, chrome de KPI/card se o kit cobre)
 4. `FieldLabel`: passar `className` que o plugin já usa (`td-field__label`, `kz-field__label`, …)
 5. Build + smoke visual claro/escuro no portal federado
+6. Rebuild remote `plugin-ui` antes do MFE se alterou CSS do kit

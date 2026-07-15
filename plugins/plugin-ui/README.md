@@ -4,6 +4,8 @@ Biblioteca de **componentes React reutilizáveis** para plugins MFE do monorepo 
 
 Centraliza primitivos de UI que hoje estão duplicados em dezenas de plugins (ex.: `HelpTooltip` em 14+ pastas). Textos em português permanecem em `content/helpTooltips.ts` de cada plugin — este pacote é **só interação, layout e acessibilidade**.
 
+**CSS canônico** (`.delpi-ui-*` em `src/styles/`) é a fonte única: MFEs **não** escrevem CSS de componentes do kit **em hipótese alguma** — só mapeiam tokens `--delpi-ui-*` e layout de página. Detalhes: [docs/architecture.md](./docs/architecture.md) § CSS · regra Cursor `plugins-reusable-components.mdc`.
+
 ---
 
 ## Documentação
