@@ -39,7 +39,7 @@ function SeriesMiniChart({ points }: { points: Array<{ label: string; value: num
 }
 
 export function DataRouteSamplePreview({ payload, className = "" }: Props) {
-  const sourceLabel = payload.source === "live" ? "Resultado do teste" : "Exemplo de retorno";
+  const sourceLabel = payload.source === "live" ? "Resultado do teste" : "Exemplo de uso";
 
   return (
     <div

@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Factory, X } from "lucide-react";
 
+import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import {
   formatParamHintLine,
   humanizeMetaShape,
@@ -49,8 +50,8 @@ export type DataRouteCatalogPanelProps = {
   /** Exibe chips de forma (KPI / Série / Tabela). Default true. */
   showDisplayKindFilters?: boolean;
   /**
-   * `comfortable` = lista + detalhe lado a lado (popover).
-   * `compact` = lista + detalhe empilhado (sidebar).
+   * `comfortable` = catálogo em popover (lista larga).
+   * `compact` = sidebar / painel estreito.
    */
   density?: DataRouteCatalogDensity;
   /** Rótulo do CTA no detalhe. */
@@ -131,6 +132,10 @@ export function DataRouteCatalogPanel({
   const [livePreview, setLivePreview] = useState<DataRoutePreviewPayload | null>(null);
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
+
+  const cardRefs = useRef(new Map<string, HTMLButtonElement>());
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  const selectedAnchorRef = useRef<HTMLElement | null>(null);
 
   const enriched = useMemo(
     (): EnrichedItem[] =>
@@ -218,6 +223,9 @@ export function DataRouteCatalogPanel({
     return filtered.find((item) => item.id === selectedId) ?? enriched.find((item) => item.id === selectedId) ?? null;
   }, [enriched, filtered, selectedId]);
 
+  // Sync no render — o positioning do portal lê o ref no layout effect.
+  selectedAnchorRef.current = selectedId ? (cardRefs.current.get(selectedId) ?? null) : null;
+
   useEffect(() => {
     setLivePreview(null);
     setTestError(null);
@@ -243,6 +251,10 @@ export function DataRouteCatalogPanel({
     setTestError(null);
   }
 
+  function selectCard(item: EnrichedItem) {
+    setSelectedId((prev) => (prev === item.id ? null : item.id));
+  }
+
   async function handleTestRoute() {
     if (!selected) return;
     setTesting(true);
@@ -261,6 +273,9 @@ export function DataRouteCatalogPanel({
       }
       const payload = await onTestRoute(selected);
       setLivePreview(payload);
+      if (payload.error) {
+        setTestError(payload.error);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Falha ao testar a rota.";
       setTestError(message);
@@ -275,10 +290,7 @@ export function DataRouteCatalogPanel({
   const detailOpen = Boolean(selected);
 
   const detail = selected ? (
-    <aside
-      className="delpi-ui-data-route-catalog__detail"
-      aria-label={`Detalhe: ${selected.label}`}
-    >
+    <div className="delpi-ui-data-route-catalog__detail">
       <div className="delpi-ui-data-route-catalog__detail-head">
         <h3 className="delpi-ui-data-route-catalog__detail-title">{selected.label}</h3>
         <button
@@ -327,7 +339,7 @@ export function DataRouteCatalogPanel({
       )}
 
       {!livePreview && samplePreview ? <DataRouteSamplePreview payload={samplePreview} /> : null}
-      {livePreview ? <DataRouteSamplePreview payload={livePreview} /> : null}
+      {livePreview && !livePreview.error ? <DataRouteSamplePreview payload={livePreview} /> : null}
       {testError ? (
         <p className="delpi-ui-data-route-preview__error" role="alert">
           {testError}
@@ -361,7 +373,7 @@ export function DataRouteCatalogPanel({
           {confirmLabel}
         </button>
       </div>
-    </aside>
+    </div>
   ) : null;
 
   return (
@@ -479,14 +491,7 @@ export function DataRouteCatalogPanel({
         ) : null}
       </div>
 
-      <div
-        className={[
-          "delpi-ui-data-route-catalog__main",
-          detailOpen ? "delpi-ui-data-route-catalog__main--detail-open" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
+      <div className="delpi-ui-data-route-catalog__main">
         <div className="delpi-ui-data-route-catalog__groups">
           {grouped.map((group) => (
             <section key={group.key} className="delpi-ui-data-route-catalog__group">
@@ -503,6 +508,10 @@ export function DataRouteCatalogPanel({
                     <li key={item.id}>
                       <button
                         type="button"
+                        ref={(el) => {
+                          if (el) cardRefs.current.set(item.id, el);
+                          else cardRefs.current.delete(item.id);
+                        }}
                         className={[
                           "delpi-ui-data-route-catalog__card",
                           active ? "delpi-ui-data-route-catalog__card--active" : "",
@@ -510,7 +519,7 @@ export function DataRouteCatalogPanel({
                           .filter(Boolean)
                           .join(" ")}
                         aria-pressed={active}
-                        onClick={() => setSelectedId(item.id)}
+                        onClick={() => selectCard(item)}
                         onDoubleClick={() => onSelect(item)}
                       >
                         <span className="delpi-ui-data-route-catalog__card-head">
@@ -531,8 +540,22 @@ export function DataRouteCatalogPanel({
             </section>
           ))}
         </div>
-        {detail}
       </div>
+
+      <AnchoredPanelPortal
+        open={detailOpen}
+        anchorRef={selectedAnchorRef}
+        panelRef={detailPanelRef}
+        variant="bare"
+        exclusive={false}
+        preferredPlacement="right"
+        gap={10}
+        className="delpi-ui-data-route-catalog__detail-portal"
+        role="complementary"
+        aria-label={selected ? `Detalhe: ${selected.label}` : "Detalhe da fonte"}
+      >
+        {detail}
+      </AnchoredPanelPortal>
     </div>
   );
 }

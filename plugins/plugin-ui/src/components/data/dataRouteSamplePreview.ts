@@ -81,6 +81,13 @@ function formatCell(value: unknown): string | number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "boolean") return value ? "sim" : "não";
   if (value == null) return "—";
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return "—";
+    }
+  }
   return String(value);
 }
 
@@ -90,6 +97,62 @@ function formatKpiValue(value: unknown): string {
   }
   if (value == null || value === "") return "—";
   return String(value);
+}
+
+function mapSeriesPoints(chartPoints: unknown[]): DataRoutePreviewPayload["series"] {
+  const points = chartPoints.slice(0, LIVE_MAX_ROWS).map((point, index) => {
+    const row = asRecord(point) ?? {};
+    const label = String(row.label ?? row.x ?? row.date ?? `P${index + 1}`);
+    const value = Number(row.value ?? row.y ?? 0);
+    return { label, value: Number.isFinite(value) ? value : 0 };
+  });
+  return { points };
+}
+
+function mapTableRows(
+  table: Record<string, unknown> | null,
+  rowsRaw: unknown[],
+): DataRoutePreviewPayload["table"] | null {
+  if (rowsRaw.length === 0) return null;
+  const columnsExplicit = Array.isArray(table?.columns) ? table.columns : [];
+  const first = asRecord(rowsRaw[0]) ?? {};
+  const columns =
+    columnsExplicit.length > 0
+      ? (columnsExplicit
+          .map((column) => {
+            const row = asRecord(column) ?? {};
+            const key = String(row.key ?? row.field ?? "").trim();
+            return key ? { key, label: String(row.label ?? key) } : null;
+          })
+          .filter(Boolean) as Array<{ key: string; label: string }>)
+      : Object.keys(first)
+          .slice(0, 4)
+          .map((key) => ({ key, label: key }));
+
+  if (columns.length === 0) return null;
+
+  const rows = rowsRaw.slice(0, LIVE_MAX_ROWS).map((row) => {
+    const record = asRecord(row) ?? {};
+    const next: Record<string, string | number> = {};
+    for (const column of columns) {
+      next[column.key] = formatCell(record[column.key]);
+    }
+    return next;
+  });
+
+  return { columns, rows };
+}
+
+function mapKpiMetrics(
+  kpiMetrics: unknown[],
+  title: string | undefined,
+): DataRoutePreviewPayload["kpi"] | null {
+  if (kpiMetrics.length === 0) return null;
+  const firstMetric = asRecord(kpiMetrics[0]) ?? {};
+  return {
+    label: String(firstMetric.label ?? title ?? "KPI"),
+    value: formatKpiValue(firstMetric.value),
+  };
 }
 
 /**
@@ -117,7 +180,12 @@ export function mapEnrichedBlockToDataRoutePreview(
   }
 
   const title =
-    (typeof resolved.label === "string" && resolved.label.trim()) || undefined;
+    (typeof resolved.label === "string" && resolved.label.trim()) ||
+    (typeof block.dataBinding === "object" &&
+      block.dataBinding &&
+      typeof (block.dataBinding as { label?: unknown }).label === "string" &&
+      String((block.dataBinding as { label: string }).label).trim()) ||
+    undefined;
 
   const chart = asRecord(resolved.chart);
   const chartPoints = Array.isArray(chart?.points) ? chart.points : [];
@@ -126,57 +194,64 @@ export function mapEnrichedBlockToDataRoutePreview(
   const kpi = asRecord(resolved.kpi);
   const kpiMetrics = Array.isArray(resolved.kpiMetrics) ? resolved.kpiMetrics : [];
 
-  if (preferred === "series" && chartPoints.length > 0) {
-    const points = chartPoints.slice(0, LIVE_MAX_ROWS).map((point, index) => {
-      const row = asRecord(point) ?? {};
-      const label = String(row.label ?? row.x ?? row.date ?? `P${index + 1}`);
-      const value = Number(row.value ?? row.y ?? 0);
-      return { label, value: Number.isFinite(value) ? value : 0 };
-    });
-    return { kind: "series", title, source: "live", series: { points } };
-  }
-
-  if (preferred === "table" || (preferred !== "kpi" && rowsRaw.length > 0 && kpi?.value == null)) {
-    if (rowsRaw.length > 0) {
-      const columnsExplicit = Array.isArray(table?.columns) ? table.columns : [];
-      const first = asRecord(rowsRaw[0]) ?? {};
-      const columns =
-        columnsExplicit.length > 0
-          ? (columnsExplicit
-              .map((column) => {
-                const row = asRecord(column) ?? {};
-                const key = String(row.key ?? "").trim();
-                return key ? { key, label: String(row.label ?? key) } : null;
-              })
-              .filter(Boolean) as Array<{ key: string; label: string }>)
-          : Object.keys(first)
-              .slice(0, 4)
-              .map((key) => ({ key, label: key }));
-
-      const rows = rowsRaw.slice(0, LIVE_MAX_ROWS).map((row) => {
-        const record = asRecord(row) ?? {};
-        const next: Record<string, string | number> = {};
-        for (const column of columns) {
-          next[column.key] = formatCell(record[column.key]);
-        }
-        return next;
-      });
-
-      return { kind: "table", title, source: "live", table: { columns, rows } };
+  if (preferred === "series") {
+    if (chartPoints.length > 0) {
+      return { kind: "series", title, source: "live", series: mapSeriesPoints(chartPoints) };
     }
-  }
-
-  if (kpiMetrics.length > 0) {
-    const firstMetric = asRecord(kpiMetrics[0]) ?? {};
+    if (rowsRaw.length > 0) {
+      const mapped = mapTableRows(table, rowsRaw);
+      if (mapped) return { kind: "table", title, source: "live", table: mapped };
+    }
     return {
-      kind: "kpi",
+      kind: "series",
       title,
       source: "live",
-      kpi: {
-        label: String(firstMetric.label ?? title ?? "KPI"),
-        value: formatKpiValue(firstMetric.value),
-      },
+      error: "A rota não retornou pontos de série neste teste.",
     };
+  }
+
+  if (preferred === "table") {
+    const mapped = mapTableRows(table, rowsRaw);
+    if (mapped) return { kind: "table", title, source: "live", table: mapped };
+    const metricsAsTable =
+      kpiMetrics.length > 0
+        ? {
+            columns: [
+              { key: "metric", label: "Indicador" },
+              { key: "value", label: "Valor" },
+            ],
+            rows: kpiMetrics.slice(0, LIVE_MAX_ROWS).map((metric) => {
+              const row = asRecord(metric) ?? {};
+              return {
+                metric: String(row.label ?? row.field ?? "—"),
+                value: formatKpiValue(row.value),
+              };
+            }),
+          }
+        : null;
+    if (metricsAsTable) return { kind: "table", title, source: "live", table: metricsAsTable };
+    if (kpi?.value != null) {
+      return {
+        kind: "kpi",
+        title,
+        source: "live",
+        kpi: {
+          label: String(kpi.label ?? title ?? "KPI"),
+          value: formatKpiValue(kpi.value),
+        },
+      };
+    }
+    return {
+      kind: "table",
+      title,
+      source: "live",
+      error: "A rota não retornou linhas neste teste.",
+    };
+  }
+
+  const metricKpi = mapKpiMetrics(kpiMetrics, title);
+  if (metricKpi) {
+    return { kind: "kpi", title, source: "live", kpi: metricKpi };
   }
 
   if (kpi?.value != null || typeof kpi?.label === "string") {
@@ -192,11 +267,12 @@ export function mapEnrichedBlockToDataRoutePreview(
   }
 
   if (chartPoints.length > 0) {
-    return mapEnrichedBlockToDataRoutePreview(block, "series");
+    return { kind: "series", title, source: "live", series: mapSeriesPoints(chartPoints) };
   }
 
-  if (rowsRaw.length > 0) {
-    return mapEnrichedBlockToDataRoutePreview(block, "table");
+  const mappedTable = mapTableRows(table, rowsRaw);
+  if (mappedTable) {
+    return { kind: "table", title, source: "live", table: mappedTable };
   }
 
   return {

@@ -96,7 +96,7 @@ describe("DataRouteCatalogPanel", () => {
     expect(detail.textContent).toMatch(/Para que serve/);
     expect(detail.textContent).toMatch(/Indicador consolidado/);
     expect(detail.textContent).toMatch(/Filial/);
-    expect(detail.textContent).toMatch(/Exemplo de retorno/);
+    expect(detail.textContent).toMatch(/Exemplo de uso/);
     expect(screen.getByLabelText("Prévia KPI")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
@@ -116,7 +116,7 @@ describe("DataRouteCatalogPanel", () => {
 
     fireEvent.click(screen.getByText("Produtos — busca"));
     expect(screen.getByRole("complementary", { name: /Detalhe: Produtos/ })).toBeTruthy();
-    expect(screen.getByText("Exemplo de retorno")).toBeTruthy();
+    expect(screen.getByText("Exemplo de uso")).toBeTruthy();
     expect(screen.getByText("Código")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Fechar detalhe" }));
@@ -147,7 +147,7 @@ describe("DataRouteCatalogPanel", () => {
     await waitFor(() => expect(onTestRoute).toHaveBeenCalled());
     expect(screen.getByText("Resultado do teste")).toBeTruthy();
     expect(screen.getByText("91,2%")).toBeTruthy();
-    expect(screen.queryByText("Exemplo de retorno")).toBeNull();
+    expect(screen.queryByText("Exemplo de uso")).toBeNull();
   });
   it("filtra por categoria e forma (KPI)", () => {
     const { container } = render(

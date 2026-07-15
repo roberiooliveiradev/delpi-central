@@ -108,8 +108,13 @@ export function DataRoutesSidePanel({
   hideHeading = false,
   mode = "insert",
 }: Props) {
-  const { config, addDataSourceBlock, replaceSelectedDataRoute, globalRefreshSec } =
-    useComunicadoEditor();
+  const {
+    config,
+    addDataSourceBlock,
+    replaceSelectedDataRoute,
+    globalRefreshSec,
+    playlistId,
+  } = useComunicadoEditor();
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +146,14 @@ export function DataRoutesSidePanel({
     if (!route) {
       throw new Error("Rota não encontrada no catálogo.");
     }
+    const preferred = primaryDataRouteDisplayKind(
+      resolveDataRouteDisplayKinds({
+        metaShape: route.metaShape,
+        allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+      }),
+    );
+    const displayMode =
+      preferred === "series" ? "line_chart" : preferred === "kpi" ? "kpi" : "table";
     const defaultParams = { ...buildRouteDefaultParams(route) };
     for (const [key, value] of Object.entries(slideFilters)) {
       if ((defaultParams[key] === undefined || defaultParams[key] === "") && value != null && value !== "") {
@@ -151,17 +164,18 @@ export function DataRoutesSidePanel({
       label: route.label,
       defaultParams,
     });
+    if (block.dataBinding) {
+      block.dataBinding.displayMode = displayMode;
+    }
     const response = await previewDataBlockV2({
       block: block as unknown as Record<string, unknown>,
-      nativeConfig: serializeComunicadoConfig(config) as Record<string, unknown>,
+      nativeConfig: serializeComunicadoConfig({
+        ...config,
+        blocks: [...(config.blocks ?? []), block],
+      }) as Record<string, unknown>,
+      playlistId,
       forceRefresh: true,
     });
-    const preferred = primaryDataRouteDisplayKind(
-      resolveDataRouteDisplayKinds({
-        metaShape: route.metaShape,
-        allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
-      }),
-    );
     return mapEnrichedBlockToDataRoutePreview(
       (response.block ?? {}) as Record<string, unknown>,
       preferred,

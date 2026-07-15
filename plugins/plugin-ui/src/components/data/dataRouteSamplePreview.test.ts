@@ -65,5 +65,22 @@ describe("mapEnrichedBlockToDataRoutePreview", () => {
       { label: "Jan", value: 10 },
       { label: "Fev", value: 12 },
     ]);
+
+    const emptyTable = mapEnrichedBlockToDataRoutePreview({ resolved: { table: { rows: [] } } }, "table");
+    expect(emptyTable.error).toMatch(/não retornou linhas/i);
+
+    const metricsAsTable = mapEnrichedBlockToDataRoutePreview(
+      {
+        resolved: {
+          kpiMetrics: [
+            { label: "Total", value: 10 },
+            { label: "Média", value: 5 },
+          ],
+        },
+      },
+      "table",
+    );
+    expect(metricsAsTable.kind).toBe("table");
+    expect(metricsAsTable.table?.rows).toHaveLength(2);
   });
 });

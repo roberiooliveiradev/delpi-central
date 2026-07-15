@@ -78,7 +78,8 @@ describe("DataRoutesSidePanel", () => {
     clickCatalogCard("OEE geral");
     fireEvent.click(screen.getByRole("button", { name: "Testar rota" }));
     await waitFor(() => expect(mockedPreview).toHaveBeenCalled());
-    expect(screen.getByText("Resultado do teste")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("Resultado do teste")).toBeTruthy());
     expect(screen.getByText("88,5")).toBeTruthy();
+    expect(mockedPreview.mock.calls[0]?.[0]?.block?.dataBinding?.displayMode).toBe("kpi");
   });
 });
