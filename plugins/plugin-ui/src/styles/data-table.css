@@ -66,6 +66,8 @@ table.delpi-ui-table th {
     var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
   );
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 table.delpi-ui-table--sortable th {
@@ -107,6 +109,7 @@ table.delpi-ui-table tbody tr:last-child td {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: nowrap;
   gap: 8px;
   width: 100%;
   min-height: 42px;
@@ -120,7 +123,12 @@ table.delpi-ui-table tbody tr:last-child td {
   font: inherit;
   font-weight: inherit;
   text-align: left;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+.delpi-ui-table__sort-button > span {
+  white-space: nowrap;
 }
 
 .delpi-ui-table__sort-button:hover,

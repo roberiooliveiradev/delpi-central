@@ -4,7 +4,7 @@
 
 .delpi-ui-filters-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--delpi-ui-filter-grid-min, 11.5rem), 1fr));
   gap: var(--delpi-ui-grid-gap, 12px);
   margin-bottom: var(--delpi-ui-section-gap, 20px);
   padding: 14px;
@@ -68,6 +68,26 @@
   font: inherit;
 }
 
+/**
+ * Chrome/WebKit: type=date empilha texto (dd/mm/aaaa) e ícone do calendário
+ * quando a célula do grid fica estreita demais. `min-width` + faixa mínima do grid
+ * mantém ícone e valor na mesma linha.
+ */
+.delpi-ui-filter-box input[type="date"],
+.delpi-ui-filter-box input[type="datetime-local"],
+.delpi-ui-filter-box input[type="month"] {
+  /* Não use max-width:100% aqui — em track estreito isso anula min-width no layout interno do WebKit. */
+  min-width: var(--delpi-ui-date-input-min-width, 11.5rem);
+  width: 100%;
+}
+
+.delpi-ui-filter-box input[type="date"]::-webkit-calendar-picker-indicator,
+.delpi-ui-filter-box input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+.delpi-ui-filter-box input[type="month"]::-webkit-calendar-picker-indicator {
+  flex-shrink: 0;
+  margin-inline-start: 4px;
+}
+
 .delpi-ui-filter-box input:not([type="checkbox"]):not([type="radio"]):focus-visible,
 .delpi-ui-filter-box select:focus-visible {
   outline: none;
@@ -102,7 +122,7 @@
 
 .delpi-ui-filter-bar__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--delpi-ui-filter-grid-min, 11.5rem), 1fr));
   gap: var(--delpi-ui-grid-gap, 12px);
   width: 100%;
   min-width: 0;
@@ -116,7 +136,7 @@
 .delpi-ui-filter-bar [class*="-filter-bar__grid"],
 .delpi-ui-filter-bar [class*="-filters__grid"] {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--delpi-ui-filter-grid-min, 11.5rem), 1fr));
   gap: var(--delpi-ui-grid-gap, 12px);
   width: 100%;
   min-width: 0;
@@ -164,6 +184,12 @@
   color: var(--delpi-ui-text, var(--text, #111111));
   font: inherit;
   width: 100%;
+}
+
+.delpi-ui-filter-bar [class$="-field"] input[type="date"],
+.delpi-ui-filter-bar [class$="-field"] input[type="datetime-local"],
+.delpi-ui-filter-bar [class$="-field"] input[type="month"] {
+  min-width: var(--delpi-ui-date-input-min-width, 11.5rem);
 }
 
 
