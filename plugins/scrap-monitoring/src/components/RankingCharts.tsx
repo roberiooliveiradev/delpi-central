@@ -5,7 +5,6 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   LabelList,
   Pie,
   PieChart,
@@ -20,21 +19,18 @@ import {
   CHART_AXIS_TICK,
   CHART_COLORS,
   CHART_GRID_STROKE,
-  CHART_MOTIVO_HEIGHT,
-  CHART_MOTIVO_INNER_RADIUS,
-  CHART_MOTIVO_OUTER_RADIUS,
-  CHART_PRODUCT_RANKING_HEIGHT,
   CHART_PRODUCT_Y_AXIS_WIDTH,
-  CHART_RANKING_HEIGHT,
-  CHART_SERIES_HEIGHT,
+  CHART_SERIES_HEIGHT_MIN,
   CHART_Y_AXIS_WIDTH,
   PIE_COLORS,
+  resolveMotivoChartHeight,
+  resolveMotivoPieRadii,
+  resolveRankingChartHeight,
 } from "../constants/chartTheme";
 import { SCRAP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ScrapRankingItem, ScrapSeriePoint } from "../types/scrap";
 import {
   formatCurrencyBrl,
-  formatMotivoLegendLabel,
   formatSharePercent,
   formatShortLabel,
   splitRankingAxisLines,
@@ -135,108 +131,119 @@ function HorizontalValueBars({
     };
   });
 
-  const height = isProduct ? CHART_PRODUCT_RANKING_HEIGHT : CHART_RANKING_HEIGHT;
+  const height = resolveRankingChartHeight(items.length, variant);
   const yWidth = isProduct ? CHART_PRODUCT_Y_AXIS_WIDTH : CHART_Y_AXIS_WIDTH;
 
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ left: 8, right: isProduct ? 72 : 16, top: 8, bottom: 8 }}
-        barCategoryGap={isProduct ? "18%" : "22%"}
-      >
-        <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" horizontal={false} />
-        <XAxis
-          type="number"
-          tick={CHART_AXIS_TICK}
-          tickFormatter={(v) => formatCurrencyBrl(Number(v))}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          width={yWidth}
-          interval={0}
-          tick={
-            isProduct
-              ? (props) => <ProductAxisTick {...props} linesByKey={linesByKey} />
-              : { ...CHART_AXIS_TICK, fontSize: 13 }
-          }
-        />
-        <Tooltip content={<CurrencyTooltip />} />
-        <Bar dataKey="value" fill={CHART_COLORS.primary} radius={[0, 6, 6, 0]} maxBarSize={28}>
-          {isProduct ? (
-            <LabelList
-              dataKey="value"
-              position="right"
-              formatter={(v: number) => formatCurrencyBrl(v)}
-              className="sm-chart-bar-label"
-            />
-          ) : null}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="sm-chart-fill" style={{ minHeight: height }}>
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ left: 8, right: isProduct ? 72 : 16, top: 8, bottom: 8 }}
+          barCategoryGap={isProduct ? "18%" : "22%"}
+        >
+          <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" horizontal={false} />
+          <XAxis
+            type="number"
+            tick={CHART_AXIS_TICK}
+            tickFormatter={(v) => formatCurrencyBrl(Number(v))}
+          />
+          <YAxis
+            type="category"
+            dataKey="name"
+            width={yWidth}
+            interval={0}
+            tick={
+              isProduct
+                ? (props) => <ProductAxisTick {...props} linesByKey={linesByKey} />
+                : { ...CHART_AXIS_TICK, fontSize: 13 }
+            }
+          />
+          <Tooltip content={<CurrencyTooltip />} />
+          <Bar dataKey="value" fill={CHART_COLORS.primary} radius={[0, 6, 6, 0]} maxBarSize={28}>
+            {isProduct ? (
+              <LabelList
+                dataKey="value"
+                position="right"
+                formatter={(v: number) => formatCurrencyBrl(v)}
+                className="sm-chart-bar-label"
+              />
+            ) : null}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
 function MotivoPie({ items }: { items: ScrapRankingItem[] }) {
-  const data = items.map((item) => ({
+  const data = items.map((item, index) => ({
     name: item.label || item.code,
     value: item.value,
     sharePct: item.sharePct,
     fullName: item.label || item.code,
+    color: PIE_COLORS[index % PIE_COLORS.length],
   }));
 
-  const legendLookup = new Map(
-    data.map((item) => [item.name, { value: item.value, sharePct: item.sharePct }]),
-  );
+  const height = resolveMotivoChartHeight(items.length);
+  const { innerRadius, outerRadius } = resolveMotivoPieRadii(height);
+  const pieBox = Math.min(280, Math.max(180, Math.floor(height * 0.72)));
 
   return (
-    <ResponsiveContainer width="100%" height={CHART_MOTIVO_HEIGHT}>
-      <PieChart>
-        <Pie
-          data={data}
-          dataKey="value"
-          nameKey="name"
-          cx="36%"
-          cy="50%"
-          innerRadius={CHART_MOTIVO_INNER_RADIUS}
-          outerRadius={CHART_MOTIVO_OUTER_RADIUS}
-          paddingAngle={2}
-        >
-          {data.map((_, index) => (
-            <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip content={<CurrencyTooltip />} />
-        <Legend
-          layout="vertical"
-          align="right"
-          verticalAlign="middle"
-          wrapperStyle={{
-            fontSize: 14,
-            fontWeight: 600,
-            maxWidth: 280,
-            lineHeight: "1.55",
-            paddingLeft: 8,
-          }}
-          formatter={(value) => {
-            const stats = legendLookup.get(String(value));
-            if (!stats) return formatShortLabel(String(value), 32);
-            return formatMotivoLegendLabel(String(value), stats.value, stats.sharePct);
-          }}
-        />
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="sm-motivo-chart" style={{ minHeight: height }}>
+      <div className="sm-motivo-chart__pie" style={{ width: pieBox, height: pieBox }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={innerRadius}
+              outerRadius={outerRadius}
+              paddingAngle={2}
+            >
+              {data.map((entry, index) => (
+                <Cell key={index} fill={entry.color} />
+              ))}
+            </Pie>
+            <Tooltip content={<CurrencyTooltip />} />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <ul className="sm-motivo-chart__legend" aria-label="Legenda por motivo">
+        {data.map((entry) => (
+          <li key={entry.name} className="sm-motivo-chart__legend-item">
+            <span
+              className="sm-motivo-chart__swatch"
+              style={{ background: entry.color }}
+              aria-hidden
+            />
+            <span className="sm-motivo-chart__legend-text">
+              <span className="sm-motivo-chart__legend-name">
+                {formatShortLabel(entry.name, 36)}
+              </span>
+              <span className="sm-motivo-chart__legend-meta">
+                {formatCurrencyBrl(entry.value)} ({formatSharePercent(entry.sharePct)})
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 function SerieChart({
   points,
   granularity,
+  height,
 }: {
   points: ScrapSeriePoint[];
   granularity: "day" | "month" | null;
+  height: number;
 }) {
   const data = points.map((point) => ({
     name: point.label,
@@ -246,30 +253,37 @@ function SerieChart({
 
   const subtitle =
     granularity === "month" ? "Agregação mensal" : granularity === "day" ? "Agregação diária" : undefined;
+  const chartHeight = Math.max(CHART_SERIES_HEIGHT_MIN, height);
 
   return (
-    <ResponsiveContainer width="100%" height={CHART_SERIES_HEIGHT}>
-      <AreaChart data={data} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
-        <defs>
-          <linearGradient id="smSerieFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.35} />
-            <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.02} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
-        <XAxis dataKey="name" tick={CHART_AXIS_TICK} minTickGap={28} />
-        <YAxis tick={CHART_AXIS_TICK} width={72} tickFormatter={(v) => formatCurrencyBrl(Number(v))} />
-        <Tooltip content={<CurrencyTooltip />} />
-        <Area
-          type="monotone"
-          dataKey="value"
-          stroke={CHART_COLORS.primary}
-          fill="url(#smSerieFill)"
-          strokeWidth={2}
-          name={subtitle ?? "Valor"}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="sm-chart-fill" style={{ minHeight: chartHeight }}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <AreaChart data={data} margin={{ left: 8, right: 12, top: 8, bottom: 8 }}>
+          <defs>
+            <linearGradient id="smSerieFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.35} />
+              <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
+          <XAxis dataKey="name" tick={CHART_AXIS_TICK} minTickGap={28} />
+          <YAxis
+            tick={CHART_AXIS_TICK}
+            width={72}
+            tickFormatter={(v) => formatCurrencyBrl(Number(v))}
+          />
+          <Tooltip content={<CurrencyTooltip />} />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke={CHART_COLORS.primary}
+            fill="url(#smSerieFill)"
+            strokeWidth={2}
+            name={subtitle ?? "Valor"}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -286,6 +300,7 @@ export function RankingCharts({
     serieGranularity === "month"
       ? `${CHARTS.serie} Agregado por mês (período longo).`
       : CHARTS.serie;
+  const pairHeight = resolveMotivoChartHeight(motivos.length);
 
   return (
     <div className={CHARTS_GRID_CLASS}>
@@ -294,7 +309,7 @@ export function RankingCharts({
         titleHint={CHARTS.motivo}
         empty={motivos.length === 0}
         wide={false}
-        className="sm-chart-card--compact"
+        className="sm-chart-card--motivo"
       >
         <MotivoPie items={motivos} />
       </ChartCard>
@@ -303,8 +318,9 @@ export function RankingCharts({
         titleHint={serieHint}
         empty={serie.length === 0}
         wide={false}
+        className="sm-chart-card--serie"
       >
-        <SerieChart points={serie} granularity={serieGranularity} />
+        <SerieChart points={serie} granularity={serieGranularity} height={pairHeight} />
       </ChartCard>
       <ChartCard
         title="Top 10 por matéria-prima"
