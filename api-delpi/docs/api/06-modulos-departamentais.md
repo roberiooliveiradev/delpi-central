@@ -361,6 +361,22 @@ Parâmetro comum: `filial` (`01` \| `02`), `dataInicio`, `dataFim`. Escopo por f
 
 Documentação completa: [controle-retrabalhos.md](./controle-retrabalhos.md) · view: [ESPECIFICACAO-VIEW.md](../../../docs/12-roadmap-e-evolucao/controle-retrabalhos/ESPECIFICACAO-VIEW.md).
 
+## Apontamento de Produção — `/production/appointments`
+
+**Permissão:** `production-appointments.access`, `production-appointments.view`, `production-appointments.view.filial-sc`, `production-appointments.view.filial-es` ou `api-delpi.access`
+
+Apontamentos SH6010 por centro de trabalho (SH1→SHB). Inclui CT de inspeção final nos totais. Plugin previsto: `production-appointments`.
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | `/production/appointments/work-centers` | Catálogo de CTs (`is_final_inspection`). |
+| GET | `/production/appointments` | Lista paginada de apontamentos. |
+| GET | `/production/appointments/summary` | Totais + agregação por CT. |
+| GET | `/production/appointments/series` | Série temporal (`group_by=day\|day_work_center`). |
+| GET | `/production/appointments/by-op` | Drill-down por OP. |
+
+Documentação completa: [production-appointments.md](./production-appointments.md) · Fase 0: [FASE0-VALIDACAO.md](../../../docs/12-roadmap-e-evolucao/production-appointments/FASE0-VALIDACAO.md).
+
 ## Acompanhamento de Refugos — `/refugos`
 
 **Permissão:** `scrap-monitoring.access`, `scrap-monitoring.view`, `scrap-monitoring.view.filial-sc`, `scrap-monitoring.view.filial-es` ou `api-delpi.access`

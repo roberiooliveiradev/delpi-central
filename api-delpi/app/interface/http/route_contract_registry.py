@@ -378,6 +378,21 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_refugos_resumo": RouteContract("refugos_resumo", "scalar"),
     "get_refugos_rankings": RouteContract("refugos_rankings", "playbook_report"),
     "get_refugos_registros": RouteContract("refugos_registros", "paged_list"),
+    "list_production_appointment_work_centers": RouteContract(
+        "production_appointment_work_center", "paged_list"
+    ),
+    "list_production_appointments": RouteContract(
+        "production_appointment", "paged_list"
+    ),
+    "get_production_appointments_summary": RouteContract(
+        "production_appointments_summary", "playbook_report"
+    ),
+    "get_production_appointments_series": RouteContract(
+        "production_appointments_series", "playbook_report"
+    ),
+    "list_production_appointments_by_op": RouteContract(
+        "production_appointments_by_op", "paged_list"
+    ),
     "list_pedidos_venda_abertos": RouteContract(
         "open_sales_order", "composite_analysis"
     ),

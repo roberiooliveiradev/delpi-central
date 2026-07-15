@@ -27,6 +27,9 @@ from app.interface.http.routes.financeiro import despesas_centro_custo_router
 from app.interface.http.routes.financeiro import inadimplencia_router
 from app.interface.http.routes.retrabalho import retrabalho_router
 from app.interface.http.routes.refugos import refugos_router
+from app.interface.http.routes.production_appointments import (
+    production_appointments_router,
+)
 from app.interface.http.routes.supplies import supplies_router
 from app.interface.http.routes.commercial import commercial_router
 from app.interface.http.routes.production import production_router
@@ -210,6 +213,7 @@ app.include_router(supplies_router.router)
 app.include_router(commercial_router.router)
 app.include_router(production_router.router)
 app.include_router(production_operational_router.router)
+app.include_router(production_appointments_router.router)
 app.include_router(purchases_router.router)
 app.include_router(engineering_router.router)
 app.include_router(quality_router.router)

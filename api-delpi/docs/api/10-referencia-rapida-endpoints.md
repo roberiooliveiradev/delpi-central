@@ -170,6 +170,11 @@ Legenda de permissões:
 | GET | `/production/orders/finished-without-consumption` | A |
 | GET | `/production/work-centers/order-summary` | A |
 | GET | `/production/work-centers/average-planned-time` | A |
+| GET | `/production/appointments/work-centers` | A |
+| GET | `/production/appointments` | A |
+| GET | `/production/appointments/summary` | A |
+| GET | `/production/appointments/series` | A |
+| GET | `/production/appointments/by-op` | A |
 | GET | `/production/allocation-gaps` | A |
 | GET | `/production/planned-vs-real-time` | A |
 

@@ -2,7 +2,7 @@
 
 > Plugin portal: **Apontamento de Produção**  
 > Id técnico: `production-appointments`  
-> Status: Fase 0 em validação (jul/2026)
+> Status: **Fase 1 API implementada** (jul/2026) — plugin e chat pendentes
 
 ## Objetivo
 
