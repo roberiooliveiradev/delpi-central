@@ -6,7 +6,7 @@ import { SelectedDataSidePanel } from "./SelectedDataSidePanel";
 
 /**
  * Aba Dados na top bar — toolbar compacta; inspector completo no painel lateral.
- * Catálogo abre em modal.
+ * Catálogo abre em popover ancorado.
  */
 export function ComunicadoDataRibbon() {
   const {
@@ -32,7 +32,7 @@ export function ComunicadoDataRibbon() {
           setDataPanelIntent("binding");
           setSelectionPanelTab("element");
         }}
-        onOpenCatalog={() => openDataCatalog()}
+        onOpenCatalog={openDataCatalog}
       />
     </div>
   );

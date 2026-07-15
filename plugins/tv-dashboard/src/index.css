@@ -766,45 +766,99 @@
   overflow: auto;
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog {
-  /* Catálogo denso: largura + altura da viewport; um único scroll no body. */
-  width: min(1120px, calc(100vw - 24px));
-  max-width: 100%;
-  max-height: calc(100dvh - 24px);
+/* Âncora fallback quando o catálogo abre sem gatilho (KeyTip / API). */
+.dashboard-tv-dashboard .td-data-catalog-popover__fallback-anchor {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* Catálogo em popover ancorado (Fase A — substitui modal fullscreen). */
+.dashboard-tv-dashboard .td-data-catalog-popover {
+  width: min(960px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: min(80dvh, 720px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  padding: 16px 16px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--td-border, #334155) 80%, transparent);
+  background: var(--td-surface-elevated, var(--td-surface, #0f172a));
+  box-shadow:
+    0 16px 40px color-mix(in srgb, #000 45%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--td-accent, #089bdb) 18%, transparent);
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog .td-modal__header {
+.dashboard-tv-dashboard .td-data-catalog-popover__chrome {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: inherit;
+  overflow: hidden;
+}
+
+.dashboard-tv-dashboard .td-data-catalog-popover__header {
   flex: 0 0 auto;
-  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--td-border, #334155) 70%, transparent);
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog .td-modal__body {
+.dashboard-tv-dashboard .td-data-catalog-popover__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--td-text, #e2e8f0);
+}
+
+.dashboard-tv-dashboard .td-data-catalog-popover__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--td-text-muted, #94a3b8);
+  cursor: pointer;
+}
+
+.dashboard-tv-dashboard .td-data-catalog-popover__close:hover {
+  background: color-mix(in srgb, var(--td-accent, #089bdb) 16%, transparent);
+  color: var(--td-text, #e2e8f0);
+}
+
+.dashboard-tv-dashboard .td-data-catalog-popover__body {
   flex: 1 1 auto;
   min-height: 0;
-  max-height: none;
   overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 0;
+  padding: 8px 12px 12px;
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog .td-data-routes-panel {
+.dashboard-tv-dashboard .td-data-catalog-popover .td-data-routes-panel {
   padding: 4px 4px 10px;
   gap: 6px;
   min-width: 0;
   max-width: 100%;
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog .td-data-routes-panel--compact .delpi-ui-field-label {
+.dashboard-tv-dashboard .td-data-catalog-popover .td-data-routes-panel--compact .delpi-ui-field-label {
   display: none;
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog {
+.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog {
   min-width: 0;
   max-width: 100%;
   gap: 5px;
@@ -813,22 +867,20 @@
   min-height: 0;
 }
 
-/* No modal largo, chips quebram linha em vez de forçar scroll horizontal. */
-.dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog__chips {
+.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__chips {
   flex-wrap: wrap;
   overflow-x: visible;
   row-gap: 4px;
   flex: 0 0 auto;
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog__card,
-.dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog__path {
+.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__card,
+.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__path {
   max-width: 100%;
   min-width: 0;
 }
 
-.dashboard-tv-dashboard .td-modal--data-catalog .delpi-ui-data-route-catalog__groups {
-  /* Lista cresce com o body — evita segundo scrollbar interno. */
+.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__groups {
   max-height: none;
   overflow: visible;
   flex: 0 0 auto;

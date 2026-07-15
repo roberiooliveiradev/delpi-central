@@ -204,7 +204,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
                   tab === "tableDesign" || tab === "tableLayout" ? tab : "element"
                 }
                 branchScope={branchScope}
-                onOpenDataSources={() => openDataCatalog()}
+                onOpenDataSources={() => openDataCatalog("insert")}
               />
             ) : tab === "data" ? (
               <SelectedDataSidePanel
@@ -212,7 +212,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
                 onInserted={() =>
                   handleTabChange(isTableSelection ? "tableDesign" : "element")
                 }
-                onOpenCatalog={() => openDataCatalog()}
+                onOpenCatalog={openDataCatalog}
               />
             ) : (
               <ComunicadoLayersPanel />

@@ -72,6 +72,12 @@ export type DataPanelIntent = "binding" | "catalog";
 /** Modo do modal de catálogo: inserir fonte nova ou trocar a rota da seleção. */
 export type DataCatalogMode = "insert" | "replace";
 
+/** Opções ao abrir o catálogo de fontes (popover ancorado). */
+export type OpenDataCatalogOptions = {
+  /** Gatilho do popover — tipicamente `event.currentTarget` do botão. */
+  anchor?: HTMLElement | null;
+};
+
 /** Contrato do editor — separado do Provider para evitar ciclos ESM com hooks/modais. */
 export type ComunicadoEditorContextValue = {
   config: ComunicadoConfig;
@@ -147,10 +153,16 @@ export type ComunicadoEditorContextValue = {
   openDataPanel: () => void;
   /** Abre o painel lateral na aba Camadas (sem modal). */
   openLayersPanel: () => void;
-  /** Abre o catálogo em modal (Inserir / Trocar rota). */
-  openDataCatalog: (mode?: DataCatalogMode) => void;
+  /**
+   * Abre o catálogo em popover (Inserir / Trocar rota).
+   * Passe `options.anchor` (ex.: `event.currentTarget`) para posicionar junto ao gatilho.
+   */
+  openDataCatalog: (mode?: DataCatalogMode, options?: OpenDataCatalogOptions) => void;
   dataCatalogModalOpen: boolean;
   setDataCatalogModalOpen: (open: boolean) => void;
+  /** Elemento âncora do popover do catálogo (null = fallback central). */
+  dataCatalogAnchor: HTMLElement | null;
+  setDataCatalogAnchor: (anchor: HTMLElement | null) => void;
   dataCatalogMode: DataCatalogMode;
   setDataCatalogMode: (mode: DataCatalogMode) => void;
   dataPanelOpen: boolean;

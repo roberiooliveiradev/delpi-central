@@ -1,6 +1,6 @@
 import { HintAction } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 import { DeckKeyTip } from "../DeckKeyTip";
 
@@ -8,7 +8,7 @@ type Props = {
   icon: LucideIcon;
   label: string;
   hint?: string;
-  onClick: () => void;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
   disabled?: boolean;
   active?: boolean;
   children?: ReactNode;

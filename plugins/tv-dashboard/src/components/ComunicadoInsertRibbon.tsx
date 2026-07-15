@@ -203,7 +203,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             label={labels.comunicadoAddDataSource ?? "Dados"}
             hint={H.insertDataSource ?? H.insertIndicator}
             keyTip={K.dataSource}
-            onClick={() => openDataCatalog()}
+            onClick={(event) => openDataCatalog("insert", { anchor: event.currentTarget })}
           />
           <DeckRibbonTile
             icon={Filter}

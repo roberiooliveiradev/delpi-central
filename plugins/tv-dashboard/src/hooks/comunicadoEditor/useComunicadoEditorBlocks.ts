@@ -67,6 +67,7 @@ import type {
   ComunicadoRibbonTabRequest,
   DataCatalogMode,
   DataPanelIntent,
+  OpenDataCatalogOptions,
 } from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
 import { applyComunicadoBlockStylePatch } from "../../utils/applyComunicadoBlockStylePatch";
@@ -107,6 +108,7 @@ type Options = {
   setDataPanelOpen: Dispatch<SetStateAction<boolean>>;
   setDataPanelIntent: Dispatch<SetStateAction<DataPanelIntent>>;
   setDataCatalogModalOpen: Dispatch<SetStateAction<boolean>>;
+  setDataCatalogAnchor: Dispatch<SetStateAction<HTMLElement | null>>;
   setDataCatalogMode: Dispatch<SetStateAction<DataCatalogMode>>;
   setShapeMenuOpen: Dispatch<SetStateAction<boolean>>;
   setRibbonTabRequest: Dispatch<SetStateAction<ComunicadoRibbonTabRequest | null>>;
@@ -147,6 +149,7 @@ export function useComunicadoEditorBlocks({
   setDataPanelOpen,
   setDataPanelIntent,
   setDataCatalogModalOpen,
+  setDataCatalogAnchor,
   setDataCatalogMode,
   setShapeMenuOpen,
   setRibbonTabRequest,
@@ -301,11 +304,12 @@ export function useComunicadoEditorBlocks({
   }, [setDataPanelIntent, setDataPanelOpen, setRibbonTabRequest]);
 
   const openDataCatalog = useCallback(
-    (mode: DataCatalogMode = "insert") => {
+    (mode: DataCatalogMode = "insert", options?: OpenDataCatalogOptions) => {
       setDataCatalogMode(mode);
+      setDataCatalogAnchor(options?.anchor ?? null);
       setDataCatalogModalOpen(true);
     },
-    [setDataCatalogMode, setDataCatalogModalOpen],
+    [setDataCatalogAnchor, setDataCatalogMode, setDataCatalogModalOpen],
   );
 
   const setDataFilters = useCallback(

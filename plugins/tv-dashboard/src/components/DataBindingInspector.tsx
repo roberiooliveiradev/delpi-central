@@ -207,7 +207,7 @@ export function DataBindingInspector({
             <button
               type="button"
               className="td-btn td-btn--sm"
-              onClick={() => openDataCatalog("replace")}
+              onClick={(event) => openDataCatalog("replace", { anchor: event.currentTarget })}
             >
               <RefreshCw size={14} aria-hidden="true" />
               Trocar rota
@@ -218,7 +218,7 @@ export function DataBindingInspector({
         <button
           type="button"
           className="td-btn td-btn--sm"
-          onClick={() => openDataCatalog("replace")}
+          onClick={(event) => openDataCatalog("replace", { anchor: event.currentTarget })}
         >
           <RefreshCw size={14} aria-hidden="true" />
           Trocar rota

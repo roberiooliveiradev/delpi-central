@@ -5,6 +5,10 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import type {
+  DataCatalogMode,
+  OpenDataCatalogOptions,
+} from "./comunicadoEditorContextCore";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataBindingInspector } from "./DataBindingInspector";
 import { DataRoutesSidePanel } from "./DataRoutesSidePanel";
@@ -14,10 +18,12 @@ import { resolveSelectedDataContext } from "../utils/selectedDataContext";
 
 export type PanelLayout = "ribbon" | "pane";
 
+type OpenCatalogFn = (mode?: DataCatalogMode, options?: OpenDataCatalogOptions) => void;
+
 type Props = {
   branchScope?: BranchScope | null;
   onInserted?: () => void;
-  onOpenCatalog?: () => void;
+  onOpenCatalog?: OpenCatalogFn;
   /** ribbon = top bar compacta; pane = painel lateral com inspector completo. */
   layout?: PanelLayout;
 };
@@ -86,7 +92,11 @@ export function SelectedDataSidePanel({
       <div className="td-deck-ribbon__panel td-deck-ribbon__panel--dados td-deck-ribbon__panel--dados-compact">
         <p className="td-deck-inspector__hint">{hint}</p>
         <div className="td-deck-ribbon__field-grid">
-          <button type="button" className="td-btn td-btn--sm" onClick={() => openCatalog()}>
+          <button
+            type="button"
+            className="td-btn td-btn--sm"
+            onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
+          >
             Abrir catálogo de fontes
           </button>
           {!showCatalog && context.kind !== "none" ? (
@@ -142,7 +152,7 @@ export function SelectedDataSidePanel({
         <button
           type="button"
           className="td-btn td-btn--sm td-btn--ghost"
-          onClick={() => openCatalog()}
+          onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
         >
           Inserir nova fonte
         </button>
@@ -166,7 +176,7 @@ export function SelectedDataSidePanel({
         <VisualDataViewInspector
           pane
           route={selectedRoute}
-          onOpenDataSources={() => openCatalog()}
+          onOpenDataSources={() => openCatalog("insert")}
         />
       ) : null}
 
@@ -185,7 +195,7 @@ export function SelectedDataSidePanel({
           <button
             type="button"
             className="td-btn td-btn--sm td-btn--ghost"
-            onClick={() => openCatalog()}
+            onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
           >
             Abrir catálogo de fontes
           </button>
@@ -202,7 +212,7 @@ export function SelectedDataSidePanel({
         <button
           type="button"
           className="td-btn td-btn--sm td-btn--ghost"
-          onClick={() => openCatalog()}
+          onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
         >
           Inserir nova fonte…
         </button>
