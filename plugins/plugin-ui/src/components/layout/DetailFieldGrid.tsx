@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type DetailField = {
   label: string;
@@ -34,12 +35,16 @@ export type DetailFieldGridProps = {
 
 export function detailFieldGridBemClasses(prefix: string): DetailFieldGridClassNames {
   const grid = `${prefix}-detail-grid`;
+  const ui = "delpi-ui-detail-grid";
   return {
-    grid,
-    item: `${grid}__item`,
-    itemWide: `${grid}__item ${grid}__item--wide`,
-    label: `${grid}__label`,
-    empty: `${prefix}-detail__empty`,
+    grid: delpiUiClass(grid, ui),
+    item: delpiUiClass(`${grid}__item`, `${ui}__item`),
+    itemWide: delpiUiClass(
+      `${grid}__item ${grid}__item--wide`,
+      `${ui}__item ${ui}__item--wide`,
+    ),
+    label: delpiUiClass(`${grid}__label`, `${ui}__label`),
+    empty: delpiUiClass(`${prefix}-detail__empty`, "delpi-ui-detail__empty"),
   };
 }
 

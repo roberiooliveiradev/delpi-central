@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type DataTableColumn<T> = {
   key: string;
@@ -66,18 +67,30 @@ export type DataTableProps<T> = {
 
 export function dataTableBemClasses(prefix: string): DataTableClassNames {
   const table = `${prefix}-table`;
+  const ui = "delpi-ui-table";
+  const wrap = `${prefix}-table-wrap`;
+  const uiWrap = "delpi-ui-table-wrap";
   return {
-    wrapSection: `${prefix}-table-wrap ${prefix}-table-wrap--section`,
-    wrapEmbedded: `${prefix}-table-wrap ${prefix}-table-wrap--embedded`,
-    table,
-    empty: `${table}__empty`,
-    headerLabel: `${table}__header-label`,
-    headerText: `${table}__header-text`,
-    headerHelp: `${table}__header-help`,
-    sortButton: `${table}__sort-button`,
-    sortButtonActive: `${table}__sort-button ${table}__sort-button--active`,
-    sortIndicator: `${table}__sort-indicator`,
-    rowClickable: `${table}__row--clickable`,
+    wrapSection: delpiUiClass(
+      `${wrap} ${wrap}--section`,
+      `${uiWrap} ${uiWrap}--section`,
+    ),
+    wrapEmbedded: delpiUiClass(
+      `${wrap} ${wrap}--embedded`,
+      `${uiWrap} ${uiWrap}--embedded`,
+    ),
+    table: delpiUiClass(table, ui),
+    empty: delpiUiClass(`${table}__empty`, `${ui}__empty`),
+    headerLabel: delpiUiClass(`${table}__header-label`, `${ui}__header-label`),
+    headerText: delpiUiClass(`${table}__header-text`, `${ui}__header-text`),
+    headerHelp: delpiUiClass(`${table}__header-help`, `${ui}__header-help`),
+    sortButton: delpiUiClass(`${table}__sort-button`, `${ui}__sort-button`),
+    sortButtonActive: delpiUiClass(
+      `${table}__sort-button ${table}__sort-button--active`,
+      `${ui}__sort-button ${ui}__sort-button--active`,
+    ),
+    sortIndicator: delpiUiClass(`${table}__sort-indicator`, `${ui}__sort-indicator`),
+    rowClickable: delpiUiClass(`${table}__row--clickable`, `${ui}__row--clickable`),
   };
 }
 
@@ -91,11 +104,17 @@ function buildTableClassName(
     return classNames.tableClickable;
   }
 
+  // classNames.table já traz prefix + delpi-ui-table; modificadores espelham os dois.
+  const tableTokens = classNames.table.split(/\s+/).filter(Boolean);
   return [
     classNames.table,
-    layout === "section" ? `${classNames.table}--section` : "",
-    isSortable ? `${classNames.table}--sortable` : "",
-    clickable ? `${classNames.table}--clickable` : "",
+    ...tableTokens.flatMap((token) => {
+      const modifiers: string[] = [];
+      if (layout === "section") modifiers.push(`${token}--section`);
+      if (isSortable) modifiers.push(`${token}--sortable`);
+      if (clickable) modifiers.push(`${token}--clickable`);
+      return modifiers;
+    }),
   ]
     .filter(Boolean)
     .join(" ");

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { buildDataTableSearchText } from "../../utils/dataTableSearch";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 import { useClientPagination } from "../../utils/useClientPagination";
 import {
   DataTable,
@@ -145,25 +146,37 @@ export type DataTableSectionProps<T> = {
 };
 
 export function dataTableSectionBemClasses(prefix: string): DataTableSectionClassNames {
+  const section = `${prefix}-table-section`;
+  const uiSection = "delpi-ui-table-section";
+  const toolbar = `${prefix}-table-toolbar`;
+  const uiToolbar = "delpi-ui-table-toolbar";
+  const search = `${prefix}-table-search`;
+  const uiSearch = "delpi-ui-table-search";
   return {
-    section: `${prefix}-card ${prefix}-table-section`,
-    header: `${prefix}-table-section__header`,
-    title: `${prefix}-section-title`,
-    titleHelp: `${prefix}-table-section__title-help`,
-    metaGroup: `${prefix}-table-section__meta-group`,
-    meta: `${prefix}-table-section__meta`,
-    actions: `${prefix}-table-section__actions`,
-    noPrint: `${prefix}-no-print`,
-    toolbar: `${prefix}-table-toolbar`,
-    searchGroup: `${prefix}-table-toolbar__search-group`,
-    search: `${prefix}-table-search`,
-    searchIcon: `${prefix}-table-search__icon`,
-    searchInput: `${prefix}-table-search__input`,
-    searchHelp: `${prefix}-table-search__help`,
-    toolbarExtra: `${prefix}-table-toolbar__extra`,
-    footer: `${prefix}-table-section__footer`,
-    embeddedSection: `${prefix}-table-section ${prefix}-table-section--embedded`,
-    interactiveModifier: `${prefix}-table-section--interactive`,
+    section: delpiUiClass(`${prefix}-card ${section}`, `delpi-ui-card ${uiSection}`),
+    header: delpiUiClass(`${section}__header`, `${uiSection}__header`),
+    title: delpiUiClass(`${prefix}-section-title`, "delpi-ui-section-title"),
+    titleHelp: delpiUiClass(`${section}__title-help`, `${uiSection}__title-help`),
+    metaGroup: delpiUiClass(`${section}__meta-group`, `${uiSection}__meta-group`),
+    meta: delpiUiClass(`${section}__meta`, `${uiSection}__meta`),
+    actions: delpiUiClass(`${section}__actions`, `${uiSection}__actions`),
+    noPrint: delpiUiClass(`${prefix}-no-print`, "delpi-ui-no-print"),
+    toolbar: delpiUiClass(toolbar, uiToolbar),
+    searchGroup: delpiUiClass(`${toolbar}__search-group`, `${uiToolbar}__search-group`),
+    search: delpiUiClass(search, uiSearch),
+    searchIcon: delpiUiClass(`${search}__icon`, `${uiSearch}__icon`),
+    searchInput: delpiUiClass(`${search}__input`, `${uiSearch}__input`),
+    searchHelp: delpiUiClass(`${search}__help`, `${uiSearch}__help`),
+    toolbarExtra: delpiUiClass(`${toolbar}__extra`, `${uiToolbar}__extra`),
+    footer: delpiUiClass(`${section}__footer`, `${uiSection}__footer`),
+    embeddedSection: delpiUiClass(
+      `${section} ${section}--embedded`,
+      `${uiSection} ${uiSection}--embedded`,
+    ),
+    interactiveModifier: delpiUiClass(
+      `${section}--interactive`,
+      `${uiSection}--interactive`,
+    ),
   };
 }
 

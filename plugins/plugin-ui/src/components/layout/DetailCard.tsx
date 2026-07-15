@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type DetailCardClassNames = {
   card: string;
@@ -34,8 +35,11 @@ export type DetailCardProps = {
 
 export function detailCardProductionBemClasses(prefix: string): DetailCardClassNames {
   return {
-    card: `${prefix}-card ${prefix}-detail-card`,
-    header: `${prefix}-detail-card__header`,
+    card: delpiUiClass(
+      `${prefix}-card ${prefix}-detail-card`,
+      "delpi-ui-card delpi-ui-detail-card",
+    ),
+    header: delpiUiClass(`${prefix}-detail-card__header`, "delpi-ui-detail-card__header"),
     icon: `${prefix}-summary-card__icon`,
     title: `${prefix}-summary-card__title`,
     description: `${prefix}-summary-card__description`,
@@ -44,16 +48,21 @@ export function detailCardProductionBemClasses(prefix: string): DetailCardClassN
 }
 
 export function detailCardRichBemClasses(prefix: string): DetailCardClassNames {
+  const card = `${prefix}-detail-card`;
+  const ui = "delpi-ui-detail-card";
   return {
-    card: `${prefix}-card ${prefix}-detail-card`,
-    header: `${prefix}-detail-card__header`,
-    icon: `${prefix}-detail-card__icon`,
-    heading: `${prefix}-detail-card__heading`,
-    title: `${prefix}-detail-card__title`,
-    titleHelp: `${prefix}-detail-card__title-help`,
-    hint: `${prefix}-detail-card__hint`,
-    actions: `${prefix}-detail-card__actions ${prefix}-no-print`,
-    body: `${prefix}-detail-card__body`,
+    card: delpiUiClass(`${prefix}-card ${card}`, `delpi-ui-card ${ui}`),
+    header: delpiUiClass(`${card}__header`, `${ui}__header`),
+    icon: delpiUiClass(`${card}__icon`, `${ui}__icon`),
+    heading: delpiUiClass(`${card}__heading`, `${ui}__heading`),
+    title: delpiUiClass(`${card}__title`, `${ui}__title`),
+    titleHelp: delpiUiClass(`${card}__title-help`, `${ui}__title-help`),
+    hint: delpiUiClass(`${card}__hint`, `${ui}__hint`),
+    actions: delpiUiClass(
+      `${card}__actions ${prefix}-no-print`,
+      `${ui}__actions delpi-ui-no-print`,
+    ),
+    body: delpiUiClass(`${card}__body`, `${ui}__body`),
     wrapBody: true,
   };
 }

@@ -539,9 +539,9 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | Arquivo | Escopo |
 |---------|--------|
 | `select-control.css` / `multi-select.css` | Selects portaled |
-| `data-table.css` | `DataTable` / `DataTableSection` (prefix-agnóstico) |
-| `pagination.css` | `createDashboardPaginationKit` + ghost buttons |
-| `detail-card.css` | `DetailCard` / `DetailFieldGrid` |
+| `data-table.css` | `DataTable` / `DataTableSection` — `.delpi-ui-table*` / toolbar / search |
+| `pagination.css` | `Pagination` / Compact / Nav — `.delpi-ui-pagination*` + `.delpi-ui-ghost-btn` |
+| `detail-card.css` | `DetailCard` / `DetailFieldGrid` — `.delpi-ui-detail-card*` / grid |
 | `kpi-card.css`, `series-chart.css`, … | KPIs, charts, etc. |
 
 MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar layout de tabela/paginação.

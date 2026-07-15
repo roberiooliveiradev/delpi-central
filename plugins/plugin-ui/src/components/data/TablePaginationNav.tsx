@@ -1,3 +1,5 @@
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type TablePaginationNavClassNames = {
   root: string;
   navButton: string;
@@ -25,12 +27,16 @@ export type TablePaginationNavProps = {
 
 export function tablePaginationNavBemClasses(prefix: string): TablePaginationNavClassNames {
   const base = `${prefix}-pagination`;
+  const ui = "delpi-ui-pagination";
 
   return {
-    root: base,
-    navButton: `${prefix}-ghost-btn ${base}__nav`,
-    info: `${base}__info`,
-    current: `${base}__current`,
+    root: delpiUiClass(base, `${ui} ${ui}--nav`),
+    navButton: delpiUiClass(
+      `${prefix}-ghost-btn ${base}__nav`,
+      `delpi-ui-ghost-btn ${ui}__nav`,
+    ),
+    info: delpiUiClass(`${base}__info`, `${ui}__info`),
+    current: delpiUiClass(`${base}__current`, `${ui}__current`),
   };
 }
 

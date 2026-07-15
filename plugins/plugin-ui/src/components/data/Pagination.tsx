@@ -7,6 +7,7 @@ import {
   TABLE_PAGE_SIZE_OPTIONS,
   type PageJumpValidationReason,
 } from "../../utils/paginationPages";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type TablePageSizeClassNames = {
   root: string;
@@ -313,32 +314,41 @@ export function Pagination({
 
 export function paginationBemClasses(prefix: string) {
   const base = `${prefix}-pagination`;
+  const ui = "delpi-ui-pagination";
+  const pageSize = `${prefix}-table-page-size`;
+  const uiPageSize = "delpi-ui-table-page-size";
   return {
     pagination: {
-      root: base,
-      controls: `${base}__controls`,
-      action: `${base}__action`,
-      actionHelp: `${base}__action-help`,
-      ghostBtn: `${prefix}-ghost-btn`,
-      pages: `${base}__pages`,
-      ellipsis: `${base}__ellipsis`,
-      page: `${base}__page`,
-      pageActive: `${base}__page ${base}__page--active`,
-      jump: `${base}__jump`,
-      jumpField: `${base}__jump-field`,
-      jumpLabel: `${base}__jump-label`,
-      jumpInput: `${base}__jump-input`,
-      jumpInputInvalid: `${base}__jump-input ${base}__jump-input--invalid`,
-      jumpHelp: `${base}__jump-help`,
-      jumpError: `${base}__jump-error`,
-      info: `${base}__info`,
-      infoHelp: `${base}__help`,
+      root: delpiUiClass(base, ui),
+      controls: delpiUiClass(`${base}__controls`, `${ui}__controls`),
+      action: delpiUiClass(`${base}__action`, `${ui}__action`),
+      actionHelp: delpiUiClass(`${base}__action-help`, `${ui}__action-help`),
+      ghostBtn: delpiUiClass(`${prefix}-ghost-btn`, "delpi-ui-ghost-btn"),
+      pages: delpiUiClass(`${base}__pages`, `${ui}__pages`),
+      ellipsis: delpiUiClass(`${base}__ellipsis`, `${ui}__ellipsis`),
+      page: delpiUiClass(`${base}__page`, `${ui}__page`),
+      pageActive: delpiUiClass(
+        `${base}__page ${base}__page--active`,
+        `${ui}__page ${ui}__page--active`,
+      ),
+      jump: delpiUiClass(`${base}__jump`, `${ui}__jump`),
+      jumpField: delpiUiClass(`${base}__jump-field`, `${ui}__jump-field`),
+      jumpLabel: delpiUiClass(`${base}__jump-label`, `${ui}__jump-label`),
+      jumpInput: delpiUiClass(`${base}__jump-input`, `${ui}__jump-input`),
+      jumpInputInvalid: delpiUiClass(
+        `${base}__jump-input ${base}__jump-input--invalid`,
+        `${ui}__jump-input ${ui}__jump-input--invalid`,
+      ),
+      jumpHelp: delpiUiClass(`${base}__jump-help`, `${ui}__jump-help`),
+      jumpError: delpiUiClass(`${base}__jump-error`, `${ui}__jump-error`),
+      info: delpiUiClass(`${base}__info`, `${ui}__info`),
+      infoHelp: delpiUiClass(`${base}__help`, `${ui}__help`),
     } satisfies PaginationClassNames,
     tablePageSize: {
-      root: `${prefix}-table-page-size`,
-      label: `${prefix}-table-page-size__label`,
-      select: `${prefix}-table-page-size__select`,
-      help: `${prefix}-table-page-size__help`,
+      root: delpiUiClass(pageSize, uiPageSize),
+      label: delpiUiClass(`${pageSize}__label`, `${uiPageSize}__label`),
+      select: delpiUiClass(`${pageSize}__select`, `${uiPageSize}__select`),
+      help: delpiUiClass(`${pageSize}__help`, `${uiPageSize}__help`),
     } satisfies TablePageSizeClassNames,
   };
 }

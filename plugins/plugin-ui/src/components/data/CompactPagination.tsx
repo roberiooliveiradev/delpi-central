@@ -1,4 +1,5 @@
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type CompactPaginationClassNames = {
   root: string;
@@ -48,19 +49,26 @@ export function compactPaginationBemClasses(
   options?: { ghostBtnModifier?: string; ghostBtn?: string; withHints?: boolean },
 ): CompactPaginationClassNames {
   const base = `${prefix}-pagination`;
+  const ui = "delpi-ui-pagination";
+  const uiCompact = "delpi-ui-pagination--compact";
   const ghostModifier = options?.ghostBtnModifier ?? "ghost";
   const withHints = options?.withHints ?? false;
+  const ghostBtn = options?.ghostBtn
+    ? delpiUiClass(options.ghostBtn, "delpi-ui-ghost-btn")
+    : delpiUiClass(`${prefix}-btn ${prefix}-btn--${ghostModifier}`, "delpi-ui-ghost-btn");
 
   return {
-    root: base,
-    left: `${base}__left`,
-    info: `${base}__info`,
-    pageSize: `${base}__size`,
-    actions: `${base}__actions`,
-    ghostBtn: options?.ghostBtn ?? `${prefix}-btn ${prefix}-btn--${ghostModifier}`,
-    action: withHints ? `${base}__action` : undefined,
-    infoHelp: withHints ? `${base}__help` : undefined,
-    actionHelp: withHints ? `${base}__action-help` : undefined,
+    root: delpiUiClass(base, `${ui} ${uiCompact}`),
+    left: delpiUiClass(`${base}__left`, `${ui}__left`),
+    info: delpiUiClass(`${base}__info`, `${ui}__info`),
+    pageSize: delpiUiClass(`${base}__size`, `${ui}__size`),
+    actions: delpiUiClass(`${base}__actions`, `${ui}__actions`),
+    ghostBtn,
+    action: withHints ? delpiUiClass(`${base}__action`, `${ui}__action`) : undefined,
+    infoHelp: withHints ? delpiUiClass(`${base}__help`, `${ui}__help`) : undefined,
+    actionHelp: withHints
+      ? delpiUiClass(`${base}__action-help`, `${ui}__action-help`)
+      : undefined,
   };
 }
 

@@ -1,10 +1,10 @@
 /**
- * Pagination (createDashboardPaginationKit) + ghost buttons — prefix-agnóstico.
- * Classes BEM `{prefix}-pagination*`, `{prefix}-ghost-btn`.
+ * Pagination (createDashboardPaginationKit / Compact / TablePaginationNav) + ghost buttons.
+ * Classes estáveis: .delpi-ui-pagination*, .delpi-ui-ghost-btn, .delpi-ui-table-page-size*.
  * Tokens: --delpi-ui-*.
  */
 
-[class*="-pagination"]:not([class*="-pagination__"]) {
+.delpi-ui-pagination {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -16,8 +16,9 @@
   box-sizing: border-box;
 }
 
-[class*="-pagination__controls"] {
+.delpi-ui-pagination__controls {
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
@@ -26,22 +27,24 @@
   min-height: 34px;
 }
 
-[class*="-pagination__action"] {
+.delpi-ui-pagination__action {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
 }
 
-[class*="-pagination__pages"] {
+.delpi-ui-pagination__pages {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-[class*="-pagination__page"] {
+.delpi-ui-pagination__page {
   min-width: 34px;
   height: 34px;
   padding: 0 8px;
@@ -54,9 +57,12 @@
   font: inherit;
   cursor: pointer;
   box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-[class*="-pagination__page"]:hover:not(:disabled) {
+.delpi-ui-pagination__page:hover:not(:disabled) {
   border-color: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
@@ -65,7 +71,7 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
-[class*="-pagination__page--active"] {
+.delpi-ui-pagination__page--active {
   border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
   background: color-mix(
     in srgb,
@@ -75,13 +81,14 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
-[class*="-pagination__ellipsis"] {
+.delpi-ui-pagination__ellipsis {
   padding: 0 4px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
 }
 
-[class*="-pagination__jump"] {
+.delpi-ui-pagination__jump {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
@@ -91,18 +98,20 @@
   min-height: 34px;
 }
 
-[class*="-pagination__jump-field"] {
+.delpi-ui-pagination__jump-field {
   display: inline-flex;
   flex-direction: row;
   align-items: center;
   gap: 8px;
-}
-
-[class*="-pagination__jump-label"] {
   white-space: nowrap;
 }
 
-[class*="-pagination__jump-input"] {
+.delpi-ui-pagination__jump-label {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.delpi-ui-pagination__jump-input {
   width: 4.5rem;
   min-height: 34px;
   padding: 4px 8px;
@@ -112,18 +121,19 @@
   color: var(--delpi-ui-text, var(--text, #111111));
   font: inherit;
   box-sizing: border-box;
+  text-align: center;
 }
 
-[class*="-pagination__jump-input"]:focus-visible {
+.delpi-ui-pagination__jump-input:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: 2px;
 }
 
-[class*="-pagination__jump-input--invalid"] {
+.delpi-ui-pagination__jump-input--invalid {
   border-color: var(--danger, #b42318);
 }
 
-[class*="-pagination__jump-error"] {
+.delpi-ui-pagination__jump-error {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -134,22 +144,76 @@
   text-align: center;
 }
 
-[class*="-pagination__info"] {
+.delpi-ui-pagination__info {
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 6px;
   flex-wrap: wrap;
+  margin: 0;
   font-size: 13px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
   text-align: center;
 }
 
-[class*="-ghost-btn"] {
+/* CompactPagination — info à esquerda, ações à direita */
+.delpi-ui-pagination--compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.delpi-ui-pagination__left {
+  display: inline-flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.delpi-ui-pagination__actions {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.delpi-ui-pagination__size {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+/* TablePaginationNav — Anterior | info | Próxima em linha */
+.delpi-ui-pagination--nav {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.delpi-ui-pagination__current {
+  font-weight: 700;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  margin: 0 0.25em;
+}
+
+.delpi-ui-ghost-btn {
   min-height: 36px;
   border-radius: 12px;
   padding: 8px 14px;
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 8px;
@@ -163,7 +227,7 @@
   box-sizing: border-box;
 }
 
-[class*="-ghost-btn"]:hover:not(:disabled) {
+.delpi-ui-ghost-btn:hover:not(:disabled) {
   border-color: color-mix(
     in srgb,
     var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
@@ -171,12 +235,42 @@
   );
 }
 
-[class*="-ghost-btn"]:focus-visible {
+.delpi-ui-ghost-btn:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
   outline-offset: 2px;
 }
 
-[class*="-ghost-btn"]:disabled {
+.delpi-ui-ghost-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
+}
+
+.delpi-ui-table-page-size {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-table-page-size__label {
+  font-weight: 600;
+}
+
+.delpi-ui-table-page-size__select {
+  min-width: 72px;
+  min-height: 36px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: 10px;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  padding: 6px 10px;
+  font: inherit;
+}
+
+.delpi-ui-table-page-size__help {
+  flex-shrink: 0;
 }
