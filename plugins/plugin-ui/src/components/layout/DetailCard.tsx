@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
-import { delpiUiClass } from "../../utils/delpiUiClass";
+import { delpiUiClass, ensureDelpiUiClass } from "../../utils/delpiUiClass";
 
 export type DetailCardClassNames = {
   card: string;
@@ -78,7 +78,11 @@ export function DetailCard({
   classNames,
   labels,
 }: DetailCardProps) {
-  const cardClass = [classNames.card, className].filter(Boolean).join(" ");
+  const withFull =
+    className != null && /\b[\w-]*detail-card--full\b/.test(className)
+      ? ensureDelpiUiClass(className, "delpi-ui-detail-card--full")
+      : className;
+  const cardClass = [classNames.card, withFull].filter(Boolean).join(" ");
 
   const titleBlock = (
     <>

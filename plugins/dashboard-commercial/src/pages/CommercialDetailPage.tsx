@@ -336,7 +336,6 @@ export function CommercialDetailPage({
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.productsSection}
           hint={`${products.length} item(ns) vinculado(s)`}
           icon={<Building2 size={20} aria-hidden />}
-          className="dc-detail-card--full"
           headerActions={
             <CommercialExportButtons
               variant="table"
@@ -374,7 +373,6 @@ export function CommercialDetailPage({
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.historySection}
           icon={<History size={20} />}
           hint="Eventos AIJ010 — processo e estágio"
-          className="dc-detail-card--full"
         >
           <CommercialProposalHistorySection
             items={historyItems}

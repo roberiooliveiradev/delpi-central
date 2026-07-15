@@ -9,6 +9,11 @@
   box-sizing: border-box;
 }
 
+/** Em layout 2 colunas (`*-detail-layout`), ocupa a linha inteira. */
+.delpi-ui-detail-card--full {
+  grid-column: 1 / -1;
+}
+
 .delpi-ui-detail-card__header {
   display: flex;
   align-items: flex-start;

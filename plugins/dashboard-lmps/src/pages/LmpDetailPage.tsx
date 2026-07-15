@@ -481,7 +481,6 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               titleHint={LMPS_HELP_TOOLTIPS.detail.productsSection}
               hint={`${item.list_products?.length ?? 0} item(ns) vinculado(s)`}
               icon={<Building2 size={20} aria-hidden />}
-              className="lmps-detail-card--full"
             >
               <DataTable
                 columns={productColumns}
@@ -503,7 +502,6 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               titleHint={LMPS_HELP_TOOLTIPS.detail.historySection}
               hint="Linha do tempo de eventos no TOTVS (AIJ010), alinhada à revisão do painel LMP"
               icon={<History size={20} aria-hidden />}
-              className="lmps-detail-card--full"
             >
               <LmpHistorySection
                 events={item.list_history ?? []}

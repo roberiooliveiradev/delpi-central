@@ -988,6 +988,12 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dc-grid-gap);
   margin-bottom: var(--dc-section-gap);
+  align-items: start;
+}.dashboard-commercial .dc-detail-layout > *{
+  min-width: 0;
+}
+.dashboard-commercial .dc-detail-layout > *:last-child:nth-child(odd){
+  grid-column: 1 / -1;
 }.dashboard-commercial .dc-detail__empty{
   margin: 0;
   color: var(--dc-text-muted);

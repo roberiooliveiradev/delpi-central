@@ -36,7 +36,6 @@ export function LmpProductStructuresSection({
       titleHint={LMPS_HELP_TOOLTIPS.detail.productStructureSection}
       hint="BOM / estrutura analítica com níveis aninhados"
       icon={<Boxes size={20} aria-hidden />}
-      className="lmps-detail-card--full"
     >
       <StructureLegend />
 
