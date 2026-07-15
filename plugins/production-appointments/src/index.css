@@ -1,0 +1,385 @@
+.dashboard-production-appointments {
+  --pa-page-padding: 24px;
+  --pa-section-gap: 20px;
+  --pa-grid-gap: 16px;
+  --pa-card-radius: 18px;
+  --pa-card-padding: 20px;
+  --pa-control-radius: 12px;
+  --pa-accent: var(--primary, #089bdb);
+  --pa-title: var(--secundary, #003866);
+  --pa-text: var(--text, #111111);
+  --pa-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --pa-surface: var(--surface, #ffffff);
+  --pa-border: var(--border, #e6e6e6);
+  --pa-danger: var(--danger, #b42318);
+  --pa-chart-axis: #64748b;
+  --pa-chart-grid: rgba(15, 23, 42, 0.08);
+  --pa-font-xs: 12px;
+  --pa-font-sm: 13px;
+  --pa-font-md: 14px;
+  --pa-font-hero: clamp(22px, 2vw, 32px);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--pa-section-gap);
+  width: 100%;
+  min-height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--pa-page-padding);
+  color: var(--pa-text);
+  background-color: var(--app-canvas, var(--bg, #ffffff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pa-accent) 5%, var(--app-canvas, #fff)),
+    var(--app-canvas, #fff) 280px
+  );
+}
+
+.dashboard-production-appointments .pa-page-header__title {
+  margin: 0;
+  font-size: var(--pa-font-hero);
+  color: var(--pa-title);
+}
+
+.dashboard-production-appointments .pa-page-header__subtitle {
+  margin: 8px 0 0;
+  color: var(--pa-text-muted);
+  font-size: var(--pa-font-md);
+}
+
+.dashboard-production-appointments .pa-card {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-card-radius);
+  padding: var(--pa-card-padding);
+}
+
+.dashboard-production-appointments .pa-filter-bar__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--pa-grid-gap);
+}
+
+.dashboard-production-appointments .pa-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dashboard-production-appointments .pa-field__label {
+  font-size: var(--pa-font-sm);
+  color: var(--pa-text-muted);
+}
+
+.dashboard-production-appointments .pa-field__input {
+  min-height: 44px;
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-control-radius);
+  padding: 8px 12px;
+  background: var(--pa-surface);
+  color: var(--pa-text);
+}
+
+.dashboard-production-appointments .pa-filters__error {
+  margin: 12px 0 0;
+  color: var(--pa-danger);
+  font-size: var(--pa-font-sm);
+}
+
+.dashboard-production-appointments .pa-filter-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dashboard-production-appointments .pa-btn {
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  font-size: var(--pa-font-sm);
+  cursor: pointer;
+}
+
+.dashboard-production-appointments .pa-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-production-appointments .pa-btn--primary {
+  background: var(--pa-accent);
+  color: #fff;
+}
+
+.dashboard-production-appointments .pa-btn--secondary {
+  background: transparent;
+  border-color: var(--pa-border);
+  color: var(--pa-text);
+}
+
+.dashboard-production-appointments .pa-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pa-grid-gap);
+}
+
+.dashboard-production-appointments .pa-kpi-card {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-card-radius);
+  padding: var(--pa-card-padding);
+}
+
+.dashboard-production-appointments .pa-kpi-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--pa-accent) 12%, transparent);
+  color: var(--pa-accent);
+}
+
+.dashboard-production-appointments .pa-kpi-card__title {
+  margin: 0;
+  font-size: var(--pa-font-sm);
+  color: var(--pa-text-muted);
+}
+
+.dashboard-production-appointments .pa-kpi-card__value {
+  margin: 6px 0 0;
+  font-size: clamp(18px, 1.6vw, 24px);
+  font-weight: 650;
+}
+
+.dashboard-production-appointments .pa-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--pa-grid-gap);
+}
+
+.dashboard-production-appointments .pa-chart-card__header {
+  margin-bottom: 12px;
+}
+
+.dashboard-production-appointments .pa-chart-card__title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.dashboard-production-appointments .pa-chart-card__empty {
+  margin: 48px 0;
+  text-align: center;
+  color: var(--pa-text-muted);
+}
+
+.dashboard-production-appointments .pa-chart-tooltip {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: var(--pa-font-sm);
+}
+
+.dashboard-production-appointments .pa-table-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-production-appointments .pa-table-card__title {
+  margin: 0;
+  font-size: 16px;
+}
+
+.dashboard-production-appointments .pa-table-card__meta {
+  margin: 0;
+  color: var(--pa-text-muted);
+  font-size: var(--pa-font-sm);
+}
+
+.dashboard-production-appointments .pa-table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-production-appointments .pa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pa-font-sm);
+}
+
+.dashboard-production-appointments .pa-table th,
+.dashboard-production-appointments .pa-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--pa-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.dashboard-production-appointments .pa-table th {
+  background: color-mix(in srgb, var(--pa-accent) 8%, transparent);
+  font-weight: 600;
+}
+
+.dashboard-production-appointments .pa-table__col--numeric {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dashboard-production-appointments .pa-table__empty {
+  text-align: center;
+  color: var(--pa-text-muted);
+  padding: 28px 12px;
+}
+
+.dashboard-production-appointments .pa-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.dashboard-production-appointments .pa-pagination__label {
+  font-size: var(--pa-font-sm);
+  color: var(--pa-text-muted);
+}
+
+.dashboard-production-appointments .pa-state-box {
+  background: var(--pa-surface);
+  border: 1px solid var(--pa-border);
+  border-radius: var(--pa-card-radius);
+  padding: 28px 24px;
+}
+
+.dashboard-production-appointments .pa-state-box h2 {
+  margin: 0 0 8px;
+}
+
+.dashboard-production-appointments .pa-state-box p {
+  margin: 0 0 16px;
+  color: var(--pa-text-muted);
+}
+
+.dashboard-production-appointments .pa-state-box--error {
+  border-color: color-mix(in srgb, var(--pa-danger) 35%, var(--pa-border));
+}
+
+.dashboard-production-appointments .pa-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pa-accent) 12%, transparent);
+  overflow: hidden;
+}
+
+.dashboard-production-appointments .pa-progress__bar {
+  height: 100%;
+  background: var(--pa-accent);
+}
+
+:root[data-theme="dark"] .dashboard-production-appointments {
+  --pa-title: var(--text, #f3f4f6);
+  --pa-text: var(--text, #f3f4f6);
+  --pa-text-muted: var(--text-muted, rgba(243, 244, 246, 0.7));
+  --pa-surface: var(--surface, #1f2937);
+  --pa-border: var(--border, #374151);
+  --pa-chart-axis: #94a3b8;
+  --pa-chart-grid: rgba(148, 163, 184, 0.2);
+}
+
+@media (max-width: 1100px) {
+  .dashboard-production-appointments .pa-kpi-grid,
+  .dashboard-production-appointments .pa-charts-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-production-appointments {
+    --pa-page-padding: 16px;
+  }
+
+  .dashboard-production-appointments .pa-filter-bar__grid,
+  .dashboard-production-appointments .pa-kpi-grid,
+  .dashboard-production-appointments .pa-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-production-appointments .pa-filter-bar__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-production-appointments .pa-btn {
+    width: 100%;
+  }
+}
+
+#root:has(> .dashboard-production-appointments) {
+  min-height: 100vh;
+}
+
+.dashboard-production-appointments .pa-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--pa-font-xs);
+  background: color-mix(in srgb, var(--pa-accent) 14%, transparent);
+  color: var(--pa-title);
+}
+
+.dashboard-production-appointments .pa-tables-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pa-section-gap);
+}
+
+.dashboard-production-appointments .pa-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.dashboard-production-appointments .pa-muted {
+  color: var(--pa-text-muted);
+  font-size: var(--pa-font-sm);
+}
+
+.dashboard-production-appointments .pa-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.dashboard-production-appointments .pa-page-header__title {
+  margin: 0;
+  font-size: var(--pa-font-hero);
+  color: var(--pa-title);
+}
+
+.dashboard-production-appointments .pa-page-header__subtitle {
+  margin: 6px 0 0;
+  color: var(--pa-text-muted);
+}
+
+.dashboard-production-appointments .pa-table__col--numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-production-appointments .pa-table__empty {
+  text-align: center;
+  color: var(--pa-text-muted);
+  padding: 24px 12px;
+}

@@ -880,6 +880,22 @@ services:
     networks:
       - delpi-network
 
+  production-appointments:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: production-appointments/Dockerfile
+
+    container_name: delpi-production-appointments
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   canal-denuncia:
     depends_on:
       - plugin-ui
@@ -1487,6 +1503,7 @@ services:
       - central-agendamento
       - controle-retrabalhos
       - scrap-monitoring
+      - production-appointments
       - canal-denuncia
       - dashboard-supplies
       - dashboard-financial

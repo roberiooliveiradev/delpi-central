@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "production-appointments",
+  "name": "Apontamento de Produção",
+  "description": "Apontamentos de OP por centro de trabalho — catálogo de CTs, resumo, série temporal e drill-down por OP (SC/ES).",
+  "icon": "factory-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/production-appointments",
+  "entry": "/apps/production-appointments/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "production-appointments.access",
+      "name": "Acessar Apontamento de Produção",
+      "description": "Permite abrir o app de apontamento de produção no portal.",
+      "module": "production-appointments"
+    },
+    {
+      "code": "production-appointments.view.filial-sc",
+      "name": "Apontamento de Produção — Filial SC",
+      "description": "Visualizar apontamentos da Filial SC (01).",
+      "module": "production-appointments"
+    },
+    {
+      "code": "production-appointments.view.filial-es",
+      "name": "Apontamento de Produção — Filial ES",
+      "description": "Visualizar apontamentos da Filial ES (02).",
+      "module": "production-appointments"
+    },
+    {
+      "code": "production-appointments.view",
+      "name": "Visualizar Apontamento de Produção",
+      "description": "Permite consultar apontamentos de ambas as filiais.",
+      "module": "production-appointments"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/production-appointments/sc",
+      "label": "Apontamento de Produção - SC",
+      "permission": "production-appointments.view.filial-sc",
+      "icon": "factory-icon",
+      "order": 23,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/production-appointments/es",
+      "label": "Apontamento de Produção - ES",
+      "permission": "production-appointments.view.filial-es",
+      "icon": "factory-icon",
+      "order": 24,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

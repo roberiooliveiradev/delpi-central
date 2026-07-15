@@ -873,6 +873,22 @@ services:
     networks:
       - delpi-network
 
+  production-appointments:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: production-appointments/Dockerfile
+      target: production
+
+    container_name: delpi-production-appointments
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   canal-denuncia:
     <<: *plugin-ui-federated
     build:

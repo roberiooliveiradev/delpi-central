@@ -2,7 +2,7 @@
 
 > Plugin portal: **Apontamento de Produção**  
 > Id técnico: `production-appointments`  
-> Status: **Fase 1 API implementada** (jul/2026) — plugin e chat pendentes
+> Status: **Fase 1 API + Fase 2 MFE** (jul/2026) — chat/OpenAPI agent pendente
 
 ## Objetivo
 

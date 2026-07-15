@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FEDERATED_PLUGINS = {
     "controle-retrabalhos",
     "scrap-monitoring",
+    "production-appointments",
     "dashboard-production",
     "dashboard-commercial",
     "dashboard-engineering",
