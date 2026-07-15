@@ -6,10 +6,10 @@ import {
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
+  isBlockHiddenOnStage,
   resolveBlockSelectionBorderRadiusPx,
   resolveBlockShapeChromeAdjustmentValues,
   resolveViewportPixelSize,
-  shouldHideDataSourceOnStage,
   isLineShapeKind,
   resolveBlockPlacementStyle,
   shapeBlockAllowsResize,
@@ -544,7 +544,7 @@ export function ComunicadoComposerCanvas() {
             </>
           ) : null}
           {blocks.map((block) => {
-            if (isDataSourceBlockType(block.type) && shouldHideDataSourceOnStage(block.id, blocks)) {
+            if (isBlockHiddenOnStage(block, blocks)) {
               return null;
             }
             const isSelected = isBlockSelected(block.id);

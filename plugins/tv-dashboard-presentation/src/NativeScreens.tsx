@@ -12,6 +12,7 @@ import {
   sortBlocksByZIndex,
   type ComunicadoScreenDataLike,
 } from "./comunicadoHelpers";
+import { filterBlocksVisibleOnStage } from "./comunicadoStageVisibility";
 import type { ComunicadoBackground } from "./comunicadoTypes";
 import { formatNumber, formatPct } from "./nativeFormat";
 import "./native-screens.css";
@@ -434,7 +435,7 @@ function RichComunicadoScreen({
     background.type === "image" ? background.url ?? background.value : undefined;
   const bgStyle: CSSProperties = comunicadoBackgroundCssProperties(background, imageUrl);
 
-  const blocks = sortBlocksByZIndex(normalized.blocks ?? []);
+  const blocks = filterBlocksVisibleOnStage(sortBlocksByZIndex(normalized.blocks ?? []));
   const logo = master?.logo;
   const logoFrame = logo?.frame;
 

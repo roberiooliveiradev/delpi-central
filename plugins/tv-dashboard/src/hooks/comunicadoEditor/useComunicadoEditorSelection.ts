@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -9,8 +10,10 @@ import {
 import {
   applyNamedStyleOnAllLines,
   defaultNamedStyleForBlockType,
+  filterStageSelectableIds,
   isComunicadoVisualBoxBlock,
   resolveNamedStyleSelectionForBlock,
+  resolveStageSelectionTargetId,
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
   selectionNamedStyleState,
@@ -134,52 +137,89 @@ export function useComunicadoEditorSelection({
 
   const selectedId = selectedIds[selectedIds.length - 1] ?? null;
 
+  /** Fonte vinculada some do palco — redireciona seleção para o visual ligado. */
+  useEffect(() => {
+    setSelectedIds((current) => {
+      if (current.length === 0) return current;
+      const next = [
+        ...new Set(
+          current
+            .map((id) => resolveStageSelectionTargetId(id, blocks))
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
+      if (next.length === current.length && next.every((id, index) => id === current[index])) {
+        return current;
+      }
+      return next;
+    });
+  }, [blocks]);
+
   const setSelectedId = useCallback(
     (id: string | null) => {
       if (editingTextIdRef.current && editingTextIdRef.current !== id) {
         flushActiveTextEdit(editingTextIdRef.current);
       }
-      setSelectedIds(id ? [id] : []);
-      setEditingTextId((current) => (id === current ? current : null));
+      const blocksNow = configRef.current.blocks ?? [];
+      const target = id ? resolveStageSelectionTargetId(id, blocksNow) : null;
+      setSelectedIds(target ? [target] : []);
+      setEditingTextId((current) => (target === current ? current : null));
       clearPartSelections();
-      if (!id) clearTextEditUi();
+      if (!target) clearTextEditUi();
     },
-    [clearPartSelections, clearTextEditUi, flushActiveTextEdit],
+    [clearPartSelections, clearTextEditUi, configRef, flushActiveTextEdit],
   );
 
   const selectBlocksByIds = useCallback(
     (blockIds: string[]) => {
       flushActiveTextEdit();
-      const unique = [...new Set(blockIds.filter(Boolean))];
+      const blocksNow = configRef.current.blocks ?? [];
+      const unique = [
+        ...new Set(
+          blockIds
+            .filter(Boolean)
+            .map((id) => resolveStageSelectionTargetId(id, blocksNow))
+            .filter((id): id is string => Boolean(id)),
+        ),
+      ];
       setSelectedIds(unique);
       setEditingTextId(null);
       clearPartSelections();
     },
-    [clearPartSelections, flushActiveTextEdit],
+    [clearPartSelections, configRef, flushActiveTextEdit],
   );
 
   const selectBlock = useCallback(
     (blockId: string, options?: { additive?: boolean }) => {
       flushActiveTextEdit();
+      const blocksNow = configRef.current.blocks ?? [];
+      const targetId = resolveStageSelectionTargetId(blockId, blocksNow);
+      if (!targetId) {
+        if (!options?.additive) {
+          setSelectedIds([]);
+          setEditingTextId(null);
+          clearPartSelections();
+        }
+        return;
+      }
       let selectedBlockType: string | undefined;
       if (options?.additive) {
         setSelectedIds((current) => {
           const set = new Set(current);
-          if (set.has(blockId)) set.delete(blockId);
-          else set.add(blockId);
-          return [...set];
+          if (set.has(targetId)) set.delete(targetId);
+          else set.add(targetId);
+          return filterStageSelectableIds([...set], blocksNow);
         });
       } else {
-        const block = configRef.current.blocks?.find((item) => item.id === blockId);
+        const block = blocksNow.find((item) => item.id === targetId);
         selectedBlockType = block?.type;
         if (block?.groupId) {
-          const memberIds =
-            configRef.current.blocks
-              ?.filter((item) => item.groupId === block.groupId)
-              .map((item) => item.id) ?? [blockId];
-          setSelectedIds(memberIds);
+          const memberIds = blocksNow
+            .filter((item) => item.groupId === block.groupId)
+            .map((item) => item.id);
+          setSelectedIds(filterStageSelectableIds(memberIds, blocksNow));
         } else {
-          setSelectedIds([blockId]);
+          setSelectedIds([targetId]);
         }
       }
       setEditingTextId(null);

@@ -1,4 +1,8 @@
-import { newBlockId, type ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import {
+  filterStageSelectableIds,
+  newBlockId,
+  type ComunicadoBlock,
+} from "@delpi/tv-dashboard-presentation";
 
 export function newComunicadoGroupId(): string {
   return `grp_${newBlockId()}`;
@@ -16,7 +20,7 @@ export function expandSelectionWithGroups(
       if (member.groupId === block.groupId) expanded.add(member.id);
     }
   }
-  return [...expanded];
+  return filterStageSelectableIds([...expanded], blocks);
 }
 
 export function groupBlocks(

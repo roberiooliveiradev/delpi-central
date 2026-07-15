@@ -39,6 +39,7 @@ import {
 | `ConfigurableSeriesChart` | Gráfico linhas/colunas com título, legenda, eixos, grade, tabela de dados |
 | `CHART_ELEMENT_CATALOG` | Catálogo de elementos configuráveis (estilo Excel) |
 | `comunicadoDataArchitecture` | `dataSourceId`, `shouldHideDataSourceOnStage`, helpers de vínculo |
+| `comunicadoStageVisibility` | `isBlockHiddenOnStage` — render + hit-test + marquee + seleção (fonte única) |
 | `parseComunicadoConfig` / `serializeComunicadoConfig` | Schema v2–v4 (`chartOptions`, `dataSourceId`, `dataBinding`, …) |
 | `comunicadoImageCropCssProperties` | CSS viewport para recorte de imagem |
 | `native-screens.css` | Layout viewport-fit (`tdp-*`, `tdp-series-chart*`) |

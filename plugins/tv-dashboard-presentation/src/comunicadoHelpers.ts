@@ -119,6 +119,17 @@ export {
   dataSourceOptionsForInspector,
 } from "./comunicadoDataArchitecture";
 
+export {
+  filterBlocksVisibleOnStage,
+  filterStageSelectableIds,
+  isBlockHiddenOnStage,
+  isBlockSelectableOnStage,
+  listViewsLinkedToDataSource,
+  resolveBlockStageHideReason,
+  resolveStageSelectionTargetId,
+  type StageHideReason,
+} from "./comunicadoStageVisibility";
+
 export function newBlockId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();

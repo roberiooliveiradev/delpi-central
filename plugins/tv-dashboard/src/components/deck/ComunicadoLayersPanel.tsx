@@ -4,6 +4,7 @@ import { HintAction } from "@delpi/plugin-ui/index";
 import {
   assignStaggeredEntranceDelays,
   clearEntranceAnimations,
+  isBlockHiddenOnStage,
   resolveEntranceAnimation,
   sortBlocksByZIndex,
   syncEntranceDelaysSameInstant,
@@ -130,6 +131,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
         <ul className="td-layers-list">
           {layers.map((block) => {
             const active = selectedIds.includes(block.id);
+            const hiddenOnStage = isBlockHiddenOnStage(block, blocks);
             return (
               <li key={block.id}>
                 <button
@@ -140,10 +142,18 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={() => onDrop(block.id)}
                   onClick={(event) => selectBlock(block.id, { additive: event.shiftKey })}
+                  title={
+                    hiddenOnStage
+                      ? "Oculta no palco (fonte vinculada) — seleção vai para o visual ligado"
+                      : undefined
+                  }
                 >
                   <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
                   <span className="td-layers-list__meta">
-                    <span className="td-layers-list__type">{comunicadoBlockTypeLabel(block.type)}</span>
+                    <span className="td-layers-list__type">
+                      {comunicadoBlockTypeLabel(block.type)}
+                      {hiddenOnStage ? " · oculto" : ""}
+                    </span>
                     <span className="td-layers-list__summary">{comunicadoBlockSummary(block)}</span>
                   </span>
                 </button>

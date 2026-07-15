@@ -305,6 +305,13 @@ export {
   isFetchableDataBlockType,
   getLinkedDataSourceIds,
   shouldHideDataSourceOnStage,
+  filterBlocksVisibleOnStage,
+  filterStageSelectableIds,
+  isBlockHiddenOnStage,
+  isBlockSelectableOnStage,
+  listViewsLinkedToDataSource,
+  resolveBlockStageHideReason,
+  resolveStageSelectionTargetId,
   listDataSourceBlocks,
   dataSourceOptionsForInspector,
   resolveDataSourceLabel,
@@ -322,6 +329,7 @@ export {
   CANVAS_TABLE_MIN_COLS,
   CANVAS_TABLE_MAX_COLS,
 } from "./comunicadoHelpers";
+export type { StageHideReason } from "./comunicadoStageVisibility";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
 export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
 export {

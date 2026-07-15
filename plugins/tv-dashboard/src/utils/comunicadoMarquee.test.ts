@@ -23,4 +23,23 @@ describe("comunicadoMarquee", () => {
     expect(blocksInMarquee(blocks, { x1: 60, y1: 60, x2: 80, y2: 80 })).toEqual(["b"]);
     expect(blocksInMarquee(blocks, { x1: 90, y1: 90, x2: 99, y2: 99 })).toEqual([]);
   });
+
+  it("ignora fonte de dados oculta (vinculada) no marquee", () => {
+    const blocks: ComunicadoBlock[] = [
+      {
+        id: "src-1",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 20, h: 20 },
+        dataBinding: { operationId: "get_oee", params: {} },
+      },
+      {
+        id: "chart-1",
+        type: "chart_view",
+        chartType: "line",
+        dataSourceId: "src-1",
+        frame: { x: 0, y: 0, w: 20, h: 20 },
+      },
+    ];
+    expect(blocksInMarquee(blocks, { x1: 0, y1: 0, x2: 25, y2: 25 })).toEqual(["chart-1"]);
+  });
 });
