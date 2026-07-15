@@ -7,6 +7,7 @@ import type {
   ScrapRankingsData,
   ScrapRegistrosData,
   ScrapResumo,
+  ScrapSerieData,
 } from "../types/scrap";
 import { queryString } from "../utils/queryParams";
 
@@ -55,6 +56,17 @@ export async function fetchScrapRankings(
 ): Promise<ScrapRankingsData> {
   return getEnvelope<ScrapRankingsData>(
     `/rankings${queryString({ ...baseQuery(filters), dimension, limit })}`,
+    options,
+  );
+}
+
+export async function fetchScrapSerie(
+  filters: ScrapQueryFilters,
+  granularity: "day" | "month" | "auto" = "auto",
+  options: RequestOptions = {},
+): Promise<ScrapSerieData> {
+  return getEnvelope<ScrapSerieData>(
+    `/serie${queryString({ ...baseQuery(filters), granularity })}`,
     options,
   );
 }

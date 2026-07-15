@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { fetchScrapRankings, fetchScrapResumo } from "../api/refugosApi";
+import {
+  fetchScrapRankings,
+  fetchScrapResumo,
+  fetchScrapSerie,
+} from "../api/refugosApi";
 import type {
   ScrapQueryFilters,
   ScrapRankingItem,
   ScrapResumo,
+  ScrapSeriePoint,
 } from "../types/scrap";
 import {
   EMPTY_REQUEST_PROGRESS,
@@ -17,6 +22,8 @@ export type DashboardLoadState = "idle" | "loading" | "success" | "error";
 export type ScrapDashboardData = {
   resumo: ScrapResumo | null;
   motivos: ScrapRankingItem[];
+  serie: ScrapSeriePoint[];
+  serieGranularity: "day" | "month" | null;
   materiais: ScrapRankingItem[];
   produtos: ScrapRankingItem[];
   centros: ScrapRankingItem[];
@@ -26,6 +33,8 @@ export type ScrapDashboardData = {
 const emptyDashboard: ScrapDashboardData = {
   resumo: null,
   motivos: [],
+  serie: [],
+  serieGranularity: null,
   materiais: [],
   produtos: [],
   centros: [],
@@ -86,6 +95,7 @@ export function useScrapDashboard(appliedFilters: ScrapQueryFilters | null) {
           [
             (signal) => fetchScrapResumo(filters, { signal }),
             (signal) => fetchScrapRankings(filters, "motivo", 10, { signal }),
+            (signal) => fetchScrapSerie(filters, "auto", { signal }),
             (signal) =>
               fetchScrapRankings(filters, "materia_prima", 10, { signal }),
             (signal) =>
@@ -108,14 +118,21 @@ export function useScrapDashboard(appliedFilters: ScrapQueryFilters | null) {
           result.status === "fulfilled" ? result.value : null,
         );
 
+        const seriePayload = values[2] as {
+          points: ScrapSeriePoint[];
+          granularity: "day" | "month";
+        } | null;
+
         setData({
           resumo: values[0] as ScrapResumo,
           motivos: ((values[1] as { items: ScrapRankingItem[] })?.items) ?? [],
-          materiais: ((values[2] as { items: ScrapRankingItem[] })?.items) ?? [],
-          produtos: ((values[3] as { items: ScrapRankingItem[] })?.items) ?? [],
-          centros: ((values[4] as { items: ScrapRankingItem[] })?.items) ?? [],
+          serie: seriePayload?.points ?? [],
+          serieGranularity: seriePayload?.granularity ?? null,
+          materiais: ((values[3] as { items: ScrapRankingItem[] })?.items) ?? [],
+          produtos: ((values[4] as { items: ScrapRankingItem[] })?.items) ?? [],
+          centros: ((values[5] as { items: ScrapRankingItem[] })?.items) ?? [],
           colaboradores:
-            ((values[5] as { items: ScrapRankingItem[] })?.items) ?? [],
+            ((values[6] as { items: ScrapRankingItem[] })?.items) ?? [],
         });
         setState("success");
       } catch (err) {

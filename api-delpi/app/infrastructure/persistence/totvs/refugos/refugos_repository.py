@@ -14,6 +14,7 @@ from app.infrastructure.persistence.totvs.refugos.refugos_sql import (
     build_registros_count_query,
     build_registros_query,
     build_resumo_query,
+    build_serie_query,
 )
 
 
@@ -108,6 +109,33 @@ class RefugosRepository(BaseRepository, RefugosRepositoryPort):
             date_end_exclusive=date_end_exclusive,
             branch=branch,
             limit=limit,
+            mp=mp,
+            pa=pa,
+            op=op,
+            motivo=motivo,
+            recurso=recurso,
+        )
+        with self:
+            return self.execute_query(query, params)
+
+    def get_serie(
+        self,
+        *,
+        granularity: str,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str,
+        mp: str | None = None,
+        pa: str | None = None,
+        op: str | None = None,
+        motivo: str | None = None,
+        recurso: str | None = None,
+    ) -> list[dict]:
+        query, params = build_serie_query(
+            granularity=granularity,
+            date_start=date_start,
+            date_end_exclusive=date_end_exclusive,
+            branch=branch,
             mp=mp,
             pa=pa,
             op=op,

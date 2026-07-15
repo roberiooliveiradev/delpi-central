@@ -11,7 +11,7 @@ describe("SCRAP_HELP_TOOLTIPS", () => {
 
   it("cobre filtros, charts, tabela e paginação", () => {
     expect(Object.keys(SCRAP_HELP_TOOLTIPS.filters).length).toBeGreaterThanOrEqual(6);
-    expect(Object.keys(SCRAP_HELP_TOOLTIPS.charts).length).toBe(5);
+    expect(Object.keys(SCRAP_HELP_TOOLTIPS.charts).length).toBe(6);
     expect(SCRAP_HELP_TOOLTIPS.table.section.length).toBeGreaterThan(10);
     expect(SCRAP_HELP_TOOLTIPS.pagination.pageSize.length).toBeGreaterThan(5);
   });

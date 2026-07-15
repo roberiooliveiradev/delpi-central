@@ -19,13 +19,15 @@ export const PIE_COLORS = [
   "#64748b",
 ] as const;
 
-export const CHART_RANKING_HEIGHT = 280;
+export const CHART_RANKING_HEIGHT = 300;
+export const CHART_MOTIVO_HEIGHT = 220;
+export const CHART_SERIES_HEIGHT = 220;
 
-/** Largura do eixo Y em gráficos de barra horizontais (cards full-width). */
-export const CHART_Y_AXIS_WIDTH = 260;
+/** Eixo Y em cards half-width — prioriza texto (código + descrição). */
+export const CHART_Y_AXIS_WIDTH = 220;
 
 export const CHART_AXIS_TICK = {
-  fontSize: 12,
+  fontSize: 11,
   fill: "var(--sm-chart-axis)",
 } as const;
 

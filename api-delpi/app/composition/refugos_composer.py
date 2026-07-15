@@ -13,6 +13,9 @@ from app.application.use_cases.refugos.get_refugos_registros_use_case import (
 from app.application.use_cases.refugos.get_refugos_resumo_use_case import (
     GetRefugosResumoUseCase,
 )
+from app.application.use_cases.refugos.get_refugos_serie_use_case import (
+    GetRefugosSerieUseCase,
+)
 from app.infrastructure.persistence.totvs.refugos.refugos_repository import (
     RefugosRepository,
 )
@@ -36,6 +39,10 @@ def build_get_refugos_resumo_use_case() -> GetRefugosResumoUseCase:
 
 def build_get_refugos_rankings_use_case() -> GetRefugosRankingsUseCase:
     return GetRefugosRankingsUseCase(repository=_repository())
+
+
+def build_get_refugos_serie_use_case() -> GetRefugosSerieUseCase:
+    return GetRefugosSerieUseCase(repository=_repository())
 
 
 def build_get_refugos_registros_use_case() -> GetRefugosRegistrosUseCase:

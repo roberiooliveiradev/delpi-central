@@ -22,6 +22,7 @@ Plugin consumidor: `plugins/scrap-monitoring` · Filiais: SC=`01`, ES=`02`.
 | GET | `/refugos/filtros` | `scalar` | `get_refugos_filtros` |
 | GET | `/refugos/resumo` | `scalar` | `get_refugos_resumo` |
 | GET | `/refugos/rankings` | `playbook_report` | `get_refugos_rankings` |
+| GET | `/refugos/serie` | `playbook_report` | `get_refugos_serie` |
 | GET | `/refugos/registros` | `paged_list` | `get_refugos_registros` |
 
 ---
@@ -71,6 +72,18 @@ Retorna:
 Query obrigatória: `dimension` ∈ `motivo` \| `materia_prima` \| `produto_acabado` \| `centro_trabalho` \| `colaborador`.
 
 Cada item: `{ code, label, quantity, value, sharePct, occurrenceCount }`.
+
+---
+
+## `/refugos/serie`
+
+Evolução temporal do valor de refugo no período.
+
+| Parâmetro | Descrição |
+|---|---|
+| `granularity` | `day` \| `month` \| `auto` (padrão). Em `auto`, usa dia se o período tiver até 62 dias; senão mês. |
+
+Retorno: `{ periodo, granularity, points[] }` com `points[].date`, `label`, `value`, `quantity`, `occurrenceCount`.
 
 ---
 

@@ -242,6 +242,8 @@ function ScrapMonitoringContent({
             <SummaryCards resumo={resumo} loading={dashboard.refreshing} />
             <RankingCharts
               motivos={dashboard.data.motivos}
+              serie={dashboard.data.serie}
+              serieGranularity={dashboard.data.serieGranularity}
               materiais={dashboard.data.materiais}
               produtos={dashboard.data.produtos}
               centros={dashboard.data.centros}

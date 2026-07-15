@@ -13,6 +13,7 @@ from app.composition.refugos_composer import (
     build_get_refugos_rankings_use_case,
     build_get_refugos_registros_use_case,
     build_get_refugos_resumo_use_case,
+    build_get_refugos_serie_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
@@ -22,6 +23,7 @@ from app.interface.http.routes.refugos.refugos_route_helpers import (
     DATA_INICIO_QUERY,
     DIMENSION_QUERY,
     FILIAL_QUERY,
+    GRANULARITY_QUERY,
     LIMIT_QUERY,
     MOTIVO_QUERY,
     MP_QUERY,
@@ -32,6 +34,7 @@ from app.interface.http.routes.refugos.refugos_route_helpers import (
     RECURSO_QUERY,
     build_refugos_query_request,
     build_refugos_registros_request,
+    build_refugos_serie_request,
     execute_refugos_route,
 )
 from app.utils.logger import log_error
@@ -189,6 +192,54 @@ def get_refugos_rankings_route(
         operation_id="get_refugos_rankings",
         success_message="Ranking de refugos carregado com sucesso.",
         error_context="carregar ranking de refugos",
+    )
+
+
+@router.get(
+    "/serie",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_refugos_serie",
+        path="/refugos/serie",
+    ),
+)
+@require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
+def get_refugos_serie_route(
+    filial: str = FILIAL_QUERY,
+    data_inicio: Optional[str] = DATA_INICIO_QUERY,
+    data_fim: Optional[str] = DATA_FIM_QUERY,
+    granularity: Optional[str] = GRANULARITY_QUERY,
+    mp: Optional[str] = MP_QUERY,
+    pa: Optional[str] = PA_QUERY,
+    op: Optional[str] = OP_QUERY,
+    motivo: Optional[str] = MOTIVO_QUERY,
+    recurso: Optional[str] = RECURSO_QUERY,
+):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
+    try:
+        request = build_refugos_serie_request(
+            filial=filial,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            granularity=granularity,
+            mp=mp,
+            pa=pa,
+            op=op,
+            motivo=motivo,
+            recurso=recurso,
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar série de refugos: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    return execute_refugos_route(
+        use_case_builder=build_get_refugos_serie_use_case,
+        request=request,
+        operation_id="get_refugos_serie",
+        success_message="Série temporal de refugos carregada com sucesso.",
+        error_context="carregar série temporal de refugos",
     )
 
 

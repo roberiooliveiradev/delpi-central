@@ -29,11 +29,13 @@ export const SCRAP_HELP_TOOLTIPS = {
   },
   charts: {
     motivo:
-      "Distribuição do valor de refugo (R$) por motivo no período filtrado.",
+      "Distribuição do valor de refugo (R$) por motivo no período filtrado, com percentual sobre o total do ranking.",
+    serie:
+      "Evolução do valor de refugo (R$) ao longo do período. Até 62 dias agrega por dia; períodos maiores agregam por mês.",
     materiaPrima:
-      "Top 10 matérias-primas por valor de refugo (R$) no período filtrado.",
+      "Top 10 matérias-primas por valor de refugo (R$) no período filtrado (código + descrição).",
     produtoAcabado:
-      "Top 10 produtos acabados (via OP) por valor de refugo (R$) no período filtrado.",
+      "Top 10 produtos acabados (via OP) por valor de refugo (R$) no período filtrado (código + descrição).",
     centroTrabalho:
       "Ranking de centros de trabalho por valor de refugo (R$) no período filtrado.",
     colaborador:

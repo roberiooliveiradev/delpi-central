@@ -377,6 +377,7 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_refugos_filtros": RouteContract("refugos_filtros", "scalar"),
     "get_refugos_resumo": RouteContract("refugos_resumo", "scalar"),
     "get_refugos_rankings": RouteContract("refugos_rankings", "playbook_report"),
+    "get_refugos_serie": RouteContract("refugos_serie", "playbook_report"),
     "get_refugos_registros": RouteContract("refugos_registros", "paged_list"),
     "list_production_appointment_work_centers": RouteContract(
         "production_appointment_work_center", "paged_list"

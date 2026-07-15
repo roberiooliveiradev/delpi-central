@@ -6,6 +6,7 @@ from fastapi import Query
 
 from app.application.dto.refugos.refugos_query_request import RefugosQueryRequest
 from app.application.dto.refugos.refugos_registros_request import RefugosRegistrosRequest
+from app.application.dto.refugos.refugos_serie_request import RefugosSerieRequest
 from app.core.responses import error_response
 from app.infrastructure.persistence.totvs.refugos.refugos_query_settings import (
     DEFAULT_PAGE,
@@ -42,6 +43,31 @@ def build_refugos_query_request(
         motivo=motivo,
         recurso=recurso,
         limit=limit,
+    )
+
+
+def build_refugos_serie_request(
+    *,
+    filial: str,
+    data_inicio: Optional[str] = None,
+    data_fim: Optional[str] = None,
+    granularity: Optional[str] = None,
+    mp: Optional[str] = None,
+    pa: Optional[str] = None,
+    op: Optional[str] = None,
+    motivo: Optional[str] = None,
+    recurso: Optional[str] = None,
+) -> RefugosSerieRequest:
+    return RefugosSerieRequest.from_query(
+        filial=filial,
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        granularity=granularity,
+        mp=mp,
+        pa=pa,
+        op=op,
+        motivo=motivo,
+        recurso=recurso,
     )
 
 
@@ -143,4 +169,10 @@ PAGE_SIZE_QUERY = Query(
     ge=1,
     le=MAX_PAGE_SIZE,
     description="Registros por página (máximo 100).",
+)
+GRANULARITY_QUERY = Query(
+    "auto",
+    alias="granularity",
+    pattern="^(day|month|auto)$",
+    description="Granularidade da série: day, month ou auto (padrão).",
 )

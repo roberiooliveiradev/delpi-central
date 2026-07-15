@@ -46,6 +46,20 @@ class RefugosRepositoryPort(Protocol):
         recurso: str | None = None,
     ) -> list[dict]: ...
 
+    def get_serie(
+        self,
+        *,
+        granularity: str,
+        date_start: str,
+        date_end_exclusive: str,
+        branch: str,
+        mp: str | None = None,
+        pa: str | None = None,
+        op: str | None = None,
+        motivo: str | None = None,
+        recurso: str | None = None,
+    ) -> list[dict]: ...
+
     def get_registros(
         self,
         *,

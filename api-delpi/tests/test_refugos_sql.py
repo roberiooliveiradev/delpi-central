@@ -2,6 +2,7 @@ from app.infrastructure.persistence.totvs.refugos.refugos_sql import (
     build_base_where,
     build_ranking_query,
     build_resumo_query,
+    build_serie_query,
 )
 
 
@@ -54,3 +55,28 @@ def test_ranking_motivo_groups_by_cyo_label() -> None:
     assert "ORDER BY value DESC" in query
     assert "TOP 10" in query
     assert params[0] == "R"
+
+
+def test_serie_day_groups_by_yyyymmdd() -> None:
+    query, params = build_serie_query(
+        granularity="day",
+        date_start="20260701",
+        date_end_exclusive="20260716",
+        branch="01",
+    )
+
+    assert "LEFT(LTRIM(RTRIM(BC.BC_DATA)), 8) AS bucket" in query
+    assert "GROUP BY LEFT(LTRIM(RTRIM(BC.BC_DATA)), 8)" in query
+    assert "ORDER BY bucket ASC" in query
+    assert params == ("R", "01", "20260701", "20260716")
+
+
+def test_serie_month_groups_by_yyyymm() -> None:
+    query, _params = build_serie_query(
+        granularity="month",
+        date_start="20260101",
+        date_end_exclusive="20260716",
+        branch="02",
+    )
+
+    assert "LEFT(LTRIM(RTRIM(BC.BC_DATA)), 6) AS bucket" in query

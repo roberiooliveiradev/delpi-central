@@ -21,3 +21,7 @@ RANKING_DIMENSIONS = frozenset(
         "colaborador",
     }
 )
+
+SERIE_GRANULARITIES = frozenset({"day", "month", "auto"})
+# Períodos > N dias usam agregação mensal quando granularity=auto.
+SERIE_AUTO_DAY_MAX_DAYS = 62

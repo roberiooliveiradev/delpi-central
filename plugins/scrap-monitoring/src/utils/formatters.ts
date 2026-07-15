@@ -48,9 +48,39 @@ export function formatPercent(value: number | null | undefined): string {
   return `${decimalFormatter.format(value)}%`;
 }
 
+export function formatSharePercent(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "0%";
+  return `${value.toLocaleString("pt-BR", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })}%`;
+}
+
 export function formatShortLabel(value: string | null | undefined, maxLength = 18): string {
   const text = (value ?? "").trim();
   if (!text) return "—";
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength - 1)}…`;
+}
+
+/** Rótulo de ranking: código + descrição truncada (preferido nos eixos). */
+export function formatRankingAxisLabel(
+  code: string | null | undefined,
+  label: string | null | undefined,
+  maxLength = 36,
+): string {
+  const codeText = (code ?? "").trim();
+  const desc = (label ?? "").trim();
+  if (codeText && desc && desc !== codeText) {
+    return formatShortLabel(`${codeText} — ${desc}`, maxLength);
+  }
+  return formatShortLabel(codeText || desc, maxLength);
+}
+
+export function formatMotivoLegendLabel(
+  name: string,
+  value: number,
+  sharePct: number,
+): string {
+  return `${formatShortLabel(name, 28)} · ${formatCurrencyBrl(value)} (${formatSharePercent(sharePct)})`;
 }

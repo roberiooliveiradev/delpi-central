@@ -33,6 +33,7 @@ def test_router_exposes_all_endpoints(refugos_client: TestClient) -> None:
     assert "/refugos/health" in paths
     assert "/refugos/resumo" in paths
     assert "/refugos/rankings" in paths
+    assert "/refugos/serie" in paths
     assert "/refugos/registros" in paths
     assert "/refugos/filtros" in paths
 
@@ -96,6 +97,32 @@ def test_rankings_returns_playbook_meta(
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "get_refugos_rankings"
     assert body["meta"]["entity"] == "refugos_rankings"
+    assert body["meta"]["shape"] == "playbook_report"
+
+
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_serie_use_case"
+)
+def test_serie_returns_playbook_meta(
+    mock_builder, _mock_branch, refugos_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "granularity": "day",
+        "points": [{"date": "2026-07-13", "label": "13/07/2026", "value": 10.0}],
+    }
+    mock_builder.return_value = use_case
+
+    response = refugos_client.get("/refugos/serie", params={"filial": "01"})
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_refugos_serie"
+    assert body["meta"]["entity"] == "refugos_serie"
     assert body["meta"]["shape"] == "playbook_report"
 
 

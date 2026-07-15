@@ -59,6 +59,20 @@ export type ScrapRankingsData = {
   items: ScrapRankingItem[];
 };
 
+export type ScrapSeriePoint = {
+  date: string;
+  label: string;
+  value: number;
+  quantity: number;
+  occurrenceCount: number;
+};
+
+export type ScrapSerieData = {
+  periodo: ScrapPeriodo;
+  granularity: "day" | "month";
+  points: ScrapSeriePoint[];
+};
+
 export type ScrapRegistroItem = {
   filial: string;
   dataPerda: string;

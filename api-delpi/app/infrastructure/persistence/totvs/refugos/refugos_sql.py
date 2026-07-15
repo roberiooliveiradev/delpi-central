@@ -295,6 +295,53 @@ def build_resumo_query(
     return sql, tuple(params)
 
 
+def build_serie_query(
+    *,
+    granularity: str,
+    date_start: str,
+    date_end_exclusive: str,
+    branch: str,
+    mp: str | None = None,
+    pa: str | None = None,
+    op: str | None = None,
+    motivo: str | None = None,
+    recurso: str | None = None,
+) -> tuple[str, tuple]:
+    """Série temporal de valor/qtd/ocorrências por dia (YYYYMMDD) ou mês (YYYYMM)."""
+    normalized = (granularity or "").strip().lower()
+    if normalized not in {"day", "month"}:
+        raise ValueError(f"granularity inválida para SQL: {granularity}")
+
+    bucket_len = 8 if normalized == "day" else 6
+    bucket_expr = f"LEFT(LTRIM(RTRIM(BC.BC_DATA)), {bucket_len})"
+
+    where, params = build_base_where(
+        date_start=date_start,
+        date_end_exclusive=date_end_exclusive,
+        branch=branch,
+        mp=mp,
+        pa=pa,
+        op=op,
+        motivo=motivo,
+        recurso=recurso,
+    )
+
+    sql = f"""
+    SELECT
+        {bucket_expr} AS bucket,
+        SUM({_VALOR_EXPR}) AS total_valor,
+        SUM(BC.BC_QUANT) AS total_quantidade,
+        COUNT(*) AS ocorrencias
+    {_BASE_FROM}
+    WHERE {where}
+      AND BC.BC_DATA IS NOT NULL
+      AND LTRIM(RTRIM(BC.BC_DATA)) <> ''
+    GROUP BY {bucket_expr}
+    ORDER BY bucket ASC
+    """
+    return sql, tuple(params)
+
+
 def build_ranking_query(
     *,
     dimension: str,

@@ -21,6 +21,7 @@ Base: `/apps/api-delpi` (gateway). Header: `X-Delpi-Caller-App: scrap-monitoring
 | Endpoint | Uso |
 |----------|-----|
 | `GET /refugos/resumo` | KPIs valor dia / mês / período |
+| `GET /refugos/serie` | Evolução temporal (dia/mês) |
 | `GET /refugos/rankings?dimension=…` | Top N (motivo, MP, PA, CT, colaborador) |
 | `GET /refugos/registros` | Tabela do acompanhamento |
 | `GET /refugos/filtros` | Opções MP/PA/OP/motivo |
