@@ -42,6 +42,21 @@ describe("SimpleKpiCard", () => {
     expect(screen.getByText("…")).toBeTruthy();
   });
 
+  it("exibe HelpTooltip quando titleHint é informado", () => {
+    render(
+      <SimpleKpiCard
+        title="Qtd. perdida"
+        titleHint="Quantidade perdida apontada em H6_QTDPERD."
+        value="10"
+        icon={<span data-testid="icon">x</span>}
+        classNames={simpleKpiCardBemClasses("pa", "kpi-card", { withBody: true })}
+      />,
+    );
+
+    expect(screen.getByLabelText("Ajuda: Qtd. perdida")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-kpi-title__help")).toBeTruthy();
+  });
+
   it("suporta body, subtitle e variant", () => {
     const classNames = simpleKpiCardBemClasses("ie", "kpi-card", {
       withBody: true,

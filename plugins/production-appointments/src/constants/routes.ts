@@ -1,24 +1,22 @@
 import { PRODUCTION_APPOINTMENTS_BASE_PATH, type BranchRouteCode } from "./branches";
 
-export type AppointmentsView = "dashboard" | "op-detail";
+export type AppointmentsView = "dashboard" | "op-detail" | "ct-detail";
 
 export type ParsedAppointmentsRoute = {
   view: AppointmentsView;
   branchRoute: BranchRouteCode;
   productionOrder?: string;
+  workCenter?: string;
 };
 
 export function branchHomePath(branchRoute: BranchRouteCode): string {
   return `${PRODUCTION_APPOINTMENTS_BASE_PATH}/${branchRoute.toLowerCase()}`;
 }
 
-export function buildOpDetailPath(
-  branchRoute: BranchRouteCode,
-  productionOrder: string,
+function buildDetailPathWithPeriod(
+  base: string,
   period?: { dateStart: string; dateEnd: string },
 ): string {
-  const encoded = encodeURIComponent(String(productionOrder).trim());
-  const base = `${branchHomePath(branchRoute)}/op/${encoded}`;
   if (!period?.dateStart || !period?.dateEnd) return base;
   const params = new URLSearchParams({
     date_start: period.dateStart,
@@ -27,19 +25,46 @@ export function buildOpDetailPath(
   return `${base}?${params.toString()}`;
 }
 
+export function buildOpDetailPath(
+  branchRoute: BranchRouteCode,
+  productionOrder: string,
+  period?: { dateStart: string; dateEnd: string },
+): string {
+  const encoded = encodeURIComponent(String(productionOrder).trim());
+  return buildDetailPathWithPeriod(`${branchHomePath(branchRoute)}/op/${encoded}`, period);
+}
+
+export function buildCtDetailPath(
+  branchRoute: BranchRouteCode,
+  workCenter: string,
+  period?: { dateStart: string; dateEnd: string },
+): string {
+  const encoded = encodeURIComponent(String(workCenter).trim());
+  return buildDetailPathWithPeriod(`${branchHomePath(branchRoute)}/ct/${encoded}`, period);
+}
+
 export function parseAppointmentsPath(pathname: string): ParsedAppointmentsRoute {
   const normalized =
     pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname || "";
   const base = PRODUCTION_APPOINTMENTS_BASE_PATH.replace(/\//g, "\\/");
-  const detailMatch = normalized.match(
-    new RegExp(`^${base}/(sc|es)/op/([^/?#]+)$`, "i"),
-  );
-  if (detailMatch) {
-    const branchRoute = detailMatch[1].toUpperCase() === "ES" ? "ES" : "SC";
+
+  const ctMatch = normalized.match(new RegExp(`^${base}/(sc|es)/ct/([^/?#]+)$`, "i"));
+  if (ctMatch) {
+    const branchRoute = ctMatch[1].toUpperCase() === "ES" ? "ES" : "SC";
+    return {
+      view: "ct-detail",
+      branchRoute,
+      workCenter: decodeURIComponent(ctMatch[2]),
+    };
+  }
+
+  const opMatch = normalized.match(new RegExp(`^${base}/(sc|es)/op/([^/?#]+)$`, "i"));
+  if (opMatch) {
+    const branchRoute = opMatch[1].toUpperCase() === "ES" ? "ES" : "SC";
     return {
       view: "op-detail",
       branchRoute,
-      productionOrder: decodeURIComponent(detailMatch[2]),
+      productionOrder: decodeURIComponent(opMatch[2]),
     };
   }
 

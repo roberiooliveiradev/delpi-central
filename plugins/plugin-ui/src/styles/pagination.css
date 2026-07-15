@@ -16,6 +16,22 @@
   box-sizing: border-box;
 }
 
+/** Emenda o footer de paginação à caixa bordada da DataTable (layout section). */
+.delpi-ui-table-wrap--section:has(+ .delpi-ui-pagination) {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.delpi-ui-table-wrap--section + .delpi-ui-pagination {
+  margin-top: 0;
+  padding: 12px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-top: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: 0 0 var(--delpi-ui-control-radius, 12px) var(--delpi-ui-control-radius, 12px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
 .delpi-ui-pagination__controls {
   display: flex;
   flex-direction: row;
@@ -30,8 +46,20 @@
 .delpi-ui-pagination__action {
   display: inline-flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
+  width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.delpi-ui-pagination__action-help,
+.delpi-ui-pagination__jump-help,
+.delpi-ui-pagination__help {
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
 }
 
@@ -47,6 +75,7 @@
 .delpi-ui-pagination__page {
   min-width: 34px;
   height: 34px;
+  width: auto;
   padding: 0 8px;
   border-radius: 10px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
@@ -60,6 +89,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .delpi-ui-pagination__page:hover:not(:disabled) {
@@ -89,6 +119,7 @@
 .delpi-ui-pagination__jump {
   display: inline-flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
@@ -96,6 +127,8 @@
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
   position: relative;
   min-height: 34px;
+  width: max-content;
+  max-width: 100%;
 }
 
 .delpi-ui-pagination__jump-field {
@@ -150,11 +183,13 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  white-space: nowrap;
   margin: 0;
   font-size: 13px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
   text-align: center;
+  max-width: 100%;
 }
 
 /* CompactPagination — info à esquerda, ações à direita */
@@ -179,6 +214,7 @@
 .delpi-ui-pagination__actions {
   display: inline-flex;
   flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
@@ -210,6 +246,8 @@
 
 .delpi-ui-ghost-btn {
   min-height: 36px;
+  width: auto;
+  max-width: 100%;
   border-radius: 12px;
   padding: 8px 14px;
   display: inline-flex;
@@ -225,6 +263,7 @@
   font-weight: 600;
   white-space: nowrap;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .delpi-ui-ghost-btn:hover:not(:disabled) {
@@ -273,6 +312,8 @@
 
 .delpi-ui-table-page-size__help {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
 }
 
 

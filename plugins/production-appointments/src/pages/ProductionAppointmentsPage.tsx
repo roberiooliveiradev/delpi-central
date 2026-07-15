@@ -12,7 +12,7 @@ import {
   BRANCH_ROUTE_LABELS,
   type BranchRouteCode,
 } from "../constants/branches";
-import { buildOpDetailPath } from "../constants/routes";
+import { buildCtDetailPath, buildOpDetailPath } from "../constants/routes";
 import { useAppointmentsDashboard } from "../hooks/useAppointmentsDashboard";
 import { useAppointmentsTables } from "../hooks/useAppointmentsTables";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
@@ -142,6 +142,16 @@ function ProductionAppointmentsContent({
     );
   };
 
+  const handleOpenCt = (workCenter: string) => {
+    if (!appliedFilters) return;
+    navigateAppointments(
+      buildCtDetailPath(branchRoute, workCenter, {
+        dateStart: appliedFilters.dateStart,
+        dateEnd: appliedFilters.dateEnd,
+      }),
+    );
+  };
+
   const summary = dashboard.data.summary;
   const hasDashboardData = summary !== null;
   const showInitialLoading = dashboard.loading && !hasDashboardData;
@@ -251,6 +261,7 @@ function ProductionAppointmentsContent({
             onListPageSizeChange={setListPageSize}
             onByOpPageSizeChange={setByOpPageSize}
             onOpenOp={handleOpenOp}
+            onOpenCt={handleOpenCt}
           />
         </>
       ) : null}

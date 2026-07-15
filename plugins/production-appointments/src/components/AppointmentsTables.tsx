@@ -67,6 +67,7 @@ type AppointmentsTablesProps = {
   onListPageSizeChange: (pageSize: number) => void;
   onByOpPageSizeChange: (pageSize: number) => void;
   onOpenOp: (productionOrder: string) => void;
+  onOpenCt: (workCenter: string) => void;
 };
 
 type SortDir = "asc" | "desc";
@@ -127,6 +128,7 @@ export function AppointmentsTables({
   onListPageSizeChange,
   onByOpPageSizeChange,
   onOpenOp,
+  onOpenCt,
 }: AppointmentsTablesProps) {
   const [viewMode, setViewMode] = useState<AppointmentsTableViewMode>("appointments");
   const [exporting, setExporting] = useState(false);
@@ -143,6 +145,7 @@ export function AppointmentsTables({
       {
         key: "work_center",
         header: "CT",
+        headerHint: PA_HELP_TOOLTIPS.columns.workCenter,
         sortable: true,
         sortValue: (row) => row.work_center,
         render: (row) => (
@@ -157,6 +160,7 @@ export function AppointmentsTables({
       {
         key: "work_center_name",
         header: "Nome",
+        headerHint: PA_HELP_TOOLTIPS.columns.workCenterName,
         sortable: true,
         sortValue: (row) => row.work_center_name || "",
         className: "pa-table__col--wide",
@@ -165,6 +169,7 @@ export function AppointmentsTables({
       {
         key: "appointment_count",
         header: "Apont.",
+        headerHint: PA_HELP_TOOLTIPS.columns.appointmentCount,
         sortable: true,
         sortValue: (row) => row.appointment_count,
         className: "pa-table__col--numeric",
@@ -173,6 +178,7 @@ export function AppointmentsTables({
       {
         key: "qty_produced",
         header: "Produzida",
+        headerHint: PA_HELP_TOOLTIPS.columns.qtyProduced,
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
@@ -181,6 +187,7 @@ export function AppointmentsTables({
       {
         key: "qty_lost",
         header: "Perdida",
+        headerHint: PA_HELP_TOOLTIPS.columns.qtyLost,
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",
@@ -189,6 +196,7 @@ export function AppointmentsTables({
       {
         key: "op_count",
         header: "OPs",
+        headerHint: PA_HELP_TOOLTIPS.columns.opCount,
         sortable: true,
         sortValue: (row) => row.op_count,
         className: "pa-table__col--numeric",
@@ -203,6 +211,7 @@ export function AppointmentsTables({
       {
         key: "appointment_date",
         header: "Data",
+        headerHint: PA_HELP_TOOLTIPS.columns.appointmentDate,
         sortable: true,
         sortValue: (row) => row.appointment_date,
         render: (row) => formatProtheusDate(row.appointment_date),
@@ -210,6 +219,7 @@ export function AppointmentsTables({
       {
         key: "production_order",
         header: "OP",
+        headerHint: PA_HELP_TOOLTIPS.columns.productionOrder,
         sortable: true,
         sortValue: (row) => row.production_order,
         render: (row) => row.production_order,
@@ -217,6 +227,7 @@ export function AppointmentsTables({
       {
         key: "product",
         header: "Produto",
+        headerHint: PA_HELP_TOOLTIPS.columns.product,
         sortable: true,
         sortValue: (row) => row.product,
         className: "pa-table__col--wide",
@@ -226,6 +237,7 @@ export function AppointmentsTables({
       {
         key: "work_center",
         header: "CT",
+        headerHint: PA_HELP_TOOLTIPS.columns.workCenter,
         sortable: true,
         sortValue: (row) => row.work_center,
         className: "pa-table__col--wide",
@@ -235,6 +247,7 @@ export function AppointmentsTables({
       {
         key: "qty_produced",
         header: "Produzida",
+        headerHint: PA_HELP_TOOLTIPS.columns.qtyProduced,
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
@@ -243,6 +256,7 @@ export function AppointmentsTables({
       {
         key: "qty_lost",
         header: "Perdida",
+        headerHint: PA_HELP_TOOLTIPS.columns.qtyLost,
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",
@@ -257,6 +271,7 @@ export function AppointmentsTables({
       {
         key: "production_order",
         header: "OP",
+        headerHint: PA_HELP_TOOLTIPS.columns.productionOrder,
         sortable: true,
         sortValue: (row) => row.production_order,
         render: (row) => row.production_order,
@@ -264,6 +279,7 @@ export function AppointmentsTables({
       {
         key: "product",
         header: "Produto",
+        headerHint: PA_HELP_TOOLTIPS.columns.product,
         sortable: true,
         sortValue: (row) => row.product,
         className: "pa-table__col--wide",
@@ -273,6 +289,7 @@ export function AppointmentsTables({
       {
         key: "appointment_count",
         header: "Apont.",
+        headerHint: PA_HELP_TOOLTIPS.columns.appointmentCount,
         sortable: true,
         sortValue: (row) => row.appointment_count,
         className: "pa-table__col--numeric",
@@ -281,6 +298,7 @@ export function AppointmentsTables({
       {
         key: "work_center_count",
         header: "CTs",
+        headerHint: PA_HELP_TOOLTIPS.columns.workCenterCount,
         sortable: true,
         sortValue: (row) => row.work_center_count,
         className: "pa-table__col--numeric",
@@ -289,6 +307,7 @@ export function AppointmentsTables({
       {
         key: "qty_produced",
         header: "Produzida",
+        headerHint: PA_HELP_TOOLTIPS.columns.qtyProduced,
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
@@ -297,6 +316,7 @@ export function AppointmentsTables({
       {
         key: "period",
         header: "Período",
+        headerHint: PA_HELP_TOOLTIPS.columns.period,
         sortable: true,
         sortValue: (row) => row.first_date,
         render: (row) =>
@@ -394,6 +414,7 @@ export function AppointmentsTables({
           defaultSortKey={ctSortKey ?? "qty_produced"}
           defaultSortDirection={ctSortDir}
           headerActions={exportAction}
+          onRowClick={(row) => onOpenCt(row.work_center)}
           serverSort={{
             sortKey: ctSortKey,
             sortDirection: ctSortDir,

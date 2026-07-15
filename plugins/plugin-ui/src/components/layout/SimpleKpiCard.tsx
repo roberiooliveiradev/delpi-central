@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { HelpTooltip } from "../help/HelpTooltip";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type SimpleKpiCardClassNames = {
@@ -8,6 +9,7 @@ export type SimpleKpiCardClassNames = {
   header?: string;
   body?: string;
   title: string;
+  titleHelp?: string;
   value: string;
   valueDanger?: string;
   subtitle?: string;
@@ -17,6 +19,8 @@ export type SimpleKpiCardLayout = "iconStart" | "iconEnd";
 
 export type SimpleKpiCardProps = {
   title: string;
+  /** Ajuda no ícone (?) ao lado do título (HelpTooltip do plugin-ui). */
+  titleHint?: string;
   value: string;
   icon: ReactNode;
   loading?: boolean;
@@ -49,6 +53,7 @@ export function simpleKpiCardBemClasses(
     header: options?.layout === "iconEnd" ? pair(`${card}__header`, `${ui}__header`) : undefined,
     body: options?.withBody ? pair(`${card}__body`, `${ui}__body`) : undefined,
     title: pair(`${card}__title`, "delpi-ui-kpi-title"),
+    titleHelp: pair(`${card}__title-help`, "delpi-ui-kpi-title__help"),
     value: pair(`${card}__value`, "delpi-ui-kpi-value"),
     valueDanger: pair(`${card}__value--danger`, "delpi-ui-kpi-value--danger"),
     subtitle: options?.withSubtitle
@@ -168,6 +173,7 @@ export function createKaizenKpiCard(prefix = "kz") {
 
 export function SimpleKpiCard({
   title,
+  titleHint,
   value,
   icon,
   loading = false,
@@ -187,7 +193,16 @@ export function SimpleKpiCard({
 
   const content = (
     <>
-      <p className={classNames.title}>{title}</p>
+      <p className={classNames.title}>
+        {title}
+        {titleHint ? (
+          <HelpTooltip
+            content={titleHint}
+            ariaLabel={`Ajuda: ${title}`}
+            className={classNames.titleHelp}
+          />
+        ) : null}
+      </p>
       <ValueTag className={valueClassName}>{loading ? "…" : value}</ValueTag>
       {subtitle && classNames.subtitle ? (
         <span className={classNames.subtitle}>{subtitle}</span>

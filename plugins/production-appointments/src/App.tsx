@@ -4,6 +4,7 @@ import { configureHttpClient } from "./api/httpClient";
 import { totvsBranchFromRoute } from "./constants/branches";
 import { parseAppointmentsPath } from "./constants/routes";
 import { useProductionAppointmentsRouterPath } from "./hooks/useProductionAppointmentsRouterPath";
+import { CtDetailPage } from "./pages/CtDetailPage";
 import { OpDetailPage } from "./pages/OpDetailPage";
 import { ProductionAppointmentsPage } from "./pages/ProductionAppointmentsPage";
 
@@ -18,7 +19,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   const pathname = useProductionAppointmentsRouterPath(pathnameFromHost);
   const route = parseAppointmentsPath(pathname);
   const showDashboard = route.view === "dashboard";
-  const showDetail = route.view === "op-detail" && Boolean(route.productionOrder);
+  const showOpDetail = route.view === "op-detail" && Boolean(route.productionOrder);
+  const showCtDetail = route.view === "ct-detail" && Boolean(route.workCenter);
   const totvsBranch = totvsBranchFromRoute(route.branchRoute);
 
   const [dashboardMounted, setDashboardMounted] = useState(showDashboard);
@@ -39,11 +41,15 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
         </div>
       ) : null}
 
-      {showDetail && route.productionOrder ? (
+      {showOpDetail && route.productionOrder ? (
         <OpDetailPage
           branchRoute={route.branchRoute}
           productionOrder={route.productionOrder}
         />
+      ) : null}
+
+      {showCtDetail && route.workCenter ? (
+        <CtDetailPage branchRoute={route.branchRoute} workCenter={route.workCenter} />
       ) : null}
     </div>
   );

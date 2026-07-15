@@ -15,6 +15,7 @@ import type { BranchRouteCode } from "../constants/branches";
 import { BRANCH_ROUTE_LABELS, totvsBranchFromRoute } from "../constants/branches";
 import { readDetailPeriodFromUrl } from "../constants/routes";
 import { createDefaultFilterFormState } from "../utils/dateRange";
+import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   formatDatePtBr,
   formatInteger,
@@ -94,6 +95,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
       {
         key: "appointment_date",
         header: "Data",
+        headerHint: PA_HELP_TOOLTIPS.columns.appointmentDate,
         sortable: true,
         sortValue: (row) => row.appointment_date,
         render: (row) => formatProtheusDate(row.appointment_date),
@@ -101,6 +103,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
       {
         key: "product",
         header: "Produto",
+        headerHint: PA_HELP_TOOLTIPS.columns.product,
         sortable: true,
         sortValue: (row) => row.product,
         render: (row) =>
@@ -109,6 +112,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
       {
         key: "work_center",
         header: "CT",
+        headerHint: PA_HELP_TOOLTIPS.columns.workCenter,
         sortable: true,
         sortValue: (row) => row.work_center,
         render: (row) =>
@@ -117,6 +121,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
       {
         key: "qty_produced",
         header: "Produzida",
+        headerHint: PA_HELP_TOOLTIPS.columns.qtyProduced,
         sortable: true,
         sortValue: (row) => row.qty_produced,
         className: "pa-table__col--numeric",
@@ -125,6 +130,7 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
       {
         key: "qty_lost",
         header: "Perdida",
+        headerHint: PA_HELP_TOOLTIPS.columns.qtyLost,
         sortable: true,
         sortValue: (row) => row.qty_lost,
         className: "pa-table__col--numeric",

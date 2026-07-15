@@ -31,8 +31,13 @@ describe("kits DataTable/Pagination — classes delpi-ui", () => {
     const { pagination, tablePageSize } = paginationBemClasses("dc");
     expect(pagination.root).toContain("delpi-ui-pagination");
     expect(pagination.controls).toContain("delpi-ui-pagination__controls");
+    expect(pagination.action).toContain("delpi-ui-pagination__action");
+    expect(pagination.actionHelp).toContain("delpi-ui-pagination__action-help");
+    expect(pagination.infoHelp).toContain("delpi-ui-pagination__help");
+    expect(pagination.jumpHelp).toContain("delpi-ui-pagination__jump-help");
     expect(pagination.ghostBtn).toContain("delpi-ui-ghost-btn");
     expect(tablePageSize.root).toContain("delpi-ui-table-page-size");
+    expect(tablePageSize.help).toContain("delpi-ui-table-page-size__help");
   });
 
   it("DataTableSection toolbar/search usam delpi-ui-*", () => {

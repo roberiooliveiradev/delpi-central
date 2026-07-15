@@ -37,7 +37,7 @@ Alinhado ao padrão canônico de [controle-retrabalhos](../controle-retrabalhos/
 
 - Factories: header, KPI, ChartCard, filtros, `createDashboardDataTableKit`, detalhe e Excel
 - **CSS estrutural** de DataTable / Pagination / DetailCard vive em `@delpi/plugin-ui/styles` (`data-table.css`, `pagination.css`, `detail-card.css`) — o MFE só aplica tokens `--delpi-ui-*` e branding
-- Filtros auto-aplicados; detalhe da OP em `/apps/production-appointments/{sc|es}/op/:op`
+- Filtros auto-aplicados; detalhe da OP em `/apps/production-appointments/{sc|es}/op/:op`; detalhe do CT em `/apps/production-appointments/{sc|es}/ct/:ct`
 - Ajuda em `src/content/helpTooltips.ts`
 
 ## Dev
