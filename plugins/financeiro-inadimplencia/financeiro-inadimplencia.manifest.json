@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "financeiro-inadimplencia",
+  "name": "Indicador de Inadimplência",
+  "description": "Acompanhe a pontualidade dos recebimentos e identifique clientes e títulos com maior impacto financeiro.",
+  "category": "financeiro",
+  "icon": "wallet-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/financeiro-inadimplencia",
+  "entry": "/apps/financeiro-inadimplencia/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "financeiro-inadimplencia.access",
+      "name": "Acessar Indicador de Inadimplência",
+      "description": "Permite abrir o app de inadimplência financeira.",
+      "module": "financeiro-inadimplencia"
+    },
+    {
+      "code": "financeiro-inadimplencia.view",
+      "name": "Visualizar inadimplência",
+      "description": "Permite consultar resumo, série, faixas, clientes e títulos.",
+      "module": "financeiro-inadimplencia"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/financeiro-inadimplencia",
+      "label": "Inadimplência",
+      "permission": "financeiro-inadimplencia.access",
+      "icon": "wallet-icon",
+      "order": 29,
+      "showInMenu": true,
+      "menuGroup": "Financeiro"
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -71,6 +71,11 @@ FINANCEIRO_CENTRO_CUSTO_ACCESS = "financeiro-centro-custo.access"
 FINANCEIRO_CENTRO_CUSTO_VIEW = "financeiro-centro-custo.view"
 FINANCEIRO_CENTRO_CUSTO_EXPORT = "financeiro-centro-custo.export"
 
+# --- financeiro — inadimplência ---
+# Pendência: cadastrar no RBAC/Keycloak e no manifesto do plugin MFE.
+FINANCEIRO_INADIMPLENCIA_ACCESS = "financeiro-inadimplencia.access"
+FINANCEIRO_INADIMPLENCIA_VIEW = "financeiro-inadimplencia.view"
+
 # --- inspeções de entrada ---
 INSPECOES_ENTRADA_VIEW = "inspecoes-entrada.view"
 INSPECOES_ENTRADA_VIEW_FILIAL_01 = "inspecoes-entrada.view.filial-01"
@@ -248,6 +253,12 @@ FINANCEIRO_CENTRO_CUSTO_EXPORT_PERMISSIONS = [
     FINANCEIRO_CENTRO_CUSTO_ACCESS,
     FINANCEIRO_CENTRO_CUSTO_VIEW,
     FINANCEIRO_CENTRO_CUSTO_EXPORT,
+]
+
+FINANCEIRO_INADIMPLENCIA_READ_PERMISSIONS = [
+    API_DELPI_ACCESS,
+    FINANCEIRO_INADIMPLENCIA_ACCESS,
+    FINANCEIRO_INADIMPLENCIA_VIEW,
 ]
 
 CONTROLE_RETRABALHO_READ_PERMISSIONS = [

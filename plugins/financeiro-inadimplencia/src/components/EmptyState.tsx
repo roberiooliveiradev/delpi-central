@@ -1,0 +1,17 @@
+import {
+  createDashboardEmptyState,
+  createDashboardLoadingState,
+  emptyStatePanelBemClasses,
+  loadingStatePanelBemClasses,
+} from "@delpi/plugin-ui/index";
+
+export const EmptyState = createDashboardEmptyState({
+  classNames: emptyStatePanelBemClasses("fi"),
+  defaultTitle: "Nenhum dado encontrado",
+  defaultMessage: "Ajuste os filtros ou o período para visualizar resultados.",
+});
+
+export const LoadingState = createDashboardLoadingState({
+  classNames: loadingStatePanelBemClasses("fi"),
+  defaultMessage: "Carregando…",
+});
