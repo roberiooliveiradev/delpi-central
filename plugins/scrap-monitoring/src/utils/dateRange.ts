@@ -59,6 +59,39 @@ export function getThisMonthRange(referenceDate = new Date()): {
   };
 }
 
+export function getTodayRange(referenceDate = new Date()): {
+  dataInicio: string;
+  dataFim: string;
+} {
+  const day = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const iso = formatIsoDate(day);
+  return { dataInicio: iso, dataFim: iso };
+}
+
+/** Semana calendário (segunda → hoje), alinhado aos dashboards departamentais. */
+export function getThisWeekRange(referenceDate = new Date()): {
+  dataInicio: string;
+  dataFim: string;
+} {
+  const dataFim = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const day = dataFim.getDay(); // 0=domingo … 6=sábado
+  const daysSinceMonday = day === 0 ? 6 : day - 1;
+  const dataInicio = new Date(dataFim);
+  dataInicio.setDate(dataInicio.getDate() - daysSinceMonday);
+  return {
+    dataInicio: formatIsoDate(dataInicio),
+    dataFim: formatIsoDate(dataFim),
+  };
+}
+
 function parseIsoDate(value: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   if (!match) return null;

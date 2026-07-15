@@ -2,7 +2,7 @@ import type { FilterFormState, ScrapFiltrosData } from "../types/scrap";
 import { validatePeriodRange } from "../utils/dateRange";
 import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
 
-export type QuickRangePreset = "12m" | "6m" | "thisMonth";
+export type QuickRangePreset = "today" | "thisWeek" | "thisMonth" | "6m" | "12m";
 
 type PeriodFiltersProps = {
   filters: FilterFormState;
@@ -131,6 +131,22 @@ export function PeriodFilters({
             Limpar filtros
           </button>
         ) : null}
+        <button
+          type="button"
+          className="sm-btn sm-btn--secondary"
+          onClick={() => onQuickRange("today")}
+          disabled={loading}
+        >
+          Hoje
+        </button>
+        <button
+          type="button"
+          className="sm-btn sm-btn--secondary"
+          onClick={() => onQuickRange("thisWeek")}
+          disabled={loading}
+        >
+          Esta semana
+        </button>
         <button
           type="button"
           className="sm-btn sm-btn--secondary"

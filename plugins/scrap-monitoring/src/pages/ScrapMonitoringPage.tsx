@@ -24,6 +24,8 @@ import {
   getDefaultLast12MonthsRange,
   getDefaultLast6MonthsRange,
   getThisMonthRange,
+  getThisWeekRange,
+  getTodayRange,
   validatePeriodRange,
 } from "../utils/dateRange";
 import { formatDatePtBr } from "../utils/formatters";
@@ -126,11 +128,15 @@ function ScrapMonitoringContent({
   const handleQuickRange = (preset: QuickRangePreset) => {
     const referenceDate = new Date();
     const range =
-      preset === "12m"
-        ? getDefaultLast12MonthsRange(referenceDate)
-        : preset === "6m"
-          ? getDefaultLast6MonthsRange(referenceDate)
-          : getThisMonthRange(referenceDate);
+      preset === "today"
+        ? getTodayRange(referenceDate)
+        : preset === "thisWeek"
+          ? getThisWeekRange(referenceDate)
+          : preset === "12m"
+            ? getDefaultLast12MonthsRange(referenceDate)
+            : preset === "6m"
+              ? getDefaultLast6MonthsRange(referenceDate)
+              : getThisMonthRange(referenceDate);
     setFilters((current) => ({ ...current, ...range }));
   };
 
