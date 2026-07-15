@@ -8,6 +8,7 @@ const DEFAULT_PAGE_SIZE = 25;
 export function useScrapRegistros(
   appliedFilters: ScrapQueryFilters | null,
   page: number,
+  pageSize = DEFAULT_PAGE_SIZE,
 ) {
   const [data, setData] = useState<ScrapRegistrosData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,17 +28,15 @@ export function useScrapRegistros(
     }
 
     const controller = new AbortController();
+    const filters = appliedFilters;
 
     async function run() {
       try {
         setLoading(true);
         setError(null);
-        const result = await fetchScrapRegistros(
-          appliedFilters,
-          page,
-          DEFAULT_PAGE_SIZE,
-          { signal: controller.signal },
-        );
+        const result = await fetchScrapRegistros(filters, page, pageSize, {
+          signal: controller.signal,
+        });
         setData(result);
       } catch (err) {
         if (controller.signal.aborted) return;
@@ -49,7 +48,7 @@ export function useScrapRegistros(
 
     void run();
     return () => controller.abort();
-  }, [appliedFilters, page, reloadKey]);
+  }, [appliedFilters, page, pageSize, reloadKey]);
 
-  return { data, loading, error, reload, pageSize: DEFAULT_PAGE_SIZE };
+  return { data, loading, error, reload, pageSize };
 }

@@ -1,15 +1,30 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 
-import { SCRAP_MONITORING_BASE_PATH } from "../constants/branches";
+function readPathname(): string {
+  if (typeof window === "undefined") return "";
+  return window.location.pathname;
+}
 
 export function useScrapMonitoringRouterPath(pathnameFromHost?: string): string {
-  return useMemo(() => {
-    if (pathnameFromHost && pathnameFromHost.trim()) {
-      return pathnameFromHost;
-    }
-    if (typeof window !== "undefined" && window.location?.pathname) {
-      return window.location.pathname;
-    }
-    return `${SCRAP_MONITORING_BASE_PATH}/sc`;
+  const [pathname, setPathname] = useState(
+    () => pathnameFromHost ?? readPathname(),
+  );
+
+  useEffect(() => {
+    if (!pathnameFromHost) return;
+    setPathname(pathnameFromHost);
   }, [pathnameFromHost]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const syncFromBrowser = () => {
+      setPathname(readPathname());
+    };
+
+    window.addEventListener("popstate", syncFromBrowser);
+    return () => window.removeEventListener("popstate", syncFromBrowser);
+  }, []);
+
+  return pathname;
 }

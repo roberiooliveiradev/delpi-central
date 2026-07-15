@@ -11,7 +11,6 @@ type PeriodFiltersProps = {
   validationError: string | null;
   loading?: boolean;
   onChange: (patch: Partial<FilterFormState>) => void;
-  onApply: () => void;
   onQuickRange: (preset: QuickRangePreset) => void;
   onClearOptional?: () => void;
 };
@@ -28,7 +27,6 @@ export function PeriodFilters({
   validationError,
   loading = false,
   onChange,
-  onApply,
   onQuickRange,
   onClearOptional,
 }: PeriodFiltersProps) {
@@ -123,14 +121,6 @@ export function PeriodFilters({
         </p>
       ) : null}
       <div className="sm-filter-bar__actions">
-        <button
-          type="button"
-          className="sm-btn sm-btn--primary"
-          onClick={onApply}
-          disabled={loading || Boolean(localError)}
-        >
-          Aplicar filtros
-        </button>
         {onClearOptional ? (
           <button
             type="button"

@@ -10,6 +10,7 @@ Painel multi-filial (SC/ES) de refugos em R$, consumindo a API **`/refugos`** da
 |------|-----------|--------------|
 | `/apps/scrap-monitoring/sc` | `scrap-monitoring.view.filial-sc` | `01` |
 | `/apps/scrap-monitoring/es` | `scrap-monitoring.view.filial-es` | `02` |
+| `/apps/scrap-monitoring/{sc\|es}/registro?…` | mesma da filial | detalhe do registro |
 
 Permissão ampla (ambas filiais): `scrap-monitoring.view` · acesso ao app: `scrap-monitoring.access`.
 
@@ -28,7 +29,7 @@ Doc completa: [api-delpi/docs/api/scrap-monitoring.md](../../api-delpi/docs/api/
 
 ## Estado desta entrega
 
-Painel MFE alinhado a `@delpi/plugin-ui` (PageHeader, KPI, FilterBar/Select, ChartCard, estados, paginação) com KPIs, rankings e tabela. Filtros: filial SC/ES, período, MP, PA, OP, motivo e centro de trabalho.
+Painel MFE alinhado a `@delpi/plugin-ui` e ao padrão visual do dashboard commercial: canvas full-bleed, filtros autoaplicados (debounce), legenda no gráfico de Motivo, `DataTableSection` com clique abrindo detalhe e exportação Excel.
 
 ## Dev
 

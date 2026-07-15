@@ -3,6 +3,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -81,12 +82,26 @@ function MotivoPie({ items }: { items: ScrapRankingItem[] }) {
   return (
     <ResponsiveContainer width="100%" height={CHART_RANKING_HEIGHT}>
       <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={95} paddingAngle={2}>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          innerRadius={55}
+          outerRadius={95}
+          paddingAngle={2}
+        >
           {data.map((_, index) => (
             <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
           ))}
         </Pie>
         <Tooltip content={<CurrencyTooltip />} />
+        <Legend
+          layout="vertical"
+          align="right"
+          verticalAlign="middle"
+          wrapperStyle={{ fontSize: 12, maxWidth: 160 }}
+          formatter={(value) => formatShortLabel(String(value), 22)}
+        />
       </PieChart>
     </ResponsiveContainer>
   );

@@ -1,92 +1,151 @@
-import type { ScrapRegistroItem } from "../types/scrap";
+import { useCallback, useMemo, useState } from "react";
+
+import { fetchAllScrapRegistros } from "../api/fetchAllScrapRegistros";
+import type { ScrapQueryFilters, ScrapRegistroItem } from "../types/scrap";
+import { exportRegistrosExcel } from "../utils/exportRegistros";
 import {
   formatCurrencyBrl,
   formatDatePtBr,
   formatQuantity,
 } from "../utils/formatters";
-import { Pagination } from "./Pagination";
+import {
+  DataTableSection,
+  type DataTableColumn,
+} from "./dataTableUi";
+import { ExportExcelButton } from "./ExportExcelButton";
 
 type RegistrosTableProps = {
   items: ScrapRegistroItem[];
+  filters: ScrapQueryFilters;
   loading?: boolean;
+  refreshing?: boolean;
   page: number;
   pageSize: number;
-  totalPages: number;
   total: number;
   onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  onRowClick: (item: ScrapRegistroItem) => void;
+  onExportError?: (message: string) => void;
 };
 
 export function RegistrosTable({
   items,
+  filters,
   loading = false,
+  refreshing = false,
   page,
   pageSize,
-  totalPages,
   total,
   onPageChange,
+  onPageSizeChange,
+  onRowClick,
+  onExportError,
 }: RegistrosTableProps) {
+  const [exporting, setExporting] = useState(false);
+
+  const columns = useMemo<DataTableColumn<ScrapRegistroItem>[]>(
+    () => [
+      {
+        key: "data",
+        header: "Data",
+        render: (row) => formatDatePtBr(row.dataPerda),
+      },
+      {
+        key: "op",
+        header: "OP",
+        render: (row) => row.op || "—",
+      },
+      {
+        key: "pa",
+        header: "PA",
+        render: (row) => row.pa || "—",
+      },
+      {
+        key: "mp",
+        header: "MP",
+        render: (row) => row.mp || "—",
+      },
+      {
+        key: "descricao",
+        header: "Descrição",
+        className: "sm-table__col--wide",
+        render: (row) => row.descricao || "—",
+      },
+      {
+        key: "motivo",
+        header: "Motivo",
+        render: (row) => row.motivo || row.motivoCodigo || "—",
+      },
+      {
+        key: "ct",
+        header: "CT",
+        render: (row) => row.centroTrabalho || "—",
+      },
+      {
+        key: "colaborador",
+        header: "Colaborador",
+        render: (row) => row.nomeOperador || row.codigoOperador || "—",
+      },
+      {
+        key: "qtd",
+        header: "Qtd",
+        className: "sm-table__col--numeric",
+        render: (row) =>
+          `${formatQuantity(row.quantidade)}${row.um ? ` ${row.um}` : ""}`,
+      },
+      {
+        key: "valor",
+        header: "Valor",
+        className: "sm-table__col--numeric",
+        render: (row) => formatCurrencyBrl(row.valor),
+      },
+    ],
+    [],
+  );
+
+  const handleExportExcel = useCallback(async () => {
+    if (exporting || total <= 0) return;
+    setExporting(true);
+    try {
+      const allItems = await fetchAllScrapRegistros(filters);
+      await exportRegistrosExcel(allItems, filters);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Não foi possível exportar o Excel.";
+      onExportError?.(message);
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting, filters, onExportError, total]);
+
   return (
-    <section className="sm-table-card sm-card">
-      <header className="sm-table-card__header">
-        <h2 className="sm-table-card__title">Registros de refugo</h2>
-        <p className="sm-table-card__meta">
-          {loading ? "Carregando…" : `${total} registro(s)`}
-        </p>
-      </header>
-      <div className="sm-table-wrap">
-        <table className="sm-table">
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>OP</th>
-              <th>PA</th>
-              <th>MP</th>
-              <th>Descrição</th>
-              <th>Motivo</th>
-              <th>CT</th>
-              <th>Colaborador</th>
-              <th className="sm-table__col--numeric">Qtd</th>
-              <th className="sm-table__col--numeric">Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 && !loading ? (
-              <tr>
-                <td colSpan={10} className="sm-table__empty">
-                  Nenhum registro no período.
-                </td>
-              </tr>
-            ) : (
-              items.map((item, index) => (
-                <tr key={`${item.op}-${item.mp}-${item.dataPerda}-${index}`}>
-                  <td>{formatDatePtBr(item.dataPerda)}</td>
-                  <td>{item.op || "—"}</td>
-                  <td>{item.pa || "—"}</td>
-                  <td>{item.mp || "—"}</td>
-                  <td>{item.descricao || "—"}</td>
-                  <td>{item.motivo || item.motivoCodigo || "—"}</td>
-                  <td>{item.centroTrabalho || "—"}</td>
-                  <td>{item.nomeOperador || item.codigoOperador || "—"}</td>
-                  <td className="sm-table__col--numeric">
-                    {formatQuantity(item.quantidade)}
-                    {item.um ? ` ${item.um}` : ""}
-                  </td>
-                  <td className="sm-table__col--numeric">{formatCurrencyBrl(item.valor)}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-      {totalPages > 1 ? (
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          total={total}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
+    <DataTableSection
+      title="Registros de refugo"
+      hint={`${total.toLocaleString("pt-BR")} registro(s) no período`}
+      columns={columns}
+      rows={items}
+      rowKey={(row) =>
+        `${row.dataPerda}|${row.op}|${row.mp}|${row.motivoCodigo}|${row.centroTrabalho}|${row.codigoOperador}|${row.quantidade}|${row.valor}`
+      }
+      onRowClick={onRowClick}
+      loading={loading && items.length === 0}
+      refreshing={refreshing || (loading && items.length > 0)}
+      hideSearch
+      serverPagination={{
+        page,
+        pageSize,
+        total,
+        onPageChange,
+        onPageSizeChange,
+      }}
+      emptyMessage="Nenhum registro no período."
+      headerActions={
+        <ExportExcelButton
+          disabled={loading || total <= 0}
+          exporting={exporting}
+          onExport={handleExportExcel}
         />
-      ) : null}
-    </section>
+      }
+    />
   );
 }
