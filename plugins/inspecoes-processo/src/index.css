@@ -388,22 +388,6 @@
   background: color-mix(in srgb, var(--ip-surface) 92%, transparent);
   color: var(--ip-text);
   font: inherit;
-}.inspecoes-processo-app .ip-pagination{
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  padding-top: 4px;
-}.inspecoes-processo-app .ip-pagination__info{
-  margin: 0;
-  color: var(--ip-muted);
-  font-size: var(--ip-font-sm);
-}.inspecoes-processo-app .ip-pagination__size{
-  min-width: 140px;
-}.inspecoes-processo-app .ip-pagination__nav{
-  display: flex;
-  gap: 8px;
 }.inspecoes-processo-app .ip-modal{
   position: fixed;
   inset: 0;
@@ -469,19 +453,6 @@
 }.inspecoes-processo-app .ip-modal__summary-value{
   margin: 4px 0 0;
   font-size: var(--ip-font-md);
-}.inspecoes-processo-app .ip-empty-state{
-  padding: 28px 24px;
-  border-radius: var(--ip-radius);
-  border: 1px dashed var(--ip-border);
-  background: color-mix(in srgb, var(--ip-surface) 88%, transparent);
-}.inspecoes-processo-app .ip-empty-state__title{
-  margin: 0;
-  font-size: 1rem;
-}.inspecoes-processo-app .ip-empty-state__description{
-  margin: 8px 0 0;
-  color: var(--ip-muted);
-  font-size: var(--ip-font-md);
-  max-width: 62ch;
 }#root:has(> .dashboard-inspecoes-processo){
   min-height: 100vh;
 }@media (max-width: 768px){

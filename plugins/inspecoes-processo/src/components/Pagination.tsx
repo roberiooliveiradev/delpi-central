@@ -1,3 +1,8 @@
+import {
+  CompactPagination,
+  compactPaginationBemClasses,
+} from "@delpi/plugin-ui/index";
+
 type PaginationProps = {
   page: number;
   pageSize: number;
@@ -9,6 +14,14 @@ type PaginationProps = {
   ariaLabel?: string;
 };
 
+const classNames = compactPaginationBemClasses("ip", {
+  ghostBtn: "ip-button",
+});
+
+/**
+ * Paginação cursor/`hasNext` adaptada ao CompactPagination do kit
+ * (total sintético só para habilitar Próxima).
+ */
 export function Pagination({
   page,
   pageSize,
@@ -19,47 +32,28 @@ export function Pagination({
   onPageSizeChange,
   ariaLabel = "Paginação do histórico",
 }: PaginationProps) {
+  const totalPages = hasNext ? page + 1 : Math.max(1, page);
+  const total = totalPages * pageSize;
+
   return (
-    <div className="ip-pagination" aria-label={ariaLabel}>
-      <p className="ip-pagination__info">
-        Página {page}
-        {hasNext ? " · há próxima página" : " · última página"}
-      </p>
-
-      <label className="ip-field ip-pagination__size">
-        <span className="ip-field__label">Itens por página</span>
-        <select
-          className="ip-input"
-          value={pageSize}
-          disabled={loading}
-          onChange={(event) => onPageSizeChange(Number(event.target.value))}
-        >
-          {pageSizeOptions.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className="ip-pagination__nav">
-        <button
-          type="button"
-          className="ip-button"
-          disabled={loading || page <= 1}
-          onClick={() => onPageChange(page - 1)}
-        >
-          Anterior
-        </button>
-        <button
-          type="button"
-          className="ip-button"
-          disabled={loading || !hasNext}
-          onClick={() => onPageChange(page + 1)}
-        >
-          Próxima
-        </button>
-      </div>
-    </div>
+    <CompactPagination
+      page={page}
+      pageSize={pageSize}
+      total={total}
+      totalPages={totalPages}
+      pageSizeOptions={pageSizeOptions}
+      onPageChange={onPageChange}
+      onPageSizeChange={onPageSizeChange}
+      disabled={loading}
+      classNames={classNames}
+      labels={{
+        info: ({ page: current }) =>
+          `Página ${current}${hasNext ? " · há próxima página" : " · última página"}`,
+        pageSizeLabel: "Itens por página",
+        previous: "Anterior",
+        next: "Próxima",
+        navigationAriaLabel: ariaLabel,
+      }}
+    />
   );
 }

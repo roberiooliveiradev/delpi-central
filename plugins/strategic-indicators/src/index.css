@@ -60,6 +60,7 @@
   --delpi-ui-title: var(--si-title);
   --delpi-ui-border: var(--border, #e6e6e6);
   --delpi-ui-muted: var(--si-text-muted);
+  --delpi-ui-text-muted: var(--si-text-muted);
 }/* SelectControl (FilterSelectField) — evita select nativo fora do tema *//* =========================================
    DARK MODE LOCAL DO PLUGIN
 ========================================= */:root[data-theme="dark"]{

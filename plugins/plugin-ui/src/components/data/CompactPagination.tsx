@@ -40,6 +40,8 @@ export type CompactPaginationProps = {
   layout?: CompactPaginationLayout;
   hints?: CompactPaginationHints;
   hideWhenSinglePage?: boolean;
+  /** Desabilita nav e page-size (ex.: fetch em andamento). */
+  disabled?: boolean;
   classNames: CompactPaginationClassNames;
   labels: CompactPaginationLabels;
 };
@@ -83,13 +85,14 @@ export function CompactPagination({
   layout = "grouped",
   hints,
   hideWhenSinglePage = false,
+  disabled = false,
   classNames,
   labels,
 }: CompactPaginationProps) {
   const resolvedTotalPages =
     totalPages ?? (pageSize > 0 ? Math.max(1, Math.ceil(total / pageSize)) : 1);
-  const canPrev = page > 1;
-  const canNext = page < resolvedTotalPages;
+  const canPrev = !disabled && page > 1;
+  const canNext = !disabled && page < resolvedTotalPages;
   const showPageSize =
     onPageSizeChange != null && pageSizeOptions != null && pageSizeOptions.length > 0;
 
@@ -175,6 +178,7 @@ export function CompactPagination({
             <span>{labels.pageSizeLabel}</span>
             <select
               value={pageSize}
+              disabled={disabled}
               onChange={(event) => onPageSizeChange(Number(event.target.value))}
             >
               {pageSizeOptions.map((option) => (

@@ -24,6 +24,27 @@
   font-size: 13px;
 }
 
+/** Empty com título + descrição (createDashboardEmptyState withTitle). */
+.delpi-ui-state-box--empty:has(> h3) {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  text-align: left;
+  min-height: 0;
+}
+
+.delpi-ui-state-box--empty:has(> h3) > h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-state-box--empty:has(> h3) > p {
+  margin: 0;
+  max-width: 62ch;
+}
+
 /** Com shell card, a borda tracejada cede ao card sólido. */
 .delpi-ui-card.delpi-ui-state-box--empty {
   border-style: solid;

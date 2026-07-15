@@ -393,8 +393,8 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | `maintenance` | StateBox dual kit; KPI factory; shortcuts domínio → ✅ **7.4** | **7.4** ✅ |
 | `transformometro` | ghost dual; print/tree no kit/tokens; dataTable dual → ✅ **7.4** | **7.4** ✅ |
 | `financeiro-inadimplencia` | secondary SimpleKpi; hero domínio `fi-kpi-hero` → ✅ **7.4** | **7.4** ✅ |
-| `inspecoes-processo` | Pagination + EmptyState **cópia local** | **7.5** |
-| `strategic-indicators` | DataTable **cópia local** | **7.5** |
+| `inspecoes-processo` | Pagination/EmptyState → kit wrappers → ✅ **7.5** | **7.5** ✅ |
+| `strategic-indicators` | DataTable thin `dataTableBemClasses("si")` → ✅ **7.5** | **7.5** ✅ |
 
 #### P2 — família dashboard + parciais
 
@@ -417,7 +417,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` | 0 chrome espelho; tokens+layout only | ✅ kit ghost/state/section stack-safe + dual-class PAC; CR sem `.delpi-ui-*` |
 | **7.3** | `minha-delpi-chat` admin UI — **path B** (domínio isolado) | 0 seletores de classe do kit no CSS; AdminKpi/DataTable/AuditPagination como `mdc-admin-*` / `mdc-audit-*` (não dual-class shell); checkbox/switch/toolbar = kit + tokens | ✅ |
 | **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ✅ kit: print help-tooltip, `analytics-kpi.css`, state-box dismiss/success, ghost `--active`, table ghost compact; MFEs zeraram `.delpi-ui-*` |
-| **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ⏳ |
+| **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ✅ CompactPagination (`disabled` + `hasNext` sintético); EmptyState dual `state-box--empty`; SI DataTable kit (CSS local removido) |
 | **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ⏳ |
 | **7.7** | Gate CI opcional (`audit` seletores `.delpi-ui-` / BEM espelho em `plugins/*/src/**/*.css`) | Falha CI se reintroduzir | ⏳ backlog |
 

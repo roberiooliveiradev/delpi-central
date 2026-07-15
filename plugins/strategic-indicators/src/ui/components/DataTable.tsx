@@ -1,5 +1,10 @@
+import {
+  DataTable as BaseDataTable,
+  dataTableBemClasses,
+  type DataTableColumn as KitDataTableColumn,
+  type DataTableLabels,
+} from "@delpi/plugin-ui/index";
 import type { ReactNode } from "react";
-import "./DataTable.css";
 
 export type DataTableColumn<T> = {
   key: string;
@@ -15,52 +20,39 @@ type DataTableProps<T> = {
   getRowKey: (row: T, index: number) => string;
 };
 
+const SI_TABLE_CLASS_NAMES = dataTableBemClasses("si");
+
+const LABELS = {
+  emptyMessage: "Nenhum registro encontrado.",
+  loadingMessage: "Carregando…",
+  sortByAriaLabel: (header: string) => `Ordenar por ${header}`,
+  headerHelpAriaLabel: (header: string) => `Ajuda: ${header}`,
+} satisfies DataTableLabels;
+
+/** Thin wrapper — chrome da tabela no kit (`delpi-ui-table*`). */
 export function DataTable<T>({
   columns,
   rows,
   loading = false,
-  emptyText = "Nenhum registro encontrado.",
+  emptyText,
   getRowKey,
 }: DataTableProps<T>) {
-  return (
-    <div className="si-datatable">
-      <div className="si-datatable__container">
-        <table className="si-datatable__table">
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <th key={column.key}>{column.header}</th>
-              ))}
-            </tr>
-          </thead>
+  const kitColumns: KitDataTableColumn<T>[] = columns.map((column) => ({
+    key: column.key,
+    header: column.header,
+    render: (row) => (column.render ? column.render(row) : "-"),
+  }));
 
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={columns.length}>
-                  <div className="si-datatable__state">Carregando...</div>
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length}>
-                  <div className="si-datatable__state">{emptyText}</div>
-                </td>
-              </tr>
-            ) : (
-              rows.map((row, index) => (
-                <tr key={getRowKey(row, index)}>
-                  {columns.map((column) => (
-                    <td key={column.key} data-label={column.header}>
-                      {column.render ? column.render(row) : "-"}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  return (
+    <BaseDataTable
+      columns={kitColumns}
+      rows={rows}
+      loading={loading}
+      emptyMessage={emptyText}
+      rowKey={getRowKey}
+      layout="section"
+      classNames={SI_TABLE_CLASS_NAMES}
+      labels={LABELS}
+    />
   );
 }

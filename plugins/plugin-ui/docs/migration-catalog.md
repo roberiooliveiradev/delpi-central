@@ -310,7 +310,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` — chrome espelho / residual kit | ✅ |
 | **7.3** | `minha-delpi-chat` admin — **B** domínio isolado (`mdc-admin-*` / `mdc-audit-*`); overrides kit zerados | ✅ |
 | **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ✅ |
-| **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ⏳ |
+| **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ✅ |
 | **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ⏳ |
 | **7.7** | Gate CI anti-reintrodução (opcional) | ⏳ backlog |
 
@@ -328,8 +328,8 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `maintenance` | 7.4 | ✅ | StateBox dual kit; KPI factory + atalhos `dm-shortcut-*` | ✅ | DataTable.css domínio; filter-kpi toggle dual |
 | `transformometro` | 7.4 | ✅ | ghost dual `DS_GHOST_BTN` | ✅ `dataTableBemClasses` | print help-tooltip + table ghost compact no kit; tree tokens no host |
 | `financeiro-inadimplencia` | 7.4 | ✅ | secondary `createSimpleKpiCard`; hero/ranking domínio `fi-kpi-hero*` | ✅ | sem dual-class parcial no hero |
-| `inspecoes-processo` | 7.5 | — | ⏳ Pagination/Empty | ⏳ | |
-| `strategic-indicators` | 7.5 | — | ⏳ DataTable | ⏳ | |
+| `inspecoes-processo` | 7.5 | ✅ | Empty dual `state-box--empty`; Pagination → CompactPagination (`hasNext` sintético) | ✅ | chrome ip-pagination/ip-empty removido |
+| `strategic-indicators` | 7.5 | — | ✅ DataTable kit `si` | ✅ `dataTableBemClasses` | `DataTable.css` removido |
 | `dashboard-*` (8) | 7.6 | ⏳ | — | ✅ wrappers | state-box/table/print |
 | P2 demais | 7.6 | ⏳ | filtersUi MEDIUM | ⏳ | SM, PA, IE, PVA, EF, PC, … |
 
@@ -351,6 +351,13 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | ghost `--active`; table ghost compact | `fi-kpi-hero*` (hero + ranking clicável) |
 | section-card title/header densidades | `kz-section-card` só `margin-bottom` (gap) |
 | | `tm-rich-tree*` + tokens de guia no host |
+
+### Onda 7.5 — wrappers Pagination/Empty/DataTable
+
+| Plugin | Kit | Leftover |
+|--------|-----|----------|
+| `inspecoes-processo` | CompactPagination + EmptyState dual; `disabled` no kit; `:has(> h3)` no empty | `ip-button` ghost local; layout de página |
+| `strategic-indicators` | `DataTable` + `dataTableBemClasses("si")` | células admin (`si-admin-table-cell`) |
 
 ---
 
