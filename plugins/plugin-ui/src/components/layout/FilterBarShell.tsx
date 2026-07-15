@@ -1,5 +1,7 @@
 import type { FormEvent, ReactNode } from "react";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type FilterBarShellClassNames = {
   root: string;
   rootWithCard: string;
@@ -24,12 +26,14 @@ export function filterBarShellBemClasses(
   const block = options?.block ?? "filter-bar";
   const bar = `${prefix}-${block}`;
   const card = `${prefix}-card`;
+  const ui = "delpi-ui-filter-bar";
   const useCard = block === "filter-bar";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
 
   return {
-    root: bar,
-    rootWithCard: useCard ? `${card} ${bar}` : bar,
-    grid: options?.withGrid ? `${bar}__grid` : undefined,
+    root: pair(bar, ui),
+    rootWithCard: useCard ? pair(`${card} ${bar}`, `delpi-ui-card ${ui}`) : pair(bar, ui),
+    grid: options?.withGrid ? pair(`${bar}__grid`, `${ui}__grid`) : undefined,
   };
 }
 

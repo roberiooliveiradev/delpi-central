@@ -1,0 +1,85 @@
+/**
+ * FiltersRow + filter-box + FilterBarShell — .delpi-ui-filters-row* / .delpi-ui-filter-*.
+ */
+
+.delpi-ui-filters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--delpi-ui-grid-gap, 12px);
+  margin-bottom: var(--delpi-ui-section-gap, 20px);
+  padding: 14px;
+  border-radius: var(--delpi-ui-filter-radius, var(--delpi-ui-control-radius, 12px));
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-sizing: border-box;
+}
+
+.delpi-ui-filters-row--extended {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.delpi-ui-filters-row--compact {
+  padding: 10px;
+  gap: 10px;
+}
+
+.delpi-ui-filter-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.delpi-ui-filter-box--action {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.delpi-ui-filter-box--wide {
+  grid-column: span 2;
+}
+
+.delpi-ui-filter-box .delpi-ui-field-label,
+.delpi-ui-filter-box label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-filter-box input:not([type="checkbox"]):not([type="radio"]),
+.delpi-ui-filter-box select {
+  min-height: var(--delpi-ui-control-height, 42px);
+  box-sizing: border-box;
+  border-radius: var(--delpi-ui-control-radius, 10px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  padding: 8px 12px;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+}
+
+.delpi-ui-filter-box input:not([type="checkbox"]):not([type="radio"]):focus-visible,
+.delpi-ui-filter-box select:focus-visible {
+  outline: none;
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 22%, transparent);
+}
+
+.delpi-ui-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--delpi-ui-grid-gap, 12px);
+  margin-bottom: var(--delpi-ui-section-gap, 20px);
+}
+
+.delpi-ui-filter-bar__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--delpi-ui-grid-gap, 12px);
+  width: 100%;
+  min-width: 0;
+}

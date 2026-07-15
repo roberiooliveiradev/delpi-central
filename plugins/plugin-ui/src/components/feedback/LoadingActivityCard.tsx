@@ -1,3 +1,5 @@
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type LoadingActivityCardVariant = "compact" | "panel";
 export type LoadingActivityCardTone = "neutral" | "info";
 
@@ -46,22 +48,27 @@ export function loadingActivityBemClasses(
   options?: { withCopyWrapper?: boolean; block?: string },
 ): LoadingActivityCardClassNames {
   const base = `${prefix}-${options?.block ?? "loading-activity"}`;
+  const ui = "delpi-ui-loading-activity";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
 
   return {
-    root: base,
-    rootVariant: (variant) => `${base}--${variant}`,
-    rootTone: (tone) => `${base}--${tone}`,
-    rootSticky: `${base}--sticky`,
-    spinner: `${base}__spinner`,
-    content: `${base}__content`,
-    copy: options?.withCopyWrapper ? `${base}__copy` : undefined,
-    title: `${base}__title`,
-    description: `${base}__description`,
-    progressWrap: `${base}__progress-wrap`,
-    progressLabel: `${base}__progress-label`,
-    progress: `${base}__progress`,
-    progressIndicator: `${base}__progress-indicator`,
-    progressIndicatorDeterminate: `${base}__progress-indicator--determinate`,
+    root: pair(base, ui),
+    rootVariant: (variant) => pair(`${base}--${variant}`, `${ui}--${variant}`),
+    rootTone: (tone) => pair(`${base}--${tone}`, `${ui}--${tone}`),
+    rootSticky: pair(`${base}--sticky`, `${ui}--sticky`),
+    spinner: pair(`${base}__spinner`, `${ui}__spinner`),
+    content: pair(`${base}__content`, `${ui}__content`),
+    copy: options?.withCopyWrapper ? pair(`${base}__copy`, `${ui}__copy`) : undefined,
+    title: pair(`${base}__title`, `${ui}__title`),
+    description: pair(`${base}__description`, `${ui}__description`),
+    progressWrap: pair(`${base}__progress-wrap`, `${ui}__progress-wrap`),
+    progressLabel: pair(`${base}__progress-label`, `${ui}__progress-label`),
+    progress: pair(`${base}__progress`, `${ui}__progress`),
+    progressIndicator: pair(`${base}__progress-indicator`, `${ui}__progress-indicator`),
+    progressIndicatorDeterminate: pair(
+      `${base}__progress-indicator--determinate`,
+      `${ui}__progress-indicator--determinate`,
+    ),
   };
 }
 

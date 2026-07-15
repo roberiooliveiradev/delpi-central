@@ -11,6 +11,19 @@ describe("delpiUiClass", () => {
       "dc-pagination delpi-ui-pagination",
     );
   });
+
+  it("não duplica quando prefixo e canônico são iguais", () => {
+    expect(delpiUiClass("delpi-ui-select", "delpi-ui-select")).toBe("delpi-ui-select");
+  });
+});
+
+describe("withBemModifier", () => {
+  it("aplica modificador em cada token BEM", async () => {
+    const { withBemModifier } = await import("./delpiUiClass");
+    expect(withBemModifier("dp-kpi-badge delpi-ui-kpi-badge", "scope")).toBe(
+      "dp-kpi-badge dp-kpi-badge--scope delpi-ui-kpi-badge delpi-ui-kpi-badge--scope",
+    );
+  });
 });
 
 describe("kits DataTable/Pagination — classes delpi-ui", () => {

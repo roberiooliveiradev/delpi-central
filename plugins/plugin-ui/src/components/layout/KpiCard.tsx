@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 
 export type KpiPerformanceBadge = {
   tone: "success" | "warning";
@@ -58,30 +59,38 @@ export type KpiCardProps = {
   className?: string;
 };
 
-/** Monta classNames BEM `{prefix}-kpi-*` dos dashboards departamentais. */
+/** Monta classNames BEM `{prefix}-kpi-*` + `.delpi-ui-kpi-*`. */
 export function kpiCardBemClasses(
   prefix: string,
   options?: { cardModifier?: string },
 ): KpiCardClassNames {
   const cardModifier = options?.cardModifier ?? "card";
   const card = `${prefix}-${cardModifier}`;
+  const ui = "delpi-ui-kpi";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
 
   return {
-    article: `${card} ${prefix}-kpi-card`,
-    header: `${prefix}-kpi-header`,
-    title: `${prefix}-kpi-title`,
-    titleHelp: `${prefix}-kpi-title__help`,
-    value: `${prefix}-kpi-value`,
-    valuePerUnit: `${prefix}-kpi-value ${prefix}-kpi-value--per-unit`,
-    goal: `${prefix}-kpi-goal`,
-    goalPerUnit: `${prefix}-kpi-goal ${prefix}-kpi-goal--per-unit`,
-    goalPrefix: `${prefix}-kpi-goal-prefix`,
-    goalIdd: `${prefix}-kpi-goal--idd`,
-    badges: `${prefix}-kpi-badges`,
-    badge: `${prefix}-kpi-badge`,
-    badgeGroup: `${prefix}-kpi-badge-group`,
-    context: `${prefix}-kpi-context`,
-    icon: `${prefix}-kpi-icon`,
+    article: pair(`${card} ${prefix}-kpi-card`, `delpi-ui-card ${ui}-card`),
+    header: pair(`${prefix}-kpi-header`, `${ui}-header`),
+    title: pair(`${prefix}-kpi-title`, `${ui}-title`),
+    titleHelp: pair(`${prefix}-kpi-title__help`, `${ui}-title__help`),
+    value: pair(`${prefix}-kpi-value`, `${ui}-value`),
+    valuePerUnit: pair(
+      `${prefix}-kpi-value ${prefix}-kpi-value--per-unit`,
+      `${ui}-value ${ui}-value--per-unit`,
+    ),
+    goal: pair(`${prefix}-kpi-goal`, `${ui}-goal`),
+    goalPerUnit: pair(
+      `${prefix}-kpi-goal ${prefix}-kpi-goal--per-unit`,
+      `${ui}-goal ${ui}-goal--per-unit`,
+    ),
+    goalPrefix: pair(`${prefix}-kpi-goal-prefix`, `${ui}-goal-prefix`),
+    goalIdd: pair(`${prefix}-kpi-goal--idd`, `${ui}-goal--idd`),
+    badges: pair(`${prefix}-kpi-badges`, `${ui}-badges`),
+    badge: pair(`${prefix}-kpi-badge`, `${ui}-badge`),
+    badgeGroup: pair(`${prefix}-kpi-badge-group`, `${ui}-badge-group`),
+    context: pair(`${prefix}-kpi-context`, `${ui}-context`),
+    icon: pair(`${prefix}-kpi-icon`, `${ui}-icon`),
   };
 }
 
@@ -156,21 +165,21 @@ export function KpiCard({
           {hasBadges ? (
             <div className={classNames.badges} role="status" aria-label={labels.badgesStatus}>
               {resolvedScopeBadge ? (
-                <span className={`${classNames.badge} ${classNames.badge}--scope`}>
+                <span className={withBemModifier(classNames.badge, "scope")}>
                   {resolvedScopeBadge.label}
                 </span>
               ) : null}
               {resolvedScopeHint ? (
-                <span className={`${classNames.badge} ${classNames.badge}--info`}>
+                <span className={withBemModifier(classNames.badge, "info")}>
                   {resolvedScopeHint}
                 </span>
               ) : null}
               {performanceBadges.map((badge, index) => (
                 <span key={`${badge.statusLabel}-${index}`} className={classNames.badgeGroup}>
-                  <span className={`${classNames.badge} ${classNames.badge}--${badge.tone}`}>
+                  <span className={withBemModifier(classNames.badge, badge.tone)}>
                     {badge.statusLabel}
                   </span>
-                  <span className={`${classNames.badge} ${classNames.badge}--direction`}>
+                  <span className={withBemModifier(classNames.badge, "direction")}>
                     {badge.directionLabel}
                   </span>
                 </span>

@@ -16,6 +16,11 @@
 @import "./styles/combobox-number.css";
 @import "./styles/range-field.css";
 @import "./styles/kpi-card.css";
+@import "./styles/departmental-kpi.css";
+@import "./styles/chart-card.css";
+@import "./styles/loading-activity.css";
+@import "./styles/dashboard-filters.css";
+@import "./styles/export-actions.css";
 @import "./styles/data-table.css";
 @import "./styles/pagination.css";
 @import "./styles/detail-card.css";

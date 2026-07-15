@@ -8,6 +8,7 @@ import {
   type SelectControlClassNames,
   type SelectControlLabels,
 } from "../forms/SelectField";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type FiltersRowClassNames = {
   row: string;
@@ -86,14 +87,20 @@ export type DashboardFiltersKit = {
   ) => ReactNode;
 };
 
-/** Monta classNames BEM `{prefix}-filters-row` dos dashboards departamentais. */
+/** Monta classNames BEM `{prefix}-filters-row` + `.delpi-ui-filters-row*`. */
 export function filtersRowBemClasses(prefix: string): FiltersRowClassNames & FilterInputFieldClassNames {
+  const row = `${prefix}-filters-row`;
+  const ui = "delpi-ui-filters-row";
+  const box = `${prefix}-filter-box`;
+  const uiBox = "delpi-ui-filter-box";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+
   return {
-    row: `${prefix}-filters-row`,
-    rowExtended: `${prefix}-filters-row ${prefix}-filters-row--extended`,
-    rowCompact: `${prefix}-filters-row ${prefix}-filters-row--compact`,
-    trailingBox: `${prefix}-filter-box ${prefix}-filter-box--action`,
-    filterBox: `${prefix}-filter-box ${prefix}-field`,
+    row: pair(row, ui),
+    rowExtended: pair(`${row} ${row}--extended`, `${ui} ${ui}--extended`),
+    rowCompact: pair(`${row} ${row}--compact`, `${ui} ${ui}--compact`),
+    trailingBox: pair(`${box} ${box}--action`, `${uiBox} ${uiBox}--action`),
+    filterBox: pair(`${box} ${prefix}-field`, uiBox),
     fieldLabel: `${prefix}-field__label`,
   };
 }

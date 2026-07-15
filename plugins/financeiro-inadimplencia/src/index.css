@@ -197,9 +197,7 @@
   border-color: var(--fi-border);
   color: var(--fi-text);
 }.dashboard-financeiro-inadimplencia .fi-filters,
-.dashboard-financeiro-inadimplencia .fi-card,
-.dashboard-financeiro-inadimplencia .fi-chart-card,
-.dashboard-financeiro-inadimplencia .fi-kpi-card{
+.dashboard-financeiro-inadimplencia .fi-card{
   background: var(--fi-surface);
   border: 1px solid var(--fi-border);
   border-radius: var(--fi-card-radius);
@@ -257,16 +255,6 @@
   grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
   gap: var(--fi-grid-gap);
   align-items: stretch;
-}.dashboard-financeiro-inadimplencia .fi-kpi-card{
-  padding: var(--fi-card-padding);
-}.dashboard-financeiro-inadimplencia .fi-kpi-card--primary{
-  border-color: color-mix(in srgb, var(--fi-accent) 35%, var(--fi-border));
-}.dashboard-financeiro-inadimplencia .fi-kpi-card--alert{
-  border-color: color-mix(in srgb, var(--fi-alert) 35%, var(--fi-border));
-}.dashboard-financeiro-inadimplencia .fi-kpi-card__subtitle{
-  margin-top: 8px;
-  color: var(--fi-text-muted);
-  font-size: var(--fi-font-sm);
 }.dashboard-financeiro-inadimplencia .fi-kpi-hero{
   display: flex;
   flex-direction: column;
@@ -314,47 +302,6 @@
   margin: 0;
   color: var(--fi-text-muted);
   font-size: var(--fi-font-sm);
-}.dashboard-financeiro-inadimplencia .fi-kpi-card--top-cliente .fi-kpi-card__value,
-.dashboard-financeiro-inadimplencia .fi-kpi-card--top-cliente [class*="kpi"][class*="value"]{
-  font-size: 1.05rem;
-  line-height: 1.25;
-  word-break: break-word;
-}.dashboard-financeiro-inadimplencia .fi-kpi-card--clickable{
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
-}.dashboard-financeiro-inadimplencia .fi-kpi-card--clickable:hover:not(:disabled),
-.dashboard-financeiro-inadimplencia .fi-kpi-card--clickable:focus-visible{
-  border-color: color-mix(in srgb, var(--fi-danger, #b42318) 55%, var(--fi-border));
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
-  transform: translateY(-1px);
-  outline: none;
-}.dashboard-financeiro-inadimplencia .fi-kpi-card--clickable:disabled{
-  cursor: wait;
-  opacity: 0.85;
-}.dashboard-financeiro-inadimplencia .fi-kpi-card__title{
-  margin: 0;
-  font-size: var(--fi-font-sm);
-  color: var(--fi-text-muted);
-  font-weight: 600;
-}.dashboard-financeiro-inadimplencia .fi-kpi-card__value{
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--fi-title);
-  line-height: 1.25;
-  word-break: break-word;
-}.dashboard-financeiro-inadimplencia .fi-kpi-card__value--danger{
-  color: var(--fi-danger, #b91c1c);
-}.dashboard-financeiro-inadimplencia .fi-kpi-card__cta{
-  margin: auto 0 0;
-  font-size: 0.8rem;
-  color: var(--fi-accent);
-  font-weight: 600;
 }.dashboard-financeiro-inadimplencia .fi-kpi-hero__icon--danger{
   background: color-mix(in srgb, var(--fi-danger, #b42318) 14%, transparent);
   color: var(--fi-danger, #b42318);
@@ -388,32 +335,11 @@
 }.dashboard-financeiro-inadimplencia .fi-ghost-btn:hover,
 .dashboard-financeiro-inadimplencia .fi-btn--sm:hover{
   background: color-mix(in srgb, var(--fi-accent) 8%, transparent);
-}.dashboard-financeiro-inadimplencia .fi-chart-card__header{
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-}.dashboard-financeiro-inadimplencia .fi-chart-card__actions{
-  margin-top: 4px;
-  overflow: visible;
-  position: relative;
-  z-index: 2;
-}.dashboard-financeiro-inadimplencia .fi-chart-card__header{
-  overflow: visible;
-}.dashboard-financeiro-inadimplencia .fi-chart-card{
-  overflow: visible;
-}.dashboard-financeiro-inadimplencia .fi-chart-card__body{
-  padding-top: 8px;
 }.dashboard-financeiro-inadimplencia .fi-charts-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--fi-grid-gap);
   align-items: stretch;
-}.dashboard-financeiro-inadimplencia .fi-charts-grid > .fi-chart-card{
-  min-height: 0;
-}.dashboard-financeiro-inadimplencia .fi-chart-card{
-  padding: var(--fi-card-padding);
-  width: 100%;
 }.dashboard-financeiro-inadimplencia .fi-chart{
   width: 100%;
   min-height: 400px;
@@ -461,13 +387,6 @@
   gap: 10px;
   align-items: end;
   margin-bottom: 20px;
-}.dashboard-financeiro-inadimplencia .fi-export-actions{
-  display: inline-flex;
-  align-items: center;
-}.dashboard-financeiro-inadimplencia .fi-export-actions .fi-btn{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }.dashboard-financeiro-inadimplencia .fi-field--inline{
   min-width: 160px;
 }.dashboard-financeiro-inadimplencia .fi-field--grow{

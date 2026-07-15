@@ -142,105 +142,11 @@
   cursor: pointer;
   font-weight: 600;
   font-size: var(--kz-font-sm);
-}.dashboard-cadastro-kaizen .kz-filters-row{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: var(--kz-grid-gap);
-  margin-bottom: var(--kz-section-gap);
-  padding: 14px;
-  border-radius: var(--kz-filter-radius);
-  border: 1px solid var(--kz-card-border);
-  background: var(--kz-card-bg);
-}.dashboard-cadastro-kaizen .kz-filter-box{
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}.dashboard-cadastro-kaizen .kz-filter-box label{
-  font-size: var(--kz-font-sm);
-  font-weight: 600;
-  color: var(--kz-text-muted);
-}.dashboard-cadastro-kaizen .kz-filter-box--action{
-  justify-content: flex-end;
-}.dashboard-cadastro-kaizen .kz-filter-box input:not([type="checkbox"]),
-.dashboard-cadastro-kaizen .kz-filter-box select{
-  min-height: var(--kz-control-height);
-  border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-input-border);
-  padding: 8px 12px;
-  background: var(--kz-input-bg);
-  color: var(--kz-input-text);
-}.dashboard-cadastro-kaizen .kz-filter-box input:focus-visible,
-.dashboard-cadastro-kaizen .kz-filter-box select:focus-visible{
-  outline: none;
-  border-color: var(--kz-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
 }.dashboard-cadastro-kaizen .kz-card{
   background: var(--kz-card-bg);
   border: 1px solid var(--kz-card-border);
   border-radius: var(--kz-card-radius);
   padding: var(--kz-card-padding);
-}.dashboard-cadastro-kaizen .kz-loading-activity{
-  display: grid;
-  align-items: center;
-  gap: 14px;
-  border-radius: var(--kz-card-radius);
-  border: 1px solid var(--kz-card-border);
-  background: var(--kz-card-bg);
-  color: var(--kz-text);
-  margin-bottom: 12px;
-}.dashboard-cadastro-kaizen .kz-loading-activity--sticky{
-  position: sticky;
-  top: 12px;
-  z-index: 8;
-}.dashboard-cadastro-kaizen .kz-loading-activity--panel,
-.dashboard-cadastro-kaizen .kz-loading-activity--compact{
-  grid-template-columns: auto minmax(0, 1fr);
-  padding: 12px 14px;
-}.dashboard-cadastro-kaizen .kz-loading-activity--info{
-  background: color-mix(in srgb, var(--kz-accent) 6%, var(--kz-card-bg));
-  border-color: color-mix(in srgb, var(--kz-accent) 20%, var(--kz-card-border));
-}.dashboard-cadastro-kaizen .kz-loading-activity__spinner{
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  border: 3px solid color-mix(in srgb, var(--kz-accent) 16%, transparent);
-  border-top-color: var(--kz-accent);
-  animation: kz-loading-spin 0.9s linear infinite;
-}.dashboard-cadastro-kaizen .kz-loading-activity__content{
-  min-width: 0;
-  display: grid;
-  gap: 8px;
-}.dashboard-cadastro-kaizen .kz-loading-activity__title{
-  color: var(--kz-accent);
-  font-size: 0.96rem;
-  line-height: 1.35;
-}.dashboard-cadastro-kaizen .kz-loading-activity__description{
-  margin: 0;
-  color: var(--kz-text-muted);
-  font-size: 0.9rem;
-  line-height: 1.45;
-}.dashboard-cadastro-kaizen .kz-loading-activity__progress{
-  width: 100%;
-  height: 6px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--kz-card-border) 82%, transparent);
-  overflow: hidden;
-}.dashboard-cadastro-kaizen .kz-loading-activity__progress-indicator{
-  height: 100%;
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--kz-accent) 88%, white);
-}.dashboard-cadastro-kaizen .kz-loading-activity__progress-wrap{
-  display: grid;
-  gap: 6px;
-}.dashboard-cadastro-kaizen .kz-loading-activity__progress-label{
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--kz-text-muted);
-  text-align: right;
-}@keyframes kz-loading-spin{
-  to {
-    transform: rotate(360deg);
-  }
 }.dashboard-cadastro-kaizen .kz-row-actions{
   display: flex;
   gap: 8px;
@@ -867,8 +773,7 @@
   }.dashboard-cadastro-kaizen .kz-participant-row{
     grid-template-columns: 1fr 120px auto;
   }
-}/* Label de formulário com ajuda */.dashboard-cadastro-kaizen .kz-field__label,
-.dashboard-cadastro-kaizen .kz-filter-box > .kz-field__label{
+}/* Label de formulário com ajuda */.dashboard-cadastro-kaizen .kz-field__label{
   display: flex;
   flex-flow: row nowrap;
   align-items: center;

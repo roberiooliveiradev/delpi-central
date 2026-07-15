@@ -68,8 +68,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}.dashboard-quality-action-plans .pac-filters-row--compact{
-  margin-bottom: var(--pac-section-gap);
 }.dashboard-quality-action-plans .pac-page-stack{
   display: flex;
   flex-direction: column;
@@ -80,8 +78,7 @@
 .dashboard-quality-action-plans .pac-page-stack > .pac-effectiveness-pending-alert,
 .dashboard-quality-action-plans .pac-page-stack > .pac-charts-grid,
 .dashboard-quality-action-plans .pac-page-stack > .pac-effectiveness-section,
-.dashboard-quality-action-plans .pac-page-stack > .pac-dashboard-grid--queue-summary,
-.dashboard-quality-action-plans .pac-page-stack > .pac-filters-row{
+.dashboard-quality-action-plans .pac-page-stack > .pac-dashboard-grid--queue-summary{
   margin-top: 0;
   margin-bottom: 0;
 }.dashboard-quality-action-plans .pac-branch-summary{
@@ -318,20 +315,6 @@
   color: var(--pac-warning);
 }.dashboard-quality-action-plans .pac-metric-card--success .pac-metric-card__value{
   color: var(--pac-success);
-}.dashboard-quality-action-plans .pac-filters-row{
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 280px));
-  gap: var(--pac-grid-gap);
-  align-items: end;
-  margin-bottom: var(--pac-section-gap);
-  padding: 14px;
-  border-radius: var(--pac-filter-radius);
-  border: 1px solid var(--pac-card-border);
-  background: var(--pac-card-bg);
-}.dashboard-quality-action-plans .pac-filters-row > .pac-field,
-.dashboard-quality-action-plans .pac-filters-row > .pac-filter-box{
-  min-width: 0;
-  width: 100%;
 }.dashboard-quality-action-plans .pac-field--filter-checkbox .pac-filter-checkbox-control{
   width: 100%;
   min-height: var(--pac-control-height);
@@ -340,28 +323,6 @@
   border-radius: var(--pac-control-radius);
   background: var(--pac-card-bg);
   box-sizing: border-box;
-}.dashboard-quality-action-plans .pac-filter-box--checkbox{
-  justify-content: flex-start;
-}.dashboard-quality-action-plans .pac-filter-box--checkbox .pac-checkbox{
-  min-height: var(--pac-control-height);
-}.dashboard-quality-action-plans .pac-filter-box input:not([type="checkbox"]):not([type="radio"]),
-.dashboard-quality-action-plans .pac-filter-box select{
-  min-height: var(--pac-control-height);
-  border-radius: var(--pac-control-radius);
-  border: 1px solid var(--pac-card-border);
-  padding: 8px 12px;
-  background: var(--surface, #fff);
-  color: var(--pac-text);
-}.dashboard-quality-action-plans .pac-filter-box{
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}.dashboard-quality-action-plans .pac-filter-box > label:not(.pac-checkbox){
-  font-size: var(--pac-font-sm);
-  font-weight: 600;
-  color: var(--pac-text-muted);
-}.dashboard-quality-action-plans .pac-filter-box--action{
-  justify-content: flex-end;
 }.dashboard-quality-action-plans .pac-filter-box__spacer{
   min-height: 20px;
 }.dashboard-quality-action-plans .pac-card{
@@ -580,18 +541,6 @@
     grid-column: 1 / -1;
     grid-template-columns: 1fr;
   }
-}.dashboard-quality-action-plans .pac-filter-box--full{
-  grid-column: 1 / -1;
-}.dashboard-quality-action-plans .pac-filter-box textarea,
-.dashboard-quality-action-plans .pac-filter-box input:not([type="checkbox"]):not([type="radio"]),
-.dashboard-quality-action-plans .pac-filter-box select{
-  width: 100%;
-  min-height: var(--pac-control-height);
-  border-radius: var(--pac-control-radius);
-  border: 1px solid var(--pac-card-border);
-  padding: 8px 12px;
-  background: var(--pac-card-bg);
-  color: var(--pac-text);
 }.dashboard-quality-action-plans .pac-form-actions,
 .dashboard-quality-action-plans .pac-inline-form{
   display: flex;
@@ -645,9 +594,6 @@
   gap: 6px;
 }.dashboard-quality-action-plans .pac-section-title .pac-title-with-help{
   display: inline-flex;
-}.dashboard-quality-action-plans .pac-chart-card__title .pac-title-with-help,
-.dashboard-quality-action-plans .pac-kpi-card__label .pac-title-with-help{
-  display: inline-flex;
 }.dashboard-quality-action-plans .pac-field__required{
   color: var(--pac-danger);
 }.dashboard-quality-action-plans .pac-field__control{
@@ -683,8 +629,7 @@
   min-height: 32px;
   padding: 0 10px;
   font-size: var(--pac-font-xs);
-}.dashboard-quality-action-plans label.pac-checkbox,
-.dashboard-quality-action-plans .pac-filters-row label.pac-checkbox{
+}.dashboard-quality-action-plans label.pac-checkbox{
   display: inline-flex;
   flex-direction: row;
   align-items: center;
@@ -721,69 +666,11 @@
   box-shadow: none;
   outline: none;
   cursor: pointer;
-}/* ——— KPI cards ——— */.dashboard-quality-action-plans .pac-kpi-card{
-  padding: var(--pac-card-padding);
-}.dashboard-quality-action-plans .pac-kpi-card__header{
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  align-items: flex-start;
-}.dashboard-quality-action-plans .pac-kpi-card__label{
-  margin: 0 0 6px;
-  color: var(--pac-text-muted);
-  font-size: var(--pac-font-sm);
-}.dashboard-quality-action-plans .pac-kpi-card__value{
-  margin: 0;
-  font-size: clamp(1.75rem, 3vw, 2.25rem);
-  font-weight: 700;
-  color: var(--pac-title);
-  line-height: 1.1;
-}.dashboard-quality-action-plans .pac-kpi-card__hint{
-  margin: 6px 0 0;
-  font-size: var(--pac-font-xs);
-  color: var(--pac-text-muted);
-}.dashboard-quality-action-plans .pac-kpi-card__icon{
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--pac-accent) 12%, transparent);
-  color: var(--pac-accent);
-  flex-shrink: 0;
-}.dashboard-quality-action-plans .pac-kpi-card--danger .pac-kpi-card__value{
-  color: var(--pac-danger);
-}.dashboard-quality-action-plans .pac-kpi-card--danger .pac-kpi-card__icon{
-  background: color-mix(in srgb, var(--pac-danger) 12%, transparent);
-  color: var(--pac-danger);
-}.dashboard-quality-action-plans .pac-kpi-card--warning .pac-kpi-card__value{
-  color: var(--pac-warning);
-}.dashboard-quality-action-plans .pac-kpi-card--warning .pac-kpi-card__icon{
-  background: color-mix(in srgb, var(--pac-warning) 12%, transparent);
-  color: var(--pac-warning);
-}.dashboard-quality-action-plans .pac-kpi-card--success .pac-kpi-card__value{
-  color: var(--pac-success);
-}.dashboard-quality-action-plans .pac-kpi-card--success .pac-kpi-card__icon{
-  background: color-mix(in srgb, var(--pac-success) 12%, transparent);
-  color: var(--pac-success);
-}/* ——— Gráficos ——— */.dashboard-quality-action-plans .pac-charts-grid{
+}/* ——— KPI cards ——— *//* ——— Gráficos ——— */.dashboard-quality-action-plans .pac-charts-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--pac-grid-gap);
   margin-top: var(--pac-section-gap);
-}.dashboard-quality-action-plans .pac-chart-card__header{
-  margin-bottom: 12px;
-}.dashboard-quality-action-plans .pac-chart-card__title{
-  margin: 0;
-  font-size: 1rem;
-  color: var(--pac-title);
-}.dashboard-quality-action-plans .pac-chart-card__hint{
-  margin: 4px 0 0;
-  font-size: var(--pac-font-xs);
-  color: var(--pac-text-muted);
-}.dashboard-quality-action-plans .pac-chart-card__body{
-  min-height: 280px;
 }.dashboard-quality-action-plans .pac-state-box{
   display: flex;
   align-items: center;
@@ -2630,8 +2517,6 @@
   .dashboard-quality-action-plans .pac-header-actions .pac-ghost-btn{
     flex: 1;
     justify-content: center;
-  }.dashboard-quality-action-plans .pac-filters-row{
-    grid-template-columns: 1fr;
   }.dashboard-quality-action-plans .pac-dashboard-grid{
     grid-template-columns: 1fr;
   }.dashboard-quality-action-plans .pac-team-card__fields{

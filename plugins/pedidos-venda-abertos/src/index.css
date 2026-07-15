@@ -156,67 +156,7 @@
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--pva-gap);
-}.pva-kpi-card--wide{
-  grid-column: span 2;
-}.pva-kpi-card--wide .pva-kpi-card__value{
-  white-space: nowrap;
-  overflow-wrap: normal;
-}.pva-kpi-card{
-  padding: 18px 20px;
-  min-width: 0;
-  overflow: hidden;
-}.pva-kpi-card__header{
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 0;
-}.pva-kpi-card__body{
-  flex: 1 1 auto;
-  min-width: 0;
-}.pva-kpi-card__title{
-  margin: 0 0 8px;
-  color: var(--pva-muted);
-  font-size: var(--pva-font-sm);
-}.pva-kpi-card__value{
-  margin: 0;
-  font-size: clamp(18px, 1.6vw, 28px);
-  line-height: 1.15;
-  overflow-wrap: anywhere;
-}.pva-kpi-card__value--danger{
-  color: var(--pva-danger);
-}.pva-kpi-card__subtitle{
-  display: block;
-  margin-top: 6px;
-  color: var(--pva-muted);
-  font-size: var(--pva-font-sm);
-}.pva-kpi-card__icon{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--pva-accent) 10%, transparent);
-  color: var(--pva-accent);
-  flex-shrink: 0;
-}.pva-filter-bar{
-  padding: 18px 20px;
-}.pva-filter-bar__header{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}.pva-filter-bar__title{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}.pva-filter-bar__title h2{
-  margin: 0;
-  font-size: 16px;
-}.pva-filter-bar__grid,
-.pva-filter-grid{
+}.pva-filter-grid{
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr) repeat(3, minmax(0, 1fr));
   gap: 12px;
@@ -376,30 +316,20 @@
   }
 }@media (max-width: 1100px){.pva-kpi-grid{
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }.pva-kpi-card--wide{
-    grid-column: span 2;
-  }.pva-filter-bar__grid,
-  .pva-filter-grid{
+  }.pva-filter-grid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }@media (max-width: 768px){.dashboard-pedidos-venda-abertos.dashboard-page{
     padding: 16px;
   }.pva-page-header,
-  .pva-filter-bar__header,
-  .pva-pagination{
+.pva-pagination{
     flex-direction: column;
     align-items: stretch;
   }.pva-btn{
     width: 100%;
   }.pva-kpi-grid,
-  .pva-filter-bar__grid,
-  .pva-filter-grid{
+.pva-filter-grid{
     grid-template-columns: 1fr;
-  }.pva-kpi-card--wide{
-    grid-column: auto;
-  }.pva-kpi-card--wide .pva-kpi-card__value{
-    white-space: normal;
-    overflow-wrap: anywhere;
   }.pva-table-card__toolbar{
     flex-direction: column;
     align-items: stretch;

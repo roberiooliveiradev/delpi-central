@@ -1,7 +1,5 @@
 import { createDashboardLoadingActivityCard } from "@delpi/plugin-ui/index";
 
-import "./LoadingActivityInline.css";
-
 export const LoadingActivityInline = createDashboardLoadingActivityCard({
   prefix: "si",
   block: "loading-activity-inline",

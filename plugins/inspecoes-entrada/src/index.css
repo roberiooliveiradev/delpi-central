@@ -202,23 +202,7 @@
 }.ie-alert--error{
   border-color: color-mix(in srgb, var(--ie-danger) 35%, var(--ie-border));
   color: var(--ie-danger);
-}.ie-filter-bar{
-  padding: 16px 18px;
-}.ie-filter-bar__header{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-}.ie-filter-bar__title{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}.ie-filter-bar__title h2{
-  margin: 0;
-  font-size: 1rem;
-}.ie-filter-bar__grid,
-.ie-filter-grid{
+}.ie-filter-grid{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
@@ -242,11 +226,7 @@
   border-radius: var(--ie-control-radius);
   background: var(--ie-surface);
   color: var(--ie-text);
-}/* SelectControl (FilterSelectField) — evita lista/bullets fora do shell */.ie-filter-bar__actions{
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
-}.ie-table-card{
+}/* SelectControl (FilterSelectField) — evita lista/bullets fora do shell */.ie-table-card{
   overflow: hidden;
 }.ie-table-loading{
   padding: 12px 16px;
@@ -498,8 +478,7 @@
   color: #fdba74;
 }:root[data-theme="dark"] .dashboard-inspecoes-entrada .ie-badge--danger{
   color: #fca5a5;
-}@media (max-width: 1100px){.ie-filter-bar__grid,
-  .ie-filter-grid{
+}@media (max-width: 1100px){.ie-filter-grid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }.ie-kpi-grid--primary{
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -511,9 +490,8 @@
 }@media (max-width: 768px){.dashboard-inspecoes-entrada.dashboard-page{
     padding: 16px;
   }.ie-page-header__main,
-  .ie-page-header__meta,
-  .ie-filter-bar__header,
-  .ie-pagination{
+.ie-page-header__meta,
+.ie-pagination{
     flex-direction: column;
     align-items: stretch;
   }.ie-page-header__brand{
@@ -530,8 +508,7 @@
     width: 100%;
   }.ie-tabs__item{
     flex: 1;
-  }.ie-filter-bar__grid,
-  .ie-filter-grid{
+  }.ie-filter-grid{
     grid-template-columns: 1fr;
   }.ie-field--wide{
     grid-column: auto;
@@ -580,69 +557,6 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }.ie-kpi-grid--secondary{
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}.ie-kpi-card{
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 12px;
-  border-left: 3px solid transparent;
-}.ie-kpi-card--info{
-  border-left-color: var(--ie-accent);
-}.ie-kpi-card--info .ie-kpi-card__icon{
-  background: color-mix(in srgb, var(--ie-accent) 12%, transparent);
-  color: var(--ie-accent);
-}.ie-kpi-card--warning{
-  border-left-color: var(--ie-warning);
-}.ie-kpi-card--warning .ie-kpi-card__icon{
-  background: color-mix(in srgb, var(--ie-warning) 12%, transparent);
-  color: var(--ie-warning);
-}.ie-kpi-card--warning .ie-kpi-card__value{
-  color: var(--ie-warning);
-}.ie-kpi-card--success{
-  border-left-color: var(--ie-success);
-}.ie-kpi-card--success .ie-kpi-card__icon{
-  background: color-mix(in srgb, var(--ie-success) 12%, transparent);
-  color: var(--ie-success);
-}.ie-kpi-card--success .ie-kpi-card__value{
-  color: var(--ie-success);
-}.ie-kpi-card--danger{
-  border-left-color: var(--ie-danger);
-}.ie-kpi-card--danger .ie-kpi-card__icon{
-  background: color-mix(in srgb, var(--ie-danger) 12%, transparent);
-  color: var(--ie-danger);
-}.ie-kpi-card--danger .ie-kpi-card__value{
-  color: var(--ie-danger);
-}.ie-kpi-card__body{
-  flex: 1;
-  min-width: 0;
-}.ie-kpi-card__title{
-  margin: 0 0 2px;
-  color: var(--ie-muted);
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}.ie-kpi-card__value{
-  margin: 0;
-  font-size: clamp(20px, 1.6vw, 24px);
-  font-weight: 800;
-  line-height: 1.05;
-}.ie-kpi-card__subtitle{
-  display: block;
-  margin-top: 2px;
-  color: var(--ie-muted);
-  font-size: 11px;
-  line-height: 1.25;
-}.ie-kpi-card__icon{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ie-text) 6%, transparent);
-  color: var(--ie-muted);
-  flex-shrink: 0;
 }.ie-dashboard-grid{
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;

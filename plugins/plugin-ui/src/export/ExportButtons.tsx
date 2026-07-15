@@ -152,8 +152,8 @@ export function createDashboardTabularExportButtons(config: {
   compactModifier?: string;
 }) {
   const prefix = config.prefix;
-  const defaultClassName = `${prefix}-export-actions`;
-  const defaultButtonClassName = `${prefix}-ghost-btn ${prefix}-export-actions__btn`;
+  const defaultClassName = `${prefix}-export-actions delpi-ui-export-actions`;
+  const defaultButtonClassName = `${prefix}-ghost-btn ${prefix}-export-actions__btn delpi-ui-ghost-btn delpi-ui-export-actions__btn`;
 
   return function DashboardTabularExportButtons(
     props: Omit<TabularExportButtonsProps, "className" | "buttonClassName"> & {
@@ -165,7 +165,7 @@ export function createDashboardTabularExportButtons(config: {
     const {
       compact = false,
       className = compact
-        ? `${defaultClassName} ${defaultClassName}--compact`
+        ? `${defaultClassName} ${prefix}-export-actions--compact delpi-ui-export-actions--compact`
         : defaultClassName,
       buttonClassName = defaultButtonClassName,
       groupAriaLabel = config.groupAriaLabel,

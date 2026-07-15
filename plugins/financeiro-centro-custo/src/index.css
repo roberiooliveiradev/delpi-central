@@ -43,11 +43,9 @@ select{
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 12px;
   box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
-}.fcc-filter-bar,
-.fcc-filters{
+}.fcc-filters{
   padding: 1rem 1.25rem;
-}.fcc-filter-bar__grid,
-.fcc-filters__grid{
+}.fcc-filters__grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem 1rem;
@@ -70,8 +68,7 @@ select{
   border-radius: 8px;
   background: var(--surface, #fff);
   color: inherit;
-}/* SelectControl (FilterSelectField) — evita lista/bullets fora do shell */.fcc-filter-bar__actions,
-.fcc-filters__actions{
+}/* SelectControl (FilterSelectField) — evita lista/bullets fora do shell */.fcc-filters__actions{
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem;
@@ -100,55 +97,10 @@ select{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem;
-}.fcc-kpi-card{
-  display: flex;
-  gap: 0.85rem;
-  padding: 1rem;
-  align-items: flex-start;
-}.fcc-kpi-card__icon{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
-  color: var(--primary, #2563eb);
-}.fcc-kpi-card__title{
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--muted-foreground, #64748b);
-}.fcc-kpi-card__value{
-  margin: 0.2rem 0 0;
-  font-size: 1.25rem;
-  font-weight: 700;
 }.fcc-charts-grid{
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 0.85rem;
-}.fcc-chart-card{
-  grid-column: span 12;
-  padding: 1rem 1.25rem 1.25rem;
-}@media (min-width: 960px){.fcc-chart-card--wide{
-    grid-column: span 12;
-  }.fcc-chart-card:not(.fcc-chart-card--wide){
-    grid-column: span 6;
-  }
-}.fcc-chart-card__header{
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.65rem;
-  margin-bottom: 0.75rem;
-}.fcc-chart-card__heading{
-  min-width: 0;
-  flex: 1 1 12rem;
-}.fcc-chart-card__actions{
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.35rem;
 }.fcc-chart-expand-btn{
   display: inline-flex;
   align-items: center;
@@ -156,14 +108,6 @@ select{
   min-height: 2rem;
   padding: 0.35rem 0.65rem;
   font-size: 0.8125rem;
-}.fcc-chart-card__title{
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-}.fcc-chart-card__hint{
-  margin: 0.25rem 0 0;
-  font-size: 0.8125rem;
-  color: var(--muted-foreground, #64748b);
 }.fcc-chart-placeholder{
   min-height: 280px;
   display: grid;

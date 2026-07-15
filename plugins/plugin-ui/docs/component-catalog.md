@@ -542,8 +542,13 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | `data-table.css` | `DataTable` / `DataTableSection` — `.delpi-ui-table*` / toolbar / search / `data-align` |
 | `pagination.css` | `Pagination` / Compact / Nav — `.delpi-ui-pagination*` + `.delpi-ui-ghost-btn` |
 | `detail-card.css` | `DetailCard` / `DetailFieldGrid` — `.delpi-ui-detail-card*` / grid (`dt`/`dd`) |
+| `chart-card.css` | `ChartCard` / `ChartToolbar` / segment toggle — `.delpi-ui-chart-*` |
+| `departmental-kpi.css` | `KpiCard` dept. — `.delpi-ui-kpi-*` (≠ `.delpi-kpi-*` TV) |
+| `loading-activity.css` | `LoadingActivityCard` — `.delpi-ui-loading-activity*` |
+| `dashboard-filters.css` | `FiltersRow` / `filter-box` / `FilterBarShell` |
+| `export-actions.css` | `TabularExportButtons` — `.delpi-ui-export-actions*` |
 
-MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar layout de tabela/paginação/detalhe (Onda 1) nem shell MultiSelect/Select (Onda 2). Chart/KPI/Loading/Filters: Onda 3.
+MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar layout das Ondas 1–3 (tabela, select/multiselect, chart/kpi/loading/filters/export).
 
 | Classe | Uso |
 |--------|-----|

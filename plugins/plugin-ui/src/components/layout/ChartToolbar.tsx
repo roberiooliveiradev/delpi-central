@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import { FieldLabel } from "../help/FieldLabel";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type ChartGranularityOption<T extends string = string> = {
   value: T;
@@ -68,21 +69,33 @@ export type ChartToolbarProps<T extends string = string> = {
 
 export type DashboardChartToolbarLabels = ChartToolbarLabels & ChartGranularityToggleLabels;
 
-/** Monta classNames BEM `{prefix}-chart-toolbar*` e `{prefix}-segment-toggle*`. */
+/** Monta classNames BEM `{prefix}-chart-toolbar*` + `.delpi-ui-chart-toolbar*`. */
 export function chartToolbarBemClasses(prefix: string) {
+  const tb = `${prefix}-chart-toolbar`;
+  const ui = "delpi-ui-chart-toolbar";
+  const seg = `${prefix}-segment-toggle`;
+  const uiSeg = "delpi-ui-segment-toggle";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+
   return {
-    toolbar: `${prefix}-chart-toolbar`,
-    granularity: `${prefix}-chart-toolbar__granularity`,
-    granularityHelp: `${prefix}-chart-toolbar__granularity-help`,
-    group: `${prefix}-chart-toolbar__group`,
-    actions: `${prefix}-chart-toolbar__actions`,
-    action: `${prefix}-chart-toolbar__action`,
-    actionHelp: `${prefix}-chart-toolbar__action-help`,
-    exportButton: `${prefix}-ghost-btn ${prefix}-chart-toolbar__export`,
+    toolbar: pair(tb, ui),
+    granularity: pair(`${tb}__granularity`, `${ui}__granularity`),
+    granularityHelp: pair(`${tb}__granularity-help`, `${ui}__granularity-help`),
+    group: pair(`${tb}__group`, `${ui}__group`),
+    actions: pair(`${tb}__actions`, `${ui}__actions`),
+    action: pair(`${tb}__action`, `${ui}__action`),
+    actionHelp: pair(`${tb}__action-help`, `${ui}__action-help`),
+    exportButton: pair(
+      `${prefix}-ghost-btn ${tb}__export`,
+      `delpi-ui-ghost-btn ${ui}__export`,
+    ),
     fieldLabel: `${prefix}-field__label`,
-    segmentToggle: `${prefix}-segment-toggle`,
-    segmentButton: `${prefix}-segment-toggle__btn`,
-    segmentButtonActive: `${prefix}-segment-toggle__btn ${prefix}-segment-toggle__btn--active`,
+    segmentToggle: pair(seg, uiSeg),
+    segmentButton: pair(`${seg}__btn`, `${uiSeg}__btn`),
+    segmentButtonActive: pair(
+      `${seg}__btn ${seg}__btn--active`,
+      `${uiSeg}__btn ${uiSeg}__btn--active`,
+    ),
   };
 }
 

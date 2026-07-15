@@ -46,6 +46,7 @@ describe("ChartCard", () => {
 
   it("layout titleRow coloca hint abaixo da linha título+ações", () => {
     const classNames = chartCardBemClasses("cr", { headerLayout: "titleRow" });
+    const pick = (cn: string | undefined) => `.${(cn ?? "").split(/\s+/).filter(Boolean)[0]}`;
 
     render(
       <ChartCard
@@ -58,12 +59,12 @@ describe("ChartCard", () => {
       </ChartCard>,
     );
 
-    const headerRow = document.querySelector(`.${classNames.headerRow}`);
-    expect(headerRow?.querySelector(`.${classNames.title}`)?.textContent).toBe("Ranking");
+    const headerRow = document.querySelector(pick(classNames.headerRow));
+    expect(headerRow?.querySelector(pick(classNames.title))?.textContent).toBe("Ranking");
     expect(headerRow?.querySelector("button")?.textContent).toBe("Expandir");
-    expect(headerRow?.querySelector(`.${classNames.hint}`)).toBeNull();
+    expect(headerRow?.querySelector(pick(classNames.hint))).toBeNull();
 
-    const header = document.querySelector(`.${classNames.header}`);
-    expect(header?.querySelector(`.${classNames.hint}`)?.textContent).toBe("Top 10");
+    const header = document.querySelector(pick(classNames.header));
+    expect(header?.querySelector(pick(classNames.hint))?.textContent).toBe("Top 10");
   });
 });

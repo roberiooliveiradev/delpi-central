@@ -1,0 +1,26 @@
+/**
+ * TabularExportButtons / DocumentExportActions — .delpi-ui-export-actions*.
+ */
+
+.delpi-ui-export-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-export-actions__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delpi-ui-export-actions--compact {
+  gap: 6px;
+}
+
+.delpi-ui-export-actions--compact .delpi-ui-export-actions__btn {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.8125rem;
+}

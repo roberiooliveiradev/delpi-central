@@ -1,0 +1,134 @@
+/**
+ * ChartCard + ChartToolbar + segment toggle — classes .delpi-ui-chart-* / .delpi-ui-segment-toggle*.
+ * Tokens: --delpi-ui-*.
+ */
+
+.delpi-ui-chart-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.delpi-ui-chart-card__heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.delpi-ui-chart-card__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.delpi-ui-chart-card__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-chart-card__title-help {
+  flex-shrink: 0;
+}
+
+.delpi-ui-chart-card__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-chart-card__hint--below {
+  margin-top: 8px;
+}
+
+.delpi-ui-chart-card__actions {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.delpi-ui-chart-card__body {
+  min-height: 120px;
+}
+
+.delpi-ui-chart-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.delpi-ui-chart-toolbar__granularity,
+.delpi-ui-chart-toolbar__group,
+.delpi-ui-chart-toolbar__actions,
+.delpi-ui-chart-toolbar__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-chart-toolbar__actions {
+  gap: 8px;
+}
+
+.delpi-ui-chart-toolbar__action,
+.delpi-ui-chart-toolbar__granularity-help,
+.delpi-ui-chart-toolbar__action-help {
+  flex-shrink: 0;
+}
+
+.delpi-ui-chart-toolbar__export {
+  white-space: nowrap;
+}
+
+.delpi-ui-segment-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-segment-toggle__btn {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-segment-toggle__btn:hover:not(:disabled) {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+}
+
+.delpi-ui-segment-toggle__btn--active {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}

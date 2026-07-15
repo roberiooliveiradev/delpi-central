@@ -170,6 +170,15 @@ Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField`
 | Poda MFEs | ✅ chrome `{prefix}-multi-select*` / `{prefix}-select__*` removido |
 | Domínio mantido | ribbon TV (`.delpi-ui-select` + densidade), `pac-table-select--status`, `filter-bar > field--multi-select` |
 
+### Onda 3 — Chart / KPI / Loading / Filters / Export (jul/2026)
+
+| Item | Status |
+|------|--------|
+| CSS canônico | ✅ `chart-card.css`, `departmental-kpi.css`, `loading-activity.css`, `dashboard-filters.css`, `export-actions.css` |
+| Kits `*BemClasses` | ✅ emitem prefix + `.delpi-ui-*` |
+| `LoadingActivityInline` (LMPS/SI) | ✅ kit `createDashboardLoadingActivityCard`; CSS local removido |
+| Poda MFEs | ✅ chrome estrutural removido; `kpi-grid` / layout de página permanece |
+
 ### Onda 1 — CSS estrutural DataTable / Detail / Pagination (jul/2026)
 
 Poda nos MFEs dos blocos BEM espelho cobertos por `data-table.css`, `detail-card.css` e `pagination.css` (classes estáveis `.delpi-ui-*`). Kits emitem `prefix` + `delpi-ui` via `delpiUiClass`.

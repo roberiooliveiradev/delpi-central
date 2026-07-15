@@ -1,6 +1,7 @@
 import { useId, type ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type ChartCardClassNames = {
   section: string;
@@ -27,7 +28,7 @@ export type ChartCardProps = {
   titleLevel?: 2 | 3;
 };
 
-/** Monta classNames BEM `{prefix}-chart-card__*` usados pelos dashboards departamentais. */
+/** Monta classNames BEM `{prefix}-chart-card__*` + `.delpi-ui-chart-card*`. */
 export function chartCardBemClasses(
   prefix: string,
   options?: {
@@ -40,24 +41,33 @@ export function chartCardBemClasses(
 ): ChartCardClassNames {
   const cardModifier = options?.cardModifier ?? "card";
   const card = `${prefix}-${cardModifier}`;
+  const ui = "delpi-ui-chart-card";
   const headerLayout = options?.headerLayout ?? "default";
   const withHeading = options?.withHeading ?? headerLayout === "default";
   const withActions = options?.withActions ?? true;
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
 
   return {
-    section: `${card} ${prefix}-chart-card`,
-    header: `${prefix}-chart-card__header`,
+    section: pair(`${card} ${prefix}-chart-card`, `delpi-ui-card ${ui}`),
+    header: pair(`${prefix}-chart-card__header`, `${ui}__header`),
     heading:
       headerLayout === "default" && withHeading
-        ? `${prefix}-chart-card__heading`
+        ? pair(`${prefix}-chart-card__heading`, `${ui}__heading`)
         : undefined,
     headerRow:
-      headerLayout === "titleRow" ? `${prefix}-chart-card__header-row` : undefined,
-    title: `${prefix}-chart-card__title`,
-    titleHelp: `${prefix}-chart-card__title-help`,
-    hint: `${prefix}-chart-card__hint`,
-    actions: withActions ? `${prefix}-chart-card__actions ${prefix}-no-print` : undefined,
-    body: `${prefix}-chart-card__body`,
+      headerLayout === "titleRow"
+        ? pair(`${prefix}-chart-card__header-row`, `${ui}__header-row`)
+        : undefined,
+    title: pair(`${prefix}-chart-card__title`, `${ui}__title`),
+    titleHelp: pair(`${prefix}-chart-card__title-help`, `${ui}__title-help`),
+    hint: pair(`${prefix}-chart-card__hint`, `${ui}__hint`),
+    actions: withActions
+      ? pair(
+          `${prefix}-chart-card__actions ${prefix}-no-print`,
+          `${ui}__actions delpi-ui-no-print`,
+        )
+      : undefined,
+    body: pair(`${prefix}-chart-card__body`, `${ui}__body`),
   };
 }
 
