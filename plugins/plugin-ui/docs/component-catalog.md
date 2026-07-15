@@ -542,6 +542,7 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | `data-table.css` | `DataTable` / `DataTableSection` — `.delpi-ui-table*` / toolbar / search / `data-align` |
 | `pagination.css` | `Pagination` / Compact / Nav — `.delpi-ui-pagination*` + `.delpi-ui-ghost-btn` |
 | `detail-card.css` | `DetailCard` / `DetailFieldGrid` — `.delpi-ui-detail-card*` / grid (`dt`/`dd`) |
+| `card-shell.css` | `.delpi-ui-card` — padding/borda/surface (Chart / FilterBar / KPI / tabela) |
 | `chart-card.css` | `ChartCard` / `ChartToolbar` / segment toggle — `.delpi-ui-chart-*` |
 | `departmental-kpi.css` | `KpiCard` dept. — `.delpi-ui-kpi-*` (≠ `.delpi-kpi-*` TV) |
 | `loading-activity.css` | `LoadingActivityCard` — `.delpi-ui-loading-activity*` |

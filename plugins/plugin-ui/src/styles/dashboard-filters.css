@@ -78,10 +78,20 @@
 
 .delpi-ui-filter-bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
   gap: var(--delpi-ui-grid-gap, 12px);
   margin-bottom: var(--delpi-ui-section-gap, 20px);
+  box-sizing: border-box;
+}
+
+/** Shell quando o kit não emite `.delpi-ui-card` (embedded / blocos sem card). */
+.delpi-ui-filter-bar:not(.delpi-ui-card) {
+  padding: 14px 1.25rem;
+  border-radius: var(--delpi-ui-filter-radius, var(--delpi-ui-control-radius, 12px));
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
 
 .delpi-ui-filter-bar__grid {
@@ -90,4 +100,62 @@
   gap: var(--delpi-ui-grid-gap, 12px);
   width: 100%;
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+/**
+ * Bridge: MFEs ainda usam `{prefix}-filter-bar__grid` / `{prefix}-filters__grid`
+ * sem dual-class (PA, SM, CR, FCC…). Força full-width no flex column do shell.
+ */
+.delpi-ui-filter-bar [class*="-filter-bar__grid"],
+.delpi-ui-filter-bar [class*="-filters__grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--delpi-ui-grid-gap, 12px);
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.delpi-ui-filter-bar [class*="-filter-bar__actions"],
+.delpi-ui-filter-bar [class*="-filters__actions"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.delpi-ui-filter-bar [class*="-filters__error"] {
+  width: 100%;
+  margin: 0;
+}
+
+/** Fields locais (`pa-field`, `sm-field`) dentro do shell — mesmo contrato do filter-box. */
+.delpi-ui-filter-bar [class$="-field"] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.delpi-ui-filter-bar [class$="-field"] label,
+.delpi-ui-filter-bar [class$="-field"] [class*="__label"],
+.delpi-ui-filter-bar [class$="-field"] .delpi-ui-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-filter-bar [class$="-field"] input:not([type="checkbox"]):not([type="radio"]),
+.delpi-ui-filter-bar [class$="-field"] select {
+  min-height: var(--delpi-ui-control-height, 42px);
+  box-sizing: border-box;
+  border-radius: var(--delpi-ui-control-radius, 10px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  padding: 8px 12px;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  width: 100%;
 }

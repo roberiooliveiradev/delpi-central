@@ -106,4 +106,24 @@ describe("SimpleKpiCard", () => {
     expect(header?.querySelector(".pva-kpi-card__body")).toBeTruthy();
     expect(header?.querySelector(".pva-kpi-card__icon")).toBeTruthy();
   });
+
+  it("emite dual-class delpi-ui no SimpleKpi", () => {
+    const classNames = simpleKpiCardBemClasses("pa", "kpi-card", { withBody: true });
+    render(
+      <SimpleKpiCard
+        title="Apontamentos"
+        value="10"
+        icon={<span data-testid="icon">i</span>}
+        classNames={classNames}
+      />,
+    );
+
+    const article = document.querySelector("article");
+    expect(article?.className).toContain("delpi-ui-card");
+    expect(article?.className).toContain("delpi-ui-kpi-card");
+    expect(document.querySelector(".delpi-ui-kpi-icon")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-kpi-title")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-kpi-value")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-kpi-card__body")).toBeTruthy();
+  });
 });

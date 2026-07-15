@@ -1,15 +1,31 @@
 /**
  * KpiCard departamental — .delpi-ui-kpi-* (não confundir com .delpi-kpi-* da TV).
  * Tokens: --delpi-ui-* / --delpi-ui-font-kpi.
+ * Shell de padding/borda: `.delpi-ui-card` em card-shell.css.
  */
 
 .delpi-ui-card.delpi-ui-kpi-card {
   min-width: 0;
-  padding: 20px;
-  border-radius: var(--delpi-ui-radius, 18px);
-  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
-  box-sizing: border-box;
+}
+
+/** SimpleKpiCard (ícone à esquerda / body) — sem header dept. */
+.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.delpi-ui-kpi-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)) > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
+  flex: 1;
+  min-width: 0;
 }
 
 .delpi-ui-kpi-header {

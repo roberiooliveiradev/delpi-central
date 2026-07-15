@@ -215,6 +215,7 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
 .delpi-ui-table-section.card {
   min-width: 0;
   margin-bottom: var(--delpi-ui-section-gap, 20px);
+  /* padding vem de .delpi-ui-card (card-shell.css) */
 }
 
 .delpi-ui-table-section {

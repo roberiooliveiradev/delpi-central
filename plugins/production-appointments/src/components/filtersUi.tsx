@@ -2,17 +2,13 @@ import {
   FilterInputField as PluginFilterInputField,
   FilterSelectField as PluginFilterSelectField,
   createFilterBarShell,
+  filtersRowBemClasses,
   selectControlBemClasses,
-  type FilterInputFieldClassNames,
   type FilterInputFieldProps,
   type FilterSelectFieldProps,
 } from "@delpi/plugin-ui/index";
 
-const FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
-  filterBox: "pa-field",
-  fieldLabel: "pa-field__label",
-};
-
+const FIELD_CLASS_NAMES = filtersRowBemClasses("pa");
 const SELECT_CLASS_NAMES = selectControlBemClasses("pa");
 
 export const FilterBarShell = createFilterBarShell({

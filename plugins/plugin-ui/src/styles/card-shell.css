@@ -1,0 +1,13 @@
+/**
+ * Shell de card canônico — ChartCard, FilterBarShell, DataTableSection, KPI, Detail.
+ * Tokens: --delpi-ui-card-padding, --delpi-ui-radius, --delpi-ui-border, --delpi-ui-surface.
+ */
+
+.delpi-ui-card {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: var(--delpi-ui-card-padding, 20px);
+  border-radius: var(--delpi-ui-radius, 18px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}

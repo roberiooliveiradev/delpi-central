@@ -179,6 +179,17 @@ Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField`
 | `LoadingActivityInline` (LMPS/SI) | ✅ kit `createDashboardLoadingActivityCard`; CSS local removido |
 | Poda MFEs | ✅ chrome estrutural removido; `kpi-grid` / layout de página permanece |
 
+### Hotfix — shell card / FilterBar / SimpleKpi (jul/2026)
+
+Regressão pós-Onda 3 (PA, scrap, CR…): filtros em 1 coluna, KPI/chart/tabela sem padding.
+
+| Correção | Onde |
+|----------|------|
+| `.delpi-ui-card` shell (padding/borda) | `card-shell.css` |
+| FilterBar column + grid `width:100%` + bridge `*-filter-bar__grid` | `dashboard-filters.css` |
+| `simpleKpiCardBemClasses` dual-class + layout ícone | `SimpleKpiCard.tsx` + `departmental-kpi.css` |
+| Fields PA/SM/CR/FCC → `filtersRowBemClasses` | filtersUi dos MFEs |
+
 ### Resíduos finais (pós-Onda 3 → canônico)
 
 | Item | Ação |

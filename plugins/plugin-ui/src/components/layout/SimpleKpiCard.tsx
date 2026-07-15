@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type SimpleKpiCardClassNames = {
   article: string;
   icon: string;
@@ -38,16 +40,20 @@ export function simpleKpiCardBemClasses(
   },
 ): SimpleKpiCardClassNames {
   const card = `${prefix}-${block}`;
+  const ui = "delpi-ui-kpi-card";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
 
   return {
-    article: `${prefix}-card ${card}`,
-    icon: `${card}__icon`,
-    header: options?.layout === "iconEnd" ? `${card}__header` : undefined,
-    body: options?.withBody ? `${card}__body` : undefined,
-    title: `${card}__title`,
-    value: `${card}__value`,
-    valueDanger: `${card}__value--danger`,
-    subtitle: options?.withSubtitle ? `${card}__subtitle` : undefined,
+    article: pair(`${prefix}-card ${card}`, `delpi-ui-card ${ui}`),
+    icon: pair(`${card}__icon`, "delpi-ui-kpi-icon"),
+    header: options?.layout === "iconEnd" ? pair(`${card}__header`, `${ui}__header`) : undefined,
+    body: options?.withBody ? pair(`${card}__body`, `${ui}__body`) : undefined,
+    title: pair(`${card}__title`, "delpi-ui-kpi-title"),
+    value: pair(`${card}__value`, "delpi-ui-kpi-value"),
+    valueDanger: pair(`${card}__value--danger`, "delpi-ui-kpi-value--danger"),
+    subtitle: options?.withSubtitle
+      ? pair(`${card}__subtitle`, "delpi-ui-kpi-subtitle")
+      : undefined,
   };
 }
 

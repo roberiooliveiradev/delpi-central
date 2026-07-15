@@ -1,7 +1,13 @@
 /**
  * ChartCard + ChartToolbar + segment toggle — classes .delpi-ui-chart-* / .delpi-ui-segment-toggle*.
+ * Padding/borda do card: `.delpi-ui-card` (card-shell.css).
  * Tokens: --delpi-ui-*.
  */
+
+.delpi-ui-chart-card {
+  display: block;
+  min-width: 0;
+}
 
 .delpi-ui-chart-card__header {
   display: flex;
@@ -60,6 +66,7 @@
 
 .delpi-ui-chart-card__body {
   min-height: 120px;
+  min-width: 0;
 }
 
 .delpi-ui-chart-toolbar {
