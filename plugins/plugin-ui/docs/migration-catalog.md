@@ -179,6 +179,17 @@ Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField`
 | `LoadingActivityInline` (LMPS/SI) | ✅ kit `createDashboardLoadingActivityCard`; CSS local removido |
 | Poda MFEs | ✅ chrome estrutural removido; `kpi-grid` / layout de página permanece |
 
+### Resíduos finais (pós-Onda 3 → canônico)
+
+| Item | Ação |
+|------|------|
+| CX `cx-export-actions*` | ✅ `TabularExportButtons` + `export-actions.css` (`--trailing` / `__label`) |
+| PAC `filter-box__spacer` | ✅ `.delpi-ui-filter-box__spacer` + `filtersRowBemClasses.filterBoxSpacer` |
+| Detail×table composição | ✅ `data-table.css`; blocos `.{prefix}-detail-card .{prefix}-table*` podados nos dept. |
+| Print pagination/toolbar overflow | ✅ `pagination.css` + `data-table.css` (`@media print`); MFEs mantêm chrome de página |
+| `inspecoes-processo` KpiCard | ✅ `createDashboardKpiCard({ prefix: "ip" })` + shell `.delpi-ui-kpi-card` |
+| SI `LoadingActivityBadge` | ✅ kit plugin-ui + `loading-activity-badge.css`; `index_dep.css` legado removido |
+
 ### Onda 1 — CSS estrutural DataTable / Detail / Pagination (jul/2026)
 
 Poda nos MFEs dos blocos BEM espelho cobertos por `data-table.css`, `detail-card.css` e `pagination.css` (classes estáveis `.delpi-ui-*`). Kits emitem `prefix` + `delpi-ui` via `delpiUiClass`.

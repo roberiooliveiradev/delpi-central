@@ -15,6 +15,8 @@ export type FiltersRowClassNames = {
   rowExtended: string;
   rowCompact?: string;
   trailingBox?: string;
+  /** Reserva altura do label quando a ação de limpar some. */
+  filterBoxSpacer: string;
 };
 
 export type FiltersRowProps = {
@@ -101,6 +103,7 @@ export function filtersRowBemClasses(prefix: string): FiltersRowClassNames & Fil
     rowCompact: pair(`${row} ${row}--compact`, `${ui} ${ui}--compact`),
     trailingBox: pair(`${box} ${box}--action`, `${uiBox} ${uiBox}--action`),
     filterBox: pair(`${box} ${prefix}-field`, uiBox),
+    filterBoxSpacer: pair(`${box}__spacer`, `${uiBox}__spacer`),
     fieldLabel: `${prefix}-field__label`,
   };
 }

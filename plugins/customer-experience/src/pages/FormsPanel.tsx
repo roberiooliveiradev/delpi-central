@@ -18,7 +18,11 @@ import {
   Save,
   Trash2,
 } from "lucide-react";
-import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import {
+  NativeCheckboxControl,
+  NativeTextControl,
+  TabularExportButtons,
+} from "@delpi/plugin-ui/index";
 import {
   activateForm,
   createForm,
@@ -1282,35 +1286,19 @@ function FormDashboardView({ form, onBack }: { form: FormDetail; onBack: () => v
             Respostas
           </button>
         </div>
-        <div className="cx-export-actions">
-          <span className="cx-export-actions__label">
-            <Download size={14} /> Exportar
-          </span>
-          <button
-            className="cx-button cx-button--ghost"
-            type="button"
-            disabled={exporting !== null}
-            onClick={() => void handleExport("csv")}
-          >
-            {exporting === "csv" ? "..." : "CSV"}
-          </button>
-          <button
-            className="cx-button cx-button--ghost"
-            type="button"
-            disabled={exporting !== null}
-            onClick={() => void handleExport("xlsx")}
-          >
-            {exporting === "xlsx" ? "..." : "Excel"}
-          </button>
-          <button
-            className="cx-button cx-button--ghost"
-            type="button"
-            disabled={exporting !== null}
-            onClick={() => void handleExport("pdf")}
-          >
-            {exporting === "pdf" ? "..." : "PDF"}
-          </button>
-        </div>
+        <TabularExportButtons
+          className="delpi-ui-export-actions delpi-ui-export-actions--trailing"
+          buttonClassName="cx-button cx-button--ghost delpi-ui-export-actions__btn"
+          showIcon={false}
+          exporting={exporting !== null}
+          exportingLabel="..."
+          leading={
+            <span className="delpi-ui-export-actions__label">
+              <Download size={14} aria-hidden="true" /> Exportar
+            </span>
+          }
+          onExport={(format) => void handleExport(format)}
+        />
       </div>
 
       {error && (

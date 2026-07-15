@@ -274,3 +274,11 @@
 .delpi-ui-table-page-size__help {
   flex-shrink: 0;
 }
+
+
+@media print {
+  .delpi-ui-pagination,
+  .delpi-ui-pagination__actions {
+    display: none !important;
+  }
+}

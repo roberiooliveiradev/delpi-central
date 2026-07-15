@@ -552,14 +552,6 @@
 }.dashboard-financial .ds-header-action__help,
 .dashboard-financial .ds-totvs-banner__help{
   flex-shrink: 0;
-}.dashboard-financial .ds-detail-card .ds-table-wrap{
-  margin-top: 4px;
-}.dashboard-financial .ds-detail-card .ds-table th{
-  color: var(--ds-accent);
-  white-space: nowrap;
-}.dashboard-financial .ds-detail-card .ds-table{
-  min-width: 640px;
-  font-size: var(--ds-font-md);
 }/* Department IDD badge (sync dashboard_department_idd) */.dashboard-financial .ds-page-header__title-row{
   display: flex;
   flex-wrap: wrap;

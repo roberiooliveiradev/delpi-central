@@ -9,6 +9,21 @@
   flex-wrap: wrap;
 }
 
+.delpi-ui-export-actions--trailing {
+  margin-left: auto;
+  gap: 6px;
+}
+
+.delpi-ui-export-actions__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  margin-right: 4px;
+}
+
 .delpi-ui-export-actions__btn {
   display: inline-flex;
   align-items: center;

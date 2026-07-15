@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 
 import { TABULAR_EXPORT_ACTIONS, type ExportAction, type TabularExportFormat } from "./types";
@@ -13,6 +14,8 @@ export type TabularExportButtonsProps = {
   showIcon?: boolean;
   groupAriaLabel?: string;
   exportingLabel?: string;
+  /** Conteúdo à esquerda (ex.: rótulo "Exportar" no CX). */
+  leading?: ReactNode;
   onExport: (format: TabularExportFormat) => void | Promise<void>;
 };
 
@@ -29,12 +32,14 @@ export function TabularExportButtons({
   showIcon = true,
   groupAriaLabel = "Exportar dados",
   exportingLabel = "Exportando…",
+  leading = null,
   onExport,
 }: TabularExportButtonsProps) {
   const isDisabled = disabled || exporting;
 
   return (
     <div className={className} role="group" aria-label={groupAriaLabel}>
+      {leading}
       {actions.map((action) => (
         <button
           key={action.format}

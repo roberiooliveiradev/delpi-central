@@ -41,6 +41,14 @@
   grid-column: span 2;
 }
 
+/** Reserva altura do label quando a ação de limpar some (trailing FiltersRow). */
+.delpi-ui-filter-box__spacer {
+  display: block;
+  min-height: 20px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .delpi-ui-filter-box .delpi-ui-field-label,
 .delpi-ui-filter-box label {
   font-size: 13px;

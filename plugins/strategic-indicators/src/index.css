@@ -57,6 +57,7 @@
   --delpi-ui-accent: var(--primary, #089bdb);
   --delpi-ui-surface: var(--surface, #ffffff);
   --delpi-ui-text: var(--si-text);
+  --delpi-ui-title: var(--si-title);
   --delpi-ui-border: var(--border, #e6e6e6);
   --delpi-ui-muted: var(--si-text-muted);
 }/* SelectControl (FilterSelectField) — evita select nativo fora do tema *//* =========================================

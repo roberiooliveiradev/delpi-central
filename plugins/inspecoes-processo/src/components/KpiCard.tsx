@@ -1,25 +1,15 @@
-import type { ReactNode } from "react";
+import {
+  createDashboardKpiCard,
+  type DashboardKpiCardProps,
+  type KpiCardLabels,
+} from "@delpi/plugin-ui/index";
 
-type KpiCardProps = {
-  title: string;
-  value: string;
-  subtitle?: string;
-  icon?: ReactNode;
-};
+const LABELS = {
+  goalPrefix: "Meta",
+  iddScorePrefix: "Nota IDD",
+  badgesStatus: "Indicadores do KPI",
+} satisfies KpiCardLabels;
 
-export function KpiCard({ title, value, subtitle, icon }: KpiCardProps) {
-  return (
-    <article className="ip-kpi-card">
-      <div className="ip-kpi-card__header">
-        {icon ? (
-          <span className="ip-kpi-card__icon" aria-hidden="true">
-            {icon}
-          </span>
-        ) : null}
-        <h3 className="ip-kpi-card__title">{title}</h3>
-      </div>
-      <p className="ip-kpi-card__value">{value}</p>
-      {subtitle ? <p className="ip-kpi-card__subtitle">{subtitle}</p> : null}
-    </article>
-  );
-}
+export const KpiCard = createDashboardKpiCard({ prefix: "ip", labels: LABELS });
+
+export type KpiCardProps = DashboardKpiCardProps;

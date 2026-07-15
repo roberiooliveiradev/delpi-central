@@ -545,8 +545,9 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | `chart-card.css` | `ChartCard` / `ChartToolbar` / segment toggle — `.delpi-ui-chart-*` |
 | `departmental-kpi.css` | `KpiCard` dept. — `.delpi-ui-kpi-*` (≠ `.delpi-kpi-*` TV) |
 | `loading-activity.css` | `LoadingActivityCard` — `.delpi-ui-loading-activity*` |
-| `dashboard-filters.css` | `FiltersRow` / `filter-box` / `FilterBarShell` |
-| `export-actions.css` | `TabularExportButtons` — `.delpi-ui-export-actions*` |
+| `loading-activity-badge.css` | `LoadingActivityBadge` — `.delpi-ui-loading-activity-badge*` |
+| `dashboard-filters.css` | `FiltersRow` / `filter-box` / `__spacer` / `FilterBarShell` |
+| `export-actions.css` | `TabularExportButtons` — `.delpi-ui-export-actions*` (+ `--trailing` / `__label`) |
 
 MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar layout das Ondas 1–3 (tabela, select/multiselect, chart/kpi/loading/filters/export).
 

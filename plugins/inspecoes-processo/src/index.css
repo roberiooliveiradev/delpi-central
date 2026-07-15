@@ -19,6 +19,16 @@
   --ip-blue-accent: #30b8ec;
   --ip-font-sm: 13px;
   --ip-font-md: 14px;
+  --delpi-ui-accent: var(--ip-accent);
+  --delpi-ui-surface: var(--ip-surface);
+  --delpi-ui-text: var(--ip-text);
+  --delpi-ui-title: var(--ip-text);
+  --delpi-ui-border: var(--ip-border);
+  --delpi-ui-muted: var(--ip-muted);
+  --delpi-ui-text-muted: var(--ip-muted);
+  --delpi-ui-radius: var(--ip-radius);
+  --delpi-ui-font-kpi: clamp(1.5rem, 2vw, 2rem);
+  --delpi-ui-kpi-icon-size: 44px;
 }.dashboard-inspecoes-processo.dashboard-page{
   min-height: 100%;
   padding: var(--ip-page-padding);
@@ -263,37 +273,6 @@
 }.inspecoes-processo-app .ip-alert--error{
   border-color: color-mix(in srgb, var(--ip-danger) 35%, var(--ip-border));
   background: color-mix(in srgb, var(--ip-danger) 8%, var(--ip-surface));
-}.inspecoes-processo-app .ip-kpi-card{
-  padding: 20px;
-  border-radius: var(--ip-radius);
-  border: 1px solid var(--ip-border);
-  background: var(--ip-surface);
-}.inspecoes-processo-app .ip-kpi-card__header{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}.inspecoes-processo-app .ip-kpi-card__icon{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--ip-accent) 10%, transparent);
-  color: var(--ip-accent);
-}.inspecoes-processo-app .ip-kpi-card__title{
-  margin: 0;
-  font-size: var(--ip-font-sm);
-  color: var(--ip-muted);
-  font-weight: 600;
-}.inspecoes-processo-app .ip-kpi-card__value{
-  margin: 12px 0 0;
-  font-size: clamp(1.5rem, 2vw, 2rem);
-  font-weight: 700;
-}.inspecoes-processo-app .ip-kpi-card__subtitle{
-  margin: 6px 0 0;
-  color: var(--ip-muted);
-  font-size: var(--ip-font-sm);
 }.inspecoes-processo-app .ip-panel{
   display: flex;
   flex-direction: column;

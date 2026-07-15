@@ -3,6 +3,15 @@
  * Tokens: --delpi-ui-* / --delpi-ui-font-kpi.
  */
 
+.delpi-ui-card.delpi-ui-kpi-card {
+  min-width: 0;
+  padding: 20px;
+  border-radius: var(--delpi-ui-radius, 18px);
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  box-sizing: border-box;
+}
+
 .delpi-ui-kpi-header {
   display: flex;
   justify-content: space-between;

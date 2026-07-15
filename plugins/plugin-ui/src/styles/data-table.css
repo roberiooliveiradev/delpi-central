@@ -385,3 +385,34 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
     width: 100%;
   }
 }
+
+
+/* Composição DetailCard + tabela (antes nos MFEs) */
+.delpi-ui-detail-card .delpi-ui-table-wrap {
+  margin-top: 4px;
+}
+
+.delpi-ui-detail-card table.delpi-ui-table th {
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  white-space: nowrap;
+}
+
+.delpi-ui-detail-card table.delpi-ui-table {
+  min-width: min(100%, 640px);
+  font-size: var(--delpi-ui-font-md, 14px);
+}
+
+@media print {
+  .delpi-ui-table-toolbar,
+  .delpi-ui-no-print {
+    display: none !important;
+  }
+
+  .delpi-ui-table-wrap,
+  .delpi-ui-table-wrap--section,
+  .delpi-ui-table-wrap--embedded,
+  .delpi-ui-table-section {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+}

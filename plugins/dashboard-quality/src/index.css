@@ -550,14 +550,6 @@
 }.dashboard-quality .dq-header-action__help,
 .dashboard-quality .dq-totvs-banner__help{
   flex-shrink: 0;
-}.dashboard-quality .dq-detail-card .dq-table-wrap{
-  margin-top: 4px;
-}.dashboard-quality .dq-detail-card .dq-table th{
-  color: var(--dq-accent);
-  white-space: nowrap;
-}.dashboard-quality .dq-detail-card .dq-table{
-  min-width: 640px;
-  font-size: var(--dq-font-md);
 }/* Department IDD badge (sync dashboard_department_idd) */.dashboard-quality .dq-page-header__title-row{
   display: flex;
   flex-wrap: wrap;

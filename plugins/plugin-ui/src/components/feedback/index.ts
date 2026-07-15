@@ -10,6 +10,14 @@ export {
   type LoadingActivityCardVariant,
 } from "./LoadingActivityCard";
 export {
+  LoadingActivityBadge,
+  createDashboardLoadingActivityBadge,
+  loadingActivityBadgeBemClasses,
+  type LoadingActivityBadgeClassNames,
+  type LoadingActivityBadgeProps,
+  type LoadingActivityBadgeTone,
+} from "./LoadingActivityBadge";
+export {
   EmptyState,
   LoadingState,
   createDashboardEmptyState,

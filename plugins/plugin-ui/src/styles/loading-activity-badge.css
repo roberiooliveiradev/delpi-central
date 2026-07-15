@@ -1,0 +1,97 @@
+/**
+ * LoadingActivityBadge — chip compacto de status (sidebar / header).
+ * Classes: .delpi-ui-loading-activity-badge*
+ */
+
+.delpi-ui-loading-activity-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+  overflow: hidden;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  box-sizing: border-box;
+}
+
+.delpi-ui-loading-activity-badge--neutral {
+  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 94%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, #e6e6e6) 84%,
+    var(--delpi-ui-accent, var(--primary, #089bdb))
+  );
+}
+
+.delpi-ui-loading-activity-badge--info {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+    var(--delpi-ui-surface, #fff)
+  );
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 24%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+}
+
+.delpi-ui-loading-activity-badge__spinner {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 18%, transparent);
+  border-top-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  flex: 0 0 auto;
+  animation: delpi-ui-loading-spin 0.9s linear infinite;
+}
+
+.delpi-ui-loading-activity-badge__label {
+  position: relative;
+  z-index: 1;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.delpi-ui-loading-activity-badge__bar {
+  position: absolute;
+  inset: auto 8px 4px 8px;
+  height: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--delpi-ui-border, #e6e6e6) 78%, transparent);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.delpi-ui-loading-activity-badge__bar-indicator {
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 78%, white),
+    transparent
+  );
+  animation: delpi-ui-loading-slide 1.4s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .delpi-ui-loading-activity-badge {
+    min-height: 34px;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .delpi-ui-loading-activity-badge__label {
+    font-size: 0.78rem;
+  }
+}

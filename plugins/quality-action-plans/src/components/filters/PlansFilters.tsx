@@ -9,9 +9,11 @@ import {
 } from "../../constants/actionPlans";
 import { EMPTY_PLANS_FILTERS, type PlansFilterState } from "../../utils/planFilters";
 import { FilterBar } from "../ui/FilterBar";
-import { FieldLabel, NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeCheckboxControl, filtersRowBemClasses } from "@delpi/plugin-ui/index";
 import { MultiSelectField } from "../ui/MultiSelectField";
 import { TextField } from "../ui/TextField";
+
+const PAC_FILTER_CLASSES = filtersRowBemClasses("pac");
 
 type Props = {
   filters: PlansFilterState;
@@ -54,7 +56,7 @@ export function PlansFilters({ filters, onChange, onRefresh, loading = false }: 
               Limpar filtros
             </button>
           ) : (
-            <span className="pac-filter-box__spacer" aria-hidden />
+            <span className={PAC_FILTER_CLASSES.filterBoxSpacer} aria-hidden />
           )}
           <button type="button" className="pac-primary-btn" disabled={loading} onClick={onRefresh}>
             <RefreshCw size={16} aria-hidden="true" />

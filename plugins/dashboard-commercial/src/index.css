@@ -999,14 +999,6 @@
 }.dashboard-commercial .dc-detail__empty{
   margin: 0;
   color: var(--dc-text-muted);
-}.dashboard-commercial .dc-detail-card .dc-table-wrap{
-  margin-top: 4px;
-}.dashboard-commercial .dc-detail-card .dc-table th{
-  color: var(--dc-accent);
-  white-space: nowrap;
-}.dashboard-commercial .dc-detail-card .dc-table{
-  min-width: 640px;
-  font-size: var(--dc-font-md);
 }.dashboard-commercial .dc-product-description{
   display: grid;
   gap: 4px;

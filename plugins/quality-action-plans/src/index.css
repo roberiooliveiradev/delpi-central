@@ -323,8 +323,6 @@
   border-radius: var(--pac-control-radius);
   background: var(--pac-card-bg);
   box-sizing: border-box;
-}.dashboard-quality-action-plans .pac-filter-box__spacer{
-  min-height: 20px;
 }.dashboard-quality-action-plans .pac-card{
   background: var(--pac-card-bg);
   border: 1px solid var(--pac-card-border);

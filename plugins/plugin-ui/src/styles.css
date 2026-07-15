@@ -19,6 +19,7 @@
 @import "./styles/departmental-kpi.css";
 @import "./styles/chart-card.css";
 @import "./styles/loading-activity.css";
+@import "./styles/loading-activity-badge.css";
 @import "./styles/dashboard-filters.css";
 @import "./styles/export-actions.css";
 @import "./styles/data-table.css";
