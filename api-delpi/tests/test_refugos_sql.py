@@ -80,3 +80,20 @@ def test_serie_month_groups_by_yyyymm() -> None:
     )
 
     assert "LEFT(LTRIM(RTRIM(BC.BC_DATA)), 6) AS bucket" in query
+
+
+def test_registros_query_exposes_unit_cost_and_pa_description() -> None:
+    from app.infrastructure.persistence.totvs.refugos.refugos_sql import (
+        build_registros_query,
+    )
+
+    query, _params = build_registros_query(
+        date_start="20260701",
+        date_end_exclusive="20260716",
+        branch="01",
+        offset=0,
+        page_size=25,
+    )
+
+    assert "AS unit_cost" in query
+    assert "AS finished_product_desc" in query

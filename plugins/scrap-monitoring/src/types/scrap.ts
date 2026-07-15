@@ -78,6 +78,7 @@ export type ScrapRegistroItem = {
   dataPerda: string;
   op: string;
   pa: string;
+  paDescricao?: string;
   mp: string;
   descricao: string;
   um: string;
@@ -85,6 +86,7 @@ export type ScrapRegistroItem = {
   motivo: string;
   quantidade: number;
   valor: number;
+  custoUnitario?: number;
   centroTrabalho: string;
   codigoOperador: string;
   nomeOperador: string;

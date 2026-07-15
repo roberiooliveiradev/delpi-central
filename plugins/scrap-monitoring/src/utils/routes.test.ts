@@ -20,6 +20,7 @@ describe("scrap routes", () => {
       dataPerda: "2026-07-01",
       op: "OP1",
       pa: "PA1",
+      paDescricao: "Chicote",
       mp: "MP1",
       descricao: "Cabo",
       um: "KG",
@@ -27,6 +28,7 @@ describe("scrap routes", () => {
       motivo: "Falha",
       quantidade: 2,
       valor: 10.5,
+      custoUnitario: 5.25,
       centroTrabalho: "CT-1",
       codigoOperador: "1",
       nomeOperador: "Ana",
@@ -38,5 +40,7 @@ describe("scrap routes", () => {
     expect(item?.op).toBe("OP1");
     expect(item?.valor).toBe(10.5);
     expect(item?.motivo).toBe("Falha");
+    expect(item?.paDescricao).toBe("Chicote");
+    expect(item?.custoUnitario).toBe(5.25);
   });
 });

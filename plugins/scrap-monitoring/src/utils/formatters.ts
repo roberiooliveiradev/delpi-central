@@ -99,3 +99,29 @@ export function formatMotivoLegendLabel(
 ): string {
   return `${formatShortLabel(name, 32)} · ${formatCurrencyBrl(value)} (${formatSharePercent(sharePct)})`;
 }
+
+/** Custo unitário explícito ou derivado de valor/quantidade. */
+export function resolveUnitCost(
+  valor: number | null | undefined,
+  quantidade: number | null | undefined,
+  custoUnitario?: number | null,
+): number | null {
+  if (custoUnitario != null && !Number.isNaN(custoUnitario) && custoUnitario > 0) {
+    return custoUnitario;
+  }
+  if (valor == null || quantidade == null || Number.isNaN(valor) || Number.isNaN(quantidade)) {
+    return null;
+  }
+  if (quantidade === 0) return null;
+  return valor / quantidade;
+}
+
+export function formatCodeWithLabel(
+  code: string | null | undefined,
+  label?: string | null,
+): string {
+  const codeText = (code ?? "").trim();
+  const desc = (label ?? "").trim();
+  if (codeText && desc && desc !== codeText) return `${codeText} — ${desc}`;
+  return codeText || desc || "—";
+}

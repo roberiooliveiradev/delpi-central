@@ -9,9 +9,10 @@ describe("SCRAP_HELP_TOOLTIPS", () => {
     expect(SCRAP_HELP_TOOLTIPS.kpis.totalPeriodo.length).toBeGreaterThan(10);
   });
 
-  it("cobre filtros, charts, tabela e paginação", () => {
+  it("cobre filtros, charts, detalhe, tabela e paginação", () => {
     expect(Object.keys(SCRAP_HELP_TOOLTIPS.filters).length).toBeGreaterThanOrEqual(6);
     expect(Object.keys(SCRAP_HELP_TOOLTIPS.charts).length).toBe(6);
+    expect(Object.keys(SCRAP_HELP_TOOLTIPS.detail).length).toBeGreaterThanOrEqual(4);
     expect(SCRAP_HELP_TOOLTIPS.table.section.length).toBeGreaterThan(10);
     expect(SCRAP_HELP_TOOLTIPS.pagination.pageSize.length).toBeGreaterThan(5);
   });

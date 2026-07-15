@@ -447,6 +447,8 @@ def build_registros_query(
         LTRIM(RTRIM(CYO.CYO_DSRF)) AS reason_label,
         BC.BC_QUANT AS quantity,
         {_VALOR_EXPR} AS value,
+        {_UNIT_COST_EXPR} AS unit_cost,
+        LTRIM(RTRIM(PA1.B1_DESC)) AS finished_product_desc,
         LTRIM(RTRIM(BC.BC_RECURSO)) AS work_center,
         LTRIM(RTRIM(BC.BC_OPERADO)) AS operator_id,
         LTRIM(RTRIM(U.USR_NOME)) AS operator_name

@@ -48,6 +48,7 @@ class GetRefugosRegistrosUseCase:
                 "dataPerda": format_protheus_date(row.get("loss_date")),
                 "op": clean_text(row.get("production_order")),
                 "pa": clean_text(row.get("finished_product")),
+                "paDescricao": clean_text(row.get("finished_product_desc")),
                 "mp": clean_text(row.get("material_code")),
                 "descricao": clean_text(row.get("description")),
                 "um": clean_text(row.get("unit")),
@@ -58,6 +59,7 @@ class GetRefugosRegistrosUseCase:
                 or clean_text(row.get("reason_code")),
                 "quantidade": round_qty(row.get("quantity")),
                 "valor": round_cost(row.get("value")),
+                "custoUnitario": round_cost(row.get("unit_cost")),
                 "centroTrabalho": clean_text(row.get("work_center")),
                 "codigoOperador": clean_text(row.get("operator_id")),
                 "nomeOperador": display_label(

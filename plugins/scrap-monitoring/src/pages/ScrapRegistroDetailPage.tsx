@@ -1,13 +1,24 @@
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  CircleDollarSign,
+  ClipboardList,
+  Package,
+  TriangleAlert,
+} from "lucide-react";
 
+import { DetailCard, DetailFieldGrid } from "../components/detailUi";
 import { EmptyState } from "../components/EmptyState";
+import { KpiCard } from "../components/KpiCard";
 import type { BranchRouteCode } from "../constants/branches";
 import { BRANCH_ROUTE_LABELS } from "../constants/branches";
+import { SCRAP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ScrapRegistroItem } from "../types/scrap";
 import {
+  formatCodeWithLabel,
   formatCurrencyBrl,
   formatDatePtBr,
   formatQuantity,
+  resolveUnitCost,
 } from "../utils/formatters";
 import { navigateScrapBack } from "../utils/navigation";
 import { branchHomePath } from "../utils/routes";
@@ -17,13 +28,12 @@ type ScrapRegistroDetailPageProps = {
   registro: ScrapRegistroItem | null;
 };
 
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="sm-detail-grid__item">
-      <dt>{label}</dt>
-      <dd>{value || "—"}</dd>
-    </div>
-  );
+const D = SCRAP_HELP_TOOLTIPS.detail;
+
+function filialLabel(filial: string, branchRoute: BranchRouteCode): string {
+  const code = filial.trim() || (branchRoute === "ES" ? "02" : "01");
+  const name = code === "02" ? "ES" : code === "01" ? "SC" : BRANCH_ROUTE_LABELS[branchRoute];
+  return `${code} (${name})`;
 }
 
 export function ScrapRegistroDetailPage({
@@ -31,6 +41,10 @@ export function ScrapRegistroDetailPage({
   registro,
 }: ScrapRegistroDetailPageProps) {
   const branchLabel = BRANCH_ROUTE_LABELS[branchRoute];
+  const unitCost = registro
+    ? resolveUnitCost(registro.valor, registro.quantidade, registro.custoUnitario)
+    : null;
+  const withoutCost = Boolean(registro && (registro.valor === 0 || unitCost === 0 || unitCost == null));
 
   return (
     <div className="dashboard-scrap-monitoring dashboard-page sm-page">
@@ -46,9 +60,24 @@ export function ScrapRegistroDetailPage({
             </h1>
             <p className="sm-detail-page__subtitle">
               {registro
-                ? `${formatDatePtBr(registro.dataPerda)} · ${registro.mp || "MP não informada"}`
+                ? `${formatDatePtBr(registro.dataPerda)} · MP ${registro.mp || "não informada"}${
+                    registro.centroTrabalho ? ` · ${registro.centroTrabalho}` : ""
+                  }`
                 : "Registro não encontrado na URL."}
             </p>
+            {registro?.motivo ? (
+              <div className="sm-detail-page__tags" aria-label="Resumo do apontamento">
+                <span className="sm-detail-tag">{registro.motivo}</span>
+                {registro.centroTrabalho ? (
+                  <span className="sm-detail-tag sm-detail-tag--muted">
+                    {registro.centroTrabalho}
+                  </span>
+                ) : null}
+                {withoutCost ? (
+                  <span className="sm-detail-tag sm-detail-tag--warning">Sem custo unitário</span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <button
             type="button"
@@ -66,56 +95,92 @@ export function ScrapRegistroDetailPage({
             message="Não foi possível carregar os dados deste refugo. Volte à lista e selecione novamente."
           />
         ) : (
-          <div className="sm-detail-layout">
-            <section className="sm-card sm-detail-card">
-              <header className="sm-detail-card__header">
-                <h2 className="sm-detail-card__title">Identificação</h2>
-              </header>
-              <div className="sm-detail-card__body">
-                <dl className="sm-detail-grid">
-                  <DetailItem label="Filial" value={registro.filial} />
-                  <DetailItem label="Data" value={formatDatePtBr(registro.dataPerda)} />
-                  <DetailItem label="OP" value={registro.op} />
-                  <DetailItem label="Produto acabado" value={registro.pa} />
-                  <DetailItem label="Matéria-prima" value={registro.mp} />
-                  <DetailItem
-                    label="Descrição"
-                    value={registro.descricao}
-                  />
-                </dl>
-              </div>
-            </section>
+          <>
+            <div className="sm-detail-kpi-grid">
+              <KpiCard
+                title="Valor do refugo"
+                titleHint={D.financial}
+                value={formatCurrencyBrl(registro.valor)}
+                icon={<CircleDollarSign size={22} />}
+              />
+              <KpiCard
+                title="Quantidade"
+                value={`${formatQuantity(registro.quantidade)}${registro.um ? ` ${registro.um}` : ""}`}
+                icon={<Package size={22} />}
+              />
+              <KpiCard
+                title="Custo unitário"
+                titleHint={D.unitCost}
+                value={unitCost == null ? "—" : formatCurrencyBrl(unitCost)}
+                icon={
+                  withoutCost ? <TriangleAlert size={22} /> : <ClipboardList size={22} />
+                }
+              />
+            </div>
 
-            <section className="sm-card sm-detail-card">
-              <header className="sm-detail-card__header">
-                <h2 className="sm-detail-card__title">Causa e operação</h2>
-              </header>
-              <div className="sm-detail-card__body">
-                <dl className="sm-detail-grid">
-                  <DetailItem label="Motivo" value={registro.motivo} />
-                  <DetailItem label="Código do motivo" value={registro.motivoCodigo} />
-                  <DetailItem label="Centro de trabalho" value={registro.centroTrabalho} />
-                  <DetailItem label="Colaborador" value={registro.nomeOperador} />
-                  <DetailItem label="Código do operador" value={registro.codigoOperador} />
-                </dl>
-              </div>
-            </section>
+            <div className="sm-detail-layout">
+              <DetailCard title="Identificação" titleHint={D.identification}>
+                <DetailFieldGrid
+                  fields={[
+                    { label: "Filial", value: filialLabel(registro.filial, branchRoute) },
+                    { label: "Data", value: formatDatePtBr(registro.dataPerda) },
+                    { label: "Ordem de produção", value: registro.op || "—" },
+                    {
+                      label: "Centro de trabalho",
+                      value: registro.centroTrabalho || "—",
+                    },
+                  ]}
+                />
+              </DetailCard>
 
-            <section className="sm-card sm-detail-card sm-detail-card--wide">
-              <header className="sm-detail-card__header">
-                <h2 className="sm-detail-card__title">Quantidade e valor</h2>
-              </header>
-              <div className="sm-detail-card__body">
-                <dl className="sm-detail-grid">
-                  <DetailItem
-                    label="Quantidade"
-                    value={`${formatQuantity(registro.quantidade)}${registro.um ? ` ${registro.um}` : ""}`}
-                  />
-                  <DetailItem label="Valor" value={formatCurrencyBrl(registro.valor)} />
-                </dl>
-              </div>
-            </section>
-          </div>
+              <DetailCard title="Causa e operação" titleHint={D.cause}>
+                <DetailFieldGrid
+                  fields={[
+                    { label: "Motivo", value: registro.motivo || "—", wide: true },
+                    { label: "Código do motivo", value: registro.motivoCodigo || "—" },
+                    {
+                      label: "Colaborador",
+                      value: registro.nomeOperador || "—",
+                      wide: true,
+                    },
+                    {
+                      label: "Código do operador",
+                      value: registro.codigoOperador || "—",
+                    },
+                  ]}
+                />
+              </DetailCard>
+
+              <DetailCard
+                title="Produtos"
+                titleHint={D.product}
+                className="sm-detail-card--full"
+              >
+                <DetailFieldGrid
+                  fields={[
+                    {
+                      label: "Matéria-prima",
+                      value: formatCodeWithLabel(registro.mp, registro.descricao),
+                      wide: true,
+                    },
+                    {
+                      label: "Produto acabado",
+                      value: formatCodeWithLabel(registro.pa, registro.paDescricao),
+                      wide: true,
+                    },
+                    {
+                      label: "Unidade de medida",
+                      value: registro.um || "—",
+                    },
+                    {
+                      label: "Valor total",
+                      value: formatCurrencyBrl(registro.valor),
+                    },
+                  ]}
+                />
+              </DetailCard>
+            </div>
+          </>
         )}
       </div>
     </div>

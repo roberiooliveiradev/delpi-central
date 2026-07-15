@@ -89,7 +89,9 @@ Retorno: `{ periodo, granularity, points[] }` com `points[].date`, `label`, `val
 
 ## `/refugos/registros`
 
-Listagem paginada alinhada à tela de acompanhamento (data, OP, PA, MP, descrição, motivo, qtd, UM, valor, CT, colaborador).
+Listagem paginada alinhada à tela de acompanhamento (data, OP, PA, MP, descrição, motivo, qtd, UM, valor, custo unitário, CT, colaborador).
+
+Campos extras por item: `paDescricao` (descrição do PA via SC2/SB1), `custoUnitario` (B2_CM1 / B1_CUSTD).
 
 ---
 

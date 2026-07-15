@@ -41,6 +41,18 @@ export const SCRAP_HELP_TOOLTIPS = {
     colaborador:
       "Top 10 colaboradores por valor de refugo (R$) no período filtrado.",
   },
+  detail: {
+    identification:
+      "Dados de filial, data, OP e códigos de produto associados ao apontamento.",
+    cause:
+      "Motivo do refugo e contexto operacional (centro de trabalho e colaborador).",
+    financial:
+      "Quantidade apontada, custo unitário usado no cálculo e valor total em R$.",
+    unitCost:
+      "Custo médio (B2_CM1) ou custo padrão (B1_CUSTD) usado no cálculo do valor.",
+    product:
+      "Matéria-prima da perda e produto acabado da OP, com descrições do cadastro SB1.",
+  },
   table: {
     section:
       "Listagem paginada dos apontamentos de refugo no período. Clique na linha para abrir o detalhe.",

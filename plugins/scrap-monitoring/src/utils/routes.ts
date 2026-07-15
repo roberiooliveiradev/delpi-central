@@ -22,25 +22,34 @@ export function parseScrapPath(pathname: string): ScrapParsedRoute {
   return { view, branchRoute };
 }
 
+function setParam(params: URLSearchParams, key: string, value: string | number | undefined) {
+  if (value == null) return;
+  const text = String(value).trim();
+  if (!text) return;
+  params.set(key, text);
+}
+
 export function buildRegistroDetailPath(
   branchRoute: BranchRouteCode,
   item: ScrapRegistroItem,
 ): string {
   const params = new URLSearchParams();
-  params.set("filial", item.filial || "");
-  params.set("dataPerda", item.dataPerda || "");
-  params.set("op", item.op || "");
-  params.set("pa", item.pa || "");
-  params.set("mp", item.mp || "");
-  params.set("descricao", item.descricao || "");
-  params.set("um", item.um || "");
-  params.set("motivoCodigo", item.motivoCodigo || "");
-  params.set("motivo", item.motivo || "");
-  params.set("quantidade", String(item.quantidade ?? ""));
-  params.set("valor", String(item.valor ?? ""));
-  params.set("centroTrabalho", item.centroTrabalho || "");
-  params.set("codigoOperador", item.codigoOperador || "");
-  params.set("nomeOperador", item.nomeOperador || "");
+  setParam(params, "filial", item.filial);
+  setParam(params, "dataPerda", item.dataPerda);
+  setParam(params, "op", item.op);
+  setParam(params, "pa", item.pa);
+  setParam(params, "paDescricao", item.paDescricao);
+  setParam(params, "mp", item.mp);
+  setParam(params, "descricao", item.descricao);
+  setParam(params, "um", item.um);
+  setParam(params, "motivoCodigo", item.motivoCodigo);
+  setParam(params, "motivo", item.motivo);
+  setParam(params, "quantidade", item.quantidade);
+  setParam(params, "valor", item.valor);
+  setParam(params, "custoUnitario", item.custoUnitario);
+  setParam(params, "centroTrabalho", item.centroTrabalho);
+  setParam(params, "codigoOperador", item.codigoOperador);
+  setParam(params, "nomeOperador", item.nomeOperador);
   return `${branchHomePath(branchRoute)}/registro?${params.toString()}`;
 }
 
@@ -53,11 +62,18 @@ export function readRegistroFromSearch(search: string): ScrapRegistroItem | null
     return null;
   }
 
+  const custoRaw = params.get("custoUnitario");
+  const custoUnitario =
+    custoRaw == null || custoRaw === ""
+      ? undefined
+      : Number(custoRaw);
+
   return {
     filial: params.get("filial") ?? "",
     dataPerda,
     op: params.get("op") ?? "",
     pa: params.get("pa") ?? "",
+    paDescricao: params.get("paDescricao") ?? "",
     mp: params.get("mp") ?? "",
     descricao: params.get("descricao") ?? "",
     um: params.get("um") ?? "",
@@ -65,6 +81,8 @@ export function readRegistroFromSearch(search: string): ScrapRegistroItem | null
     motivo: params.get("motivo") ?? "",
     quantidade: Number(params.get("quantidade") || 0),
     valor: Number(params.get("valor") || 0),
+    custoUnitario:
+      custoUnitario != null && !Number.isNaN(custoUnitario) ? custoUnitario : undefined,
     centroTrabalho: params.get("centroTrabalho") ?? "",
     codigoOperador: params.get("codigoOperador") ?? "",
     nomeOperador: params.get("nomeOperador") ?? "",

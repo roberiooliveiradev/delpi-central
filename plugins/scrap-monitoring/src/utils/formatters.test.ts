@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatCodeWithLabel,
   formatCurrencyBrl,
   formatDatePtBr,
   formatRankingAxisLabel,
+  resolveUnitCost,
   splitRankingAxisLines,
 } from "./formatters";
 import { getThisMonthRange, validatePeriodRange } from "./dateRange";
@@ -23,6 +25,13 @@ describe("formatters", () => {
     const lines = splitRankingAxisLines("10070344", "CABO PP CIRCULAR PVC/PVC 9X22AWG");
     expect(lines.codeLine).toBe("10070344");
     expect(lines.descLine).toContain("CABO PP");
+  });
+
+  it("resolve custo unitário explícito ou derivado", () => {
+    expect(resolveUnitCost(10, 2, 5)).toBe(5);
+    expect(resolveUnitCost(10, 2)).toBe(5);
+    expect(resolveUnitCost(10, 0)).toBeNull();
+    expect(formatCodeWithLabel("9048", "Chicote")).toBe("9048 — Chicote");
   });
 });
 
