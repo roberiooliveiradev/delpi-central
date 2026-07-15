@@ -39,8 +39,8 @@ import { TableMemberSelect } from "../ui/TableMemberSelect";
 import { TextAreaField } from "../ui/TextAreaField";
 import { TextField } from "../ui/TextField";
 import { Rnc8dQuantityUnitField } from "./Rnc8dQuantityUnitField";
-import {
 import { PAC_TABLE } from "../ui/tableChrome";
+import {
   parseQuantityValue,
   quantityInputValue,
   unitInputValue,
