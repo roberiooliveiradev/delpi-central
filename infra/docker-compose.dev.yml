@@ -857,6 +857,22 @@ services:
     networks:
       - delpi-network
 
+  scrap-monitoring:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: scrap-monitoring/Dockerfile
+      target: production
+
+    container_name: delpi-scrap-monitoring
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   canal-denuncia:
     <<: *plugin-ui-federated
     build:

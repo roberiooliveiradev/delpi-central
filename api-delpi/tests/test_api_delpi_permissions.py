@@ -40,6 +40,16 @@ def test_retrabalho_branch_maps_use_filial_constants() -> None:
     )
 
 
+def test_scrap_monitoring_branch_maps_use_filial_constants() -> None:
+    assert perms.SCRAP_MONITORING_BRANCH_VIEW_PERMS["01"] == (
+        perms.SCRAP_MONITORING_VIEW_FILIAL_SC
+    )
+    assert perms.SCRAP_MONITORING_BRANCH_VIEW_PERMS["02"] == (
+        perms.SCRAP_MONITORING_VIEW_FILIAL_ES
+    )
+    assert perms.SCRAP_MONITORING_ACCESS in perms.SCRAP_MONITORING_READ_PERMISSIONS
+
+
 def test_financeiro_centro_custo_permissions_are_stable_strings() -> None:
     assert perms.FINANCEIRO_CENTRO_CUSTO_ACCESS == "financeiro-centro-custo.access"
     assert perms.FINANCEIRO_CENTRO_CUSTO_VIEW == "financeiro-centro-custo.view"

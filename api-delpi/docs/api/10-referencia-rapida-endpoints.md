@@ -294,6 +294,18 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 
 Permissões: `controle-retrabalhos.*` ou `api-delpi.access`. Legenda: **CR** = controle-retrabalhos.
 
+## Acompanhamento de Refugos (`/refugos`)
+
+| Método | Endpoint | Permissão |
+|---|---|---|
+| GET | `/refugos/health` | SM |
+| GET | `/refugos/filtros` | SM |
+| GET | `/refugos/resumo` | SM |
+| GET | `/refugos/rankings` | SM |
+| GET | `/refugos/registros` | SM |
+
+Permissões: `scrap-monitoring.*` ou `api-delpi.access`. Filiais SC/ES (`01`/`02`). Legenda: **SM** = scrap-monitoring. Doc: [scrap-monitoring.md](./scrap-monitoring.md).
+
 ---
 
 

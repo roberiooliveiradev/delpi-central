@@ -101,6 +101,7 @@ FASE_REMOTE=(plugin-ui)
 
 FASE_MFE=(
   controle-retrabalhos
+  scrap-monitoring
   dashboard-commercial
   dashboard-engineering
   dashboard-financial

@@ -1,0 +1,82 @@
+.dashboard-scrap-monitoring {
+  --sm-page-padding: 24px;
+  --sm-card-radius: 18px;
+  --sm-card-padding: 20px;
+  --sm-accent: var(--primary, #089bdb);
+  --sm-title: var(--secundary, #003866);
+  --sm-text: var(--text, #111111);
+  --sm-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --sm-surface: var(--surface, #ffffff);
+  --sm-border: var(--border, #e6e6e6);
+  --sm-font-md: 14px;
+  --sm-font-hero: clamp(22px, 2vw, 32px);
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--sm-page-padding);
+  color: var(--sm-text);
+  background-color: var(--app-canvas, var(--bg, #ffffff));
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--sm-accent) 5%, var(--app-canvas, #fff)),
+    var(--app-canvas, #fff) 280px
+  );
+}
+
+.dashboard-scrap-monitoring .sm-title {
+  margin: 0;
+  font-size: var(--sm-font-hero);
+  color: var(--sm-title);
+}
+
+.dashboard-scrap-monitoring .sm-subtitle {
+  margin: 8px 0 0;
+  color: var(--sm-text-muted);
+  font-size: var(--sm-font-md);
+}
+
+.dashboard-scrap-monitoring .sm-card {
+  background: var(--sm-surface);
+  border: 1px solid var(--sm-border);
+  border-radius: var(--sm-card-radius);
+  padding: var(--sm-card-padding);
+}
+
+.dashboard-scrap-monitoring .sm-card__title {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.dashboard-scrap-monitoring .sm-card__body {
+  margin: 0;
+  font-size: var(--sm-font-md);
+  line-height: 1.5;
+  color: var(--sm-text-muted);
+}
+
+.dashboard-scrap-monitoring code {
+  font-size: 0.92em;
+}
+
+:root[data-theme="dark"] .dashboard-scrap-monitoring {
+  --sm-title: var(--text, #f3f4f6);
+  --sm-text: var(--text, #f3f4f6);
+  --sm-text-muted: var(--text-muted, rgba(243, 244, 246, 0.7));
+  --sm-surface: var(--surface, #1f2937);
+  --sm-border: var(--border, #374151);
+}
+
+@media (max-width: 768px) {
+  .dashboard-scrap-monitoring {
+    --sm-page-padding: 16px;
+  }
+}
+
+#root:has(> .dashboard-scrap-monitoring) {
+  min-height: 100vh;
+}

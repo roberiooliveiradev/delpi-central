@@ -361,6 +361,22 @@ Parâmetro comum: `filial` (`01` \| `02`), `dataInicio`, `dataFim`. Escopo por f
 
 Documentação completa: [controle-retrabalhos.md](./controle-retrabalhos.md) · view: [ESPECIFICACAO-VIEW.md](../../../docs/12-roadmap-e-evolucao/controle-retrabalhos/ESPECIFICACAO-VIEW.md).
 
+## Acompanhamento de Refugos — `/refugos`
+
+**Permissão:** `scrap-monitoring.access`, `scrap-monitoring.view`, `scrap-monitoring.view.filial-sc`, `scrap-monitoring.view.filial-es` ou `api-delpi.access`
+
+Painel de refugos em R$ (`SBC010` + custo SB2/SB1, motivos CYO, PA via SC2, operador SYS_USR). Plugin: `scrap-monitoring`. Filiais: SC=`01`, ES=`02`.
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| GET | `/refugos/health` | Health check da fonte SBC010. |
+| GET | `/refugos/filtros` | Opções MP/PA/OP/motivo no período. |
+| GET | `/refugos/resumo` | KPIs valor dia/mês/período. |
+| GET | `/refugos/rankings` | Top N por dimensão (`motivo`, `materia_prima`, `produto_acabado`, `centro_trabalho`, `colaborador`). |
+| GET | `/refugos/registros` | Listagem paginada do acompanhamento. |
+
+Documentação completa: [scrap-monitoring.md](./scrap-monitoring.md).
+
 ### GET /quality/nonconformities
 
 | Query | Descrição |

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "scrap-monitoring",
+  "name": "Acompanhamento de Refugos",
+  "description": "Painel de refugos em R$ — resumo, rankings e registros por filial SC/ES",
+  "icon": "factory-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/scrap-monitoring",
+  "entry": "/apps/scrap-monitoring/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "scrap-monitoring.access",
+      "name": "Acessar Acompanhamento de Refugos",
+      "description": "Permite abrir o app de acompanhamento de refugos no portal.",
+      "module": "scrap-monitoring"
+    },
+    {
+      "code": "scrap-monitoring.view.filial-sc",
+      "name": "Acompanhamento de Refugos — Filial SC",
+      "description": "Visualizar refugos da Filial SC (01).",
+      "module": "scrap-monitoring"
+    },
+    {
+      "code": "scrap-monitoring.view.filial-es",
+      "name": "Acompanhamento de Refugos — Filial ES",
+      "description": "Visualizar refugos da Filial ES (02).",
+      "module": "scrap-monitoring"
+    },
+    {
+      "code": "scrap-monitoring.view",
+      "name": "Visualizar Acompanhamento de Refugos",
+      "description": "Permite consultar resumo, rankings e registros de refugo (ambas filiais).",
+      "module": "scrap-monitoring"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/scrap-monitoring/sc",
+      "label": "Acompanhamento de Refugos - SC",
+      "permission": "scrap-monitoring.view.filial-sc",
+      "icon": "factory-icon",
+      "order": 21,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/scrap-monitoring/es",
+      "label": "Acompanhamento de Refugos - ES",
+      "permission": "scrap-monitoring.view.filial-es",
+      "icon": "factory-icon",
+      "order": 22,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

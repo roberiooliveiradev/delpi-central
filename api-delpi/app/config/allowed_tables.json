@@ -29,6 +29,9 @@
     "SBZ010",
     "SBC010",
 
+    "CYO010",
+    "SYS_USR",
+
     "SD1010",
     "SD2010",
 
@@ -93,6 +96,8 @@
     "SBZ010": "Indicadores de Produtos por Filial — usada para estoque de segurança (BZ_ESTSEG) e parâmetros por filial.",
     "SB9010": "Saldos Iniciais / Fechamento de Estoque — usada para consultar saldo e valor de estoque em datas de fechamento, como inventário mensal e MATR460.",
     "SBC010": "Perda por OP — usada para refugo, scrap, perdas por OP e análises internas de qualidade.",
+    "CYO010": "Cadastro de motivos de refugo/scrap — descrição legível do código BC_MOTIVO (CYO_CDRF → CYO_DSRF).",
+    "SYS_USR": "Usuários do sistema Protheus — nome do operador apontado em BC_OPERADO.",
 
     "SD1010": "⚠️ Itens de Notas Fiscais de Entrada — contém dados fiscais; usada para compras, entradas e histórico de aquisição.",
     "SD2010": "⚠️ Itens de Notas Fiscais de Saída — contém dados fiscais; usada para saídas, vendas, remessas, devoluções e composição de movimentação fiscal de estoque.",

@@ -864,6 +864,22 @@ services:
     networks:
       - delpi-network
 
+  scrap-monitoring:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: scrap-monitoring/Dockerfile
+
+    container_name: delpi-scrap-monitoring
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   canal-denuncia:
     depends_on:
       - plugin-ui
@@ -1470,6 +1486,7 @@ services:
       - inspecoes-processo
       - central-agendamento
       - controle-retrabalhos
+      - scrap-monitoring
       - canal-denuncia
       - dashboard-supplies
       - dashboard-financial
