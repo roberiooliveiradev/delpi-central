@@ -93,6 +93,9 @@ describe("DataRouteCatalogPanel", () => {
     fireEvent.click(screen.getByText("OEE geral"));
     const detail = screen.getByRole("complementary", { name: /Detalhe: OEE geral/ });
     expect(detail).toBeTruthy();
+    const main = document.querySelector(".delpi-ui-data-route-catalog__main--detail-open");
+    expect(main).toBeTruthy();
+    expect(main?.contains(detail)).toBe(true);
     expect(detail.textContent).toMatch(/Para que serve/);
     expect(detail.textContent).toMatch(/Indicador consolidado/);
     expect(detail.textContent).toMatch(/Filial/);

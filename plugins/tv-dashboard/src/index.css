@@ -640,6 +640,19 @@
   flex: 1 1 auto;
 }.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__main{
   min-height: min(52vh, 420px);
+}.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__main--detail-open{
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 10px;
+  align-items: start;
+}.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__main--detail-open .delpi-ui-data-route-catalog__groups{
+  max-height: min(60vh, 520px);
+  overflow: auto;
+  flex: none;
+}.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__main--detail-open .delpi-ui-data-route-catalog__detail{
+  width: 100%;
+  max-height: min(60vh, 520px);
+  overflow: auto;
 }.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__chips{
   flex-wrap: wrap;
   overflow-x: visible;

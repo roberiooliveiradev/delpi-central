@@ -247,22 +247,22 @@ export function DataRouteCatalogPanel({
   }, [selected]);
 
   useLayoutEffect(() => {
-    if (density !== "comfortable" || !selectedId) {
+    if (density === "compact" || !selectedId) {
       setDetailTop(0);
       return;
     }
 
     const update = () => {
       const card = cardRefs.current.get(selectedId);
-      const main = mainRef.current;
+      const groups = groupsRef.current;
       const detailEl = detailPanelRef.current;
-      if (!card || !main) return;
+      if (!card || !groups) return;
 
-      const mainRect = main.getBoundingClientRect();
+      const groupsRect = groups.getBoundingClientRect();
       const cardRect = card.getBoundingClientRect();
-      let top = cardRect.top - mainRect.top;
+      let top = cardRect.top - groupsRect.top;
       const detailH = detailEl?.offsetHeight ?? 0;
-      const maxTop = Math.max(0, mainRect.height - detailH);
+      const maxTop = Math.max(0, groupsRect.height - Math.min(detailH, groupsRect.height));
       top = Math.min(Math.max(0, top), maxTop);
       setDetailTop(top);
     };
@@ -336,7 +336,7 @@ export function DataRouteCatalogPanel({
   const descClamp = density === "compact" ? 90 : 140;
   const detailOpen = Boolean(selected);
   const detailStyle: CSSProperties | undefined =
-    density === "comfortable" && selected ? { top: detailTop } : undefined;
+    density !== "compact" && selected ? { marginTop: detailTop } : undefined;
 
   const detail = selected ? (
     <aside
@@ -549,9 +549,7 @@ export function DataRouteCatalogPanel({
         ref={mainRef}
         className={[
           "delpi-ui-data-route-catalog__main",
-          density === "comfortable" && detailOpen
-            ? "delpi-ui-data-route-catalog__main--detail-open"
-            : "",
+          detailOpen ? "delpi-ui-data-route-catalog__main--detail-open" : "",
           density === "compact" && detailOpen
             ? "delpi-ui-data-route-catalog__main--detail-stacked"
             : "",

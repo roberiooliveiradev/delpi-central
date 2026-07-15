@@ -24,32 +24,43 @@
   position: relative;
 }
 
-.delpi-ui-data-route-catalog--comfortable .delpi-ui-data-route-catalog__main--detail-open {
-  padding-right: 350px;
+/* Detalhe ao lado da lista — nunca empilhar no final do fluxo. */
+.delpi-ui-data-route-catalog__main--detail-open {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 10px;
+  align-items: start;
+  padding-right: 0;
 }
 
-.delpi-ui-data-route-catalog--comfortable
-  .delpi-ui-data-route-catalog__main--detail-open
-  .delpi-ui-data-route-catalog__detail {
-  position: absolute;
-  right: 0;
-  width: 340px;
-  max-height: 100%;
+.delpi-ui-data-route-catalog__main--detail-open .delpi-ui-data-route-catalog__groups {
+  min-width: 0;
+  max-height: min(60vh, 520px);
   overflow: auto;
-  z-index: 2;
+}
+
+.delpi-ui-data-route-catalog__main--detail-open .delpi-ui-data-route-catalog__detail {
+  position: relative;
+  width: 100%;
+  max-height: min(60vh, 520px);
+  overflow: auto;
   border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, transparent);
   border-radius: 8px;
+  z-index: 2;
 }
 
+/* Sidebar estreita: detalhe empilhado abaixo da lista. */
 .delpi-ui-data-route-catalog--compact .delpi-ui-data-route-catalog__main--detail-stacked {
+  display: flex !important;
+  flex-direction: column;
   gap: 10px;
+  grid-template-columns: none;
 }
 
-.delpi-ui-data-route-catalog--compact
-  .delpi-ui-data-route-catalog__main--detail-stacked
-  .delpi-ui-data-route-catalog__detail {
+.delpi-ui-data-route-catalog--compact .delpi-ui-data-route-catalog__main--detail-stacked .delpi-ui-data-route-catalog__detail {
   position: relative;
   top: auto !important;
+  margin-top: 0 !important;
   width: 100%;
   max-height: min(48vh, 420px);
   overflow: auto;
