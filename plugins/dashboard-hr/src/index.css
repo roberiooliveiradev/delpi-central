@@ -30,6 +30,9 @@
   --delpi-ui-border: var(--dh-card-border);
   --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--dh-text-muted);
+  --delpi-ui-card-padding: var(--dh-card-padding);
+  --delpi-ui-section-gap: var(--dh-section-gap);
+  --delpi-ui-radius: var(--dh-card-radius);
 }.dashboard-hr button,
 .dashboard-hr input,
 .dashboard-hr select{

@@ -7,24 +7,15 @@
   display: grid;
   align-items: center;
   gap: 14px;
-  border-radius: var(--delpi-ui-radius, 18px);
-  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  /* padding/borda/fundo: card-shell.css */
   color: var(--delpi-ui-text, var(--text, #111111));
   box-shadow: var(
     --delpi-ui-shadow,
     var(--shadow, 0 10px 24px color-mix(in srgb, var(--delpi-ui-text, #111) 8%, transparent))
   );
+  /* Dashboards usam margin nos filhos (não flex gap) — não zerar no .dashboard-page. */
   margin-bottom: var(--delpi-ui-section-gap, 16px);
   box-sizing: border-box;
-}
-
-/**
- * Stack-safe: páginas com `dashboard-page` + gap já espaçam filhos —
- * evita margem dupla (filter/loading) no filho direto.
- */
-.dashboard-page > .delpi-ui-loading-activity {
-  margin-bottom: 0;
 }
 
 /** Loading embutido em table-section (sem gap de page-stack). */

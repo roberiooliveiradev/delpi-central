@@ -27,6 +27,9 @@ select{
   --delpi-ui-text-muted: var(--muted-foreground, #64748b);
   --delpi-ui-border: var(--border, #e2e8f0);
   --delpi-ui-grid-gap: 0.85rem;
+  --delpi-ui-card-padding: 1.25rem;
+  --delpi-ui-section-gap: 1.25rem;
+  --delpi-ui-radius: 16px;
 }.fcc-page-header,
 .fcc-page__header{
   display: flex;

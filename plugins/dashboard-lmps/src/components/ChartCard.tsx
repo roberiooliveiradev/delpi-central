@@ -1,16 +1,18 @@
 import {
   ChartCard as DelpiChartCard,
-  type ChartCardClassNames,
+  chartCardBemClasses,
+  delpiUiClass,
   type ChartCardProps as DelpiChartCardProps,
 } from "@delpi/plugin-ui/index";
 
+const BASE = chartCardBemClasses("lmps");
+
+/** Mantém aliases locais (`lmps-card-header` / `lmps-card-body`) + dual kit. */
 const CLASS_NAMES = {
-  section: "lmps-card lmps-chart-card",
-  header: "lmps-card-header",
-  title: "",
-  titleHelp: "lmps-chart-card__title-help",
-  body: "lmps-card-body",
-} satisfies ChartCardClassNames;
+  ...BASE,
+  header: delpiUiClass("lmps-card-header", "delpi-ui-chart-card__header"),
+  body: delpiUiClass("lmps-card-body", "delpi-ui-chart-card__body"),
+};
 
 export type ChartCardProps = Omit<DelpiChartCardProps, "classNames" | "titleLevel">;
 

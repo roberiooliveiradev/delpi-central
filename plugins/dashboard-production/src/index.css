@@ -30,6 +30,9 @@
   --delpi-ui-border: var(--dp-card-border);
   --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--dp-text-muted);
+  --delpi-ui-card-padding: var(--dp-card-padding);
+  --delpi-ui-section-gap: var(--dp-section-gap);
+  --delpi-ui-radius: var(--dp-card-radius);
 }.dashboard-production button,
 .dashboard-production input,
 .dashboard-production select{

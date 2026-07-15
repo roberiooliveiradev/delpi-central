@@ -35,6 +35,9 @@
   --delpi-ui-border: var(--dc-card-border);
   --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--dc-text-muted);
+  --delpi-ui-card-padding: var(--dc-card-padding);
+  --delpi-ui-section-gap: var(--dc-section-gap);
+  --delpi-ui-radius: var(--dc-card-radius);
 }.dashboard-commercial button,
 .dashboard-commercial input,
 .dashboard-commercial select{

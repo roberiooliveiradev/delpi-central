@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
-import { HelpTooltip, NativeTextControl } from "@delpi/plugin-ui/index";
+import { HelpTooltip, NativeTextControl, dataTableSectionBemClasses } from "@delpi/plugin-ui/index";
 import { useClientPagination } from "../hooks/useClientPagination";
 import {
   useLoadingProgress,
@@ -13,6 +13,8 @@ import { Pagination } from "./Pagination";
 import { sortTableRows } from "../utils/sortTableRows";
 
 const DEFAULT_PAGE_SIZE = 20;
+const LMPS_SECTION = dataTableSectionBemClasses("lmps");
+
 
 export type ServerPaginationConfig = {
   page: number;
@@ -139,23 +141,23 @@ export function DataTableSection<T>({
 
   return (
     <section
-      className="lmps-card lmps-table-section"
+      className={LMPS_SECTION.section}
       aria-busy={loading || refreshing}
     >
-      <div className="lmps-table-section__header">
-        <h2 className="lmps-section-title">
+      <div className={LMPS_SECTION.header}>
+        <h2 className={LMPS_SECTION.title}>
           {title}
           {titleHint ? (
             <HelpTooltip
               content={titleHint}
               ariaLabel={`Ajuda: ${title}`}
-              className="lmps-table-section__title-help"
+              className={LMPS_SECTION.titleHelp}
             />
           ) : null}
         </h2>
-        <div className="lmps-table-section__meta-group">
-          {hint ? <span className="lmps-table-section__meta">{hint}</span> : null}
-          <span className="lmps-table-section__meta">
+        <div className={LMPS_SECTION.metaGroup}>
+          {hint ? <span className={LMPS_SECTION.meta}>{hint}</span> : null}
+          <span className={LMPS_SECTION.meta}>
             {paginationTotal} registro(s)
           </span>
         </div>
@@ -180,12 +182,12 @@ export function DataTableSection<T>({
       ) : (
         <>
           {!hideSearch ? (
-            <div className="lmps-table-toolbar">
-              <div className="lmps-table-search" role="search">
-                <Search size={16} aria-hidden="true" className="lmps-table-search__icon" />
+            <div className={LMPS_SECTION.toolbar}>
+              <div className={LMPS_SECTION.search} role="search">
+                <Search size={16} aria-hidden="true" className={LMPS_SECTION.searchIcon} />
                 <NativeTextControl
                   type="search"
-                  className="lmps-table-search__input"
+                  className={LMPS_SECTION.searchInput}
                   value={search}
                   placeholder={searchPlaceholder}
                   onChange={setSearch}
@@ -196,7 +198,7 @@ export function DataTableSection<T>({
                 <HelpTooltip
                   content={searchHint}
                   ariaLabel="Ajuda: busca na tabela"
-                  className="lmps-table-search__help"
+                  className={LMPS_SECTION.searchHelp}
                 />
               ) : null}
             </div>
