@@ -6,6 +6,7 @@ import {
 
 const kit = createDashboardPaginationKit({
   prefix: "sm",
+  hints: {},
   tablePageSizeLabels: {
     label: "Itens por página",
     selectAriaLabel: "Quantidade de itens por página",

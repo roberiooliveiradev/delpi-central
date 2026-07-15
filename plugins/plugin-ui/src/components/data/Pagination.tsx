@@ -354,7 +354,7 @@ export function createDashboardPaginationKit(config: {
   prefix: string;
   labels: PaginationLabels;
   tablePageSizeLabels: TablePageSizeLabels;
-  hints: PaginationHints & { pageSize?: string };
+  hints?: PaginationHints & { pageSize?: string };
 }): DashboardPaginationKit {
   const classNames = paginationBemClasses(config.prefix);
 
@@ -369,7 +369,7 @@ export function createDashboardPaginationKit(config: {
         <TablePageSizeSelect
           classNames={classNames.tablePageSize}
           labels={config.tablePageSizeLabels}
-          pageSizeHint={config.hints.pageSize}
+          pageSizeHint={config.hints?.pageSize}
           {...props}
         />
       );

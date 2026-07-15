@@ -94,9 +94,22 @@ function ScrapMonitoringContent({
     return filtersFromFormState(totvsBranch, debouncedFilters);
   }, [debouncedFilters, periodError, totvsBranch]);
 
+  const appliedFiltersKey = appliedFilters
+    ? [
+        appliedFilters.filial,
+        appliedFilters.dataInicio,
+        appliedFilters.dataFim,
+        appliedFilters.mp ?? "",
+        appliedFilters.pa ?? "",
+        appliedFilters.op ?? "",
+        appliedFilters.motivo ?? "",
+        appliedFilters.centroTrabalho ?? "",
+      ].join("|")
+    : "";
+
   useEffect(() => {
     setPage(1);
-  }, [appliedFilters]);
+  }, [appliedFiltersKey]);
 
   const dashboard = useScrapDashboard(isActive ? appliedFilters : null);
   const registros = useScrapRegistros(
@@ -235,10 +248,10 @@ function ScrapMonitoringContent({
                 actionLabel="Tentar novamente"
                 onAction={registros.reload}
               />
-            ) : (
+            ) : appliedFilters ? (
               <RegistrosTable
                 items={registros.data?.items ?? []}
-                filters={appliedFilters!}
+                filters={appliedFilters}
                 loading={registros.loading}
                 refreshing={registros.loading && Boolean(registros.data)}
                 page={registros.data?.page ?? page}
@@ -249,7 +262,7 @@ function ScrapMonitoringContent({
                 onRowClick={handleRowClick}
                 onExportError={setExportError}
               />
-            )}
+            ) : null}
           </>
         ) : null}
       </div>
