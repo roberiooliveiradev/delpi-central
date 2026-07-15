@@ -166,6 +166,8 @@ export {
   DataRouteCatalogPanel,
   primaryDataRouteDisplayKind,
   resolveDataRouteDisplayKinds,
+  buildSampleDataRoutePreview,
+  mapEnrichedBlockToDataRoutePreview,
   countRequiredParams,
   formatParamHintLine,
   humanizeMetaShape,
@@ -179,6 +181,7 @@ export {
   type DataRouteCatalogPanelProps,
   type DataRouteDisplayKind,
   type DataRouteParamFieldSummary,
+  type DataRoutePreviewPayload,
 } from "./DataRouteCatalogPanel";
 
 export {

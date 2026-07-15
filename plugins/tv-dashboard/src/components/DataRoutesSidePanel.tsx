@@ -4,17 +4,27 @@ import {
   DataRouteCatalogPanel,
   FieldLabel,
   NativeTextControl,
+  mapEnrichedBlockToDataRoutePreview,
+  primaryDataRouteDisplayKind,
   resolveDataRouteDisplayKinds,
   summarizeRouteParams,
+  type DataRouteCatalogItem,
+  type DataRoutePreviewPayload,
 } from "@delpi/plugin-ui/index";
 import {
   createDataSourceBlock,
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
+  serializeComunicadoConfig,
   type ComunicadoDataBinding,
 } from "@delpi/tv-dashboard-presentation";
 
-import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import {
+  listDataRoutes,
+  previewDataBlockV2,
+  type BranchScope,
+  type TvDataRouteCatalogItem,
+} from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { DataCatalogMode } from "./comunicadoEditorContextCore";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -63,6 +73,23 @@ function CategoryIcon({ category }: { category: string }) {
   return <Factory size={16} aria-hidden />;
 }
 
+function buildRouteDefaultParams(route: TvDataRouteCatalogItem): NonNullable<ComunicadoDataBinding["params"]> {
+  const defaults: NonNullable<ComunicadoDataBinding["params"]> = Object.fromEntries(
+    Object.entries(route.paramSchema ?? {})
+      .map(([key, schema]) => {
+        const def = (schema as { default?: string | number }).default;
+        return def !== undefined ? [key, def] : null;
+      })
+      .filter(Boolean) as Array<[string, string | number]>,
+  );
+  const pair = findDateRangeKeys(Object.keys(route.paramSchema ?? {}));
+  const preset = defaultDateRangePreset(pair);
+  if (preset) {
+    defaults[DATE_RANGE_PRESET_PARAM] = preset;
+  }
+  return defaults;
+}
+
 type Props = {
   /** Chamado após inserir/substituir fonte (ex.: fechar modal ou voltar aba Elemento). */
   onInserted?: () => void;
@@ -105,21 +132,40 @@ export function DataRoutesSidePanel({
   function pickRoute(route: TvDataRouteCatalogItem) {
     setPickedRoute(route);
     setLabel(route.label);
-    const defaults: NonNullable<ComunicadoDataBinding["params"]> = Object.fromEntries(
-      Object.entries(route.paramSchema ?? {})
-        .map(([key, schema]) => {
-          const def = (schema as { default?: string | number }).default;
-          return def !== undefined ? [key, def] : null;
-        })
-        .filter(Boolean) as Array<[string, string | number]>,
-    );
-    const pair = findDateRangeKeys(Object.keys(route.paramSchema ?? {}));
-    const preset = defaultDateRangePreset(pair);
-    if (preset) {
-      defaults[DATE_RANGE_PRESET_PARAM] = preset;
-    }
-    setParams(defaults);
+    setParams(buildRouteDefaultParams(route));
     setRefreshSec("");
+  }
+
+  async function testRoute(item: DataRouteCatalogItem): Promise<DataRoutePreviewPayload> {
+    const route = routes.find((entry) => entry.operationId === item.id);
+    if (!route) {
+      throw new Error("Rota não encontrada no catálogo.");
+    }
+    const defaultParams = { ...buildRouteDefaultParams(route) };
+    for (const [key, value] of Object.entries(slideFilters)) {
+      if ((defaultParams[key] === undefined || defaultParams[key] === "") && value != null && value !== "") {
+        defaultParams[key] = value;
+      }
+    }
+    const block = createDataSourceBlock(route.operationId, {
+      label: route.label,
+      defaultParams,
+    });
+    const response = await previewDataBlockV2({
+      block: block as unknown as Record<string, unknown>,
+      nativeConfig: serializeComunicadoConfig(config) as Record<string, unknown>,
+      forceRefresh: true,
+    });
+    const preferred = primaryDataRouteDisplayKind(
+      resolveDataRouteDisplayKinds({
+        metaShape: route.metaShape,
+        allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+      }),
+    );
+    return mapEnrichedBlockToDataRoutePreview(
+      (response.block ?? {}) as Record<string, unknown>,
+      preferred,
+    );
   }
 
   function handleInsert() {
@@ -255,6 +301,7 @@ export function DataRoutesSidePanel({
           const route = routes.find((entry) => entry.operationId === item.id);
           if (route) pickRoute(route);
         }}
+        onTestRoute={testRoute}
         density={hideHeading ? "comfortable" : "compact"}
         confirmLabel={mode === "replace" ? "Usar esta rota" : "Usar esta fonte"}
         searchPlaceholder="Buscar fonte ou descrição…"

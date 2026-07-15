@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from "react";
-import { Factory } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Factory, X } from "lucide-react";
 
 import {
   formatParamHintLine,
@@ -8,6 +8,11 @@ import {
   truncateText,
   type DataRouteParamFieldSummary,
 } from "./dataRouteCatalogHelpers";
+import { DataRouteSamplePreview } from "./DataRouteSamplePreview";
+import {
+  buildSampleDataRoutePreview,
+  type DataRoutePreviewPayload,
+} from "./dataRouteSamplePreview";
 
 export type DataRouteDisplayKind = "kpi" | "series" | "table";
 
@@ -50,6 +55,11 @@ export type DataRouteCatalogPanelProps = {
   density?: DataRouteCatalogDensity;
   /** Rótulo do CTA no detalhe. */
   confirmLabel?: string;
+  /**
+   * Teste ao vivo da rota (ex.: `POST /data/preview-block`).
+   * Sem callback, «Testar rota» só reforça o exemplo estático.
+   */
+  onTestRoute?: (item: DataRouteCatalogItem) => Promise<DataRoutePreviewPayload>;
 };
 
 const DISPLAY_KIND_LABELS: Record<DataRouteDisplayKind, string> = {
@@ -112,11 +122,15 @@ export function DataRouteCatalogPanel({
   showDisplayKindFilters = true,
   density = "comfortable",
   confirmLabel = "Usar esta fonte",
+  onTestRoute,
 }: DataRouteCatalogPanelProps) {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
   const [kindFilters, setKindFilters] = useState<DataRouteDisplayKind[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [livePreview, setLivePreview] = useState<DataRoutePreviewPayload | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
 
   const enriched = useMemo(
     (): EnrichedItem[] =>
@@ -204,19 +218,78 @@ export function DataRouteCatalogPanel({
     return filtered.find((item) => item.id === selectedId) ?? enriched.find((item) => item.id === selectedId) ?? null;
   }, [enriched, filtered, selectedId]);
 
+  useEffect(() => {
+    setLivePreview(null);
+    setTestError(null);
+    setTesting(false);
+  }, [selectedId]);
+
+  const samplePreview = useMemo(() => {
+    if (!selected) return null;
+    return buildSampleDataRoutePreview({
+      id: selected.id,
+      label: selected.label,
+      kind: selected.primaryKind,
+    });
+  }, [selected]);
+
   function toggleKind(kind: DataRouteDisplayKind) {
     setKindFilters((prev) => (prev.includes(kind) ? prev.filter((k) => k !== kind) : [...prev, kind]));
   }
 
+  function closeDetail() {
+    setSelectedId(null);
+    setLivePreview(null);
+    setTestError(null);
+  }
+
+  async function handleTestRoute() {
+    if (!selected) return;
+    setTesting(true);
+    setTestError(null);
+    try {
+      if (!onTestRoute) {
+        setLivePreview({
+          ...buildSampleDataRoutePreview({
+            id: selected.id,
+            label: selected.label,
+            kind: selected.primaryKind,
+          }),
+          source: "live",
+        });
+        return;
+      }
+      const payload = await onTestRoute(selected);
+      setLivePreview(payload);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Falha ao testar a rota.";
+      setTestError(message);
+      setLivePreview(null);
+    } finally {
+      setTesting(false);
+    }
+  }
+
   const hasActiveFilters = categoryFilter !== "all" || kindFilters.length > 0 || query.trim().length > 0;
   const descClamp = density === "compact" ? 90 : 140;
+  const detailOpen = Boolean(selected);
 
   const detail = selected ? (
     <aside
       className="delpi-ui-data-route-catalog__detail"
       aria-label={`Detalhe: ${selected.label}`}
     >
-      <h3 className="delpi-ui-data-route-catalog__detail-title">{selected.label}</h3>
+      <div className="delpi-ui-data-route-catalog__detail-head">
+        <h3 className="delpi-ui-data-route-catalog__detail-title">{selected.label}</h3>
+        <button
+          type="button"
+          className="delpi-ui-data-route-catalog__detail-close"
+          aria-label="Fechar detalhe"
+          onClick={closeDetail}
+        >
+          <X size={16} aria-hidden="true" />
+        </button>
+      </div>
       <p className="delpi-ui-data-route-catalog__detail-section-label">Para que serve</p>
       <p className="delpi-ui-data-route-catalog__detail-body">{selected.audienceDescription}</p>
 
@@ -253,6 +326,14 @@ export function DataRouteCatalogPanel({
         </ul>
       )}
 
+      {!livePreview && samplePreview ? <DataRouteSamplePreview payload={samplePreview} /> : null}
+      {livePreview ? <DataRouteSamplePreview payload={livePreview} /> : null}
+      {testError ? (
+        <p className="delpi-ui-data-route-preview__error" role="alert">
+          {testError}
+        </p>
+      ) : null}
+
       {selected.httpMethod && selected.path ? (
         <details className="delpi-ui-data-route-catalog__advanced">
           <summary>Avançado (API)</summary>
@@ -263,21 +344,25 @@ export function DataRouteCatalogPanel({
         </details>
       ) : null}
 
-      <button
-        type="button"
-        className="delpi-ui-data-route-catalog__confirm"
-        onClick={() => onSelect(selected)}
-      >
-        {confirmLabel}
-      </button>
+      <div className="delpi-ui-data-route-catalog__detail-actions">
+        <button
+          type="button"
+          className="delpi-ui-data-route-catalog__test"
+          onClick={() => void handleTestRoute()}
+          disabled={testing}
+        >
+          {testing ? "Testando…" : "Testar rota"}
+        </button>
+        <button
+          type="button"
+          className="delpi-ui-data-route-catalog__confirm"
+          onClick={() => onSelect(selected)}
+        >
+          {confirmLabel}
+        </button>
+      </div>
     </aside>
-  ) : (
-    <aside className="delpi-ui-data-route-catalog__detail delpi-ui-data-route-catalog__detail--empty" aria-hidden={false}>
-      <p className="delpi-ui-data-route-catalog__detail-body">
-        Selecione uma fonte na lista para ver para que serve e quais filtros ela usa.
-      </p>
-    </aside>
-  );
+  ) : null;
 
   return (
     <div
@@ -394,7 +479,14 @@ export function DataRouteCatalogPanel({
         ) : null}
       </div>
 
-      <div className="delpi-ui-data-route-catalog__main">
+      <div
+        className={[
+          "delpi-ui-data-route-catalog__main",
+          detailOpen ? "delpi-ui-data-route-catalog__main--detail-open" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className="delpi-ui-data-route-catalog__groups">
           {grouped.map((group) => (
             <section key={group.key} className="delpi-ui-data-route-catalog__group">
@@ -446,6 +538,11 @@ export function DataRouteCatalogPanel({
 }
 
 export type { DataRouteParamFieldSummary } from "./dataRouteCatalogHelpers";
+export type { DataRoutePreviewPayload } from "./dataRouteSamplePreview";
+export {
+  buildSampleDataRoutePreview,
+  mapEnrichedBlockToDataRoutePreview,
+} from "./dataRouteSamplePreview";
 export {
   countRequiredParams,
   formatParamHintLine,

@@ -23,7 +23,7 @@
   flex: 1 1 auto;
 }
 
-.delpi-ui-data-route-catalog--comfortable .delpi-ui-data-route-catalog__main {
+.delpi-ui-data-route-catalog--comfortable .delpi-ui-data-route-catalog__main--detail-open {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
   gap: 10px;
@@ -279,11 +279,35 @@
 }
 
 .delpi-ui-data-route-catalog--compact .delpi-ui-data-route-catalog__detail {
-  max-height: min(42vh, 320px);
+  max-height: min(48vh, 420px);
 }
 
-.delpi-ui-data-route-catalog__detail--empty {
+.delpi-ui-data-route-catalog__detail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.delpi-ui-data-route-catalog__detail-close {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -4px -4px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+  cursor: pointer;
+}
+
+.delpi-ui-data-route-catalog__detail-close:hover {
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 8%, transparent);
+  color: var(--delpi-ui-text, var(--text, #111));
 }
 
 .delpi-ui-data-route-catalog__detail-title {
@@ -369,8 +393,36 @@
   margin-bottom: 4px;
 }
 
+.delpi-ui-data-route-catalog__detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.delpi-ui-data-route-catalog__test {
+  align-self: stretch;
+  padding: 7px 10px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 55%, var(--delpi-ui-border, #e5e7eb));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, var(--delpi-ui-surface, #fff));
+  color: var(--delpi-ui-accent, #089bdb);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delpi-ui-data-route-catalog__test:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 14%, var(--delpi-ui-surface, #fff));
+}
+
+.delpi-ui-data-route-catalog__test:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .delpi-ui-data-route-catalog__confirm {
-  margin-top: 6px;
   align-self: stretch;
   padding: 7px 10px;
   border: none;
@@ -385,6 +437,91 @@
 
 .delpi-ui-data-route-catalog__confirm:hover {
   filter: brightness(1.05);
+}
+
+.delpi-ui-data-route-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 85%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-surface, #fff) 92%, var(--delpi-ui-accent, #089bdb));
+}
+
+.delpi-ui-data-route-preview__error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #b42318;
+}
+
+.delpi-ui-data-route-preview__kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, transparent);
+}
+
+.delpi-ui-data-route-preview__kpi-label {
+  font-size: 11px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-preview__kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-data-route-preview__table-wrap {
+  overflow: auto;
+  max-width: 100%;
+}
+
+.delpi-ui-data-route-preview__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.delpi-ui-data-route-preview__table th,
+.delpi-ui-data-route-preview__table td {
+  padding: 4px 6px;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, transparent);
+  white-space: nowrap;
+}
+
+.delpi-ui-data-route-preview__table th {
+  font-weight: 700;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-preview__chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.delpi-ui-data-route-preview__series-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 11px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-preview__series-legend strong {
+  margin-left: 4px;
+  color: var(--delpi-ui-text, var(--text, #111));
 }
 
 /* legado — mantido se algum consumidor ainda usa badge */

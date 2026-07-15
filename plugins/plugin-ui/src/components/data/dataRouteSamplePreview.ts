@@ -1,0 +1,208 @@
+export type DataRouteDisplayKind = "kpi" | "series" | "table";
+
+export type DataRoutePreviewPayload = {
+  kind: DataRouteDisplayKind;
+  title?: string;
+  kpi?: { label: string; value: string };
+  table?: {
+    columns: Array<{ key: string; label: string }>;
+    rows: Array<Record<string, string | number>>;
+  };
+  series?: { points: Array<{ label: string; value: number }> };
+  error?: string;
+  source: "sample" | "live";
+};
+
+const SAMPLE_MAX_ROWS = 4;
+const LIVE_MAX_ROWS = 5;
+
+/** Exemplo estático tipado — sem chamada HTTP. */
+export function buildSampleDataRoutePreview(input: {
+  id: string;
+  label: string;
+  kind: DataRouteDisplayKind;
+}): DataRoutePreviewPayload {
+  const title = input.label || input.id;
+  const { kind } = input;
+
+  if (kind === "kpi") {
+    return {
+      kind: "kpi",
+      title,
+      source: "sample",
+      kpi: { label: title, value: "87,4%" },
+    };
+  }
+
+  if (kind === "series") {
+    return {
+      kind: "series",
+      title,
+      source: "sample",
+      series: {
+        points: [
+          { label: "Seg", value: 72 },
+          { label: "Ter", value: 78 },
+          { label: "Qua", value: 81 },
+          { label: "Qui", value: 76 },
+          { label: "Sex", value: 88 },
+        ],
+      },
+    };
+  }
+
+  return {
+    kind: "table",
+    title,
+    source: "sample",
+    table: {
+      columns: [
+        { key: "code", label: "Código" },
+        { key: "name", label: "Descrição" },
+        { key: "value", label: "Valor" },
+      ],
+      rows: [
+        { code: "A-01", name: "Exemplo Alfa", value: 12 },
+        { code: "B-02", name: "Exemplo Beta", value: 8 },
+        { code: "C-03", name: "Exemplo Gama", value: 21 },
+        { code: "D-04", name: "Exemplo Delta", value: 5 },
+      ].slice(0, SAMPLE_MAX_ROWS),
+    },
+  };
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function formatCell(value: unknown): string | number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "boolean") return value ? "sim" : "não";
+  if (value == null) return "—";
+  return String(value);
+}
+
+function formatKpiValue(value: unknown): string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value);
+  }
+  if (value == null || value === "") return "—";
+  return String(value);
+}
+
+/**
+ * Converte `block.resolved` do preview-block (tv-dashboard-api) para o payload do catálogo.
+ */
+export function mapEnrichedBlockToDataRoutePreview(
+  block: Record<string, unknown>,
+  preferred: DataRouteDisplayKind,
+): DataRoutePreviewPayload {
+  const resolved = asRecord(block.resolved);
+  if (!resolved) {
+    return {
+      kind: preferred,
+      source: "live",
+      error: "Resposta sem dados resolvidos.",
+    };
+  }
+
+  const error =
+    (typeof resolved.error === "string" && resolved.error.trim()) ||
+    (typeof resolved.detail === "string" && resolved.detail.trim()) ||
+    "";
+  if (error) {
+    return { kind: preferred, source: "live", error };
+  }
+
+  const title =
+    (typeof resolved.label === "string" && resolved.label.trim()) || undefined;
+
+  const chart = asRecord(resolved.chart);
+  const chartPoints = Array.isArray(chart?.points) ? chart.points : [];
+  const table = asRecord(resolved.table);
+  const rowsRaw = Array.isArray(table?.rows) ? table.rows : [];
+  const kpi = asRecord(resolved.kpi);
+  const kpiMetrics = Array.isArray(resolved.kpiMetrics) ? resolved.kpiMetrics : [];
+
+  if (preferred === "series" && chartPoints.length > 0) {
+    const points = chartPoints.slice(0, LIVE_MAX_ROWS).map((point, index) => {
+      const row = asRecord(point) ?? {};
+      const label = String(row.label ?? row.x ?? row.date ?? `P${index + 1}`);
+      const value = Number(row.value ?? row.y ?? 0);
+      return { label, value: Number.isFinite(value) ? value : 0 };
+    });
+    return { kind: "series", title, source: "live", series: { points } };
+  }
+
+  if (preferred === "table" || (preferred !== "kpi" && rowsRaw.length > 0 && kpi?.value == null)) {
+    if (rowsRaw.length > 0) {
+      const columnsExplicit = Array.isArray(table?.columns) ? table.columns : [];
+      const first = asRecord(rowsRaw[0]) ?? {};
+      const columns =
+        columnsExplicit.length > 0
+          ? (columnsExplicit
+              .map((column) => {
+                const row = asRecord(column) ?? {};
+                const key = String(row.key ?? "").trim();
+                return key ? { key, label: String(row.label ?? key) } : null;
+              })
+              .filter(Boolean) as Array<{ key: string; label: string }>)
+          : Object.keys(first)
+              .slice(0, 4)
+              .map((key) => ({ key, label: key }));
+
+      const rows = rowsRaw.slice(0, LIVE_MAX_ROWS).map((row) => {
+        const record = asRecord(row) ?? {};
+        const next: Record<string, string | number> = {};
+        for (const column of columns) {
+          next[column.key] = formatCell(record[column.key]);
+        }
+        return next;
+      });
+
+      return { kind: "table", title, source: "live", table: { columns, rows } };
+    }
+  }
+
+  if (kpiMetrics.length > 0) {
+    const firstMetric = asRecord(kpiMetrics[0]) ?? {};
+    return {
+      kind: "kpi",
+      title,
+      source: "live",
+      kpi: {
+        label: String(firstMetric.label ?? title ?? "KPI"),
+        value: formatKpiValue(firstMetric.value),
+      },
+    };
+  }
+
+  if (kpi?.value != null || typeof kpi?.label === "string") {
+    return {
+      kind: "kpi",
+      title,
+      source: "live",
+      kpi: {
+        label: String(kpi.label ?? title ?? "KPI"),
+        value: formatKpiValue(kpi.value),
+      },
+    };
+  }
+
+  if (chartPoints.length > 0) {
+    return mapEnrichedBlockToDataRoutePreview(block, "series");
+  }
+
+  if (rowsRaw.length > 0) {
+    return mapEnrichedBlockToDataRoutePreview(block, "table");
+  }
+
+  return {
+    kind: preferred,
+    title,
+    source: "live",
+    error: "A rota respondeu, mas sem KPI, tabela ou série reconhecíveis neste preview.",
+  };
+}
