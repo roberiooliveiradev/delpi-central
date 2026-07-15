@@ -13,6 +13,7 @@ describe("SCRAP_HELP_TOOLTIPS", () => {
     expect(Object.keys(SCRAP_HELP_TOOLTIPS.filters).length).toBeGreaterThanOrEqual(6);
     expect(Object.keys(SCRAP_HELP_TOOLTIPS.charts).length).toBe(6);
     expect(Object.keys(SCRAP_HELP_TOOLTIPS.detail).length).toBeGreaterThanOrEqual(4);
+    expect(SCRAP_HELP_TOOLTIPS.actions.refresh.length).toBeGreaterThan(10);
     expect(SCRAP_HELP_TOOLTIPS.table.section.length).toBeGreaterThan(10);
     expect(SCRAP_HELP_TOOLTIPS.pagination.pageSize.length).toBeGreaterThan(5);
   });

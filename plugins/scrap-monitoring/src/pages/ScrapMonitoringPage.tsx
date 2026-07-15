@@ -153,6 +153,18 @@ function ScrapMonitoringContent({
     setPage(1);
   };
 
+  const handleRefresh = () => {
+    dashboard.reload();
+    registros.reload();
+    filtrosOptions.reload();
+  };
+
+  const refreshing =
+    dashboard.loading ||
+    dashboard.refreshing ||
+    registros.loading ||
+    filtrosOptions.loading;
+
   const resumo = dashboard.data.resumo;
   const hasDashboardData = resumo !== null;
   const showInitialLoading = dashboard.loading && !hasDashboardData;
@@ -179,6 +191,8 @@ function ScrapMonitoringContent({
         <PageHeader
           title={`Acompanhamento de Refugos — ${branchLabel}`}
           subtitle={`Filial TOTVS ${totvsBranch} · ${periodoLabel}`}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
         />
 
         <PeriodFilters

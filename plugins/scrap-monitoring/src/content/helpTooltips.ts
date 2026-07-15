@@ -41,6 +41,10 @@ export const SCRAP_HELP_TOOLTIPS = {
     colaborador:
       "Top 10 colaboradores por valor de refugo (R$) no período filtrado.",
   },
+  actions: {
+    refresh:
+      "Recarrega KPIs, gráficos, opções de filtro e a tabela com o período e filtros atuais.",
+  },
   detail: {
     identification:
       "Dados de filial, data, OP e códigos de produto associados ao apontamento.",
