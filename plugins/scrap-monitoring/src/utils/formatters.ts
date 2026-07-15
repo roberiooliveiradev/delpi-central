@@ -77,6 +77,21 @@ export function formatRankingAxisLabel(
   return formatShortLabel(codeText || desc, maxLength);
 }
 
+/** Duas linhas no eixo: código em destaque + descrição truncada. */
+export function splitRankingAxisLines(
+  code: string | null | undefined,
+  label: string | null | undefined,
+  descMaxLength = 48,
+): { codeLine: string; descLine: string } {
+  const codeText = (code ?? "").trim();
+  const desc = (label ?? "").trim();
+  if (codeText && desc && desc !== codeText) {
+    return { codeLine: codeText, descLine: formatShortLabel(desc, descMaxLength) };
+  }
+  const single = codeText || desc || "—";
+  return { codeLine: single, descLine: "" };
+}
+
 export function formatMotivoLegendLabel(
   name: string,
   value: number,

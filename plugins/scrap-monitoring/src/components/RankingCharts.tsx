@@ -6,6 +6,7 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -22,6 +23,8 @@ import {
   CHART_MOTIVO_HEIGHT,
   CHART_MOTIVO_INNER_RADIUS,
   CHART_MOTIVO_OUTER_RADIUS,
+  CHART_PRODUCT_RANKING_HEIGHT,
+  CHART_PRODUCT_Y_AXIS_WIDTH,
   CHART_RANKING_HEIGHT,
   CHART_SERIES_HEIGHT,
   CHART_Y_AXIS_WIDTH,
@@ -32,9 +35,9 @@ import type { ScrapRankingItem, ScrapSeriePoint } from "../types/scrap";
 import {
   formatCurrencyBrl,
   formatMotivoLegendLabel,
-  formatRankingAxisLabel,
   formatSharePercent,
   formatShortLabel,
+  splitRankingAxisLines,
 } from "../utils/formatters";
 import { ChartCard } from "./ChartCard";
 
@@ -70,38 +73,107 @@ function CurrencyTooltip({
   );
 }
 
-function HorizontalValueBars({
-  items,
-  includeCode = false,
-}: {
-  items: ScrapRankingItem[];
-  includeCode?: boolean;
-}) {
-  const data = items.map((item) => ({
-    name: includeCode
-      ? formatRankingAxisLabel(item.code, item.label, 40)
-      : formatShortLabel(item.label || item.code, 36),
-    fullName: includeCode
-      ? `${item.code}${item.label ? ` — ${item.label}` : ""}`
-      : item.label || item.code,
-    value: item.value,
-    sharePct: item.sharePct,
-  }));
+type ProductTickProps = {
+  x?: number;
+  y?: number;
+  payload?: { value?: string };
+  linesByKey: Map<string, { codeLine: string; descLine: string }>;
+};
+
+function ProductAxisTick({ x = 0, y = 0, payload, linesByKey }: ProductTickProps) {
+  const key = String(payload?.value ?? "");
+  const lines = linesByKey.get(key) ?? { codeLine: key, descLine: "" };
+  const hasDesc = Boolean(lines.descLine);
 
   return (
-    <ResponsiveContainer width="100%" height={CHART_RANKING_HEIGHT}>
-      <BarChart data={data} layout="vertical" margin={{ left: 4, right: 12, top: 8, bottom: 8 }}>
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={-6}
+        y={hasDesc ? -7 : 4}
+        textAnchor="end"
+        className="sm-chart-axis-code"
+      >
+        {lines.codeLine}
+      </text>
+      {hasDesc ? (
+        <text x={-6} y={11} textAnchor="end" className="sm-chart-axis-desc">
+          {lines.descLine}
+        </text>
+      ) : null}
+    </g>
+  );
+}
+
+function HorizontalValueBars({
+  items,
+  variant = "simple",
+}: {
+  items: ScrapRankingItem[];
+  variant?: "simple" | "product";
+}) {
+  const isProduct = variant === "product";
+  const linesByKey = new Map<string, { codeLine: string; descLine: string }>();
+
+  const data = items.map((item, index) => {
+    if (isProduct) {
+      const key = `${item.code || item.label || index}`;
+      const lines = splitRankingAxisLines(item.code, item.label, 52);
+      linesByKey.set(key, lines);
+      return {
+        name: key,
+        fullName: `${item.code}${item.label ? ` — ${item.label}` : ""}`,
+        value: item.value,
+        sharePct: item.sharePct,
+      };
+    }
+
+    return {
+      name: formatShortLabel(item.label || item.code, 28),
+      fullName: item.label || item.code,
+      value: item.value,
+      sharePct: item.sharePct,
+    };
+  });
+
+  const height = isProduct ? CHART_PRODUCT_RANKING_HEIGHT : CHART_RANKING_HEIGHT;
+  const yWidth = isProduct ? CHART_PRODUCT_Y_AXIS_WIDTH : CHART_Y_AXIS_WIDTH;
+
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart
+        data={data}
+        layout="vertical"
+        margin={{ left: 8, right: isProduct ? 72 : 16, top: 8, bottom: 8 }}
+        barCategoryGap={isProduct ? "18%" : "22%"}
+      >
         <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" horizontal={false} />
-        <XAxis type="number" tick={CHART_AXIS_TICK} tickFormatter={(v) => formatCurrencyBrl(Number(v))} />
+        <XAxis
+          type="number"
+          tick={CHART_AXIS_TICK}
+          tickFormatter={(v) => formatCurrencyBrl(Number(v))}
+        />
         <YAxis
           type="category"
           dataKey="name"
-          width={CHART_Y_AXIS_WIDTH}
-          tick={CHART_AXIS_TICK}
+          width={yWidth}
           interval={0}
+          tick={
+            isProduct
+              ? (props) => <ProductAxisTick {...props} linesByKey={linesByKey} />
+              : { ...CHART_AXIS_TICK, fontSize: 13 }
+          }
         />
         <Tooltip content={<CurrencyTooltip />} />
-        <Bar dataKey="value" fill={CHART_COLORS.primary} radius={[0, 6, 6, 0]} />
+        <Bar dataKey="value" fill={CHART_COLORS.primary} radius={[0, 6, 6, 0]} maxBarSize={28}>
+          {isProduct ? (
+            <LabelList
+              dataKey="value"
+              position="right"
+              formatter={(v: number) => formatCurrencyBrl(v)}
+              className="sm-chart-bar-label"
+            />
+          ) : null}
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );
@@ -238,17 +310,17 @@ export function RankingCharts({
         title="Top 10 por matéria-prima"
         titleHint={CHARTS.materiaPrima}
         empty={materiais.length === 0}
-        wide={false}
+        wide
       >
-        <HorizontalValueBars items={materiais} includeCode />
+        <HorizontalValueBars items={materiais} variant="product" />
       </ChartCard>
       <ChartCard
         title="Top 10 por produto acabado"
         titleHint={CHARTS.produtoAcabado}
         empty={produtos.length === 0}
-        wide={false}
+        wide
       >
-        <HorizontalValueBars items={produtos} includeCode />
+        <HorizontalValueBars items={produtos} variant="product" />
       </ChartCard>
       <ChartCard
         title="Por centro de trabalho"

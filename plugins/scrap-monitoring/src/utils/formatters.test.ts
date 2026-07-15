@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCurrencyBrl, formatDatePtBr, formatRankingAxisLabel } from "./formatters";
+import {
+  formatCurrencyBrl,
+  formatDatePtBr,
+  formatRankingAxisLabel,
+  splitRankingAxisLines,
+} from "./formatters";
 import { getThisMonthRange, validatePeriodRange } from "./dateRange";
 
 describe("formatters", () => {
@@ -12,6 +17,12 @@ describe("formatters", () => {
   it("monta rótulo de ranking com código", () => {
     expect(formatRankingAxisLabel("90480001", "CHICOTE TESTE", 40)).toContain("90480001");
     expect(formatRankingAxisLabel("90480001", "CHICOTE TESTE", 40)).toContain("—");
+  });
+
+  it("separa código e descrição em duas linhas", () => {
+    const lines = splitRankingAxisLines("10070344", "CABO PP CIRCULAR PVC/PVC 9X22AWG");
+    expect(lines.codeLine).toBe("10070344");
+    expect(lines.descLine).toContain("CABO PP");
   });
 });
 

@@ -20,6 +20,8 @@ export const PIE_COLORS = [
 ] as const;
 
 export const CHART_RANKING_HEIGHT = 300;
+/** Ranking de produtos full-width — mais altura por barra. */
+export const CHART_PRODUCT_RANKING_HEIGHT = 380;
 export const CHART_MOTIVO_HEIGHT = 300;
 export const CHART_SERIES_HEIGHT = 300;
 
@@ -27,11 +29,13 @@ export const CHART_SERIES_HEIGHT = 300;
 export const CHART_MOTIVO_INNER_RADIUS = 58;
 export const CHART_MOTIVO_OUTER_RADIUS = 98;
 
-/** Eixo Y em cards half-width — prioriza texto (código + descrição). */
-export const CHART_Y_AXIS_WIDTH = 220;
+/** Eixo Y — half-width (CT / colaborador). */
+export const CHART_Y_AXIS_WIDTH = 160;
+/** Eixo Y — full-width com código + descrição em 2 linhas. */
+export const CHART_PRODUCT_Y_AXIS_WIDTH = 340;
 
 export const CHART_AXIS_TICK = {
-  fontSize: 11,
+  fontSize: 12,
   fill: "var(--sm-chart-axis)",
 } as const;
 
