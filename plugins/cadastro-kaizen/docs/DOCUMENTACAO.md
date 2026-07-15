@@ -9,7 +9,8 @@ Substituir o cadastro manual em planilha Google Sheets por um fluxo operacional 
 - Persistência em PostgreSQL (schema `quality`)
 - Formulário validado (filial, status, tipos de economia)
 - Importação controlada da planilha legada via API (sem scripts offline)
-- Permissões RBAC dedicadas (`cadastro-kaizen.view` / `cadastro-kaizen.manage`)
+- Permissões RBAC dedicadas (`cadastro-kaizen.view` / `cadastro-kaizen.manage` / `cadastro-kaizen.notify-suggestions`)
+- Canal público de sugestão (public-hub + `POST /public/kaizen/suggestions`)
 
 A leitura para **indicadores estratégicos** e **dashboard-quality** permanece na planilha (`GET /quality/kaizens/summary`) até evolução planejada.
 
@@ -19,15 +20,23 @@ A leitura para **indicadores estratégicos** e **dashboard-quality** permanece n
 flowchart LR
   subgraph portal [Portal Minha DELPI]
     UI[Cadastro Kaizens MFE]
+    Share[Compartilhar sugestao]
+  end
+
+  subgraph publicHub [public-hub]
+    Form["/p/kaizen/sugestao/aberto"]
   end
 
   subgraph gateway [Gateway Nginx]
-    G1["/apps/cadastro-kaizen/*"]
-    G2["/apps/api-delpi/*"]
+    G1["/apps/cadastro-kaizen"]
+    G2["/apps/api-delpi"]
+    G3["/p/kaizen"]
   end
 
   subgraph api [api-delpi]
     R[kaizen_records_router]
+    P[kaizen_public_router]
+    N[kaizen_portal_notification]
     S[quality_router summary]
     UC[ImportKaizensFromSheetUseCase]
     CALC[KaizenSavingsCalculator]
@@ -36,10 +45,15 @@ flowchart LR
   subgraph data [Dados]
     PG[(quality.kaizens)]
     GS[Google Sheets]
+    Core[Core Integrations]
   end
 
   UI --> G1
   UI --> G2
+  Share --> Form
+  Form --> G3 --> P
+  P --> PG
+  P --> N --> Core
   G2 --> R
   R --> CALC --> PG
   R --> UC
@@ -153,6 +167,8 @@ A **validade de 1 ano** dos ganhos financeiros usa sempre `date_implemented` (`k
 
 **Status Aprovado (jul/2026):** `aprovado` exige `date_committee_approved`. Conta no KPI de quantidade (`COALESCE(date_committee_approved, date_implemented)`), mas **não** nos ganhos financeiros (só `implantado`). Validação em `kaizen_status_date_rules` (API) e espelho no MFE.
 
+**Status Recebido (jul/2026):** renomeação de `em_andamento` → `recebido` (migration V043). Status inicial do formulário público e de novos registros. **Não** conta quantidade mensal nem ganhos (`kaizen_indicator_eligibility`). Pipeline operacional: `recebido` → `aprovado` → `implantado`.
+
 Timeline de versões exibe «Implantação: … → …» a partir de `effective_from` (sincronizado com `date_implemented`).
 
 ## 6. Categorias
@@ -178,15 +194,53 @@ Formulários, filtros, KPIs, tabelas e seções usam wrappers finos em `src/comp
 
 Detalhes, mapa de wrappers e checklist para novos campos: **[UI-PLUGIN-UI.md](./UI-PLUGIN-UI.md)**.
 
-## 8. Variáveis de ambiente (planilha — importação e dashboard)
+## 8. Variáveis de ambiente
 
 | Variável | Uso |
 |----------|-----|
-| `QUALITY_SHEET_ID` | ID da planilha Google |
+| `QUALITY_SHEET_ID` | ID da planilha Google (import / summary Sheets) |
 | `QUALITY_KAIZEN_SHEET_GID` | Aba kaizen |
 | `GOOGLE_SHEETS_TIMEOUT` | Timeout do client HTTP |
+| `KAIZEN_NOTIFICATIONS_ENABLED` | Liga/desliga notificações de sugestão pública (default `true`) |
+| `CORE_API_BASE_URL` | Base do Core para Integrations |
+| `CORE_API_INTEGRATIONS_SERVICE_TOKEN` | Bearer do serviço de notificações |
+| `RUN_PLUGINS_MIGRATIONS_ON_STARTUP` | Aplica V0xx do schema `quality` no boot |
 
 Definidas em `infra/.env` e repassadas ao container `delpi-api-delpi`.
+
+## 8.1 Sugestão pública
+
+| Item | Detalhe |
+|------|---------|
+| Rota | `POST /public/kaizen/suggestions` |
+| Auth | Nenhuma (prefixo público no middleware) |
+| Router | `kaizen_public_router.py` |
+| Mapper | `kaizen_public_suggestion_mapper.build_suggestion_record_fields` |
+| Status | Sempre `recebido` |
+| Notificação | `notify_public_suggestion_created` → Core `/integrations/notifications` com `permissionCodes: [cadastro-kaizen.notify-suggestions]` |
+| UI | public-hub `apps/kaizen` — wizard 2 etapas + % preenchimento + tela de conclusão |
+| Compartilhar | Modal no MFE: QR (api.qrserver.com), copiar link, **Exportar PNG** (`downloadKaizenSuggestionQrPng`, 512×512) |
+
+Body (campos obrigatórios):
+
+```json
+{
+  "proposer_name": "Maria Silva",
+  "sector": "Produtivo",
+  "employee_registration": "12345",
+  "work_center_or_location": "CT-16",
+  "problem_description": "Descrição do problema (mín. 5).",
+  "proposed_solution": "Solução proposta (mín. 5).",
+  "branch_code": "01",
+  "website": ""
+}
+```
+
+`website` é honeypot: se preenchido, a API responde sucesso falso sem gravar.
+
+`meta.operationId`: `create_public_kaizen_suggestion`
+
+Catálogo de notificação: Core `notification_catalog.json` categoria `cadastro_kaizen` (+ espelho no portal).
 
 ## 9. Revisões, versões e rotas estendidas
 
@@ -218,7 +272,7 @@ Resumo dos próximos passos:
 2. **Fase 5** — Scripts CI/homologação (`check-cadastro-kaizen.sh`)
 3. **Fase 6b/6c** — `summary` Postgres com cálculo temporal — ver [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md)
 4. **Fases 7–9** — Dashboard, agente chat, cutover planilha
-5. **Fase 10** — Export, anexos (backlog)
+5. **Fase 10** — Export em massa de registros (backlog; export PNG do QR de sugestão já entregue)
 
 Status detalhado: [status-atual.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/status-atual.md).
 
@@ -229,9 +283,15 @@ cd api-delpi
 PYTHONPATH="../shared:.:." pytest \
   tests/unit/test_kaizen_savings_calculator.py \
   tests/unit/test_kaizen_revision_service.py \
+  tests/unit/test_kaizen_status_and_indicators.py \
+  tests/unit/test_kaizen_public_suggestion_mapper.py \
+  tests/unit/test_kaizen_portal_notification_service.py \
   tests/unit/test_import_kaizens_from_sheet_use_case.py \
   tests/test_route_meta_smoke.py -k "kaizen" -q
 
 cd plugins/cadastro-kaizen
 npm run ci
+
+cd plugins/public-hub
+npx vite build
 ```

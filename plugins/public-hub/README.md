@@ -182,6 +182,20 @@ O formulário público (jul/2026) inclui modo wizard (`oneQuestionPerPage`), pá
 
 Ver `src/apps/customer-experience/` (`api.ts`, `ThanksPage.tsx`, `FormPage.tsx`, `pages.tsx`).
 
+### Kaizen — sugestão pública (`kaizen`)
+
+Formulário aberto (token estático `aberto`) para colaboradores enviarem ideias:
+
+| Página | Rota | `load` / submit |
+|---|---|---|
+| Sugestão | `/p/kaizen/sugestao/aberto` | `POST /apps/api-delpi/public/kaizen/suggestions` |
+
+Wizard **2 etapas** (Identificação → Melhoria), barra de **% preenchimento** e tela de conclusão. Tokens de marca `--pub-*` em `kaizen-form.css`.
+
+Compartilhamento (QR/link/PNG) fica no MFE autenticado `cadastro-kaizen` (botão **Compartilhar sugestão**).
+
+Ver `src/apps/kaizen/` · doc: [plugins/cadastro-kaizen/README.md](../cadastro-kaizen/README.md).
+
 ### Painéis TV (`tv-dashboard`)
 
 Apresentação rotativa em modo **kiosk** (sem logo DELPI):

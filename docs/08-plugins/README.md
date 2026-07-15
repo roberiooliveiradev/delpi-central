@@ -110,7 +110,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Dashboard LMPs | `/apps/api-delpi/engineering/lmps/*` |
 | Eficiência Fabril | `/apps/api-delpi/production/eficiencia-fabril/*` |
 | Dashboard Qualidade | `/apps/api-delpi/quality/*` (Kaizen/5S: **Google Sheets**; PPM/NC: TOTVS) |
-| Cadastro de Kaizens | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação da planilha via `POST .../import-from-sheet` |
+| Cadastro de Kaizens | `/apps/api-delpi/quality/kaizens/records` (**PostgreSQL**); importação Sheets; sugestão pública `POST /public/kaizen/suggestions` + form `/p/kaizen/sugestao/aberto` |
 | Inspeções de Entrada | `/apps/api-delpi/inspecoes-entrada/*` (TOTVS views) |
 | Inspeções de Processo | `/apps/api-delpi/inspecoes-processo/*` (TOTVS views + auditoria QPR/QP*) |
 | Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
@@ -190,7 +190,7 @@ Declaradas no manifesto e persistidas na Core API:
 | scrap-monitoring | `scrap-monitoring.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
-| cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage` |
+| cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage`, `cadastro-kaizen.notify-suggestions` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
 

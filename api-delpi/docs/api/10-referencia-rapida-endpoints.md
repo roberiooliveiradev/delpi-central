@@ -13,6 +13,9 @@ Legenda de permissões:
 | **Q** | `api-delpi.quality.access` |
 | **L** | `dashboard-lmps.view` |
 | **PAC-R** | Leitura PAC: `quality-action-plans.read`, `.manage`, `api-delpi.quality.action-plans.read`, `dashboard-quality.view`, … |
+| **KZ-R** | Leitura cadastro Kaizen: `cadastro-kaizen.view`, `.manage`, `dashboard-quality.view`, `api-delpi.quality.access`, … |
+| **KZ-W** | Escrita cadastro Kaizen: `cadastro-kaizen.manage`, `api-delpi.quality.access`, … |
+| **público** | Sem JWT (prefixo `/public/...`) |
 | **PAC-W** | Escrita PAC: `quality-action-plans.write`, `.manage` |
 ---
 
@@ -224,6 +227,10 @@ Legenda de permissões:
 | GET | `/quality/nonconformities/series` | Q |
 | GET | `/quality/kaizens/summary` | Q |
 | GET | `/quality/kaizens/{kaizen_id}` | Q |
+| GET | `/quality/kaizens/records` | KZ-R |
+| POST | `/quality/kaizens/records` | KZ-W |
+| POST | `/quality/kaizens/records/import-from-sheet` | KZ-W |
+| POST | `/public/kaizen/suggestions` | público |
 | GET | `/quality/audit-5s/summary` | Q |
 | GET | `/quality/ppm/internal/summary` | Q |
 | GET | `/quality/ppm/external/summary` | Q |

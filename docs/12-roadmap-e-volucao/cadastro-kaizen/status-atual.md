@@ -1,12 +1,12 @@
 # Status atual — Cadastro de Kaizens
 
-> Snapshot em **2026-07-07**. Roadmap completo: [ROADMAP.md](./ROADMAP.md)
+> Snapshot em **2026-07-15**. Roadmap completo: [ROADMAP.md](./ROADMAP.md)
 
 ## Resumo
 
 | Camada | Status |
 |--------|--------|
-| PostgreSQL `quality.kaizens` | ✅ Migrations V026–V036 |
+| PostgreSQL `quality.kaizens` | ✅ Migrations V026–V043 |
 | API CRUD + import | ✅ Em `main` |
 | MFE `cadastro-kaizen` | ✅ Build + Docker dev |
 | Dados piloto (dev) | ✅ 21+ registros via API |
@@ -26,6 +26,10 @@
 | **Data recebimento da ideia** | ✅ Migration V035 + campo no Estágio + coluna na listagem (dev) |
 | **Categorias múltiplas** | ✅ Migration V036 `categories TEXT[]` + multi-select creatable na ficha (dev) |
 | **Data implantação = vigência** | ✅ UI unificada — `date_implemented` espelha `effective_from` da revisão; sem campo «Vigente a partir de» (dev) |
+| Status `aprovado` + `date_committee_approved` | ✅ Migration V042 + regras de data/indicadores |
+| Status `recebido` (ex-`em_andamento`) | ✅ Migration V043 |
+| Formulário público + notificação | ✅ public-hub wizard + `POST /public/kaizen/suggestions` + sino Core |
+| Compartilhar sugestão (QR/PNG) | ✅ Modal na listagem |
 | Cálculo temporal do dashboard (revisões) | 📋 Especificado — [ESPECIFICACAO-REVISOES.md](./ESPECIFICACAO-REVISOES.md) (Fase 6b/6c) |
 
 ## O que já funciona
@@ -38,7 +42,7 @@
 - **Estágio:** recebimento da ideia, **data implantação** (única referência de vigência), descontinuação
 - **Versões completas do kaizen**: cada "melhoria" é uma **versão nova e completa**.
   Botão **Criar nova versão** clona todos os dados num formulário completo → nasce
-  **Em andamento** (rascunho) sem afetar a versão implantada. Ao **implantar**
+  **Recebido** (rascunho) sem afetar a versão implantada. Ao **implantar**
   (`POST /versions/{n}/implement`), a anterior vira **Substituída** e a nova assume,
   com aniversário de 1 ano próprio. **Só uma versão implantada por vez**. Edição inline
   das seções = **correção** da versão vigente (não cria versão).
@@ -52,7 +56,10 @@
   (`kaizen_audit_log`)
 - **Múltiplos responsáveis/participantes** (accountable segue como principal)
 - Importar planilha (botão na UI ou `POST .../import-from-sheet`)
-- Permissões `cadastro-kaizen.view` / `cadastro-kaizen.manage`
+- Permissões `cadastro-kaizen.view` / `cadastro-kaizen.manage` / `cadastro-kaizen.notify-suggestions`
+- **Formulário público de sugestão** (`/p/kaizen/sugestao/aberto`) com wizard 2 etapas,
+  % de preenchimento e conclusão; botão **Compartilhar sugestão** (QR + link + PNG)
+- Status **Recebido** / **Aprovado** / **Implantado** com regras de datas e indicadores
 
 ## Bloqueios para produção
 
@@ -78,4 +85,8 @@
 | `categories TEXT[]` | V036, `kaizen_categories.py`, `CategoryMultiSelectField` | Multi-seleção + criar novas (localStorage `delpi-kaizen-custom-categories`) |
 | `DateField` compartilhado | `@delpi/plugin-ui` + wrapper `components/ui/DateField.tsx` | Datas ISO no formulário e no detalhe |
 | Vigência unificada | `kaizen_revision_service.resolve_effective_from` | `date_implemented` espelha `effective_from`; UI sem «Vigente a partir de»; implantar versão usa data do Estágio |
+| Status `aprovado` + data comitê | V042, `kaizen_status_date_rules`, indicadores | Quantidade sim; ganhos financeiros não |
+| Status `recebido` | V043 (rename `em_andamento`) | Default; fila pública/gestor; fora dos KPIs |
+| Sugestão pública | `POST /public/kaizen/suggestions`, public-hub wizard | Sem JWT; notifica `notify-suggestions` |
+| Compartilhar sugestão | Modal QR + link + Exportar PNG | `kaizenPublicSuggestionLink.ts` |
 | Migração UI `@delpi/plugin-ui` | `plugins/cadastro-kaizen/docs/UI-PLUGIN-UI.md` | F2/F3 concluído: filtros, KPI, forms, SectionCard, dashboard e detalhe |

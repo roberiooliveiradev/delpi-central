@@ -279,6 +279,7 @@ Consultas analíticas (TOTVS Protheus e Google Sheets).
 | PUT | `/quality/kaizens/records/{id}` | Atualiza cadastro. |
 | DELETE | `/quality/kaizens/records/{id}` | Exclusão lógica do cadastro. |
 | POST | `/quality/kaizens/records/import-from-sheet` | Importa linhas ativas da planilha para PostgreSQL. |
+| POST | `/public/kaizen/suggestions` | Sugestão pública (**sem JWT**); status inicial `recebido`. |
 | GET | `/quality/audit-5s/summary` | Resumo auditorias 5S. |
 | GET | `/quality/ppm/internal/summary` | PPM interno (resumo). |
 | GET | `/quality/ppm/external/summary` | PPM externo (resumo). |
@@ -484,7 +485,7 @@ Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração She
 
 ### Cadastro operacional — `/quality/kaizens/records`
 
-**Fonte:** PostgreSQL (`quality.kaizens`, migrations `V026`/`V027`). Plugin MFE: `cadastro-kaizen`. Documentação: [plugins/cadastro-kaizen/README.md](../../../plugins/cadastro-kaizen/README.md).
+**Fonte:** PostgreSQL (`quality.kaizens`, migrations `V026`–`V043`). Plugin MFE: `cadastro-kaizen`. Documentação: [plugins/cadastro-kaizen/README.md](../../../plugins/cadastro-kaizen/README.md).
 
 **Permissões:**
 
@@ -492,13 +493,14 @@ Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração She
 |----------|-------------------|
 | Leitura (GET) | `cadastro-kaizen.view`, `cadastro-kaizen.manage`, `dashboard-quality.view`, `api-delpi.quality.access`, `api-delpi.access` |
 | Escrita (POST/PUT/DELETE/import) | `cadastro-kaizen.manage`, `api-delpi.quality.access`, `api-delpi.access` |
+| Alerta sugestão pública | `cadastro-kaizen.notify-suggestions` (sino Core; não é RBAC da rota HTTP) |
 
 #### GET /quality/kaizens/records
 
 | Query | Descrição |
 |-------|-----------|
 | `branch` | `01` ou `02` |
-| `status` | `em_andamento`, `implantado`, `descontinuado`, `cancelado` |
+| `status` | `recebido`, `aprovado`, `implantado`, `descontinuado`, `cancelado` |
 | `savings_type` | `tempo`, `material`, `financeiro`, `qualitativo`, `misto` |
 | `title` | Filtro parcial no título |
 | `date_start`, `date_end` | Intervalo em `date_implemented` (ISO) |
@@ -508,13 +510,13 @@ Testes unitários: `api-delpi/tests/test_kaizen_repository.py`. Integração She
 
 #### POST /quality/kaizens/records
 
-Body JSON com `branch_code`, `title` (obrigatórios), campos cadastrais e entradas de economia. A API infere `savings_type` quando omitido e calcula `daily_savings` / `annual_savings` via `KaizenSavingsCalculator`.
+Body JSON com `branch_code`, `title` (obrigatórios), campos cadastrais e entradas de economia. A API infere `savings_type` quando omitido e calcula `daily_savings` / `annual_savings` via `KaizenSavingsCalculator`. Status default: `recebido`. `aprovado` exige `date_committee_approved`; `implantado` exige `date_implemented`.
 
 **operationId:** `create_kaizen_record` · **meta.shape:** `scalar`
 
 #### POST /quality/kaizens/records/import-from-sheet
 
-Importa todas as linhas **ativas** da planilha kaizen (`deleted` ignorado) para o PostgreSQL. Ignora duplicatas (filial + título + data de implantação).
+Importa todas as linhas **ativas** da planilha kaizen (`deleted` ignorado) para o PostgreSQL. Ignora duplicatas (filial + título + data de implantação). Alias legado de status `em_andamento` → `recebido`.
 
 Body opcional: `{ "dry_run": true }` — simula sem gravar.
 
@@ -526,10 +528,20 @@ Código: `ImportKaizensFromSheetUseCase`, `kaizen_sheet_import_mapper.py`, `kaiz
 
 Testes: `tests/unit/test_import_kaizens_from_sheet_use_case.py`, smoke `test_quality_kaizen_*` em `test_route_meta_smoke.py`.
 
+#### POST /public/kaizen/suggestions
+
+Sugestão aberta (formulário public-hub `/p/kaizen/sugestao/aberto`). **Sem JWT.** Cria registro com `status=recebido` e notifica gestores com `cadastro-kaizen.notify-suggestions` (quando Core Integrations estiver configurado).
+
+Body: `proposer_name`, `sector`, `employee_registration`, `work_center_or_location`, `problem_description`, `proposed_solution`, `branch_code` opcional (`01`/`02`), honeypot `website`.
+
+**operationId:** `create_public_kaizen_suggestion` · Router: `kaizen_public_router.py`
+
 #### Revisões, versões e evidências (implementado)
 
 Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo de vida de versões, evidências e trilhas de auditoria. Ver [plugins/cadastro-kaizen/docs/DOCUMENTACAO.md](../../../plugins/cadastro-kaizen/docs/DOCUMENTACAO.md) § 9.
 
 **Vigência:** `effective_from` da revisão espelha `date_implemented` informado no Estágio. O PUT não exige campo separado «Vigente a partir de» — body legado `effective_from` é ignorado.
+
+**Indicadores:** `recebido` fora de quantidade/ganhos; `aprovado` só quantidade; `implantado` quantidade + ganhos. Detalhe: README do plugin.
 
 **Pendente (Fase 6b/6c):** migrar `GET /quality/kaizens/summary` para Postgres com cálculo temporal por revisão — especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).
