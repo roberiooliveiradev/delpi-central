@@ -10,6 +10,7 @@ type RegistrosTableProps = {
   items: ScrapRegistroItem[];
   loading?: boolean;
   page: number;
+  pageSize: number;
   totalPages: number;
   total: number;
   onPageChange: (page: number) => void;
@@ -19,6 +20,7 @@ export function RegistrosTable({
   items,
   loading = false,
   page,
+  pageSize,
   totalPages,
   total,
   onPageChange,
@@ -79,9 +81,10 @@ export function RegistrosTable({
       {totalPages > 1 ? (
         <Pagination
           page={page}
+          pageSize={pageSize}
+          total={total}
           totalPages={totalPages}
           onPageChange={onPageChange}
-          disabled={loading}
         />
       ) : null}
     </section>

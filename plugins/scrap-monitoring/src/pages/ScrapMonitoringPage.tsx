@@ -216,6 +216,7 @@ function ScrapMonitoringContent({ branchRoute, totvsBranch }: ContentProps) {
               items={registros.data?.items ?? []}
               loading={registros.loading}
               page={registros.data?.page ?? page}
+              pageSize={registros.data?.pageSize ?? 50}
               totalPages={registros.data?.totalPages ?? 1}
               total={registros.data?.total ?? 0}
               onPageChange={setPage}

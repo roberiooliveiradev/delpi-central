@@ -5,7 +5,7 @@ import {
 } from "@delpi/plugin-ui/index";
 
 const LABELS = {
-  info: ({ page, totalPages }: { page: number; totalPages: number }) =>
+  info: ({ page, totalPages }: { page: number; totalPages: number; total: number; pageSize: number }) =>
     `Página ${page} / ${totalPages}`,
   previous: "Anterior",
   next: "Próxima",
