@@ -3,6 +3,31 @@
   flex-direction: column;
   gap: 6px;
   min-height: 0;
+  min-width: 0;
+}
+
+.delpi-ui-data-route-catalog__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.delpi-ui-data-route-catalog__main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.delpi-ui-data-route-catalog--comfortable .delpi-ui-data-route-catalog__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(240px, 0.9fr);
+  gap: 10px;
+  align-items: stretch;
 }
 
 .delpi-ui-data-route-catalog__search {
@@ -106,6 +131,7 @@
   gap: 8px;
   overflow: auto;
   min-height: 0;
+  min-width: 0;
 }
 
 .delpi-ui-data-route-catalog__group-title {
@@ -143,7 +169,7 @@
   gap: 2px;
   width: 100%;
   margin: 0;
-  padding: 5px 8px;
+  padding: 6px 8px;
   border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
   border-radius: 6px;
   background: color-mix(
@@ -166,6 +192,12 @@
   border-color: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 45%, var(--delpi-ui-border, #e5e7eb));
   background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 10%, var(--delpi-ui-surface, #fff));
   outline: none;
+}
+
+.delpi-ui-data-route-catalog__card--active {
+  border-color: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 65%, var(--delpi-ui-border, #e5e7eb));
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 16%, var(--delpi-ui-surface, #fff));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 35%, transparent);
 }
 
 .delpi-ui-data-route-catalog__card-head {
@@ -201,20 +233,158 @@
   line-height: 1.25;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.delpi-ui-data-route-catalog__path {
+.delpi-ui-data-route-catalog--compact .delpi-ui-data-route-catalog__card-desc {
+  -webkit-line-clamp: 1;
+}
+
+.delpi-ui-data-route-catalog__card-meta {
   font-size: 10px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   line-height: 1.2;
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 50%, transparent));
-  opacity: 0.85;
+}
+
+.delpi-ui-data-route-catalog__path {
+  display: block;
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.3;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 50%, transparent));
+  opacity: 0.9;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.delpi-ui-data-route-catalog__detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, transparent);
+  border-radius: 8px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 5%,
+    var(--delpi-ui-surface, var(--surface, #fff))
+  );
+  box-sizing: border-box;
+}
+
+.delpi-ui-data-route-catalog--compact .delpi-ui-data-route-catalog__detail {
+  max-height: min(42vh, 320px);
+}
+
+.delpi-ui-data-route-catalog__detail--empty {
+  justify-content: center;
+}
+
+.delpi-ui-data-route-catalog__detail-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-data-route-catalog__detail-section-label {
+  margin: 4px 0 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-catalog__detail-body {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-data-route-catalog__detail-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.delpi-ui-data-route-catalog__detail-shape {
+  font-size: 11px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-catalog__param-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delpi-ui-data-route-catalog__param-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+}
+
+.delpi-ui-data-route-catalog__param-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111));
+}
+
+.delpi-ui-data-route-catalog__param-meta {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+  text-transform: lowercase;
+}
+
+.delpi-ui-data-route-catalog__param-hint {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-catalog__advanced {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-catalog__advanced summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.delpi-ui-data-route-catalog__confirm {
+  margin-top: 6px;
+  align-self: stretch;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 7px;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delpi-ui-data-route-catalog__confirm:hover {
+  filter: brightness(1.05);
 }
 
 /* legado — mantido se algum consumidor ainda usa badge */
@@ -239,6 +409,14 @@
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, var(--delpi-ui-surface, #111827));
 }
 
+:root[data-theme="dark"] .delpi-ui-data-route-catalog__card--active {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 20%, var(--delpi-ui-surface, #111827));
+}
+
 :root[data-theme="dark"] .delpi-ui-data-route-catalog__group-title {
   background: color-mix(in srgb, var(--delpi-ui-surface, #111827) 94%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-data-route-catalog__detail {
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 10%, var(--delpi-ui-surface, #111827));
 }

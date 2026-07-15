@@ -166,9 +166,18 @@ export {
   DataRouteCatalogPanel,
   primaryDataRouteDisplayKind,
   resolveDataRouteDisplayKinds,
+  countRequiredParams,
+  formatParamHintLine,
+  humanizeMetaShape,
+  isParamFieldOptional,
+  resolveRouteAudienceDescription,
+  summarizeRouteParams,
+  truncateText,
+  type DataRouteCatalogDensity,
   type DataRouteCatalogItem,
   type DataRouteCatalogPanelProps,
   type DataRouteDisplayKind,
+  type DataRouteParamFieldSummary,
 } from "./DataRouteCatalogPanel";
 
 export {

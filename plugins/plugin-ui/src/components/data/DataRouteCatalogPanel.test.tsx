@@ -22,6 +22,7 @@ const ITEMS: DataRouteCatalogItem[] = [
     description: "Indicador consolidado de eficiência.",
     metaShape: "scalar",
     displayKinds: ["kpi"],
+    params: [{ key: "branch", label: "Filial", optional: true }],
   },
   {
     id: "search_products",
@@ -32,6 +33,10 @@ const ITEMS: DataRouteCatalogItem[] = [
     description: "Listagem paginada de produtos.",
     metaShape: "paged_list",
     displayKinds: ["table"],
+    params: [
+      { key: "q", label: "Busca", optional: false },
+      { key: "limit", label: "Limite", optional: true },
+    ],
   },
   {
     id: "oee_series",
@@ -66,13 +71,14 @@ describe("resolveDataRouteDisplayKinds", () => {
 });
 
 describe("DataRouteCatalogPanel", () => {
-  it("agrupa, busca e dispara onSelect", () => {
+  it("lista amigável sem path no card; detalhe exige confirmar", () => {
     const onSelect = vi.fn();
 
     render(
       <DataRouteCatalogPanel
         items={ITEMS}
         onSelect={onSelect}
+        density="comfortable"
         categoryLabels={{ production: "Produção", products: "Produtos" }}
         categoryOrder={["production", "products"]}
       />,
@@ -80,24 +86,18 @@ describe("DataRouteCatalogPanel", () => {
 
     expect(screen.getByRole("group", { name: "Categorias" })).toBeTruthy();
     expect(screen.getByText("OEE geral")).toBeTruthy();
-    expect(
-      screen.getByText((_, node) =>
-        Boolean(
-          node?.classList.contains("delpi-ui-data-route-catalog__path") &&
-            node.textContent?.replace(/\s+/g, " ").trim() === "GET /production/oee",
-        ),
-      ),
-    ).toBeTruthy();
-    expect(screen.getByText(/Indicador consolidado/)).toBeTruthy();
+    expect(screen.queryByText("GET /production/oee")).toBeNull();
+    expect(screen.getByText("1 filtro")).toBeTruthy();
 
-    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "busca" } });
-    expect(screen.queryByText("OEE geral")).toBeNull();
-    expect(screen.getByText("Produtos — busca")).toBeTruthy();
+    fireEvent.click(screen.getByText("OEE geral"));
+    const detail = screen.getByRole("complementary", { name: /Detalhe: OEE geral/ });
+    expect(detail).toBeTruthy();
+    expect(detail.textContent).toMatch(/Para que serve/);
+    expect(detail.textContent).toMatch(/Indicador consolidado/);
+    expect(detail.textContent).toMatch(/Filial/);
 
-    fireEvent.click(screen.getByText("Produtos — busca"));
-    expect(onSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "search_products", label: "Produtos — busca" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "get_oee", label: "OEE geral" }));
   });
 
   it("filtra por categoria e forma (KPI)", () => {
@@ -127,5 +127,25 @@ describe("DataRouteCatalogPanel", () => {
     expect(screen.getByText("OEE geral")).toBeTruthy();
     expect(screen.getByText("OEE — série")).toBeTruthy();
     expect(screen.queryByText("Produtos — busca")).toBeNull();
+  });
+
+  it("busca por label e mostra path só em avançado", () => {
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={vi.fn()}
+        categoryLabels={{ production: "Produção", products: "Produtos" }}
+        categoryOrder={["production", "products"]}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "busca" } });
+    expect(screen.queryByText("OEE geral")).toBeNull();
+    expect(screen.getByText("Produtos — busca")).toBeTruthy();
+
+    fireEvent.click(screen.getByText("Produtos — busca"));
+    fireEvent.click(screen.getByText("Avançado (API)"));
+    expect(screen.getByText("GET /products/search")).toBeTruthy();
+    expect(screen.getByText("2 filtros · 1 obrigatório")).toBeTruthy();
   });
 });

@@ -779,9 +779,9 @@
 
 /* Catálogo em popover ancorado (Fase A — substitui modal fullscreen). */
 .dashboard-tv-dashboard .td-data-catalog-popover {
-  width: min(960px, calc(100vw - 24px));
+  width: min(1040px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
-  max-height: min(80dvh, 720px);
+  max-height: min(82dvh, 760px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -861,10 +861,15 @@
 .dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog {
   min-width: 0;
   max-width: 100%;
-  gap: 5px;
+  gap: 6px;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1 1 auto;
+}
+
+.dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__main {
+  min-height: min(52vh, 420px);
 }
 
 .dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__chips {
@@ -882,8 +887,8 @@
 
 .dashboard-tv-dashboard .td-data-catalog-popover .delpi-ui-data-route-catalog__groups {
   max-height: none;
-  overflow: visible;
-  flex: 0 0 auto;
+  overflow: auto;
+  flex: 1 1 auto;
 }
 
 .dashboard-tv-dashboard .td-data-route-list {
