@@ -142,7 +142,7 @@
   }
 }.dashboard-scrap-monitoring .sm-chart-card--compact .sm-chart-card__body,
 .dashboard-scrap-monitoring .sm-chart-card--compact .delpi-ui-chart-card__body{
-  min-height: 180px;
+  min-height: 280px;
 }.dashboard-scrap-monitoring .sm-table__cell-ellipsis{
   display: block;
   overflow: hidden;

@@ -20,8 +20,12 @@ export const PIE_COLORS = [
 ] as const;
 
 export const CHART_RANKING_HEIGHT = 300;
-export const CHART_MOTIVO_HEIGHT = 220;
-export const CHART_SERIES_HEIGHT = 220;
+export const CHART_MOTIVO_HEIGHT = 300;
+export const CHART_SERIES_HEIGHT = 300;
+
+/** Rosca Motivo — raios do Pie. */
+export const CHART_MOTIVO_INNER_RADIUS = 58;
+export const CHART_MOTIVO_OUTER_RADIUS = 98;
 
 /** Eixo Y em cards half-width — prioriza texto (código + descrição). */
 export const CHART_Y_AXIS_WIDTH = 220;

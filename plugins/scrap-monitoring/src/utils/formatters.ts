@@ -82,5 +82,5 @@ export function formatMotivoLegendLabel(
   value: number,
   sharePct: number,
 ): string {
-  return `${formatShortLabel(name, 28)} · ${formatCurrencyBrl(value)} (${formatSharePercent(sharePct)})`;
+  return `${formatShortLabel(name, 32)} · ${formatCurrencyBrl(value)} (${formatSharePercent(sharePct)})`;
 }

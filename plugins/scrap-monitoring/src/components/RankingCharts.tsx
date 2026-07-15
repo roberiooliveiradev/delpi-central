@@ -20,6 +20,8 @@ import {
   CHART_COLORS,
   CHART_GRID_STROKE,
   CHART_MOTIVO_HEIGHT,
+  CHART_MOTIVO_INNER_RADIUS,
+  CHART_MOTIVO_OUTER_RADIUS,
   CHART_RANKING_HEIGHT,
   CHART_SERIES_HEIGHT,
   CHART_Y_AXIS_WIDTH,
@@ -124,10 +126,10 @@ function MotivoPie({ items }: { items: ScrapRankingItem[] }) {
           data={data}
           dataKey="value"
           nameKey="name"
-          cx="34%"
+          cx="36%"
           cy="50%"
-          innerRadius={42}
-          outerRadius={72}
+          innerRadius={CHART_MOTIVO_INNER_RADIUS}
+          outerRadius={CHART_MOTIVO_OUTER_RADIUS}
           paddingAngle={2}
         >
           {data.map((_, index) => (
@@ -139,10 +141,16 @@ function MotivoPie({ items }: { items: ScrapRankingItem[] }) {
           layout="vertical"
           align="right"
           verticalAlign="middle"
-          wrapperStyle={{ fontSize: 11, maxWidth: 240, lineHeight: "1.35" }}
+          wrapperStyle={{
+            fontSize: 14,
+            fontWeight: 600,
+            maxWidth: 280,
+            lineHeight: "1.55",
+            paddingLeft: 8,
+          }}
           formatter={(value) => {
             const stats = legendLookup.get(String(value));
-            if (!stats) return formatShortLabel(String(value), 28);
+            if (!stats) return formatShortLabel(String(value), 32);
             return formatMotivoLegendLabel(String(value), stats.value, stats.sharePct);
           }}
         />
