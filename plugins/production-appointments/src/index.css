@@ -642,13 +642,16 @@
 .dashboard-production-appointments .pa-table-wrap,
 .dashboard-production-appointments .pa-table-wrap--section {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--pa-border);
   border-radius: var(--pa-control-radius);
   background: var(--pa-surface);
 }
 
-.dashboard-production-appointments .pa-table {
-  width: 100%;
+.dashboard-production-appointments .pa-table,
+.dashboard-production-appointments .pa-table--section {
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
   font-size: var(--pa-font-sm);
 }
@@ -667,6 +670,72 @@
   background: color-mix(in srgb, var(--pa-surface) 92%, var(--pa-accent) 8%);
 }
 
+.dashboard-production-appointments .pa-table--sortable th {
+  padding: 0;
+}
+
+.dashboard-production-appointments .pa-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.dashboard-production-appointments .pa-table__header-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.dashboard-production-appointments .pa-table__header-text {
+  white-space: nowrap;
+}
+
+.dashboard-production-appointments .pa-table__header-help {
+  flex-shrink: 0;
+}
+
+.dashboard-production-appointments .pa-table__sort-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-production-appointments .pa-table__sort-button:hover,
+.dashboard-production-appointments .pa-table__sort-button:focus-visible {
+  background: color-mix(in srgb, var(--pa-accent) 6%, transparent);
+  outline: none;
+}
+
+.dashboard-production-appointments .pa-table__sort-button--active {
+  color: var(--pa-accent);
+}
+
+.dashboard-production-appointments .pa-table__sort-indicator {
+  color: var(--pa-text-muted);
+  font-size: 0.85em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.dashboard-production-appointments .pa-table__sort-button--active .pa-table__sort-indicator {
+  color: var(--pa-accent);
+}
+
 .dashboard-production-appointments .pa-table__col--wide {
   min-width: 200px;
   max-width: 360px;
@@ -678,12 +747,23 @@
   font-variant-numeric: tabular-nums;
 }
 
+.dashboard-production-appointments .pa-table__col--numeric .pa-table__sort-button {
+  justify-content: flex-end;
+}
+
+.dashboard-production-appointments .pa-table__empty {
+  text-align: center;
+  color: var(--pa-text-muted);
+  padding: 24px;
+}
+
 .dashboard-production-appointments .pa-table__row--clickable {
   cursor: pointer;
 }
 
-.dashboard-production-appointments .pa-table__row--clickable:hover {
-  background: color-mix(in srgb, var(--pa-accent) 6%, transparent);
+.dashboard-production-appointments .pa-table__row--clickable:hover td,
+.dashboard-production-appointments .pa-table--clickable tbody tr:hover td {
+  background: color-mix(in srgb, var(--pa-accent) 8%, transparent);
 }
 
 .dashboard-production-appointments .pa-table-toolbar {
@@ -692,22 +772,47 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .dashboard-production-appointments .pa-table-page-size {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  font-size: var(--pa-font-sm);
+  color: var(--pa-text-muted);
+}
+
+.dashboard-production-appointments .pa-table-page-size__label {
+  font-weight: 600;
 }
 
 .dashboard-production-appointments .pa-table-page-size__select {
+  min-width: 72px;
   min-height: 36px;
   border: 1px solid var(--pa-border);
-  border-radius: var(--pa-control-radius);
+  border-radius: 10px;
   background: var(--pa-surface);
   color: var(--pa-text);
-  padding: 0 10px;
+  padding: 6px 10px;
+}
+
+.dashboard-production-appointments .pa-table-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: min(280px, 100%);
+}
+
+.dashboard-production-appointments .pa-table-search__input {
+  min-height: 36px;
+  flex: 1;
+  border: 1px solid var(--pa-border);
+  border-radius: 10px;
+  background: var(--pa-surface);
+  color: var(--pa-text);
+  padding: 6px 10px;
+  font: inherit;
 }
 
 .dashboard-production-appointments .pa-export-actions {

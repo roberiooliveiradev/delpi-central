@@ -17,7 +17,9 @@ export const PA_HELP_TOOLTIPS = {
   tables: {
     byWorkCenter:
       "Totais agregados por centro de trabalho no período. O selo “Inspeção final” marca o CT usado como referência de inspeção.",
-    appointments: "Lista paginada dos apontamentos individuais do período.",
-    byOp: "Resumo por ordem de produção: contagem de apontamentos, CTs e quantidade produzida.",
+    appointments:
+      "Lista paginada dos apontamentos individuais. Clique na linha para abrir o detalhe da OP.",
+    byOp:
+      "Resumo por ordem de produção. Clique na linha para abrir o detalhe da OP com apontamentos, KPIs e exportação.",
   },
 } as const;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { PRODUCTION_APPOINTMENTS_BASE_PATH } from "./branches";
 import { buildOpDetailPath, parseAppointmentsPath } from "./routes";
 
 describe("parseAppointmentsPath", () => {
@@ -19,6 +20,15 @@ describe("parseAppointmentsPath", () => {
       view: "op-detail",
       branchRoute: "SC",
       productionOrder: "000123",
+    });
+  });
+
+  it("decodifica OP com caracteres especiais", () => {
+    const path = `${PRODUCTION_APPOINTMENTS_BASE_PATH}/sc/op/${encodeURIComponent("OP 1/2")}`;
+    expect(parseAppointmentsPath(path)).toEqual({
+      view: "op-detail",
+      branchRoute: "SC",
+      productionOrder: "OP 1/2",
     });
   });
 });
