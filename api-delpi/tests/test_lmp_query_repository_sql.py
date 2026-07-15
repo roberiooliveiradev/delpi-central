@@ -763,6 +763,26 @@ def test_dashboard_summary_select_cycle_index_when_homolog_cycles() -> None:
     assert "H.MEASUREMENT_REVISION = C.AD1_REVISA" in sql
 
 
+def test_engenharia_resumo_non_lite_exposes_measurement_revision() -> None:
+    """Dashboard completo (não-lite) precisa da coluna para o JOIN per-revision."""
+    repo = _work_month_repository()
+
+    lite_sql = repo._sql_engenharia_resumo_ultima_revisao_select(
+        eng_minutes_expr="1",
+        where_sample_eng_e="1=1",
+        lite=True,
+    )
+    full_sql = repo._sql_engenharia_resumo_ultima_revisao_select(
+        eng_minutes_expr="1",
+        where_sample_eng_e="1=1",
+        lite=False,
+    )
+
+    assert "MEASUREMENT_REVISION" in lite_sql
+    assert "MAX(M.ULTIMA_REVISA_MEDICAO) AS MEASUREMENT_REVISION" in full_sql
+    assert repo._staged_eng_resumo_join_revision_sql() == "AND H.MEASUREMENT_REVISION = C.AD1_REVISA"
+
+
 def test_get_lmp_dashboard_summary_reuses_repository_row_cache() -> None:
     from unittest.mock import patch
 

@@ -1720,6 +1720,7 @@ class LMPQueryRepository(BaseRepository, LMPQueryRepositoryPort):
         return f"""
                     E.AIJ_FILIAL,
                     E.AIJ_NROPOR,
+                    MAX(M.ULTIMA_REVISA_MEDICAO) AS MEASUREMENT_REVISION,
                     MIN(E.AIJ_DTINIC) AS START_DATE,
                     MAX(
                         CASE
