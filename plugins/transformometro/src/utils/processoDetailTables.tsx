@@ -5,7 +5,6 @@ import type { ProcessoComparativoItem, Revisao } from "../data/api/transformomet
 import { cenarioLabel } from "../content/cenarioLabels";
 import { toDateInputValue } from "./dateInputs";
 import { revisaoDisplayLabel } from "./revisaoLabels";
-import { DS_GHOST_BTN, dsGhostBtn } from "../components/ghostChrome";
 
 const C = TM_HELP_TOOLTIPS.columns;
 
@@ -157,7 +156,7 @@ export function buildRevisaoColumns({
         <TableRowActions>
           <button
             type="button"
-            className={DS_GHOST_BTN}
+            className="ds-ghost-btn"
             onClick={(e) => {
               e.stopPropagation();
               onOpen(r.revisao_id);
@@ -167,7 +166,7 @@ export function buildRevisaoColumns({
           </button>
           <button
             type="button"
-            className={DS_GHOST_BTN}
+            className="ds-ghost-btn"
             onClick={(e) => {
               e.stopPropagation();
               void onDuplicate(r);
@@ -177,7 +176,7 @@ export function buildRevisaoColumns({
           </button>
           <button
             type="button"
-            className={dsGhostBtn('danger')}
+            className="ds-ghost-btn ds-ghost-btn--danger"
             onClick={(e) => {
               e.stopPropagation();
               void onDelete(r);

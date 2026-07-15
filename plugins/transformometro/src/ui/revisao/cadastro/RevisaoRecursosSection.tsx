@@ -26,7 +26,6 @@ import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
 import { useClientPagination } from "../../../hooks/useClientPagination";
 import { CadastroSection } from "./CadastroSection";
 import { RecursoPreviewCard } from "./RecursoPreviewCard";
-import { DS_GHOST_BTN } from "../../../components/ghostChrome";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
 const C = TM_HELP_TOOLTIPS.columns;
@@ -269,7 +268,7 @@ export function RevisaoRecursosSection({
                           </button>
                           <button
                             type="button"
-                            className={DS_GHOST_BTN}
+                            className="ds-ghost-btn"
                             onClick={() => {
                               setEditingVinculoId(null);
                               setEditVinculoForm(emptyVinculoForm());
@@ -303,14 +302,14 @@ export function RevisaoRecursosSection({
                       <td className="ds-table__actions-col">
                         <button
                           type="button"
-                          className={DS_GHOST_BTN}
+                          className="ds-ghost-btn"
                           onClick={() => startEditVinculo(v)}
                         >
                           Editar
                         </button>
                         <button
                           type="button"
-                          className={DS_GHOST_BTN}
+                          className="ds-ghost-btn"
                           onClick={() =>
                             void deleteVinculo(v.vinculo_id, getAccessToken).then(() => onReload())
                           }
@@ -421,7 +420,7 @@ export function RevisaoRecursosSection({
       <div className="ds-cadastro-subsection ds-cadastro-subsection--divider">
         <button
           type="button"
-          className={DS_GHOST_BTN}
+          className="ds-ghost-btn"
           onClick={() => setShowRecursoForm((v) => !v)}
         >
           {showRecursoForm ? "Cancelar novo recurso" : "+ Cadastrar recurso no catálogo"}

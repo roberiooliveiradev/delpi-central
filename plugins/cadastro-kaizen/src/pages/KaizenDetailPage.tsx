@@ -173,7 +173,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
     ? "active"
     : selectedStatus === "implantado"
       ? "active"
-      : selectedStatus === "recebido"
+      : selectedStatus === "em_andamento"
         ? "draft"
         : "readonly";
   const editable = mode !== "readonly";
@@ -255,7 +255,7 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
     try {
       const cloned = {
         ...formValuesToPayload(recordToFormValues(record)),
-        status: "recebido",
+        status: "em_andamento",
       };
       const created = await createKaizenVersion(record.id, cloned);
       await load();

@@ -23,7 +23,6 @@ import {
 } from "@delpi/plugin-ui/index";
 import type { MergedRevisaoDiagram } from "../../types/diagram";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
-import { DS_GHOST_BTN } from "../ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   revisaoId: string;
@@ -196,12 +195,12 @@ export function RevisaoDiagramSection({
               {saving ? "Salvando…" : "Salvar diagrama da revisão"}
             </button>
           ) : null}
-          <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(false)}>
+          <button type="button" className="ds-ghost-btn" onClick={() => void exportPng(false)}>
             <Download size={16} />
             Exportar PNG
           </button>
           {!readOnly ? (
-            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng(true)}>
+            <button type="button" className="ds-ghost-btn" onClick={() => void exportPng(true)}>
               <ImagePlus size={16} />
               PNG como evidência
             </button>

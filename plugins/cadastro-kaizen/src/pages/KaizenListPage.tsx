@@ -21,7 +21,6 @@ import { detailPath, newPath } from "../constants/kaizen";
 import type { KaizenRecord } from "../types/kaizen";
 import { formatCurrency, formatDate } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
-import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -221,7 +220,7 @@ export function KaizenListPage({ onNavigate }: Props) {
           <div className="kz-row-actions">
             <button
               type="button"
-              className={KZ_GHOST_BTN}
+              className="kz-ghost-btn"
               onClick={() => onNavigate(detailPath(row.id))}
             >
               <FolderOpen size={14} aria-hidden="true" />

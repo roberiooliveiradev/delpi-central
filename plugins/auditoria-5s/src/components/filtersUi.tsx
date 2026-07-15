@@ -2,7 +2,6 @@ import {
   FilterInputField as PluginFilterInputField,
   FilterSelectField as PluginFilterSelectField,
   createFilterBarShell,
-  delpiUiClass,
   selectControlBemClasses,
   type FilterInputFieldClassNames,
   type FilterInputFieldProps,
@@ -22,16 +21,11 @@ assertPluginUiExport("FilterSelectField", PluginFilterSelectField);
 assertPluginUiExport("createFilterBarShell", createFilterBarShell);
 assertPluginUiExport("selectControlBemClasses", selectControlBemClasses);
 
-/** Dual-class fields do painel analytics (FilterBarShell). */
 const FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
-  filterBox: delpiUiClass("a5s-analytics-filter-field", "delpi-ui-filter-box"),
+  filterBox: "a5s-analytics-filter-field",
   fieldLabel: "a5s-analytics-filter-field__label",
 };
 
-/**
- * Domínio da listagem (`a5s-filters-card`) — não é shell do kit;
- * classes locais de layout do card de filtros da lista.
- */
 const LIST_FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
   filterBox: "a5s-filters-card__field",
   fieldLabel: "a5s-filters-card__field-label",

@@ -26,7 +26,6 @@ import {
   useProcessoWorkspaceSection,
   useRevisaoWorkspaceSection,
 } from "../processos/ProcessoWorkspaceShell";
-import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 import {
   resolveActiveWorkspaceNodeId,
   resolveWorkspacePanelKey,
@@ -174,7 +173,7 @@ export function ProcessoWorkspacePage({
   }
 
   const processBackAction = (
-    <button type="button" className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`} onClick={onBack}>
+    <button type="button" className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn" onClick={onBack}>
       <ArrowLeft size={16} />
       Lista
     </button>
@@ -184,7 +183,7 @@ export function ProcessoWorkspacePage({
     <>
       <button
         type="button"
-        className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
+        className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
         disabled={!processo}
         onClick={() => void handleDuplicateProcesso()}
       >
@@ -193,7 +192,7 @@ export function ProcessoWorkspacePage({
       </button>
       <button
         type="button"
-        className={`${dsGhostBtn('danger')} tm-processo-workspace-sidebar__action-btn`}
+        className="ds-ghost-btn ds-ghost-btn--danger tm-processo-workspace-sidebar__action-btn"
         disabled={!processo}
         onClick={() => void handleDeleteProcesso()}
       >

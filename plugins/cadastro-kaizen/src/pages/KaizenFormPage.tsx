@@ -17,7 +17,6 @@ import {
 } from "../constants/kaizen";
 import type { KaizenFormValues } from "../types/kaizen";
 import { validateKaizenFormStatusDates } from "../utils/validateKaizenStatusDates";
-import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   mode: "new" | "edit";
@@ -131,7 +130,7 @@ export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props)
           </button>
           <button
             type="button"
-            className={KZ_GHOST_BTN}
+            className="kz-ghost-btn"
             onClick={() => onNavigate(listPath())}
           >
             Cancelar

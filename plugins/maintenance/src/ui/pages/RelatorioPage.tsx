@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, LineChart, RefreshCw, Search, X } from "lucide-react";
-import { NativeTextControl, simpleKpiCardBemClasses } from "@delpi/plugin-ui/index";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import {
   PreventivaDetailPanel,
@@ -11,7 +11,6 @@ import {
   type DataTableColumn,
   DataTableSection,
   FilterBar,
-  KpiCard,
   MultiSelectField,
   StateBox,
   StatusBadge,
@@ -110,40 +109,6 @@ function CodigoDescricaoCell({
       <span className="dm-datatable__codigo-descricao__codigo">{codigo}</span>
       <span className="dm-datatable__codigo-descricao__descricao">{label}</span>
     </span>
-  );
-}
-
-const KPI_CN = simpleKpiCardBemClasses("dm", "kpi-card", { withBody: true, withSubtitle: true });
-
-function FilterKpiButton({
-  active,
-  onClick,
-  icon,
-  title,
-  value,
-}: {
-  active: boolean;
-  onClick: () => void;
-  icon: ReactNode;
-  title: string;
-  value: string | number;
-}) {
-  return (
-    <button
-      type="button"
-      className={`${KPI_CN.article} dm-filter-kpi${active ? " is-active" : ""}`}
-      onClick={onClick}
-    >
-      <div className={KPI_CN.icon} aria-hidden="true">
-        {icon}
-      </div>
-      {KPI_CN.body ? (
-        <div className={KPI_CN.body}>
-          <p className={KPI_CN.title}>{title}</p>
-          <p className={KPI_CN.value}>{value}</p>
-        </div>
-      ) : null}
-    </button>
   );
 }
 
@@ -795,62 +760,106 @@ export function RelatorioPage({
       <section className="dm-kpi-grid dm-kpi-grid--report">
         {listTab === "revisoes" ? (
           <>
-            <FilterKpiButton
-              active={revisaoStatusFiltro.includes("CRÍTICO")}
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${revisaoStatusFiltro.includes("CRÍTICO") ? " is-active" : ""}`}
               onClick={() => toggleRevisaoStatusFiltro("CRÍTICO")}
-              icon={<AlertTriangle size={20} />}
-              title="Revisão vencida"
-              value={revisaoResumo.critico}
-            />
-            <FilterKpiButton
-              active={revisaoStatusFiltro.includes("ATENÇÃO")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--danger" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Revisão vencida</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.critico}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${revisaoStatusFiltro.includes("ATENÇÃO") ? " is-active" : ""}`}
               onClick={() => toggleRevisaoStatusFiltro("ATENÇÃO")}
-              icon={<AlertTriangle size={20} />}
-              title="Próxima do prazo"
-              value={revisaoResumo.atencao}
-            />
-            <FilterKpiButton
-              active={revisaoStatusFiltro.includes("OK")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--warning" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Próxima do prazo</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.atencao}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${revisaoStatusFiltro.includes("OK") ? " is-active" : ""}`}
               onClick={() => toggleRevisaoStatusFiltro("OK")}
-              icon={<AlertTriangle size={20} />}
-              title="No prazo"
-              value={revisaoResumo.ok}
-            />
-            <KpiCard
-              title="Ferramentas programadas"
-              value={String(revisaoResumo.total)}
-              icon={<LineChart size={20} aria-hidden="true" />}
-            />
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--success" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">No prazo</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.ok}</p>
+              </div>
+            </button>
+            <article className="dm-card dm-kpi-card">
+              <div className="dm-kpi-card__icon" aria-hidden="true">
+                <LineChart size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Ferramentas programadas</p>
+                <p className="dm-kpi-card__value">{revisaoResumo.total}</p>
+              </div>
+            </article>
           </>
         ) : (
           <>
-            <FilterKpiButton
-              active={statusFiltro.includes("CRÍTICO")}
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("CRÍTICO") ? " is-active" : ""}`}
               onClick={() => toggleStatusFiltro("CRÍTICO")}
-              icon={<AlertTriangle size={20} />}
-              title="Crítico"
-              value={resumo.critico}
-            />
-            <FilterKpiButton
-              active={statusFiltro.includes("ATENÇÃO")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--danger" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Crítico</p>
+                <p className="dm-kpi-card__value">{resumo.critico}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("ATENÇÃO") ? " is-active" : ""}`}
               onClick={() => toggleStatusFiltro("ATENÇÃO")}
-              icon={<AlertTriangle size={20} />}
-              title="Atenção"
-              value={resumo.atencao}
-            />
-            <FilterKpiButton
-              active={statusFiltro.includes("OK")}
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--warning" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Atenção</p>
+                <p className="dm-kpi-card__value">{resumo.atencao}</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={`dm-card dm-kpi-card dm-kpi-card--action${statusFiltro.includes("OK") ? " is-active" : ""}`}
               onClick={() => toggleStatusFiltro("OK")}
-              icon={<AlertTriangle size={20} />}
-              title="OK"
-              value={resumo.ok}
-            />
-            <KpiCard
-              title="Pares monitorados"
-              value={String(resumo.total)}
-              subtitle={`${ultimasTotal} últimas reposições na filial`}
-              icon={<LineChart size={20} aria-hidden="true" />}
-            />
+            >
+              <div className="dm-kpi-card__icon dm-kpi-card__icon--success" aria-hidden="true">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">OK</p>
+                <p className="dm-kpi-card__value">{resumo.ok}</p>
+              </div>
+            </button>
+            <article className="dm-card dm-kpi-card">
+              <div className="dm-kpi-card__icon" aria-hidden="true">
+                <LineChart size={20} />
+              </div>
+              <div>
+                <p className="dm-kpi-card__label">Pares monitorados</p>
+                <p className="dm-kpi-card__value">{resumo.total}</p>
+                <p className="dm-kpi-card__hint">{ultimasTotal} últimas reposições na filial</p>
+              </div>
+            </article>
           </>
         )}
       </section>

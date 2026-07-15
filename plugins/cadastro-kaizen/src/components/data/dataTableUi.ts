@@ -1,6 +1,7 @@
 import {
   createDashboardDataTableKit,
   dataTableBemClasses,
+  type DataTableClassNames,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -21,8 +22,14 @@ function TablePageSizeSelect(_props: {
   return null;
 }
 
-/** Dual-class completo do kit — sem overrides que removam classes canônicas. */
-const KZ_TABLE_CLASS_NAMES = dataTableBemClasses("kz");
+const KZ_TABLE_CLASS_NAMES: DataTableClassNames = {
+  ...dataTableBemClasses("kz"),
+  wrapSection: "kz-table-wrap",
+  wrapEmbedded: "kz-table-wrap",
+  sortButton: "kz-table__sort",
+  sortButtonActive: "kz-table__sort kz-table__sort--active",
+  sortIndicator: "kz-table__sort-indicator",
+};
 
 const LABELS = {
   emptyMessage: "Nenhum registro encontrado.",

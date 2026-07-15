@@ -73,8 +73,10 @@ export function SummaryCards({
 
   return (
     <div className="fi-kpi-grid" aria-label="Indicadores principais">
-      {/* Domínio: hero composto (não é SimpleKpi do kit). */}
-      <section className="fi-card fi-kpi-hero" aria-label="Pontualidade do mês atual">
+      <section
+        className="fi-card fi-kpi-card fi-kpi-card--primary fi-kpi-hero"
+        aria-label="Pontualidade do mês atual"
+      >
         <div className="fi-kpi-hero__head">
           <span className="fi-kpi-hero__icon" aria-hidden="true">
             <BadgeCheck size={22} />
@@ -116,6 +118,7 @@ export function SummaryCards({
         }
         icon={<TimerOff size={20} aria-hidden="true" />}
         loading={loading}
+        className="fi-kpi-card--alert"
         valueTone="danger"
       />
 
@@ -129,13 +132,13 @@ export function SummaryCards({
         }
         icon={<AlertTriangle size={20} aria-hidden="true" />}
         loading={loading}
+        className="fi-kpi-card--alert"
         valueTone="danger"
       />
 
-      {/* Domínio: card clicável do ranking (não dual-class parcial do kit). */}
       <button
         type="button"
-        className="fi-card fi-kpi-hero fi-kpi-hero--clickable fi-kpi-hero--danger"
+        className="fi-card fi-kpi-card fi-kpi-card--alert fi-kpi-card--top-cliente fi-kpi-card--clickable"
         onClick={onOpenTopClientes}
         disabled={!onOpenTopClientes || loading}
         aria-label="Abrir ranking de clientes inadimplentes do mês"
@@ -144,13 +147,13 @@ export function SummaryCards({
           <span className="fi-kpi-hero__icon fi-kpi-hero__icon--danger" aria-hidden="true">
             <UserRoundX size={20} />
           </span>
-          <p className="fi-kpi-hero__eyebrow">Cliente mais inadimplente</p>
+          <p className="fi-kpi-card__title">Cliente mais inadimplente</p>
         </div>
-        <p className="fi-kpi-hero__value fi-kpi-hero__value--danger">
+        <p className="fi-kpi-card__value fi-kpi-card__value--danger">
           {loading ? "…" : topClienteNome}
         </p>
-        <p className="fi-kpi-hero__meta">{topClienteSubtitle}</p>
-        <p className="fi-kpi-hero__cta">Clique para ver o ranking do mês</p>
+        <p className="fi-kpi-card__subtitle">{topClienteSubtitle}</p>
+        <p className="fi-kpi-card__cta">Clique para ver o ranking do mês</p>
       </button>
     </div>
   );

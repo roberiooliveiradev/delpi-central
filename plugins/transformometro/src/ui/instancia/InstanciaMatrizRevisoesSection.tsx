@@ -29,7 +29,6 @@ import {
   sortMatrizPontosForRanking,
 } from "../../utils/matrizImpactoPoints";
 import { exportImpactEffortMatrixPlotPng } from "../../utils/exportImpactEffortMatrixPng";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = {
   instanciaId: string;
@@ -110,7 +109,7 @@ export function InstanciaMatrizRevisoesSection({
         toolbar={
           <button
             type="button"
-            className={DS_GHOST_BTN}
+            className="ds-ghost-btn"
             disabled={loading || pontos.length === 0}
             onClick={() =>
               exportImpactEffortMatrixPlotPng(plotRef.current, `matriz-melhoria-${instanciaId}`, () =>

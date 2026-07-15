@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import type { KaizenStatus } from "../../types/kaizen";
 
 const FLOW: Array<{ value: KaizenStatus; label: string }> = [
-  { value: "recebido", label: "Recebido" },
+  { value: "em_andamento", label: "Em andamento" },
   { value: "aprovado", label: "Aprovado" },
   { value: "implantado", label: "Implantado" },
 ];

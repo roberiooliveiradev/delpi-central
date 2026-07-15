@@ -4,7 +4,6 @@ import { NativeSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { PARTICIPANT_ROLES } from "../../constants/kaizen";
 import type { KaizenParticipant, ParticipantRole } from "../../types/kaizen";
 import { EmptyHint } from "../ui";
-import { KZ_GHOST_BTN } from "../ui/ghostChrome";
 
 type KaizenParticipantsFieldProps = {
   participants: KaizenParticipant[];
@@ -60,7 +59,7 @@ export function KaizenParticipantsField({ participants, onChange }: KaizenPartic
         </div>
       ))}
 
-      <button type="button" className={`${KZ_GHOST_BTN} kz-participants__add`} onClick={add}>
+      <button type="button" className="kz-ghost-btn kz-participants__add" onClick={add}>
         <Plus size={14} aria-hidden="true" />
         Adicionar participante
       </button>

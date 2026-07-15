@@ -25,20 +25,6 @@
   --a5s-font-md: 14px;
   --a5s-font-hero: clamp(24px, 2vw, 36px);
   --a5s-font-kpi: clamp(26px, 2.2vw, 38px);
-  --delpi-ui-accent: var(--a5s-accent);
-  --delpi-ui-surface: var(--a5s-surface);
-  --delpi-ui-text: var(--a5s-text);
-  --delpi-ui-border: var(--a5s-border);
-  --delpi-ui-muted: var(--a5s-muted);
-  --delpi-ui-radius: var(--a5s-radius);
-  --delpi-ui-control-radius: var(--a5s-control-radius);
-  --delpi-ui-control-height: var(--a5s-control-height);
-  --delpi-ui-section-gap: var(--a5s-section-gap);
-  --delpi-ui-kpi-icon-size: var(--a5s-kpi-icon-size);
-  --delpi-ui-font-kpi: var(--a5s-font-kpi);
-  --delpi-ui-success: var(--a5s-success);
-  --delpi-ui-danger: var(--a5s-danger);
-  --delpi-ui-warning: var(--a5s-warning);
 }.dashboard-auditoria-5s.dashboard-page{
   width: 100%;
   min-height: 100%;
@@ -2045,7 +2031,7 @@ button.a5s-criterion-photo__thumb:focus-visible{
   border: 1px solid #b71c1c;
 }.a5s-btn--danger:hover:not(:disabled){
   background: #b71c1c;
-}/* Domínio listagem — paginação com badge da página (não CompactPagination do kit) */.a5s-list-pagination{
+}/* Paginação custom da listagem (layout horizontal + badge da página) — não é o kit DataTable */.a5s-pagination{
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2054,11 +2040,11 @@ button.a5s-criterion-photo__thumb:focus-visible{
   border-top: 1px solid var(--a5s-border);
   color: var(--a5s-muted);
   font-size: 0.88rem;
-}.a5s-list-pagination__controls{
+}.a5s-pagination__controls{
   display: inline-flex;
   align-items: center;
   gap: 8px;
-}.a5s-list-pagination__page{
+}.a5s-pagination__page{
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2153,6 +2139,9 @@ button.a5s-criterion-photo__thumb:focus-visible{
   }.a5s-table__actions-cell,
   .a5s-table--dashboard .a5s-table__actions-cell{
     justify-content: flex-end;
+  }.a5s-analytics-kpi__icon{
+    width: 36px;
+    height: 36px;
   }
 }@media (max-width: 640px){.a5s-stats-grid,
   .a5s-filters-card{
@@ -2208,10 +2197,36 @@ button.a5s-criterion-photo__thumb:focus-visible{
 }.a5s-analytics__content--refresh{
   opacity: 0.72;
   pointer-events: none;
+}.a5s-analytics-filters{
+  padding: 18px;
+  border-radius: var(--a5s-radius);
+  border: 1px solid var(--a5s-border);
+  background: var(--a5s-surface);
 }.a5s-analytics-filters__grid{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+}.a5s-analytics-filters__grid label,
+.a5s-analytics-filter-field{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--a5s-muted);
+  min-width: 0;
+}.a5s-analytics-filter-field__label{
+  font-size: inherit;
+  color: inherit;
+  font-weight: 500;
+}.a5s-analytics-filters__grid input,
+.a5s-analytics-filters__grid select,
+.a5s-analytics-filter-field input,
+.a5s-analytics-filter-field select{
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--a5s-border);
+  background: var(--a5s-surface);
+  color: var(--a5s-text);
 }.a5s-analytics-filters__actions{
   display: flex;
   gap: 10px;
@@ -2223,6 +2238,63 @@ button.a5s-criterion-photo__thumb:focus-visible{
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
+}.a5s-analytics-kpi{
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: var(--a5s-radius);
+  border: 1px solid var(--a5s-border);
+  background: var(--a5s-surface);
+}.a5s-analytics-kpi--warning{
+  border-color: color-mix(in srgb, var(--a5s-warning) 35%, var(--a5s-border));
+}.a5s-analytics-kpi--danger{
+  border-color: color-mix(in srgb, var(--a5s-danger) 55%, var(--a5s-border));
+  background: color-mix(in srgb, var(--a5s-danger) 10%, var(--a5s-surface));
+}.a5s-analytics-kpi--danger .a5s-analytics-kpi__icon{
+  background: color-mix(in srgb, var(--a5s-danger) 22%, transparent);
+  color: var(--a5s-danger);
+}.a5s-analytics-kpi--danger .a5s-analytics-kpi__value{
+  color: var(--a5s-danger);
+}.a5s-analytics-kpi--danger .a5s-analytics-kpi__hint{
+  color: color-mix(in srgb, var(--a5s-danger) 72%, var(--a5s-muted));
+}.a5s-analytics-kpi--success{
+  border-color: color-mix(in srgb, var(--a5s-success) 55%, var(--a5s-border));
+  background: color-mix(in srgb, var(--a5s-success) 10%, var(--a5s-surface));
+}.a5s-analytics-kpi--success .a5s-analytics-kpi__icon{
+  background: color-mix(in srgb, var(--a5s-success) 22%, transparent);
+  color: var(--a5s-success);
+}.a5s-analytics-kpi--success .a5s-analytics-kpi__value{
+  color: var(--a5s-success);
+}.a5s-analytics-kpi--success .a5s-analytics-kpi__hint{
+  color: color-mix(in srgb, var(--a5s-success) 72%, var(--a5s-muted));
+}.a5s-analytics-kpi__icon{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--a5s-kpi-icon-size);
+  height: var(--a5s-kpi-icon-size);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--a5s-accent) 10%, transparent);
+  color: var(--a5s-accent);
+  flex-shrink: 0;
+}.a5s-analytics-kpi__label{
+  display: block;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--a5s-muted);
+}.a5s-analytics-kpi__value{
+  display: block;
+  margin: 4px 0 0;
+  font-size: var(--a5s-font-kpi);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--a5s-title);
+}.a5s-analytics-kpi__hint{
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--a5s-muted);
 }.a5s-analytics-charts{
   display: flex;
   flex-direction: column;

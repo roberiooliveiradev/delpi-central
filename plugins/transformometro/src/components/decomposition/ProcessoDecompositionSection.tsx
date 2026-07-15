@@ -16,7 +16,6 @@ import { TabPanelTransition } from "../TabPanelTransition";
 import { DecompositionTreeEditor } from "./DecompositionTreeEditor";
 import { DecompositionValidationPanel } from "./DecompositionValidationPanel";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
-import { DS_GHOST_BTN } from "../ghostChrome";
 import {
   humanizeDecompositionApiError,
   scrollToDecompositionNode,
@@ -206,11 +205,11 @@ export function ProcessoDecompositionSection({
 
       {!readOnly ? (
         <div className="tm-decomposition-section__actions">
-          <button type="button" className={DS_GHOST_BTN} onClick={() => void handleSuggestDraft()}>
+          <button type="button" className="ds-ghost-btn" onClick={() => void handleSuggestDraft()}>
             <Sparkles size={14} />
             Sugerir do fluxo
           </button>
-          <button type="button" className={DS_GHOST_BTN} onClick={() => void handleExportCsv()}>
+          <button type="button" className="ds-ghost-btn" onClick={() => void handleExportCsv()}>
             <Download size={14} />
             Exportar CSV
           </button>
@@ -220,7 +219,7 @@ export function ProcessoDecompositionSection({
         </div>
       ) : (
         <div className="tm-decomposition-section__actions">
-          <button type="button" className={DS_GHOST_BTN} onClick={() => void handleExportCsv()}>
+          <button type="button" className="ds-ghost-btn" onClick={() => void handleExportCsv()}>
             <Download size={14} />
             Exportar CSV
           </button>

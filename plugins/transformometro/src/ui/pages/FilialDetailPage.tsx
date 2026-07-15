@@ -28,7 +28,6 @@ import {
 } from "../../data/api/transformometroApi";
 import { buildFilialPath } from "../../utils/routeParser";
 import { FilialFormFields } from "../filiais/FilialFormFields";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
   emptyFilialForm,
   filialFormFromEntity,
@@ -185,7 +184,7 @@ export function FilialDetailPage({
     const errorView = (
       <div className="ds-state ds-state--error" role="alert">
         <p>{error ?? "Unidade não encontrada."}</p>
-        <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+        <button type="button" className="ds-ghost-btn" onClick={onBack}>
           Voltar à lista
         </button>
       </div>
@@ -211,7 +210,7 @@ export function FilialDetailPage({
             )}
           </div>
           {!isCreate ? (
-            <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
+            <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
               <Trash2 size={16} />
               Excluir
             </button>
@@ -275,12 +274,12 @@ export function FilialDetailPage({
         onNavigate={onNavigate}
         actions={
           <>
-            <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+            <button type="button" className="ds-ghost-btn" onClick={onBack}>
               <ArrowLeft size={16} />
               Lista
             </button>
             {!isCreate ? (
-              <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
+              <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
                 <Trash2 size={16} />
                 Excluir
               </button>

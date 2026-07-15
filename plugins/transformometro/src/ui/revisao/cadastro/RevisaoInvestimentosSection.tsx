@@ -20,7 +20,6 @@ import {
 } from "../investimentoForm";
 import { CadastroSection } from "./CadastroSection";
 import { useConfirm } from "../../../components/ui/ConfirmDialogProvider";
-import { DS_GHOST_BTN } from "../../../components/ghostChrome";
 
 const CADASTRO_TABLE_PAGE_SIZE = 10;
 const C = TM_HELP_TOOLTIPS.columns;
@@ -163,7 +162,7 @@ export function RevisaoInvestimentosSection({
                             </button>
                             <button
                               type="button"
-                              className={DS_GHOST_BTN}
+                              className="ds-ghost-btn"
                               onClick={() => {
                                 setEditingInvestimentoId(null);
                                 setEditInvForm(emptyInvestimentoForm(options));
@@ -189,14 +188,14 @@ export function RevisaoInvestimentosSection({
                           <div className="ds-table__actions">
                             <button
                               type="button"
-                              className={DS_GHOST_BTN}
+                              className="ds-ghost-btn"
                               onClick={() => startEditInvestimento(inv)}
                             >
                               Editar
                             </button>
                             <button
                               type="button"
-                              className={DS_GHOST_BTN}
+                              className="ds-ghost-btn"
                               onClick={() => void handleDeleteInvestimento(inv)}
                             >
                               Remover

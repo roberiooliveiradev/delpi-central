@@ -14,5 +14,4 @@ export type { MultiSelectOption } from "./MultiSelectField";
 export { PendingChangeBadge } from "./PendingChangeBadge";
 export { StateBox } from "./StateBox";
 export { StatusBadge } from "./StatusBadge";
-export { KpiCard, type KpiCardProps } from "./KpiCard";
 export type { DataTableColumn } from "./types";

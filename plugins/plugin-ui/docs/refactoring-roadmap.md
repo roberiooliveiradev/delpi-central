@@ -388,11 +388,11 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Plugin | Violações típicas | Onda sugerida |
 |--------|-------------------|---------------|
-| `cadastro-kaizen` | `.kz-section-card*` / dataTableUi → ✅ onda 7.4 (gap only + dual completo) | **7.4** ✅ |
-| `auditoria-5s` | analytics KPI/filters → kit; paginação domínio `a5s-list-pagination` → ✅ **7.4** | **7.4** ✅ |
-| `maintenance` | StateBox dual kit; KPI factory; shortcuts domínio → ✅ **7.4** | **7.4** ✅ |
-| `transformometro` | ghost dual; print/tree no kit/tokens; dataTable dual → ✅ **7.4** | **7.4** ✅ |
-| `financeiro-inadimplencia` | secondary SimpleKpi; hero domínio `fi-kpi-hero` → ✅ **7.4** | **7.4** ✅ |
+| `cadastro-kaizen` | `.kz-section-card*`; `dataTableUi` dual incompleto | **7.4** |
+| `auditoria-5s` | table/filters CSS; KPI/paginação **inline** | **7.4** |
+| `maintenance` | StateBox local + DataTable.css + KPI inline | **7.4** |
+| `transformometro` | ghost, table-section, tree-guides/help print | **7.4** |
+| `financeiro-inadimplencia` | CSS/markup `fi-kpi-*` | **7.4** |
 | `inspecoes-processo` | Pagination + EmptyState **cópia local** | **7.5** |
 | `strategic-indicators` | DataTable **cópia local** | **7.5** |
 
@@ -416,7 +416,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — zerar/mover overrides `.delpi-ui-*` | 0 seletores `.delpi-ui-*` em CSS do MFE (exceto justificativa doc) | ✅ `data-delpi-ui-density="compact"` + `host-density-compact.css` / `format-pane--compact` / `--fill` |
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` | 0 chrome espelho; tokens+layout only | ✅ kit ghost/state/section stack-safe + dual-class PAC; CR sem `.delpi-ui-*` |
 | **7.3** | `minha-delpi-chat` admin UI — **path B** (domínio isolado) | 0 seletores de classe do kit no CSS; AdminKpi/DataTable/AuditPagination como `mdc-admin-*` / `mdc-audit-*` (não dual-class shell); checkbox/switch/toolbar = kit + tokens | ✅ |
-| **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ✅ kit: print help-tooltip, `analytics-kpi.css`, state-box dismiss/success, ghost `--active`, table ghost compact; MFEs zeraram `.delpi-ui-*` |
+| **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ⏳ |
 | **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ⏳ |
 | **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ⏳ |
 | **7.7** | Gate CI opcional (`audit` seletores `.delpi-ui-` / BEM espelho em `plugins/*/src/**/*.css`) | Falha CI se reintroduzir | ⏳ backlog |

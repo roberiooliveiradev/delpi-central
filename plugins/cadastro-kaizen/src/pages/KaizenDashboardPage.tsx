@@ -33,7 +33,6 @@ import {
 } from "../utils/dashboardFilterUrl";
 import { formatCurrency, formatDate, formatInteger } from "../utils/format";
 import { savingsTypeLabel, statusLabel, unitLabel } from "../utils/labels";
-import { KZ_GHOST_BTN } from "../components/ui/ghostChrome";
 
 type Props = {
   onNavigate: (path: string) => void;
@@ -46,7 +45,7 @@ type Bucket = BarListBucket;
 const STATUS_TONE: Record<string, Tone> = {
   implantado: "success",
   aprovado: "accent",
-  recebido: "accent",
+  em_andamento: "accent",
   descontinuado: "muted",
   cancelado: "danger",
 };
@@ -187,7 +186,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
           <>
             <button
               type="button"
-              className={KZ_GHOST_BTN}
+              className="kz-ghost-btn"
               onClick={() => void load()}
               disabled={loading}
             >
@@ -204,7 +203,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
         ariaLabel="Filtros do painel"
         trailing={
           hasFilters ? (
-            <button type="button" className={KZ_GHOST_BTN} onClick={clearFilters}>
+            <button type="button" className="kz-ghost-btn" onClick={clearFilters}>
               Limpar filtros
             </button>
           ) : undefined

@@ -18,7 +18,6 @@ import {
   type DropPosition,
 } from "../../utils/decompositionReorder";
 import { DecompositionRichTree } from "./DecompositionRichTree";
-import { DS_GHOST_BTN } from "../ghostChrome";
 
 type Props = {
   tree: DecompositionTreeV1;
@@ -125,7 +124,7 @@ export function DecompositionTreeEditor({
         ) : null}
         <button
           type="button"
-          className={`${DS_GHOST_BTN} tm-rich-tree__delete-btn`}
+          className="ds-ghost-btn tm-rich-tree__delete-btn"
           aria-label="Excluir nó"
           onClick={() => removeNode(nodeId)}
         >
@@ -139,7 +138,7 @@ export function DecompositionTreeEditor({
     <div className="tm-decomposition-editor">
       {!readOnly ? (
         <div className="tm-decomposition-editor__toolbar">
-          <button type="button" className={DS_GHOST_BTN} onClick={() => addNode("processo_chave", null)}>
+          <button type="button" className="ds-ghost-btn" onClick={() => addNode("processo_chave", null)}>
             <Plus size={14} />
             Processo-chave
           </button>

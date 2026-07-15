@@ -305,22 +305,6 @@
 }.dashboard-financeiro-inadimplencia .fi-kpi-hero__icon--danger{
   background: color-mix(in srgb, var(--fi-danger, #b42318) 14%, transparent);
   color: var(--fi-danger, #b42318);
-}.dashboard-financeiro-inadimplencia .fi-kpi-hero--clickable{
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  width: 100%;
-}.dashboard-financeiro-inadimplencia .fi-kpi-hero--clickable:disabled{
-  opacity: 0.72;
-  cursor: wait;
-}.dashboard-financeiro-inadimplencia .fi-kpi-hero__value--danger{
-  color: var(--fi-danger, #b91c1c);
-  font-size: clamp(1.35rem, 2vw, 1.75rem);
-}.dashboard-financeiro-inadimplencia .fi-kpi-hero__cta{
-  margin: auto 0 0;
-  font-size: var(--fi-font-sm);
-  font-weight: 600;
-  color: var(--fi-accent);
 }.dashboard-financeiro-inadimplencia .fi-field--chart-filter{
   min-width: 280px;
   max-width: 420px;

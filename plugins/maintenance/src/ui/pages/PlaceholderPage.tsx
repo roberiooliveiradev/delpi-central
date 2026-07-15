@@ -1,6 +1,5 @@
 import { Settings, LineChart } from "lucide-react";
 
-import { StateBox } from "../../components/data";
 import { MaintenanceShell } from "../../components/MaintenanceShell";
 import { PageHeader } from "../../components/PageHeader";
 
@@ -31,7 +30,7 @@ export function PlaceholderPage({
         onNavigate={onNavigate}
       />
       <section className="dm-card">
-        <StateBox>Entrega prevista na {phase} do roadmap.</StateBox>
+        <p className="dm-state-box">Entrega prevista na {phase} do roadmap.</p>
       </section>
     </MaintenanceShell>
   );

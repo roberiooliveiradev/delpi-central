@@ -85,25 +85,20 @@ export function simpleKpiKaizenToneClass(prefix: string, tone: string) {
   return `${prefix}-kpi--${tone}`;
 }
 
-/** BEM `{prefix}-analytics-kpi` + dual `.delpi-ui-analytics-kpi*` (auditoria-5s etc.). */
+/** BEM `{prefix}-analytics-kpi` (auditoria-5s e dashboards com KPI compacto + ícone). */
 export function simpleKpiAnalyticsBemClasses(prefix: string): SimpleKpiCardClassNames {
   const kpi = `${prefix}-analytics-kpi`;
-  const ui = "delpi-ui-analytics-kpi";
-  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    article: pair(kpi, ui),
-    icon: pair(`${kpi}__icon`, `${ui}__icon`),
-    title: pair(`${kpi}__label`, `${ui}__label`),
-    value: pair(`${kpi}__value`, `${ui}__value`),
-    subtitle: pair(`${kpi}__hint`, `${ui}__hint`),
+    article: kpi,
+    icon: `${kpi}__icon`,
+    title: `${kpi}__label`,
+    value: `${kpi}__value`,
+    subtitle: `${kpi}__hint`,
   };
 }
 
 export function simpleKpiAnalyticsVariantClass(prefix: string, variant: string) {
-  return delpiUiClass(
-    `${prefix}-analytics-kpi--${variant}`,
-    `delpi-ui-analytics-kpi--${variant}`,
-  );
+  return `${prefix}-analytics-kpi--${variant}`;
 }
 
 export function createAnalyticsKpiCard(prefix = "a5s") {

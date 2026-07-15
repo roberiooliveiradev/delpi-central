@@ -65,7 +65,6 @@ import {
 import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
 import type { ProcessoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
 import { ProcessoWorkspaceSectionPanel } from "../processos/ProcessoWorkspaceSectionPanel";
-import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -289,7 +288,7 @@ export function ProcessoDetailPage({
     const loader = (
       <>
         {!embedded ? (
-          <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+          <button type="button" className="ds-ghost-btn" onClick={onBack}>
             <ArrowLeft size={16} />
             Voltar
           </button>
@@ -309,7 +308,7 @@ export function ProcessoDetailPage({
     const errorView = (
       <>
         {!embedded ? (
-          <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+          <button type="button" className="ds-ghost-btn" onClick={onBack}>
             <ArrowLeft size={16} />
             Voltar
           </button>
@@ -576,13 +575,13 @@ export function ProcessoDetailPage({
           onNavigate={onNavigate}
           actions={
             <>
-              <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
+              <button type="button" className="ds-ghost-btn" onClick={onBack}>
                 <ArrowLeft size={16} />
                 Lista
               </button>
               <button
                 type="button"
-                className={DS_GHOST_BTN}
+                className="ds-ghost-btn"
                 disabled={refreshing}
                 onClick={() => void handleDuplicateProcesso()}
               >
@@ -591,7 +590,7 @@ export function ProcessoDetailPage({
               </button>
               <button
                 type="button"
-                className={dsGhostBtn('danger')}
+                className="ds-ghost-btn ds-ghost-btn--danger"
                 disabled={refreshing}
                 onClick={() => void handleDeleteProcesso()}
               >

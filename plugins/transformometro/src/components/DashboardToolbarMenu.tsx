@@ -1,5 +1,4 @@
 import { ChevronDown, Database, Download, FileDown } from "lucide-react";
-import { DS_GHOST_BTN } from "./ghostChrome";
 
 type Props = {
   exporting: "csv" | "excel" | null;
@@ -22,7 +21,7 @@ export function DashboardToolbarMenu({
 
   return (
     <details className="ds-header-menu">
-      <summary className={DS_GHOST_BTN} aria-label="Exportar dados e manutenção do cache">
+      <summary className="ds-ghost-btn" aria-label="Exportar dados e manutenção do cache">
         <Download size={16} />
         Exportar
         <ChevronDown size={14} className="ds-header-menu__chevron" aria-hidden="true" />

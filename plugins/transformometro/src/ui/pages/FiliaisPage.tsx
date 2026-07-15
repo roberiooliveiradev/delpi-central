@@ -28,7 +28,6 @@ import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { buildFilialPath } from "../../utils/routeParser";
-import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const F = TM_HELP_TOOLTIPS.filiais;
@@ -124,7 +123,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
         <TableRowActions>
           <button
             type="button"
-            className={DS_GHOST_BTN}
+            className="ds-ghost-btn"
             onClick={(event) => {
               event.stopPropagation();
               onNavigate(buildFilialPath(row.filial_id));
@@ -134,7 +133,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
           </button>
           <button
             type="button"
-            className={dsGhostBtn('danger')}
+            className="ds-ghost-btn ds-ghost-btn--danger"
             onClick={(event) => {
               event.stopPropagation();
               void handleDelete(row);
@@ -175,7 +174,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
         Unidades ativas aparecem nos formulários de{" "}
         <button
           type="button"
-          className={DS_GHOST_BTN}
+          className="ds-ghost-btn"
           onClick={() => onNavigate(buildConfiguracoesSectionPath("departamentos"))}
         >
           Departamentos
@@ -183,7 +182,7 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
         e{" "}
         <button
           type="button"
-          className={DS_GHOST_BTN}
+          className="ds-ghost-btn"
           onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
         >
           Processos

@@ -24,7 +24,6 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoArquivo } from "../../types/processoArquivo";
 import { isSpreadsheetAttachedFile } from "../../utils/evidenceFilePreview";
 import { useConfirm } from "../ui/ConfirmDialogProvider";
-import { DS_GHOST_BTN } from "../ghostChrome";
 
 const P = TM_HELP_TOOLTIPS.processos;
 
@@ -211,7 +210,7 @@ function ArquivoCard({
         {previewable || arquivo.tipo === "link" ? (
           <button
             type="button"
-            className={DS_GHOST_BTN}
+            className="ds-ghost-btn"
             onClick={(event) => handlePreview(event)}
             aria-label="Abrir arquivo"
           >
@@ -221,7 +220,7 @@ function ArquivoCard({
         {arquivo.tipo !== "link" ? (
           <button
             type="button"
-            className={DS_GHOST_BTN}
+            className="ds-ghost-btn"
             onClick={() => void downloadArquivo(processoId, arquivo, getAccessToken)}
             aria-label="Baixar arquivo"
           >
@@ -498,7 +497,7 @@ export function ProcessoArquivoPanel({
           ) : (
             <button
               type="button"
-              className={`${DS_GHOST_BTN} tm-evidence-upload__link-toggle`}
+              className="ds-ghost-btn tm-evidence-upload__link-toggle"
               onClick={() => setShowLink(true)}
             >
               <Plus size={14} aria-hidden="true" />

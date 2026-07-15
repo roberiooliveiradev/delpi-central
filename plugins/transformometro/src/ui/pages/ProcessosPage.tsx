@@ -38,7 +38,6 @@ import {
 } from "../processos/processoForm";
 import { formatDateTime } from "../../utils/format";
 import { renderTableStatus } from "../../utils/tablePresentation";
-import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   pathname?: string;
@@ -216,7 +215,7 @@ export function ProcessosPage({
               <button type="submit" className="ds-primary-btn">
                 Criar processo
               </button>
-              <button type="button" className={DS_GHOST_BTN} onClick={cancelForm}>
+              <button type="button" className="ds-ghost-btn" onClick={cancelForm}>
                 Cancelar
               </button>
             </div>

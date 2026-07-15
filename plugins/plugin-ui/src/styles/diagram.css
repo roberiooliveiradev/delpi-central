@@ -42,8 +42,7 @@
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-section__actions .ds-primary-btn, .dashboard-transformometro .tm-diagram-section__actions .ds-primary-btn,
-.delpi-ui-flowchart-shell .tm-diagram-section__actions .delpi-ui-ghost-btn,
-.dashboard-transformometro .tm-diagram-section__actions .delpi-ui-ghost-btn{
+.delpi-ui-flowchart-shell .tm-diagram-section__actions .ds-ghost-btn, .dashboard-transformometro .tm-diagram-section__actions .ds-ghost-btn{
   min-height: 34px;
   padding: 6px 10px;
   font-size: var(--ds-font-xs);

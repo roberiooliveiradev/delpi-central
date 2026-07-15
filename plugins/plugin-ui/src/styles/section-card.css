@@ -9,22 +9,15 @@
 
 .delpi-ui-section-card__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
-.delpi-ui-section-card__header .delpi-ui-section-title,
-.delpi-ui-section-card__title {
+.delpi-ui-section-card__header .delpi-ui-section-title {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--delpi-ui-text, var(--text, #111111));
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .delpi-ui-section-card__actions {
@@ -36,7 +29,7 @@
 }
 
 .delpi-ui-section-card__subtitle {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   font-size: 13px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
 }
