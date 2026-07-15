@@ -105,6 +105,27 @@ export function validatePeriodRange(dateStart: string, dateEnd: string): string 
   return null;
 }
 
+export type QuickRangePreset = "today" | "thisWeek" | "30d" | "6m" | "thisMonth";
+
+export function resolveQuickRangePreset(
+  preset: QuickRangePreset,
+  referenceDate = new Date(),
+): { dateStart: string; dateEnd: string } {
+  switch (preset) {
+    case "today":
+      return getTodayRange(referenceDate);
+    case "thisWeek":
+      return getThisWeekRange(referenceDate);
+    case "6m":
+      return getDefaultLast6MonthsRange(referenceDate);
+    case "30d":
+      return getDefaultLast30DaysRange(referenceDate);
+    case "thisMonth":
+    default:
+      return getThisMonthRange(referenceDate);
+  }
+}
+
 export function createDefaultFilterFormState(referenceDate = new Date()) {
   const range = getThisMonthRange(referenceDate);
   return {
