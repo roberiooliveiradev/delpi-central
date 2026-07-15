@@ -37,12 +37,16 @@ class InadimplenciaRepository(BaseRepository, InadimplenciaRepositoryPort):
         end_date_exclusive: str,
         customer_code: str | None = None,
         store_code: str | None = None,
+        customer_pairs: tuple[tuple[str, str], ...] | None = None,
+        novos_negocios: bool = False,
     ) -> list[dict]:
         query, params = build_mensal_query(
             start_date=start_date,
             end_date_exclusive=end_date_exclusive,
             customer_code=customer_code,
             store_code=store_code,
+            customer_pairs=customer_pairs,
+            novos_negocios=novos_negocios,
         )
         with self:
             return self.execute_query(query, params)

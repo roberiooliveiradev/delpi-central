@@ -24,7 +24,9 @@ from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.routes.financeiro.inadimplencia_route_helpers import (
     CUSTOMER_CODE_QUERY,
+    CUSTOMERS_QUERY,
     DELAY_RANGE_QUERY,
+    NOVOS_NEGOCIOS_QUERY,
     ONLY_WITH_DELAYS_QUERY,
     PAGE_QUERY,
     PAGE_SIZE_QUERY,
@@ -92,6 +94,8 @@ def get_financeiro_inadimplencia_mensal_route(
     end_date: Optional[str] = PERIOD_END_QUERY,
     customer_code: Optional[str] = CUSTOMER_CODE_QUERY,
     store_code: Optional[str] = STORE_CODE_QUERY,
+    customers: Optional[str] = CUSTOMERS_QUERY,
+    novos_negocios: bool = NOVOS_NEGOCIOS_QUERY,
 ):
     try:
         request = build_inadimplencia_mensal_request(
@@ -99,6 +103,8 @@ def get_financeiro_inadimplencia_mensal_route(
             end_date=end_date,
             customer_code=customer_code,
             store_code=store_code,
+            customers=customers,
+            novos_negocios=novos_negocios,
         )
     except ValueError as exc:
         log_error(f"Erro de validação ao carregar série mensal de inadimplência: {exc}")

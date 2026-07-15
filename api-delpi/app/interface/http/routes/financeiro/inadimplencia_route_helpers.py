@@ -46,12 +46,16 @@ def build_inadimplencia_mensal_request(
     end_date: Optional[str] = None,
     customer_code: Optional[str] = None,
     store_code: Optional[str] = None,
+    customers: Optional[str] = None,
+    novos_negocios: bool = False,
 ) -> InadimplenciaMensalQueryRequest:
     return InadimplenciaMensalQueryRequest.from_query(
         start_date=start_date,
         end_date=end_date,
         customer_code=customer_code,
         store_code=store_code,
+        customers=customers,
+        novos_negocios=novos_negocios,
     )
 
 
@@ -168,6 +172,14 @@ ONLY_WITH_DELAYS_QUERY = Query(
 )
 CUSTOMER_CODE_QUERY = Query(None, description="Código do cliente (CLIENTE).")
 STORE_CODE_QUERY = Query(None, description="Loja do cliente (LOJA).")
+CUSTOMERS_QUERY = Query(
+    None,
+    description="Lista de clientes CODIGO/LOJA separados por vírgula (filtro multiplo da série mensal).",
+)
+NOVOS_NEGOCIOS_QUERY = Query(
+    False,
+    description="Se true, exclui o cliente-chave WEG (000001) e considera apenas Novos Negócios.",
+)
 STATUS_QUERY = Query(
     "all",
     pattern="^(all|on_time|late)$",

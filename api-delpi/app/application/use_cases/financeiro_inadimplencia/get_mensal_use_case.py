@@ -33,6 +33,8 @@ class GetInadimplenciaMensalUseCase:
             end_date_exclusive=end_exclusive.isoformat(),
             customer_code=request.customer_code,
             store_code=request.store_code,
+            customer_pairs=request.customer_pairs,
+            novos_negocios=request.novos_negocios,
         )
 
         items: list[InadimplenciaMensalItem] = []

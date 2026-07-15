@@ -82,4 +82,24 @@ describe("query builders", () => {
     expect(params.get("customer_code")).toBe("000001");
     expect(params.get("store_code")).toBe("09");
   });
+
+  it("serializa série mensal com lista de clientes", () => {
+    const params = buildMensalQuery({
+      startDate: "2025-08-01",
+      endDate: "2026-08-01",
+      customers: ["000001/09", "000179/01"],
+      customerCode: "ignored",
+    });
+    expect(params.get("customers")).toBe("000001/09,000179/01");
+    expect(params.get("customer_code")).toBeNull();
+  });
+
+  it("serializa série mensal com flag Novos Negócios", () => {
+    const params = buildMensalQuery({
+      startDate: "2025-08-01",
+      endDate: "2026-08-01",
+      novosNegocios: true,
+    });
+    expect(params.get("novos_negocios")).toBe("true");
+  });
 });

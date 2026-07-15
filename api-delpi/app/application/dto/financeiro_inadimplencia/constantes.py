@@ -62,3 +62,9 @@ VALID_SORT_DIR = frozenset({"asc", "desc"})
 
 PERIODO_PADRAO_ROTULO = "Últimos 12 meses completos"
 PERIODO_PERSONALIZADO_ROTULO = "Período personalizado"
+
+# Clientes fora do escopo deste plugin (ex.: intercompany Delpi).
+EXCLUDED_CUSTOMER_CODES: tuple[str, ...] = ("000207",)
+
+# Cliente-chave (WEG). Demais clientes = Novos Negócios.
+WEG_CUSTOMER_CODE = "000001"

@@ -8,6 +8,7 @@ import { DelayRangesChart } from "../features/dashboard/DelayRangesChart";
 import { MonthlyEvolutionChart } from "../features/dashboard/MonthlyEvolutionChart";
 import { PeriodFilters } from "../features/dashboard/PeriodFilters";
 import { SummaryCards } from "../features/dashboard/SummaryCards";
+import { TopLateCustomersChart } from "../features/dashboard/TopLateCustomersChart";
 import { TopLateCustomersModal } from "../features/dashboard/TopLateCustomersModal";
 import { CustomerTitlesModal } from "../features/titles/CustomerTitlesModal";
 import {
@@ -17,7 +18,6 @@ import {
 } from "../hooks/useInadimplenciaClientes";
 import { useInadimplenciaDashboard } from "../hooks/useInadimplenciaDashboard";
 import type { PeriodFormState, SelectedCustomer } from "../types/inadimplencia";
-import { formatUpdatedAt } from "../utils/formatters";
 import {
   createDefaultPeriodFormState,
   formatPeriodLabel,
@@ -77,20 +77,10 @@ export function InadimplenciaPage() {
       <PageHeader
         title="Indicador de Inadimplência"
         subtitle="Acompanhe a pontualidade dos recebimentos e identifique clientes e títulos com maior impacto financeiro."
+        periodLabel={periodLabel}
+        updatedAt={dashboard.updatedAt}
         onRefresh={dashboard.reload}
         refreshing={dashboard.isLoading}
-        actions={
-          <div className="fi-header-meta">
-            <span className="fi-period-badge" title="Período aplicado">
-              {periodLabel}
-            </span>
-            {dashboard.updatedAt ? (
-              <span className="fi-updated-at">
-                Atualizado em {formatUpdatedAt(dashboard.updatedAt)}
-              </span>
-            ) : null}
-          </div>
-        }
       />
 
       <PeriodFilters
@@ -125,9 +115,14 @@ export function InadimplenciaPage() {
             loading={dashboard.isLoading}
           />
 
-          <DelayRangesChart faixas={dashboard.data.faixas} loading={dashboard.isLoading} />
+          <div className="fi-charts-grid">
+            <DelayRangesChart faixas={dashboard.data.faixas} loading={dashboard.isLoading} />
+            <TopLateCustomersChart onOpenRanking={() => setTopClientesOpen(true)} />
+          </div>
 
           <ClientesTable
+            period={periodFilter}
+            periodLabel={periodLabel}
             data={clientes.data}
             loading={clientes.isLoading}
             error={clientes.error}

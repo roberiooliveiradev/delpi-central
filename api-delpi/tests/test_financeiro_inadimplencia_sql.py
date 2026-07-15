@@ -27,8 +27,9 @@ def test_build_period_where_uses_exclusive_end() -> None:
         start_date="2025-07-01",
         end_date_exclusive="2026-07-01",
     )
-    assert where_clause == "MES_REFERENCIA >= ? AND MES_REFERENCIA < ?"
-    assert params == ("2025-07-01", "2026-07-01")
+    assert "MES_REFERENCIA >= ? AND MES_REFERENCIA < ?" in where_clause
+    assert "LTRIM(RTRIM(CLIENTE)) NOT IN (?)" in where_clause
+    assert params == ("2025-07-01", "2026-07-01", "000207")
 
 
 def test_build_resumo_query_aggregates_without_select_star() -> None:
@@ -40,7 +41,8 @@ def test_build_resumo_query_aggregates_without_select_star() -> None:
     assert "SUM(PAGO_COM_ATRASO)" in query
     assert "VW_FINANCEIRO_INADIMPLENCIA" in query
     assert "SELECT *" not in query
-    assert params == ("2025-07-01", "2026-07-01")
+    assert "LTRIM(RTRIM(CLIENTE)) NOT IN (?)" in query
+    assert params == ("2025-07-01", "2026-07-01", "000207")
 
 
 def test_build_mensal_query_groups_by_mes_referencia() -> None:
@@ -50,7 +52,7 @@ def test_build_mensal_query_groups_by_mes_referencia() -> None:
     )
     assert "GROUP BY MES_REFERENCIA" in query
     assert "ORDER BY MES_REFERENCIA ASC" in query
-    assert params == ("2025-07-01", "2026-07-01")
+    assert params == ("2025-07-01", "2026-07-01", "000207")
 
 
 def test_build_mensal_query_filters_customer_and_store() -> None:
@@ -62,7 +64,36 @@ def test_build_mensal_query_filters_customer_and_store() -> None:
     )
     assert "LTRIM(RTRIM(CLIENTE)) = ?" in query
     assert "LTRIM(RTRIM(LOJA)) = ?" in query
-    assert params == ("2025-07-01", "2026-07-01", "000001", "09")
+    assert params == ("2025-07-01", "2026-07-01", "000207", "000001", "09")
+
+
+def test_build_mensal_query_filters_customer_pairs() -> None:
+    query, params = build_mensal_query(
+        start_date="2025-07-01",
+        end_date_exclusive="2026-07-01",
+        customer_pairs=(("000001", "09"), ("000179", "01")),
+    )
+    assert query.count("LTRIM(RTRIM(CLIENTE)) = ? AND LTRIM(RTRIM(LOJA)) = ?") == 2
+    assert " OR " in query
+    assert params == (
+        "2025-07-01",
+        "2026-07-01",
+        "000207",
+        "000001",
+        "09",
+        "000179",
+        "01",
+    )
+
+
+def test_build_mensal_query_novos_negocios_excludes_weg() -> None:
+    query, params = build_mensal_query(
+        start_date="2025-07-01",
+        end_date_exclusive="2026-07-01",
+        novos_negocios=True,
+    )
+    assert "LTRIM(RTRIM(CLIENTE)) <> ?" in query
+    assert params == ("2025-07-01", "2026-07-01", "000207", "000001")
 
 
 def test_build_faixas_query() -> None:
@@ -71,7 +102,7 @@ def test_build_faixas_query() -> None:
         end_date_exclusive="2026-07-01",
     )
     assert "GROUP BY LTRIM(RTRIM(FAIXA_ATRASO))" in query
-    assert params == ("2025-07-01", "2026-07-01")
+    assert params == ("2025-07-01", "2026-07-01", "000207")
 
 
 def test_build_clientes_queries_apply_search_and_pagination() -> None:
@@ -82,8 +113,8 @@ def test_build_clientes_queries_apply_search_and_pagination() -> None:
         only_with_delays=True,
     )
     assert "HAVING COALESCE(SUM(PAGO_COM_ATRASO), 0) > 0" in count_query
-    assert count_params[0:2] == ("2025-07-01", "2026-07-01")
-    assert count_params[2:] == tuple(["%WEG%"] * len(CLIENTES_SEARCH_FIELDS))
+    assert count_params[0:3] == ("2025-07-01", "2026-07-01", "000207")
+    assert count_params[3:] == tuple(["%WEG%"] * len(CLIENTES_SEARCH_FIELDS))
 
     data_query, data_params = build_clientes_data_query(
         start_date="2025-07-01",
@@ -114,14 +145,15 @@ def test_build_titulos_where_applies_customer_status_faixa_and_search() -> None:
     assert "LTRIM(RTRIM(LOJA)) = ?" in where_clause
     assert "PAGO_COM_ATRASO = 1" in where_clause
     assert "LTRIM(RTRIM(FAIXA_ATRASO)) = ?" in where_clause
-    assert params[:5] == (
+    assert params[:6] == (
         "2025-07-01",
         "2026-07-01",
+        "000207",
         "000001",
         "09",
         "ATRASO_ACIMA_30_DIAS",
     )
-    assert params[5:] == tuple(["%014413%"] * len(TITULOS_SEARCH_FIELDS))
+    assert params[6:] == tuple(["%014413%"] * len(TITULOS_SEARCH_FIELDS))
 
 
 def test_build_titulos_data_query_uses_offset_and_whitelist_order() -> None:
@@ -210,4 +242,4 @@ def test_titulos_count_query() -> None:
     )
     assert "SELECT COUNT(*) AS total_items" in query
     assert "PAGO_EM_DIA = 1" in query
-    assert params == ("2025-07-01", "2026-07-01")
+    assert params == ("2025-07-01", "2026-07-01", "000207")

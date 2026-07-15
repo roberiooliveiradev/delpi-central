@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from app.application.dto.financeiro_inadimplencia.constantes import MAX_PAGE_SIZE
+from app.application.dto.financeiro_inadimplencia.constantes import (
+    EXCLUDED_CUSTOMER_CODES,
+    MAX_PAGE_SIZE,
+    WEG_CUSTOMER_CODE,
+)
 
 INADIMPLENCIA_VIEW = "dbo.VW_FINANCEIRO_INADIMPLENCIA"
 
@@ -61,10 +65,31 @@ def build_period_where(
     start_date: str,
     end_date_exclusive: str,
 ) -> tuple[str, tuple]:
-    return (
-        "MES_REFERENCIA >= ? AND MES_REFERENCIA < ?",
-        (start_date, end_date_exclusive),
+    clauses = ["MES_REFERENCIA >= ?", "MES_REFERENCIA < ?"]
+    params: list = [start_date, end_date_exclusive]
+
+    excluded = tuple(
+        code.strip() for code in EXCLUDED_CUSTOMER_CODES if str(code).strip()
     )
+    if excluded:
+        placeholders = ", ".join("?" for _ in excluded)
+        clauses.append(f"LTRIM(RTRIM(CLIENTE)) NOT IN ({placeholders})")
+        params.extend(excluded)
+
+    return " AND ".join(clauses), tuple(params)
+
+
+def append_novos_negocios_filter(
+    where_clause: str,
+    params: list,
+    *,
+    novos_negocios: bool,
+) -> str:
+    """Novos Negócios = todos os clientes exceto o cliente-chave WEG (000001)."""
+    if not novos_negocios:
+        return where_clause
+    params.append(WEG_CUSTOMER_CODE)
+    return f"{where_clause} AND LTRIM(RTRIM(CLIENTE)) <> ?"
 
 
 def _build_search_clause(
@@ -128,6 +153,8 @@ def build_mensal_query(
     end_date_exclusive: str,
     customer_code: str | None = None,
     store_code: str | None = None,
+    customer_pairs: tuple[tuple[str, str], ...] | None = None,
+    novos_negocios: bool = False,
 ) -> tuple[str, tuple]:
     where_clause, params_period = build_period_where(
         start_date=start_date,
@@ -135,13 +162,29 @@ def build_mensal_query(
     )
     params: list = list(params_period)
 
-    if customer_code:
-        where_clause = f"{where_clause} AND LTRIM(RTRIM(CLIENTE)) = ?"
-        params.append(customer_code)
+    pairs = tuple(customer_pairs or ())
+    if pairs:
+        pair_clauses: list[str] = []
+        for code, store in pairs:
+            pair_clauses.append(
+                "(LTRIM(RTRIM(CLIENTE)) = ? AND LTRIM(RTRIM(LOJA)) = ?)"
+            )
+            params.extend([code, store])
+        where_clause = f"{where_clause} AND ({' OR '.join(pair_clauses)})"
+    else:
+        if customer_code:
+            where_clause = f"{where_clause} AND LTRIM(RTRIM(CLIENTE)) = ?"
+            params.append(customer_code)
 
-    if store_code:
-        where_clause = f"{where_clause} AND LTRIM(RTRIM(LOJA)) = ?"
-        params.append(store_code)
+        if store_code:
+            where_clause = f"{where_clause} AND LTRIM(RTRIM(LOJA)) = ?"
+            params.append(store_code)
+
+    where_clause = append_novos_negocios_filter(
+        where_clause,
+        params,
+        novos_negocios=novos_negocios,
+    )
 
     query = f"""
 SELECT

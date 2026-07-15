@@ -50,12 +50,12 @@ export function DelayRangesChart({ faixas, loading = false }: DelayRangesChartPr
       ) : null}
       {!loading && items.length > 0 ? (
         <>
-          <div className="fi-chart" aria-hidden="true">
-            <ResponsiveContainer width="100%" height={320}>
+          <div className="fi-chart fi-chart--compact" aria-hidden="true">
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart
                 data={chartData}
                 layout="vertical"
-                margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
+                margin={{ top: 4, right: 16, left: 4, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--fi-chart-grid)" />
                 <XAxis type="number" tick={{ fontSize: 11, fill: "var(--fi-chart-axis)" }} />
@@ -83,7 +83,7 @@ export function DelayRangesChart({ faixas, loading = false }: DelayRangesChartPr
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <ul className="fi-faixas-list">
+          <ul className="fi-faixas-list fi-faixas-list--compact">
             {items.map((item) => (
               <li key={item.codigo} className={item.codigo === "ATRASO_ACIMA_30_DIAS" ? "fi-faixas-list__item--danger" : undefined}>
                 <strong>{item.rotulo}</strong>
