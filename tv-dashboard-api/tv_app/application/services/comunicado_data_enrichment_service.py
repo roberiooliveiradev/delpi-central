@@ -278,12 +278,25 @@ def _extract_series(
     return extract_series_points(data, series_field, branch=branch)
 
 def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
+    """Extrai linhas para tabela: `items`/`tableField`, fallbacks e lista bare (ex.: bulk appointments)."""
+    if isinstance(data, list):
+        return data
     if not isinstance(data, dict):
         return []
     key = table_field or "items"
     raw = data.get(key)
     if isinstance(raw, list):
         return raw
+    # Envelope api-delpi às vezes chega com data aninhado (lista ou {items}).
+    nested = data.get("data")
+    if isinstance(nested, list):
+        return nested
+    if isinstance(nested, dict):
+        nested_raw = nested.get(key) if key else None
+        if isinstance(nested_raw, list):
+            return nested_raw
+        if isinstance(nested.get("items"), list):
+            return nested["items"]
     raw = data.get("top_products")
     if isinstance(raw, list):
         return raw

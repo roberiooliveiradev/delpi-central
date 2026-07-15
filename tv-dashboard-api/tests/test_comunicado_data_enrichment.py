@@ -287,6 +287,61 @@ def test_enrich_data_metric_auto_resolves_table_for_paged_list():
     assert any(column["key"] == "code" for column in columns)
 
 
+def test_enrich_table_accepts_bare_list_payload_like_eficiencia_appointments():
+    """api-delpi bulk appointments devolve data=[...] (não {items:[...]}); preview TV precisa mapear."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "list_eficiencia_fabril_appointments",
+            "shape": "paged_list",
+        },
+        "data": [
+            {
+                "appointment_id": "A1",
+                "op": "OP001",
+                "produto": "90010001",
+                "centro_trabalho": "CT01",
+            },
+            {
+                "appointment_id": "A2",
+                "op": "OP002",
+                "produto": "90010002",
+                "centro_trabalho": "CT02",
+            },
+        ],
+        "route": {
+            "label": "Eficiência fabril — apontamentos (carga bulk)",
+            "metaShape": "paged_list",
+            "tvConstraints": {"maxRows": 5},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "tbl-bulk",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "list_eficiencia_fabril_appointments",
+                    "displayMode": "table",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) == 2
+    assert rows[0]["appointment_id"] == "A1"
+    assert rows[1]["op"] == "OP002"
+    columns = enriched[0]["resolved"]["table"]["columns"]
+    assert any(column["key"] == "appointment_id" for column in columns)
+
+
 def test_enrich_scalar_route_as_line_chart():
     gateway = MagicMock()
     gateway.fetch_by_operation_id.return_value = {
