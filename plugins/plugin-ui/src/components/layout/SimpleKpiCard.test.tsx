@@ -80,9 +80,10 @@ describe("SimpleKpiCard", () => {
     expect(document.querySelector(".ie-kpi-card--success")).toBeTruthy();
   });
 
-  it("createAnalyticsKpiCard usa BEM analytics-kpi e variante", () => {
+  it("createAnalyticsKpiCard usa BEM analytics-kpi dual-class e variante", () => {
     const AnalyticsKpiCard = createAnalyticsKpiCard("a5s");
-    expect(simpleKpiAnalyticsBemClasses("a5s").title).toBe("a5s-analytics-kpi__label");
+    expect(simpleKpiAnalyticsBemClasses("a5s").title).toContain("a5s-analytics-kpi__label");
+    expect(simpleKpiAnalyticsBemClasses("a5s").title).toContain("delpi-ui-analytics-kpi__label");
 
     render(
       <AnalyticsKpiCard
@@ -95,7 +96,9 @@ describe("SimpleKpiCard", () => {
     );
 
     expect(document.querySelector(".a5s-analytics-kpi--warning")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-analytics-kpi--warning")).toBeTruthy();
     expect(document.querySelector(".a5s-analytics-kpi__label")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-analytics-kpi__label")).toBeTruthy();
     expect(document.querySelector(".a5s-analytics-kpi__hint")).toBeTruthy();
     expect(screen.getByText("NC pendentes")).toBeTruthy();
   });

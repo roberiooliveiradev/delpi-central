@@ -22,6 +22,7 @@ import {
 } from "@delpi/plugin-ui/index";
 import { DiagramValidationPanel } from "./DiagramValidationPanel";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
+import { DS_GHOST_BTN } from "../ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
   processoId: string;
@@ -181,19 +182,19 @@ export function ProcessoDiagramSection({
             <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
               {saving ? "Salvando…" : "Salvar diagrama"}
             </button>
-            <button type="button" className="ds-ghost-btn" disabled={validating} onClick={() => void runValidation()}>
+            <button type="button" className={DS_GHOST_BTN} disabled={validating} onClick={() => void runValidation()}>
               <ShieldCheck size={16} />
               Validar / simular
             </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => void exportPng()}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng()}>
               <Download size={16} />
               Exportar PNG
             </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => void exportBpmnXml()}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportBpmnXml()}>
               <FileCode2 size={16} />
               Exportar BPMN XML
             </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => importInputRef.current?.click()}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => importInputRef.current?.click()}>
               <Upload size={16} />
               Importar BPMN XML
             </button>
@@ -211,11 +212,11 @@ export function ProcessoDiagramSection({
           </div>
         ) : (
           <div className="tm-diagram-section__actions">
-            <button type="button" className="ds-ghost-btn" onClick={() => void exportPng()}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportPng()}>
               <Download size={16} />
               Exportar PNG
             </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => void exportBpmnXml()}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void exportBpmnXml()}>
               <FileCode2 size={16} />
               Exportar BPMN XML
             </button>

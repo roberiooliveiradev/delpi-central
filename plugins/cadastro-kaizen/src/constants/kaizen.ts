@@ -58,7 +58,7 @@ export function visibleSavingsParamFields(type: SavingsType | ""): SavingsParamF
 }
 
 export const KAIZEN_STATUSES = [
-  { value: "em_andamento", label: "Em andamento" },
+  { value: "recebido", label: "Recebido" },
   { value: "aprovado", label: "Aprovado" },
   { value: "implantado", label: "Implantado" },
   { value: "descontinuado", label: "Descontinuado" },
@@ -96,7 +96,7 @@ export function emptyFormValues(): KaizenFormValues {
     unit_material_cost: "",
     fixed_daily_savings: "",
     realized_daily_savings: "",
-    status: "em_andamento",
+    status: "recebido",
     date_idea_received: "",
     date_committee_approved: "",
     date_implemented: "",

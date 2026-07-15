@@ -1,4 +1,5 @@
 import { Download, Upload } from "lucide-react";
+import { KZ_GHOST_BTN } from "./ui/ghostChrome";
 
 type ListHeaderActionsProps = {
   onNew: () => void;
@@ -24,7 +25,7 @@ export function KaizenListHeaderActions({
       {onExport ? (
         <button
           type="button"
-          className="kz-ghost-btn"
+          className={KZ_GHOST_BTN}
           onClick={onExport}
           disabled={exporting}
         >
@@ -35,7 +36,7 @@ export function KaizenListHeaderActions({
       {onImport ? (
         <button
           type="button"
-          className="kz-ghost-btn"
+          className={KZ_GHOST_BTN}
           onClick={onImport}
           disabled={importing}
         >
@@ -48,7 +49,7 @@ export function KaizenListHeaderActions({
       </button>
       <button
         type="button"
-        className="kz-ghost-btn"
+        className={KZ_GHOST_BTN}
         onClick={onRefresh}
         disabled={loading}
       >

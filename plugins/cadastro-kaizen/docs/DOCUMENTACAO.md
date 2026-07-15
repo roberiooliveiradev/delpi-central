@@ -59,7 +59,7 @@ Query params:
 | Parâmetro | Tipo | Descrição |
 |-----------|------|-----------|
 | `branch` | `01` \| `02` | Filial |
-| `status` | enum | `em_andamento`, `aprovado`, `implantado`, `descontinuado`, `cancelado` |
+| `status` | enum | `recebido`, `aprovado`, `implantado`, `descontinuado`, `cancelado` |
 | `savings_type` | enum | `tempo`, `material`, … |
 | `title` | string | Busca parcial (ILIKE) |
 | `date_start`, `date_end` | ISO date | Filtro em `date_implemented` |

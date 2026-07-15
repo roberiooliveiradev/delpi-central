@@ -6,7 +6,12 @@ import {
   formatProtheusDate,
   formatQuantity,
 } from "./formatters";
-import { getThisMonthRange, validatePeriodRange } from "./dateRange";
+import {
+  getThisMonthRange,
+  getThisWeekRange,
+  getTodayRange,
+  validatePeriodRange,
+} from "./dateRange";
 
 describe("formatters", () => {
   it("formata moeda, data e quantidade (sem conversão de unidade)", () => {
@@ -24,5 +29,22 @@ describe("dateRange", () => {
     const range = getThisMonthRange(new Date(2026, 3, 15));
     expect(range.dateStart).toBe("2026-04-01");
     expect(range.dateEnd).toBe("2026-04-15");
+  });
+
+  it("resolve hoje e esta semana (segunda → hoje)", () => {
+    expect(getTodayRange(new Date(2026, 6, 15))).toEqual({
+      dateStart: "2026-07-15",
+      dateEnd: "2026-07-15",
+    });
+    // quarta-feira 15/07/2026 → segunda 13/07
+    expect(getThisWeekRange(new Date(2026, 6, 15))).toEqual({
+      dateStart: "2026-07-13",
+      dateEnd: "2026-07-15",
+    });
+    // domingo 12/07/2026 → segunda 06/07
+    expect(getThisWeekRange(new Date(2026, 6, 12))).toEqual({
+      dateStart: "2026-07-06",
+      dateEnd: "2026-07-12",
+    });
   });
 });

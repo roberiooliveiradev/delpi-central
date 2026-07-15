@@ -161,9 +161,15 @@
   background: color-mix(in srgb, var(--pa-accent) 8%, var(--pa-surface));
   border-color: color-mix(in srgb, var(--pa-accent) 35%, var(--pa-border));
 }/* SelectControl (FilterSelectField) */.dashboard-production-appointments .pa-kpi-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--pa-grid-gap);
+  align-items: stretch;
+}.dashboard-production-appointments .pa-kpi-grid > *{
+  flex: 1 1 14.5rem;
+  min-width: min(100%, max(14.5rem, max-content));
+  max-width: 100%;
+  box-sizing: border-box;
 }.dashboard-production-appointments .pa-badge{
   display: inline-block;
   margin-left: 8px;
@@ -231,9 +237,11 @@
   justify-content: flex-start;
 }@media (max-width: 768px){.dashboard-production-appointments.dashboard-page{
     --pa-page-padding: 16px;
-  }.dashboard-production-appointments .pa-filters__grid,
-.dashboard-production-appointments .pa-kpi-grid{
+  }.dashboard-production-appointments .pa-filters__grid{
     grid-template-columns: 1fr;
+  }.dashboard-production-appointments .pa-kpi-grid > *{
+    flex: 1 1 100%;
+    min-width: 0;
   }.dashboard-production-appointments .pa-filters__actions{
     flex-direction: column;
     align-items: stretch;

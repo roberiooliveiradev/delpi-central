@@ -11,6 +11,7 @@ import {
 import type { AuditDetail } from "../api/audit5sApi";
 import { auditStatusLabel, auditStatusVariant, shiftLabel } from "../constants/audit5s";
 import { formatPersonName } from "../utils/formatPersonName";
+import { KpiCard } from "./KpiCard";
 
 type Props = {
   audit: AuditDetail;
@@ -95,28 +96,24 @@ export function AuditDetailHero({ audit, showBack, onBack }: Props) {
       </div>
 
       <div className="a5s-hero-audit__kpis">
-        <article className="a5s-kpi-card">
-          <span className="a5s-kpi-card__label">Progresso</span>
-          <strong className="a5s-kpi-card__value">{progressPct}%</strong>
-          <span className="a5s-kpi-card__hint">
-            {audit.progress.scored} de {audit.progress.total} critérios
-          </span>
-        </article>
-        <article className="a5s-kpi-card">
-          <span className="a5s-kpi-card__label">Pendentes</span>
-          <strong className="a5s-kpi-card__value">{audit.progress.pending}</strong>
-          <span className="a5s-kpi-card__hint">aguardando nota</span>
-        </article>
-        <article className="a5s-kpi-card a5s-kpi-card--accent">
-          <span className="a5s-kpi-card__label">
-            <Percent size={14} aria-hidden />
-            Geral
-          </span>
-          <strong className="a5s-kpi-card__value">
-            {overallScore != null ? `${overallScore}%` : "—"}
-          </strong>
-          <span className="a5s-kpi-card__hint">média dos sensos</span>
-        </article>
+        <KpiCard
+          title="Progresso"
+          value={`${progressPct}%`}
+          subtitle={`${audit.progress.scored} de ${audit.progress.total} critérios`}
+          icon={<ClipboardCheck size={20} aria-hidden />}
+        />
+        <KpiCard
+          title="Pendentes"
+          value={String(audit.progress.pending)}
+          subtitle="aguardando nota"
+          icon={<UserRound size={20} aria-hidden />}
+        />
+        <KpiCard
+          title="Geral"
+          value={overallScore != null ? `${overallScore}%` : "—"}
+          subtitle="média dos sensos"
+          icon={<Percent size={20} aria-hidden />}
+        />
       </div>
 
       <div className="a5s-progress a5s-hero-audit__progress">

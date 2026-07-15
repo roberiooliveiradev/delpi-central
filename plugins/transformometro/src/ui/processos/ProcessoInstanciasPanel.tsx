@@ -30,6 +30,7 @@ import {
 import { TmNativeTextAreaField } from "../../components/ui/tmNativeFormFields";
 import { filterSetoresByFilial } from "../../utils/setores";
 import { renderTableStatus } from "../../utils/tablePresentation";
+import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 function renderInstanciaUnidade(row: ProcessoInstancia, activeFilialCount: number) {
   if (!row.todas_filiais_ativas) {
@@ -544,7 +545,7 @@ export function ProcessoInstanciasPanel({
           <TableRowActions>
             <button
               type="button"
-              className={`ds-ghost-btn${!navigateOnSelect && selectedInstanciaId === row.instancia_id ? " ds-ghost-btn--active" : ""}`}
+              className={!navigateOnSelect && selectedInstanciaId === row.instancia_id ? dsGhostBtn("active") : DS_GHOST_BTN}
               onClick={() => onSelect(row.instancia_id)}
             >
               {navigateOnSelect
@@ -553,13 +554,13 @@ export function ProcessoInstanciasPanel({
                   ? "Selecionada"
                   : "Selecionar"}
             </button>
-            <button type="button" className="ds-ghost-btn" onClick={() => startDuplicate(row)}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => startDuplicate(row)}>
               <Copy size={14} />
               Replicar
             </button>
             <button
               type="button"
-              className="ds-ghost-btn ds-ghost-btn--danger"
+              className={dsGhostBtn('danger')}
               disabled={busy || saving}
               onClick={() => void handleDelete(row)}
             >
@@ -929,7 +930,7 @@ export function ProcessoInstanciasPanel({
               <button type="submit" className="ds-primary-btn" disabled={saving || !canSubmit}>
                 {submitLabel}
               </button>
-              <button type="button" className="ds-ghost-btn" disabled={saving} onClick={handleCancelForm}>
+              <button type="button" className={DS_GHOST_BTN} disabled={saving} onClick={handleCancelForm}>
                 Cancelar
               </button>
             </div>

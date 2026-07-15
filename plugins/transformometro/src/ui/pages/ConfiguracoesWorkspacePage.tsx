@@ -22,6 +22,7 @@ import {
   ConfiguracoesWorkspaceShell,
   useRecursoWorkspaceSection,
 } from "../configuracoes/ConfiguracoesWorkspaceShell";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
   buildConfiguracoesSectionPath,
   parseConfiguracoesSectionFromPath,
@@ -122,7 +123,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
     route.view === "filial" && route.filialId ? (
       <button
         type="button"
-        className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
+        className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
         onClick={() => onNavigate(buildConfiguracoesSectionPath("unidades"))}
       >
         <ArrowLeft size={16} />
@@ -131,7 +132,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
     ) : route.view === "setor" && route.setorId ? (
       <button
         type="button"
-        className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
+        className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
         onClick={() => onNavigate(buildConfiguracoesSectionPath("departamentos"))}
       >
         <ArrowLeft size={16} />
@@ -140,7 +141,7 @@ export function ConfiguracoesWorkspacePage({ getAccessToken, route, pathname, on
     ) : route.view === "recurso" && route.recursoId ? (
       <button
         type="button"
-        className="ds-ghost-btn tm-processo-workspace-sidebar__action-btn"
+        className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
         onClick={() => onNavigate(buildConfiguracoesSectionPath("recursos"))}
       >
         <ArrowLeft size={16} />

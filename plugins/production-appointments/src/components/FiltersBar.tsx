@@ -3,7 +3,7 @@ import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { validatePeriodRange } from "../utils/dateRange";
 import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
 
-export type QuickRangePreset = "30d" | "6m" | "thisMonth";
+export type QuickRangePreset = "today" | "thisWeek" | "30d" | "6m" | "thisMonth";
 
 type FiltersBarProps = {
   filters: FilterFormState;
@@ -89,6 +89,22 @@ export function FiltersBar({
         </p>
       ) : null}
       <div className="pa-filter-bar__actions pa-filters__actions">
+        <button
+          type="button"
+          className="pa-btn pa-btn--secondary"
+          onClick={() => onQuickRange("today")}
+          disabled={loading}
+        >
+          Hoje
+        </button>
+        <button
+          type="button"
+          className="pa-btn pa-btn--secondary"
+          onClick={() => onQuickRange("thisWeek")}
+          disabled={loading}
+        >
+          Esta semana
+        </button>
         <button
           type="button"
           className="pa-btn pa-btn--secondary"

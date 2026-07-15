@@ -21,6 +21,37 @@ export function getThisMonthRange(referenceDate = new Date()): {
   return { dateStart: formatIsoDate(dateStart), dateEnd: formatIsoDate(dateEnd) };
 }
 
+/** Dia corrido = hoje (data inicial = data final). */
+export function getTodayRange(referenceDate = new Date()): {
+  dateStart: string;
+  dateEnd: string;
+} {
+  const day = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const iso = formatIsoDate(day);
+  return { dateStart: iso, dateEnd: iso };
+}
+
+/** Semana calendário (segunda → hoje), alinhado aos dashboards departamentais. */
+export function getThisWeekRange(referenceDate = new Date()): {
+  dateStart: string;
+  dateEnd: string;
+} {
+  const dateEnd = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const day = dateEnd.getDay(); // 0=domingo … 6=sábado
+  const daysSinceMonday = day === 0 ? 6 : day - 1;
+  const dateStart = new Date(dateEnd);
+  dateStart.setDate(dateStart.getDate() - daysSinceMonday);
+  return { dateStart: formatIsoDate(dateStart), dateEnd: formatIsoDate(dateEnd) };
+}
+
 export function getDefaultLast6MonthsRange(referenceDate = new Date()): {
   dateStart: string;
   dateEnd: string;

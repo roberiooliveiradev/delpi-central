@@ -628,11 +628,11 @@ export function AuditListView({
               </table>
             </div>
 
-            <div className="a5s-pagination">
+            <div className="a5s-list-pagination">
               <span>
                 Mostrando {pageStart} a {pageEnd} de {filteredAudits.length} auditorias
               </span>
-              <div className="a5s-pagination__controls">
+              <div className="a5s-list-pagination__controls">
                 <button
                   type="button"
                   className="a5s-icon-btn"
@@ -642,7 +642,7 @@ export function AuditListView({
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="a5s-pagination__page">{currentPage}</span>
+                <span className="a5s-list-pagination__page">{currentPage}</span>
                 <button
                   type="button"
                   className="a5s-icon-btn"

@@ -23,6 +23,8 @@ import {
   getDefaultLast30DaysRange,
   getDefaultLast6MonthsRange,
   getThisMonthRange,
+  getThisWeekRange,
+  getTodayRange,
   validatePeriodRange,
 } from "../utils/dateRange";
 import { formatDatePtBr } from "../utils/formatters";
@@ -124,11 +126,15 @@ function ProductionAppointmentsContent({
   const handleQuickRange = (preset: QuickRangePreset) => {
     const referenceDate = new Date();
     const range =
-      preset === "6m"
-        ? getDefaultLast6MonthsRange(referenceDate)
-        : preset === "30d"
-          ? getDefaultLast30DaysRange(referenceDate)
-          : getThisMonthRange(referenceDate);
+      preset === "today"
+        ? getTodayRange(referenceDate)
+        : preset === "thisWeek"
+          ? getThisWeekRange(referenceDate)
+          : preset === "6m"
+            ? getDefaultLast6MonthsRange(referenceDate)
+            : preset === "30d"
+              ? getDefaultLast30DaysRange(referenceDate)
+              : getThisMonthRange(referenceDate);
     setDraftFilters((current) => ({ ...current, ...range }));
   };
 

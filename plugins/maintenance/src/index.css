@@ -4,11 +4,6 @@
 .dashboard-maintenance *{
   box-sizing: border-box;
 }.dashboard-maintenance{
-  --delpi-ui-accent: var(--dm-accent, var(--primary, #089bdb));
-  --delpi-ui-surface: var(--dm-surface, var(--surface, #ffffff));
-  --delpi-ui-text: var(--dm-text, var(--text, #111111));
-  --delpi-ui-border: var(--dm-border, var(--border, #e6e6e6));
-  --delpi-ui-muted: var(--dm-text-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
   --dm-page-padding: 24px;
   --dm-section-gap: 20px;
   --dm-grid-gap: 16px;
@@ -28,6 +23,18 @@
   --dm-font-md: 14px;
   --dm-font-hero: clamp(24px, 2vw, 36px);
   --dm-font-kpi: clamp(22px, 2vw, 30px);
+  --delpi-ui-accent: var(--dm-accent);
+  --delpi-ui-surface: var(--dm-card-bg);
+  --delpi-ui-text: var(--dm-text);
+  --delpi-ui-border: var(--dm-card-border);
+  --delpi-ui-muted: var(--dm-text-muted);
+  --delpi-ui-section-gap: var(--dm-section-gap);
+  --delpi-ui-radius: var(--dm-card-radius);
+  --delpi-ui-control-radius: var(--dm-control-radius);
+  --delpi-ui-card-padding: var(--dm-card-padding);
+  --delpi-ui-font-kpi: var(--dm-font-kpi);
+  --delpi-ui-success: var(--success, #15803d);
+  --delpi-ui-danger: var(--danger, #b42318);
 }.dashboard-maintenance button,
 .dashboard-maintenance input{
   font: inherit;
@@ -396,11 +403,45 @@
   margin: 0;
   font-size: 18px;
   color: var(--dm-title);
-}.dashboard-maintenance .dm-kpi-grid{
+}.dashboard-maintenance .dm-kpi-grid,
+.dashboard-maintenance .dm-shortcut-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dm-grid-gap);
   margin-bottom: var(--dm-section-gap);
+}/* Domínio — atalhos de navegação (não é SimpleKpi do kit). */
+.dashboard-maintenance .dm-shortcut-card{
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}.dashboard-maintenance .dm-shortcut-card__icon{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--dm-accent) 10%, transparent);
+  color: var(--dm-accent);
+}.dashboard-maintenance .dm-shortcut-card__label{
+  margin: 0;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
+}.dashboard-maintenance .dm-shortcut-card__value{
+  margin: 4px 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--dm-title);
+}.dashboard-maintenance .dm-shortcut-card__hint,
+.dashboard-maintenance .dm-shortcut-card__meta{
+  margin: 6px 0 0;
+  font-size: var(--dm-font-sm);
+  color: var(--dm-text-muted);
 }.dashboard-maintenance .dm-nav__link--back{
   display: inline-flex;
   align-items: center;
@@ -1020,14 +1061,9 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-}.dashboard-maintenance .dm-indicadores-kpi{
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  padding: 12px;
-  border: 1px solid var(--dm-card-border);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--dm-card-bg) 92%, var(--dm-accent) 8%);
+}.dashboard-maintenance .dm-filter-kpi.is-active{
+  border-color: color-mix(in srgb, var(--dm-accent) 55%, var(--dm-card-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dm-accent) 35%, transparent);
 }.dashboard-maintenance .dm-indicadores-breakdown{
   display: grid;
   gap: 10px;
@@ -1086,47 +1122,8 @@
   font-size: var(--dm-font-xs);
   background: color-mix(in srgb, var(--dm-accent) 10%, var(--dm-card-bg));
   color: var(--dm-accent);
-}.dashboard-maintenance .dm-state-box{
-  margin: 0 0 var(--dm-section-gap);
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--dm-accent) 8%, var(--dm-card-bg));
-  color: var(--dm-text);
-  transition: opacity 0.2s ease;
-}.dashboard-maintenance .dm-state-box--error{
-  background: color-mix(in srgb, #ef4444 12%, var(--dm-card-bg));
-  color: #b91c1c;
-}.dashboard-maintenance .dm-state-box--success{
-  background: color-mix(in srgb, #22c55e 12%, var(--dm-card-bg));
-  color: #15803d;
-}.dashboard-maintenance .dm-state-box--dismissible{
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}.dashboard-maintenance .dm-state-box__content{
-  flex: 1 1 auto;
-  min-width: 0;
-}.dashboard-maintenance .dm-state-box__dismiss{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  opacity: 0.72;
-  cursor: pointer;
-}.dashboard-maintenance .dm-state-box__dismiss:hover,
-.dashboard-maintenance .dm-state-box__dismiss:focus-visible{
-  opacity: 1;
-  background: color-mix(in srgb, currentColor 12%, transparent);
-  outline: none;
-}.dashboard-maintenance .dm-shortcuts{
+}/* StateBox: chrome no kit (dual-class); sem espelho no MFE. */
+.dashboard-maintenance .dm-shortcuts{
   display: flex;
   flex-wrap: wrap;
   gap: 12px;

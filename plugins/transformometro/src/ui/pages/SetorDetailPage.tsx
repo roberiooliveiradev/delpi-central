@@ -28,6 +28,7 @@ import {
 } from "../../data/api/transformometroApi";
 import { buildSetorPath } from "../../utils/routeParser";
 import { SetorFormFields } from "../setores/SetorFormFields";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
   createPayloadFromSetorForm,
   emptySetorForm,
@@ -205,7 +206,7 @@ export function SetorDetailPage({
     const errorView = (
       <div className="ds-state ds-state--error" role="alert">
         <p>{loadError ?? "Departamento não encontrado."}</p>
-        <button type="button" className="ds-ghost-btn" onClick={onBack}>
+        <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
           Voltar à lista
         </button>
       </div>
@@ -231,7 +232,7 @@ export function SetorDetailPage({
             </p>
           </div>
           {!isCreate ? (
-            <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
+            <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
               <Trash2 size={16} />
               Excluir
             </button>
@@ -304,12 +305,12 @@ export function SetorDetailPage({
         onNavigate={onNavigate}
         actions={
           <>
-            <button type="button" className="ds-ghost-btn" onClick={onBack}>
+            <button type="button" className={DS_GHOST_BTN} onClick={onBack}>
               <ArrowLeft size={16} />
               Lista
             </button>
             {!isCreate ? (
-              <button type="button" className="ds-ghost-btn" onClick={() => void handleDelete()}>
+              <button type="button" className={DS_GHOST_BTN} onClick={() => void handleDelete()}>
                 <Trash2 size={16} />
                 Excluir
               </button>

@@ -5,7 +5,7 @@ import { HintAction, TitleWithHelp } from "../ui";
 import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 const STATUS_LABELS: Record<KaizenVersionStatus, string> = {
-  em_andamento: "Rascunho",
+  recebido: "Rascunho",
   aprovado: "Aprovado",
   implantado: "Ativa",
   descontinuado: "Descontinuada",
@@ -99,7 +99,7 @@ export function KaizenVersionSwitcher({
               <span className="kz-version-pill__num">v{revision.revision_number}</span>
               <span className="kz-version-pill__status">
                 {status === "implantado" ? <Check size={12} aria-hidden="true" /> : null}
-                {status === "em_andamento" ? <PencilLine size={12} aria-hidden="true" /> : null}
+                {status === "recebido" ? <PencilLine size={12} aria-hidden="true" /> : null}
                 {status === "substituido" ? <History size={12} aria-hidden="true" /> : null}
                 {STATUS_LABELS[status]}
               </span>

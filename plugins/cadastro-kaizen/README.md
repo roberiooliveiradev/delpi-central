@@ -104,7 +104,7 @@ Tabela: `quality.kaizens` (migration `V027__create_kaizens.sql`).
 |-------|----------------|------------|
 | `branch_code` | `01`, `02` | Obrigatório |
 | `title` | string | Obrigatório |
-| `status` | `em_andamento`, `implantado`, `descontinuado`, `cancelado` | Default `em_andamento` |
+| `status` | `recebido`, `implantado`, `descontinuado`, `cancelado` | Default `recebido` |
 | `date_idea_received` | date | Recebimento da ideia (V035) |
 | `date_implemented` | date | Implantação — vigência da revisão + validade 1 ano da economia |
 | `date_discontinued` | date | Fim da operação |

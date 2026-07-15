@@ -7,6 +7,7 @@ import {
   formatReposicaoIndicadorDate,
 } from "../utils/reposicaoIndicadores";
 import { formatCodigoDescricao } from "../utils/pecaOptions";
+import { KpiCard } from "./data/KpiCard";
 
 type FerramentaReposicaoIndicadoresProps = {
   reposicoes: ReposicaoItem[];
@@ -74,51 +75,26 @@ export function FerramentaReposicaoIndicadores({
       </div>
 
       <div className="dm-indicadores-kpi-grid">
-        <article className="dm-indicadores-kpi">
-          <div className="dm-kpi-card__icon" aria-hidden="true">
-            <Repeat size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">Total de reposições</p>
-            <p className="dm-kpi-card__value dm-kpi-card__value--sm">{formatNumber(indicadores.total)}</p>
-          </div>
-        </article>
-
-        <article className="dm-indicadores-kpi">
-          <div className="dm-kpi-card__icon" aria-hidden="true">
-            <Layers size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">Peças distintas</p>
-            <p className="dm-kpi-card__value dm-kpi-card__value--sm">
-              {formatNumber(indicadores.pecasDistintas)}
-            </p>
-          </div>
-        </article>
-
-        <article className="dm-indicadores-kpi">
-          <div className="dm-kpi-card__icon" aria-hidden="true">
-            <Activity size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">Média de golpes</p>
-            <p className="dm-kpi-card__value dm-kpi-card__value--sm">
-              {formatNumber(indicadores.mediaGolpes)}
-            </p>
-          </div>
-        </article>
-
-        <article className="dm-indicadores-kpi">
-          <div className="dm-kpi-card__icon" aria-hidden="true">
-            <Calendar size={20} />
-          </div>
-          <div>
-            <p className="dm-kpi-card__label">Última reposição</p>
-            <p className="dm-kpi-card__value dm-kpi-card__value--sm">
-              {formatReposicaoIndicadorDate(indicadores.ultimaReposicao)}
-            </p>
-          </div>
-        </article>
+        <KpiCard
+          title="Total de reposições"
+          value={formatNumber(indicadores.total)}
+          icon={<Repeat size={20} aria-hidden="true" />}
+        />
+        <KpiCard
+          title="Peças distintas"
+          value={formatNumber(indicadores.pecasDistintas)}
+          icon={<Layers size={20} aria-hidden="true" />}
+        />
+        <KpiCard
+          title="Média de golpes"
+          value={formatNumber(indicadores.mediaGolpes)}
+          icon={<Activity size={20} aria-hidden="true" />}
+        />
+        <KpiCard
+          title="Última reposição"
+          value={formatReposicaoIndicadorDate(indicadores.ultimaReposicao)}
+          icon={<Calendar size={20} aria-hidden="true" />}
+        />
       </div>
 
       {indicadores.pecaMaisTrocada ? (

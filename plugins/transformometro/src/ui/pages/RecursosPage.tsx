@@ -27,6 +27,7 @@ import { buildRecursoPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { renderTableStatus } from "../../utils/tablePresentation";
+import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 const C = TM_HELP_TOOLTIPS.columns;
 
@@ -148,7 +149,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
         <TableRowActions>
           <button
             type="button"
-            className="ds-ghost-btn"
+            className={DS_GHOST_BTN}
             onClick={(event) => {
               event.stopPropagation();
               onNavigate(buildRecursoPath(r.recurso_compartilhado_id));
@@ -158,7 +159,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
           </button>
           <button
             type="button"
-            className="ds-ghost-btn ds-ghost-btn--danger"
+            className={dsGhostBtn('danger')}
             onClick={(event) => {
               event.stopPropagation();
               void handleDelete(r);
@@ -199,7 +200,7 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
         Recursos cadastrados aqui aparecem ao vincular em{" "}
         <button
           type="button"
-          className="ds-ghost-btn"
+          className={DS_GHOST_BTN}
           onClick={() => onNavigate(TRANSFORMOMETRO_ROUTES.processos)}
         >
           Processos → revisão → Recursos

@@ -13,6 +13,7 @@ import {
 import { optionalDateField, todayDateInput, toDateInputValue } from "../../utils/dateInputs";
 import { formatCurrency } from "../../utils/format";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 const C = TM_HELP_TOOLTIPS.columns;
 const R = TM_HELP_TOOLTIPS.recursos;
@@ -239,7 +240,7 @@ export function RecursoCustosSection({
                           </button>
                           <button
                             type="button"
-                            className="ds-ghost-btn"
+                            className={DS_GHOST_BTN}
                             onClick={() => setEditingId(null)}
                           >
                             Cancelar
@@ -259,14 +260,14 @@ export function RecursoCustosSection({
                         <div className="ds-table__actions">
                           <button
                             type="button"
-                            className="ds-ghost-btn"
+                            className={DS_GHOST_BTN}
                             onClick={() => startEdit(c)}
                           >
                             Editar
                           </button>
                           <button
                             type="button"
-                            className="ds-ghost-btn"
+                            className={DS_GHOST_BTN}
                             onClick={() => void handleDelete(c)}
                           >
                             Excluir

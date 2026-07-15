@@ -36,6 +36,7 @@ import {
   MATRIZ_QUADRANTE_LABELS_GRAFICO,
 } from "../../content/matrizImpactoLabels";
 import { exportImpactEffortMatrixPlotPng } from "../../utils/exportImpactEffortMatrixPng";
+import { DS_GHOST_BTN } from "../../components/ghostChrome";
 
 type Props = {
   revisao: Revisao;
@@ -246,7 +247,7 @@ export function RevisaoMatrizImpactoSection({
             ) : null}
             <button
               type="button"
-              className="ds-ghost-btn"
+              className={DS_GHOST_BTN}
               disabled={loading || !ponto}
               onClick={() =>
                 exportImpactEffortMatrixPlotPng(

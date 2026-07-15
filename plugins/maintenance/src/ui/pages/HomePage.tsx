@@ -80,20 +80,20 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
         />
       ) : null}
 
-      <section className="dm-kpi-grid">
+      <section className="dm-shortcut-grid" aria-label="Atalhos do módulo">
         {canManageFiliais ? (
           <button
             type="button"
-            className="dm-card dm-kpi-card dm-kpi-card--action"
+            className="dm-card dm-shortcut-card"
             onClick={() => onNavigate(MAINTENANCE_ROUTES.filiais)}
           >
-            <div className="dm-kpi-card__icon" aria-hidden="true">
+            <div className="dm-shortcut-card__icon" aria-hidden="true">
               <Building2 size={22} />
             </div>
             <div>
-              <p className="dm-kpi-card__label">Administração</p>
-              <h2 className="dm-kpi-card__value">Filiais</h2>
-              <p className="dm-kpi-card__hint">Cadastro de filiais operacionais do módulo.</p>
+              <p className="dm-shortcut-card__label">Administração</p>
+              <h2 className="dm-shortcut-card__value">Filiais</h2>
+              <p className="dm-shortcut-card__hint">Cadastro de filiais operacionais do módulo.</p>
             </div>
           </button>
         ) : null}
@@ -101,18 +101,18 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
           <button
             key={submodule.id}
             type="button"
-            className="dm-card dm-kpi-card dm-kpi-card--action"
+            className="dm-card dm-shortcut-card"
             onClick={() => handleOpenSubmodule(submodule.entry_path)}
           >
-            <div className="dm-kpi-card__icon" aria-hidden="true">
+            <div className="dm-shortcut-card__icon" aria-hidden="true">
               <SubmoduleIcon icon={submodule.icon} />
             </div>
             <div>
-              <p className="dm-kpi-card__label">Submódulo</p>
-              <h2 className="dm-kpi-card__value">{submodule.label}</h2>
-              <p className="dm-kpi-card__hint">{submodule.description}</p>
+              <p className="dm-shortcut-card__label">Submódulo</p>
+              <h2 className="dm-shortcut-card__value">{submodule.label}</h2>
+              <p className="dm-shortcut-card__hint">{submodule.description}</p>
               {activeFilial ? (
-                <p className="dm-kpi-card__meta">
+                <p className="dm-shortcut-card__meta">
                   Filial: {resolveFilialDisplayName(filiais, activeFilial)}
                 </p>
               ) : null}
