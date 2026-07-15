@@ -1,5 +1,5 @@
 import {
-  MultiSelectField as BaseMultiSelectField,
+  createDashboardMultiSelectField,
   multiSelectBemClasses,
   type DashboardMultiSelectFieldProps,
   type MultiSelectFieldLabels,
@@ -15,15 +15,13 @@ const LABELS = {
   multipleSelected: (count: number) => `${count} selecionado(s)`,
 } satisfies MultiSelectFieldLabels;
 
-const CLASS_NAMES = {
-  ...multiSelectBemClasses("ef"),
-  root: "ef-field ef-field--multi-select",
-  actionButton: "ef-btn ef-btn--ghost ef-btn--sm",
-};
-
-export function MultiSelectField(props: DashboardMultiSelectFieldProps) {
-  return <BaseMultiSelectField classNames={CLASS_NAMES} labels={LABELS} {...props} />;
-}
-
+/* FilterBarShell já é o card — root sem ef-filter-box para não aninhar cards. */
+export const MultiSelectField = createDashboardMultiSelectField({
+  labels: LABELS,
+  classNames: {
+    ...multiSelectBemClasses("ef"),
+    root: "ef-field ef-field--multi-select",
+  },
+});
 export type { MultiSelectOption };
 export type MultiSelectFieldProps = DashboardMultiSelectFieldProps;
