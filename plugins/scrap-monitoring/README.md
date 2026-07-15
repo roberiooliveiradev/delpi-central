@@ -46,4 +46,11 @@ Docker (scripts sequenciais):
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build scrap-monitoring
 ```
 
-Registrar manifesto no portal após deploy do plugin.
+Registrar manifesto no portal após deploy do plugin:
+
+```bash
+TOKEN=$(bash infra/scripts/get-dev-token.sh) \
+  bash plugins/scrap-monitoring/scripts/register-manifest.sh
+```
+
+Depois atribua no RBAC: `scrap-monitoring.access`, `.view.filial-sc`, `.view.filial-es` e `.view`.
