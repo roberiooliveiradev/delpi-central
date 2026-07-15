@@ -3,12 +3,22 @@ export const DEFAULT_RANKING_LIMIT = 10;
 export type FilterFormState = {
   dataInicio: string;
   dataFim: string;
+  mp: string;
+  pa: string;
+  op: string;
+  motivo: string;
+  centroTrabalho: string;
 };
 
 export type ScrapQueryFilters = {
   filial: string;
   dataInicio: string;
   dataFim: string;
+  mp?: string;
+  pa?: string;
+  op?: string;
+  motivo?: string;
+  centroTrabalho?: string;
 };
 
 export type ScrapPeriodo = {
@@ -73,4 +83,16 @@ export type ScrapRegistrosData = {
   pageSize: number;
   total: number;
   totalPages: number;
+};
+
+export type ScrapFiltroOption = {
+  codigo: string;
+  descricao?: string;
+};
+
+export type ScrapFiltrosData = {
+  materiasPrimas: ScrapFiltroOption[];
+  produtosAcabados: ScrapFiltroOption[];
+  ordensProducao: ScrapFiltroOption[];
+  motivos: ScrapFiltroOption[];
 };

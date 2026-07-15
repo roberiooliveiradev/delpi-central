@@ -28,7 +28,7 @@ Doc completa: [api-delpi/docs/api/scrap-monitoring.md](../../api-delpi/docs/api/
 
 ## Estado desta entrega
 
-Painel MFE com KPIs (dia/mês/período), rankings (motivo, MP, PA, CT, colaborador) e tabela paginada de registros, filtrados por filial SC/ES e período.
+Painel MFE com KPIs (dia/mês/período), rankings (motivo, MP, PA, CT, colaborador) e tabela paginada de registros. Filtros: filial SC/ES, período, MP, PA, OP, motivo e centro de trabalho.
 
 ## Dev
 

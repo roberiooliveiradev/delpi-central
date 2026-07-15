@@ -89,17 +89,46 @@ export function validatePeriodRange(dataInicio: string, dataFim: string): string
   return null;
 }
 
+const EMPTY_OPTIONAL_FILTERS = {
+  mp: "",
+  pa: "",
+  op: "",
+  motivo: "",
+  centroTrabalho: "",
+} as const;
+
 export function createDefaultFilterFormState(referenceDate = new Date()) {
-  return getThisMonthRange(referenceDate);
+  return {
+    ...getThisMonthRange(referenceDate),
+    ...EMPTY_OPTIONAL_FILTERS,
+  };
+}
+
+function optionalFilter(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
 }
 
 export function filtersFromFormState(
   filial: string,
-  state: { dataInicio: string; dataFim: string },
+  state: {
+    dataInicio: string;
+    dataFim: string;
+    mp?: string;
+    pa?: string;
+    op?: string;
+    motivo?: string;
+    centroTrabalho?: string;
+  },
 ) {
   return {
     filial,
     dataInicio: state.dataInicio,
     dataFim: state.dataFim,
+    mp: optionalFilter(state.mp),
+    pa: optionalFilter(state.pa),
+    op: optionalFilter(state.op),
+    motivo: optionalFilter(state.motivo),
+    centroTrabalho: optionalFilter(state.centroTrabalho),
   };
 }

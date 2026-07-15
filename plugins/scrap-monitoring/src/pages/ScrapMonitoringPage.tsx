@@ -13,6 +13,7 @@ import {
   type BranchRouteCode,
 } from "../constants/branches";
 import { useScrapDashboard } from "../hooks/useScrapDashboard";
+import { useScrapFiltros } from "../hooks/useScrapFiltros";
 import { useScrapRegistros } from "../hooks/useScrapRegistros";
 import type { FilterFormState } from "../types/scrap";
 import {
@@ -25,6 +26,14 @@ import {
 } from "../utils/dateRange";
 import { formatDatePtBr } from "../utils/formatters";
 import { useLoadingProgress } from "../utils/loadingProgress";
+
+const EMPTY_OPTIONAL_FILTERS = {
+  mp: "",
+  pa: "",
+  op: "",
+  motivo: "",
+  centroTrabalho: "",
+} as const;
 
 type ScrapMonitoringPageProps = {
   pathname?: string;
@@ -64,6 +73,7 @@ function ScrapMonitoringContent({ branchRoute, totvsBranch }: ContentProps) {
 
   const dashboard = useScrapDashboard(appliedFilters);
   const registros = useScrapRegistros(appliedFilters, page);
+  const filtrosOptions = useScrapFiltros(appliedFilters);
 
   const handleApplyPeriod = () => {
     const error = validatePeriodRange(draftFilters.dataInicio, draftFilters.dataFim);
@@ -76,10 +86,13 @@ function ScrapMonitoringContent({ branchRoute, totvsBranch }: ContentProps) {
     setPage(1);
   };
 
-  const applyFilterRange = (range: FilterFormState) => {
-    setDraftFilters(range);
+  const applyFilterRange = (range: Pick<FilterFormState, "dataInicio" | "dataFim">) => {
+    setDraftFilters((current) => {
+      const next = { ...current, ...range };
+      setAppliedFilters(filtersFromFormState(totvsBranch, next));
+      return next;
+    });
     setValidationError(null);
-    setAppliedFilters(filtersFromFormState(totvsBranch, range));
     setPage(1);
   };
 
@@ -92,6 +105,16 @@ function ScrapMonitoringContent({ branchRoute, totvsBranch }: ContentProps) {
           ? getDefaultLast6MonthsRange(referenceDate)
           : getThisMonthRange(referenceDate);
     applyFilterRange(range);
+  };
+
+  const handleClearOptional = () => {
+    setDraftFilters((current) => {
+      const next = { ...current, ...EMPTY_OPTIONAL_FILTERS };
+      setAppliedFilters(filtersFromFormState(totvsBranch, next));
+      return next;
+    });
+    setValidationError(null);
+    setPage(1);
   };
 
   const resumo = dashboard.data.resumo;
@@ -123,11 +146,14 @@ function ScrapMonitoringContent({ branchRoute, totvsBranch }: ContentProps) {
 
       <PeriodFilters
         filters={draftFilters}
+        options={filtrosOptions.data}
+        optionsLoading={filtrosOptions.loading}
         validationError={validationError}
         loading={dashboard.loading || dashboard.refreshing}
         onChange={(patch) => setDraftFilters((current) => ({ ...current, ...patch }))}
         onApply={handleApplyPeriod}
         onQuickRange={handleQuickRange}
+        onClearOptional={handleClearOptional}
       />
 
       {permissionDenied ? (

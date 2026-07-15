@@ -33,6 +33,12 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 | [production-appointments/ESPECIFICACAO.md](./production-appointments/ESPECIFICACAO.md) | Escopo e rotas previstas |
 | [production-appointments/FASE0-VALIDACAO.md](./production-appointments/FASE0-VALIDACAO.md) | Validação SQL Fase 0 (jul/2026) |
 
+### Acompanhamento de Refugos (scrap-monitoring)
+
+| Arquivo | Conteúdo |
+|---|---|
+| [scrap-monitoring/README.md](./scrap-monitoring/README.md) | Índice do módulo (plugin id EN, labels PT-BR) |
+
 ### Eficiência Fabril
 
 | Arquivo | Conteúdo |

@@ -57,7 +57,7 @@
 
 .dashboard-scrap-monitoring .sm-filter-bar__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 220px));
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: var(--sm-grid-gap);
 }
 

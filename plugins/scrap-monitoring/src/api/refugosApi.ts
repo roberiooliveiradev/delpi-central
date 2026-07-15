@@ -1,6 +1,7 @@
 import { httpGet } from "./httpClient";
 import { unwrapApiDelpiEnvelope } from "../types/api";
 import type {
+  ScrapFiltrosData,
   ScrapQueryFilters,
   ScrapRankingDimension,
   ScrapRankingsData,
@@ -19,6 +20,19 @@ async function getEnvelope<T>(path: string, options: RequestOptions = {}): Promi
 }
 
 function baseQuery(filters: ScrapQueryFilters) {
+  return {
+    filial: filters.filial,
+    dataInicio: filters.dataInicio,
+    dataFim: filters.dataFim,
+    mp: filters.mp,
+    pa: filters.pa,
+    op: filters.op,
+    motivo: filters.motivo,
+    centroTrabalho: filters.centroTrabalho,
+  };
+}
+
+function periodQuery(filters: Pick<ScrapQueryFilters, "filial" | "dataInicio" | "dataFim">) {
   return {
     filial: filters.filial,
     dataInicio: filters.dataInicio,
@@ -53,6 +67,16 @@ export async function fetchScrapRegistros(
 ): Promise<ScrapRegistrosData> {
   return getEnvelope<ScrapRegistrosData>(
     `/registros${queryString({ ...baseQuery(filters), page, pageSize })}`,
+    options,
+  );
+}
+
+export async function fetchScrapFiltros(
+  filters: Pick<ScrapQueryFilters, "filial" | "dataInicio" | "dataFim">,
+  options: RequestOptions = {},
+): Promise<ScrapFiltrosData> {
+  return getEnvelope<ScrapFiltrosData>(
+    `/filtros${queryString(periodQuery(filters))}`,
     options,
   );
 }
