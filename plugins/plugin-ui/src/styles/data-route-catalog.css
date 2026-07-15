@@ -21,18 +21,40 @@
   min-height: 0;
   min-width: 0;
   flex: 1 1 auto;
+  position: relative;
 }
 
-.delpi-ui-data-route-catalog__detail-portal {
-  width: min(340px, calc(100vw - 24px));
-  max-height: min(72vh, 560px);
+.delpi-ui-data-route-catalog--comfortable .delpi-ui-data-route-catalog__main--detail-open {
+  padding-right: 350px;
+}
+
+.delpi-ui-data-route-catalog--comfortable
+  .delpi-ui-data-route-catalog__main--detail-open
+  .delpi-ui-data-route-catalog__detail {
+  position: absolute;
+  right: 0;
+  width: 340px;
+  max-height: 100%;
   overflow: auto;
-  box-sizing: border-box;
-  border-radius: 10px;
-  box-shadow:
-    0 12px 28px color-mix(in srgb, #0f172a 18%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 70%, transparent);
-  background: var(--delpi-ui-surface, var(--surface, #fff));
+  z-index: 2;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, transparent);
+  border-radius: 8px;
+}
+
+.delpi-ui-data-route-catalog--compact .delpi-ui-data-route-catalog__main--detail-stacked {
+  gap: 10px;
+}
+
+.delpi-ui-data-route-catalog--compact
+  .delpi-ui-data-route-catalog__main--detail-stacked
+  .delpi-ui-data-route-catalog__detail {
+  position: relative;
+  top: auto !important;
+  width: 100%;
+  max-height: min(48vh, 420px);
+  overflow: auto;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, transparent);
+  border-radius: 8px;
 }
 
 .delpi-ui-data-route-catalog__search {
