@@ -29,7 +29,7 @@ Doc completa: [api-delpi/docs/api/scrap-monitoring.md](../../api-delpi/docs/api/
 
 ## Estado desta entrega
 
-Painel MFE alinhado a `@delpi/plugin-ui` e ao padrão visual do dashboard commercial: canvas full-bleed, filtros autoaplicados (debounce), legenda no gráfico de Motivo, `DataTableSection` com clique abrindo detalhe e exportação Excel.
+Painel MFE alinhado a `@delpi/plugin-ui` e ao padrão visual do dashboard commercial: canvas full-bleed, filtros autoaplicados (debounce), balões `HelpTooltip` (`src/content/helpTooltips.ts`), gráficos full-width (1 por linha), `DataTableSection` com clique abrindo detalhe e exportação Excel.
 
 ## Dev
 

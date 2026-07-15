@@ -4,9 +4,19 @@ import {
   type PageJumpValidationReason,
 } from "@delpi/plugin-ui/index";
 
+import { SCRAP_HELP_TOOLTIPS } from "../content/helpTooltips";
+
+const P = SCRAP_HELP_TOOLTIPS.pagination;
+
 const kit = createDashboardPaginationKit({
   prefix: "sm",
-  hints: {},
+  hints: {
+    pageSize: P.pageSize,
+    previous: P.previous,
+    next: P.next,
+    info: P.info,
+    jump: P.jump,
+  },
   tablePageSizeLabels: {
     label: "Itens por página",
     selectAriaLabel: "Quantidade de itens por página",
@@ -23,11 +33,11 @@ const kit = createDashboardPaginationKit({
     jumpError: (reason: PageJumpValidationReason, totalPages: number) => {
       switch (reason) {
         case "empty":
-          return "Informe o número da página.";
+          return P.jumpEmpty;
         case "invalid":
-          return "Número de página inválido.";
+          return P.jumpInvalid;
         case "below_min":
-          return "A página mínima é 1.";
+          return P.jumpBelowMin;
         case "above_max":
           return `A página máxima é ${totalPages}.`;
         default:

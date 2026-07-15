@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { fetchAllScrapRegistros } from "../api/fetchAllScrapRegistros";
+import { SCRAP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ScrapQueryFilters, ScrapRegistroItem } from "../types/scrap";
 import { exportRegistrosExcel } from "../utils/exportRegistros";
 import {
@@ -28,6 +29,8 @@ type RegistrosTableProps = {
   onExportError?: (message: string) => void;
 };
 
+const T = SCRAP_HELP_TOOLTIPS.table;
+
 export function RegistrosTable({
   items,
   filters,
@@ -48,47 +51,70 @@ export function RegistrosTable({
       {
         key: "data",
         header: "Data",
+        headerHint: T.data,
         render: (row) => formatDatePtBr(row.dataPerda),
       },
       {
         key: "op",
         header: "OP",
+        headerHint: T.op,
         render: (row) => row.op || "—",
       },
       {
         key: "pa",
         header: "PA",
+        headerHint: T.pa,
         render: (row) => row.pa || "—",
       },
       {
         key: "mp",
         header: "MP",
+        headerHint: T.mp,
         render: (row) => row.mp || "—",
       },
       {
         key: "descricao",
         header: "Descrição",
+        headerHint: T.descricao,
         className: "sm-table__col--wide",
-        render: (row) => row.descricao || "—",
+        render: (row) => {
+          const text = row.descricao?.trim() || "—";
+          return (
+            <span className="sm-table__cell-ellipsis" title={text === "—" ? undefined : text}>
+              {text}
+            </span>
+          );
+        },
       },
       {
         key: "motivo",
         header: "Motivo",
+        headerHint: T.motivo,
         render: (row) => row.motivo || row.motivoCodigo || "—",
       },
       {
         key: "ct",
         header: "CT",
+        headerHint: T.ct,
         render: (row) => row.centroTrabalho || "—",
       },
       {
         key: "colaborador",
         header: "Colaborador",
-        render: (row) => row.nomeOperador || row.codigoOperador || "—",
+        headerHint: T.colaborador,
+        render: (row) => {
+          const text = row.nomeOperador || row.codigoOperador || "—";
+          return (
+            <span className="sm-table__cell-ellipsis" title={text === "—" ? undefined : text}>
+              {text}
+            </span>
+          );
+        },
       },
       {
         key: "qtd",
         header: "Qtd",
+        headerHint: T.qtd,
         className: "sm-table__col--numeric",
         render: (row) =>
           `${formatQuantity(row.quantidade)}${row.um ? ` ${row.um}` : ""}`,
@@ -96,6 +122,7 @@ export function RegistrosTable({
       {
         key: "valor",
         header: "Valor",
+        headerHint: T.valor,
         className: "sm-table__col--numeric",
         render: (row) => formatCurrencyBrl(row.valor),
       },
@@ -121,6 +148,7 @@ export function RegistrosTable({
   return (
     <DataTableSection
       title="Registros de refugo"
+      titleHint={T.section}
       hint={`${total.toLocaleString("pt-BR")} registro(s) no período`}
       columns={columns}
       rows={items}

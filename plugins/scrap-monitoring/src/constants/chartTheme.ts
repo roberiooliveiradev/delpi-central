@@ -21,6 +21,9 @@ export const PIE_COLORS = [
 
 export const CHART_RANKING_HEIGHT = 280;
 
+/** Largura do eixo Y em gráficos de barra horizontais (cards full-width). */
+export const CHART_Y_AXIS_WIDTH = 260;
+
 export const CHART_AXIS_TICK = {
   fontSize: 12,
   fill: "var(--sm-chart-axis)",

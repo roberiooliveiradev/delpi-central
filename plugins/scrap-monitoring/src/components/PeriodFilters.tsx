@@ -1,6 +1,9 @@
+import { SCRAP_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { FilterFormState, ScrapFiltrosData } from "../types/scrap";
 import { validatePeriodRange } from "../utils/dateRange";
 import { FilterBarShell, FilterInputField, FilterSelectField } from "./filtersUi";
+
+const F = SCRAP_HELP_TOOLTIPS.filters;
 
 export type QuickRangePreset = "today" | "thisWeek" | "thisMonth" | "6m" | "12m";
 
@@ -56,6 +59,7 @@ export function PeriodFilters({
         <FilterInputField
           id="sm-filter-start"
           label="Data inicial"
+          hint={F.dateStart}
           type="date"
           value={filters.dataInicio}
           onChange={(value) => onChange({ dataInicio: value })}
@@ -63,6 +67,7 @@ export function PeriodFilters({
         <FilterInputField
           id="sm-filter-end"
           label="Data final"
+          hint={F.dateEnd}
           type="date"
           value={filters.dataFim}
           onChange={(value) => onChange({ dataFim: value })}
@@ -70,6 +75,7 @@ export function PeriodFilters({
         <FilterSelectField
           id="sm-filter-mp"
           label="Matéria-prima"
+          hint={F.mp}
           value={filters.mp}
           onChange={(value) => onChange({ mp: value })}
           options={mpOptions}
@@ -80,6 +86,7 @@ export function PeriodFilters({
         <FilterSelectField
           id="sm-filter-pa"
           label="Produto acabado"
+          hint={F.pa}
           value={filters.pa}
           onChange={(value) => onChange({ pa: value })}
           options={paOptions}
@@ -90,6 +97,7 @@ export function PeriodFilters({
         <FilterSelectField
           id="sm-filter-op"
           label="Ordem de produção"
+          hint={F.op}
           value={filters.op}
           onChange={(value) => onChange({ op: value })}
           options={opOptions}
@@ -100,6 +108,7 @@ export function PeriodFilters({
         <FilterSelectField
           id="sm-filter-motivo"
           label="Motivo"
+          hint={F.motivo}
           value={filters.motivo}
           onChange={(value) => onChange({ motivo: value })}
           options={motivoOptions}
@@ -109,6 +118,7 @@ export function PeriodFilters({
         <FilterInputField
           id="sm-filter-centro"
           label="Centro de trabalho"
+          hint={F.centroTrabalho}
           type="text"
           placeholder="Ex.: CT-23"
           value={filters.centroTrabalho}
