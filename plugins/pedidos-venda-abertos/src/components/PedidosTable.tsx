@@ -1,7 +1,5 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
-import { ExcelExportButton } from "@delpi/plugin-ui/index";
-
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { formatEntityTypeWithCodeStore } from "../utils/entityCodeStore";
 import { useTableColumnPreferences } from "../hooks/useTableColumnPreferences";
@@ -18,6 +16,9 @@ import { OpPrevisaoModal } from "./OpPrevisaoModal";
 import { StatusBadge } from "./StatusBadge";
 import { TableColumnSettings } from "./TableColumnSettings";
 import { TableFontSizeControls } from "./TableFontSizeControls";
+import { ExcelExportButton, dataTableBemClasses } from "@delpi/plugin-ui/index";
+
+const PVA_TABLE = dataTableBemClasses("pva");
 
 type PedidosTableProps = {
   rows: PedidosVendaAbertosItem[];
@@ -197,7 +198,7 @@ export function PedidosTable({
           </div>
         </div>
 
-        <div className="pva-table-wrap">
+        <div className={PVA_TABLE.wrap}>
           <table className="pva-table">
             <thead>
               <tr>

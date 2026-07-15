@@ -1,3 +1,4 @@
+import { IE_STATE_BOX_COMPACT } from "../ui/stateChrome";
 import { useEffect, useState } from "react";
 import { ChevronDown, Printer, X } from "lucide-react";
 
@@ -133,7 +134,7 @@ export function HistoricoDetailModal({
             </div>
           ) : null}
           {loading ? (
-            <div className="ie-state-box ie-state-box--compact" role="status">
+            <div className={IE_STATE_BOX_COMPACT} role="status">
               Carregando detalhe da inspeção…
             </div>
           ) : null}
@@ -171,7 +172,7 @@ export function HistoricoDetailModal({
               <section className="ie-modal-detail__section" aria-label="Ensaios da inspeção">
                 <h3>Ensaios da inspeção</h3>
                 {tests.length === 0 ? (
-                  <div className="ie-state-box ie-state-box--compact">
+                  <div className={IE_STATE_BOX_COMPACT}>
                     Nenhum ensaio registrado para esta inspeção.
                   </div>
                 ) : (

@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import {
   ArrowLeft,
@@ -113,7 +114,7 @@ export function CommercialDetailPage({
         <div className="dc-detail-page__header">
           <button
             type="button"
-            className="dc-ghost-btn"
+            className={GHOST_BTN}
             onClick={handleBack}
           >
             <ArrowLeft size={16} aria-hidden />
@@ -170,7 +171,7 @@ export function CommercialDetailPage({
           <div className="dc-header-action">
             <button
               type="button"
-              className="dc-ghost-btn"
+              className={GHOST_BTN}
               onClick={detail.reload}
               disabled={detail.loading}
             >
@@ -186,7 +187,7 @@ export function CommercialDetailPage({
           <div className="dc-header-action">
             <button
               type="button"
-              className="dc-ghost-btn"
+              className={GHOST_BTN}
               onClick={handleBack}
             >
               <ArrowLeft size={16} aria-hidden />

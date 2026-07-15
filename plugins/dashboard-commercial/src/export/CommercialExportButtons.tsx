@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { TabularExportButtons } from "@delpi/plugin-ui/index";
 
 import { runCommercialExport } from "./dispatch";
@@ -72,7 +73,7 @@ export function CommercialExportButtons(props: CommercialExportButtonsProps) {
   const {
     disabled = false,
     className = "dc-export-actions",
-    buttonClassName = "dc-ghost-btn dc-export-actions__btn",
+    buttonClassName = `${GHOST_BTN} dc-export-actions__btn`,
     showIcon = true,
   } = props;
 

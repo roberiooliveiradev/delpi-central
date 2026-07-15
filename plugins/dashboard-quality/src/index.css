@@ -28,6 +28,7 @@
   --delpi-ui-surface: var(--dq-card-bg);
   --delpi-ui-text: var(--dq-text);
   --delpi-ui-border: var(--dq-card-border);
+  --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--dq-text-muted);
 }.dashboard-quality button,
 .dashboard-quality input,
@@ -287,13 +288,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dq-grid-gap);
   margin-bottom: var(--dq-section-gap);
-}.dashboard-quality .dq-state-box{
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dq-text-muted);
-  font-size: var(--dq-font-sm);
 }.dashboard-quality .dq-row--clickable{
   cursor: pointer;
 }.dashboard-quality .dq-row--clickable:hover td,
@@ -510,10 +504,6 @@
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-  }.dashboard-quality .dq-state-box{
-    min-height: 120px;
-    border: 1px dashed #ccc;
-    color: #555 !important;
   }.dashboard-quality .dq-table-wrap{
     overflow: visible !important;
   }.dashboard-quality .dq-table{

@@ -55,6 +55,7 @@ import {
 import { formatDecimal, formatInteger } from "../utils/format";
 import { ENGINEERING_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode, normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const PIE_HEIGHT = 320;
 const PIE_RADIUS = 110;
@@ -460,7 +461,7 @@ export function LmpPage({ pathname }: LmpPageProps) {
                 onGranularityChange={setGranularity}
               />
               {evolutionChartData.length === 0 && !loading ? (
-                <p className="ds-state-box">Sem dados para o agrupamento selecionado.</p>
+                <p className={STATE_BOX_EMPTY}>Sem dados para o agrupamento selecionado.</p>
               ) : (
               <ResponsiveContainer width="100%" height={LINE_HEIGHT}>
                 <LineChart data={evolutionChartData}>

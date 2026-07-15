@@ -14,6 +14,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { COMMERCIAL_ROL_SERIES_LABELS } from "../constants/commercialIndicators";
 import type { RolSeriesPoint } from "../hooks/useCommercialRolSeries";
 import { formatChartCurrency } from "../utils/format";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 320;
 
@@ -47,7 +48,7 @@ export function RolEvolutionChart({
 
   if (loading && data.length === 0) {
     return (
-      <div className="dc-state-box" aria-busy="true">
+      <div className={STATE_BOX_EMPTY} aria-busy="true">
         Carregando gráfico…
       </div>
     );
@@ -55,7 +56,7 @@ export function RolEvolutionChart({
 
   if (data.length === 0) {
     return (
-      <div className="dc-state-box">Sem dados para o gráfico no período.</div>
+      <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
     );
   }
 

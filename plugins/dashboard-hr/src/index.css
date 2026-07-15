@@ -28,6 +28,7 @@
   --delpi-ui-surface: var(--dh-card-bg);
   --delpi-ui-text: var(--dh-text);
   --delpi-ui-border: var(--dh-card-border);
+  --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--dh-text-muted);
 }.dashboard-hr button,
 .dashboard-hr input,
@@ -287,13 +288,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dh-grid-gap);
   margin-bottom: var(--dh-section-gap);
-}.dashboard-hr .dh-state-box{
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dh-text-muted);
-  font-size: var(--dh-font-sm);
 }.dashboard-hr .dh-module-shortcut__phase{
   display: inline-block;
   margin-bottom: 8px;
@@ -478,10 +472,6 @@
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-  }.dashboard-hr .dh-state-box{
-    min-height: 120px;
-    border: 1px dashed #ccc;
-    color: #555 !important;
   }.dashboard-hr .dh-table-wrap{
     overflow: visible !important;
   }.dashboard-hr .dh-table{

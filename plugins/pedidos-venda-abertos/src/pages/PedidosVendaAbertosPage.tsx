@@ -1,3 +1,4 @@
+import { PVA_STATE_BOX } from "../ui/stateChrome";
 import {
   AlertTriangle,
   CalendarClock,
@@ -49,7 +50,7 @@ export function PedidosVendaAbertosPage() {
         <PageHeader loading={loading} onRefresh={reload} totalLoaded={allItemsCount} />
 
         {loading && !allItemsCount ? (
-          <div className="pva-state-box" role="status">
+          <div className={PVA_STATE_BOX} role="status">
             Carregando pedidos em aberto…
           </div>
         ) : null}
@@ -64,7 +65,7 @@ export function PedidosVendaAbertosPage() {
         ) : null}
 
         {showEmptyDataset ? (
-          <div className="pva-state-box">Nenhum pedido em aberto encontrado.</div>
+          <div className={PVA_STATE_BOX}>Nenhum pedido em aberto encontrado.</div>
         ) : null}
 
         {!error && allItemsCount > 0 ? (

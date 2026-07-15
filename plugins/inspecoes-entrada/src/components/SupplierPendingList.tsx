@@ -1,3 +1,4 @@
+import { IE_STATE_BOX_COMPACT } from "../ui/stateChrome";
 import type { InspecoesEntradaPendenteFornecedor } from "../types/inspecoesEntradaDashboard";
 import { formatText } from "../utils/format";
 
@@ -15,7 +16,7 @@ export function SupplierPendingList({
   totalPending,
 }: SupplierPendingListProps) {
   if (loading) {
-    return <div className="ie-state-box ie-state-box--compact">Carregando gargalos…</div>;
+    return <div className={IE_STATE_BOX_COMPACT}>Carregando gargalos…</div>;
   }
 
   if (error) {
@@ -27,7 +28,7 @@ export function SupplierPendingList({
   }
 
   if (items.length === 0) {
-    return <div className="ie-state-box ie-state-box--compact">Nenhum fornecedor com pendência encontrado.</div>;
+    return <div className={IE_STATE_BOX_COMPACT}>Nenhum fornecedor com pendência encontrado.</div>;
   }
 
   const maxCount = Math.max(...items.map((item) => item.pending_count), 1);

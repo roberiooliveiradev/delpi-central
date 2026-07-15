@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
-
 import type {
   DespesasLancamentoItem,
   DespesasLancamentosData,
@@ -17,6 +15,9 @@ import { EmptyState } from "./EmptyState";
 import { ErrorState } from "./ErrorState";
 import { LoadingState } from "./LoadingState";
 import { Pagination } from "./Pagination";
+import { NativeTextControl, dataTableBemClasses } from "@delpi/plugin-ui/index";
+
+const FCC_TABLE = dataTableBemClasses("fcc");
 
 type ColumnDef = {
   label: string;
@@ -140,7 +141,7 @@ export function LancamentosTable({
       ) : null}
 
       {items.length > 0 ? (
-        <div className="fcc-table-wrap">
+        <div className={FCC_TABLE.wrap}>
           <table className="fcc-table">
             <thead>
               <tr>

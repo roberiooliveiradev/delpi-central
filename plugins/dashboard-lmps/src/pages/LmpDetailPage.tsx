@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import {
   ArrowLeft,
@@ -35,6 +36,7 @@ import { formatPeriodLabel } from "../utils/dates";
 import { readLmpsFilters, type LmpsFilterUrlState } from "../utils/filterUrl";
 import { navigateLmpsBack } from "../utils/navigation";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_ERROR } from "../ui/stateChrome";
 
 type LmpDetailPageProps = {
   saleNumber: string;
@@ -372,7 +374,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
           <div className="lmps-header-action">
             <button
               type="button"
-              className="lmps-ghost-btn"
+              className={GHOST_BTN}
               onClick={detail.reload}
               disabled={detail.loading}
             >
@@ -388,7 +390,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
           <div className="lmps-header-action">
             <button
               type="button"
-              className="lmps-ghost-btn"
+              className={GHOST_BTN}
               onClick={() => navigateLmpsBack(LMPS_ROUTES.home, backFilters)}
             >
               <ArrowLeft size={16} aria-hidden />
@@ -404,7 +406,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
       </header>
 
       {detail.error ? (
-        <div className="lmps-state-box lmps-state-box-error" role="alert">
+        <div className={STATE_BOX_ERROR} role="alert">
           <p>{detail.error}</p>
           <button type="button" className="lmps-primary-btn" onClick={detail.reload}>
             Tentar novamente

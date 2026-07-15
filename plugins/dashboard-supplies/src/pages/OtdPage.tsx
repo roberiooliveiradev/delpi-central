@@ -35,6 +35,7 @@ import { formatPeriodLabel, formatDisplayDate } from "../utils/dates";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { formatInteger, formatPercent } from "../utils/format";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 320;
 
@@ -269,7 +270,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem série mensal.</div>
+            <div className={STATE_BOX_EMPTY}>Sem série mensal.</div>
           )}
         </ChartCard>
 
@@ -292,7 +293,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Nenhum fornecedor crítico.</div>
+            <div className={STATE_BOX_EMPTY}>Nenhum fornecedor crítico.</div>
           )}
         </ChartCard>
       </section>

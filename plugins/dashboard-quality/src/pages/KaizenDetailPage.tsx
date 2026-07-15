@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import { ArrowLeft, Lightbulb, RefreshCw, Wallet } from "lucide-react";
 
@@ -91,7 +92,7 @@ export function KaizenDetailPage({ kaizenId, pathname }: KaizenDetailPageProps) 
         <div className="dq-page-header__actions">
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={reload}
             disabled={loading}
           >
@@ -100,7 +101,7 @@ export function KaizenDetailPage({ kaizenId, pathname }: KaizenDetailPageProps) 
           </button>
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={() =>
               navigateQualityBack(QUALITY_ROUTES.kaizen, readQualityFilters())
             }
@@ -114,7 +115,7 @@ export function KaizenDetailPage({ kaizenId, pathname }: KaizenDetailPageProps) 
       {error ? (
         <div className="dq-state dq-state--error" role="alert">
           <p>{error}</p>
-          <button type="button" className="dq-ghost-btn" onClick={reload}>
+          <button type="button" className={GHOST_BTN} onClick={reload}>
             Tentar novamente
           </button>
         </div>

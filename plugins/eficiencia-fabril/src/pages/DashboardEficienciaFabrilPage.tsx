@@ -1,3 +1,4 @@
+import { EF_GHOST_BTN } from "../ui/ghostChrome";
 import { useCallback, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -178,7 +179,7 @@ function DashboardEficienciaFabrilContent({
         </div>
         <button
           type="button"
-          className="ef-btn ef-btn--ghost"
+          className={EF_GHOST_BTN}
           onClick={() => reload()}
           disabled={loading}
         >

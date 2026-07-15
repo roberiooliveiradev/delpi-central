@@ -61,6 +61,7 @@ import { buildOeeAppointmentPath } from "../constants/routes";
 import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const PAGE_SIZE = 20;
 
@@ -523,7 +524,7 @@ export function OeePage({ pathname }: OeePageProps) {
           {!oeeSeries.error &&
           oeeSeries.points.length === 0 &&
           !oeeSeries.loading ? (
-            <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
           ) : null}
         </ChartCard>
       </section>

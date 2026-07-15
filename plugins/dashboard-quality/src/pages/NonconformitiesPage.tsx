@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { Download } from "lucide-react";
@@ -39,6 +40,7 @@ import { navigateQuality } from "../utils/navigation";
 import { saveNonconformityDetailRecord } from "../utils/recordDetailStorage";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const DEFAULT_PAGE_SIZE = 20;
 const CHART_HEIGHT = 320;
@@ -314,7 +316,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         actions={
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={handleExportCsv}
             disabled={!data?.items.length}
           >
@@ -382,7 +384,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
           ) : null}
 
           {!chartError && chartData.length === 0 && !chartLoading ? (
-            <div className="dq-state-box">Sem dados para o gráfico no período.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
           ) : null}
 
           {!chartError && (chartData.length > 0 || chartLoading) ? (
@@ -450,7 +452,7 @@ export function NonconformitiesPage({ pathname }: NonconformitiesPageProps) {
         headerActions={
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={handleExportCsv}
             disabled={!data?.items.length}
           >

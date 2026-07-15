@@ -12,7 +12,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
 import {
   fetchDespesasRankingCentros,
   fetchDespesasRankingFornecedores,
@@ -37,6 +36,9 @@ import { EmptyState } from "./EmptyState";
 import { ErrorState } from "./ErrorState";
 import { FccModal } from "./FccModal";
 import { LoadingState } from "./LoadingState";
+import { dataTableBemClasses } from "@delpi/plugin-ui/index";
+
+const FCC_TABLE = dataTableBemClasses("fcc");
 
 const EXPANDED_RANKING_LIMIT = 50;
 const PREVIEW_CHART_HEIGHT = 280;
@@ -169,7 +171,7 @@ function RankingCentrosDetailTable({ items }: { items: DespesasRankingCentroItem
   return (
     <div className="fcc-ranking-detail">
       <h3 className="fcc-ranking-detail__title">Detalhamento</h3>
-      <div className="fcc-table-wrap">
+      <div className={FCC_TABLE.wrap}>
         <table className="fcc-table fcc-ranking-detail__table">
           <thead>
             <tr>
@@ -209,7 +211,7 @@ function RankingFornecedoresDetailTable({ items }: { items: DespesasRankingForne
   return (
     <div className="fcc-ranking-detail">
       <h3 className="fcc-ranking-detail__title">Detalhamento</h3>
-      <div className="fcc-table-wrap">
+      <div className={FCC_TABLE.wrap}>
         <table className="fcc-table fcc-ranking-detail__table">
           <thead>
             <tr>

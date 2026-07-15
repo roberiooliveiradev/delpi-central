@@ -28,6 +28,7 @@
   --delpi-ui-surface: var(--dp-card-bg);
   --delpi-ui-text: var(--dp-text);
   --delpi-ui-border: var(--dp-card-border);
+  --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--dp-text-muted);
 }.dashboard-production button,
 .dashboard-production input,
@@ -337,13 +338,6 @@
   margin-bottom: var(--dp-section-gap);
 }.dashboard-production .dp-chart-section--wide{
   grid-column: 1 / -1;
-}.dashboard-production .dp-state-box{
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dp-text-muted);
-  font-size: var(--dp-font-sm);
 }.dashboard-production .dp-appointments-table-card{
   padding: var(--dp-card-padding);
   border-radius: var(--dp-card-radius);
@@ -787,10 +781,6 @@
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-  }.dashboard-production .dp-state-box{
-    min-height: 120px;
-    border: 1px dashed #ccc;
-    color: #555 !important;
   }.dashboard-production .dp-table-wrap{
     overflow: visible !important;
   }.dashboard-production .dp-table{

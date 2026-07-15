@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 
@@ -98,7 +99,7 @@ export function NonconformityDetailPage(_props: NonconformityDetailPageProps) {
         <div className="dq-page-header__actions">
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={() =>
               navigateQualityBack(QUALITY_ROUTES.nonconformities, readQualityFilters())
             }

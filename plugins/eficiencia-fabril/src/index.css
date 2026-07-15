@@ -125,8 +125,7 @@
   background: var(--app-canvas, var(--bg, #ffffff));
   color: var(--ef-text);
   box-sizing: border-box;
-}.dashboard-eficiencia-fabril .ef-btn--sm,
-.dashboard-eficiencia-fabril .ef-ghost-btn.ef-btn--sm{
+}.dashboard-eficiencia-fabril .ef-btn--sm{
   min-height: 28px;
   padding: 4px 8px;
   font-size: var(--ef-font-xs);
@@ -154,10 +153,6 @@
 }.ef-btn--primary{
   background: var(--ef-accent);
   color: #fff;
-}.ef-btn--ghost{
-  background: transparent;
-  border-color: var(--ef-border);
-  color: var(--ef-text);
 }.ef-efficiency-legend{
   margin: 0 0 16px;
   color: var(--ef-muted);

@@ -1,3 +1,4 @@
+import { EF_GHOST_BTN } from "../ui/ghostChrome";
 import { useEffect } from "react";
 import { X } from "lucide-react";
 
@@ -38,7 +39,7 @@ export function ChartModal({ open, title, subtitle, onClose, children }: ChartMo
             <h2>{title}</h2>
             {subtitle ? <p>{subtitle}</p> : null}
           </div>
-          <button className="ef-btn ef-btn--ghost ef-modal__close" type="button" onClick={onClose}>
+          <button className={`${EF_GHOST_BTN} ef-modal__close`} type="button" onClick={onClose}>
             <X size={16} aria-hidden />
             Fechar
           </button>

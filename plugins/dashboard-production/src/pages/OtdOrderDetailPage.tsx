@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import {
   ArrowLeft,
@@ -244,7 +245,7 @@ export function OtdOrderDetailPage({
         onRefresh={detail.reload}
         refreshing={detail.loading && Boolean(order)}
         actions={
-          <button type="button" className="dp-ghost-btn" onClick={handleBack}>
+          <button type="button" className={GHOST_BTN} onClick={handleBack}>
             <ArrowLeft size={16} aria-hidden="true" />
             Voltar
           </button>

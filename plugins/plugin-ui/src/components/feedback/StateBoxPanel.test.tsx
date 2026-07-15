@@ -21,5 +21,8 @@ describe("StateBoxPanel", () => {
     expect(screen.getByText("Ajuste os filtros.")).toBeTruthy();
     expect(screen.getByTestId("icon")).toBeTruthy();
     expect(document.querySelector(".pc-state-box--empty")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-state-box--empty")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-card")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-state-box__icon")).toBeTruthy();
   });
 });

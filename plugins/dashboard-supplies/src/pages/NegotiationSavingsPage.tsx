@@ -37,6 +37,7 @@ import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatChartCurrency, formatCurrency, formatInteger } from "../utils/format";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 320;
 
@@ -220,7 +221,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem lançamentos no período.</div>
+            <div className={STATE_BOX_EMPTY}>Sem lançamentos no período.</div>
           )}
         </ChartCard>
 
@@ -243,7 +244,7 @@ export function NegotiationSavingsPage({ pathname }: NegotiationSavingsPageProps
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem dados por unidade.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados por unidade.</div>
           )}
         </ChartCard>
       </section>

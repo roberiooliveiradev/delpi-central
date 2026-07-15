@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { DocumentExportActions } from "@delpi/plugin-ui/index";
 
 type ExportActionsProps = {
@@ -26,7 +27,7 @@ export function ExportActions({
       onExportExcel={onExportExcel}
       onExportPdf={onExportPdf}
       className={`dp-export-actions${className ? ` ${className}` : ""}`}
-      buttonClassName="dp-ghost-btn"
+      buttonClassName={GHOST_BTN}
       excelLabel={excelLabel}
       pdfLabel={pdfLabel}
     />

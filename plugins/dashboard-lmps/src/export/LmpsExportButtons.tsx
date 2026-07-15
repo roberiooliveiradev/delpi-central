@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 /**
  * UI genérica CSV/Excel/PDF — domínio e builders permanecem em `dispatch` / builders.
  */
@@ -50,7 +51,7 @@ export function LmpsExportButtons(props: LmpsExportButtonsProps) {
   const {
     disabled = false,
     className = "lmps-export-actions",
-    buttonClassName = "lmps-ghost-btn lmps-export-actions__btn",
+    buttonClassName = `${GHOST_BTN} lmps-export-actions__btn`,
     showIcon = true,
   } = props;
 

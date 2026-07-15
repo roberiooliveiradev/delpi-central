@@ -45,6 +45,7 @@ import {
   exportSalesOrderOtdLinesExcel,
   exportSalesOrderOtdLinesPdf,
 } from "../utils/salesOrderOtdExport";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const PAGE_SIZE = 20;
 
@@ -406,7 +407,7 @@ export function SalesOrderOtdPage({ pathname }: SalesOrderOtdPageProps) {
           {!otdSeries.error &&
           otdSeries.points.length === 0 &&
           !otdSeries.loading ? (
-            <div className="dc-state-box">Sem dados para o gráfico no período.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
           ) : null}
         </ChartCard>
       </section>

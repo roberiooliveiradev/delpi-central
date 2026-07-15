@@ -179,21 +179,10 @@
   background: var(--ie-surface);
   border: 1px solid var(--ie-border);
   border-radius: var(--ie-radius);
-}.ie-state-box,
-.ie-alert{
+}.ie-alert{
   background: var(--ie-surface);
   border: 1px solid var(--ie-border);
   border-radius: var(--ie-radius);
-}.ie-state-box{
-  padding: 20px;
-  color: var(--ie-muted);
-}.ie-state-box--compact{
-  padding: 14px 16px;
-  font-size: var(--ie-font-sm);
-}.ie-state-box--positive{
-  border-color: color-mix(in srgb, var(--ie-success) 25%, var(--ie-border));
-  color: var(--ie-success);
-}.ie-alert{
   padding: 16px 20px;
   display: flex;
   align-items: center;
@@ -212,20 +201,10 @@
   gap: 6px;
   font-size: var(--ie-font-sm);
   min-width: 0;
-}.ie-field--wide{
-  grid-column: span 2;
 }.ie-field span,
 .ie-field__label{
   color: var(--ie-muted);
   font-weight: 500;
-}.ie-field input,
-.ie-field select{
-  min-height: var(--ie-control-height);
-  padding: 0 12px;
-  border: 1px solid var(--ie-border);
-  border-radius: var(--ie-control-radius);
-  background: var(--ie-surface);
-  color: var(--ie-text);
 }/* SelectControl (FilterSelectField) — evita lista/bullets fora do shell */.ie-table-card{
   overflow: hidden;
 }.ie-table-loading{
@@ -510,7 +489,8 @@
     flex: 1;
   }.ie-filter-grid{
     grid-template-columns: 1fr;
-  }.ie-field--wide{
+  }.ie-field--wide,
+  .ie-filter-box--wide{
     grid-column: auto;
   }.ie-dashboard-grid{
     grid-template-columns: 1fr;

@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { ClipboardCheck, Download, Star } from "lucide-react";
@@ -42,6 +43,7 @@ import { formatScore } from "../utils/format";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 300;
 
@@ -199,7 +201,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
         actions={
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={handleExportCsv}
             disabled={items.length === 0}
           >
@@ -263,7 +265,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
       <section className="dq-charts-grid" aria-busy={loading}>
         <ChartCard title="Nota média por área (top 8)">
           {areaChart.length === 0 && !loading ? (
-            <div className="dq-state-box">Sem dados para o gráfico.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico.</div>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={areaChart} layout="vertical" margin={{ left: 8 }}>
@@ -297,7 +299,7 @@ export function Audit5sPage({ pathname }: Audit5sPageProps) {
           />
 
           {scoreChart.length === 0 && !loading ? (
-            <div className="dq-state-box">Sem dados para o gráfico.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico.</div>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <LineChart

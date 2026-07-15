@@ -33,6 +33,7 @@
   --delpi-ui-surface: var(--dc-card-bg);
   --delpi-ui-text: var(--dc-text);
   --delpi-ui-border: var(--dc-card-border);
+  --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--dc-text-muted);
 }.dashboard-commercial button,
 .dashboard-commercial input,
@@ -542,13 +543,6 @@
   color: #81c784;
 }:root[data-theme="dark"] .dashboard-commercial .dc-funnel__goal-gap--below{
   color: #ef9a9a;
-}.dashboard-commercial .dc-state-box{
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dc-text-muted);
-  font-size: var(--dc-font-sm);
 }.dashboard-commercial .dc-history-section{
   display: grid;
   gap: 16px;
@@ -867,7 +861,6 @@
 .dashboard-commercial .dc-ppm-toolbar,
 .dashboard-commercial .dc-totvs-banner,
 .dashboard-commercial .dc-shortcuts-section,
-.dashboard-commercial .delpi-ui-help-tooltip__trigger,
 .dashboard-commercial .dc-state--loading,
 .dashboard-commercial .dc-state--error,
 .dashboard-commercial .dc-state--warning,
@@ -938,10 +931,6 @@
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-  }.dashboard-commercial .dc-state-box{
-    min-height: 120px;
-    border: 1px dashed #ccc;
-    color: #555 !important;
   }.dashboard-commercial .dc-table-wrap{
     overflow: visible !important;
   }.dashboard-commercial .dc-table{

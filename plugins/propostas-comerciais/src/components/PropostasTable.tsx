@@ -1,6 +1,10 @@
+import { dataTableBemClasses } from "@delpi/plugin-ui/index";
 import type { PropostaComercialListItem } from "../types/propostasComerciais";
 import { StatusBadge } from "./StatusBadge";
 import { displayValue } from "../utils/format";
+
+const PC_TABLE = dataTableBemClasses("pc");
+
 
 type PropostasTableProps = {
   items: PropostaComercialListItem[];
@@ -9,7 +13,7 @@ type PropostasTableProps = {
 
 export function PropostasTable({ items, onSelect }: PropostasTableProps) {
   return (
-    <div className="pc-table-wrap">
+    <div className={PC_TABLE.wrap}>
       <table className="pc-table">
         <thead>
           <tr>

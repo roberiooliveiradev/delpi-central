@@ -3,6 +3,7 @@ import { useMemo, type CSSProperties } from "react";
 import { CHART_COLORS } from "../constants/chartColors";
 import { formatInteger, formatPercent } from "../utils/format";
 import type { ClosingRateData } from "../types/commercial";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 type ConversionFunnelChartProps = {
   data: ClosingRateData | null;
@@ -70,7 +71,7 @@ export function ConversionFunnelChart({
   if (loading && !hasData) {
     return (
       <div className="dc-funnel dc-funnel--loading" aria-busy="true">
-        <div className="dc-state-box">Carregando funil…</div>
+        <div className={STATE_BOX_EMPTY}>Carregando funil…</div>
       </div>
     );
   }
@@ -78,7 +79,7 @@ export function ConversionFunnelChart({
   if (!hasData) {
     return (
       <div className="dc-funnel dc-funnel--empty">
-        <div className="dc-state-box">Sem propostas no período filtrado.</div>
+        <div className={STATE_BOX_EMPTY}>Sem propostas no período filtrado.</div>
       </div>
     );
   }

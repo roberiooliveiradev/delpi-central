@@ -2,7 +2,7 @@ import type {
   PropostaComercialItem,
   PropostaComercialItemTextDraft,
 } from "../types/propostasComerciais";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import {NativeTextControl, dataTableBemClasses} from "@delpi/plugin-ui/index";
 import {
   DEFAULT_ITEM_COLUMN_LABELS,
   ITEM_COLUMN_KEYS,
@@ -10,6 +10,9 @@ import {
 } from "../constants/propostaComercialLabels";
 import { displayValue, formatLoteMinimoMil } from "../utils/format";
 import { PcNativeTextAreaControl } from "./pcFormFields";
+
+const PC_TABLE = dataTableBemClasses("pc");
+
 
 type ItensTableReadOnlyProps = {
   items: PropostaComercialItem[];
@@ -95,7 +98,7 @@ export function ItensTable(props: ItensTableProps) {
     : resolveColumnLabels(props.columnLabels);
 
   return (
-    <div className="pc-table-wrap">
+    <div className={PC_TABLE.wrap}>
       <table className="pc-table pc-table--items">
         <thead>
           <tr>

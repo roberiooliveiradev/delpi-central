@@ -1,3 +1,4 @@
+import { IE_STATE_BOX } from "../ui/stateChrome";
 import { useEffect, useState } from "react";
 
 import { branchFromPathname } from "../constants/branch";
@@ -81,7 +82,7 @@ export function HistoricoPage({
       />
 
       {showInitialLoading ? (
-        <div className="ie-state-box" role="status">
+        <div className={IE_STATE_BOX} role="status">
           Carregando histórico de inspeções…
         </div>
       ) : null}
@@ -96,7 +97,7 @@ export function HistoricoPage({
       ) : null}
 
       {showEmpty ? (
-        <div className="ie-state-box">
+        <div className={IE_STATE_BOX}>
           Nenhuma inspeção encontrada para os filtros selecionados.
         </div>
       ) : null}

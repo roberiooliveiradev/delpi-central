@@ -35,6 +35,7 @@ import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/g
 import { formatBranchFilterLabel } from "../utils/branchClientFilters";
 import { formatProtheusDateHuman } from "../utils/dates";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 320;
 
@@ -270,7 +271,7 @@ export function StockPage({ pathname }: StockPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem saldo por localização no período.</div>
+            <div className={STATE_BOX_EMPTY}>Sem saldo por localização no período.</div>
           )}
         </ChartCard>
 
@@ -286,7 +287,7 @@ export function StockPage({ pathname }: StockPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem saldo por unidade.</div>
+            <div className={STATE_BOX_EMPTY}>Sem saldo por unidade.</div>
           )}
         </ChartCard>
       </section>

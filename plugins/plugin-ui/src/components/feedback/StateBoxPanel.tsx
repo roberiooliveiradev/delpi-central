@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type StateBoxVariant = "loading" | "error" | "empty";
 
 export type StateBoxClassNames = {
@@ -20,16 +22,54 @@ export type StateBoxPanelProps = {
   classNames: StateBoxClassNames;
 };
 
+/** Dual `{prefix}-state-box*` + `.delpi-ui-state-box*` (+ card shell). */
 export function stateBoxBemClasses(prefix: string): StateBoxClassNames {
   const base = `${prefix}-state-box`;
+  const card = `${prefix}-card`;
+  const ui = "delpi-ui-state-box";
+  const uiCard = "delpi-ui-card";
+  const shell = delpiUiClass(`${card} ${base}`, `${uiCard} ${ui}`);
 
   return {
-    root: base,
-    rootLoading: `${base} ${base}--loading`,
-    rootError: `${base} ${base}--error`,
-    rootEmpty: `${base} ${base}--empty`,
-    icon: `${base}__icon`,
+    root: shell,
+    rootLoading: delpiUiClass(
+      `${card} ${base} ${base}--loading`,
+      `${uiCard} ${ui} ${ui}--loading`,
+    ),
+    rootError: delpiUiClass(
+      `${card} ${base} ${base}--error`,
+      `${uiCard} ${ui} ${ui}--error`,
+    ),
+    rootEmpty: delpiUiClass(
+      `${card} ${base} ${base}--empty`,
+      `${uiCard} ${ui} ${ui}--empty`,
+    ),
+    icon: delpiUiClass(`${base}__icon`, `${ui}__icon`),
   };
+}
+
+/** Placeholder de gráfico/lista (sem card) — dual `--empty`. */
+export function stateBoxPlaceholderBemClasses(prefix: string): string {
+  return delpiUiClass(
+    `${prefix}-state-box`,
+    "delpi-ui-state-box delpi-ui-state-box--empty",
+  );
+}
+
+/** Placeholder compacto (listas inline) — dual `--empty --compact`. */
+export function stateBoxCompactPlaceholderBemClasses(prefix: string): string {
+  return delpiUiClass(
+    `${prefix}-state-box ${prefix}-state-box--empty ${prefix}-state-box--compact`,
+    "delpi-ui-state-box delpi-ui-state-box--empty delpi-ui-state-box--compact",
+  );
+}
+
+/** Estado de erro inline (sem card) — dual `--error`. */
+export function stateBoxErrorBemClasses(prefix: string): string {
+  return delpiUiClass(
+    `${prefix}-state-box ${prefix}-state-box--error`,
+    "delpi-ui-state-box delpi-ui-state-box--error",
+  );
 }
 
 function resolveRootClass(variant: StateBoxVariant, classNames: StateBoxClassNames): string {

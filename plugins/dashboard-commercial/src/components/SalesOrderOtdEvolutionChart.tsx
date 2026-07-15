@@ -14,6 +14,7 @@ import { CHART_COLORS } from "../constants/chartColors";
 import { COMMERCIAL_OTD_SERIES_LABELS } from "../constants/commercialOtdIndicators";
 import type { SalesOrderOtdSeriesPoint } from "../hooks/useCommercialSalesOrderOtdSeries";
 import { formatPercent } from "../utils/format";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 320;
 
@@ -38,7 +39,7 @@ export function SalesOrderOtdEvolutionChart({
 }: SalesOrderOtdEvolutionChartProps) {
   if (loading && data.length === 0) {
     return (
-      <div className="dc-state-box" aria-busy="true">
+      <div className={STATE_BOX_EMPTY} aria-busy="true">
         Carregando gráfico…
       </div>
     );
@@ -46,7 +47,7 @@ export function SalesOrderOtdEvolutionChart({
 
   if (data.length === 0) {
     return (
-      <div className="dc-state-box">Sem dados para o gráfico no período.</div>
+      <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
     );
   }
 

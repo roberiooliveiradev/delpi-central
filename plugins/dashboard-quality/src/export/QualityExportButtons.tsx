@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { TabularExportButtons } from "@delpi/plugin-ui/index";
 
 import { runQualityExport } from "./dispatch";
@@ -47,7 +48,7 @@ export function QualityExportButtons(props: QualityExportButtonsProps) {
   const {
     disabled = false,
     className = "dq-export-actions",
-    buttonClassName = "dq-ghost-btn dq-export-actions__btn",
+    buttonClassName = `${GHOST_BTN} dq-export-actions__btn`,
     showIcon = true,
   } = props;
 

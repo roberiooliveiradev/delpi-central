@@ -1,7 +1,10 @@
+import { dataTableBemClasses } from "@delpi/plugin-ui/index";
 import type { InspecoesEntradaHistoricoItem } from "../types/inspecoesEntradaHistorico";
 import { formatDatePt, formatNumber, formatText } from "../utils/format";
 import { resolveResultBadge } from "../utils/resultBadge";
 import { ResultBadge } from "./ResultBadge";
+
+const IE_TABLE = dataTableBemClasses("ie");
 
 type HistoricoTableProps = {
   items: InspecoesEntradaHistoricoItem[];
@@ -10,7 +13,7 @@ type HistoricoTableProps = {
 
 export function HistoricoTable({ items, onViewDetails }: HistoricoTableProps) {
   return (
-    <div className="ie-table-wrap">
+    <div className={IE_TABLE.wrap}>
       <table className="ie-table">
         <thead>
           <tr>

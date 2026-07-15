@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import { ArrowLeft, PackageCheck, Truck } from "lucide-react";
 
@@ -72,7 +73,7 @@ export function SalesOrderOtdLineDetailPage({
         <div className="dc-page-header__brand">
           <button
             type="button"
-            className="dc-ghost-btn dc-detail-back"
+            className={`${GHOST_BTN} dc-detail-back`}
             onClick={() => navigateCommercialBack(backPath, filterState)}
           >
             <ArrowLeft size={16} />

@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Banknote,
@@ -70,6 +71,7 @@ import {
   formatNewBusinessRolContextLine,
 } from "../utils/customerSegmentLabel";
 import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 type DashboardCommercialPageProps = {
   isActive?: boolean;
@@ -747,7 +749,7 @@ export function DashboardCommercialPage({
                 payload={rolSeriesExportPayload}
                 disabled={rolSeries.points.length === 0}
                 className="dc-export-actions dc-export-actions--compact"
-                buttonClassName="dc-ghost-btn dc-chart-toolbar__export"
+                buttonClassName={`${GHOST_BTN} dc-chart-toolbar__export`}
               />
             }
           />
@@ -770,7 +772,7 @@ export function DashboardCommercialPage({
           {!rolSeries.error &&
           rolSeries.points.length === 0 &&
           !rolSeries.loading ? (
-            <div className="dc-state-box">Sem dados para o gráfico no período.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
           ) : null}
 
           {rolSeries.truncated ? (
@@ -802,7 +804,7 @@ export function DashboardCommercialPage({
               payload={funnelExportPayload}
               disabled={!closingRate || (closingRate.qtd_proposals ?? 0) === 0}
               className="dc-export-actions dc-export-actions--compact"
-              buttonClassName="dc-ghost-btn dc-chart-toolbar__export"
+              buttonClassName={`${GHOST_BTN} dc-chart-toolbar__export`}
             />
           }
         >

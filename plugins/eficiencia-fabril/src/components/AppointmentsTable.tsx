@@ -1,15 +1,17 @@
+import { EF_GHOST_BTN } from "../ui/ghostChrome";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useCallback, useState } from "react";
-
 import { resolveEficienciaFabrilAppointmentStatus } from "../utils/appointmentStatus";
 import { EF_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { EficienciaFabrilItem } from "../types/eficienciaFabril";
-import { HelpTooltip } from "@delpi/plugin-ui/index";
 import type { AppointmentsSortColumn, SortDirection } from "../utils/appointmentsTableSort";
 import { formatDisplayDate } from "../utils/dates";
 import { exportAppointmentsExcel, exportAppointmentsPdf } from "../utils/exportAppointments";
 import { ExportActions } from "./ExportActions";
 import { formatCurrency, formatPercent, formatProductionQuantity } from "../utils/format";
+import { dataTableBemClasses, HelpTooltip } from "@delpi/plugin-ui/index";
+
+const EF_TABLE = dataTableBemClasses("ef");
 
 type SortableColumn = {
   id: AppointmentsSortColumn;
@@ -146,7 +148,7 @@ export function AppointmentsTable({
           <div className="ef-pagination">
             <button
               type="button"
-              className="ef-btn ef-btn--ghost"
+              className={EF_GHOST_BTN}
               disabled={disabled || page <= 1}
               onClick={() => onPageChange(page - 1)}
             >
@@ -157,7 +159,7 @@ export function AppointmentsTable({
             </span>
             <button
               type="button"
-              className="ef-btn ef-btn--ghost"
+              className={EF_GHOST_BTN}
               disabled={disabled || page >= totalPages}
               onClick={() => onPageChange(page + 1)}
             >
@@ -167,7 +169,7 @@ export function AppointmentsTable({
         </div>
       </header>
 
-      <div className="ef-table-wrap">
+      <div className={EF_TABLE.wrap}>
         <table className="ef-table ef-table--sortable">
           <thead>
             <tr>

@@ -311,7 +311,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.3** | `minha-delpi-chat` admin — **B** domínio isolado (`mdc-admin-*` / `mdc-audit-*`); overrides kit zerados | ✅ |
 | **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ✅ |
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ✅ |
-| **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ⏳ |
+| **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ✅ |
 | **7.7** | Gate CI anti-reintrodução (opcional) | ⏳ backlog |
 
 ### Checklist por plugin (preencher ao fechar onda)
@@ -330,8 +330,14 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `financeiro-inadimplencia` | 7.4 | ✅ | secondary `createSimpleKpiCard`; hero/ranking domínio `fi-kpi-hero*` | ✅ | sem dual-class parcial no hero |
 | `inspecoes-processo` | 7.5 | ✅ | Empty dual `state-box--empty`; Pagination → CompactPagination (`hasNext` sintético) | ✅ | chrome ip-pagination/ip-empty removido |
 | `strategic-indicators` | 7.5 | — | ✅ DataTable kit `si` | ✅ `dataTableBemClasses` | `DataTable.css` removido |
-| `dashboard-*` (8) | 7.6 | ⏳ | — | ✅ wrappers | state-box/table/print |
-| P2 demais | 7.6 | ⏳ | filtersUi MEDIUM | ⏳ | SM, PA, IE, PVA, EF, PC, … |
+| `dashboard-*` (8) | 7.6 | ✅ | state/ghost chrome helpers; print sem `.delpi-ui-*` | ✅ | state-box/ghost dual; token `--delpi-ui-state-box-min-height`; print hide help-tooltip só no kit |
+| `scrap-monitoring` | 7.6 | ✅ | Empty → `emptyStateCardBemClasses` | ✅ | Error via `createStateBoxPanel` dual no kit; CSS state-box removido |
+| `production-appointments` | 7.6 | ✅ | ErrorState dual card+error | ✅ | Empty/Loading já dual; chrome state-box podado |
+| `inspecoes-entrada` | 7.6 | ✅ | state Chrome + `filtersRowBemClasses` | ✅ | compact/positive no kit; table-wrap dual; alert domínio |
+| `pedidos-venda-abertos` | 7.6 | ✅ | state + filtersUi dual | ✅ | ghost espelho `.pva-ghost-btn` removido; `pva-btn--ghost` domínio OK |
+| `eficiencia-fabril` | 7.6 | ✅ | `EF_GHOST_BTN` + table-wrap dual | ✅ | `.ef-btn--ghost` chrome removido; paginação inline domínio |
+| `propostas-comerciais` | 7.6 | ✅ | StateBoxPanel dual via kit | ✅ | CSS `.pc-state-box*` removido; table-wrap dual |
+| `financeiro-centro-custo` | 7.6 | ✅ | Empty/Loading card dual; Error dual | ✅ | `.fcc-state*` removido; filtersUi já dual |
 
 ### DoD de um plugin na Fase 7
 
@@ -358,6 +364,17 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 |--------|-----|----------|
 | `inspecoes-processo` | CompactPagination + EmptyState dual; `disabled` no kit; `:has(> h3)` no empty | `ip-button` ghost local; layout de página |
 | `strategic-indicators` | `DataTable` + `dataTableBemClasses("si")` | células admin (`si-admin-table-cell`) |
+
+### Onda 7.6 — dashboard-* + P2
+
+| Para o kit (`plugin-ui/src/styles/` + factories) | Leftovers de domínio (OK no MFE) |
+|-------------------------------------------------|----------------------------------|
+| `stateBoxBemClasses` dual (card + icon + `--error/--empty`) | Print layout dept. (`dc-print-*`, hide pagination/nav) |
+| `stateBoxPlaceholderBemClasses` / `--compact` / `--positive` | `*-ghost-btn--sm` / `ef-btn--sm` (só tamanho) |
+| Icon layout `state-box__icon` + h2 no painel | `ie-alert` / `pva-alert`; grids de página/KPI |
+| (print help-tooltip já na 7.4) | `pva-btn--ghost` (shell de botão local, não espelho kit) |
+| | Paginação inline EF; table th/td domínio onde não é DataTable kit |
+| | Filter `--wide` / label layout; appointments table domínio |
 
 ---
 

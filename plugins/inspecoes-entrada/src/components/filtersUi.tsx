@@ -2,20 +2,18 @@ import {
   FilterInputField as PluginFilterInputField,
   FilterSelectField as PluginFilterSelectField,
   createFilterBarShell,
+  filtersRowBemClasses,
   selectControlBemClasses,
-  type FilterInputFieldClassNames,
+  withBemModifier,
   type FilterInputFieldProps,
   type FilterSelectFieldProps,
 } from "@delpi/plugin-ui/index";
 
-const FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
-  filterBox: "ie-field",
-  fieldLabel: "ie-field__label",
-};
+const FIELD_CLASS_NAMES = filtersRowBemClasses("ie");
 
-const WIDE_FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
-  filterBox: "ie-field ie-field--wide",
-  fieldLabel: "ie-field__label",
+const WIDE_FIELD_CLASS_NAMES = {
+  ...FIELD_CLASS_NAMES,
+  filterBox: withBemModifier(FIELD_CLASS_NAMES.filterBox, "wide"),
 };
 
 const SELECT_CLASS_NAMES = selectControlBemClasses("ie");

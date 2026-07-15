@@ -178,15 +178,6 @@
   font-size: var(--pa-font-xs);
   background: color-mix(in srgb, var(--pa-accent) 14%, transparent);
   color: var(--pa-title);
-}.dashboard-production-appointments .pa-state-box{
-  padding: 1.25rem 1.35rem;
-}.dashboard-production-appointments .pa-state-box p{
-  margin: 0 0 0.85rem;
-  color: var(--pa-text-muted);
-}.dashboard-production-appointments .pa-state-box--error{
-  border-color: var(--pa-danger-border);
-}.dashboard-production-appointments .pa-state-box--empty p{
-  margin: 0;
 }@keyframes pa-loading-indeterminate{
   0% {
     transform: translateX(-100%);

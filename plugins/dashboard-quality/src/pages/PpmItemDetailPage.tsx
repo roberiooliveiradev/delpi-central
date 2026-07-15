@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 
@@ -80,7 +81,7 @@ export function PpmItemDetailPage(_props: PpmItemDetailPageProps) {
         <div className="dq-page-header__actions">
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={() => navigateQualityBack(QUALITY_ROUTES.ppm, readQualityFilters())}
           >
             <ArrowLeft size={16} />

@@ -141,3 +141,56 @@
 .delpi-ui-state-box p:last-child {
   margin-bottom: 0;
 }
+
+/** Painel com ícone (StateBoxPanel) — layout esquerda + tipografia. */
+.delpi-ui-state-box:has(> .delpi-ui-state-box__icon) {
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 14px;
+  text-align: left;
+  min-height: 0;
+}
+
+.delpi-ui-state-box__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-state-box--error .delpi-ui-state-box__icon {
+  color: var(--delpi-ui-danger, var(--danger, #b42318));
+}
+
+.delpi-ui-state-box--success .delpi-ui-state-box__icon,
+.delpi-ui-state-box--positive .delpi-ui-state-box__icon {
+  color: var(--delpi-ui-success, var(--success, #15803d));
+}
+
+.delpi-ui-state-box:has(> .delpi-ui-state-box__icon) h2,
+.delpi-ui-state-box:has(> .delpi-ui-state-box__icon) h3 {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-state-box--compact {
+  min-height: 0;
+  padding: 14px 16px;
+  font-size: var(--delpi-ui-font-sm, 13px);
+}
+
+/** Mensagem positiva (ex.: «nenhuma rejeição»). */
+.delpi-ui-state-box--positive {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-success, var(--success, #22c55e)) 35%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+  color: var(--delpi-ui-success, var(--success, #15803d));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-success, var(--success, #22c55e)) 8%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}

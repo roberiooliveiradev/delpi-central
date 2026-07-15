@@ -45,6 +45,7 @@ import { buildOtdOrderPath } from "../utils/routeParser";
 import { normalizeOperationalUnitCode } from "../utils/operationalUnitLabels";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const PAGE_SIZE = 20;
 
@@ -359,7 +360,7 @@ export function OtdPage({ pathname }: OtdPageProps) {
             {!otdSeries.error &&
             otdSeries.points.length === 0 &&
             !otdSeries.loading ? (
-              <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+              <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
             ) : null}
           </ChartCard>
       </section>

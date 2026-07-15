@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -407,14 +408,14 @@ export function OeeAppointmentDetailPage({
             {appointment?.production_order ? (
               <button
                 type="button"
-                className="dp-ghost-btn"
+                className={GHOST_BTN}
                 onClick={handleOpenProductionOrder}
               >
                 <ExternalLink size={16} aria-hidden="true" />
                 Ver OP
               </button>
             ) : null}
-            <button type="button" className="dp-ghost-btn" onClick={handleBack}>
+            <button type="button" className={GHOST_BTN} onClick={handleBack}>
               <ArrowLeft size={16} aria-hidden="true" />
               Voltar
             </button>

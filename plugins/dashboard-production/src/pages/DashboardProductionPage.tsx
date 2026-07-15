@@ -53,6 +53,7 @@ import {
 import { formatPercent } from "../utils/format";
 import { resolveApiBranch } from "../utils/branchClientFilters";
 import { formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 300;
 
@@ -474,7 +475,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             {!oeeSeries.error &&
             oeeSeries.points.length === 0 &&
             !oeeSeries.loading ? (
-              <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+              <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
             ) : null}
 
             {oeeSeries.truncated ? (
@@ -534,7 +535,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
             {!otdSeries.error &&
             otdSeries.points.length === 0 &&
             !otdSeries.loading ? (
-              <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+              <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
             ) : null}
 
             {otdSeries.truncated ? (
@@ -583,7 +584,7 @@ export function DashboardProductionPage({ pathname }: { pathname?: string }) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="dp-state-box">Sem dados para o gráfico no período.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
           )}
         </ChartCard>
       </section>

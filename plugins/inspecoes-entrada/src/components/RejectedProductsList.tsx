@@ -1,3 +1,4 @@
+import { IE_STATE_BOX_COMPACT_POSITIVE, IE_STATE_BOX_COMPACT } from "../ui/stateChrome";
 import type { InspecoesEntradaRejeitadaProduto } from "../types/inspecoesEntradaDashboard";
 import { formatDateTimePt, formatNumber, formatText } from "../utils/format";
 
@@ -26,7 +27,7 @@ export function RejectedProductsList({
   total,
 }: RejectedProductsListProps) {
   if (loading) {
-    return <div className="ie-state-box ie-state-box--compact">Carregando rejeições…</div>;
+    return <div className={IE_STATE_BOX_COMPACT}>Carregando rejeições…</div>;
   }
 
   if (error) {
@@ -39,7 +40,7 @@ export function RejectedProductsList({
 
   if (items.length === 0) {
     return (
-      <div className="ie-state-box ie-state-box--compact ie-state-box--positive">
+      <div className={IE_STATE_BOX_COMPACT_POSITIVE}>
         Nenhuma rejeição registrada para esta filial.
       </div>
     );

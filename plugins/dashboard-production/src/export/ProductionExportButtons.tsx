@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { TabularExportButtons } from "@delpi/plugin-ui/index";
 
 import { runProductionExport } from "./dispatch";
@@ -50,7 +51,7 @@ export function ProductionExportButtons(props: ProductionExportButtonsProps) {
   const {
     disabled = false,
     className = "dp-export-actions",
-    buttonClassName = "dp-ghost-btn dp-export-actions__btn",
+    buttonClassName = `${GHOST_BTN} dp-export-actions__btn`,
     showIcon = true,
   } = props;
 

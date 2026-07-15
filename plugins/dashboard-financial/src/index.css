@@ -28,6 +28,7 @@
   --delpi-ui-surface: var(--ds-card-bg);
   --delpi-ui-text: var(--ds-text);
   --delpi-ui-border: var(--ds-card-border);
+  --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--ds-text-muted);
 }.dashboard-financial button,
 .dashboard-financial input,
@@ -321,13 +322,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ds-grid-gap);
   margin-bottom: var(--ds-section-gap);
-}.dashboard-financial .ds-state-box{
-  min-height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ds-text-muted);
-  font-size: var(--ds-font-sm);
 }.dashboard-financial .ds-module-shortcut__phase{
   display: inline-block;
   margin-bottom: 8px;
@@ -512,10 +506,6 @@
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-  }.dashboard-financial .ds-state-box{
-    min-height: 120px;
-    border: 1px dashed #ccc;
-    color: #555 !important;
   }.dashboard-financial .ds-table-wrap{
     overflow: visible !important;
   }.dashboard-financial .ds-table{

@@ -27,6 +27,7 @@
   --delpi-ui-surface: var(--sm-surface);
   --delpi-ui-text: var(--sm-text);
   --delpi-ui-border: var(--sm-border);
+  --delpi-ui-state-box-min-height: 120px;
   --delpi-ui-muted: var(--sm-text-muted);
 }.dashboard-scrap-monitoring.dashboard-page{
   width: 100%;
@@ -134,27 +135,6 @@
   border-radius: 10px;
   padding: 8px 10px;
   font-size: var(--sm-font-sm);
-}.dashboard-scrap-monitoring .sm-state-box{
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  background: var(--sm-surface);
-  border: 1px solid var(--sm-border);
-  border-radius: var(--sm-card-radius);
-  padding: 28px 24px;
-}.dashboard-scrap-monitoring .sm-state-box__icon{
-  color: var(--sm-accent);
-  flex-shrink: 0;
-}.dashboard-scrap-monitoring .sm-state-box h2,
-.dashboard-scrap-monitoring .sm-state-box h3{
-  margin: 0 0 8px;
-}.dashboard-scrap-monitoring .sm-state-box p{
-  margin: 0 0 16px;
-  color: var(--sm-text-muted);
-}.dashboard-scrap-monitoring .sm-state-box--error{
-  border-color: color-mix(in srgb, var(--sm-danger) 35%, var(--sm-border));
-}.dashboard-scrap-monitoring .sm-state-box--error .sm-state-box__icon{
-  color: var(--sm-danger);
 }.dashboard-scrap-monitoring .sm-detail-page__header{
   display: flex;
   justify-content: space-between;

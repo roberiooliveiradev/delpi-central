@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useCallback, useMemo, useState } from "react";
 import { useChartGranularitySelection } from "@delpi/plugin-ui/index";
 import { Download, Lightbulb, Wallet } from "lucide-react";
@@ -49,6 +50,7 @@ import { navigateQuality } from "../utils/navigation";
 import type { TimeSeriesPoint } from "../utils/timeSeriesAggregation";
 import { QUALITY_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { OPERATIONAL_UNIT_COLUMN_LABEL, formatOperationalUnitCode } from "../utils/operationalUnitLabels";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 300;
 
@@ -262,7 +264,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
         actions={
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={handleExportCsv}
             disabled={listItems.length === 0}
           >
@@ -346,7 +348,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
           />
 
           {periodChart.length === 0 && !loading ? (
-            <div className="dq-state-box">Sem dados para o gráfico.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico.</div>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <LineChart
@@ -391,7 +393,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       <section className="dq-charts-grid" aria-busy={loading}>
         <ChartCard title="Kaizens por status">
           {statusChart.length === 0 && !loading ? (
-            <div className="dq-state-box">Sem dados para o gráfico.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico.</div>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <PieChart>
@@ -420,7 +422,7 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
 
         <ChartCard title="Economia por setor (top 8)">
           {sectorChart.length === 0 && !loading ? (
-            <div className="dq-state-box">Sem dados para o gráfico.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico.</div>
           ) : (
             <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
               <BarChart data={sectorChart} layout="vertical" margin={{ left: 8 }}>

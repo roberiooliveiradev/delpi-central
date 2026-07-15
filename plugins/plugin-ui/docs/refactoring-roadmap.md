@@ -400,8 +400,8 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Plugin / grupo | Violações típicas | Onda sugerida |
 |----------------|-------------------|---------------|
-| `dashboard-{production,commercial,quality,financial,hr,engineering,supplies,lmps}` | state-box, table mobile, print, ghost | **7.6** |
-| `scrap-monitoring`, `production-appointments`, `inspecoes-entrada`, `pedidos-venda-abertos`, `eficiencia-fabril`, `propostas-comerciais`, financeiros | filters/state-box/pagination CSS; filtersUi MEDIUM | **7.6** |
+| `dashboard-{production,commercial,quality,financial,hr,engineering,supplies,lmps}` | state-box, table mobile, print, ghost → ✅ onda 7.6 | **7.6** ✅ |
+| `scrap-monitoring`, `production-appointments`, `inspecoes-entrada`, `pedidos-venda-abertos`, `eficiencia-fabril`, `propostas-comerciais`, financeiros | filters/state-box/pagination CSS → ✅ onda 7.6 | **7.6** ✅ |
 | `controle-retrabalhos` | residual margin / `.cr-card:not` → ✅ onda 7.2 (stack-safe no kit) | **7.2** |
 
 #### Limpos (referência — sem chrome das patterns)
@@ -418,7 +418,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **7.3** | `minha-delpi-chat` admin UI — **path B** (domínio isolado) | 0 seletores de classe do kit no CSS; AdminKpi/DataTable/AuditPagination como `mdc-admin-*` / `mdc-audit-*` (não dual-class shell); checkbox/switch/toolbar = kit + tokens | ✅ |
 | **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ✅ kit: print help-tooltip, `analytics-kpi.css`, state-box dismiss/success, ghost `--active`, table ghost compact; MFEs zeraram `.delpi-ui-*` |
 | **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ✅ CompactPagination (`disabled` + `hasNext` sintético); EmptyState dual `state-box--empty`; SI DataTable kit (CSS local removido) |
-| **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ⏳ |
+| **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ✅ kit: `stateBoxBemClasses` dual + placeholder/compact/positive; MFEs 0× `.delpi-ui-*`; ghost/state dual |
 | **7.7** | Gate CI opcional (`audit` seletores `.delpi-ui-` / BEM espelho em `plugins/*/src/**/*.css`) | Falha CI se reintroduzir | ⏳ backlog |
 
 ### 8.4 Ordem operacional por PR
@@ -433,7 +433,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | Item | Nota |
 |------|------|
 | UI 100% domínio (fishbone PAC, presentation SI PanZoom, …) | CSS no MFE **ok** se **não** for export/dual-class do kit |
-| `@media print` hide de help-tooltip | Preferir utilitário no kit (onda 7.1/7.6); não deixar seletor `.delpi-ui-*` permanente no MFE |
+| `@media print` hide de help-tooltip | Utilitário no kit (ondas 7.1/7.4); MFE commercial sem seletor `.delpi-ui-*` (onda 7.6) |
 | Admin chat se permanecer domínio | Renomear classes para **não** parecer shell KPI/filter do kit |
 
 ---

@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, Factory, Truck } from "lucide-react";
 
@@ -318,7 +319,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
         actions={
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={handleExportCsv}
             disabled={!tablePage?.items.length}
           >
@@ -459,7 +460,7 @@ export function PpmPage({ pathname }: PpmPageProps) {
         headerActions={
           <button
             type="button"
-            className="dq-ghost-btn dq-no-print"
+            className={`${GHOST_BTN} dq-no-print`}
             onClick={handleExportCsv}
             disabled={!tablePage?.items.length}
           >

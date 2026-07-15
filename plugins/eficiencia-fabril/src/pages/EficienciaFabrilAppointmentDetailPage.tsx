@@ -1,6 +1,6 @@
+import { EF_GHOST_BTN } from "../ui/ghostChrome";
 import { useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, Boxes, CircleGauge, Clock3, Factory, RefreshCw } from "lucide-react";
-
 import { ProductStructureTree } from "../components/ProductStructureTree";
 import { AppointmentTimeFindings } from "../components/AppointmentTimeFindings";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
@@ -32,6 +32,9 @@ import {
   exportAppointmentDetailExcel,
   exportAppointmentDetailPdf,
 } from "../utils/appointmentDetailExport";
+import { dataTableBemClasses } from "@delpi/plugin-ui/index";
+
+const EF_TABLE = dataTableBemClasses("ef");
 
 type EficienciaFabrilAppointmentDetailPageProps = {
   appointmentId: string;
@@ -325,7 +328,7 @@ export function EficienciaFabrilAppointmentDetailPage({
             ) : null}
             <button
               type="button"
-              className="ef-btn ef-btn--ghost"
+              className={EF_GHOST_BTN}
               onClick={detail.reload}
               disabled={detail.loading}
             >
@@ -334,7 +337,7 @@ export function EficienciaFabrilAppointmentDetailPage({
             </button>
             <button
               type="button"
-              className="ef-btn ef-btn--ghost"
+              className={EF_GHOST_BTN}
               onClick={() => navigateEficienciaFabrilBack(backPath)}
             >
               <ArrowLeft size={16} aria-hidden />
@@ -421,7 +424,7 @@ export function EficienciaFabrilAppointmentDetailPage({
                   <p>SG2010 — operação do apontamento destacada</p>
                 </div>
               </header>
-              <div className="ef-table-wrap">
+              <div className={EF_TABLE.wrap}>
                 <table className="ef-table ef-table--routing">
                   <thead>
                     <tr>

@@ -16,6 +16,7 @@ import type { PpmChartReferenceLine } from "../constants/ppmReferenceLines";
 import type { PpmSeriesPoint } from "../hooks/usePpmChartSeries";
 import type { DualPpmSeriesPoint } from "../utils/mergePpmSeries";
 import { formatDecimal } from "../utils/format";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 320;
 
@@ -42,7 +43,7 @@ export function PpmEvolutionChart({
 
   if (loading && data.length === 0) {
     return (
-      <div className="dq-state-box" aria-busy="true">
+      <div className={STATE_BOX_EMPTY} aria-busy="true">
         Carregando gráfico…
       </div>
     );
@@ -50,7 +51,7 @@ export function PpmEvolutionChart({
 
   if (data.length === 0) {
     return (
-      <div className="dq-state-box">Sem dados para o gráfico no período.</div>
+      <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico no período.</div>
     );
   }
 

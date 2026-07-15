@@ -1,3 +1,4 @@
+import { GHOST_BTN } from "../ui/ghostChrome";
 import { Printer } from "lucide-react";
 
 type PrintReportButtonProps = {
@@ -27,7 +28,7 @@ export function PrintReportButton({
   return (
     <button
       type="button"
-      className="dq-ghost-btn dq-no-print"
+      className={`${GHOST_BTN} dq-no-print`}
       onClick={triggerPrint}
       disabled={disabled}
       aria-label="Imprimir relatório da página"

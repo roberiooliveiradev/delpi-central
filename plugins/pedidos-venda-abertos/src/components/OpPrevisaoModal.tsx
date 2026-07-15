@@ -1,3 +1,5 @@
+import { dataTableBemClasses } from "@delpi/plugin-ui/index";
+import { PVA_STATE_BOX } from "../ui/stateChrome";
 import type { PedidosVendaAbertosItem } from "../types/pedidosVendaAbertos";
 import { formatDisplayDate, resolveOpVsPedidoPrazo } from "../utils/dates";
 import { formatQuantity } from "../utils/format";
@@ -5,6 +7,9 @@ import { getLineOpPrevisao } from "../utils/opAllocation";
 import { getAllocatedStock } from "../utils/stockAllocation";
 import { PvaModal } from "./PvaModal";
 import { StatusBadge } from "./StatusBadge";
+
+const PVA_TABLE = dataTableBemClasses("pva");
+
 
 type OpPrevisaoModalProps = {
   item: PedidosVendaAbertosItem | null;
@@ -68,7 +73,7 @@ export function OpPrevisaoModal({ item, open, onClose }: OpPrevisaoModalProps) {
         </section>
 
         {previsao.opsUtilizadas.length > 0 ? (
-          <div className="pva-table-wrap pva-op-modal__table-wrap">
+          <div className={`${PVA_TABLE.wrap} pva-op-modal__table-wrap`}>
             <table className="pva-table pva-op-modal__table">
               <thead>
                 <tr>
@@ -111,7 +116,7 @@ export function OpPrevisaoModal({ item, open, onClose }: OpPrevisaoModalProps) {
             </table>
           </div>
         ) : (
-          <p className="pva-state-box">Nenhuma OP alocada para esta linha.</p>
+          <p className={PVA_STATE_BOX}>Nenhuma OP alocada para esta linha.</p>
         )}
       </div>
     </PvaModal>

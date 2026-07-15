@@ -33,6 +33,7 @@ import {
 } from "../utils/format";
 import { buildKpiGoalPresentation, formatDashboardMetricValue } from "../utils/goalDisplay";
 import { SUPPLIES_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const CHART_HEIGHT = 320;
 
@@ -229,7 +230,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem dados de CPV por CFOP.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados de CPV por CFOP.</div>
           )}
         </ChartCard>
 
@@ -245,7 +246,7 @@ export function CpvPage({ pathname }: CpvPageProps) {
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div className="ds-state-box">Sem dados por TM.</div>
+            <div className={STATE_BOX_EMPTY}>Sem dados por TM.</div>
           )}
         </ChartCard>
       </section>

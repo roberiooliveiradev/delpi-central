@@ -42,6 +42,7 @@ import {
   formatInteger,
   formatRoiRatio,
 } from "../utils/format";
+import { STATE_BOX_EMPTY } from "../ui/stateChrome";
 
 const LINE_CHART_HEIGHT = 320;
 const TOP_BAR_ROW_HEIGHT = 40;
@@ -324,7 +325,7 @@ export function TransformaPage({ pathname }: TransformaPageProps) {
             onGranularityChange={setGranularity}
           />
           {savingsChartData.length === 0 && !isBusy ? (
-            <p className="ds-state-box">
+            <p className={STATE_BOX_EMPTY}>
               Sem economia líquida no período para o agrupamento selecionado.
             </p>
           ) : (

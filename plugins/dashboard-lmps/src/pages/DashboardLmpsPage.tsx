@@ -60,6 +60,7 @@ import {
   needsClientSideFilter,
   resolveLmpsApiFilters,
 } from "../utils/lmpsClientFilters";
+import { STATE_BOX_EMPTY, STATE_BOX_ERROR } from "../ui/stateChrome";
 
 const PRIMARY_CHART_COLOR = "#089bdb";
 const SECONDARY_CHART_COLOR = "#003866";
@@ -572,14 +573,14 @@ export function DashboardLmpsPage({
       {error && !hasData && !loading ? (
         <section className="lmps-charts-grid">
           <ChartCard title="Erro">
-            <div className="lmps-state-box lmps-state-box-error">{error}</div>
+            <div className={STATE_BOX_ERROR}>{error}</div>
           </ChartCard>
         </section>
       ) : null}
 
       {error && hasData && !loading ? (
         <section className="lmps-charts-grid">
-          <div className="lmps-state-box lmps-state-box-error">
+          <div className={STATE_BOX_ERROR}>
             Não foi possível atualizar os dados. Exibindo última carga válida.{" "}
             {error}
           </div>
@@ -676,7 +677,7 @@ export function DashboardLmpsPage({
                     onGranularityChange={setGranularity}
                   />
                   {evolutionChartData.length === 0 && !loading ? (
-                    <div className="lmps-state-box">
+                    <div className={STATE_BOX_EMPTY}>
                       Sem dados para o agrupamento selecionado.
                     </div>
                   ) : (

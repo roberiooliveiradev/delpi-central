@@ -2,18 +2,16 @@ import {
   FilterInputField as PluginFilterInputField,
   createDashboardFiltersKit,
   createFilterBarShell,
-  type FilterInputFieldClassNames,
+  filtersRowBemClasses,
+  withBemModifier,
   type FilterInputFieldProps,
 } from "@delpi/plugin-ui/index";
 
-const FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
-  filterBox: "pva-field",
-  fieldLabel: "pva-field__label",
-};
+const FIELD_CLASS_NAMES = filtersRowBemClasses("pva");
 
-const WIDE_FIELD_CLASS_NAMES: FilterInputFieldClassNames = {
-  filterBox: "pva-field pva-field--wide",
-  fieldLabel: "pva-field__label",
+const WIDE_FIELD_CLASS_NAMES = {
+  ...FIELD_CLASS_NAMES,
+  filterBox: withBemModifier(FIELD_CLASS_NAMES.filterBox, "wide"),
 };
 
 export const FilterBarShell = createFilterBarShell({
@@ -22,9 +20,7 @@ export const FilterBarShell = createFilterBarShell({
   defaultAriaLabel: "Filtros",
 });
 
-const {
-  FilterSelectField: KitFilterSelectField,
-} = createDashboardFiltersKit({
+const { FilterSelectField: KitFilterSelectField } = createDashboardFiltersKit({
   prefix: "pva",
   portalScopeClassName: "dashboard-pedidos-venda-abertos",
   labels: { filtersAriaLabel: "Filtros" },
