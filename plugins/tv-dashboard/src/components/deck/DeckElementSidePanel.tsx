@@ -173,6 +173,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
         .join(" ")}
       style={panelStyle}
       aria-label="Painel de formatação"
+      data-delpi-ui-density="compact"
     >
       {open ? (
         <>
@@ -195,6 +196,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
             activeTabId={tab}
             onTabChange={(id) => handleTabChange(id as SelectionPanelTab)}
             bodyClassName="td-deck-side-panel__pane-body"
+            density="compact"
           >
             {isElementFormatPanelTab(tab) ? (
               <ComunicadoElementInspector

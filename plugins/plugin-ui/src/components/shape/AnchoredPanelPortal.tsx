@@ -47,6 +47,11 @@ export type AnchoredPanelPortalProps = {
    * exclusivos. Use false para overlays aninhados (select/combobox internos).
    */
   exclusive?: boolean;
+  /**
+   * Densidade visual do kit (`data-delpi-ui-density`).
+   * compact = ribbon / catálogo / popovers densos (host-density-compact.css).
+   */
+  density?: "comfortable" | "compact";
   children: ReactNode;
 };
 
@@ -66,6 +71,7 @@ export function AnchoredPanelPortal({
   portalScopeClassName,
   onDismiss,
   exclusive = true,
+  density,
   children,
 }: AnchoredPanelPortalProps) {
   const reactId = useId();
@@ -137,6 +143,7 @@ export function AnchoredPanelPortal({
       role={role}
       aria-label={ariaLabel}
       data-delpi-anchored-exclusive={exclusive ? "true" : "false"}
+      {...(density ? { "data-delpi-ui-density": density } : {})}
     >
       {children}
     </div>

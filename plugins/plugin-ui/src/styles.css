@@ -9,6 +9,7 @@
 @import "./styles/centered-scaled-preview.css";
 @import "./styles/data-route-catalog.css";
 @import "./styles/format-pane.css";
+@import "./styles/host-density-compact.css";
 @import "./styles/native-controls.css";
 @import "./styles/select-control.css";
 @import "./styles/multi-select.css";

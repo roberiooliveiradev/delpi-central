@@ -1030,8 +1030,7 @@
   min-width: 0;
 }
 
-.tdp-data-block--table .tdp-configurable-table,
-.tdp-data-block--table .delpi-ui-config-table {
+.tdp-data-block--table .tdp-configurable-table {
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -1039,7 +1038,7 @@
 }
 
 .tdp-data-block--chart {
-  /* Office: moldura/fill/radius vêm do chartArea (.delpi-ui-series-chart).
+  /* Office: moldura/fill/radius vêm do chartArea (kit series-chart).
      Fundo branco aqui é quadrado e “quebra” cantos arredondados do filho. */
   padding: 0;
   overflow: visible;
@@ -1063,14 +1062,6 @@
   color: var(--tdp-data-text, #1e293b);
   border: none;
   border-radius: 0;
-}
-
-.tdp-data-block--chart > .delpi-ui-series-chart-shell {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  /* Sombra no shell (não no card com overflow:hidden). */
-  box-shadow: var(--tdp-block-box-shadow, none);
 }
 
 .tdp-centered-scaled-preview {
@@ -1150,58 +1141,6 @@
   min-height: 0;
   display: flex;
   align-items: stretch;
-}
-
-.tdp-kpi-view__cell .delpi-kpi-card-shell,
-.tdp-kpi-view__cell .delpi-kpi-card {
-  width: 100%;
-  height: 100%;
-}
-
-.tdp-kpi-view .delpi-kpi-card-shell,
-.tdp-kpi-view .delpi-kpi-card {
-  height: 100%;
-  width: 100%;
-}
-
-/* KPI — tipografia pelo contraste do fundo do card (não herda tema chrome do host). */
-.tdp-kpi-view .delpi-kpi-card-shell {
-  /* Sombra no shell — overflow:hidden do card não corta o blur. */
-  box-shadow: var(--tdp-block-box-shadow, var(--delpi-kpi-card-shadow, none));
-  border-radius: var(--delpi-kpi-card-radius, 16px);
-}
-
-.tdp-kpi-view .delpi-kpi-card {
-  background: var(--delpi-kpi-card-bg, #ffffff);
-  border-width: var(--delpi-kpi-card-border-width, 0px);
-  border-style: solid;
-  border-color: var(--delpi-kpi-card-border-color, transparent);
-  border-radius: var(--delpi-kpi-card-radius, 0px);
-  padding: 0.55em 0.75em;
-  color: var(--delpi-kpi-fg, #0f172a);
-  box-shadow: none;
-}
-
-.tdp-kpi-view .delpi-kpi-card__label {
-  color: var(--delpi-kpi-label-color, #64748b);
-}
-
-.tdp-kpi-view .delpi-kpi-card__value {
-  color: var(--delpi-kpi-value-color, var(--delpi-kpi-value-fg, #0f172a));
-}
-
-.tdp-kpi-view .delpi-kpi-card__hint {
-  color: var(--delpi-kpi-hint-color, #64748b);
-}
-
-.tdp-kpi-view .delpi-kpi-icon {
-  /* Não forçar accent — respeita `--delpi-kpi-icon-fg` / color do DelpiKpiCard. */
-  background: color-mix(
-    in srgb,
-    var(--delpi-kpi-icon-fg, var(--tdp-data-accent, #089bdb)) 12%,
-    transparent
-  );
-  color: var(--delpi-kpi-icon-fg, var(--tdp-data-accent, #089bdb));
 }
 
 .tdp-kpi-placeholder {

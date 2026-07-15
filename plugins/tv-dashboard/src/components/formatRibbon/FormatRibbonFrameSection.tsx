@@ -161,6 +161,7 @@ function FrameSizeGroup({
             preferredPlacement="bottom"
             allowFlip={false}
             gap={10}
+            density="compact"
             onDismiss={() => setOpen(false)}
           >
             {body}

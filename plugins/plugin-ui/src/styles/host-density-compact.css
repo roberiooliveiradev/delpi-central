@@ -1,0 +1,201 @@
+/**
+ * Densidade compacta do host — ribbon, catálogo, popovers e controles densos.
+ *
+ * Contrato: o host define `data-delpi-ui-density="compact"` num wrapper
+ * (ribbon, painel lateral, popover do catálogo, shape library, etc.).
+ * Não usar classes `.td-*` neste arquivo.
+ *
+ * Painel FormatPane denso: use também `.delpi-ui-format-pane--compact`
+ * (ver `format-pane.css`) — regra de range fluido ganha sobre a ribbon.
+ *
+ * @see plugins/plugin-ui/docs/refactoring-roadmap.md § 8.3 onda 7.1
+ */
+
+/* --- Controles nativos / select (altura de ribbon) --- */
+[data-delpi-ui-density="compact"] {
+  --delpi-ui-control-min-height: 28px;
+  --delpi-ui-control-pad-y: 4px;
+  --delpi-ui-control-pad-x: 8px;
+  --delpi-ui-control-font-size: 12px;
+  --delpi-ui-control-radius: 8px;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-native-control,
+[data-delpi-ui-density="compact"] .delpi-ui-native-control--compact {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 12px;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-select {
+  width: auto;
+  min-width: 120px;
+  height: auto;
+  display: flex;
+  align-items: stretch;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-select--compact .delpi-ui-select__trigger,
+[data-delpi-ui-density="compact"] .delpi-ui-select .delpi-ui-select__trigger {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 12px;
+  line-height: 1.2;
+  align-items: center;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-combobox-number__input {
+  text-align: center;
+  width: 2.75rem;
+}
+
+/* --- RangeField (ribbon: largura fixa; pane sobrescreve em format-pane--compact) --- */
+[data-delpi-ui-density="compact"] .delpi-ui-range-field {
+  width: 148px;
+  min-width: 120px;
+  max-width: 200px;
+  flex: 0 0 auto;
+  padding: 2px 0;
+  box-sizing: border-box;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-range-field--compact {
+  min-width: 0;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-range-field__label {
+  font-size: 10px;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-range-field__input.delpi-ui-native-control--compact {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
+}
+
+/* --- Shape / color menus --- */
+[data-delpi-ui-density="compact"] .delpi-ui-shape-menu__panel,
+[data-delpi-ui-density="compact"] .delpi-ui-color-picker-trigger__panel {
+  z-index: 50;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-shape-menu__trigger,
+[data-delpi-ui-density="compact"] .delpi-ui-color-picker-trigger__button {
+  min-height: 0;
+  max-height: 56px;
+  padding: 4px 6px;
+  gap: 2px;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-shape-menu__trigger-icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* --- Help tooltip em chrome denso (tabs) --- */
+[data-delpi-ui-density="compact"] .delpi-ui-help-tooltip--wrap,
+[data-delpi-ui-density="compact"] .delpi-ui-help-tooltip__trigger {
+  cursor: pointer;
+}
+
+/* --- Checkbox nativo em formulários densos --- */
+[data-delpi-ui-density="compact"] .delpi-ui-native-checkbox {
+  width: auto;
+  max-width: 100%;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-native-checkbox input {
+  width: 1rem;
+  height: 1rem;
+  max-width: 1rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  flex: 0 0 auto;
+  accent-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-native-checkbox__copy,
+[data-delpi-ui-density="compact"] .delpi-ui-native-checkbox__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* --- Data route catalog (popover denso) --- */
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog .delpi-ui-field-label {
+  display: none;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog {
+  min-width: 0;
+  max-width: 100%;
+  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__main {
+  min-height: min(52vh, 420px);
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__main--detail-open {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: 10px;
+  align-items: start;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__main--detail-open .delpi-ui-data-route-catalog__groups {
+  max-height: min(60vh, 520px);
+  overflow: auto;
+  flex: none;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__main--detail-open .delpi-ui-data-route-catalog__detail {
+  width: 100%;
+  max-height: min(60vh, 520px);
+  overflow: auto;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__chips {
+  flex-wrap: wrap;
+  overflow-x: visible;
+  row-gap: 4px;
+  flex: 0 0 auto;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__card,
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__path {
+  max-width: 100%;
+  min-width: 0;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-data-route-catalog__groups {
+  max-height: none;
+  overflow: auto;
+  flex: 1 1 auto;
+}
+
+/* --- Table style strip (painel / opções densas) --- */
+[data-delpi-ui-density="compact"] .delpi-ui-table-style-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}

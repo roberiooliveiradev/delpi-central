@@ -34,6 +34,7 @@ export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismis
       className="td-shape-library td-shape-library--portal"
       role="menu"
       aria-label="Biblioteca de formas"
+      density="compact"
       onDismiss={onDismiss}
     >
       {recent.length ? (

@@ -579,6 +579,8 @@ export function ComunicadoComposerCanvas() {
                   block.type === "shape" && isLineShapeKind(block.shape)
                     ? "td-composer__block-wrap--line-shape"
                     : "",
+                  block.type === "chart_view" ? "td-composer__block-wrap--chart" : "",
+                  block.type === "kpi_view" ? "td-composer__block-wrap--kpi" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -630,7 +632,13 @@ export function ComunicadoComposerCanvas() {
                   fontScale={1}
                   isSelected={isSelected}
                   isEditingText={editingTextId === block.id}
-                  className={isSelected ? "td-composer__block--selected" : ""}
+                  className={[
+                    isSelected ? "td-composer__block--selected" : "",
+                    block.type === "chart_view" ? "td-composer__block--chart" : "",
+                    block.type === "kpi_view" ? "td-composer__block--kpi" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || undefined}
                   dataLoading={
                     (isFetchableDataBlockType(block.type) || isDataViewBlockType(block.type)) &&
                     !("resolved" in block && block.resolved) &&

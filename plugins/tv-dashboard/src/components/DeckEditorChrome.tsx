@@ -233,6 +233,7 @@ export function DeckEditorChrome({
         .filter(Boolean)
         .join(" ")}
       aria-label="Editor da programação"
+      data-delpi-ui-density="compact"
     >
       {chromeCollapsed ? (
         <div className="td-deck-chrome__collapsed-rail">

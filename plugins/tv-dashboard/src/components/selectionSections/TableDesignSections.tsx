@@ -285,6 +285,7 @@ export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionL
             preferredPlacement="bottom"
             allowFlip={false}
             gap={10}
+            density="compact"
             onDismiss={() => setOpen(false)}
           >
             {checks}

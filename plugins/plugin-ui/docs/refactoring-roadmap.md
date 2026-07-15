@@ -360,7 +360,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 ## 8. Fase 7 — Zero CSS de componente do kit no MFE (jul/2026)
 
-> **Status:** planejado · **Não iniciar implementação** sem marcar ondas abaixo e atualizar [migration-catalog.md](./migration-catalog.md) § Fase 7.  
+> **Status:** em execução · ondas 7.1+ · **Não iniciar implementação** sem marcar ondas abaixo e atualizar [migration-catalog.md](./migration-catalog.md) § Fase 7.  
 > **Regra:** Cursor `plugins-reusable-components.mdc` — se a UI vem do kit, **zero CSS** no MFE (hipótese alguma).  
 > **Auditoria:** varredura monorepo jul/2026 (~28 plugins com violação CSS e/ou TSX).
 
@@ -379,10 +379,10 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 
 | Plugin | Violações típicas | Onda sugerida |
 |--------|-------------------|---------------|
-| `tv-dashboard` | ~96 seletores `.delpi-ui-*` (format-pane, ribbon, catalog, help-tooltip) | **7.1** |
+| `tv-dashboard` | ~96 seletores `.delpi-ui-*` (format-pane, ribbon, catalog, help-tooltip) → ✅ onda 7.1 | **7.1** |
 | `quality-action-plans` | ghost, state-box, section-card header, table modal, help-tooltip | **7.2** |
 | `minha-delpi-chat` | Admin KPI/filter/table/pagination local + CSS; overrides toolbar/checkbox | **7.3** (avaliar: migrar ao kit **ou** renomear DS admin como domínio fora do dual-class) |
-| `tv-dashboard-presentation` | config-table, series-chart-shell, kpi-card TV | **7.1** (junto TV) |
+| `tv-dashboard-presentation` | config-table, series-chart-shell, kpi-card TV → ✅ onda 7.1 | **7.1** (junto TV) |
 
 #### P1 — espelho BEM / cópia nomeada
 
@@ -413,7 +413,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | Onda | Escopo | DoD mínimo | Status |
 |------|--------|------------|--------|
 | **7.0** | Doc + regra Cursor (este § + migration-catalog + `plugins-reusable-components.mdc`) | Regra absoluta publicada | ✅ |
-| **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — zerar/mover overrides `.delpi-ui-*` | 0 seletores `.delpi-ui-*` em CSS do MFE (exceto justificativa doc) | ⏳ |
+| **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — zerar/mover overrides `.delpi-ui-*` | 0 seletores `.delpi-ui-*` em CSS do MFE (exceto justificativa doc) | ✅ `data-delpi-ui-density="compact"` + `host-density-compact.css` / `format-pane--compact` / `--fill` |
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` | 0 chrome espelho; tokens+layout only | ⏳ |
 | **7.3** | `minha-delpi-chat` admin UI — decisão kit vs domínio renomeado | Sem classes que fingem dual-class do shell dashboard **ou** migrado ao kit | ⏳ |
 | **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ⏳ |

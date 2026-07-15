@@ -15,6 +15,17 @@
   overflow: hidden;
 }
 
+/* Bloco TV / presentation — garante fill + sombra do bloco quando o host seta --tdp-block-box-shadow. */
+.delpi-ui-series-chart-shell--fill {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-shadow: var(
+    --tdp-block-box-shadow,
+    var(--delpi-ui-series-chart-shadow, none)
+  );
+}
+
 .delpi-ui-series-chart-shell:has(.delpi-ui-series-chart__part--selected),
 .delpi-ui-series-chart-shell:has(.delpi-ui-series-chart__part--resizable),
 .delpi-ui-series-chart-shell:has([data-chart-part][aria-selected="true"]) {

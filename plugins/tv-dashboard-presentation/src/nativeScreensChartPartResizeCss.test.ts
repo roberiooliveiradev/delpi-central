@@ -29,9 +29,11 @@ describe("series chart part resize CSS (plugin-ui)", () => {
     }
   });
 
-  it("native-screens não duplica paint tdp-series-chart", () => {
+  it("native-screens não duplica paint tdp-series-chart nem chrome do kit", () => {
     expect(nativeCss).not.toMatch(/\.tdp-series-chart\s*\{/);
-    expect(nativeCss).toMatch(/\.tdp-data-block--chart\s*>\s*\.delpi-ui-series-chart/);
+    expect(nativeCss).not.toMatch(/\.delpi-ui-/);
+    expect(nativeCss).not.toMatch(/\.delpi-kpi-/);
+    expect(css).toMatch(/\.delpi-ui-series-chart-shell\s*\{[^}]*box-shadow:\s*var\(\s*--tdp-block-box-shadow/s);
   });
 
   it("comunicado não herda grid KPI (prévia/filmstrip em branco)", () => {

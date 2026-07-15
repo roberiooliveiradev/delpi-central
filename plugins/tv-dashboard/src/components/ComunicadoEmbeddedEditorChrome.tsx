@@ -142,7 +142,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   }
 
   return (
-    <section className="td-deck-chrome td-deck-chrome--embedded" aria-label="Editor do comunicado">
+    <section className="td-deck-chrome td-deck-chrome--embedded" aria-label="Editor do comunicado" data-delpi-ui-density="compact">
       <div className="td-deck-chrome__head">
         <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
           {tabs.map((tab, index) => {

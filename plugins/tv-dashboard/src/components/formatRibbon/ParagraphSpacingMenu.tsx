@@ -184,6 +184,7 @@ export function ParagraphSpacingMenu({
           role="dialog"
           aria-label="Estilo e espaçamento do parágrafo"
           preferredPlacement="bottom"
+          density="compact"
           onDismiss={() => setOpen(false)}
         >
           <ParagraphSpacingPanel {...panelProps} />

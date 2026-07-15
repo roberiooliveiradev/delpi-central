@@ -206,6 +206,7 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "popover" }: 
           role="menu"
           aria-label="Efeitos de texto"
           preferredPlacement="bottom"
+          density="compact"
           onDismiss={() => setOpen(false)}
         >
           <TextEffectsPanel

@@ -22,6 +22,8 @@ export type FormatPaneShellProps = {
   children: ReactNode;
   className?: string;
   bodyClassName?: string;
+  /** compact = padding/tabs densos (TV deck side panel). */
+  density?: "comfortable" | "compact";
 };
 
 function FormatPaneTabButton({
@@ -61,8 +63,15 @@ export function FormatPaneShell({
   children,
   className,
   bodyClassName,
+  density = "comfortable",
 }: FormatPaneShellProps) {
-  const rootClass = ["delpi-ui-format-pane", className].filter(Boolean).join(" ");
+  const rootClass = [
+    "delpi-ui-format-pane",
+    density === "compact" ? "delpi-ui-format-pane--compact" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={rootClass}>

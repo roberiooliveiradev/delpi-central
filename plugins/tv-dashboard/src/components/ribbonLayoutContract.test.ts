@@ -9,14 +9,34 @@ describe("ribbon table style checks layout", () => {
     expect(css).toContain(".td-deck-ribbon__style-check");
   });
 
-  it("sidebar / painel usa grade 2 colunas e strip com wrap (não vaza ribbon)", () => {
+  it("sidebar / painel usa grade 2 colunas e strip denso no kit (não vaza ribbon)", () => {
     const css = readFileSync(resolve(__dirname, "../index.css"), "utf8");
+    const kitDensity = readFileSync(
+      resolve(__dirname, "../../../plugin-ui/src/styles/host-density-compact.css"),
+      "utf8",
+    );
+    const formatPane = readFileSync(
+      resolve(__dirname, "../../../plugin-ui/src/styles/format-pane.css"),
+      "utf8",
+    );
+    const sidePanelTsx = readFileSync(
+      resolve(__dirname, "./deck/DeckElementSidePanel.tsx"),
+      "utf8",
+    );
+    const ribbonShellTsx = readFileSync(
+      resolve(__dirname, "./deck/DeckRibbonShell.tsx"),
+      "utf8",
+    );
     expect(css).toMatch(
       /\.td-deck-ribbon__style-checks--pane\s*\{[^}]*grid-template-columns:\s*repeat\(2/s,
     );
-    expect(css).toMatch(
-      /\.td-deck-side-panel \.delpi-ui-table-style-strip\s*\{[^}]*flex-wrap:\s*wrap/s,
+    expect(css).not.toMatch(/\.delpi-ui-/);
+    expect(kitDensity).toMatch(
+      /\[data-delpi-ui-density="compact"\]\s*\.delpi-ui-table-style-strip\s*\{[^}]*flex-wrap:\s*wrap/s,
     );
+    expect(formatPane).toContain(".delpi-ui-format-pane--compact");
+    expect(sidePanelTsx).toContain('data-delpi-ui-density="compact"');
+    expect(ribbonShellTsx).toContain('data-delpi-ui-density="compact"');
   });
 
   it("Posição/tamanho ficam em faixa horizontal (não cortam Larg/Alt)", () => {

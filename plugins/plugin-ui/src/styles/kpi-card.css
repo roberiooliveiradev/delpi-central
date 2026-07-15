@@ -340,6 +340,55 @@
   border: 1px solid var(--delpi-ui-accent, #089bdb);
   border-radius: 4px;
   padding: 2px 4px;
+  cursor: text;
+}
+
+.delpi-kpi-card__edit[contenteditable="true"] {
+  user-select: text;
+}
+
+/* Preenche o bloco host (TV / presentation) — sombra no shell. */
+.delpi-kpi-card-shell--fill,
+.delpi-kpi-card--fill {
+  width: 100%;
+  height: 100%;
+}
+
+.delpi-kpi-card-shell--fill {
+  box-shadow: var(--tdp-block-box-shadow, var(--delpi-kpi-card-shadow, none));
+  border-radius: var(--delpi-kpi-card-radius, 16px);
+}
+
+.delpi-kpi-card--fill {
+  background: var(--delpi-kpi-card-bg, #ffffff);
+  border-width: var(--delpi-kpi-card-border-width, 0px);
+  border-style: solid;
+  border-color: var(--delpi-kpi-card-border-color, transparent);
+  border-radius: var(--delpi-kpi-card-radius, 0px);
+  padding: 0.55em 0.75em;
+  color: var(--delpi-kpi-fg, #0f172a);
+  box-shadow: none;
+}
+
+.delpi-kpi-card--fill .delpi-kpi-card__label {
+  color: var(--delpi-kpi-label-color, #64748b);
+}
+
+.delpi-kpi-card--fill .delpi-kpi-card__value {
+  color: var(--delpi-kpi-value-color, var(--delpi-kpi-value-fg, #0f172a));
+}
+
+.delpi-kpi-card--fill .delpi-kpi-card__hint {
+  color: var(--delpi-kpi-hint-color, #64748b);
+}
+
+.delpi-kpi-card--fill .delpi-kpi-icon {
+  background: color-mix(
+    in srgb,
+    var(--delpi-kpi-icon-fg, var(--delpi-ui-accent, #089bdb)) 12%,
+    transparent
+  );
+  color: var(--delpi-kpi-icon-fg, var(--delpi-ui-accent, #089bdb));
 }
 
 .delpi-ui-fit-text {

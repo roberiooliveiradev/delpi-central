@@ -75,6 +75,7 @@ plugins/plugin-ui/
 - **MF:** `preparePluginUiRemote()` no `bootstrap.tsx` carrega `@delpi/plugin-ui/styles` (dynamic import).
 - **MFE pode ter no CSS:** tokens, dark scoped, layout de página (`*-page-stack`, gap entre seções), CSS de UI **que não é** do kit.
 - **MFE não pode — em hipótese alguma:** CSS de componente do `plugin-ui` (nem `.delpi-ui-*`, nem BEM local do mesmo export). Bug visual → corrigir neste pacote + rebuild do remote (`up-*-sequential.sh --fase remote --build plugin-ui`).
+- **Densidade compacta (hosts densos — TV deck):** o host define `data-delpi-ui-density="compact"` no wrapper (ribbon, painel, popover). Estilos em `styles/host-density-compact.css`. Format pane: prop `density="compact"` → `.delpi-ui-format-pane--compact`. Blocos embutidos: modifiers `--fill` (`series-chart-shell`, `config-table`, `kpi-card`).
 - Seguir [plugins-visual-design-system.mdc](../../.cursor/rules/plugins-visual-design-system.mdc) e [plugins-reusable-components.mdc](../../.cursor/rules/plugins-reusable-components.mdc) § CSS do kit (zero no MFE).
 
 ## Integração — Module Federation (padrão)

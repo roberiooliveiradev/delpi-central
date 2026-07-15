@@ -209,6 +209,8 @@ export type DelpiKpiCardProps = {
   valueColor?: string;
   backgroundColor?: string;
   className?: string;
+  /** Preenche o host (TV / presentation) — classes `--fill` no shell e card. */
+  fill?: boolean;
   /** Mapa de partes (primitivos) — padrão chartParts. */
   kpiParts?: KpiPartsMap | null;
   /** Options flat para merge com parts. */
@@ -231,6 +233,7 @@ export function DelpiKpiCard({
   valueColor,
   backgroundColor,
   className,
+  fill = false,
   kpiParts,
   kpiOptions,
   interaction = null,
@@ -397,6 +400,7 @@ export function DelpiKpiCard({
   const articleClass = [
     DELPI_KPI_CLASS_NAMES.articleTone(tone),
     className,
+    fill ? "delpi-kpi-card--fill" : "",
     cardPtr.selected ? "delpi-kpi-card--part-selected" : "",
     !showTitle && !showHint ? "delpi-kpi-card--value-dominant" : "",
   ]
@@ -407,7 +411,9 @@ export function DelpiKpiCard({
 
   return (
     <div
-      className="delpi-kpi-card-shell"
+      className={["delpi-kpi-card-shell", fill ? "delpi-kpi-card-shell--fill" : ""]
+        .filter(Boolean)
+        .join(" ")}
       data-custom-value={resolvedValueColor ? "true" : undefined}
       style={Object.keys(shellStyle).length ? shellStyle : undefined}
     >

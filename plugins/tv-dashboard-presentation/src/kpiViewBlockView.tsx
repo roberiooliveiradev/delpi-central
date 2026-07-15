@@ -107,6 +107,7 @@ export function KpiViewBlockView({
         kpiOptions={block.kpiOptions}
         kpiParts={block.kpiParts}
         interaction={hasMulti ? null : kpiInteraction}
+        fill
       />
     );
   };

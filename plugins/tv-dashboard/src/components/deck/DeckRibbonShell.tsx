@@ -29,6 +29,7 @@ export function DeckRibbonShell({
         .join(" ")}
       role="toolbar"
       aria-label={label}
+      data-delpi-ui-density="compact"
     >
       {children}
     </div>

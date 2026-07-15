@@ -59,6 +59,7 @@ export function DataCatalogModalHost({ branchScope = null }: Props) {
           className="td-data-catalog-popover"
           role="dialog"
           aria-label={title}
+          density="compact"
           onDismiss={closeCatalog}
         >
           <div className="td-data-catalog-popover__chrome">
