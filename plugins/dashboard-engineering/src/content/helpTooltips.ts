@@ -15,7 +15,7 @@ export const ENGINEERING_HELP_TOOLTIPS = {
     listingType:
       "Classificação da listagem (LMP, Amostra ou Outro). Vazio = todos os tipos.",
     status:
-      "Status de classificação de prazo (Pontual, Atrasado, Andamento, Retornada). Vazio = todos.",
+      "Andamento (em aberto); Pontual/Atrasado só após fechamento; Retornada. Vazio = todos.",
   },
   kpis: {
     lmpOnTime:

@@ -237,7 +237,7 @@ O **detalhe** (`GET …/{sale_number}`) continua usando `_sql_header_lmp` com es
 | `date_start`, `date_end` | Período. |
 | `branch` | Filial. |
 | `listing_type` | `Todos` (default), `LMP`, `Amostra` ou `Outro`. Com `LMP`, a SQL omite OVs «Outro» sem âncora de listagem (`EngSupportOvRef`). |
-| `status` | Filtro de status do dashboard (`Todos`, `Pontual`, `Atrasado`, …). |
+| `status` | Filtro de status do dashboard (`Todos`, `Pontual`, `Atrasado`, `Andamento`, `Retornada`). **Regra:** LMPs em aberto ficam em `Andamento`; `Pontual`/`Atrasado` só após `FINALIZADA` (`LMPBusinessRules.resolve_dashboard_status`). |
 | `page`, `page_size` | Paginação (apenas `/dashboard` e `/items`). |
 
 **Performance (`/dashboard/summary`, `/dashboard/charts`, `/dashboard/items`):**

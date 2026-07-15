@@ -798,10 +798,11 @@ Para OVs com `engineering_status = RETORNADA`:
 
 ### Item em andamento / parcial / aberta
 
-Para OVs não finalizadas:
+Para OVs não finalizadas (`ABERTA`, `PARCIAL`, etc.):
 
-- `Andamento` enquanto ainda dentro da janela aceitável;
-- `Atrasado` quando o tempo efetivo extrapolar o limite.
+- status do dashboard é sempre `Andamento`;
+- **não** classificar como `Atrasado` enquanto a LMP estiver aberta — o produto e o fluxo ainda podem mudar;
+- `Pontual` / `Atrasado` só são decididos no fechamento (`engineering_status = FINALIZADA`), com base no SLA efetivo da conclusão.
 
 ---
 

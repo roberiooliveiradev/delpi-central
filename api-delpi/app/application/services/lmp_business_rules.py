@@ -168,46 +168,37 @@ class LMPBusinessRules:
         engineering_total_minutes: Optional[int] = None,
         today: Optional[date] = None,
     ) -> str:
-        today = today or date.today()
+        """Classifica status do dashboard: Pontual/Atrasado só após FINALIZADA.
+
+        LMPs em aberto (ABERTA, PARCIAL, etc.) permanecem em Andamento —
+        o atraso só é decidido no fechamento, pois o produto e o fluxo
+        ainda podem mudar. O parâmetro ``today`` permanece por compatibilidade
+        de assinatura e não classifica LMPs abertas.
+        """
+        if cls.is_engineering_returned(engineering_status):
+            return cls.DASHBOARD_STATUS_RETURNED
+
+        if not cls.is_engineering_finished(engineering_status):
+            return cls.DASHBOARD_STATUS_IN_PROGRESS
 
         nivel = cls.get_nivel(qtd_pi)
         sla_limit_minutes = cls.get_sla_limit_minutes(nivel)
-
         start_date = cls.parse_totvs_date(start_date_str)
         end_date = cls.parse_totvs_date(end_date_str)
         data_limite_com_tolerancia = cls.get_sla_limit_date(start_date, nivel)
-
         total_minutes = int(engineering_total_minutes or 0)
-        finished = cls.is_engineering_finished(engineering_status)
-        returned = cls.is_engineering_returned(engineering_status)
 
-        if returned:
-            return cls.DASHBOARD_STATUS_RETURNED
-
-        if finished:
-            within_date_limit = (
-                end_date is not None
-                and data_limite_com_tolerancia is not None
-                and end_date <= data_limite_com_tolerancia
-            )
-            within_minutes_limit = total_minutes <= sla_limit_minutes
-
-            return (
-                cls.DASHBOARD_STATUS_ON_TIME
-                if (within_date_limit or within_minutes_limit)
-                else cls.DASHBOARD_STATUS_LATE
-            )
-
-        over_date_limit = (
-            data_limite_com_tolerancia is not None
-            and today > data_limite_com_tolerancia
+        within_date_limit = (
+            end_date is not None
+            and data_limite_com_tolerancia is not None
+            and end_date <= data_limite_com_tolerancia
         )
-        over_minutes_limit = total_minutes > sla_limit_minutes
+        within_minutes_limit = total_minutes <= sla_limit_minutes
 
         return (
-            cls.DASHBOARD_STATUS_LATE
-            if (over_date_limit and over_minutes_limit)
-            else cls.DASHBOARD_STATUS_IN_PROGRESS
+            cls.DASHBOARD_STATUS_ON_TIME
+            if (within_date_limit or within_minutes_limit)
+            else cls.DASHBOARD_STATUS_LATE
         )
 
     @classmethod

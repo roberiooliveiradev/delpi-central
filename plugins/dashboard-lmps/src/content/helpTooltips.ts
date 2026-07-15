@@ -11,7 +11,7 @@ export const LMPS_HELP_TOOLTIPS = {
     listingType:
       "Classificação da listagem (LMP, Amostra ou Outro). Permite múltipla seleção.",
     status:
-      "Status de classificação de prazo (Pontual, Atrasado, Andamento, Retornada). Permite múltipla seleção.",
+      "Status de prazo: Andamento (em aberto), Pontual/Atrasado (só após fechamento) ou Retornada. Permite múltipla seleção.",
   },
   actions: {
     pageSubtitle:
@@ -69,7 +69,8 @@ export const LMPS_HELP_TOOLTIPS = {
     slaDays: "Quantidade de dias úteis previstos no SLA do nível.",
     limitDate: "Data limite calculada com base no SLA.",
     leadTime: "Lead time útil consumido (dias úteis).",
-    status: "Classificação de prazo: Pontual, Atrasado, Andamento ou Retornada.",
+    status:
+      "Andamento enquanto aberta; Pontual ou Atrasado só no fechamento; Retornada em exceção.",
   },
   detail: {
     statusKpi:
@@ -95,7 +96,7 @@ export const LMPS_HELP_TOOLTIPS = {
     proposalStartDate: "Data de início da proposta no TOTVS.",
     proposalEndDate: "Data de encerramento ou previsão de fim da proposta.",
     proposalStatus:
-      "Classificação de prazo calculada: Pontual, Atrasado, Andamento ou Retornada.",
+      "Andamento se aberta; Pontual/Atrasado calculados só no fechamento; Retornada em exceção.",
     proposalNivel: "Nível de SLA aplicado (1, 2 ou 3) conforme regras de negócio.",
     proposalSlaDays: "Quantidade de dias úteis previstos no SLA do nível.",
     proposalLimitDate: "Data limite de entrega calculada a partir do início e do SLA.",
