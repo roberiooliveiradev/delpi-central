@@ -133,6 +133,7 @@ FASE_MFE=(
   customer-experience
   cultura-delpi
   codigo-etica
+  guias-procedimentos
   central-agendamento
   canal-denuncia
   quality-labels

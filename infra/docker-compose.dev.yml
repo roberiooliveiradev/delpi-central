@@ -634,6 +634,22 @@ services:
     networks:
       - delpi-network
 
+  guias-procedimentos:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: guias-procedimentos/Dockerfile
+      target: production
+
+    container_name: delpi-guias-procedimentos
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   quality-labels:
     <<: *plugin-ui-federated
     build:
@@ -1098,6 +1114,7 @@ services:
       DRAWING_PDF_LIBRARY_DIR: ${DRAWING_PDF_LIBRARY_DIR:-/drawing-pdfs}
       PAC_EVIDENCE_UPLOAD_DIR: ${PAC_EVIDENCE_UPLOAD_DIR:-/app/data/pac-evidences}
       KAIZEN_EVIDENCE_UPLOAD_DIR: ${KAIZEN_EVIDENCE_UPLOAD_DIR:-/app/data/kaizen-evidences}
+      GUIAS_PROCEDIMENTOS_UPLOAD_DIR: ${GUIAS_PROCEDIMENTOS_UPLOAD_DIR:-/app/data/guias-procedimentos}
       AUDIT_5S_NC_UPLOAD_DIR: ${AUDIT_5S_NC_UPLOAD_DIR:-/app/data/audit-5s-nc}
       AUDIT_5S_RESPONSE_UPLOAD_DIR: ${AUDIT_5S_RESPONSE_UPLOAD_DIR:-/app/data/audit-5s-responses}
       AUDIT_5S_NOTIFICATIONS_ENABLED: ${AUDIT_5S_NOTIFICATIONS_ENABLED:-true}
@@ -1130,6 +1147,7 @@ services:
       # Evidências PAC e anexos Auditoria 5S — persistir no host (sobrevive a rebuild do container)
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/pac-evidences:/app/data/pac-evidences
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/kaizen-evidences:/app/data/kaizen-evidences
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/guias-procedimentos:/app/data/guias-procedimentos
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-nc:/app/data/audit-5s-nc
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/audit-5s-responses:/app/data/audit-5s-responses
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/qr:/app/data/quality-labels/qr

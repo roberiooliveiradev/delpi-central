@@ -43,6 +43,9 @@ from app.interface.http.routes.dashboard import dashboard_router
 from app.interface.http.routes.scheduling import scheduling_router
 from app.interface.http.routes.cultura_delpi import cultura_delpi_router
 from app.interface.http.routes.canal_denuncia import canal_denuncia_router
+from app.interface.http.routes.guias_procedimentos import guias_procedimentos_router
+from app.interface.http.routes.guias_procedimentos import guias_procedimentos_admin_router
+from app.interface.http.routes.guias_procedimentos import guias_procedimentos_media_router
 from app.interface.http.routes.inspecoes_entrada import inspecoes_entrada_router
 from app.interface.http.routes.inspecoes_processo import inspecoes_processo_router
 from app.interface.http.routes.pedidos_venda_abertos import pedidos_venda_abertos_router
@@ -230,6 +233,26 @@ app.include_router(
     canal_denuncia_router.router,
     prefix="/canal-denuncia",
     tags=["Canal de Denúncia"],
+)
+app.include_router(
+    guias_procedimentos_router.router,
+    prefix="/guias-procedimentos",
+    tags=["Guias e Procedimentos"],
+)
+app.include_router(
+    guias_procedimentos_admin_router.router,
+    prefix="/guias-procedimentos",
+    tags=["Guias e Procedimentos — Admin"],
+)
+app.include_router(
+    guias_procedimentos_media_router.read_media_router,
+    prefix="/guias-procedimentos",
+    tags=["Guias e Procedimentos — Media"],
+)
+app.include_router(
+    guias_procedimentos_media_router.admin_media_router,
+    prefix="/guias-procedimentos",
+    tags=["Guias e Procedimentos — Admin Media"],
 )
 app.include_router(product_drawing_routes.router, prefix="/products", tags=["products"])
 app.include_router(product_routes.router, prefix="/products", tags=["products"])
