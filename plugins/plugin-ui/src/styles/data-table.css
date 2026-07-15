@@ -418,7 +418,9 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
 }
 
 .delpi-ui-detail-card table.delpi-ui-table {
-  min-width: min(100%, 640px);
+  /* Preenche o wrap (igual à regra base). min(100%, 640px) deixava a tabela
+     “curtinha” em páginas de detalhe largas (ex.: OP / CT). */
+  min-width: 100%;
   font-size: var(--delpi-ui-font-md, 14px);
 }
 

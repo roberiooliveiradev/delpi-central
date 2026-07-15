@@ -29,3 +29,35 @@ export function withBemModifier(classNames: string, modifier: string): string {
     .flatMap((token) => [token, `${token}--${modifier}`])
     .join(" ");
 }
+
+/**
+ * Espelha `{prefix}-table__col--*` → `delpi-ui-table__col--*` em colunas do DataTable.
+ * MFEs tipicamente passam só o BEM local (`pa-table__col--numeric`); o CSS do kit
+ * estiliza só `.delpi-ui-table__col-*`.
+ */
+export function resolveDataTableColumnClassName(
+  className: string | undefined,
+): string | undefined {
+  const raw = (className ?? "").trim();
+  if (!raw) return undefined;
+
+  const tokens = raw.split(/\s+/).filter(Boolean);
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (token: string) => {
+    if (seen.has(token)) return;
+    seen.add(token);
+    out.push(token);
+  };
+
+  for (const token of tokens) {
+    push(token);
+    const match = token.match(/^[a-z0-9][\w-]*-table__col--([a-z0-9-]+)$/i);
+    if (match) {
+      push(`delpi-ui-table__col--${match[1]}`);
+    }
+  }
+
+  return out.join(" ");
+}

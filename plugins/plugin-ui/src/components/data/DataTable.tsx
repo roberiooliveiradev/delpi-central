@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
-import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+import {
+  delpiUiClass,
+  resolveDataTableColumnClassName,
+  withBemModifier,
+} from "../../utils/delpiUiClass";
 
 export type DataTableColumn<T> = {
   key: string;
@@ -233,8 +237,9 @@ export function DataTable<T>({
         <tr>
           {columns.map((column) => {
             const isSorted = sortKey === column.key;
+            const columnClass = resolveDataTableColumnClassName(column.className);
             const headerClass = [
-              column.className,
+              columnClass,
               column.sortable && classNames.sortableColumn ? classNames.sortableColumn : "",
             ]
               .filter(Boolean)
@@ -303,7 +308,7 @@ export function DataTable<T>({
               {columns.map((column) => (
                 <td
                   key={column.key}
-                  className={column.className}
+                  className={resolveDataTableColumnClassName(column.className)}
                   data-label={column.mobileLabel ?? column.header}
                   data-align={column.align}
                   data-interactive={column.interactive ? "true" : undefined}

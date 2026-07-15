@@ -41,6 +41,22 @@ describe("withBemModifier", () => {
   });
 });
 
+describe("resolveDataTableColumnClassName", () => {
+  it("espelha {prefix}-table__col--* para delpi-ui-table__col--*", async () => {
+    const { resolveDataTableColumnClassName } = await import("./delpiUiClass");
+    expect(resolveDataTableColumnClassName("pa-table__col--numeric")).toBe(
+      "pa-table__col--numeric delpi-ui-table__col--numeric",
+    );
+    expect(resolveDataTableColumnClassName("pa-table__col--wide")).toBe(
+      "pa-table__col--wide delpi-ui-table__col--wide",
+    );
+    expect(
+      resolveDataTableColumnClassName("pa-table__col--numeric delpi-ui-table__col--numeric"),
+    ).toBe("pa-table__col--numeric delpi-ui-table__col--numeric");
+    expect(resolveDataTableColumnClassName(undefined)).toBeUndefined();
+  });
+});
+
 describe("ghostBtnBemClasses", () => {
   it("emite dual-class e modificadores", async () => {
     const { ghostBtnBemClasses, ghostBtnWithModifiers } = await import("./ghostBtnBem");
