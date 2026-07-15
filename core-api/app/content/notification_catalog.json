@@ -82,6 +82,14 @@
       "kind": "app",
       "sourceApps": ["central-agendamento"],
       "pluginId": "central-agendamento"
+    },
+    "cadastro_kaizen": {
+      "label": "Cadastro de Kaizens",
+      "icon": "sparkles",
+      "mutable": true,
+      "kind": "app",
+      "sourceApps": ["cadastro-kaizen"],
+      "pluginId": "cadastro-kaizen"
     }
   },
   "legacyCategoryAliases": {

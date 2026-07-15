@@ -20,6 +20,12 @@
       "name": "Gerenciar cadastro de Kaizens",
       "description": "Criar, editar e excluir kaizens",
       "module": "cadastro-kaizen"
+    },
+    {
+      "code": "cadastro-kaizen.notify-suggestions",
+      "name": "Receber notificações de sugestões Kaizen",
+      "description": "Recebe alerta no portal quando uma sugestão pública é enviada",
+      "module": "cadastro-kaizen"
     }
   ],
   "routes": [

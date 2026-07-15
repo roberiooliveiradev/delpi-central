@@ -53,7 +53,7 @@ REVISION_TRIGGER_FIELDS = (
 )
 
 _STATUS_LABELS = {
-    "em_andamento": "Em andamento",
+    "recebido": "Recebido",
     "aprovado": "Aprovado",
     "implantado": "Implantado",
     "descontinuado": "Descontinuado",

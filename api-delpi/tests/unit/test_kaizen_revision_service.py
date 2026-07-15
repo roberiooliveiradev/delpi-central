@@ -6,14 +6,14 @@ from app.domain.services.kaizen import kaizen_revision_service as svc
 
 
 def test_changed_trigger_fields_detects_status():
-    current = {"status": "em_andamento", "notes": "a"}
+    current = {"status": "recebido", "notes": "a"}
     updated = {"status": "implantado", "notes": "b"}
     changed = svc.changed_trigger_fields(current, updated)
     assert changed == ["status"]
 
 
 def test_changed_trigger_fields_ignores_non_trigger():
-    current = {"status": "em_andamento", "notes": "a", "accountable": "Ana"}
+    current = {"status": "recebido", "notes": "a", "accountable": "Ana"}
     updated = {"notes": "b", "accountable": "Bruno"}
     assert svc.changed_trigger_fields(current, updated) == []
 
@@ -25,7 +25,7 @@ def test_changed_trigger_fields_normalizes_numbers():
 
 
 def test_resolve_change_type_creation_baseline():
-    assert svc.resolve_change_type(None, {"status": "em_andamento"}, is_creation=True) == "baseline"
+    assert svc.resolve_change_type(None, {"status": "recebido"}, is_creation=True) == "baseline"
 
 
 def test_resolve_change_type_creation_implanted():
@@ -33,7 +33,7 @@ def test_resolve_change_type_creation_implanted():
 
 
 def test_resolve_change_type_to_implanted():
-    current = {"status": "em_andamento"}
+    current = {"status": "recebido"}
     merged = {"status": "implantado"}
     assert svc.resolve_change_type(current, merged, is_creation=False) == "implantacao"
 
@@ -51,10 +51,10 @@ def test_resolve_change_type_savings_change_is_melhoria():
 
 
 def test_build_change_summary_status():
-    current = {"status": "em_andamento"}
+    current = {"status": "recebido"}
     merged = {"status": "implantado"}
     summary = svc.build_change_summary(current, merged, ["status"])
-    assert summary == "status: Em andamento → Implantado"
+    assert summary == "status: Recebido → Implantado"
 
 
 def test_build_snapshot_contains_business_fields():

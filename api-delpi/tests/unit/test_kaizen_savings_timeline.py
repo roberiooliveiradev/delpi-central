@@ -78,7 +78,7 @@ def test_current_active_savings_expired():
 def test_draft_version_never_counts_in_period():
     # v1 implantada (contabiliza) + v2 em andamento (rascunho — não conta).
     revisions = [
-        _rev(2, "2024-06-01", None, 99.0, version_status="em_andamento"),
+        _rev(2, "2024-06-01", None, 99.0, version_status="recebido"),
         _rev(1, "2024-01-01", None, 10.0, version_status="implantado"),
     ]
     total = timeline.period_savings(
@@ -92,7 +92,7 @@ def test_draft_version_never_counts_in_period():
 
 def test_current_active_ignores_draft_even_if_recent():
     revisions = [
-        _rev(2, "2026-06-25", None, 99.0, 30000.0, version_status="em_andamento"),
+        _rev(2, "2026-06-25", None, 99.0, 30000.0, version_status="recebido"),
         _rev(1, "2026-01-01", None, 10.0, 2000.0, version_status="implantado"),
     ]
     current = timeline.current_active_savings(revisions, today=date(2026, 7, 1))

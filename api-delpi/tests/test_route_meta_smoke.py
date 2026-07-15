@@ -171,7 +171,7 @@ def test_quality_kaizen_records_create_returns_meta(mock_build) -> None:
         "branch_code": "01",
         "title": "Kaizen teste",
         "savings_type": "qualitativo",
-        "status": "em_andamento",
+        "status": "recebido",
     }
     mock_build.return_value = mock_repo
 

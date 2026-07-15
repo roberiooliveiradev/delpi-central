@@ -13,6 +13,7 @@ import { DataTableSection } from "../components/data";
 import {
   KaizenListHeaderActions,
 } from "../components/KaizenListHeaderActions";
+import { KaizenShareSuggestionModal } from "../components/KaizenShareSuggestionModal";
 import { KaizenPageHeader } from "../components/KaizenPageHeader";
 import { KaizenNavTabs } from "../components/KaizenNavTabs";
 import { KaizenRecordFilters } from "../components/KaizenRecordFilters";
@@ -39,6 +40,7 @@ export function KaizenListPage({ onNavigate }: Props) {
   const [status, setStatus] = useState("");
   const [savingsType, setSavingsType] = useState("");
   const [title, setTitle] = useState("");
+  const [shareOpen, setShareOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -251,6 +253,7 @@ export function KaizenListPage({ onNavigate }: Props) {
           <KaizenListHeaderActions
             onNew={() => onNavigate(newPath())}
             onRefresh={() => void load()}
+            onShare={() => setShareOpen(true)}
             onExport={() => void handleExport()}
             onImport={() => fileInputRef.current?.click()}
             loading={loading}
@@ -259,6 +262,8 @@ export function KaizenListPage({ onNavigate }: Props) {
           />
         }
       />
+
+      <KaizenShareSuggestionModal open={shareOpen} onClose={() => setShareOpen(false)} />
 
       <input
         ref={fileInputRef}

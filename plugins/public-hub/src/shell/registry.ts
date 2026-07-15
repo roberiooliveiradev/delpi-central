@@ -2,6 +2,7 @@ import type { PublicRegistry } from "./types";
 import { customerExperiencePages } from "../apps/customer-experience/pages";
 import { qualityLabelsPages } from "../apps/quality-labels/pages";
 import { tvDashboardPages } from "../apps/tv-dashboard/pages";
+import { kaizenPages } from "../apps/kaizen/pages";
 
 /**
  * Registro de páginas públicas por app. Para adicionar um novo app público,
@@ -11,4 +12,5 @@ export const publicRegistry: PublicRegistry = {
   "customer-experience": customerExperiencePages,
   "quality-labels": qualityLabelsPages,
   "tv-dashboard": tvDashboardPages,
+  kaizen: kaizenPages,
 };

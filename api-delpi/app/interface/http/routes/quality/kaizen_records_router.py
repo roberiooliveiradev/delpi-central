@@ -37,7 +37,7 @@ class KaizenParticipantBody(BaseModel):
     user_id: str | None = Field(default=None, max_length=100)
 
 
-_STATUS_PATTERN = "^(em_andamento|aprovado|implantado|descontinuado|cancelado)$"
+_STATUS_PATTERN = "^(recebido|aprovado|implantado|descontinuado|cancelado)$"
 
 
 class KaizenRecordBody(BaseModel):
@@ -58,7 +58,7 @@ class KaizenRecordBody(BaseModel):
     fixed_daily_savings: float | None = None
     realized_daily_savings: float | None = None
     status: str = Field(
-        default="em_andamento",
+        default="recebido",
         pattern=_STATUS_PATTERN,
     )
     date_implemented: str | None = None

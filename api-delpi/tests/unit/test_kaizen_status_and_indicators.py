@@ -17,7 +17,7 @@ from app.domain.services.kaizen.kaizen_status_date_rules import (
 def test_counts_for_quantity_includes_aprovado_and_implantado() -> None:
     assert counts_for_quantity("aprovado") is True
     assert counts_for_quantity("implantado") is True
-    assert counts_for_quantity("em_andamento") is False
+    assert counts_for_quantity("recebido") is False
     assert counts_for_quantity("cancelado") is False
 
 
@@ -57,4 +57,4 @@ def test_validate_status_dates_ok() -> None:
         status="implantado",
         date_implemented="2026-06-01",
     )
-    validate_status_dates(status="em_andamento")
+    validate_status_dates(status="recebido")

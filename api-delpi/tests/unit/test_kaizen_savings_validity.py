@@ -45,7 +45,7 @@ def test_is_inactive_after_one_year():
 def test_is_inactive_when_not_implemented():
     implemented = date(2026, 1, 10)
     assert not validity.is_savings_active(
-        implemented, status="em_andamento", reference=date(2026, 6, 1)
+        implemented, status="recebido", reference=date(2026, 6, 1)
     )
 
 

@@ -34,6 +34,14 @@ Dashboard qualidade → /apps/api-delpi/quality/kaizens/summary (Google Sheets)
 
 Navegação interna via estado do MFE (`CadastroKaizenPage`); o Portal monta o plugin em `basePath` do manifesto.
 
+## Formulário público de sugestão
+
+- Link compartilhado (botão **Compartilhar** na listagem): `/p/kaizen/sugestao/aberto` (public-hub)
+- API: `POST /apps/api-delpi/public/kaizen/suggestions` (sem JWT)
+- Status inicial: `recebido`
+- Permissão de alerta: `cadastro-kaizen.notify-suggestions` (sino do portal)
+- Env API: `KAIZEN_NOTIFICATIONS_ENABLED` (default true) + token Core Integrations
+
 ## API (gateway)
 
 Base HTTP: **`/apps/api-delpi/quality/kaizens/records`**
@@ -93,8 +101,9 @@ A importação é **idempotente**: ignora duplicatas (mesma filial + título + d
 |--------|-----|
 | `cadastro-kaizen.view` | Listar e consultar registros |
 | `cadastro-kaizen.manage` | Criar, editar, excluir e importar |
+| `cadastro-kaizen.notify-suggestions` | Alerta no portal ao receber sugestão pública |
 
-Na api-delpi, rotas de leitura aceitam também `api-delpi.quality.access` e `dashboard-quality.view`; escrita exige `cadastro-kaizen.manage` (ou `api-delpi.access` / `api-delpi.quality.access`).
+Na api-delpi, rotas de leitura aceitam também `api-delpi.quality.access` e `dashboard-quality.view`; escrita autenticada exige `cadastro-kaizen.manage` (ou `api-delpi.access` / `api-delpi.quality.access`). A rota pública de sugestão não exige JWT.
 
 ## Modelo de dados
 
@@ -104,8 +113,9 @@ Tabela: `quality.kaizens` (migration `V027__create_kaizens.sql`).
 |-------|----------------|------------|
 | `branch_code` | `01`, `02` | Obrigatório |
 | `title` | string | Obrigatório |
-| `status` | `em_andamento`, `implantado`, `descontinuado`, `cancelado` | Default `em_andamento` |
+| `status` | `recebido`, `aprovado`, `implantado`, `descontinuado`, `cancelado` | Default `recebido` |
 | `date_idea_received` | date | Recebimento da ideia (V035) |
+| `date_committee_approved` | date | Aprovação no comitê (V042); obrigatória se status = aprovado |
 | `date_implemented` | date | Implantação — vigência da revisão + validade 1 ano da economia |
 | `date_discontinued` | date | Fim da operação |
 | `categories` | `TEXT[]` | Multi-categoria (V036); `category` = primeiro item |

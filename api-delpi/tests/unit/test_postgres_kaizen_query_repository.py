@@ -54,7 +54,7 @@ def test_postgres_kaizen_summary_counts_implanted_in_range() -> None:
 
 
 def test_postgres_kaizen_summary_excludes_non_implanted() -> None:
-    repository = _repository([_row(status="em_andamento")])
+    repository = _repository([_row(status="recebido")])
 
     summary = repository.get_kaizen_summary(
         KaizenSummaryRequest(

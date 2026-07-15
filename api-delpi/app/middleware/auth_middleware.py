@@ -8,7 +8,7 @@ __all__ = ["jwt_middleware"]
 
 # Prefixos públicos (sem JWT) servidos pela api-delpi.
 # Ex.: leitura pública da inspeção via QR (public-hub), protegida por token opaco.
-_PUBLIC_PREFIXES = ("/public/quality-labels/",)
+_PUBLIC_PREFIXES = ("/public/quality-labels/", "/public/kaizen/")
 
 # root_path possíveis (o gateway costuma remover, mas mantemos robustez).
 _ROOT_PREFIXES = ("/apps/api-delpi",)

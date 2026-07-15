@@ -8,7 +8,7 @@ from app.shared.utils.spreadsheet_date import parse_spreadsheet_date
 
 def normalize_sheet_status(value: str | None) -> str:
     if not value:
-        return "em_andamento"
+        return "recebido"
     normalized = (
         str(value)
         .strip()
@@ -19,14 +19,16 @@ def normalize_sheet_status(value: str | None) -> str:
         .replace("ç", "c")
         .replace(" ", "_")
     )
-    allowed = {"em_andamento", "aprovado", "implantado", "descontinuado", "cancelado"}
+    allowed = {"recebido", "aprovado", "implantado", "descontinuado", "cancelado"}
     if normalized in allowed:
         return normalized
+    if normalized in {"em_andamento", "emandamento"}:
+        return "recebido"
     if normalized == "implantada":
         return "implantado"
     if normalized in {"aprovada", "aprovacao"}:
         return "aprovado"
-    return "em_andamento"
+    return "recebido"
 
 
 def sheet_detail_to_record_fields(detail: KaizenDetail) -> dict[str, Any]:

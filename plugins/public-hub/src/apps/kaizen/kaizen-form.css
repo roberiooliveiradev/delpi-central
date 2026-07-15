@@ -1,0 +1,114 @@
+/* Formulário público Kaizen — layout próprio; palco/fundo vem do shell. */
+
+.kz-pub-form,
+.kz-pub-done {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  color: var(--pub-text, #0f172a);
+}
+
+.kz-pub-form__eyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pub-accent, #089bdb);
+}
+
+.kz-pub-form__header h1,
+.kz-pub-done h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.5rem, 2.5vw, 1.85rem);
+  line-height: 1.2;
+}
+
+.kz-pub-form__lead,
+.kz-pub-done p {
+  margin: 0 0 24px;
+  color: var(--pub-muted, #64748b);
+  line-height: 1.5;
+}
+
+.kz-pub-form__section {
+  margin: 0 0 20px;
+  padding: 16px;
+  border: 1px solid var(--pub-border, #e2e8f0);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--pub-surface, #fff) 92%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.kz-pub-form__section > legend {
+  padding: 0 6px;
+  font-weight: 650;
+  font-size: 0.95rem;
+}
+
+.kz-pub-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.kz-pub-field input,
+.kz-pub-field textarea,
+.kz-pub-field__nested {
+  border: 1px solid var(--pub-border, #cbd5e1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  background: var(--pub-surface, #fff);
+  color: inherit;
+}
+
+.kz-pub-field--group {
+  gap: 8px;
+}
+
+.kz-pub-field--group > legend {
+  padding: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.kz-pub-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kz-pub-form__submit {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font: inherit;
+  font-weight: 650;
+  color: #fff;
+  background: var(--pub-accent, #089bdb);
+  cursor: pointer;
+}
+
+.kz-pub-form__submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.kz-pub-form__error {
+  margin: 0 0 12px;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}
+
+.kz-pub-hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

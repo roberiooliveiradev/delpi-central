@@ -1,9 +1,10 @@
-import { Download, Upload } from "lucide-react";
+import { Download, Share2, Upload } from "lucide-react";
 import { KZ_GHOST_BTN } from "./ui/ghostChrome";
 
 type ListHeaderActionsProps = {
   onNew: () => void;
   onRefresh: () => void;
+  onShare?: () => void;
   onExport?: () => void;
   onImport?: () => void;
   loading?: boolean;
@@ -14,6 +15,7 @@ type ListHeaderActionsProps = {
 export function KaizenListHeaderActions({
   onNew,
   onRefresh,
+  onShare,
   onExport,
   onImport,
   loading,
@@ -22,6 +24,12 @@ export function KaizenListHeaderActions({
 }: ListHeaderActionsProps) {
   return (
     <>
+      {onShare ? (
+        <button type="button" className={KZ_GHOST_BTN} onClick={onShare}>
+          <Share2 size={16} aria-hidden="true" />
+          Compartilhar
+        </button>
+      ) : null}
       {onExport ? (
         <button
           type="button"

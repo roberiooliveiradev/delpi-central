@@ -14,7 +14,7 @@ from app.domain.services.kaizen.kaizen_sheet_import_mapper import (
 
 def test_normalize_sheet_status_maps_implantado() -> None:
     assert normalize_sheet_status("Implantado") == "implantado"
-    assert normalize_sheet_status("em andamento") == "em_andamento"
+    assert normalize_sheet_status("em andamento") == "recebido"
 
 
 def test_sheet_detail_to_record_fields_maps_time_inputs() -> None:
@@ -64,7 +64,7 @@ def test_import_use_case_skips_existing_and_creates_new() -> None:
             id="01-07/01/2026-Novo",
             title="Novo kaizen",
             date_implemented="07/01/2026",
-            status="em_andamento",
+            status="recebido",
             accountable=None,
             sector=None,
             investment=None,

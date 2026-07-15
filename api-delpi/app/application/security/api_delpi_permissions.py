@@ -22,6 +22,7 @@ DASHBOARD_LMPS_VIEW = "dashboard-lmps.view"
 # --- cadastro kaizen ---
 CADASTRO_KAIZEN_VIEW = "cadastro-kaizen.view"
 CADASTRO_KAIZEN_MANAGE = "cadastro-kaizen.manage"
+CADASTRO_KAIZEN_NOTIFY_SUGGESTIONS = "cadastro-kaizen.notify-suggestions"
 
 # --- planos de ação PAC qualidade ---
 QUALITY_ACTION_PLANS_ACCESS = "quality-action-plans.access"

@@ -249,6 +249,13 @@ class Settings:
     )
 
     # ==========================
+    # Cadastro Kaizen — sugestões públicas + notificações
+    # ==========================
+    KAIZEN_NOTIFICATIONS_ENABLED: bool = (
+        _get_env("KAIZEN_NOTIFICATIONS_ENABLED", default="true").lower() == "true"
+    )
+
+    # ==========================
     # Microsoft Graph — Canal de Denúncia (e-mail)
     # ==========================
     GRAPH_TENANT_ID: str | None = _get_env("GRAPH_TENANT_ID")

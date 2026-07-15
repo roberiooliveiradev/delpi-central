@@ -46,7 +46,7 @@ _COUNTED_VERSION_STATUS = {"implantado", "substituido", "descontinuado"}
 
 
 def _version_counts(revision: dict[str, Any]) -> bool:
-    """Rascunhos (em_andamento) e cancelados nunca somam no ganho por período."""
+    """Rascunhos (recebido) e cancelados nunca somam no ganho por período."""
     status = revision.get("version_status")
     if status is None:
         return True  # compat: revisões antigas sem status são tratadas como implantadas

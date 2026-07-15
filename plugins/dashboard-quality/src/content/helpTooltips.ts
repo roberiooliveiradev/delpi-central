@@ -35,7 +35,7 @@ export const QUALITY_HELP_TOOLTIPS = {
       "PPM interno de componentes: devoluções internas de produtos 9026* sobre a produção total do período.",
     ppmExternalComponents:
       "PPM externo de componentes: devoluções externas de produtos 9026* sobre a produção total do período.",
-    kaizenOpen: "Quantidade de kaizens abertos ou em andamento no recorte.",
+    kaizenOpen: "Quantidade de kaizens com status Recebido (fila de sugestões) no recorte.",
     kaizenClosed: "Kaizens concluídos no período filtrado.",
     kaizenTotal: "Total de kaizens registrados no período conforme filtros aplicados.",
     kaizenIdeas:

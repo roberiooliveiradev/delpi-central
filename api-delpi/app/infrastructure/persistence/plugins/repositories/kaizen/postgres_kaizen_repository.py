@@ -68,7 +68,7 @@ _KAIZEN_SELECT = """
 
 _VALID_PARTICIPANT_ROLES = {"responsavel", "participante", "apoio"}
 _VERSION_STATUSES = {
-    "em_andamento",
+    "recebido",
     "aprovado",
     "implantado",
     "descontinuado",
@@ -384,7 +384,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "total": len(period_rows),
             "implantados": status_count("implantado"),
             "aprovados": status_count("aprovado"),
-            "em_andamento": status_count("em_andamento"),
+            "recebidos": status_count("recebido"),
             "descontinuados": status_count("descontinuado"),
             "cancelados": status_count("cancelado"),
             "period_savings": round(period_savings, 2),
@@ -859,7 +859,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         enriched = self._apply_category_fields(enriched)
         enriched = revision_service.ensure_implantation_date(enriched)
         validate_status_dates(
-            status=enriched.get("status", "em_andamento"),
+            status=enriched.get("status", "recebido"),
             date_committee_approved=enriched.get("date_committee_approved"),
             date_implemented=enriched.get("date_implemented"),
         )
@@ -902,7 +902,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("annual_savings"),
                 enriched.get("realized_daily_savings"),
                 enriched.get("realized_annual_savings"),
-                enriched.get("status", "em_andamento"),
+                enriched.get("status", "recebido"),
                 enriched.get("date_idea_received"),
                 enriched.get("date_committee_approved"),
                 enriched.get("date_implemented"),
@@ -927,8 +927,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
             self._replace_participants(kaizen_id, participants)
 
         change_type = revision_service.resolve_change_type(None, enriched, is_creation=True)
-        initial_status = str(enriched.get("status", "em_andamento"))
-        version_status = initial_status if initial_status in _VERSION_STATUSES else "em_andamento"
+        initial_status = str(enriched.get("status", "recebido"))
+        version_status = initial_status if initial_status in _VERSION_STATUSES else "recebido"
         self._create_revision(
             kaizen_id=kaizen_id,
             record=enriched,
@@ -953,7 +953,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             event_type="kaizen_created",
             payload={
                 "title": str(enriched.get("title") or "").strip(),
-                "status": enriched.get("status", "em_andamento"),
+                "status": enriched.get("status", "recebido"),
                 "annual_savings": enriched.get("annual_savings"),
             },
             actor_user_id=created_by_user_id,
@@ -998,7 +998,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         enriched = self._apply_category_fields(enriched)
         enriched = revision_service.ensure_implantation_date(enriched)
         validate_status_dates(
-            status=enriched.get("status", "em_andamento"),
+            status=enriched.get("status", "recebido"),
             date_committee_approved=enriched.get("date_committee_approved"),
             date_implemented=enriched.get("date_implemented"),
         )
@@ -1059,7 +1059,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("annual_savings"),
                 enriched.get("realized_daily_savings"),
                 enriched.get("realized_annual_savings"),
-                enriched.get("status", "em_andamento"),
+                enriched.get("status", "recebido"),
                 enriched.get("date_idea_received"),
                 enriched.get("date_committee_approved"),
                 enriched.get("date_implemented"),
@@ -1119,7 +1119,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         if status_changed:
             if new_status == "implantado" and active.get("version_status") in (
-                "em_andamento",
+                "recebido",
                 "aprovado",
             ):
                 effective_from = revision_service.resolve_effective_from(enriched)
@@ -1134,8 +1134,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 self._set_version_status(
                     revision_id, new_status, effective_until=effective_until
                 )
-            elif new_status == "em_andamento":
-                self._set_version_status(revision_id, "em_andamento")
+            elif new_status == "recebido":
+                self._set_version_status(revision_id, "recebido")
 
             self._append_history(
                 kaizen_id,
@@ -1241,7 +1241,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             effective_from=effective_from,
             created_by_user_id=created_by_user_id,
             created_by_name=actor_name,
-            version_status="em_andamento",
+            version_status="recebido",
         )
         if participants_input is not None:
             self._store_version_participants(revision_id, participants_input)
@@ -1276,7 +1276,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         revision = self.get_revision(kaizen_id, revision_number)
         if revision is None:
             return None
-        if revision.get("version_status") != "em_andamento":
+        if revision.get("version_status") != "recebido":
             raise PluginsRepositoryError(
                 "Só é possível editar uma versão em andamento (rascunho)."
             )
@@ -1287,7 +1287,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         merged = {**base, **fields}
         enriched = enrich_savings_fields(merged)
         validate_status_dates(
-            status=enriched.get("status", "em_andamento"),
+            status=enriched.get("status", "recebido"),
             date_committee_approved=enriched.get("date_committee_approved"),
             date_implemented=enriched.get("date_implemented"),
         )
@@ -1315,7 +1315,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         revision = self.get_revision(kaizen_id, revision_number)
         if revision is None:
             return None
-        if revision.get("version_status") not in ("em_andamento", "substituido"):
+        if revision.get("version_status") not in ("recebido", "substituido"):
             raise PluginsRepositoryError(
                 "Só é possível implantar uma versão em andamento."
             )

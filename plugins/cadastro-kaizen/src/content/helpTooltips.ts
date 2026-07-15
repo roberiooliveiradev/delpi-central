@@ -40,7 +40,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
     improvementDescription: "O que foi alterado no processo.",
     expectedResult: "Ganho esperado com a melhoria (qualitativo ou quantitativo).",
     status:
-      "Estágio da versão vigente: em andamento, aprovado (comitê), implantado, descontinuado ou cancelado. Aprovado conta na quantidade sem ganhos; Implantado conta quantidade e ganhos. Alterar aqui corrige a versão atual, sem criar uma nova.",
+      "Estágio da versão vigente: recebido, aprovado (comitê), implantado, descontinuado ou cancelado. Aprovado conta na quantidade sem ganhos; Implantado conta quantidade e ganhos. Alterar aqui corrige a versão atual, sem criar uma nova.",
     dateImplemented:
       "Data em que a melhoria entrou em operação. Obrigatória para o status Implantado. Define a vigência da versão implantada, a validade de 1 ano da economia e os ganhos financeiros.",
     savingsType:
@@ -70,7 +70,7 @@ export const KAIZEN_HELP_TOOLTIPS = {
   },
   improvements: {
     launch:
-      "Cria uma cópia da versão ativa como rascunho (Em andamento) e a seleciona. Edite as seções ali mesmo e, ao final, clique em “Salvar e tornar ativa”. A versão ativa segue contabilizando até lá.",
+      "Cria uma cópia da versão ativa como rascunho (Recebido) e a seleciona. Edite as seções ali mesmo e, ao final, clique em “Salvar e tornar ativa”. A versão ativa segue contabilizando até lá.",
     periodGain:
       "Soma dos ganhos das versões que estiveram implantadas no intervalo, respeitando a validade de 1 ano de cada uma e sem projetar dias futuros. Rascunhos não contam.",
     currentSavings:
@@ -78,6 +78,6 @@ export const KAIZEN_HELP_TOOLTIPS = {
     implement:
       "Torna esta versão a vigente usando a data implantação informada no estágio. A versão implantada anterior passa a Substituída e para de contabilizar.",
     editDraft:
-      "Ajusta o rascunho antes de implantar. Só versões Em andamento podem ser editadas por aqui.",
+      "Ajusta o rascunho antes de implantar. Só versões Recebido (rascunho) podem ser editadas por aqui.",
   },
 } as const;

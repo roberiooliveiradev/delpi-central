@@ -1,6 +1,6 @@
 export type SavingsType = "tempo" | "material" | "financeiro" | "qualitativo" | "misto";
 
-export type KaizenStatus = "em_andamento" | "aprovado" | "implantado" | "descontinuado" | "cancelado";
+export type KaizenStatus = "recebido" | "aprovado" | "implantado" | "descontinuado" | "cancelado";
 
 export type ParticipantRole = "responsavel" | "participante" | "apoio";
 
@@ -69,7 +69,7 @@ export type KaizenRevisionChangeType =
 
 // Ciclo de vida de uma VERSÃO do kaizen (revisão = versão completa do processo).
 export type KaizenVersionStatus =
-  | "em_andamento"
+  | "recebido"
   | "aprovado"
   | "implantado"
   | "descontinuado"
@@ -160,7 +160,7 @@ export type KaizenSummary = {
   total: number;
   implantados: number;
   aprovados: number;
-  em_andamento: number;
+  recebidos: number;
   descontinuados: number;
   cancelados: number;
   period_savings: number;
