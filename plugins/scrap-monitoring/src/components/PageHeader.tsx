@@ -1,15 +1,10 @@
-type PageHeaderProps = {
-  title: string;
-  subtitle: string;
-};
+import { createDashboardPageHeader, pageHeaderTitleRowBemClasses } from "@delpi/plugin-ui/index";
 
-export function PageHeader({ title, subtitle }: PageHeaderProps) {
-  return (
-    <header className="sm-page-header">
-      <div>
-        <h1 className="sm-page-header__title">{title}</h1>
-        <p className="sm-page-header__subtitle">{subtitle}</p>
-      </div>
-    </header>
-  );
-}
+export const PageHeader = createDashboardPageHeader({
+  layout: "titleRow",
+  classNames: pageHeaderTitleRowBemClasses("sm"),
+  labels: {
+    refresh: "Atualizar",
+    refreshing: "Atualizando…",
+  },
+});

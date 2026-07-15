@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import {
   Bar,
   BarChart,
@@ -21,25 +20,7 @@ import {
 } from "../constants/chartTheme";
 import type { ScrapRankingItem } from "../types/scrap";
 import { formatCurrencyBrl, formatShortLabel } from "../utils/formatters";
-
-type ChartCardProps = {
-  title: string;
-  children: ReactNode;
-  empty?: boolean;
-};
-
-function ChartCard({ title, children, empty = false }: ChartCardProps) {
-  return (
-    <article className="sm-chart-card sm-card">
-      <header className="sm-chart-card__header">
-        <h3 className="sm-chart-card__title">{title}</h3>
-      </header>
-      <div className="sm-chart-card__body">
-        {empty ? <p className="sm-chart-card__empty">Sem dados no período.</p> : children}
-      </div>
-    </article>
-  );
-}
+import { ChartCard } from "./ChartCard";
 
 type RankingChartsProps = {
   motivos: ScrapRankingItem[];

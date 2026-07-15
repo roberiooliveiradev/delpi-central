@@ -4,7 +4,9 @@ import { PageHeader } from "../components/PageHeader";
 import { PeriodFilters, type QuickRangePreset } from "../components/PeriodFilters";
 import { RankingCharts } from "../components/RankingCharts";
 import { RegistrosTable } from "../components/RegistrosTable";
-import { EmptyState, ErrorState, LoadingState } from "../components/StateBoxes";
+import { EmptyState } from "../components/EmptyState";
+import { ErrorState } from "../components/ErrorState";
+import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { SummaryCards } from "../components/SummaryCards";
 import {
   BRANCH_ROUTE_LABELS,
@@ -173,7 +175,16 @@ function ScrapMonitoringContent({ branchRoute, totvsBranch }: ContentProps) {
       ) : null}
 
       {!permissionDenied && showInitialLoading ? (
-        <LoadingState percent={initialLoadingProgress} />
+        <LoadingActivityCard
+          title="Carregando painel…"
+          description={
+            initialLoadingProgress > 0
+              ? `${initialLoadingProgress}%`
+              : "Consultando API de refugos"
+          }
+          variant="panel"
+          progressPercent={initialLoadingProgress}
+        />
       ) : null}
 
       {!permissionDenied && !showInitialLoading && isEmpty ? (

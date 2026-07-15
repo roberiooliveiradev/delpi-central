@@ -4,6 +4,7 @@ import {
   formatDatePtBr,
   formatQuantity,
 } from "../utils/formatters";
+import { Pagination } from "./Pagination";
 
 type RegistrosTableProps = {
   items: ScrapRegistroItem[];
@@ -76,27 +77,12 @@ export function RegistrosTable({
         </table>
       </div>
       {totalPages > 1 ? (
-        <footer className="sm-pagination">
-          <button
-            type="button"
-            className="sm-btn sm-btn--secondary"
-            disabled={page <= 1 || loading}
-            onClick={() => onPageChange(page - 1)}
-          >
-            Anterior
-          </button>
-          <span className="sm-pagination__label">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            type="button"
-            className="sm-btn sm-btn--secondary"
-            disabled={page >= totalPages || loading}
-            onClick={() => onPageChange(page + 1)}
-          >
-            Próxima
-          </button>
-        </footer>
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          disabled={loading}
+        />
       ) : null}
     </section>
   );
