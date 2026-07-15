@@ -266,8 +266,9 @@
 }.dashboard-lmps .lmps-detail-layout > *{
   min-width: 0;
 }
-/* Sem par na última linha (ex.: só Histórico, sem Estrutura), ocupa as duas colunas */
-.dashboard-lmps .lmps-detail-layout > *:last-child:nth-child(odd){
+/* Estrutura / Histórico: cada um em linha própria (largura total) */
+.dashboard-lmps .lmps-detail-layout > .lmps-detail-card--full,
+.dashboard-lmps .lmps-detail-layout > .delpi-ui-detail-card--full{
   grid-column: 1 / -1;
 }.dashboard-lmps .lmps-history-badge{
   display: inline-flex;

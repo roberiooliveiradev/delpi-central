@@ -373,6 +373,7 @@ export function CommercialDetailPage({
           titleHint={COMMERCIAL_HELP_TOOLTIPS.detail.historySection}
           icon={<History size={20} />}
           hint="Eventos AIJ010 — processo e estágio"
+          className="dc-detail-card--full"
         >
           <CommercialProposalHistorySection
             items={historyItems}

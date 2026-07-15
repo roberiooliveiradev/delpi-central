@@ -992,7 +992,8 @@
 }.dashboard-commercial .dc-detail-layout > *{
   min-width: 0;
 }
-.dashboard-commercial .dc-detail-layout > *:last-child:nth-child(odd){
+.dashboard-commercial .dc-detail-layout > .dc-detail-card--full,
+.dashboard-commercial .dc-detail-layout > .delpi-ui-detail-card--full{
   grid-column: 1 / -1;
 }.dashboard-commercial .dc-detail__empty{
   margin: 0;

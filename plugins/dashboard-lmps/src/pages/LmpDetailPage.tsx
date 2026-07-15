@@ -502,6 +502,7 @@ export function LmpDetailPage({ saleNumber, branch }: LmpDetailPageProps) {
               titleHint={LMPS_HELP_TOOLTIPS.detail.historySection}
               hint="Linha do tempo de eventos no TOTVS (AIJ010), alinhada à revisão do painel LMP"
               icon={<History size={20} aria-hidden />}
+              className="lmps-detail-card--full"
             >
               <LmpHistorySection
                 events={item.list_history ?? []}
