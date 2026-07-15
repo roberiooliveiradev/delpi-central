@@ -247,7 +247,7 @@
 
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  max-height: min(88vh, 42rem);
+  max-height: var(--delpi-ui-lucide-picker-max-height, min(88vh, 42rem));
   width: 100%;
   border: 1px solid var(--lucide-picker-border);
   border-radius: 14px;
@@ -259,7 +259,7 @@
 }
 
 .delpi-ui-lucide-icon-picker--embedded {
-  max-height: min(52vh, 28rem);
+  max-height: var(--delpi-ui-lucide-picker-embedded-max-height, min(52vh, 28rem));
   box-shadow: none;
   margin-top: 0.5rem;
 }

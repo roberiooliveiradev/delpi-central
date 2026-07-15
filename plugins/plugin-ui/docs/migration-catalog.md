@@ -77,6 +77,7 @@ python3 scripts/ci/check_plugin_docker_shared_libraries.py --check
 python3 scripts/ci/audit_plugin_ui_duplication.py --check          # bloqueia HelpTooltip local + integração
 python3 scripts/ci/audit_plugin_ui_duplication.py --check --strict # falha em toda duplicata catalogada
 python3 scripts/ci/audit_plugin_ui_native_form_controls.py --check # bloqueia <select>/<textarea> novos fora do pacote
+python3 scripts/ci/audit_mfe_plugin_ui_css.py --check              # bloqueia seletores .delpi-ui-* em CSS de MFE (Fase 7)
 ```
 
 Relatório: [native-form-controls-audit.md](./native-form-controls-audit.md)
@@ -312,7 +313,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ✅ |
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ✅ |
 | **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ✅ |
-| **7.7** | Gate CI anti-reintrodução (opcional) | ⏳ backlog |
+| **7.7** | Gate CI anti-reintrodução | ✅ `scripts/ci/audit_mfe_plugin_ui_css.py --check` |
 
 ### Checklist por plugin (preencher ao fechar onda)
 

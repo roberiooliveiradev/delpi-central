@@ -1192,21 +1192,17 @@
 }.cx-icon-attach__picker{
   margin-top: 4px;
   min-width: 0;
-}.cx-icon-attach__picker .delpi-ui-lucide-icon-picker{
-  max-height: min(72vh, 38rem);
-}/* Isola a busca do picker: `.cx-field input` força borda/bloco e empilha a lupa. */
-.dashboard-customer-experience .cx-field .delpi-ui-lucide-icon-picker__search-wrap{
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-}.dashboard-customer-experience .cx-field .delpi-ui-lucide-icon-picker input.delpi-ui-lucide-icon-picker__search{
+  /* Altura do LucideIconPicker via token do kit (sem seletor .delpi-ui-*). */
+  --delpi-ui-lucide-picker-max-height: min(72vh, 38rem);
+}
+/* Isola inputs do picker de `.cx-field input` (borda/bloco); só classes de domínio. */
+.cx-icon-attach__picker input{
   border: 0;
   border-radius: 0;
   background: transparent;
   padding: 0.7rem 0;
   box-shadow: none;
-}.dashboard-customer-experience .cx-field .delpi-ui-lucide-icon-picker input.delpi-ui-lucide-icon-picker__search:focus{
+}.cx-icon-attach__picker input:focus{
   outline: none;
   border-color: transparent;
 }.cx-muted{
