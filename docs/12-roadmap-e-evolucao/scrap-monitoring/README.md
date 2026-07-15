@@ -11,7 +11,7 @@ Scaffold do plugin MFE multi-filial (SC/ES) + API `/refugos` (jul/2026).
 | API | `/refugos/*` (resumo, rankings, registros, filtros, health) | feito |
 | RBAC | `.view.filial-sc` / `.view.filial-es` + gate 403 | feito |
 | Plugin scaffold | Manifest SC/ES + stub UI | feito |
-| UI completa | KPIs / gráficos / tabela | backlog |
+| UI completa | KPIs / gráficos / tabela | feito |
 
 ## Filiais
 

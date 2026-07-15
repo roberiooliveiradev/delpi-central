@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   Bar,
   BarChart,
@@ -23,7 +24,7 @@ import { formatCurrencyBrl, formatShortLabel } from "../utils/formatters";
 
 type ChartCardProps = {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
   empty?: boolean;
 };
 

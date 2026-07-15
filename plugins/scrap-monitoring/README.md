@@ -28,7 +28,7 @@ Doc completa: [api-delpi/docs/api/scrap-monitoring.md](../../api-delpi/docs/api/
 
 ## Estado desta entrega
 
-Scaffold MF + manifesto SC/ES + stub de página. **UI completa** (gráficos/tabela) na fase seguinte.
+Painel MFE com KPIs (dia/mês/período), rankings (motivo, MP, PA, CT, colaborador) e tabela paginada de registros, filtrados por filial SC/ES e período.
 
 ## Dev
 
