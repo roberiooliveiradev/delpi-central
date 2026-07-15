@@ -58,6 +58,7 @@ import type {
 import { formatCurrency, formatDate } from "../utils/format";
 import { categoriesFromRecord } from "../utils/kaizenCategories";
 import { savingsTypeLabel } from "../utils/labels";
+import { validateKaizenFormStatusDates } from "../utils/validateKaizenStatusDates";
 import { useKaizenSectionEdit } from "../hooks/useKaizenSectionEdit";
 
 type Props = {
@@ -219,6 +220,10 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
       setError(null);
       setSuccess(null);
       try {
+        const statusDateError = validateKaizenFormStatusDates(form);
+        if (statusDateError) {
+          throw new Error(statusDateError);
+        }
         const payload = formValuesToPayload(form);
         if (mode === "draft" && selectedRevision != null) {
           await updateKaizenVersion(record.id, selectedRevision, payload);
@@ -581,6 +586,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               value={formatDate(view.date_idea_received)}
             />
             <ReadOnlyField
+              label="Data aprovação no comitê"
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateCommitteeApproved}
+              value={formatDate(view.date_committee_approved)}
+            />
+            <ReadOnlyField
               label="Data implantação"
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
               value={formatDate(view.date_implemented)}
@@ -610,9 +620,22 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
               onChange={(value) => updateField("date_idea_received", value)}
             />
             <DateField
+              id="kz-d-date-committee"
+              label={
+                form.status === "aprovado"
+                  ? "Data aprovação no comitê *"
+                  : "Data aprovação no comitê"
+              }
+              hint={KAIZEN_HELP_TOOLTIPS.fields.dateCommitteeApproved}
+              required={form.status === "aprovado"}
+              value={form.date_committee_approved}
+              onChange={(value) => updateField("date_committee_approved", value)}
+            />
+            <DateField
               id="kz-d-date-impl"
-              label="Data implantação"
+              label={form.status === "implantado" ? "Data implantação *" : "Data implantação"}
               hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
+              required={form.status === "implantado"}
               value={form.date_implemented}
               onChange={(value) => updateField("date_implemented", value)}
             />

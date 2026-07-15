@@ -8,6 +8,12 @@ from app.application.dto.kaizen.kaizen_summary_response import KaizenSummaryResp
 from app.domain.entities.kaizen.kaizen import Kaizen, KaizenDetail
 from app.domain.ports.kaizen.kaizen_query_port import KaizenQueryRepositoryPort
 from app.domain.services.kaizen import kaizen_savings_validity
+from app.domain.services.kaizen.kaizen_indicator_eligibility import (
+    counts_for_quantity,
+    date_in_range,
+    is_implemented_status,
+    quantity_anchor_from_row,
+)
 from app.domain.services.kaizen.kaizen_query_mapper import (
     _as_date,
     _as_float,
@@ -31,6 +37,7 @@ _KAIZEN_QUERY_SELECT = """
            k.daily_savings,
            k.annual_savings,
            k.status,
+           k.date_committee_approved,
            k.date_implemented
       FROM quality.kaizens k
      WHERE k.deleted_at IS NULL
@@ -40,28 +47,14 @@ _KAIZEN_QUERY_SELECT = """
 class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryPort):
     """Leitura analítica de kaizens a partir do PostgreSQL (substitui Google Sheets)."""
 
-    def __init__(self, utils: Utils | None = None) -> None:
-        super().__init__()
+    def __init__(self, utils: Utils | None = None, connection=None) -> None:
+        super().__init__(connection=connection)
         self._utils = utils or Utils()
 
     def _load_rows(self) -> list[dict[str, Any]]:
         return self.fetch_all(
             f"{_KAIZEN_QUERY_SELECT} ORDER BY k.date_implemented DESC NULLS LAST, k.created_at DESC"
         )
-
-    @staticmethod
-    def _is_implanted(status: str | None) -> bool:
-        if not status:
-            return False
-        normalized = (
-            str(status)
-            .strip()
-            .lower()
-            .replace("í", "i")
-            .replace("ú", "u")
-            .replace("ã", "a")
-        )
-        return normalized == "implantado"
 
     def _parse_request_dates(
         self, request: KaizenSummaryRequest
@@ -88,20 +81,6 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
             if row_branch != request.branch.strip():
                 return False
 
-        return True
-
-    @staticmethod
-    def _implemented_in_range(
-        implemented_at: date | None,
-        range_start: date | None,
-        range_end: date | None,
-    ) -> bool:
-        if implemented_at is None:
-            return False
-        if range_start is not None and implemented_at < range_start:
-            return False
-        if range_end is not None and implemented_at > range_end:
-            return False
         return True
 
     @staticmethod
@@ -142,21 +121,25 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
         range_start, range_end = self._parse_request_dates(request)
         rows = self._load_rows()
 
-        implemented_rows = [row for row in rows if self._is_implanted(row.get("status"))]
-
         count_rows: list[dict[str, Any]] = []
         savings_rows: list[dict[str, Any]] = []
 
-        for row in implemented_rows:
+        for row in rows:
             if not self._matches_filters(row, request):
                 continue
 
+            status = row.get("status")
+            quantity_day = quantity_anchor_from_row(row)
             implemented = _as_date(row.get("date_implemented"))
 
-            if self._implemented_in_range(implemented, range_start, range_end):
+            if counts_for_quantity(status) and date_in_range(
+                quantity_day, range_start, range_end
+            ):
                 count_rows.append(row)
 
-            if self._contributes_savings_in_range(implemented, range_start, range_end):
+            if is_implemented_status(status) and self._contributes_savings_in_range(
+                implemented, range_start, range_end
+            ):
                 savings_rows.append(row)
 
         kaizens: list[Kaizen] = [row_to_kaizen(row) for row in count_rows]

@@ -16,13 +16,16 @@ def normalize_sheet_status(value: str | None) -> str:
         .replace("í", "i")
         .replace("ú", "u")
         .replace("ã", "a")
+        .replace("ç", "c")
         .replace(" ", "_")
     )
-    allowed = {"em_andamento", "implantado", "descontinuado", "cancelado"}
+    allowed = {"em_andamento", "aprovado", "implantado", "descontinuado", "cancelado"}
     if normalized in allowed:
         return normalized
     if normalized == "implantada":
         return "implantado"
+    if normalized in {"aprovada", "aprovacao"}:
+        return "aprovado"
     return "em_andamento"
 
 

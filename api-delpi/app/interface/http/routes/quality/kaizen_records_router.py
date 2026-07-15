@@ -19,6 +19,7 @@ from app.composition.kaizen_composer import (
     build_kaizen_repository,
 )
 from app.core.responses import error_response, not_found_response
+from app.domain.services.kaizen.kaizen_status_date_rules import KaizenStatusDateError
 from app.interface.http.openapi_agent_metadata import (
     QUALITY_KAIZEN_RECORD_BY_ID,
     QUALITY_KAIZEN_RECORDS_LIST,
@@ -34,6 +35,9 @@ class KaizenParticipantBody(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     role: str = Field(default="participante", pattern="^(responsavel|participante|apoio)$")
     user_id: str | None = Field(default=None, max_length=100)
+
+
+_STATUS_PATTERN = "^(em_andamento|aprovado|implantado|descontinuado|cancelado)$"
 
 
 class KaizenRecordBody(BaseModel):
@@ -55,11 +59,12 @@ class KaizenRecordBody(BaseModel):
     realized_daily_savings: float | None = None
     status: str = Field(
         default="em_andamento",
-        pattern="^(em_andamento|implantado|descontinuado|cancelado)$",
+        pattern=_STATUS_PATTERN,
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
     date_idea_received: str | None = None
+    date_committee_approved: str | None = None
     notes: str | None = None
     process_description: str | None = None
     problem_description: str | None = None
@@ -100,11 +105,12 @@ class UpdateKaizenRecordBody(BaseModel):
     realized_daily_savings: float | None = None
     status: str | None = Field(
         default=None,
-        pattern="^(em_andamento|implantado|descontinuado|cancelado)$",
+        pattern=_STATUS_PATTERN,
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
     date_idea_received: str | None = None
+    date_committee_approved: str | None = None
     notes: str | None = None
     process_description: str | None = None
     problem_description: str | None = None
@@ -154,7 +160,7 @@ def list_kaizen_records(
     branch: str | None = Query(default=None, pattern="^(01|02)$"),
     status: str | None = Query(
         default=None,
-        pattern="^(em_andamento|implantado|descontinuado|cancelado)$",
+        pattern=_STATUS_PATTERN,
     ),
     savings_type: str | None = Query(
         default=None,
@@ -202,6 +208,8 @@ def create_kaizen_record(body: KaizenRecordBody = Body(...)):
             actor_name=_current_user_name(),
         )
         return api_delpi_success(data, operation_id="create_kaizen_record")
+    except KaizenStatusDateError as exc:
+        return error_response(str(exc), status_code=400)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao cadastrar kaizen: {exc}")
         return error_response(str(exc), status_code=500)
@@ -316,6 +324,8 @@ def update_kaizen_record(record_id: str, body: UpdateKaizenRecordBody = Body(...
         if data is None:
             return not_found_response("Kaizen não encontrado.")
         return api_delpi_success(data, operation_id="update_kaizen_record")
+    except KaizenStatusDateError as exc:
+        return error_response(str(exc), status_code=400)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar kaizen: {exc}")
         return error_response(str(exc), status_code=500)
@@ -441,6 +451,8 @@ def update_kaizen_version(
         if data is None:
             return not_found_response("Versão não encontrada.")
         return api_delpi_success(data, operation_id="update_kaizen_version")
+    except KaizenStatusDateError as exc:
+        return error_response(str(exc), status_code=400)
     except PluginsRepositoryError as exc:
         log_error(f"Erro ao atualizar versão do kaizen: {exc}")
         return error_response(str(exc), status_code=400)

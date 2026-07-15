@@ -23,6 +23,7 @@ SNAPSHOT_FIELDS = (
     "realized_annual_savings",
     "status",
     "date_idea_received",
+    "date_committee_approved",
     "date_implemented",
     "date_discontinued",
     "notes",
@@ -36,6 +37,7 @@ SNAPSHOT_FIELDS = (
 # Campos cujo valor, ao mudar, obriga a criação de uma nova revisão.
 REVISION_TRIGGER_FIELDS = (
     "status",
+    "date_committee_approved",
     "date_implemented",
     "date_discontinued",
     "savings_type",
@@ -52,6 +54,7 @@ REVISION_TRIGGER_FIELDS = (
 
 _STATUS_LABELS = {
     "em_andamento": "Em andamento",
+    "aprovado": "Aprovado",
     "implantado": "Implantado",
     "descontinuado": "Descontinuado",
     "cancelado": "Cancelado",
@@ -130,12 +133,11 @@ def build_snapshot(record: dict[str, Any]) -> dict[str, Any]:
 
 
 def ensure_implantation_date(record: dict[str, Any]) -> dict[str, Any]:
-    """Garante data de implantação quando o status é implantado (base dos cálculos)."""
-    if _normalize(record.get("status")) != "implantado":
-        return record
-    if _normalize(record.get("date_implemented")):
-        return record
-    return {**record, "date_implemented": date.today().isoformat()}
+    """Pass-through: data de implantação é obrigatória via ``kaizen_status_date_rules``.
+
+    Mantido por compatibilidade com create/update; não preenche data automaticamente.
+    """
+    return record
 
 
 def resolve_effective_from(

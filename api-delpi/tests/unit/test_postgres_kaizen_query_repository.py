@@ -32,7 +32,7 @@ def _row(**overrides) -> dict:
 
 
 def _repository(rows: list[dict]) -> PostgresKaizenQueryRepository:
-    repo = PostgresKaizenQueryRepository()
+    repo = PostgresKaizenQueryRepository(connection=MagicMock())
     repo.fetch_all = MagicMock(return_value=rows)
     repo.fetch_one = MagicMock(return_value=None)
     return repo
@@ -67,9 +67,54 @@ def test_postgres_kaizen_summary_excludes_non_implanted() -> None:
     assert summary.total_savings == 0.0
 
 
+def test_postgres_kaizen_summary_counts_aprovado_without_savings() -> None:
+    repository = _repository(
+        [
+            _row(
+                status="aprovado",
+                date_committee_approved=date(2026, 1, 20),
+                date_implemented=None,
+                daily_savings=Decimal("10.00"),
+            )
+        ]
+    )
+
+    summary = repository.get_kaizen_summary(
+        KaizenSummaryRequest(
+            date_start="2026-01-01",
+            date_end="2026-01-31",
+        )
+    )
+
+    assert summary.total_kaizens == 1
+    assert summary.total_savings == 0.0
+
+
+def test_postgres_kaizen_summary_aprovado_falls_back_to_implemented_date() -> None:
+    repository = _repository(
+        [
+            _row(
+                status="aprovado",
+                date_committee_approved=None,
+                date_implemented=date(2026, 1, 16),
+            )
+        ]
+    )
+
+    summary = repository.get_kaizen_summary(
+        KaizenSummaryRequest(
+            date_start="2026-01-01",
+            date_end="2026-01-31",
+        )
+    )
+
+    assert summary.total_kaizens == 1
+    assert summary.total_savings == 0.0
+
+
 def test_postgres_kaizen_get_by_id_accepts_uuid() -> None:
     row = _row()
-    repository = PostgresKaizenQueryRepository()
+    repository = PostgresKaizenQueryRepository(connection=MagicMock())
     repository.fetch_all = MagicMock(return_value=[row])
     repository.fetch_one = MagicMock(return_value=row)
 
@@ -83,7 +128,7 @@ def test_postgres_kaizen_get_by_id_accepts_uuid() -> None:
 
 def test_postgres_kaizen_get_by_id_accepts_legacy_sheet_id() -> None:
     row = _row()
-    repository = PostgresKaizenQueryRepository()
+    repository = PostgresKaizenQueryRepository(connection=MagicMock())
     repository.fetch_all = MagicMock(return_value=[row])
     repository.fetch_one = MagicMock(return_value=None)
 
@@ -94,7 +139,7 @@ def test_postgres_kaizen_get_by_id_accepts_legacy_sheet_id() -> None:
 
 
 def test_postgres_kaizen_get_by_id_returns_none_when_missing() -> None:
-    repository = PostgresKaizenQueryRepository()
+    repository = PostgresKaizenQueryRepository(connection=MagicMock())
     repository.fetch_all = MagicMock(return_value=[])
     repository.fetch_one = MagicMock(return_value=None)
 

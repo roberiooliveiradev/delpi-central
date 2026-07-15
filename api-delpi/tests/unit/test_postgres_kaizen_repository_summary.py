@@ -31,6 +31,7 @@ def _implanted_row(**overrides) -> dict:
         "realized_daily_savings": None,
         "realized_annual_savings": None,
         "status": "implantado",
+        "date_committee_approved": None,
         "date_implemented": date(2026, 6, 15),
         "date_discontinued": None,
         "notes": None,
@@ -47,6 +48,34 @@ def _implanted_row(**overrides) -> dict:
     }
     base.update(overrides)
     return base
+
+
+def test_summary_counts_aprovado_in_quantity_not_savings() -> None:
+    repo = PostgresKaizenRepository(connection=MagicMock())
+    repo.fetch_all = MagicMock(
+        return_value=[
+            _implanted_row(
+                status="aprovado",
+                date_committee_approved=date(2026, 7, 2),
+                date_implemented=None,
+                daily_savings=Decimal("50"),
+                annual_savings=Decimal("18000"),
+            )
+        ]
+    )
+
+    result = repo.summary(
+        branch_code="01",
+        date_start="2026-07-01",
+        date_end="2026-07-31",
+    )
+
+    assert result["period_implanted_count"] == 1
+    assert result["aprovados"] == 1
+    assert result["implantados"] == 0
+    assert result["period_savings"] == 0.0
+    assert result["active_count"] == 0
+    assert result["implanted_by_month"] == [{"key": "2026-07", "value": 1}]
 
 
 def test_summary_keeps_period_savings_and_active_when_no_new_implants_in_period() -> None:

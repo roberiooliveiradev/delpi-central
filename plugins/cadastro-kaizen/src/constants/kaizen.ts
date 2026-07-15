@@ -59,6 +59,7 @@ export function visibleSavingsParamFields(type: SavingsType | ""): SavingsParamF
 
 export const KAIZEN_STATUSES = [
   { value: "em_andamento", label: "Em andamento" },
+  { value: "aprovado", label: "Aprovado" },
   { value: "implantado", label: "Implantado" },
   { value: "descontinuado", label: "Descontinuado" },
   { value: "cancelado", label: "Cancelado" },
@@ -97,6 +98,7 @@ export function emptyFormValues(): KaizenFormValues {
     realized_daily_savings: "",
     status: "em_andamento",
     date_idea_received: "",
+    date_committee_approved: "",
     date_implemented: "",
     date_discontinued: "",
     notes: "",
@@ -139,6 +141,7 @@ export function recordToFormValues(record: KaizenRecord): KaizenFormValues {
     realized_daily_savings: record.realized_daily_savings?.toString() ?? "",
     status: record.status,
     date_idea_received: record.date_idea_received ?? "",
+    date_committee_approved: record.date_committee_approved ?? "",
     date_implemented: record.date_implemented ?? "",
     date_discontinued: record.date_discontinued ?? "",
     notes: record.notes ?? "",
@@ -189,6 +192,7 @@ export function formValuesToPayload(values: KaizenFormValues): Record<string, un
     realized_daily_savings: parseOptionalNumber(values.realized_daily_savings),
     status: values.status,
     date_idea_received: values.date_idea_received || null,
+    date_committee_approved: values.date_committee_approved || null,
     date_implemented: values.date_implemented || null,
     date_discontinued: values.date_discontinued || null,
     notes: values.notes.trim() || null,

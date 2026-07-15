@@ -6,6 +6,7 @@ import { KAIZEN_HELP_TOOLTIPS } from "../../content/helpTooltips";
 
 const STATUS_LABELS: Record<KaizenVersionStatus, string> = {
   em_andamento: "Rascunho",
+  aprovado: "Aprovado",
   implantado: "Ativa",
   descontinuado: "Descontinuada",
   cancelado: "Cancelada",

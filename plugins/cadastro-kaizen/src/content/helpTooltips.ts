@@ -30,6 +30,8 @@ export const KAIZEN_HELP_TOOLTIPS = {
       "Data em que a melhoria deixou de operar, quando aplicável. Interrompe a contabilização dos ganhos.",
     dateIdeaReceived:
       "Data em que a ideia de melhoria foi recebida ou registrada, antes da implantação.",
+    dateCommitteeApproved:
+      "Data em que o comitê aprovou o kaizen. Obrigatória para o status Aprovado. Define o mês do indicador de quantidade (se vazia em registros legados, usa a data de implantação).",
     notes: "Notas livres, observações e detalhes que não se encaixam nos demais campos.",
     changeReason:
       "Descreva o porquê da correção. O texto fica registrado na trilha de auditoria da versão.",
@@ -38,9 +40,9 @@ export const KAIZEN_HELP_TOOLTIPS = {
     improvementDescription: "O que foi alterado no processo.",
     expectedResult: "Ganho esperado com a melhoria (qualitativo ou quantitativo).",
     status:
-      "Estágio da versão vigente: em andamento, implantado, descontinuado ou cancelado. Alterar aqui corrige a versão atual, sem criar uma nova.",
+      "Estágio da versão vigente: em andamento, aprovado (comitê), implantado, descontinuado ou cancelado. Aprovado conta na quantidade sem ganhos; Implantado conta quantidade e ganhos. Alterar aqui corrige a versão atual, sem criar uma nova.",
     dateImplemented:
-      "Data em que a melhoria entrou em operação. Define a vigência da versão implantada e a validade de 1 ano da economia.",
+      "Data em que a melhoria entrou em operação. Obrigatória para o status Implantado. Define a vigência da versão implantada, a validade de 1 ano da economia e os ganhos financeiros.",
     savingsType:
       "Como a economia é medida: tempo (segundos/ocorrências), material, financeira fixa, qualitativa ou mista.",
     realizedDailySavings:

@@ -16,6 +16,7 @@ import {
   recordToFormValues,
 } from "../constants/kaizen";
 import type { KaizenFormValues } from "../types/kaizen";
+import { validateKaizenFormStatusDates } from "../utils/validateKaizenStatusDates";
 
 type Props = {
   mode: "new" | "edit";
@@ -70,6 +71,10 @@ export function KaizenFormPage({ mode, recordId, onNavigate, onCreated }: Props)
       const payload = formValuesToPayload(values);
       if (!payload.title) {
         throw new Error("Informe o título do kaizen.");
+      }
+      const statusDateError = validateKaizenFormStatusDates(values);
+      if (statusDateError) {
+        throw new Error(statusDateError);
       }
 
       if (mode === "new") {

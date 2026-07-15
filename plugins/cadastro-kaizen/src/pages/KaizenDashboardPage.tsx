@@ -44,6 +44,7 @@ type Bucket = BarListBucket;
 
 const STATUS_TONE: Record<string, Tone> = {
   implantado: "success",
+  aprovado: "accent",
   em_andamento: "accent",
   descontinuado: "muted",
   cancelado: "danger",
@@ -157,11 +158,16 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
 
   const hasPeriod = summary?.has_period ?? false;
   const savingsHint = hasPeriod ? "no período selecionado" : "acumulado (validade de 1 ano)";
-  const implantedHint = hasPeriod ? "no período selecionado" : "total implantados";
+  const implantedHint = hasPeriod ? "no período selecionado" : "total aprovados/implantados";
 
   const total = summary?.total ?? 0;
   const showEmptyCatalog =
-    summary != null && !error && !hasFilters && total === 0 && (summary.implantados ?? 0) === 0;
+    summary != null &&
+    !error &&
+    !hasFilters &&
+    total === 0 &&
+    (summary.implantados ?? 0) === 0 &&
+    (summary.aprovados ?? 0) === 0;
   const showPeriodWithoutNewImplants =
     summary != null &&
     hasPeriod &&
@@ -264,7 +270,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
             <KpiCard
               icon={<CalendarCheck size={22} />}
               tone="accent"
-              label="Kaizens implantados"
+              label="Kaizens aprovados/implantados"
               value={formatInteger(summary.period_implanted_count)}
               sub={implantedHint}
             />
@@ -273,7 +279,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
               tone="accent"
               label="Total de kaizens"
               value={formatInteger(summary.total)}
-              sub={`${formatInteger(summary.implantados)} implantados`}
+              sub={`${formatInteger(summary.aprovados ?? 0)} aprovados · ${formatInteger(summary.implantados)} implantados`}
             />
             <KpiCard
               icon={<TrendingUp size={22} />}
@@ -300,7 +306,7 @@ export function KaizenDashboardPage({ onNavigate }: Props) {
 
           <div className="kz-dash-grid">
             <section className="kz-card kz-dash-panel kz-dash-panel--wide">
-              <h2 className="kz-dash-panel__title">Kaizens implantados por mês</h2>
+              <h2 className="kz-dash-panel__title">Kaizens aprovados/implantados por mês</h2>
               <BarList buckets={buckets.implantedByMonth} toneOf={() => "success"} />
             </section>
 

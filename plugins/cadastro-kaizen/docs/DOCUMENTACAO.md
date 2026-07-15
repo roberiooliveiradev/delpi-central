@@ -59,7 +59,7 @@ Query params:
 | Parâmetro | Tipo | Descrição |
 |-----------|------|-----------|
 | `branch` | `01` \| `02` | Filial |
-| `status` | enum | `em_andamento`, `implantado`, … |
+| `status` | enum | `em_andamento`, `aprovado`, `implantado`, `descontinuado`, `cancelado` |
 | `savings_type` | enum | `tempo`, `material`, … |
 | `title` | string | Busca parcial (ILIKE) |
 | `date_start`, `date_end` | ISO date | Filtro em `date_implemented` |
@@ -145,12 +145,13 @@ A **validade de 1 ano** dos ganhos financeiros usa sempre `date_implemented` (`k
 | Campo | Uso |
 |-------|-----|
 | `date_idea_received` | Recebimento/registro da ideia (V035). Opcional. |
-| `date_implemented` | **Data de implantação** — início da operação, validade de 1 ano da economia e vigência da revisão implantada. |
+| `date_committee_approved` | Aprovação no comitê (V042). Obrigatória se `status = aprovado`. âncora preferencial do indicador de quantidade. |
+| `date_implemented` | **Data de implantação** — início da operação, validade de 1 ano da economia e vigência da revisão implantada. Obrigatória se `status = implantado`. |
 | `date_discontinued` | Fim da operação; interrompe contabilização. |
 
-**Regra unificada (jul/2026):** o usuário informa apenas **Data implantação** no Estágio. Internamente, `effective_from` da revisão espelha `date_implemented` (`kaizen_revision_service.resolve_effective_from`). O body legado `effective_from` no PUT é ignorado. Ao implantar rascunho (`POST .../implement`), a API lê `date_implemented` do snapshot da versão.
+**Regra unificada (jul/2026):** o usuário informa **Data implantação** no Estágio. Internamente, `effective_from` da revisão espelha `date_implemented` (`kaizen_revision_service.resolve_effective_from`). O body legado `effective_from` no PUT é ignorado. Ao implantar rascunho (`POST .../implement`), a API lê `date_implemented` do snapshot da versão.
 
-Se status = `implantado` sem data, `ensure_implantation_date` preenche com a data de hoje.
+**Status Aprovado (jul/2026):** `aprovado` exige `date_committee_approved`. Conta no KPI de quantidade (`COALESCE(date_committee_approved, date_implemented)`), mas **não** nos ganhos financeiros (só `implantado`). Validação em `kaizen_status_date_rules` (API) e espelho no MFE.
 
 Timeline de versões exibe «Implantação: … → …» a partir de `effective_from` (sincronizado com `date_implemented`).
 

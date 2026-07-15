@@ -39,9 +39,9 @@ export const QUALITY_HELP_TOOLTIPS = {
     kaizenClosed: "Kaizens concluídos no período filtrado.",
     kaizenTotal: "Total de kaizens registrados no período conforme filtros aplicados.",
     kaizenIdeas:
-      "Quantidade de ideias aprovadas para kaizen implantadas no período. Meta do indicador Ideias Aprovadas para Kaizen/mês (Indicadores Estratégicos).",
+      "Quantidade de kaizens com status Aprovado ou Implantado no período, pela data de aprovação no comitê (ou data de implantação, se a aprovação não estiver cadastrada). Meta do indicador Ideias Aprovadas para Kaizen/mês (Indicadores Estratégicos).",
     kaizenFinancialGains:
-      "Ganhos financeiros do kaizen no período: soma de daily_savings × dias ativos de cada melhoria implantada. Meta do indicador Ganhos Financeiros Kaizen/mês (Indicadores Estratégicos).",
+      "Ganhos financeiros do kaizen no período: soma de daily_savings × dias ativos apenas de melhorias com status Implantado. Status Aprovado conta na quantidade, mas não nos ganhos. Meta do indicador Ganhos Financeiros Kaizen/mês (Indicadores Estratégicos).",
     kaizenSavings:
       "Mesmo valor dos ganhos financeiros do kaizen — economia acumulada no período filtrado.",
     audit5sScore: "Nota média das auditorias 5S realizadas no período.",

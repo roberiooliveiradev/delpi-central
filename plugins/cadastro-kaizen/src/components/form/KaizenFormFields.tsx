@@ -89,9 +89,23 @@ export function KaizenFormFields({ values, onChange }: KaizenFormFieldsProps) {
         />
 
         <DateField
+          id="kz-date-committee-approved"
+          label={
+            values.status === "aprovado"
+              ? "Data aprovação no comitê *"
+              : "Data aprovação no comitê"
+          }
+          hint={KAIZEN_HELP_TOOLTIPS.fields.dateCommitteeApproved}
+          required={values.status === "aprovado"}
+          value={values.date_committee_approved}
+          onChange={(value) => onChange("date_committee_approved", value)}
+        />
+
+        <DateField
           id="kz-date-implemented"
-          label="Data implantação"
+          label={values.status === "implantado" ? "Data implantação *" : "Data implantação"}
           hint={KAIZEN_HELP_TOOLTIPS.fields.dateImplemented}
+          required={values.status === "implantado"}
           value={values.date_implemented}
           onChange={(value) => onChange("date_implemented", value)}
         />

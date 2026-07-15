@@ -90,9 +90,9 @@ def test_resolve_effective_from_falls_back_to_date_implemented():
     assert svc.resolve_effective_from({"date_implemented": "2026-03-03"}) == "2026-03-03"
 
 
-def test_ensure_implantation_date_fills_today_when_implanted_without_date():
+def test_ensure_implantation_date_is_passthrough_without_auto_fill():
     result = svc.ensure_implantation_date({"status": "implantado"})
-    assert result["date_implemented"] == date.today().isoformat()
+    assert "date_implemented" not in result
 
 
 def test_ensure_implantation_date_keeps_existing():

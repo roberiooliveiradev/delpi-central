@@ -37,6 +37,11 @@ export function computeKaizenFormCompletion(values: KaizenFormValues): FormCompl
     { id: "process", label: "Processo", done: filled(values.process_description) },
     { id: "improvement", label: "Melhoria", done: filled(values.improvement_description) },
     { id: "idea", label: "Recebimento da ideia", done: filled(values.date_idea_received) },
+    {
+      id: "committee",
+      label: "Aprovação no comitê",
+      done: filled(values.date_committee_approved),
+    },
     { id: "date", label: "Implantação", done: filled(values.date_implemented) },
     { id: "savings", label: "Economia", done: isSavingsFilled(values) },
   ];

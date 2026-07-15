@@ -9,6 +9,7 @@ const DIFF_FIELDS: Array<{ key: string; label: string; kind?: "status" }> = [
   { key: "realized_daily_savings", label: "Realizada/dia" },
   { key: "date_idea_received", label: "Recebimento da ideia" },
   { key: "categories", label: "Categorias" },
+  { key: "date_committee_approved", label: "Aprovação no comitê" },
   { key: "date_implemented", label: "Implantação" },
   { key: "title", label: "Título" },
   { key: "branch_code", label: "Unidade" },

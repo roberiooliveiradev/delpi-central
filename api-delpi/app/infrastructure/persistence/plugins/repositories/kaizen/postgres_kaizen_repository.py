@@ -12,11 +12,16 @@ from app.domain.services.kaizen.kaizen_categories import (
     categories_from_row,
     normalize_categories,
 )
+from app.domain.services.kaizen.kaizen_indicator_eligibility import (
+    counts_for_quantity,
+    quantity_anchor_from_row,
+)
 from app.domain.services.kaizen.kaizen_savings_calculator import (
     enrich_savings_fields,
     resolve_realized_annual_savings,
     resolve_realized_daily_savings,
 )
+from app.domain.services.kaizen.kaizen_status_date_rules import validate_status_dates
 from app.infrastructure.persistence.plugins.plugin_base_repository import (
     PluginBaseRepository,
     PluginsRepositoryError,
@@ -43,6 +48,7 @@ _KAIZEN_SELECT = """
            k.realized_annual_savings,
            k.status,
            k.date_idea_received,
+           k.date_committee_approved,
            k.date_implemented,
            k.date_discontinued,
            k.notes,
@@ -61,7 +67,14 @@ _KAIZEN_SELECT = """
 """
 
 _VALID_PARTICIPANT_ROLES = {"responsavel", "participante", "apoio"}
-_VERSION_STATUSES = {"em_andamento", "implantado", "descontinuado", "cancelado", "substituido"}
+_VERSION_STATUSES = {
+    "em_andamento",
+    "aprovado",
+    "implantado",
+    "descontinuado",
+    "cancelado",
+    "substituido",
+}
 
 
 class PostgresKaizenRepository(PluginBaseRepository):
@@ -209,13 +222,13 @@ class PostgresKaizenRepository(PluginBaseRepository):
     ) -> dict[str, Any]:
         """Indicadores agregados do painel de kaizens, direto do Postgres.
 
-        Regras de negócio (espelham `kaizen_savings_validity` e o painel do MFE):
+        Regras de negócio (espelham `kaizen_savings_validity` / elegibilidade e o painel do MFE):
 
         - **Ganhos financeiros no período**: soma de ``daily_savings × dias ativos`` de
           TODOS os kaizens implantados (inclui os implantados antes do período que ainda
           contabilizam), com o teto de 1 ano de validade e **sem projetar dias futuros**.
-        - **Contagens/distribuições/série mensal**: escopadas pela ``date_implemented``
-          dentro do período (quando informado).
+        - **Contagens/série mensal de quantidade**: status ``aprovado`` ou ``implantado``,
+          âncora ``COALESCE(date_committee_approved, date_implemented)`` no período.
         - **Run-rate vigente**: kaizens implantados ainda dentro da validade hoje.
         """
         filters = ["k.deleted_at IS NULL"]
@@ -238,13 +251,19 @@ class PostgresKaizenRepository(PluginBaseRepository):
         def implemented_date(row: dict[str, Any]) -> date | None:
             return self._as_date(row.get("date_implemented"))
 
+        def quantity_date(row: dict[str, Any]) -> date | None:
+            return quantity_anchor_from_row(row)
+
         def is_implanted(row: dict[str, Any]) -> bool:
             return row.get("status") == "implantado"
+
+        def counts_quantity(row: dict[str, Any]) -> bool:
+            return counts_for_quantity(row.get("status"))
 
         def in_period(row: dict[str, Any]) -> bool:
             if not has_period:
                 return True
-            day = implemented_date(row)
+            day = quantity_date(row) or implemented_date(row)
             if day is None:
                 return False
             if start and day < start:
@@ -268,13 +287,13 @@ class PostgresKaizenRepository(PluginBaseRepository):
             )
             period_savings += daily * days
 
-        # Indicador 2 — novos implantados por mês (pela date_implemented, no período).
+        # Indicador 2 — quantidade no período (aprovado + implantado, âncora coalesce).
         implanted_period = [
-            row for row in period_rows if is_implanted(row) and implemented_date(row)
+            row for row in period_rows if counts_quantity(row) and quantity_date(row)
         ]
         month_counts: dict[str, int] = {}
         for row in implanted_period:
-            day = implemented_date(row)
+            day = quantity_date(row)
             if day is None:
                 continue
             key = f"{day.year:04d}-{day.month:02d}"
@@ -364,6 +383,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             "has_period": has_period,
             "total": len(period_rows),
             "implantados": status_count("implantado"),
+            "aprovados": status_count("aprovado"),
             "em_andamento": status_count("em_andamento"),
             "descontinuados": status_count("descontinuado"),
             "cancelados": status_count("cancelado"),
@@ -430,6 +450,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         "realized_daily_savings",
         "status",
         "date_idea_received",
+        "date_committee_approved",
         "date_implemented",
         "date_discontinued",
         "notes",
@@ -837,6 +858,11 @@ class PostgresKaizenRepository(PluginBaseRepository):
         enriched = enrich_savings_fields(fields)
         enriched = self._apply_category_fields(enriched)
         enriched = revision_service.ensure_implantation_date(enriched)
+        validate_status_dates(
+            status=enriched.get("status", "em_andamento"),
+            date_committee_approved=enriched.get("date_committee_approved"),
+            date_implemented=enriched.get("date_implemented"),
+        )
         submodule_id = self._kaizen_submodule_id()
         effective_from = revision_service.resolve_effective_from(enriched)
 
@@ -847,13 +873,14 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 savings_type, seconds_per_occurrence, occurrences_per_day, hourly_cost,
                 quantity_saved_per_day, unit_material_cost, fixed_daily_savings,
                 daily_savings, annual_savings, realized_daily_savings, realized_annual_savings,
-                status, date_idea_received, date_implemented, date_discontinued,
+                status, date_idea_received, date_committee_approved, date_implemented,
+                date_discontinued,
                 notes, process_description, problem_description, improvement_description,
                 expected_result, category, categories, current_revision_number, created_by_user_id
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, 1, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, 1, %s
             )
             RETURNING id
             """,
@@ -877,6 +904,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("realized_annual_savings"),
                 enriched.get("status", "em_andamento"),
                 enriched.get("date_idea_received"),
+                enriched.get("date_committee_approved"),
                 enriched.get("date_implemented"),
                 enriched.get("date_discontinued"),
                 enriched.get("notes"),
@@ -969,6 +997,11 @@ class PostgresKaizenRepository(PluginBaseRepository):
         enriched = enrich_savings_fields(merged)
         enriched = self._apply_category_fields(enriched)
         enriched = revision_service.ensure_implantation_date(enriched)
+        validate_status_dates(
+            status=enriched.get("status", "em_andamento"),
+            date_committee_approved=enriched.get("date_committee_approved"),
+            date_implemented=enriched.get("date_implemented"),
+        )
 
         changed_fields = revision_service.changed_trigger_fields(current, enriched)
 
@@ -993,6 +1026,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                    realized_annual_savings = %s,
                    status = %s,
                    date_idea_received = %s,
+                   date_committee_approved = %s,
                    date_implemented = %s,
                    date_discontinued = %s,
                    notes = %s,
@@ -1027,6 +1061,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("realized_annual_savings"),
                 enriched.get("status", "em_andamento"),
                 enriched.get("date_idea_received"),
+                enriched.get("date_committee_approved"),
                 enriched.get("date_implemented"),
                 enriched.get("date_discontinued"),
                 enriched.get("notes"),
@@ -1083,9 +1118,14 @@ class PostgresKaizenRepository(PluginBaseRepository):
         status_changed = old_status != new_status
 
         if status_changed:
-            if new_status == "implantado" and active.get("version_status") == "em_andamento":
+            if new_status == "implantado" and active.get("version_status") in (
+                "em_andamento",
+                "aprovado",
+            ):
                 effective_from = revision_service.resolve_effective_from(enriched)
                 self._set_version_status(revision_id, "implantado", effective_from=effective_from)
+            elif new_status == "aprovado":
+                self._set_version_status(revision_id, "aprovado")
             elif new_status in ("descontinuado", "cancelado"):
                 effective_until = (
                     self._normalize_date(enriched.get("date_discontinued"))
@@ -1246,6 +1286,11 @@ class PostgresKaizenRepository(PluginBaseRepository):
         fields.pop("change_reason", None)
         merged = {**base, **fields}
         enriched = enrich_savings_fields(merged)
+        validate_status_dates(
+            status=enriched.get("status", "em_andamento"),
+            date_committee_approved=enriched.get("date_committee_approved"),
+            date_implemented=enriched.get("date_implemented"),
+        )
         self._update_version_snapshot(str(revision["id"]), enriched)
         self._append_history(
             kaizen_id,
@@ -1361,6 +1406,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                    realized_annual_savings = %s,
                    status = 'implantado',
                    date_idea_received = %s,
+                   date_committee_approved = %s,
                    date_implemented = %s,
                    notes = %s,
                    process_description = %s,
@@ -1393,6 +1439,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 enriched.get("realized_daily_savings"),
                 enriched.get("realized_annual_savings"),
                 enriched.get("date_idea_received"),
+                enriched.get("date_committee_approved"),
                 enriched.get("date_implemented") or effective,
                 enriched.get("notes"),
                 enriched.get("process_description"),
