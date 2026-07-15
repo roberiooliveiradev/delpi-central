@@ -337,6 +337,21 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_financeiro_despesas_centro_custo_lancamentos": RouteContract(
         "financeiro_despesas_centro_custo_lancamento", "paged_list"
     ),
+    "get_financeiro_inadimplencia_resumo": RouteContract(
+        "financeiro_inadimplencia_resumo", "scalar"
+    ),
+    "get_financeiro_inadimplencia_mensal": RouteContract(
+        "financeiro_inadimplencia_mensal", "list"
+    ),
+    "get_financeiro_inadimplencia_faixas_atraso": RouteContract(
+        "financeiro_inadimplencia_faixas_atraso", "list"
+    ),
+    "get_financeiro_inadimplencia_clientes": RouteContract(
+        "financeiro_inadimplencia_cliente", "paged_list"
+    ),
+    "get_financeiro_inadimplencia_titulos": RouteContract(
+        "financeiro_inadimplencia_titulo", "paged_list"
+    ),
     "get_retrabalhos_health": RouteContract(
         "retrabalho_horas_improdutivas_health", "scalar"
     ),

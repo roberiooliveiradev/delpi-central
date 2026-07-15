@@ -919,6 +919,22 @@ services:
     networks:
       - delpi-network
 
+  financeiro-inadimplencia:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: financeiro-inadimplencia/Dockerfile
+      target: production
+
+    container_name: delpi-financeiro-inadimplencia
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-engineering:
     <<: *plugin-ui-federated
     build:

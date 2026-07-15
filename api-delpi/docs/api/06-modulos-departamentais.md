@@ -27,6 +27,19 @@ Parâmetros comuns de período:
 | GET | `/financial/fixed_cost_pct` | Custos fixos % (planilha; filial vazia = consolidado). |
 | GET | `/financial/pmr` | Prazo médio de recebimento. |
 
+### Inadimplência — `/financeiro/inadimplencia`
+
+Fonte: view somente leitura `dbo.VW_FINANCEIRO_INADIMPLENCIA`.  
+Documentação completa: [financeiro-inadimplencia.md](./financeiro-inadimplencia.md).
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/financeiro/inadimplencia/resumo` | Totais e percentuais de pontualidade/inadimplência. |
+| GET | `/financeiro/inadimplencia/mensal` | Série mensal. |
+| GET | `/financeiro/inadimplencia/faixas-atraso` | Distribuição por faixa de atraso. |
+| GET | `/financeiro/inadimplencia/clientes` | Ranking paginado de clientes. |
+| GET | `/financeiro/inadimplencia/titulos` | Títulos paginados. |
+
 ---
 
 ## Comercial — `/commercial`

@@ -928,6 +928,22 @@ services:
     networks:
       - delpi-network
 
+  financeiro-inadimplencia:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: financeiro-inadimplencia/Dockerfile
+
+    container_name: delpi-financeiro-inadimplencia
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-engineering:
     depends_on:
       - plugin-ui
@@ -1458,6 +1474,7 @@ services:
       - dashboard-supplies
       - dashboard-financial
       - financeiro-centro-custo
+      - financeiro-inadimplencia
       - dashboard-engineering
       - dashboard-hr
       - api-delpi-console

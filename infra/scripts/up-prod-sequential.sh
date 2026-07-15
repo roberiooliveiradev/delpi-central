@@ -121,6 +121,7 @@ FASE_MFE=(
   pedidos-venda-abertos
   propostas-comerciais
   financeiro-centro-custo
+  financeiro-inadimplencia
   strategic-indicators
   customer-experience
   cultura-delpi

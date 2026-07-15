@@ -101,6 +101,11 @@ Legenda de permissões:
 | GET | `/financial/ebitda_pct` | A |
 | GET | `/financial/fixed_cost_pct` | A |
 | GET | `/financial/pmr` | A |
+| GET | `/financeiro/inadimplencia/resumo` | A / `financeiro-inadimplencia.access` |
+| GET | `/financeiro/inadimplencia/mensal` | A / `financeiro-inadimplencia.access` |
+| GET | `/financeiro/inadimplencia/faixas-atraso` | A / `financeiro-inadimplencia.access` |
+| GET | `/financeiro/inadimplencia/clientes` | A / `financeiro-inadimplencia.access` |
+| GET | `/financeiro/inadimplencia/titulos` | A / `financeiro-inadimplencia.access` |
 
 ---
 
