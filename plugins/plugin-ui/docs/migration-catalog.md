@@ -308,7 +308,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.0** | Regra Cursor + docs (roadmap § 8, este catálogo, architecture/contributing) | ✅ |
 | **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — overrides `.delpi-ui-*` | ✅ |
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` — chrome espelho / residual kit | ✅ |
-| **7.3** | `minha-delpi-chat` admin (kit **ou** renomear DS domínio) | ⏳ |
+| **7.3** | `minha-delpi-chat` admin — **B** domínio isolado (`mdc-admin-*` / `mdc-audit-*`); overrides kit zerados | ✅ |
 | **7.4** | `cadastro-kaizen`, `auditoria-5s`, `maintenance`, `transformometro`, `financeiro-inadimplencia` | ⏳ |
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ⏳ |
 | **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ⏳ |
@@ -322,7 +322,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `tv-dashboard-presentation` | 7.1 | ✅ | — | ✅ | fill modifiers no kit (`--fill`) |
 | `quality-action-plans` | 7.2 | ✅ | headers dual `PAC_SECTION` | ✅ | ghost/state/section/table → kit; domain leftovers OK |
 | `controle-retrabalhos` | 7.2 | ✅ | — | ✅ | stack-safe margin no kit; sem `.cr-card:not` / state-box mirror |
-| `minha-delpi-chat` | 7.3 | ⏳ | ⏳ Admin* | ⏳ | decisão kit vs domínio |
+| `minha-delpi-chat` | 7.3 | ✅ | ✅ Admin* domínio (`mdc-admin-*` KPI/table; `mdc-audit-*` paginação) — **path B** (não kit shell) | ✅ checkboxes/switch/toolbar via kit + tokens; `delpi-ui-native-switch--compact` no kit |
 | `cadastro-kaizen` | 7.4 | ⏳ | — | ⏳ dataTableUi | section-card CSS |
 | `auditoria-5s` | 7.4 | ⏳ | ⏳ KPI/pag inline | ⏳ filtersUi | |
 | `maintenance` | 7.4 | ⏳ | ⏳ StateBox/KPI | ⏳ | |

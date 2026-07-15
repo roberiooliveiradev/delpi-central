@@ -381,7 +381,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 |--------|-------------------|---------------|
 | `tv-dashboard` | ~96 seletores `.delpi-ui-*` (format-pane, ribbon, catalog, help-tooltip) → ✅ onda 7.1 | **7.1** |
 | `quality-action-plans` | ghost, state-box, section-card header, table modal, help-tooltip → ✅ onda 7.2 | **7.2** |
-| `minha-delpi-chat` | Admin KPI/filter/table/pagination local + CSS; overrides toolbar/checkbox | **7.3** (avaliar: migrar ao kit **ou** renomear DS admin como domínio fora do dual-class) |
+| `minha-delpi-chat` | Admin KPI/filter/table/pagination local + CSS; overrides toolbar/checkbox → ✅ **7.3 path B** | **7.3** ✅ domínio `mdc-admin-*` / `mdc-audit-*`; 0 seletores de classe do kit no CSS do MFE |
 | `tv-dashboard-presentation` | config-table, series-chart-shell, kpi-card TV → ✅ onda 7.1 | **7.1** (junto TV) |
 
 #### P1 — espelho BEM / cópia nomeada
@@ -415,7 +415,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **7.0** | Doc + regra Cursor (este § + migration-catalog + `plugins-reusable-components.mdc`) | Regra absoluta publicada | ✅ |
 | **7.1** | `tv-dashboard` + `tv-dashboard-presentation` — zerar/mover overrides `.delpi-ui-*` | 0 seletores `.delpi-ui-*` em CSS do MFE (exceto justificativa doc) | ✅ `data-delpi-ui-density="compact"` + `host-density-compact.css` / `format-pane--compact` / `--fill` |
 | **7.2** | `quality-action-plans` + `controle-retrabalhos` | 0 chrome espelho; tokens+layout only | ✅ kit ghost/state/section stack-safe + dual-class PAC; CR sem `.delpi-ui-*` |
-| **7.3** | `minha-delpi-chat` admin UI — decisão kit vs domínio renomeado | Sem classes que fingem dual-class do shell dashboard **ou** migrado ao kit | ⏳ |
+| **7.3** | `minha-delpi-chat` admin UI — **path B** (domínio isolado) | 0 seletores de classe do kit no CSS; AdminKpi/DataTable/AuditPagination como `mdc-admin-*` / `mdc-audit-*` (não dual-class shell); checkbox/switch/toolbar = kit + tokens | ✅ |
 | **7.4** | kaizen, a5s, maintenance, transformometro, financeiro-inadimplencia | Sem espelho BEM; inline → factory | ⏳ |
 | **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ⏳ |
 | **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ⏳ |

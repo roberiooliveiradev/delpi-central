@@ -140,14 +140,10 @@
   min-width: 0;
 }
 
-.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .delpi-ui-toolbar-select-field {
+/* Layout só no marcador de domínio do ToolbarSelectField (sem chrome do kit). */
+.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter {
   margin: 0;
   min-width: 0;
-}
-
-.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter span,
-.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter .delpi-ui-toolbar-select-field__label {
-  font-size: 0.68rem;
 }
 
 .mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__btn,
@@ -161,11 +157,6 @@
   font-size: 0.75rem;
   line-height: 1.2;
   white-space: nowrap;
-}
-
-.mdc-rich-dashboard__panel--data .mdc-rich-table--dashboard .mdc-rich-table__filter .delpi-ui-toolbar-select__trigger {
-  min-height: 1.85rem;
-  font-size: 0.75rem;
 }
 
 .mdc-rich-dashboard__panel-body {

@@ -152,6 +152,16 @@
   --mdc-sidebar-rail: 4.75rem;
   --mdc-content-max: 100%;
   --mdc-chat-column-max: 52rem;
+
+  /* Kit @delpi/plugin-ui — só tokens; chrome fica no remote. */
+  --delpi-ui-accent: var(--mdc-primary);
+  --delpi-ui-surface: var(--mdc-card-bg);
+  --delpi-ui-text: var(--mdc-text);
+  --delpi-ui-border: var(--mdc-card-border);
+  --delpi-ui-muted: var(--mdc-text-muted);
+  --delpi-ui-text-muted: var(--mdc-text-muted);
+  --delpi-ui-radius-sm: var(--mdc-radius-sm);
+  --delpi-ui-focus-ring: var(--mdc-focus-ring);
 }@media (max-width: 767px){
   :root {
     --mdc-chat-column-max: 100%;

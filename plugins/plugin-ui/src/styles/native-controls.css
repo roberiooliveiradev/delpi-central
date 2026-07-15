@@ -237,6 +237,26 @@ textarea.delpi-ui-native-control--compact {
   color: var(--delpi-ui-text, #111);
 }
 
+.delpi-ui-native-switch--compact .delpi-ui-native-switch__track {
+  width: 2rem;
+  height: 1.125rem;
+}
+
+.delpi-ui-native-switch--compact .delpi-ui-native-switch__track::after {
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.delpi-ui-native-switch--compact[data-checked="true"] .delpi-ui-native-switch__track::after {
+  transform: translateX(0.875rem);
+}
+
+.delpi-ui-native-switch--compact .delpi-ui-native-switch__label {
+  font-size: 0.8rem;
+}
+
 /**
  * Range — só âncora de classe; thumb/track ficam no plugin consumidor
  * (ex. `.td-deck-ribbon__opacity-range`) para não forçar look de text field.

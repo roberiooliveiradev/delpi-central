@@ -29,52 +29,11 @@
   padding: clamp(0.9rem, 1.5vw, 1.15rem);
 }
 
-/* Checkbox / radio — alinhado ao agent builder */
+/* Checkbox admin — NativeCheckboxControl do kit + marcador de domínio (layout only). */
 .mdc-admin-form-row {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.65rem;
   width: 100%;
   max-width: 100%;
-  margin: 0;
   padding: 0.4rem 0;
-  cursor: pointer;
-}
-
-.mdc-admin-form-row input[type="checkbox"],
-.mdc-admin-form-row input[type="radio"] {
-  flex: 0 0 auto;
-  width: 1.05rem;
-  height: 1.05rem;
-  margin: 0;
-  accent-color: var(--mdc-primary);
-  cursor: pointer;
-}
-
-.mdc-admin-form-row:has(input:disabled) {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.mdc-admin-form-row .delpi-ui-native-checkbox__copy {
-  display: grid;
-  gap: 0.12rem;
-  min-width: 0;
-}
-
-.mdc-admin-form-row .delpi-ui-native-checkbox__label {
-  color: var(--mdc-text);
-  font-size: 0.9rem;
-  font-weight: 500;
-  line-height: 1.35;
-}
-
-.mdc-admin-form-row .delpi-ui-native-checkbox__hint {
-  color: var(--mdc-text-muted);
-  font-size: 0.8rem;
-  line-height: 1.4;
 }
 
 /* Campos — mesmo padrão de .mdc-chat-ws-field + builder */

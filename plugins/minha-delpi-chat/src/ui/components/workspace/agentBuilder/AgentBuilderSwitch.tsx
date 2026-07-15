@@ -31,12 +31,11 @@ export function AgentBuilderSwitch({
       aria-label={accessibleLabel}
       className={[
         "mdc-ab-switch",
-        size === "compact" ? "mdc-ab-switch--compact" : null,
+        size === "compact" ? "delpi-ui-native-switch--compact" : null,
         className,
       ]
         .filter(Boolean)
         .join(" ")}
-      trackClassName="mdc-ab-switch__track"
       label={label}
     />
   );
