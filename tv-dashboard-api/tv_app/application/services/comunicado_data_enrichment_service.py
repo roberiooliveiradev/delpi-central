@@ -113,13 +113,41 @@ def _iter_scalar_candidate_keys(value_fields: list[Any]) -> list[str]:
     return keys
 
 
+# Campos de paginação/cobertura — não são KPI de negócio (ex.: playbook_report.summary).
+_KPI_META_FIELD_KEYS = frozenset(
+    {
+        "total_records",
+        "totalrecords",
+        "page",
+        "page_size",
+        "pagesize",
+        "offset",
+        "limit",
+        "returned",
+        "is_complete",
+        "iscomplete",
+        "branch_filter_applied",
+        "consolidated_across_branches",
+    }
+)
+
+
+def _is_kpi_meta_field(key: str) -> bool:
+    key_l = key.lower().replace("-", "_")
+    if key_l in _KPI_META_FIELD_KEYS:
+        return True
+    if key_l.endswith("_applied") or key_l.startswith("is_"):
+        return True
+    return False
+
+
 def _first_numeric_like_field(payload: dict[str, Any]) -> Any:
     """Fallback quando o catálogo não declara valueFields (ex.: campos *_pct no payload)."""
     preferred: list[tuple[int, str, Any]] = []
     for key, value in payload.items():
         if value is None or isinstance(value, (dict, list, bool)):
             continue
-        if not isinstance(key, str):
+        if not isinstance(key, str) or _is_kpi_meta_field(key):
             continue
         key_l = key.lower()
         rank = 3
@@ -143,7 +171,7 @@ def _discover_numeric_field_keys(payload: dict[str, Any]) -> list[str]:
     for key, value in payload.items():
         if value is None or isinstance(value, (dict, list, bool)):
             continue
-        if not isinstance(key, str):
+        if not isinstance(key, str) or _is_kpi_meta_field(key):
             continue
         key_l = key.lower()
         rank = 3
@@ -583,10 +611,24 @@ class ComunicadoDataEnrichmentService:
                 if points:
                     scalar = points[-1].get("value")
             kpi_label = primary["label"] if primary else label
-            return {
+            resolved: dict[str, Any] = {
                 "kpi": {"value": scalar, "label": kpi_label},
                 "kpiMetrics": metrics,
             }
+            # Relatório com lista: anexa tabela para preview/TV poderem cair no ranking
+            # quando o summary só tem metadados ou o KPI summary não cobre o conteúdo.
+            rows, columns = _extract_table_rows(
+                data,
+                route_info.get("tableFields"),
+                max_rows,
+                meta=meta,
+                series_field=route_info.get("seriesField"),
+                branch=branch_str,
+                value_label=label,
+            )
+            if rows:
+                resolved["table"] = {"rows": rows, "columns": columns}
+            return resolved
 
         if mode in {"line_chart", "bar_chart"}:
             points = _extract_series(data, route_info.get("seriesField"), branch=branch_str)

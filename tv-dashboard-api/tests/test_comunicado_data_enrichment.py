@@ -695,6 +695,59 @@ def test_enrich_multi_metric_lmp_summary_all_and_selected():
     assert selected[0]["resolved"]["kpi"]["label"] == "% no prazo"
 
 
+def test_enrich_kpi_skips_total_records_and_attaches_playbook_table():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_production_consumption_top_items_by_work_center",
+            "shape": "playbook_report",
+            "fields": [
+                {"key": "item_code", "label": "Código"},
+                {"key": "real_consumption_qty", "label": "Consumo"},
+            ],
+        },
+        "data": {
+            "items": [
+                {"item_code": "1001", "real_consumption_qty": 12.5},
+                {"item_code": "1002", "real_consumption_qty": 8.0},
+            ],
+            "summary": {
+                "total_records": 10,
+                "is_complete": True,
+                "consolidated_across_branches": True,
+            },
+        },
+        "route": {
+            "label": "Consumo por centro de trabalho",
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "src-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_production_consumption_top_items_by_work_center",
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    resolved = enriched[0]["resolved"]
+    assert resolved["kpiMetrics"] == []
+    assert resolved["kpi"]["value"] is None
+    assert len(resolved["table"]["rows"]) == 2
+    assert resolved["table"]["rows"][0]["item_code"] == "1001"
+
+
 def test_decorate_input_resolves_branch_from_slide_schemas():
     gateway = MagicMock()
     service = ComunicadoDataEnrichmentService(
