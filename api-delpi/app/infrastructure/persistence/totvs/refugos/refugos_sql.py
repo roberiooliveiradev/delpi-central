@@ -231,7 +231,7 @@ def build_resumo_query(
     motivo: str | None = None,
     recurso: str | None = None,
 ) -> tuple[str, tuple]:
-    """Uma query: total do período + KPIs do dia (dataFim) e do mês (mês de dataFim)."""
+    """Uma query: total do período + KPIs do dia (dataFim) e do mês calendário completo de dataFim."""
     sql = f"""
     SELECT
         SUM(CASE WHEN BC.BC_DATA >= ? AND BC.BC_DATA < ? THEN {_VALOR_EXPR} ELSE 0 END) AS total_valor,

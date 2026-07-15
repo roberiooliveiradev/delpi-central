@@ -96,13 +96,19 @@ class RefugosPeriod:
         return start, end_exclusive
 
     def month_closed_open(self) -> tuple[str, str]:
-        """KPIs do mês = mês calendário de dataFim até dataFim inclusive."""
+        """KPIs do mês = mês calendário completo de dataFim (1º → último dia).
+
+        Independente do intervalo filtrado: alterar só dataFim dentro do mesmo
+        mês não altera valorMes (diferente do total do período).
+        """
         qb = QueryBuilder()
         month_start = date(self.end_date.year, self.end_date.month, 1)
+        if self.end_date.month == 12:
+            next_month = date(self.end_date.year + 1, 1, 1)
+        else:
+            next_month = date(self.end_date.year, self.end_date.month + 1, 1)
         start = qb.convert_date_to_protheus(month_start.isoformat())
-        end_exclusive = qb.convert_date_to_protheus(
-            (self.end_date + timedelta(days=1)).isoformat()
-        )
+        end_exclusive = qb.convert_date_to_protheus(next_month.isoformat())
         if not start or not end_exclusive:
             raise ValueError("Não foi possível converter o mês de referência.")
         return start, end_exclusive

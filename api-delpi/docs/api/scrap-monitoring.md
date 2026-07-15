@@ -62,7 +62,7 @@ Retorna:
 | `totalValor` / `totalQuantidade` / `ocorrencias` | Totais do período |
 | `registrosSemCusto` | Linhas com custo unitário zero |
 | `valorDia` | Soma no dia de `dataFim` |
-| `valorMes` | Soma do mês calendário de `dataFim` até `dataFim` |
+| `valorMes` | Soma do **mês calendário completo** de `dataFim` (1º → último dia do mês) |
 
 ---
 
