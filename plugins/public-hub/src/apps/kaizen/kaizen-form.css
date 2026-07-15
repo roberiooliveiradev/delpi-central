@@ -13,6 +13,7 @@
 
 .kz-pub-form__header {
   margin-bottom: 4px;
+  text-align: center;
 }
 
 .kz-pub-form__eyebrow {
@@ -39,16 +40,71 @@
   line-height: 1.5;
 }
 
+.kz-pub-progress,
+.kz-pub-done__progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px auto 0;
+  max-width: 420px;
+  width: 100%;
+}
+
+.kz-pub-progress__track {
+  flex: 1;
+  min-width: 120px;
+  height: 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pub-accent) 22%, var(--pub-input-bg));
+  border: 1px solid color-mix(in srgb, var(--pub-accent) 28%, var(--pub-card-border));
+  overflow: hidden;
+}
+
+.kz-pub-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--pub-accent), var(--pub-primary));
+  transition: width 0.25s ease;
+}
+
+.kz-pub-progress__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--pub-accent);
+  min-width: 36px;
+  text-align: right;
+}
+
 .kz-pub-done {
   background: var(--pub-card-bg);
   border: 1px solid var(--pub-card-border);
   border-radius: 16px;
   box-shadow: var(--pub-card-shadow);
-  padding: 28px 24px;
+  padding: 32px 24px;
+  text-align: center;
+  align-items: center;
+}
+
+.kz-pub-done__check {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--pub-on-brand);
+  background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--pub-accent) 35%, transparent);
 }
 
 .kz-pub-done strong {
   color: var(--pub-text);
+}
+
+.kz-pub-done__progress {
+  margin-top: 20px;
 }
 
 .kz-pub-card {
@@ -62,6 +118,7 @@
   flex-direction: column;
   gap: 16px;
   color: var(--pub-text-body);
+  text-align: left;
 }
 
 .kz-pub-card__title {
@@ -171,28 +228,50 @@
   margin-top: 2px;
 }
 
-.kz-pub-form__submit {
-  width: 100%;
-  border: 0;
+.kz-pub-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.kz-pub-nav__btn {
+  flex: 1;
   border-radius: 14px;
-  padding: 14px 16px;
+  padding: 14px 18px;
   font: inherit;
-  font-weight: 650;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease, filter 0.12s ease;
+}
+
+.kz-pub-nav__btn--ghost {
+  border: 1px solid var(--pub-input-border);
+  background: var(--pub-option-bg);
+  color: var(--pub-text);
+}
+
+.kz-pub-nav__btn--primary {
+  border: 0;
   color: var(--pub-on-brand);
   background: linear-gradient(140deg, var(--pub-accent), var(--pub-primary));
-  cursor: pointer;
   box-shadow: 0 10px 28px color-mix(in srgb, var(--pub-accent) 28%, transparent);
 }
 
-.kz-pub-form__submit:hover:not(:disabled) {
-  filter: brightness(1.04);
+.kz-pub-nav__btn:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
-.kz-pub-form__submit:disabled {
+.kz-pub-nav__btn:disabled {
   opacity: 0.72;
   cursor: wait;
+  transform: none;
   filter: none;
   box-shadow: none;
+}
+
+.kz-pub-form--wizard .kz-pub-nav__btn--primary:only-child {
+  flex: 1;
 }
 
 .kz-pub-form__error {
@@ -203,6 +282,7 @@
   background: color-mix(in srgb, var(--pub-danger) 10%, var(--pub-card-bg));
   color: var(--pub-danger);
   font-size: 0.9rem;
+  text-align: left;
 }
 
 .kz-pub-hp {
