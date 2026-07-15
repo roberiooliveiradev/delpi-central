@@ -1,4 +1,11 @@
 -- Renomeia status operacional em_andamento → recebido (sugestão pública / fila do gestor).
+-- Ordem obrigatória: dropar CHECKs antigos antes do UPDATE (V042 ainda rejeita 'recebido').
+
+ALTER TABLE quality.kaizens
+    DROP CONSTRAINT IF EXISTS ck_quality_kaizens_status;
+
+ALTER TABLE quality.kaizen_revisions
+    DROP CONSTRAINT IF EXISTS ck_kaizen_revision_version_status;
 
 UPDATE quality.kaizens
    SET status = 'recebido'
@@ -12,9 +19,6 @@ ALTER TABLE quality.kaizens
     ALTER COLUMN status SET DEFAULT 'recebido';
 
 ALTER TABLE quality.kaizens
-    DROP CONSTRAINT IF EXISTS ck_quality_kaizens_status;
-
-ALTER TABLE quality.kaizens
     ADD CONSTRAINT ck_quality_kaizens_status CHECK (
         status IN (
             'recebido',
@@ -24,9 +28,6 @@ ALTER TABLE quality.kaizens
             'cancelado'
         )
     );
-
-ALTER TABLE quality.kaizen_revisions
-    DROP CONSTRAINT IF EXISTS ck_kaizen_revision_version_status;
 
 ALTER TABLE quality.kaizen_revisions
     ADD CONSTRAINT ck_kaizen_revision_version_status CHECK (
