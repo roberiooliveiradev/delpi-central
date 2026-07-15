@@ -763,7 +763,6 @@
 }
 
 .dashboard-maintenance .dm-primary-btn,
-.dashboard-maintenance .dm-ghost-btn,
 .dashboard-maintenance .dm-link-btn {
   display: inline-flex;
   align-items: center;
@@ -782,19 +781,16 @@
 }
 
 .dashboard-maintenance .dm-primary-btn:hover,
-.dashboard-maintenance .dm-ghost-btn:hover,
 .dashboard-maintenance .dm-link-btn:hover {
   box-shadow: 0 6px 18px color-mix(in srgb, var(--dm-accent) 12%, transparent);
 }
 
 .dashboard-maintenance .dm-primary-btn:active,
-.dashboard-maintenance .dm-ghost-btn:active,
 .dashboard-maintenance .dm-link-btn:active {
   transform: scale(0.98);
 }
 
 .dashboard-maintenance .dm-primary-btn:disabled,
-.dashboard-maintenance .dm-ghost-btn:disabled,
 .dashboard-maintenance .dm-link-btn:disabled {
   opacity: 0.65;
   cursor: not-allowed;
@@ -808,7 +804,6 @@
   color: white;
 }
 
-.dashboard-maintenance .dm-ghost-btn,
 .dashboard-maintenance .dm-link-btn {
   border: 1px solid var(--dm-card-border);
   background: transparent;

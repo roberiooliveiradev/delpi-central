@@ -1,0 +1,73 @@
+/**
+ * DetailCard / DetailFieldGrid — prefix-agnóstico.
+ * Classes BEM `{prefix}-detail-card*`, `{prefix}-detail-grid*`.
+ */
+
+[class*="-detail-card"][class*="-card"],
+[class*="-detail-card"] {
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+[class*="-detail-card__header"] {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+[class*="-detail-card__heading"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+[class*="-detail-card__title"] {
+  margin: 0;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 700;
+  color: var(--delpi-ui-text, var(--text, #111111));
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[class*="-detail-card__hint"] {
+  margin: 0.35rem 0 0;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  font-size: 14px;
+}
+
+[class*="-detail-card__actions"] {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+[class*="-detail-card__body"] {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+[class*="-detail-grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px 16px;
+}
+
+[class*="-detail-grid__label"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  margin-bottom: 4px;
+}
+
+[class*="-detail-grid__value"] {
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}

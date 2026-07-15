@@ -1,0 +1,182 @@
+/**
+ * Pagination (createDashboardPaginationKit) + ghost buttons — prefix-agnóstico.
+ * Classes BEM `{prefix}-pagination*`, `{prefix}-ghost-btn`.
+ * Tokens: --delpi-ui-*.
+ */
+
+[class*="-pagination"]:not([class*="-pagination__"]) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  width: 100%;
+  box-sizing: border-box;
+}
+
+[class*="-pagination__controls"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 34px;
+}
+
+[class*="-pagination__action"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+[class*="-pagination__pages"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+[class*="-pagination__page"] {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font-size: 13px;
+  font-weight: 600;
+  font: inherit;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+[class*="-pagination__page"]:hover:not(:disabled) {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+[class*="-pagination__page--active"] {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+[class*="-pagination__ellipsis"] {
+  padding: 0 4px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+[class*="-pagination__jump"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  position: relative;
+  min-height: 34px;
+}
+
+[class*="-pagination__jump-field"] {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+[class*="-pagination__jump-label"] {
+  white-space: nowrap;
+}
+
+[class*="-pagination__jump-input"] {
+  width: 4.5rem;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: 10px;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  box-sizing: border-box;
+}
+
+[class*="-pagination__jump-input"]:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+[class*="-pagination__jump-input--invalid"] {
+  border-color: var(--danger, #b42318);
+}
+
+[class*="-pagination__jump-error"] {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--danger, #b42318);
+  text-align: center;
+}
+
+[class*="-pagination__info"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  text-align: center;
+}
+
+[class*="-ghost-btn"] {
+  min-height: 36px;
+  border-radius: 12px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+[class*="-ghost-btn"]:hover:not(:disabled) {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
+    var(--delpi-ui-border, var(--border, #e6e6e6))
+  );
+}
+
+[class*="-ghost-btn"]:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: 2px;
+}
+
+[class*="-ghost-btn"]:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}

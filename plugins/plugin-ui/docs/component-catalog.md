@@ -534,6 +534,18 @@ Helper: `parseRangeFieldNumber`. Constante: `RANGE_FIELD_CLASS`.
 
 ## Estilos base (`styles.css`)
 
+Inclui CSS compartilhados importados em `src/styles/`:
+
+| Arquivo | Escopo |
+|---------|--------|
+| `select-control.css` / `multi-select.css` | Selects portaled |
+| `data-table.css` | `DataTable` / `DataTableSection` (prefix-agnóstico) |
+| `pagination.css` | `createDashboardPaginationKit` + ghost buttons |
+| `detail-card.css` | `DetailCard` / `DetailFieldGrid` |
+| `kpi-card.css`, `series-chart.css`, … | KPIs, charts, etc. |
+
+MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar layout de tabela/paginação.
+
 | Classe | Uso |
 |--------|-----|
 | `delpi-ui-help-tooltip` | Root do tooltip |

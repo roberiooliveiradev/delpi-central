@@ -163,25 +163,6 @@
   cursor: wait;
 }
 
-.dashboard-cadastro-kaizen .kz-ghost-btn {
-  min-height: var(--kz-control-height);
-  border-radius: var(--kz-control-radius);
-  padding: 10px 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--kz-card-border);
-  background: transparent;
-  color: var(--kz-text);
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.dashboard-cadastro-kaizen .kz-ghost-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .dashboard-cadastro-kaizen .kz-danger-btn {
   min-height: 36px;
   border-radius: var(--kz-control-radius);
@@ -397,16 +378,6 @@
   color: inherit;
 }
 
-.dashboard-cadastro-kaizen .kz-table__sort-indicator {
-  margin-left: 4px;
-  font-size: 0.75rem;
-  opacity: 0.55;
-}
-
-.dashboard-cadastro-kaizen .kz-table th[aria-sort]:not([aria-sort="none"]) .kz-table__sort-indicator {
-  opacity: 1;
-}
-
 .dashboard-cadastro-kaizen .kz-table-wrap {
   overflow-x: auto;
   margin-bottom: 12px;
@@ -473,22 +444,6 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.dashboard-cadastro-kaizen .kz-pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--kz-card-border);
-}
-
-.dashboard-cadastro-kaizen .kz-pagination__info {
-  font-size: var(--kz-font-sm);
-  color: var(--kz-text-muted);
 }
 
 .dashboard-cadastro-kaizen .kz-pagination__actions {

@@ -406,66 +406,10 @@
   color: var(--pa-text-muted);
 }
 
-.dashboard-production-appointments .pa-table-wrap {
-  overflow-x: auto;
-}
-
-.dashboard-production-appointments .pa-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--pa-font-sm);
-}
-
-.dashboard-production-appointments .pa-table th,
-.dashboard-production-appointments .pa-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--pa-border);
-  text-align: left;
-  vertical-align: top;
-}
-
-.dashboard-production-appointments .pa-table th {
-  background: color-mix(in srgb, var(--pa-accent) 8%, transparent);
-  font-weight: 600;
-}
-
-.dashboard-production-appointments .pa-table__col--numeric {
-  text-align: right;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.dashboard-production-appointments .pa-table__empty {
-  text-align: center;
-  color: var(--pa-text-muted);
-  padding: 28px 12px;
-}
-
 .dashboard-production-appointments .pa-tables-stack {
   display: flex;
   flex-direction: column;
   gap: var(--pa-section-gap);
-}
-
-.dashboard-production-appointments .pa-pagination,
-.dashboard-production-appointments .pa-table-card__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding: 0.25rem 0 0.5rem;
-}
-
-.dashboard-production-appointments .pa-pagination__info {
-  font-size: var(--pa-font-sm);
-  color: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments .pa-pagination__actions {
-  display: inline-flex;
-  gap: 0.5rem;
 }
 
 .dashboard-production-appointments .pa-badge {
@@ -610,209 +554,15 @@
   }
 }
 
-.dashboard-production-appointments .pa-table-section.pa-card {
+/* Branding local sobre DataTable/Detail (estilos estruturais vêm do @delpi/plugin-ui). */
+.dashboard-production-appointments .pa-table-section.pa-card,
+.dashboard-production-appointments .pa-detail-card.pa-card {
   padding: var(--pa-card-padding);
-  min-width: 0;
 }
 
-.dashboard-production-appointments .pa-table-section__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.dashboard-production-appointments .pa-table-section__actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dashboard-production-appointments .pa-section-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 650;
+.dashboard-production-appointments .pa-section-title,
+.dashboard-production-appointments .pa-detail-card__title {
   color: var(--pa-title);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dashboard-production-appointments .pa-table-wrap,
-.dashboard-production-appointments .pa-table-wrap--section {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  border: 1px solid var(--pa-border);
-  border-radius: var(--pa-control-radius);
-  background: var(--pa-surface);
-}
-
-.dashboard-production-appointments .pa-table,
-.dashboard-production-appointments .pa-table--section {
-  width: max-content;
-  min-width: 100%;
-  border-collapse: collapse;
-  font-size: var(--pa-font-sm);
-}
-
-.dashboard-production-appointments .pa-table th,
-.dashboard-production-appointments .pa-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--pa-border);
-  text-align: left;
-  vertical-align: top;
-}
-
-.dashboard-production-appointments .pa-table th {
-  font-weight: 700;
-  color: var(--pa-text-muted);
-  background: color-mix(in srgb, var(--pa-surface) 92%, var(--pa-accent) 8%);
-}
-
-.dashboard-production-appointments .pa-table--sortable th {
-  padding: 0;
-}
-
-.dashboard-production-appointments .pa-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.dashboard-production-appointments .pa-table__header-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  flex: 1 1 auto;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-.dashboard-production-appointments .pa-table__header-text {
-  white-space: nowrap;
-}
-
-.dashboard-production-appointments .pa-table__header-help {
-  flex-shrink: 0;
-}
-
-.dashboard-production-appointments .pa-table__sort-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: 42px;
-  padding: 10px 12px;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  color: inherit;
-  font: inherit;
-  font-weight: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.dashboard-production-appointments .pa-table__sort-button:hover,
-.dashboard-production-appointments .pa-table__sort-button:focus-visible {
-  background: color-mix(in srgb, var(--pa-accent) 6%, transparent);
-  outline: none;
-}
-
-.dashboard-production-appointments .pa-table__sort-button--active {
-  color: var(--pa-accent);
-}
-
-.dashboard-production-appointments .pa-table__sort-indicator {
-  color: var(--pa-text-muted);
-  font-size: 0.85em;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.dashboard-production-appointments .pa-table__sort-button--active .pa-table__sort-indicator {
-  color: var(--pa-accent);
-}
-
-.dashboard-production-appointments .pa-table__col--wide {
-  min-width: 200px;
-  max-width: 360px;
-}
-
-.dashboard-production-appointments .pa-table__col--numeric {
-  text-align: right;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-
-.dashboard-production-appointments .pa-table__col--numeric .pa-table__sort-button {
-  justify-content: flex-end;
-}
-
-.dashboard-production-appointments .pa-table__empty {
-  text-align: center;
-  color: var(--pa-text-muted);
-  padding: 24px;
-}
-
-.dashboard-production-appointments .pa-table__row--clickable {
-  cursor: pointer;
-}
-
-.dashboard-production-appointments .pa-table__row--clickable:hover td,
-.dashboard-production-appointments .pa-table--clickable tbody tr:hover td {
-  background: color-mix(in srgb, var(--pa-accent) 8%, transparent);
-}
-
-.dashboard-production-appointments .pa-table-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.dashboard-production-appointments .pa-table-page-size {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--pa-font-sm);
-  color: var(--pa-text-muted);
-}
-
-.dashboard-production-appointments .pa-table-page-size__label {
-  font-weight: 600;
-}
-
-.dashboard-production-appointments .pa-table-page-size__select {
-  min-width: 72px;
-  min-height: 36px;
-  border: 1px solid var(--pa-border);
-  border-radius: 10px;
-  background: var(--pa-surface);
-  color: var(--pa-text);
-  padding: 6px 10px;
-}
-
-.dashboard-production-appointments .pa-table-search {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: min(280px, 100%);
-}
-
-.dashboard-production-appointments .pa-table-search__input {
-  min-height: 36px;
-  flex: 1;
-  border: 1px solid var(--pa-border);
-  border-radius: 10px;
-  background: var(--pa-surface);
-  color: var(--pa-text);
-  padding: 6px 10px;
-  font: inherit;
 }
 
 .dashboard-production-appointments .pa-export-actions {
@@ -823,50 +573,6 @@
 .dashboard-production-appointments .pa-detail-toolbar {
   display: flex;
   justify-content: flex-start;
-}
-
-.dashboard-production-appointments .pa-detail-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.dashboard-production-appointments .pa-detail-card__title {
-  margin: 0;
-  font-size: clamp(1.25rem, 2vw, 1.75rem);
-  color: var(--pa-title);
-}
-
-.dashboard-production-appointments .pa-detail-card__hint {
-  margin: 0.35rem 0 0;
-  color: var(--pa-text-muted);
-  font-size: var(--pa-font-md);
-}
-
-.dashboard-production-appointments .pa-detail-card__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--pa-section-gap);
-}
-
-.dashboard-production-appointments .pa-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px 16px;
-}
-
-.dashboard-production-appointments .pa-detail-grid__label {
-  display: block;
-  font-size: var(--pa-font-xs);
-  color: var(--pa-text-muted);
-  margin-bottom: 4px;
-}
-
-.dashboard-production-appointments .pa-detail-grid__value {
-  font-weight: 600;
-  color: var(--pa-text);
 }
 
 @media (max-width: 768px) {

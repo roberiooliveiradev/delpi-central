@@ -1,5 +1,6 @@
-import type { BranchRouteCode } from "../constants/branches";
-import { branchHomePath } from "../constants/routes";
+import { PRODUCTION_APPOINTMENTS_BASE_PATH } from "../constants/branches";
+
+export const APPOINTMENTS_ROUTE_CHANGE_EVENT = "delpi:production-appointments:route";
 
 let navStackDepth = 0;
 let suppressPopstateDepthChange = false;
@@ -11,6 +12,12 @@ if (typeof window !== "undefined") {
   });
 }
 
+function notifyRouteChange(pathname: string) {
+  window.dispatchEvent(
+    new CustomEvent(APPOINTMENTS_ROUTE_CHANGE_EVENT, { detail: { pathname } }),
+  );
+}
+
 export function navigateAppointments(path: string) {
   if (typeof window === "undefined") return;
   const questionIndex = path.indexOf("?");
@@ -18,21 +25,23 @@ export function navigateAppointments(path: string) {
   const query = questionIndex >= 0 ? path.slice(questionIndex) : "";
 
   if (window.location.pathname === basePath && window.location.search === query) {
+    notifyRouteChange(basePath);
     return;
   }
 
   window.history.pushState(null, "", path);
   navStackDepth += 1;
   suppressPopstateDepthChange = true;
+  notifyRouteChange(basePath);
   window.dispatchEvent(new PopStateEvent("popstate"));
   suppressPopstateDepthChange = false;
 }
 
-export function navigateAppointmentsBack(branchRoute: BranchRouteCode) {
+export function navigateAppointmentsBack(branchRoute: "SC" | "ES") {
   if (typeof window === "undefined") return;
   if (navStackDepth > 0) {
     window.history.back();
     return;
   }
-  navigateAppointments(branchHomePath(branchRoute));
+  navigateAppointments(`${PRODUCTION_APPOINTMENTS_BASE_PATH}/${branchRoute.toLowerCase()}`);
 }

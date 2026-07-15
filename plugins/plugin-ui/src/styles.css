@@ -16,6 +16,9 @@
 @import "./styles/combobox-number.css";
 @import "./styles/range-field.css";
 @import "./styles/kpi-card.css";
+@import "./styles/data-table.css";
+@import "./styles/pagination.css";
+@import "./styles/detail-card.css";
 @import "./styles/series-chart.css";
 @import "./styles/configurable-table.css";
 @import "./styles/tree-guides.css";

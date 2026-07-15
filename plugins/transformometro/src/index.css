@@ -2699,25 +2699,6 @@
   border-color: color-mix(in srgb, var(--ds-accent) 25%, transparent);
 }
 
-.dashboard-transformometro .ds-ghost-btn {
-  min-height: var(--ds-control-height);
-  border-radius: var(--ds-control-radius);
-  padding: 10px 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--ds-card-border);
-  background: transparent;
-  color: var(--ds-text);
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.dashboard-transformometro .ds-ghost-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .dashboard-transformometro .ds-ppm-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -3045,38 +3026,6 @@
   cursor: pointer;
 }
 
-.dashboard-transformometro .ds-table__sort-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  width: 100%;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.dashboard-transformometro .ds-table__sort-button:hover,
-.dashboard-transformometro .ds-table__sort-button:focus-visible {
-  color: var(--ds-text);
-}
-
-.dashboard-transformometro .ds-table__sort-indicator {
-  color: var(--ds-text-muted);
-  font-size: 11px;
-  opacity: 0.55;
-  flex-shrink: 0;
-}
-
-.dashboard-transformometro .ds-table th[aria-sort]:not([aria-sort="none"]) .ds-table__sort-indicator {
-  opacity: 1;
-  color: var(--ds-accent);
-}
-
 .dashboard-transformometro th.ds-table__actions-col,
 .dashboard-transformometro td.ds-table__actions-col,
 .dashboard-transformometro .ds-table__actions-cell {
@@ -3171,12 +3120,6 @@
 
 .dashboard-transformometro .ds-table-section__footer .ds-hint {
   margin: 0;
-}
-
-.dashboard-transformometro .ds-cadastro-section__pagination {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--ds-card-border);
 }
 
 .dashboard-transformometro .ds-table-section__meta-group {
@@ -3363,22 +3306,6 @@
   100% {
     transform: translateX(260%);
   }
-}
-
-.dashboard-transformometro .ds-pagination {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--ds-card-border);
-}
-
-.dashboard-transformometro .ds-pagination__info {
-  font-size: var(--ds-font-sm);
-  color: var(--ds-text-muted);
 }
 
 .dashboard-transformometro .ds-pagination__actions {
