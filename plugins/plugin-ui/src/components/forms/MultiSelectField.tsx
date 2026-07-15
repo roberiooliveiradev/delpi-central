@@ -3,6 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { FieldLabel } from "../help/FieldLabel";
 import { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type MultiSelectOption = {
   value: string;
@@ -64,24 +65,29 @@ export type MultiSelectFieldProps = {
   showBulkActions?: boolean;
 };
 
-/** Monta classNames BEM `{prefix}-multi-select__*` dos dashboards departamentais. */
+/** Monta BEM `{prefix}-multi-select__*` + classes estáveis `.delpi-ui-multi-select*`. */
 export function multiSelectBemClasses(prefix: string): MultiSelectFieldClassNames {
+  const ms = `${prefix}-multi-select`;
+  const ui = "delpi-ui-multi-select";
+  const pair = (local: string, canonical: string) =>
+    local === canonical ? canonical : delpiUiClass(local, canonical);
+
   return {
     root: `${prefix}-filter-box ${prefix}-field ${prefix}-field--multi-select`,
     fieldLabel: `${prefix}-field__label`,
-    multiSelect: `${prefix}-multi-select`,
-    multiSelectOpen: `${prefix}-multi-select ${prefix}-multi-select--open`,
-    trigger: `${prefix}-multi-select__trigger`,
-    triggerLabel: `${prefix}-multi-select__trigger-label`,
-    panel: `${prefix}-multi-select__panel delpi-ui-multi-select__panel`,
-    search: `${prefix}-multi-select__search`,
-    actions: `${prefix}-multi-select__actions delpi-ui-multi-select__actions`,
+    multiSelect: pair(ms, ui),
+    multiSelectOpen: pair(`${ms} ${ms}--open`, `${ui} ${ui}--open`),
+    trigger: pair(`${ms}__trigger`, `${ui}__trigger`),
+    triggerLabel: pair(`${ms}__trigger-label`, `${ui}__trigger-label`),
+    panel: pair(`${ms}__panel`, `${ui}__panel`),
+    search: pair(`${ms}__search`, `${ui}__search`),
+    actions: pair(`${ms}__actions`, `${ui}__actions`),
     /* Compacto canônico — não usar `{prefix}-ghost-btn` (toolbar sobrescreve btn--sm). */
     actionButton: "delpi-ui-multi-select__action",
-    list: `${prefix}-multi-select__list`,
-    empty: `${prefix}-multi-select__empty`,
-    option: `${prefix}-multi-select__option`,
-    createOption: `${prefix}-multi-select__create`,
+    list: pair(`${ms}__list`, `${ui}__list`),
+    empty: pair(`${ms}__empty`, `${ui}__empty`),
+    option: pair(`${ms}__option`, `${ui}__option`),
+    createOption: pair(`${ms}__create`, `${ui}__create`),
   };
 }
 

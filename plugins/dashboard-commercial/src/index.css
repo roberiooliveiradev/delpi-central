@@ -323,174 +323,10 @@
   padding: 8px 12px;
   background: var(--surface, #fff);
   color: var(--dc-text);
-}.dashboard-commercial .dc-multi-select{
-  position: relative;
-  min-width: 0;
-}.dashboard-commercial .dc-multi-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--dc-control-height);
-  border-radius: var(--dc-control-radius);
-  border: 1px solid var(--dc-card-border);
-  padding: 8px 12px;
-  background: var(--surface, #fff);
-  color: var(--dc-text);
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-}.dashboard-commercial .dc-multi-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-commercial .dc-multi-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}.dashboard-commercial .dc-multi-select--open .dc-multi-select__trigger{
-  border-color: color-mix(in srgb, var(--dc-accent) 45%, var(--dc-card-border));
-}.dashboard-commercial .dc-multi-select__panel{
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--dc-card-border);
-  background: var(--dc-card-bg);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-}.dashboard-commercial .dc-multi-select__search{
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: var(--dc-control-radius);
-  border: 1px solid var(--dc-card-border);
-  background: var(--surface, #fff);
-  color: var(--dc-text);
-  box-sizing: border-box;
-}.dashboard-commercial .dc-multi-select__actions{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
 }.dashboard-commercial .dc-btn--sm{
   min-height: 28px;
   padding: 4px 8px;
   font-size: var(--dc-font-xs);
-}.dashboard-commercial .dc-multi-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 168px;
-  overflow: auto;
-  display: grid;
-  gap: 2px;
-}.dashboard-commercial .dc-multi-select__option{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 0;
-  padding: 5px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--dc-text);
-  font-size: var(--dc-font-sm);
-  font-weight: 400;
-  line-height: 1.25;
-}.dashboard-commercial .dc-multi-select__option:hover{
-  background: color-mix(in srgb, var(--dc-accent) 8%, transparent);
-}.dashboard-commercial .dc-multi-select__option input[type="checkbox"]{
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  flex: 0 0 16px;
-  margin: 0;
-  padding: 0;
-  border: none;
-  box-shadow: none;
-  accent-color: var(--dc-accent);
-}.dashboard-commercial .dc-multi-select__option span{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}.dashboard-commercial .dc-multi-select__empty{
-  padding: 8px;
-  color: var(--dc-text-muted);
-  font-size: var(--dc-font-sm);
-}.dashboard-commercial .dc-select{
-  position: relative;
-  min-width: 0;
-}.dashboard-commercial .dc-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--dc-control-height, 42px);
-  padding: 0 12px;
-  border-radius: var(--dc-control-radius);
-  border: 1px solid var(--dc-card-border);
-  background: var(--surface, #fff);
-  color: var(--dc-text);
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-}.dashboard-commercial .dc-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-commercial .dc-select--open .dc-select__trigger{
-  border-color: color-mix(in srgb, var(--dc-accent) 45%, var(--dc-card-border));
-}.dashboard-commercial .dc-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}.dashboard-commercial .dc-select__panel{
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--dc-card-border);
-  background: var(--dc-card-bg);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-}.dashboard-commercial .dc-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 200px;
-  overflow: auto;
-  display: grid;
-  gap: 2px;
-}.dashboard-commercial .dc-select__option{
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  padding: 6px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--dc-text);
-  font: inherit;
-  font-size: var(--dc-font-sm);
-}.dashboard-commercial .dc-select__option:hover,
-.dashboard-commercial .dc-select__option--active{
-  background: color-mix(in srgb, var(--dc-accent) 10%, transparent);
-  color: var(--dc-accent);
-}.dashboard-commercial .dc-select__empty{
-  padding: 8px;
-  color: var(--dc-text-muted);
-  font-size: var(--dc-font-sm);
 }.dashboard-commercial .dc-filter-box input:not([type="checkbox"]){
   width: 100%;
   min-width: 0;
@@ -703,13 +539,7 @@
   color: var(--dc-accent);
   background: color-mix(in srgb, var(--dc-accent) 12%, transparent);
   border-color: color-mix(in srgb, var(--dc-accent) 25%, transparent);
-}/* MultiSelect: ghost de toolbar não deve vencer ações compactas do plugin-ui */.dashboard-commercial .dc-multi-select__actions .dc-ghost-btn,
-.dashboard-commercial .dc-multi-select__actions .delpi-ui-multi-select__action{
-  min-height: 28px;
-  padding: 4px 8px;
-  font-size: var(--dc-font-xs);
-  transform: none;
-}.dashboard-commercial .dc-ppm-toolbar{
+}/* MultiSelect: ghost de toolbar não deve vencer ações compactas do plugin-ui */.dashboard-commercial .dc-ppm-toolbar{
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1339,8 +1169,7 @@
     background: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }/* Imprime só o dashboard qualidade, não sidebar nem chrome do portal */
-  body *{
+  }/* Imprime só o dashboard qualidade, não sidebar nem chrome do portal */body *{
     visibility: hidden;
   }.dashboard-commercial.dc-print-root,
   .dashboard-commercial.dc-print-root *{

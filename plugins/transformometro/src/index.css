@@ -88,9 +88,8 @@
     opacity: 1;
     transform: translateY(0);
   }
-}@media (prefers-reduced-motion: reduce){
-  .dashboard-transformometro .tm-page-transition,
-  .dashboard-transformometro .tm-tab-panel-transition {
+}@media (prefers-reduced-motion: reduce){.dashboard-transformometro .tm-page-transition,
+  .dashboard-transformometro .tm-tab-panel-transition{
     animation: none;
   }
 }@keyframes ds-view-fade-in{
@@ -132,8 +131,7 @@
   --ds-negative-fg: #fca5a5;
   --ds-danger-fg: #fca5a5;
   --ds-danger-bg: color-mix(in srgb, #ef4444 18%, var(--ds-card-bg));
-}/* Header */
-.dashboard-transformometro .ds-page-header{
+}/* Header */.dashboard-transformometro .ds-page-header{
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto;
@@ -194,8 +192,7 @@
   justify-content: center;
   min-width: 0;
   white-space: nowrap;
-}/* Buttons */
-.dashboard-transformometro .ds-primary-btn{
+}/* Buttons */.dashboard-transformometro .ds-primary-btn{
   min-height: var(--ds-control-height);
   border-radius: var(--ds-control-radius);
   padding: 10px 14px;
@@ -223,8 +220,7 @@
   text-underline-offset: 2px;
 }.dashboard-transformometro .ds-link-btn:hover{
   color: color-mix(in srgb, var(--ds-accent) 80%, var(--ds-title));
-}/* Filters */
-.dashboard-transformometro .ds-filters-row{
+}/* Filters */.dashboard-transformometro .ds-filters-row{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: var(--ds-grid-gap);
@@ -237,200 +233,11 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 }.dashboard-transformometro .ds-filter-box--wide{
   grid-column: span 2;
-}/* Seleção múltipla (Unidade/Setor) — padrão do dashboard de engenharia */
-.dashboard-transformometro .ds-field--multi-select{
-  gap: 6px;
-}.dashboard-transformometro .ds-multi-select{
-  position: relative;
-  min-width: 0;
-}.dashboard-transformometro .ds-multi-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--ds-control-height);
-  border-radius: var(--ds-control-radius);
-  border: 1px solid var(--ds-card-border);
-  padding: 8px 12px;
-  background: var(--ds-input-bg, #fff);
-  color: var(--ds-text);
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-}.dashboard-transformometro .ds-multi-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-transformometro .ds-multi-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}.dashboard-transformometro .ds-multi-select--open .ds-multi-select__trigger{
-  border-color: color-mix(in srgb, var(--ds-accent) 45%, var(--ds-card-border));
-}.dashboard-transformometro .ds-multi-select__panel{
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--ds-card-border);
-  background: var(--ds-card-bg);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-}.dashboard-transformometro .ds-multi-select__search{
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: var(--ds-control-radius);
-  border: 1px solid var(--ds-card-border);
-  background: var(--ds-input-bg, #fff);
-  color: var(--ds-text);
-  box-sizing: border-box;
-}.dashboard-transformometro .ds-multi-select__actions{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}.dashboard-transformometro .ds-btn--sm{
+}/* Seleção múltipla (Unidade/Setor) — padrão do dashboard de engenharia */.dashboard-transformometro .ds-btn--sm{
   min-height: 28px;
   padding: 4px 8px;
   font-size: var(--ds-font-xs, 12px);
-}.dashboard-transformometro .ds-multi-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 168px;
-  overflow: auto;
-  display: grid;
-  gap: 2px;
-}.dashboard-transformometro .ds-multi-select__option{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 0;
-  padding: 5px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--ds-text);
-  font-size: var(--ds-font-sm, 13px);
-  font-weight: 400;
-  line-height: 1.25;
-}.dashboard-transformometro .ds-multi-select__option:hover{
-  background: color-mix(in srgb, var(--ds-accent) 8%, transparent);
-}.dashboard-transformometro .ds-multi-select__option input[type="checkbox"]{
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  flex: 0 0 16px;
-  margin: 0;
-  padding: 0;
-  border: none;
-  box-shadow: none;
-  accent-color: var(--ds-accent);
-}.dashboard-transformometro .ds-multi-select__option span{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}.dashboard-transformometro .ds-multi-select__empty{
-  margin: 0;
-  padding: 8px;
-  color: var(--ds-text-muted);
-  font-size: var(--ds-font-sm, 13px);
-}/* Select único — padrão action plans (PAC) */
-.dashboard-transformometro .ds-select{
-  position: relative;
-  min-width: 0;
-}.dashboard-transformometro .ds-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--ds-control-height);
-  border-radius: var(--ds-control-radius);
-  border: 1px solid var(--ds-card-border);
-  padding: 8px 12px;
-  background: var(--ds-input-bg, #fff);
-  color: var(--ds-text);
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-  appearance: none;
-  box-sizing: border-box;
-}.dashboard-transformometro .ds-select__trigger:focus-visible{
-  outline: 2px solid var(--ds-accent);
-  outline-offset: 2px;
-}.dashboard-transformometro .ds-select__trigger svg{
-  flex-shrink: 0;
-  color: var(--ds-text-muted);
-}.dashboard-transformometro .ds-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-transformometro .ds-select__trigger-label{
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  line-height: 1.2;
-  text-align: left;
-}.dashboard-transformometro .ds-select--open .ds-select__trigger{
-  border-color: color-mix(in srgb, var(--ds-accent) 45%, var(--ds-card-border));
-}.dashboard-transformometro .ds-select__panel{
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--ds-card-border);
-  background: var(--ds-card-bg);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-}.dashboard-transformometro .ds-select__search{
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: var(--ds-control-radius);
-  border: 1px solid var(--ds-card-border);
-  background: var(--ds-input-bg, #fff);
-  color: var(--ds-text);
-  box-sizing: border-box;
-}.dashboard-transformometro .ds-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 168px;
-  overflow: auto;
-  display: grid;
-  gap: 2px;
-}.dashboard-transformometro .ds-select__option{
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  padding: 8px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--ds-text);
-  font-size: var(--ds-font-sm, 13px);
-}.dashboard-transformometro .ds-select__option:hover,
-.dashboard-transformometro .ds-select__option--active{
-  background: color-mix(in srgb, var(--ds-accent) 10%, transparent);
-  color: var(--ds-accent);
-}.dashboard-transformometro .ds-select__empty{
-  padding: 8px;
-  color: var(--ds-text-muted);
-  font-size: var(--ds-font-sm, 13px);
-}.dashboard-transformometro .ds-field__required{
+}/* Select único — padrão action plans (PAC) */.dashboard-transformometro .ds-field__required{
   color: var(--ds-danger, #c0392b);
 }.dashboard-transformometro .tm-inst-setores-label{
   display: block;
@@ -438,8 +245,7 @@
   font-size: var(--ds-font-sm);
   font-weight: 600;
   color: var(--ds-text-muted);
-}/* Grade de seleção múltipla (filiais / setores) — checkbox + label sempre inline */
-.dashboard-transformometro .tm-check-grid{
+}/* Grade de seleção múltipla (filiais / setores) — checkbox + label sempre inline */.dashboard-transformometro .tm-check-grid{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 8px 16px;
@@ -492,8 +298,7 @@
   font-size: var(--ds-font-xs);
   font-weight: 600;
   color: var(--ds-text-muted);
-}/* Layout vertical do formulário de instância (evita campos grudados no grid) */
-.dashboard-transformometro .tm-inst-form{
+}/* Layout vertical do formulário de instância (evita campos grudados no grid) */.dashboard-transformometro .tm-inst-form{
   display: flex;
   flex-direction: column;
   gap: var(--ds-grid-gap);
@@ -513,8 +318,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--ds-text);
-}/* ── Processos — browser em pastas ───────────────────────────────── */
-.dashboard-transformometro .tm-processo-browser__header{
+}/* ── Processos — browser em pastas ───────────────────────────────── */.dashboard-transformometro .tm-processo-browser__header{
   align-items: flex-start;
   gap: 1rem;
 }.dashboard-transformometro .tm-processo-browser__toolbar{
@@ -717,28 +521,19 @@
   align-items: center;
   gap: 0.35rem;
   margin-top: 0.75rem;
-}@media (max-width: 900px){
-  .dashboard-transformometro .tm-processo-browser__list-item {
+}@media (max-width: 900px){.dashboard-transformometro .tm-processo-browser__list-item{
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
       "icon main"
       "icon status"
       "progress progress";
-  }
-
-  .dashboard-transformometro .tm-processo-browser__list-item .tm-processo-folder-icon {
+  }.dashboard-transformometro .tm-processo-browser__list-item .tm-processo-folder-icon{
     grid-area: icon;
-  }
-
-  .dashboard-transformometro .tm-processo-browser__list-main {
+  }.dashboard-transformometro .tm-processo-browser__list-main{
     grid-area: main;
-  }
-
-  .dashboard-transformometro .tm-processo-browser__list-status {
+  }.dashboard-transformometro .tm-processo-browser__list-status{
     grid-area: status;
-  }
-
-  .dashboard-transformometro .tm-processo-browser__list-item .tm-form-progress--compact {
+  }.dashboard-transformometro .tm-processo-browser__list-item .tm-form-progress--compact{
     grid-area: progress;
   }
 }.dashboard-transformometro .tm-processo-workspace{
@@ -781,13 +576,10 @@
   pointer-events: auto;
   transform: translateY(0);
   z-index: 1;
-}@media (prefers-reduced-motion: reduce){
-  .dashboard-transformometro .tm-processo-workspace-section {
+}@media (prefers-reduced-motion: reduce){.dashboard-transformometro .tm-processo-workspace-section{
     transform: none;
     transition: none;
-  }
-
-  .dashboard-transformometro .tm-processo-workspace-tree__children-wrap {
+  }.dashboard-transformometro .tm-processo-workspace-tree__children-wrap{
     transition: none;
   }
 }.dashboard-transformometro .tm-processo-workspace-tree-icon{
@@ -822,8 +614,7 @@
 }.dashboard-transformometro .tm-processo-workspace-overview{
   display: grid;
   gap: 1rem;
-}@media (min-width: 900px){
-  .dashboard-transformometro .tm-processo-workspace-overview {
+}@media (min-width: 900px){.dashboard-transformometro .tm-processo-workspace-overview{
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
   }
@@ -1194,21 +985,14 @@
 }.dashboard-transformometro .tm-processo-workspace-sidebar__action-btn{
   width: 100%;
   justify-content: flex-start;
-}@media (max-width: 900px){
-  .dashboard-transformometro .tm-processo-workspace {
+}@media (max-width: 900px){.dashboard-transformometro .tm-processo-workspace{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-transformometro .tm-processo-workspace-sidebar-shell {
+  }.dashboard-transformometro .tm-processo-workspace-sidebar-shell{
     width: 100%;
-  }
-
-  .dashboard-transformometro .tm-processo-workspace-sidebar {
+  }.dashboard-transformometro .tm-processo-workspace-sidebar{
     position: static;
     max-height: 16rem;
-  }
-
-  .dashboard-transformometro .tm-processo-workspace-sidebar__resize-handle {
+  }.dashboard-transformometro .tm-processo-workspace-sidebar__resize-handle{
     display: none;
   }
 }.dashboard-transformometro .tm-instancia-unidade{
@@ -1313,8 +1097,7 @@
 }.dashboard-transformometro .ds-filter-box textarea{
   min-height: calc(var(--ds-control-height) * 1.6);
   resize: vertical;
-}/* Checkbox / radio — label inline, controle compacto (não herdar input de texto) */
-.dashboard-transformometro .ds-check-label{
+}/* Checkbox / radio — label inline, controle compacto (não herdar input de texto) */.dashboard-transformometro .ds-check-label{
   display: inline-flex;
   flex-direction: row;
   align-items: center;
@@ -1349,8 +1132,7 @@
   font-size: var(--ds-font-sm);
   font-weight: 600;
   color: var(--ds-text-muted);
-}/* Barra de preenchimento do cadastro (padrão quality-action-plans / Kaizen) */
-.dashboard-transformometro .tm-form-progress{
+}/* Barra de preenchimento do cadastro (padrão quality-action-plans / Kaizen) */.dashboard-transformometro .tm-form-progress{
   padding: 14px 16px;
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-control-radius);
@@ -1445,8 +1227,7 @@
   margin-bottom: 10px;
 }.dashboard-transformometro .tm-decomposition-editor__drag-hint{
   margin: 0;
-}/* Rich tree — mapeamento WBS (padrão dashboard commercial) */
-.dashboard-transformometro .tm-rich-tree{
+}/* Rich tree — mapeamento WBS (padrão dashboard commercial) */.dashboard-transformometro .tm-rich-tree{
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
   overflow: hidden;
@@ -1685,8 +1466,7 @@
   margin-bottom: var(--ds-section-gap);
 }.dashboard-transformometro .tm-panel-stack > .ds-card{
   margin-bottom: 0;
-}/* Cards */
-.dashboard-transformometro .ds-card{
+}/* Cards */.dashboard-transformometro .ds-card{
   background: var(--ds-card-bg);
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-card-radius);
@@ -1805,12 +1585,9 @@
   font-variant-numeric: tabular-nums;
   color: #f87171;
   white-space: nowrap;
-}@media (max-width: 720px){
-  .dashboard-transformometro .ds-alert-item {
+}@media (max-width: 720px){.dashboard-transformometro .ds-alert-item{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-transformometro .ds-alert-item__meta {
+  }.dashboard-transformometro .ds-alert-item__meta{
     justify-content: flex-start;
   }
 }.dashboard-transformometro .ds-rateio-diag{
@@ -1825,8 +1602,7 @@
 }.dashboard-transformometro .ds-rateio-diag__message{
   margin: 0 0 6px;
   font-weight: 600;
-}/* KPI grid */
-.dashboard-transformometro .ds-kpi-grid{
+}/* KPI grid */.dashboard-transformometro .ds-kpi-grid{
   display: grid;
   grid-template-columns: repeat(3, minmax(280px, 1fr));
   gap: var(--ds-grid-gap);
@@ -1871,8 +1647,7 @@
   background: color-mix(in srgb, var(--ds-accent) 10%, transparent);
   color: var(--ds-accent);
   flex-shrink: 0;
-}/* Summary grid */
-.dashboard-transformometro .ds-summary-grid{
+}/* Summary grid */.dashboard-transformometro .ds-summary-grid{
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ds-grid-gap);
@@ -2284,8 +2059,7 @@
   font-size: var(--ds-font-sm);
   color: var(--ds-text-muted);
   line-height: 1.45;
-}/* States */
-.dashboard-transformometro .ds-state{
+}/* States */.dashboard-transformometro .ds-state{
   margin-bottom: var(--ds-section-gap);
   padding: 16px;
   border-radius: var(--ds-card-radius);
@@ -2300,46 +2074,30 @@
 }.dashboard-transformometro .ds-state--loading{
   color: var(--ds-text-muted);
   text-align: center;
-}@media (max-width: 1100px){
-  .dashboard-transformometro .ds-shortcuts-grid {
+}@media (max-width: 1100px){.dashboard-transformometro .ds-shortcuts-grid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}@media (max-width: 768px){
-  .dashboard-transformometro.dashboard-page {
+}@media (max-width: 768px){.dashboard-transformometro.dashboard-page{
     padding: 16px;
-  }
-
-  .dashboard-transformometro .ds-chart-toolbar {
+  }.dashboard-transformometro .ds-chart-toolbar{
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .dashboard-transformometro .ds-chart-toolbar__actions {
+  }.dashboard-transformometro .ds-chart-toolbar__actions{
     width: 100%;
     justify-content: flex-end;
-  }
-
-  .dashboard-transformometro .ds-segment-toggle {
+  }.dashboard-transformometro .ds-segment-toggle{
     width: 100%;
     justify-content: center;
-  }
-
-  .dashboard-transformometro .ds-kpi-grid,
+  }.dashboard-transformometro .ds-kpi-grid,
   .dashboard-transformometro .ds-summary-grid,
   .dashboard-transformometro .ds-charts-grid,
-  .dashboard-transformometro .ds-charts-grid--rankings {
+  .dashboard-transformometro .ds-charts-grid--rankings{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-transformometro .ds-filter-box--wide {
+  }.dashboard-transformometro .ds-filter-box--wide{
     grid-column: span 1;
-  }
-
-  .dashboard-transformometro .ds-summary-metrics {
+  }.dashboard-transformometro .ds-summary-metrics{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-transformometro .ds-shortcuts-grid {
+  }.dashboard-transformometro .ds-shortcuts-grid{
     grid-template-columns: 1fr;
   }
 }.dashboard-transformometro .ds-print-only{
@@ -2361,14 +2119,11 @@
 }.dashboard-transformometro .ds-print-summary__meta dd{
   margin: 0.15rem 0 0;
   font-size: 0.95rem;
-}@media print{
-  @page {
+}@media print{@page{
     size: A4 portrait;
     margin: 10mm;
-  }
-
-  html,
-  body {
+  }html,
+  body{
     width: 100% !important;
     height: auto !important;
     margin: 0 !important;
@@ -2377,19 +2132,12 @@
     background: #fff !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-
-  /* Imprime só o dashboard qualidade, não sidebar nem chrome do portal */
-  body * {
+  }/* Imprime só o dashboard qualidade, não sidebar nem chrome do portal */body *{
     visibility: hidden;
-  }
-
-  .dashboard-transformometro.ds-print-root,
-  .dashboard-transformometro.ds-print-root * {
+  }.dashboard-transformometro.ds-print-root,
+  .dashboard-transformometro.ds-print-root *{
     visibility: visible;
-  }
-
-  .dashboard-transformometro.ds-print-root {
+  }.dashboard-transformometro.ds-print-root{
     position: absolute;
     left: 0;
     top: 0;
@@ -2403,18 +2151,12 @@
     color: #000 !important;
     box-shadow: none !important;
     animation: none !important;
-  }
-
-  .dashboard-transformometro .ds-app-shell {
+  }.dashboard-transformometro .ds-app-shell{
     animation: none !important;
-  }
-
-  .dashboard-transformometro.dashboard-page {
+  }.dashboard-transformometro.dashboard-page{
     padding: 0 !important;
     background: #fff !important;
-  }
-
-  .dashboard-transformometro .ds-no-print,
+  }.dashboard-transformometro .ds-no-print,
   .dashboard-transformometro .ds-screen-only,
   .dashboard-transformometro .ds-nav,
   .dashboard-transformometro .ds-header-actions,
@@ -2435,69 +2177,49 @@
   .dashboard-transformometro .ds-state--loading,
   .dashboard-transformometro .ds-state--error,
   .dashboard-transformometro .ds-state--warning,
-  .dashboard-transformometro button {
+  .dashboard-transformometro button{
     display: none !important;
-  }
-
-  .dashboard-transformometro .ds-print-only {
+  }.dashboard-transformometro .ds-print-only{
     display: block !important;
     margin: 0 0 8px;
     padding: 0 0 8px;
     border-bottom: 1px solid #999;
-  }
-
-  .dashboard-transformometro .ds-print-summary__title {
+  }.dashboard-transformometro .ds-print-summary__title{
     margin: 0 0 6px;
     font-size: 16pt;
     line-height: 1.2;
     color: #000 !important;
-  }
-
-  .dashboard-transformometro .ds-print-summary__meta {
+  }.dashboard-transformometro .ds-print-summary__meta{
     display: flex;
     flex-wrap: wrap;
     gap: 4px 20px;
-  }
-
-  .dashboard-transformometro .ds-print-summary__meta dt {
+  }.dashboard-transformometro .ds-print-summary__meta dt{
     display: inline;
     font-size: 8pt;
     color: #444 !important;
-  }
-
-  .dashboard-transformometro .ds-print-summary__meta dt::after {
+  }.dashboard-transformometro .ds-print-summary__meta dt::after{
     content: ": ";
-  }
-
-  .dashboard-transformometro .ds-print-summary__meta dd {
+  }.dashboard-transformometro .ds-print-summary__meta dd{
     display: inline;
     margin: 0 12px 0 0;
     font-size: 9pt;
     font-weight: 600;
     color: #000 !important;
-  }
-
-  .dashboard-transformometro .ds-kpi-grid,
-  .dashboard-transformometro .ds-summary-grid {
+  }.dashboard-transformometro .ds-kpi-grid,
+  .dashboard-transformometro .ds-summary-grid{
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
     margin-bottom: 10px !important;
-  }
-
-  .dashboard-transformometro .ds-charts-grid {
+  }.dashboard-transformometro .ds-charts-grid{
     display: grid !important;
     grid-template-columns: 1fr !important;
     gap: 10px !important;
     margin-bottom: 10px !important;
-  }
-
-  .dashboard-transformometro .ds-chart-section,
-  .dashboard-transformometro .ds-table-section {
+  }.dashboard-transformometro .ds-chart-section,
+  .dashboard-transformometro .ds-table-section{
     margin-bottom: 10px !important;
-  }
-
-  .dashboard-transformometro .ds-card {
+  }.dashboard-transformometro .ds-card{
     break-inside: avoid;
     page-break-inside: avoid;
     box-shadow: none !important;
@@ -2506,92 +2228,61 @@
     padding: 10px 12px !important;
     margin: 0 0 8px !important;
     background: #fff !important;
-  }
-
-  .dashboard-transformometro .ds-kpi-value {
+  }.dashboard-transformometro .ds-kpi-value{
     font-size: 20pt !important;
     line-height: 1.1;
     color: #000 !important;
-  }
-
-  .dashboard-transformometro .ds-kpi-title,
+  }.dashboard-transformometro .ds-kpi-title,
   .dashboard-transformometro .ds-kpi-subtitle,
-  .dashboard-transformometro .ds-chart-card__title {
+  .dashboard-transformometro .ds-chart-card__title{
     color: #222 !important;
-  }
-
-  .dashboard-transformometro .ds-kpi-icon,
-  .dashboard-transformometro .ds-summary-card__icon {
+  }.dashboard-transformometro .ds-kpi-icon,
+  .dashboard-transformometro .ds-summary-card__icon{
     width: 32px !important;
     height: 32px !important;
-  }
-
-  .dashboard-transformometro .ds-chart-card__header {
+  }.dashboard-transformometro .ds-chart-card__header{
     margin-bottom: 6px;
-  }
-
-  .dashboard-transformometro .ds-chart-card__body {
+  }.dashboard-transformometro .ds-chart-card__body{
     min-height: 0 !important;
     height: auto !important;
     overflow: visible !important;
-  }
-
-  .dashboard-transformometro .recharts-responsive-container {
+  }.dashboard-transformometro .recharts-responsive-container{
     width: 100% !important;
     height: 220px !important;
     min-height: 220px !important;
     max-height: 220px !important;
-  }
-
-  .dashboard-transformometro .recharts-wrapper,
-  .dashboard-transformometro .recharts-surface {
+  }.dashboard-transformometro .recharts-wrapper,
+  .dashboard-transformometro .recharts-surface{
     width: 100% !important;
     max-width: 100% !important;
-  }
-
-  .dashboard-transformometro .ds-sparkline .recharts-responsive-container {
+  }.dashboard-transformometro .ds-sparkline .recharts-responsive-container{
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
-  }
-
-  .dashboard-transformometro .ds-state-box {
+  }.dashboard-transformometro .ds-state-box{
     min-height: 120px;
     border: 1px dashed #ccc;
     color: #555 !important;
-  }
-
-  .dashboard-transformometro .ds-table-wrap {
+  }.dashboard-transformometro .ds-table-wrap{
     overflow: visible !important;
-  }
-
-  .dashboard-transformometro .ds-table {
+  }.dashboard-transformometro .ds-table{
     font-size: 8pt;
-  }
-
-  .dashboard-transformometro .ds-table th,
-  .dashboard-transformometro .ds-table td {
+  }.dashboard-transformometro .ds-table th,
+  .dashboard-transformometro .ds-table td{
     padding: 4px 6px !important;
     border-color: #ccc !important;
     color: #000 !important;
-  }
-
-  .dashboard-transformometro .ds-table th {
+  }.dashboard-transformometro .ds-table th{
     background: #f0f0f0 !important;
-  }
-
-  .dashboard-transformometro .ds-section-title {
+  }.dashboard-transformometro .ds-section-title{
     font-size: 11pt;
     margin: 8px 0 6px;
     color: #000 !important;
-  }
-
-  .dashboard-transformometro svg {
+  }.dashboard-transformometro svg{
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-}/* Força Recharts a recalcular dimensões antes do diálogo de impressão */
-html.ds-printing .dashboard-transformometro .recharts-responsive-container{
+}/* Força Recharts a recalcular dimensões antes do diálogo de impressão */html.ds-printing .dashboard-transformometro .recharts-responsive-container{
   width: 100% !important;
   height: 220px !important;
   min-height: 220px !important;
@@ -2619,8 +2310,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container{
   font-size: var(--ds-font-sm);
 }.dashboard-transformometro .ds-dl-grid__full{
   grid-column: 1 / -1;
-}/* Seções read/edit (padrão Kaizen / Action Plans) */
-.dashboard-transformometro .ds-editable-section{
+}/* Seções read/edit (padrão Kaizen / Action Plans) */.dashboard-transformometro .ds-editable-section{
   margin-bottom: 1rem;
 }.dashboard-transformometro .ds-editable-section__header{
   display: flex;
@@ -2754,8 +2444,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container{
   margin-bottom: 1rem;
   font-size: var(--ds-font-sm);
   color: var(--ds-text-muted);
-}/* Abas do cadastro da revisão */
-.dashboard-transformometro .ds-cadastro-tabs{
+}/* Abas do cadastro da revisão */.dashboard-transformometro .ds-cadastro-tabs{
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -2953,33 +2642,24 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container{
   flex-wrap: wrap;
 }.dashboard-transformometro .ds-cadastro-panel__workflow-actions{
   flex-wrap: wrap;
-}@media (max-width: 1100px){
-  .dashboard-transformometro .ds-charts-grid {
+}@media (max-width: 1100px){.dashboard-transformometro .ds-charts-grid{
     grid-template-columns: 1fr;
   }
-}@media (max-width: 480px){
-  .dashboard-transformometro .ds-header-actions {
+}@media (max-width: 480px){.dashboard-transformometro .ds-header-actions{
     width: 100%;
     justify-content: flex-end;
-  }
-
-  .dashboard-transformometro .ds-header-actions .ds-primary-btn,
-  .dashboard-transformometro .ds-header-actions .ds-ghost-btn {
+  }.dashboard-transformometro .ds-header-actions .ds-primary-btn,
+  .dashboard-transformometro .ds-header-actions .ds-ghost-btn{
     flex: 0 1 auto;
     justify-content: center;
-  }
-
-  .dashboard-transformometro .ds-cta-strip {
+  }.dashboard-transformometro .ds-cta-strip{
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .dashboard-transformometro .ds-cta-strip .ds-primary-btn {
+  }.dashboard-transformometro .ds-cta-strip .ds-primary-btn{
     width: 100%;
     justify-content: center;
   }
-}/* Alinha o ícone (i) inline com títulos e rótulos */
-.dashboard-transformometro .ds-section-title,
+}/* Alinha o ícone (i) inline com títulos e rótulos */.dashboard-transformometro .ds-section-title,
 .dashboard-transformometro .ds-kpi-title,
 .dashboard-transformometro .tm-field__label,
 .dashboard-transformometro .tm-chart-card__title{
@@ -2989,13 +2669,11 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container{
   flex-wrap: nowrap;
 }.dashboard-transformometro .tm-field__label{
   gap: 6px;
-}@media print{
-  .delpi-ui-help-tooltip__trigger,
-  .delpi-ui-help-tooltip__bubble {
+}@media print{.delpi-ui-help-tooltip__trigger,
+  .delpi-ui-help-tooltip__bubble{
     display: none !important;
   }
-}/* ── Evidências de revisão ─────────────────────────────────────── */
-.dashboard-transformometro .tm-evidence-panel{
+}/* ── Evidências de revisão ─────────────────────────────────────── */.dashboard-transformometro .tm-evidence-panel{
   display: flex;
   flex-direction: column;
   gap: var(--ds-section-gap, 1rem);
@@ -3215,8 +2893,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container{
 }.dashboard-transformometro .tm-evidence-upload__submit,
 .dashboard-transformometro .tm-evidence-upload__link-toggle{
   align-self: flex-start;
-}/* ── Linha do tempo (auditoria do processo) ───────────────────────── */
-.dashboard-transformometro .tm-timeline__title{
+}/* ── Linha do tempo (auditoria do processo) ───────────────────────── */.dashboard-transformometro .tm-timeline__title{
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -3334,8 +3011,7 @@ html.ds-printing .dashboard-transformometro .recharts-responsive-container{
   margin: 0.2rem 0 0;
   font-size: 0.8125rem;
   color: var(--ds-accent);
-}/* Comparativo de revisões (instância) */
-.dashboard-transformometro .tm-comparativo-section{
+}/* Comparativo de revisões (instância) */.dashboard-transformometro .tm-comparativo-section{
   display: flex;
   flex-direction: column;
   gap: 12px;

@@ -159,7 +159,16 @@ Após migração:
 
 Após migração Pagination: remover `PaginationPageJump.tsx` e `utils/paginationPages.ts` locais; reexportar `TABLE_PAGE_SIZE_OPTIONS` em `./Pagination`.
 
-Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField` (~20 linhas); **CSS shell ainda no MFE** (Onda 2 do plano de centralização CSS).
+Após migração MultiSelect: wrapper fino com `createDashboardMultiSelectField` (~20 linhas); **Onda 2 ✅** — shell em `multi-select.css` (`.delpi-ui-multi-select*`); MFE sem cópia estrutural.
+
+### Onda 2 — MultiSelect + SelectControl (jul/2026)
+
+| Item | Status |
+|------|--------|
+| `multiSelectBemClasses` / `selectControlBemClasses` | ✅ emitem prefix + `.delpi-ui-*` |
+| Shell CSS | ✅ `multi-select.css` completo; `select-control.css` já canônico |
+| Poda MFEs | ✅ chrome `{prefix}-multi-select*` / `{prefix}-select__*` removido |
+| Domínio mantido | ribbon TV (`.delpi-ui-select` + densidade), `pac-table-select--status`, `filter-bar > field--multi-select` |
 
 ### Onda 1 — CSS estrutural DataTable / Detail / Pagination (jul/2026)
 

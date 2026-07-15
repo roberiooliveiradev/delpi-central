@@ -81,6 +81,11 @@
   height: 1rem;
   flex-shrink: 0;
   color: var(--delpi-ui-select-muted);
+  transition: transform 0.15s ease;
+}
+
+.delpi-ui-select--open .delpi-ui-select__trigger svg {
+  transform: rotate(180deg);
 }
 
 .delpi-ui-select__panel {

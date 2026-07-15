@@ -131,83 +131,6 @@
   background: var(--sm-surface);
   border-color: var(--sm-border);
   color: var(--sm-text);
-}.dashboard-scrap-monitoring .sm-select{
-  position: relative;
-  min-width: 0;
-}.dashboard-scrap-monitoring .sm-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--sm-control-height);
-  padding: 8px 12px;
-  border: 1px solid var(--sm-border);
-  border-radius: var(--sm-control-radius);
-  background: var(--sm-surface);
-  color: var(--sm-text);
-  cursor: pointer;
-  text-align: left;
-}.dashboard-scrap-monitoring .sm-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-scrap-monitoring .sm-select--open .sm-select__trigger{
-  border-color: color-mix(in srgb, var(--sm-accent) 45%, var(--sm-border));
-}.dashboard-scrap-monitoring .sm-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}.dashboard-scrap-monitoring .sm-select__panel{
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border-radius: var(--sm-control-radius);
-  border: 1px solid var(--sm-border);
-  background: var(--sm-surface);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-}.dashboard-scrap-monitoring .sm-select__panel--portal{
-  right: auto;
-  top: auto;
-  left: auto;
-}.dashboard-scrap-monitoring .sm-select__search{
-  width: 100%;
-  min-height: 36px;
-  border: 1px solid var(--sm-border);
-  border-radius: 8px;
-  padding: 6px 10px;
-  background: var(--sm-surface);
-  color: var(--sm-text);
-}.dashboard-scrap-monitoring .sm-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 220px;
-  overflow: auto;
-  display: grid;
-  gap: 2px;
-}.dashboard-scrap-monitoring .sm-select__option{
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  padding: 7px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--sm-text);
-  font-size: var(--sm-font-sm);
-}.dashboard-scrap-monitoring .sm-select__option:hover,
-.dashboard-scrap-monitoring .sm-select__option--active{
-  background: color-mix(in srgb, var(--sm-accent) 12%, transparent);
-  color: var(--sm-accent);
-}.dashboard-scrap-monitoring .sm-select__empty{
-  padding: 8px;
-  color: var(--sm-text-muted);
-  font-size: var(--sm-font-sm);
 }.dashboard-scrap-monitoring .sm-kpi-grid{
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -375,36 +298,26 @@
   --delpi-ui-text: var(--sm-text);
   --delpi-ui-border: var(--sm-border);
   --delpi-ui-muted: var(--sm-text-muted);
-}@media (max-width: 1100px){
-  .dashboard-scrap-monitoring .sm-kpi-grid,
+}@media (max-width: 1100px){.dashboard-scrap-monitoring .sm-kpi-grid,
   .dashboard-scrap-monitoring .sm-charts-grid,
-  .dashboard-scrap-monitoring .sm-detail-layout {
+  .dashboard-scrap-monitoring .sm-detail-layout{
     grid-template-columns: 1fr 1fr;
   }
-}@media (max-width: 768px){
-  .dashboard-scrap-monitoring {
+}@media (max-width: 768px){.dashboard-scrap-monitoring{
     --sm-page-padding: 16px;
-  }
-
-  .dashboard-scrap-monitoring .sm-page-header,
-  .dashboard-scrap-monitoring .sm-detail-page__header {
+  }.dashboard-scrap-monitoring .sm-page-header,
+  .dashboard-scrap-monitoring .sm-detail-page__header{
     flex-direction: column;
-  }
-
-  .dashboard-scrap-monitoring .sm-filter-bar__grid,
+  }.dashboard-scrap-monitoring .sm-filter-bar__grid,
   .dashboard-scrap-monitoring .sm-kpi-grid,
   .dashboard-scrap-monitoring .sm-charts-grid,
   .dashboard-scrap-monitoring .sm-detail-layout,
-  .dashboard-scrap-monitoring .sm-detail-grid {
+  .dashboard-scrap-monitoring .sm-detail-grid{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-scrap-monitoring .sm-filter-bar__actions {
+  }.dashboard-scrap-monitoring .sm-filter-bar__actions{
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .dashboard-scrap-monitoring .sm-btn {
+  }.dashboard-scrap-monitoring .sm-btn{
     width: 100%;
   }
 }#root:has(> .sm-app-root),

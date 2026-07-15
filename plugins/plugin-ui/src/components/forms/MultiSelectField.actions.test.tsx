@@ -29,6 +29,9 @@ describe("multiSelectBemClasses", () => {
     expect(cn.actionButton).not.toContain("ghost-btn");
     expect(cn.actions).toContain("delpi-ui-multi-select__actions");
     expect(cn.panel).toContain("delpi-ui-multi-select__panel");
+    expect(cn.trigger).toContain("delpi-ui-multi-select__trigger");
+    expect(cn.option).toContain("delpi-ui-multi-select__option");
+    expect(cn.multiSelect).toContain("delpi-ui-multi-select");
   });
 });
 

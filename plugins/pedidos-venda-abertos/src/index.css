@@ -125,8 +125,7 @@
 }.pva-ghost-btn:disabled{
   opacity: 0.6;
   cursor: not-allowed;
-}.pva-ghost-btn.pva-btn--sm,
-.pva-multi-select__actions .pva-btn--sm{
+}.pva-ghost-btn.pva-btn--sm{
   min-height: 28px;
   padding: 4px 8px;
   font-size: var(--pva-font-xs);
@@ -223,150 +222,15 @@
   gap: 12px;
 }.pva-field--clients{
   min-width: 0;
-}.pva-multi-select{
-  position: relative;
-}/* SelectControl (FilterSelectField Filial / Status) — mesma família BEM do multi-select */
-.pva-select{
-  position: relative;
-  min-width: 0;
-}.pva-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--pva-control-height);
-  padding: 0 12px;
-  border: 1px solid var(--pva-border);
-  border-radius: var(--pva-control-radius);
-  background: var(--pva-surface);
-  color: var(--pva-text);
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-}.pva-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.pva-select--open .pva-select__trigger{
-  border-color: color-mix(in srgb, var(--pva-accent) 45%, var(--pva-border));
-}.pva-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}.pva-select__panel{
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--pva-border);
-  border-radius: var(--pva-control-radius);
-  background: var(--pva-surface);
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--pva-text) 12%, transparent);
-}.pva-select__search{
-  min-height: var(--pva-control-height);
-  padding: 0 12px;
-  border: 1px solid var(--pva-border);
-  border-radius: var(--pva-control-radius);
-  background: var(--pva-surface);
-  color: var(--pva-text);
-  font: inherit;
-}.pva-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 200px;
-  overflow: auto;
-  display: grid;
-  gap: 2px;
-}.pva-select__list li{
-  margin: 0;
-  list-style: none;
-}.pva-select__option{
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  padding: 6px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--pva-text);
-  font: inherit;
-  font-size: var(--pva-font-sm);
-}.pva-select__option:hover,
-.pva-select__option--active{
-  background: color-mix(in srgb, var(--pva-accent) 10%, transparent);
-  color: var(--pva-accent);
-}.pva-select__empty{
-  padding: 8px;
-  color: var(--pva-muted);
-  font-size: var(--pva-font-sm);
-}.pva-multi-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--pva-control-height);
-  padding: 0 12px;
-  border: 1px solid var(--pva-border);
-  border-radius: var(--pva-control-radius);
-  background: var(--pva-surface);
-  color: var(--pva-text);
-  cursor: pointer;
-  text-align: left;
-}.pva-multi-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}.pva-multi-select--open .pva-multi-select__trigger{
-  border-color: color-mix(in srgb, var(--pva-accent) 45%, var(--pva-border));
-}.pva-multi-select__panel{
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 6px);
-  left: 0;
-  width: max(100%, 240px);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px;
-  border: 1px solid var(--pva-border);
-  border-radius: var(--pva-control-radius);
-  background: var(--pva-surface);
-  box-shadow: 0 12px 32px color-mix(in srgb, var(--pva-text) 12%, transparent);
-  box-sizing: border-box;
-}.pva-multi-select__search{
-  min-height: var(--pva-control-height);
-  padding: 0 12px;
-  border: 1px solid var(--pva-border);
-  border-radius: var(--pva-control-radius);
-  background: var(--pva-surface);
-  color: var(--pva-text);
-}.pva-multi-select__actions{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}.pva-multi-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 260px;
-  overflow-y: auto;
-}.pva-check-list{
+}/* SelectControl (FilterSelectField Filial / Status) — mesma família BEM do multi-select */.pva-check-list{
   list-style: none;
   margin: 0;
   padding: 0;
   max-height: 280px;
   overflow-y: auto;
-}.pva-check-list li,
-.pva-multi-select__list li{
+}.pva-check-list li{
   margin: 0;
-}.pva-check-option,
-.pva-multi-select__option{
+}.pva-check-option{
   display: inline-flex;
   flex-direction: row;
   align-items: center;
@@ -377,11 +241,9 @@
   border-radius: 8px;
   cursor: pointer;
   color: var(--pva-text);
-}.pva-check-option:hover,
-.pva-multi-select__option:hover{
+}.pva-check-option:hover{
   background: color-mix(in srgb, var(--pva-accent) 8%, transparent);
-}.pva-check-option input[type="checkbox"],
-.pva-multi-select__option input[type="checkbox"]{
+}.pva-check-option input[type="checkbox"]{
   appearance: auto;
   display: inline-block;
   width: 16px;
@@ -398,16 +260,14 @@
   cursor: not-allowed;
 }.pva-check-option input[type="checkbox"]:disabled + .pva-check-option__label{
   opacity: 0.55;
-}.pva-check-option__label,
-.pva-multi-select__option span{
+}.pva-check-option__label{
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 1.25;
-}.pva-check-list__empty,
-.pva-multi-select__empty{
+}.pva-check-list__empty{
   padding: 8px 10px;
   color: var(--pva-muted);
 }.pva-field{
@@ -514,95 +374,61 @@
   to {
     transform: rotate(360deg);
   }
-}@media (max-width: 1100px){
-  .pva-kpi-grid {
+}@media (max-width: 1100px){.pva-kpi-grid{
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .pva-kpi-card--wide {
+  }.pva-kpi-card--wide{
     grid-column: span 2;
-  }
-
-  .pva-filter-bar__grid,
-  .pva-filter-grid {
+  }.pva-filter-bar__grid,
+  .pva-filter-grid{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}@media (max-width: 768px){
-  .dashboard-pedidos-venda-abertos.dashboard-page {
+}@media (max-width: 768px){.dashboard-pedidos-venda-abertos.dashboard-page{
     padding: 16px;
-  }
-
-  .pva-page-header,
+  }.pva-page-header,
   .pva-filter-bar__header,
-  .pva-pagination {
+  .pva-pagination{
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .pva-btn {
+  }.pva-btn{
     width: 100%;
-  }
-
-  .pva-kpi-grid,
+  }.pva-kpi-grid,
   .pva-filter-bar__grid,
-  .pva-filter-grid {
+  .pva-filter-grid{
     grid-template-columns: 1fr;
-  }
-
-  .pva-kpi-card--wide {
+  }.pva-kpi-card--wide{
     grid-column: auto;
-  }
-
-  .pva-kpi-card--wide .pva-kpi-card__value {
+  }.pva-kpi-card--wide .pva-kpi-card__value{
     white-space: normal;
     overflow-wrap: anywhere;
-  }
-
-  .pva-table-card__toolbar {
+  }.pva-table-card__toolbar{
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .pva-table-card__actions {
+  }.pva-table-card__actions{
     justify-content: stretch;
-  }
-
-  .pva-table-font-size {
+  }.pva-table-font-size{
     justify-content: space-between;
     width: 100%;
-  }
-
-  .pva-table thead {
+  }.pva-table thead{
     display: none;
-  }
-
-  .pva-table tbody tr {
+  }.pva-table tbody tr{
     display: block;
     margin-bottom: 12px;
     border: 1px solid var(--pva-border);
     border-radius: 14px;
     overflow: hidden;
-  }
-
-  .pva-table tbody td {
+  }.pva-table tbody td{
     display: grid;
     grid-template-columns: minmax(110px, 38%) 1fr;
     gap: 8px;
     align-items: start;
     border-bottom: 1px solid var(--pva-border);
-  }
-
-  .pva-table tbody td::before {
+  }.pva-table tbody td::before{
     content: attr(data-label);
     color: var(--pva-muted);
     font-weight: 600;
-  }
-
-  .pva-table tbody td:last-child {
+  }.pva-table tbody td:last-child{
     border-bottom: 0;
-  }
-
-  .pva-table__col--numeric {
+  }.pva-table__col--numeric{
     text-align: left;
   }
 }.pva-link-btn{

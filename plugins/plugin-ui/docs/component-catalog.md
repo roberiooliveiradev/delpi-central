@@ -538,12 +538,12 @@ Inclui CSS compartilhados importados em `src/styles/`:
 
 | Arquivo | Escopo |
 |---------|--------|
-| `select-control.css` / `multi-select.css` | Selects portaled |
+| `select-control.css` / `multi-select.css` | `.delpi-ui-select*` / `.delpi-ui-multi-select*` (Onda 2 — shell canônico; MFE só tokens) |
 | `data-table.css` | `DataTable` / `DataTableSection` — `.delpi-ui-table*` / toolbar / search / `data-align` |
 | `pagination.css` | `Pagination` / Compact / Nav — `.delpi-ui-pagination*` + `.delpi-ui-ghost-btn` |
 | `detail-card.css` | `DetailCard` / `DetailFieldGrid` — `.delpi-ui-detail-card*` / grid (`dt`/`dd`) |
 
-MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar layout de tabela/paginação/detalhe (Onda 1). Shell MultiSelect/Select e Chart/KPI/Loading: ondas 2–3.
+MFEs: definir `--delpi-ui-*` no escopo `.dashboard-*` e **não** reimplementar layout de tabela/paginação/detalhe (Onda 1) nem shell MultiSelect/Select (Onda 2). Chart/KPI/Loading/Filters: Onda 3.
 
 | Classe | Uso |
 |--------|-----|

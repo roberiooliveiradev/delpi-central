@@ -117,8 +117,6 @@
   min-width: min(100%, 180px);
   flex: 1 1 180px;
   font-size: 0.85rem;
-}.dashboard-eficiencia-fabril .ef-field--multi-select{
-  position: relative;
 }.dashboard-eficiencia-fabril .ef-field__label{
   display: inline-flex;
   align-items: center;
@@ -143,106 +141,6 @@
   min-height: 28px;
   padding: 4px 8px;
   font-size: var(--ef-font-xs);
-}.dashboard-eficiencia-fabril .ef-multi-select{
-  position: relative;
-  min-width: 0;
-}.dashboard-eficiencia-fabril .ef-multi-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--ef-control-height);
-  border-radius: var(--ef-control-radius);
-  border: 1px solid var(--ef-border);
-  padding: 0 12px;
-  background: var(--app-canvas, var(--bg, #ffffff));
-  color: var(--ef-text);
-  font: inherit;
-  cursor: pointer;
-  text-align: left;
-}.dashboard-eficiencia-fabril .ef-multi-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-eficiencia-fabril .ef-multi-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}.dashboard-eficiencia-fabril .ef-multi-select--open .ef-multi-select__trigger{
-  border-color: color-mix(in srgb, var(--ef-accent) 45%, var(--ef-border));
-}.dashboard-eficiencia-fabril .ef-multi-select__panel{
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 4px);
-  left: 0;
-  width: max(100%, 240px);
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--ef-border);
-  background: var(--ef-surface);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
-  box-sizing: border-box;
-}.dashboard-eficiencia-fabril .ef-multi-select__search{
-  width: 100%;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: var(--ef-control-radius);
-  border: 1px solid var(--ef-border);
-  background: var(--app-canvas, var(--bg, #ffffff));
-  color: var(--ef-text);
-  box-sizing: border-box;
-}.dashboard-eficiencia-fabril .ef-multi-select__actions{
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}.dashboard-eficiencia-fabril .ef-multi-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 168px;
-  overflow: auto;
-  display: grid;
-  gap: 2px;
-}.dashboard-eficiencia-fabril .ef-multi-select__option{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 0;
-  padding: 5px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: var(--ef-text);
-  font-size: var(--ef-font-sm);
-  font-weight: 400;
-  line-height: 1.25;
-}.dashboard-eficiencia-fabril .ef-multi-select__option:hover{
-  background: color-mix(in srgb, var(--ef-accent) 8%, var(--ef-surface));
-}.dashboard-eficiencia-fabril .ef-multi-select__option input[type="checkbox"]{
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  flex: 0 0 16px;
-  margin: 0;
-  padding: 0;
-  border: none;
-  box-shadow: none;
-  accent-color: var(--ef-accent);
-}.dashboard-eficiencia-fabril .ef-multi-select__option span{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  color: var(--ef-text);
-}.dashboard-eficiencia-fabril .ef-multi-select__empty{
-  padding: 8px;
-  color: var(--ef-muted);
-  font-size: var(--ef-font-sm);
 }.ef-field--checkbox{
   flex-direction: row;
   align-items: center;
@@ -879,89 +777,55 @@
   color: var(--ef-muted);
   border-top: 1px solid var(--ef-border);
   background: color-mix(in srgb, var(--ef-surface) 92%, var(--ef-accent) 8%);
-}@media (max-width: 1100px){
-  .ef-charts-grid__row--3 {
+}@media (max-width: 1100px){.ef-charts-grid__row--3{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}@media (max-width: 768px){
-  .dashboard-eficiencia-fabril.dashboard-page {
+}@media (max-width: 768px){.dashboard-eficiencia-fabril.dashboard-page{
     padding: 16px;
-  }
-
-  .ef-page-header {
+  }.ef-page-header{
     flex-direction: column;
-  }
-
-  .ef-page-header .ef-btn {
+  }.ef-page-header .ef-btn{
     width: 100%;
-  }
-
-  .ef-filter-bar .ef-btn--primary {
+  }.ef-filter-bar .ef-btn--primary{
     width: 100%;
-  }
-
-  .ef-kpi-grid {
+  }.ef-kpi-grid{
     grid-template-columns: 1fr;
-  }
-
-  .ef-detail-layout,
-  .ef-detail-grid {
+  }.ef-detail-layout,
+  .ef-detail-grid{
     grid-template-columns: 1fr;
-  }
-
-  .ef-charts-grid__row--3,
-  .ef-charts-grid__row--2 {
+  }.ef-charts-grid__row--3,
+  .ef-charts-grid__row--2{
     grid-template-columns: 1fr;
-  }
-
-  .ef-chart-card__header-row {
+  }.ef-chart-card__header-row{
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .ef-chart-card__actions {
+  }.ef-chart-card__actions{
     justify-content: flex-end;
-  }
-
-  .ef-table-card__header {
+  }.ef-table-card__header{
     flex-direction: column;
-  }
-
-  .ef-table-card__actions {
+  }.ef-table-card__actions{
     width: 100%;
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .ef-table-wrap {
+  }.ef-table-wrap{
     border: none;
-  }
-
-  .ef-table {
+  }.ef-table{
     min-width: 100%;
-  }
-
-  .ef-table:not(.ef-table--routing) thead {
+  }.ef-table:not(.ef-table--routing) thead{
     display: none;
-  }
-
-  .ef-table:not(.ef-table--routing),
+  }.ef-table:not(.ef-table--routing),
   .ef-table:not(.ef-table--routing) tbody,
   .ef-table:not(.ef-table--routing) tr,
-  .ef-table:not(.ef-table--routing) td {
+  .ef-table:not(.ef-table--routing) td{
     display: block;
     width: 100%;
-  }
-
-  .ef-table:not(.ef-table--routing) tr {
+  }.ef-table:not(.ef-table--routing) tr{
     margin-bottom: 14px;
     border: 1px solid var(--ef-border);
     border-radius: 14px;
     padding: 14px;
     background: var(--ef-surface);
-  }
-
-  .ef-table:not(.ef-table--routing) td {
+  }.ef-table:not(.ef-table--routing) td{
     display: flex;
     justify-content: space-between;
     gap: 12px;
@@ -969,26 +833,18 @@
     border-bottom: none;
     white-space: normal;
     text-align: right;
-  }
-
-  .ef-table:not(.ef-table--routing) td::before {
+  }.ef-table:not(.ef-table--routing) td::before{
     content: attr(data-label);
     font-weight: 600;
     color: var(--ef-muted);
     text-align: left;
     flex-shrink: 0;
-  }
-
-  .ef-table__empty {
+  }.ef-table__empty{
     display: block;
     text-align: center;
-  }
-
-  .ef-table__empty::before {
+  }.ef-table__empty::before{
     content: none;
-  }
-
-  .ef-kpi-icon {
+  }.ef-kpi-icon{
     width: 36px;
     height: 36px;
   }

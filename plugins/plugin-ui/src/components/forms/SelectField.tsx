@@ -3,6 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 
 
 import { FieldLabel } from "../help/FieldLabel";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
+import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type SelectOption = {
   value: string;
@@ -48,19 +49,27 @@ export type SelectControlProps = {
   labels: SelectControlLabels;
 };
 
+/** Monta BEM `{prefix}-select__*` + classes estáveis `.delpi-ui-select*`. */
 export function selectControlBemClasses(prefix: string): SelectControlClassNames {
   const select = `${prefix}-select`;
+  const ui = "delpi-ui-select";
+  const pair = (local: string, canonical: string) =>
+    local === canonical ? canonical : delpiUiClass(local, canonical);
+
   return {
-    root: select,
-    rootOpen: `${select} ${select}--open`,
-    trigger: `${select}__trigger`,
-    triggerLabel: `${select}__trigger-label`,
-    panel: `${select}__panel`,
-    search: `${select}__search`,
-    list: `${select}__list`,
-    option: `${select}__option`,
-    optionActive: `${select}__option ${select}__option--active`,
-    empty: `${select}__empty`,
+    root: pair(select, ui),
+    rootOpen: pair(`${select} ${select}--open`, `${ui} ${ui}--open`),
+    trigger: pair(`${select}__trigger`, `${ui}__trigger`),
+    triggerLabel: pair(`${select}__trigger-label`, `${ui}__trigger-label`),
+    panel: pair(`${select}__panel`, `${ui}__panel`),
+    search: pair(`${select}__search`, `${ui}__search`),
+    list: pair(`${select}__list`, `${ui}__list`),
+    option: pair(`${select}__option`, `${ui}__option`),
+    optionActive: pair(
+      `${select}__option ${select}__option--active`,
+      `${ui}__option ${ui}__option--active`,
+    ),
+    empty: pair(`${select}__empty`, `${ui}__empty`),
   };
 }
 
@@ -111,7 +120,14 @@ export function SelectControl({
     .filter(Boolean)
     .join(" ");
 
-  const panelClassName = [classNames.panel, `${classNames.panel}--portal`].filter(Boolean).join(" ");
+  // Espelha `--portal` em cada token (prefix + delpi-ui), não só no último token da string.
+  const panelClassName = [
+    classNames.panel,
+    ...classNames.panel
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((token) => `${token}--portal`),
+  ].join(" ");
 
   const closePanel = () => {
     setOpen(false);

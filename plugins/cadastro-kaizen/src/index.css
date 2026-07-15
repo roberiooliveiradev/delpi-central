@@ -305,8 +305,7 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-}/* Dentro do formulário as seções são cards; o espaçamento vem do gap do .kz-form. */
-.dashboard-cadastro-kaizen .kz-form .kz-section-card,
+}/* Dentro do formulário as seções são cards; o espaçamento vem do gap do .kz-form. */.dashboard-cadastro-kaizen .kz-form .kz-section-card,
 .dashboard-cadastro-kaizen .kz-form .kz-form-progress{
   margin-bottom: 0;
 }.dashboard-cadastro-kaizen .kz-form-note{
@@ -317,8 +316,7 @@
   border: 1px dashed var(--kz-card-border);
   border-radius: var(--kz-control-radius);
   padding: 10px 12px;
-}/* Barra de preenchimento do formulário (padrão quality-action-plans) */
-.dashboard-cadastro-kaizen .kz-form-progress{
+}/* Barra de preenchimento do formulário (padrão quality-action-plans) */.dashboard-cadastro-kaizen .kz-form-progress{
   padding: 14px 16px;
   border: 1px solid var(--kz-card-border);
   border-radius: var(--kz-control-radius);
@@ -363,43 +361,28 @@
   color: var(--kz-text-muted);
 }.dashboard-cadastro-kaizen .kz-form-progress__item--done{
   color: var(--kz-success);
-}@media (max-width: 768px){
-  .dashboard-cadastro-kaizen.dashboard-page {
+}@media (max-width: 768px){.dashboard-cadastro-kaizen.dashboard-page{
     padding: 16px;
-  }
-
-  .dashboard-cadastro-kaizen .kz-page-header {
+  }.dashboard-cadastro-kaizen .kz-page-header{
     flex-direction: column;
-  }
-
-  .dashboard-cadastro-kaizen .kz-header-actions {
+  }.dashboard-cadastro-kaizen .kz-header-actions{
     width: 100%;
-  }
-
-  .dashboard-cadastro-kaizen .kz-header-actions .kz-primary-btn,
-  .dashboard-cadastro-kaizen .kz-header-actions .kz-ghost-btn {
+  }.dashboard-cadastro-kaizen .kz-header-actions .kz-primary-btn,
+  .dashboard-cadastro-kaizen .kz-header-actions .kz-ghost-btn{
     flex: 1;
     justify-content: center;
-  }
-
-  .dashboard-cadastro-kaizen .kz-form-grid {
+  }.dashboard-cadastro-kaizen .kz-form-grid{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-cadastro-kaizen .kz-form-grid .kz-span-2 {
+  }.dashboard-cadastro-kaizen .kz-form-grid .kz-span-2{
     grid-column: 1 / -1;
-  }
-
-  .dashboard-cadastro-kaizen .kz-form-actions .kz-primary-btn,
-  .dashboard-cadastro-kaizen .kz-form-actions .kz-ghost-btn {
+  }.dashboard-cadastro-kaizen .kz-form-actions .kz-primary-btn,
+  .dashboard-cadastro-kaizen .kz-form-actions .kz-ghost-btn{
     flex: 1;
     justify-content: center;
   }
 }/* ============================================================
    Ficha do kaizen — seções read/edit, pipeline, evidências, revisões
-   ============================================================ */
-
-.dashboard-cadastro-kaizen .kz-section-card{
+   ============================================================ */.dashboard-cadastro-kaizen .kz-section-card{
   margin-bottom: var(--kz-section-gap);
 }.dashboard-cadastro-kaizen .kz-section-card__header{
   display: flex;
@@ -451,8 +434,7 @@
   line-height: 1.5;
 }.dashboard-cadastro-kaizen .kz-read-field__value--empty{
   color: var(--kz-text-muted);
-}/* Chips de participantes */
-.dashboard-cadastro-kaizen .kz-chips{
+}/* Chips de participantes */.dashboard-cadastro-kaizen .kz-chips{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -475,8 +457,7 @@
 }.dashboard-cadastro-kaizen .kz-chip--responsavel{
   background: color-mix(in srgb, var(--kz-success) 12%, var(--kz-card-bg));
   border-color: color-mix(in srgb, var(--kz-success) 34%, var(--kz-card-border));
-}/* Participantes (edição) */
-.dashboard-cadastro-kaizen .kz-participants{
+}/* Participantes (edição) */.dashboard-cadastro-kaizen .kz-participants{
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -500,8 +481,7 @@
   color: var(--kz-text);
 }.dashboard-cadastro-kaizen .kz-participants__add{
   align-self: flex-start;
-}/* Pipeline de status */
-.dashboard-cadastro-kaizen .kz-pipeline{
+}/* Pipeline de status */.dashboard-cadastro-kaizen .kz-pipeline{
   display: flex;
   align-items: center;
   gap: 8px;
@@ -553,8 +533,7 @@
   background: color-mix(in srgb, var(--kz-text-muted) 12%, var(--kz-card-bg));
   color: var(--kz-text-muted);
   border: 1px solid var(--kz-card-border);
-}/* Timeline de revisões */
-.dashboard-cadastro-kaizen .kz-timeline{
+}/* Timeline de revisões */.dashboard-cadastro-kaizen .kz-timeline{
   list-style: none;
   margin: 0;
   padding: 0;
@@ -603,8 +582,7 @@
   margin: 4px 0 0;
   font-size: var(--kz-font-xs);
   color: var(--kz-text-muted);
-}/* Badges */
-.dashboard-cadastro-kaizen .kz-badge{
+}/* Badges */.dashboard-cadastro-kaizen .kz-badge{
   display: inline-block;
   padding: 2px 10px;
   border-radius: 999px;
@@ -627,8 +605,7 @@
 }.dashboard-cadastro-kaizen .kz-badge--current{
   background: var(--kz-accent);
   color: #fff;
-}/* Evidências */
-.dashboard-cadastro-kaizen .kz-evidence-panel{
+}/* Evidências */.dashboard-cadastro-kaizen .kz-evidence-panel{
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -686,8 +663,7 @@
   gap: 6px;
   padding: 6px 8px;
   border-top: 1px solid var(--kz-card-border);
-}/* Botões de ação não podem estourar a largura do card (evita corte). */
-.dashboard-cadastro-kaizen .kz-evidence__actions > button{
+}/* Botões de ação não podem estourar a largura do card (evita corte). */.dashboard-cadastro-kaizen .kz-evidence__actions > button{
   flex: 1 1 0;
   min-width: 0;
   padding: 5px 6px;
@@ -728,8 +704,7 @@
 }.dashboard-cadastro-kaizen .kz-evidence-upload__submit,
 .dashboard-cadastro-kaizen .kz-evidence-upload__link-toggle{
   align-self: flex-start;
-}/* Dropzone (arrastar e soltar) */
-.dashboard-cadastro-kaizen .kz-dropzone{
+}/* Dropzone (arrastar e soltar) */.dashboard-cadastro-kaizen .kz-dropzone{
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -761,8 +736,7 @@
   color: var(--kz-text);
 }.dashboard-cadastro-kaizen .kz-dropzone__hint{
   margin: 0;
-}/* Fila de pendentes */
-.dashboard-cadastro-kaizen .kz-pending-list{
+}/* Fila de pendentes */.dashboard-cadastro-kaizen .kz-pending-list{
   list-style: none;
   margin: 0;
   padding: 0;
@@ -872,8 +846,7 @@
   cursor: pointer;
 }.dashboard-cadastro-kaizen .kz-pending__remove:hover:not(:disabled){
   background: color-mix(in srgb, var(--kz-danger) 10%, transparent);
-}/* Formulário de link externo */
-.dashboard-cadastro-kaizen .kz-evidence-link{
+}/* Formulário de link externo */.dashboard-cadastro-kaizen .kz-evidence-link{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 12px;
@@ -884,25 +857,17 @@
   background: color-mix(in srgb, var(--kz-text-muted) 4%, var(--kz-card-bg));
 }.dashboard-cadastro-kaizen .kz-evidence-link .kz-span-2{
   grid-column: span 2;
-}@media (max-width: 768px){
-  .dashboard-cadastro-kaizen .kz-read-grid .kz-span-2,
-  .dashboard-cadastro-kaizen .kz-evidence-link .kz-span-2 {
+}@media (max-width: 768px){.dashboard-cadastro-kaizen .kz-read-grid .kz-span-2,
+  .dashboard-cadastro-kaizen .kz-evidence-link .kz-span-2{
     grid-column: span 1;
-  }
-
-  .dashboard-cadastro-kaizen .kz-evidence-gallery {
+  }.dashboard-cadastro-kaizen .kz-evidence-gallery{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-cadastro-kaizen .kz-pending-list {
+  }.dashboard-cadastro-kaizen .kz-pending-list{
     grid-template-columns: 1fr;
-  }
-
-  .dashboard-cadastro-kaizen .kz-participant-row {
+  }.dashboard-cadastro-kaizen .kz-participant-row{
     grid-template-columns: 1fr 120px auto;
   }
-}/* Label de formulário com ajuda */
-.dashboard-cadastro-kaizen .kz-field__label,
+}/* Label de formulário com ajuda */.dashboard-cadastro-kaizen .kz-field__label,
 .dashboard-cadastro-kaizen .kz-filter-box > .kz-field__label{
   display: flex;
   flex-flow: row nowrap;
@@ -914,213 +879,13 @@
   font-size: var(--kz-font-sm);
   font-weight: 600;
   color: var(--kz-text-muted);
-}/* Multi-select (padrão dashboard-quality) */
-.dashboard-cadastro-kaizen .kz-multi-field{
+}/* Multi-select (padrão dashboard-quality) */.dashboard-cadastro-kaizen .kz-multi-field{
   min-width: 0;
-}.dashboard-cadastro-kaizen .kz-multi-select{
-  position: relative;
-}.dashboard-cadastro-kaizen .kz-multi-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--kz-control-height);
-  padding: 8px 12px;
-  border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-input-border);
-  background: var(--kz-input-bg);
-  color: var(--kz-input-text);
-  cursor: pointer;
-  text-align: left;
-}.dashboard-cadastro-kaizen .kz-multi-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-cadastro-kaizen .kz-multi-select--open .kz-multi-select__trigger{
-  border-color: var(--kz-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
-}.dashboard-cadastro-kaizen .kz-multi-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}.dashboard-cadastro-kaizen .kz-multi-select__trigger svg{
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-}.dashboard-cadastro-kaizen .kz-multi-select--open .kz-multi-select__trigger svg{
-  transform: rotate(180deg);
-}.dashboard-cadastro-kaizen .kz-multi-select__panel{
-  position: absolute;
-  z-index: 120;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-  border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-card-border);
-  background: var(--kz-card-bg);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-}.dashboard-cadastro-kaizen .kz-multi-select__search{
-  min-height: 36px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--kz-input-border);
-  background: var(--kz-input-bg);
-  color: var(--kz-input-text);
-  box-sizing: border-box;
-}.dashboard-cadastro-kaizen .kz-multi-select__create{
-  display: block;
-  width: calc(100% - 16px);
-  margin: 0 8px 8px;
-  padding: 8px 10px;
-  border: 1px dashed var(--kz-input-border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--kz-accent);
-  font-size: var(--kz-font-sm);
-  text-align: left;
-  cursor: pointer;
-}.dashboard-cadastro-kaizen .kz-multi-select__create:hover{
-  background: color-mix(in srgb, var(--kz-accent) 10%, transparent);
-}.dashboard-cadastro-kaizen .kz-field--multi-select{
-  min-width: 0;
-}.dashboard-cadastro-kaizen .kz-multi-select__actions{
-  display: flex;
-  gap: 6px;
 }.dashboard-cadastro-kaizen .kz-btn--sm{
   padding: 4px 10px;
   font-size: var(--kz-font-xs);
   min-height: 30px;
-}.dashboard-cadastro-kaizen .kz-multi-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 240px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}.dashboard-cadastro-kaizen .kz-multi-select__option{
-  display: flex;
-  flex-flow: row nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  margin: 0;
-  padding: 7px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: var(--kz-font-sm);
-  font-weight: 400;
-  line-height: 1.25;
-  color: var(--kz-text);
-}.dashboard-cadastro-kaizen .kz-multi-select__option:hover{
-  background: color-mix(in srgb, var(--kz-accent) 10%, transparent);
-}/* Checkbox não pode herdar o estilo de input de filtro (vira caixa grande). */
-.dashboard-cadastro-kaizen .kz-multi-select__option input[type="checkbox"]{
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  flex: 0 0 16px;
-  margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  box-shadow: none;
-  background: none;
-  accent-color: var(--kz-accent);
-}.dashboard-cadastro-kaizen .kz-multi-select__option span{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}.dashboard-cadastro-kaizen .kz-multi-select__empty{
-  padding: 8px;
-  font-size: var(--kz-font-sm);
-  color: var(--kz-text-muted);
-}/* Select simples (FilterSelectField / SelectControl) — mesmo DNA do multi-select */
-.dashboard-cadastro-kaizen .kz-select{
-  position: relative;
-  min-width: 0;
-}.dashboard-cadastro-kaizen .kz-select__trigger{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  min-height: var(--kz-control-height);
-  padding: 8px 12px;
-  border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-input-border);
-  background: var(--kz-input-bg);
-  color: var(--kz-input-text);
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-}.dashboard-cadastro-kaizen .kz-select__trigger:disabled{
-  opacity: 0.6;
-  cursor: not-allowed;
-}.dashboard-cadastro-kaizen .kz-select--open .kz-select__trigger{
-  border-color: var(--kz-accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
-}.dashboard-cadastro-kaizen .kz-select__trigger-label{
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}.dashboard-cadastro-kaizen .kz-select__trigger svg{
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-}.dashboard-cadastro-kaizen .kz-select--open .kz-select__trigger svg{
-  transform: rotate(180deg);
-}.dashboard-cadastro-kaizen .kz-select__panel{
-  position: absolute;
-  z-index: 120;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-  border-radius: var(--kz-control-radius);
-  border: 1px solid var(--kz-card-border);
-  background: var(--kz-card-bg);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-}.dashboard-cadastro-kaizen .kz-select__list{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-height: 240px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}.dashboard-cadastro-kaizen .kz-select__option{
-  width: 100%;
-  border: none;
-  background: transparent;
-  text-align: left;
-  padding: 7px 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--kz-font-sm);
-  color: var(--kz-text);
-}.dashboard-cadastro-kaizen .kz-select__option:hover,
-.dashboard-cadastro-kaizen .kz-select__option--active{
-  background: color-mix(in srgb, var(--kz-accent) 12%, transparent);
-  color: var(--kz-accent);
-}.dashboard-cadastro-kaizen .kz-select__empty{
-  padding: 8px;
-  font-size: var(--kz-font-sm);
-  color: var(--kz-text-muted);
-}/* Diff entre revisões */
-.dashboard-cadastro-kaizen .kz-timeline__diff{
+}/* Checkbox não pode herdar o estilo de input de filtro (vira caixa grande). *//* Select simples (FilterSelectField / SelectControl) — mesmo DNA do multi-select *//* Diff entre revisões */.dashboard-cadastro-kaizen .kz-timeline__diff{
   list-style: none;
   margin: 6px 0 0;
   padding: 8px 10px;
@@ -1142,9 +907,7 @@
 }.dashboard-cadastro-kaizen .kz-timeline__diff-to{
   font-weight: 600;
   color: var(--kz-accent);
-}/* ---------------------------------------------------------------- Melhorias */
-
-.dashboard-cadastro-kaizen .kz-improvements{
+}/* ---------------------------------------------------------------- Melhorias */.dashboard-cadastro-kaizen .kz-improvements{
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1263,9 +1026,7 @@
   margin: 10px 0 0;
   font-size: var(--kz-font-xs);
   color: var(--kz-text-muted);
-}/* ---------------------------------------------------------- Versões (ações) */
-
-.dashboard-cadastro-kaizen .kz-improvements__toolbar{
+}/* ---------------------------------------------------------- Versões (ações) */.dashboard-cadastro-kaizen .kz-improvements__toolbar{
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1291,9 +1052,7 @@
   border-left: 3px solid var(--kz-warning, #d97706);
 }.dashboard-cadastro-kaizen .kz-improvement--implantado{
   border-left: 3px solid var(--kz-success, #16a34a);
-}/* ---------------------------------------------------------- Seletor de versões */
-
-.dashboard-cadastro-kaizen .kz-versions{
+}/* ---------------------------------------------------------- Seletor de versões */.dashboard-cadastro-kaizen .kz-versions{
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1350,21 +1109,18 @@
   gap: 4px;
   font-size: var(--kz-font-xs);
   color: var(--kz-text-muted);
-}/* Versão ativa (implantada) */
-.dashboard-cadastro-kaizen .kz-version-pill--implantado{
+}/* Versão ativa (implantada) */.dashboard-cadastro-kaizen .kz-version-pill--implantado{
   border-color: color-mix(in srgb, var(--kz-success, #16a34a) 55%, var(--kz-card-border));
 }.dashboard-cadastro-kaizen .kz-version-pill--implantado .kz-version-pill__status{
   color: var(--kz-success, #16a34a);
   font-weight: 600;
-}/* Rascunho */
-.dashboard-cadastro-kaizen .kz-version-pill--em_andamento{
+}/* Rascunho */.dashboard-cadastro-kaizen .kz-version-pill--em_andamento{
   border-style: dashed;
   border-color: color-mix(in srgb, var(--kz-warning, #d97706) 55%, var(--kz-card-border));
 }.dashboard-cadastro-kaizen .kz-version-pill--em_andamento .kz-version-pill__status{
   color: var(--kz-warning, #d97706);
   font-weight: 600;
-}/* Selecionada (destaque forte) */
-.dashboard-cadastro-kaizen .kz-version-pill--selected{
+}/* Selecionada (destaque forte) */.dashboard-cadastro-kaizen .kz-version-pill--selected{
   border-color: var(--kz-accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--kz-accent) 22%, transparent);
   background: color-mix(in srgb, var(--kz-accent) 6%, var(--kz-card-bg, #fff));
@@ -1414,9 +1170,7 @@
   border-radius: var(--kz-control-radius);
   background: var(--kz-input-bg, #fff);
   color: var(--kz-text);
-}/* ---------------------------------------------------------- Modal de versão */
-
-.dashboard-cadastro-kaizen .kz-modal-overlay,
+}/* ---------------------------------------------------------- Modal de versão */.dashboard-cadastro-kaizen .kz-modal-overlay,
 .kz-modal-overlay{
   position: fixed;
   inset: 0;
@@ -1472,9 +1226,7 @@
 }.kz-icon-btn:hover{
   background: color-mix(in srgb, var(--kz-text-muted, #64748b) 12%, transparent);
   color: var(--kz-text, #0f172a);
-}/* ---------------------------------------------------------- Registro alterações */
-
-.dashboard-cadastro-kaizen .kz-changelog{
+}/* ---------------------------------------------------------- Registro alterações */.dashboard-cadastro-kaizen .kz-changelog{
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -1542,9 +1294,7 @@
   color: var(--kz-text-muted);
 }.dashboard-cadastro-kaizen .kz-evidence-panel--compact .kz-evidence-gallery{
   gap: 12px;
-}/* ============================================================ Dashboard */
-
-.dashboard-cadastro-kaizen .kz-nav{
+}/* ============================================================ Dashboard */.dashboard-cadastro-kaizen .kz-nav{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -1566,9 +1316,7 @@
   color: var(--kz-accent);
   background: color-mix(in srgb, var(--kz-accent) 12%, transparent);
   border-color: color-mix(in srgb, var(--kz-accent) 25%, transparent);
-}/* --- KPIs --- */
-
-.dashboard-cadastro-kaizen .kz-dash-period-note{
+}/* --- KPIs --- */.dashboard-cadastro-kaizen .kz-dash-period-note{
   margin: 0 0 var(--kz-section-gap);
   padding: 10px 14px;
   border-radius: var(--kz-control-radius);
@@ -1630,9 +1378,7 @@
 }.dashboard-cadastro-kaizen .kz-kpi--muted .kz-kpi__icon{
   background: color-mix(in srgb, var(--kz-text-muted) 14%, transparent);
   color: var(--kz-text-muted);
-}/* --- Panels grid --- */
-
-.dashboard-cadastro-kaizen .kz-dash-grid{
+}/* --- Panels grid --- */.dashboard-cadastro-kaizen .kz-dash-grid{
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--kz-grid-gap);
@@ -1651,15 +1397,12 @@
 .dashboard-cadastro-kaizen .kz-dash-panel--wide,
 .dashboard-cadastro-kaizen .kz-dash-panel--recent{
   grid-column: 1 / -1;
-}@media (max-width: 720px){
-  .dashboard-cadastro-kaizen .kz-dash-panel--validity,
+}@media (max-width: 720px){.dashboard-cadastro-kaizen .kz-dash-panel--validity,
   .dashboard-cadastro-kaizen .kz-dash-panel--wide,
-  .dashboard-cadastro-kaizen .kz-dash-panel--recent {
+  .dashboard-cadastro-kaizen .kz-dash-panel--recent{
     grid-column: span 1;
   }
-}/* --- Bar list --- */
-
-.dashboard-cadastro-kaizen .kz-barlist{
+}/* --- Bar list --- */.dashboard-cadastro-kaizen .kz-barlist{
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1704,9 +1447,7 @@
   color: var(--kz-title);
   min-width: 28px;
   text-align: right;
-}/* --- Validity / recent lists --- */
-
-.dashboard-cadastro-kaizen .kz-validity-note{
+}/* --- Validity / recent lists --- */.dashboard-cadastro-kaizen .kz-validity-note{
   margin: 0;
   padding: 8px 12px;
   border-radius: var(--kz-control-radius);
@@ -1772,9 +1513,7 @@
 }.dashboard-cadastro-kaizen .kz-recent-row__chevron{
   color: var(--kz-text-muted);
   flex-shrink: 0;
-}/* ---------------------------------------------------------------- Modal + prévia */
-
-.dashboard-cadastro-kaizen.kz-modal-overlay{
+}/* ---------------------------------------------------------------- Modal + prévia */.dashboard-cadastro-kaizen.kz-modal-overlay{
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -1843,8 +1582,7 @@
   gap: 6px 16px;
   font-size: var(--kz-font-sm);
   color: var(--kz-text-muted);
-}/* Thumbs clicáveis (abrem a prévia) */
-.dashboard-cadastro-kaizen .kz-evidence__thumb-btn,
+}/* Thumbs clicáveis (abrem a prévia) */.dashboard-cadastro-kaizen .kz-evidence__thumb-btn,
 .dashboard-cadastro-kaizen .kz-pending__thumb-btn{
   padding: 0;
   border: none;
@@ -1889,8 +1627,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-}@media (max-width: 640px){
-  .dashboard-cadastro-kaizen .kz-evidence-preview__pdf {
+}@media (max-width: 640px){.dashboard-cadastro-kaizen .kz-evidence-preview__pdf{
     height: 60vh;
   }
 }
