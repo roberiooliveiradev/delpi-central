@@ -120,6 +120,39 @@
   background: var(--delpi-ui-surface, var(--surface, #ffffff));
 }
 
+/**
+ * Leading do FilterBarShell — ícone + "Filtros" na mesma linha.
+ * Bridge: prefix-filter-bar__header / __title (PVA, IE…).
+ */
+.delpi-ui-filter-bar [class*="-filter-bar__header"],
+.delpi-ui-filter-bar [class*="-filters__header"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.delpi-ui-filter-bar [class*="-filter-bar__title"],
+.delpi-ui-filter-bar [class*="-filters__title"] {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 0;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+}
+
+.delpi-ui-filter-bar [class*="-filter-bar__title"] h2,
+.delpi-ui-filter-bar [class*="-filters__title"] h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .delpi-ui-filter-bar__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(var(--delpi-ui-filter-grid-min, 11.5rem), 1fr));
