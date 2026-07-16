@@ -18,6 +18,7 @@ import {
   selectionListTypeState,
   selectionNamedStyleState,
   selectionRunStyleState,
+  suggestDefaultTextProjection,
   syncTextBlockFromRuns,
   toggleListTypeOnAllLines,
   visualBoxEnsureRichTextBlock,
@@ -526,6 +527,30 @@ export function useComunicadoEditorSelection({
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
   }, [configRef, editingTextId, selected, updateBlockTextFieldsRef, updateBlocksRef]);
 
+  const insertDataFieldAtCursor = useCallback(() => {
+    if (!editingTextId) return;
+    const block = configRef.current.blocks?.find((item) => item.id === editingTextId);
+    if (!block || !isComunicadoVisualBoxBlock(block)) return;
+    const sourceId = block.dataSourceId?.trim();
+    if (!sourceId) return;
+    const source = configRef.current.blocks?.find((item) => item.id === sourceId);
+    const resolved =
+      source && "resolved" in source && source.resolved ? source.resolved : undefined;
+    const projection =
+      block.textProjection ??
+      suggestDefaultTextProjection(resolved) ??
+      undefined;
+    const field = projection?.field?.trim();
+    if (!field) return;
+    const bridge = textEditorBridgesRef.current.get(editingTextId);
+    bridge?.insertDataRefAtSelection?.({
+      field,
+      aggregation: projection?.aggregation,
+      format: projection?.format,
+      label: field,
+    });
+  }, [configRef, editingTextId]);
+
   /** Ao trocar de slide: limpa seleção (não auto-seleciona o 1º bloco). */
   const resetSelectionForSlide = useCallback(() => {
     setSelectedIds([]);
@@ -580,6 +605,7 @@ export function useComunicadoEditorSelection({
     toggleEditingTextRunStyle,
     toggleSelectedTextListType,
     applySelectedNamedTextStyle,
+    insertDataFieldAtCursor,
     ribbonTabRequest,
     setRibbonTabRequest,
     requestRibbonTab,

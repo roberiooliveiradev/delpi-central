@@ -1597,6 +1597,15 @@ body.td-composer--marqueeing *{
   margin-top: 0.15em;
   pointer-events: auto;
 }
+.dashboard-tv-dashboard .td-composer__data-ref-run,
+.dashboard-tv-dashboard .td-composer__inline-text--rich .td-composer__data-ref-run{
+  display: inline;
+  border-bottom: 1px dashed var(--delpi-ui-accent, #2563eb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 12%, transparent);
+  border-radius: 2px;
+  padding: 0 2px;
+  cursor: default;
+}
 .dashboard-tv-dashboard .td-composer__text-block--selected{
   outline: none;
 }

@@ -5,6 +5,7 @@ import {
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
   insertLineBreakAtOffset,
+  insertDataRefAtOffset,
   renderContentRunsHtml,
   restoreEditableTextSelection,
   selectionRunStyleState,
@@ -162,5 +163,15 @@ describe("comunicadoContentRunEditing", () => {
     });
 
     document.body.removeChild(root);
+  });
+
+  it("insertDataRefAtOffset insere run dinâmico no meio do texto", () => {
+    const next = insertDataRefAtOffset([{ text: "OEE: " }, { text: "%" }], 5, {
+      field: "oee",
+      format: "percent",
+    });
+    expect(next).toHaveLength(3);
+    expect(next[1].dataRef?.field).toBe("oee");
+    expect(next.map((run) => run.text).join("")).toContain("OEE:");
   });
 });

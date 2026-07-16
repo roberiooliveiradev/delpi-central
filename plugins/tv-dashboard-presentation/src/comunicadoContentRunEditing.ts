@@ -18,6 +18,7 @@ import type {
   ComunicadoListType,
   ComunicadoNamedTextStyle,
   ComunicadoTextBlock,
+  ComunicadoTextDataRef,
   ComunicadoTextDecoration,
 } from "./comunicadoTypes";
 import { buildTextDecoration, parseTextDecorationFlags } from "./comunicadoHelpers";
@@ -139,10 +140,14 @@ function runStylesEqual(
 export function compactContentRuns(runs: ComunicadoContentRun[]): ComunicadoContentRun[] {
   const compacted: ComunicadoContentRun[] = [];
   for (const run of runs) {
-    if (!run.text) continue;
+    if (!run.text && !run.dataRef?.field?.trim()) continue;
+    if (run.dataRef?.field?.trim()) {
+      compacted.push(run);
+      continue;
+    }
     const style = pruneRunStyle(run.style ?? {});
     const previous = compacted[compacted.length - 1];
-    if (previous && runStylesEqual(previous.style, style)) {
+    if (previous && !previous.dataRef && runStylesEqual(previous.style, style)) {
       previous.text += run.text;
       continue;
     }
@@ -154,12 +159,85 @@ export function compactContentRuns(runs: ComunicadoContentRun[]): ComunicadoCont
 function flattenRunsToChars(runs: ComunicadoContentRun[]): CharToken[] {
   const chars: CharToken[] = [];
   for (const run of runs) {
+    if (run.dataRef?.field?.trim()) {
+      for (const char of run.text || "…") {
+        chars.push({ text: char });
+      }
+      continue;
+    }
     const style = pruneRunStyle(run.style ?? {});
     for (const char of run.text) {
       chars.push(style ? { text: char, style } : { text: char });
     }
   }
   return chars;
+}
+
+/** Insere run dinâmico na posição do cursor (texto misto estático + dado). */
+export function insertDataRefAtOffset(
+  runs: ComunicadoContentRun[],
+  offset: number,
+  dataRef: ComunicadoTextDataRef,
+  placeholderText = "…",
+): ComunicadoContentRun[] {
+  const length = plainTextFromContentRuns(runs).length;
+  const safeOffset = Math.max(0, Math.min(length, offset));
+  const before: ComunicadoContentRun[] = [];
+  const after: ComunicadoContentRun[] = [];
+  let pos = 0;
+  let inserted = false;
+
+  for (const run of runs) {
+    if (inserted) {
+      after.push(run);
+      continue;
+    }
+    if (run.dataRef?.field?.trim()) {
+      const runLen = run.text.length || 1;
+      if (pos + runLen <= safeOffset) {
+        before.push(run);
+        pos += runLen;
+        continue;
+      }
+      if (safeOffset <= pos) {
+        before.push({ text: placeholderText, dataRef });
+        inserted = true;
+        after.push(run);
+        continue;
+      }
+      before.push(run);
+      before.push({ text: placeholderText, dataRef });
+      inserted = true;
+      pos += runLen;
+      continue;
+    }
+
+    const runLen = run.text.length;
+    if (pos + runLen <= safeOffset) {
+      before.push(run);
+      pos += runLen;
+      continue;
+    }
+    if (safeOffset <= pos) {
+      before.push({ text: placeholderText, dataRef });
+      inserted = true;
+      after.push(run);
+      continue;
+    }
+    const within = safeOffset - pos;
+    const leftText = run.text.slice(0, within);
+    const rightText = run.text.slice(within);
+    if (leftText) before.push(run.style ? { text: leftText, style: run.style } : { text: leftText });
+    before.push({ text: placeholderText, dataRef });
+    inserted = true;
+    if (rightText) after.push(run.style ? { text: rightText, style: run.style } : { text: rightText });
+    pos += runLen;
+  }
+
+  if (!inserted) {
+    before.push({ text: placeholderText, dataRef });
+  }
+  return compactContentRuns([...before, ...after]);
 }
 
 function charsToRuns(chars: CharToken[]): ComunicadoContentRun[] {
@@ -325,6 +403,15 @@ export function contentRunsFromEditableRoot(root: HTMLElement): ComunicadoConten
         if (node.nodeType !== Node.ELEMENT_NODE) return;
         const childElement = node as Element;
         if (childElement.tagName === "BR") return;
+        const dataRef = decodeDataRefAttr(childElement.getAttribute(DATA_REF_ATTR));
+        if (dataRef?.field?.trim()) {
+          runs.push({
+            text: childElement.textContent ?? "…",
+            dataRef,
+            style: mergeInheritedRunStyle(inherited, styleFromElement(childElement)),
+          });
+          return;
+        }
         const merged = mergeInheritedRunStyle(inherited, styleFromElement(childElement));
         for (const child of childElement.childNodes) {
           walk(child, merged);
@@ -399,6 +486,29 @@ export function runStyleToInlineCss(
 const LINE_ATTR = "data-comunicado-line";
 const LIST_TYPE_ATTR = "data-list-type";
 const NAMED_STYLE_ATTR = "data-named-style";
+const DATA_REF_ATTR = "data-comunicado-data-ref";
+
+function encodeDataRefAttr(ref: ComunicadoTextDataRef): string {
+  return encodeURIComponent(
+    JSON.stringify({
+      field: ref.field,
+      aggregation: ref.aggregation,
+      format: ref.format,
+      label: ref.label,
+    }),
+  );
+}
+
+function decodeDataRefAttr(raw: string | null): ComunicadoTextDataRef | undefined {
+  if (!raw?.trim()) return undefined;
+  try {
+    const parsed = JSON.parse(decodeURIComponent(raw)) as ComunicadoTextDataRef;
+    if (!parsed?.field?.trim()) return undefined;
+    return parsed;
+  } catch {
+    return undefined;
+  }
+}
 
 function stripPresetTypographyForEditorInline(
   style: ComunicadoContentRunStyle | undefined,
@@ -419,6 +529,17 @@ function renderRunsInlineHtml(
   }
   return resolved
     .map((run) => {
+      if (run.dataRef?.field?.trim()) {
+        const label = run.dataRef.label ?? run.dataRef.field;
+        const styleForInline = lineNamedStyle
+          ? stripPresetTypographyForEditorInline(run.style)
+          : run.style;
+        const inline = runStyleToInlineCss(styleForInline, options);
+        const badge = escapeHtml(label);
+        const text = escapeHtml(run.text || "…");
+        const refAttr = encodeDataRefAttr(run.dataRef);
+        return `<span class="td-composer__data-ref-run" ${DATA_REF_ATTR}="${refAttr}" title="Campo: ${badge}"${inline ? ` style="${inline}"` : ""}>${text}</span>`;
+      }
       const styleForInline = lineNamedStyle
         ? stripPresetTypographyForEditorInline(run.style)
         : run.style;

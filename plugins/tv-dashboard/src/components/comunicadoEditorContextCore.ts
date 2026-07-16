@@ -43,6 +43,8 @@ export type TextEditorBridge = {
   refreshSelectionState: () => void;
   /** Persiste o rascunho do contentEditable antes de sair do modo edição. */
   commitPending?: () => void;
+  /** Insere run dinâmico (`dataRef`) na posição do cursor. */
+  insertDataRefAtSelection?: (dataRef: import("@delpi/tv-dashboard-presentation").ComunicadoTextDataRef) => void;
 };
 
 export type ComunicadoRibbonTabRequest =
@@ -217,6 +219,8 @@ export type ComunicadoEditorContextValue = {
     textStrokeWidth?: number;
     textReflection?: boolean;
   }) => void;
+  /** Insere run dinâmico no cursor do texto em edição (requer fonte + campo). */
+  insertDataFieldAtCursor: () => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
   cutSelected: () => void;
@@ -253,6 +257,10 @@ export type ComunicadoEditorContextValue = {
   triggerUpload: (target: "block" | "background") => void;
   setBackgroundColor: (value: string) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
+  /** Vincula texto/forma selecionado à fonte preferida do slide (ou abre catálogo). */
+  bindSelectedVisualBoxToData: () => void;
+  /** Insere bloco de texto e vincula campo dinâmico quando há fonte no slide. */
+  insertTextDataFieldBlock: () => void;
   applySlideTemplate: (nativeConfig: Record<string, unknown>) => void;
   applySlideTheme: (theme: ComunicadoSlideTheme) => void;
   alignSelected: (command: LayoutAlignCommand) => void;
