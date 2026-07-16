@@ -359,11 +359,21 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
               <p className="cipa-section-title">
                 Conteúdo da ata <HelpTooltip content={helpTooltips.richText} />
               </p>
-              <RichTextEditor value={bodyHtml} onChange={setBodyHtml} mode="edit" />
+              <RichTextEditor
+                value={bodyHtml}
+                onChange={setBodyHtml}
+                mode="edit"
+                portalScopeClassName="dashboard-cipa"
+              />
             </div>
             <div className="cipa-rich-section">
               <p className="cipa-section-title">Pauta</p>
-              <RichTextEditor value={agendaHtml} onChange={setAgendaHtml} mode="edit" />
+              <RichTextEditor
+                value={agendaHtml}
+                onChange={setAgendaHtml}
+                mode="edit"
+                portalScopeClassName="dashboard-cipa"
+              />
             </div>
           </div>
         )}
@@ -372,11 +382,21 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
           <div className="cipa-form-stack">
             <div className="cipa-rich-section">
               <p className="cipa-section-title">Decisões</p>
-              <RichTextEditor value={decisionsHtml} onChange={setDecisionsHtml} mode="edit" />
+              <RichTextEditor
+                value={decisionsHtml}
+                onChange={setDecisionsHtml}
+                mode="edit"
+                portalScopeClassName="dashboard-cipa"
+              />
             </div>
             <div className="cipa-rich-section">
               <p className="cipa-section-title">Pendências</p>
-              <RichTextEditor value={pendingHtml} onChange={setPendingHtml} mode="edit" />
+              <RichTextEditor
+                value={pendingHtml}
+                onChange={setPendingHtml}
+                mode="edit"
+                portalScopeClassName="dashboard-cipa"
+              />
             </div>
           </div>
         )}

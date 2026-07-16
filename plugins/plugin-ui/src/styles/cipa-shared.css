@@ -33,45 +33,6 @@
   cursor: pointer;
 }
 
-.delpi-ui-rich-text {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border: 1px solid var(--delpi-ui-border, #e5e7eb);
-  border-radius: 12px;
-  background: var(--delpi-ui-surface, #fff);
-}
-
-.delpi-ui-rich-text__toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px;
-  border-bottom: 1px solid var(--delpi-ui-border, #e5e7eb);
-}
-
-.delpi-ui-rich-text__toolbar button {
-  min-width: 36px;
-  min-height: 36px;
-  border-radius: 8px;
-  border: 1px solid var(--delpi-ui-border, #e5e7eb);
-  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, transparent);
-  cursor: pointer;
-}
-
-.delpi-ui-rich-text__editor,
-.delpi-ui-rich-text--preview {
-  min-height: 160px;
-  padding: 12px 14px;
-  color: var(--delpi-ui-text, #111);
-  line-height: 1.5;
-}
-
-.delpi-ui-rich-text__editor:focus {
-  outline: 2px solid var(--delpi-ui-accent, #089bdb);
-  outline-offset: -2px;
-}
-
 .delpi-ui-user-directory-picker {
   display: flex;
   flex-direction: column;

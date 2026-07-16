@@ -10,7 +10,7 @@
 | API | `cipa-api` dedicada |
 | Unidade | Filiais `01` / `02` |
 | MFE | `plugins/cipa` federado |
-| Editor | `RichTextEditor` em `@delpi/plugin-ui` (contentEditable + toolbar) |
+| Editor | `RichTextEditor` em `@delpi/plugin-ui` (ribbon Fonte/Parágrafo, paridade tv-dashboard) |
 | Assinatura | `SignaturePad` PNG + hash SHA-256 da versão |
 | PDF | ReportLab |
 | Notificações | Core API `/integrations/notifications` |

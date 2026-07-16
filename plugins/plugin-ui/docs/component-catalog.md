@@ -801,7 +801,8 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 | Export | Uso |
 |--------|-----|
 | `SignaturePad` | Canvas de assinatura manuscrita (PNG) |
-| `RichTextEditor` | WYSIWYG básico + modo preview |
+| `RichTextEditor` | WYSIWYG com ribbon Fonte/Parágrafo (paridade tv-dashboard) + preview |
+| `RichTextToolbar` | Faixa de formatação reutilizável (fonte, parágrafo, cores, listas) |
 | `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`) |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).

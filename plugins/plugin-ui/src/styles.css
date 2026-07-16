@@ -34,6 +34,7 @@
 @import "./styles/configurable-table.css";
 @import "./styles/tree-guides.css";
 @import "./styles/timeline.css";
+@import "./styles/rich-text-editor.css";
 @import "./styles/cipa-shared.css";
 
 .delpi-ui-help-tooltip {
