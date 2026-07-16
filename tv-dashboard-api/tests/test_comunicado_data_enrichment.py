@@ -636,6 +636,8 @@ def test_enrich_series_route_does_not_leak_internal_metadata_as_table():
     column_keys = {col["key"] for col in table["columns"]}
     assert column_keys == {"periodo", "value"}
     assert "campo" not in column_keys and "valor" not in column_keys
+    # Linhas só com as chaves declaradas — sem `label` duplicando a coluna Período.
+    assert all(set(row.keys()) == {"periodo", "value"} for row in table["rows"])
     assert [row["value"] for row in table["rows"]] == [82.5, 84.0]
     assert enriched[0]["resolved"]["kpi"]["value"] == 84.0
 

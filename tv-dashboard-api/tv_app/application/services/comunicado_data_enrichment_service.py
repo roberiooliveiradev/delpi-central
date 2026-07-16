@@ -456,11 +456,11 @@ def _series_to_table_rows(
     points = _extract_series(data, series_field, branch=branch)
     rows: list[dict[str, Any]] = []
     for point in points[:max_rows]:
-        label = point.get("label")
+        # Só as chaves declaradas nas colunas (periodo/value): evitar `label` duplicando
+        # a coluna Período na derivação de colunas do frontend (união das chaves da linha).
         rows.append(
             {
-                "label": label,
-                "periodo": label,
+                "periodo": point.get("label"),
                 "value": point.get("value"),
             }
         )
