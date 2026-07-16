@@ -27,7 +27,6 @@ import {
   applyRichTextAlign,
   applyRichTextFontFamily,
   applyRichTextFontSize,
-  insertRichTextLink,
   queryRichTextAlign,
   queryRichTextCommandState,
   runRichTextCommand,
@@ -45,6 +44,8 @@ type Props = {
   editorRef: RefObject<HTMLDivElement | null>;
   disabled?: boolean;
   onFormatted: () => void;
+  /** Abre o diálogo de link do editor (ModalShell) — sem prompt do navegador. */
+  onRequestLink: () => void;
   portalScopeClassName?: string;
 };
 
@@ -89,6 +90,7 @@ export function RichTextToolbar({
   editorRef,
   disabled = false,
   onFormatted,
+  onRequestLink,
   portalScopeClassName,
 }: Props) {
   const [fontFamily, setFontFamily] = useState(RICH_TEXT_FONT_FAMILIES[0].value);
@@ -317,11 +319,7 @@ export function RichTextToolbar({
               hint={RICH_TEXT_LABELS.link}
               ariaLabel={RICH_TEXT_LABELS.link}
               disabled={disabled}
-              onClick={() => {
-                const url = window.prompt(RICH_TEXT_LABELS.linkPrompt);
-                if (!url?.trim()) return;
-                run(() => insertRichTextLink(editor, url.trim()));
-              }}
+              onClick={onRequestLink}
             >
               <Link size={15} aria-hidden="true" />
             </RichTextIconButton>

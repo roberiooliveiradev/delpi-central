@@ -42,6 +42,7 @@
 @import "./styles/status-badge.css";
 @import "./styles/content-card.css";
 @import "./styles/state-banner.css";
+@import "./styles/modal-shell.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

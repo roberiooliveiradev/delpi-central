@@ -1,4 +1,5 @@
 export { RichTextEditor, type RichTextEditorMode, type RichTextEditorProps } from "./RichTextEditor";
+export { RichTextLinkDialog, type RichTextLinkDialogProps } from "./RichTextLinkDialog";
 export { RichTextToolbar } from "./RichTextToolbar";
 export {
   RICH_TEXT_FONT_FAMILIES,
