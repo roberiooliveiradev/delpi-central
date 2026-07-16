@@ -134,13 +134,6 @@ export function syncTextBlockFields(
   return { content, contentRuns: undefined };
 }
 
-export function resolveTextBlockDisplayRuns(
-  block: Pick<ComunicadoTextBlock, "content" | "contentRuns">,
-): ComunicadoContentRun[] {
-  if (block.contentRuns && block.contentRuns.length > 0) return block.contentRuns;
-  return [{ text: block.content }];
-}
-
 export function contentRunStyleToCss(
   style: ComunicadoContentRunStyle | undefined,
   options?: { fontScale?: number },
