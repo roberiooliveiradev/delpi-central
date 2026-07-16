@@ -1135,3 +1135,51 @@ def test_enrich_unwraps_api_delpi_envelope_for_text_list():
     rows = enriched[0]["resolved"]["table"]["rows"]
     assert len(rows) == 2
     assert rows[0]["codigo"] == "A1"
+
+
+def test_enrich_links_text_block_to_data_source_resolved():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+        "data": {
+            "branch": "02",
+            "rol_target_pct": 111.1,
+        },
+        "route": {
+            "label": "Meta ROL",
+            "valueFields": ["rol_target_pct"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "src-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_branch_rol_target_pct",
+                    "displayMode": "kpi",
+                },
+            },
+            {
+                "id": "txt-1",
+                "type": "text",
+                "content": "—",
+                "dataSourceId": "src-1",
+                "textProjection": {"field": "rol_target_pct", "format": "number"},
+                "frame": {"x": 0, "y": 0, "w": 20, "h": 10},
+            },
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    source = next(b for b in enriched if b.get("id") == "src-1")
+    text = next(b for b in enriched if b.get("id") == "txt-1")
+    assert source.get("resolved", {}).get("kpi", {}).get("value") is not None
+    assert text.get("resolved", {}).get("kpi", {}).get("value") is not None
+    assert text.get("serverTextProjectionApplied") is True

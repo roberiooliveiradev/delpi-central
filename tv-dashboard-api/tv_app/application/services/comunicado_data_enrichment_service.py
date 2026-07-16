@@ -26,6 +26,7 @@ from tv_app.application.services.tv_dashboard_content_service import message
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
     DATA_VIEW_BLOCK_TYPES,
+    TEXT_DATA_BOUND_BLOCK_TYPES,
     TvDataRouteCatalogService,
 )
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
@@ -808,7 +809,7 @@ class ComunicadoDataEnrichmentService:
         linked: list[dict[str, Any]] = []
         for block in blocks:
             block_type = str(block.get("type") or "")
-            if block_type not in DATA_VIEW_BLOCK_TYPES:
+            if block_type not in DATA_VIEW_BLOCK_TYPES and block_type not in TEXT_DATA_BOUND_BLOCK_TYPES:
                 linked.append(block)
                 continue
             source_id = str(block.get("dataSourceId") or "").strip()
@@ -816,10 +817,14 @@ class ComunicadoDataEnrichmentService:
                 linked.append(block)
                 continue
             merged = dict(block)
-            merged["resolved"] = apply_view_projection_to_resolved(
-                source_resolved[source_id],
-                block,
-            )
+            if block_type in DATA_VIEW_BLOCK_TYPES:
+                merged["resolved"] = apply_view_projection_to_resolved(
+                    source_resolved[source_id],
+                    block,
+                )
+            else:
+                merged["resolved"] = dict(source_resolved[source_id])
+                merged["serverTextProjectionApplied"] = True
             linked.append(merged)
         return linked
 
