@@ -7,6 +7,7 @@ import {
 import type { ComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
+import type { KpiMetricProjection } from "./viewProjection";
 
 export type KpiViewPresentation = {
   label: string;
@@ -19,22 +20,31 @@ export type KpiViewPresentation = {
   showIcon: boolean;
 };
 
+export type KpiMetricPresentationOverrides = Pick<
+  KpiMetricProjection,
+  "format" | "colorRules" | "label"
+>;
+
 export function resolveKpiViewPresentation(
   resolved: ComunicadoDataResolved | undefined,
   kpiOptions?: ComunicadoKpiOptions | null,
+  metricOverrides?: KpiMetricPresentationOverrides | null,
 ): KpiViewPresentation {
   const options = mergeComunicadoKpiOptions(kpiOptions);
   const rawValue = resolved?.kpi?.value;
   const numeric = parseKpiNumericValue(rawValue);
-  const toneResult = resolveDelpiKpiTone(numeric, options.colorRules, options.tone ?? "default");
+  const colorRules = metricOverrides?.colorRules ?? options.colorRules;
+  const toneResult = resolveDelpiKpiTone(numeric, colorRules, options.tone ?? "default");
+  const valueFormat = metricOverrides?.format ?? options.valueFormat;
 
   const label =
+    metricOverrides?.label?.trim() ||
     options.title?.trim() ||
     resolved?.kpi?.label ||
     resolved?.label ||
     "Indicador";
 
-  const valueText = formatKpiValue(rawValue, options.valueFormat, options.unit);
+  const valueText = formatKpiValue(rawValue, valueFormat, options.unit);
   const hint = options.subtitle?.trim() || undefined;
 
   return {

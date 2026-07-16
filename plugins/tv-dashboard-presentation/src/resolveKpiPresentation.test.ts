@@ -68,4 +68,19 @@ describe("kpi_view", () => {
     expect(presentation.tone).toBe("positive");
     expect(presentation.valueText).toContain("92");
   });
+
+  it("override por métrica sobrescreve formato e regras", () => {
+    const presentation = resolveKpiViewPresentation(
+      { kpi: { value: 0.85, label: "OTD" } },
+      { valueFormat: "raw", colorRules: [{ op: "gte", value: 0.9, tone: "positive" }] },
+      {
+        format: "percent",
+        label: "OTD médio",
+        colorRules: [{ op: "gte", value: 0.8, tone: "positive" }],
+      },
+    );
+    expect(presentation.label).toBe("OTD médio");
+    expect(presentation.tone).toBe("positive");
+    expect(presentation.valueText).toContain("%");
+  });
 });

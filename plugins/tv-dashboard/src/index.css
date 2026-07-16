@@ -5689,6 +5689,26 @@ body.td-composer--marqueeing *{
   gap: 0.15rem;
   flex-shrink: 0;
 }
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric{
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--td-border, #e5e7eb) 80%, transparent);
+}
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric:last-child{
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric-controls{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  padding-left: 0.15rem;
+}
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric-controls > :last-child{
+  grid-column: 1 / -1;
+}
 .dashboard-tv-dashboard .td-kpi-part-typography{
   display: flex;
   flex-direction: column;

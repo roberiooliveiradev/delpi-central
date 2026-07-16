@@ -260,6 +260,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Filtra métricas só neste visual, sem novo fetch. Use a fonte para limitar o conjunto disponível a todos os visuais.",
     tableColumns:
       "Escolha quais colunas aparecem e a ordem (↑↓). Vazio = todas as colunas da fonte.",
+    kpiMetricsProjection:
+      "Por coluna: ligar/desligar, agregação (soma, média…) e formato. Regras de cor globais ficam em Aparência; regras por métrica sobrescrevem quando definidas.",
     connectFlow:
       "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados. Qualquer fonte serve para qualquer visual.",
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */

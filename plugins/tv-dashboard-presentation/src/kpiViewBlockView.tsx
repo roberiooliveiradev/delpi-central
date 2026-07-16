@@ -104,9 +104,13 @@ export function KpiViewBlockView({
   // Parts são a fonte de verdade (paridade editor ↔ prévia ↔ apresentação).
   const mergedParts = mergeKpiPartsWithOptions(block.kpiParts, block.kpiOptions);
   const kpiInteraction = interactive ? interaction : null;
+  const metricProjectionByField = new Map(
+    (block.kpiProjection?.metrics ?? []).map((metric) => [metric.field, metric]),
+  );
 
-  const renderCard = (metricResolved = resolved) => {
-    const presentation = resolveKpiViewPresentation(metricResolved, block.kpiOptions);
+  const renderCard = (metricResolved = resolved, field?: string) => {
+    const metricProj = field ? metricProjectionByField.get(field) : undefined;
+    const presentation = resolveKpiViewPresentation(metricResolved, block.kpiOptions, metricProj);
     const iconAllowed = isKpiPartVisible(mergedParts, { kind: "icon" }, presentation.showIcon);
     const Icon =
       iconAllowed && presentation.iconName
@@ -135,11 +139,14 @@ export function KpiViewBlockView({
       <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view tdp-kpi-view--multi">
         {metrics.map((metric) => (
           <div key={metric.field} className="tdp-kpi-view__cell">
-            {renderCard({
-              ...resolved,
-              kpi: { value: metric.value, label: metric.label },
-              label: metric.label,
-            })}
+            {renderCard(
+              {
+                ...resolved,
+                kpi: { value: metric.value, label: metric.label },
+                label: metric.label,
+              },
+              metric.field,
+            )}
           </div>
         ))}
       </div>
@@ -148,7 +155,7 @@ export function KpiViewBlockView({
 
   return (
     <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view">
-      {renderCard()}
+      {renderCard(resolved, metrics[0]?.field)}
     </div>
   );
 }

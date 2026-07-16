@@ -10,6 +10,7 @@ import {
   tablePresetLabel,
   type ComunicadoBlock,
   type ComunicadoTableViewBlock,
+  type KpiViewProjection,
   type TableViewProjection,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -20,6 +21,7 @@ import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { TableColumnsMultiSelect } from "./TableColumnsMultiSelect";
+import { KpiMetricsProjectionEditor } from "./KpiMetricsProjectionEditor";
 import { ValueFieldsMultiSelect, type ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 type Props = {
@@ -136,6 +138,17 @@ export function VisualDataViewInspector({
     } as Partial<ComunicadoTableViewBlock>);
   };
 
+  const applyKpiProjection = (next: KpiViewProjection | undefined) => {
+    const visibleFields = next?.metrics
+      ?.filter((metric) => metric.visible !== false)
+      .map((metric) => metric.field);
+    updateSelected({
+      kpiProjection: next,
+      selectedValueFields: visibleFields?.length ? visibleFields : undefined,
+      valueField: visibleFields?.[0],
+    } as Partial<ComunicadoBlock>);
+  };
+
   const connectionBody = (
     <>
       {selected.type === "chart_view" ? (
@@ -181,6 +194,21 @@ export function VisualDataViewInspector({
           ]}
         />
       </DeckField>
+      {hasSource && selected.type === "kpi_view" && valueFieldOptions.length > 0 ? (
+        <DeckField
+          id="td-view-kpi-metrics"
+          label="Métricas neste KPI"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.kpiMetricsProjection}
+        >
+          <KpiMetricsProjectionEditor
+            idPrefix="td-view-kpi-metric"
+            options={valueFieldOptions}
+            kpiProjection={"kpiProjection" in selected ? selected.kpiProjection : undefined}
+            compact={isRibbon}
+            onChange={applyKpiProjection}
+          />
+        </DeckField>
+      ) : null}
       {hasSource && selected.type === "table_view" && tableColumnOptions.length > 0 ? (
         <DeckField
           id="td-view-table-columns"
@@ -197,7 +225,7 @@ export function VisualDataViewInspector({
         </DeckField>
       ) : null}
       {hasSource &&
-      selected.type !== "table_view" &&
+      selected.type === "chart_view" &&
       valueFieldOptions.length > 0 ? (
         <DeckField
           id="td-view-value-fields"
