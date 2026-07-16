@@ -77,6 +77,18 @@ Props principais: `title`, `icon`, `eyebrow`, `description`, `meta`, `onClick`,
 
 ---
 
+## `DocumentReader`
+
+Composição canônica para leitura e impressão de documentos formais em papel A4:
+`DocumentReader` (viewport/toolbar), `DocumentPage` (header/watermark/footer),
+`DocumentHeader`, `DocumentFooter` e `DocumentSignatureBlock`.
+
+O kit controla papel, responsividade e `@media print`; cabeçalho institucional,
+textos e regras do documento continuam no plugin consumidor. Use
+`printDocumentReader()` para imprimir apenas a superfície documental.
+
+---
+
 ## Família `help` — balões explicativos
 
 Textos em português vêm do **plugin consumidor** (`content/helpTooltips.ts`). Este pacote só fornece interação e acessibilidade.

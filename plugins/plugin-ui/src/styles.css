@@ -43,6 +43,7 @@
 @import "./styles/content-card.css";
 @import "./styles/state-banner.css";
 @import "./styles/modal-shell.css";
+@import "./styles/document-reader.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

@@ -70,6 +70,26 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-07-16",
     description: "Card clicável de navegação/atalho (unidades, submódulos).",
   }),
+  vc("layout", "DocumentReader", {
+    addedAt: "2026-07-16",
+    description: "Viewport e toolbar para leitura/impressão de documentos formais.",
+  }),
+  vc("layout", "DocumentPage", {
+    addedAt: "2026-07-16",
+    description: "Papel A4 com slots de cabeçalho, marca d'água, corpo e rodapé.",
+  }),
+  vc("layout", "DocumentHeader", {
+    addedAt: "2026-07-16",
+    description: "Cabeçalho documental com logo, título e subtítulo.",
+  }),
+  vc("layout", "DocumentFooter", {
+    addedAt: "2026-07-16",
+    description: "Rodapé documental em três colunas.",
+  }),
+  vc("layout", "DocumentSignatureBlock", {
+    addedAt: "2026-07-16",
+    description: "Bloco formal de assinatura com imagem, linha, nome, papel e status.",
+  }),
   vc("layout", "PanelCard"),
   vc("layout", "ContentCard", {
     updatedAt: "2026-07-16",
