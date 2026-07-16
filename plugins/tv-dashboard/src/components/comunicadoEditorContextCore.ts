@@ -297,7 +297,9 @@ export type ComunicadoEditorContextValue = {
   staleSourceIds: string[];
   /** Fontes com fetch em andamento (spinner do filtro). */
   refreshingSourceIds: string[];
+  loadingMoreSourceIds: string[];
   refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
+  loadMoreDataPreview: (blockId: string) => Promise<void>;
   globalRefreshSec: number;
   lastDataDisplayMode: ComunicadoDataDisplayMode;
   setLastDataDisplayMode: (mode: ComunicadoDataDisplayMode) => void;

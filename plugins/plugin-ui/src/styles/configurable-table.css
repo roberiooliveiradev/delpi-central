@@ -197,6 +197,17 @@
   bottom: -4px;
 }
 
+.delpi-ui-config-table__column--selected {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 10%,
+    var(--delpi-ui-config-table-cell-bg, #fff)
+  ) !important;
+  box-shadow:
+    inset 1px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent),
+    inset -1px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent);
+}
+
 /* Galeria Estilos de tabela (ribbon strip + Mais) */
 .delpi-ui-table-style-strip {
   display: inline-flex;

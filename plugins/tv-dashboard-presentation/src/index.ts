@@ -814,6 +814,11 @@ export {
   resolveEditableTableProjectionColumns,
 } from "./tableProjectionEditing";
 export {
+  mergeComunicadoDataPages,
+  resolveComunicadoDataPageState,
+  type ComunicadoDataPageState,
+} from "./dataPagination";
+export {
   duplicateBlocksWithDataPolicy,
   isLegacyFetchableDataBlock,
   needsDataSourceDuplicateChoice,

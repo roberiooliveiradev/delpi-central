@@ -45,6 +45,9 @@ export type TableInteraction = {
   onPartPointerDown?: (ref: TablePartRef, event: ReactPointerEvent) => void;
   onPartDoubleClick?: (ref: TablePartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
   onColumnResize?: (columnKey: string, widthPct: number) => void;
+  hasMoreRows?: boolean;
+  loadingMoreRows?: boolean;
+  onLoadMoreRows?: () => void;
   onPartContentCommit?: (ref: TablePartRef, content: string) => void;
   onPartEditCancel?: () => void;
 };

@@ -236,4 +236,40 @@ describe("useComunicadoDataPreview", () => {
     expect(mockedPreview).not.toHaveBeenCalled();
     expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(99);
   });
+
+  it("carrega e concatena a próxima página sob demanda", async () => {
+    const pagedConfig: ComunicadoConfig = {
+      blocks: [{
+        id: "source-1",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 20, h: 20 },
+        dataBinding: { operationId: "list_items", params: {} },
+      }],
+    };
+    mockedPreview
+      .mockResolvedValueOnce({
+        block: { resolved: {
+          data: { page: 1, page_size: 30, total_pages: 2 },
+          table: { rows: [{ id: 1 }], columns: [{ key: "id", label: "ID" }] },
+        } },
+      } as Awaited<ReturnType<typeof previewDataBlockV2>>)
+      .mockResolvedValueOnce({
+        block: { resolved: {
+          data: { page: 2, page_size: 30, total_pages: 2 },
+          table: { rows: [{ id: 2 }], columns: [{ key: "id", label: "ID" }] },
+        } },
+      } as Awaited<ReturnType<typeof previewDataBlockV2>>);
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({ playlistId: "pl-1", config: pagedConfig }),
+    );
+    await act(async () => { await Promise.resolve(); });
+    await act(async () => { await result.current.loadMoreDataPreview("source-1"); });
+    expect(result.current.resolvedByBlockId["source-1"]?.table?.rows).toEqual([
+      { id: 1 },
+      { id: 2 },
+    ]);
+    expect(mockedPreview.mock.calls[1]?.[0].block).toMatchObject({
+      dataBinding: { params: { page: 2, page_size: 30 } },
+    });
+  });
 });

@@ -40,7 +40,7 @@ export function ComunicadoTableLayoutRibbon() {
     <div className="td-deck-ribbon__groups">
       <SelectionTypedWithTailHost
         layout="ribbon"
-        typed={["tableLayoutData", "tableLayoutDisplay", "tableLayoutSize", "tableLayoutAlign"]}
+        typed={["tableLayoutData", "tableLayoutSize", "tableLayoutAlign"]}
       />
     </div>
   );

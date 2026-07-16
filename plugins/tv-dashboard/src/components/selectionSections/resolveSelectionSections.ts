@@ -92,7 +92,6 @@ export function resolveSelectionSections(
         "tableStyles",
         "tableBorders",
         "tableLayoutData",
-        "tableLayoutDisplay",
         "tableLayoutSize",
         "tableLayoutAlign",
       ]);
@@ -124,7 +123,6 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "tableStyles",
   "tableBorders",
   "tableLayoutData",
-  "tableLayoutDisplay",
   "tableLayoutSize",
   "tableLayoutAlign",
   "chartLayout",

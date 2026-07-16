@@ -12,8 +12,9 @@ import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import { mergeClassNames } from "./nativeControlClasses";
 
 export type ComboboxNumberControlProps = {
-  value: number;
+  value?: number | null;
   onChange: (value: number) => void;
+  onClear?: () => void;
   /** Valores sugeridos na lista (o usuário pode digitar fora da lista). */
   options: readonly number[];
   min?: number;
@@ -29,6 +30,7 @@ export type ComboboxNumberControlProps = {
   /** Cantos retos (padrão da ribbon TV). */
   square?: boolean;
   compact?: boolean;
+  placeholder?: string;
 };
 
 function parseDraftNumber(raw: string): number | null {
@@ -45,6 +47,7 @@ function parseDraftNumber(raw: string): number | null {
 export function ComboboxNumberControl({
   value,
   onChange,
+  onClear,
   options,
   min,
   max,
@@ -56,9 +59,10 @@ export function ComboboxNumberControl({
   portalScopeClassName,
   square = true,
   compact = false,
+  placeholder,
 }: ComboboxNumberControlProps) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState(String(value));
+  const [draft, setDraft] = useState(value == null ? "" : String(value));
   const wrapperRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -66,7 +70,7 @@ export function ComboboxNumberControl({
   const listId = `${generatedId}-list`;
 
   useEffect(() => {
-    setDraft(String(value));
+    setDraft(value == null ? "" : String(value));
   }, [value]);
 
   useEffect(() => {
@@ -81,7 +85,12 @@ export function ComboboxNumberControl({
   const commit = (raw: string) => {
     const parsed = parseDraftNumber(raw);
     if (parsed == null) {
-      setDraft(String(value));
+      if (!raw.trim() && onClear && value != null) {
+        onClear();
+        setDraft("");
+        return;
+      }
+      setDraft(value == null ? "" : String(value));
       return;
     }
     const next = clamp ? clamp(parsed) : parsed;
@@ -105,7 +114,7 @@ export function ComboboxNumberControl({
       return;
     }
     if (event.key === "Escape") {
-      setDraft(String(value));
+      setDraft(value == null ? "" : String(value));
       setOpen(false);
       return;
     }
@@ -141,6 +150,7 @@ export function ComboboxNumberControl({
           aria-valuemax={max}
           disabled={disabled}
           value={draft}
+          placeholder={placeholder}
           onChange={(event) => {
             setDraft(event.target.value);
           }}

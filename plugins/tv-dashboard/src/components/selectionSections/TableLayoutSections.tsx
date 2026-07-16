@@ -9,7 +9,7 @@ import {
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { NativeTextControl } from "@delpi/plugin-ui/index";
+import { ComboboxNumberControl } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
@@ -21,6 +21,8 @@ import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const D = TV_DASHBOARD_HELP_TOOLTIPS.data;
+const TABLE_ROW_HEIGHT_PRESETS = [20, 24, 28, 32, 40, 48] as const;
+const TABLE_COLUMN_WIDTH_PRESETS = [10, 15, 20, 25, 33.3, 50, 75] as const;
 
 function useTableLayoutControls() {
   const { selected, updateSelected, openDataPanel } = useComunicadoEditor();
@@ -78,65 +80,6 @@ export function TableLayoutDataSection({ layout }: { layout: SelectionSectionLay
   return (
     <DeckRibbonGroup label="Tabela" hint={H.tableData ?? H.chartData}>
       {tiles}
-    </DeckRibbonGroup>
-  );
-}
-
-/** Truncamento visual maxRows / maxCols. */
-export function TableLayoutDisplaySection({ layout }: { layout: SelectionSectionLayout }) {
-  const ctrl = useTableLayoutControls();
-  if (!ctrl) return null;
-  const { block, updateSelected } = ctrl;
-
-  const hint =
-    "Truncamento visual das linhas e colunas resolvidas da fonte (não altera o ERP).";
-
-  const fields = (
-    <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
-      <label className="td-deck-ribbon__frame-field">
-        <span className="td-deck-ribbon__field-label">Máx. linhas</span>
-        <NativeTextControl
-          type="number"
-          className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-          min={1}
-          placeholder="Todas"
-          value={block.maxRows ?? ""}
-          onChange={(raw) => {
-            updateSelected({
-              maxRows: raw === "" ? undefined : Math.max(1, Number(raw) || 1),
-            } as Partial<ComunicadoBlock>);
-          }}
-        />
-      </label>
-      <label className="td-deck-ribbon__frame-field">
-        <span className="td-deck-ribbon__field-label">Máx. cols</span>
-        <NativeTextControl
-          type="number"
-          className="td-deck-ribbon__number td-deck-ribbon__number--compact"
-          min={1}
-          placeholder="Todas"
-          value={block.maxCols ?? ""}
-          onChange={(raw) => {
-            updateSelected({
-              maxCols: raw === "" ? undefined : Math.max(1, Number(raw) || 1),
-            } as Partial<ComunicadoBlock>);
-          }}
-        />
-      </label>
-    </div>
-  );
-
-  if (layout === "pane") {
-    return (
-      <SelectionPaneSection title="Exibição" hint={hint} defaultOpen={false}>
-        {fields}
-      </SelectionPaneSection>
-    );
-  }
-
-  return (
-    <DeckRibbonGroup label="Exibição" hint={hint}>
-      {fields}
     </DeckRibbonGroup>
   );
 }
@@ -245,8 +188,6 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
   };
 
   const activeColumn = projectionColumns.find((column) => column.key === activeKey);
-  const rowHeight = options.rowHeightPx ?? "";
-
   const patchColumnWidth = (widthPct: number | undefined) => {
     if (!activeKey) return;
     updateSelected({
@@ -258,18 +199,20 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
     <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
       <label className="td-deck-ribbon__frame-field">
         <span className="td-deck-ribbon__field-label">Altura linha (px)</span>
-        <NativeTextControl
-          type="number"
-          className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
           min={16}
           max={200}
           placeholder="Auto"
-          value={rowHeight}
-          onChange={(raw) => {
-            applyOptions({
-              rowHeightPx: raw === "" ? undefined : Math.max(16, Math.min(200, Number(raw) || 16)),
-            });
-          }}
+          value={options.rowHeightPx}
+          options={TABLE_ROW_HEIGHT_PRESETS}
+          clamp={(value) => Math.max(16, Math.min(200, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Altura da linha"
+          onClear={() => applyOptions({ rowHeightPx: undefined })}
+          onChange={(value) => applyOptions({ rowHeightPx: value })}
         />
       </label>
       <label className="td-deck-ribbon__frame-field">
@@ -295,17 +238,21 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
       </label>
       <label className="td-deck-ribbon__frame-field">
         <span className="td-deck-ribbon__field-label">Largura (%)</span>
-        <NativeTextControl
-          type="number"
-          className="td-deck-ribbon__number td-deck-ribbon__number--compact"
+        <ComboboxNumberControl
+          className="td-deck-ribbon__number-combobox"
+          compact
+          square={false}
           min={1}
           max={100}
           placeholder="Auto"
           disabled={!activeKey}
-          value={activeColumn?.widthPct ?? ""}
-          onChange={(raw) => {
-            patchColumnWidth(raw === "" ? undefined : Number(raw) || undefined);
-          }}
+          value={activeColumn?.widthPct}
+          options={TABLE_COLUMN_WIDTH_PRESETS}
+          clamp={(value) => Math.max(1, Math.min(100, value))}
+          portalScopeClassName="dashboard-tv-dashboard"
+          aria-label="Largura da coluna"
+          onClear={() => patchColumnWidth(undefined)}
+          onChange={patchColumnWidth}
         />
       </label>
     </div>

@@ -46,6 +46,7 @@ import {
   resolveInputPartFrameRoot,
   resolveInputRefreshSourceIds,
   resolveInputTargetScope,
+  resolveComunicadoDataPageState,
   resizeTableProjectionColumn,
   resizeInputPartFrame,
   scaleInputPartTypographyOnResize,
@@ -460,6 +461,8 @@ function EditorTableViewBlock({
     selectTablePart,
     requestRibbonTab,
     updateBlock,
+    loadMoreDataPreview,
+    loadingMoreSourceIds,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -531,6 +534,9 @@ function EditorTableViewBlock({
     },
     [block, updateBlock],
   );
+  const pageState = resolveComunicadoDataPageState(block.resolved);
+  const sourceId = block.dataSourceId?.trim();
+  const loadingMoreRows = Boolean(sourceId && loadingMoreSourceIds.includes(sourceId));
 
   const interaction =
     selectedId === block.id
@@ -539,6 +545,14 @@ function EditorTableViewBlock({
           onPartPointerDown,
           onPartDoubleClick,
           onColumnResize,
+          hasMoreRows: Boolean(sourceId && pageState?.hasMore),
+          loadingMoreRows,
+          onLoadMoreRows:
+            sourceId && pageState?.hasMore
+              ? () => {
+                  void loadMoreDataPreview(sourceId);
+                }
+              : undefined,
         }
       : null;
 

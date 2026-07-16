@@ -32,7 +32,6 @@ import {
 import {
   TableLayoutAlignSection,
   TableLayoutDataSection,
-  TableLayoutDisplaySection,
   TableLayoutSizeSection,
 } from "./TableLayoutSections";
 import { TextBoxSection } from "./TextBoxSection";
@@ -89,8 +88,6 @@ function renderSection(
       return <TableBordersSection key={id} layout={layout} />;
     case "tableLayoutData":
       return <TableLayoutDataSection key={id} layout={layout} />;
-    case "tableLayoutDisplay":
-      return <TableLayoutDisplaySection key={id} layout={layout} />;
     case "tableLayoutAlign":
       return <TableLayoutAlignSection key={id} layout={layout} />;
     case "tableLayoutSize":

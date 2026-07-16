@@ -2,11 +2,30 @@ from unittest.mock import MagicMock
 
 from tv_app.application.services.comunicado_data_enrichment_service import (
     ComunicadoDataEnrichmentService,
+    _apply_incremental_pagination_defaults,
     _extract_scalar_value,
     _extract_series,
     reset_comunicado_data_block_cache,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
+
+
+def test_incremental_pagination_defaults_only_for_paginated_routes():
+    route = {
+        "paramSchema": {
+            "page": {"type": "integer"},
+            "page_size": {"type": "integer"},
+        }
+    }
+    assert _apply_incremental_pagination_defaults({}, route) == {
+        "page": 1,
+        "page_size": 30,
+    }
+    assert _apply_incremental_pagination_defaults(
+        {"page": 3, "page_size": 15},
+        route,
+    ) == {"page": 3, "page_size": 15}
+    assert _apply_incremental_pagination_defaults({}, {"paramSchema": {}}) == {}
 
 
 def test_enrich_data_source_block_resolves_full_payload():

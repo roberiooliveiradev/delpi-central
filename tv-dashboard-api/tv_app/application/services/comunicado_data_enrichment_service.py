@@ -22,7 +22,10 @@ from tv_app.application.services.data.tv_view_projection_service import (
 from tv_app.application.services.native_screen_cache_service import (
     native_data_cache_ttl_seconds,
 )
-from tv_app.application.services.tv_dashboard_content_service import message
+from tv_app.application.services.tv_dashboard_content_service import (
+    message,
+    tv_dashboard_setting_int,
+)
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
     DATA_VIEW_BLOCK_TYPES,
@@ -41,6 +44,21 @@ _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_s
 # Sem maxRows explícito: série diária (~3 meses) cabe no scroll do bloco; não truncar em 5
 # (gráfico recebe a série inteira — tabela deve acompanhar).
 _DEFAULT_TABLE_MAX_ROWS = 90
+
+
+def _apply_incremental_pagination_defaults(
+    params: dict[str, Any],
+    route: dict[str, Any] | None,
+) -> dict[str, Any]:
+    schema = route.get("paramSchema") if isinstance(route, dict) else None
+    if not isinstance(schema, dict) or "page" not in schema or "page_size" not in schema:
+        return params
+    page_size = max(1, tv_dashboard_setting_int("tableIncrementalPageSize", 30))
+    return {
+        **params,
+        "page": params.get("page") or 1,
+        "page_size": params.get("page_size") or page_size,
+    }
 
 
 def _resolve_table_max_rows(binding: dict[str, Any], route_info: dict[str, Any]) -> int:
@@ -971,6 +989,10 @@ class ComunicadoDataEnrichmentService:
             slide_filters=slide_filters,
             block_params=block_params,
             input_overrides=input_overrides,
+        )
+        merged_params = _apply_incremental_pagination_defaults(
+            merged_params,
+            self._catalog.get_route(operation_id),
         )
 
         branch = merged_params.get("branch")

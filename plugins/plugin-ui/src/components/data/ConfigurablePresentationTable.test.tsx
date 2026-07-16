@@ -103,7 +103,7 @@ describe("ConfigurablePresentationTable", () => {
     expect(screen.getByText("150")).toBeTruthy();
   });
 
-  it("aplica quebra de texto e colgroup com larguras", () => {
+  it("aplica quebra automática e colgroup quando há larguras", () => {
     const { container } = render(
       <ConfigurablePresentationTable
         columns={[
@@ -111,7 +111,7 @@ describe("ConfigurablePresentationTable", () => {
           { key: "value", label: "Valor", widthPct: 40 },
         ]}
         rows={[{ name: "Texto longo para quebrar na célula", value: 100 }]}
-        options={{ wrapText: true, rowHeightPx: 32 }}
+        options={{ wrapText: false, rowHeightPx: 32 }}
       />,
     );
     const root = container.querySelector(".delpi-ui-config-table");
@@ -140,6 +140,7 @@ describe("ConfigurablePresentationTable", () => {
     ) as HTMLElement | null;
     expect(handle).toBeTruthy();
     expect(container.querySelectorAll("[data-column-resize-handle]")).toHaveLength(2);
+    expect(container.querySelectorAll(".delpi-ui-config-table__column--selected")).toHaveLength(1);
 
     table.getBoundingClientRect = () => ({ width: 400 }) as DOMRect;
     header.getBoundingClientRect = () => ({ width: 100 }) as DOMRect;
@@ -147,6 +148,27 @@ describe("ConfigurablePresentationTable", () => {
     fireEvent.pointerMove(handle!, { clientX: 140, pointerId: 1 });
 
     expect(onColumnResize).toHaveBeenLastCalledWith("name", 35);
+  });
+
+  it("solicita a próxima página ao chegar ao fim do scroll", () => {
+    const onLoadMoreRows = vi.fn();
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+        interaction={{ hasMoreRows: true, onLoadMoreRows }}
+      />,
+    );
+    const frame = container.querySelector(
+      ".delpi-ui-config-table__frame",
+    ) as HTMLDivElement;
+    Object.defineProperties(frame, {
+      scrollHeight: { value: 500, configurable: true },
+      clientHeight: { value: 200, configurable: true },
+      scrollTop: { value: 270, writable: true, configurable: true },
+    });
+    fireEvent.scroll(frame);
+    expect(onLoadMoreRows).toHaveBeenCalledTimes(1);
   });
 });
 

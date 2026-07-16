@@ -50,10 +50,15 @@ export function ConfigurablePresentationTable({
   const ariaLabel = title || "Tabela de dados";
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const totalRow = showTotalRow ? buildConfigurableTableTotalRow(columns, rows) : null;
+  const selectedColumnIndex =
+    interaction?.selectedPart?.kind === "headerCell"
+      ? interaction.selectedPart.colIndex
+      : undefined;
   const hasColumnWidths = columns.some((column) => column.widthPct != null && column.widthPct > 0);
   const layoutClassName = [
     className,
     interactive ? `${cn.root}--interactive` : null,
+    hasColumnWidths ? cn.rootWrap : null,
     hasColumnWidths ? cn.rootFixedCols : null,
   ]
     .filter(Boolean)
@@ -83,7 +88,13 @@ export function ConfigurablePresentationTable({
         interaction={interaction}
         tableParts={tableParts}
       />
-      <TableFrame ariaLabel={ariaLabel} columns={columns}>
+      <TableFrame
+        ariaLabel={ariaLabel}
+        columns={columns}
+        hasMoreRows={interaction?.hasMoreRows}
+        loadingMoreRows={interaction?.loadingMoreRows}
+        onLoadMoreRows={interaction?.onLoadMoreRows}
+      >
         <TableHeader visible={showHeader} interaction={interaction} tableParts={tableParts}>
           {columns.map((column, colIndex) => (
             <TableHeaderCell
@@ -105,6 +116,7 @@ export function ConfigurablePresentationTable({
                   key={`${column.key}-${rowIndex}`}
                   rowIndex={rowIndex}
                   colIndex={colIndex}
+                  columnSelected={selectedColumnIndex === colIndex}
                   interaction={interaction}
                   tableParts={tableParts}
                 >
@@ -120,6 +132,7 @@ export function ConfigurablePresentationTable({
                   key={`${column.key}-total`}
                   rowIndex={rows.length}
                   colIndex={colIndex}
+                  columnSelected={selectedColumnIndex === colIndex}
                   interaction={interaction}
                   tableParts={tableParts}
                 >

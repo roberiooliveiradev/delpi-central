@@ -17,6 +17,7 @@
   "nativeDataCache": {
     "ttlSeconds": 120
   },
+  "tableIncrementalPageSize": 30,
   "comunicadoDataBlocks": {
     "maxPerSlide": 6
   },

@@ -31,7 +31,6 @@ export type SelectionSectionId =
   | "tableBorders"
   | "tableStyles"
   | "tableLayoutData"
-  | "tableLayoutDisplay"
   | "tableLayoutAlign"
   | "tableLayoutSize"
   | "kpiAppearance"

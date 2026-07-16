@@ -233,7 +233,7 @@ export function configurableTableOptionsModifierClasses(
     classes.push(options.textAlign === "center" ? cn.rootAlignCenter : cn.rootAlignRight);
   }
   if (options.headerUppercase === false) classes.push(cn.rootHeaderNormalCase);
-  if (options.wrapText) classes.push(cn.rootWrap);
+  if (options.wrapText || hasColumnWidths) classes.push(cn.rootWrap);
   if (hasColumnWidths) classes.push(cn.rootFixedCols);
   return classes;
 }

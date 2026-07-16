@@ -194,7 +194,7 @@ export function ComunicadoElementInspector({
             labels={labels}
             typed={
               panelFocus === "tableLayout"
-                ? ["tableLayoutData", "tableLayoutDisplay", "tableLayoutAlign"]
+                ? ["tableLayoutData", "tableLayoutSize", "tableLayoutAlign"]
                 : panelFocus === "tableDesign"
                   ? ["tableStyleOptions", "tableStyles", "tableBorders"]
                   : [
@@ -202,7 +202,7 @@ export function ComunicadoElementInspector({
                       "tableStyles",
                       "tableBorders",
                       "tableLayoutData",
-                      "tableLayoutDisplay",
+                      "tableLayoutSize",
                       "tableLayoutAlign",
                     ]
             }

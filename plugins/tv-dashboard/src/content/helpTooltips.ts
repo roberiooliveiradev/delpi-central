@@ -277,7 +277,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableColumns:
       "Escolha quais colunas aparecem e a ordem (↑↓). Vazio = todas as colunas da fonte.",
     tableWrapText:
-      "Quebra o texto das células em várias linhas (como Excel → Quebrar Texto Automaticamente). Sem quebra, o conteúdo fica em uma linha e a tabela pode rolar na horizontal.",
+      "Quebra o texto das células em várias linhas. Ao definir ou arrastar a largura de uma coluna, a quebra é ativada automaticamente.",
     tableColumnSize:
       "Altura mínima das linhas (px) e largura relativa de cada coluna (%). Selecione a coluna no seletor ou clique no cabeçalho e arraste as alças azuis nos cantos.",
     kpiMetricsProjection:
@@ -310,12 +310,6 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Cores internas (cabeçalho/células) e bordas entre células. Contorno do bloco = aba Forma / Moldura.",
     tableTitle:
       "Título acima da grade (ex.: Top produtos). Ligado por padrão; vazio usa o nome da fonte de dados.",
-    tableTruncation:
-      "Limita quantas linhas e colunas a tabela mostra no slide. Vazio = exibe tudo que a fonte entregou (com scroll no bloco).",
-    tableMaxRows:
-      "Quantidade máxima de linhas visíveis. Deixe vazio para mostrar a série/lista completa com scroll.",
-    tableMaxCols:
-      "Quantidade máxima de colunas visíveis (da esquerda para a direita). Deixe vazio para todas as colunas.",
     sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
     duplicateSourceChoice: {
       title: "Fonte de dados na duplicação",

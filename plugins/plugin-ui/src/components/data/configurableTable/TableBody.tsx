@@ -12,6 +12,7 @@ export type TableCellProps = {
   children: ReactNode;
   rowIndex?: number;
   colIndex?: number;
+  columnSelected?: boolean;
   interaction?: TableInteraction | null;
   tableParts?: TablePartsMap | null;
 };
@@ -20,6 +21,7 @@ export function TableCell({
   children,
   rowIndex = 0,
   colIndex = 0,
+  columnSelected = false,
   interaction,
   tableParts,
 }: TableCellProps) {
@@ -41,7 +43,11 @@ export function TableCell({
 
   return (
     <td
-      className={[cn.cell, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
+      className={[
+        cn.cell,
+        selected ? `${cn.root}__part--selected` : "",
+        columnSelected ? cn.columnSelected : "",
+      ].filter(Boolean).join(" ")}
       style={style}
       {...dom}
       onPointerDown={onPointerDown}

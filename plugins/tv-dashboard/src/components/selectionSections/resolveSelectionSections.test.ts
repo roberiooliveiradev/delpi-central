@@ -174,7 +174,7 @@ describe("resolveSelectionSections", () => {
     ]);
   });
 
-  it("tabela tipada: design + layout + display", () => {
+  it("tabela tipada: design + layout sem truncamento", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -190,7 +190,6 @@ describe("resolveSelectionSections", () => {
       "tableStyles",
       "tableBorders",
       "tableLayoutData",
-      "tableLayoutDisplay",
       "tableLayoutSize",
       "tableLayoutAlign",
       "display",
@@ -212,7 +211,6 @@ describe("resolveSelectionSections", () => {
       "tableStyles",
       "tableBorders",
       "tableLayoutData",
-      "tableLayoutDisplay",
       "tableLayoutSize",
       "tableLayoutAlign",
       "chartLayout",

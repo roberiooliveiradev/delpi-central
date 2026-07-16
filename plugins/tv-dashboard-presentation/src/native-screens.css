@@ -1397,6 +1397,17 @@
   bottom: -4px;
 }
 
+.tdp-table-column--selected {
+  background: color-mix(
+    in srgb,
+    var(--tdp-data-accent, #089bdb) 10%,
+    var(--tdp-table-cell-bg, #fff)
+  ) !important;
+  box-shadow:
+    inset 1px 0 color-mix(in srgb, var(--tdp-data-accent, #089bdb) 48%, transparent),
+    inset -1px 0 color-mix(in srgb, var(--tdp-data-accent, #089bdb) 48%, transparent);
+}
+
 .tdp-data-source {
   /* Chrome tipográfico da fonte no palco (fundo claro): independente do tema escuro do shell. */
   --tdp-data-source-fg: var(--tdp-data-accent, #089bdb);

@@ -3,6 +3,8 @@ import {
   buildDataPreviewFingerprint,
   isComunicadoInputBlock,
   isFetchableDataBlockType,
+  mergeComunicadoDataPages,
+  resolveComunicadoDataPageState,
   resolveInputRefreshSourceIds,
   resolvePreviewRefreshSourceIds,
   serializeComunicadoConfig,
@@ -72,6 +74,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
   );
   const [staleSourceIds, setStaleSourceIds] = useState<string[]>([]);
   const [refreshingSourceIds, setRefreshingSourceIds] = useState<string[]>([]);
+  const [loadingMoreSourceIds, setLoadingMoreSourceIds] = useState<string[]>([]);
   const [initialLoading, setInitialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -87,6 +90,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
   const syncedFingerprintRef = useRef(buildDataPreviewFingerprint(config));
   const didInitialFetchRef = useRef(false);
   const autoRefreshTimerRef = useRef<number | null>(null);
+  const loadingMoreRef = useRef(new Set<string>());
 
   const dataFingerprint = useMemo(() => buildDataPreviewFingerprint(config), [config]);
   fingerprintRef.current = dataFingerprint;
@@ -228,6 +232,57 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     [fetchBlocks, readDataBlocks],
   );
 
+  const loadMoreDataPreview = useCallback(
+    async (blockId: string) => {
+      if (loadingMoreRef.current.has(blockId)) return;
+      const block = readDataBlocks().find((item) => item.id === blockId);
+      const previous = resolvedRef.current[blockId];
+      const pageState = resolveComunicadoDataPageState(previous);
+      if (!block || !previous || !pageState?.hasMore) return;
+      const requestBlock = {
+        ...block,
+        dataBinding: {
+          ...block.dataBinding,
+          params: {
+            ...(block.dataBinding.params ?? {}),
+            page: pageState.page + 1,
+            page_size:
+              pageState.pageSize ??
+              (Number(block.dataBinding.params?.page_size) || 30),
+          },
+        },
+      };
+      loadingMoreRef.current.add(blockId);
+      setLoadingMoreSourceIds((current) => [...new Set([...current, blockId])]);
+      try {
+        const response = await previewDataBlockV2({
+          block: stripResolved(requestBlock),
+          nativeConfig: serializeComunicadoConfig(configRef.current),
+          playlistId: playlistIdRef.current,
+          forceRefresh: false,
+        });
+        const nextPage = response.block?.resolved;
+        if (!nextPage || typeof nextPage !== "object") return;
+        setResolvedByBlockId((current) => {
+          const merged = mergeComunicadoDataPages(
+            current[blockId] ?? previous,
+            nextPage as ComunicadoDataResolved,
+          );
+          const next = { ...current, [blockId]: merged };
+          resolvedRef.current = next;
+          writeDataPreviewCache(playlistIdRef.current, fingerprintRef.current, next);
+          return next;
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Falha ao carregar mais dados.");
+      } finally {
+        loadingMoreRef.current.delete(blockId);
+        setLoadingMoreSourceIds((current) => current.filter((id) => id !== blockId));
+      }
+    },
+    [readDataBlocks],
+  );
+
   const scheduleAutoRefresh = useCallback(
     (sourceIds: string[], blocks: FetchableBlock[]) => {
       if (sourceIds.length === 0) return;
@@ -306,7 +361,9 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     isDataPreviewStale,
     staleSourceIds,
     refreshingSourceIds,
+    loadingMoreSourceIds,
     refreshDataPreview,
+    loadMoreDataPreview,
     clearStaleForSourceIds,
   };
 }

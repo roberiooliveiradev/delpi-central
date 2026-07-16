@@ -64,4 +64,24 @@ describe("ComboboxNumberControl", () => {
     expect(onChange).not.toHaveBeenCalled();
     expect((input as HTMLInputElement).value).toBe("18");
   });
+
+  it("permite limpar um valor automático", () => {
+    const onClear = vi.fn();
+    const { container } = render(
+      <ComboboxNumberControl
+        value={24}
+        options={[20, 24]}
+        placeholder="Auto"
+        aria-label="Altura"
+        onChange={vi.fn()}
+        onClear={onClear}
+      />,
+    );
+    const input = container.querySelector(".delpi-ui-combobox-number__input");
+    fireEvent.change(input!, { target: { value: "" } });
+    fireEvent.blur(input!);
+
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect((input as HTMLInputElement).placeholder).toBe("Auto");
+  });
 });
