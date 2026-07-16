@@ -175,6 +175,28 @@
   outline-offset: 0;
 }
 
+.delpi-ui-config-table__column-resize-handle {
+  position: absolute;
+  right: -4px;
+  z-index: 3;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 75%, #fff);
+  border-radius: 1px;
+  background: var(--delpi-ui-accent, #089bdb);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.delpi-ui-config-table__column-resize-handle--top {
+  top: -4px;
+}
+
+.delpi-ui-config-table__column-resize-handle--bottom {
+  bottom: -4px;
+}
+
 /* Galeria Estilos de tabela (ribbon strip + Mais) */
 .delpi-ui-table-style-strip {
   display: inline-flex;

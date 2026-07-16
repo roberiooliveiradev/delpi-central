@@ -810,6 +810,10 @@ export {
   type ViewProjectionSelection,
 } from "./viewProjection";
 export {
+  resizeTableProjectionColumn,
+  resolveEditableTableProjectionColumns,
+} from "./tableProjectionEditing";
+export {
   duplicateBlocksWithDataPolicy,
   isLegacyFetchableDataBlock,
   needsDataSourceDuplicateChoice,

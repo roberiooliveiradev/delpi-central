@@ -44,6 +44,7 @@ export type TableInteraction = {
   editingPart?: TablePartRef | null;
   onPartPointerDown?: (ref: TablePartRef, event: ReactPointerEvent) => void;
   onPartDoubleClick?: (ref: TablePartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
+  onColumnResize?: (columnKey: string, widthPct: number) => void;
   onPartContentCommit?: (ref: TablePartRef, content: string) => void;
   onPartEditCancel?: () => void;
 };
@@ -59,7 +60,7 @@ const TABLE_PART_KIND_CAPABILITIES: Record<TablePartRef["kind"], TablePartCapabi
   frame: { movable: false, editable: false, deletable: false, resizable: false },
   title: { movable: false, editable: true, deletable: true, resizable: false },
   header: { movable: false, editable: false, deletable: true, resizable: false },
-  headerCell: { movable: false, editable: true, deletable: false, resizable: false },
+  headerCell: { movable: false, editable: true, deletable: false, resizable: true },
   cell: { movable: false, editable: false, deletable: false, resizable: false },
 };
 

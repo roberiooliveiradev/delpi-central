@@ -18,6 +18,7 @@ export type ConfigurableTableClassNames = {
   title: string;
   header: string;
   headerCell: string;
+  columnResizeHandle: string;
   body: string;
   row: string;
   rowHeader: string;
@@ -49,6 +50,7 @@ export function configurableTableBemClasses(
     title: `${prefix}__title`,
     header: `${prefix}__header`,
     headerCell: `${prefix}__header-cell`,
+    columnResizeHandle: `${prefix}__column-resize-handle`,
     body: `${prefix}__body`,
     row: `${prefix}__row`,
     rowHeader: `${prefix}__row--header`,
@@ -79,6 +81,7 @@ export function configurableTableTvClasses(): ConfigurableTableClassNames {
     title: "tdp-table-title",
     header: "tdp-table-header",
     headerCell: "tdp-table-header-cell",
+    columnResizeHandle: "tdp-table-column-resize-handle",
     body: "tdp-table-body",
     row: "tdp-table-row",
     rowHeader: "tdp-table-row--header",

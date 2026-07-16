@@ -1375,6 +1375,28 @@
   outline-offset: 1px;
 }
 
+.tdp-table-column-resize-handle {
+  position: absolute;
+  right: -4px;
+  z-index: 3;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--tdp-data-accent, #089bdb) 80%, #fff);
+  border-radius: 1px;
+  background: var(--tdp-data-accent, #089bdb);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.tdp-table-column-resize-handle--top {
+  top: -4px;
+}
+
+.tdp-table-column-resize-handle--bottom {
+  bottom: -4px;
+}
+
 .tdp-data-source {
   /* Chrome tipográfico da fonte no palco (fundo claro): independente do tema escuro do shell. */
   --tdp-data-source-fg: var(--tdp-data-accent, #089bdb);

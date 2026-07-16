@@ -279,7 +279,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableWrapText:
       "Quebra o texto das células em várias linhas (como Excel → Quebrar Texto Automaticamente). Sem quebra, o conteúdo fica em uma linha e a tabela pode rolar na horizontal.",
     tableColumnSize:
-      "Altura mínima das linhas (px) e largura relativa de cada coluna (%). Selecione a coluna no seletor ou clique no cabeçalho no palco.",
+      "Altura mínima das linhas (px) e largura relativa de cada coluna (%). Selecione a coluna no seletor ou clique no cabeçalho e arraste as alças azuis nos cantos.",
     kpiMetricsProjection:
       "Por coluna: ligar/desligar, agregação (soma, média…) e formato. Regras de cor globais ficam em Aparência; regras por métrica sobrescrevem quando definidas.",
     chartAxesProjection:

@@ -1,5 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ConfigurablePresentationTable } from "./ConfigurablePresentationTable";
 import { mergeConfigurableTableOptions } from "./configurableTableOptions";
@@ -119,6 +119,34 @@ describe("ConfigurablePresentationTable", () => {
     expect(root?.className).toMatch(/--fixed-cols/);
     expect(container.querySelectorAll("col")).toHaveLength(2);
     expect((container.querySelector("col") as HTMLElement | null)?.style.width).toBe("60%");
+  });
+
+  it("exibe alças na coluna selecionada e emite largura ao arrastar", () => {
+    const onColumnResize = vi.fn();
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+        interaction={{
+          selectedPart: { kind: "headerCell", colIndex: 0 },
+          onColumnResize,
+        }}
+      />,
+    );
+    const table = screen.getByRole("table");
+    const header = screen.getByRole("columnheader", { name: "Produto" });
+    const handle = container.querySelector(
+      '[data-column-resize-handle="top"]',
+    ) as HTMLElement | null;
+    expect(handle).toBeTruthy();
+    expect(container.querySelectorAll("[data-column-resize-handle]")).toHaveLength(2);
+
+    table.getBoundingClientRect = () => ({ width: 400 }) as DOMRect;
+    header.getBoundingClientRect = () => ({ width: 100 }) as DOMRect;
+    fireEvent.pointerDown(handle!, { clientX: 100, pointerId: 1 });
+    fireEvent.pointerMove(handle!, { clientX: 140, pointerId: 1 });
+
+    expect(onColumnResize).toHaveBeenLastCalledWith("name", 35);
   });
 });
 

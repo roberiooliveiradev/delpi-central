@@ -1,4 +1,8 @@
-import type { CSSProperties, ReactNode } from "react";
+import type {
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from "react";
 
 import { useConfigurableTableClasses } from "../configurableTableClasses";
 import {
@@ -11,6 +15,7 @@ import {
 
 export type TableHeaderCellProps = {
   children: ReactNode;
+  columnKey: string;
   colIndex?: number;
   interaction?: TableInteraction | null;
   tableParts?: TablePartsMap | null;
@@ -18,6 +23,7 @@ export type TableHeaderCellProps = {
 
 export function TableHeaderCell({
   children,
+  columnKey,
   colIndex = 0,
   interaction,
   tableParts,
@@ -37,6 +43,43 @@ export function TableHeaderCell({
           ...(paint.fontWeight != null ? { fontWeight: paint.fontWeight } : {}),
         }
       : undefined;
+  const resizable = selected && Boolean(interaction?.onColumnResize);
+
+  const startColumnResize = (event: ReactPointerEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const handle = event.currentTarget;
+    const cell = handle.closest("th");
+    const table = handle.closest("table");
+    if (!cell || !table || !interaction?.onColumnResize) return;
+
+    const startX = event.clientX;
+    const startWidthPx = cell.getBoundingClientRect().width;
+    const tableWidthPx = table.getBoundingClientRect().width;
+    if (tableWidthPx <= 0) return;
+
+    const pointerId = event.pointerId;
+    handle.setPointerCapture?.(pointerId);
+
+    const onPointerMove = (moveEvent: PointerEvent) => {
+      const nextWidthPx = Math.max(8, startWidthPx + moveEvent.clientX - startX);
+      const nextWidthPct = Math.max(
+        1,
+        Math.min(100, Math.round((nextWidthPx / tableWidthPx) * 1000) / 10),
+      );
+      interaction.onColumnResize?.(columnKey, nextWidthPct);
+    };
+    const finish = () => {
+      handle.removeEventListener("pointermove", onPointerMove);
+      handle.removeEventListener("pointerup", finish);
+      handle.removeEventListener("pointercancel", finish);
+      if (handle.hasPointerCapture?.(pointerId)) handle.releasePointerCapture(pointerId);
+    };
+
+    handle.addEventListener("pointermove", onPointerMove);
+    handle.addEventListener("pointerup", finish);
+    handle.addEventListener("pointercancel", finish);
+  };
 
   return (
     <th
@@ -47,6 +90,24 @@ export function TableHeaderCell({
       onDoubleClick={onDoubleClick}
     >
       {children}
+      {resizable ? (
+        <>
+          <span
+            className={`${cn.columnResizeHandle} ${cn.columnResizeHandle}--top`}
+            role="separator"
+            aria-orientation="vertical"
+            data-column-resize-handle="top"
+            onPointerDown={startColumnResize}
+          />
+          <span
+            className={`${cn.columnResizeHandle} ${cn.columnResizeHandle}--bottom`}
+            role="separator"
+            aria-orientation="vertical"
+            data-column-resize-handle="bottom"
+            onPointerDown={startColumnResize}
+          />
+        </>
+      ) : null}
     </th>
   );
 }

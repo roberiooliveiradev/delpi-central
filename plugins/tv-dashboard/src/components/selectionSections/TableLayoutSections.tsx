@@ -1,21 +1,21 @@
 import { useMemo, useState } from "react";
 import { AlignCenter, AlignLeft, AlignRight, Database, Grid3x3, WrapText } from "lucide-react";
 import {
-  applyViewProjection,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
-  resolveTableColumns,
+  resizeTableProjectionColumn,
+  resolveEditableTableProjectionColumns,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
-  type TableColumnProjection,
-  type TableViewProjection,
 } from "@delpi/tv-dashboard-presentation";
+import { NativeTextControl } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
+import { TdRibbonSelect } from "../tdRibbonUi";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
@@ -95,14 +95,13 @@ export function TableLayoutDisplaySection({ layout }: { layout: SelectionSection
     <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
       <label className="td-deck-ribbon__frame-field">
         <span className="td-deck-ribbon__field-label">Máx. linhas</span>
-        <input
+        <NativeTextControl
           type="number"
           className="td-deck-ribbon__number td-deck-ribbon__number--compact"
           min={1}
           placeholder="Todas"
           value={block.maxRows ?? ""}
-          onChange={(event) => {
-            const raw = event.target.value;
+          onChange={(raw) => {
             updateSelected({
               maxRows: raw === "" ? undefined : Math.max(1, Number(raw) || 1),
             } as Partial<ComunicadoBlock>);
@@ -111,14 +110,13 @@ export function TableLayoutDisplaySection({ layout }: { layout: SelectionSection
       </label>
       <label className="td-deck-ribbon__frame-field">
         <span className="td-deck-ribbon__field-label">Máx. cols</span>
-        <input
+        <NativeTextControl
           type="number"
           className="td-deck-ribbon__number td-deck-ribbon__number--compact"
           min={1}
           placeholder="Todas"
           value={block.maxCols ?? ""}
-          onChange={(event) => {
-            const raw = event.target.value;
+          onChange={(raw) => {
             updateSelected({
               maxCols: raw === "" ? undefined : Math.max(1, Number(raw) || 1),
             } as Partial<ComunicadoBlock>);
@@ -203,27 +201,9 @@ export function TableLayoutAlignSection({ layout }: { layout: SelectionSectionLa
   );
 }
 
-function ensureTableProjectionColumns(
-  block: ComunicadoTableViewBlock,
-): TableColumnProjection[] {
-  const existing = block.tableProjection?.columns;
-  if (existing?.length) return existing.map((column) => ({ ...column }));
-
-  const resolved = applyViewProjection(block.resolved, {
-    tableProjection: block.tableProjection,
-  });
-  const rows = resolved?.table?.rows ?? [];
-  const columns = resolveTableColumns(resolved, rows);
-  return columns.map((column) => ({
-    key: column.key,
-    label: column.label,
-    visible: true,
-  }));
-}
-
 /** Altura de linha e largura por coluna (Excel Layout → Tamanho). */
 export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLayout }) {
-  const { selected, selectedTablePart, updateSelected } = useComunicadoEditor();
+  const { selected, selectedTablePart, selectTablePart, updateSelected } = useComunicadoEditor();
   const [columnKey, setColumnKey] = useState<string>("");
   const block = selected?.type === "table_view" ? (selected as ComunicadoTableViewBlock) : null;
   const options = block
@@ -231,19 +211,22 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
     : null;
 
   const projectionColumns = useMemo(
-    () => (block ? ensureTableProjectionColumns(block) : []),
+    () =>
+      block
+        ? resolveEditableTableProjectionColumns(block).filter((column) => column.visible !== false)
+        : [],
     [block],
   );
   const activeKey = useMemo(() => {
-    if (columnKey && projectionColumns.some((column) => column.key === columnKey)) {
-      return columnKey;
-    }
     if (
       selectedTablePart?.kind === "headerCell" &&
       selectedTablePart.colIndex != null &&
       projectionColumns[selectedTablePart.colIndex]
     ) {
       return projectionColumns[selectedTablePart.colIndex].key;
+    }
+    if (columnKey && projectionColumns.some((column) => column.key === columnKey)) {
+      return columnKey;
     }
     return projectionColumns[0]?.key ?? "";
   }, [columnKey, projectionColumns, selectedTablePart]);
@@ -266,33 +249,23 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
 
   const patchColumnWidth = (widthPct: number | undefined) => {
     if (!activeKey) return;
-    const nextColumns = ensureTableProjectionColumns(block).map((column) => {
-      if (column.key !== activeKey) return column;
-      const next: TableColumnProjection = { ...column };
-      if (widthPct == null || widthPct <= 0) {
-        delete next.widthPct;
-      } else {
-        next.widthPct = Math.max(1, Math.min(100, widthPct));
-      }
-      return next;
-    });
-    const nextProjection: TableViewProjection = { columns: nextColumns };
-    updateSelected({ tableProjection: nextProjection } as Partial<ComunicadoBlock>);
+    updateSelected({
+      tableProjection: resizeTableProjectionColumn(block, activeKey, widthPct),
+    } as Partial<ComunicadoBlock>);
   };
 
   const fields = (
     <div className="td-deck-ribbon__frame-grid td-deck-ribbon__toolbar-row--dense">
       <label className="td-deck-ribbon__frame-field">
         <span className="td-deck-ribbon__field-label">Altura linha (px)</span>
-        <input
+        <NativeTextControl
           type="number"
           className="td-deck-ribbon__number td-deck-ribbon__number--compact"
           min={16}
           max={200}
           placeholder="Auto"
           value={rowHeight}
-          onChange={(event) => {
-            const raw = event.target.value;
+          onChange={(raw) => {
             applyOptions({
               rowHeightPx: raw === "" ? undefined : Math.max(16, Math.min(200, Number(raw) || 16)),
             });
@@ -301,26 +274,28 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
       </label>
       <label className="td-deck-ribbon__frame-field">
         <span className="td-deck-ribbon__field-label">Coluna</span>
-        <select
-          className="td-deck-ribbon__select td-deck-ribbon__select--compact"
+        <TdRibbonSelect
           value={activeKey}
           disabled={projectionColumns.length === 0}
-          onChange={(event) => setColumnKey(event.target.value)}
-        >
-          {projectionColumns.length === 0 ? (
-            <option value="">Sem colunas</option>
-          ) : (
-            projectionColumns.map((column) => (
-              <option key={column.key} value={column.key}>
-                {column.label?.trim() || column.key}
-              </option>
-            ))
-          )}
-        </select>
+          aria-label="Coluna da tabela"
+          onChange={(nextKey) => {
+            setColumnKey(nextKey);
+            const colIndex = projectionColumns.findIndex((column) => column.key === nextKey);
+            if (colIndex >= 0) selectTablePart(block.id, { kind: "headerCell", colIndex });
+          }}
+          options={
+            projectionColumns.length === 0
+              ? [{ value: "", label: "Sem colunas" }]
+              : projectionColumns.map((column) => ({
+                  value: column.key,
+                  label: column.label?.trim() || column.key,
+                }))
+          }
+        />
       </label>
       <label className="td-deck-ribbon__frame-field">
         <span className="td-deck-ribbon__field-label">Largura (%)</span>
-        <input
+        <NativeTextControl
           type="number"
           className="td-deck-ribbon__number td-deck-ribbon__number--compact"
           min={1}
@@ -328,8 +303,7 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
           placeholder="Auto"
           disabled={!activeKey}
           value={activeColumn?.widthPct ?? ""}
-          onChange={(event) => {
-            const raw = event.target.value;
+          onChange={(raw) => {
             patchColumnWidth(raw === "" ? undefined : Number(raw) || undefined);
           }}
         />

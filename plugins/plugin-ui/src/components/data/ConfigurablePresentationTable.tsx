@@ -88,6 +88,7 @@ export function ConfigurablePresentationTable({
           {columns.map((column, colIndex) => (
             <TableHeaderCell
               key={column.key}
+              columnKey={column.key}
               colIndex={colIndex}
               interaction={interaction}
               tableParts={tableParts}

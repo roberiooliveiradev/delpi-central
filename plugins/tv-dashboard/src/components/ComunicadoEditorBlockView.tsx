@@ -12,6 +12,7 @@ import {
   comunicadoImageCropCssProperties,
   getChartPartState,
   isChartPartRefEqual,
+  isTablePartRefEqual,
   isComunicadoVisualBoxBlock,
   mergeComunicadoChartOptions,
   partsToChartOptions,
@@ -45,6 +46,7 @@ import {
   resolveInputPartFrameRoot,
   resolveInputRefreshSourceIds,
   resolveInputTargetScope,
+  resizeTableProjectionColumn,
   resizeInputPartFrame,
   scaleInputPartTypographyOnResize,
   upsertInputPartState,
@@ -457,6 +459,7 @@ function EditorTableViewBlock({
     selectBlocksByIds,
     selectTablePart,
     requestRibbonTab,
+    updateBlock,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -470,7 +473,7 @@ function EditorTableViewBlock({
       }
       const samePartSelected =
         selectedId === block.id &&
-        Boolean(selectedTablePart && selectedTablePart.kind === ref.kind);
+        Boolean(selectedTablePart && isTablePartRefEqual(selectedTablePart, ref));
       const contentPart = isCompositeContentPart("table_view", ref);
       const action = resolveCompositePartPointerAction({
         blockSelected: selectedId === block.id,
@@ -520,12 +523,22 @@ function EditorTableViewBlock({
     [block.id, requestRibbonTab, selectTablePart],
   );
 
+  const onColumnResize = useCallback(
+    (columnKey: string, widthPct: number) => {
+      updateBlock(block.id, {
+        tableProjection: resizeTableProjectionColumn(block, columnKey, widthPct),
+      });
+    },
+    [block, updateBlock],
+  );
+
   const interaction =
     selectedId === block.id
       ? {
           selectedPart: selectedTablePart,
           onPartPointerDown,
           onPartDoubleClick,
+          onColumnResize,
         }
       : null;
 
