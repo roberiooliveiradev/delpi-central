@@ -557,8 +557,8 @@ class MeetingMinutesService:
 
     def soft_delete(self, user, minute_id: str) -> dict[str, Any]:
         minute = self._load_authorized(user, "delete", minute_id)
-        if minute["status"] not in {"draft", "cancelled"}:
-            raise ValueError("Somente rascunhos ou atas canceladas podem ser excluídas.")
+        if not MinuteStatusTransitionService.can_delete(minute["status"]):
+            raise ValueError("Atas assinadas ou finalizadas não podem ser excluídas.")
         return {"minute": self.repo.soft_delete(minute_id, self._user_id(user))}
 
     def add_attachment(

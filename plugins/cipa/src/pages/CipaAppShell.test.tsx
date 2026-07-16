@@ -7,6 +7,8 @@ import type { CipaAccess } from "../security/cipaAccess";
 import { CipaAppShell } from "./CipaAppShell";
 
 const api = vi.hoisted(() => ({
+  createVersion: vi.fn(),
+  deleteMinute: vi.fn(),
   listMinutes: vi.fn(),
   listCipaMembers: vi.fn(),
   getMySignatureProfile: vi.fn(),
@@ -22,7 +24,9 @@ const navigation = vi.hoisted(() => ({
 vi.mock("../api/cipaApi", () => ({
   createCipaMember: vi.fn(),
   createMinute: vi.fn(),
+  createVersion: api.createVersion,
   deleteCipaMember: vi.fn(),
+  deleteMinute: api.deleteMinute,
   endCipaMember: vi.fn(),
   fetchMySignatureImageBlob: vi.fn(),
   exportPdf: api.exportPdf,
@@ -94,6 +98,8 @@ afterEach(() => {
 });
 
 beforeEach(() => {
+  api.createVersion.mockResolvedValue({ minute: { id: "minute-1" } });
+  api.deleteMinute.mockResolvedValue({ minute: { id: "minute-1" } });
   api.listMinutes.mockResolvedValue({
     items: [
       {
@@ -169,11 +175,77 @@ describe("CipaAppShell compartilhado", () => {
     const row = container.querySelector(".delpi-ui-table__row--clickable");
     expect(table).toBeTruthy();
     expect(row).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Editar$/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Excluir$/ })).toBeTruthy();
 
     fireEvent.keyDown(row!, { key: "Enter" });
     expect(navigation.navigateCipa).toHaveBeenCalledWith(
       "/apps/cipa/filial-01/minutes/minute-1",
     );
+  });
+
+  it("edita e exclui rascunho pela listagem com confirmação", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByText("Reunião ordinária");
+    fireEvent.click(screen.getByRole("button", { name: /^Editar$/ }));
+    expect(navigation.navigateCipa).toHaveBeenCalledWith(
+      "/apps/cipa/filial-01/minutes/minute-1/edit",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /^Excluir$/ }));
+    expect(screen.getByRole("heading", { name: "Excluir ata" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Excluir ata" }));
+
+    await waitFor(() => expect(api.deleteMinute).toHaveBeenCalledWith("minute-1"));
+  });
+
+  it("cria nova versão antes de editar ata parcialmente assinada", async () => {
+    api.listMinutes.mockResolvedValue({
+      items: [
+        {
+          id: "minute-1",
+          unit_code: "01",
+          title: "Ata parcialmente assinada",
+          minute_number: "ATA-001",
+          meeting_type: "ordinary",
+          meeting_date: "2026-07-16",
+          status: "partially_signed",
+          signatures_done: 1,
+          signatures_pending: 1,
+        },
+      ],
+      total: 1,
+    });
+
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByText("Ata parcialmente assinada");
+    fireEvent.click(screen.getByRole("button", { name: /^Editar$/ }));
+
+    await waitFor(() =>
+      expect(api.createVersion).toHaveBeenCalledWith("minute-1", {
+        change_reason: "Ata reaberta para edição pelo gestor.",
+      }),
+    );
+    expect(navigation.navigateCipa).toHaveBeenCalledWith(
+      "/apps/cipa/filial-01/minutes/minute-1/edit",
+    );
+    expect(screen.getByRole("button", { name: /^Excluir$/ })).toBeTruthy();
   });
 
   it("renderiza estado de acesso negado pelo componente canônico", () => {

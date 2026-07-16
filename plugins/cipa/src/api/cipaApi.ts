@@ -70,6 +70,14 @@ export async function updateMinute(id: string, body: Record<string, unknown>) {
   return unwrap(envelope);
 }
 
+export async function deleteMinute(id: string) {
+  const envelope = await httpJson<ApiEnvelope<{ minute: Record<string, unknown> }>>(
+    "DELETE",
+    `${API}/minutes/${id}`,
+  );
+  return unwrap(envelope);
+}
+
 export async function setSigners(id: string, signers: Record<string, unknown>[]) {
   const envelope = await httpJson<ApiEnvelope<{ signers: Record<string, unknown>[] }>>(
     "PUT",

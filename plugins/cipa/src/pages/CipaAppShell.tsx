@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
   BackLink,
@@ -7,9 +7,21 @@ import {
   StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { Building2, Download, FilePlus2, PenLine, Printer, RefreshCw, Users } from "lucide-react";
+import {
+  Building2,
+  Download,
+  FilePlus2,
+  PenLine,
+  Pencil,
+  Printer,
+  RefreshCw,
+  Trash2,
+  Users,
+} from "lucide-react";
 
 import {
+  createVersion,
+  deleteMinute,
   exportPdf,
   finalizeMinute,
   getAudit,
@@ -46,6 +58,7 @@ import {
   cipaDataTableLabels,
   cipaStatusBadgeClassNames,
 } from "../ui/cipaUiContracts";
+import { CipaConfirmModal } from "../ui/CipaConfirmModal";
 import { CipaMembersPage } from "./CipaMembersPage";
 import { MinuteEditorPage } from "./MinuteEditorPage";
 import { MinuteDocumentView } from "../components/MinuteDocumentView";
@@ -58,6 +71,18 @@ type Props = {
   accessLoading: boolean;
   accessError: string | null;
 };
+
+function canEditMinute(status: string): boolean {
+  return status !== "finalized" && status !== "cancelled";
+}
+
+function canDeleteMinute(status: string): boolean {
+  return status !== "signed" && status !== "finalized";
+}
+
+function needsNewVersionForEdit(status: string): boolean {
+  return status !== "draft" && status !== "in_review";
+}
 
 export function CipaAppShell({ route, access, accessLoading, accessError }: Props) {
   if (accessLoading) {
@@ -276,6 +301,8 @@ function MinuteListPage({
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<MinuteListItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const load = () => {
@@ -295,6 +322,35 @@ function MinuteListPage({
   };
 
   useEffect(() => load(), [unitCode, status]);
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await deleteMinute(deleteTarget.id);
+      setDeleteTarget(null);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir ata.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const openEditor = useCallback(async (item: MinuteListItem) => {
+    setError(null);
+    try {
+      if (needsNewVersionForEdit(item.status)) {
+        await createVersion(item.id, {
+          change_reason: "Ata reaberta para edição pelo gestor.",
+        });
+      }
+      navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${item.id}/edit`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao preparar ata para edição.");
+    }
+  }, [unitCode]);
 
   const columns = useMemo<DataTableColumn<MinuteListItem>[]>(
     () => [
@@ -345,8 +401,36 @@ function MinuteListPage({
           return total > 0 ? `${done}/${total}` : "—";
         },
       },
+      ...(canManage
+        ? [
+            {
+              key: "actions",
+              header: "Ações",
+              mobileLabel: "Ações",
+              interactive: true,
+              render: (item: MinuteListItem) => (
+                <div className="cipa-members-actions">
+                  {canEditMinute(item.status) ? (
+                    <ActionButton
+                      variant="ghost"
+                      onClick={() => void openEditor(item)}
+                    >
+                      <Pencil size={14} /> Editar
+                    </ActionButton>
+                  ) : null}
+                  {canDeleteMinute(item.status) ? (
+                    <ActionButton variant="ghost" onClick={() => setDeleteTarget(item)}>
+                      <Trash2 size={14} /> Excluir
+                    </ActionButton>
+                  ) : null}
+                  {!canEditMinute(item.status) && !canDeleteMinute(item.status) ? "—" : null}
+                </div>
+              ),
+            } satisfies DataTableColumn<MinuteListItem>,
+          ]
+        : []),
     ],
-    [],
+    [canManage, openEditor],
   );
 
   return (
@@ -445,6 +529,21 @@ function MinuteListPage({
           />
         ) : null}
       </CipaContentCard>
+
+      <CipaConfirmModal
+        open={Boolean(deleteTarget)}
+        title="Excluir ata"
+        message={
+          deleteTarget
+            ? `Excluir a ata ${deleteTarget.minute_number} — ${deleteTarget.title}? O registro será removido da listagem, mas a auditoria será preservada.`
+            : ""
+        }
+        confirmLabel="Excluir ata"
+        busy={deleting}
+        variant="danger"
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }
@@ -464,6 +563,7 @@ function MinuteDetailPage({
   const [audit, setAudit] = useState<Record<string, unknown>[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const reload = () => {
     getMinute(minuteId)
@@ -501,6 +601,37 @@ function MinuteDetailPage({
     }
   };
 
+  const confirmDelete = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteMinute(minuteId);
+      navigateCipa(`/apps/cipa/filial-${unitCode}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao excluir ata.");
+    } finally {
+      setBusy(false);
+      setDeleteOpen(false);
+    }
+  };
+
+  const openEditor = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      if (needsNewVersionForEdit(status)) {
+        await createVersion(minuteId, {
+          change_reason: "Ata reaberta para edição pelo gestor.",
+        });
+      }
+      navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/edit`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao preparar ata para edição.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="cipa-page-stack">
       <CipaPageHeader
@@ -513,13 +644,14 @@ function MinuteDetailPage({
         subtitle={`${String(minute?.minute_number || "")} · ${STATUS_LABELS[status] || status}`}
         actions={
           <>
-            {canManage && (status === "draft" || status === "in_review") && (
-              <ActionButton
-                onClick={() =>
-                  navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/edit`)
-                }
-              >
-                Editar
+            {canManage && canEditMinute(status) && (
+              <ActionButton disabled={busy} onClick={() => void openEditor()}>
+                <Pencil size={16} /> Editar
+              </ActionButton>
+            )}
+            {canManage && canDeleteMinute(status) && (
+              <ActionButton variant="ghost" disabled={busy} onClick={() => setDeleteOpen(true)}>
+                <Trash2 size={16} /> Excluir
               </ActionButton>
             )}
             {canManage && (status === "draft" || status === "in_review") && (
@@ -568,6 +700,17 @@ function MinuteDetailPage({
       />
 
       {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
+
+      <CipaConfirmModal
+        open={deleteOpen}
+        title="Excluir ata"
+        message={`Excluir a ata ${String(minute?.minute_number || "")} — ${String(minute?.title || "")}? O registro será removido da listagem, mas a auditoria será preservada.`}
+        confirmLabel="Excluir ata"
+        busy={busy}
+        variant="danger"
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleteOpen(false)}
+      />
 
       {detail ? (
         <MinuteDocumentView

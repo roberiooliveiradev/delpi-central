@@ -7,6 +7,9 @@ CONTENT_LOCKED_STATUSES = frozenset(
     {"awaiting_signatures", "partially_signed", "signed", "finalized", "cancelled"}
 )
 TERMINAL_STATUSES = frozenset({"finalized", "cancelled"})
+DELETABLE_STATUSES = frozenset(
+    {"draft", "in_review", "awaiting_signatures", "partially_signed", "cancelled"}
+)
 
 ALLOWED_TRANSITIONS: dict[str, frozenset[str]] = {
     "draft": frozenset({"in_review", "awaiting_signatures", "cancelled"}),
@@ -31,6 +34,11 @@ class MinuteStatusTransitionService:
     @classmethod
     def is_terminal(cls, status: str) -> bool:
         return status in TERMINAL_STATUSES
+
+    @classmethod
+    def can_delete(cls, status: str) -> bool:
+        """Soft-delete permitido enquanto a ata ainda não está assinada/finalizada."""
+        return status in DELETABLE_STATUSES
 
     @classmethod
     def requires_new_version_for_content_change(cls, status: str) -> bool:

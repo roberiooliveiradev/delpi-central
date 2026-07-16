@@ -112,3 +112,13 @@ def test_content_editable_flags():
     assert MinuteStatusTransitionService.requires_new_version_for_content_change(
         "awaiting_signatures"
     )
+
+
+def test_soft_delete_flags_preserve_signed_and_finalized_minutes():
+    assert MinuteStatusTransitionService.can_delete("draft")
+    assert MinuteStatusTransitionService.can_delete("in_review")
+    assert MinuteStatusTransitionService.can_delete("awaiting_signatures")
+    assert MinuteStatusTransitionService.can_delete("partially_signed")
+    assert MinuteStatusTransitionService.can_delete("cancelled")
+    assert not MinuteStatusTransitionService.can_delete("signed")
+    assert not MinuteStatusTransitionService.can_delete("finalized")

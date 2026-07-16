@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from cipa_app.application.use_cases.meeting_minutes_service import MeetingMinutesService
 
 
@@ -119,3 +121,40 @@ def test_signature_image_checks_minute_and_reads_current_signature(monkeypatch):
     raw = service.signature_image(SimpleNamespace(id="reader"), "minute-1", "signature-1")
 
     assert raw.startswith(b"\x89PNG")
+
+
+def test_soft_delete_allows_partially_signed_and_keeps_repository_history():
+    class Repo:
+        def soft_delete(self, minute_id, actor_user_id):
+            return {
+                "id": minute_id,
+                "status": "partially_signed",
+                "deleted_at": "2026-07-16T18:00:00+00:00",
+                "actor_user_id": actor_user_id,
+            }
+
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    service.repo = Repo()
+    service._load_authorized = lambda *_args: {
+        "id": "minute-1",
+        "unit_code": "01",
+        "status": "partially_signed",
+    }
+
+    result = service.soft_delete(SimpleNamespace(id="actor-1"), "minute-1")
+
+    assert result["minute"]["deleted_at"] is not None
+    assert result["minute"]["actor_user_id"] == "actor-1"
+
+
+@pytest.mark.parametrize("status", ["signed", "finalized"])
+def test_soft_delete_rejects_signed_or_finalized(status):
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    service._load_authorized = lambda *_args: {
+        "id": "minute-1",
+        "unit_code": "01",
+        "status": status,
+    }
+
+    with pytest.raises(ValueError, match="assinadas ou finalizadas"):
+        service.soft_delete(SimpleNamespace(id="actor-1"), "minute-1")

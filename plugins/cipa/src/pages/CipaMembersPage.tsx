@@ -2,11 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
   BackLink,
-  ConfirmModalPanel,
   DataTable,
   FieldLabel,
   FormSelectControl,
-  ModalShell,
   NativeTextControl,
   StatusBadge,
   UserDirectoryPicker,
@@ -40,6 +38,7 @@ import {
   cipaDataTableLabels,
   cipaStatusBadgeClassNames,
 } from "../ui/cipaUiContracts";
+import { CipaConfirmModal } from "../ui/CipaConfirmModal";
 
 type Props = {
   unitCode: CipaUnitCode;
@@ -57,24 +56,6 @@ const EMPTY_FORM: FormState = {
   role: "titular_member",
   mandate_start: new Date().toISOString().slice(0, 10),
   mandate_end: "",
-};
-
-const MODAL_CLASSES = {
-  overlay: "delpi-ui-modal-overlay",
-  dialog: "delpi-ui-modal delpi-ui-modal--sm",
-  header: "delpi-ui-modal__header",
-  title: "delpi-ui-modal__title",
-  closeButton: "delpi-ui-modal__close",
-  body: "delpi-ui-modal__body",
-  footer: "delpi-ui-modal__footer",
-};
-
-const CONFIRM_CLASSES = {
-  message: "cipa-confirm-modal__message",
-  actions: "cipa-form-actions cipa-form-actions--end",
-  cancelButton: "delpi-ui-action-btn delpi-ui-action-btn--ghost",
-  confirmButton: "delpi-ui-action-btn delpi-ui-action-btn--primary",
-  confirmButtonDanger: "delpi-ui-action-btn cipa-action-btn--danger",
 };
 
 function formatMandate(member: CipaMember): string {
@@ -386,30 +367,20 @@ export function CipaMembersPage({ unitCode }: Props) {
         )}
       </CipaSectionCard>
 
-      <ModalShell
+      <CipaConfirmModal
         open={Boolean(ending)}
         title="Encerrar participação"
-        onClose={() => {
-          if (!saving) setEnding(null);
-        }}
-        classNames={MODAL_CLASSES}
-        portalScopeClassName="dashboard-cipa"
-      >
-        <ConfirmModalPanel
-          message={
-            ending
-              ? `Encerrar o mandato ativo de ${ending.display_name}? O histórico será preservado.`
-              : ""
-          }
-          confirmLabel="Encerrar"
-          cancelLabel="Cancelar"
-          confirmBusy={saving}
-          variant="danger"
-          onConfirm={() => void confirmEnd()}
-          onCancel={() => setEnding(null)}
-          classNames={CONFIRM_CLASSES}
-        />
-      </ModalShell>
+        message={
+          ending
+            ? `Encerrar o mandato ativo de ${ending.display_name}? O histórico será preservado.`
+            : ""
+        }
+        confirmLabel="Encerrar"
+        busy={saving}
+        variant="danger"
+        onConfirm={() => void confirmEnd()}
+        onCancel={() => setEnding(null)}
+      />
     </div>
   );
 }
