@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  parseComunicadoConfig,
+  serializeComunicadoConfig,
+} from "./comunicadoHelpers";
+import {
   aggregateValues,
   applyViewProjection,
   discoverResolvedFieldOptions,
@@ -105,5 +109,42 @@ describe("applyViewProjection", () => {
     expect(suggested.chartProjection?.categoryField).toBe("periodo");
     expect(suggested.chartProjection?.series?.length).toBeGreaterThan(0);
     expect(suggested.tableProjection?.columns?.length).toBeGreaterThan(0);
+  });
+
+  it("respeita valueFieldTypes para eixo X vs Y", () => {
+    const suggested = suggestDefaultProjections(sampleResolved, {
+      periodo: "date",
+      oee: "number",
+      otd: "number",
+      a: "number",
+      b: "number",
+    });
+    expect(suggested.chartProjection?.categoryField).toBe("periodo");
+    expect(suggested.chartProjection?.series?.every((s) => s.field !== "periodo")).toBe(true);
+  });
+});
+
+describe("persistência sem selectedValueFields", () => {
+  it("migra legado no load e não regrava selectedValueFields", () => {
+    const parsed = parseComunicadoConfig({
+      blocks: [
+        {
+          id: "c1",
+          type: "chart_view",
+          chartType: "bar",
+          selectedValueFields: ["oee", "otd"],
+          frame: { x: 0, y: 0, w: 40, h: 30 },
+        },
+      ],
+    });
+    const chart = parsed.blocks.find((b) => b.type === "chart_view");
+    expect(chart?.type).toBe("chart_view");
+    if (chart?.type !== "chart_view") return;
+    expect(chart.chartProjection?.series?.map((s) => s.field)).toEqual(["oee", "otd"]);
+    expect("selectedValueFields" in chart).toBe(false);
+    const serialized = serializeComunicadoConfig(parsed) as { blocks: Array<Record<string, unknown>> };
+    const out = serialized.blocks.find((b) => b.type === "chart_view");
+    expect(out?.selectedValueFields).toBeUndefined();
+    expect(out?.chartProjection).toBeTruthy();
   });
 });

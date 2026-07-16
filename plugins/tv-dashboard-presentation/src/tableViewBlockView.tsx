@@ -22,8 +22,6 @@ export function TableViewBlockView({
   interaction = null,
 }: Props) {
   const resolved = applyViewProjection(block.resolved, {
-    selectedValueFields: block.selectedValueFields,
-    valueField: block.valueField,
     tableProjection: block.tableProjection,
   });
   const label = tablePresetLabel(block.tablePreset);

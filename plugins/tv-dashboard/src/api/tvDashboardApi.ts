@@ -342,6 +342,8 @@ export async function getPreviewPayload(id: string, filters?: PreviewFilterOverr
   );
 }
 
+export type TvDataRouteFieldType = "number" | "string" | "date";
+
 export type TvDataRouteCatalogItem = {
   operationId: string;
   label: string;
@@ -354,6 +356,8 @@ export type TvDataRouteCatalogItem = {
   suggestedDisplayModes?: string[];
   valueFields?: string[];
   valueFieldLabels?: Record<string, string>;
+  /** Tipos curados (overlay) — sugerem eixo X vs Y. */
+  valueFieldTypes?: Record<string, TvDataRouteFieldType>;
   defaultParams?: Record<string, unknown>;
   paramSchema?: Record<string, unknown>;
   fixedQueryParams?: Record<string, unknown>;

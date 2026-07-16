@@ -237,9 +237,9 @@ export type ComunicadoDataBinding = {
   params?: Record<string, string | number | boolean | null>;
   displayMode?: ComunicadoDataDisplayMode;
   label?: string;
-  /** Campo principal (legado). Preferir `selectedValueFields` para multi-métrica. */
+  /** @deprecated Legado da fonte monolítica; visuais usam *Projection. */
   valueField?: string;
-  /** Campos exibidos no visual; vazio/ausente = todas as métricas disponíveis da rota. */
+  /** @deprecated Legado da fonte monolítica; visuais usam *Projection. */
   selectedValueFields?: string[];
   maxRows?: number;
   refreshSec?: number;
@@ -275,10 +275,7 @@ export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
   type: "chart_view";
   chartType: ComunicadoChartType;
   dataSourceId?: string;
-  /** Override da seleção de métricas da fonte (escalares multi-campo). */
-  selectedValueFields?: string[];
-  valueField?: string;
-  /** Projeção de eixos/séries (preferir sobre selectedValueFields). */
+  /** Projeção de eixos/séries (contrato canônico). */
   chartProjection?: import("./viewProjection").ChartViewProjection;
   chartOptions?: ComunicadoChartOptions;
   /** Onda 4G — estilo/visibilidade por parte (adapter com chartOptions). */
@@ -293,9 +290,7 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   /** Onda 4G.8 — estilo/visibilidade por parte (adapter com tableOptions). */
   tableParts?: ComunicadoTablePartsMap;
   dataSourceId?: string;
-  selectedValueFields?: string[];
-  valueField?: string;
-  /** Colunas visíveis/ordem (preferir sobre selectedValueFields / maxCols). */
+  /** Colunas visíveis/ordem (contrato canônico). */
   tableProjection?: import("./viewProjection").TableViewProjection;
   /** Truncamento de exibição: máx. de linhas (vazio = todas do resolved, com scroll). */
   maxRows?: number;
@@ -342,9 +337,7 @@ export type ComunicadoInputBlock = ComunicadoBlockBase & {
 export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
   type: "kpi_view";
   dataSourceId?: string;
-  selectedValueFields?: string[];
-  valueField?: string;
-  /** Métricas com agregação/formato/regras por coluna (preferir sobre selectedValueFields). */
+  /** Métricas com agregação/formato/regras por coluna (contrato canônico). */
   kpiProjection?: import("./viewProjection").KpiViewProjection;
   kpiOptions?: import("./comunicadoKpiOptions").ComunicadoKpiOptions;
   /** Partes primitivas (card/title/value/hint/icon) — padrão chartParts. */
@@ -378,6 +371,8 @@ export type ComunicadoDataResolved = {
   statusCode?: number | null;
   displayMode?: string;
   label?: string;
+  /** Enrichment já aplicou *Projection no servidor — cliente não re-agrega. */
+  serverProjectionApplied?: boolean;
   kpi?: { value?: unknown; label?: string };
   /** Métricas escalares disponíveis (multi-campo). */
   kpiMetrics?: ComunicadoDataKpiMetric[];

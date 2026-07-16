@@ -421,6 +421,26 @@ export function applyViewProjection(
 ): ComunicadoDataResolved | undefined {
   if (!resolved) return resolved;
 
+  // Servidor já projetou (enrichment) — só filtra métricas visíveis se necessário.
+  if (resolved.serverProjectionApplied) {
+    if (selection.kpiProjection?.metrics?.length) {
+      const visible = new Set(
+        selection.kpiProjection.metrics
+          .filter((metric) => metric.visible !== false)
+          .map((metric) => metric.field),
+      );
+      const metrics = (resolved.kpiMetrics ?? []).filter((metric) => visible.has(metric.field));
+      if (metrics.length > 0) {
+        return {
+          ...resolved,
+          kpiMetrics: metrics,
+          kpi: { value: metrics[0]?.value, label: metrics[0]?.label },
+        };
+      }
+    }
+    return resolved;
+  }
+
   const fallback: MetricSelection = {
     selectedValueFields: selection.selectedValueFields,
     valueField: selection.valueField,
@@ -479,21 +499,34 @@ export function discoverResolvedFieldOptions(
 }
 
 /** Sugere projeções iniciais ao conectar uma fonte (sem sobrescrever config existente). */
-export function suggestDefaultProjections(resolved: ComunicadoDataResolved | undefined): {
+export function suggestDefaultProjections(
+  resolved: ComunicadoDataResolved | undefined,
+  fieldTypes?: Record<string, "number" | "string" | "date"> | null,
+): {
   kpiProjection?: KpiViewProjection;
   chartProjection?: ChartViewProjection;
   tableProjection?: TableViewProjection;
 } {
   if (!resolved) return {};
   const fields = discoverResolvedFieldOptions(resolved);
+  const typeOf = (field: string): "number" | "string" | "date" | undefined =>
+    fieldTypes?.[field];
+
   const numericFields = fields.filter((item) => {
+    const declared = typeOf(item.field);
+    if (declared === "number") return true;
+    if (declared === "string" || declared === "date") return false;
     const metric = resolved.kpiMetrics?.find((entry) => entry.field === item.field);
     if (metric && metric.value != null && metric.value !== "") return true;
     const sample = resolved.table?.rows?.[0]?.[item.field];
     return sample != null && sample !== "" && asFiniteNumber(sample) != null;
   });
+
   const categoryCandidate =
     fields.find((item) => {
+      const declared = typeOf(item.field);
+      if (declared === "date" || declared === "string") return true;
+      if (declared === "number") return false;
       const sample = resolved.table?.rows?.[0]?.[item.field];
       return typeof sample === "string" && asFiniteNumber(sample) == null;
     })?.field ?? fields[0]?.field;

@@ -35,11 +35,7 @@ import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { Modal } from "./ui/Modal";
-import {
-  applyValueFieldSelectionToBinding,
-  ValueFieldsMultiSelect,
-  type ValueFieldOption,
-} from "./ValueFieldsMultiSelect";
+import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 const REFRESH_PRESET_VALUES = new Set(["60", "120", "300", "600"]);
 
@@ -321,24 +317,10 @@ export function DataBindingInspector({
         />
       </DeckField>
       {valueFieldOptions.length > 0 ? (
-        <DeckField
-          id="td-data-value-fields"
-          label="Campos de valor"
-          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.valueFields}
-        >
-          <ValueFieldsMultiSelect
-            idPrefix="td-data-value-field"
-            options={valueFieldOptions}
-            selectedValueFields={binding.selectedValueFields}
-            valueField={binding.valueField}
-            compact={isRibbon}
-            onChange={(patch) =>
-              applyPatch({
-                dataBinding: applyValueFieldSelectionToBinding(binding, patch),
-              } as Partial<ComunicadoBlock>)
-            }
-          />
-        </DeckField>
+        <p className="td-deck-inspector__hint">
+          Campos disponíveis ({valueFieldOptions.length}): configure métricas, eixos e colunas no
+          visual (KPI / gráfico / tabela), não na fonte.
+        </p>
       ) : null}
     </>
   );

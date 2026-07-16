@@ -51,8 +51,6 @@ export function ChartViewBlockView({
   interaction = null,
 }: Props) {
   const resolved = applyViewProjection(block.resolved, {
-    selectedValueFields: block.selectedValueFields,
-    valueField: block.valueField,
     chartProjection: block.chartProjection,
   });
   const label = resolved?.label ?? chartTypeLabel(block.chartType);

@@ -67,7 +67,18 @@ describe("DataRoutesSidePanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
     expect(screen.getByLabelText("Rótulo")).toBeTruthy();
     expect(screen.getByText(/Indicador consolidado/)).toBeTruthy();
-    expect(screen.getByText("Inserir fonte de dados")).toBeTruthy();
+    expect(screen.getByText("Continuar")).toBeTruthy();
+  });
+
+  it("wizard pergunta o visual antes de inserir", async () => {
+    renderPanel();
+    await waitFor(() => expect(screen.getByText("Fontes de dados")).toBeTruthy());
+    clickCatalogCard("OEE geral");
+    fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
+    fireEvent.click(screen.getByText("Continuar"));
+    expect(screen.getByText("Como apresentar?")).toBeTruthy();
+    expect(screen.getByText(/KPI \(cards/)).toBeTruthy();
+    expect(screen.getByText("Inserir no palco")).toBeTruthy();
   });
 
   it("testar rota chama preview-block e mostra resultado", async () => {
@@ -80,6 +91,6 @@ describe("DataRoutesSidePanel", () => {
     await waitFor(() => expect(mockedPreview).toHaveBeenCalled());
     await waitFor(() => expect(screen.getByText("Resultado do teste")).toBeTruthy());
     expect(screen.getByText("88,5")).toBeTruthy();
-    expect(mockedPreview.mock.calls[0]?.[0]?.block?.dataBinding?.displayMode).toBe("kpi");
+    expect(mockedPreview.mock.calls[0]?.[0]?.block?.dataBinding?.displayMode).toBe("auto");
   });
 });

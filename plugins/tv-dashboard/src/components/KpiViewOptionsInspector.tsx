@@ -4,7 +4,6 @@ import {
   LucideIconPicker,
   NativeTextControl,
   type DelpiKpiCardTone,
-  type DelpiKpiColorRuleOp,
 } from "@delpi/plugin-ui/index";
 import {
   KPI_ELEMENT_CATALOG,
@@ -24,6 +23,7 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { InspectorElementRow } from "./InspectorElementRow";
+import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import { KpiPartInspector } from "./KpiPartInspector";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -35,15 +35,6 @@ const TONE_OPTIONS: Array<{ value: DelpiKpiCardTone; label: string }> = [
   { value: "positive", label: "Positivo" },
   { value: "negative", label: "Negativo" },
   { value: "warning", label: "Atenção" },
-];
-
-const OP_OPTIONS: Array<{ value: DelpiKpiColorRuleOp; label: string }> = [
-  { value: "gte", label: "≥" },
-  { value: "gt", label: ">" },
-  { value: "lte", label: "≤" },
-  { value: "lt", label: "<" },
-  { value: "eq", label: "=" },
-  { value: "between", label: "entre" },
 ];
 
 export function KpiViewOptionsInspector({ pane = false }: Props) {
@@ -198,81 +189,11 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
             hint={TV_DASHBOARD_HELP_TOOLTIPS.data.kpiColorRules}
             defaultOpen={rules.length > 0}
           >
-            <p className="td-deck-inspector__hint">Primeira regra que casar com o valor define a cor.</p>
-            {rules.map((rule, index) => (
-              <div key={`kpi-rule-${index}`} className="td-kpi-rule">
-                <DeckField id={`td-kpi-rule-op-${index}`} label="Se valor">
-                  <FormSelectControl
-                    id={`td-kpi-rule-op-${index}`}
-                    ariaLabel="Operador"
-                    value={rule.op}
-                    onChange={(value) => {
-                      const next = [...rules];
-                      next[index] = { ...rule, op: value as DelpiKpiColorRuleOp };
-                      patchOptions({ colorRules: next });
-                    }}
-                    options={OP_OPTIONS}
-                  />
-                </DeckField>
-                <DeckField id={`td-kpi-rule-value-${index}`} label="Limiar">
-                  <NativeTextControl
-                    id={`td-kpi-rule-value-${index}`}
-                    type="number"
-                    value={String(rule.value)}
-                    onChange={(raw) => {
-                      const next = [...rules];
-                      next[index] = { ...rule, value: Number(raw) || 0 };
-                      patchOptions({ colorRules: next });
-                    }}
-                  />
-                </DeckField>
-                {rule.op === "between" ? (
-                  <DeckField id={`td-kpi-rule-value-to-${index}`} label="Até">
-                    <NativeTextControl
-                      id={`td-kpi-rule-value-to-${index}`}
-                      type="number"
-                      value={rule.valueTo ?? ""}
-                      onChange={(raw) => {
-                        const next = [...rules];
-                        next[index] = { ...rule, valueTo: raw.trim() ? Number(raw) : undefined };
-                        patchOptions({ colorRules: next });
-                      }}
-                    />
-                  </DeckField>
-                ) : null}
-                <DeckField id={`td-kpi-rule-tone-${index}`} label="Tom">
-                  <FormSelectControl
-                    id={`td-kpi-rule-tone-${index}`}
-                    ariaLabel="Tom da regra"
-                    value={rule.tone ?? "default"}
-                    onChange={(value) => {
-                      const next = [...rules];
-                      next[index] = { ...rule, tone: value as DelpiKpiCardTone };
-                      patchOptions({ colorRules: next });
-                    }}
-                    options={TONE_OPTIONS}
-                  />
-                </DeckField>
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm td-btn--ghost"
-                  onClick={() => patchOptions({ colorRules: rules.filter((_, i) => i !== index) })}
-                >
-                  Remover regra
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--ghost"
-              onClick={() =>
-                patchOptions({
-                  colorRules: [...rules, { op: "gte", value: 90, tone: "positive" }],
-                })
-              }
-            >
-              Adicionar regra
-            </button>
+            <KpiColorRulesEditor
+              idPrefix="td-kpi-global-rules"
+              rules={rules}
+              onChange={(colorRules) => patchOptions({ colorRules })}
+            />
           </DeckPropertySection>
         </>
       ) : null}

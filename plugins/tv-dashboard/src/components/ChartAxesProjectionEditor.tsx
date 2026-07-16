@@ -3,9 +3,13 @@ import type { ChartViewProjection } from "@delpi/tv-dashboard-presentation";
 
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
+export type ChartAxisFieldOption = ValueFieldOption & {
+  fieldType?: "number" | "string" | "date";
+};
+
 type Props = {
   idPrefix: string;
-  options: ValueFieldOption[];
+  options: ChartAxisFieldOption[];
   chartProjection?: ChartViewProjection | null;
   onChange: (next: ChartViewProjection | undefined) => void;
   compact?: boolean;
@@ -63,7 +67,10 @@ export function ChartAxesProjectionEditor({
         }}
         options={[
           { value: "", label: "Categoria automática" },
-          ...options.map((opt) => ({ value: opt.field, label: `X · ${opt.label}` })),
+          ...options.map((opt) => ({
+            value: opt.field,
+            label: `X · ${opt.label}${opt.fieldType ? ` (${opt.fieldType})` : ""}`,
+          })),
         ]}
       />
       {options.map((option) => {

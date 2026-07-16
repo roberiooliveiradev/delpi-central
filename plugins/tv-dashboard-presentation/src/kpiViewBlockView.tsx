@@ -53,8 +53,6 @@ export function KpiViewBlockView({
   interaction = null,
 }: Props) {
   const resolved = applyViewProjection(block.resolved, {
-    selectedValueFields: block.selectedValueFields,
-    valueField: block.valueField,
     kpiProjection: block.kpiProjection,
   });
   const bound = Boolean(block.dataSourceId?.trim());

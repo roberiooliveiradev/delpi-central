@@ -6,6 +6,7 @@ import {
   type ViewAggregation,
 } from "@delpi/tv-dashboard-presentation";
 
+import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 type Props = {
@@ -148,28 +149,15 @@ export function KpiMetricsProjectionEditor({
                     patchMetric(metric.field, { label: value.trim() || undefined })
                   }
                 />
-                <NativeTextControl
-                  id={`${idPrefix}-${metric.field}-gte`}
-                  className={compact ? "delpi-ui-native-control--compact" : undefined}
-                  type="number"
-                  placeholder="Positivo se ≥ (opcional)"
-                  value={
-                    metric.colorRules?.find((rule) => rule.op === "gte" && rule.tone === "positive")
-                      ?.value ?? ""
-                  }
-                  onChange={(value) => {
-                    const trimmed = value.trim();
-                    if (!trimmed) {
-                      patchMetric(metric.field, { colorRules: undefined });
-                      return;
-                    }
-                    const num = Number(trimmed);
-                    if (!Number.isFinite(num)) return;
-                    patchMetric(metric.field, {
-                      colorRules: [{ op: "gte", value: num, tone: "positive" }],
-                    });
-                  }}
-                />
+                <div className="td-deck-inspector__kpi-metric-rules">
+                  <p className="td-deck-inspector__hint">Cores condicionais desta métrica</p>
+                  <KpiColorRulesEditor
+                    idPrefix={`${idPrefix}-${metric.field}-rules`}
+                    rules={metric.colorRules ?? []}
+                    compact={compact}
+                    onChange={(colorRules) => patchMetric(metric.field, { colorRules })}
+                  />
+                </div>
               </div>
             ) : null}
           </div>

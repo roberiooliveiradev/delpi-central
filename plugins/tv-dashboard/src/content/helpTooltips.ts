@@ -236,6 +236,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   data: {
     catalogSearch:
       "Busque rotas GET da api-delpi. Os chips KPI / Série / Tabela só filtram o catálogo — qualquer fonte pode ligar a KPI, gráfico ou tabela.",
+    insertWizard:
+      "Escolha o visual inicial criado junto com a fonte. A mesma fonte continua disponível para outros formatos no palco.",
     sourceConfig:
       "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; no editor, «Atualizar visual» refresca o palco.",
     testRoute:

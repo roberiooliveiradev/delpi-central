@@ -807,16 +807,12 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
-    if (block.selectedValueFields?.length) base.selectedValueFields = [...block.selectedValueFields];
-    if (block.valueField) base.valueField = block.valueField;
     if (block.chartProjection) base.chartProjection = block.chartProjection;
     if (block.chartOptions) base.chartOptions = { ...block.chartOptions };
     if (block.chartParts) base.chartParts = { ...block.chartParts };
   } else if (block.type === "table_view") {
     base.tablePreset = block.tablePreset;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
-    if (block.selectedValueFields?.length) base.selectedValueFields = [...block.selectedValueFields];
-    if (block.valueField) base.valueField = block.valueField;
     if (block.tableProjection) base.tableProjection = block.tableProjection;
     if (block.maxRows != null) base.maxRows = block.maxRows;
     if (block.maxCols != null) base.maxCols = block.maxCols;
@@ -829,8 +825,6 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     if (block.headerRow != null) base.headerRow = block.headerRow;
   } else if (block.type === "kpi_view") {
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
-    if (block.selectedValueFields?.length) base.selectedValueFields = [...block.selectedValueFields];
-    if (block.valueField) base.valueField = block.valueField;
     if (block.kpiProjection) base.kpiProjection = block.kpiProjection;
     if (block.kpiOptions) base.kpiOptions = { ...block.kpiOptions };
     if (block.kpiParts) base.kpiParts = { ...block.kpiParts };
@@ -1060,11 +1054,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         ? (block.chartParts as ComunicadoChartPartsMap)
         : undefined;
     const chartParts = normalizeChartPartsForLoad(rawParts, chartOptions);
-    const selectedValueFields = normalizeSelectedValueFields(block.selectedValueFields);
-    const valueField = typeof block.valueField === "string" ? block.valueField : undefined;
+    const legacyFields = normalizeSelectedValueFields(block.selectedValueFields);
+    const legacyValueField = typeof block.valueField === "string" ? block.valueField : undefined;
     const chartProjection =
       normalizeChartProjection(block.chartProjection) ??
-      chartProjectionFromSelectedFields(selectedValueFields, valueField);
+      chartProjectionFromSelectedFields(legacyFields, legacyValueField);
     return attachBlockAnimations(
       {
         id,
@@ -1076,8 +1070,6 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         chartOptions,
         chartParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
-        selectedValueFields,
-        valueField,
         chartProjection,
         resolved:
           block.resolved && typeof block.resolved === "object"
@@ -1099,11 +1091,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         ? (block.tableParts as ComunicadoTablePartsMap)
         : undefined;
     const tableParts = normalizeTablePartsForLoad(rawParts, tableOptions, style);
-    const selectedValueFields = normalizeSelectedValueFields(block.selectedValueFields);
-    const valueField = typeof block.valueField === "string" ? block.valueField : undefined;
+    const legacyFields = normalizeSelectedValueFields(block.selectedValueFields);
+    const legacyValueField = typeof block.valueField === "string" ? block.valueField : undefined;
     const tableProjection =
       normalizeTableProjection(block.tableProjection) ??
-      tableProjectionFromSelectedFields(selectedValueFields, valueField);
+      tableProjectionFromSelectedFields(legacyFields, legacyValueField);
     return attachBlockAnimations(
       {
         id,
@@ -1115,8 +1107,6 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         tableOptions,
         tableParts,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
-        selectedValueFields,
-        valueField,
         tableProjection,
         maxRows: normalizeTableViewLimit(block.maxRows, TABLE_VIEW_MAX_ROWS_CAP),
         maxCols: normalizeTableViewLimit(block.maxCols, TABLE_VIEW_MAX_COLS_CAP),
@@ -1219,11 +1209,11 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       ...baseOptions,
       ...partsToKpiOptions(kpiParts),
     });
-    const selectedValueFields = normalizeSelectedValueFields(block.selectedValueFields);
-    const valueField = typeof block.valueField === "string" ? block.valueField : undefined;
+    const legacyFields = normalizeSelectedValueFields(block.selectedValueFields);
+    const legacyValueField = typeof block.valueField === "string" ? block.valueField : undefined;
     const kpiProjection =
       normalizeKpiProjection(block.kpiProjection) ??
-      kpiProjectionFromSelectedFields(selectedValueFields, valueField);
+      kpiProjectionFromSelectedFields(legacyFields, legacyValueField);
     return attachBlockAnimations(
       {
         id,
@@ -1232,8 +1222,6 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         style: { ...defaultStyle("kpi_view"), ...style },
         groupId,
         dataSourceId: typeof block.dataSourceId === "string" ? block.dataSourceId : undefined,
-        selectedValueFields,
-        valueField,
         kpiProjection,
         kpiOptions,
         kpiParts,

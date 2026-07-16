@@ -90,7 +90,10 @@ export function VisualDataViewInspector({
             block.id === selected.dataSourceId && isDataSourceBlockType(block.type),
         ) ?? null
       : null;
-  const valueFieldOptions = viewValueFieldOptions(route, linkedSource);
+  const valueFieldOptions = viewValueFieldOptions(route, linkedSource).map((item) => ({
+    ...item,
+    fieldType: route?.valueFieldTypes?.[item.field],
+  }));
   const tableColumnOptions = valueFieldOptions.map((item) => ({
     key: item.field,
     label: item.label,
@@ -99,30 +102,18 @@ export function VisualDataViewInspector({
   const applyTableProjection = (next: TableViewProjection | undefined) => {
     updateSelected({
       tableProjection: next,
-      selectedValueFields: next?.columns
-        ?.filter((col) => col.visible !== false)
-        .map((col) => col.key),
-      valueField: next?.columns?.find((col) => col.visible !== false)?.key,
     } as Partial<ComunicadoTableViewBlock>);
   };
 
   const applyKpiProjection = (next: KpiViewProjection | undefined) => {
-    const visibleFields = next?.metrics
-      ?.filter((metric) => metric.visible !== false)
-      .map((metric) => metric.field);
     updateSelected({
       kpiProjection: next,
-      selectedValueFields: visibleFields?.length ? visibleFields : undefined,
-      valueField: visibleFields?.[0],
     } as Partial<ComunicadoBlock>);
   };
 
   const applyChartProjection = (next: ChartViewProjection | undefined) => {
-    const seriesFields = next?.series?.map((item) => item.field);
     updateSelected({
       chartProjection: next,
-      selectedValueFields: seriesFields?.length ? seriesFields : undefined,
-      valueField: seriesFields?.[0],
     } as Partial<ComunicadoBlock>);
   };
 
@@ -168,7 +159,10 @@ export function VisualDataViewInspector({
             );
             const resolved =
               source && "resolved" in source ? source.resolved : undefined;
-            const suggested = suggestDefaultProjections(resolved);
+            const suggested = suggestDefaultProjections(
+              resolved,
+              route?.valueFieldTypes ?? null,
+            );
             if (selected.type === "kpi_view" && !selected.kpiProjection?.metrics?.length) {
               updateSelected({
                 dataSourceId: sourceId,

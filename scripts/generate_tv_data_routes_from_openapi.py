@@ -36,6 +36,7 @@ OVERLAY_KEYS = frozenset(
     {
         "valueFields",
         "valueFieldLabels",
+        "valueFieldTypes",
         "seriesField",
         "defaultParams",
         "tvConstraints",
@@ -794,6 +795,7 @@ def seed_overlays_from_catalog(
             "paramSchema",
             "whenToUse",
             "valueFieldLabels",
+            "valueFieldTypes",
         }
         if any(key in overlay for key in tv_keys):
             # Mantém label/description/category se já curados junto.

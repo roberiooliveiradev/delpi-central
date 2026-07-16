@@ -5709,6 +5709,41 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-inspector__kpi-metric-controls > :last-child{
   grid-column: 1 / -1;
 }
+.dashboard-tv-dashboard .td-data-routes-panel__wizard{
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+}
+.dashboard-tv-dashboard .td-data-routes-panel__wizard-option{
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--td-border, #e5e7eb) 90%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.dashboard-tv-dashboard .td-data-routes-panel__wizard-option--active{
+  border-color: color-mix(in srgb, var(--td-accent, #089bdb) 55%, transparent);
+  background: color-mix(in srgb, var(--td-accent, #089bdb) 8%, transparent);
+}
+.dashboard-tv-dashboard .td-data-routes-panel__wizard-option strong{
+  display: block;
+  font-size: 13px;
+}
+.dashboard-tv-dashboard .td-data-routes-panel__wizard-option small{
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--td-muted, #6b7280);
+  font-size: 11px;
+  line-height: 1.35;
+}
+.dashboard-tv-dashboard .td-kpi-rules{
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 .dashboard-tv-dashboard .td-kpi-part-typography{
   display: flex;
   flex-direction: column;

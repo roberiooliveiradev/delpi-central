@@ -21,6 +21,7 @@ export { ChartSeriesPie } from "./ChartSeriesPie";
 export { ChartSeriesRadar } from "./ChartSeriesRadar";
 export { ChartSeriesScatter } from "./ChartSeriesScatter";
 export { ChartSeriesStackedBar } from "./ChartSeriesStackedBar";
+export { ChartSeriesCategoryStackedBar } from "./ChartSeriesCategoryStackedBar";
 export { ChartSeriesWaterfall } from "./ChartSeriesWaterfall";
 export { ChartTitle } from "./ChartTitle";
 export { ChartValueLabels } from "./ChartValueLabels";

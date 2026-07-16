@@ -7,9 +7,9 @@ import { ChartAxisY } from "./ChartAxisY";
 import { ChartDataPoints } from "./ChartDataPoints";
 import { ChartGrid } from "./ChartGrid";
 import { ChartPlotArea } from "./ChartPlotArea";
-import { ChartSeriesArea } from "./ChartSeriesArea";
 import { ChartSeriesBar } from "./ChartSeriesBar";
 import { ChartSeriesBubble } from "./ChartSeriesBubble";
+import { ChartSeriesCategoryStackedBar } from "./ChartSeriesCategoryStackedBar";
 import { ChartSeriesFunnel } from "./ChartSeriesFunnel";
 import { ChartSeriesHistogram } from "./ChartSeriesHistogram";
 import { ChartSeriesLine } from "./ChartSeriesLine";
@@ -18,6 +18,7 @@ import { ChartSeriesRadar } from "./ChartSeriesRadar";
 import { ChartSeriesScatter } from "./ChartSeriesScatter";
 import { ChartSeriesStackedBar } from "./ChartSeriesStackedBar";
 import { ChartSeriesWaterfall } from "./ChartSeriesWaterfall";
+import { ChartSeriesArea } from "./ChartSeriesArea";
 import { ChartValueLabels } from "./ChartValueLabels";
 import type { ChartPartsMap, SeriesChartInteraction } from "../seriesChartParts";
 import type { SeriesChartKindProps } from "./types";
@@ -75,27 +76,54 @@ export function ChartPlotAreaGroup({
     (chartType === "line" || chartType === "area") &&
     seriesList &&
     seriesList.length > 1;
+  const multiBar = chartType === "bar" && seriesList && seriesList.length > 1;
+  const multiStacked = chartType === "stacked_bar" && seriesList && seriesList.length > 1;
 
   const series = (
     <>
       {chartType === "bar" ? (
-        <ChartSeriesBar
-          layout={layout}
-          points={points}
-          seriesColor={seriesColor}
-          interaction={interaction}
-        />
+        multiBar && seriesList ? (
+          <>
+            {seriesList.map((entry, index) => (
+              <ChartSeriesBar
+                key={`series-bar-${entry.name}-${index}`}
+                layout={layout}
+                points={entry.points}
+                seriesColor={resolveSeriesColor(index, entry.color)}
+                interaction={interaction}
+                seriesIndex={index}
+                seriesCount={seriesList.length}
+              />
+            ))}
+          </>
+        ) : (
+          <ChartSeriesBar
+            layout={layout}
+            points={points}
+            seriesColor={seriesColor}
+            interaction={interaction}
+          />
+        )
       ) : null}
 
       {chartType === "stacked_bar" ? (
-        <ChartSeriesStackedBar
-          layout={layout}
-          points={points}
-          seriesColor={seriesColor}
-          interaction={interaction}
-          chartParts={chartParts}
-          categoryColors={config.categoryColors}
-        />
+        multiStacked && seriesList ? (
+          <ChartSeriesCategoryStackedBar
+            layout={layout}
+            seriesList={seriesList}
+            resolveColor={resolveSeriesColor}
+            interaction={interaction}
+          />
+        ) : (
+          <ChartSeriesStackedBar
+            layout={layout}
+            points={points}
+            seriesColor={seriesColor}
+            interaction={interaction}
+            chartParts={chartParts}
+            categoryColors={config.categoryColors}
+          />
+        )
       ) : null}
 
       {chartType === "histogram" ? (

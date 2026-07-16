@@ -99,6 +99,8 @@ export function DataRoutesSidePanel({
   const [label, setLabel] = useState("");
   const [refreshSec, setRefreshSec] = useState<string>("");
   const [params, setParams] = useState<ComunicadoDataBinding["params"]>({});
+  const [step, setStep] = useState<"config" | "wizard">("config");
+  const [wizardView, setWizardView] = useState<"kpi" | "table" | "series" | "source_only">("table");
 
   useEffect(() => {
     setLoading(true);
@@ -116,6 +118,15 @@ export function DataRoutesSidePanel({
     setLabel(route.label);
     setParams(buildRouteDefaultParams(route));
     setRefreshSec("");
+    setStep("config");
+    const preferred = primaryDataRouteDisplayKind(
+      resolveDataRouteDisplayKinds({
+        metaShape: route.metaShape,
+        allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+      }),
+      route.metaShape,
+    );
+    setWizardView(preferred);
   }
 
   async function testRoute(item: DataRouteCatalogItem): Promise<DataRoutePreviewPayload> {
@@ -153,14 +164,11 @@ export function DataRoutesSidePanel({
         defaultParams[key] = value;
       }
     }
-    // Kind do catálogo = sugestão de visual; a fonte resolve kpi+table+chart (displayMode auto).
-    const preferred = primaryDataRouteDisplayKind(
-      resolveDataRouteDisplayKinds({
-        metaShape: pickedRoute.metaShape,
-        allowedDisplayModes: pickedRoute.allowedDisplayModes ?? pickedRoute.suggestedDisplayModes,
-      }),
-      pickedRoute.metaShape,
-    );
+    // Kind do catálogo = sugestão; wizard define o visual criado (ou só a fonte).
+    const preferred =
+      wizardView === "source_only"
+        ? undefined
+        : wizardView;
     const block = createDataSourceBlock(pickedRoute.operationId, {
       label: label.trim() || pickedRoute.label,
       defaultParams,
@@ -172,10 +180,91 @@ export function DataRoutesSidePanel({
     if (mode === "replace") {
       replaceSelectedDataRoute(block);
     } else {
-      addDataSourceBlock(block, { preferredView: preferred });
+      addDataSourceBlock(block, preferred ? { preferredView: preferred } : undefined);
     }
     setPickedRoute(null);
+    setStep("config");
     onInserted?.();
+  }
+
+  if (pickedRoute && step === "wizard" && mode !== "replace") {
+    const kinds = resolveDataRouteDisplayKinds({
+      metaShape: pickedRoute.metaShape,
+      allowedDisplayModes: pickedRoute.allowedDisplayModes ?? pickedRoute.suggestedDisplayModes,
+    });
+    const options: Array<{ value: typeof wizardView; label: string; hint: string }> = [
+      {
+        value: "kpi",
+        label: "KPI (cards / contagem)",
+        hint: kinds.includes("kpi")
+          ? "Métricas escalares ou quantidade da listagem"
+          : "Disponível — a fonte resolve fatias KPI quando houver",
+      },
+      {
+        value: "series",
+        label: "Gráfico (série / barras)",
+        hint: kinds.includes("series")
+          ? "Série temporal ou colunas numéricas no eixo Y"
+          : "Disponível — escolha campos no visual depois",
+      },
+      {
+        value: "table",
+        label: "Tabela completa",
+        hint: kinds.includes("table")
+          ? "Linhas e colunas da listagem / playbook"
+          : "Disponível — qualquer payload vira tabela",
+      },
+      {
+        value: "source_only",
+        label: "Só a fonte (sem visual)",
+        hint: "Insere o chip de dados; você liga KPI/gráfico/tabela depois",
+      },
+    ];
+    return (
+      <div className="td-data-routes-panel">
+        <button
+          type="button"
+          className="td-btn td-btn--sm td-btn--ghost td-data-routes-panel__back"
+          onClick={() => setStep("config")}
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Voltar aos parâmetros
+        </button>
+        <DeckPropertySection pane title="Como apresentar?" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.insertWizard}>
+          <p className="td-deck-inspector__meta">{pickedRoute.label}</p>
+          <p className="td-subtitle">
+            Esta fonte pode alimentar KPI, gráfico e tabela. Escolha o visual inicial (pode mudar depois).
+          </p>
+          <div className="td-data-routes-panel__wizard" role="radiogroup" aria-label="Visual inicial">
+            {options.map((option) => (
+              <label
+                key={option.value}
+                className={[
+                  "td-data-routes-panel__wizard-option",
+                  wizardView === option.value ? "td-data-routes-panel__wizard-option--active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <input
+                  type="radio"
+                  name="td-insert-wizard-view"
+                  checked={wizardView === option.value}
+                  onChange={() => setWizardView(option.value)}
+                />
+                <span>
+                  <strong>{option.label}</strong>
+                  <small>{option.hint}</small>
+                </span>
+              </label>
+            ))}
+          </div>
+          <button type="button" className="td-btn td-btn--primary td-btn--sm" onClick={handleInsert}>
+            Inserir no palco
+          </button>
+        </DeckPropertySection>
+      </div>
+    );
   }
 
   if (pickedRoute) {
@@ -249,8 +338,15 @@ export function DataRoutesSidePanel({
               });
             }}
           />
-          <button type="button" className="td-btn td-btn--primary td-btn--sm" onClick={handleInsert}>
-            {mode === "replace" ? "Aplicar rota" : "Inserir fonte de dados"}
+          <button
+            type="button"
+            className="td-btn td-btn--primary td-btn--sm"
+            onClick={() => {
+              if (mode === "replace") handleInsert();
+              else setStep("wizard");
+            }}
+          >
+            {mode === "replace" ? "Aplicar rota" : "Continuar"}
           </button>
         </DeckPropertySection>
       </div>

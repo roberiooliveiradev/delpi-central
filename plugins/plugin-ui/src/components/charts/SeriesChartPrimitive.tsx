@@ -108,11 +108,25 @@ export function SeriesChartPrimitive({
       : usableSeriesChartPoints(points);
   const multiSeries = Boolean(normalizedSeries && normalizedSeries.length > 1);
   const axisValues = multiSeries
-    ? normalizedSeries!.flatMap((series) =>
-        series.points
-          .map((point) => (point.value == null ? null : Number(point.value)))
-          .filter((value): value is number => value != null && Number.isFinite(value)),
-      )
+    ? chartType === "stacked_bar"
+      ? (() => {
+          const n = Math.max(...normalizedSeries!.map((series) => series.points.length), 0);
+          const sums: number[] = [];
+          for (let i = 0; i < n; i += 1) {
+            let sum = 0;
+            for (const series of normalizedSeries!) {
+              const raw = Number(series.points[i]?.value);
+              if (Number.isFinite(raw) && raw > 0) sum += raw;
+            }
+            sums.push(sum);
+          }
+          return sums;
+        })()
+      : normalizedSeries!.flatMap((series) =>
+          series.points
+            .map((point) => (point.value == null ? null : Number(point.value)))
+            .filter((value): value is number => value != null && Number.isFinite(value)),
+        )
     : undefined;
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const plotHostRef = useRef<HTMLDivElement>(null);

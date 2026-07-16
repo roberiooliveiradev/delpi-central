@@ -67,6 +67,38 @@ describe("ConfigurableSeriesChart", () => {
     expect(screen.getByText("OTD")).toBeTruthy();
   });
 
+  it("barras multi-série renderizam legenda agrupada", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="bar"
+        points={[
+          { label: "Jan", value: 10 },
+          { label: "Fev", value: 20 },
+        ]}
+        seriesList={[
+          {
+            name: "A",
+            points: [
+              { label: "Jan", value: 10 },
+              { label: "Fev", value: 20 },
+            ],
+          },
+          {
+            name: "B",
+            points: [
+              { label: "Jan", value: 15 },
+              { label: "Fev", value: 25 },
+            ],
+          },
+        ]}
+        options={{ showLegend: true, legendPosition: "bottom", showTitle: false }}
+      />,
+    );
+    expect(screen.getByText("A")).toBeTruthy();
+    expect(screen.getByText("B")).toBeTruthy();
+    expect(container.querySelectorAll("rect.delpi-ui-series-chart__series-bar, rect").length).toBeGreaterThan(2);
+  });
+
   it("coloca box-shadow no shell (não no card com overflow:hidden)", () => {
     const shadow = "0 12px 28px rgba(15, 23, 42, 0.1)";
     const { container } = render(

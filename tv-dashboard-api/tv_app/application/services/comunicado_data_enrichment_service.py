@@ -11,6 +11,9 @@ from tv_app.application.services.comunicado_input_filters_service import (
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
+from tv_app.application.services.data.tv_view_projection_service import (
+    apply_view_projection_to_resolved,
+)
 from tv_app.application.services.native_screen_cache_service import (
     native_data_cache_ttl_seconds,
 )
@@ -686,7 +689,10 @@ class ComunicadoDataEnrichmentService:
                 linked.append(block)
                 continue
             merged = dict(block)
-            merged["resolved"] = source_resolved[source_id]
+            merged["resolved"] = apply_view_projection_to_resolved(
+                source_resolved[source_id],
+                block,
+            )
             linked.append(merged)
         return linked
 
