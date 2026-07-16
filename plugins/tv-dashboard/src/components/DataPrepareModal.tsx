@@ -27,7 +27,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   listDataRoutes,
@@ -80,6 +80,8 @@ function queryLabel(block: ComunicadoDataSourceBlock): string {
 
 type RibbonTab = "home" | "transform" | "addColumn" | "combine";
 
+const EMPTY_STEPS: DataTransformStep[] = [];
+
 /**
  * Ambiente de preparação estilo Power Query — modal.
  * «Consultas» = fontes `data_source` (rotas api-delpi) do slide.
@@ -114,7 +116,11 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewEpoch, setPreviewEpoch] = useState(0);
-  const [forcePreviewRefresh, setForcePreviewRefresh] = useState(false);
+
+  const configRef = useRef(config);
+  configRef.current = config;
+  const forcePreviewRef = useRef(false);
+  const previewRequestIdRef = useRef(0);
 
   const [draftRenameFrom, setDraftRenameFrom] = useState("");
   const [draftRenameTo, setDraftRenameTo] = useState("");
@@ -163,7 +169,9 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   }, [open, initialSourceId, queries, activeId]);
 
   const active = queries.find((q) => q.id === activeId) ?? null;
-  const steps = active?.dataTransform?.steps ?? [];
+  const activeBlockRef = useRef(active);
+  activeBlockRef.current = active;
+  const steps = active?.dataTransform?.steps ?? EMPTY_STEPS;
 
   useEffect(() => {
     setPreviewStepIndex(steps.length > 0 ? steps.length - 1 : null);
@@ -183,64 +191,64 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     setFormulaDraft(dataTransformStepFormula(step));
   }, [previewStepIndex, steps]);
 
-  const stepsThroughPreview = useMemo(() => {
-    if (previewStepIndex == null) return [] as DataTransformStep[];
-    return steps.slice(0, previewStepIndex + 1);
+  const stepsThroughKey = useMemo(() => {
+    if (previewStepIndex == null) return "[]";
+    return JSON.stringify(steps.slice(0, previewStepIndex + 1));
   }, [previewStepIndex, steps]);
 
-  const stepsThroughKey = useMemo(
-    () => JSON.stringify(stepsThroughPreview),
-    [stepsThroughPreview],
-  );
-
   useEffect(() => {
-    if (!open || !active) {
+    if (!open || !activeId) {
       setPreview({ columns: [], rows: [] });
       setPreviewError(null);
+      setPreviewLoading(false);
       return;
     }
+
     let cancelled = false;
-    const shouldForce = forcePreviewRefresh;
+    const requestId = ++previewRequestIdRef.current;
+    const forceRefresh = forcePreviewRef.current;
+    forcePreviewRef.current = false;
+
     const handle = window.setTimeout(() => {
+      const block = activeBlockRef.current;
+      if (!block || block.id !== activeId) {
+        setPreviewLoading(false);
+        return;
+      }
+      const stepsThrough =
+        stepsThroughKey === "[]"
+          ? ([] as DataTransformStep[])
+          : ((JSON.parse(stepsThroughKey) as DataTransformStep[]) ?? []);
+
       setPreviewLoading(true);
       setPreviewError(null);
       void previewTransformTableOnServer({
-        block: active,
-        config,
+        block,
+        config: configRef.current,
         playlistId,
-        stepsThrough: stepsThroughPreview,
-        forceRefresh: shouldForce,
+        stepsThrough,
+        forceRefresh,
       })
         .then((table) => {
-          if (cancelled) return;
+          if (cancelled || previewRequestIdRef.current !== requestId) return;
           setPreview(table);
         })
         .catch((err: unknown) => {
-          if (cancelled) return;
+          if (cancelled || previewRequestIdRef.current !== requestId) return;
           setPreviewError(err instanceof Error ? err.message : "Falha ao calcular prévia no servidor.");
           setPreview({ columns: [], rows: [] });
         })
         .finally(() => {
-          if (cancelled) return;
+          if (cancelled || previewRequestIdRef.current !== requestId) return;
           setPreviewLoading(false);
-          if (shouldForce) setForcePreviewRefresh(false);
         });
     }, 280);
+
     return () => {
       cancelled = true;
       window.clearTimeout(handle);
     };
-  }, [
-    open,
-    active,
-    activeId,
-    config,
-    playlistId,
-    stepsThroughKey,
-    previewEpoch,
-    forcePreviewRefresh,
-    stepsThroughPreview,
-  ]);
+  }, [open, activeId, playlistId, stepsThroughKey, previewEpoch]);
 
   const linkedSeries = useMemo(
     () => linkedChartSeriesForSource(blocks, activeId),
@@ -322,7 +330,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   };
 
   const requestServerPreview = (force = false) => {
-    if (force) setForcePreviewRefresh(true);
+    forcePreviewRef.current = force;
     setPreviewEpoch((n) => n + 1);
   };
 
