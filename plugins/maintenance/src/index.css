@@ -600,6 +600,12 @@
   gap: 6px;
   min-width: min(100%, 320px);
   flex: 1 1 200px;
+}
+/* FilterBarShell (coluna): não crescer na altura — flex:1 do .dm-field era para wrap horizontal. */
+.dashboard-maintenance .dm-filter-bar .dm-field{
+  flex: 0 1 auto;
+  width: 100%;
+  min-width: 0;
 }.dashboard-maintenance .dm-field--invalid .dm-field__label,
 .dashboard-maintenance .dm-field--invalid > span:not(.dm-field__error){
   color: #f87171;

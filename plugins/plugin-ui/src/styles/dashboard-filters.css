@@ -183,6 +183,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
+  grid-column: 1 / -1;
 }
 
 .delpi-ui-filter-bar [class*="-filters__error"] {
@@ -196,6 +197,9 @@
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  /* Shell é flex column; MFE com `flex: 1` no field (layout horizontal legado)
+     esticava cada campo e gerava buracos verticais enormes (maintenance jul/2026). */
+  flex: 0 1 auto;
 }
 
 .delpi-ui-filter-bar [class$="-field"] label,
