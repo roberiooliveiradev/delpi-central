@@ -4,11 +4,13 @@ import {
   TABLE_VIEW_MAX_ROWS_CAP,
   chartTypeLabel,
   dataSourceOptionsForInspector,
+  discoverResolvedFieldOptions,
   isDataSourceBlockType,
   normalizeTableViewLimit,
   tablePresetLabel,
   type ComunicadoBlock,
   type ComunicadoTableViewBlock,
+  type TableViewProjection,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
@@ -17,6 +19,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import { TableColumnsMultiSelect } from "./TableColumnsMultiSelect";
 import { ValueFieldsMultiSelect, type ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 type Props = {
@@ -38,25 +41,17 @@ function viewValueFieldOptions(
   route: TvDataRouteCatalogItem | null | undefined,
   source: ComunicadoBlock | null,
 ): ValueFieldOption[] {
-  const fromRoute = route?.valueFields ?? [];
   const labels = route?.valueFieldLabels ?? {};
-  if (fromRoute.length > 0) {
-    return fromRoute
-      .map((field) => String(field).trim())
-      .filter(Boolean)
-      .map((field) => ({
-        field,
-        label: labels[field]?.trim() || field,
-      }));
-  }
-  const metrics =
-    source && "resolved" in source && source.resolved && Array.isArray(source.resolved.kpiMetrics)
-      ? source.resolved.kpiMetrics
-      : [];
-  return metrics.map((metric) => ({
-    field: metric.field,
-    label: metric.label || metric.field,
-  }));
+  const catalog = (route?.valueFields ?? [])
+    .map((field) => String(field).trim())
+    .filter(Boolean)
+    .map((field) => ({
+      field,
+      label: labels[field]?.trim() || field,
+    }));
+  const resolved =
+    source && "resolved" in source && source.resolved ? source.resolved : undefined;
+  return discoverResolvedFieldOptions(resolved, catalog);
 }
 
 export function VisualDataViewInspector({
@@ -91,6 +86,10 @@ export function VisualDataViewInspector({
         ) ?? null
       : null;
   const valueFieldOptions = viewValueFieldOptions(route, linkedSource);
+  const tableColumnOptions = valueFieldOptions.map((item) => ({
+    key: item.field,
+    label: item.label,
+  }));
 
   const applyMetricPatch = (patch: {
     selectedValueFields?: string[];
@@ -100,13 +99,41 @@ export function VisualDataViewInspector({
       updateSelected({
         selectedValueFields: undefined,
         valueField: undefined,
+        kpiProjection: undefined,
+        chartProjection: undefined,
       } as Partial<ComunicadoBlock>);
       return;
     }
     updateSelected({
       selectedValueFields: patch.selectedValueFields,
       valueField: patch.valueField ?? patch.selectedValueFields[0],
+      kpiProjection:
+        selected.type === "kpi_view"
+          ? {
+              metrics: patch.selectedValueFields.map((field) => ({
+                field,
+                visible: true,
+                aggregation: "first" as const,
+              })),
+            }
+          : undefined,
+      chartProjection:
+        selected.type === "chart_view"
+          ? {
+              series: patch.selectedValueFields.map((field) => ({ field })),
+            }
+          : undefined,
     } as Partial<ComunicadoBlock>);
+  };
+
+  const applyTableProjection = (next: TableViewProjection | undefined) => {
+    updateSelected({
+      tableProjection: next,
+      selectedValueFields: next?.columns
+        ?.filter((col) => col.visible !== false)
+        .map((col) => col.key),
+      valueField: next?.columns?.find((col) => col.visible !== false)?.key,
+    } as Partial<ComunicadoTableViewBlock>);
   };
 
   const connectionBody = (
@@ -154,7 +181,24 @@ export function VisualDataViewInspector({
           ]}
         />
       </DeckField>
-      {hasSource && valueFieldOptions.length > 0 ? (
+      {hasSource && selected.type === "table_view" && tableColumnOptions.length > 0 ? (
+        <DeckField
+          id="td-view-table-columns"
+          label="Colunas neste visual"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.tableColumns}
+        >
+          <TableColumnsMultiSelect
+            idPrefix="td-view-table-col"
+            options={tableColumnOptions}
+            tableProjection={tableBlock?.tableProjection}
+            compact={isRibbon}
+            onChange={applyTableProjection}
+          />
+        </DeckField>
+      ) : null}
+      {hasSource &&
+      selected.type !== "table_view" &&
+      valueFieldOptions.length > 0 ? (
         <DeckField
           id="td-view-value-fields"
           label="Métricas neste visual"

@@ -5678,6 +5678,17 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-inspector__value-fields .td-deck-inspector__hint{
   margin: 0 0 0.15rem;
 }
+.dashboard-tv-dashboard .td-deck-inspector__column-row{
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-content: space-between;
+}
+.dashboard-tv-dashboard .td-deck-inspector__column-order{
+  display: inline-flex;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
 .dashboard-tv-dashboard .td-kpi-part-typography{
   display: flex;
   flex-direction: column;
