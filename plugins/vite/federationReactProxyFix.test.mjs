@@ -13,11 +13,13 @@ import {
   patchRemoteEntryCacheBust,
   publishDelpiMfReact,
   isUsableReact,
+  listBundledReactBridgeImports,
   resolveBundledReactBridgeName,
   upgradeUnconditionalReactGlobalPublish,
   DELPI_MF_REACT_GLOBAL,
 } from "./federationReactProxyFix.ts";
 import { DELPI_MF_PATCH_VERSION } from "./federationPatchVersion.mjs";
+import { performance } from "node:perf_hooks";
 
 const REACT_INTERNALS = "__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE";
 
@@ -124,6 +126,23 @@ function testAppChunkSkipsLoneReactDomBridge() {
 }
 
 /**
+ * Regressão ReDoS (?v=7): `(?:[^}"']*,)*r as` travava vite build do plugin-ui
+ * (milhares de `import{a,b,…}`) em "rendering chunks…".
+ */
+function testBridgeImportScanIsLinearOnCommaHeavyImports() {
+  const specs = Array.from({ length: 800 }, (_, i) => `a${i}`).join(",");
+  const bait =
+    `import{${specs}}from"./other.js";` +
+    "x,".repeat(800) +
+    `import{r as Lv,g as Xv}from"./index-ABC.js";var o=Lv();o.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;`;
+  const t0 = performance.now();
+  assert.deepEqual(listBundledReactBridgeImports(bait), ["Lv"]);
+  assert.equal(resolveBundledReactBridgeName(bait), "Lv");
+  const ms = performance.now() - t0;
+  assert.ok(ms < 200, `scan deve ser linear (<200ms), foi ${ms.toFixed(1)}ms`);
+}
+
+/**
  * Regressão dashboard-hr: bridge minificado `rs` — replace ingênuo de `rs()`
  * quebrava `getSelectors()` / `getHours()` → SyntaxError Unexpected token '('.
  */
@@ -171,8 +190,9 @@ testAppChunkReactBridgeFallback();
 testAppChunkPrefersDollarReactBridgeOverReactDom();
 testAppChunkMultiSpecReactImportNotConfusedWithReactDom();
 testAppChunkSkipsLoneReactDomBridge();
+testBridgeImportScanIsLinearOnCommaHeavyImports();
 testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 14 testes passaram");
+console.log("OK: federationReactProxyFix — 15 testes passaram");

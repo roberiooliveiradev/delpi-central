@@ -73,12 +73,49 @@ function escapeRegExp(value: string): string {
 /**
  * Binding atribuído a partir de `id()` — inclui ternário já patchado:
  * `v=((globalThis…)?…:Zv())`.
+ *
+ * Linear (indexOf): evita `[^;]*` aberto, que em chunks grandes do plugin-ui
+ * (mermaid/catálogo) explodia CPU no renderChunk.
  */
 function findBridgeCallBinding(code: string, id: string): string | null {
-  const assignRe = new RegExp(
-    String.raw`(${MF_IDENT})=([^;]*${escapeRegExp(id)}\(\))`,
+  const call = `${id}()`;
+  let from = 0;
+  while (true) {
+    const callAt = code.indexOf(call, from);
+    if (callAt < 0) return null;
+    if (callAt > 0 && /[\w$]/.test(code[callAt - 1]!)) {
+      from = callAt + 1;
+      continue;
+    }
+    const stmtStart = code.lastIndexOf(";", callAt) + 1;
+    const slice = code.slice(stmtStart, callAt);
+    const assigns = [
+      ...slice.matchAll(
+        new RegExp(String.raw`(^|[^\w$])(${MF_IDENT})\s*=(?!=)`, "g"),
+      ),
+    ];
+    if (assigns.length > 0) {
+      return assigns[assigns.length - 1]![2];
+    }
+    from = callAt + 1;
+  }
+}
+
+/**
+ * Bridges `r` exportados de `./index-*.js` — linear, sem `(?:[^}]*,)*` (ReDoS).
+ * Aceita multi-spec (`import{r as Lv,g as Xv}`).
+ */
+export function listBundledReactBridgeImports(code: string): string[] {
+  const importRe = new RegExp(
+    String.raw`import\{([^}]*)\}from"\.\/index-[^"?]+\.js(?:\?v=[^"]+)?"`,
+    "g",
   );
-  return code.match(assignRe)?.[1] ?? null;
+  const bridges: string[] = [];
+  for (const m of code.matchAll(importRe)) {
+    const rAs = m[1].match(/(?:^|,)r as ([$A-Za-z_][\w$]*)(?:,|$)/);
+    if (rAs) bridges.push(rAs[1]);
+  }
+  return bridges;
 }
 
 /**
@@ -92,11 +129,7 @@ function findBridgeCallBinding(code: string, id: string): string | null {
  * costuma exportar `r` + `g`; regex só `{r as X}` ignorava esse bridge (api-delpi-console).
  */
 export function resolveBundledReactBridgeName(code: string): string | null {
-  const importRe = new RegExp(
-    String.raw`import\{(?:[^}"']*,)*r as (${MF_IDENT})(?:,[^}"']*)*\}from"\.\/index-[^"?]+\.js(?:\?v=[^"]+)?"`,
-    "g",
-  );
-  const bridges = [...code.matchAll(importRe)].map((m) => m[1]);
+  const bridges = listBundledReactBridgeImports(code);
   if (bridges.length === 0) return null;
 
   for (const id of bridges) {
