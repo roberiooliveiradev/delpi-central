@@ -45,3 +45,20 @@ export const UNIT_LABELS: Record<string, string> = {
   "01": "Santa Catarina",
   "02": "Espírito Santo",
 };
+
+/** Ações da trilha de auditoria da ata (cipa.meeting_minute_audit_logs). */
+export const AUDIT_ACTION_LABELS: Record<string, string> = {
+  create: "Ata criada",
+  edit: "Dados da ata editados",
+  edit_content: "Conteúdo editado",
+  replace_participants: "Participantes atualizados",
+  replace_signers: "Signatários atualizados",
+  send_for_signature: "Enviada para assinatura",
+  sign: "Assinatura registrada",
+  signature_progress: "Progresso de assinaturas",
+  refuse_signature: "Assinatura recusada",
+  create_version: "Nova versão criada",
+  finalize: "Ata finalizada",
+  cancel: "Ata cancelada",
+  soft_delete: "Ata excluída",
+};

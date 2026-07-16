@@ -41,6 +41,7 @@ import {
   type CipaAccess,
   type CipaUnitCode,
 } from "../security/cipaAccess";
+import { buildMinuteHistoryTimeline } from "../utils/minuteHistoryTimeline";
 import {
   CipaContentCard,
   CipaFilterInputField,
@@ -51,6 +52,7 @@ import {
   CipaSectionCard,
   CipaStateBanner,
   CipaStateBox,
+  CipaTimeline,
 } from "../ui/cipaUi";
 import {
   cipaDataTableClassNames,
@@ -705,25 +707,13 @@ function MinuteDetailPage({
         <CipaStateBox variant="loading" message="Carregando modo de leitura…" />
       )}
 
-      <CipaSectionCard title="Versões">
-        <ul className="cipa-list">
-          {(detail?.versions || []).map((version) => (
-            <li key={String(version.id)}>
-              v{String(version.version_number)} · {String(version.created_at)} ·{" "}
-              {String(version.change_reason || "")}
-            </li>
-          ))}
-        </ul>
-      </CipaSectionCard>
-
-      <CipaSectionCard title="Auditoria">
-        <ul className="cipa-list">
-          {audit.map((item) => (
-            <li key={String(item.id)}>
-              {String(item.action)} · {String(item.created_at)}
-            </li>
-          ))}
-        </ul>
+      <CipaSectionCard title="Histórico da ata">
+        <CipaTimeline
+          layout="tree"
+          aria-label="Histórico de versões e auditoria da ata"
+          items={buildMinuteHistoryTimeline(detail?.versions || [], audit)}
+          emptyMessage="Nenhum evento registrado."
+        />
       </CipaSectionCard>
     </div>
   );

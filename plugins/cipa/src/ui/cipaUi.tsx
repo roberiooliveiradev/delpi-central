@@ -9,6 +9,7 @@ import {
   createDashboardSectionCard,
   createDashboardStateBanner,
   createStateBoxPanel,
+  createTimeline,
   emptyStateCardBemClasses,
   formActionsBemClasses,
   loadingStateCardBemClasses,
@@ -73,6 +74,8 @@ export const CipaLoadingState = createDashboardLoadingState({
   classNames: loadingStateCardBemClasses(PREFIX),
   defaultMessage: "Carregando…",
 });
+
+export const CipaTimeline = createTimeline({ prefix: PREFIX });
 
 export const CipaStateBox = createStateBoxPanel({
   prefix: PREFIX,

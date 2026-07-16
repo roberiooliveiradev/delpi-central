@@ -322,4 +322,50 @@ describe("CipaAppShell compartilhado", () => {
     fireEvent.click(screen.getByRole("button", { name: /Baixar PDF/ }));
     await waitFor(() => expect(api.exportPdf).toHaveBeenCalledWith("minute-1"));
   });
+
+  it("histórico da ata usa timeline em árvore com branches de auditoria", async () => {
+    api.getMinute.mockResolvedValue({
+      minute: {
+        id: "minute-1",
+        unit_code: "01",
+        title: "Reunião ordinária",
+        minute_number: "2026/001",
+        meeting_type: "ordinary",
+        meeting_date: "2026-07-16",
+        status: "in_review",
+      },
+      version: { body_html: "<p>Documento da ata.</p>", content_hash: "hash" },
+      participants: [],
+      signers: [],
+      signatures: [],
+      action_items: [],
+      versions: [
+        {
+          id: "v1",
+          version_number: 1,
+          created_at: "2026-07-16T18:26:24-03:00",
+          change_reason: "Criação inicial",
+        },
+      ],
+    });
+    api.getAudit.mockResolvedValue({
+      items: [
+        { id: "a1", action: "sign", created_at: "2026-07-16T18:45:52-03:00" },
+      ],
+    });
+
+    const { container } = render(
+      <CipaAppShell
+        route={{ kind: "detail", unitCode: "01", minuteId: "minute-1" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByText("Versão 1");
+    expect(screen.getByText("Assinatura registrada")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-timeline--tree")).toBeTruthy();
+    expect(container.querySelector('[data-branch-key="audit"]')).toBeTruthy();
+  });
 });

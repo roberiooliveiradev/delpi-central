@@ -14,3 +14,9 @@ export function formatDateBr(isoDate: string): string {
   if (!match) return isoDate;
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
+
+export function formatDateTimeBr(isoDateTime: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(isoDateTime);
+  if (!match) return formatDateBr(isoDateTime);
+  return `${match[3]}/${match[2]}/${match[1]} ${match[4]}:${match[5]}`;
+}
