@@ -743,6 +743,22 @@ export {
   type DataTableSnapshot,
 } from "./dataTransform";
 export {
+  canEditFormula,
+  canEditNewColumnFormula,
+  formatStepFormula,
+  formulaBarDisplayValue,
+  parseAddColumnFormula,
+  parseFilterFormula,
+  parseFormulaBarText,
+  parseRenameFormula,
+  parseReplaceFormula,
+  parseSelectFormula,
+  parseSortFormula,
+  type FormulaParseErr,
+  type FormulaParseOk,
+  type FormulaParseResult,
+} from "./dataTransformFormula";
+export {
   resolveChartType,
   resolveEffectiveDisplayMode,
   resolveTableColumns,

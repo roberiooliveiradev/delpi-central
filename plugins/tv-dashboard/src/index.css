@@ -6401,15 +6401,31 @@ body.td-composer--marqueeing *{
   color: var(--td-text);
   border-bottom: 1px solid var(--td-border);
 }
+.dashboard-tv-dashboard .td-data-pq__formula-wrap{
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--td-border);
+}
 .dashboard-tv-dashboard .td-data-pq__formula{
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
-  border-bottom: 1px solid var(--td-border);
   font-size: 12px;
   background: var(--td-surface);
 }
+.dashboard-tv-dashboard .td-data-pq__formula-error{
+  margin: 0;
+  padding: 4px 10px 6px;
+  font-size: 11px;
+  color: #b91c1c;
+}
+.dashboard-tv-dashboard .td-data-pq__formula-hint{
+  margin: 0;
+  padding: 0 10px 6px;
+  font-size: 10px;
+  color: var(--td-muted);
+}
+
 .dashboard-tv-dashboard .td-data-pq__fx{
   display: inline-flex;
   align-items: center;

@@ -1,6 +1,5 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
-  dataTransformStepFormula,
   dataTransformStepLabel,
   isDataSourceBlockType,
   normalizeDataTransform,
@@ -42,6 +41,7 @@ import {
   previewTransformTableOnServer,
   type ServerTransformTable,
 } from "../utils/previewTransformTableOnServer";
+import { DataPrepareFormulaBar } from "./DataPrepareFormulaBar";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { Modal } from "./ui/Modal";
 
@@ -110,7 +110,8 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   const [ribbonTab, setRibbonTab] = useState<RibbonTab>("home");
   const [previewStepIndex, setPreviewStepIndex] = useState<number | null>(null);
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
-  const [formulaDraft, setFormulaDraft] = useState("");
+  const [newColumnDraft, setNewColumnDraft] = useState(false);
+  const [formulaFocusToken, setFormulaFocusToken] = useState(0);
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const [preview, setPreview] = useState<ServerTransformTable>({ columns: [], rows: [] });
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -176,20 +177,13 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   useEffect(() => {
     setPreviewStepIndex(steps.length > 0 ? steps.length - 1 : null);
     setEditingStepIndex(null);
+    setNewColumnDraft(false);
   }, [activeId, steps.length]);
 
   useEffect(() => {
-    if (previewStepIndex == null || !steps[previewStepIndex]) {
-      setFormulaDraft("");
-      return;
-    }
-    const step = steps[previewStepIndex]!;
-    if (step.op === "addColumn") {
-      setFormulaDraft(step.expr);
-      return;
-    }
-    setFormulaDraft(dataTransformStepFormula(step));
-  }, [previewStepIndex, steps]);
+    // Trocar etapa cancela draft de nova coluna.
+    setNewColumnDraft(false);
+  }, [previewStepIndex]);
 
   const stepsThroughKey = useMemo(() => {
     if (previewStepIndex == null) return "[]";
@@ -299,13 +293,23 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     persistSteps(next);
   };
 
-  const applyFormulaEdit = () => {
+  const commitFormulaStep = (step: DataTransformStep) => {
+    if (newColumnDraft) {
+      addStep(step);
+      setNewColumnDraft(false);
+      return;
+    }
     if (previewStepIndex == null) return;
-    const step = steps[previewStepIndex];
-    if (!step || step.op !== "addColumn") return;
-    const expr = formulaDraft.trim();
-    if (!expr || expr === step.expr) return;
-    replaceStep(previewStepIndex, { ...step, expr });
+    const current = steps[previewStepIndex];
+    if (!current) return;
+    if (JSON.stringify(current) === JSON.stringify(step)) return;
+    replaceStep(previewStepIndex, step);
+  };
+
+  const startNewColumnFromFx = () => {
+    setRibbonTab("addColumn");
+    setNewColumnDraft(true);
+    setFormulaFocusToken((n) => n + 1);
   };
 
   const applySuggestedPreset = () => {
@@ -710,6 +714,14 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                     <FunctionSquare size={16} aria-hidden />
                     Coluna personalizada
                   </button>
+                  <button
+                    type="button"
+                    className="td-data-pq__ribbon-action"
+                    onClick={startNewColumnFromFx}
+                  >
+                    <FunctionSquare size={16} aria-hidden />
+                    Nova coluna (fx)
+                  </button>
                   <NativeTextControl
                     id="td-pq-group-keys"
                     className="td-data-pq__ribbon-input"
@@ -927,28 +939,16 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                   {previewError}
                 </p>
               ) : null}
-              <div className="td-data-pq__formula" aria-label="Barra de fórmula">
-                <span className="td-data-pq__fx" aria-hidden>
-                  fx
-                </span>
-                {previewStepIndex != null && steps[previewStepIndex]?.op === "addColumn" ? (
-                  <input
-                    className="td-data-pq__formula-input"
-                    value={formulaDraft}
-                    onChange={(event) => setFormulaDraft(event.target.value)}
-                    onBlur={applyFormulaEdit}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        applyFormulaEdit();
-                      }
-                    }}
-                    aria-label="Expressão da coluna"
-                  />
-                ) : (
-                  <code>{formulaDraft || "= Fonte (rota api-delpi)"}</code>
-                )}
-              </div>
+              <DataPrepareFormulaBar
+                step={
+                  previewStepIndex != null ? (steps[previewStepIndex] ?? null) : null
+                }
+                newColumnDraft={newColumnDraft}
+                columnHints={preview.columns}
+                focusToken={formulaFocusToken}
+                onCommit={commitFormulaStep}
+                onCancelDraft={() => setNewColumnDraft(false)}
+              />
               <div className="td-data-pq__grid-wrap">
                 {!active ? (
                   <p className="td-deck-inspector__hint">Selecione uma consulta à esquerda.</p>
