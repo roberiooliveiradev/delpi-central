@@ -62,10 +62,23 @@ export function DataPrepareFormulaBar({
     onCommit(result.step);
   };
 
-  const hint =
-    columnHints.length > 0
-      ? `Colunas: ${columnHints.slice(0, 12).join(", ")}${columnHints.length > 12 ? "…" : ""}`
-      : null;
+  const hint = (() => {
+    if (!editable) return null;
+    if (newColumnDraft || step?.op === "addColumn") {
+      const cols =
+        columnHints.length > 0
+          ? `Colunas: ${columnHints.slice(0, 12).join(", ")}${columnHints.length > 12 ? "…" : ""}`
+          : null;
+      const dsl = "DSL: if(cond, a, b), concat, abs/min/max/coalesce/len/lower/upper/trim";
+      return cols ? `${cols} · ${dsl}` : dsl;
+    }
+    if (step?.op === "rename") return "Ex.: = RenameColumns(Fonte, de → para)";
+    if (step?.op === "select") return "Ex.: = SelectColumns(Fonte, [col1, col2])";
+    if (step?.op === "filter") return 'Ex.: = FilterRows(Fonte, [col] eq "valor")';
+    if (step?.op === "sort") return "Ex.: = Sort(Fonte, coluna, asc|desc)";
+    if (step?.op === "replace") return 'Ex.: = ReplaceValue(Fonte, coluna, "a" → "b")';
+    return null;
+  })();
 
   return (
     <div className="td-data-pq__formula-wrap">

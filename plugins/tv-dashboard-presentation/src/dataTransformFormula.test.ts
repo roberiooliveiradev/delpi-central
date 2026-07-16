@@ -54,6 +54,25 @@ describe("dataTransformFormula", () => {
     });
   });
 
+  it("edita filter/sort pela barra com contexto de etapa", () => {
+    expect(
+      parseFormulaBarText('= FilterRows(Fonte, [branch] eq "02")', {
+        step: { op: "filter", column: "branch", cmp: "eq", value: "01" },
+      }),
+    ).toEqual({
+      ok: true,
+      step: { op: "filter", column: "branch", cmp: "eq", value: "02" },
+    });
+    expect(
+      parseFormulaBarText("= Sort(Fonte, meta, asc)", {
+        step: { op: "sort", column: "oee", direction: "desc" },
+      }),
+    ).toEqual({
+      ok: true,
+      step: { op: "sort", column: "meta", direction: "asc" },
+    });
+  });
+
   it("canEditFormula e parseFormulaBarText por contexto", () => {
     expect(canEditFormula({ op: "addColumn", name: "a", expr: "1" })).toBe(true);
     expect(canEditFormula({ op: "merge", sourceId: "x", leftKey: "a", rightKey: "b" })).toBe(
