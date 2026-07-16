@@ -306,6 +306,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                 ]);
               }}
               searchUsers={searchDirectoryUsers}
+              showSelectedList={false}
               labels={{ title: "Usuários do diretório" }}
             />
 

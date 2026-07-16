@@ -15,6 +15,11 @@ export type UserDirectoryPickerProps = {
     signal?: AbortSignal,
   ) => Promise<DirectoryUserOption[]>;
   disabled?: boolean;
+  /**
+   * Exibe a lista interna de selecionados com botão «Remover» (default true).
+   * Passe false quando o consumidor já renderiza a própria lista (evita duplicação).
+   */
+  showSelectedList?: boolean;
   labels?: {
     title?: string;
     hint?: string;
@@ -28,6 +33,7 @@ export function UserDirectoryPicker({
   onChange,
   searchUsers,
   disabled = false,
+  showSelectedList = true,
   labels,
   className,
 }: UserDirectoryPickerProps) {
@@ -104,20 +110,22 @@ export function UserDirectoryPicker({
           ))}
         </ul>
       ) : null}
-      <ul className="delpi-ui-user-directory-picker__selected">
-        {value.map((user) => (
-          <li key={user.id}>
-            <span>{user.name || user.email}</span>
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onChange(value.filter((item) => item.id !== user.id))}
-            >
-              Remover
-            </button>
-          </li>
-        ))}
-      </ul>
+      {showSelectedList ? (
+        <ul className="delpi-ui-user-directory-picker__selected">
+          {value.map((user) => (
+            <li key={user.id}>
+              <span>{user.name || user.email}</span>
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onChange(value.filter((item) => item.id !== user.id))}
+              >
+                Remover
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

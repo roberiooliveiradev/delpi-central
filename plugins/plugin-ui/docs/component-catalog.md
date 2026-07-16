@@ -849,6 +849,6 @@ Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
 | `SignaturePad` | Canvas de assinatura manuscrita (PNG) |
 | `RichTextEditor` | WYSIWYG com ribbon Fonte/Parágrafo (paridade tv-dashboard) + preview |
 | `RichTextToolbar` | Faixa de formatação reutilizável (fonte, parágrafo, cores, listas) |
-| `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`) |
+| `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista |
 
 CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).
