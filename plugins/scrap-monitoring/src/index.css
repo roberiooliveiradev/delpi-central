@@ -207,14 +207,15 @@
 }
 
 .dashboard-scrap-monitoring .sm-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14.5rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--sm-grid-gap);
   align-items: stretch;
 }
 
 .dashboard-scrap-monitoring .sm-kpi-grid > * {
-  min-width: 0;
+  flex: 1 1 14.5rem;
+  min-width: min(100%, max(14.5rem, max-content));
   max-width: 100%;
   box-sizing: border-box;
 }

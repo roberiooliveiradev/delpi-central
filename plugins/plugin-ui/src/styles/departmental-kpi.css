@@ -5,8 +5,10 @@
  */
 
 .delpi-ui-card.delpi-ui-kpi-card {
-  min-width: 0;
-  overflow: hidden;
+  /* Cresce com o valor (R$ longo); não fica menor que o conteúdo. */
+  min-width: max-content;
+  width: max-content;
+  max-width: 100%;
   box-sizing: border-box;
   container-type: inline-size;
   container-name: delpi-ui-kpi;
@@ -25,13 +27,14 @@
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  width: 100%;
-  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+  min-width: max-content;
 }
 
 .delpi-ui-kpi-card__body {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: max-content;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -41,7 +44,7 @@
 .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)):not(:has(.delpi-ui-kpi-card__header))
   > :not(.delpi-ui-kpi-icon):not([class*="kpi-card__icon"]) {
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: max-content;
 }
 
 /**
@@ -52,13 +55,14 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  width: 100%;
-  min-width: 0;
+  width: max-content;
+  max-width: 100%;
+  min-width: max-content;
 }
 
 .delpi-ui-kpi-card__header .delpi-ui-kpi-card__body {
   flex: 1 1 auto;
-  min-width: 0;
+  min-width: max-content;
 }
 
 .delpi-ui-kpi-card__header .delpi-ui-kpi-icon {
@@ -68,8 +72,8 @@
 
 /** MetricKpiCard — body + ícone no header canônico. */
 .delpi-ui-kpi-header .delpi-ui-kpi-card__body {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: max-content;
 }
 
 .delpi-ui-kpi-header {
@@ -77,6 +81,9 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
+  width: max-content;
+  max-width: 100%;
+  min-width: max-content;
 }
 
 .delpi-ui-kpi-title {
@@ -96,15 +103,13 @@
 
 .delpi-ui-kpi-value {
   margin: 0 0 4px;
-  /* cqi: escala com a largura do card (grid); evita vazamento de R$ milhares. */
   font-size: var(--delpi-ui-font-kpi, clamp(1.15rem, 12cqi, 2rem));
   line-height: 1.1;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: max-content;
+  max-width: none;
   color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
 }
 
@@ -115,15 +120,30 @@
 }
 
 @media (max-width: 768px) {
-  .delpi-ui-kpi-value {
-    white-space: normal;
-    overflow-wrap: anywhere;
-    text-overflow: unset;
-    overflow: visible;
-  }
-
   .delpi-ui-kpi-card--wide {
     grid-column: auto;
+  }
+
+  .delpi-ui-card.delpi-ui-kpi-card,
+  .delpi-ui-kpi-card:not(:has(.delpi-ui-kpi-header)):not(:has(.delpi-ui-kpi-card__header)),
+  .delpi-ui-kpi-card__header,
+  .delpi-ui-kpi-header {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .delpi-ui-kpi-card__body,
+  .delpi-ui-kpi-card__header .delpi-ui-kpi-card__body,
+  .delpi-ui-kpi-header .delpi-ui-kpi-card__body {
+    min-width: 0;
+  }
+
+  .delpi-ui-kpi-value {
+    width: auto;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
