@@ -4,7 +4,7 @@ import {
   isComunicadoInputBlock,
   isFetchableDataBlockType,
   resolveInputRefreshSourceIds,
-  resolveStaleSourceIdsForPreviewChange,
+  resolvePreviewRefreshSourceIds,
   serializeComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoConfig,
@@ -27,6 +27,8 @@ type Options = {
 };
 
 type FetchableBlock = Extract<ComunicadoBlock, { dataBinding: ComunicadoDataBinding }>;
+
+const DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS = 400;
 
 function stripResolved(block: FetchableBlock): Record<string, unknown> {
   const { resolved: _resolved, ...blockPayload } = block;
@@ -61,8 +63,8 @@ function hasAnyResolved(
 }
 
 /**
- * Preview de dados do editor — pull manual.
- * Sem poll e sem refetch ao editar binding; fingerprint muda ⇒ stale até «Atualizar visual».
+ * Preview de dados do editor — refetch automático quando filtros ou fontes mudam.
+ * Botão «Atualizar visual» permanece para refresh manual com bypass de cache.
  */
 export function useComunicadoDataPreview({ playlistId, config }: Options) {
   const [resolvedByBlockId, setResolvedByBlockId] = useState<Record<string, ComunicadoDataResolved>>(
@@ -84,6 +86,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
   /** Fingerprint da última carga bem-sucedida (ou hidratada do session). */
   const syncedFingerprintRef = useRef(buildDataPreviewFingerprint(config));
   const didInitialFetchRef = useRef(false);
+  const autoRefreshTimerRef = useRef<number | null>(null);
 
   const dataFingerprint = useMemo(() => buildDataPreviewFingerprint(config), [config]);
   fingerprintRef.current = dataFingerprint;
@@ -96,6 +99,12 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       ),
     [],
   );
+
+  useEffect(() => {
+    return () => {
+      if (autoRefreshTimerRef.current != null) window.clearTimeout(autoRefreshTimerRef.current);
+    };
+  }, []);
 
   // Troca de playlist: recarrega seed da sessão.
   useEffect(() => {
@@ -111,6 +120,10 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     fingerprintRef.current = fp;
     syncedFingerprintRef.current = fp;
     didInitialFetchRef.current = false;
+    if (autoRefreshTimerRef.current != null) {
+      window.clearTimeout(autoRefreshTimerRef.current);
+      autoRefreshTimerRef.current = null;
+    }
   }, [playlistId]);
 
   const mergeResolved = useCallback(
@@ -157,7 +170,6 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       const requestId = ++requestIdRef.current;
       setError(null);
       setRefreshingSourceIds([...targetIds]);
-      // Auto-refresh do filtro (e Atualizar visual) já cobre — não acusar stale nesses ids.
       setStaleSourceIds((prev) => prev.filter((id) => !targetIds.has(id)));
 
       const nativeConfig = serializeComunicadoConfig(configRef.current);
@@ -185,6 +197,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       } catch (err) {
         if (requestIdRef.current !== requestId) return;
         setError(err instanceof Error ? err.message : "Falha ao carregar dados.");
+        setStaleSourceIds((prev) => [...new Set([...prev, ...targetIds])]);
       } finally {
         if (requestIdRef.current === requestId) {
           setInitialLoading(false);
@@ -215,7 +228,23 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     [fetchBlocks, readDataBlocks],
   );
 
-  // Fingerprint: stale se binding mudou; carga inicial só se ainda não há dados.
+  const scheduleAutoRefresh = useCallback(
+    (sourceIds: string[], blocks: FetchableBlock[]) => {
+      if (sourceIds.length === 0) return;
+      if (autoRefreshTimerRef.current != null) window.clearTimeout(autoRefreshTimerRef.current);
+      autoRefreshTimerRef.current = window.setTimeout(() => {
+        autoRefreshTimerRef.current = null;
+        void fetchBlocks(blocks, {
+          showLoading: false,
+          blockIds: new Set(sourceIds),
+          force: true,
+        });
+      }, DATA_PREVIEW_AUTO_REFRESH_DEBOUNCE_MS);
+    },
+    [fetchBlocks],
+  );
+
+  // Fingerprint: auto-refresh das fontes afetadas; carga inicial se ainda não há dados.
   useEffect(() => {
     const blocks = readDataBlocks();
     if (blocks.length === 0) {
@@ -237,14 +266,13 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
             inputAffected.add(id);
           }
         }
-        setStaleSourceIds(
-          resolveStaleSourceIdsForPreviewChange({
-            previousFingerprint: synced,
-            nextFingerprint: dataFingerprint,
-            allFetchableIds,
-            inputAffectedSourceIds: [...inputAffected],
-          }),
-        );
+        const sourceIds = resolvePreviewRefreshSourceIds({
+          previousFingerprint: synced,
+          nextFingerprint: dataFingerprint,
+          allFetchableIds,
+          inputAffectedSourceIds: [...inputAffected],
+        });
+        scheduleAutoRefresh(sourceIds, blocks);
         return;
       }
       didInitialFetchRef.current = true;
@@ -261,7 +289,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       didInitialFetchRef.current = true;
       void fetchBlocks(blocks, { showLoading: true, force: false });
     }
-  }, [playlistId, dataFingerprint, fetchBlocks, readDataBlocks]);
+  }, [playlistId, dataFingerprint, fetchBlocks, readDataBlocks, scheduleAutoRefresh]);
 
   const isDataPreviewStale = staleSourceIds.length > 0;
 

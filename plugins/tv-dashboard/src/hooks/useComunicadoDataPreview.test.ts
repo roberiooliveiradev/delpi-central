@@ -74,7 +74,7 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("mudança de fingerprint marca stale e não chama a API", async () => {
+  it("mudança de fingerprint dispara refetch automático (debounce)", async () => {
     const { result, rerender } = renderHook(
       ({ config }: { config: ComunicadoConfig }) =>
         useComunicadoDataPreview({
@@ -89,19 +89,27 @@ describe("useComunicadoDataPreview", () => {
     });
     expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(42);
     mockedPreview.mockClear();
+    mockedPreview.mockResolvedValue({
+      block: { resolved: { kpi: { value: 77, label: "OEE" } } },
+    } as Awaited<ReturnType<typeof previewDataBlockV2>>);
 
     rerender({ config: withParams(7) });
     await act(async () => {
       await Promise.resolve();
     });
-
     expect(mockedPreview).not.toHaveBeenCalled();
-    expect(result.current.isDataPreviewStale).toBe(true);
-    expect(result.current.staleSourceIds).toContain("metric-1");
-    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(42);
+    expect(result.current.isDataPreviewStale).toBe(false);
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450));
+    });
+
+    expect(mockedPreview).toHaveBeenCalledTimes(1);
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(77);
+    expect(result.current.isDataPreviewStale).toBe(false);
   });
 
-  it("refreshDataPreview busca de novo com forceRefresh e limpa stale", async () => {
+  it("refreshDataPreview busca de novo com forceRefresh", async () => {
     const { result, rerender } = renderHook(
       ({ config }: { config: ComunicadoConfig }) =>
         useComunicadoDataPreview({
@@ -117,9 +125,9 @@ describe("useComunicadoDataPreview", () => {
 
     rerender({ config: withParams(7) });
     await act(async () => {
-      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 450));
     });
-    expect(result.current.isDataPreviewStale).toBe(true);
+
     mockedPreview.mockClear();
     mockedPreview.mockResolvedValueOnce({
       block: { resolved: { kpi: { value: 55, label: "OEE" } } },

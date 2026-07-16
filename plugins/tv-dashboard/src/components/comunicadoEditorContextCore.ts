@@ -284,7 +284,7 @@ export type ComunicadoEditorContextValue = {
   uploadCustomFont: (file: File) => Promise<void>;
   dataPreviewLoading: boolean;
   dataPreviewError: string | null;
-  /** Fingerprint de dados mudou sem refetch — clicar em Atualizar visual. */
+  /** Preview desatualizado após falha de fetch — usar «Atualizar visual». */
   isDataPreviewStale: boolean;
   staleSourceIds: string[];
   /** Fontes com fetch em andamento (spinner do filtro). */

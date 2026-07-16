@@ -203,7 +203,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     back: "Voltar à lista de programações.",
     preview: "Abrir pré-visualização em tela cheia (← → slides, Espaço pausa; controles somem após inatividade).",
     refreshVisual:
-      "No editor, os dados não atualizam sozinhos. Clique para buscar de novo na api-delpi (ignora cache). O badge «Dados desatualizados» some após o refresh.",
+      "Busca de novo na api-delpi ignorando cache. Filtros e fontes já atualizam o palco sozinhos; use para forçar refresh manual.",
     share: "Colaboradores: convidar para editar (usuário Minha DELPI ou link de edição).",
     copyLink: "Copiar o link da TV (só apresentação, sem edição).",
     qr: "Gerar QR code do link da TV (apresentação).",
@@ -226,9 +226,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     defaultDuration:
       "Duração aplicada a novas telas e às que não tiverem tempo individual definido.",
     refreshInterval:
-      "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor use «Atualizar visual» — não há poll automático.",
+      "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor, filtros e fontes atualizam o preview automaticamente.",
     dataBlockRefreshInterval:
-      "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview só atualiza em «Atualizar visual».",
+      "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview atualiza ao mudar filtros ou a fonte.",
     customSlideType:
       "Tela livre: monte o layout no palco com as abas Inserir, Exibir e as ferramentas contextuais do objeto (Forma, Gráfico, Tabela, Dados). O título acima é só o nome no filmstrip.",
     publicUrl:
@@ -243,7 +243,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertWizard:
       "Escolha o visual inicial criado junto com a fonte. A mesma fonte continua disponível para outros formatos no palco.",
     sourceConfig:
-      "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; no editor, «Atualizar visual» refresca o palco.",
+      "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; alterações aqui atualizam o palco automaticamente.",
     prepareData:
       "Abre o editor de preparação em modal: consultas = rotas api-delpi do slide; etapas transformam a tabela antes do visual.",
     testRoute:

@@ -251,6 +251,7 @@ export {
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
   resolveDataBlockRefreshSec,
+  resolvePreviewRefreshSourceIds,
   resolveStaleSourceIdsForPreviewChange,
 } from "./dataRefresh";
 export {

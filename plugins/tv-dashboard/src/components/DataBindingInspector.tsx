@@ -474,7 +474,7 @@ export function DataBindingInspector({
         {activeSections.includes("refresh") ? (
           <RibbonZone title="Atualização">
             <p className="td-deck-inspector__hint">
-              No editor o preview não atualiza sozinho — use «Atualizar visual». O intervalo abaixo vale só na TV.
+              No editor o preview atualiza ao mudar parâmetros ou filtros. O intervalo abaixo vale só na TV.
             </p>
             <div className="td-deck-ribbon__field-grid">{refreshFields}</div>
           </RibbonZone>
@@ -489,7 +489,7 @@ export function DataBindingInspector({
       <DeckPropertySection
         pane={pane}
         title={editingLinkedSource ? "Parâmetros da fonte" : "Dados"}
-        hint="Parâmetros deste bloco sobrescrevem filtros do slide. No editor o preview não autoatualiza — use «Atualizar visual»; o intervalo de refresh vale só na TV."
+        hint="Parâmetros deste bloco sobrescrevem filtros do slide. Alterações atualizam o palco automaticamente; o intervalo de refresh vale só na TV."
       >
         {connectionFields}
         {refreshFields}
