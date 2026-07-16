@@ -8,7 +8,13 @@ import {
   SignaturePad,
 } from "@delpi/plugin-ui/index";
 
-import { getSignContext, refuseMinute, signMinute } from "../api/cipaApi";
+import {
+  fetchMySignatureImageBlob,
+  getMySignatureProfile,
+  getSignContext,
+  refuseMinute,
+  signMinute,
+} from "../api/cipaApi";
 import { UNIT_LABELS } from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
@@ -23,30 +29,62 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
   const [name, setName] = useState("");
   const [accepted, setAccepted] = useState(false);
   const [png, setPng] = useState<Blob | null>(null);
+  const [savedPreviewUrl, setSavedPreviewUrl] = useState<string | null>(null);
+  const [hasSavedSignature, setHasSavedSignature] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refuseReason, setRefuseReason] = useState("");
 
   useEffect(() => {
-    getSignContext(minuteId)
-      .then((data) => {
+    const controller = new AbortController();
+    Promise.all([
+      getSignContext(minuteId, controller.signal),
+      getMySignatureProfile(controller.signal).catch(() => null),
+    ])
+      .then(async ([data, profile]) => {
         setContext(data);
         const signer = data.signer as { display_name?: string } | undefined;
-        setName(signer?.display_name || "");
+        const signerName = (signer?.display_name || "").trim();
+        const profileName = (profile?.display_name || "").trim();
+        setName(signerName || profileName);
+
+        if (profile?.has_signature) {
+          setHasSavedSignature(true);
+          try {
+            const blob = await fetchMySignatureImageBlob(controller.signal);
+            setSavedPreviewUrl((prev) => {
+              if (prev) URL.revokeObjectURL(prev);
+              return URL.createObjectURL(blob);
+            });
+          } catch {
+            setHasSavedSignature(false);
+          }
+        }
       })
-      .catch((err) => setError(err instanceof Error ? err.message : "Erro"));
+      .catch((err) => {
+        if (!(err instanceof DOMException && err.name === "AbortError")) {
+          setError(err instanceof Error ? err.message : "Erro");
+        }
+      });
+    return () => {
+      controller.abort();
+      setSavedPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    };
   }, [minuteId]);
 
-  async function confirmSign() {
-    if (!png || !accepted || !name.trim()) {
-      setError("Preencha nome, aceite o termo e desenhe a assinatura.");
+  async function submitSignature(signatureBlob: Blob) {
+    if (!accepted || !name.trim()) {
+      setError("Preencha nome, aceite o termo e informe a assinatura.");
       return;
     }
     setBusy(true);
     setError(null);
     try {
       const form = new FormData();
-      form.append("signature", png, "signature.png");
+      form.append("signature", signatureBlob, "signature.png");
       form.append("display_name_confirmed", name.trim());
       form.append("terms_accepted", "true");
       form.append("session_id", crypto.randomUUID());
@@ -56,6 +94,23 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
       setError(err instanceof Error ? err.message : "Erro ao assinar");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function confirmSign() {
+    if (!png) {
+      setError("Preencha nome, aceite o termo e desenhe a assinatura.");
+      return;
+    }
+    await submitSignature(png);
+  }
+
+  async function confirmUseSavedSignature() {
+    try {
+      const blob = await fetchMySignatureImageBlob();
+      await submitSignature(blob);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao usar assinatura cadastrada.");
     }
   }
 
@@ -125,8 +180,40 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
           onChange={setAccepted}
           label={terms}
         />
+
+        {hasSavedSignature && savedPreviewUrl ? (
+          <div className="cipa-signature-preview">
+            <p>
+              Assinatura cadastrada{" "}
+              <button
+                type="button"
+                className="cipa-link"
+                onClick={() => navigateCipa("/apps/cipa/my-signature")}
+              >
+                (gerenciar)
+              </button>
+            </p>
+            <img
+              src={savedPreviewUrl}
+              alt="Assinatura cadastrada"
+              className="cipa-signature-img"
+            />
+            <div className="cipa-footer-actions">
+              <button
+                type="button"
+                className="cipa-btn cipa-btn--primary"
+                disabled={busy}
+                onClick={() => void confirmUseSavedSignature()}
+              >
+                Usar assinatura cadastrada
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <p>
           Assinatura <HelpTooltip content={helpTooltips.signaturePad} />
+          {hasSavedSignature ? " — ou desenhe uma nova só para esta ata" : ""}
         </p>
         <SignaturePad onChange={setPng} />
         <div className="cipa-footer-actions">

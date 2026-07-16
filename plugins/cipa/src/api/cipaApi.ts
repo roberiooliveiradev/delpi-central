@@ -187,3 +187,46 @@ export async function fetchCipaAccess(signal?: AbortSignal) {
   const envelope = await httpGet<ApiEnvelope<CipaAccessPayload>>(`${API}/access`, { signal });
   return unwrap(envelope);
 }
+
+export type MySignatureProfile = {
+  user_id: string;
+  display_name: string;
+  has_signature: boolean;
+  updated_at?: string | null;
+};
+
+export async function getMySignatureProfile(signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<MySignatureProfile>>(
+    `${API}/signatures/me`,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function updateMySignatureProfile(
+  body: { display_name: string },
+  signal?: AbortSignal,
+) {
+  const envelope = await httpJson<ApiEnvelope<MySignatureProfile>>(
+    "PUT",
+    `${API}/signatures/me`,
+    body,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function uploadMySignatureImage(blob: Blob, signal?: AbortSignal) {
+  const form = new FormData();
+  form.append("signature", blob, "signature.png");
+  const envelope = await httpForm<ApiEnvelope<MySignatureProfile>>(
+    `${API}/signatures/me/image`,
+    form,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function fetchMySignatureImageBlob(signal?: AbortSignal) {
+  return httpBlob(`${API}/signatures/me/image`, { signal });
+}

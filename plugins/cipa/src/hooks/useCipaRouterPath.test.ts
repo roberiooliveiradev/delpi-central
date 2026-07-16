@@ -28,4 +28,8 @@ describe("parseCipaRoute", () => {
       minuteId: "abc",
     });
   });
+
+  it("perfil de assinatura pessoal", () => {
+    expect(parseCipaRoute("/apps/cipa/my-signature")).toEqual({ kind: "mySignature" });
+  });
 });

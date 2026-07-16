@@ -26,6 +26,7 @@ export type CipaRoute =
   | { kind: "edit"; unitCode: "01" | "02"; minuteId: string }
   | { kind: "sign"; unitCode: "01" | "02"; minuteId: string }
   | { kind: "pending" }
+  | { kind: "mySignature" }
   | { kind: "unknown" };
 
 export function parseCipaRoute(pathname: string): CipaRoute {
@@ -35,6 +36,9 @@ export function parseCipaRoute(pathname: string): CipaRoute {
   }
   if (path.endsWith("/pending") || path.includes("/cipa/pending")) {
     return { kind: "pending" };
+  }
+  if (path.endsWith("/my-signature") || path.includes("/cipa/my-signature")) {
+    return { kind: "mySignature" };
   }
   const match = path.match(
     /\/apps\/cipa\/filial-(01|02)(?:\/minutes\/([^/]+))?(?:\/(edit|sign))?$/,

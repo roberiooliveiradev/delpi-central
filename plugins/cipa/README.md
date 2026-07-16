@@ -18,8 +18,13 @@ Portal → plugins/cipa (MFE) → /apps/cipa-api → schema cipa (postgres-plugi
 | `/apps/cipa/filial-{xx}/minutes/new` | Nova ata |
 | `/apps/cipa/filial-{xx}/minutes/{id}` | Detalhe |
 | `/apps/cipa/filial-{xx}/minutes/{id}/edit` | Edição |
-| `/apps/cipa/filial-{xx}/minutes/{id}/sign` | Assinatura |
+| `/apps/cipa/filial-{xx}/minutes/{id}/sign` | Assinatura da ata |
+| `/apps/cipa/my-signature` | Perfil de assinatura pessoal (nome + PNG) — exige `cipa.sign` |
 | `/apps/cipa/pending` | Pendências do usuário |
+
+### Assinatura pessoal
+
+Cada usuário com `cipa.sign` configura **apenas a própria** assinatura em `/apps/cipa/my-signature`. Na tela de assinar uma ata, o nome é pré-preenchido e há o botão **Usar assinatura cadastrada** (o desenho no pad continua disponível só para aquela ata).
 
 ## API
 
@@ -33,7 +38,7 @@ Modelo enxuto (6 códigos) — ver `cipa.manifest.json`:
 |--------|--------|
 | `cipa.view` | Consulta e auditoria |
 | `cipa.manage` | CRUD, envio, finalização, PDF e signatários |
-| `cipa.sign` | Assinar ou recusar |
+| `cipa.sign` | Assinar, recusar e configurar assinatura pessoal |
 | `cipa.admin` | Tudo, em todas as unidades |
 | `cipa.unit.filial-01` | Dados da filial 01 |
 | `cipa.unit.filial-02` | Dados da filial 02 |

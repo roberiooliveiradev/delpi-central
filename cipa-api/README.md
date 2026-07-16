@@ -6,6 +6,7 @@ API dedicada do plugin **CIPA** (Comissão Interna de Prevenção de Acidentes).
 
 - Atas de reunião (CRUD, versionamento, participantes, signatários)
 - Assinatura manuscrita (PNG) vinculada ao hash da versão
+- Perfil de assinatura pessoal por usuário (`cipa.sign`) — nome + PNG reutilizável
 - Auditoria de domínio, exportação PDF, isolamento por filial `01`/`02`
 
 ## Rotas
@@ -13,6 +14,7 @@ API dedicada do plugin **CIPA** (Comissão Interna de Prevenção de Acidentes).
 - Health: `GET /health` → via gateway `/apps/cipa-api/health`
 - Escopo RBAC: `GET /access` → unidades e capacidades do usuário
 - Atas: `/minutes` (ver OpenAPI `/docs`)
+- Assinatura pessoal: `GET/PUT /signatures/me`, `POST/GET /signatures/me/image`
 
 ## Stack
 
@@ -29,4 +31,4 @@ pytest -q
 
 Migrations: `CIPA_RUN_MIGRATIONS_ON_STARTUP=true` no Compose.
 
-Volumes persistentes: `cipa/signatures`, `cipa/attachments`, `cipa/pdfs` sob `DELPI_DATA_HOST_DIR`.
+Volumes persistentes: `cipa/signatures` (inclui `profiles/` para assinatura pessoal), `cipa/attachments`, `cipa/pdfs` sob `DELPI_DATA_HOST_DIR`.

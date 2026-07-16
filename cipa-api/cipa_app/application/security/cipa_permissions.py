@@ -113,6 +113,12 @@ def assert_unit_action(user, action: str, unit_code: str) -> None:
         )
 
 
+def assert_global_action(user, action: str) -> None:
+    """Gate de ação global (sem escopo de unidade) — ex.: perfil de assinatura."""
+    if not _has_global_action(user, action):
+        raise PermissionError(f"Sem permissão para '{action}'.")
+
+
 def build_access_payload(user) -> dict[str, object]:
     """Resumo de escopo para o MFE — espelha o modelo enxuto do manifesto."""
     is_admin = has_permission(user, ADMIN_PERMISSION)

@@ -4,7 +4,7 @@
   "name": "CIPA",
   "description": "Gestão de atas, assinaturas e processos da CIPA por unidade",
   "icon": "clipboard-check-icon",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "type": "microfrontend",
   "basePath": "/apps/cipa",
   "entry": "/apps/cipa/assets/remoteEntry.js",
@@ -24,7 +24,7 @@
     {
       "code": "cipa.sign",
       "name": "Assinar atas da CIPA",
-      "description": "Assinar ou recusar atas pendentes de assinatura.",
+      "description": "Assinar ou recusar atas pendentes e configurar a assinatura pessoal.",
       "module": "cipa"
     },
     {
@@ -69,6 +69,22 @@
       "permission": "cipa.unit.filial-02",
       "icon": "clipboard-check-icon",
       "order": 42,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/my-signature",
+      "label": "Minha assinatura",
+      "permission": "cipa.sign",
+      "icon": "clipboard-check-icon",
+      "order": 43,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/cipa/pending",
+      "label": "CIPA — Pendências de assinatura",
+      "permission": "cipa.sign",
+      "icon": "clipboard-check-icon",
+      "order": 44,
       "showInMenu": false
     }
   ],

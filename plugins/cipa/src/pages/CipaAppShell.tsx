@@ -30,6 +30,7 @@ import {
 } from "../security/cipaAccess";
 import { MinuteEditorPage } from "./MinuteEditorPage";
 import { MinuteSignPage } from "./MinuteSignPage";
+import { MySignaturePage } from "./MySignaturePage";
 
 const badgeClasses = statusBadgeBemClasses("cipa");
 
@@ -76,6 +77,21 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
     return (
       <div className="dashboard-cipa dashboard-page">
         <PendingPage />
+      </div>
+    );
+  }
+
+  if (route.kind === "mySignature") {
+    if (!access?.can_sign) {
+      return (
+        <div className="dashboard-cipa dashboard-page">
+          <AccessDenied message="Você não tem permissão para configurar assinatura (cipa.sign)." />
+        </div>
+      );
+    }
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <MySignaturePage />
       </div>
     );
   }
@@ -215,13 +231,22 @@ function CipaHomePage({ access }: { access: CipaAccess | null }) {
       {access?.can_sign ? (
         <section className="cipa-card">
           <h2>Assinaturas</h2>
-          <button
-            type="button"
-            className="cipa-btn cipa-btn--primary"
-            onClick={() => navigateCipa("/apps/cipa/pending")}
-          >
-            <PenLine size={16} /> Ver pendências
-          </button>
+          <div className="cipa-home-actions">
+            <button
+              type="button"
+              className="cipa-btn cipa-btn--primary"
+              onClick={() => navigateCipa("/apps/cipa/pending")}
+            >
+              <PenLine size={16} /> Ver pendências
+            </button>
+            <button
+              type="button"
+              className="cipa-btn"
+              onClick={() => navigateCipa("/apps/cipa/my-signature")}
+            >
+              <PenLine size={16} /> Minha assinatura
+            </button>
+          </div>
         </section>
       ) : null}
     </div>
@@ -236,6 +261,7 @@ function MinuteListPage({
   access: CipaAccess | null;
 }) {
   const canManage = canUnit(access, unitCode, "manage");
+  const canSign = Boolean(access?.can_sign);
   const [items, setItems] = useState<MinuteListItem[]>([]);
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
@@ -274,6 +300,15 @@ function MinuteListPage({
           <button type="button" className="cipa-btn cipa-btn--ghost" onClick={() => load()}>
             <RefreshCw size={16} /> Atualizar
           </button>
+          {canSign ? (
+            <button
+              type="button"
+              className="cipa-btn"
+              onClick={() => navigateCipa("/apps/cipa/my-signature")}
+            >
+              <PenLine size={16} /> Minha assinatura
+            </button>
+          ) : null}
           {canManage ? (
             <button
               type="button"
@@ -556,10 +591,28 @@ function PendingPage() {
           <h1>Assinaturas pendentes</h1>
           <p>Atas que aguardam sua assinatura</p>
         </div>
+        <div className="cipa-header__actions">
+          <button
+            type="button"
+            className="cipa-btn cipa-btn--primary"
+            onClick={() => navigateCipa("/apps/cipa/my-signature")}
+          >
+            <PenLine size={16} /> Minha assinatura
+          </button>
+        </div>
       </header>
       <section className="cipa-card">
         {items.length === 0 ? (
-          <p className="cipa-state">Nenhuma pendência.</p>
+          <div className="cipa-empty-state">
+            <p className="cipa-state">Nenhuma pendência.</p>
+            <button
+              type="button"
+              className="cipa-btn"
+              onClick={() => navigateCipa("/apps/cipa/my-signature")}
+            >
+              <PenLine size={16} /> Configurar minha assinatura
+            </button>
+          </div>
         ) : (
           <ul className="cipa-list">
             {items.map((item) => (
