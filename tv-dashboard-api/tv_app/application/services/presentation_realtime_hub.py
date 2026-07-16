@@ -110,6 +110,23 @@ class PresentationRealtimeHub:
                 current = self._client_meta.get(playlist_id, {}).get(websocket)
                 if current and current["clientId"] == client_id:
                     current["lastSeen"] = time.monotonic()
+            return
+
+        if message_type == "slide_draft":
+            slide_id = self._clean_text(payload.get("slideId"))
+            native_config = payload.get("nativeConfig")
+            if not client_id or not slide_id or not isinstance(native_config, dict):
+                return
+            await self.broadcast_now(
+                playlist_id,
+                {
+                    "type": "slide_draft",
+                    "playlistId": playlist_id,
+                    "slideId": slide_id,
+                    "clientId": client_id,
+                    "nativeConfig": native_config,
+                },
+            )
 
     @staticmethod
     def _clean_text(value: Any) -> str | None:

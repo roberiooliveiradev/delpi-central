@@ -17,6 +17,7 @@ export type {
   PresentationPresencePeer,
   PresentationPresenceRole,
   PresentationRealtimeEvent,
+  PresentationSlideDraftEvent,
 } from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
 
 export type PresentationPresenceRole = "editor" | "viewer";
 
@@ -8,21 +8,36 @@ export type PresentationPresencePeer = {
   role: PresentationPresenceRole;
 };
 
+export type PresentationSlideDraftEvent = {
+  type: "slide_draft";
+  playlistId?: string;
+  slideId: string;
+  clientId: string;
+  nativeConfig: Record<string, unknown>;
+};
+
 export type PresentationRealtimeEvent = {
   type: string;
   reason?: string;
   revision?: string;
   playlistId?: string;
+  slideId?: string;
+  clientId?: string;
+  nativeConfig?: Record<string, unknown>;
   peers?: PresentationPresencePeer[];
 };
+
+type RealtimeSend = (payload: Record<string, unknown>) => void;
 
 type Options = {
   enabled: boolean;
   wsUrl: string | null;
   onPresentationUpdated?: (event: PresentationRealtimeEvent) => void;
+  onSlideDraft?: (event: PresentationSlideDraftEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
   onConnectionChange?: (connected: boolean) => void;
   presence?: PresentationPresencePeer;
+  sendRef?: React.MutableRefObject<RealtimeSend | null>;
   reconnectMs?: number;
   pingMs?: number;
   updateDebounceMs?: number;
@@ -32,6 +47,27 @@ export function parsePresentationRealtimeEvent(value: unknown): PresentationReal
   if (!value || typeof value !== "object") return null;
   const payload = value as Record<string, unknown>;
   if (typeof payload.type !== "string") return null;
+  if (payload.type === "slide_draft") {
+    const slideId = payload.slideId;
+    const clientId = payload.clientId;
+    const nativeConfig = payload.nativeConfig;
+    if (
+      typeof slideId !== "string" ||
+      typeof clientId !== "string" ||
+      !nativeConfig ||
+      typeof nativeConfig !== "object" ||
+      Array.isArray(nativeConfig)
+    ) {
+      return null;
+    }
+    return {
+      type: "slide_draft",
+      playlistId: typeof payload.playlistId === "string" ? payload.playlistId : undefined,
+      slideId,
+      clientId,
+      nativeConfig: nativeConfig as Record<string, unknown>,
+    };
+  }
   if (payload.type !== "presence_update") return payload as PresentationRealtimeEvent;
   if (!Array.isArray(payload.peers)) return null;
 
@@ -69,25 +105,31 @@ export function usePresentationRealtime({
   enabled,
   wsUrl,
   onPresentationUpdated,
+  onSlideDraft,
   onPresenceUpdate,
   onConnectionChange,
   presence,
+  sendRef,
   reconnectMs = 5000,
   pingMs = 30000,
   updateDebounceMs = 200,
 }: Options) {
   const handlerRef = useRef(onPresentationUpdated);
   handlerRef.current = onPresentationUpdated;
+  const slideDraftHandlerRef = useRef(onSlideDraft);
+  slideDraftHandlerRef.current = onSlideDraft;
   const presenceHandlerRef = useRef(onPresenceUpdate);
   presenceHandlerRef.current = onPresenceUpdate;
   const connectionHandlerRef = useRef(onConnectionChange);
   connectionHandlerRef.current = onConnectionChange;
+  const sendRefStable = sendRef;
   const updateTimerRef = useRef<number | null>(null);
   const pendingEventRef = useRef<PresentationRealtimeEvent | null>(null);
 
   useEffect(() => {
     if (!enabled || !wsUrl) {
       connectionHandlerRef.current?.(false);
+      if (sendRefStable) sendRefStable.current = null;
       return undefined;
     }
 
@@ -122,6 +164,12 @@ export function usePresentationRealtime({
       ws = new WebSocket(wsUrl);
       ws.onopen = () => {
         connectionHandlerRef.current?.(true);
+        if (sendRefStable) {
+          sendRefStable.current = (payload) => {
+            if (ws?.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify(payload));
+          };
+        }
         if (presence) {
           ws?.send(JSON.stringify({ type: "presence_join", ...presence }));
         }
@@ -142,6 +190,9 @@ export function usePresentationRealtime({
           if (payload.type === "presentation_updated") {
             schedulePresentationUpdated(payload);
           }
+          if (payload.type === "slide_draft") {
+            slideDraftHandlerRef.current?.(payload);
+          }
           if (payload.type === "presence_update") {
             presenceHandlerRef.current?.(payload.peers ?? []);
           }
@@ -150,6 +201,7 @@ export function usePresentationRealtime({
         }
       };
       ws.onclose = () => {
+        if (sendRefStable) sendRefStable.current = null;
         connectionHandlerRef.current?.(false);
         if (pingTimer != null) {
           window.clearInterval(pingTimer);
@@ -167,6 +219,7 @@ export function usePresentationRealtime({
 
     return () => {
       closedByUser = true;
+      if (sendRefStable) sendRefStable.current = null;
       connectionHandlerRef.current?.(false);
       if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
       if (pingTimer != null) window.clearInterval(pingTimer);
@@ -190,6 +243,7 @@ export function usePresentationRealtime({
     reconnectMs,
     pingMs,
     updateDebounceMs,
+    sendRefStable,
     presence?.clientId,
     presence?.displayName,
     presence?.role,

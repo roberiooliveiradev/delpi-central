@@ -28,6 +28,34 @@ def test_realtime_hub_broadcasts_to_room():
     asyncio.run(_run())
 
 
+def test_realtime_hub_relays_slide_draft():
+    import asyncio
+
+    async def _run() -> None:
+        hub = PresentationRealtimeHub()
+        sent: list[dict] = []
+
+        class FakeWebSocket:
+            async def send_json(self, payload: dict) -> None:
+                sent.append(payload)
+
+        hub._rooms["playlist-1"] = {FakeWebSocket()}  # noqa: SLF001
+        await hub._handle_message(  # noqa: SLF001
+            FakeWebSocket(),
+            playlist_id="playlist-1",
+            message=(
+                '{"type":"slide_draft","clientId":"editor-1","slideId":"slide-a",'
+                '"nativeConfig":{"body":"texto ao vivo"}}'
+            ),
+        )
+        assert sent[0]["type"] == "slide_draft"
+        assert sent[0]["slideId"] == "slide-a"
+        assert sent[0]["clientId"] == "editor-1"
+        assert sent[0]["nativeConfig"] == {"body": "texto ao vivo"}
+
+    asyncio.run(_run())
+
+
 def test_public_presentation_ws_ping():
     client = TestClient(app)
     playlist = {

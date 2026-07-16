@@ -118,6 +118,7 @@ export function PlaylistEditorPage({
     Record<string, PresentationPayload["slides"][number]>
   >({});
   const saveComunicadoTimerRef = useRef<number | null>(null);
+  const wsDraftTimerRef = useRef<number | null>(null);
   const pendingComunicadoSaveRef = useRef<{
     slide: Slide;
     nativeConfig: Record<string, unknown>;
@@ -283,16 +284,17 @@ export function PlaylistEditorPage({
       const pl = await getPlaylist(playlistId);
       setPlaylist((current) => {
         const remoteSlides = pl.slides ?? current?.slides ?? [];
-        const live = liveComunicadoConfigRef.current;
+        const pending = pendingComunicadoSaveRef.current;
         const activeId = selectedSlideIdRef.current;
         const slides = remoteSlides.map((slide) => {
           if (
-            live &&
+            pending &&
             activeId &&
             slide.id === activeId &&
+            slide.id === pending.slide.id &&
             slide.nativeScreenKey === "custom_message"
           ) {
-            return { ...slide, nativeConfig: live };
+            return { ...slide, nativeConfig: pending.nativeConfig };
           }
           return slide;
         });
@@ -303,6 +305,31 @@ export function PlaylistEditorPage({
       // mantém estado local se a sincronização falhar
     }
   }, [playlistId, refreshPreviewThumbnails]);
+
+  const applyRemoteSlideDraft = useCallback(
+    (slideId: string, nativeConfig: Record<string, unknown>, clientId: string) => {
+      if (clientId === editorPresence?.clientId) return;
+      const pending = pendingComunicadoSaveRef.current;
+      if (pending?.slide.id === slideId) return;
+
+      setPlaylist((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          slides: (current.slides ?? []).map((slide) =>
+            slide.id === slideId && slide.nativeScreenKey === "custom_message"
+              ? { ...slide, nativeConfig }
+              : slide,
+          ),
+        };
+      });
+
+      if (selectedSlideIdRef.current === slideId) {
+        liveComunicadoConfigRef.current = nativeConfig;
+      }
+    },
+    [editorPresence?.clientId],
+  );
 
   useEffect(() => {
     void refreshPreviewThumbnails();
@@ -335,19 +362,16 @@ export function PlaylistEditorPage({
     writeSelectedSlideId(playlistId, null);
   }, [slides, selectedSlideId, playlistId, selectSlide]);
 
-  const fetchContentRevision = useCallback(async (id: string) => {
-    const status = await getPresentationStatus(id);
-    return status.contentRevision ?? null;
-  }, []);
-
-  usePlaylistEditorSync({
+  const { sendRealtime: wsSendRef } = usePlaylistEditorSync({
     playlistId,
     accessToken,
     presence: editorPresence,
     onPresenceUpdate: setPresencePeers,
-    fetchContentRevision,
     onSync: () => {
       void reloadPlaylistFromServer();
+    },
+    onSlideDraft: (event) => {
+      applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
     },
   });
 
@@ -641,6 +665,18 @@ export function PlaylistEditorPage({
         nativeConfig,
       });
     }, 700);
+
+    if (wsDraftTimerRef.current) window.clearTimeout(wsDraftTimerRef.current);
+    wsDraftTimerRef.current = window.setTimeout(() => {
+      const clientId = editorPresence?.clientId;
+      if (!clientId) return;
+      wsSendRef.current?.({
+        type: "slide_draft",
+        slideId: slide.id,
+        clientId,
+        nativeConfig,
+      });
+    }, 120);
   }
 
   useEffect(() => {

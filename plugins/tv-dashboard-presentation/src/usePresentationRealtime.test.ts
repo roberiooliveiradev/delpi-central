@@ -42,4 +42,32 @@ describe("parsePresentationRealtimeEvent", () => {
   it("rejeita frame sem tipo", () => {
     expect(parsePresentationRealtimeEvent({ peers: [] })).toBeNull();
   });
+
+  it("aceita rascunho de slide em tempo real", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "slide_draft",
+        playlistId: "playlist-1",
+        slideId: "slide-a",
+        clientId: "editor-1",
+        nativeConfig: { title: "Olá" },
+      }),
+    ).toEqual({
+      type: "slide_draft",
+      playlistId: "playlist-1",
+      slideId: "slide-a",
+      clientId: "editor-1",
+      nativeConfig: { title: "Olá" },
+    });
+  });
+
+  it("rejeita slide_draft sem nativeConfig", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "slide_draft",
+        slideId: "slide-a",
+        clientId: "editor-1",
+      }),
+    ).toBeNull();
+  });
 });
