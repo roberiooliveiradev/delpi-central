@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 
 
-MAX_PERIOD_BUCKETS = 60
+# Cobre um ano inteiro em granularidade diária (366 dias) para não truncar séries
+# como «este ano (até hoje)». Acima disso (multi-ano diário) trunca por segurança.
+MAX_PERIOD_BUCKETS = 366
 
 
 @dataclass(frozen=True)

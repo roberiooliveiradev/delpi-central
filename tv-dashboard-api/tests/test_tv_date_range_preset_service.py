@@ -6,7 +6,6 @@ from tv_app.application.services.tv_date_range_preset_service import (
     apply_date_range_preset,
     compute_preset_range,
     find_date_range_keys,
-    resolve_adaptive_granularity,
 )
 
 
@@ -49,25 +48,6 @@ def test_previous_calendar_periods_cross_year_boundaries():
     assert compute_preset_range("previous_year", today=today) == (
         date(2025, 1, 1),
         date(2025, 12, 31),
-    )
-
-
-def test_adaptive_granularity_scales_to_fit_bucket_cap():
-    """Regressão: «este ano» com granularity=day truncava a série em 60 buckets."""
-    # 7 dias → day cabe
-    assert resolve_adaptive_granularity(date(2026, 7, 10), date(2026, 7, 16)) == "day"
-    # ~197 dias → escala para week (29 buckets)
-    assert resolve_adaptive_granularity(date(2026, 1, 1), date(2026, 7, 16)) == "week"
-    # 3 anos → escala para month (36 buckets)
-    assert resolve_adaptive_granularity(date(2024, 1, 1), date(2026, 12, 31)) == "month"
-    # 100 anos → year
-    assert (
-        resolve_adaptive_granularity(date(1927, 1, 1), date(2026, 12, 31)) == "year"
-    )
-    # Preferência mais grossa é respeitada (não desce para day)
-    assert (
-        resolve_adaptive_granularity(date(2026, 7, 1), date(2026, 7, 16), preferred="month")
-        == "month"
     )
 
 

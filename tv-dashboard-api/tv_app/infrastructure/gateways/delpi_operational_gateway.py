@@ -15,42 +15,13 @@ from tv_app.application.services.series_points_extractor import (
     response_fields_from_meta,
     unwrap_operational_data,
 )
-from tv_app.application.services.tv_dashboard_content_service import tv_dashboard_setting_int
 from tv_app.application.services.tv_date_range_preset_service import (
     PERIOD_DAYS_KEY,
     apply_date_range_preset,
     date_alias_keys,
     read_date_range_values,
-    resolve_adaptive_granularity,
     resolve_output_date_range_keys,
 )
-
-
-def _apply_adaptive_granularity(
-    query: dict[str, str],
-    *,
-    start_key: str,
-    end_key: str,
-) -> dict[str, str]:
-    """Séries longas não podem ser truncadas: escala granularity (day→week→month→year)
-    para o período caber no limite de buckets da api-delpi."""
-    preferred = str(query.get("granularity") or "").strip().lower()
-    if not preferred:
-        return query
-    try:
-        start = date.fromisoformat(str(query.get(start_key) or "")[:10])
-        end = date.fromisoformat(str(query.get(end_key) or "")[:10])
-    except ValueError:
-        return query
-    adaptive = resolve_adaptive_granularity(
-        start,
-        end,
-        preferred=preferred,
-        max_buckets=tv_dashboard_setting_int("seriesMaxBuckets", 60),
-    )
-    if adaptive == preferred:
-        return query
-    return {**query, "granularity": adaptive}
 
 
 def _build_query_params(
@@ -118,7 +89,6 @@ def _build_query_params(
             if value is None or value == "":
                 continue
             query[str(key)] = str(value)
-        query = _apply_adaptive_granularity(query, start_key=start_key, end_key=end_key)
         return _filter_query_to_route_schema(query, schema=schema, fixed=fixed, always_allow={start_key, end_key, "branch"})
 
     # direct: emite schema + extras, mas se há par de datas canônico, remove aliases
@@ -147,8 +117,6 @@ def _build_query_params(
         if value is None or value == "":
             continue
         query[str(key)] = str(value)
-    if pair:
-        query = _apply_adaptive_granularity(query, start_key=pair[0], end_key=pair[1])
     return _filter_query_to_route_schema(query, schema=schema, fixed=fixed, always_allow=always_allow)
 
 

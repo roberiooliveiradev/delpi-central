@@ -165,41 +165,6 @@ def compute_preset_range(
     return None
 
 
-GRANULARITY_ORDER = ("day", "week", "month", "year")
-
-
-def _bucket_count(start: date, end: date, granularity: str) -> int:
-    if granularity == "day":
-        return (end - start).days + 1
-    if granularity == "week":
-        week_start = start - timedelta(days=start.weekday())
-        return ((end - week_start).days // 7) + 1
-    if granularity == "month":
-        return (end.year - start.year) * 12 + (end.month - start.month) + 1
-    return end.year - start.year + 1
-
-
-def resolve_adaptive_granularity(
-    start: date,
-    end: date,
-    *,
-    preferred: str = "day",
-    max_buckets: int = 60,
-) -> str:
-    """Menor granularidade (a partir da preferida) cujo período cabe em max_buckets.
-
-    Evita truncamento silencioso de séries longas (ex.: «este ano» com bucket diário).
-    """
-    if start > end:
-        return preferred if preferred in GRANULARITY_ORDER else "day"
-    normalized = str(preferred or "").strip().lower()
-    start_index = GRANULARITY_ORDER.index(normalized) if normalized in GRANULARITY_ORDER else 0
-    for granularity in GRANULARITY_ORDER[start_index:]:
-        if _bucket_count(start, end, granularity) <= max(max_buckets, 1):
-            return granularity
-    return GRANULARITY_ORDER[-1]
-
-
 def _as_iso(value: Any) -> str | None:
     if value is None or value == "":
         return None

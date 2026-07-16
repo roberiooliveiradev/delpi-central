@@ -44,6 +44,8 @@ _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_s
 # Sem maxRows explícito: série diária (~3 meses) cabe no scroll do bloco; não truncar em 5
 # (gráfico recebe a série inteira — tabela deve acompanhar).
 _DEFAULT_TABLE_MAX_ROWS = 90
+# Séries longas (ex.: «este ano» diário): tabela acompanha o gráfico com todos os pontos.
+_DEFAULT_SERIES_TABLE_MAX_ROWS = 366
 
 
 def _apply_incremental_pagination_defaults(
@@ -67,6 +69,9 @@ def _resolve_table_max_rows(binding: dict[str, Any], route_info: dict[str, Any])
     constraints = route_info.get("tvConstraints")
     if isinstance(constraints, dict) and constraints.get("maxRows") is not None:
         return max(1, int(constraints["maxRows"]))
+    # Rota de série: tabela traz todos os pontos da API (acompanha o gráfico), sem cap de 90.
+    if str(route_info.get("seriesField") or "").strip():
+        return _DEFAULT_SERIES_TABLE_MAX_ROWS
     return _DEFAULT_TABLE_MAX_ROWS
 
 
