@@ -8,7 +8,8 @@ import re
 from typing import Any
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-_CMPS = frozenset({"eq", "neq", "gt", "lt", "notNull"})
+_CMPS = frozenset({"eq", "neq", "gt", "lt", "notNull", "contains", "startsWith"})
+_AGGS = frozenset({"sum", "avg", "min", "max", "count", "first"})
 _OPS = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
@@ -16,6 +17,11 @@ _OPS = {
     ast.Div: operator.truediv,
     ast.USub: operator.neg,
 }
+
+
+def _as_agg(raw: Any) -> str | None:
+    value = str(raw or "").strip()
+    return value if value in _AGGS else None
 
 
 def normalize_data_transform(raw: Any) -> dict[str, Any] | None:
@@ -35,11 +41,7 @@ def normalize_data_transform(raw: Any) -> dict[str, Any] | None:
             if frm and to:
                 steps.append({"op": "rename", "from": frm, "to": to})
         elif op == "select":
-            columns = [
-                str(col).strip()
-                for col in (item.get("columns") or [])
-                if str(col).strip()
-            ]
+            columns = [str(col).strip() for col in (item.get("columns") or []) if str(col).strip()]
             if columns:
                 steps.append({"op": "select", "columns": columns})
         elif op == "filter":
@@ -55,6 +57,97 @@ def normalize_data_transform(raw: Any) -> dict[str, Any] | None:
             expr = str(item.get("expr") or "").strip()
             if name and expr:
                 steps.append({"op": "addColumn", "name": name, "expr": expr})
+        elif op == "replace":
+            column = str(item.get("column") or "").strip()
+            find = str(item.get("find") if item.get("find") is not None else "")
+            replace_with = str(
+                item.get("replaceWith")
+                if item.get("replaceWith") is not None
+                else item.get("replace")
+                if item.get("replace") is not None
+                else ""
+            )
+            if column:
+                steps.append(
+                    {"op": "replace", "column": column, "find": find, "replaceWith": replace_with}
+                )
+        elif op == "sort":
+            column = str(item.get("column") or "").strip()
+            direction = "desc" if str(item.get("direction") or "").strip() == "desc" else "asc"
+            if column:
+                steps.append({"op": "sort", "column": column, "direction": direction})
+        elif op in {"keepRows", "removeRows"}:
+            try:
+                count = max(0, int(item.get("count") or 0))
+            except (TypeError, ValueError):
+                count = 0
+            from_ = "bottom" if str(item.get("from") or "").strip() == "bottom" else "top"
+            if count > 0:
+                steps.append({"op": op, "count": count, "from": from_})
+        elif op == "changeType":
+            column = str(item.get("column") or "").strip()
+            to = "number" if str(item.get("to") or "").strip() == "number" else "string"
+            if column:
+                steps.append({"op": "changeType", "column": column, "to": to})
+        elif op == "fillDown":
+            column = str(item.get("column") or "").strip()
+            if column:
+                steps.append({"op": "fillDown", "column": column})
+        elif op == "firstRowAsHeader":
+            steps.append({"op": "firstRowAsHeader"})
+        elif op == "groupBy":
+            keys = [str(k).strip() for k in (item.get("keys") or []) if str(k).strip()]
+            aggregations: list[dict[str, Any]] = []
+            for agg in item.get("aggregations") or []:
+                if not isinstance(agg, dict):
+                    continue
+                column = str(agg.get("column") or "").strip()
+                fn = _as_agg(agg.get("fn"))
+                as_name = str(agg.get("as") or "").strip() or f"{column}_{fn}"
+                if column and fn:
+                    aggregations.append({"column": column, "fn": fn, "as": as_name})
+            if keys and aggregations:
+                steps.append({"op": "groupBy", "keys": keys, "aggregations": aggregations})
+        elif op == "pivot":
+            column = str(item.get("column") or "").strip()
+            value_column = str(item.get("valueColumn") or "").strip()
+            aggregation = _as_agg(item.get("aggregation")) or "sum"
+            if column and value_column:
+                steps.append(
+                    {
+                        "op": "pivot",
+                        "column": column,
+                        "valueColumn": value_column,
+                        "aggregation": aggregation,
+                    }
+                )
+        elif op == "unpivot":
+            columns = [str(col).strip() for col in (item.get("columns") or []) if str(col).strip()]
+            if columns:
+                steps.append(
+                    {
+                        "op": "unpivot",
+                        "columns": columns,
+                        "nameColumn": str(item.get("nameColumn") or "").strip() or "atributo",
+                        "valueColumn": str(item.get("valueColumn") or "").strip() or "valor",
+                    }
+                )
+        elif op == "merge":
+            source_id = str(item.get("sourceId") or "").strip()
+            left_key = str(item.get("leftKey") or "").strip()
+            right_key = str(item.get("rightKey") or "").strip()
+            columns = [str(col).strip() for col in (item.get("columns") or []) if str(col).strip()]
+            if source_id and left_key and right_key:
+                step = {
+                    "op": "merge",
+                    "sourceId": source_id,
+                    "leftKey": left_key,
+                    "rightKey": right_key,
+                    "join": "left",
+                }
+                if columns:
+                    step["columns"] = columns
+                steps.append(step)
     return {"steps": steps} if steps else None
 
 
@@ -96,19 +189,44 @@ def _as_number(value: Any) -> float | None:
 def _compare_filter(cell: Any, cmp_: str, value: Any) -> bool:
     if cmp_ == "notNull":
         return cell is not None and str(cell).strip() != ""
+    left = str(cell if cell is not None else "")
+    right = str(value if value is not None else "")
     if cmp_ == "eq":
-        return str(cell if cell is not None else "") == str(value if value is not None else "")
+        return left == right
     if cmp_ == "neq":
-        return str(cell if cell is not None else "") != str(value if value is not None else "")
-    left = _as_number(cell)
-    right = _as_number(value)
-    if left is None or right is None:
+        return left != right
+    if cmp_ == "contains":
+        return right in left
+    if cmp_ == "startsWith":
+        return left.startswith(right)
+    ln = _as_number(cell)
+    rn = _as_number(value)
+    if ln is None or rn is None:
         return False
     if cmp_ == "gt":
-        return left > right
+        return ln > rn
     if cmp_ == "lt":
-        return left < right
+        return ln < rn
     return False
+
+
+def _aggregate(values: list[Any], fn: str) -> Any:
+    if fn == "count":
+        return len(values)
+    if fn == "first":
+        return values[0] if values else None
+    nums = [n for n in (_as_number(v) for v in values) if n is not None]
+    if not nums:
+        return None
+    if fn == "sum":
+        return float(sum(nums))
+    if fn == "avg":
+        return float(sum(nums) / len(nums))
+    if fn == "min":
+        return float(min(nums))
+    if fn == "max":
+        return float(max(nums))
+    return None
 
 
 def evaluate_safe_arithmetic_expr(expr: str, row: dict[str, Any]) -> float | None:
@@ -151,12 +269,23 @@ def evaluate_safe_arithmetic_expr(expr: str, row: dict[str, Any]) -> float | Non
         return None
 
 
+def _safe_header(value: Any, index: int) -> str:
+    raw = str(value or "").strip() or f"coluna_{index + 1}"
+    cleaned = re.sub(r"[^\w]+", "_", raw)
+    if cleaned and cleaned[0].isdigit():
+        cleaned = f"_{cleaned}"
+    return cleaned
+
+
 def apply_data_transform_steps(
     table: dict[str, Any],
     steps: list[dict[str, Any]] | None,
+    *,
+    sibling_tables: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     columns = [str(col) for col in (table.get("columns") or [])]
     rows = [dict(row) for row in (table.get("rows") or []) if isinstance(row, dict)]
+    siblings = sibling_tables or {}
     if not steps:
         return {"columns": columns, "rows": rows}
 
@@ -194,6 +323,161 @@ def apply_data_transform_steps(
             if name not in columns:
                 columns.append(name)
             rows = [{**row, name: evaluate_safe_arithmetic_expr(expr, row)} for row in rows]
+        elif op == "replace":
+            column = str(step.get("column") or "")
+            find = str(step.get("find") if step.get("find") is not None else "")
+            replace_with = str(step.get("replaceWith") if step.get("replaceWith") is not None else "")
+            rows = [
+                {**row, column: str(row.get(column) if row.get(column) is not None else "").replace(find, replace_with)}
+                for row in rows
+            ]
+        elif op == "sort":
+            column = str(step.get("column") or "")
+            reverse = str(step.get("direction") or "") == "desc"
+
+            def _sort_key(row: dict[str, Any]) -> tuple[int, float | str]:
+                value = row.get(column)
+                num = _as_number(value)
+                if num is not None:
+                    return (0, num)
+                return (1, str(value if value is not None else ""))
+
+            rows = sorted(rows, key=_sort_key, reverse=reverse)
+        elif op == "keepRows":
+            count = int(step.get("count") or 0)
+            if str(step.get("from") or "") == "bottom":
+                rows = rows[-count:] if count else rows
+            else:
+                rows = rows[:count]
+        elif op == "removeRows":
+            count = int(step.get("count") or 0)
+            if str(step.get("from") or "") == "bottom":
+                rows = rows[:-count] if count else rows
+            else:
+                rows = rows[count:]
+        elif op == "changeType":
+            column = str(step.get("column") or "")
+            to = str(step.get("to") or "string")
+            if to == "number":
+                rows = [{**row, column: _as_number(row.get(column))} for row in rows]
+            else:
+                rows = [
+                    {
+                        **row,
+                        column: "" if row.get(column) is None else str(row.get(column)),
+                    }
+                    for row in rows
+                ]
+        elif op == "fillDown":
+            column = str(step.get("column") or "")
+            last: Any = None
+            next_rows = []
+            for row in rows:
+                cell = row.get(column)
+                if cell is not None and str(cell).strip() != "":
+                    last = cell
+                    next_rows.append(row)
+                else:
+                    next_rows.append({**row, column: last})
+            rows = next_rows
+        elif op == "firstRowAsHeader":
+            if not rows:
+                continue
+            header_row = rows[0]
+            next_columns = [_safe_header(header_row.get(col), i) for i, col in enumerate(columns)]
+            next_rows = []
+            for row in rows[1:]:
+                next_row = {next_columns[i]: row.get(col) for i, col in enumerate(columns)}
+                next_rows.append(next_row)
+            columns = next_columns
+            rows = next_rows
+        elif op == "groupBy":
+            keys = [str(k) for k in (step.get("keys") or [])]
+            aggregations = [a for a in (step.get("aggregations") or []) if isinstance(a, dict)]
+            groups: dict[str, list[dict[str, Any]]] = {}
+            for row in rows:
+                key = "\u0001".join(str(row.get(k) if row.get(k) is not None else "") for k in keys)
+                groups.setdefault(key, []).append(row)
+            next_rows = []
+            for group_rows in groups.values():
+                next_row: dict[str, Any] = {k: group_rows[0].get(k) for k in keys}
+                for agg in aggregations:
+                    column = str(agg.get("column") or "")
+                    fn = str(agg.get("fn") or "sum")
+                    as_name = str(agg.get("as") or f"{column}_{fn}")
+                    next_row[as_name] = _aggregate([r.get(column) for r in group_rows], fn)
+                next_rows.append(next_row)
+            columns = keys + [str(a.get("as") or "") for a in aggregations if a.get("as")]
+            rows = next_rows
+        elif op == "pivot":
+            column = str(step.get("column") or "")
+            value_column = str(step.get("valueColumn") or "")
+            aggregation = str(step.get("aggregation") or "sum")
+            stay = [c for c in columns if c not in {column, value_column}]
+            pivot_values = sorted(
+                {str(row.get(column) if row.get(column) is not None else "") for row in rows} - {""}
+            )
+            groups: dict[str, list[dict[str, Any]]] = {}
+            for row in rows:
+                key = "\u0001".join(str(row.get(k) if row.get(k) is not None else "") for k in stay)
+                groups.setdefault(key, []).append(row)
+            next_columns = stay + [_safe_header(v, 0) for v in pivot_values]
+            next_rows = []
+            for group_rows in groups.values():
+                next_row = {k: group_rows[0].get(k) for k in stay}
+                for pivot in pivot_values:
+                    matched = [
+                        r for r in group_rows if str(r.get(column) if r.get(column) is not None else "") == pivot
+                    ]
+                    next_row[_safe_header(pivot, 0)] = _aggregate(
+                        [r.get(value_column) for r in matched], aggregation
+                    )
+                next_rows.append(next_row)
+            columns = next_columns
+            rows = next_rows
+        elif op == "unpivot":
+            unpivot_cols = [str(c) for c in (step.get("columns") or [])]
+            stay = [c for c in columns if c not in unpivot_cols]
+            name_col = str(step.get("nameColumn") or "atributo")
+            value_col = str(step.get("valueColumn") or "valor")
+            next_rows = []
+            for row in rows:
+                for col in unpivot_cols:
+                    next_row = {k: row.get(k) for k in stay}
+                    next_row[name_col] = col
+                    next_row[value_col] = row.get(col)
+                    next_rows.append(next_row)
+            columns = stay + [name_col, value_col]
+            rows = next_rows
+        elif op == "merge":
+            source_id = str(step.get("sourceId") or "")
+            other = siblings.get(source_id)
+            if not isinstance(other, dict):
+                continue
+            left_key = str(step.get("leftKey") or "")
+            right_key = str(step.get("rightKey") or "")
+            other_cols = [str(c) for c in (other.get("columns") or [])]
+            other_rows = [dict(r) for r in (other.get("rows") or []) if isinstance(r, dict)]
+            take_cols = [str(c) for c in (step.get("columns") or []) if str(c).strip()]
+            if not take_cols:
+                take_cols = [c for c in other_cols if c != right_key]
+            right_index = {
+                str(r.get(right_key) if r.get(right_key) is not None else ""): r for r in other_rows
+            }
+            for col in take_cols:
+                if col not in columns:
+                    columns.append(col)
+            next_rows = []
+            for row in rows:
+                match = right_index.get(str(row.get(left_key) if row.get(left_key) is not None else ""))
+                if not match:
+                    next_rows.append(row)
+                    continue
+                merged = dict(row)
+                for col in take_cols:
+                    merged[col] = match.get(col)
+                next_rows.append(merged)
+            rows = next_rows
 
     return {"columns": columns, "rows": rows}
 
@@ -201,6 +485,8 @@ def apply_data_transform_steps(
 def apply_data_transform_to_payload(
     data: Any,
     transform: Any,
+    *,
+    sibling_tables: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[Any, bool, dict[str, Any] | None]:
     normalized = normalize_data_transform(transform)
     steps = normalized.get("steps") if normalized else None
@@ -209,5 +495,5 @@ def apply_data_transform_to_payload(
     table = coerce_payload_to_table(data)
     if table is None:
         return data, False, None
-    next_table = apply_data_transform_steps(table, steps)
+    next_table = apply_data_transform_steps(table, steps, sibling_tables=sibling_tables)
     return next_table["rows"], True, next_table

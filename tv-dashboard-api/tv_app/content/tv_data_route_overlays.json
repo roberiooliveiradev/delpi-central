@@ -123,7 +123,18 @@
           "default": 7,
           "label": "Período (dias)"
         }
-      }
+      },
+      "suggestedTransformSteps": [
+        {
+          "op": "select",
+          "columns": ["periodo", "oee_filial_01", "oee_filial_02"]
+        },
+        {
+          "op": "sort",
+          "column": "periodo",
+          "direction": "asc"
+        }
+      ]
     },
     "get_production_otd_series": {
       "seriesField": "points",

@@ -49,6 +49,7 @@ OVERLAY_KEYS = frozenset(
         "label",
         "category",
         "paramSchema",  # merge profundo com schema OpenAPI
+        "suggestedTransformSteps",
     }
 )
 
@@ -796,6 +797,7 @@ def seed_overlays_from_catalog(
             "whenToUse",
             "valueFieldLabels",
             "valueFieldTypes",
+            "suggestedTransformSteps",
         }
         if any(key in overlay for key in tv_keys):
             # Mantém label/description/category se já curados junto.

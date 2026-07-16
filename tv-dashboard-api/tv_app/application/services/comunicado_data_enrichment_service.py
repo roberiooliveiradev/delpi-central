@@ -11,7 +11,11 @@ from tv_app.application.services.comunicado_input_filters_service import (
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
-from tv_app.application.services.data.tv_data_transform_service import apply_data_transform_to_payload
+from tv_app.application.services.data.tv_data_transform_service import (
+    apply_data_transform_to_payload,
+    coerce_payload_to_table,
+    normalize_data_transform,
+)
 from tv_app.application.services.data.tv_view_projection_service import (
     apply_view_projection_to_resolved,
 )
@@ -570,6 +574,14 @@ class ComunicadoDataEnrichmentService:
 
         # Dedupe in-request: mesmas operationId+params ⇒ um fetch nesta montagem.
         request_memo: dict[str, dict[str, Any]] = {}
+        enrich_kwargs: dict[str, Any] = {
+            "slide_filters": slide_filters,
+            "playlist_defaults": playlist_defaults,
+            "authorization": authorization,
+            "user": user,
+            "force_refresh": force_refresh,
+            "request_memo": request_memo,
+        }
         enriched: list[dict[str, Any]] = []
         for block in blocks:
             if not isinstance(block, dict):
@@ -583,13 +595,8 @@ class ComunicadoDataEnrichmentService:
                 enriched.append(
                     self._enrich_data_block(
                         block,
-                        slide_filters=slide_filters,
                         input_overrides=input_overrides,
-                        playlist_defaults=playlist_defaults,
-                        authorization=authorization,
-                        user=user,
-                        force_refresh=force_refresh,
-                        request_memo=request_memo,
+                        **enrich_kwargs,
                     )
                 )
                 continue
@@ -606,7 +613,58 @@ class ComunicadoDataEnrichmentService:
                 )
                 continue
             enriched.append(block)
+
+        # 2ª passagem: merge entre fontes precisa das tabelas irmãs já resolvidas.
+        sibling_tables = self._build_sibling_tables(enriched)
+        if sibling_tables and any(self._transform_needs_siblings(block) for block in enriched):
+            re_enriched: list[dict[str, Any]] = []
+            for block in enriched:
+                if not isinstance(block, dict) or not self._transform_needs_siblings(block):
+                    re_enriched.append(block)
+                    continue
+                source_id = str(block.get("id") or "")
+                source_contrib = by_source.get(source_id) if isinstance(by_source.get(source_id), dict) else {}
+                input_overrides = merge_filter_layers(slide_input_contrib, source_contrib)
+                siblings = {key: value for key, value in sibling_tables.items() if key != source_id}
+                re_enriched.append(
+                    self._enrich_data_block(
+                        block,
+                        input_overrides=input_overrides,
+                        sibling_tables=siblings,
+                        **enrich_kwargs,
+                    )
+                )
+            enriched = re_enriched
+
         return self._link_view_blocks_to_sources(enriched)
+
+    @staticmethod
+    def _transform_needs_siblings(block: dict[str, Any]) -> bool:
+        if str(block.get("type") or "") != "data_source":
+            return False
+        normalized = normalize_data_transform(block.get("dataTransform"))
+        steps = normalized.get("steps") if normalized else None
+        if not steps:
+            return False
+        return any(str(step.get("op") or "") == "merge" for step in steps if isinstance(step, dict))
+
+    @staticmethod
+    def _build_sibling_tables(blocks: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        tables: dict[str, dict[str, Any]] = {}
+        for block in blocks:
+            if not isinstance(block, dict) or str(block.get("type") or "") != "data_source":
+                continue
+            source_id = str(block.get("id") or "").strip()
+            resolved = block.get("resolved")
+            if not source_id or not isinstance(resolved, dict):
+                continue
+            data = resolved.get("data")
+            _, _, table = apply_data_transform_to_payload(data, block.get("dataTransform"))
+            if table is None:
+                table = coerce_payload_to_table(data)
+            if table is not None:
+                tables[source_id] = table
+        return tables
 
     @staticmethod
     def _filter_context_blocks(
@@ -816,6 +874,7 @@ class ComunicadoDataEnrichmentService:
         force_refresh: bool = False,
         request_memo: dict[str, dict[str, Any]] | None = None,
         input_overrides: dict[str, Any] | None = None,
+        sibling_tables: dict[str, dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -867,6 +926,7 @@ class ComunicadoDataEnrichmentService:
             transformed, server_transform_applied, _table = apply_data_transform_to_payload(
                 data,
                 block.get("dataTransform"),
+                sibling_tables=sibling_tables,
             )
             if server_transform_applied:
                 presentation_data = transformed

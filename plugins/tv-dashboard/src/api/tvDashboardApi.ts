@@ -363,6 +363,8 @@ export type TvDataRouteCatalogItem = {
   fixedQueryParams?: Record<string, unknown>;
   tvConstraints?: Record<string, unknown>;
   metaShape?: string;
+  /** Preset de steps Power Query sugeridos pelo overlay da rota. */
+  suggestedTransformSteps?: Array<Record<string, unknown>>;
 };
 
 export async function listDataRoutes() {

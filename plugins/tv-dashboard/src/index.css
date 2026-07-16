@@ -6421,11 +6421,36 @@ body.td-composer--marqueeing *{
   font-weight: 700;
   font-size: 11px;
 }
-.dashboard-tv-dashboard .td-data-pq__formula code{
+.dashboard-tv-dashboard .td-data-pq__formula code,
+.dashboard-tv-dashboard .td-data-pq__formula-input{
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 11px;
   overflow: auto;
   white-space: nowrap;
+}
+.dashboard-tv-dashboard .td-data-pq__formula-input{
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--td-text);
+  padding: 2px 0;
+  outline: none;
+}
+.dashboard-tv-dashboard .td-data-pq__col--series{
+  cursor: pointer;
+}
+.dashboard-tv-dashboard .td-data-pq__col--active,
+.dashboard-tv-dashboard .td-data-pq__cell--active{
+  background: color-mix(in srgb, var(--td-accent) 18%, var(--td-surface));
+}
+.dashboard-tv-dashboard .td-data-pq__edit-step{
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--td-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .dashboard-tv-dashboard .td-data-pq__grid-wrap{
   flex: 1 1 auto;

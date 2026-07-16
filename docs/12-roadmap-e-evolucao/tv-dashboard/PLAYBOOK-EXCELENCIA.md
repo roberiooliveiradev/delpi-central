@@ -1589,11 +1589,13 @@ api-delpi → data (cru em resolved.data)
 | **Query** | `data_source.dataTransform.steps` | Só steps (nunca rows) |
 | **View** | `chartProjection` / `kpiProjection` / `tableProjection` | Campos/agregação/cor de série |
 
-UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_source` (rotas api-delpi); grid + etapas aplicadas + ribbon Transformar/Adicionar coluna. Entrada no inspetor: «Abrir preparação de dados…».
+UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_source` (rotas api-delpi); grid + etapas aplicadas + ribbon Página Inicial / Transformar / Adicionar coluna / Combinar. Entrada no inspetor: «Abrir preparação de dados…».
 
-**Backlog (Fase C restante):** groupBy/pivot/merge entre fontes; highlight cruzado grid↔série; barra de fórmula editável (DSL avançada).
+**Engine Query (steps):** rename, select, filter, addColumn, replace, sort, keepRows/removeRows, changeType, fillDown, firstRowAsHeader, groupBy, pivot, unpivot, merge (left join entre fontes do slide via `siblingTables`). Paridade TS (`dataTransform.ts`) ↔ Python (`tv_data_transform_service.py`); enrichment aplica merge em 2ª passagem.
 
-**Entregue (Fase C):** diálogo «Selecionar dados»; `plotOn: primary|secondary`; estilo de linha (dash) + espessura por série no Format.
+**UX avançada:** editar etapa (lápis); barra `fx` editável em `addColumn`; highlight cruzado grid↔série (`dataPrepareCrossHighlight`); preset `suggestedTransformSteps` no overlay da rota (ex.: OEE série).
+
+**Entregue (Fase C):** diálogo «Selecionar dados»; `plotOn: primary|secondary`; estilo de linha (dash) + espessura por série; steps avançados + merge + highlight + presets.
 ### 19.6 Onde implementar (sem espalhar)
 
 | Camada | Módulo canônico | Não fazer |
