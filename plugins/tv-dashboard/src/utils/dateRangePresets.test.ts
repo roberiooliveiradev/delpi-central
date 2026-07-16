@@ -18,6 +18,11 @@ describe("dateRangePresets", () => {
     const values = DATE_RANGE_PRESET_OPTIONS.map((item) => item.value);
     expect(values).toContain("this_month");
     expect(values).toContain("this_week");
+    expect(values).toContain("this_quarter");
+    expect(values).toContain("this_year");
+    expect(values).toContain("previous_month");
+    expect(values).toContain("previous_year");
+    expect(values).toContain("last_90_days");
     expect(values).toContain("last_n_days");
     expect(values).toContain("custom");
   });

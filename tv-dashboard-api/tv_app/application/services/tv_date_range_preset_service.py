@@ -122,11 +122,41 @@ def compute_preset_range(
     if normalized == "this_month":
         return day.replace(day=1), day
 
+    if normalized == "this_quarter":
+        quarter_start_month = ((day.month - 1) // 3) * 3 + 1
+        return day.replace(month=quarter_start_month, day=1), day
+
+    if normalized == "this_year":
+        return day.replace(month=1, day=1), day
+
+    if normalized == "previous_week":
+        current_week_start = day - timedelta(days=day.weekday())
+        return current_week_start - timedelta(days=7), current_week_start - timedelta(days=1)
+
+    if normalized == "previous_month":
+        current_month_start = day.replace(day=1)
+        previous_month_end = current_month_start - timedelta(days=1)
+        return previous_month_end.replace(day=1), previous_month_end
+
+    if normalized == "previous_quarter":
+        current_quarter_month = ((day.month - 1) // 3) * 3 + 1
+        current_quarter_start = day.replace(month=current_quarter_month, day=1)
+        previous_quarter_end = current_quarter_start - timedelta(days=1)
+        previous_quarter_month = ((previous_quarter_end.month - 1) // 3) * 3 + 1
+        return previous_quarter_end.replace(month=previous_quarter_month, day=1), previous_quarter_end
+
+    if normalized == "previous_year":
+        previous_year = day.year - 1
+        return date(previous_year, 1, 1), date(previous_year, 12, 31)
+
     if normalized == "last_7_days":
         return day - timedelta(days=6), day
 
     if normalized == "last_30_days":
         return day - timedelta(days=29), day
+
+    if normalized == "last_90_days":
+        return day - timedelta(days=89), day
 
     if normalized in {"last_n_days", "last_n", "period_days"}:
         n = max(int(period_days or 7), 1)
