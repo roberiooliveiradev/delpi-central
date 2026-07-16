@@ -6,6 +6,7 @@ import {
   SimpleKpiCard,
   simpleKpiAnalyticsBemClasses,
   simpleKpiCardBemClasses,
+  simpleKpiCardIconToneClass,
 } from "./SimpleKpiCard";
 
 afterEach(() => {
@@ -78,6 +79,14 @@ describe("SimpleKpiCard", () => {
     expect(document.querySelector(".ie-kpi-card__body")).toBeTruthy();
     expect(screen.getByText("No período")).toBeTruthy();
     expect(document.querySelector(".ie-kpi-card--success")).toBeTruthy();
+  });
+
+  it("simpleKpiCardIconToneClass emite dual-class do tom do ícone", () => {
+    expect(simpleKpiCardIconToneClass("dm", "danger")).toBe(
+      "dm-kpi-card__icon--danger delpi-ui-kpi-icon--danger",
+    );
+    expect(simpleKpiCardIconToneClass("dm", "warning")).toContain("delpi-ui-kpi-icon--warning");
+    expect(simpleKpiCardIconToneClass("dm", "success")).toContain("delpi-ui-kpi-icon--success");
   });
 
   it("createAnalyticsKpiCard usa BEM analytics-kpi dual-class e variante", () => {

@@ -581,6 +581,36 @@
   border: 0;
   background: var(--dm-accent);
   color: white;
+}.dashboard-maintenance .dm-ghost-btn{
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--dm-control-height, 44px);
+  height: auto;
+  padding: 10px 16px;
+  border-radius: var(--dm-control-radius);
+  border: 1px solid var(--dm-card-border);
+  background: transparent;
+  color: var(--dm-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}.dashboard-maintenance .dm-ghost-btn:hover:not(:disabled){
+  border-color: color-mix(in srgb, var(--dm-accent) 40%, var(--dm-card-border));
+  background: color-mix(in srgb, var(--dm-accent) 8%, var(--dm-card-bg));
+}.dashboard-maintenance .dm-ghost-btn:disabled{
+  opacity: 0.65;
+  cursor: not-allowed;
 }.dashboard-maintenance .dm-link-btn{
   border: 1px solid var(--dm-card-border);
   background: transparent;

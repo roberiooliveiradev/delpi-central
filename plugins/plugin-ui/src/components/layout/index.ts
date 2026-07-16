@@ -122,6 +122,7 @@ export {
   simpleKpiAnalyticsBemClasses,
   simpleKpiAnalyticsVariantClass,
   simpleKpiCardBemClasses,
+  simpleKpiCardIconToneClass,
   simpleKpiCardVariantClass,
   simpleKpiCardWideClass,
   simpleKpiKaizenBemClasses,

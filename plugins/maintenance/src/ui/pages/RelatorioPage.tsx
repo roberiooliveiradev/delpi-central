@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, LineChart, RefreshCw, Search, X } from "lucide-react";
-import { NativeTextControl, simpleKpiCardBemClasses } from "@delpi/plugin-ui/index";
+import { AlertTriangle, CheckCircle2, CircleAlert, LineChart, RefreshCw, Search, X } from "lucide-react";
+import {
+  NativeTextControl,
+  simpleKpiCardBemClasses,
+  simpleKpiCardIconToneClass,
+} from "@delpi/plugin-ui/index";
 
 import {
   PreventivaDetailPanel,
@@ -115,18 +119,22 @@ function CodigoDescricaoCell({
 
 const KPI_CN = simpleKpiCardBemClasses("dm", "kpi-card", { withBody: true, withSubtitle: true });
 
+type FilterKpiTone = "danger" | "warning" | "success";
+
 function FilterKpiButton({
   active,
   onClick,
   icon,
   title,
   value,
+  tone,
 }: {
   active: boolean;
   onClick: () => void;
   icon: ReactNode;
   title: string;
   value: string | number;
+  tone: FilterKpiTone;
 }) {
   return (
     <button
@@ -134,7 +142,7 @@ function FilterKpiButton({
       className={`${KPI_CN.article} dm-filter-kpi${active ? " is-active" : ""}`}
       onClick={onClick}
     >
-      <div className={KPI_CN.icon} aria-hidden="true">
+      <div className={`${KPI_CN.icon} ${simpleKpiCardIconToneClass("dm", tone)}`} aria-hidden="true">
         {icon}
       </div>
       {KPI_CN.body ? (
@@ -798,7 +806,8 @@ export function RelatorioPage({
             <FilterKpiButton
               active={revisaoStatusFiltro.includes("CRÍTICO")}
               onClick={() => toggleRevisaoStatusFiltro("CRÍTICO")}
-              icon={<AlertTriangle size={20} />}
+              icon={<CircleAlert size={20} />}
+              tone="danger"
               title="Revisão vencida"
               value={revisaoResumo.critico}
             />
@@ -806,13 +815,15 @@ export function RelatorioPage({
               active={revisaoStatusFiltro.includes("ATENÇÃO")}
               onClick={() => toggleRevisaoStatusFiltro("ATENÇÃO")}
               icon={<AlertTriangle size={20} />}
+              tone="warning"
               title="Próxima do prazo"
               value={revisaoResumo.atencao}
             />
             <FilterKpiButton
               active={revisaoStatusFiltro.includes("OK")}
               onClick={() => toggleRevisaoStatusFiltro("OK")}
-              icon={<AlertTriangle size={20} />}
+              icon={<CheckCircle2 size={20} />}
+              tone="success"
               title="No prazo"
               value={revisaoResumo.ok}
             />
@@ -827,7 +838,8 @@ export function RelatorioPage({
             <FilterKpiButton
               active={statusFiltro.includes("CRÍTICO")}
               onClick={() => toggleStatusFiltro("CRÍTICO")}
-              icon={<AlertTriangle size={20} />}
+              icon={<CircleAlert size={20} />}
+              tone="danger"
               title="Crítico"
               value={resumo.critico}
             />
@@ -835,13 +847,15 @@ export function RelatorioPage({
               active={statusFiltro.includes("ATENÇÃO")}
               onClick={() => toggleStatusFiltro("ATENÇÃO")}
               icon={<AlertTriangle size={20} />}
+              tone="warning"
               title="Atenção"
               value={resumo.atencao}
             />
             <FilterKpiButton
               active={statusFiltro.includes("OK")}
               onClick={() => toggleStatusFiltro("OK")}
-              icon={<AlertTriangle size={20} />}
+              icon={<CheckCircle2 size={20} />}
+              tone="success"
               title="OK"
               value={resumo.ok}
             />

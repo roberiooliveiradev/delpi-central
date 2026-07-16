@@ -66,6 +66,15 @@ export function simpleKpiCardVariantClass(prefix: string, variant: string, block
   return `${prefix}-${block}--${variant}`;
 }
 
+/** Tom do ícone KPI — dual-class `{prefix}-kpi-card__icon--tone` + `.delpi-ui-kpi-icon--tone`. */
+export function simpleKpiCardIconToneClass(
+  prefix: string,
+  tone: "danger" | "warning" | "success",
+  block = "kpi-card",
+) {
+  return delpiUiClass(`${prefix}-${block}__icon--${tone}`, `delpi-ui-kpi-icon--${tone}`);
+}
+
 export function simpleKpiCardWideClass(prefix: string, block = "kpi-card") {
   return delpiUiClass(`${prefix}-${block}--wide`, "delpi-ui-kpi-card--wide");
 }

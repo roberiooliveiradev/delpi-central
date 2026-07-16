@@ -286,6 +286,43 @@
   color: var(--delpi-ui-accent, var(--primary, #089bdb));
 }
 
+.delpi-ui-kpi-icon--danger {
+  color: var(--delpi-ui-danger, #ef4444);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #ef4444) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-kpi-icon--warning {
+  color: var(--delpi-ui-warning, #f59e0b);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-warning, #f59e0b) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-kpi-icon--success {
+  color: var(--delpi-ui-success, #22c55e);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-success, #22c55e) 12%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+/** KPI clicável (filtro por status) — reset de <button>. */
+button.delpi-ui-kpi-card {
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  width: 100%;
+}
+
 .delpi-ui-kpi-footer {
   margin-top: 12px;
   padding-top: 12px;
