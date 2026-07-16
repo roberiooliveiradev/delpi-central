@@ -232,7 +232,9 @@ export {
   timelineMarkerToneClass,
   type DashboardTimelineProps,
   type TimelineClassNames,
+  type TimelineColumnLabels,
   type TimelineItemModel,
   type TimelineProps,
   type TimelineTone,
+  type TimelineVariant,
 } from "./Timeline";

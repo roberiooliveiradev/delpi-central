@@ -4,6 +4,8 @@ import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type TimelineTone = "default" | "danger" | "warning" | "success" | "info";
 
+export type TimelineVariant = "feed" | "table";
+
 export type TimelineItemModel = {
   id: string;
   title: ReactNode;
@@ -17,8 +19,16 @@ export type TimelineItemModel = {
   tone?: TimelineTone;
 };
 
+export type TimelineColumnLabels = {
+  time?: string;
+  title?: string;
+  detail?: string;
+  meta?: string;
+};
+
 export type TimelineClassNames = {
   root: string;
+  rootTable: string;
   track: string;
   entry: string;
   marker: string;
@@ -30,6 +40,9 @@ export type TimelineClassNames = {
   meta: string;
   empty: string;
   loading: string;
+  tableWrap: string;
+  table: string;
+  markerCell: string;
 };
 
 export type TimelineProps = {
@@ -37,12 +50,22 @@ export type TimelineProps = {
   emptyMessage?: string;
   loading?: boolean;
   loadingMessage?: string;
+  /** `feed` = cartões empilhados; `table` = grade tabular com trilho. */
+  variant?: TimelineVariant;
+  columnLabels?: TimelineColumnLabels;
   className?: string;
   classNames: TimelineClassNames;
   /** Prefixo BEM local — usado nos modifiers de tom do marker. */
   prefix: string;
   block?: string;
   "aria-label"?: string;
+};
+
+const DEFAULT_COLUMN_LABELS: Required<TimelineColumnLabels> = {
+  time: "Quando",
+  title: "Ação",
+  detail: "Detalhe",
+  meta: "Usuário",
 };
 
 export function timelineBemClasses(prefix: string, block = "timeline"): TimelineClassNames {
@@ -52,6 +75,7 @@ export function timelineBemClasses(prefix: string, block = "timeline"): Timeline
 
   return {
     root: pair(root, ui),
+    rootTable: pair(`${root}--table`, `${ui}--table`),
     track: pair(`${root}__track`, `${ui}__track`),
     entry: pair(`${root}__entry`, `${ui}__entry`),
     marker: pair(`${root}__marker`, `${ui}__marker`),
@@ -63,6 +87,9 @@ export function timelineBemClasses(prefix: string, block = "timeline"): Timeline
     meta: pair(`${root}__meta`, `${ui}__meta`),
     empty: pair(`${root}__empty`, `${ui}__empty`),
     loading: pair(`${root}__loading`, `${ui}__loading`),
+    tableWrap: pair(`${root}__table-wrap`, `${ui}__table-wrap`),
+    table: pair(`${root}__table`, `${ui}__table`),
+    markerCell: pair(`${root}__marker-cell`, `${ui}__marker-cell`),
   };
 }
 
@@ -75,18 +102,149 @@ export function timelineMarkerToneClass(
   return delpiUiClass(`${prefix}-${block}__marker--${tone}`, `delpi-ui-timeline__marker--${tone}`);
 }
 
+function TimelineMarker({
+  item,
+  classNames,
+  prefix,
+  block,
+}: {
+  item: TimelineItemModel;
+  classNames: TimelineClassNames;
+  prefix: string;
+  block: string;
+}) {
+  const tone = item.tone ?? "default";
+  const markerClass = [classNames.marker, timelineMarkerToneClass(prefix, tone, block)]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <span className={markerClass} aria-hidden="true">
+      {item.marker ?? null}
+    </span>
+  );
+}
+
+function TimelineFeed({
+  items,
+  classNames,
+  prefix,
+  block,
+  ariaLabel,
+}: {
+  items: TimelineItemModel[];
+  classNames: TimelineClassNames;
+  prefix: string;
+  block: string;
+  ariaLabel: string;
+}) {
+  return (
+    <ol className={classNames.track} aria-label={ariaLabel}>
+      {items.map((item) => (
+        <li key={item.id} className={classNames.entry}>
+          <TimelineMarker item={item} classNames={classNames} prefix={prefix} block={block} />
+          <div className={classNames.body}>
+            <div className={classNames.header}>
+              <strong className={classNames.title}>{item.title}</strong>
+              {item.timeLabel != null || item.occurredAt ? (
+                <time className={classNames.time} dateTime={item.occurredAt ?? undefined}>
+                  {item.timeLabel ?? item.occurredAt}
+                </time>
+              ) : null}
+            </div>
+            {item.detail != null && item.detail !== "" ? (
+              <p className={classNames.detail}>{item.detail}</p>
+            ) : null}
+            {item.meta != null && item.meta !== "" ? (
+              <p className={classNames.meta}>{item.meta}</p>
+            ) : null}
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function TimelineTable({
+  items,
+  classNames,
+  prefix,
+  block,
+  ariaLabel,
+  columnLabels,
+}: {
+  items: TimelineItemModel[];
+  classNames: TimelineClassNames;
+  prefix: string;
+  block: string;
+  ariaLabel: string;
+  columnLabels: Required<TimelineColumnLabels>;
+}) {
+  return (
+    <div className={classNames.tableWrap}>
+      <table className={classNames.table} aria-label={ariaLabel}>
+        <thead>
+          <tr>
+            <th scope="col" className={classNames.markerCell}>
+              <span className="delpi-ui-sr-only">Status</span>
+            </th>
+            <th scope="col">{columnLabels.time}</th>
+            <th scope="col">{columnLabels.title}</th>
+            <th scope="col">{columnLabels.detail}</th>
+            <th scope="col">{columnLabels.meta}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id} className={classNames.entry}>
+              <td className={classNames.markerCell}>
+                <TimelineMarker item={item} classNames={classNames} prefix={prefix} block={block} />
+              </td>
+              <td className={classNames.time}>
+                {item.timeLabel != null || item.occurredAt ? (
+                  <time dateTime={item.occurredAt ?? undefined}>
+                    {item.timeLabel ?? item.occurredAt}
+                  </time>
+                ) : (
+                  "—"
+                )}
+              </td>
+              <td className={classNames.title}>{item.title}</td>
+              <td className={classNames.detail}>
+                {item.detail != null && item.detail !== "" ? item.detail : "—"}
+              </td>
+              <td className={classNames.meta}>
+                {item.meta != null && item.meta !== "" ? item.meta : "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function Timeline({
   items,
   emptyMessage = "Nenhum evento.",
   loading = false,
   loadingMessage = "Carregando…",
+  variant = "feed",
+  columnLabels,
   className,
   classNames,
   prefix,
   block = "timeline",
   "aria-label": ariaLabel = "Linha do tempo",
 }: TimelineProps) {
-  const rootClass = [classNames.root, className].filter(Boolean).join(" ");
+  const labels = { ...DEFAULT_COLUMN_LABELS, ...columnLabels };
+  const rootClass = [
+    classNames.root,
+    variant === "table" ? classNames.rootTable : "",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (loading && items.length === 0) {
     return (
@@ -106,38 +264,24 @@ export function Timeline({
 
   return (
     <div className={rootClass}>
-      <ol className={classNames.track} aria-label={ariaLabel}>
-        {items.map((item) => {
-          const tone = item.tone ?? "default";
-          const markerClass = [classNames.marker, timelineMarkerToneClass(prefix, tone, block)]
-            .filter(Boolean)
-            .join(" ");
-
-          return (
-            <li key={item.id} className={classNames.entry}>
-              <span className={markerClass} aria-hidden="true">
-                {item.marker ?? null}
-              </span>
-              <div className={classNames.body}>
-                <div className={classNames.header}>
-                  <strong className={classNames.title}>{item.title}</strong>
-                  {item.timeLabel != null || item.occurredAt ? (
-                    <time className={classNames.time} dateTime={item.occurredAt ?? undefined}>
-                      {item.timeLabel ?? item.occurredAt}
-                    </time>
-                  ) : null}
-                </div>
-                {item.detail != null && item.detail !== "" ? (
-                  <p className={classNames.detail}>{item.detail}</p>
-                ) : null}
-                {item.meta != null && item.meta !== "" ? (
-                  <p className={classNames.meta}>{item.meta}</p>
-                ) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ol>
+      {variant === "table" ? (
+        <TimelineTable
+          items={items}
+          classNames={classNames}
+          prefix={prefix}
+          block={block}
+          ariaLabel={ariaLabel}
+          columnLabels={labels}
+        />
+      ) : (
+        <TimelineFeed
+          items={items}
+          classNames={classNames}
+          prefix={prefix}
+          block={block}
+          ariaLabel={ariaLabel}
+        />
+      )}
     </div>
   );
 }

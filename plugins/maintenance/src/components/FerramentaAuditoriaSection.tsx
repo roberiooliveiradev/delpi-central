@@ -67,9 +67,9 @@ function toTimelineItem(item: FerramentaAuditItem): TimelineItemModel {
     detail: auditPayloadSummary(item.payload),
     meta:
       item.usuario_nome?.trim() && userId ? (
-        <span title={userId}>Usuário: {userLabel}</span>
+        <span title={userId}>{userLabel}</span>
       ) : (
-        `Usuário: ${userLabel}`
+        userLabel
       ),
     tone: auditActionTone(item.acao),
     marker: auditActionMarker(item.acao),
@@ -134,10 +134,17 @@ export function FerramentaAuditoriaSection({
         actions={<span className="dm-badge">{total} evento(s)</span>}
       >
         <Timeline
+          variant="table"
           items={timelineItems}
           loading={loading}
           emptyMessage="Nenhum evento registrado para esta ferramenta."
           aria-label="Auditoria da ferramenta"
+          columnLabels={{
+            time: "Quando",
+            title: "Ação",
+            detail: "Detalhe",
+            meta: "Usuário",
+          }}
         />
         <div className="dm-auditoria-timeline__footer">
           <Pagination

@@ -1,6 +1,18 @@
 /**
- * Timeline — .delpi-ui-timeline* (linha do tempo vertical).
+ * Timeline — .delpi-ui-timeline* (linha do tempo vertical / variante tabela).
  */
+
+.delpi-ui-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 .delpi-ui-timeline {
   min-width: 0;
@@ -112,4 +124,135 @@
   padding: 16px 0;
   font-size: 13px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+/* ——— Variante tabela (trilho + colunas alinhadas) ——— */
+
+.delpi-ui-timeline--table .delpi-ui-timeline__table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: var(--delpi-ui-control-radius, 12px);
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: var(--delpi-ui-table-font-size, 13px);
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__table th,
+.delpi-ui-timeline--table .delpi-ui-timeline__table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  text-align: left;
+  vertical-align: top;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__table th {
+  font-weight: 700;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
+  );
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__table tbody tr:nth-child(even) {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 94%,
+    var(--delpi-ui-text, var(--text, #111111)) 6%
+  );
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__table tbody tr:hover {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__entry {
+  padding: 0;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__marker-cell {
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  padding-left: 10px;
+  padding-right: 6px;
+  position: relative;
+  vertical-align: middle;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__marker-cell::before {
+  content: "";
+  position: absolute;
+  left: 21px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--delpi-ui-border, var(--border, #e6e6e6));
+}
+
+.delpi-ui-timeline--table tbody tr:first-child .delpi-ui-timeline__marker-cell::before {
+  top: 50%;
+}
+
+.delpi-ui-timeline--table tbody tr:last-child .delpi-ui-timeline__marker-cell::before {
+  bottom: 50%;
+}
+
+.delpi-ui-timeline--table thead .delpi-ui-timeline__marker-cell::before {
+  display: none;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__marker {
+  position: relative;
+  left: auto;
+  top: auto;
+  z-index: 1;
+  margin: 0 auto;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__time {
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__detail,
+.delpi-ui-timeline--table .delpi-ui-timeline__meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-timeline--table .delpi-ui-timeline__meta {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+@media (max-width: 720px) {
+  .delpi-ui-timeline--table .delpi-ui-timeline__table th:nth-child(4),
+  .delpi-ui-timeline--table .delpi-ui-timeline__table td:nth-child(4) {
+    min-width: 12rem;
+  }
 }
