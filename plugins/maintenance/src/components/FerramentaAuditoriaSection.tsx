@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CircleAlert, FilePenLine, PlusCircle, Trash2 } from "lucide-react";
+import { CircleAlert, FilePenLine, History, PlusCircle, Table2, Trash2 } from "lucide-react";
 import {
   createDashboardSectionCard,
   sectionCardPacBemClasses,
@@ -10,7 +10,7 @@ import {
 import { auditActionLabel, auditPayloadSummary, formatAuditUser } from "../content/auditLabels";
 import { fetchFerramentaAuditoria, type FerramentaAuditItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
-import { Pagination, Timeline } from "./data";
+import { DataTable, Pagination, Timeline, type DataTableColumn } from "./data";
 
 type FerramentaAuditoriaSectionProps = {
   filial: string;
@@ -18,6 +18,8 @@ type FerramentaAuditoriaSectionProps = {
   reloadKey?: number;
   getAccessToken?: () => string | undefined;
 };
+
+type AuditoriaViewMode = "timeline" | "table";
 
 const SectionCard = createDashboardSectionCard({
   classNames: sectionCardPacBemClasses("dm"),
@@ -38,6 +40,40 @@ function formatDateTime(value?: string | null) {
     minute: "2-digit",
   });
 }
+
+const auditColumns: DataTableColumn<FerramentaAuditItem>[] = [
+  {
+    key: "data",
+    header: "Quando",
+    sortable: false,
+    render: (item) => formatDateTime(item.data_criacao),
+  },
+  {
+    key: "acao",
+    header: "Ação",
+    sortable: false,
+    render: (item) => auditActionLabel(item.acao),
+  },
+  {
+    key: "detalhe",
+    header: "Detalhe",
+    sortable: false,
+    render: (item) => auditPayloadSummary(item.payload),
+  },
+  {
+    key: "usuario",
+    header: "Usuário",
+    sortable: false,
+    render: (item) => {
+      const label = formatAuditUser(item.usuario_nome, item.usuario_sub);
+      const id = item.usuario_sub?.trim();
+      if (item.usuario_nome?.trim() && id) {
+        return <span title={id}>{label}</span>;
+      }
+      return label;
+    },
+  },
+];
 
 function auditActionTone(acao: string): TimelineTone {
   if (acao.endsWith(".delete")) return "danger";
@@ -67,9 +103,9 @@ function toTimelineItem(item: FerramentaAuditItem): TimelineItemModel {
     detail: auditPayloadSummary(item.payload),
     meta:
       item.usuario_nome?.trim() && userId ? (
-        <span title={userId}>{userLabel}</span>
+        <span title={userId}>Usuário: {userLabel}</span>
       ) : (
-        userLabel
+        `Usuário: ${userLabel}`
       ),
     tone: auditActionTone(item.acao),
     marker: auditActionMarker(item.acao),
@@ -83,6 +119,7 @@ export function FerramentaAuditoriaSection({
   getAccessToken,
 }: FerramentaAuditoriaSectionProps) {
   const auditTable = useServerTable({ pageSize: 10 });
+  const [viewMode, setViewMode] = useState<AuditoriaViewMode>("timeline");
   const [items, setItems] = useState<FerramentaAuditItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -131,30 +168,69 @@ export function FerramentaAuditoriaSection({
         title="Auditoria da ferramenta"
         hint="Registro cronológico de reposições e revisões programadas desta ferramenta."
         subtitle="Eventos em ordem do mais recente para o mais antigo."
-        actions={<span className="dm-badge">{total} evento(s)</span>}
+        actions={
+          <>
+            <div
+              className="dm-view-toggle"
+              role="tablist"
+              aria-label="Visualização da auditoria"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === "timeline"}
+                className={`dm-view-toggle__btn${
+                  viewMode === "timeline" ? " dm-view-toggle__btn--active" : ""
+                }`}
+                onClick={() => setViewMode("timeline")}
+              >
+                <History size={16} aria-hidden="true" />
+                Linha do tempo
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === "table"}
+                className={`dm-view-toggle__btn${
+                  viewMode === "table" ? " dm-view-toggle__btn--active" : ""
+                }`}
+                onClick={() => setViewMode("table")}
+              >
+                <Table2 size={16} aria-hidden="true" />
+                Tabela
+              </button>
+            </div>
+            <span className="dm-badge">{total} evento(s)</span>
+          </>
+        }
       >
-        <Timeline
-          variant="table"
-          items={timelineItems}
-          loading={loading}
-          emptyMessage="Nenhum evento registrado para esta ferramenta."
-          aria-label="Auditoria da ferramenta"
-          columnLabels={{
-            time: "Quando",
-            title: "Ação",
-            detail: "Detalhe",
-            meta: "Usuário",
-          }}
-        />
-        <div className="dm-auditoria-timeline__footer">
-          <Pagination
-            page={auditTable.query.page}
-            pageSize={auditTable.query.pageSize}
-            total={total}
-            onPageChange={auditTable.setPage}
-            hideWhenSinglePage
+        {viewMode === "timeline" ? (
+          <Timeline
+            items={timelineItems}
+            loading={loading}
+            emptyMessage="Nenhum evento registrado para esta ferramenta."
+            aria-label="Auditoria da ferramenta"
           />
-        </div>
+        ) : (
+          <DataTable
+            columns={auditColumns}
+            rows={items}
+            loading={loading}
+            emptyMessage="Nenhum evento registrado para esta ferramenta."
+            getRowKey={(item) => item.audit_id}
+          />
+        )}
+        {!loading && total > 0 ? (
+          <div className="dm-auditoria-timeline__footer">
+            <Pagination
+              page={auditTable.query.page}
+              pageSize={auditTable.query.pageSize}
+              total={total}
+              onPageChange={auditTable.setPage}
+              hideWhenSinglePage
+            />
+          </div>
+        ) : null}
       </SectionCard>
     </>
   );

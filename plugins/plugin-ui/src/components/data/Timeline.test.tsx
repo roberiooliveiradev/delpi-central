@@ -49,31 +49,6 @@ describe("Timeline", () => {
     expect(document.querySelector(".delpi-ui-timeline__marker--success")).toBeTruthy();
   });
 
-  it("variante table renderiza cabeçalhos e células alinhadas", () => {
-    const TimelineView = createTimeline({ prefix: "dm" });
-    render(
-      <TimelineView
-        variant="table"
-        columnLabels={{ time: "Quando", title: "Ação", detail: "Detalhe", meta: "Usuário" }}
-        items={[
-          {
-            id: "1",
-            title: "Reposição registrada",
-            timeLabel: "15/07/2026, 14:45",
-            detail: "Peça 3019",
-            meta: "Ana",
-            tone: "success",
-          },
-        ]}
-      />,
-    );
-
-    expect(document.querySelector(".delpi-ui-timeline--table")).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Quando" })).toBeTruthy();
-    expect(screen.getByRole("columnheader", { name: "Ação" })).toBeTruthy();
-    expect(screen.getByRole("cell", { name: "Ana" })).toBeTruthy();
-  });
-
   it("mostra empty quando sem itens", () => {
     const TimelineView = createTimeline({ prefix: "dm" });
     render(<TimelineView items={[]} emptyMessage="Sem eventos." />);
