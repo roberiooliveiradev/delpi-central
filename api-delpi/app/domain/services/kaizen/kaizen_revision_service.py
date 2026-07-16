@@ -154,3 +154,18 @@ def resolve_effective_from(
         if isinstance(normalized, str) and normalized:
             return normalized
     return date.today().isoformat()
+
+
+def resolve_parent_revision_id(
+    *,
+    explicit: str | None,
+    active_version: dict[str, Any] | None,
+) -> str | None:
+    """Resolve o pai da nova versão: override explícito ou versão ativa."""
+    if isinstance(explicit, str):
+        trimmed = explicit.strip()
+        if trimmed:
+            return trimmed
+    if active_version and active_version.get("id"):
+        return str(active_version["id"])
+    return None

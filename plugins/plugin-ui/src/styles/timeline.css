@@ -113,3 +113,64 @@
   font-size: 13px;
   color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
 }
+
+/* ——— Layout tree (branches via parentId) ——— */
+
+.delpi-ui-timeline--tree .delpi-ui-timeline__track::before {
+  /* Trilho contínuo só no nível raiz; ramos desenham o próprio segmento. */
+  bottom: auto;
+  height: calc(100% - 20px);
+}
+
+.delpi-ui-timeline--tree .delpi-ui-timeline__track--nested {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 8px 0 0 28px;
+  position: relative;
+}
+
+.delpi-ui-timeline--tree .delpi-ui-timeline__track--nested::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 10px;
+  width: 2px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 35%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+}
+
+.delpi-ui-timeline--tree .delpi-ui-timeline__entry--branch {
+  position: relative;
+}
+
+/* Conector horizontal do trilho pai até o marker do branch */
+.delpi-ui-timeline--tree .delpi-ui-timeline__entry--branch::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: 13px;
+  width: 16px;
+  height: 2px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 35%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+}
+
+.delpi-ui-timeline--tree .delpi-ui-timeline__entry--branch .delpi-ui-timeline__marker {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 40%,
+    var(--delpi-ui-border, #e6e6e6)
+  );
+}
+
+.delpi-ui-timeline--tree .delpi-ui-timeline__entry[data-branch-key]:not([data-branch-key="main"])
+  > .delpi-ui-timeline__marker {
+  border-style: dashed;
+}

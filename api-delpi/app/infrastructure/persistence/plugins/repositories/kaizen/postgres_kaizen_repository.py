@@ -604,6 +604,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
         created_by_user_id: str,
         created_by_name: str | None = None,
         version_status: str = "implantado",
+        parent_revision_id: str | None = None,
     ) -> str:
         snapshot = revision_service.build_snapshot(record)
         row = self.execute_returning_one(
@@ -611,8 +612,8 @@ class PostgresKaizenRepository(PluginBaseRepository):
             INSERT INTO quality.kaizen_revisions (
                 kaizen_id, revision_number, change_type, change_summary, change_reason,
                 effective_from, effective_until, snapshot, daily_savings, annual_savings,
-                created_by_user_id, created_by_name, version_status
-            ) VALUES (%s, %s, %s, %s, %s, %s, NULL, %s::jsonb, %s, %s, %s, %s, %s)
+                created_by_user_id, created_by_name, version_status, parent_revision_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, NULL, %s::jsonb, %s, %s, %s, %s, %s, %s)
             RETURNING id
             """,
             (
@@ -628,6 +629,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
                 created_by_user_id,
                 created_by_name,
                 version_status,
+                parent_revision_id,
             ),
             auto_commit=False,
         )
@@ -741,7 +743,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             """
             SELECT id, kaizen_id, revision_number, change_type, change_summary, change_reason,
                    effective_from, effective_until, snapshot, snapshot_schema_version,
-                   daily_savings, annual_savings, version_status,
+                   daily_savings, annual_savings, version_status, parent_revision_id,
                    created_by_user_id, created_by_name, created_at
               FROM quality.kaizen_revisions
              WHERE kaizen_id = %s
@@ -768,6 +770,33 @@ class PostgresKaizenRepository(PluginBaseRepository):
              LIMIT 1
             """,
             (kaizen_id,),
+        )
+
+    def _resolve_parent_revision_id(
+        self,
+        kaizen_id: str,
+        *,
+        explicit: str | None,
+    ) -> str | None:
+        """Valida override explícito ou usa a versão ativa como pai."""
+        if isinstance(explicit, str) and explicit.strip():
+            row = self.fetch_one(
+                """
+                SELECT id
+                  FROM quality.kaizen_revisions
+                 WHERE id = %s
+                   AND kaizen_id = %s
+                """,
+                (explicit.strip(), kaizen_id),
+            )
+            if row is None:
+                raise PluginsRepositoryError(
+                    "parent_revision_id inválido para este kaizen."
+                )
+            return str(row["id"])
+        return revision_service.resolve_parent_revision_id(
+            explicit=None,
+            active_version=self._get_active_version(kaizen_id),
         )
 
     def _next_revision_number(self, kaizen_id: str) -> int:
@@ -801,7 +830,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             """
             SELECT id, kaizen_id, revision_number, change_type, change_summary, change_reason,
                    effective_from, effective_until, snapshot, snapshot_schema_version,
-                   daily_savings, annual_savings, version_status,
+                   daily_savings, annual_savings, version_status, parent_revision_id,
                    created_by_user_id, created_by_name, created_at
               FROM quality.kaizen_revisions
              WHERE kaizen_id = %s
@@ -820,7 +849,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             """
             SELECT id, kaizen_id, revision_number, change_type, change_summary, change_reason,
                    effective_from, effective_until, snapshot, snapshot_schema_version,
-                   created_by_user_id, created_at
+                   parent_revision_id, created_by_user_id, created_at
               FROM quality.kaizen_revisions
              WHERE kaizen_id = %s
                AND effective_from <= %s
@@ -1224,6 +1253,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
 
         participants_input = fields.pop("participants", None)
         change_reason = fields.pop("change_reason", None)
+        parent_revision_id = fields.pop("parent_revision_id", None)
         merged = {**current, **fields}
         merged.pop("id", None)
         enriched = enrich_savings_fields(merged)
@@ -1231,6 +1261,10 @@ class PostgresKaizenRepository(PluginBaseRepository):
         revision_number = self._next_revision_number(kaizen_id)
         enriched = revision_service.ensure_implantation_date(enriched)
         effective_from = revision_service.resolve_effective_from(enriched)
+        resolved_parent_id = self._resolve_parent_revision_id(
+            kaizen_id,
+            explicit=parent_revision_id if isinstance(parent_revision_id, str) else None,
+        )
         revision_id = self._create_revision(
             kaizen_id=kaizen_id,
             record=enriched,
@@ -1242,6 +1276,7 @@ class PostgresKaizenRepository(PluginBaseRepository):
             created_by_user_id=created_by_user_id,
             created_by_name=actor_name,
             version_status="recebido",
+            parent_revision_id=resolved_parent_id,
         )
         if participants_input is not None:
             self._store_version_participants(revision_id, participants_input)

@@ -75,6 +75,7 @@ class KaizenRecordBody(BaseModel):
     participants: list[KaizenParticipantBody] | None = None
     effective_from: str | None = None
     change_reason: str | None = None
+    parent_revision_id: str | None = None
 
 
 KAIZEN_EXPORT_VERSION = 1

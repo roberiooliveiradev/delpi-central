@@ -91,6 +91,8 @@ export type KaizenRevision = {
   annual_savings: number | null;
   version_status: KaizenVersionStatus | null;
   savings_valid_until: string | null;
+  /** Pai na árvore de versões (Timeline layout=tree). */
+  parent_revision_id: string | null;
   created_by_user_id: string;
   created_by_name: string | null;
   created_at: string;

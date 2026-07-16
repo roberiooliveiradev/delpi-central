@@ -228,11 +228,14 @@ export {
 export {
   Timeline,
   createTimeline,
+  buildTimelineForest,
   timelineBemClasses,
   timelineMarkerToneClass,
   type DashboardTimelineProps,
   type TimelineClassNames,
   type TimelineItemModel,
+  type TimelineLayout,
   type TimelineProps,
   type TimelineTone,
+  type TimelineTreeNode,
 } from "./Timeline";

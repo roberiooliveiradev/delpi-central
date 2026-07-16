@@ -79,6 +79,30 @@ def test_resolve_effective_from_uses_provided_when_no_implantation_date():
     assert svc.resolve_effective_from({}, provided="2026-05-01") == "2026-05-01"
 
 
+def test_resolve_parent_revision_id_prefers_explicit():
+    assert (
+        svc.resolve_parent_revision_id(
+            explicit="  parent-1  ",
+            active_version={"id": "active-9"},
+        )
+        == "parent-1"
+    )
+
+
+def test_resolve_parent_revision_id_falls_back_to_active():
+    assert (
+        svc.resolve_parent_revision_id(
+            explicit=None,
+            active_version={"id": "active-9"},
+        )
+        == "active-9"
+    )
+
+
+def test_resolve_parent_revision_id_none_without_active():
+    assert svc.resolve_parent_revision_id(explicit="  ", active_version=None) is None
+
+
 def test_resolve_effective_from_prefers_date_implemented_over_provided():
     assert (
         svc.resolve_effective_from({"date_implemented": "2026-03-03"}, provided="2026-05-01")

@@ -122,7 +122,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   }),
   vc("data", "Timeline", {
     addedAt: "2026-07-16",
-    changeNote: "Linha do tempo vertical (auditoria / histórico)",
+    changeNote: "Linha do tempo linear + layout tree (parentId / branchKey)",
   }),
   // forms
   vc("forms", "SelectField"),

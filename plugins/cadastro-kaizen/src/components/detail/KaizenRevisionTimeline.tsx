@@ -83,9 +83,50 @@ function formatDate(value: string | null): string {
   return date.toLocaleDateString("pt-BR");
 }
 
+/** Irmãos com maior revision_number ficam no tronco; demais viram branch visual. */
+function resolveBranchKeys(revisions: KaizenRevision[]): Map<string, string> {
+  const childrenByParent = new Map<string, KaizenRevision[]>();
+  for (const revision of revisions) {
+    const parentId = revision.parent_revision_id?.trim();
+    if (!parentId) continue;
+    const list = childrenByParent.get(parentId) ?? [];
+    list.push(revision);
+    childrenByParent.set(parentId, list);
+  }
+
+  const keys = new Map<string, string>();
+  for (const kids of childrenByParent.values()) {
+    if (kids.length <= 1) {
+      for (const kid of kids) keys.set(kid.id, "main");
+      continue;
+    }
+    const sorted = [...kids].sort((a, b) => a.revision_number - b.revision_number);
+    sorted.forEach((kid, index) => {
+      keys.set(
+        kid.id,
+        index === sorted.length - 1 ? "main" : `alt-${kid.revision_number}`,
+      );
+    });
+  }
+  return keys;
+}
+
+function resolvePreviousRevision(
+  revision: KaizenRevision,
+  byId: Map<string, KaizenRevision>,
+  byNumber: Map<number, KaizenRevision>,
+): KaizenRevision | undefined {
+  const parentId = revision.parent_revision_id?.trim();
+  if (parentId && byId.has(parentId)) {
+    return byId.get(parentId);
+  }
+  return byNumber.get(revision.revision_number - 1);
+}
+
 function toRevisionTimelineItem(
   revision: KaizenRevision,
   previous: KaizenRevision | undefined,
+  branchKey: string | undefined,
 ): TimelineItemModel {
   const tone = CHANGE_TYPE_TONE[revision.change_type] ?? "default";
   const badgeTone = BADGE_TONE[revision.change_type] ?? "muted";
@@ -94,6 +135,8 @@ function toRevisionTimelineItem(
 
   return {
     id: revision.id,
+    parentId: revision.parent_revision_id,
+    branchKey,
     title: (
       <span className="kz-revision-timeline__title">
         <span className="kz-revision-timeline__version">v{revision.revision_number}</span>
@@ -140,17 +183,25 @@ type KaizenRevisionTimelineProps = {
 };
 
 export function KaizenRevisionTimeline({ revisions }: KaizenRevisionTimelineProps) {
+  const byId = new Map<string, KaizenRevision>();
   const byNumber = new Map<number, KaizenRevision>();
   for (const revision of revisions) {
+    byId.set(revision.id, revision);
     byNumber.set(revision.revision_number, revision);
   }
+  const branchKeys = resolveBranchKeys(revisions);
 
   const items = revisions.map((revision) =>
-    toRevisionTimelineItem(revision, byNumber.get(revision.revision_number - 1)),
+    toRevisionTimelineItem(
+      revision,
+      resolvePreviousRevision(revision, byId, byNumber),
+      branchKeys.get(revision.id),
+    ),
   );
 
   return (
     <Timeline
+      layout="tree"
       items={items}
       emptyMessage="Nenhuma revisão registrada."
       aria-label="Versões e mudanças do kaizen"
