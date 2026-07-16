@@ -10,7 +10,7 @@ import {
 import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
-import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
+import { applyViewProjection } from "./viewProjection";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 import { applyTableViewDisplayLimits } from "./tableViewLimits";
 import { resolveTableColumns } from "./tvDataPresentation";
@@ -52,9 +52,10 @@ export function KpiViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = applyMetricSelectionToResolved(block.resolved, {
+  const resolved = applyViewProjection(block.resolved, {
     selectedValueFields: block.selectedValueFields,
     valueField: block.valueField,
+    kpiProjection: block.kpiProjection,
   });
   const bound = Boolean(block.dataSourceId?.trim());
 

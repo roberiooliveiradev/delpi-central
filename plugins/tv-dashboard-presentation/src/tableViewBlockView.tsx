@@ -4,7 +4,7 @@ import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoTableInteraction } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
-import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
+import { applyViewProjection } from "./viewProjection";
 import { applyTableViewDisplayLimits } from "./tableViewLimits";
 import { resolveTableColumns } from "./tvDataPresentation";
 
@@ -21,9 +21,10 @@ export function TableViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = applyMetricSelectionToResolved(block.resolved, {
+  const resolved = applyViewProjection(block.resolved, {
     selectedValueFields: block.selectedValueFields,
     valueField: block.valueField,
+    tableProjection: block.tableProjection,
   });
   const label = tablePresetLabel(block.tablePreset);
   const tableInteraction = interactive ? interaction : null;

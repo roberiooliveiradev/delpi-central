@@ -278,6 +278,8 @@ export type ComunicadoChartViewBlock = ComunicadoBlockBase & {
   /** Override da seleção de métricas da fonte (escalares multi-campo). */
   selectedValueFields?: string[];
   valueField?: string;
+  /** Projeção de eixos/séries (preferir sobre selectedValueFields). */
+  chartProjection?: import("./viewProjection").ChartViewProjection;
   chartOptions?: ComunicadoChartOptions;
   /** Onda 4G — estilo/visibilidade por parte (adapter com chartOptions). */
   chartParts?: ComunicadoChartPartsMap;
@@ -293,6 +295,8 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
   dataSourceId?: string;
   selectedValueFields?: string[];
   valueField?: string;
+  /** Colunas visíveis/ordem (preferir sobre selectedValueFields / maxCols). */
+  tableProjection?: import("./viewProjection").TableViewProjection;
   /** Truncamento de exibição: máx. de linhas (vazio = todas do resolved, com scroll). */
   maxRows?: number;
   /** Truncamento de exibição: máx. de colunas (vazio = todas). */
@@ -340,6 +344,8 @@ export type ComunicadoKpiViewBlock = ComunicadoBlockBase & {
   dataSourceId?: string;
   selectedValueFields?: string[];
   valueField?: string;
+  /** Métricas com agregação/formato/regras por coluna (preferir sobre selectedValueFields). */
+  kpiProjection?: import("./viewProjection").KpiViewProjection;
   kpiOptions?: import("./comunicadoKpiOptions").ComunicadoKpiOptions;
   /** Partes primitivas (card/title/value/hint/icon) — padrão chartParts. */
   kpiParts?: import("./comunicadoKpiParts").ComunicadoKpiPartsMap;
@@ -378,6 +384,13 @@ export type ComunicadoDataResolved = {
   chart?: {
     points?: Array<{ label?: unknown; value?: unknown }>;
     chartType?: "line" | "bar";
+    /** Multi-série (Fase 4); `points` permanece a 1ª série / fallback. */
+    series?: Array<{
+      name: string;
+      field?: string;
+      color?: string;
+      points: Array<{ label?: unknown; value?: unknown }>;
+    }>;
   };
   table?: {
     rows?: Array<Record<string, unknown>>;

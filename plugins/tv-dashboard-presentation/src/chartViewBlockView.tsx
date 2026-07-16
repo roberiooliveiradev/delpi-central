@@ -6,7 +6,7 @@ import {
 import type { ComunicadoChartInteraction } from "./comunicadoChartParts";
 import type { ComunicadoChartViewBlock, ComunicadoDataResolved } from "./comunicadoTypes";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
-import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
+import { applyViewProjection } from "./viewProjection";
 import { TvDataSeriesChartWidget } from "./tvDataChartWidgets";
 
 type Props = {
@@ -50,9 +50,10 @@ export function ChartViewBlockView({
   loading = false,
   interaction = null,
 }: Props) {
-  const resolved = applyMetricSelectionToResolved(block.resolved, {
+  const resolved = applyViewProjection(block.resolved, {
     selectedValueFields: block.selectedValueFields,
     valueField: block.valueField,
+    chartProjection: block.chartProjection,
   });
   const label = resolved?.label ?? chartTypeLabel(block.chartType);
   const chartInteraction = interactive ? interaction : null;

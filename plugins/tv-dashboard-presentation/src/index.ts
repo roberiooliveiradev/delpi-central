@@ -745,6 +745,27 @@ export {
   resolveSelectedMetricFields,
   type MetricSelection,
 } from "./resolveKpiMetrics";
+export {
+  VIEW_AGGREGATION_OPTIONS,
+  aggregateValues,
+  applyViewProjection,
+  chartProjectionFromSelectedFields,
+  columnValuesFromRows,
+  discoverResolvedFieldOptions,
+  kpiProjectionFromSelectedFields,
+  normalizeChartProjection,
+  normalizeKpiProjection,
+  normalizeTableProjection,
+  tableProjectionFromSelectedFields,
+  type ChartSeriesProjection,
+  type ChartViewProjection,
+  type KpiMetricProjection,
+  type KpiViewProjection,
+  type TableColumnProjection,
+  type TableViewProjection,
+  type ViewAggregation,
+  type ViewProjectionSelection,
+} from "./viewProjection";
 export type { ComunicadoDataKpiMetric } from "./comunicadoTypes";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";
