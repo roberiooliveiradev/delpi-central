@@ -33,6 +33,17 @@ class SignatureStorageService:
         path.write_bytes(raw)
         return str(path)
 
+    def read(self, path: str) -> bytes:
+        base = self.base_dir.resolve()
+        file_path = Path(path).resolve()
+        try:
+            file_path.relative_to(base)
+        except ValueError as exc:
+            raise CipaStorageError("Caminho de assinatura inválido.") from exc
+        if not file_path.is_file():
+            raise CipaStorageError("Imagem de assinatura não encontrada.")
+        return file_path.read_bytes()
+
 
 class AttachmentStorageService:
     ALLOWED_TYPES = {

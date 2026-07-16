@@ -52,3 +52,42 @@ def test_create_persists_participants_in_initial_transaction_flow():
 
     assert service.repo.participants["participants"] == participants
     assert service.repo.participants["unit_code"] == "01"
+
+
+def test_finalize_renders_pdf_with_validation_code_before_persisting(monkeypatch):
+    captured = {}
+
+    class Repo:
+        def get_version(self, _minute_id):
+            return {"content_hash": "hash-final"}
+
+        def set_status(self, **kwargs):
+            captured["status"] = kwargs
+            return {"id": kwargs["minute_id"], "status": kwargs["status"]}
+
+    class PdfStorage:
+        def save(self, **kwargs):
+            captured["pdf_storage"] = kwargs
+            return "/data/final.pdf"
+
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    service.repo = Repo()
+    service.pdf_storage = PdfStorage()
+    service._load_authorized = lambda *_args: {
+        "id": "minute-1",
+        "unit_code": "01",
+        "status": "signed",
+    }
+
+    def render_pdf(minute, _version):
+        captured["minute_pdf"] = minute
+        return b"pdf"
+
+    service._render_pdf = render_pdf
+    monkeypatch.setattr("secrets.token_urlsafe", lambda _length: "VALIDA-123")
+
+    service.finalize(SimpleNamespace(id="actor-1"), "minute-1")
+
+    assert captured["minute_pdf"]["validation_code"] == "VALIDA-123"
+    assert captured["minute_pdf"]["final_content_hash"] == "hash-final"
+    assert captured["status"]["extra"]["validation_code"] == "VALIDA-123"

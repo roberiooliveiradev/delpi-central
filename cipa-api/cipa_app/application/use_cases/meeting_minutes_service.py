@@ -477,12 +477,16 @@ class MeetingMinutesService:
         version = self.repo.get_version(minute_id)
         if not version:
             raise LookupError("Versão não encontrada.")
-        signatures = self.repo.list_signatures(minute_id)
-        pdf_bytes = self.pdf_renderer.render(minute, version, signatures)
+        validation_code = secrets.token_urlsafe(12)
+        minute_for_pdf = {
+            **minute,
+            "validation_code": validation_code,
+            "final_content_hash": version["content_hash"],
+        }
+        pdf_bytes = self._render_pdf(minute_for_pdf, version)
         pdf_path = self.pdf_storage.save(
             unit_code=minute["unit_code"], minute_id=minute_id, raw=pdf_bytes
         )
-        validation_code = secrets.token_urlsafe(12)
         updated = self.repo.set_status(
             minute_id=minute_id,
             status="finalized",
@@ -504,9 +508,30 @@ class MeetingMinutesService:
         version = self.repo.get_version(minute_id)
         if not version:
             raise LookupError("Versão não encontrada.")
-        signatures = self.repo.list_signatures(minute_id)
-        raw = self.pdf_renderer.render(minute, version, signatures)
+        raw = self._render_pdf(minute, version)
         return raw, f"ata-cipa-{minute['minute_number'].replace('/', '-')}.pdf"
+
+    def _render_pdf(
+        self,
+        minute: dict[str, Any],
+        version: dict[str, Any],
+    ) -> bytes:
+        participants = self.repo.list_participants(str(minute["id"]))
+        signers = self.repo.list_signers(str(minute["id"]))
+        signatures = []
+        for signature in self.repo.list_signatures(str(minute["id"])):
+            enriched = dict(signature)
+            image_path = signature.get("image_path")
+            if image_path:
+                enriched["image_bytes"] = self.signature_storage.read(str(image_path))
+            signatures.append(enriched)
+        return self.pdf_renderer.render(
+            minute,
+            version,
+            participants,
+            signers,
+            signatures,
+        )
 
     def audit(self, user, minute_id: str) -> dict[str, Any]:
         minute = self.repo.get_minute(minute_id)
