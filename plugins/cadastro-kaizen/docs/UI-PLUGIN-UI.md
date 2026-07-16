@@ -56,7 +56,7 @@ Doc: [novo-plugin-mfe-checklist.md](../../../docs/05-plugin-system/novo-plugin-m
 Barrels locais:
 
 - `components/ui/index.ts` — primitivos plugin-ui
-- `components/data/index.ts` — DataTable, Pagination, LoadingActivity
+- `components/data/index.ts` — DataTable, Pagination, LoadingActivity, Timeline
 - `components/form/index.ts` — formulário e domínio de campos
 - `components/detail/index.ts` — ficha, versões, evidências, changelog
 - `components/evidence/index.ts` — dropzone, fila, preview
@@ -76,6 +76,7 @@ Barrels locais:
 | `KaizenFormPage` / `KaizenFormFields` | `FormSection` → `SectionCard` + `FormGrid` + campos nativos |
 | `KaizenEvidencePanel` | `FormGrid`, campos nativos, `TitleWithHelp`, etapa padrão `SelectField` |
 | `KaizenEvidencePendingList` | `SelectField` + `TextAreaField` na fila de upload |
+| `KaizenChangeLog` / `KaizenRevisionTimeline` | `Timeline` (kit) + lista de governança local |
 | `KaizenImprovementsPanel` | `TitleWithHelp` + `DateField` (período) |
 | `KaizenVersionSwitcher` | `TitleWithHelp` + `HintAction` no botão «tornar ativa» |
 
@@ -84,7 +85,7 @@ Barrels locais:
 Não duplicam primitivos do pacote — são regras de negócio ou layout específico:
 
 - `KaizenParticipantsField` (layout de linha nome+papel)
-- `KaizenEvidencePanel` (galeria/preview), `KaizenChangeLog`, `StatusPipeline`
+- `KaizenEvidencePanel` (galeria/preview), `StatusPipeline`
 - `KaizenFormProgress`, `KaizenNavTabs`, `KaizenListHeaderActions`, `BarList` (dashboard)
 
 ## Adicionar um campo novo

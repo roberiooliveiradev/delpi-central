@@ -1,6 +1,8 @@
+import type { TimelineItemModel, TimelineTone } from "@delpi/plugin-ui/index";
+
 import type { KaizenRevision, KaizenRevisionChangeType } from "../../types/kaizen";
-import { EmptyHint } from "../ui";
 import { statusLabel } from "../../utils/labels";
+import { Timeline } from "../data";
 
 const DIFF_FIELDS: Array<{ key: string; label: string; kind?: "status" }> = [
   { key: "status", label: "Status", kind: "status" },
@@ -56,7 +58,16 @@ const CHANGE_TYPE_LABELS: Record<KaizenRevisionChangeType, string> = {
   restauracao: "Restauração",
 };
 
-const CHANGE_TYPE_TONE: Record<KaizenRevisionChangeType, string> = {
+const CHANGE_TYPE_TONE: Record<KaizenRevisionChangeType, TimelineTone> = {
+  baseline: "default",
+  implantacao: "success",
+  melhoria: "info",
+  correcao: "warning",
+  descontinuacao: "danger",
+  restauracao: "info",
+};
+
+const BADGE_TONE: Record<KaizenRevisionChangeType, string> = {
   baseline: "muted",
   implantacao: "success",
   melhoria: "info",
@@ -72,65 +83,77 @@ function formatDate(value: string | null): string {
   return date.toLocaleDateString("pt-BR");
 }
 
+function toRevisionTimelineItem(
+  revision: KaizenRevision,
+  previous: KaizenRevision | undefined,
+): TimelineItemModel {
+  const tone = CHANGE_TYPE_TONE[revision.change_type] ?? "default";
+  const badgeTone = BADGE_TONE[revision.change_type] ?? "muted";
+  const current = revision.effective_until == null;
+  const diffs = computeDiff(revision.snapshot ?? {}, previous?.snapshot);
+
+  return {
+    id: revision.id,
+    title: (
+      <span className="kz-revision-timeline__title">
+        <span className="kz-revision-timeline__version">v{revision.revision_number}</span>
+        <span className={`kz-badge kz-badge--${badgeTone}`}>
+          {CHANGE_TYPE_LABELS[revision.change_type] ?? revision.change_type}
+        </span>
+        {current ? <span className="kz-badge kz-badge--current">Vigente</span> : null}
+      </span>
+    ),
+    detail: (
+      <div className="kz-revision-timeline__detail">
+        {revision.change_summary ? (
+          <p className="kz-revision-timeline__summary">{revision.change_summary}</p>
+        ) : null}
+        {revision.change_reason ? (
+          <p className="kz-revision-timeline__reason">{revision.change_reason}</p>
+        ) : null}
+        {diffs.length > 0 ? (
+          <ul className="kz-revision-timeline__diff">
+            {diffs.map((diff) => (
+              <li key={diff.label}>
+                <span className="kz-revision-timeline__diff-label">{diff.label}:</span>{" "}
+                <span className="kz-revision-timeline__diff-from">{diff.from}</span>
+                {" → "}
+                <span className="kz-revision-timeline__diff-to">{diff.to}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <p className="kz-revision-timeline__dates">
+          Implantação: {formatDate(revision.effective_from)}
+          {" → "}
+          {revision.effective_until ? formatDate(revision.effective_until) : "atual"}
+        </p>
+      </div>
+    ),
+    meta: revision.created_by_name || revision.created_by_user_id || undefined,
+    tone,
+  };
+}
+
 type KaizenRevisionTimelineProps = {
   revisions: KaizenRevision[];
 };
 
 export function KaizenRevisionTimeline({ revisions }: KaizenRevisionTimelineProps) {
-  if (revisions.length === 0) {
-    return <EmptyHint>Nenhuma revisão registrada.</EmptyHint>;
-  }
-
   const byNumber = new Map<number, KaizenRevision>();
   for (const revision of revisions) {
     byNumber.set(revision.revision_number, revision);
   }
 
+  const items = revisions.map((revision) =>
+    toRevisionTimelineItem(revision, byNumber.get(revision.revision_number - 1)),
+  );
+
   return (
-    <ol className="kz-timeline">
-      {revisions.map((revision) => {
-        const tone = CHANGE_TYPE_TONE[revision.change_type] ?? "muted";
-        const current = revision.effective_until == null;
-        const previous = byNumber.get(revision.revision_number - 1);
-        const diffs = computeDiff(revision.snapshot ?? {}, previous?.snapshot);
-        return (
-          <li key={revision.id} className="kz-timeline__item">
-            <div className="kz-timeline__marker" aria-hidden="true" />
-            <div className="kz-timeline__body">
-              <div className="kz-timeline__head">
-                <span className="kz-timeline__version">v{revision.revision_number}</span>
-                <span className={`kz-badge kz-badge--${tone}`}>
-                  {CHANGE_TYPE_LABELS[revision.change_type] ?? revision.change_type}
-                </span>
-                {current ? <span className="kz-badge kz-badge--current">Vigente</span> : null}
-              </div>
-              {revision.change_summary ? (
-                <p className="kz-timeline__summary">{revision.change_summary}</p>
-              ) : null}
-              {revision.change_reason ? (
-                <p className="kz-timeline__reason">{revision.change_reason}</p>
-              ) : null}
-              {diffs.length > 0 ? (
-                <ul className="kz-timeline__diff">
-                  {diffs.map((diff) => (
-                    <li key={diff.label}>
-                      <span className="kz-timeline__diff-label">{diff.label}:</span>{" "}
-                      <span className="kz-timeline__diff-from">{diff.from}</span>
-                      {" → "}
-                      <span className="kz-timeline__diff-to">{diff.to}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              <p className="kz-timeline__dates">
-                Implantação: {formatDate(revision.effective_from)}
-                {" → "}
-                {revision.effective_until ? formatDate(revision.effective_until) : "atual"}
-              </p>
-            </div>
-          </li>
-        );
-      })}
-    </ol>
+    <Timeline
+      items={items}
+      emptyMessage="Nenhuma revisão registrada."
+      aria-label="Versões e mudanças do kaizen"
+    />
   );
 }

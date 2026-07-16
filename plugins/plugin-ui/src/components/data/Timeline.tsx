@@ -128,10 +128,10 @@ export function Timeline({
                   ) : null}
                 </div>
                 {item.detail != null && item.detail !== "" ? (
-                  <p className={classNames.detail}>{item.detail}</p>
+                  <div className={classNames.detail}>{item.detail}</div>
                 ) : null}
                 {item.meta != null && item.meta !== "" ? (
-                  <p className={classNames.meta}>{item.meta}</p>
+                  <div className={classNames.meta}>{item.meta}</div>
                 ) : null}
               </div>
             </li>

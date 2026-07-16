@@ -417,52 +417,26 @@
   background: color-mix(in srgb, var(--kz-text-muted) 12%, var(--kz-card-bg));
   color: var(--kz-text-muted);
   border: 1px solid var(--kz-card-border);
-}/* Timeline de revisões */.dashboard-cadastro-kaizen .kz-timeline{
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}.dashboard-cadastro-kaizen .kz-timeline__item{
-  display: grid;
-  grid-template-columns: 20px 1fr;
-  gap: 12px;
-  padding-bottom: 14px;
-  position: relative;
-}.dashboard-cadastro-kaizen .kz-timeline__item:not(:last-child)::before{
-  content: "";
-  position: absolute;
-  left: 9px;
-  top: 18px;
-  bottom: -4px;
-  width: 2px;
-  background: var(--kz-card-border);
-}.dashboard-cadastro-kaizen .kz-timeline__marker{
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-top: 5px;
-  background: var(--kz-accent);
-  border: 3px solid color-mix(in srgb, var(--kz-accent) 25%, var(--kz-card-bg));
-}.dashboard-cadastro-kaizen .kz-timeline__head{
-  display: flex;
+}/* Conteúdo rico das revisões (dentro do Timeline do kit) */.dashboard-cadastro-kaizen .kz-revision-timeline__title{
+  display: inline-flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-}.dashboard-cadastro-kaizen .kz-timeline__version{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__version{
   font-weight: 700;
   color: var(--kz-title);
-}.dashboard-cadastro-kaizen .kz-timeline__summary{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__detail > :first-child{
+  margin-top: 0;
+}.dashboard-cadastro-kaizen .kz-revision-timeline__summary{
   margin: 4px 0 0;
   font-size: var(--kz-font-md);
   color: var(--kz-text);
-}.dashboard-cadastro-kaizen .kz-timeline__reason{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__reason{
   margin: 2px 0 0;
   font-size: var(--kz-font-sm);
   color: var(--kz-text-muted);
   font-style: italic;
-}.dashboard-cadastro-kaizen .kz-timeline__dates{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__dates{
   margin: 4px 0 0;
   font-size: var(--kz-font-xs);
   color: var(--kz-text-muted);
@@ -768,7 +742,7 @@
   padding: 4px 10px;
   font-size: var(--kz-font-xs);
   min-height: 30px;
-}/* Checkbox não pode herdar o estilo de input de filtro (vira caixa grande). *//* Select simples (FilterSelectField / SelectControl) — mesmo DNA do multi-select *//* Diff entre revisões */.dashboard-cadastro-kaizen .kz-timeline__diff{
+}/* Checkbox não pode herdar o estilo de input de filtro (vira caixa grande). *//* Select simples (FilterSelectField / SelectControl) — mesmo DNA do multi-select *//* Diff entre revisões */.dashboard-cadastro-kaizen .kz-revision-timeline__diff{
   list-style: none;
   margin: 6px 0 0;
   padding: 8px 10px;
@@ -778,16 +752,16 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-}.dashboard-cadastro-kaizen .kz-timeline__diff li{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__diff li{
   font-size: var(--kz-font-xs);
   color: var(--kz-text);
-}.dashboard-cadastro-kaizen .kz-timeline__diff-label{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__diff-label{
   font-weight: 700;
   color: var(--kz-text-muted);
-}.dashboard-cadastro-kaizen .kz-timeline__diff-from{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__diff-from{
   text-decoration: line-through;
   color: var(--kz-text-muted);
-}.dashboard-cadastro-kaizen .kz-timeline__diff-to{
+}.dashboard-cadastro-kaizen .kz-revision-timeline__diff-to{
   font-weight: 600;
   color: var(--kz-accent);
 }/* ---------------------------------------------------------------- Melhorias */.dashboard-cadastro-kaizen .kz-improvements{
@@ -1119,38 +1093,8 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--kz-text-muted);
-}.dashboard-cadastro-kaizen .kz-history{
-  list-style: none;
-  margin: 0;
-  padding: 0 0 0 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}.dashboard-cadastro-kaizen .kz-history__item{
-  display: flex;
-  gap: 10px;
-}.dashboard-cadastro-kaizen .kz-history__marker{
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-top: 6px;
-  background: var(--kz-accent);
-  flex-shrink: 0;
-}.dashboard-cadastro-kaizen .kz-history__head{
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}.dashboard-cadastro-kaizen .kz-history__title{
-  font-weight: 600;
-  font-size: var(--kz-font-sm);
-}.dashboard-cadastro-kaizen .kz-history__date,
-.dashboard-cadastro-kaizen .kz-history__author{
-  font-size: var(--kz-font-xs);
-  color: var(--kz-text-muted);
-}.dashboard-cadastro-kaizen .kz-history__desc{
-  margin: 2px 0;
-  font-size: var(--kz-font-xs);
+}.dashboard-cadastro-kaizen .kz-changelog .delpi-ui-timeline__title{
+  color: var(--kz-accent, var(--kz-title));
 }.dashboard-cadastro-kaizen .kz-audit{
   list-style: none;
   margin: 0;
