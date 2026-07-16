@@ -2,6 +2,7 @@ from tv_app.application.services.data.tv_data_transform_service import (
     apply_data_transform_steps,
     apply_data_transform_to_payload,
     evaluate_safe_arithmetic_expr,
+    evaluate_safe_column_expr,
     normalize_data_transform,
 )
 
@@ -52,6 +53,14 @@ def test_apply_steps_round_trip_like_ts():
 def test_safe_expr_rejects_calls():
     assert evaluate_safe_arithmetic_expr("oee + meta", {"oee": 1, "meta": 2}) == 3.0
     assert evaluate_safe_arithmetic_expr("oee + evil()", {"oee": 1}) is None
+
+
+def test_column_expr_dsl():
+    assert evaluate_safe_column_expr('if(oee >= meta, "ok", "nok")', {"oee": 90, "meta": 85}) == "ok"
+    assert evaluate_safe_column_expr('concat("F", branch)', {"branch": "01"}) == "F01"
+    assert evaluate_safe_column_expr("coalesce(gap, 0)", {"gap": None}) == 0
+    assert evaluate_safe_column_expr("abs(meta - oee)", {"meta": 85, "oee": 90}) == 5.0
+    assert evaluate_safe_column_expr("lower(trim(name))", {"name": "  AB "}) == "ab"
 
 
 def test_apply_to_payload_marks_applied():

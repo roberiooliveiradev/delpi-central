@@ -734,6 +734,7 @@ export {
   dataTransformStepFormula,
   dataTransformStepLabel,
   evaluateSafeArithmeticExpr,
+  evaluateSafeColumnExpr,
   normalizeDataTransform,
   type DataTransform,
   type DataTransformAgg,

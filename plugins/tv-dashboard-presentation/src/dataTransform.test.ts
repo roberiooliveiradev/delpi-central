@@ -4,6 +4,7 @@ import {
   applyDataTransformSteps,
   applyDataTransformToPayload,
   evaluateSafeArithmeticExpr,
+  evaluateSafeColumnExpr,
   normalizeDataTransform,
 } from "./dataTransform";
 
@@ -50,6 +51,15 @@ describe("dataTransform", () => {
     expect(evaluateSafeArithmeticExpr("oee + meta", { oee: 1, meta: 2 })).toBe(3);
     expect(evaluateSafeArithmeticExpr("oee + evil()", { oee: 1 })).toBeNull();
     expect(evaluateSafeArithmeticExpr("__proto__", { __proto__: 1 })).toBeNull();
+  });
+
+  it("DSL if/concat/coalesce", () => {
+    expect(evaluateSafeColumnExpr('if(oee >= meta, "ok", "nok")', { oee: 90, meta: 85 })).toBe(
+      "ok",
+    );
+    expect(evaluateSafeColumnExpr('concat("F", branch)', { branch: "01" })).toBe("F01");
+    expect(evaluateSafeColumnExpr("coalesce(gap, 0)", { gap: null })).toBe(0);
+    expect(evaluateSafeColumnExpr("abs(meta - oee)", { meta: 85, oee: 90 })).toBe(5);
   });
 
   it("aplica ao payload lista e marca applied", () => {

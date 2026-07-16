@@ -17,6 +17,18 @@ _OPS = {
     ast.Div: operator.truediv,
     ast.USub: operator.neg,
 }
+_CMP_OPS = {
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+    ast.Gt: operator.gt,
+    ast.GtE: operator.ge,
+    ast.Lt: operator.lt,
+    ast.LtE: operator.le,
+}
+_FUNC_WHITELIST = frozenset(
+    {"iff", "concat", "abs", "min", "max", "coalesce", "len", "lower", "upper", "trim"}
+)
+_IF_CALL_RE = re.compile(r"\bif\s*\(", re.IGNORECASE)
 
 
 def _as_agg(raw: Any) -> str | None:
@@ -230,42 +242,139 @@ def _aggregate(values: list[Any], fn: str) -> Any:
 
 
 def evaluate_safe_arithmetic_expr(expr: str, row: dict[str, Any]) -> float | None:
+    """Compat: retorna só número; preferir evaluate_safe_column_expr."""
+    return _as_number(evaluate_safe_column_expr(expr, row))
+
+
+def evaluate_safe_column_expr(expr: str, row: dict[str, Any]) -> Any:
+    """
+    DSL segura de coluna calculada (sandbox AST).
+    if(cond, a, b), concat(...), abs/min/max/coalesce/len/lower/upper/trim,
+    aritmética e comparadores == != > >= < <=.
+    """
     trimmed = (expr or "").strip()
     if not trimmed:
         return None
+    rewritten = _IF_CALL_RE.sub("iff(", trimmed)
     try:
-        tree = ast.parse(trimmed, mode="eval")
+        tree = ast.parse(rewritten, mode="eval")
     except SyntaxError:
         return None
 
-    def _eval(node: ast.AST) -> float:
+    def _truthy(value: Any) -> bool:
+        if value is None:
+            return False
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return value != 0 and value == value  # noqa: PLR0124
+        return str(value).strip() != ""
+
+    def _num(value: Any) -> float:
+        num = _as_number(value)
+        if num is None:
+            raise ValueError("nan")
+        return num
+
+    def _eval(node: ast.AST) -> Any:
         if isinstance(node, ast.Expression):
             return _eval(node.body)
-        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) and not isinstance(
-            node.value, bool
-        ):
-            return float(node.value)
+        if isinstance(node, ast.Constant):
+            if isinstance(node.value, bool):
+                return node.value
+            if isinstance(node.value, (int, float)) and not isinstance(node.value, bool):
+                return float(node.value)
+            if isinstance(node.value, str):
+                return node.value
+            if node.value is None:
+                return None
+            raise ValueError("const")
         if isinstance(node, ast.UnaryOp) and type(node.op) in _OPS:
-            return float(_OPS[type(node.op)](_eval(node.operand)))
+            return float(_OPS[type(node.op)](_num(_eval(node.operand))))
         if isinstance(node, ast.BinOp) and type(node.op) in _OPS:
-            left = _eval(node.left)
-            right = _eval(node.right)
+            left = _num(_eval(node.left))
+            right = _num(_eval(node.right))
             if isinstance(node.op, ast.Div) and right == 0:
                 raise ZeroDivisionError
             return float(_OPS[type(node.op)](left, right))
+        if isinstance(node, ast.Compare):
+            if len(node.ops) != 1 or len(node.comparators) != 1:
+                raise ValueError("cmp")
+            op_type = type(node.ops[0])
+            if op_type not in _CMP_OPS:
+                raise ValueError("cmpop")
+            left = _eval(node.left)
+            right = _eval(node.comparators[0])
+            ln = _as_number(left)
+            rn = _as_number(right)
+            if ln is not None and rn is not None:
+                return bool(_CMP_OPS[op_type](ln, rn))
+            return bool(
+                _CMP_OPS[op_type](
+                    str(left if left is not None else ""),
+                    str(right if right is not None else ""),
+                )
+            )
         if isinstance(node, ast.Name):
             if not _IDENT_RE.match(node.id) or node.id not in row:
                 raise ValueError("col")
-            num = _as_number(row.get(node.id))
-            if num is None:
-                raise ValueError("nan")
-            return num
+            cell = row.get(node.id)
+            if cell is None or (isinstance(cell, str) and cell.strip() == ""):
+                return None
+            return cell
+        if isinstance(node, ast.Call):
+            if not isinstance(node.func, ast.Name):
+                raise ValueError("call")
+            fname = node.func.id
+            if fname not in _FUNC_WHITELIST:
+                raise ValueError("fn")
+            if node.keywords:
+                raise ValueError("kw")
+            args = [_eval(arg) for arg in node.args]
+            if fname == "iff":
+                if len(args) != 3:
+                    raise ValueError("iff")
+                return args[1] if _truthy(args[0]) else args[2]
+            if fname == "concat":
+                return "".join("" if a is None else str(a) for a in args)
+            if fname == "abs":
+                if len(args) != 1:
+                    raise ValueError("abs")
+                return abs(_num(args[0]))
+            if fname in {"min", "max"}:
+                if len(args) < 1:
+                    raise ValueError(fname)
+                nums = [_num(a) for a in args]
+                return float(min(nums) if fname == "min" else max(nums))
+            if fname == "coalesce":
+                for arg in args:
+                    if arg is not None and not (isinstance(arg, str) and arg.strip() == ""):
+                        return arg
+                return None
+            if fname == "len":
+                if len(args) != 1:
+                    raise ValueError("len")
+                if args[0] is None:
+                    return 0.0
+                return float(len(str(args[0])))
+            if fname in {"lower", "upper", "trim"}:
+                if len(args) != 1:
+                    raise ValueError(fname)
+                text = "" if args[0] is None else str(args[0])
+                if fname == "lower":
+                    return text.lower()
+                if fname == "upper":
+                    return text.upper()
+                return text.strip()
+            raise ValueError("fn")
         raise ValueError("node")
 
     try:
         value = _eval(tree)
-        return value if value == value else None  # noqa: PLR0124
-    except (ValueError, ZeroDivisionError, TypeError, KeyError):
+        if isinstance(value, float) and value != value:  # noqa: PLR0124
+            return None
+        return value
+    except (ValueError, ZeroDivisionError, TypeError, KeyError, OverflowError):
         return None
 
 
@@ -322,7 +431,7 @@ def apply_data_transform_steps(
                 continue
             if name not in columns:
                 columns.append(name)
-            rows = [{**row, name: evaluate_safe_arithmetic_expr(expr, row)} for row in rows]
+            rows = [{**row, name: evaluate_safe_column_expr(expr, row)} for row in rows]
         elif op == "replace":
             column = str(step.get("column") or "")
             find = str(step.get("find") if step.get("find") is not None else "")

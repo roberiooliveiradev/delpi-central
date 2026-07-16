@@ -307,18 +307,19 @@ function aggregateColumn(
 }
 
 /**
- * Avalia expressão aritmética segura: identificadores = colunas da linha,
- * operadores + - * / e parênteses. Sem eval livre.
+ * DSL segura de coluna calculada (espelho do Python).
+ * if(cond, a, b), concat, abs/min/max/coalesce/len/lower/upper/trim,
+ * aritmética e == != > >= < <=. Sem eval livre.
  */
-export function evaluateSafeArithmeticExpr(
+export function evaluateSafeColumnExpr(
   expr: string,
   row: Record<string, unknown>,
-): number | null {
-  const trimmed = expr.trim();
+): unknown {
+  const trimmed = expr.trim().replace(/\bif\s*\(/gi, "iff(");
   if (!trimmed) return null;
-  const columns = Object.keys(row).sort((a, b) => b.length - a.length);
   let i = 0;
   const peek = () => trimmed[i] ?? "";
+  const peek2 = () => trimmed.slice(i, i + 2);
   const consume = () => {
     const ch = trimmed[i] ?? "";
     i += 1;
@@ -327,22 +328,48 @@ export function evaluateSafeArithmeticExpr(
   const skipWs = () => {
     while (/\s/.test(peek())) i += 1;
   };
+  const truthy = (value: unknown): boolean => {
+    if (value == null) return false;
+    if (typeof value === "boolean") return value;
+    if (typeof value === "number") return value !== 0 && Number.isFinite(value);
+    return String(value).trim() !== "";
+  };
+  const toNum = (value: unknown): number => {
+    const num = asNumber(value);
+    if (num == null) throw new Error("nan");
+    return num;
+  };
 
-  const parseIdentifierOrNumber = (): number => {
+  const parsePrimary = (): unknown => {
     skipWs();
     if (peek() === "(") {
       consume();
-      const value = parseExpr();
+      const value = parseComparison();
       skipWs();
       if (peek() !== ")") throw new Error("paren");
       consume();
       return value;
     }
-    if (peek() === "-") {
+    if (peek() === "-" && !/\d/.test(trimmed[i + 1] ?? "")) {
       consume();
-      return -parseIdentifierOrNumber();
+      return -toNum(parsePrimary());
     }
-    if (/\d/.test(peek()) || peek() === ".") {
+    if (peek() === '"' || peek() === "'") {
+      const quote = consume();
+      let raw = "";
+      while (peek() && peek() !== quote) {
+        if (peek() === "\\") {
+          consume();
+          raw += consume();
+        } else {
+          raw += consume();
+        }
+      }
+      if (peek() !== quote) throw new Error("str");
+      consume();
+      return raw;
+    }
+    if (/\d/.test(peek()) || (peek() === "." && /\d/.test(trimmed[i + 1] ?? ""))) {
       let raw = "";
       while (/[\d.]/.test(peek())) raw += consume();
       const num = Number(raw);
@@ -352,27 +379,87 @@ export function evaluateSafeArithmeticExpr(
     let ident = "";
     while (/[A-Za-z0-9_]/.test(peek())) ident += consume();
     if (!ident || !IDENT.test(ident)) throw new Error("ident");
-    if (!columns.includes(ident) && !(ident in row)) throw new Error("col");
-    const num = asNumber(row[ident]);
-    if (num == null) throw new Error("nan");
-    return num;
+    skipWs();
+    if (peek() === "(") {
+      consume();
+      const args: unknown[] = [];
+      skipWs();
+      if (peek() !== ")") {
+        args.push(parseComparison());
+        skipWs();
+        while (peek() === ",") {
+          consume();
+          args.push(parseComparison());
+          skipWs();
+        }
+      }
+      if (peek() !== ")") throw new Error("call");
+      consume();
+      return applyFn(ident, args);
+    }
+    if (!(ident in row) && !Object.keys(row).includes(ident)) throw new Error("col");
+    const cell = row[ident];
+    if (cell == null || (typeof cell === "string" && cell.trim() === "")) return null;
+    return cell;
   };
 
-  const parseTerm = (): number => {
-    let left = parseIdentifierOrNumber();
+  const applyFn = (name: string, args: unknown[]): unknown => {
+    if (name === "iff") {
+      if (args.length !== 3) throw new Error("iff");
+      return truthy(args[0]) ? args[1] : args[2];
+    }
+    if (name === "concat") {
+      return args.map((a) => (a == null ? "" : String(a))).join("");
+    }
+    if (name === "abs") {
+      if (args.length !== 1) throw new Error("abs");
+      return Math.abs(toNum(args[0]));
+    }
+    if (name === "min" || name === "max") {
+      if (!args.length) throw new Error(name);
+      const nums = args.map(toNum);
+      return name === "min" ? Math.min(...nums) : Math.max(...nums);
+    }
+    if (name === "coalesce") {
+      for (const arg of args) {
+        if (arg != null && !(typeof arg === "string" && arg.trim() === "")) return arg;
+      }
+      return null;
+    }
+    if (name === "len") {
+      if (args.length !== 1) throw new Error("len");
+      if (args[0] == null) return 0;
+      return String(args[0]).length;
+    }
+    if (name === "lower" || name === "upper" || name === "trim") {
+      if (args.length !== 1) throw new Error(name);
+      const text = args[0] == null ? "" : String(args[0]);
+      if (name === "lower") return text.toLowerCase();
+      if (name === "upper") return text.toUpperCase();
+      return text.trim();
+    }
+    throw new Error("fn");
+  };
+
+  const parseUnary = (): unknown => parsePrimary();
+
+  const parseTerm = (): unknown => {
+    let left = parseUnary();
     for (;;) {
       skipWs();
       const op = peek();
       if (op !== "*" && op !== "/") break;
       consume();
-      const right = parseIdentifierOrNumber();
-      left = op === "*" ? left * right : right === 0 ? NaN : left / right;
-      if (!Number.isFinite(left)) throw new Error("arith");
+      const right = parseUnary();
+      const ln = toNum(left);
+      const rn = toNum(right);
+      left = op === "*" ? ln * rn : rn === 0 ? NaN : ln / rn;
+      if (!Number.isFinite(left as number)) throw new Error("arith");
     }
     return left;
   };
 
-  const parseExpr = (): number => {
+  const parseSum = (): unknown => {
     let left = parseTerm();
     for (;;) {
       skipWs();
@@ -380,20 +467,64 @@ export function evaluateSafeArithmeticExpr(
       if (op !== "+" && op !== "-") break;
       consume();
       const right = parseTerm();
-      left = op === "+" ? left + right : left - right;
-      if (!Number.isFinite(left)) throw new Error("arith");
+      left = op === "+" ? toNum(left) + toNum(right) : toNum(left) - toNum(right);
+      if (!Number.isFinite(left as number)) throw new Error("arith");
     }
     return left;
   };
 
+  const parseComparison = (): unknown => {
+    const left = parseSum();
+    skipWs();
+    const two = peek2();
+    let op: string | null = null;
+    if (two === "==" || two === "!=" || two === ">=" || two === "<=") {
+      op = two;
+      i += 2;
+    } else if (peek() === ">" || peek() === "<") {
+      op = consume();
+    }
+    if (!op) return left;
+    const right = parseSum();
+    const ln = asNumber(left);
+    const rn = asNumber(right);
+    if (ln != null && rn != null) {
+      if (op === "==") return ln === rn;
+      if (op === "!=") return ln !== rn;
+      if (op === ">") return ln > rn;
+      if (op === ">=") return ln >= rn;
+      if (op === "<") return ln < rn;
+      if (op === "<=") return ln <= rn;
+    }
+    const ls = String(left ?? "");
+    const rs = String(right ?? "");
+    if (op === "==") return ls === rs;
+    if (op === "!=") return ls !== rs;
+    if (op === ">") return ls > rs;
+    if (op === ">=") return ls >= rs;
+    if (op === "<") return ls < rs;
+    return ls <= rs;
+  };
+
   try {
-    const value = parseExpr();
+    const value = parseComparison();
     skipWs();
     if (i !== trimmed.length) return null;
-    return Number.isFinite(value) ? value : null;
+    if (typeof value === "number" && !Number.isFinite(value)) return null;
+    return value;
   } catch {
     return null;
   }
+}
+
+/**
+ * Avalia expressão aritmética segura (compat) — só número.
+ */
+export function evaluateSafeArithmeticExpr(
+  expr: string,
+  row: Record<string, unknown>,
+): number | null {
+  return asNumber(evaluateSafeColumnExpr(expr, row));
 }
 
 function safeHeader(value: unknown, index: number): string {
@@ -446,7 +577,7 @@ export function applyDataTransformSteps(
       if (!columns.includes(name)) columns = [...columns, name];
       rows = rows.map((row) => ({
         ...row,
-        [name]: evaluateSafeArithmeticExpr(step.expr, row),
+        [name]: evaluateSafeColumnExpr(step.expr, row),
       }));
       continue;
     }
