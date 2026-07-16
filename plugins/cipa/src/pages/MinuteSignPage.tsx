@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { HelpTooltip, SignaturePad } from "@delpi/plugin-ui/index";
 
 import { getSignContext, refuseMinute, signMinute } from "../api/cipaApi";
+import { UNIT_LABELS } from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
 
@@ -75,9 +76,17 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
     <div className="cipa-page-stack cipa-sign-page">
       <header className="cipa-header">
         <div>
+          <button
+            type="button"
+            className="cipa-link"
+            onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}`)}
+          >
+            ← Voltar para a ata
+          </button>
           <h1>Assinatura da ata</h1>
           <p>
-            {String(minute.minute_number || "")} — {String(minute.title || "")}
+            {UNIT_LABELS[unitCode]} · {String(minute.minute_number || "")} —{" "}
+            {String(minute.title || "")}
           </p>
         </div>
       </header>

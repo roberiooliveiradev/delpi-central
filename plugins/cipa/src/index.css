@@ -190,7 +190,192 @@
 .dashboard-cipa .cipa-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.dashboard-cipa .cipa-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-cipa .cipa-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-cipa .cipa-field__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cipa-text);
+}
+
+.dashboard-cipa .cipa-field--span-2 {
+  grid-column: span 2;
+}
+
+.dashboard-cipa .cipa-field--grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-cipa .cipa-section-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cipa-text);
+}
+
+.dashboard-cipa .cipa-rich-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-cipa .cipa-external-row {
+  display: flex;
   gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.dashboard-cipa .cipa-participant-list {
+  margin-top: 4px;
+}
+
+.dashboard-cipa .cipa-chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-cipa .cipa-chip-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--cipa-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--cipa-accent) 6%, transparent);
+}
+
+.dashboard-cipa .cipa-chip-list__tag {
+  margin-left: 8px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cipa-accent) 18%, transparent);
+  color: var(--cipa-text-muted);
+}
+
+.dashboard-cipa .cipa-icon-btn {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--cipa-border);
+  background: var(--cipa-surface);
+  color: var(--cipa-text-muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-cipa .cipa-icon-btn:hover {
+  color: var(--cipa-danger);
+  border-color: color-mix(in srgb, var(--cipa-danger) 40%, var(--cipa-border));
+}
+
+.dashboard-cipa .cipa-editor-card {
+  min-height: 280px;
+}
+
+.dashboard-cipa .cipa-steps__item.is-done {
+  border-color: color-mix(in srgb, var(--cipa-accent) 50%, var(--cipa-border));
+  color: var(--cipa-text-muted);
+}
+
+.dashboard-cipa .cipa-review__header h2 {
+  margin: 0 0 8px;
+  color: var(--cipa-title);
+}
+
+.dashboard-cipa .cipa-review__meta {
+  margin: 0;
+  color: var(--cipa-text-muted);
+  font-size: 14px;
+}
+
+.dashboard-cipa .cipa-review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.dashboard-cipa .cipa-review-block {
+  padding: 14px;
+  border: 1px solid var(--cipa-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--cipa-surface) 96%, var(--cipa-accent) 4%);
+}
+
+.dashboard-cipa .cipa-review-block--wide {
+  grid-column: span 2;
+}
+
+.dashboard-cipa .cipa-review-block h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cipa-title);
+}
+
+.dashboard-cipa .cipa-review-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--cipa-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.dashboard-cipa .cipa-review-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--cipa-text-muted);
+  font-style: italic;
+}
+
+.dashboard-cipa .cipa-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.dashboard-cipa .cipa-card h2 {
+  margin: 0 0 12px;
+  color: var(--cipa-title);
+  font-size: 1.1rem;
+}
+
+.dashboard-cipa .cipa-card .delpi-ui-user-directory-picker,
+.dashboard-cipa .cipa-card .delpi-ui-rich-text {
+  width: 100%;
+}
+
+.dashboard-cipa .cipa-prose p {
+  margin: 0 0 0.75em;
+}
+
+.dashboard-cipa .cipa-prose p:last-child {
+  margin-bottom: 0;
 }
 
 .dashboard-cipa .cipa-footer-actions {
@@ -281,6 +466,20 @@
 
   .dashboard-cipa .cipa-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-cipa .cipa-field--span-2,
+  .dashboard-cipa .cipa-review-block--wide {
+    grid-column: span 1;
+  }
+
+  .dashboard-cipa .cipa-review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-cipa .cipa-external-row .cipa-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .dashboard-cipa .cipa-header__actions,

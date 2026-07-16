@@ -243,7 +243,10 @@ function MinuteListPage({
       { unit_code: unitCode, status: status || undefined, q: q || undefined },
       controller.signal,
     )
-      .then((data) => setItems(data.items))
+      .then((data) => {
+        setItems(data.items);
+        setError(null);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro ao listar."))
       .finally(() => setLoading(false));
     return () => controller.abort();
@@ -307,12 +310,23 @@ function MinuteListPage({
           </button>
         </div>
 
-        {error && <p className="cipa-error">{error}</p>}
+        {error ? <p className="cipa-error">{error}</p> : null}
         {loading ? (
           <p className="cipa-state">Carregando…</p>
-        ) : items.length === 0 ? (
-          <p className="cipa-state">Nenhuma ata encontrada.</p>
-        ) : (
+        ) : !error && items.length === 0 ? (
+          <div className="cipa-empty-state">
+            <p className="cipa-state">Nenhuma ata encontrada para os filtros atuais.</p>
+            {canManage ? (
+              <button
+                type="button"
+                className="cipa-btn cipa-btn--primary"
+                onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
+              >
+                <FilePlus2 size={16} /> Criar primeira ata
+              </button>
+            ) : null}
+          </div>
+        ) : !error ? (
           <div className="cipa-table-wrap">
             <table className="cipa-table">
               <thead>
@@ -353,7 +367,7 @@ function MinuteListPage({
               </tbody>
             </table>
           </div>
-        )}
+        ) : null}
       </section>
     </div>
   );
