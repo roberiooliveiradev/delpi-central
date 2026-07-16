@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  ActionButton,
+  BackLink,
   FieldLabel,
   HelpTooltip,
   NativeTextControl,
@@ -123,9 +125,7 @@ export function MySignaturePage() {
     <div className="cipa-page-stack">
       <header className="cipa-header">
         <div>
-          <button type="button" className="cipa-link" onClick={() => navigateCipa("/apps/cipa")}>
-            ← Voltar ao início
-          </button>
+          <BackLink onClick={() => navigateCipa("/apps/cipa")}>Voltar ao início</BackLink>
           <h1>Minha assinatura</h1>
           <p>
             Configure o nome e o traço que serão reutilizados ao assinar atas. Cada usuário
@@ -153,14 +153,13 @@ export function MySignaturePage() {
           />
         </div>
         <div className="cipa-footer-actions">
-          <button
-            type="button"
-            className="cipa-btn cipa-btn--primary"
+          <ActionButton
+            variant="primary"
             disabled={savingProfile}
             onClick={() => void handleSaveProfile()}
           >
             <Save size={16} /> Salvar nome
-          </button>
+          </ActionButton>
         </div>
       </section>
 
@@ -179,14 +178,13 @@ export function MySignaturePage() {
         <p>Desenhe abaixo para criar ou substituir a assinatura salva.</p>
         <SignaturePad key={padKey} onChange={setPng} />
         <div className="cipa-footer-actions">
-          <button
-            type="button"
-            className="cipa-btn cipa-btn--primary"
+          <ActionButton
+            variant="primary"
             disabled={savingImage || !png}
             onClick={() => void handleSaveImage()}
           >
             <PenLine size={16} /> Salvar assinatura
-          </button>
+          </ActionButton>
         </div>
       </section>
     </div>

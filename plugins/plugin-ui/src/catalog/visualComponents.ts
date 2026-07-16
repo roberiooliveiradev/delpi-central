@@ -41,6 +41,15 @@ function vc(
 }
 
 export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
+  // actions
+  vc("layout", "ActionButton", {
+    addedAt: "2026-07-16",
+    description: "Botão de ação canônico com variantes primary, default, ghost e link.",
+  }),
+  vc("layout", "BackLink", {
+    addedAt: "2026-07-16",
+    description: "Navegação de retorno com seta e sem chrome de botão.",
+  }),
   // help — pacote 0.1.0
   vc("help", "HelpTooltip"),
   vc("help", "FieldLabel"),

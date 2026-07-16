@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  ActionButton,
+  BackLink,
   FieldLabel,
   NativeSelectControl,
   NativeTextControl,
@@ -170,9 +172,7 @@ function AccessDenied({ message }: { message: string }) {
     <section className="cipa-card">
       <h1>Sem acesso</h1>
       <p className="cipa-state">{message}</p>
-      <button type="button" className="cipa-btn" onClick={() => navigateCipa("/apps/cipa")}>
-        Voltar ao início
-      </button>
+      <ActionButton onClick={() => navigateCipa("/apps/cipa")}>Voltar ao início</ActionButton>
     </section>
   );
 }
@@ -232,20 +232,12 @@ function CipaHomePage({ access }: { access: CipaAccess | null }) {
         <section className="cipa-card">
           <h2>Assinaturas</h2>
           <div className="cipa-home-actions">
-            <button
-              type="button"
-              className="cipa-btn cipa-btn--primary"
-              onClick={() => navigateCipa("/apps/cipa/pending")}
-            >
+            <ActionButton variant="primary" onClick={() => navigateCipa("/apps/cipa/pending")}>
               <PenLine size={16} /> Ver pendências
-            </button>
-            <button
-              type="button"
-              className="cipa-btn"
-              onClick={() => navigateCipa("/apps/cipa/my-signature")}
-            >
+            </ActionButton>
+            <ActionButton onClick={() => navigateCipa("/apps/cipa/my-signature")}>
               <PenLine size={16} /> Minha assinatura
-            </button>
+            </ActionButton>
           </div>
         </section>
       ) : null}
@@ -290,33 +282,26 @@ function MinuteListPage({
     <div className="cipa-page-stack">
       <header className="cipa-header">
         <div>
-          <button type="button" className="cipa-link" onClick={() => navigateCipa("/apps/cipa")}>
-            ← Unidades
-          </button>
+          <BackLink onClick={() => navigateCipa("/apps/cipa")}>Unidades</BackLink>
           <h1>CIPA — {UNIT_LABELS[unitCode]}</h1>
           <p>Atas de reunião da unidade</p>
         </div>
         <div className="cipa-header__actions">
-          <button type="button" className="cipa-btn cipa-btn--ghost" onClick={() => load()}>
+          <ActionButton variant="ghost" onClick={() => load()}>
             <RefreshCw size={16} /> Atualizar
-          </button>
+          </ActionButton>
           {canSign ? (
-            <button
-              type="button"
-              className="cipa-btn"
-              onClick={() => navigateCipa("/apps/cipa/my-signature")}
-            >
+            <ActionButton onClick={() => navigateCipa("/apps/cipa/my-signature")}>
               <PenLine size={16} /> Minha assinatura
-            </button>
+            </ActionButton>
           ) : null}
           {canManage ? (
-            <button
-              type="button"
-              className="cipa-btn cipa-btn--primary"
+            <ActionButton
+              variant="primary"
               onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
             >
               <FilePlus2 size={16} /> Nova ata
-            </button>
+            </ActionButton>
           ) : null}
         </div>
       </header>
@@ -357,9 +342,9 @@ function MinuteListPage({
               placeholder="Título ou número"
             />
           </div>
-          <button type="button" className="cipa-btn cipa-filters__submit" onClick={() => load()}>
+          <ActionButton className="cipa-filters__submit" onClick={() => load()}>
             Buscar
-          </button>
+          </ActionButton>
         </div>
 
         {error ? <p className="cipa-error">{error}</p> : null}
@@ -369,13 +354,12 @@ function MinuteListPage({
           <div className="cipa-empty-state">
             <p className="cipa-state">Nenhuma ata encontrada para os filtros atuais.</p>
             {canManage ? (
-              <button
-                type="button"
-                className="cipa-btn cipa-btn--primary"
+              <ActionButton
+                variant="primary"
                 onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
               >
                 <FilePlus2 size={16} /> Criar primeira ata
-              </button>
+              </ActionButton>
             ) : null}
           </div>
         ) : !error ? (
@@ -461,13 +445,9 @@ function MinuteDetailPage({
     <div className="cipa-page-stack">
       <header className="cipa-header">
         <div>
-          <button
-            type="button"
-            className="cipa-link"
-            onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}`)}
-          >
-            ← Voltar
-          </button>
+          <BackLink onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}`)}>
+            Voltar
+          </BackLink>
           <h1>{String(minute?.title || "Ata")}</h1>
           <p>
             {String(minute?.minute_number || "")} · {STATUS_LABELS[status] || status}
@@ -475,18 +455,15 @@ function MinuteDetailPage({
         </div>
         <div className="cipa-header__actions">
           {canManage && (status === "draft" || status === "in_review") && (
-            <button
-              type="button"
-              className="cipa-btn"
+            <ActionButton
               onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/edit`)}
             >
               Editar
-            </button>
+            </ActionButton>
           )}
           {canManage && (status === "draft" || status === "in_review") && (
-            <button
-              type="button"
-              className="cipa-btn cipa-btn--primary"
+            <ActionButton
+              variant="primary"
               disabled={busy}
               onClick={() => {
                 setBusy(true);
@@ -497,21 +474,19 @@ function MinuteDetailPage({
               }}
             >
               Enviar para assinatura
-            </button>
+            </ActionButton>
           )}
           {canSign && (status === "awaiting_signatures" || status === "partially_signed") && (
-            <button
-              type="button"
-              className="cipa-btn cipa-btn--primary"
+            <ActionButton
+              variant="primary"
               onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/sign`)}
             >
               <PenLine size={16} /> Assinar
-            </button>
+            </ActionButton>
           )}
           {canManage && status === "signed" && (
-            <button
-              type="button"
-              className="cipa-btn cipa-btn--primary"
+            <ActionButton
+              variant="primary"
               disabled={busy}
               onClick={() => {
                 setBusy(true);
@@ -522,7 +497,7 @@ function MinuteDetailPage({
               }}
             >
               Finalizar
-            </button>
+            </ActionButton>
           )}
         </div>
       </header>
@@ -585,47 +560,39 @@ function PendingPage() {
     <div className="cipa-page-stack">
       <header className="cipa-header">
         <div>
-          <button type="button" className="cipa-link" onClick={() => navigateCipa("/apps/cipa")}>
-            ← Início
-          </button>
+          <BackLink onClick={() => navigateCipa("/apps/cipa")}>Início</BackLink>
           <h1>Assinaturas pendentes</h1>
           <p>Atas que aguardam sua assinatura</p>
         </div>
         <div className="cipa-header__actions">
-          <button
-            type="button"
-            className="cipa-btn cipa-btn--primary"
+          <ActionButton
+            variant="primary"
             onClick={() => navigateCipa("/apps/cipa/my-signature")}
           >
             <PenLine size={16} /> Minha assinatura
-          </button>
+          </ActionButton>
         </div>
       </header>
       <section className="cipa-card">
         {items.length === 0 ? (
           <div className="cipa-empty-state">
             <p className="cipa-state">Nenhuma pendência.</p>
-            <button
-              type="button"
-              className="cipa-btn"
-              onClick={() => navigateCipa("/apps/cipa/my-signature")}
-            >
+            <ActionButton onClick={() => navigateCipa("/apps/cipa/my-signature")}>
               <PenLine size={16} /> Configurar minha assinatura
-            </button>
+            </ActionButton>
           </div>
         ) : (
           <ul className="cipa-list">
             {items.map((item) => (
               <li key={item.id}>
-                <button
-                  type="button"
-                  className="cipa-link"
+                <ActionButton
+                  variant="link"
                   onClick={() =>
                     navigateCipa(`/apps/cipa/filial-${item.unit_code}/minutes/${item.id}/sign`)
                   }
                 >
                   {item.minute_number} — {item.title}
-                </button>
+                </ActionButton>
               </li>
             ))}
           </ul>

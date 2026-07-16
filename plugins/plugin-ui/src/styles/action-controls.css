@@ -1,0 +1,86 @@
+/* ActionButton / BackLink — botões de ação e voltar canônicos dos MFEs */
+
+.delpi-ui-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #111111));
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, filter 0.15s ease;
+}
+
+.delpi-ui-action-btn:hover:not(:disabled) {
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 45%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+}
+
+.delpi-ui-action-btn:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)
+  );
+}
+
+.delpi-ui-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delpi-ui-action-btn--primary {
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  color: #fff;
+}
+
+.delpi-ui-action-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.delpi-ui-action-btn--ghost {
+  background: transparent;
+}
+
+.delpi-ui-action-btn--link {
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-action-btn--link:hover:not(:disabled) {
+  border: none;
+  text-decoration: underline;
+}
+
+.delpi-ui-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  font: inherit;
+  cursor: pointer;
+}
+
+.delpi-ui-back-link:hover {
+  text-decoration: underline;
+}
+
+.delpi-ui-back-link__arrow {
+  flex-shrink: 0;
+}

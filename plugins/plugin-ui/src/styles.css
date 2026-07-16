@@ -36,6 +36,7 @@
 @import "./styles/timeline.css";
 @import "./styles/rich-text-editor.css";
 @import "./styles/cipa-shared.css";
+@import "./styles/action-controls.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

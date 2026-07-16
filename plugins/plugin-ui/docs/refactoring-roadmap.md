@@ -420,6 +420,7 @@ Dashboards 8× reexportam via `src/utils/*.ts` e `src/constants/chartColors.ts` 
 | **7.5** | `inspecoes-processo` Pagination/EmptyState; SI DataTable | Thin wrappers / kit | ✅ CompactPagination (`disabled` + `hasNext` sintético); EmptyState dual `state-box--empty`; SI DataTable kit (CSS local removido) |
 | **7.6** | Família `dashboard-*` + MFEs P2 (filters/state-box/table mobile) | Padrão dept. alinhado a CR/tokens | ✅ kit: `stateBoxBemClasses` dual + placeholder/compact/positive; MFEs 0× `.delpi-ui-*`; ghost/state dual |
 | **7.7** | Gate CI (`audit_mfe_plugin_ui_css.py` — seletores `.delpi-ui-*` em CSS de MFE) | Falha CI se reintroduzir | ✅ ligado em `build-tv-dashboard.sh` |
+| **7.8** | `cipa` — botões de ação e navegação voltar | `ActionButton` / `BackLink` no kit; sem `.cipa-btn` / `.cipa-link` | ✅ |
 
 ### 8.4 Ordem operacional por PR
 

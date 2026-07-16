@@ -4,6 +4,7 @@
  * Catálogo: docs/component-catalog.md
  * Como contribuir: docs/contributing.md
  */
+export * from "./components/actions";
 export * from "./components/help";
 export * from "./components/layout";
 export * from "./components/feedback";

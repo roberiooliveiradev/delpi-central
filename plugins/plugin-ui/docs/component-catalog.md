@@ -10,6 +10,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 
 | Família | Exemplos no catálogo |
 |---------|----------------------|
+| actions | ActionButton, BackLink |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | PageHeader, KpiCard, DelpiKpiCard, ChartCard… |
 | feedback | EmptyState, ModalShell, DrawerShell… |
@@ -28,6 +29,26 @@ Imports:
 ```ts
 import { HelpTooltip, FieldLabel, TabHintCell } from "@delpi/plugin-ui";
 ```
+
+---
+
+## `ActionButton` e `BackLink`
+
+Controles canônicos para ações e navegação de retorno. O MFE deve mapear apenas tokens
+`--delpi-ui-*` e layout do contêiner; não deve copiar o chrome dos botões no CSS local.
+
+```tsx
+<BackLink onClick={goBack}>Voltar para atas</BackLink>
+
+<ActionButton variant="primary" onClick={save}>Salvar</ActionButton>
+<ActionButton variant="ghost" onClick={refresh}>Atualizar</ActionButton>
+<ActionButton variant="link" onClick={manage}>Gerenciar</ActionButton>
+```
+
+| Componente | Props principais |
+|------------|------------------|
+| `ActionButton` | `variant` (`default`, `primary`, `ghost`, `link`), `type`, `disabled`, `onClick`, `className` |
+| `BackLink` | `onClick`, `className`, `children` |
 
 ---
 

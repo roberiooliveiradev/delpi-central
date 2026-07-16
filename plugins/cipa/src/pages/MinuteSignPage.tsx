@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  ActionButton,
+  BackLink,
   FieldLabel,
   HelpTooltip,
   NativeCheckboxControl,
@@ -138,13 +140,11 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
     <div className="cipa-page-stack cipa-sign-page">
       <header className="cipa-header">
         <div>
-          <button
-            type="button"
-            className="cipa-link"
+          <BackLink
             onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}`)}
           >
-            ← Voltar para a ata
-          </button>
+            Voltar para a ata
+          </BackLink>
           <h1>Assinatura da ata</h1>
           <p>
             {UNIT_LABELS[unitCode]} · {String(minute.minute_number || "")} —{" "}
@@ -185,13 +185,12 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
           <div className="cipa-signature-preview">
             <p>
               Assinatura cadastrada{" "}
-              <button
-                type="button"
-                className="cipa-link"
+              <ActionButton
+                variant="link"
                 onClick={() => navigateCipa("/apps/cipa/my-signature")}
               >
                 (gerenciar)
-              </button>
+              </ActionButton>
             </p>
             <img
               src={savedPreviewUrl}
@@ -199,14 +198,13 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
               className="cipa-signature-img"
             />
             <div className="cipa-footer-actions">
-              <button
-                type="button"
-                className="cipa-btn cipa-btn--primary"
+              <ActionButton
+                variant="primary"
                 disabled={busy}
                 onClick={() => void confirmUseSavedSignature()}
               >
                 Usar assinatura cadastrada
-              </button>
+              </ActionButton>
             </div>
           </div>
         ) : null}
@@ -217,14 +215,9 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
         </p>
         <SignaturePad onChange={setPng} />
         <div className="cipa-footer-actions">
-          <button
-            type="button"
-            className="cipa-btn cipa-btn--primary"
-            disabled={busy}
-            onClick={() => void confirmSign()}
-          >
+          <ActionButton variant="primary" disabled={busy} onClick={() => void confirmSign()}>
             Confirmar assinatura
-          </button>
+          </ActionButton>
         </div>
       </section>
 
@@ -237,14 +230,9 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
           placeholder="Justificativa obrigatória"
           aria-label="Justificativa da recusa"
         />
-        <button
-          type="button"
-          className="cipa-btn"
-          disabled={busy}
-          onClick={() => void confirmRefuse()}
-        >
+        <ActionButton disabled={busy} onClick={() => void confirmRefuse()}>
           Recusar
-        </button>
+        </ActionButton>
       </section>
     </div>
   );

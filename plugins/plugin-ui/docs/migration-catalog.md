@@ -314,6 +314,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ✅ |
 | **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ✅ |
 | **7.7** | Gate CI anti-reintrodução | ✅ `scripts/ci/audit_mfe_plugin_ui_css.py --check` |
+| **7.8** | `cipa` — botões de ação e voltar compartilhados | ✅ |
 
 ### Checklist por plugin (preencher ao fechar onda)
 
@@ -339,6 +340,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `eficiencia-fabril` | 7.6 | ✅ | `EF_GHOST_BTN` + table-wrap dual | ✅ | `.ef-btn--ghost` chrome removido; paginação inline domínio |
 | `propostas-comerciais` | 7.6 | ✅ | StateBoxPanel dual via kit | ✅ | CSS `.pc-state-box*` removido; table-wrap dual |
 | `financeiro-centro-custo` | 7.6 | ✅ | Empty/Loading card dual; Error dual | ✅ | `.fcc-state*` removido; filtersUi já dual |
+| `cipa` | 7.8 | ⚠ residual prévio | ✅ `ActionButton` / `BackLink` | ✅ ações | `.cipa-btn` e `.cipa-link` removidos; ainda há seletores antigos de FieldLabel/Picker/RichText/SignaturePad fora do escopo 7.8 |
 
 ### DoD de um plugin na Fase 7
 

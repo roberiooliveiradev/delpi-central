@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import {
+  ActionButton,
+  BackLink,
   FieldLabel,
   HelpTooltip,
   NativeSelectControl,
@@ -167,21 +169,18 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
     <div className="cipa-page-stack cipa-editor-page">
       <header className="cipa-header">
         <div>
-          <button type="button" className="cipa-link" onClick={() => navigateCipa(listPath)}>
-            ← Voltar para atas
-          </button>
+          <BackLink onClick={() => navigateCipa(listPath)}>Voltar para atas</BackLink>
           <h1>{currentId ? "Editar ata" : "Nova ata"}</h1>
           <p>{unitLabel}</p>
         </div>
         <div className="cipa-header__actions">
-          <button
-            type="button"
-            className="cipa-btn cipa-btn--primary"
+          <ActionButton
+            variant="primary"
             disabled={saving || !title.trim()}
             onClick={() => void saveDraft()}
           >
             {saving ? "Salvando…" : "Salvar ata"}
-          </button>
+          </ActionButton>
         </div>
       </header>
 
@@ -307,14 +306,12 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                   }}
                 />
               </div>
-              <button
-                type="button"
-                className="cipa-btn"
+              <ActionButton
                 onClick={() => addExternalParticipant()}
                 disabled={!externalName.trim()}
               >
                 <Plus size={16} /> Adicionar
-              </button>
+              </ActionButton>
             </div>
 
             {participants.length > 0 ? (
@@ -374,16 +371,10 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
         </section>
 
         <div className="cipa-compose__footer">
-          <button type="button" className="cipa-btn" onClick={() => navigateCipa(listPath)}>
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="cipa-btn cipa-btn--primary"
-            disabled={saving || !title.trim()}
-          >
+          <ActionButton onClick={() => navigateCipa(listPath)}>Cancelar</ActionButton>
+          <ActionButton type="submit" variant="primary" disabled={saving || !title.trim()}>
             {saving ? "Salvando…" : "Salvar ata"}
-          </button>
+          </ActionButton>
         </div>
       </form>
     </div>
