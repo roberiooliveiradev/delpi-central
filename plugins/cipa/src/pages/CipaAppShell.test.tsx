@@ -207,7 +207,7 @@ describe("CipaAppShell compartilhado", () => {
     await waitFor(() => expect(api.deleteMinute).toHaveBeenCalledWith("minute-1"));
   });
 
-  it("cria nova versão antes de editar ata parcialmente assinada", async () => {
+  it("editar ata parcialmente assinada apenas navega, sem criar versão antes de salvar", async () => {
     api.listMinutes.mockResolvedValue({
       items: [
         {
@@ -238,13 +238,11 @@ describe("CipaAppShell compartilhado", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Editar$/ }));
 
     await waitFor(() =>
-      expect(api.createVersion).toHaveBeenCalledWith("minute-1", {
-        change_reason: "Ata reaberta para edição pelo gestor.",
-      }),
+      expect(navigation.navigateCipa).toHaveBeenCalledWith(
+        "/apps/cipa/filial-01/minutes/minute-1/edit",
+      ),
     );
-    expect(navigation.navigateCipa).toHaveBeenCalledWith(
-      "/apps/cipa/filial-01/minutes/minute-1/edit",
-    );
+    expect(api.createVersion).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: /^Excluir$/ })).toBeTruthy();
   });
 

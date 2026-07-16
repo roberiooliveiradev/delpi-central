@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 
 import {
-  createVersion,
   deleteMinute,
   exportPdf,
   finalizeMinute,
@@ -78,10 +77,6 @@ function canEditMinute(status: string): boolean {
 
 function canDeleteMinute(status: string): boolean {
   return status !== "signed" && status !== "finalized";
-}
-
-function needsNewVersionForEdit(status: string): boolean {
-  return status !== "draft" && status !== "in_review";
 }
 
 export function CipaAppShell({ route, access, accessLoading, accessError }: Props) {
@@ -338,20 +333,6 @@ function MinuteListPage({
     }
   };
 
-  const openEditor = useCallback(async (item: MinuteListItem) => {
-    setError(null);
-    try {
-      if (needsNewVersionForEdit(item.status)) {
-        await createVersion(item.id, {
-          change_reason: "Ata reaberta para edição pelo gestor.",
-        });
-      }
-      navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${item.id}/edit`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao preparar ata para edição.");
-    }
-  }, [unitCode]);
-
   const columns = useMemo<DataTableColumn<MinuteListItem>[]>(
     () => [
       {
@@ -413,7 +394,9 @@ function MinuteListPage({
                   {canEditMinute(item.status) ? (
                     <ActionButton
                       variant="ghost"
-                      onClick={() => void openEditor(item)}
+                      onClick={() =>
+                        navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${item.id}/edit`)
+                      }
                     >
                       <Pencil size={14} /> Editar
                     </ActionButton>
@@ -430,7 +413,7 @@ function MinuteListPage({
           ]
         : []),
     ],
-    [canManage, openEditor],
+    [canManage, unitCode],
   );
 
   return (
@@ -615,23 +598,6 @@ function MinuteDetailPage({
     }
   };
 
-  const openEditor = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      if (needsNewVersionForEdit(status)) {
-        await createVersion(minuteId, {
-          change_reason: "Ata reaberta para edição pelo gestor.",
-        });
-      }
-      navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/edit`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao preparar ata para edição.");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
     <div className="cipa-page-stack">
       <CipaPageHeader
@@ -645,7 +611,12 @@ function MinuteDetailPage({
         actions={
           <>
             {canManage && canEditMinute(status) && (
-              <ActionButton disabled={busy} onClick={() => void openEditor()}>
+              <ActionButton
+                disabled={busy}
+                onClick={() =>
+                  navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/edit`)
+                }
+              >
                 <Pencil size={16} /> Editar
               </ActionButton>
             )}

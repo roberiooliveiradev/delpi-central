@@ -14,6 +14,7 @@ import {
 
 import {
   createMinute,
+  createVersion,
   getMinute,
   listCipaMembers,
   searchDirectoryUsers,
@@ -55,6 +56,10 @@ function isSignerParticipant(item: ParticipantDraft): boolean {
   return !item.is_external && Boolean(item.user_id) && item.must_sign;
 }
 
+function statusRequiresNewVersion(status: string): boolean {
+  return status !== "" && status !== "draft" && status !== "in_review";
+}
+
 function validateForm(values: {
   title: string;
   meetingDate: string;
@@ -81,6 +86,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentId, setCurrentId] = useState<string | undefined>(minuteId);
+  const [minuteStatus, setMinuteStatus] = useState("");
   const [participantsTouched, setParticipantsTouched] = useState(false);
   const [compositionLoading, setCompositionLoading] = useState(false);
   const [compositionNotice, setCompositionNotice] = useState<string | null>(null);
@@ -129,6 +135,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
     getMinute(minuteId)
       .then((detail) => {
         const m = detail.minute;
+        setMinuteStatus(String(m.status || ""));
         setTitle(String(m.title || ""));
         setMeetingType(String(m.meeting_type || "ordinary"));
         setMeetingDate(String(m.meeting_date || "").slice(0, 10));
@@ -230,6 +237,14 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
         ...contentFields,
         participants,
       };
+      if (currentId && statusRequiresNewVersion(minuteStatus)) {
+        // Ata já enviada/assinada: reabrir criando nova versão apenas no salvar
+        // (invalida assinaturas somente quando a alteração é confirmada).
+        await createVersion(currentId, {
+          change_reason: "Ata reaberta para edição pelo gestor.",
+        });
+        setMinuteStatus("in_review");
+      }
       const detail = currentId
         ? await updateMinute(currentId, payload)
         : await createMinute(payload);
@@ -280,6 +295,14 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
 
       {error ? (
         <CipaStateBanner variant="error">{error}</CipaStateBanner>
+      ) : null}
+
+      {statusRequiresNewVersion(minuteStatus) ? (
+        <CipaStateBanner>
+          Esta ata já está em processo de assinatura. Nada muda enquanto você não
+          salvar; ao salvar, uma nova versão será criada e as assinaturas
+          existentes serão invalidadas, exigindo nova rodada de assinaturas.
+        </CipaStateBanner>
       ) : null}
 
       <form

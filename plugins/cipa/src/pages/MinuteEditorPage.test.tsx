@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MinuteEditorPage } from "./MinuteEditorPage";
@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   getMinute: vi.fn(),
   searchDirectoryUsers: vi.fn(),
   createMinute: vi.fn(),
+  createVersion: vi.fn(),
   updateMinute: vi.fn(),
   setSigners: vi.fn(),
 }));
@@ -94,5 +95,61 @@ describe("MinuteEditorPage composição CIPA", () => {
     expect(
       screen.queryByRole("button", { name: /Recarregar composição CIPA/ }),
     ).toBeNull();
+  });
+
+  it("ata em assinatura: avisa e só cria nova versão ao salvar", async () => {
+    api.getMinute.mockResolvedValue({
+      minute: {
+        id: "minute-1",
+        title: "Ata parcialmente assinada",
+        meeting_type: "ordinary",
+        meeting_date: "2026-07-16",
+        status: "partially_signed",
+        start_time: null,
+        end_time: null,
+        location: "",
+      },
+      version: { body_html: "<p>ok</p>" },
+      participants: [
+        {
+          user_id: "22222222-2222-2222-2222-222222222222",
+          display_name: "Snapshot Histórico",
+          role_in_meeting: "secretary",
+          presence: "present",
+          is_external: false,
+          must_sign: true,
+        },
+      ],
+      signers: [],
+      signatures: [],
+      action_items: [],
+      versions: [],
+    });
+    api.createVersion.mockResolvedValue({ minute: { id: "minute-1" } });
+    api.updateMinute.mockResolvedValue({ minute: { id: "minute-1" } });
+    api.setSigners.mockResolvedValue({});
+
+    render(<MinuteEditorPage unitCode="01" minuteId="minute-1" />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Snapshot Histórico").length).toBeGreaterThan(0);
+    });
+    // Aviso visível, mas nenhuma versão criada só por abrir o editor.
+    expect(
+      screen.getByText(/uma nova versão será criada/),
+    ).toBeTruthy();
+    expect(api.createVersion).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /^Salvar ata$/ })[0]);
+
+    await waitFor(() =>
+      expect(api.createVersion).toHaveBeenCalledWith("minute-1", {
+        change_reason: "Ata reaberta para edição pelo gestor.",
+      }),
+    );
+    await waitFor(() => expect(api.updateMinute).toHaveBeenCalled());
+    expect(api.createVersion.mock.invocationCallOrder[0]).toBeLessThan(
+      api.updateMinute.mock.invocationCallOrder[0],
+    );
   });
 });
