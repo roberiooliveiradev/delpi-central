@@ -9,7 +9,6 @@ import {
 
 import { getSignatureImage, type MinuteDetail } from "../api/cipaApi";
 import {
-  MEETING_TYPE_LABELS,
   PARTICIPANT_ROLE_LABELS,
   STATUS_LABELS,
   UNIT_LABELS,
@@ -38,11 +37,6 @@ function dateLong(value: unknown): string {
   const [year, month, day] = raw.split("-").map(Number);
   if (!year || !month || !day || !MONTHS[month]) return "data não informada";
   return `${day} de ${MONTHS[month]} de ${year}`;
-}
-
-function time(value: unknown): string {
-  const raw = String(value || "");
-  return raw ? raw.slice(0, 5) : "";
 }
 
 function unitCity(unitCode: string): string {
@@ -128,16 +122,6 @@ export function MinuteDocumentView({
 
   const meetingDate = minute.meeting_date || version.meeting_date;
   const city = unitCity(String(minute.unit_code || ""));
-  const participants = detail.participants || [];
-  const names = participants.map((item) => String(item.display_name || "")).filter(Boolean);
-  const start = time(minute.start_time);
-  const end = time(minute.end_time);
-  const period =
-    start && end ? `das ${start} às ${end}` : start ? `às ${start}` : "no horário convocado";
-  const location = String(minute.location || "local informado na convocação");
-  const type =
-    MEETING_TYPE_LABELS[String(minute.meeting_type || "")]?.toLocaleLowerCase("pt-BR") ||
-    String(minute.meeting_type || "ordinária");
 
   return (
     <DocumentReader toolbar={toolbar} className={className} ariaLabel="Modo de leitura da ata">
@@ -170,14 +154,6 @@ export function MinuteDocumentView({
             {city}, {dateLong(meetingDate)}.
           </p>
 
-          {names.length > 0 ? (
-            <p>
-              Aos {dateLong(meetingDate)}, {period}, em {location}, realizou-se reunião{" "}
-              {type} da <strong>Comissão Interna de Prevenção de Acidentes e de Assédio — CIPA</strong>,
-              com a presença de <strong>{names.join(", ")}</strong>.
-            </p>
-          ) : null}
-
           {["agenda_html", "body_html", "decisions_html", "pending_html", "observations_html"].map(
             (field) => {
               const html = String(version[field] || "");
@@ -192,9 +168,6 @@ export function MinuteDocumentView({
             },
           )}
 
-          <p className="cipa-minute-document__closing">
-            <strong>DELPI Conexões Elétricas, {dateLong(meetingDate)}.</strong>
-          </p>
           <h2>Assinaturas:</h2>
           <div className="cipa-minute-document__signatures">
             {(detail.signers || []).map((signer) => {

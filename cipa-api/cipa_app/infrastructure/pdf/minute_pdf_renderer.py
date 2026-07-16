@@ -64,16 +64,6 @@ _ROLE_LABELS = {
     "other": "Participante",
 }
 
-_MEETING_TYPE_LABELS = {
-    "ordinary": "ordinária",
-    "extraordinary": "extraordinária",
-    "installation": "de instalação",
-    "election": "de eleição",
-    "training": "de treinamento",
-    "other": "",
-}
-
-
 def format_date_br(value: Any) -> str:
     parsed = _as_date(value)
     return parsed.strftime("%d/%m/%Y") if parsed else "—"
@@ -98,19 +88,123 @@ def _as_date(value: Any) -> date | None:
         return None
 
 
-def _time(value: Any) -> str:
-    raw = str(value or "").strip()
-    return raw[:5] if raw else "—"
-
-
 def _safe_inline_html(raw: str) -> str:
     return bleach.clean(
         raw,
-        tags=["b", "strong", "i", "em", "u", "br", "a"],
-        attributes={"a": ["href"]},
+        tags=[
+            "b", "strong", "i", "em", "u", "s", "strike", "del",
+            "sub", "sup", "br", "a", "font",
+        ],
+        attributes={
+            "a": ["href"],
+            "font": ["color", "face", "size", "backcolor"],
+        },
         protocols=["http", "https", "mailto"],
         strip=True,
     )
+
+
+_STYLE_RE = re.compile(
+    r"<(span|font)\b([^>]*)style\s*=\s*([\"'])(.*?)\3([^>]*)>(.*?)</\1\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _style_to_reportlab(raw: str) -> tuple[str, str]:
+    """Converte CSS do RichTextEditor em tags inline aceitas pelo ReportLab."""
+    css: dict[str, str] = {}
+    for chunk in raw.split(";"):
+        if ":" in chunk:
+            key, value = chunk.split(":", 1)
+            css[key.strip().lower()] = value.strip()
+    opens: list[str] = []
+    closes: list[str] = []
+    font_attrs: list[str] = []
+    if css.get("color"):
+        font_attrs.append(f'color="{escape(css["color"])}"')
+    background = css.get("background-color") or css.get("background")
+    if background:
+        font_attrs.append(f'backColor="{escape(background)}"')
+    if css.get("font-family"):
+        family = css["font-family"].split(",", 1)[0].strip(" \"'")
+        family_key = family.lower()
+        reportlab_family = (
+            "Courier"
+            if "courier" in family_key or "monospace" in family_key
+            else "Times-Roman"
+            if "times" in family_key or "georgia" in family_key or "serif" in family_key
+            else "Helvetica"
+        )
+        font_attrs.append(f'face="{reportlab_family}"')
+    if css.get("font-size"):
+        match = re.match(r"([\d.]+)(px|pt)?", css["font-size"])
+        if match:
+            size = float(match.group(1))
+            if match.group(2) == "px":
+                size *= 0.75
+            font_attrs.append(f'size="{size:g}"')
+    if font_attrs:
+        opens.append(f"<font {' '.join(font_attrs)}>")
+        closes.insert(0, "</font>")
+    if css.get("font-weight") in {"bold", "bolder", "600", "700", "800", "900"}:
+        opens.append("<b>")
+        closes.insert(0, "</b>")
+    if css.get("font-style") in {"italic", "oblique"}:
+        opens.append("<i>")
+        closes.insert(0, "</i>")
+    decoration = f"{css.get('text-decoration', '')} {css.get('text-decoration-line', '')}"
+    if "underline" in decoration:
+        opens.append("<u>")
+        closes.insert(0, "</u>")
+    if "line-through" in decoration:
+        opens.append("<strike>")
+        closes.insert(0, "</strike>")
+    return "".join(opens), "".join(closes)
+
+
+def _convert_rich_inline(raw: str) -> str:
+    # Itera para suportar spans aninhados.
+    previous = None
+    while raw != previous:
+        previous = raw
+
+        def replace(match: re.Match[str]) -> str:
+            opening, closing = _style_to_reportlab(match.group(4))
+            return f"{opening}{match.group(6)}{closing}"
+
+        raw = _STYLE_RE.sub(replace, raw)
+    return raw
+
+
+def _block_style(
+    body_style: ParagraphStyle,
+    tag: str,
+    attributes: str,
+) -> ParagraphStyle:
+    style = ParagraphStyle(f"CipaRichText-{tag}", parent=body_style)
+    align_match = re.search(
+        r"text-align\s*:\s*(left|center|right|justify)",
+        attributes,
+        re.IGNORECASE,
+    )
+    if align_match:
+        style.alignment = {
+            "left": TA_LEFT,
+            "center": TA_CENTER,
+            "right": TA_RIGHT,
+            "justify": TA_JUSTIFY,
+        }[align_match.group(1).lower()]
+    if tag.startswith("h"):
+        level = int(tag[1])
+        style.fontName = "Helvetica-Bold"
+        style.fontSize = {1: 18, 2: 16, 3: 14, 4: 12, 5: 11, 6: 10}.get(level, 11)
+        style.leading = style.fontSize * 1.25
+        style.spaceBefore = 3 * mm
+        style.spaceAfter = 2 * mm
+    if tag == "blockquote":
+        style.leftIndent = 10 * mm
+        style.rightIndent = 5 * mm
+    return style
 
 
 def html_to_paragraphs(
@@ -118,28 +212,58 @@ def html_to_paragraphs(
     body_style: ParagraphStyle,
     bullet_style: ParagraphStyle,
 ) -> list[Flowable]:
-    """Converte HTML sanitizado em blocos ReportLab, preservando inline e listas."""
+    """Converte RichTextEditor HTML em blocos ReportLab preservando formatação."""
     raw = raw_html or ""
-    raw = re.sub(r"<\s*li\b[^>]*>", "\n\n• ", raw, flags=re.IGNORECASE)
-    raw = re.sub(r"<\s*/\s*li\s*>", "", raw, flags=re.IGNORECASE)
-    raw = re.sub(
-        r"<\s*/?\s*(?:p|div|h[1-6]|ul|ol)\b[^>]*>",
-        "\n\n",
-        raw,
-        flags=re.IGNORECASE,
-    )
     raw = re.sub(r"<\s*br\s*/?\s*>", "<br/>", raw, flags=re.IGNORECASE)
+    raw = _convert_rich_inline(raw)
+
+    # Anota cada <li> com o tipo da lista pai para preservar listas mistas.
+    def annotate_list(match: re.Match[str]) -> str:
+        kind = match.group(1).lower()
+        content = re.sub(
+            r"<li\b([^>]*)>",
+            rf'<li data-list-kind="{kind}"\1>',
+            match.group(2),
+            flags=re.IGNORECASE,
+        )
+        return f"<{kind}>{content}</{kind}>"
+
+    raw = re.sub(
+        r"<(ol|ul)\b[^>]*>(.*?)</\1\s*>",
+        annotate_list,
+        raw,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
     blocks: list[Flowable] = []
-    for part in re.split(r"\n\s*\n", raw):
-        cleaned = _safe_inline_html(part.strip())
+
+    # Cada bloco estrutural recebe seu próprio estilo (heading/alinhamento/recuo).
+    block_re = re.compile(
+        r"<(p|div|h[1-6]|blockquote|li)\b([^>]*)>(.*?)</\1\s*>",
+        re.IGNORECASE | re.DOTALL,
+    )
+    matches = list(block_re.finditer(raw))
+    parts: list[tuple[str, str, str]] = []
+    if matches:
+        for match in matches:
+            parts.append((match.group(1).lower(), match.group(2), match.group(3)))
+    else:
+        parts.append(("p", "", raw))
+
+    ordered_index = 0
+    for tag, attributes, content in parts:
+        cleaned = _safe_inline_html(content.strip())
         if not re.sub(r"<[^>]+>", "", cleaned).strip():
             continue
-        is_bullet = cleaned.startswith("• ")
+        is_bullet = tag == "li"
+        is_ordered = is_bullet and 'data-list-kind="ol"' in attributes.lower()
+        if is_ordered:
+            ordered_index += 1
+        bullet_text = f"{ordered_index}." if is_ordered else "•"
         blocks.append(
             Paragraph(
-                cleaned[2:] if is_bullet else cleaned,
-                bullet_style if is_bullet else body_style,
-                bulletText="•" if is_bullet else None,
+                cleaned,
+                bullet_style if is_bullet else _block_style(body_style, tag, attributes),
+                bulletText=bullet_text if is_bullet else None,
             )
         )
     return blocks
@@ -280,21 +404,6 @@ class MinutePdfRenderer:
             Paragraph(f"{escape(city)}, {format_date_long_pt(meeting_date)}.", styles["date"]),
         ]
 
-        if participants:
-            names = ", ".join(escape(str(item.get("display_name") or "—")) for item in participants)
-            time_text = self._time_sentence(minute)
-            meeting_type = _MEETING_TYPE_LABELS.get(
-                str(minute.get("meeting_type") or ""),
-                str(minute.get("meeting_type") or ""),
-            )
-            intro = (
-                f"Aos {format_date_long_pt(meeting_date)}, {time_text}, nas dependências de "
-                f"<b>DELPI Conexões Elétricas</b>, realizou-se reunião "
-                f"{escape(meeting_type)} da Comissão Interna de "
-                f"Prevenção de Acidentes e de Assédio — CIPA, com a presença de {names}."
-            )
-            story.append(Paragraph(intro, styles["body"]))
-
         sections = [
             ("Pauta", version.get("agenda_html")),
             ("", version.get("body_html")),
@@ -313,10 +422,6 @@ class MinutePdfRenderer:
         story.extend(
             [
                 Spacer(1, 5 * mm),
-                Paragraph(
-                    f"<b>DELPI Conexões Elétricas, {format_date_long_pt(meeting_date)}.</b>",
-                    styles["body"],
-                ),
                 Paragraph("Assinaturas:", styles["section"]),
             ]
         )
@@ -335,16 +440,6 @@ class MinutePdfRenderer:
             ]
         )
         return story
-
-    def _time_sentence(self, minute: dict[str, Any]) -> str:
-        start = _time(minute.get("start_time"))
-        end = _time(minute.get("end_time"))
-        location = escape(str(minute.get("location") or "local informado na convocação"))
-        if start != "—" and end != "—":
-            return f"das {start} às {end}, em {location}"
-        if start != "—":
-            return f"às {start}, em {location}"
-        return f"em {location}"
 
     def _signature_blocks(
         self,

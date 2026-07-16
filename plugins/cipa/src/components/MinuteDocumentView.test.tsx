@@ -59,5 +59,7 @@ describe("MinuteDocumentView", () => {
     expect(screen.getByText("Conteúdo formal da reunião.")).toBeTruthy();
     expect(screen.getByText("Presidente da CIPA")).toBeTruthy();
     expect(screen.getByText("Baixar PDF")).toBeTruthy();
+    expect(screen.queryByText(/realizou-se reunião/)).toBeNull();
+    expect(screen.queryByText(/DELPI Conexões Elétricas, 16 de julho/)).toBeNull();
   });
 });

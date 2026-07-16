@@ -51,6 +51,33 @@ def test_html_sanitizer_strips_script():
     assert "ok" in cleaned
 
 
+def test_html_sanitizer_preserves_safe_rich_text_formatting():
+    cleaned = CipaHtmlSanitizer.sanitize(
+        '<p style="text-align:center">'
+        '<span style="font-size:20px;color:#f00;background-color:#ff0;'
+        'font-family:Arial;font-weight:bold;font-style:italic;'
+        'text-decoration:underline line-through">Formatado</span></p>'
+    )
+    assert "text-align: center" in cleaned
+    assert "font-size: 20px" in cleaned
+    assert "color: #f00" in cleaned
+    assert "background-color: #ff0" in cleaned
+    assert "font-family: Arial" in cleaned
+    assert "font-weight: bold" in cleaned
+    assert "font-style: italic" in cleaned
+    assert "text-decoration: underline line-through" in cleaned
+
+
+def test_html_sanitizer_removes_unsafe_css():
+    cleaned = CipaHtmlSanitizer.sanitize(
+        '<span style="color:red;background-image:url(javascript:alert(1));'
+        'position:fixed">Seguro</span>'
+    )
+    assert "color: red" in cleaned
+    assert "url(" not in cleaned
+    assert "position:" not in cleaned
+
+
 def test_permission_codes():
     assert perms.unit_permission_code("01") == "cipa.unit.filial-01"
     assert perms.action_permission_code("create") == "cipa.manage"
