@@ -1593,9 +1593,11 @@ UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_s
 
 **Engine Query (steps):** rename, select, filter, addColumn, replace, sort, keepRows/removeRows, changeType, fillDown, firstRowAsHeader, groupBy, pivot, unpivot, merge (left join entre fontes do slide via `siblingTables`). **Cálculo sempre no backend** (`tv_data_transform_service` via enrichment / `POST /data/preview-block`). O TS `dataTransform.ts` é só espelho de teste — o modal chama a API para a prévia (não recalcula no browser).
 
-**UX avançada:** editar etapa (lápis); barra `fx` editável em `addColumn`; highlight cruzado grid↔série (`dataPrepareCrossHighlight`); preset `suggestedTransformSteps` no overlay da rota (ex.: OEE série).
+**Barra fx (Query):** componente `DataPrepareFormulaBar` + contrato `dataTransformFormula.ts` / `tv_data_transform_formula_service.py`. Editável para `addColumn` (DSL: `if(cond,a,b)`, `concat`, `abs`/`min`/`max`/`coalesce`/`len`/`lower`/`upper`/`trim`, comparadores) e etapas tipadas `RenameColumns` / `SelectColumns` / `FilterRows` / `Sort` / `ReplaceValue`. Enter/blur faz parse → atualiza `dataTransform.steps` → prévia servidor.
 
-**Entregue (Fase C):** diálogo «Selecionar dados»; `plotOn: primary|secondary`; estilo de linha (dash) + espessura por série; steps avançados + merge + highlight + presets.
+**UX:** editar etapa (lápis); highlight cruzado grid↔série (`dataPrepareCrossHighlight`); preset `suggestedTransformSteps` no overlay da rota (ex.: OEE série); «Nova coluna (fx)» na ribbon.
+
+**Entregue (Fase C + D):** Select Data; eixo secundário; dash por série; steps avançados + merge; barra fx + DSL + parse de etapas básicas.
 ### 19.6 Onde implementar (sem espalhar)
 
 | Camada | Módulo canônico | Não fazer |
