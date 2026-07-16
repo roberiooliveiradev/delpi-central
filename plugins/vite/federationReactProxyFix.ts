@@ -71,15 +71,29 @@ function escapeRegExp(value: string): string {
 }
 
 /**
- * Escolhe o bridge CJS de React (não react-dom) entre vários `import{r as X}from"./index-*"`.
+ * Binding atribuído a partir de `id()` — inclui ternário já patchado:
+ * `v=((globalThis…)?…:Zv())`.
+ */
+function findBridgeCallBinding(code: string, id: string): string | null {
+  const assignRe = new RegExp(
+    String.raw`(${MF_IDENT})=([^;]*${escapeRegExp(id)}\(\))`,
+  );
+  return code.match(assignRe)?.[1] ?? null;
+}
+
+/**
+ * Escolhe o bridge CJS de React (não react-dom) entre vários `import{…r as X…}from"./index-*"`.
  *
- * Rollup às vezes emite `$h` = React e `kh` = react-dom. Se `(\w+)` ignora `$h`, o patch
- * redireciona `kh()` para `__DELPI_MF_REACT__` → `p.__DOM_INTERNALS` fica undefined →
- * `Cannot read properties of undefined (reading 'd')`.
+ * Rollup às vezes emite `$h` = React e `kh` = react-dom. Se o bridge React não é
+ * reconhecido, o patch redireciona `kh()`/`Zv()` para `__DELPI_MF_REACT__` →
+ * `p.__DOM_INTERNALS` fica undefined → `Cannot read properties of undefined (reading 'd')`.
+ *
+ * Também casa imports multi-spec (`import{r as Lv,g as Xv}from…`) — o React core
+ * costuma exportar `r` + `g`; regex só `{r as X}` ignorava esse bridge (api-delpi-console).
  */
 export function resolveBundledReactBridgeName(code: string): string | null {
   const importRe = new RegExp(
-    String.raw`import\{r as (${MF_IDENT})\}from"\.\/index-[^"?]+\.js(?:\?v=[^"]+)?"`,
+    String.raw`import\{(?:[^}"']*,)*r as (${MF_IDENT})(?:,[^}"']*)*\}from"\.\/index-[^"?]+\.js(?:\?v=[^"]+)?"`,
     "g",
   );
   const bridges = [...code.matchAll(importRe)].map((m) => m[1]);
@@ -87,26 +101,22 @@ export function resolveBundledReactBridgeName(code: string): string | null {
 
   for (const id of bridges) {
     if (!code.includes(`${id}()`)) continue;
-    const assignRe = new RegExp(String.raw`(${MF_IDENT})=${escapeRegExp(id)}\(\)`);
-    const assignMatch = code.match(assignRe);
-    if (!assignMatch) continue;
-    const binding = assignMatch[1];
-    if (code.includes(`${binding}.${REACT_CLIENT_INTERNALS}`)) {
+    const binding = findBridgeCallBinding(code, id);
+    if (binding && code.includes(`${binding}.${REACT_CLIENT_INTERNALS}`)) {
       return id;
     }
   }
 
   for (const id of bridges) {
     if (!code.includes(`${id}()`)) continue;
-    const assignRe = new RegExp(String.raw`(${MF_IDENT})=${escapeRegExp(id)}\(\)`);
-    const assignMatch = code.match(assignRe);
-    if (assignMatch && code.includes(`${assignMatch[1]}.${REACT_DOM_INTERNALS}`)) {
+    const binding = findBridgeCallBinding(code, id);
+    if (binding && code.includes(`${binding}.${REACT_DOM_INTERNALS}`)) {
       continue;
     }
     return id;
   }
 
-  return bridges.find((id) => code.includes(`${id}()`)) ?? null;
+  return null;
 }
 
 /**

@@ -102,6 +102,28 @@ function testAppChunkPrefersDollarReactBridgeOverReactDom() {
 }
 
 /**
+ * Regressão api-delpi-console: React core exporta `r`+`g` → `import{r as Lv,g as Xv}`.
+ * Regex só `{r as X}` pegava só o bridge react-dom (`Zv`) e redirecionava para o global
+ * → `v.__DOM_INTERNALS` undefined → reading 'd'.
+ */
+function testAppChunkMultiSpecReactImportNotConfusedWithReactDom() {
+  const raw = String.raw`import{r as Lv,g as Xv}from"./index-DwdO1xOW.js?v=6";import{r as Zv}from"./index-BxSNP-PZ.js?v=6";function boot(){var o=Lv(),v=Zv();var _=o.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE,D=v.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;return D.d}`;
+  assert.equal(resolveBundledReactBridgeName(raw), "Lv", "bridge React é Lv (multi-spec)");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.ok(out.includes("var o=("), "redireciona Lv()");
+  assert.ok(out.includes("v=Zv()"), "não redireciona Zv() (react-dom)");
+  assert.ok(!out.includes("v=(globalThis.__DELPI_MF_REACT__"), "v não vira React global");
+}
+
+/** Só react-dom no chunk (ou ternário sem assign simples) — não patchar bridge DOM. */
+function testAppChunkSkipsLoneReactDomBridge() {
+  const raw = String.raw`import{r as Zv}from"./index-BxSNP-PZ.js?v=6";function boot(){var v=((globalThis.__DELPI_MF_REACT__&&typeof globalThis.__DELPI_MF_REACT__.useRef=="function")?globalThis.__DELPI_MF_REACT__:Zv());var D=v.__DOM_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE;return D.d}`;
+  assert.equal(resolveBundledReactBridgeName(raw), null, "não escolhe bridge react-dom");
+  const out = patchBundledReactConsumerChunk(raw);
+  assert.equal(out, raw, "chunk só com react-dom permanece intacto");
+}
+
+/**
  * Regressão dashboard-hr: bridge minificado `rs` — replace ingênuo de `rs()`
  * quebrava `getSelectors()` / `getHours()` → SyntaxError Unexpected token '('.
  */
@@ -147,8 +169,10 @@ testBrokenReactNotUsable();
 testUpgradeUnconditionalPublish();
 testAppChunkReactBridgeFallback();
 testAppChunkPrefersDollarReactBridgeOverReactDom();
+testAppChunkMultiSpecReactImportNotConfusedWithReactDom();
+testAppChunkSkipsLoneReactDomBridge();
 testAppChunkShortBridgeDoesNotCorruptIdentifierSuffix();
 testMfImportCacheBust();
 testRemoteEntryCacheBust();
 
-console.log("OK: federationReactProxyFix — 12 testes passaram");
+console.log("OK: federationReactProxyFix — 14 testes passaram");
