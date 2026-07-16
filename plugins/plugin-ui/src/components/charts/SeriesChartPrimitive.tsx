@@ -10,9 +10,11 @@ import {
 import {
   seriesChartThemeStyle,
   usableSeriesChartPoints,
+  SERIES_CHART_CATEGORY_PALETTE,
   type SeriesChartKind,
   type SeriesChartOptions,
   type SeriesChartPoint,
+  type SeriesChartSeriesSpec,
   type SeriesChartValueFormat,
 } from "./seriesChartOptions";
 import { useSeriesChartClasses } from "./seriesChartClasses";
@@ -52,6 +54,8 @@ export type SeriesPlotRenderProps = {
   layout: SeriesChartLayout;
   config: SeriesChartOptions;
   points: SeriesChartPoint[];
+  /** Multi-série (overlay). Quando length > 1, o paint deve desenhar todas. */
+  seriesList?: SeriesChartSeriesSpec[];
   seriesColor: string;
   valueFormat: SeriesChartValueFormat;
   showAxes: boolean;
@@ -67,6 +71,8 @@ export type SeriesPlotRenderProps = {
 export type SeriesChartPrimitiveProps = {
   chartType: SeriesChartKind;
   points: SeriesChartPoint[];
+  /** Quando informado com 2+ itens, escala Y e legenda usam todas as séries. */
+  seriesList?: SeriesChartSeriesSpec[];
   options?: SeriesChartOptions | null;
   chartParts?: ChartPartsMap | null;
   interaction?: SeriesChartInteraction | null;
@@ -79,6 +85,7 @@ export type SeriesChartPrimitiveProps = {
 export function SeriesChartPrimitive({
   chartType,
   points,
+  seriesList,
   options,
   chartParts,
   interaction,
@@ -88,7 +95,25 @@ export function SeriesChartPrimitive({
 }: SeriesChartPrimitiveProps) {
   const cn = useSeriesChartClasses();
   const config = mergeSeriesChartOptionsWithParts(options, chartParts);
-  const usable = usableSeriesChartPoints(points);
+  const normalizedSeries =
+    seriesList && seriesList.length > 0
+      ? seriesList.map((series) => ({
+          ...series,
+          points: usableSeriesChartPoints(series.points),
+        }))
+      : undefined;
+  const usable =
+    normalizedSeries && normalizedSeries.length > 0
+      ? normalizedSeries[0]!.points
+      : usableSeriesChartPoints(points);
+  const multiSeries = Boolean(normalizedSeries && normalizedSeries.length > 1);
+  const axisValues = multiSeries
+    ? normalizedSeries!.flatMap((series) =>
+        series.points
+          .map((point) => (point.value == null ? null : Number(point.value)))
+          .filter((value): value is number => value != null && Number.isFinite(value)),
+      )
+    : undefined;
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const plotHostRef = useRef<HTMLDivElement>(null);
   const [viewSize, setViewSize] = useState({ w: SERIES_CHART_VIEW_W, h: SERIES_CHART_VIEW_H });
@@ -161,6 +186,7 @@ export function SeriesChartPrimitive({
   );
   const layout = buildSeriesChartLayout({
     points: usable,
+    axisValues,
     showXAxisLabels: config.showAxes !== false && config.showXAxisLabels !== false,
     showXAxisTitle: config.showXAxisTitle !== false,
     viewW: viewSize.w,
@@ -181,6 +207,17 @@ export function SeriesChartPrimitive({
   const showLegend = config.showLegend !== false && config.legendPosition !== "hidden";
   const showAxes = config.showAxes !== false;
   const ariaLabel = title || seriesName;
+  const legendItems =
+    multiSeries && normalizedSeries
+      ? normalizedSeries.map((series, index) => ({
+          name: series.name,
+          color:
+            series.color?.trim() ||
+            config.categoryColors?.[index] ||
+            SERIES_CHART_CATEGORY_PALETTE[index % SERIES_CHART_CATEGORY_PALETTE.length] ||
+            seriesColor,
+        }))
+      : undefined;
   const chartAreaRef = { kind: "chartArea" as const };
   const chartAreaSelected = isChartPartRefEqual(chartAreaRef, interaction?.selectedPart);
   const chartAreaFrame = getChartPartState(chartParts, chartAreaRef)?.frame;
@@ -224,6 +261,7 @@ export function SeriesChartPrimitive({
     layout,
     config,
     points: usable,
+    seriesList: normalizedSeries,
     seriesColor,
     valueFormat,
     showAxes,
@@ -240,6 +278,7 @@ export function SeriesChartPrimitive({
     <ChartLegend
       seriesName={seriesName}
       seriesColor={seriesColor}
+      items={legendItems}
       position={config.legendPosition ?? "bottom"}
       visible={showLegend}
       interaction={interaction}

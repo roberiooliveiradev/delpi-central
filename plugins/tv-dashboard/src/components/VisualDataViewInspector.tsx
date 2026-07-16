@@ -10,6 +10,7 @@ import {
   tablePresetLabel,
   type ComunicadoBlock,
   type ComunicadoTableViewBlock,
+  type ChartViewProjection,
   type KpiViewProjection,
   type TableViewProjection,
 } from "@delpi/tv-dashboard-presentation";
@@ -20,9 +21,10 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
-import { TableColumnsMultiSelect } from "./TableColumnsMultiSelect";
+import { ChartAxesProjectionEditor } from "./ChartAxesProjectionEditor";
 import { KpiMetricsProjectionEditor } from "./KpiMetricsProjectionEditor";
-import { ValueFieldsMultiSelect, type ValueFieldOption } from "./ValueFieldsMultiSelect";
+import { TableColumnsMultiSelect } from "./TableColumnsMultiSelect";
+import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 type Props = {
   pane?: boolean;
@@ -93,41 +95,6 @@ export function VisualDataViewInspector({
     label: item.label,
   }));
 
-  const applyMetricPatch = (patch: {
-    selectedValueFields?: string[];
-    valueField?: string;
-  }) => {
-    if (!patch.selectedValueFields || patch.selectedValueFields.length === 0) {
-      updateSelected({
-        selectedValueFields: undefined,
-        valueField: undefined,
-        kpiProjection: undefined,
-        chartProjection: undefined,
-      } as Partial<ComunicadoBlock>);
-      return;
-    }
-    updateSelected({
-      selectedValueFields: patch.selectedValueFields,
-      valueField: patch.valueField ?? patch.selectedValueFields[0],
-      kpiProjection:
-        selected.type === "kpi_view"
-          ? {
-              metrics: patch.selectedValueFields.map((field) => ({
-                field,
-                visible: true,
-                aggregation: "first" as const,
-              })),
-            }
-          : undefined,
-      chartProjection:
-        selected.type === "chart_view"
-          ? {
-              series: patch.selectedValueFields.map((field) => ({ field })),
-            }
-          : undefined,
-    } as Partial<ComunicadoBlock>);
-  };
-
   const applyTableProjection = (next: TableViewProjection | undefined) => {
     updateSelected({
       tableProjection: next,
@@ -146,6 +113,15 @@ export function VisualDataViewInspector({
       kpiProjection: next,
       selectedValueFields: visibleFields?.length ? visibleFields : undefined,
       valueField: visibleFields?.[0],
+    } as Partial<ComunicadoBlock>);
+  };
+
+  const applyChartProjection = (next: ChartViewProjection | undefined) => {
+    const seriesFields = next?.series?.map((item) => item.field);
+    updateSelected({
+      chartProjection: next,
+      selectedValueFields: seriesFields?.length ? seriesFields : undefined,
+      valueField: seriesFields?.[0],
     } as Partial<ComunicadoBlock>);
   };
 
@@ -194,6 +170,21 @@ export function VisualDataViewInspector({
           ]}
         />
       </DeckField>
+      {hasSource && selected.type === "chart_view" && valueFieldOptions.length > 0 ? (
+        <DeckField
+          id="td-view-chart-axes"
+          label="Eixos e séries"
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.chartAxesProjection}
+        >
+          <ChartAxesProjectionEditor
+            idPrefix="td-view-chart-axis"
+            options={valueFieldOptions}
+            chartProjection={"chartProjection" in selected ? selected.chartProjection : undefined}
+            compact={isRibbon}
+            onChange={applyChartProjection}
+          />
+        </DeckField>
+      ) : null}
       {hasSource && selected.type === "kpi_view" && valueFieldOptions.length > 0 ? (
         <DeckField
           id="td-view-kpi-metrics"
@@ -221,26 +212,6 @@ export function VisualDataViewInspector({
             tableProjection={tableBlock?.tableProjection}
             compact={isRibbon}
             onChange={applyTableProjection}
-          />
-        </DeckField>
-      ) : null}
-      {hasSource &&
-      selected.type === "chart_view" &&
-      valueFieldOptions.length > 0 ? (
-        <DeckField
-          id="td-view-value-fields"
-          label="Métricas neste visual"
-          hint={TV_DASHBOARD_HELP_TOOLTIPS.data.viewValueFields}
-        >
-          <ValueFieldsMultiSelect
-            idPrefix="td-view-value-field"
-            options={valueFieldOptions}
-            selectedValueFields={
-              "selectedValueFields" in selected ? selected.selectedValueFields : undefined
-            }
-            valueField={"valueField" in selected ? selected.valueField : undefined}
-            compact={isRibbon}
-            onChange={applyMetricPatch}
           />
         </DeckField>
       ) : null}

@@ -262,6 +262,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Escolha quais colunas aparecem e a ordem (↑↓). Vazio = todas as colunas da fonte.",
     kpiMetricsProjection:
       "Por coluna: ligar/desligar, agregação (soma, média…) e formato. Regras de cor globais ficam em Aparência; regras por métrica sobrescrevem quando definidas.",
+    chartAxesProjection:
+      "Escolha o campo do eixo X (categoria) e uma ou mais séries no Y. Várias séries sobrepõem no gráfico de linha/área.",
     connectFlow:
       "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados. Qualquer fonte serve para qualquer visual.",
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */

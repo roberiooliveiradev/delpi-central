@@ -2,12 +2,13 @@ import { BarSeriesChart } from "./BarSeriesChart";
 import { LineSeriesChart } from "./LineSeriesChart";
 import { ChartPlotAreaGroup } from "./seriesChart";
 import { SeriesChartPrimitive } from "./SeriesChartPrimitive";
-import type { SeriesChartKind, SeriesChartOptions, SeriesChartPoint } from "./seriesChartOptions";
+import type { SeriesChartKind, SeriesChartOptions, SeriesChartPoint, SeriesChartSeriesSpec } from "./seriesChartOptions";
 import type { ChartPartsMap, SeriesChartInteraction } from "./seriesChartParts";
 
 export type ConfigurableSeriesChartProps = {
   chartType: SeriesChartKind;
   points: SeriesChartPoint[];
+  seriesList?: SeriesChartSeriesSpec[];
   options?: SeriesChartOptions | null;
   chartParts?: ChartPartsMap | null;
   interaction?: SeriesChartInteraction | null;
@@ -21,6 +22,7 @@ export type ConfigurableSeriesChartProps = {
 export function ConfigurableSeriesChart({
   chartType,
   points,
+  seriesList,
   options,
   chartParts,
   interaction,
@@ -28,7 +30,7 @@ export function ConfigurableSeriesChart({
   className,
   pieInnerRadiusRatio = 0,
 }: ConfigurableSeriesChartProps) {
-  const shared = { points, options, chartParts, interaction, emptyMessage, className };
+  const shared = { points, seriesList, options, chartParts, interaction, emptyMessage, className };
 
   if (chartType === "bar") {
     return <BarSeriesChart {...shared} />;

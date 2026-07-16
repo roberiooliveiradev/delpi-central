@@ -36,6 +36,37 @@ describe("ConfigurableSeriesChart", () => {
     expect(screen.getByText("Receita")).toBeTruthy();
   });
 
+  it("legenda lista várias séries quando seriesList tem 2+", () => {
+    render(
+      <ConfigurableSeriesChart
+        chartType="line"
+        points={[
+          { label: "Jan", value: 80 },
+          { label: "Fev", value: 70 },
+        ]}
+        seriesList={[
+          {
+            name: "OEE",
+            points: [
+              { label: "Jan", value: 80 },
+              { label: "Fev", value: 70 },
+            ],
+          },
+          {
+            name: "OTD",
+            points: [
+              { label: "Jan", value: 90 },
+              { label: "Fev", value: 95 },
+            ],
+          },
+        ]}
+        options={{ showLegend: true, legendPosition: "bottom", showTitle: false }}
+      />,
+    );
+    expect(screen.getByText("OEE")).toBeTruthy();
+    expect(screen.getByText("OTD")).toBeTruthy();
+  });
+
   it("coloca box-shadow no shell (não no card com overflow:hidden)", () => {
     const shadow = "0 12px 28px rgba(15, 23, 42, 0.1)";
     const { container } = render(

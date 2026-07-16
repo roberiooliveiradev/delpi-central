@@ -52,6 +52,11 @@ export type SeriesChartLayoutTypography = {
 
 export type BuildSeriesChartLayoutInput = {
   points: SeriesChartPoint[];
+  /**
+   * Valores extras para escala Y (ex.: multi-série).
+   * Quando presente, substitui os values de `points` no cálculo de ticks.
+   */
+  axisValues?: number[];
   showXAxisLabels: boolean;
   showXAxisTitle: boolean;
   /** ViewBox dinâmico (ResizeObserver). Default: constantes SERIES_CHART_VIEW_*. */
@@ -331,7 +336,10 @@ function resolveSideMargins(
 }
 
 export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): SeriesChartLayout {
-  const values = input.points.map((point) => Number(point.value));
+  const values =
+    input.axisValues && input.axisValues.length > 0
+      ? input.axisValues.map((value) => Number(value))
+      : input.points.map((point) => Number(point.value));
   const dataMin = Math.min(...values);
   const dataMax = Math.max(...values);
   const ticks = resolveSeriesChartTicks(dataMin, dataMax);

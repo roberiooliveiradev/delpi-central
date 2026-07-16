@@ -1,5 +1,6 @@
 import { useId } from "react";
 
+import { SERIES_CHART_CATEGORY_PALETTE } from "../seriesChartOptions";
 import { ChartAxisLines } from "./ChartAxisLines";
 import { ChartAxisX } from "./ChartAxisX";
 import { ChartAxisY } from "./ChartAxisY";
@@ -45,6 +46,7 @@ export function ChartPlotAreaGroup({
   layout,
   config,
   points,
+  seriesList,
   seriesColor,
   valueFormat,
   showAxes,
@@ -62,6 +64,17 @@ export function ChartPlotAreaGroup({
   const cartesianGrid = showGrid && !skipCartesian;
   const clipRawId = useId().replace(/:/g, "");
   const plotClipId = `delpi-series-plot-clip-${clipRawId}`;
+
+  const resolveSeriesColor = (index: number, explicit?: string) =>
+    explicit?.trim() ||
+    config.categoryColors?.[index] ||
+    SERIES_CHART_CATEGORY_PALETTE[index % SERIES_CHART_CATEGORY_PALETTE.length] ||
+    seriesColor;
+
+  const multiLine =
+    (chartType === "line" || chartType === "area") &&
+    seriesList &&
+    seriesList.length > 1;
 
   const series = (
     <>
@@ -146,7 +159,7 @@ export function ChartPlotAreaGroup({
         />
       ) : null}
 
-      {chartType === "area" ? (
+      {chartType === "area" && !multiLine ? (
         <ChartSeriesArea
           layout={layout}
           points={points}
@@ -200,27 +213,89 @@ export function ChartPlotAreaGroup({
       ) : null}
 
       {chartType === "line" ? (
+        multiLine && seriesList ? (
+          <>
+            {seriesList.map((series, index) => {
+              const color = resolveSeriesColor(index, series.color);
+              return (
+                <g key={`series-line-${series.name}-${index}`}>
+                  <ChartSeriesLine
+                    layout={layout}
+                    points={series.points}
+                    seriesColor={color}
+                    strokeWidth={strokeWidth}
+                    interaction={interaction}
+                    chartParts={chartParts}
+                    seriesIndex={index}
+                  />
+                  <ChartDataPoints
+                    layout={layout}
+                    points={series.points}
+                    seriesColor={color}
+                    visible={showMarkers}
+                    interaction={interaction}
+                    chartParts={chartParts}
+                    seriesIndex={index}
+                  />
+                </g>
+              );
+            })}
+          </>
+        ) : (
+          <>
+            <ChartSeriesLine
+              layout={layout}
+              points={points}
+              seriesColor={seriesColor}
+              strokeWidth={strokeWidth}
+              interaction={interaction}
+              chartParts={chartParts}
+            />
+            <ChartDataPoints
+              layout={layout}
+              points={points}
+              seriesColor={seriesColor}
+              visible={showMarkers}
+              interaction={interaction}
+              chartParts={chartParts}
+            />
+          </>
+        )
+      ) : null}
+
+      {chartType === "area" && multiLine && seriesList ? (
         <>
-          <ChartSeriesLine
-            layout={layout}
-            points={points}
-            seriesColor={seriesColor}
-            strokeWidth={strokeWidth}
-            interaction={interaction}
-            chartParts={chartParts}
-          />
-          <ChartDataPoints
-            layout={layout}
-            points={points}
-            seriesColor={seriesColor}
-            visible={showMarkers}
-            interaction={interaction}
-            chartParts={chartParts}
-          />
+          {seriesList.map((series, index) => {
+            const color = resolveSeriesColor(index, series.color);
+            return (
+              <g key={`series-area-${series.name}-${index}`}>
+                <ChartSeriesArea
+                  layout={layout}
+                  points={series.points}
+                  seriesColor={color}
+                  strokeWidth={strokeWidth}
+                  interaction={interaction}
+                  chartParts={chartParts}
+                  seriesIndex={index}
+                />
+                {showMarkers ? (
+                  <ChartDataPoints
+                    layout={layout}
+                    points={series.points}
+                    seriesColor={color}
+                    visible={showMarkers}
+                    interaction={interaction}
+                    chartParts={chartParts}
+                    seriesIndex={index}
+                  />
+                ) : null}
+              </g>
+            );
+          })}
         </>
       ) : null}
 
-      {chartType === "area" && showMarkers ? (
+      {chartType === "area" && !multiLine && showMarkers ? (
         <ChartDataPoints
           layout={layout}
           points={points}

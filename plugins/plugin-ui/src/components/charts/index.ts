@@ -75,6 +75,7 @@ export {
   type SeriesChartLegendPosition,
   type SeriesChartOptions,
   type SeriesChartPoint,
+  type SeriesChartSeriesSpec,
   type SeriesChartResolvedMeta,
   type SeriesChartTheme,
   type SeriesChartValueFormat,

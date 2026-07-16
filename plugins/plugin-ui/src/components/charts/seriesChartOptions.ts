@@ -70,6 +70,13 @@ export type SeriesChartPoint = {
   value?: number | null;
 };
 
+/** Série nomeada para gráficos multi-série (overlay). */
+export type SeriesChartSeriesSpec = {
+  name: string;
+  points: SeriesChartPoint[];
+  color?: string;
+};
+
 /** Tipos com paint SVG nativo (4H.7 + avançados). */
 export type SeriesChartKind =
   | "line"

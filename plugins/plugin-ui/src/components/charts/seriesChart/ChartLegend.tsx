@@ -16,6 +16,8 @@ import { ChartPartResizeHandles } from "./ChartPartResizeHandles";
 export type ChartLegendProps = {
   seriesName: string;
   seriesColor: string;
+  /** Quando informado, renderiza uma entrada por série. */
+  items?: Array<{ name: string; color: string }>;
   position: SeriesChartLegendPosition;
   visible?: boolean;
   interaction?: SeriesChartInteraction | null;
@@ -44,6 +46,7 @@ function partFrameStyle(
 export function ChartLegend({
   seriesName,
   seriesColor,
+  items,
   position,
   visible = true,
   interaction,
@@ -88,10 +91,8 @@ export function ChartLegend({
       ? { ...frameStyle, ...typographyStyle, ...paintStyle }
       : undefined;
   const showResize = selected && chartPartAllowsResize(ref);
-  /*
-   * Não materializar frame no select: absolute tira a legenda do flex e
-   * sobrepõe o plot (reflow). Move/resize no editor gravam o frame no 1º arraste.
-   */
+  const legendEntries =
+    items && items.length > 0 ? items : [{ name: seriesName, color: seriesColor }];
 
   return (
     <ul
@@ -110,10 +111,12 @@ export function ChartLegend({
       onPointerDown={onPointerDown}
       onDoubleClick={onDoubleClick}
     >
-      <li className={cn.legendItem}>
-        <span className={cn.legendSwatch} style={{ background: seriesColor }} aria-hidden />
-        <span>{seriesName}</span>
-      </li>
+      {legendEntries.map((entry) => (
+        <li key={`${entry.name}-${entry.color}`} className={cn.legendItem}>
+          <span className={cn.legendSwatch} style={{ background: entry.color }} aria-hidden />
+          <span>{entry.name}</span>
+        </li>
+      ))}
       <ChartPartResizeHandles
         visible={showResize}
         onResizePointerDown={(handle, event) => {

@@ -31,14 +31,28 @@ export function TvDataSeriesChartWidget({
   chartType = "line",
 }: ChartWidgetProps) {
   const kind = toSeriesChartKind(chartType) ?? "line";
-  const points = (resolved.chart?.points ?? []).map((point) => ({
-    label: point.label != null ? String(point.label) : undefined,
-    value: point.value == null ? null : Number(point.value),
-  }));
+  const seriesList = (resolved.chart?.series ?? [])
+    .filter((series) => Array.isArray(series.points) && series.points.length > 0)
+    .map((series) => ({
+      name: series.name,
+      color: series.color,
+      points: series.points.map((point) => ({
+        label: point.label != null ? String(point.label) : undefined,
+        value: point.value == null ? null : Number(point.value),
+      })),
+    }));
+  const points =
+    seriesList.length > 0
+      ? seriesList[0]!.points
+      : (resolved.chart?.points ?? []).map((point) => ({
+          label: point.label != null ? String(point.label) : undefined,
+          value: point.value == null ? null : Number(point.value),
+        }));
   return (
     <ConfigurableSeriesChart
       chartType={kind}
       points={points}
+      seriesList={seriesList.length > 1 ? seriesList : undefined}
       options={resolveChartDisplayOptions(chartOptions, resolved)}
       chartParts={chartParts}
       interaction={interaction}
