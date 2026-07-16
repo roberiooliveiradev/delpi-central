@@ -299,7 +299,8 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                       role_in_meeting: previous?.role_in_meeting ?? "titular_member",
                       presence: previous?.presence ?? "present",
                       is_external: false,
-                      must_sign: previous?.must_sign ?? false,
+                      // Interno adicionado já entra como signatário; desmarcar é a exceção.
+                      must_sign: previous?.must_sign ?? true,
                     };
                   }),
                   ...externals,
