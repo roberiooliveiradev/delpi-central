@@ -514,12 +514,24 @@ export function suggestDefaultProjections(
 
   const numericFields = fields.filter((item) => {
     const declared = typeOf(item.field);
-    if (declared === "number") return true;
+    const rows = resolved.table?.rows ?? [];
+    const hasFiniteSample = () =>
+      rows.some((row) => {
+        const sample = row[item.field];
+        return sample != null && sample !== "" && asFiniteNumber(sample) != null;
+      });
     if (declared === "string" || declared === "date") return false;
+    if (declared === "number") {
+      // Tipo declarado no catálogo não basta — campo fantasma (ex.: quantidade no OEE) quebra o default.
+      if (rows.length === 0) {
+        const metric = resolved.kpiMetrics?.find((entry) => entry.field === item.field);
+        return Boolean(metric && metric.value != null && metric.value !== "");
+      }
+      return hasFiniteSample();
+    }
     const metric = resolved.kpiMetrics?.find((entry) => entry.field === item.field);
     if (metric && metric.value != null && metric.value !== "") return true;
-    const sample = resolved.table?.rows?.[0]?.[item.field];
-    return sample != null && sample !== "" && asFiniteNumber(sample) != null;
+    return hasFiniteSample();
   });
 
   const categoryCandidate =

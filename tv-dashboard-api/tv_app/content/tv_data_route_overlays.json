@@ -101,8 +101,7 @@
       },
       "valueFields": [
         "oee_filial_01",
-        "oee_filial_02",
-        "quantidade"
+        "oee_filial_02"
       ],
       "valueFieldTypes": {
         "periodo": "date",
@@ -110,8 +109,7 @@
         "date_start": "date",
         "date_end": "date",
         "oee_filial_01": "number",
-        "oee_filial_02": "number",
-        "quantidade": "number"
+        "oee_filial_02": "number"
       },
       "label": "OEE — série temporal",
       "description": "Evolução diária do OEE ao longo do período.",
@@ -141,8 +139,7 @@
         "date_start": "date",
         "date_end": "date",
         "otd_filial_01": "number",
-        "otd_filial_02": "number",
-        "quantidade": "number"
+        "otd_filial_02": "number"
       },
       "label": "OTD — série temporal",
       "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",

@@ -102,19 +102,21 @@ export function SeriesChartPrimitive({
           points: usableSeriesChartPoints(series.points),
         }))
       : undefined;
+  // Multi-série: série vazia (ex.: campo fantasma «quantidade») não pode zerar o gráfico.
+  const seriesWithData = normalizedSeries?.filter((series) => series.points.length > 0);
   const usable =
-    normalizedSeries && normalizedSeries.length > 0
-      ? normalizedSeries[0]!.points
+    seriesWithData && seriesWithData.length > 0
+      ? seriesWithData[0]!.points
       : usableSeriesChartPoints(points);
-  const multiSeries = Boolean(normalizedSeries && normalizedSeries.length > 1);
+  const multiSeries = Boolean(seriesWithData && seriesWithData.length > 1);
   const axisValues = multiSeries
-    ? chartType === "stacked_bar"
+      ? chartType === "stacked_bar"
       ? (() => {
-          const n = Math.max(...normalizedSeries!.map((series) => series.points.length), 0);
+          const n = Math.max(...seriesWithData!.map((series) => series.points.length), 0);
           const sums: number[] = [];
           for (let i = 0; i < n; i += 1) {
             let sum = 0;
-            for (const series of normalizedSeries!) {
+            for (const series of seriesWithData!) {
               const raw = Number(series.points[i]?.value);
               if (Number.isFinite(raw) && raw > 0) sum += raw;
             }
@@ -122,7 +124,7 @@ export function SeriesChartPrimitive({
           }
           return sums;
         })()
-      : normalizedSeries!.flatMap((series) =>
+      : seriesWithData!.flatMap((series) =>
           series.points
             .map((point) => (point.value == null ? null : Number(point.value)))
             .filter((value): value is number => value != null && Number.isFinite(value)),
@@ -222,8 +224,8 @@ export function SeriesChartPrimitive({
   const showAxes = config.showAxes !== false;
   const ariaLabel = title || seriesName;
   const legendItems =
-    multiSeries && normalizedSeries
-      ? normalizedSeries.map((series, index) => ({
+    multiSeries && seriesWithData
+      ? seriesWithData.map((series, index) => ({
           name: series.name,
           color:
             series.color?.trim() ||
@@ -275,7 +277,7 @@ export function SeriesChartPrimitive({
     layout,
     config,
     points: usable,
-    seriesList: normalizedSeries,
+    seriesList: seriesWithData && seriesWithData.length > 0 ? seriesWithData : normalizedSeries,
     seriesColor,
     valueFormat,
     showAxes,

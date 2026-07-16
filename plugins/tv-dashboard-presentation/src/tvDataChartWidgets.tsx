@@ -32,7 +32,13 @@ export function TvDataSeriesChartWidget({
 }: ChartWidgetProps) {
   const kind = toSeriesChartKind(chartType) ?? "line";
   const seriesList = (resolved.chart?.series ?? [])
-    .filter((series) => Array.isArray(series.points) && series.points.length > 0)
+    .filter((series) =>
+      Array.isArray(series.points) &&
+      series.points.some((point) => {
+        if (point.value == null || point.value === "") return false;
+        return Number.isFinite(Number(point.value));
+      }),
+    )
     .map((series) => ({
       name: series.name,
       color: series.color,

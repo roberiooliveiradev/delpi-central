@@ -122,6 +122,31 @@ describe("applyViewProjection", () => {
     expect(suggested.chartProjection?.categoryField).toBe("periodo");
     expect(suggested.chartProjection?.series?.every((s) => s.field !== "periodo")).toBe(true);
   });
+
+  it("não sugere série numérica declarada sem amostra finita nas linhas", () => {
+    const resolved: ComunicadoDataResolved = {
+      ...sampleResolved,
+      table: {
+        columns: [
+          { key: "periodo", label: "Período" },
+          { key: "oee_filial_01", label: "OEE 01" },
+          { key: "quantidade", label: "Quantidade" },
+        ],
+        rows: [
+          { periodo: "Jan", oee_filial_01: 80, quantidade: null },
+          { periodo: "Fev", oee_filial_01: 70 },
+        ],
+      },
+      kpiMetrics: [{ field: "oee_filial_01", label: "OEE 01", value: 80 }],
+    };
+    const suggested = suggestDefaultProjections(resolved, {
+      periodo: "date",
+      oee_filial_01: "number",
+      quantidade: "number",
+    });
+    expect(suggested.chartProjection?.series?.map((s) => s.field)).toEqual(["oee_filial_01"]);
+    expect(suggested.kpiProjection?.metrics?.map((m) => m.field)).toEqual(["oee_filial_01"]);
+  });
 });
 
 describe("persistência sem selectedValueFields", () => {

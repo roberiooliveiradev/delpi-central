@@ -269,6 +269,38 @@ describe("ConfigurableSeriesChart", () => {
     expect(container.querySelector(".delpi-ui-series-chart__series-marker")).toBeNull();
     expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
   });
+
+  it("não mostra Sem série quando a primeira série é vazia e há outra com dados", () => {
+    const { container } = render(
+      <ConfigurableSeriesChart
+        chartType="line"
+        points={[
+          { label: "Jan", value: null },
+          { label: "Fev", value: null },
+        ]}
+        seriesList={[
+          {
+            name: "Quantidade",
+            points: [
+              { label: "Jan", value: null },
+              { label: "Fev", value: null },
+            ],
+          },
+          {
+            name: "oee_filial_01",
+            points: [
+              { label: "Jan", value: 80 },
+              { label: "Fev", value: 70 },
+            ],
+          },
+        ]}
+        options={{ showLegend: true, legendPosition: "bottom", showTitle: false }}
+      />,
+    );
+    expect(screen.queryByText("Sem série")).toBeNull();
+    expect(container.querySelector(".delpi-ui-series-chart__series-line")).toBeTruthy();
+    expect(screen.queryByText("Quantidade")).toBeNull();
+  });
 });
 
 describe("formatSeriesChartValue", () => {
