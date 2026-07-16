@@ -1,3 +1,4 @@
+import { buildLucideIconOptions, DECK_QUICK_LUCIDE_ICON_NAMES } from "@delpi/plugin-ui/index";
 import type { ComunicadoImageCrop } from "./comunicadoImageCrop";
 import type { ComunicadoChartOptions } from "./comunicadoChartOptions";
 import type { ComunicadoChartPartsMap } from "./comunicadoChartParts";
@@ -475,20 +476,4 @@ export const COMUNICADO_FONT_SIZE_PRESETS = [
 
 export const COMUNICADO_LINE_HEIGHT_OPTIONS = [1, 1.15, 1.5, 2] as const;
 
-export const COMUNICADO_ICON_OPTIONS: Array<{ name: string; label: string }> = [
-  { name: "Star", label: "Estrela" },
-  { name: "Factory", label: "Fábrica" },
-  { name: "TrendingUp", label: "Tendência" },
-  { name: "TrendingDown", label: "Queda" },
-  { name: "Gauge", label: "Indicador" },
-  { name: "Activity", label: "Atividade" },
-  { name: "Target", label: "Meta" },
-  { name: "Users", label: "Equipe" },
-  { name: "Shield", label: "Segurança" },
-  { name: "AlertTriangle", label: "Alerta" },
-  { name: "CheckCircle2", label: "Concluído" },
-  { name: "BarChart3", label: "Gráfico" },
-  { name: "Percent", label: "Percentual" },
-  { name: "DollarSign", label: "Financeiro" },
-  { name: "Package", label: "Produto" },
-];
+export const COMUNICADO_ICON_OPTIONS = buildLucideIconOptions(DECK_QUICK_LUCIDE_ICON_NAMES);

@@ -165,6 +165,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("forms", "ComboboxNumberControl"),
   vc("forms", "EditableTableCell"),
   vc("forms", "LucideIconPicker"),
+  vc("forms", "LucideIconField"),
   vc("forms", "LucideIconGridPanel"),
   vc("forms", "LucideIconByName"),
   // export

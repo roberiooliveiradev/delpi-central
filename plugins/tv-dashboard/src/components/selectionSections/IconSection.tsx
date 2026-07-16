@@ -3,7 +3,9 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 import {
   DECK_SHAPE_DEFAULTS,
+  LucideIconField,
   LucideIconPicker,
+  useLucideIconField,
 } from "@delpi/plugin-ui/index";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
@@ -21,6 +23,8 @@ import type { SelectionSectionLayout } from "./types";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
+const ICON_FIELD_LABELS = { clear: "Estrela (padrão)", close: "Fechar" } as const;
+
 function isIconBlock(
   block: ReturnType<typeof useComunicadoEditor>["selected"],
 ): block is ComunicadoIconBlock {
@@ -37,6 +41,19 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
   const block = selected;
   const iconColor = block.style?.color ?? DECK_SHAPE_DEFAULTS.fill;
   const strokeWidth = block.style?.strokeWidth ?? 2;
+
+  const applyIconName = (name: string | null) => {
+    updateSelected({ iconName: name?.trim() || "Star" } as Partial<ComunicadoIconBlock>);
+  };
+
+  const iconField = useLucideIconField({
+    value: block.iconName,
+    defaultIcon: "Star",
+    nameFormat: "pascal",
+    curatedOnly: false,
+    labels: ICON_FIELD_LABELS,
+    onChange: applyIconName,
+  });
 
   const colorControl = (
     <TvRibbonColorPicker
@@ -66,27 +83,15 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
     return (
       <SelectionPaneSection title="Ícone" hint={H.iconEditor} defaultOpen>
         <DeckField id="td-icon-name" label="Ícone Lucide" hint={H.iconPicker}>
-          <button
-            type="button"
-            className="td-btn td-btn--sm td-btn--ghost"
-            onClick={() => setPickerOpen((open) => !open)}
-          >
-            {block.iconName}
-          </button>
-          {pickerOpen ? (
-            <LucideIconPicker
-              embedded
-              curatedOnly={false}
-              nameFormat="pascal"
-              value={block.iconName}
-              onChange={(name) => {
-                updateSelected({ iconName: name?.trim() || "Star" } as Partial<ComunicadoIconBlock>);
-                setPickerOpen(false);
-              }}
-              onClose={() => setPickerOpen(false)}
-              labels={{ clear: "Estrela (padrão)", close: "Fechar" }}
-            />
-          ) : null}
+          <LucideIconField
+            value={block.iconName}
+            defaultIcon="Star"
+            nameFormat="pascal"
+            curatedOnly={false}
+            labels={ICON_FIELD_LABELS}
+            onChange={applyIconName}
+            ariaLabel="Selecionar ícone Lucide"
+          />
         </DeckField>
         <DeckField id="td-icon-color" label="Cor" hint={H.iconColor}>
           {colorControl}
@@ -123,16 +128,12 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
       {pickerOpen ? (
         <div className="td-icon-editor-picker">
           <LucideIconPicker
-            embedded
-            curatedOnly={false}
-            nameFormat="pascal"
-            value={block.iconName}
+            {...iconField.pickerProps}
             onChange={(name) => {
-              updateSelected({ iconName: name?.trim() || "Star" } as Partial<ComunicadoIconBlock>);
+              applyIconName(name);
               setPickerOpen(false);
             }}
             onClose={() => setPickerOpen(false)}
-            labels={{ clear: "Estrela (padrão)", close: "Fechar" }}
           />
         </div>
       ) : null}

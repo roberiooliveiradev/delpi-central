@@ -601,6 +601,49 @@
   filter: brightness(1.05);
 }
 
+.delpi-ui-lucide-icon-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.delpi-ui-lucide-icon-field__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid var(--lucide-picker-border, var(--delpi-ui-border, #e5e7eb));
+  border-radius: 10px;
+  padding: 0.35rem 0.65rem;
+  background: transparent;
+  color: var(--lucide-picker-text, var(--delpi-ui-text, #0f172a));
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-lucide-icon-field__trigger:hover {
+  background: color-mix(in srgb, var(--lucide-picker-text, #0f172a) 6%, transparent);
+}
+
+.delpi-ui-lucide-icon-field__preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.delpi-ui-lucide-icon-field__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delpi-ui-lucide-icon-field__picker {
+  min-width: 0;
+}
+
 /* --- ImpactEffortMatrix (Playbook 21 Transformômetro) --- */
 .delpi-ui-impact-effort-matrix {
   --impact-effort-surface: var(--delpi-ui-surface, var(--surface, #ffffff));

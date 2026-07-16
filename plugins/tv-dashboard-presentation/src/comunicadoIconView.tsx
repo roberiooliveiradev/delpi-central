@@ -1,6 +1,5 @@
-import { DECK_COLOR_SURFACE, DECK_SHAPE_DEFAULTS } from "@delpi/plugin-ui/index";
+import { DECK_COLOR_SURFACE, DECK_SHAPE_DEFAULTS, resolveLucideIconOrFallback } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
-import * as LucideIcons from "lucide-react";
 import type { CSSProperties } from "react";
 
 import type { ComunicadoIconBlock } from "./comunicadoTypes";
@@ -14,8 +13,7 @@ const LEGACY_ICON_COLORS = new Set([
 ]);
 
 export function resolveComunicadoLucideIcon(name: string): LucideIcon {
-  const Icon = (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[name];
-  return Icon ?? LucideIcons.Star;
+  return resolveLucideIconOrFallback(name, "Star");
 }
 
 /** Cor do traço do ícone — padrão alinhado ao preenchimento das formas. */

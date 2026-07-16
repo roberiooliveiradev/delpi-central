@@ -603,6 +603,33 @@ Helpers: `resolveLucideIcon`, `groupLucideIconsBySection`, `LUCIDE_ICON_SECTIONS
 Renderiza um ícone Lucide pelo nome.
 
 ```ts
+import { LucideIconByName, resolveLucideIconOrFallback } from "@delpi/plugin-ui";
+```
+
+Prop `fallback` opcional — usa `resolveLucideIconOrFallback` quando informada.
+
+### `LucideIconField` / `useLucideIconField`
+
+Campo padrão (trigger + picker embutido) e hook para layout customizado (ribbon TV).
+
+```tsx
+import { LucideIconField, useLucideIconField } from "@delpi/plugin-ui";
+
+<LucideIconField
+  value={iconName}
+  defaultIcon="Star"
+  nameFormat="pascal"
+  onChange={setIconName}
+/>
+
+// Ribbon com trigger próprio:
+const iconField = useLucideIconField({ value, onChange, defaultIcon: "Star" });
+{iconField.open ? <LucideIconPicker {...iconField.pickerProps} /> : null}
+```
+
+Catálogo rápido TV: `DECK_QUICK_LUCIDE_ICON_NAMES` + `buildLucideIconOptions`.
+
+```ts
 import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 ```
 
