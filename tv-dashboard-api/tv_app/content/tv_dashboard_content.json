@@ -15,6 +15,7 @@
     "dataParamUnknown": "Parâmetro não permitido.",
     "dataRouteMethodNotAllowed": "Somente rotas GET são permitidas na TV.",
     "dataRowsLimitExceeded": "Limite de linhas excedido para esta rota.",
+    "dataListCountLabel": "Quantidade",
     "mediaNotFound": "Mídia não encontrada.",
     "mediaUploaded": "Mídia enviada."
   },

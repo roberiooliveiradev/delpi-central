@@ -265,7 +265,7 @@ export function useComunicadoEditorBlocks({
   }, [configRef, selectedId, setSelectedId, updateBlocks]);
 
   const addDataSourceBlock = useCallback(
-    (block: ComunicadoBlock) => {
+    (block: ComunicadoBlock, options?: { preferredView?: "kpi" | "table" | "series" }) => {
       const selectedBlock = configRef.current.blocks?.find((item) => item.id === selectedId);
       let nextBlocks = [...(configRef.current.blocks ?? [])];
       const withZ = {
@@ -273,16 +273,45 @@ export function useComunicadoEditorBlocks({
         style: { ...block.style, zIndex: nextZIndex(nextBlocks) },
       };
       nextBlocks = [...nextBlocks, withZ];
+      let linkedExistingView = false;
       if (
         selectedBlock &&
         isDataViewBlockType(selectedBlock.type) &&
         !("dataSourceId" in selectedBlock && selectedBlock.dataSourceId?.trim())
       ) {
+        linkedExistingView = true;
         nextBlocks = nextBlocks.map((item) =>
           item.id === selectedBlock.id
             ? ({ ...item, dataSourceId: withZ.id } as ComunicadoBlock)
             : item,
         );
+      }
+      // Fonte sozinha no palco é só o chip — cria visual ligado (como no Testar rota).
+      if (!linkedExistingView && options?.preferredView) {
+        let viewBlock: ComunicadoBlock;
+        if (options.preferredView === "series") {
+          viewBlock = createChartViewBlock("line");
+        } else if (options.preferredView === "table") {
+          viewBlock = createTableViewBlock(6, 5, "grid");
+        } else {
+          viewBlock = createKpiViewBlock();
+        }
+        (viewBlock as { dataSourceId?: string }).dataSourceId = withZ.id;
+        viewBlock.style = {
+          ...viewBlock.style,
+          zIndex: nextZIndex(nextBlocks),
+        };
+        nextBlocks = [...nextBlocks, viewBlock];
+        if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
+          const mode = withZ.dataBinding.displayMode;
+          if (mode && mode !== "auto") {
+            setLastDataDisplayMode(mode);
+          }
+        }
+        setDataPanelOpen(false);
+        setSelectedId(viewBlock.id);
+        updateBlocks(nextBlocks);
+        return;
       }
       if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
         const mode = withZ.dataBinding.displayMode;

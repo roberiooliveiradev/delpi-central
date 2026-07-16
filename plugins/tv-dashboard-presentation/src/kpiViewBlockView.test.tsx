@@ -74,4 +74,30 @@ describe("KpiViewBlockView icon visibility", () => {
     expect(screen.getByText("42")).toBeTruthy();
     expect(screen.getByText("3.2")).toBeTruthy();
   });
+
+  it("cai na tabela anexada quando não há valor numérico", () => {
+    const base = createKpiViewBlock({ title: "Travamento" });
+    if (base.type !== "kpi_view") throw new Error("expected kpi_view");
+    const block: ComunicadoKpiViewBlock = {
+      ...base,
+      dataSourceId: "src-1",
+      resolved: {
+        kpi: { value: null, label: "Travamento" },
+        table: {
+          rows: [
+            { branch: "02", component_code: "1001" },
+            { branch: "02", component_code: "1002" },
+          ],
+          columns: [
+            { key: "branch", label: "Filial" },
+            { key: "component_code", label: "Componente" },
+          ],
+        },
+      },
+    };
+    const { container } = render(<KpiViewBlockView block={block} />);
+    expect(container.querySelector(".tdp-data-block--table")).toBeTruthy();
+    expect(screen.getByText("1001")).toBeTruthy();
+    expect(screen.queryByText("Fonte sem valor numérico")).toBeNull();
+  });
 });

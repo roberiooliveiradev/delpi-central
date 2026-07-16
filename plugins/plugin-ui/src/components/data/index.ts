@@ -184,6 +184,8 @@ export {
   type DataRoutePreviewPayload,
 } from "./DataRouteCatalogPanel";
 
+export { DataRouteSamplePreview } from "./DataRouteSamplePreview";
+
 export {
   TableHeaderCell,
   TableHeaderContent,

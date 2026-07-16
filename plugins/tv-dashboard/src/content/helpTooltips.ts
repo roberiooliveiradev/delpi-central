@@ -236,7 +236,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   data: {
     catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",
     sourceConfig:
-      "Parâmetros da consulta e intervalo de atualização na TV. No editor, altere os filtros e clique em «Atualizar visual» para ver o efeito.",
+      "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; no editor, «Atualizar visual» refresca o palco.",
+    testRoute:
+      "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
       "Escolha um período relativo (recalculado a cada atualização da TV) ou Personalizado para informar Data início/fim fixas abaixo.",
     dateRangeFixed:

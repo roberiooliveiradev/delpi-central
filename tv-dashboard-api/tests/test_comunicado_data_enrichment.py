@@ -867,10 +867,54 @@ def test_enrich_kpi_skips_total_records_and_attaches_playbook_table():
         authorization="Bearer x",
     )
     resolved = enriched[0]["resolved"]
-    assert resolved["kpiMetrics"] == []
-    assert resolved["kpi"]["value"] is None
+    assert len(resolved["kpiMetrics"]) == 1
+    assert resolved["kpiMetrics"][0]["field"] == "total_records"
+    assert resolved["kpiMetrics"][0]["value"] == 10
+    assert resolved["kpi"]["value"] == 10
     assert len(resolved["table"]["rows"]) == 2
     assert resolved["table"]["rows"][0]["item_code"] == "1001"
+
+
+def test_enrich_allocation_gaps_kpi_uses_list_count():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_allocation_gaps", "shape": "playbook_report"},
+        "data": {
+            "items": [
+                {"branch": "02", "component_code": "1001", "allocated_qty": 0.0},
+                {"branch": "02", "component_code": "1002", "allocated_qty": 0.0},
+            ],
+            "summary": {"total_records": 42, "is_complete": False},
+        },
+        "route": {
+            "label": "Componentes sem empenho (travamento)",
+            "tableFields": "items",
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "src-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_production_allocation_gaps",
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    resolved = enriched[0]["resolved"]
+    assert resolved["kpi"]["value"] == 42
+    assert resolved["kpiMetrics"][0]["label"] == "Quantidade"
+    assert len(resolved["table"]["rows"]) == 2
 
 
 def test_decorate_input_resolves_branch_from_slide_schemas():

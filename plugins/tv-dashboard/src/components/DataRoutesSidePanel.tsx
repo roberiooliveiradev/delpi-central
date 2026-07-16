@@ -4,7 +4,6 @@ import {
   DataRouteCatalogPanel,
   FieldLabel,
   NativeTextControl,
-  mapEnrichedBlockToDataRoutePreview,
   primaryDataRouteDisplayKind,
   resolveDataRouteDisplayKinds,
   summarizeRouteParams,
@@ -15,23 +14,22 @@ import {
   createDataSourceBlock,
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
-  serializeComunicadoConfig,
   type ComunicadoDataBinding,
 } from "@delpi/tv-dashboard-presentation";
 
 import {
   listDataRoutes,
-  previewDataBlockV2,
   type BranchScope,
   type TvDataRouteCatalogItem,
 } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
+import { previewTvDataRoute } from "../utils/previewTvDataRoute";
 import type { DataCatalogMode } from "./comunicadoEditorContextCore";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
-import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
 
 const CATEGORY_ORDER = [
   "production",
@@ -125,14 +123,6 @@ export function DataRoutesSidePanel({
     if (!route) {
       throw new Error("Rota não encontrada no catálogo.");
     }
-    const preferred = primaryDataRouteDisplayKind(
-      resolveDataRouteDisplayKinds({
-        metaShape: route.metaShape,
-        allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
-      }),
-    );
-    const displayMode =
-      preferred === "series" ? "line_chart" : preferred === "kpi" ? "kpi" : "table";
     const defaultParams = { ...buildRouteDefaultParams(route) };
     for (const [key, value] of Object.entries(slideFilters)) {
       if ((defaultParams[key] === undefined || defaultParams[key] === "") && value != null && value !== "") {
@@ -143,22 +133,16 @@ export function DataRoutesSidePanel({
       label: route.label,
       defaultParams,
     });
-    if (block.dataBinding) {
-      block.dataBinding.displayMode = displayMode;
+    if (!block.dataBinding) {
+      throw new Error("Bloco de fonte sem dataBinding.");
     }
-    const response = await previewDataBlockV2({
-      block: block as unknown as Record<string, unknown>,
-      nativeConfig: serializeComunicadoConfig({
-        ...config,
-        blocks: [...(config.blocks ?? []), block],
-      }) as Record<string, unknown>,
+    return previewTvDataRoute({
+      route,
+      block: block as typeof block & { dataBinding: NonNullable<typeof block.dataBinding> },
+      config,
       playlistId,
-      forceRefresh: true,
+      slideFilters,
     });
-    return mapEnrichedBlockToDataRoutePreview(
-      (response.block ?? {}) as Record<string, unknown>,
-      preferred,
-    );
   }
 
   function handleInsert() {
@@ -169,15 +153,27 @@ export function DataRoutesSidePanel({
         defaultParams[key] = value;
       }
     }
+    const preferred = primaryDataRouteDisplayKind(
+      resolveDataRouteDisplayKinds({
+        metaShape: pickedRoute.metaShape,
+        allowedDisplayModes: pickedRoute.allowedDisplayModes ?? pickedRoute.suggestedDisplayModes,
+      }),
+      pickedRoute.metaShape,
+    );
+    const displayMode =
+      preferred === "series" ? "line_chart" : preferred === "kpi" ? "kpi" : "table";
     const block = createDataSourceBlock(pickedRoute.operationId, {
       label: label.trim() || pickedRoute.label,
       defaultParams,
       refreshSec: refreshSec.trim() ? Number(refreshSec) : undefined,
     });
+    if (block.dataBinding) {
+      block.dataBinding.displayMode = displayMode;
+    }
     if (mode === "replace") {
       replaceSelectedDataRoute(block);
     } else {
-      addDataSourceBlock(block);
+      addDataSourceBlock(block, { preferredView: preferred });
     }
     setPickedRoute(null);
     onInserted?.();

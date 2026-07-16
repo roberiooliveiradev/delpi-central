@@ -144,7 +144,10 @@ export type ComunicadoEditorContextValue = {
   armMultiDragSelection: (ids: string[]) => void;
   addBlock: (type: ComunicadoBlock["type"]) => void;
   addDataBlock: (block: ComunicadoBlock) => void;
-  addDataSourceBlock: (block: ComunicadoBlock) => void;
+  addDataSourceBlock: (
+    block: ComunicadoBlock,
+    options?: { preferredView?: "kpi" | "table" | "series" },
+  ) => void;
   addChartViewBlock: (chartType: ComunicadoChartType) => void;
   addCanvasTableBlock: (rows?: number, cols?: number) => void;
   addInputBlock: () => void;

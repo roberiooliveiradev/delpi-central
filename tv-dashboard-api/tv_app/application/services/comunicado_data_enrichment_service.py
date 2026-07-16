@@ -237,6 +237,30 @@ def _metrics_from_candidates(
     return metrics
 
 
+def _list_count_metric(
+    data: Any,
+    *,
+    route_info: dict[str, Any],
+    labels: dict[str, str],
+) -> dict[str, Any] | None:
+    """Playbook/listagem sem escalar de negócio: KPI = quantidade de registros."""
+    if not isinstance(data, dict):
+        return None
+    summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
+    total = summary.get("total_records")
+    if isinstance(total, bool) or not isinstance(total, (int, float)):
+        rows = _list_from_data(data, route_info.get("tableFields") if isinstance(route_info, dict) else None)
+        if not rows:
+            return None
+        total = len(rows)
+    count_label = labels.get("total_records") or message("dataListCountLabel", "Quantidade")
+    return {
+        "field": "total_records",
+        "value": total,
+        "label": count_label,
+    }
+
+
 def _extract_kpi_metrics(
     data: Any,
     *,
@@ -249,6 +273,10 @@ def _extract_kpi_metrics(
     metrics = _metrics_from_candidates(data, catalog, labels) if catalog else []
     if not metrics:
         metrics = _metrics_from_candidates(data, _discover_candidates(data), labels)
+    if not metrics:
+        count_metric = _list_count_metric(data, route_info=route_info, labels=labels)
+        if count_metric is not None:
+            metrics = [count_metric]
 
     selected = _binding_selected_fields(binding)
     if selected is None:
@@ -256,6 +284,11 @@ def _extract_kpi_metrics(
     wanted = {field: index for index, field in enumerate(selected)}
     filtered = [metric for metric in metrics if metric["field"] in wanted]
     filtered.sort(key=lambda metric: wanted.get(str(metric["field"]), 999))
+    if filtered:
+        return filtered
+    # Seleção pediu campo inexistente no payload (ex.: coluna de linha) — mantém contagem.
+    if len(metrics) == 1 and metrics[0].get("field") == "total_records":
+        return metrics
     return filtered
 
 

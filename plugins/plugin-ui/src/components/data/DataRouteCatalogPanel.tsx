@@ -100,8 +100,24 @@ export function resolveDataRouteDisplayKinds(item: {
   return [...kinds];
 }
 
-export function primaryDataRouteDisplayKind(kinds: DataRouteDisplayKind[]): DataRouteDisplayKind {
+export function primaryDataRouteDisplayKind(
+  kinds: DataRouteDisplayKind[],
+  metaShape?: string | null,
+): DataRouteDisplayKind {
   if (kinds.includes("series")) return "series";
+  const shape = String(metaShape ?? "")
+    .trim()
+    .toLowerCase();
+  // Listagens / playbooks: tabela é o conteúdo principal; KPI costuma ser só contagem.
+  if (
+    (shape === "paged_list" ||
+      shape === "hierarchy" ||
+      shape === "playbook_report" ||
+      shape === "composite_analysis") &&
+    kinds.includes("table")
+  ) {
+    return "table";
+  }
   if (kinds.includes("kpi")) return "kpi";
   return "table";
 }
@@ -156,7 +172,7 @@ export function DataRouteCatalogPanel({
         return {
           ...item,
           displayKinds: kinds,
-          primaryKind: primaryDataRouteDisplayKind(kinds),
+          primaryKind: primaryDataRouteDisplayKind(kinds, item.metaShape),
           params,
           audienceDescription: resolveRouteAudienceDescription(item),
           paramHint: formatParamHintLine(params) ?? "Sem filtros",

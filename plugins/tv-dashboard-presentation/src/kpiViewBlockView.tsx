@@ -1,3 +1,4 @@
+import { ConfigurableTable } from "./ConfigurableTable";
 import { DelpiKpiCard } from "@delpi/plugin-ui/index";
 
 import { resolveComunicadoLucideIcon } from "./comunicadoIconView";
@@ -6,10 +7,13 @@ import {
   mergeKpiPartsWithOptions,
   type ComunicadoKpiInteraction,
 } from "./comunicadoKpiParts";
+import { resolveTableDisplayOptions } from "./comunicadoTableOptions";
 import type { ComunicadoKpiViewBlock } from "./comunicadoTypes";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 import { applyMetricSelectionToResolved } from "./resolveKpiMetrics";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
+import { applyTableViewDisplayLimits } from "./tableViewLimits";
+import { resolveTableColumns } from "./tvDataPresentation";
 
 type Props = {
   block: ComunicadoKpiViewBlock;
@@ -76,6 +80,19 @@ export function KpiViewBlockView({
   const hasValue =
     hasMulti || (resolved.kpi?.value != null && resolved.kpi.value !== "");
   if (!hasValue) {
+    const tableRows = resolved.table?.rows ?? [];
+    if (tableRows.length > 0) {
+      const allColumns = resolveTableColumns(resolved, tableRows);
+      const { rows, columns } = applyTableViewDisplayLimits(tableRows, allColumns, {});
+      const tableOptions = resolveTableDisplayOptions(undefined, "grid", resolved);
+      return (
+        <div className="tdp-data-block tdp-data-block--table">
+          <div className="tdp-data-table-wrap">
+            <ConfigurableTable columns={columns} rows={rows} options={tableOptions} preset="grid" />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
         <KpiTypePlaceholder loading={loading} interactive={interactive} bound />

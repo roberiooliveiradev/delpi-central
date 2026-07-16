@@ -1,6 +1,11 @@
-import { useState, type ReactNode } from "react";
-import { Copy, RefreshCw, SlidersHorizontal } from "lucide-react";
-import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { useEffect, useState, type ReactNode } from "react";
+import { Copy, Play, RefreshCw, SlidersHorizontal } from "lucide-react";
+import {
+  DataRouteSamplePreview,
+  FormSelectControl,
+  NativeTextControl,
+  type DataRoutePreviewPayload,
+} from "@delpi/plugin-ui/index";
 import {
   blockTypeForDisplayMode,
   DATA_REFRESH_SEC_MAX,
@@ -18,6 +23,7 @@ import {
 
 import type { BranchScope, TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { previewTvDataRoute } from "../utils/previewTvDataRoute";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import {
   DataParamFields,
@@ -96,9 +102,13 @@ export function DataBindingInspector({
     openDataCatalog,
     globalRefreshSec,
     setLastDataDisplayMode,
+    playlistId,
   } = useComunicadoEditor();
   const [paramsModalOpen, setParamsModalOpen] = useState(false);
   const [refreshCustom, setRefreshCustom] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [livePreview, setLivePreview] = useState<DataRoutePreviewPayload | null>(null);
+  const [testError, setTestError] = useState<string | null>(null);
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
@@ -110,11 +120,23 @@ export function DataBindingInspector({
     "dataBinding" in (target ?? {}) &&
     (isDataBlockType((target as ComunicadoBlock).type) ||
       isDataSourceBlockType((target as ComunicadoBlock).type));
+  const targetId = target && "id" in target ? String(target.id) : "";
+  const operationId =
+    target && "dataBinding" in target && target.dataBinding
+      ? String(target.dataBinding.operationId || "").trim()
+      : "";
+
+  useEffect(() => {
+    setLivePreview(null);
+    setTestError(null);
+    setTesting(false);
+  }, [targetId, operationId]);
 
   if (!canEdit || !target || !("dataBinding" in target)) return null;
 
   const editingLinkedSource = Boolean(blockOverride && selected && blockOverride.id !== selected.id);
   const binding = target.dataBinding;
+
   const applyPatch = (patch: Partial<ComunicadoBlock>) => {
     if (blockOverride) {
       updateBlock(blockOverride.id, patch);
@@ -190,6 +212,52 @@ export function DataBindingInspector({
     applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
   }
 
+  async function handleTestRoute() {
+    if (!route || !("dataBinding" in target)) return;
+    setTesting(true);
+    setTestError(null);
+    try {
+      const payload = await previewTvDataRoute({
+        route,
+        block: target as ComunicadoBlock & { dataBinding: ComunicadoDataBinding },
+        config,
+        playlistId,
+        slideFilters,
+      });
+      if (payload.error) {
+        setLivePreview(null);
+        setTestError(payload.error);
+      } else {
+        setLivePreview(payload);
+      }
+    } catch (err) {
+      setLivePreview(null);
+      setTestError(err instanceof Error ? err.message : "Falha ao testar a rota.");
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const testRouteControls = route ? (
+    <div className="td-data-binding-test">
+      <button
+        type="button"
+        className="td-btn td-btn--sm"
+        disabled={testing}
+        onClick={() => void handleTestRoute()}
+      >
+        <Play size={14} aria-hidden="true" />
+        {testing ? "Testando…" : "Testar rota"}
+      </button>
+      {testError ? (
+        <p className="delpi-ui-data-route-preview__error" role="alert">
+          {testError}
+        </p>
+      ) : null}
+      {livePreview && !livePreview.error ? <DataRouteSamplePreview payload={livePreview} /> : null}
+    </div>
+  ) : null;
+
   const connectionFields = (
     <>
       <p className="td-deck-inspector__meta" title={route?.label ?? binding.operationId}>
@@ -224,6 +292,7 @@ export function DataBindingInspector({
           Trocar rota
         </button>
       ) : null}
+      {testRouteControls}
       {showPresentationMode ? (
         <DeckField id="td-data-display-mode" label="Formato de apresentação">
           <FormSelectControl

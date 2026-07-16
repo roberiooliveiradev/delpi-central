@@ -64,9 +64,11 @@ describe("resolveDataRouteDisplayKinds", () => {
     ).toEqual(expect.arrayContaining(["table", "series"]));
   });
 
-  it("escolhe primaryKind com série primeiro", () => {
+  it("escolhe primaryKind com série primeiro; listagens preferem tabela", () => {
     expect(primaryDataRouteDisplayKind(["kpi", "series"])).toBe("series");
     expect(primaryDataRouteDisplayKind(["kpi", "table"])).toBe("kpi");
+    expect(primaryDataRouteDisplayKind(["kpi", "table"], "playbook_report")).toBe("table");
+    expect(primaryDataRouteDisplayKind(["kpi", "table"], "paged_list")).toBe("table");
   });
 });
 

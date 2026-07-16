@@ -839,6 +839,16 @@
   gap: 8px;
   margin-bottom: 8px;
 }
+.dashboard-tv-dashboard .td-data-binding-test{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 8px 0 12px;
+  min-width: 0;
+}
+.dashboard-tv-dashboard .td-data-binding-test .delpi-ui-data-route-preview{
+  max-width: 100%;
+}
 .dashboard-tv-dashboard .td-btn--sm{
   padding: 8px 12px;
   font-size: 13px;

@@ -3079,9 +3079,9 @@
       },
       "paramStrategy": "direct",
       "tableFields": "items",
-      "valueFields": [
-        "allocated_qty"
-      ],
+      "valueFieldLabels": {
+        "total_records": "Quantidade"
+      },
       "whenToUse": "Use na TV de programação/PCP quando precisar enxergar a fila de travamentos — tabela com OP e componente; KPI só conta a quantidade."
     },
     {

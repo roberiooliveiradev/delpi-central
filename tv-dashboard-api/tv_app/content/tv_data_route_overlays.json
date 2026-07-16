@@ -192,7 +192,9 @@
     "get_production_allocation_gaps": {
       "allowedDisplayModes": ["table", "kpi", "auto"],
       "tableFields": "items",
-      "valueFields": ["allocated_qty"],
+      "valueFieldLabels": {
+        "total_records": "Quantidade"
+      },
       "label": "Componentes sem empenho (travamento)",
       "description": "Lista componentes com empenho zerado que travam a produção.",
       "whenToUse": "Use na TV de programação/PCP quando precisar enxergar a fila de travamentos — tabela com OP e componente; KPI só conta a quantidade."
