@@ -18,6 +18,7 @@
     "ttlSeconds": 120
   },
   "tableIncrementalPageSize": 30,
+  "seriesMaxBuckets": 60,
   "comunicadoDataBlocks": {
     "maxPerSlide": 6
   },

@@ -195,6 +195,42 @@ def test_direct_strategy_strips_date_aliases():
     assert "end_date" not in query
 
 
+def test_date_range_long_period_scales_granularity():
+    """«Este ano» com granularity=day fixa truncava em 60 buckets — escala para week."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "branch": {"type": "string"},
+            },
+            "fixedQueryParams": {"granularity": "day"},
+        },
+        {"start_date": "2026-01-01", "end_date": "2026-07-16"},
+    )
+    assert query["granularity"] == "week"
+    assert query["start_date"] == "2026-01-01"
+    assert query["end_date"] == "2026-07-16"
+
+
+def test_date_range_short_period_keeps_daily_granularity():
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+            },
+            "fixedQueryParams": {"granularity": "day"},
+        },
+        {"start_date": "2026-07-01", "end_date": "2026-07-16"},
+    )
+    assert query["granularity"] == "day"
+
+
 def test_date_range_strategy_respects_partial_end_date():
     """Só end_date do filtro — não recalcular fim=hoje."""
     query = _build_query_params(
