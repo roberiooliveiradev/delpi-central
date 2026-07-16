@@ -16,6 +16,7 @@ import { ChartSeriesSection } from "./ChartSeriesSection";
 import { DataSourceHintSection } from "./DataSourceHintSection";
 import { DisplaySection } from "./DisplaySection";
 import { FrameSizeSection } from "./FrameSizeSection";
+import { IconSection } from "./IconSection";
 import { ImageCropSection } from "./ImageCropSection";
 import { InputBindingSection } from "./InputBindingSection";
 import { KpiAppearanceSection } from "./KpiAppearanceSection";
@@ -77,6 +78,8 @@ function renderSection(
       return <ShapeGallerySection key={id} layout={layout} />;
     case "shapeChrome":
       return <ShapeChromeSection key={id} layout={layout} />;
+    case "iconEditor":
+      return <IconSection key={id} layout={layout} />;
     case "tableStyleOptions":
       return <TableStyleOptionsSection key={id} layout={layout} />;
     case "tableStyles":

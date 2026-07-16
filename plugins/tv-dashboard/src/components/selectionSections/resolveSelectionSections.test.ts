@@ -52,7 +52,7 @@ describe("resolveSelectionSections", () => {
           } as SelectionSectionContext["selected"],
         }),
       ),
-    ).toEqual(expect.arrayContaining(["shapeChrome", "display", "organize", "actions"]));
+    ).toEqual(expect.arrayContaining(["iconEditor", "display", "organize", "actions"]));
 
     expect(
       resolveSelectionSections(

@@ -331,6 +331,12 @@ export {
 } from "./comunicadoHelpers";
 export type { StageHideReason } from "./comunicadoStageVisibility";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
+export {
+  ComunicadoIconGraphic,
+  resolveComunicadoIconColor,
+  resolveComunicadoIconStrokeWidth,
+  resolveComunicadoLucideIcon,
+} from "./comunicadoIconView";
 export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
 export {
   ComunicadoInputBlockView,

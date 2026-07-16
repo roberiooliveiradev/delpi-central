@@ -15,6 +15,7 @@ export type SelectionSectionId =
   | "textBox"
   | "visualBox"
   | "shapeChrome"
+  | "iconEditor"
   | "shapeGallery"
   | "media"
   | "imageCrop"

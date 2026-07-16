@@ -989,6 +989,16 @@
   box-shadow: 0 12px 32px color-mix(in srgb, #000 16%, transparent);
   scrollbar-width: thin;
 }
+.dashboard-tv-dashboard .td-icon-editor-picker{
+  width: min(320px, 100%);
+  max-height: min(52vh, 380px);
+  overflow: auto;
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid var(--td-border);
+  background: var(--td-surface);
+}
 .dashboard-tv-dashboard .td-shape-library__label{
   display: none;
 }

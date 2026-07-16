@@ -524,7 +524,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     return base;
   }
   if (type === "icon") {
-    return { zIndex: 2, color: DECK_COLOR_SURFACE, strokeWidth: 2 };
+    return { zIndex: 2, color: DECK_SHAPE_DEFAULTS.fill, strokeWidth: 2, opacity: 1 };
   }
   if (isDataSourceBlockType(type)) {
     /* Sem color: o chrome da fonte usa accent no CSS; injetar TEXT_STRONG
