@@ -29,6 +29,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { ActiveCompositePartSelect } from "./ActiveCompositePartSelect";
 import { KpiPartTypographyFields } from "./KpiPartTypographyFields";
 import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
@@ -207,6 +208,8 @@ export function KpiPartInspector({ pane = false, block }: Props) {
         onHide={canDelete ? removePart : undefined}
         hideLabel="Ocultar parte"
       />
+
+      <ActiveCompositePartSelect id="td-kpi-part-active-element" />
 
       {selectedKpiPart.kind === "title" ? (
         <DeckField id="td-kpi-part-title" label="Texto do título">

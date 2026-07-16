@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isCompositeContentPart,
   isMolduraPartSelection,
   resolveCompositePartPointerAction,
   shouldUsePartChromeInsteadOfBlock,
@@ -13,16 +14,29 @@ describe("resolveCompositePartPointerAction", () => {
         blockSelected: false,
         samePartSelected: false,
         partAllowsMove: true,
+        contentPart: true,
       }),
     ).toBe("drag-block");
   });
 
-  it("bloco selecionado sem parte arrasta o bloco (não entra na parte)", () => {
+  it("bloco selecionado + parte de conteúdo seleciona a parte (Excel-like)", () => {
+    expect(
+      resolveCompositePartPointerAction({
+        blockSelected: true,
+        samePartSelected: false,
+        partAllowsMove: false,
+        contentPart: true,
+      }),
+    ).toBe("select-part");
+  });
+
+  it("moldura com bloco selecionado ainda arrasta o bloco", () => {
     expect(
       resolveCompositePartPointerAction({
         blockSelected: true,
         samePartSelected: false,
         partAllowsMove: true,
+        contentPart: false,
       }),
     ).toBe("drag-block");
   });
@@ -33,18 +47,20 @@ describe("resolveCompositePartPointerAction", () => {
         blockSelected: true,
         samePartSelected: true,
         partAllowsMove: true,
+        contentPart: true,
       }),
     ).toBe("part-move");
   });
 
-  it("parte selecionada mas não móvel destravar para o bloco", () => {
+  it("parte de conteúdo já selecionada e não móvel fica em select-part", () => {
     expect(
       resolveCompositePartPointerAction({
         blockSelected: true,
         samePartSelected: true,
         partAllowsMove: false,
+        contentPart: true,
       }),
-    ).toBe("drag-block");
+    ).toBe("select-part");
   });
 });
 
@@ -57,12 +73,13 @@ describe("isMolduraPartSelection / shouldUsePartChromeInsteadOfBlock", () => {
     expect(shouldUsePartChromeInsteadOfBlock("input", { kind: "frame" })).toBe(false);
   });
 
-  it("subitens (control, title, value) e card KPI usam chrome da parte", () => {
+  it("subitens (control, title, value, series) usam chrome da parte", () => {
     expect(shouldUsePartChromeInsteadOfBlock("input", { kind: "control" })).toBe(true);
     expect(shouldUsePartChromeInsteadOfBlock("chart_view", { kind: "title" })).toBe(true);
+    expect(shouldUsePartChromeInsteadOfBlock("chart_view", { kind: "series" })).toBe(true);
     expect(shouldUsePartChromeInsteadOfBlock("kpi_view", { kind: "card" })).toBe(true);
-    expect(shouldUsePartChromeInsteadOfBlock("kpi_view", { kind: "value" })).toBe(true);
-    expect(shouldUsePartChromeInsteadOfBlock("table_view", { kind: "header" })).toBe(true);
+    expect(isCompositeContentPart("chart_view", { kind: "series" })).toBe(true);
+    expect(isCompositeContentPart("chart_view", { kind: "chartArea" })).toBe(false);
   });
 
   it("sem parte = chrome global", () => {

@@ -1,21 +1,30 @@
 /**
  * Política de clique em partes de widgets compostos (KPI / chart / table / input).
- * Seleção de parte = duplo clique; clique simples move o bloco (ou a parte já ativa).
+ *
+ * Excel-like: com o bloco já selecionado, clique em parte de conteúdo (série, métrica…)
+ * seleciona a parte sem arrastar o bloco. Arraste do bloco fica no chrome/moldura.
  */
 
-export type CompositePartPointerAction = "drag-block" | "part-move";
+export type CompositePartPointerAction = "drag-block" | "part-move" | "select-part";
 
 /**
- * - Bloco ainda não selecionado / modo global / outra parte → arrastar o bloco (destravar).
+ * - Bloco ainda não selecionado → arrastar o bloco (1º clique).
+ * - Conteúdo + bloco selecionado → selecionar a parte (sem drag).
  * - Mesma parte já selecionada e móvel → arrastar a parte.
+ * - Moldura / fundo → arrastar o bloco.
  */
 export function resolveCompositePartPointerAction(params: {
   blockSelected: boolean;
   samePartSelected: boolean;
   partAllowsMove: boolean;
+  /** Parte de conteúdo (série, marcador, título, métrica…) vs moldura/fundo. */
+  contentPart?: boolean;
 }): CompositePartPointerAction {
   if (params.blockSelected && params.samePartSelected && params.partAllowsMove) {
     return "part-move";
+  }
+  if (params.blockSelected && params.contentPart) {
+    return "select-part";
   }
   return "drag-block";
 }
@@ -41,4 +50,12 @@ export function shouldUsePartChromeInsteadOfBlock(
   part: { kind: string } | null | undefined,
 ): boolean {
   return Boolean(part) && !isMolduraPartSelection(blockType, part);
+}
+
+/** Clique deve selecionar a parte sem iniciar drag do bloco. */
+export function isCompositeContentPart(
+  blockType: string | undefined,
+  part: { kind: string } | null | undefined,
+): boolean {
+  return shouldUsePartChromeInsteadOfBlock(blockType, part);
 }

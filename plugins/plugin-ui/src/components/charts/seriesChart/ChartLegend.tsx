@@ -111,12 +111,39 @@ export function ChartLegend({
       onPointerDown={onPointerDown}
       onDoubleClick={onDoubleClick}
     >
-      {legendEntries.map((entry) => (
-        <li key={`${entry.name}-${entry.color}`} className={cn.legendItem}>
-          <span className={cn.legendSwatch} style={{ background: entry.color }} aria-hidden />
-          <span>{entry.name}</span>
-        </li>
-      ))}
+      {legendEntries.map((entry, seriesIndex) => {
+        const seriesRef = { kind: "series" as const, seriesIndex };
+        const {
+          selected: seriesSelected,
+          editing: _seriesEditing,
+          onPointerDown: onSeriesPointerDown,
+          onDoubleClick: onSeriesDoubleClick,
+          ...seriesDom
+        } = bindChartPartPointer(seriesRef, interaction);
+        return (
+          <li
+            key={`${entry.name}-${entry.color}-${seriesIndex}`}
+            className={[
+              cn.legendItem,
+              seriesSelected ? `${cn.root}__part--selected` : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            {...seriesDom}
+            onPointerDown={(event) => {
+              event.stopPropagation();
+              onSeriesPointerDown?.(event);
+            }}
+            onDoubleClick={(event) => {
+              event.stopPropagation();
+              onSeriesDoubleClick?.(event);
+            }}
+          >
+            <span className={cn.legendSwatch} style={{ background: entry.color }} aria-hidden />
+            <span>{entry.name}</span>
+          </li>
+        );
+      })}
       <ChartPartResizeHandles
         visible={showResize}
         onResizePointerDown={(handle, event) => {

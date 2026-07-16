@@ -75,7 +75,7 @@ import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
-import { resolveCompositePartPointerAction } from "../utils/compositePartSelection";
+import { resolveCompositePartPointerAction, isCompositeContentPart } from "../utils/compositePartSelection";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
@@ -163,8 +163,8 @@ function EditorChartViewBlock({
   } = useComunicadoEditor();
 
   /**
-   * Clique simples: seleção global + arraste do bloco (ou move da parte já ativa).
-   * Duplo clique: entra na parte / subcomponente.
+   * Clique simples: com bloco já selecionado, parte de conteúdo → seleciona a parte (Excel-like).
+   * Moldura/fundo → arraste do bloco. Mesma parte móvel → move a parte.
    */
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event?: ReactPointerEvent) => {
@@ -176,12 +176,27 @@ function EditorChartViewBlock({
       const samePartSelected =
         selectedId === block.id &&
         Boolean(selectedChartPart && isChartPartRefEqual(selectedChartPart, ref));
+      const contentPart = isCompositeContentPart("chart_view", ref);
       const action = resolveCompositePartPointerAction({
         blockSelected: selectedId === block.id,
         samePartSelected,
         partAllowsMove: chartPartAllowsMove(ref),
+        contentPart,
       });
       if (action === "part-move") return;
+      if (action === "select-part") {
+        selectChartPart(block.id, ref);
+        const primitiveKinds = new Set([
+          "marker",
+          "series",
+          "chartArea",
+          "plotArea",
+          "axis",
+          "grid",
+        ]);
+        requestRibbonTab(primitiveKinds.has(ref.kind) ? "shape" : "chart");
+        return;
+      }
       beginBlockStageMoveDrag({
         event,
         block,
@@ -198,8 +213,10 @@ function EditorChartViewBlock({
       armMultiDragSelection,
       block,
       isBlockSelected,
+      requestRibbonTab,
       selectBlock,
       selectBlocksByIds,
+      selectChartPart,
       selectedChartPart,
       selectedId,
       selectedIds,
@@ -454,13 +471,20 @@ function EditorTableViewBlock({
       const samePartSelected =
         selectedId === block.id &&
         Boolean(selectedTablePart && selectedTablePart.kind === ref.kind);
+      const contentPart = isCompositeContentPart("table_view", ref);
       const action = resolveCompositePartPointerAction({
         blockSelected: selectedId === block.id,
         samePartSelected,
-        /* Tabela ainda não move frame no palco — clique sempre destravar o bloco. */
+        /* Tabela ainda não move frame no palco. */
         partAllowsMove: false,
+        contentPart,
       });
       if (action === "part-move") return;
+      if (action === "select-part") {
+        selectTablePart(block.id, ref);
+        requestRibbonTab(ref.kind === "frame" ? "shape" : "table");
+        return;
+      }
       beginBlockStageMoveDrag({
         event,
         block,
@@ -477,8 +501,10 @@ function EditorTableViewBlock({
       armMultiDragSelection,
       block,
       isBlockSelected,
+      requestRibbonTab,
       selectBlock,
       selectBlocksByIds,
+      selectTablePart,
       selectedId,
       selectedIds,
       selectedTablePart,
@@ -559,15 +585,20 @@ function EditorKpiViewBlock({
       const samePartSelected =
         selectedId === block.id &&
         Boolean(selectedKpiPart && isKpiPartRefEqual(selectedKpiPart, part));
-      if (part.kind === "metricCard" && selectedId === block.id && !event.shiftKey) {
-        selectKpiPart(block.id, part);
-      }
+      const contentPart = isCompositeContentPart("kpi_view", part);
       const action = resolveCompositePartPointerAction({
         blockSelected: selectedId === block.id,
         samePartSelected,
         partAllowsMove: kpiPartAllowsMove(part),
+        contentPart,
       });
       if (action === "part-move") return;
+      if (action === "select-part") {
+        selectKpiPart(block.id, part);
+        if (part.kind === "metricCard") requestRibbonTab("data");
+        else requestRibbonTab("shape");
+        return;
+      }
       beginBlockStageMoveDrag({
         event,
         block,
@@ -584,6 +615,7 @@ function EditorKpiViewBlock({
       armMultiDragSelection,
       block,
       isBlockSelected,
+      requestRibbonTab,
       selectBlock,
       selectBlocksByIds,
       selectKpiPart,
@@ -930,14 +962,15 @@ function EditorInputBlock({
       const blockSelected = selectedId === block.id;
       const samePartSelected =
         blockSelected && Boolean(selectedInputPart && selectedInputPart.kind === part.kind);
+      const contentPart = isCompositeContentPart("input", part);
       const action = resolveCompositePartPointerAction({
         blockSelected,
         samePartSelected,
         partAllowsMove: inputPartAllowsMove(part),
+        contentPart,
       });
       if (action === "part-move") return;
-      // Conteúdo: clique na caixa/borda seleciona o subitem. Moldura → arrasta o bloco.
-      if (blockSelected && part.kind !== "frame" && !samePartSelected) {
+      if (action === "select-part") {
         selectInputPart(block.id, part);
         requestRibbonTab("shape");
         return;

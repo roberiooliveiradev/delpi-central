@@ -37,9 +37,9 @@ export function chartPartSelectionLabel(part: ComunicadoChartPartRef): string {
     case "legend":
       return "Legenda";
     case "series":
-      return "Série";
+      return `Série ${(part.seriesIndex ?? 0) + 1}`;
     case "marker":
-      return `Marcador ${(part.pointIndex ?? 0) + 1}`;
+      return `Marcador série ${(part.seriesIndex ?? 0) + 1} · ponto ${(part.pointIndex ?? 0) + 1}`;
     case "dataLabel":
       return `Rótulo ${(part.pointIndex ?? 0) + 1}`;
     case "dataLabels":

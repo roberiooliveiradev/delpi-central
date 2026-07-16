@@ -14,7 +14,6 @@ import {
   hostRelativeFrameToPageBottomLeftPx,
   mergeChartPartsWithOptions,
   mergeComunicadoChartOptions,
-  OFFICE_CHART_SERIES_COLOR,
   partsToChartOptions,
   patchHostRelativeFramePageBottomLeftPx,
   resolveChartAreaStyle,
@@ -30,10 +29,15 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { ActiveCompositePartSelect } from "./ActiveCompositePartSelect";
 import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+import {
+  patchChartSeriesAppearance,
+  resolveChartSeriesAppearanceColor,
+} from "../utils/chartSeriesAppearance";
 import { chartPartSelectionLabel } from "../utils/resolveSelectionChromeMode";
 
 type Props = {
@@ -73,9 +77,14 @@ export function ChartPartInspector({ pane = false, block }: Props) {
   });
   const displayOptions = resolveChartDisplayOptions(options, block.resolved);
   const primitive = chartPartVisualPrimitive(selectedChartPart);
-  const seriesColor = options.seriesColor ?? OFFICE_CHART_SERIES_COLOR;
+  const activeSeriesIndex =
+    selectedChartPart.kind === "series" || selectedChartPart.kind === "marker"
+      ? selectedChartPart.seriesIndex
+      : 0;
+  const seriesColor = resolveChartSeriesAppearanceColor(block, activeSeriesIndex);
   const partKey = serializeChartPartRef(selectedChartPart);
   const partState = block.chartParts?.[partKey];
+  const seriesPartKey = serializeChartPartRef({ kind: "series", seriesIndex: activeSeriesIndex });
   const canDelete = chartPartAllowsDelete(selectedChartPart);
   const frameable = chartPartAllowsFrame(selectedChartPart);
   const defaults = defaultChartPartFrame(selectedChartPart);
@@ -123,9 +132,6 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       nextOptions.title = patch.content;
       nextOptions.showTitle = true;
     }
-    if (selectedChartPart.kind === "series" && patch.style?.stroke) {
-      nextOptions.seriesColor = patch.style.stroke;
-    }
     if (selectedChartPart.kind === "legend" && patch.content !== undefined) {
       nextOptions.seriesName = patch.content;
     }
@@ -133,9 +139,31 @@ export function ChartPartInspector({ pane = false, block }: Props) {
       nextOptions.backgroundColor = patch.style.fill;
       nextOptions.theme = "light";
     }
+    if (selectedChartPart.kind === "series" && (patch.style?.stroke || patch.style?.strokeWidth != null)) {
+      const appearance = patchChartSeriesAppearance(block, selectedChartPart.seriesIndex, {
+        color: patch.style?.stroke,
+        strokeWidth: patch.style?.strokeWidth,
+      });
+      updateSelected({
+        chartParts: appearance.chartParts ?? nextParts,
+        chartOptions: appearance.chartOptions ?? nextOptions,
+        ...(appearance.chartProjection ? { chartProjection: appearance.chartProjection } : {}),
+      } as Partial<typeof block>);
+      return;
+    }
     updateSelected({
       chartParts: nextParts,
       chartOptions: nextOptions,
+    } as Partial<typeof block>);
+  };
+
+  const persistSeriesAppearance = (patch: { color?: string; strokeWidth?: number }) => {
+    if (selectedChartPart.kind !== "series" && selectedChartPart.kind !== "marker") return;
+    const appearance = patchChartSeriesAppearance(block, activeSeriesIndex, patch);
+    updateSelected({
+      ...(appearance.chartProjection ? { chartProjection: appearance.chartProjection } : {}),
+      ...(appearance.chartParts ? { chartParts: appearance.chartParts } : {}),
+      ...(appearance.chartOptions ? { chartOptions: appearance.chartOptions } : {}),
     } as Partial<typeof block>);
   };
 
@@ -208,6 +236,8 @@ export function ChartPartInspector({ pane = false, block }: Props) {
         hideDanger
         hint="Del também oculta a parte (não remove o gráfico)."
       />
+
+      <ActiveCompositePartSelect id="td-chart-part-active-element" />
 
       {frameable ? (
         <>
@@ -372,8 +402,12 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               label="Cor da série"
               value={seriesColor}
               onChange={(color) => {
-                persistOptions({ ...options, seriesColor: color });
-                patchPart({ style: { stroke: color, fill: color } });
+                const appearance = patchChartSeriesAppearance(block, 0, { color });
+                updateSelected({
+                  ...(appearance.chartProjection ? { chartProjection: appearance.chartProjection } : {}),
+                  ...(appearance.chartParts ? { chartParts: appearance.chartParts } : {}),
+                  ...(appearance.chartOptions ? { chartOptions: appearance.chartOptions } : {}),
+                } as Partial<typeof block>);
               }}
             />
           </DeckField>
@@ -456,10 +490,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               inline
               label="Cor do traço"
               value={seriesColor}
-              onChange={(color) => {
-                persistOptions({ ...options, seriesColor: color });
-                patchPart({ style: { stroke: color, fill: color } });
-              }}
+              onChange={(color) => persistSeriesAppearance({ color })}
             />
           </DeckField>
           <DeckField id="td-chart-part-series-width" label="Espessura">
@@ -469,8 +500,10 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               min={1}
               max={8}
               step={0.5}
-              value={block.chartParts?.["series:0"]?.style?.strokeWidth ?? 2}
-              onChange={(value) => patchPart({ style: { strokeWidth: Number(value) || 2 } })}
+              value={block.chartParts?.[seriesPartKey]?.style?.strokeWidth ?? 2}
+              onChange={(value) =>
+                persistSeriesAppearance({ strokeWidth: Number(value) || 2 })
+              }
             />
           </DeckField>
         </>

@@ -66,8 +66,15 @@ export function VisualDataViewInspector({
   onOpenDataSources,
   route = null,
 }: Props) {
-  const { selected, blocks, updateSelected, openDataPanel, selectedKpiPart, selectedChartPart } =
-    useComunicadoEditor();
+  const {
+    selected,
+    blocks,
+    updateSelected,
+    openDataPanel,
+    selectedKpiPart,
+    selectedChartPart,
+    selectChartPart,
+  } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
@@ -219,6 +226,9 @@ export function VisualDataViewInspector({
                   null
                 : null
             }
+            onSeriesActivate={(_field, seriesIndex) => {
+              selectChartPart(selected.id, { kind: "series", seriesIndex });
+            }}
           />
         </DeckField>
       ) : null}

@@ -23,8 +23,10 @@ type Props = {
   chartProjection?: ChartViewProjection | null;
   onChange: (next: ChartViewProjection | undefined) => void;
   compact?: boolean;
-  /** Série destacada (duplo clique no palco). */
+  /** Série destacada (selecionada no palco). */
   focusedSeriesField?: string | null;
+  /** Clique na linha da série → seleciona a parte no palco (Excel-like). */
+  onSeriesActivate?: (field: string, seriesIndex: number) => void;
 };
 
 function seriesByField(
@@ -44,6 +46,7 @@ export function ChartAxesProjectionEditor({
   onChange,
   compact = false,
   focusedSeriesField = null,
+  onSeriesActivate,
 }: Props) {
   if (options.length === 0) return null;
 
@@ -133,8 +136,29 @@ export function ChartAxesProjectionEditor({
               checked && orderIndex >= 0 ? rowClassName(baseClass, orderIndex) : baseClass
             }
             {...(checked && orderIndex >= 0 ? rowDropProps(orderIndex) : {})}
+            role={checked ? "button" : undefined}
+            tabIndex={checked ? 0 : undefined}
+            onClick={
+              checked && onSeriesActivate
+                ? () => onSeriesActivate(option.field, orderIndex)
+                : undefined
+            }
+            onKeyDown={
+              checked && onSeriesActivate
+                ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSeriesActivate(option.field, orderIndex);
+                    }
+                  }
+                : undefined
+            }
           >
-            <div className="td-deck-inspector__chart-series-head">
+            <div
+              className="td-deck-inspector__chart-series-head"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
               {checked && canDrag ? (
                 <button
                   type="button"

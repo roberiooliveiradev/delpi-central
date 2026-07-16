@@ -18,6 +18,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { ActiveCompositePartSelect } from "./ActiveCompositePartSelect";
 import { PartInspectorToolbar } from "./PartInspectorToolbar";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 import { DeckField } from "./deck/DeckField";
@@ -117,6 +118,8 @@ export function TablePartInspector({ pane = false, block }: Props) {
         onHide={canDelete ? removePart : undefined}
         hideLabel="Ocultar parte"
       />
+
+      <ActiveCompositePartSelect id="td-table-part-active-element" />
 
       {selectedTablePart.kind === "title" ? (
         <DeckField id="td-table-part-title" label="Texto do título">
