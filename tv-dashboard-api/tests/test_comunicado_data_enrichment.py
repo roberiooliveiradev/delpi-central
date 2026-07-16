@@ -580,6 +580,101 @@ def test_enrich_data_source_series_table_keeps_full_series_without_max_rows():
     assert len(resolved["table"]["rows"]) == 12
 
 
+def test_enrich_series_route_does_not_leak_internal_metadata_as_table():
+    """Regressão prod: OEE série (points + granularity/truncated) deve virar tabela de série,
+    nunca campo/valor com metadados internos (granularity, truncated)."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {
+            "granularity": "day",
+            "truncated": False,
+            "branch": "01",
+            "points": [
+                {
+                    "periodo": "2026-07-01",
+                    "sort_key": "2026-07-01",
+                    "date_start": "2026-07-01",
+                    "date_end": "2026-07-01",
+                    "oee_filial_01": 82.5,
+                    "oee_filial_02": None,
+                },
+                {
+                    "periodo": "2026-07-02",
+                    "sort_key": "2026-07-02",
+                    "date_start": "2026-07-02",
+                    "date_end": "2026-07-02",
+                    "oee_filial_01": 84.0,
+                    "oee_filial_02": None,
+                },
+            ],
+        },
+        "route": {
+            "label": "OEE — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {"requiresBranchPermission": True},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "params": {"branch": "01", "periodDays": 30},
+                "displayMode": "auto",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    table = enriched[0]["resolved"]["table"]
+    column_keys = {col["key"] for col in table["columns"]}
+    assert column_keys == {"periodo", "value"}
+    assert "campo" not in column_keys and "valor" not in column_keys
+    assert [row["value"] for row in table["rows"]] == [82.5, 84.0]
+    assert enriched[0]["resolved"]["kpi"]["value"] == 84.0
+
+
+def test_enrich_series_route_empty_points_yields_no_metadata_rows():
+    """Série vazia não deve vazar granularity/truncated como campo/valor."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {"granularity": "day", "truncated": False, "branch": "01", "points": []},
+        "route": {
+            "label": "OEE — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {"requiresBranchPermission": True},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "params": {"branch": "01", "periodDays": 30},
+                "displayMode": "table",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    table = enriched[0]["resolved"]["table"]
+    assert table["rows"] == []
+    serialized = str(table)
+    assert "granularity" not in serialized and "truncated" not in serialized
+
+
 def test_enrich_honors_value_field_override():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()

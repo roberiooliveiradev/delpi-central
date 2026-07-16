@@ -276,6 +276,9 @@ def _list_count_metric(
     """Playbook/listagem sem escalar de negócio: KPI = quantidade de registros."""
     if not isinstance(data, dict):
         return None
+    # Série temporal: KPI é o último ponto (tratado adiante), nunca a contagem de pontos.
+    if isinstance(route_info, dict) and str(route_info.get("seriesField") or "").strip():
+        return None
     summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
     total = summary.get("total_records")
     if isinstance(total, bool) or not isinstance(total, (int, float)):
@@ -509,6 +512,19 @@ def _extract_table_rows(
     branch: str | None = None,
     value_label: str | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    # Rotas de série (seriesField no catálogo) têm a série como fonte canônica: normaliza
+    # os pontos (label/valor por filial) antes do caminho de lista genérico e nunca vaza
+    # metadados internos (granularity, truncated, sort_key…) como colunas ou campo/valor.
+    if series_field and str(series_field).strip():
+        series_rows, series_columns = _series_to_table_rows(
+            data,
+            series_field,
+            branch=branch,
+            max_rows=max_rows,
+            value_label=value_label,
+        )
+        return series_rows, series_columns
+
     raw_rows = _list_from_data(data, table_field)
     rows: list[dict[str, Any]] = []
     for row in raw_rows[:max_rows]:
