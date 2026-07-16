@@ -60,6 +60,11 @@
   table-layout: auto;
 }
 
+.delpi-ui-config-table--fixed-cols .delpi-ui-config-table__data-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
 .delpi-ui-config-table__header-cell,
 .delpi-ui-config-table__cell {
   padding: 0.25rem 0.4rem;
@@ -69,6 +74,16 @@
     var(--delpi-ui-config-table-border-color, #e2e8f0);
   text-align: left;
   white-space: nowrap;
+  min-height: var(--delpi-ui-config-table-row-height, unset);
+  height: var(--delpi-ui-config-table-row-height, auto);
+  vertical-align: middle;
+}
+
+.delpi-ui-config-table--wrap .delpi-ui-config-table__header-cell,
+.delpi-ui-config-table--wrap .delpi-ui-config-table__cell {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .delpi-ui-config-table__header-cell {

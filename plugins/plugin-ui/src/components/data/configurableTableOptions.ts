@@ -2,7 +2,12 @@ import { formatNumber, formatPct } from "../../utils/localeFormat";
 import { DECK_TABLE_DEFAULTS } from "../../theme/deckColorCatalog";
 import type { ConfigurableTableClassNames } from "./configurableTableClasses";
 
-export type PresentationTableColumn = { key: string; label: string };
+export type PresentationTableColumn = {
+  key: string;
+  label: string;
+  /** Largura relativa da coluna (% do total da tabela). Omitido = auto. */
+  widthPct?: number;
+};
 
 export type ConfigurableTableTextAlign = "left" | "center" | "right";
 
@@ -41,6 +46,10 @@ export type ConfigurableTableOptions = {
   showBorders?: boolean;
   valueFormat?: ConfigurableTableValueFormat;
   headerUppercase?: boolean;
+  /** Quebra texto nas células (Excel → Quebrar Texto Automaticamente). */
+  wrapText?: boolean;
+  /** Altura mínima das linhas de dados (px). */
+  rowHeightPx?: number;
 };
 
 /** Cores herdadas do catálogo DECK_* (tema claro do gráfico). */
@@ -179,6 +188,9 @@ export function configurableTableOptionsCssVars(
   }
   if (options.borderStyle) vars[`--${cssVarPrefix}-border-style`] = options.borderStyle;
   if (options.fontSize != null && options.fontSize > 0) vars[`--${cssVarPrefix}-font-size`] = `${options.fontSize}px`;
+  if (options.rowHeightPx != null && options.rowHeightPx > 0) {
+    vars[`--${cssVarPrefix}-row-height`] = `${Math.max(16, Math.min(200, options.rowHeightPx))}px`;
+  }
   return vars;
 }
 
@@ -194,7 +206,10 @@ export function configurableTableOptionsModifierClasses(
     | "rootAlignCenter"
     | "rootAlignRight"
     | "rootHeaderNormalCase"
+    | "rootWrap"
+    | "rootFixedCols"
   >,
+  hasColumnWidths = false,
 ): string[] {
   const cn = classNames ?? {
     rootMinimal: "delpi-ui-config-table--minimal",
@@ -205,6 +220,8 @@ export function configurableTableOptionsModifierClasses(
     rootAlignCenter: "delpi-ui-config-table--align-center",
     rootAlignRight: "delpi-ui-config-table--align-right",
     rootHeaderNormalCase: "delpi-ui-config-table--header-normal-case",
+    rootWrap: "delpi-ui-config-table--wrap",
+    rootFixedCols: "delpi-ui-config-table--fixed-cols",
   };
   const classes: string[] = [];
   if (options.showBorders === false) classes.push(cn.rootMinimal);
@@ -216,5 +233,7 @@ export function configurableTableOptionsModifierClasses(
     classes.push(options.textAlign === "center" ? cn.rootAlignCenter : cn.rootAlignRight);
   }
   if (options.headerUppercase === false) classes.push(cn.rootHeaderNormalCase);
+  if (options.wrapText) classes.push(cn.rootWrap);
+  if (hasColumnWidths) classes.push(cn.rootFixedCols);
   return classes;
 }

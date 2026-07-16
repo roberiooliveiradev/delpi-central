@@ -50,6 +50,14 @@ export function ConfigurablePresentationTable({
   const ariaLabel = title || "Tabela de dados";
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const totalRow = showTotalRow ? buildConfigurableTableTotalRow(columns, rows) : null;
+  const hasColumnWidths = columns.some((column) => column.widthPct != null && column.widthPct > 0);
+  const layoutClassName = [
+    className,
+    interactive ? `${cn.root}--interactive` : null,
+    hasColumnWidths ? cn.rootFixedCols : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (rows.length === 0) {
     return (
@@ -66,7 +74,7 @@ export function ConfigurablePresentationTable({
   return (
     <TableContainer
       options={config}
-      className={[className, interactive ? `${cn.root}--interactive` : null].filter(Boolean).join(" ")}
+      className={layoutClassName}
       tableParts={tableParts}
     >
       <TableTitle
@@ -75,7 +83,7 @@ export function ConfigurablePresentationTable({
         interaction={interaction}
         tableParts={tableParts}
       />
-      <TableFrame ariaLabel={ariaLabel}>
+      <TableFrame ariaLabel={ariaLabel} columns={columns}>
         <TableHeader visible={showHeader} interaction={interaction} tableParts={tableParts}>
           {columns.map((column, colIndex) => (
             <TableHeaderCell

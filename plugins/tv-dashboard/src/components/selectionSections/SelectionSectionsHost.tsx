@@ -33,6 +33,7 @@ import {
   TableLayoutAlignSection,
   TableLayoutDataSection,
   TableLayoutDisplaySection,
+  TableLayoutSizeSection,
 } from "./TableLayoutSections";
 import { TextBoxSection } from "./TextBoxSection";
 import { TypographySection } from "./TypographySection";
@@ -92,6 +93,8 @@ function renderSection(
       return <TableLayoutDisplaySection key={id} layout={layout} />;
     case "tableLayoutAlign":
       return <TableLayoutAlignSection key={id} layout={layout} />;
+    case "tableLayoutSize":
+      return <TableLayoutSizeSection key={id} layout={layout} />;
     case "chartLayout":
       return <ChartLayoutSection key={id} layout={layout} />;
     case "chartStyles":

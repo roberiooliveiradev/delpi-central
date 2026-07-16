@@ -1253,6 +1253,23 @@
   white-space: nowrap;
   color: var(--tdp-table-cell-color, var(--tdp-data-text, #334155));
   background: var(--tdp-table-cell-bg, #ffffff);
+  min-height: var(--tdp-table-row-height, unset);
+  height: var(--tdp-table-row-height, auto);
+  vertical-align: middle;
+}
+
+.tdp-configurable-table--wrap .tdp-table-header-cell,
+.tdp-configurable-table--wrap .tdp-table-cell,
+.tdp-configurable-table--wrap .tdp-data-table th,
+.tdp-configurable-table--wrap .tdp-data-table td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.tdp-configurable-table--fixed-cols .tdp-data-table {
+  width: 100%;
+  table-layout: fixed;
 }
 
 .tdp-table-header-cell,

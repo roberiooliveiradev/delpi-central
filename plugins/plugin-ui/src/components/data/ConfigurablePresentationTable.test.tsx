@@ -102,6 +102,24 @@ describe("ConfigurablePresentationTable", () => {
     expect(screen.getByText("Total")).toBeTruthy();
     expect(screen.getByText("150")).toBeTruthy();
   });
+
+  it("aplica quebra de texto e colgroup com larguras", () => {
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={[
+          { key: "name", label: "Produto", widthPct: 60 },
+          { key: "value", label: "Valor", widthPct: 40 },
+        ]}
+        rows={[{ name: "Texto longo para quebrar na célula", value: 100 }]}
+        options={{ wrapText: true, rowHeightPx: 32 }}
+      />,
+    );
+    const root = container.querySelector(".delpi-ui-config-table");
+    expect(root?.className).toMatch(/--wrap/);
+    expect(root?.className).toMatch(/--fixed-cols/);
+    expect(container.querySelectorAll("col")).toHaveLength(2);
+    expect((container.querySelector("col") as HTMLElement | null)?.style.width).toBe("60%");
+  });
 });
 
 describe("mergeConfigurableTableOptions", () => {

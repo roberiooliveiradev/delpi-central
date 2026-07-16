@@ -93,6 +93,7 @@ export function resolveSelectionSections(
         "tableBorders",
         "tableLayoutData",
         "tableLayoutDisplay",
+        "tableLayoutSize",
         "tableLayoutAlign",
       ]);
     default:
@@ -124,6 +125,7 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "tableBorders",
   "tableLayoutData",
   "tableLayoutDisplay",
+  "tableLayoutSize",
   "tableLayoutAlign",
   "chartLayout",
   "chartStyles",

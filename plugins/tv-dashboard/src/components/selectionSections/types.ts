@@ -33,6 +33,7 @@ export type SelectionSectionId =
   | "tableLayoutData"
   | "tableLayoutDisplay"
   | "tableLayoutAlign"
+  | "tableLayoutSize"
   | "kpiAppearance"
   | "animation"
   | "actions"

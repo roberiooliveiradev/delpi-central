@@ -55,9 +55,18 @@ export function TableViewBlockView({
 
   const allRows = resolved.table?.rows ?? [];
   const allColumns = resolveTableColumns(resolved, allRows);
-  const { rows, columns } = applyTableViewDisplayLimits(allRows, allColumns, {
+  const { rows, columns: limitedColumns } = applyTableViewDisplayLimits(allRows, allColumns, {
     maxRows: block.maxRows,
     maxCols: block.maxCols,
+  });
+  const widthByKey = new Map(
+    (block.tableProjection?.columns ?? [])
+      .filter((column) => column.widthPct != null && column.widthPct > 0)
+      .map((column) => [column.key, column.widthPct as number]),
+  );
+  const columns = limitedColumns.map((column) => {
+    const widthPct = widthByKey.get(column.key);
+    return widthPct != null ? { ...column, widthPct } : column;
   });
   const tableOptions = resolveTableDisplayOptions(block.tableOptions, block.tablePreset, resolved);
 

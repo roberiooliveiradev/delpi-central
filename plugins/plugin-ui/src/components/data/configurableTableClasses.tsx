@@ -11,6 +11,8 @@ export type ConfigurableTableClassNames = {
   rootAlignCenter: string;
   rootAlignRight: string;
   rootHeaderNormalCase: string;
+  rootWrap: string;
+  rootFixedCols: string;
   dataTable: string;
   tableFrame: string;
   title: string;
@@ -40,6 +42,8 @@ export function configurableTableBemClasses(
     rootAlignCenter: `${prefix}--align-center`,
     rootAlignRight: `${prefix}--align-right`,
     rootHeaderNormalCase: `${prefix}--header-normal-case`,
+    rootWrap: `${prefix}--wrap`,
+    rootFixedCols: `${prefix}--fixed-cols`,
     dataTable: `${prefix}__data-table`,
     tableFrame: `${prefix}__frame`,
     title: `${prefix}__title`,
@@ -68,6 +72,8 @@ export function configurableTableTvClasses(): ConfigurableTableClassNames {
     rootAlignCenter: "tdp-configurable-table--align-center",
     rootAlignRight: "tdp-configurable-table--align-right",
     rootHeaderNormalCase: "tdp-configurable-table--header-normal-case",
+    rootWrap: "tdp-configurable-table--wrap",
+    rootFixedCols: "tdp-configurable-table--fixed-cols",
     dataTable: "tdp-data-table",
     tableFrame: "tdp-table-frame",
     title: "tdp-table-title",
