@@ -57,6 +57,8 @@ export function kpiElementIdForPartRef(ref: KpiPartRef): KpiElementId {
       return "kpiHint";
     case "icon":
       return "kpiIcon";
+    case "metricCard":
+      return "kpiCard";
     default: {
       const _exhaustive: never = ref;
       return _exhaustive;

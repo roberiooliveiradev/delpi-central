@@ -5682,12 +5682,41 @@ body.td-composer--marqueeing *{
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  justify-content: space-between;
+  justify-content: flex-start;
+}
+.dashboard-tv-dashboard .td-deck-inspector__column-row--hidden{
+  opacity: 0.72;
 }
 .dashboard-tv-dashboard .td-deck-inspector__column-order{
   display: inline-flex;
   gap: 0.15rem;
   flex-shrink: 0;
+  margin-left: auto;
+}
+.dashboard-tv-dashboard .td-deck-inspector__drag-handle{
+  flex-shrink: 0;
+  width: 1.4rem;
+  height: 1.4rem;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--td-muted, #64748b);
+  cursor: grab;
+  font-size: 0.7rem;
+  line-height: 1;
+  letter-spacing: -0.12em;
+}
+.dashboard-tv-dashboard .td-deck-inspector__drag-handle:active{
+  cursor: grabbing;
+}
+.dashboard-tv-dashboard .td-deck-inspector__drag-row--dragging{
+  opacity: 0.55;
+}
+.dashboard-tv-dashboard .td-deck-inspector__drag-row--over{
+  outline: 1px dashed color-mix(in srgb, var(--td-accent, #089bdb) 55%, transparent);
+  outline-offset: 1px;
+  border-radius: 6px;
 }
 .dashboard-tv-dashboard .td-deck-inspector__kpi-metric{
   display: flex;
@@ -5696,18 +5725,51 @@ body.td-composer--marqueeing *{
   padding-bottom: 0.45rem;
   border-bottom: 1px solid color-mix(in srgb, var(--td-border, #e5e7eb) 80%, transparent);
 }
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric--focused,
+.dashboard-tv-dashboard .td-deck-inspector__chart-series--focused{
+  background: color-mix(in srgb, var(--td-accent, #089bdb) 8%, transparent);
+  border-radius: 8px;
+  padding: 0.35rem 0.4rem 0.55rem;
+  border-bottom-color: transparent;
+}
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric-head,
+.dashboard-tv-dashboard .td-deck-inspector__chart-series-head{
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
 .dashboard-tv-dashboard .td-deck-inspector__kpi-metric:last-child{
   border-bottom: 0;
   padding-bottom: 0;
 }
-.dashboard-tv-dashboard .td-deck-inspector__kpi-metric-controls{
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric-controls,
+.dashboard-tv-dashboard .td-deck-inspector__chart-series-controls{
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.35rem;
   padding-left: 0.15rem;
 }
-.dashboard-tv-dashboard .td-deck-inspector__kpi-metric-controls > :last-child{
+.dashboard-tv-dashboard .td-deck-inspector__field-label{
   grid-column: 1 / -1;
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--td-muted, #64748b);
+}
+.dashboard-tv-dashboard .td-deck-inspector__kpi-metric-controls > :last-child,
+.dashboard-tv-dashboard .td-deck-inspector__chart-series-controls > :last-child{
+  grid-column: 1 / -1;
+}
+.dashboard-tv-dashboard .td-deck-inspector__chart-series{
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--td-border, #e5e7eb) 80%, transparent);
+}
+.dashboard-tv-dashboard .td-deck-inspector__chart-series:last-child{
+  border-bottom: 0;
+  padding-bottom: 0;
 }
 .dashboard-tv-dashboard .td-data-routes-panel__wizard{
   display: flex;

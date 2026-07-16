@@ -467,6 +467,7 @@ export {
   getKpiPartState,
   isKpiElementEnabled,
   isKpiElementOpenForPart,
+  isKpiPartRefEqual,
   kpiElementPrimaryPartRef,
   kpiPartAllowsDelete,
   kpiPartAllowsEdit,
@@ -767,6 +768,19 @@ export {
   type ViewAggregation,
   type ViewProjectionSelection,
 } from "./viewProjection";
+export {
+  buildViewDataLinkPatch,
+  buildViewFrameFitPatch,
+  countViewLayoutItems,
+  framesDiffer,
+  isNearDefaultKpiFrame,
+  suggestViewFrameSize,
+  syncDataViewBlocksWithResolved,
+  viewHasProjectionConfigured,
+  type BuildViewDataLinkPatchInput,
+  type DataViewBlockType,
+  type ViewFieldTypes,
+} from "./syncViewDataLink";
 export type { ComunicadoDataKpiMetric } from "./comunicadoTypes";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

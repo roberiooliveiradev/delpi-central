@@ -7,7 +7,8 @@ import {
   discoverResolvedFieldOptions,
   isDataSourceBlockType,
   normalizeTableViewLimit,
-  suggestDefaultProjections,
+  buildViewDataLinkPatch,
+  buildViewFrameFitPatch,
   tablePresetLabel,
   type ComunicadoBlock,
   type ComunicadoTableViewBlock,
@@ -65,7 +66,8 @@ export function VisualDataViewInspector({
   onOpenDataSources,
   route = null,
 }: Props) {
-  const { selected, blocks, updateSelected, openDataPanel } = useComunicadoEditor();
+  const { selected, blocks, updateSelected, openDataPanel, selectedKpiPart, selectedChartPart } =
+    useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
@@ -100,20 +102,35 @@ export function VisualDataViewInspector({
   }));
 
   const applyTableProjection = (next: TableViewProjection | undefined) => {
+    const framePatch = buildViewFrameFitPatch({
+      ...selected,
+      tableProjection: next,
+    } as ComunicadoBlock);
     updateSelected({
       tableProjection: next,
+      ...(framePatch ?? {}),
     } as Partial<ComunicadoTableViewBlock>);
   };
 
   const applyKpiProjection = (next: KpiViewProjection | undefined) => {
+    const framePatch = buildViewFrameFitPatch({
+      ...selected,
+      kpiProjection: next,
+    } as ComunicadoBlock);
     updateSelected({
       kpiProjection: next,
+      ...(framePatch ?? {}),
     } as Partial<ComunicadoBlock>);
   };
 
   const applyChartProjection = (next: ChartViewProjection | undefined) => {
+    const framePatch = buildViewFrameFitPatch({
+      ...selected,
+      chartProjection: next,
+    } as ComunicadoBlock);
     updateSelected({
       chartProjection: next,
+      ...(framePatch ?? {}),
     } as Partial<ComunicadoBlock>);
   };
 
@@ -159,32 +176,21 @@ export function VisualDataViewInspector({
             );
             const resolved =
               source && "resolved" in source ? source.resolved : undefined;
-            const suggested = suggestDefaultProjections(
+            const patch = buildViewDataLinkPatch({
+              viewType: selected.type,
+              dataSourceId: sourceId,
               resolved,
-              route?.valueFieldTypes ?? null,
-            );
-            if (selected.type === "kpi_view" && !selected.kpiProjection?.metrics?.length) {
-              updateSelected({
-                dataSourceId: sourceId,
-                kpiProjection: suggested.kpiProjection,
-              } as Partial<ComunicadoBlock>);
-              return;
-            }
-            if (selected.type === "chart_view" && !selected.chartProjection?.series?.length) {
-              updateSelected({
-                dataSourceId: sourceId,
-                chartProjection: suggested.chartProjection,
-              } as Partial<ComunicadoBlock>);
-              return;
-            }
-            if (selected.type === "table_view" && !selected.tableProjection?.columns?.length) {
-              updateSelected({
-                dataSourceId: sourceId,
-                tableProjection: suggested.tableProjection,
-              } as Partial<ComunicadoBlock>);
-              return;
-            }
-            updateSelected({ dataSourceId: sourceId } as Partial<ComunicadoBlock>);
+              fieldTypes: route?.valueFieldTypes ?? null,
+              currentFrame: selected.frame,
+              existing: {
+                kpiProjection: "kpiProjection" in selected ? selected.kpiProjection : undefined,
+                chartProjection:
+                  "chartProjection" in selected ? selected.chartProjection : undefined,
+                tableProjection:
+                  "tableProjection" in selected ? selected.tableProjection : undefined,
+              },
+            });
+            updateSelected(patch as Partial<ComunicadoBlock>);
           }}
           options={[
             {
@@ -207,6 +213,12 @@ export function VisualDataViewInspector({
             chartProjection={"chartProjection" in selected ? selected.chartProjection : undefined}
             compact={isRibbon}
             onChange={applyChartProjection}
+            focusedSeriesField={
+              selectedChartPart?.kind === "series"
+                ? selected.chartProjection?.series?.[selectedChartPart.seriesIndex ?? -1]?.field ??
+                  null
+                : null
+            }
           />
         </DeckField>
       ) : null}
@@ -222,6 +234,9 @@ export function VisualDataViewInspector({
             kpiProjection={"kpiProjection" in selected ? selected.kpiProjection : undefined}
             compact={isRibbon}
             onChange={applyKpiProjection}
+            focusedMetricField={
+              selectedKpiPart?.kind === "metricCard" ? selectedKpiPart.field : null
+            }
           />
         </DeckField>
       ) : null}

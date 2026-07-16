@@ -14,12 +14,12 @@ import {
 export type ViewAggregation = "first" | "sum" | "avg" | "min" | "max" | "count";
 
 export const VIEW_AGGREGATION_OPTIONS: Array<{ value: ViewAggregation; label: string }> = [
-  { value: "first", label: "Primeiro" },
+  { value: "first", label: "Primeiro valor" },
   { value: "sum", label: "Soma" },
   { value: "avg", label: "Média" },
   { value: "min", label: "Mínimo" },
   { value: "max", label: "Máximo" },
-  { value: "count", label: "Contagem" },
+  { value: "count", label: "Contagem de linhas" },
 ];
 
 export type KpiMetricProjection = {
@@ -534,7 +534,7 @@ export function suggestDefaultProjections(
   const kpiProjection: KpiViewProjection | undefined =
     numericFields.length > 0
       ? {
-          metrics: numericFields.slice(0, 6).map((item) => ({
+          metrics: numericFields.slice(0, 12).map((item) => ({
             field: item.field,
             label: item.label,
             visible: true,
@@ -547,7 +547,7 @@ export function suggestDefaultProjections(
     numericFields.length > 0
       ? {
           categoryField: categoryCandidate,
-          series: numericFields.slice(0, 3).map((item) => ({
+          series: numericFields.slice(0, 6).map((item) => ({
             field: item.field,
             label: item.label,
           })),

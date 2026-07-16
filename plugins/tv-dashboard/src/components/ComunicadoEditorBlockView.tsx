@@ -30,6 +30,7 @@ import {
   kpiPartAllowsMove,
   kpiPartAllowsResize,
   kpiPartCornerAdjFromLocalX,
+  isKpiPartRefEqual,
   materializeMissingKpiPartFramesFromRoot,
   partsToKpiOptions,
   resolveKpiPartFrameRoot,
@@ -544,7 +545,10 @@ function EditorKpiViewBlock({
       }
       const samePartSelected =
         selectedId === block.id &&
-        Boolean(selectedKpiPart && selectedKpiPart.kind === part.kind);
+        Boolean(selectedKpiPart && isKpiPartRefEqual(selectedKpiPart, part));
+      if (part.kind === "metricCard" && selectedId === block.id && !event.shiftKey) {
+        selectKpiPart(block.id, part);
+      }
       const action = resolveCompositePartPointerAction({
         blockSelected: selectedId === block.id,
         samePartSelected,
@@ -569,6 +573,7 @@ function EditorKpiViewBlock({
       isBlockSelected,
       selectBlock,
       selectBlocksByIds,
+      selectKpiPart,
       selectedId,
       selectedIds,
       selectedKpiPart,
@@ -581,8 +586,12 @@ function EditorKpiViewBlock({
       const same =
         selectedId === block.id &&
         selectedKpiPart &&
-        selectedKpiPart.kind === part.kind;
+        isKpiPartRefEqual(selectedKpiPart, part);
       selectKpiPart(block.id, part);
+      if (part.kind === "metricCard") {
+        requestRibbonTab("data");
+        return;
+      }
       requestRibbonTab("shape");
       if (same && kpiPartAllowsEdit(part)) {
         beginEditKpiPart(block.id, part);

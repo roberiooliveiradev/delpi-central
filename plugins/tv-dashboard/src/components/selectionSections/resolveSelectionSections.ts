@@ -36,6 +36,9 @@ export function resolveSelectionSections(
   }
 
   if (selected.type === "kpi_view" && ctx.selectedKpiPart) {
+    if (ctx.selectedKpiPart.kind === "metricCard") {
+      return withCommonTail(["kpiAppearance"]);
+    }
     const head: SelectionSectionId[] = ["shapeChrome", "typography"];
     if (kpiPartAllowsFrame(ctx.selectedKpiPart)) {
       return withCommonTail(head, "light");

@@ -1,6 +1,8 @@
 import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import type { TableColumnProjection, TableViewProjection } from "@delpi/tv-dashboard-presentation";
 
+import { useProjectionDragReorder } from "../hooks/useProjectionDragReorder";
+
 export type TableColumnOption = {
   key: string;
   label: string;
@@ -42,7 +44,6 @@ function buildProjection(
     return undefined;
   }
   if (visibleOrdered.length === catalog.length) {
-    // Todas visíveis mas reordenadas.
     return {
       columns: visibleOrdered.map((key) => ({
         key,
@@ -93,13 +94,20 @@ export function moveTableColumn(
   if (target < 0 || target >= visible.length) return projection;
   const nextVisible = [...visible];
   const [item] = nextVisible.splice(index, 1);
-  nextVisible.splice(target, 0, item);
+  nextVisible.splice(target, 0, item!);
   return buildProjection(options, nextVisible);
 }
 
+export function reorderTableColumns(
+  options: TableColumnOption[],
+  projection: TableViewProjection | undefined,
+  visibleOrdered: string[],
+): TableViewProjection | undefined {
+  return buildProjection(options, visibleOrdered);
+}
+
 /**
- * Seleção e ordem de colunas da table_view.
- * Vazio/automático = todas as colunas do resolved.
+ * Seleção e ordem de colunas da table_view (arrastar para reordenar).
  */
 export function TableColumnsMultiSelect({
   idPrefix,
@@ -112,6 +120,12 @@ export function TableColumnsMultiSelect({
 
   const visible = resolveVisibleKeys(options, tableProjection);
   const isAutomatic = !tableProjection?.columns?.length;
+  const hidden = options.filter((opt) => !visible.includes(opt.key));
+
+  const { canDrag, rowClassName, rowDropProps, handleDragProps } = useProjectionDragReorder(
+    visible,
+    (nextVisible) => onChange(reorderTableColumns(options, tableProjection ?? undefined, nextVisible)),
+  );
 
   return (
     <div
@@ -125,52 +139,53 @@ export function TableColumnsMultiSelect({
     >
       <p className="td-deck-inspector__hint">
         {isAutomatic
-          ? "Todas as colunas (desmarque para filtrar)"
-          : `${visible.length} de ${options.length} colunas`}
+          ? "Todas as colunas — arraste para reordenar (ou desmarque para filtrar)"
+          : `${visible.length} de ${options.length} colunas — arraste ⋮⋮ para reordenar`}
       </p>
-      {options.map((option) => {
-        const checked = visible.includes(option.key);
-        const orderIndex = visible.indexOf(option.key);
+      {visible.map((key, index) => {
+        const option = options.find((opt) => opt.key === key) ?? { key, label: key };
         return (
-          <div key={option.key} className="td-deck-inspector__column-row">
+          <div
+            key={option.key}
+            className={rowClassName("td-deck-inspector__column-row", index)}
+            {...rowDropProps(index)}
+          >
+            {canDrag ? (
+              <button
+                type="button"
+                className="td-deck-inspector__drag-handle"
+                aria-label={`Arrastar coluna ${option.label}`}
+                title="Arrastar para reordenar"
+                {...handleDragProps(index)}
+              >
+                ⋮⋮
+              </button>
+            ) : null}
             <NativeCheckboxControl
               id={`${idPrefix}-${option.key}`}
               className="td-deck-inspector__checkbox"
-              checked={checked}
+              checked
               label={option.label}
               onChange={(nextChecked) => {
                 onChange(patchTableColumnVisibility(options, visible, option.key, nextChecked));
               }}
             />
-            {checked && !isAutomatic ? (
-              <span className="td-deck-inspector__column-order">
-                <button
-                  type="button"
-                  className="td-btn td-btn--ghost td-btn--sm"
-                  aria-label={`Subir ${option.label}`}
-                  disabled={orderIndex <= 0}
-                  onClick={() =>
-                    onChange(moveTableColumn(options, tableProjection ?? undefined, option.key, -1))
-                  }
-                >
-                  ↑
-                </button>
-                <button
-                  type="button"
-                  className="td-btn td-btn--ghost td-btn--sm"
-                  aria-label={`Descer ${option.label}`}
-                  disabled={orderIndex < 0 || orderIndex >= visible.length - 1}
-                  onClick={() =>
-                    onChange(moveTableColumn(options, tableProjection ?? undefined, option.key, 1))
-                  }
-                >
-                  ↓
-                </button>
-              </span>
-            ) : null}
           </div>
         );
       })}
+      {hidden.map((option) => (
+        <div key={option.key} className="td-deck-inspector__column-row td-deck-inspector__column-row--hidden">
+          <NativeCheckboxControl
+            id={`${idPrefix}-${option.key}`}
+            className="td-deck-inspector__checkbox"
+            checked={false}
+            label={option.label}
+            onChange={(nextChecked) => {
+              onChange(patchTableColumnVisibility(options, visible, option.key, nextChecked));
+            }}
+          />
+        </div>
+      ))}
     </div>
   );
 }

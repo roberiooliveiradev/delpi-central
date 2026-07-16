@@ -1,6 +1,16 @@
-import { FormSelectControl, NativeCheckboxControl } from "@delpi/plugin-ui/index";
-import type { ChartViewProjection } from "@delpi/tv-dashboard-presentation";
+import {
+  FormSelectControl,
+  NativeCheckboxControl,
+  NativeTextControl,
+} from "@delpi/plugin-ui/index";
+import {
+  VIEW_AGGREGATION_OPTIONS,
+  type ChartSeriesProjection,
+  type ChartViewProjection,
+  type ViewAggregation,
+} from "@delpi/tv-dashboard-presentation";
 
+import { useProjectionDragReorder } from "../hooks/useProjectionDragReorder";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 export type ChartAxisFieldOption = ValueFieldOption & {
@@ -13,10 +23,19 @@ type Props = {
   chartProjection?: ChartViewProjection | null;
   onChange: (next: ChartViewProjection | undefined) => void;
   compact?: boolean;
+  /** Série destacada (duplo clique no palco). */
+  focusedSeriesField?: string | null;
 };
 
+function seriesByField(
+  projection: ChartViewProjection | null | undefined,
+): Map<string, ChartSeriesProjection> {
+  return new Map((projection?.series ?? []).map((item) => [item.field, item]));
+}
+
 /**
- * Eixo X (categoria) + séries Y para chart_view.
+ * Eixo X (categoria) + séries Y com propriedades individuais.
+ * Ao mudar a categoria de referência, ela sai do eixo Y e o gráfico reprojeta os pontos.
  */
 export function ChartAxesProjectionEditor({
   idPrefix,
@@ -24,19 +43,42 @@ export function ChartAxesProjectionEditor({
   chartProjection,
   onChange,
   compact = false,
+  focusedSeriesField = null,
 }: Props) {
   if (options.length === 0) return null;
 
   const categoryField = chartProjection?.categoryField ?? "";
-  const seriesFields = new Set((chartProjection?.series ?? []).map((item) => item.field));
-  const hasProjection = Boolean(chartProjection?.categoryField || chartProjection?.series?.length);
+  const seriesList = chartProjection?.series ?? [];
+  const seriesMap = seriesByField(chartProjection);
+  const hasProjection = Boolean(categoryField || seriesList.length);
 
   const persist = (next: ChartViewProjection) => {
-    if (!next.categoryField && (!next.series || next.series.length === 0)) {
+    const cleanedSeries = (next.series ?? []).filter(
+      (item) => !next.categoryField || item.field !== next.categoryField,
+    );
+    const payload: ChartViewProjection = {
+      categoryField: next.categoryField || undefined,
+      series: cleanedSeries.length > 0 ? cleanedSeries : undefined,
+    };
+    if (!payload.categoryField && !payload.series?.length) {
       onChange(undefined);
       return;
     }
-    onChange(next);
+    onChange(payload);
+  };
+
+  const yOptions = options.filter((opt) => opt.field !== categoryField);
+
+  const { canDrag, rowClassName, rowDropProps, handleDragProps } = useProjectionDragReorder(
+    seriesList,
+    (next) => persist({ categoryField: categoryField || undefined, series: next }),
+  );
+
+  const patchSeries = (field: string, patch: Partial<ChartSeriesProjection>) => {
+    const current = seriesList.map((item) =>
+      item.field === field ? { ...item, ...patch } : item,
+    );
+    persist({ categoryField: categoryField || undefined, series: current });
   };
 
   return (
@@ -51,18 +93,18 @@ export function ChartAxesProjectionEditor({
     >
       <p className="td-deck-inspector__hint">
         {hasProjection
-          ? "Categoria no eixo X e uma ou mais séries no eixo Y"
-          : "Automático (série da rota). Escolha campos para projetar."}
+          ? "X = categoria de referência; Y = séries (arraste para ordenar)"
+          : "Automático (série da rota). Escolha a categoria X e as séries Y."}
       </p>
       <FormSelectControl
         id={`${idPrefix}-category`}
         className={compact ? "delpi-ui-select--compact" : undefined}
-        ariaLabel="Campo do eixo X (categoria)"
+        ariaLabel="Campo do eixo X (categoria de referência)"
         value={categoryField}
         onChange={(value) => {
           persist({
             categoryField: value || undefined,
-            series: chartProjection?.series,
+            series: seriesList,
           });
         }}
         options={[
@@ -73,26 +115,91 @@ export function ChartAxesProjectionEditor({
           })),
         ]}
       />
-      {options.map((option) => {
-        const checked = seriesFields.has(option.field);
+
+      <p className="td-deck-inspector__hint">Séries no eixo Y</p>
+      {yOptions.map((option) => {
+        const checked = seriesMap.has(option.field);
+        const series = seriesMap.get(option.field);
+        const focused = focusedSeriesField === option.field;
+        const orderIndex = seriesList.findIndex((item) => item.field === option.field);
+        const baseClass = focused
+          ? "td-deck-inspector__chart-series td-deck-inspector__chart-series--focused"
+          : "td-deck-inspector__chart-series";
+
         return (
-          <NativeCheckboxControl
+          <div
             key={option.field}
-            id={`${idPrefix}-series-${option.field}`}
-            className="td-deck-inspector__checkbox"
-            checked={checked}
-            label={`Y · ${option.label}`}
-            onChange={(nextChecked) => {
-              const current = chartProjection?.series ?? [];
-              const nextSeries = nextChecked
-                ? [...current.filter((item) => item.field !== option.field), { field: option.field }]
-                : current.filter((item) => item.field !== option.field);
-              persist({
-                categoryField: chartProjection?.categoryField,
-                series: nextSeries.length > 0 ? nextSeries : undefined,
-              });
-            }}
-          />
+            className={
+              checked && orderIndex >= 0 ? rowClassName(baseClass, orderIndex) : baseClass
+            }
+            {...(checked && orderIndex >= 0 ? rowDropProps(orderIndex) : {})}
+          >
+            <div className="td-deck-inspector__chart-series-head">
+              {checked && canDrag ? (
+                <button
+                  type="button"
+                  className="td-deck-inspector__drag-handle"
+                  aria-label={`Arrastar série ${option.label}`}
+                  title="Arrastar para reordenar"
+                  {...handleDragProps(orderIndex)}
+                >
+                  ⋮⋮
+                </button>
+              ) : null}
+              <NativeCheckboxControl
+                id={`${idPrefix}-series-${option.field}`}
+                className="td-deck-inspector__checkbox"
+                checked={checked}
+                label={`Y · ${option.label}`}
+                onChange={(nextChecked) => {
+                  const current = seriesList.filter((item) => item.field !== option.field);
+                  const nextSeries = nextChecked
+                    ? [...current, { field: option.field, label: option.label }]
+                    : current;
+                  persist({
+                    categoryField: categoryField || undefined,
+                    series: nextSeries,
+                  });
+                }}
+              />
+            </div>
+            {checked && series ? (
+              <div className="td-deck-inspector__chart-series-controls">
+                <FormSelectControl
+                  id={`${idPrefix}-${option.field}-agg`}
+                  className={compact ? "delpi-ui-select--compact" : undefined}
+                  ariaLabel={`Método de cálculo de ${option.label}`}
+                  value={series.aggregation ?? "first"}
+                  onChange={(value) =>
+                    patchSeries(option.field, { aggregation: value as ViewAggregation })
+                  }
+                  options={VIEW_AGGREGATION_OPTIONS.map((item) => ({
+                    value: item.value,
+                    label: item.label,
+                  }))}
+                />
+                <NativeTextControl
+                  id={`${idPrefix}-${option.field}-label`}
+                  className={compact ? "delpi-ui-native-control--compact" : undefined}
+                  placeholder="Rótulo da série"
+                  value={series.label ?? ""}
+                  onChange={(value) =>
+                    patchSeries(option.field, { label: value.trim() || undefined })
+                  }
+                />
+                <NativeTextControl
+                  id={`${idPrefix}-${option.field}-color`}
+                  className={compact ? "delpi-ui-native-control--compact" : undefined}
+                  placeholder="#089bdb"
+                  value={series.color ?? ""}
+                  onChange={(value) =>
+                    patchSeries(option.field, { color: value.trim() || undefined })
+                  }
+                  ariaLabel={`Cor da série ${option.label}`}
+                />
+              </div>
+            ) : null}
+          </div>
         );
       })}
     </div>

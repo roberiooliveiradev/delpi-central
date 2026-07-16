@@ -70,6 +70,20 @@ export function KpiPartInspector({ pane = false, block }: Props) {
 
   if (!selectedKpiPart) return null;
 
+  if (selectedKpiPart.kind === "metricCard") {
+    return (
+      <DeckPropertySection pane={pane} title={kpiPartSelectionLabel(selectedKpiPart)}>
+        <p className="td-deck-inspector__hint">
+          Clique na métrica na aba Dados para alterar método de cálculo, formato e cores
+          condicionais deste card.
+        </p>
+        <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={() => clearKpiPartSelection()}>
+          Limpar seleção
+        </button>
+      </DeckPropertySection>
+    );
+  }
+
   const slideDesign = resolveViewportPixelSize(viewportProfile);
   const options = mergeComunicadoKpiOptions({
     ...block.kpiOptions,

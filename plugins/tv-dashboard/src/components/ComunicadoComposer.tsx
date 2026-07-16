@@ -2,6 +2,7 @@ import {
   adjustmentHandleCssPosition,
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
+  buildViewDataLinkPatch,
   comunicadoBackgroundCssProperties,
   isDataSourceBlockType,
   isDataViewBlockType,
@@ -605,7 +606,25 @@ export function ComunicadoComposerCanvas() {
                       selected.type === "table_view") &&
                     !selected.dataSourceId?.trim()
                   ) {
-                    updateBlock(selected.id, { dataSourceId: block.id } as Partial<ComunicadoBlock>);
+                    const resolved =
+                      "resolved" in block ? block.resolved : undefined;
+                    updateBlock(
+                      selected.id,
+                      buildViewDataLinkPatch({
+                        viewType: selected.type,
+                        dataSourceId: block.id,
+                        resolved,
+                        currentFrame: selected.frame,
+                        existing: {
+                          kpiProjection:
+                            "kpiProjection" in selected ? selected.kpiProjection : undefined,
+                          chartProjection:
+                            "chartProjection" in selected ? selected.chartProjection : undefined,
+                          tableProjection:
+                            "tableProjection" in selected ? selected.tableProjection : undefined,
+                        },
+                      }) as Partial<ComunicadoBlock>,
+                    );
                     return;
                   }
                   if (

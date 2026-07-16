@@ -44,12 +44,14 @@ import {
   getChartPartState,
   getKpiPartState,
   mergeKpiPartsWithOptions,
+  buildViewDataLinkPatch,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
   type ComunicadoConfig,
   type ComunicadoDataDisplayMode,
   type ComunicadoDataFilters,
+  type ComunicadoDataResolved,
   type ComunicadoInputBlock,
   type ComunicadoInputPartRef,
   type ComunicadoKpiPartRef,
@@ -120,6 +122,8 @@ type Options = {
   >;
   /** Após excluir blocos `input`, recalcular preview das fontes afetadas. */
   onInputBlocksRemoved?: (payload: { sourceIds: string[] }) => void;
+  /** Resolved atual da fonte (preview) — para materializar projection no link. */
+  getSourceResolved?: (sourceId: string) => ComunicadoDataResolved | undefined;
 };
 
 /**
@@ -156,6 +160,7 @@ export function useComunicadoEditorBlocks({
   removeSelectedRef,
   updateBlockTextFieldsRef,
   onInputBlocksRemoved,
+  getSourceResolved,
 }: Options) {
   const updateBlocks = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
@@ -208,32 +213,57 @@ export function useComunicadoEditorBlocks({
     [configRef, setLastDataDisplayMode, setSelectedId, updateBlocks],
   );
 
+  const linkViewToSource = useCallback(
+    (
+      block: ComunicadoBlock,
+      sourceId: string,
+    ): ComunicadoBlock => {
+      if (!isDataViewBlockType(block.type)) {
+        return { ...block, dataSourceId: sourceId } as ComunicadoBlock;
+      }
+      const resolved = getSourceResolved?.(sourceId);
+      const patch = buildViewDataLinkPatch({
+        viewType: block.type,
+        dataSourceId: sourceId,
+        resolved,
+        currentFrame: block.frame,
+        existing: {
+          kpiProjection: "kpiProjection" in block ? block.kpiProjection : undefined,
+          chartProjection: "chartProjection" in block ? block.chartProjection : undefined,
+          tableProjection: "tableProjection" in block ? block.tableProjection : undefined,
+        },
+      });
+      return { ...block, ...patch } as ComunicadoBlock;
+    },
+    [getSourceResolved],
+  );
+
   const addChartViewBlock = useCallback(
     (chartType: ComunicadoChartType) => {
-      const block = createChartViewBlock(chartType);
+      let block = createChartViewBlock(chartType);
       const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
       if (sourceId) {
-        (block as { dataSourceId?: string }).dataSourceId = sourceId;
+        block = linkViewToSource(block, sourceId);
       }
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       setSelectedId(block.id);
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, selectedId, setSelectedId, updateBlocks],
+    [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks],
   );
 
   const addTableViewBlock = useCallback(
     (rows: number, cols: number, preset: ComunicadoTablePreset) => {
-      const block = createTableViewBlock(rows, cols, preset);
+      let block = createTableViewBlock(rows, cols, preset);
       const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
       if (sourceId) {
-        (block as { dataSourceId?: string }).dataSourceId = sourceId;
+        block = linkViewToSource(block, sourceId);
       }
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
       setSelectedId(block.id);
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, selectedId, setSelectedId, updateBlocks],
+    [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks],
   );
 
   const addCanvasTableBlock = useCallback(
@@ -254,15 +284,15 @@ export function useComunicadoEditorBlocks({
   }, [configRef, setSelectedId, updateBlocks]);
 
   const addKpiViewBlock = useCallback(() => {
-    const block = createKpiViewBlock();
+    let block = createKpiViewBlock();
     const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
     if (sourceId) {
-      (block as { dataSourceId?: string }).dataSourceId = sourceId;
+      block = linkViewToSource(block, sourceId);
     }
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
     setSelectedId(block.id);
     updateBlocks([...(configRef.current.blocks ?? []), block]);
-  }, [configRef, selectedId, setSelectedId, updateBlocks]);
+  }, [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks]);
 
   const addDataSourceBlock = useCallback(
     (block: ComunicadoBlock, options?: { preferredView?: "kpi" | "table" | "series" }) => {
@@ -281,9 +311,7 @@ export function useComunicadoEditorBlocks({
       ) {
         linkedExistingView = true;
         nextBlocks = nextBlocks.map((item) =>
-          item.id === selectedBlock.id
-            ? ({ ...item, dataSourceId: withZ.id } as ComunicadoBlock)
-            : item,
+          item.id === selectedBlock.id ? linkViewToSource(item, withZ.id) : item,
         );
       }
       // Fonte sozinha no palco é só o chip — cria visual ligado (como no Testar rota).
@@ -296,7 +324,7 @@ export function useComunicadoEditorBlocks({
         } else {
           viewBlock = createKpiViewBlock();
         }
-        (viewBlock as { dataSourceId?: string }).dataSourceId = withZ.id;
+        viewBlock = linkViewToSource(viewBlock, withZ.id);
         viewBlock.style = {
           ...viewBlock.style,
           zIndex: nextZIndex(nextBlocks),
@@ -323,7 +351,7 @@ export function useComunicadoEditorBlocks({
       setSelectedId(withZ.id);
       updateBlocks(nextBlocks);
     },
-    [configRef, selectedId, setDataPanelOpen, setLastDataDisplayMode, setSelectedId, updateBlocks],
+    [configRef, linkViewToSource, selectedId, setDataPanelOpen, setLastDataDisplayMode, setSelectedId, updateBlocks],
   );
 
   const openDataPanel = useCallback(() => {

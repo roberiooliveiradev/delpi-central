@@ -6,6 +6,7 @@ import {
   type ViewAggregation,
 } from "@delpi/tv-dashboard-presentation";
 
+import { useProjectionDragReorder } from "../hooks/useProjectionDragReorder";
 import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
@@ -15,6 +16,8 @@ type Props = {
   kpiProjection?: KpiViewProjection | null;
   onChange: (next: KpiViewProjection | undefined) => void;
   compact?: boolean;
+  /** Métrica focada no palco (metricCard). */
+  focusedMetricField?: string | null;
 };
 
 function resolveMetrics(
@@ -28,7 +31,12 @@ function resolveMetrics(
     );
     for (const opt of options) {
       if (!byField.has(opt.field)) {
-        ordered.push({ field: opt.field, visible: true, aggregation: "first" });
+        ordered.push({
+          field: opt.field,
+          label: opt.label,
+          visible: false,
+          aggregation: "first",
+        });
       }
     }
     return ordered;
@@ -42,7 +50,7 @@ function resolveMetrics(
 }
 
 /**
- * Configuração segregada por métrica: visível, agregação e formato.
+ * Configuração segregada por métrica: visível, método de cálculo, formato e ordem.
  */
 export function KpiMetricsProjectionEditor({
   idPrefix,
@@ -50,6 +58,7 @@ export function KpiMetricsProjectionEditor({
   kpiProjection,
   onChange,
   compact = false,
+  focusedMetricField = null,
 }: Props) {
   if (options.length === 0) return null;
 
@@ -78,10 +87,13 @@ export function KpiMetricsProjectionEditor({
   };
 
   const patchMetric = (field: string, patch: Partial<KpiMetricProjection>) => {
-    persist(
-      metrics.map((metric) => (metric.field === field ? { ...metric, ...patch } : metric)),
-    );
+    persist(metrics.map((metric) => (metric.field === field ? { ...metric, ...patch } : metric)));
   };
+
+  const { canDrag, rowClassName, rowDropProps, handleDragProps } = useProjectionDragReorder(
+    metrics,
+    persist,
+  );
 
   return (
     <div
@@ -94,26 +106,53 @@ export function KpiMetricsProjectionEditor({
       aria-label="Métricas do KPI"
     >
       <p className="td-deck-inspector__hint">
-        {visibleCount} de {options.length} métricas — agregação e formato por coluna
+        {visibleCount} de {options.length} métricas — método de cálculo por coluna
+        {canDrag ? " · arraste para ordenar" : ""}
       </p>
-      {metrics.map((metric) => {
+      {metrics.map((metric, index) => {
         const label = options.find((opt) => opt.field === metric.field)?.label || metric.field;
         const visible = metric.visible !== false;
+        const focused = focusedMetricField === metric.field;
         return (
-          <div key={metric.field} className="td-deck-inspector__kpi-metric">
-            <NativeCheckboxControl
-              id={`${idPrefix}-${metric.field}-vis`}
-              className="td-deck-inspector__checkbox"
-              checked={visible}
-              label={label}
-              onChange={(checked) => patchMetric(metric.field, { visible: checked })}
-            />
+          <div
+            key={metric.field}
+            className={rowClassName(
+              focused
+                ? "td-deck-inspector__kpi-metric td-deck-inspector__kpi-metric--focused"
+                : "td-deck-inspector__kpi-metric",
+              index,
+            )}
+            {...rowDropProps(index)}
+          >
+            <div className="td-deck-inspector__kpi-metric-head">
+              {canDrag ? (
+                <button
+                  type="button"
+                  className="td-deck-inspector__drag-handle"
+                  aria-label={`Arrastar métrica ${label}`}
+                  title="Arrastar para reordenar"
+                  {...handleDragProps(index)}
+                >
+                  ⋮⋮
+                </button>
+              ) : null}
+              <NativeCheckboxControl
+                id={`${idPrefix}-${metric.field}-vis`}
+                className="td-deck-inspector__checkbox"
+                checked={visible}
+                label={label}
+                onChange={(checked) => patchMetric(metric.field, { visible: checked })}
+              />
+            </div>
             {visible ? (
               <div className="td-deck-inspector__kpi-metric-controls">
+                <label className="td-deck-inspector__field-label" htmlFor={`${idPrefix}-${metric.field}-agg`}>
+                  Método de cálculo
+                </label>
                 <FormSelectControl
                   id={`${idPrefix}-${metric.field}-agg`}
                   className={compact ? "delpi-ui-select--compact" : undefined}
-                  ariaLabel={`Agregação de ${label}`}
+                  ariaLabel={`Método de cálculo de ${label}`}
                   value={metric.aggregation ?? "first"}
                   onChange={(value) =>
                     patchMetric(metric.field, { aggregation: value as ViewAggregation })
@@ -123,6 +162,9 @@ export function KpiMetricsProjectionEditor({
                     label: item.label,
                   }))}
                 />
+                <label className="td-deck-inspector__field-label" htmlFor={`${idPrefix}-${metric.field}-fmt`}>
+                  Formato
+                </label>
                 <FormSelectControl
                   id={`${idPrefix}-${metric.field}-fmt`}
                   className={compact ? "delpi-ui-select--compact" : undefined}

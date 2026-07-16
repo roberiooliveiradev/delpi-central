@@ -133,20 +133,48 @@ export function KpiViewBlockView({
   };
 
   if (hasMulti) {
+    const selectedMetricField =
+      kpiInteraction?.selectedPart?.kind === "metricCard"
+        ? kpiInteraction.selectedPart.field
+        : null;
     return (
       <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view tdp-kpi-view--multi">
-        {metrics.map((metric) => (
-          <div key={metric.field} className="tdp-kpi-view__cell">
-            {renderCard(
-              {
-                ...resolved,
-                kpi: { value: metric.value, label: metric.label },
-                label: metric.label,
-              },
-              metric.field,
-            )}
-          </div>
-        ))}
+        {metrics.map((metric) => {
+          const metricRef = { kind: "metricCard" as const, field: metric.field };
+          const selected = selectedMetricField === metric.field;
+          return (
+            <div
+              key={metric.field}
+              className={
+                selected
+                  ? "tdp-kpi-view__cell tdp-kpi-view__cell--selected"
+                  : "tdp-kpi-view__cell"
+              }
+              data-kpi-part={`metricCard:${metric.field}`}
+              aria-selected={selected || undefined}
+              onPointerDown={(event) => {
+                if (!kpiInteraction?.onPartPointerDown) return;
+                event.stopPropagation();
+                kpiInteraction.onPartPointerDown(metricRef, event);
+              }}
+              onDoubleClick={(event) => {
+                if (!kpiInteraction?.onPartDoubleClick) return;
+                event.stopPropagation();
+                event.preventDefault();
+                kpiInteraction.onPartDoubleClick(metricRef, event);
+              }}
+            >
+              {renderCard(
+                {
+                  ...resolved,
+                  kpi: { value: metric.value, label: metric.label },
+                  label: metric.label,
+                },
+                metric.field,
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }

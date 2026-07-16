@@ -38,6 +38,7 @@ import { useComunicadoEditorStage } from "../hooks/comunicadoEditor/useComunicad
 import { useComunicadoDataPreview } from "../hooks/useComunicadoDataPreview";
 import { useInputFilterDataRefresh } from "../hooks/useInputFilterDataRefresh";
 import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboard";
+import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
 import { enrichComunicadoConfigForEditor, resolveMasterForPreview } from "./slideCardPreview";
@@ -342,9 +343,18 @@ export function ComunicadoEditorProvider({
     removeSelectedRef,
     updateBlockTextFieldsRef,
     onInputBlocksRemoved,
+    getSourceResolved: (sourceId: string) => resolvedByBlockId[sourceId],
   });
 
   updateBlocksRef.current = blockActions.updateBlocks;
+
+  useSyncViewDataLinks({
+    configRef,
+    blocks: config.blocks ?? [],
+    resolvedByBlockId,
+    commitBlocks: blockActions.updateBlocks,
+  });
+
 
   const setSpeakerNotes = useCallback(
     (speakerNotes: string) => {

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   moveTableColumn,
   patchTableColumnVisibility,
+  reorderTableColumns,
   resolveVisibleKeys,
 } from "./TableColumnsMultiSelect";
 
@@ -26,5 +27,10 @@ describe("TableColumnsMultiSelect helpers", () => {
     const projection = patchTableColumnVisibility(options, ["a", "b", "c"], "c", false);
     const moved = moveTableColumn(options, projection, "a", 1);
     expect(moved?.columns?.filter((col) => col.visible).map((col) => col.key)).toEqual(["b", "a"]);
+  });
+
+  it("reorderTableColumns persiste ordem arrastada", () => {
+    const next = reorderTableColumns(options, undefined, ["c", "a", "b"]);
+    expect(next?.columns?.map((col) => col.key)).toEqual(["c", "a", "b"]);
   });
 });

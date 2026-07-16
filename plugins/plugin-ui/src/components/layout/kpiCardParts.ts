@@ -21,7 +21,9 @@ export type KpiPartRef =
   | { kind: "title" }
   | { kind: "value" }
   | { kind: "hint" }
-  | { kind: "icon" };
+  | { kind: "icon" }
+  /** Card individual em KPI multi-métrica (seleção no palco). */
+  | { kind: "metricCard"; field: string };
 
 export type KpiPartStyle = {
   fill?: string;
@@ -119,6 +121,7 @@ const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities
   value: { movable: true, editable: false, deletable: false, resizable: true },
   hint: { movable: true, editable: true, deletable: true, resizable: true },
   icon: { movable: true, editable: false, deletable: true, resizable: true },
+  metricCard: { movable: false, editable: false, deletable: false, resizable: false },
 };
 
 /** Options flat do card (legado / inspetor) — espelho de SeriesChartOptions. */
@@ -502,6 +505,7 @@ export function resolveKpiIconBoxStyle(
 }
 
 export function serializeKpiPartRef(ref: KpiPartRef): string {
+  if (ref.kind === "metricCard") return `metricCard:${ref.field}`;
   return ref.kind;
 }
 
@@ -510,12 +514,20 @@ export function parseKpiPartRef(raw: string | null | undefined): KpiPartRef | nu
   if (value === "card" || value === "title" || value === "value" || value === "hint" || value === "icon") {
     return { kind: value };
   }
+  if (value.startsWith("metricCard:")) {
+    const field = value.slice("metricCard:".length).trim();
+    return field ? { kind: "metricCard", field } : null;
+  }
   return null;
 }
 
 export function isKpiPartRefEqual(a?: KpiPartRef | null, b?: KpiPartRef | null): boolean {
   if (!a || !b) return false;
-  return a.kind === b.kind;
+  if (a.kind !== b.kind) return false;
+  if (a.kind === "metricCard" && b.kind === "metricCard") {
+    return a.field === b.field;
+  }
+  return true;
 }
 
 export function kpiPartCapabilities(ref: KpiPartRef): KpiPartCapabilities {

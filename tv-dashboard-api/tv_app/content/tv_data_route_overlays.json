@@ -99,6 +99,20 @@
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02",
+        "quantidade"
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number",
+        "quantidade": "number"
+      },
       "label": "OEE — série temporal",
       "description": "Evolução diária do OEE ao longo do período.",
       "whenToUse": "Escolha quando a TV precisa de um gráfico de tendência do OEE (linha/área), não só o valor do dia.",
@@ -120,6 +134,15 @@
       },
       "tvConstraints": {
         "requiresBranchPermission": true
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "otd_filial_01": "number",
+        "otd_filial_02": "number",
+        "quantidade": "number"
       },
       "label": "OTD — série temporal",
       "description": "Evolução diária do OTD (entregas no prazo) ao longo do período.",

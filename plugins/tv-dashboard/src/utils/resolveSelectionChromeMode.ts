@@ -71,6 +71,8 @@ export function kpiPartSelectionLabel(part: ComunicadoKpiPartRef): string {
       return "Subtítulo";
     case "icon":
       return "Ícone";
+    case "metricCard":
+      return `Métrica · ${part.field}`;
     default:
       return serializeKpiPartRef(part);
   }
