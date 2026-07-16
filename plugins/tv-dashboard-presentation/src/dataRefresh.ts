@@ -94,12 +94,26 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
       dataTransform: block.dataTransform ?? null,
     }));
   const viewLinks = (config.blocks ?? [])
-    .filter((block) => block.type === "chart_view" || block.type === "table_view" || block.type === "kpi_view")
+    .filter(
+      (block) =>
+        block.type === "chart_view" ||
+        block.type === "table_view" ||
+        block.type === "kpi_view" ||
+        ((block.type === "heading" || block.type === "text" || block.type === "shape") &&
+          "dataSourceId" in block &&
+          block.dataSourceId?.trim()),
+    )
     .map((block) => ({
       id: block.id,
       dataSourceId:
         block.type === "chart_view" || block.type === "table_view" || block.type === "kpi_view"
           ? block.dataSourceId
+          : "dataSourceId" in block
+            ? block.dataSourceId
+            : undefined,
+      textProjection:
+        block.type === "heading" || block.type === "text" || block.type === "shape"
+          ? block.textProjection?.field
           : undefined,
     }));
   const inputBlocks = (config.blocks ?? [])

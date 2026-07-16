@@ -34,6 +34,7 @@ import {
 | `useFullscreenStage` | Duplo-clique → fullscreen (preview admin) |
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
 | `ComunicadoBlockView` | Render blocos comunicado (texto, mídia, crop, formas, dados) |
+| `textViewProjection` | Resolver transversal para `textProjection` / `dataRef` em heading, text e shape (Onda 4P) |
 | `ChartViewBlockView` / `TableViewBlockView` | Visuais conectados a `data_source` |
 | `DataSourceBlockView` | Ícone de fonte no editor (oculto no palco quando vinculado) |
 | `ConfigurableSeriesChart` | Gráfico linhas/colunas com título, legenda, eixos, grade, tabela de dados |
