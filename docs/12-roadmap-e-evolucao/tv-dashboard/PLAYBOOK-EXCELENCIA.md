@@ -1595,7 +1595,7 @@ UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_s
 
 **Barra fx (Query):** componente `DataPrepareFormulaBar` + contrato `dataTransformFormula.ts` / `tv_data_transform_formula_service.py`. Editável para `addColumn` (DSL: `if(cond,a,b)`, `concat`, `abs`/`min`/`max`/`coalesce`/`len`/`lower`/`upper`/`trim`, comparadores) e etapas tipadas `RenameColumns` / `SelectColumns` / `FilterRows` / `Sort` / `ReplaceValue`. **✓ aplica / ✕ descarta** (Enter / Escape); **não** commit no blur. Etapa selecionada ↔ fórmula na barra; grid = prévia até a etapa.
 
-**UX (jul/2026):** ribbon cria steps (formulário contextual); clique no cabeçalho do grid define **coluna ativa** (pré-preenche transformações); highlight cruzado grid↔série; preset `suggestedTransformSteps`; «Inserir etapa (fx)» foca a barra. Labels de etapa no painel direito no estilo Power Query (ex.: «Cabeçalhos promovidos»).
+**UX (jul/2026):** ribbon cria steps (formulário contextual); clique no cabeçalho/célula seleciona ou desseleciona a **coluna ativa**; clique em consulta/etapa também alterna seleção; **botão direito** abre `DataPrepareContextMenu` (renomear/filtrar/ordenar/excluir etapa…). Balões `HintAction` / `SectionHintLabel` em `helpTooltips.dataPrepare`. Highlight cruzado grid↔série; preset `suggestedTransformSteps`; «Inserir etapa (fx)» foca a barra.
 
 **Entregue (Fase C + D + UX ribbon):** Select Data; eixo secundário; dash por série; steps avançados + merge; barra fx + DSL + parse; ribbon contextual + coluna ativa + commit explícito na fx.
 ### 19.6 Onde implementar (sem espalhar)

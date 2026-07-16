@@ -6334,6 +6334,18 @@ body.td-composer--marqueeing *{
   min-width: 200px;
   max-width: 280px;
 }
+.dashboard-tv-dashboard .td-data-pq__ribbon-hint-wrap{
+  display: inline-flex;
+  min-width: 140px;
+}
+.dashboard-tv-dashboard .td-data-pq__col-label{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dashboard-tv-dashboard .td-data-pq__grid td{
+  cursor: pointer;
+}
 .dashboard-tv-dashboard .td-data-pq__workspace{
   display: grid;
   grid-template-columns: minmax(160px, 200px) minmax(0, 1fr) minmax(200px, 240px);

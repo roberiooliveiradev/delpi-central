@@ -8,6 +8,11 @@ import {
   type DataTransformStep,
 } from "@delpi/tv-dashboard-presentation";
 import {
+  HintAction,
+  SectionHintLabel,
+  type FixedPanelPoint,
+} from "@delpi/plugin-ui/index";
+import {
   Columns3,
   Pencil,
   Plus,
@@ -15,12 +20,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 
 import {
   listDataRoutes,
   type TvDataRouteCatalogItem,
 } from "../api/tvDashboardApi";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   columnForSelectedSeries,
   linkedChartSeriesForSource,
@@ -30,13 +36,20 @@ import {
   previewTransformTableOnServer,
   type ServerTransformTable,
 } from "../utils/previewTransformTableOnServer";
+import {
+  DataPrepareContextMenu,
+  type DataPrepareCtxTarget,
+} from "./DataPrepareContextMenu";
 import { DataPrepareFormulaBar } from "./DataPrepareFormulaBar";
 import {
   DataPrepareRibbon,
+  type DataPrepareRibbonOpenRequest,
   type RibbonTab,
 } from "./DataPrepareRibbon";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { Modal } from "./ui/Modal";
+
+const H = TV_DASHBOARD_HELP_TOOLTIPS.dataPrepare;
 
 type Props = {
   open: boolean;
@@ -56,8 +69,7 @@ const EMPTY_STEPS: DataTransformStep[] = [];
 
 /**
  * Ambiente de preparação estilo Power Query — modal.
- * «Consultas» = fontes `data_source` (rotas api-delpi) do slide.
- * Cálculo dos steps: sempre no backend (`preview-block` / enrichment).
+ * Clique esquerdo: seleciona/desseleciona. Botão direito: menu de ações.
  */
 export function DataPrepareModal({ open, onClose, initialSourceId = null }: Props) {
   const {
@@ -89,6 +101,13 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [previewEpoch, setPreviewEpoch] = useState(0);
+  const [ctxMenu, setCtxMenu] = useState<{
+    position: FixedPanelPoint;
+    target: DataPrepareCtxTarget;
+  } | null>(null);
+  const [ribbonOpenToken, setRibbonOpenToken] = useState(0);
+  const [ribbonOpenRequest, setRibbonOpenRequest] =
+    useState<DataPrepareRibbonOpenRequest | null>(null);
 
   const configRef = useRef(config);
   configRef.current = config;
@@ -103,7 +122,10 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setCtxMenu(null);
+      return;
+    }
     if (initialSourceId && queries.some((q) => q.id === initialSourceId)) {
       setActiveId(initialSourceId);
       return;
@@ -293,6 +315,42 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     else setRibbonTab("transform");
   };
 
+  const toggleQuery = (id: string) => {
+    setActiveId((prev) => (prev === id ? null : id));
+  };
+
+  const toggleStep = (index: number | null) => {
+    setPreviewStepIndex((prev) => (prev === index ? null : index));
+  };
+
+  const toggleColumn = (col: string) => {
+    setActiveColumn((prev) => (prev === col ? "" : col));
+  };
+
+  const openContextMenu = useCallback((event: MouseEvent, target: DataPrepareCtxTarget) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (target.kind === "query") setActiveId(target.id);
+    if (target.kind === "step") setPreviewStepIndex(target.index);
+    if (target.kind === "fonte") setPreviewStepIndex(null);
+    if (target.kind === "column") setActiveColumn(target.name);
+    setCtxMenu({
+      position: { x: event.clientX, y: event.clientY },
+      target,
+    });
+  }, []);
+
+  const openRibbonAction = (request: DataPrepareRibbonOpenRequest) => {
+    setRibbonTab(request.tab);
+    setRibbonOpenRequest(request);
+    setRibbonOpenToken((n) => n + 1);
+  };
+
+  const copyText = (text: string) => {
+    if (!text.trim()) return;
+    void navigator.clipboard?.writeText(text).catch(() => undefined);
+  };
+
   return (
     <Modal
       open={open}
@@ -301,21 +359,32 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
       className="td-modal--data-prepare"
       footer={
         <div className="td-data-pq__footer">
-          <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={onClose}>
-            Cancelar
-          </button>
-          <button type="button" className="td-btn td-btn--sm" onClick={handleCloseAndApply}>
-            Fechar e aplicar
-          </button>
+          <HintAction hint={H.footerCancel} ariaLabel="Ajuda: cancelar" placement="top">
+            <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={onClose}>
+              Cancelar
+            </button>
+          </HintAction>
+          <HintAction hint={H.footerApply} ariaLabel="Ajuda: fechar e aplicar" placement="top">
+            <button type="button" className="td-btn td-btn--sm" onClick={handleCloseAndApply}>
+              Fechar e aplicar
+            </button>
+          </HintAction>
         </div>
       }
     >
       {queries.length === 0 ? (
-        <p className="td-deck-inspector__hint">
-          Nenhuma fonte no slide. Insira uma rota api-delpi (fonte de dados) para preparar a tabela.
-        </p>
+        <p className="td-deck-inspector__hint">{H.modal}</p>
       ) : (
-        <div className="td-data-pq">
+        <div
+          className="td-data-pq"
+          title={H.modal}
+          onClick={() => setCtxMenu(null)}
+          onContextMenu={(event) => {
+            // Evita menu nativo no workspace; menus específicos usam stopPropagation.
+            if ((event.target as HTMLElement).closest("[data-pq-ctx]")) return;
+            event.preventDefault();
+          }}
+        >
           <DataPrepareRibbon
             tab={ribbonTab}
             onTabChange={setRibbonTab}
@@ -329,31 +398,50 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
             onAddStep={addStep}
             onStartFxColumn={startNewColumnFromFx}
             onApplyPreset={applySuggestedPreset}
+            openRequestToken={ribbonOpenToken}
+            openRequest={ribbonOpenRequest}
           />
 
           <div className="td-data-pq__workspace">
             <aside className="td-data-pq__queries" aria-label="Consultas (rotas)">
-              <div className="td-data-pq__pane-title">Consultas [{queries.length}]</div>
+              <div className="td-data-pq__pane-title">
+                <SectionHintLabel label={`Consultas [${queries.length}]`} hint={H.queries} />
+              </div>
               <ul className="td-data-pq__query-list">
                 {queries.map((query) => {
                   const selectedQuery = query.id === activeId;
                   return (
                     <li key={query.id}>
-                      <button
-                        type="button"
-                        className={
-                          selectedQuery
-                            ? "td-data-pq__query td-data-pq__query--selected"
-                            : "td-data-pq__query"
-                        }
-                        onClick={() => setActiveId(query.id)}
+                      <HintAction
+                        hint={H.queryItem}
+                        ariaLabel={`Ajuda: consulta ${queryLabel(query)}`}
+                        placement="bottom"
+                        suppressed={Boolean(ctxMenu)}
                       >
-                        <Columns3 size={14} aria-hidden />
-                        <span className="td-data-pq__query-label">{queryLabel(query)}</span>
-                        <span className="td-data-pq__query-meta">
-                          {query.dataBinding?.operationId || "rota"}
-                        </span>
-                      </button>
+                        <button
+                          type="button"
+                          data-pq-ctx="query"
+                          className={
+                            selectedQuery
+                              ? "td-data-pq__query td-data-pq__query--selected"
+                              : "td-data-pq__query"
+                          }
+                          aria-pressed={selectedQuery}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleQuery(query.id);
+                          }}
+                          onContextMenu={(event) =>
+                            openContextMenu(event, { kind: "query", id: query.id })
+                          }
+                        >
+                          <Columns3 size={14} aria-hidden />
+                          <span className="td-data-pq__query-label">{queryLabel(query)}</span>
+                          <span className="td-data-pq__query-meta">
+                            {query.dataBinding?.operationId || "rota"}
+                          </span>
+                        </button>
+                      </HintAction>
                     </li>
                   );
                 })}
@@ -362,19 +450,23 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
 
             <section className="td-data-pq__main" aria-label="Prévia">
               <div className="td-data-pq__banner">
-                <span>
-                  Prévia até a etapa selecionada (servidor). Clique no cabeçalho para coluna ativa;
-                  coluna ligada ao gráfico também seleciona a série.
-                  {previewLoading ? " Atualizando…" : null}
-                </span>
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm td-btn--ghost"
-                  disabled={previewLoading}
-                  onClick={() => requestServerPreview(true)}
-                >
-                  Atualizar
-                </button>
+                <HintAction hint={H.previewBanner} ariaLabel="Ajuda: prévia" placement="bottom">
+                  <span>
+                    Prévia até a etapa selecionada. Clique seleciona/desseleciona; botão direito abre
+                    ações.
+                    {previewLoading ? " Atualizando…" : null}
+                  </span>
+                </HintAction>
+                <HintAction hint={H.refresh} ariaLabel="Ajuda: atualizar prévia" placement="bottom">
+                  <button
+                    type="button"
+                    className="td-btn td-btn--sm td-btn--ghost"
+                    disabled={previewLoading}
+                    onClick={() => requestServerPreview(true)}
+                  >
+                    Atualizar
+                  </button>
+                </HintAction>
               </div>
               {previewError ? (
                 <p className="td-deck-inspector__hint" role="alert">
@@ -389,9 +481,11 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                 onCommit={commitFormulaStep}
                 onCancelDraft={() => setNewColumnDraft(false)}
               />
-              <div className="td-data-pq__grid-wrap">
+              <div className="td-data-pq__grid-wrap" title={H.grid}>
                 {!active ? (
-                  <p className="td-deck-inspector__hint">Selecione uma consulta à esquerda.</p>
+                  <p className="td-deck-inspector__hint">
+                    Nenhuma consulta selecionada. Clique numa consulta à esquerda.
+                  </p>
                 ) : preview.rows.length === 0 ? (
                   <p className="td-deck-inspector__hint">
                     Sem linhas. Atualize a fonte ou ajuste filtros / parâmetros da rota.
@@ -408,6 +502,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                           return (
                             <th
                               key={col}
+                              data-pq-ctx="column"
                               className={[
                                 linked ? "td-data-pq__col--series" : "",
                                 isSeriesHl || isActiveCol ? "td-data-pq__col--active" : "",
@@ -419,24 +514,34 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                                   ? { boxShadow: `inset 0 -3px 0 ${linked.color}` }
                                   : undefined
                               }
-                              title={
-                                linked
-                                  ? `Coluna ativa · série «${linked.label}»`
-                                  : `Coluna ativa: ${col}`
-                              }
-                              onClick={() => {
-                                setActiveColumn(col);
-                                if (!linked) return;
+                              aria-selected={isActiveCol}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                const willSelect = activeColumn !== col;
+                                toggleColumn(col);
+                                if (!linked || !willSelect) return;
                                 selectChartPart(linked.chartId, {
                                   kind: "series",
                                   seriesIndex: linked.seriesIndex,
                                 });
                               }}
+                              onContextMenu={(event) =>
+                                openContextMenu(event, { kind: "column", name: col })
+                              }
                             >
-                              <span className="td-data-pq__col-type" aria-hidden>
-                                {linked ? "∑" : "ABC"}
-                              </span>
-                              {col}
+                              <HintAction
+                                hint={H.columnHeader}
+                                ariaLabel={`Ajuda: coluna ${col}`}
+                                placement="bottom"
+                                suppressed={Boolean(ctxMenu)}
+                              >
+                                <span className="td-data-pq__col-label">
+                                  <span className="td-data-pq__col-type" aria-hidden>
+                                    {linked ? "∑" : "ABC"}
+                                  </span>
+                                  {col}
+                                </span>
+                              </HintAction>
                             </th>
                           );
                         })}
@@ -453,6 +558,13 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                                 highlightedColumn === col || activeColumn === col
                                   ? "td-data-pq__cell--active"
                                   : undefined
+                              }
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleColumn(col);
+                              }}
+                              onContextMenu={(event) =>
+                                openContextMenu(event, { kind: "column", name: col })
                               }
                             >
                               {row[col] == null ? "" : String(row[col])}
@@ -474,7 +586,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
             <aside className="td-data-pq__settings" aria-label="Configuração da consulta">
               <div className="td-data-pq__pane-title">
                 <Settings2 size={14} aria-hidden />
-                Config. consulta
+                <SectionHintLabel label="Config. consulta" hint={H.settings} />
               </div>
               <div className="td-data-pq__props">
                 <label className="td-data-pq__prop-label" htmlFor="td-pq-query-name">
@@ -495,84 +607,154 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                   <p className="td-deck-inspector__meta">Coluna ativa: {activeColumn}</p>
                 ) : null}
               </div>
-              <div className="td-data-pq__steps-title">Etapas aplicadas</div>
+              <div className="td-data-pq__steps-title">
+                <SectionHintLabel label="Etapas aplicadas" hint={H.steps} />
+              </div>
               <ol className="td-data-pq__steps">
                 <li>
-                  <button
-                    type="button"
-                    className={
-                      previewStepIndex == null
-                        ? "td-data-pq__step td-data-pq__step--selected"
-                        : "td-data-pq__step"
-                    }
-                    onClick={() => setPreviewStepIndex(null)}
-                  >
-                    Fonte
-                  </button>
+                  <HintAction hint={H.stepFonte} ariaLabel="Ajuda: etapa Fonte" placement="top">
+                    <button
+                      type="button"
+                      data-pq-ctx="fonte"
+                      className={
+                        previewStepIndex == null
+                          ? "td-data-pq__step td-data-pq__step--selected"
+                          : "td-data-pq__step"
+                      }
+                      aria-pressed={previewStepIndex == null}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleStep(null);
+                      }}
+                      onContextMenu={(event) => openContextMenu(event, { kind: "fonte" })}
+                    >
+                      Fonte
+                    </button>
+                  </HintAction>
                 </li>
                 {steps.map((step, index) => {
                   const selectedStep = previewStepIndex === index;
                   return (
                     <li key={`${step.op}-${index}`}>
                       <div
+                        data-pq-ctx="step"
                         className={
                           selectedStep
                             ? "td-data-pq__step td-data-pq__step--selected"
                             : "td-data-pq__step"
                         }
+                        onContextMenu={(event) =>
+                          openContextMenu(event, { kind: "step", index })
+                        }
                       >
                         {selectedStep ? (
-                          <button
-                            type="button"
-                            className="td-data-pq__step-x"
-                            aria-label="Remover etapa"
-                            onClick={() => removeStep(index)}
+                          <HintAction
+                            hint={H.stepDelete}
+                            ariaLabel="Ajuda: remover etapa"
+                            placement="top"
                           >
-                            <X size={12} aria-hidden />
-                          </button>
+                            <button
+                              type="button"
+                              className="td-data-pq__step-x"
+                              aria-label="Remover etapa"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                removeStep(index);
+                              }}
+                            >
+                              <X size={12} aria-hidden />
+                            </button>
+                          </HintAction>
                         ) : null}
-                        <button
-                          type="button"
-                          className="td-data-pq__step-main"
-                          onClick={() => setPreviewStepIndex(index)}
+                        <HintAction
+                          hint={H.stepItem}
+                          ariaLabel={`Ajuda: ${dataTransformStepLabel(step)}`}
+                          placement="top"
+                          suppressed={Boolean(ctxMenu)}
                         >
-                          {dataTransformStepLabel(step)}
-                        </button>
+                          <button
+                            type="button"
+                            className="td-data-pq__step-main"
+                            aria-pressed={selectedStep}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              toggleStep(index);
+                            }}
+                          >
+                            {dataTransformStepLabel(step)}
+                          </button>
+                        </HintAction>
                         <div className="td-data-pq__step-tools">
-                          <button
-                            type="button"
-                            className="td-btn td-btn--sm td-btn--ghost"
-                            aria-label="Editar etapa na barra fx"
-                            onClick={() => focusFormulaForStep(index)}
+                          <HintAction
+                            hint={H.stepEdit}
+                            ariaLabel="Ajuda: editar etapa"
+                            placement="top"
                           >
-                            <Pencil size={12} aria-hidden />
-                          </button>
-                          <button
-                            type="button"
-                            className="td-btn td-btn--sm td-btn--ghost"
-                            aria-label="Mover para cima"
-                            disabled={index === 0}
-                            onClick={() => moveStep(index, -1)}
+                            <button
+                              type="button"
+                              className="td-btn td-btn--sm td-btn--ghost"
+                              aria-label="Editar etapa na barra fx"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                focusFormulaForStep(index);
+                              }}
+                            >
+                              <Pencil size={12} aria-hidden />
+                            </button>
+                          </HintAction>
+                          <HintAction
+                            hint={H.stepMoveUp}
+                            ariaLabel="Ajuda: mover etapa para cima"
+                            placement="top"
                           >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
-                            className="td-btn td-btn--sm td-btn--ghost"
-                            aria-label="Mover para baixo"
-                            disabled={index === steps.length - 1}
-                            onClick={() => moveStep(index, 1)}
+                            <button
+                              type="button"
+                              className="td-btn td-btn--sm td-btn--ghost"
+                              aria-label="Mover para cima"
+                              disabled={index === 0}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                moveStep(index, -1);
+                              }}
+                            >
+                              ↑
+                            </button>
+                          </HintAction>
+                          <HintAction
+                            hint={H.stepMoveDown}
+                            ariaLabel="Ajuda: mover etapa para baixo"
+                            placement="top"
                           >
-                            ↓
-                          </button>
-                          <button
-                            type="button"
-                            className="td-btn td-btn--sm td-btn--ghost"
-                            aria-label="Excluir etapa"
-                            onClick={() => removeStep(index)}
+                            <button
+                              type="button"
+                              className="td-btn td-btn--sm td-btn--ghost"
+                              aria-label="Mover para baixo"
+                              disabled={index === steps.length - 1}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                moveStep(index, 1);
+                              }}
+                            >
+                              ↓
+                            </button>
+                          </HintAction>
+                          <HintAction
+                            hint={H.stepDelete}
+                            ariaLabel="Ajuda: excluir etapa"
+                            placement="top"
                           >
-                            <Trash2 size={12} aria-hidden />
-                          </button>
+                            <button
+                              type="button"
+                              className="td-btn td-btn--sm td-btn--ghost"
+                              aria-label="Excluir etapa"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                removeStep(index);
+                              }}
+                            >
+                              <Trash2 size={12} aria-hidden />
+                            </button>
+                          </HintAction>
                         </div>
                       </div>
                     </li>
@@ -585,21 +767,68 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                 </p>
               ) : (
                 <p className="td-deck-inspector__meta">
-                  Selecione a etapa para ver a prévia até ali. Lápis foca a barra fx (✓ aplica).
+                  Clique na etapa para prévia; clique de novo desseleciona (Fonte). Botão direito:
+                  menu.
                 </p>
               )}
-              <button
-                type="button"
-                className="td-btn td-btn--sm"
-                style={{ marginTop: 8 }}
-                disabled={!active}
-                onClick={startNewColumnFromFx}
-              >
-                <Plus size={14} aria-hidden />
-                Nova etapa (fx)…
-              </button>
+              <HintAction hint={H.newFxStep} ariaLabel="Ajuda: nova etapa fx" placement="top">
+                <button
+                  type="button"
+                  className="td-btn td-btn--sm"
+                  style={{ marginTop: 8 }}
+                  disabled={!active}
+                  onClick={startNewColumnFromFx}
+                >
+                  <Plus size={14} aria-hidden />
+                  Nova etapa (fx)…
+                </button>
+              </HintAction>
             </aside>
           </div>
+
+          <DataPrepareContextMenu
+            open={Boolean(ctxMenu)}
+            position={ctxMenu?.position ?? null}
+            target={ctxMenu?.target ?? null}
+            hasSteps={steps.length > 0}
+            canMoveStepUp={
+              ctxMenu?.target?.kind === "step" ? ctxMenu.target.index > 0 : false
+            }
+            canMoveStepDown={
+              ctxMenu?.target?.kind === "step"
+                ? ctxMenu.target.index < steps.length - 1
+                : false
+            }
+            queryOperationId={active?.dataBinding?.operationId ?? null}
+            onClose={() => setCtxMenu(null)}
+            onRefresh={() => requestServerPreview(true)}
+            onClearSteps={() => persistSteps([])}
+            onCopyText={copyText}
+            onEditStepFx={focusFormulaForStep}
+            onMoveStep={moveStep}
+            onDeleteStep={removeStep}
+            onRenameColumn={(column) => {
+              setActiveColumn(column);
+              openRibbonAction({ tab: "transform", action: "rename" });
+            }}
+            onFilterColumn={(column) => {
+              setActiveColumn(column);
+              openRibbonAction({ tab: "transform", action: "filter" });
+            }}
+            onSortColumn={(column, direction) => {
+              addStep({ op: "sort", column, direction });
+            }}
+            onRemoveColumn={(column) => {
+              const next = preview.columns.filter((name) => name !== column);
+              if (!next.length) return;
+              addStep({ op: "select", columns: next });
+              setActiveColumn("");
+            }}
+            onKeepOnlyColumn={(column) => {
+              addStep({ op: "select", columns: [column] });
+              setActiveColumn(column);
+            }}
+          />
         </div>
       )}
     </Modal>

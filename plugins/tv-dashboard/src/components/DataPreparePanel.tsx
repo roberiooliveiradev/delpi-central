@@ -1,7 +1,7 @@
+import { HintAction } from "@delpi/plugin-ui/index";
+import type { ComunicadoDataSourceBlock } from "@delpi/tv-dashboard-presentation";
 import { Database } from "lucide-react";
 import { useState } from "react";
-
-import type { ComunicadoDataSourceBlock } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { DataPrepareModal } from "./DataPrepareModal";
@@ -30,10 +30,16 @@ export function DataPreparePanel({ pane = false, block }: Props) {
           Ambiente tipo Power Query: prévia tabular, etapas aplicadas e transformações na rota
           api-delpi (não no visual).
         </p>
-        <button type="button" className="td-btn td-btn--sm" onClick={() => setOpen(true)}>
-          <Database size={14} aria-hidden />
-          Abrir preparação de dados…
-        </button>
+        <HintAction
+          hint={TV_DASHBOARD_HELP_TOOLTIPS.dataPrepare.modal}
+          ariaLabel="Ajuda: abrir preparação de dados"
+          placement="bottom"
+        >
+          <button type="button" className="td-btn td-btn--sm" onClick={() => setOpen(true)}>
+            <Database size={14} aria-hidden />
+            Abrir preparação de dados…
+          </button>
+        </HintAction>
       </DeckPropertySection>
       <DataPrepareModal
         open={open}

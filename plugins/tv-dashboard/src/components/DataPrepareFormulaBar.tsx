@@ -5,9 +5,14 @@ import {
   parseFormulaBarText,
   type FormulaParseResult,
 } from "@delpi/tv-dashboard-presentation";
+import { HintAction } from "@delpi/plugin-ui/index";
 import type { DataTransformStep } from "@delpi/tv-dashboard-presentation";
 import { Check, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+
+const H = TV_DASHBOARD_HELP_TOOLTIPS.dataPrepare;
 
 type Props = {
   step: DataTransformStep | null;
@@ -88,61 +93,67 @@ export function DataPrepareFormulaBar({
 
   return (
     <div className="td-data-pq__formula-wrap">
-      <div className="td-data-pq__formula" aria-label="Barra de fórmula">
-        <span className="td-data-pq__fx" aria-hidden>
-          fx
-        </span>
-        {editable ? (
-          <>
-            <input
-              ref={inputRef}
-              className="td-data-pq__formula-input"
-              value={value}
-              onChange={(event) => {
-                setValue(event.target.value);
-                if (error) setError(null);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  commit();
+      <HintAction hint={H.formulaBar} ariaLabel="Ajuda: barra de fórmula" placement="bottom">
+        <div className="td-data-pq__formula" aria-label="Barra de fórmula">
+          <span className="td-data-pq__fx" aria-hidden>
+            fx
+          </span>
+          {editable ? (
+            <>
+              <input
+                ref={inputRef}
+                className="td-data-pq__formula-input"
+                value={value}
+                onChange={(event) => {
+                  setValue(event.target.value);
+                  if (error) setError(null);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    commit();
+                  }
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    discard();
+                  }
+                }}
+                aria-label="Fórmula da etapa"
+                aria-invalid={Boolean(error)}
+                placeholder={
+                  newColumnDraft
+                    ? "= AddColumn(Fonte, nome, expr)"
+                    : formatStepFormula(step)
                 }
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  discard();
-                }
-              }}
-              aria-label="Fórmula da etapa"
-              aria-invalid={Boolean(error)}
-              placeholder={
-                newColumnDraft
-                  ? "= AddColumn(Fonte, nome, expr)"
-                  : formatStepFormula(step)
-              }
-            />
-            <button
-              type="button"
-              className="td-data-pq__formula-btn"
-              aria-label="Aplicar fórmula"
-              disabled={!dirty && !newColumnDraft}
-              onClick={commit}
-            >
-              <Check size={14} aria-hidden />
-            </button>
-            <button
-              type="button"
-              className="td-data-pq__formula-btn"
-              aria-label="Descartar"
-              disabled={!dirty && !newColumnDraft}
-              onClick={discard}
-            >
-              <X size={14} aria-hidden />
-            </button>
-          </>
-        ) : (
-          <code>{formatStepFormula(step)}</code>
-        )}
-      </div>
+              />
+              <HintAction hint={H.formulaApply} ariaLabel="Ajuda: aplicar fórmula" placement="bottom">
+                <button
+                  type="button"
+                  className="td-data-pq__formula-btn"
+                  aria-label="Aplicar fórmula"
+                  disabled={!dirty && !newColumnDraft}
+                  onClick={commit}
+                >
+                  <Check size={14} aria-hidden />
+                </button>
+              </HintAction>
+              <HintAction hint={H.formulaDiscard} ariaLabel="Ajuda: descartar fórmula" placement="bottom">
+                <button
+                  type="button"
+                  className="td-data-pq__formula-btn"
+                  aria-label="Descartar"
+                  disabled={!dirty && !newColumnDraft}
+                  onClick={discard}
+                >
+                  <X size={14} aria-hidden />
+                </button>
+              </HintAction>
+            </>
+          ) : (
+            <code>{formatStepFormula(step)}</code>
+          )}
+        </div>
+      </HintAction>
       {error ? (
         <p className="td-data-pq__formula-error" role="alert">
           {error}

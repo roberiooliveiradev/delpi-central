@@ -1,4 +1,4 @@
-import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FormSelectControl, HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
 import type {
   DataTransformAgg,
   DataTransformCmp,
@@ -16,11 +16,15 @@ import {
   Sparkles,
   Type,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+
+const H = TV_DASHBOARD_HELP_TOOLTIPS.dataPrepare;
 
 export type RibbonTab = "home" | "transform" | "addColumn" | "combine";
 
-type TransformAction =
+export type TransformAction =
   | "rename"
   | "filter"
   | "replace"
@@ -33,6 +37,13 @@ type TransformAction =
 type AddColumnAction = "custom" | "fx" | "groupBy" | "pivot" | "unpivot";
 
 type CombineAction = "merge";
+
+/** Abre formulário de ação a partir do menu de contexto. */
+export type DataPrepareRibbonOpenRequest =
+  | { tab: "home"; showSelect?: boolean }
+  | { tab: "transform"; action: TransformAction }
+  | { tab: "addColumn"; action: Exclude<AddColumnAction, "fx"> }
+  | { tab: "combine"; action: CombineAction };
 
 const CMP_OPTIONS: Array<{ value: DataTransformCmp; label: string }> = [
   { value: "eq", label: "igual a" },
@@ -53,11 +64,45 @@ const AGG_OPTIONS: Array<{ value: DataTransformAgg; label: string }> = [
   { value: "first", label: "Primeiro" },
 ];
 
+function RibbonHintButton({
+  hint,
+  label,
+  active = false,
+  disabled,
+  onClick,
+  children,
+}: {
+  hint: string;
+  label: string;
+  active?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children?: ReactNode;
+}) {
+  return (
+    <HintAction hint={hint} ariaLabel={`Ajuda: ${label}`} placement="bottom">
+      <button
+        type="button"
+        className={
+          active
+            ? "td-data-pq__ribbon-action td-data-pq__ribbon-action--active"
+            : "td-data-pq__ribbon-action"
+        }
+        disabled={disabled}
+        onClick={onClick}
+        aria-label={label}
+      >
+        {children}
+        {label}
+      </button>
+    </HintAction>
+  );
+}
+
 type Props = {
   tab: RibbonTab;
   onTabChange: (tab: RibbonTab) => void;
   columnOptions: Array<{ value: string; label: string }>;
-  /** Coluna clicada no grid — pré-preenche formulários. */
   activeColumn: string;
   onActiveColumnChange: (column: string) => void;
   siblingOptions: Array<{ value: string; label: string }>;
@@ -67,6 +112,9 @@ type Props = {
   onAddStep: (step: DataTransformStep) => void;
   onStartFxColumn: () => void;
   onApplyPreset: () => void;
+  /** Token + pedido para abrir ação (menu de contexto). */
+  openRequestToken?: number;
+  openRequest?: DataPrepareRibbonOpenRequest | null;
 };
 
 /**
@@ -85,6 +133,8 @@ export function DataPrepareRibbon({
   onAddStep,
   onStartFxColumn,
   onApplyPreset,
+  openRequestToken = 0,
+  openRequest = null,
 }: Props) {
   const [transformAction, setTransformAction] = useState<TransformAction | null>(null);
   const [addAction, setAddAction] = useState<AddColumnAction | null>(null);
@@ -122,6 +172,35 @@ export function DataPrepareRibbon({
   }, [tab]);
 
   useEffect(() => {
+    if (!openRequestToken || !openRequest) return;
+    if (openRequest.tab === "home") {
+      setShowSelectForm(Boolean(openRequest.showSelect));
+      setTransformAction(null);
+      setAddAction(null);
+      setCombineAction(null);
+      return;
+    }
+    if (openRequest.tab === "transform") {
+      setTransformAction(openRequest.action);
+      setAddAction(null);
+      setCombineAction(null);
+      setShowSelectForm(false);
+      return;
+    }
+    if (openRequest.tab === "addColumn") {
+      setAddAction(openRequest.action);
+      setTransformAction(null);
+      setCombineAction(null);
+      setShowSelectForm(false);
+      return;
+    }
+    setCombineAction(openRequest.action);
+    setTransformAction(null);
+    setAddAction(null);
+    setShowSelectForm(false);
+  }, [openRequestToken, openRequest]);
+
+  useEffect(() => {
     if (activeColumn && !groupAggCol) setGroupAggCol(activeColumn);
     if (activeColumn && !pivotCol) setPivotCol(activeColumn);
     if (activeColumn && !mergeLeft) setMergeLeft(activeColumn);
@@ -129,13 +208,17 @@ export function DataPrepareRibbon({
 
   const col = activeColumn.trim();
   const colSelect = (
-    <FormSelectControl
-      id="td-pq-active-col"
-      ariaLabel="Coluna ativa"
-      value={activeColumn}
-      onChange={onActiveColumnChange}
-      options={[{ value: "", label: "Coluna (ou clique no grid)…" }, ...columnOptions]}
-    />
+    <HintAction hint={H.columnHeader} ariaLabel="Ajuda: coluna ativa" placement="bottom">
+      <div className="td-data-pq__ribbon-hint-wrap">
+        <FormSelectControl
+          id="td-pq-active-col"
+          ariaLabel="Coluna ativa"
+          value={activeColumn}
+          onChange={onActiveColumnChange}
+          options={[{ value: "", label: "Coluna (ou clique no grid)…" }, ...columnOptions]}
+        />
+      </div>
+    </HintAction>
   );
 
   const applyAndClear = (step: DataTransformStep) => {
@@ -145,68 +228,77 @@ export function DataPrepareRibbon({
     setCombineAction(null);
   };
 
+  const tabHints: Record<RibbonTab, string> = {
+    home: H.tabHome,
+    transform: H.tabTransform,
+    addColumn: H.tabAddColumn,
+    combine: H.tabCombine,
+  };
+
   return (
-    <div className="td-data-pq__ribbon" role="toolbar" aria-label="Transformações">
+    <div className="td-data-pq__ribbon" role="toolbar" aria-label="Transformações" title={H.ribbon}>
       <div className="td-data-pq__ribbon-tabs">
-        {(
-          [
-            ["home", "Página Inicial"],
-            ["transform", "Transformar"],
-            ["addColumn", "Adicionar coluna"],
-            ["combine", "Combinar"],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            className={
-              tab === id
-                ? "td-data-pq__ribbon-tab td-data-pq__ribbon-tab--active"
-                : "td-data-pq__ribbon-tab"
-            }
-            onClick={() => onTabChange(id)}
-          >
-            {label}
-          </button>
-        ))}
+          {(
+            [
+              ["home", "Página Inicial"],
+              ["transform", "Transformar"],
+              ["addColumn", "Adicionar coluna"],
+              ["combine", "Combinar"],
+            ] as const
+          ).map(([id, label]) => (
+            <HintAction
+              key={id}
+              hint={tabHints[id]}
+              ariaLabel={`Ajuda: ${label}`}
+              placement="bottom"
+            >
+              <button
+                type="button"
+                className={
+                  tab === id
+                    ? "td-data-pq__ribbon-tab td-data-pq__ribbon-tab--active"
+                    : "td-data-pq__ribbon-tab"
+                }
+                onClick={() => onTabChange(id)}
+              >
+                {label}
+              </button>
+            </HintAction>
+          ))}
       </div>
 
       <div className="td-data-pq__ribbon-actions">
         {tab === "home" ? (
           <>
-            <button
-              type="button"
-              className="td-data-pq__ribbon-action"
+            <RibbonHintButton
+              hint={H.refresh}
+              label="Atualizar"
               disabled={previewLoading}
               onClick={onRefresh}
             >
               <RefreshCw size={16} aria-hidden />
-              Atualizar
-            </button>
-            <button
-              type="button"
-              className={
-                showSelectForm
-                  ? "td-data-pq__ribbon-action td-data-pq__ribbon-action--active"
-                  : "td-data-pq__ribbon-action"
-              }
+            </RibbonHintButton>
+            <RibbonHintButton
+              hint={H.selectColumns}
+              label="Escolher colunas"
+              active={showSelectForm}
               onClick={() => setShowSelectForm((open) => !open)}
             >
               <Columns3 size={16} aria-hidden />
-              Escolher colunas
-            </button>
-            <button
-              type="button"
-              className="td-data-pq__ribbon-action"
+            </RibbonHintButton>
+            <RibbonHintButton
+              hint={H.promoteHeaders}
+              label="Cabeçalhos promovidos"
               onClick={() => applyAndClear({ op: "firstRowAsHeader" })}
-            >
-              Cabeçalhos promovidos
-            </button>
+            />
             {hasPreset ? (
-              <button type="button" className="td-data-pq__ribbon-action" onClick={onApplyPreset}>
+              <RibbonHintButton
+                hint={H.routePreset}
+                label="Preset da rota"
+                onClick={onApplyPreset}
+              >
                 <Sparkles size={16} aria-hidden />
-                Preset da rota
-              </button>
+              </RibbonHintButton>
             ) : null}
           </>
         ) : null}
@@ -215,32 +307,28 @@ export function DataPrepareRibbon({
           <>
             {(
               [
-                ["rename", "Renomear"],
-                ["filter", "Filtrar"],
-                ["replace", "Substituir"],
-                ["sort", "Ordenar"],
-                ["keepRows", "Manter linhas"],
-                ["removeRows", "Remover linhas"],
-                ["changeType", "Tipo"],
-                ["fillDown", "Preencher ↓"],
+                ["rename", "Renomear", H.actionRename, null],
+                ["filter", "Filtrar", H.actionFilter, "filter"],
+                ["replace", "Substituir", H.actionReplace, "replace"],
+                ["sort", "Ordenar", H.actionSort, "sort"],
+                ["keepRows", "Manter linhas", H.actionKeepRows, null],
+                ["removeRows", "Remover linhas", H.actionRemoveRows, null],
+                ["changeType", "Tipo", H.actionChangeType, "type"],
+                ["fillDown", "Preencher ↓", H.actionFillDown, null],
               ] as const
-            ).map(([id, label]) => (
-              <button
+            ).map(([id, label, hint, icon]) => (
+              <RibbonHintButton
                 key={id}
-                type="button"
-                className={
-                  transformAction === id
-                    ? "td-data-pq__ribbon-action td-data-pq__ribbon-action--active"
-                    : "td-data-pq__ribbon-action"
-                }
+                hint={hint}
+                label={label}
+                active={transformAction === id}
                 onClick={() => setTransformAction(id)}
               >
-                {id === "filter" ? <Filter size={14} aria-hidden /> : null}
-                {id === "replace" ? <Replace size={14} aria-hidden /> : null}
-                {id === "sort" ? <ArrowDownAZ size={14} aria-hidden /> : null}
-                {id === "changeType" ? <Type size={14} aria-hidden /> : null}
-                {label}
-              </button>
+                {icon === "filter" ? <Filter size={14} aria-hidden /> : null}
+                {icon === "replace" ? <Replace size={14} aria-hidden /> : null}
+                {icon === "sort" ? <ArrowDownAZ size={14} aria-hidden /> : null}
+                {icon === "type" ? <Type size={14} aria-hidden /> : null}
+              </RibbonHintButton>
             ))}
           </>
         ) : null}
@@ -249,21 +337,18 @@ export function DataPrepareRibbon({
           <>
             {(
               [
-                ["custom", "Coluna personalizada"],
-                ["fx", "Inserir etapa (fx)"],
-                ["groupBy", "Agrupar por"],
-                ["pivot", "Pivot"],
-                ["unpivot", "Unpivot"],
+                ["custom", "Coluna personalizada", H.actionCustomColumn, "fx"],
+                ["fx", "Inserir etapa (fx)", H.actionFx, "fx"],
+                ["groupBy", "Agrupar por", H.actionGroupBy, "group"],
+                ["pivot", "Pivot", H.actionPivot, null],
+                ["unpivot", "Unpivot", H.actionUnpivot, null],
               ] as const
-            ).map(([id, label]) => (
-              <button
+            ).map(([id, label, hint, icon]) => (
+              <RibbonHintButton
                 key={id}
-                type="button"
-                className={
-                  addAction === id
-                    ? "td-data-pq__ribbon-action td-data-pq__ribbon-action--active"
-                    : "td-data-pq__ribbon-action"
-                }
+                hint={hint}
+                label={label}
+                active={addAction === id}
                 onClick={() => {
                   if (id === "fx") {
                     onStartFxColumn();
@@ -273,29 +358,22 @@ export function DataPrepareRibbon({
                   setAddAction(id);
                 }}
               >
-                {id === "custom" || id === "fx" ? (
-                  <FunctionSquare size={14} aria-hidden />
-                ) : null}
-                {id === "groupBy" ? <Layers2 size={14} aria-hidden /> : null}
-                {label}
-              </button>
+                {icon === "fx" ? <FunctionSquare size={14} aria-hidden /> : null}
+                {icon === "group" ? <Layers2 size={14} aria-hidden /> : null}
+              </RibbonHintButton>
             ))}
           </>
         ) : null}
 
         {tab === "combine" ? (
-          <button
-            type="button"
-            className={
-              combineAction === "merge"
-                ? "td-data-pq__ribbon-action td-data-pq__ribbon-action--active"
-                : "td-data-pq__ribbon-action"
-            }
+          <RibbonHintButton
+            hint={H.actionMerge}
+            label="Mesclar consultas"
+            active={combineAction === "merge"}
             onClick={() => setCombineAction("merge")}
           >
             <GitMerge size={14} aria-hidden />
-            Mesclar consultas
-          </button>
+          </RibbonHintButton>
         ) : null}
       </div>
 
