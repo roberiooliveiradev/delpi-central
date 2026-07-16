@@ -65,6 +65,19 @@ export function getDefaultLast6MonthsRange(referenceDate = new Date()): {
   return { dateStart: formatIsoDate(dateStart), dateEnd: formatIsoDate(dateEnd) };
 }
 
+export function getDefaultLast12MonthsRange(referenceDate = new Date()): {
+  dateStart: string;
+  dateEnd: string;
+} {
+  const dateEnd = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const dateStart = new Date(dateEnd.getFullYear(), dateEnd.getMonth() - 11, 1);
+  return { dateStart: formatIsoDate(dateStart), dateEnd: formatIsoDate(dateEnd) };
+}
+
 export function getDefaultLast30DaysRange(referenceDate = new Date()): {
   dateStart: string;
   dateEnd: string;
@@ -105,7 +118,7 @@ export function validatePeriodRange(dateStart: string, dateEnd: string): string 
   return null;
 }
 
-export type QuickRangePreset = "today" | "thisWeek" | "30d" | "6m" | "thisMonth";
+export type QuickRangePreset = "today" | "thisWeek" | "30d" | "6m" | "12m" | "thisMonth";
 
 export function resolveQuickRangePreset(
   preset: QuickRangePreset,
@@ -118,6 +131,8 @@ export function resolveQuickRangePreset(
       return getThisWeekRange(referenceDate);
     case "6m":
       return getDefaultLast6MonthsRange(referenceDate);
+    case "12m":
+      return getDefaultLast12MonthsRange(referenceDate);
     case "30d":
       return getDefaultLast30DaysRange(referenceDate);
     case "thisMonth":

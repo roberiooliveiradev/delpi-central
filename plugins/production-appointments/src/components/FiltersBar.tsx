@@ -144,6 +144,14 @@ export function FiltersBar({
         >
           6 meses
         </button>
+        <button
+          type="button"
+          className="pa-btn pa-btn--secondary"
+          onClick={() => onQuickRange("12m")}
+          disabled={loading}
+        >
+          Últimos 12 meses
+        </button>
       </div>
     </FilterBarShell>
   );

@@ -54,5 +54,9 @@ describe("dateRange", () => {
     expect(resolveQuickRangePreset("today", ref)).toEqual(getTodayRange(ref));
     expect(resolveQuickRangePreset("thisWeek", ref)).toEqual(getThisWeekRange(ref));
     expect(resolveQuickRangePreset("thisMonth", ref)).toEqual(getThisMonthRange(ref));
+    expect(resolveQuickRangePreset("12m", ref)).toEqual({
+      dateStart: "2025-08-01",
+      dateEnd: "2026-07-15",
+    });
   });
 });
