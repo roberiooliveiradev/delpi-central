@@ -244,7 +244,12 @@ function EditorChartViewBlock({
 
   const onPartContentCommit = useCallback(
     (ref: ComunicadoChartPartRef, content: string) => {
-      if (editingChartPart && ref.kind === editingChartPart.kind) {
+      if (
+        editingChartPart &&
+        ref.kind === editingChartPart.kind &&
+        (ref.kind !== "axisTitle" ||
+          (editingChartPart.kind === "axisTitle" && ref.axis === editingChartPart.axis))
+      ) {
         commitChartPartContent(content);
         return;
       }
@@ -256,6 +261,14 @@ function EditorChartViewBlock({
       if (ref.kind === "title") {
         nextOptions.title = content;
         nextOptions.showTitle = true;
+      } else if (ref.kind === "legend" || ref.kind === "series") {
+        nextOptions.seriesName = content;
+      } else if (ref.kind === "axisTitle" && ref.axis === "x") {
+        nextOptions.xAxisTitle = content;
+        nextOptions.showXAxisTitle = true;
+      } else if (ref.kind === "axisTitle" && ref.axis === "y") {
+        nextOptions.yAxisTitle = content;
+        nextOptions.showYAxisTitle = true;
       }
       updateBlock(block.id, {
         chartParts: { ...chartOptionsToParts(nextOptions), ...nextParts },

@@ -3,6 +3,7 @@ import { useRef } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import {
+  isAutomaticTextColor,
   resolveAutomaticTextColor,
   resolveComplexBlockForeground,
 } from "../shape/colorUtils";
@@ -186,15 +187,44 @@ function matchesRule(value: number, rule: DelpiKpiColorRule): boolean {
 
 export function parseKpiNumericValue(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const trimmed = value.trim();
-    const pct = trimmed.replace("%", "").trim();
-    const br = Number(pct.replace(/\./g, "").replace(",", "."));
-    if (Number.isFinite(br) && /[.,]/.test(pct)) return br;
-    const plain = Number(pct.replace(/[^\d.-]/g, ""));
-    return Number.isFinite(plain) ? plain : null;
+  if (typeof value !== "string") return null;
+
+  const pct = value.trim().replace("%", "").trim();
+  if (!pct) return null;
+
+  const hasComma = pct.includes(",");
+  const hasDot = pct.includes(".");
+
+  // 1.234,56 (BR) ou 1,234.56 (US) — o separador decimal é o último.
+  if (hasComma && hasDot) {
+    const lastComma = pct.lastIndexOf(",");
+    const lastDot = pct.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      const br = Number(pct.replace(/\./g, "").replace(",", "."));
+      return Number.isFinite(br) ? br : null;
+    }
+    const us = Number(pct.replace(/,/g, ""));
+    return Number.isFinite(us) ? us : null;
   }
-  return null;
+
+  // Só vírgula: 86,2 / 1234,56
+  if (hasComma) {
+    const br = Number(pct.replace(/\./g, "").replace(",", "."));
+    return Number.isFinite(br) ? br : null;
+  }
+
+  // Só ponto: 78.91 (decimal) vs 1.234 (milhar BR).
+  if (hasDot) {
+    if (/^\d{1,3}(\.\d{3})+$/.test(pct)) {
+      const thousands = Number(pct.replace(/\./g, ""));
+      return Number.isFinite(thousands) ? thousands : null;
+    }
+    const decimal = Number(pct);
+    return Number.isFinite(decimal) ? decimal : null;
+  }
+
+  const plain = Number(pct.replace(/[^\d.-]/g, ""));
+  return Number.isFinite(plain) ? plain : null;
 }
 
 const DELPI_KPI_CLASS_NAMES = metricKpiCardBemClasses("delpi");
@@ -267,11 +297,16 @@ export function DelpiKpiCard({
   const cardBg = parts.card?.style?.fill ?? backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor;
   const autoFg = resolveAutomaticTextColor(cardBg);
   const resolvedTitleColor = resolveKpiPartForeground(parts.title?.style?.color, cardBg, "label");
+  // Cor explícita do usuário/regra — `AUTOMATIC_TEXT_COLOR` do seed não conta (libera tom CSS).
+  const rawValueColor = (parts.value?.style?.color ?? valueColor)?.trim() || undefined;
+  const hasCustomValueColor = Boolean(rawValueColor) && !isAutomaticTextColor(rawValueColor);
   const resolvedValueColor = resolveKpiPartForeground(
-    parts.value?.style?.color ?? valueColor,
+    hasCustomValueColor ? rawValueColor : undefined,
     cardBg,
     "value",
   );
+  const valueColorForStyle =
+    hasCustomValueColor || tone === "default" ? resolvedValueColor : undefined;
   const resolvedHintColor = resolveKpiPartForeground(parts.hint?.style?.color, cardBg, "label");
   const resolvedBg = parts.card?.style?.fill ?? backgroundColor;
   const cardStroke = parts.card?.style?.stroke;
@@ -309,7 +344,7 @@ export function DelpiKpiCard({
       {
         ...parts.value?.style,
         fontSize: resolveKpiPartFontSize("value", parts.value?.style),
-        color: resolvedValueColor,
+        ...(valueColorForStyle ? { color: valueColorForStyle } : { color: undefined }),
       },
       { flexPart: true },
     ),
@@ -371,7 +406,9 @@ export function DelpiKpiCard({
     ["--delpi-kpi-fg" as string]: autoFg,
     ["--delpi-kpi-label-color" as string]: resolvedTitleColor,
     ["--delpi-kpi-hint-color" as string]: resolvedHintColor,
-    ["--delpi-kpi-value-fg" as string]: resolvedValueColor,
+    ...(valueColorForStyle
+      ? ({ ["--delpi-kpi-value-fg" as string]: valueColorForStyle } as CSSProperties)
+      : {}),
     ["--delpi-kpi-card-bg" as string]: resolvedBg ?? DECK_KPI_DEFAULTS.backgroundColor,
     ["--delpi-kpi-card-radius" as string]: `${cardCornerRadius}px`,
     ["--delpi-kpi-card-shadow" as string]: cardShadow,
@@ -394,7 +431,9 @@ export function DelpiKpiCard({
           ["--delpi-kpi-card-opacity" as string]: String(parts.card.style.opacity),
         } as CSSProperties)
       : {}),
-    ["--delpi-kpi-value-color" as string]: resolvedValueColor,
+    ...(hasCustomValueColor
+      ? ({ ["--delpi-kpi-value-color" as string]: resolvedValueColor } as CSSProperties)
+      : {}),
   };
 
   const articleClass = [
@@ -414,7 +453,7 @@ export function DelpiKpiCard({
       className={["delpi-kpi-card-shell", fill ? "delpi-kpi-card-shell--fill" : ""]
         .filter(Boolean)
         .join(" ")}
-      data-custom-value={resolvedValueColor ? "true" : undefined}
+      data-custom-value={hasCustomValueColor ? "true" : undefined}
       style={Object.keys(shellStyle).length ? shellStyle : undefined}
     >
       <article

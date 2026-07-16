@@ -2,10 +2,13 @@ import { useSeriesChartClasses } from "../seriesChartClasses";
 import {
   chartPartDomProps,
   chartPartTypographyStyle,
+  getChartPartState,
   isChartPartInteractionSelected,
+  resolveChartPartFontSize,
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import { ChartAxisTitle } from "./ChartAxisTitle";
 import { formatChartTick, type SeriesChartLayout } from "./layout";
 import type { SeriesChartValueFormat } from "../seriesChartOptions";
 
@@ -35,9 +38,11 @@ export function ChartAxisY({
   const titleRef = { kind: "axisTitle" as const, axis: "y" as const };
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const axisSelected = isChartPartInteractionSelected(axisRef, interaction?.selectedPart);
-  const titleSelected = isChartPartInteractionSelected(titleRef, interaction?.selectedPart);
   const axisTypography = chartPartTypographyStyle(chartParts, axisRef);
-  const titleTypography = chartPartTypographyStyle(chartParts, titleRef);
+  const titleFontSize = resolveChartPartFontSize(
+    "axisTitle",
+    getChartPartState(chartParts, titleRef)?.style,
+  );
 
   return (
     <g
@@ -71,36 +76,20 @@ export function ChartAxisY({
           pointerEvents="all"
         />
       ) : null}
-      {showTitle && title ? (
-        <text
+      {showTitle ? (
+        <ChartAxisTitle
+          axis="y"
+          title={title}
+          visible={showTitle}
           x={10}
           y={axisCenterY}
-          className={[cn.axisTitle, cn.axisTitleY, titleSelected ? `${cn.root}__part--selected` : ""]
-            .filter(Boolean)
-            .join(" ")}
-          transform={`rotate(-90 10 ${axisCenterY})`}
-          style={titleTypography}
-          {...chartPartDomProps(titleRef, interaction?.selectedPart)}
-          onPointerDown={
-            interactive
-              ? (event) => {
-                  event.stopPropagation();
-                  interaction?.onPartPointerDown?.(titleRef, event);
-                }
-              : undefined
-          }
-          onDoubleClick={
-            interactive
-              ? (event) => {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  interaction?.onPartDoubleClick?.(titleRef, event);
-                }
-              : undefined
-          }
-        >
-          {title}
-        </text>
+          editWidth={Math.max(margin.left, 28)}
+          editHeight={Math.min(plotH, Math.max(120, (title?.length ?? 8) * titleFontSize * 0.7))}
+          textAnchor="middle"
+          rotate={`rotate(-90 10 ${axisCenterY})`}
+          interaction={interaction}
+          chartParts={chartParts}
+        />
       ) : null}
       {showLabels
         ? ticks.map((tick, tickIndex) => {

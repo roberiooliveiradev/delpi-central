@@ -18,6 +18,7 @@ import {
   partsToChartOptions,
   patchHostRelativeFramePageBottomLeftPx,
   resolveChartAreaStyle,
+  resolveChartDisplayOptions,
   resolvePlotAreaStyle,
   resolveViewportPixelSize,
   serializeChartPartRef,
@@ -70,6 +71,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
     ...block.chartOptions,
     ...partsToChartOptions(block.chartParts),
   });
+  const displayOptions = resolveChartDisplayOptions(options, block.resolved);
   const primitive = chartPartVisualPrimitive(selectedChartPart);
   const seriesColor = options.seriesColor ?? OFFICE_CHART_SERIES_COLOR;
   const partKey = serializeChartPartRef(selectedChartPart);
@@ -197,7 +199,7 @@ export function ChartPartInspector({ pane = false, block }: Props) {
         onBack={clearChartPartSelection}
         backLabel="Voltar aos elementos"
         onEditOnStage={
-          selectedChartPart.kind === "title"
+          selectedChartPart.kind === "title" || selectedChartPart.kind === "axisTitle"
             ? () => beginEditChartPart(block.id, selectedChartPart)
             : undefined
         }
@@ -386,7 +388,9 @@ export function ChartPartInspector({ pane = false, block }: Props) {
           <NativeTextControl
             id={`td-chart-part-axis-title-${selectedChartPart.axis}`}
             value={
-              selectedChartPart.axis === "x" ? (options.xAxisTitle ?? "") : (options.yAxisTitle ?? "")
+              selectedChartPart.axis === "x"
+                ? (options.xAxisTitle?.trim() || displayOptions.xAxisTitle || "")
+                : (options.yAxisTitle?.trim() || displayOptions.yAxisTitle || "")
             }
             placeholder={selectedChartPart.axis === "x" ? "Ex.: Mês" : "Ex.: Valor (R$)"}
             onChange={(value) =>

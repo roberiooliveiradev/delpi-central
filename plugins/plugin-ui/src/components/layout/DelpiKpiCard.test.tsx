@@ -29,6 +29,28 @@ describe("resolveDelpiKpiTone", () => {
   it("parseia valores percentuais e com milhar", () => {
     expect(parseKpiNumericValue("86,2%")).toBeCloseTo(86.2);
     expect(parseKpiNumericValue(42)).toBe(42);
+    expect(parseKpiNumericValue("78.91")).toBeCloseTo(78.91);
+    expect(parseKpiNumericValue("1.234,56")).toBeCloseTo(1234.56);
+    expect(parseKpiNumericValue("1.234")).toBe(1234);
+  });
+
+  it("aplica tom da regra a valores decimais com ponto (API)", () => {
+    const rules: DelpiKpiColorRule[] = [{ op: "lte", value: 80, tone: "negative" }];
+    const numeric = parseKpiNumericValue("78.91");
+    expect(resolveDelpiKpiTone(numeric, rules).tone).toBe("negative");
+  });
+});
+
+describe("DelpiKpiCard tone vs cor explícita", () => {
+  it("não força cor inline quando o tom vem da regra", () => {
+    const { container } = render(
+      <DelpiKpiCard label="OEE" value="78.91" tone="negative" />,
+    );
+    const shell = container.querySelector(".delpi-kpi-card-shell") as HTMLElement;
+    const value = container.querySelector(".delpi-kpi-card__value") as HTMLElement;
+    expect(shell.getAttribute("data-custom-value")).toBeNull();
+    expect(container.querySelector(".delpi-kpi-card--negative")).toBeTruthy();
+    expect(value.style.color).toBe("");
   });
 });
 
@@ -197,12 +219,12 @@ describe("DelpiKpiCard chrome", () => {
     expect(icon.style.height).toBe("96px");
   });
 
-  it("valor usa tipografia padrão 32px (alinhada à ribbon), sem auto-fit", () => {
+  it("valor usa tipografia padrão 40px (KPI_PART_FONT_SIZE_DEFAULTS), sem auto-fit", () => {
     const { container } = render(
       <DelpiKpiCard label="Consumo" value="10" />,
     );
     const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
-    expect(fit?.style.fontSize).toBe("32px");
+    expect(fit?.style.fontSize).toBe("40px");
   });
 
   it("não reexibe ícone oculto só porque o ReactNode icon foi passado", () => {

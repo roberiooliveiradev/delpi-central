@@ -8,6 +8,7 @@ import {
   type ChartPartsMap,
   type SeriesChartInteraction,
 } from "../seriesChartParts";
+import { ChartAxisTitle } from "./ChartAxisTitle";
 import { resolveXLabelTextAnchor, type SeriesChartLayout } from "./layout";
 import type { SeriesChartPoint } from "../seriesChartOptions";
 
@@ -45,10 +46,12 @@ export function ChartAxisX({
   const hitH = Math.max(viewH - xAxisY, Math.round(axisFontSize * 1.6));
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const axisSelected = isChartPartInteractionSelected(axisRef, interaction?.selectedPart);
-  const titleSelected = isChartPartInteractionSelected(titleRef, interaction?.selectedPart);
   const visibleSet = new Set(visibleXLabelIndices);
   const axisTypography = chartPartTypographyStyle(chartParts, axisRef);
-  const titleTypography = chartPartTypographyStyle(chartParts, titleRef);
+  const titleFontSize = resolveChartPartFontSize(
+    "axisTitle",
+    getChartPartState(chartParts, titleRef)?.style,
+  );
 
   return (
     <g
@@ -106,36 +109,19 @@ export function ChartAxisX({
             );
           })
         : null}
-      {showTitle && title ? (
-        <text
+      {showTitle ? (
+        <ChartAxisTitle
+          axis="x"
+          title={title}
+          visible={showTitle}
           x={margin.left + layout.plotW / 2}
           y={viewH - 4}
-          className={[cn.axisTitle, cn.axisTitleX, titleSelected ? `${cn.root}__part--selected` : ""]
-            .filter(Boolean)
-            .join(" ")}
+          editWidth={Math.min(plotW, Math.max(80, (title?.length ?? 8) * titleFontSize * 0.65))}
+          editHeight={Math.max(22, titleFontSize + 10)}
           textAnchor="middle"
-          style={titleTypography}
-          {...chartPartDomProps(titleRef, interaction?.selectedPart)}
-          onPointerDown={
-            interactive
-              ? (event) => {
-                  event.stopPropagation();
-                  interaction?.onPartPointerDown?.(titleRef, event);
-                }
-              : undefined
-          }
-          onDoubleClick={
-            interactive
-              ? (event) => {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  interaction?.onPartDoubleClick?.(titleRef, event);
-                }
-              : undefined
-          }
-        >
-          {title}
-        </text>
+          interaction={interaction}
+          chartParts={chartParts}
+        />
       ) : null}
     </g>
   );
