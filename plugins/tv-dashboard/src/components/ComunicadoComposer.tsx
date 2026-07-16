@@ -585,6 +585,7 @@ export function ComunicadoComposerCanvas() {
                     : "",
                   block.type === "chart_view" ? "td-composer__block-wrap--chart" : "",
                   block.type === "kpi_view" ? "td-composer__block-wrap--kpi" : "",
+                  block.type === "input" ? "td-composer__block-wrap--input" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -725,6 +726,7 @@ export function ComunicadoComposerCanvas() {
                   selectedChartPart,
                   selectedKpiPart,
                   selectedTablePart,
+                  selectedInputPart,
                 }) ? (
                   <ComplexViewFloatToolbar block={block} />
                 ) : null}

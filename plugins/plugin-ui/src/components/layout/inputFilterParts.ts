@@ -565,7 +565,7 @@ export function resolveInputContrastBackground(
  */
 export function resolveInputBlockPaintCssVars(
   contrastBackground: string,
-  options?: { boxShadow?: string | null },
+  options?: { boxShadow?: string | null; borderRadius?: number | null },
 ): CSSProperties {
   const fg = resolveComplexBlockForeground(AUTOMATIC_TEXT_COLOR, contrastBackground, {
     role: "emphasis",
@@ -581,6 +581,10 @@ export function resolveInputBlockPaintCssVars(
       : shadowTrimmed
         ? shadowTrimmed
         : DECK_INPUT_DEFAULTS.boxShadow;
+  const radius =
+    options?.borderRadius != null && Number.isFinite(options.borderRadius)
+      ? Math.max(0, options.borderRadius)
+      : DECK_INPUT_DEFAULTS.borderRadius;
   return {
     ["--tdp-input-surface" as string]: contrastBackground,
     ["--tdp-input-fg" as string]: fg,
@@ -588,6 +592,7 @@ export function resolveInputBlockPaintCssVars(
     ["--tdp-input-border" as string]: muted,
     ["--tdp-input-shadow" as string]: shadow,
     ["--tdp-block-box-shadow" as string]: shadow,
+    ["--tdp-input-radius" as string]: `${radius}px`,
     color: fg,
   };
 }

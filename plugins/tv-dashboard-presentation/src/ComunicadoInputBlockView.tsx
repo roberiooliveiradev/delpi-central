@@ -151,8 +151,11 @@ export function ComunicadoInputBlockView({
 
   const contrastBackground = resolveInputContrastBackground(parts, block.style);
   const frameState = resolveInputFrameStateWithDefaults(parts);
+  const frameRadius =
+    frameState.style?.borderRadius ?? block.style?.borderRadius ?? undefined;
   const paintVars = resolveInputBlockPaintCssVars(contrastBackground, {
     boxShadow: frameState.style?.boxShadow ?? block.style?.boxShadow,
+    borderRadius: frameRadius,
   });
   const frameLayout = resolveInputPartLayoutStyle(frameState, {
     partKind: "frame",
@@ -165,7 +168,9 @@ export function ComunicadoInputBlockView({
     ...(frameLayout.borderColor ? { borderColor: frameLayout.borderColor } : {}),
     ...(frameLayout.borderWidth ? { borderWidth: frameLayout.borderWidth } : {}),
     ...(frameLayout.borderStyle ? { borderStyle: frameLayout.borderStyle } : {}),
-    ...(frameLayout.borderRadius ? { borderRadius: frameLayout.borderRadius } : {}),
+    borderRadius:
+      frameLayout.borderRadius ??
+      (frameRadius != null ? `${Math.max(0, frameRadius)}px` : undefined),
     ...(frameLayout.boxShadow ? { boxShadow: frameLayout.boxShadow } : {}),
   };
 

@@ -118,6 +118,7 @@ export function InputBindingInspector({ pane = false }: Props) {
   };
 
   return (
+    <div id="td-input-binding">
     <DeckPropertySection
       pane={pane}
       title="Campo / Filtro"
@@ -240,5 +241,6 @@ export function InputBindingInspector({ pane = false }: Props) {
         />
       ) : null}
     </DeckPropertySection>
+    </div>
   );
 }

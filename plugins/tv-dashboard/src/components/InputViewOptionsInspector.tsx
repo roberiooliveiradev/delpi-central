@@ -36,7 +36,12 @@ export function InputViewOptionsInspector({ pane = false }: Props) {
       hint="Ligue ou desligue subpartes. Duplo clique no palco seleciona a parte para estilizar."
       defaultOpen
     >
-      <div className="td-chart-elements" role="group" aria-label="Elementos do filtro">
+      <div
+        id="td-input-elements"
+        className="td-chart-elements"
+        role="group"
+        aria-label="Elementos do filtro"
+      >
         {INPUT_ELEMENT_CATALOG.filter((item) => item.id !== "inputFrame").map((item) => {
           const elementId = item.id as InputElementId;
           const enabled = isInputElementEnabled(elementId, block.inputParts, { hasIconName });

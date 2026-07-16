@@ -17,6 +17,7 @@ import {
   TABLE_STYLE_RECIPES,
 } from "../content/tableStyleRecipes";
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
+import { FloatChecklist, FloatChecklistItem } from "./FloatChecklist";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
@@ -79,51 +80,35 @@ export function TableSelectionFloatToolbar({ block }: Props) {
         data: "Dados da tabela",
       }}
       renderElements={() => (
-        <div className="td-float-checklist" role="group" aria-label="Elementos da tabela">
+        <FloatChecklist aria-label="Elementos da tabela">
           {TABLE_ELEMENT_CATALOG.map((element) => {
             const enabled = isTableElementEnabled(element.id, options);
             return (
-              <button
+              <FloatChecklistItem
                 key={element.id}
-                type="button"
-                className={[
-                  "td-deck-ribbon__cascade-item",
-                  enabled ? "td-float-checklist__item--on" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                label={element.label}
                 title={element.hint}
+                active={enabled}
                 onClick={() => toggleElement(element.id, !enabled)}
-              >
-                {enabled ? "✓ " : ""}
-                {element.label}
-              </button>
+              />
             );
           })}
-        </div>
+        </FloatChecklist>
       )}
       renderStyle={(close) => (
-        <div className="td-float-checklist" role="group" aria-label="Estilos da tabela">
+        <FloatChecklist aria-label="Estilos da tabela">
           {TABLE_STYLE_RECIPES.slice(0, 8).map((recipe) => (
-            <button
+            <FloatChecklistItem
               key={recipe.id}
-              type="button"
-              className={[
-                "td-deck-ribbon__cascade-item",
-                activeStyleId === recipe.id ? "td-float-checklist__item--on" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              label={recipe.label}
+              active={activeStyleId === recipe.id}
               onClick={() => {
                 applyRecipe(recipe.id);
                 close();
               }}
-            >
-              {activeStyleId === recipe.id ? "✓ " : ""}
-              {recipe.label}
-            </button>
+            />
           ))}
-        </div>
+        </FloatChecklist>
       )}
       renderData={(close) => (
         <>

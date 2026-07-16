@@ -1480,8 +1480,8 @@
   /* Fundo branco + sombra na moldura; contorno vem do frame (inline) — sem borda CSS extra. */
   background: var(--tdp-input-surface, #ffffff);
   border: none;
-  /* Mesmo raio padrão do gráfico/KPI (16) — evita sombra “achatada” por radius 8. */
-  border-radius: 16px;
+  /* Raio sincronizado com frame / seleção (--tdp-input-radius). */
+  border-radius: var(--tdp-input-radius, 16px);
   box-shadow: var(--tdp-block-box-shadow, var(--tdp-input-shadow, none));
   color: var(--tdp-input-fg, #0f172a);
   /* Subitens (absolute/%) não pintam fora da moldura — handles usam overlay próprio. */

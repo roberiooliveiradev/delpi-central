@@ -31,6 +31,7 @@ import {
 } from "./comunicadoTableParts";
 import type { ComunicadoBlock } from "./comunicadoTypes";
 import { isAreaShapeKind, resolveShapePrimitive } from "./comunicadoVisualPrimitive";
+import { DECK_INPUT_DEFAULTS } from "@delpi/plugin-ui/index";
 
 /**
  * Chrome de forma compartilhado (cantos / contorno) — formas area, KPI card, tabela, chartArea e filtro.
@@ -84,7 +85,11 @@ export function resolveBlockShapeChromeCornerPx(block: ComunicadoBlock): number 
   }
   if (block.type === "input") {
     const frame = getInputPartState(block.inputParts, { kind: "frame" });
-    return frame?.style?.borderRadius ?? block.style?.borderRadius ?? 0;
+    return (
+      frame?.style?.borderRadius ??
+      block.style?.borderRadius ??
+      DECK_INPUT_DEFAULTS.borderRadius
+    );
   }
   return 0;
 }

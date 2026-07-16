@@ -32,8 +32,18 @@ function tableBlock(): ComunicadoBlock {
   } as ComunicadoBlock;
 }
 
+function inputBlock(): ComunicadoBlock {
+  return {
+    id: "i1",
+    type: "input",
+    frame: { x: 0, y: 0, w: 30, h: 10 },
+    style: { zIndex: 1 },
+    input: { paramKey: "branch", targetScope: "slide" },
+  } as ComunicadoBlock;
+}
+
 describe("shouldShowComplexViewFloatToolbar", () => {
-  it("mostra float em chart/kpi/table sem parte selecionada", () => {
+  it("mostra float em chart/kpi/table/filtro sem parte selecionada", () => {
     expect(
       shouldShowComplexViewFloatToolbar({
         block: chartBlock(),
@@ -42,6 +52,7 @@ describe("shouldShowComplexViewFloatToolbar", () => {
         selectedChartPart: null,
         selectedKpiPart: null,
         selectedTablePart: null,
+        selectedInputPart: null,
       }),
     ).toBe(true);
     expect(
@@ -52,6 +63,7 @@ describe("shouldShowComplexViewFloatToolbar", () => {
         selectedChartPart: null,
         selectedKpiPart: null,
         selectedTablePart: null,
+        selectedInputPart: null,
       }),
     ).toBe(true);
     expect(
@@ -62,6 +74,18 @@ describe("shouldShowComplexViewFloatToolbar", () => {
         selectedChartPart: null,
         selectedKpiPart: null,
         selectedTablePart: null,
+        selectedInputPart: null,
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowComplexViewFloatToolbar({
+        block: inputBlock(),
+        isPrimary: true,
+        selectedIdsLength: 1,
+        selectedChartPart: null,
+        selectedKpiPart: null,
+        selectedTablePart: null,
+        selectedInputPart: null,
       }),
     ).toBe(true);
   });
@@ -75,6 +99,7 @@ describe("shouldShowComplexViewFloatToolbar", () => {
         selectedChartPart: { kind: "legend" },
         selectedKpiPart: null,
         selectedTablePart: null,
+        selectedInputPart: null,
       }),
     ).toBe(false);
     expect(
@@ -85,6 +110,18 @@ describe("shouldShowComplexViewFloatToolbar", () => {
         selectedChartPart: null,
         selectedKpiPart: { kind: "value" },
         selectedTablePart: null,
+        selectedInputPart: null,
+      }),
+    ).toBe(false);
+    expect(
+      shouldShowComplexViewFloatToolbar({
+        block: inputBlock(),
+        isPrimary: true,
+        selectedIdsLength: 1,
+        selectedChartPart: null,
+        selectedKpiPart: null,
+        selectedTablePart: null,
+        selectedInputPart: { kind: "control" },
       }),
     ).toBe(false);
     expect(
@@ -95,6 +132,7 @@ describe("shouldShowComplexViewFloatToolbar", () => {
         selectedChartPart: null,
         selectedKpiPart: null,
         selectedTablePart: null,
+        selectedInputPart: null,
       }),
     ).toBe(false);
   });

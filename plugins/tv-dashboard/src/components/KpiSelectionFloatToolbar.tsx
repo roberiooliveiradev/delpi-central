@@ -13,6 +13,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
+import { FloatChecklist, FloatChecklistItem } from "./FloatChecklist";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
@@ -72,6 +73,15 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
     }
   };
 
+  const formatLabel =
+    options.valueFormat === "percent"
+      ? "Percentual"
+      : options.valueFormat === "number"
+        ? "Número"
+        : options.valueFormat === "compact"
+          ? "Compacto"
+          : "Como veio";
+
   return (
     <ComplexSelectionFloatToolbar
       blockId={block.id}
@@ -82,52 +92,35 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
         data: "Dados do KPI",
       }}
       renderElements={() => (
-        <div className="td-float-checklist" role="group" aria-label="Elementos do KPI">
+        <FloatChecklist aria-label="Elementos do KPI">
           {KPI_ELEMENT_CATALOG.map((element) => {
             const enabled = isKpiElementEnabled(element.id, options, block.kpiParts);
             return (
-              <button
+              <FloatChecklistItem
                 key={element.id}
-                type="button"
-                className={[
-                  "td-deck-ribbon__cascade-item",
-                  enabled ? "td-float-checklist__item--on" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+                label={element.label}
+                active={enabled}
                 onClick={() => toggleElement(element.id, !enabled)}
-              >
-                {enabled ? "✓ " : ""}
-                {element.label}
-              </button>
+              />
             );
           })}
-        </div>
+        </FloatChecklist>
       )}
       renderStyle={(close) => (
-        <div className="td-float-checklist" role="group" aria-label="Aparência do KPI">
+        <FloatChecklist aria-label="Aparência do KPI">
           {TONE_OPTIONS.map((tone) => (
-            <button
+            <FloatChecklistItem
               key={tone.value}
-              type="button"
-              className={[
-                "td-deck-ribbon__cascade-item",
-                (options.tone ?? "default") === tone.value ? "td-float-checklist__item--on" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              label={tone.label}
+              active={(options.tone ?? "default") === tone.value}
               onClick={() => {
                 patchOptions({ tone: tone.value });
                 close();
               }}
-            >
-              {(options.tone ?? "default") === tone.value ? "✓ " : ""}
-              {tone.label}
-            </button>
+            />
           ))}
-          <button
-            type="button"
-            className="td-deck-ribbon__cascade-item"
+          <FloatChecklistItem
+            label={`Formato: ${formatLabel}`}
             onClick={() => {
               patchOptions({
                 valueFormat:
@@ -140,17 +133,8 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
                         : "percent",
               });
             }}
-          >
-            Formato:{" "}
-            {options.valueFormat === "percent"
-              ? "Percentual"
-              : options.valueFormat === "number"
-                ? "Número"
-                : options.valueFormat === "compact"
-                  ? "Compacto"
-                  : "Como veio"}
-          </button>
-        </div>
+          />
+        </FloatChecklist>
       )}
       renderData={(close) => (
         <>
