@@ -11,6 +11,7 @@ API dedicada do plugin **CIPA** (Comissão Interna de Prevenção de Acidentes).
 ## Rotas
 
 - Health: `GET /health` → via gateway `/apps/cipa-api/health`
+- Escopo RBAC: `GET /access` → unidades e capacidades do usuário
 - Atas: `/minutes` (ver OpenAPI `/docs`)
 
 ## Stack

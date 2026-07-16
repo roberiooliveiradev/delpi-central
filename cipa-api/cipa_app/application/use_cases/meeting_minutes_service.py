@@ -47,7 +47,7 @@ class MeetingMinutesService:
         return minute
 
     def list_minutes(self, user, filters: dict[str, Any]) -> dict[str, Any]:
-        units = perms.unit_codes_for_action(user, "view")
+        units = perms.unit_codes_for_read(user)
         if filters.get("unit_code"):
             code = perms.normalize_unit_code(filters["unit_code"])
             if not code or code not in units:
@@ -69,7 +69,11 @@ class MeetingMinutesService:
         return {"items": rows, "total": total}
 
     def get_detail(self, user, minute_id: str) -> dict[str, Any]:
-        minute = self._load_authorized(user, "view", minute_id)
+        minute = self.repo.get_minute(minute_id)
+        if not minute:
+            raise LookupError("Ata não encontrada.")
+        if not perms.has_unit_read_access(user, minute["unit_code"]):
+            raise PermissionError("Sem permissão para visualizar esta ata.")
         version = self.repo.get_version(minute_id)
         return {
             "minute": minute,
@@ -497,7 +501,11 @@ class MeetingMinutesService:
         return raw, f"ata-cipa-{minute['minute_number'].replace('/', '-')}.pdf"
 
     def audit(self, user, minute_id: str) -> dict[str, Any]:
-        self._load_authorized(user, "view_audit", minute_id)
+        minute = self.repo.get_minute(minute_id)
+        if not minute:
+            raise LookupError("Ata não encontrada.")
+        if not perms.has_unit_read_access(user, minute["unit_code"]):
+            raise PermissionError("Sem permissão para consultar auditoria desta ata.")
         return {"items": self.repo.list_audit(minute_id)}
 
     def soft_delete(self, user, minute_id: str) -> dict[str, Any]:

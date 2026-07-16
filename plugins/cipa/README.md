@@ -12,6 +12,7 @@ Portal → plugins/cipa (MFE) → /apps/cipa-api → schema cipa (postgres-plugi
 
 | Path | Descrição |
 |------|-----------|
+| `/apps/cipa` | Início — escolha de unidade e pendências |
 | `/apps/cipa/filial-01` | Lista de atas SC |
 | `/apps/cipa/filial-02` | Lista de atas ES |
 | `/apps/cipa/filial-{xx}/minutes/new` | Nova ata |
@@ -26,7 +27,18 @@ Base: `/apps/cipa-api` — ver [cipa-api/README.md](../../cipa-api/README.md).
 
 ## Permissões
 
-Códigos `cipa.minutes.{ação}.filial-{01|02}` e `cipa.admin.filial-{01|02}` — ver `cipa.manifest.json`.
+Modelo enxuto (6 códigos) — ver `cipa.manifest.json`:
+
+| Código | Escopo |
+|--------|--------|
+| `cipa.view` | Consulta e auditoria |
+| `cipa.manage` | CRUD, envio, finalização, PDF e signatários |
+| `cipa.sign` | Assinar ou recusar |
+| `cipa.admin` | Tudo, em todas as unidades |
+| `cipa.unit.filial-01` | Dados da filial 01 |
+| `cipa.unit.filial-02` | Dados da filial 02 |
+
+Combine **uma ação** (`view`, `manage` ou `sign`) com **a unidade** desejada. `cipa.admin` dispensa o restante.
 
 ## Dev
 

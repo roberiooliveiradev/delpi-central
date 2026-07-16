@@ -168,3 +168,22 @@ export type DirectoryUser = {
   name: string;
   email: string;
 };
+
+export type CipaAccessPayload = {
+  admin: boolean;
+  can_view: boolean;
+  can_manage: boolean;
+  can_sign: boolean;
+  units: Array<{
+    id: "01" | "02";
+    label: string;
+    view: boolean;
+    manage: boolean;
+    sign: boolean;
+  }>;
+};
+
+export async function fetchCipaAccess(signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<CipaAccessPayload>>(`${API}/access`, { signal });
+  return unwrap(envelope);
+}

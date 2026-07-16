@@ -10,6 +10,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from delpi_auth.credential_guard import check_credentials
 from cipa_app.config import settings
 from cipa_app.core.responses import fail
+from cipa_app.interface.http.routes.access_routes import router as access_router
 from cipa_app.interface.http.routes.minutes_routes import router as minutes_router
 from cipa_app.middleware.auth_middleware import jwt_middleware
 from cipa_app.startup.run_migrations_on_startup import run_migrations_on_startup
@@ -85,4 +86,5 @@ def health():
     return {"status": "online", "service": "cipa-api"}
 
 
+app.include_router(access_router)
 app.include_router(minutes_router)

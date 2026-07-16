@@ -21,7 +21,7 @@ Sequencial por unidade e ano: `YYYY/NNN` (ex.: `2026/001`).
 
 ## Aceite v1
 
-Criar → editar → participantes/signatários → enviar → assinar (mobile) → acompanhar → finalizar → PDF → auditoria → RBAC por filial.
+Criar → editar → participantes/signatários → enviar → assinar (mobile) → acompanhar → finalizar → PDF → auditoria → RBAC: ações globais + escopo por unidade (`cipa.unit.filial-*`).
 
 ## Backlog (§23)
 

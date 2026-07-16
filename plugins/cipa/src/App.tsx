@@ -1,4 +1,5 @@
 import { configureHttpClient } from "./api/httpClient";
+import { useCipaAccess } from "./hooks/useCipaAccess";
 import { useCipaRouterPath, parseCipaRoute } from "./hooks/useCipaRouterPath";
 import { CipaAppShell } from "./pages/CipaAppShell";
 
@@ -11,5 +12,8 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   configureHttpClient(() => getAccessToken?.());
   const pathname = useCipaRouterPath(pathnameFromHost);
   const route = parseCipaRoute(pathname);
-  return <CipaAppShell route={route} />;
+  const { access, loading, error } = useCipaAccess(getAccessToken);
+  return (
+    <CipaAppShell route={route} access={access} accessLoading={loading} accessError={error} />
+  );
 }

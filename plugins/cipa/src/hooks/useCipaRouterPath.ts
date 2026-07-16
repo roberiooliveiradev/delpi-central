@@ -19,6 +19,7 @@ export function useCipaRouterPath(pathnameFromHost?: string) {
 }
 
 export type CipaRoute =
+  | { kind: "home" }
   | { kind: "list"; unitCode: "01" | "02" }
   | { kind: "new"; unitCode: "01" | "02" }
   | { kind: "detail"; unitCode: "01" | "02"; minuteId: string }
@@ -29,6 +30,9 @@ export type CipaRoute =
 
 export function parseCipaRoute(pathname: string): CipaRoute {
   const path = pathname.replace(/\/+$/, "") || "/";
+  if (path === "/apps/cipa") {
+    return { kind: "home" };
+  }
   if (path.endsWith("/pending") || path.includes("/cipa/pending")) {
     return { kind: "pending" };
   }

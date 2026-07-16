@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { HelpTooltip, StatusBadge, statusBadgeBemClasses } from "@delpi/plugin-ui/index";
-import { FilePlus2, PenLine, RefreshCw } from "lucide-react";
+import { Building2, FilePlus2, PenLine, RefreshCw } from "lucide-react";
 
 import {
   finalizeMinute,
@@ -16,14 +16,90 @@ import { MEETING_TYPE_LABELS, STATUS_LABELS, UNIT_LABELS } from "../constants/la
 import { helpTooltips } from "../content/helpTooltips";
 import type { CipaRoute } from "../hooks/useCipaRouterPath";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
+import {
+  canUnit,
+  readableUnits,
+  type CipaAccess,
+  type CipaUnitCode,
+} from "../security/cipaAccess";
 import { MinuteEditorPage } from "./MinuteEditorPage";
 import { MinuteSignPage } from "./MinuteSignPage";
 
 const badgeClasses = statusBadgeBemClasses("cipa");
 
-type Props = { route: CipaRoute };
+type Props = {
+  route: CipaRoute;
+  access: CipaAccess | null;
+  accessLoading: boolean;
+  accessError: string | null;
+};
 
-export function CipaAppShell({ route }: Props) {
+export function CipaAppShell({ route, access, accessLoading, accessError }: Props) {
+  if (accessLoading) {
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <p className="cipa-state">Carregando permissões…</p>
+      </div>
+    );
+  }
+
+  if (accessError) {
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <p className="cipa-error">{accessError}</p>
+      </div>
+    );
+  }
+
+  if (route.kind === "home") {
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <CipaHomePage access={access} />
+      </div>
+    );
+  }
+
+  if (route.kind === "pending") {
+    if (!access?.can_sign) {
+      return (
+        <div className="dashboard-cipa dashboard-page">
+          <AccessDenied message="Você não tem permissão para assinar atas." />
+        </div>
+      );
+    }
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <PendingPage />
+      </div>
+    );
+  }
+
+  if (
+    route.kind === "list" ||
+    route.kind === "new" ||
+    route.kind === "edit" ||
+    route.kind === "detail" ||
+    route.kind === "sign"
+  ) {
+    const unitCode = route.unitCode;
+    const requiredAction =
+      route.kind === "new" || route.kind === "edit"
+        ? "manage"
+        : route.kind === "sign"
+          ? "sign"
+          : "view";
+
+    if (!canUnit(access, unitCode, requiredAction)) {
+      return (
+        <div className="dashboard-cipa dashboard-page">
+          <AccessDenied
+            message={`Sem permissão para esta unidade (${UNIT_LABELS[unitCode]}).`}
+          />
+        </div>
+      );
+    }
+  }
+
   if (route.kind === "sign") {
     return (
       <div className="dashboard-cipa dashboard-page">
@@ -44,32 +120,116 @@ export function CipaAppShell({ route }: Props) {
   if (route.kind === "detail") {
     return (
       <div className="dashboard-cipa dashboard-page">
-        <MinuteDetailPage unitCode={route.unitCode} minuteId={route.minuteId} />
-      </div>
-    );
-  }
-  if (route.kind === "pending") {
-    return (
-      <div className="dashboard-cipa dashboard-page">
-        <PendingPage />
+        <MinuteDetailPage
+          unitCode={route.unitCode}
+          minuteId={route.minuteId}
+          access={access}
+        />
       </div>
     );
   }
   if (route.kind === "list") {
     return (
       <div className="dashboard-cipa dashboard-page">
-        <MinuteListPage unitCode={route.unitCode} />
+        <MinuteListPage unitCode={route.unitCode} access={access} />
       </div>
     );
   }
+
   return (
     <div className="dashboard-cipa dashboard-page">
-      <p className="cipa-state">Selecione uma unidade no menu (Filial 01 ou 02).</p>
+      <CipaHomePage access={access} />
     </div>
   );
 }
 
-function MinuteListPage({ unitCode }: { unitCode: "01" | "02" }) {
+function AccessDenied({ message }: { message: string }) {
+  return (
+    <section className="cipa-card">
+      <h1>Sem acesso</h1>
+      <p className="cipa-state">{message}</p>
+      <button type="button" className="cipa-btn" onClick={() => navigateCipa("/apps/cipa")}>
+        Voltar ao início
+      </button>
+    </section>
+  );
+}
+
+function CipaHomePage({ access }: { access: CipaAccess | null }) {
+  const units = readableUnits(access);
+  const singleUnit = units.length === 1 ? units[0] : null;
+
+  useEffect(() => {
+    if (singleUnit) {
+      navigateCipa(`/apps/cipa/filial-${singleUnit.id}`);
+    }
+  }, [singleUnit]);
+
+  if (singleUnit) {
+    return <p className="cipa-state">Redirecionando para {singleUnit.label}…</p>;
+  }
+
+  return (
+    <div className="cipa-page-stack">
+      <header className="cipa-header">
+        <div>
+          <h1>CIPA</h1>
+          <p>Escolha a unidade ou acesse suas pendências de assinatura.</p>
+        </div>
+      </header>
+
+      {units.length > 0 ? (
+        <section className="cipa-card">
+          <h2>Unidades</h2>
+          <div className="cipa-unit-grid">
+            {units.map((unit) => (
+              <button
+                key={unit.id}
+                type="button"
+                className="cipa-unit-card"
+                onClick={() => navigateCipa(`/apps/cipa/filial-${unit.id}`)}
+              >
+                <Building2 size={22} />
+                <span className="cipa-unit-card__title">{unit.label}</span>
+                <span className="cipa-unit-card__meta">Filial {unit.id}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="cipa-card">
+          <p className="cipa-state">
+            Nenhuma unidade disponível. Solicite <code>cipa.view</code> ou{" "}
+            <code>cipa.manage</code> combinado com <code>cipa.unit.filial-01</code> /{" "}
+            <code>cipa.unit.filial-02</code>.
+          </p>
+        </section>
+      )}
+
+      {access?.can_sign ? (
+        <section className="cipa-card">
+          <h2>Assinaturas</h2>
+          <button
+            type="button"
+            className="cipa-btn cipa-btn--primary"
+            onClick={() => navigateCipa("/apps/cipa/pending")}
+          >
+            <PenLine size={16} /> Ver pendências
+          </button>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function MinuteListPage({
+  unitCode,
+  access,
+}: {
+  unitCode: CipaUnitCode;
+  access: CipaAccess | null;
+}) {
+  const canManage = canUnit(access, unitCode, "manage");
   const [items, setItems] = useState<MinuteListItem[]>([]);
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
@@ -95,6 +255,9 @@ function MinuteListPage({ unitCode }: { unitCode: "01" | "02" }) {
     <div className="cipa-page-stack">
       <header className="cipa-header">
         <div>
+          <button type="button" className="cipa-link" onClick={() => navigateCipa("/apps/cipa")}>
+            ← Unidades
+          </button>
           <h1>CIPA — {UNIT_LABELS[unitCode]}</h1>
           <p>Atas de reunião da unidade</p>
         </div>
@@ -102,13 +265,15 @@ function MinuteListPage({ unitCode }: { unitCode: "01" | "02" }) {
           <button type="button" className="cipa-btn cipa-btn--ghost" onClick={() => load()}>
             <RefreshCw size={16} /> Atualizar
           </button>
-          <button
-            type="button"
-            className="cipa-btn cipa-btn--primary"
-            onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
-          >
-            <FilePlus2 size={16} /> Nova ata
-          </button>
+          {canManage ? (
+            <button
+              type="button"
+              className="cipa-btn cipa-btn--primary"
+              onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
+            >
+              <FilePlus2 size={16} /> Nova ata
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -197,10 +362,14 @@ function MinuteListPage({ unitCode }: { unitCode: "01" | "02" }) {
 function MinuteDetailPage({
   unitCode,
   minuteId,
+  access,
 }: {
-  unitCode: "01" | "02";
+  unitCode: CipaUnitCode;
   minuteId: string;
+  access: CipaAccess | null;
 }) {
+  const canManage = canUnit(access, unitCode, "manage");
+  const canSign = canUnit(access, unitCode, "sign");
   const [detail, setDetail] = useState<MinuteDetail | null>(null);
   const [audit, setAudit] = useState<Record<string, unknown>[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -239,7 +408,7 @@ function MinuteDetailPage({
           </p>
         </div>
         <div className="cipa-header__actions">
-          {(status === "draft" || status === "in_review") && (
+          {canManage && (status === "draft" || status === "in_review") && (
             <button
               type="button"
               className="cipa-btn"
@@ -248,7 +417,7 @@ function MinuteDetailPage({
               Editar
             </button>
           )}
-          {(status === "draft" || status === "in_review") && (
+          {canManage && (status === "draft" || status === "in_review") && (
             <button
               type="button"
               className="cipa-btn cipa-btn--primary"
@@ -264,7 +433,7 @@ function MinuteDetailPage({
               Enviar para assinatura
             </button>
           )}
-          {(status === "awaiting_signatures" || status === "partially_signed") && (
+          {canSign && (status === "awaiting_signatures" || status === "partially_signed") && (
             <button
               type="button"
               className="cipa-btn cipa-btn--primary"
@@ -273,7 +442,7 @@ function MinuteDetailPage({
               <PenLine size={16} /> Assinar
             </button>
           )}
-          {status === "signed" && (
+          {canManage && status === "signed" && (
             <button
               type="button"
               className="cipa-btn cipa-btn--primary"
@@ -350,6 +519,9 @@ function PendingPage() {
     <div className="cipa-page-stack">
       <header className="cipa-header">
         <div>
+          <button type="button" className="cipa-link" onClick={() => navigateCipa("/apps/cipa")}>
+            ← Início
+          </button>
           <h1>Assinaturas pendentes</h1>
           <p>Atas que aguardam sua assinatura</p>
         </div>

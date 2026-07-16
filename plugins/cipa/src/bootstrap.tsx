@@ -13,6 +13,8 @@ import type { AppProps } from "./App";
 import type { Root } from "react-dom/client";
 const { default: App } = await import("./App");
 
+export type { AppProps };
+
 const roots = new WeakMap<HTMLElement, Root>();
 
 function renderApp(el: HTMLElement, props: AppProps = {}) {

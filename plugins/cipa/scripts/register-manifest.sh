@@ -23,4 +23,4 @@ curl -fsS -X POST "$BASE_URL/core-api/admin/apps/register" \
   -H "Content-Type: application/json" \
   -d @"$MANIFEST" | python3 -m json.tool
 
-echo "[OK] Atribua permissões cipa.minutes.*.filial-01/02 e cipa.admin.filial-* no RBAC."
+echo "[OK] Atribua cipa.view/manage/sign + cipa.unit.filial-01|02 (ou cipa.admin) no RBAC."

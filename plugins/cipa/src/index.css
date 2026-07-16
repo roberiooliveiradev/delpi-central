@@ -235,6 +235,41 @@
   background: color-mix(in srgb, var(--success, #12b76a) 18%, transparent);
 }
 
+.dashboard-cipa .cipa-unit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.dashboard-cipa .cipa-unit-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--cipa-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--cipa-surface) 92%, var(--cipa-accent) 8%);
+  color: var(--cipa-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.dashboard-cipa .cipa-unit-card:hover {
+  border-color: var(--cipa-accent);
+}
+
+.dashboard-cipa .cipa-unit-card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--cipa-title);
+}
+
+.dashboard-cipa .cipa-unit-card__meta {
+  color: var(--cipa-text-muted);
+  font-size: 0.9rem;
+}
+
 @media (max-width: 768px) {
   .dashboard-cipa {
     --cipa-page-padding: 16px;
