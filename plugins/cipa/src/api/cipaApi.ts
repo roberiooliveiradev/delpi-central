@@ -241,3 +241,85 @@ export async function uploadMySignatureImage(blob: Blob, signal?: AbortSignal) {
 export async function fetchMySignatureImageBlob(signal?: AbortSignal) {
   return httpBlob(`${API}/signatures/me/image`, { signal });
 }
+
+export type CipaMember = {
+  id: string;
+  unit_code: string;
+  user_id: string;
+  display_name: string;
+  role: string;
+  mandate_start: string;
+  mandate_end?: string | null;
+  is_active: boolean;
+  sort_order?: number;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+};
+
+export async function listCipaMembers(
+  unitCode: string,
+  options?: {
+    activeOn?: string;
+    includeInactive?: boolean;
+    signal?: AbortSignal;
+  },
+) {
+  const qs = new URLSearchParams({ unit_code: unitCode });
+  if (options?.activeOn) qs.set("active_on", options.activeOn);
+  if (options?.includeInactive) qs.set("include_inactive", "true");
+  const envelope = await httpGet<ApiEnvelope<CipaMember[]>>(
+    `${API}/members?${qs.toString()}`,
+    { signal: options?.signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function createCipaMember(body: {
+  unit_code: string;
+  user_id: string;
+  display_name: string;
+  role: string;
+  mandate_start: string;
+  mandate_end?: string | null;
+  sort_order?: number;
+}) {
+  const envelope = await httpJson<ApiEnvelope<CipaMember>>("POST", `${API}/members`, body);
+  return unwrap(envelope);
+}
+
+export async function updateCipaMember(
+  memberId: string,
+  body: {
+    display_name?: string;
+    role?: string;
+    mandate_start?: string;
+    mandate_end?: string | null;
+    is_active?: boolean;
+    sort_order?: number;
+  },
+) {
+  const envelope = await httpJson<ApiEnvelope<CipaMember>>(
+    "PATCH",
+    `${API}/members/${memberId}`,
+    body,
+  );
+  return unwrap(envelope);
+}
+
+export async function endCipaMember(memberId: string, mandateEnd?: string | null) {
+  const envelope = await httpJson<ApiEnvelope<CipaMember>>(
+    "POST",
+    `${API}/members/${memberId}/end`,
+    { mandate_end: mandateEnd ?? null },
+  );
+  return unwrap(envelope);
+}
+
+export async function deleteCipaMember(memberId: string) {
+  const envelope = await httpJson<ApiEnvelope<CipaMember>>(
+    "DELETE",
+    `${API}/members/${memberId}`,
+  );
+  return unwrap(envelope);
+}

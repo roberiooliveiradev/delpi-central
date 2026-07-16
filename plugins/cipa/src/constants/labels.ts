@@ -28,6 +28,19 @@ export const PARTICIPANT_ROLE_LABELS: Record<string, string> = {
   other: "Outro",
 };
 
+/** Cargos do cadastro permanente da CIPA (subset dos papéis de ata). */
+export const MEMBER_ROLE_LABELS: Record<string, string> = {
+  president: PARTICIPANT_ROLE_LABELS.president,
+  vice_president: PARTICIPANT_ROLE_LABELS.vice_president,
+  secretary: PARTICIPANT_ROLE_LABELS.secretary,
+  titular_member: PARTICIPANT_ROLE_LABELS.titular_member,
+  alternate_member: PARTICIPANT_ROLE_LABELS.alternate_member,
+};
+
+export const MEMBER_ROLE_OPTIONS = Object.entries(MEMBER_ROLE_LABELS).map(
+  ([value, label]) => ({ value, label }),
+);
+
 export const UNIT_LABELS: Record<string, string> = {
   "01": "Santa Catarina",
   "02": "Espírito Santo",

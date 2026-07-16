@@ -7,7 +7,7 @@ import {
   StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { Building2, Download, FilePlus2, PenLine, Printer, RefreshCw } from "lucide-react";
+import { Building2, Download, FilePlus2, PenLine, Printer, RefreshCw, Users } from "lucide-react";
 
 import {
   exportPdf,
@@ -46,6 +46,7 @@ import {
   cipaDataTableLabels,
   cipaStatusBadgeClassNames,
 } from "../ui/cipaUiContracts";
+import { CipaMembersPage } from "./CipaMembersPage";
 import { MinuteEditorPage } from "./MinuteEditorPage";
 import { MinuteDocumentView } from "../components/MinuteDocumentView";
 import { MinuteSignPage } from "./MinuteSignPage";
@@ -115,6 +116,7 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
 
   if (
     route.kind === "list" ||
+    route.kind === "members" ||
     route.kind === "new" ||
     route.kind === "edit" ||
     route.kind === "detail" ||
@@ -122,7 +124,7 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
   ) {
     const unitCode = route.unitCode;
     const requiredAction =
-      route.kind === "new" || route.kind === "edit"
+      route.kind === "new" || route.kind === "edit" || route.kind === "members"
         ? "manage"
         : route.kind === "sign"
           ? "sign"
@@ -137,6 +139,14 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
         </div>
       );
     }
+  }
+
+  if (route.kind === "members") {
+    return (
+      <div className="dashboard-cipa dashboard-page">
+        <CipaMembersPage unitCode={route.unitCode} />
+      </div>
+    );
   }
 
   if (route.kind === "sign") {
@@ -356,12 +366,19 @@ function MinuteListPage({
               </ActionButton>
             ) : null}
             {canManage ? (
-              <ActionButton
-                variant="primary"
-                onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
-              >
-                <FilePlus2 size={16} /> Nova ata
-              </ActionButton>
+              <>
+                <ActionButton
+                  onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/members`)}
+                >
+                  <Users size={16} /> Membros e cargos
+                </ActionButton>
+                <ActionButton
+                  variant="primary"
+                  onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
+                >
+                  <FilePlus2 size={16} /> Nova ata
+                </ActionButton>
+              </>
             ) : null}
           </>
         }

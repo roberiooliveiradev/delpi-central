@@ -21,6 +21,7 @@ export function useCipaRouterPath(pathnameFromHost?: string) {
 export type CipaRoute =
   | { kind: "home" }
   | { kind: "list"; unitCode: "01" | "02" }
+  | { kind: "members"; unitCode: "01" | "02" }
   | { kind: "new"; unitCode: "01" | "02" }
   | { kind: "detail"; unitCode: "01" | "02"; minuteId: string }
   | { kind: "edit"; unitCode: "01" | "02"; minuteId: string }
@@ -39,6 +40,10 @@ export function parseCipaRoute(pathname: string): CipaRoute {
   }
   if (path.endsWith("/my-signature") || path.includes("/cipa/my-signature")) {
     return { kind: "mySignature" };
+  }
+  const membersMatch = path.match(/\/apps\/cipa\/filial-(01|02)\/members$/);
+  if (membersMatch) {
+    return { kind: "members", unitCode: membersMatch[1] as "01" | "02" };
   }
   const match = path.match(
     /\/apps\/cipa\/filial-(01|02)(?:\/minutes\/([^/]+))?(?:\/(edit|sign))?$/,

@@ -8,6 +8,7 @@ import { CipaAppShell } from "./CipaAppShell";
 
 const api = vi.hoisted(() => ({
   listMinutes: vi.fn(),
+  listCipaMembers: vi.fn(),
   getMySignatureProfile: vi.fn(),
   getMinute: vi.fn(),
   getAudit: vi.fn(),
@@ -19,7 +20,10 @@ const navigation = vi.hoisted(() => ({
 }));
 
 vi.mock("../api/cipaApi", () => ({
+  createCipaMember: vi.fn(),
   createMinute: vi.fn(),
+  deleteCipaMember: vi.fn(),
+  endCipaMember: vi.fn(),
   fetchMySignatureImageBlob: vi.fn(),
   exportPdf: api.exportPdf,
   finalizeMinute: vi.fn(),
@@ -28,6 +32,7 @@ vi.mock("../api/cipaApi", () => ({
   getSignatureImage: vi.fn(),
   getMySignatureProfile: api.getMySignatureProfile,
   getSignContext: vi.fn(),
+  listCipaMembers: api.listCipaMembers,
   listMinutes: api.listMinutes,
   pendingSignatures: vi.fn(),
   refuseMinute: vi.fn(),
@@ -35,6 +40,7 @@ vi.mock("../api/cipaApi", () => ({
   sendForSignature: vi.fn(),
   setSigners: vi.fn(),
   signMinute: vi.fn(),
+  updateCipaMember: vi.fn(),
   updateMinute: vi.fn(),
   updateMySignatureProfile: vi.fn(),
   uploadMySignatureImage: vi.fn(),
@@ -108,6 +114,18 @@ beforeEach(() => {
     display_name: "Ana",
     has_signature: false,
   });
+  api.listCipaMembers.mockResolvedValue([
+    {
+      id: "member-1",
+      unit_code: "01",
+      user_id: "11111111-1111-1111-1111-111111111111",
+      display_name: "Ana Presidente",
+      role: "president",
+      mandate_start: "2026-01-01",
+      mandate_end: null,
+      is_active: true,
+    },
+  ]);
   api.getAudit.mockResolvedValue({ items: [] });
   api.exportPdf.mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
   api.getMinute.mockResolvedValue({
@@ -170,6 +188,35 @@ describe("CipaAppShell compartilhado", () => {
 
     expect(screen.getByRole("heading", { name: "Sem acesso" })).toBeTruthy();
     expect(container.querySelector(".delpi-ui-state-box--error")).toBeTruthy();
+  });
+
+  it("navega para membros e cargos a partir da listagem", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Membros e cargos/ }));
+    expect(navigation.navigateCipa).toHaveBeenCalledWith("/apps/cipa/filial-01/members");
+  });
+
+  it("renderiza a gestão de membros com composição ativa", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "members", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByRole("heading", { name: /Membros e cargos/ });
+    expect(await screen.findByText("Ana Presidente")).toBeTruthy();
+    expect(api.listCipaMembers).toHaveBeenCalled();
   });
 
   it("carrega o fluxo básico da assinatura pessoal", async () => {

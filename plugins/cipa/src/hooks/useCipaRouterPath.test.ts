@@ -32,4 +32,15 @@ describe("parseCipaRoute", () => {
   it("perfil de assinatura pessoal", () => {
     expect(parseCipaRoute("/apps/cipa/my-signature")).toEqual({ kind: "mySignature" });
   });
+
+  it("membros e cargos por filial", () => {
+    expect(parseCipaRoute("/apps/cipa/filial-01/members")).toEqual({
+      kind: "members",
+      unitCode: "01",
+    });
+    expect(parseCipaRoute("/apps/cipa/filial-02/members")).toEqual({
+      kind: "members",
+      unitCode: "02",
+    });
+  });
 });

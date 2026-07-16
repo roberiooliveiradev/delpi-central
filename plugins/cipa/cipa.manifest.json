@@ -18,7 +18,7 @@
     {
       "code": "cipa.manage",
       "name": "Gerenciar atas da CIPA",
-      "description": "Criar, editar, excluir, enviar, cancelar, finalizar, exportar PDF e gerenciar signatários.",
+      "description": "Criar, editar, excluir, enviar, cancelar, finalizar, exportar PDF, gerenciar signatários e cadastro de membros/cargos.",
       "module": "cipa"
     },
     {
@@ -69,6 +69,22 @@
       "permission": "cipa.unit.filial-02",
       "icon": "clipboard-check-icon",
       "order": 42,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/filial-01/members",
+      "label": "CIPA — Membros Filial 01",
+      "permission": "cipa.manage",
+      "icon": "clipboard-check-icon",
+      "order": 42.1,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/filial-02/members",
+      "label": "CIPA — Membros Filial 02",
+      "permission": "cipa.manage",
+      "icon": "clipboard-check-icon",
+      "order": 42.2,
       "showInMenu": false
     },
     {
