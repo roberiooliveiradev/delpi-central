@@ -30,13 +30,6 @@ export function SummaryCards({ resumo, loading = false }: SummaryCardsProps) {
         loading={loading}
       />
       <KpiCard
-        title="Total no período"
-        titleHint={H.totalPeriodo}
-        value={formatCurrencyBrl(resumo?.totalValor)}
-        icon={<Package size={22} />}
-        loading={loading}
-      />
-      <KpiCard
         title="Ocorrências"
         titleHint={H.ocorrencias}
         value={formatInteger(resumo?.ocorrencias)}
@@ -56,6 +49,14 @@ export function SummaryCards({ resumo, loading = false }: SummaryCardsProps) {
         value={formatInteger(resumo?.registrosSemCusto)}
         icon={<TriangleAlert size={22} />}
         loading={loading}
+      />
+      <KpiCard
+        title="Total no período"
+        titleHint={H.totalPeriodo}
+        value={formatCurrencyBrl(resumo?.totalValor)}
+        icon={<Package size={22} />}
+        loading={loading}
+        wide
       />
     </div>
   );
