@@ -16,8 +16,10 @@ import {
 
 import { ChartAddElementMenu } from "./ChartAddElementMenu";
 import { ChartColorsStylesMenu } from "./ChartColorsStylesMenu";
+import { ChartSelectDataModal } from "./ChartSelectDataModal";
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { useState } from "react";
 
 type Props = {
   block: ComunicadoChartViewBlock;
@@ -33,6 +35,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
     selectChartPart,
     setSelectionPanelTab,
   } = useComunicadoEditor();
+  const [selectDataOpen, setSelectDataOpen] = useState(false);
 
   const chartKind = toSeriesChartKind(block.chartType) ?? "line";
   const options = mergeComunicadoChartOptions({
@@ -86,6 +89,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
   };
 
   return (
+    <>
     <ComplexSelectionFloatToolbar
       blockId={block.id}
       frame={block.frame}
@@ -131,7 +135,7 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
             type="button"
             className="td-deck-ribbon__cascade-item"
             onClick={() => {
-              openDataFocus();
+              setSelectDataOpen(true);
               close();
             }}
           >
@@ -160,5 +164,11 @@ export function ChartSelectionFloatToolbar({ block }: Props) {
         </>
       )}
     />
+    <ChartSelectDataModal
+      open={selectDataOpen}
+      onClose={() => setSelectDataOpen(false)}
+      block={block}
+    />
+    </>
   );
 }

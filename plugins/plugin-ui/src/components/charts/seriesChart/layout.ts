@@ -38,6 +38,10 @@ export type SeriesChartLayout = {
   visibleXLabelIndices: number[];
   toX: (index: number, count: number) => number;
   toY: (value: number) => number;
+  /** Escala Y direita (séries com plotOn=secondary). */
+  toYSecondary?: (value: number) => number;
+  secondaryTicks?: number[];
+  hasSecondaryAxis?: boolean;
 };
 
 /**
@@ -57,6 +61,8 @@ export type BuildSeriesChartLayoutInput = {
    * Quando presente, substitui os values de `points` no cálculo de ticks.
    */
   axisValues?: number[];
+  /** Valores para eixo Y secundário (direita). */
+  secondaryAxisValues?: number[];
   showXAxisLabels: boolean;
   showXAxisTitle: boolean;
   /** ViewBox dinâmico (ResizeObserver). Default: constantes SERIES_CHART_VIEW_*. */
@@ -347,6 +353,17 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const axisMax = ticks[ticks.length - 1] ?? dataMax;
   const axisRange = Math.max(axisMax - axisMin, 1e-6);
 
+  const secondaryValues = (input.secondaryAxisValues ?? [])
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+  const hasSecondaryAxis = secondaryValues.length > 0;
+  const secondaryTicks = hasSecondaryAxis
+    ? resolveSeriesChartTicks(Math.min(...secondaryValues), Math.max(...secondaryValues))
+    : undefined;
+  const secondaryMin = secondaryTicks?.[0] ?? 0;
+  const secondaryMax = secondaryTicks?.[secondaryTicks.length - 1] ?? 1;
+  const secondaryRange = Math.max(secondaryMax - secondaryMin, 1e-6);
+
   const viewW = Math.max(120, input.viewW ?? SERIES_CHART_VIEW_W);
   const viewH = Math.max(80, input.viewH ?? SERIES_CHART_VIEW_H);
   const axisFontSize = resolveAxisFontSize(input.typography);
@@ -381,7 +398,10 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
   const autoMargin: SeriesChartMargin = {
     top: baseMargin.top,
     left: sides.left,
-    right: sides.right,
+    right: Math.max(
+      sides.right,
+      hasSecondaryAxis ? Math.round(axisFontSize * 3.2) + 10 : sides.right,
+    ),
     bottom: resolveBottomMargin(
       input.showXAxisLabels,
       input.showXAxisTitle,
@@ -392,7 +412,15 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     ),
   };
   const margin: SeriesChartMargin = clampMarginsForUsablePlot(
-    framedEarly ?? autoMargin,
+    framedEarly
+      ? {
+          ...framedEarly,
+          right: Math.max(
+            framedEarly.right,
+            hasSecondaryAxis ? Math.round(axisFontSize * 3.2) + 10 : framedEarly.right,
+          ),
+        }
+      : autoMargin,
     viewW,
     viewH,
   );
@@ -415,6 +443,12 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     const t = Math.min(1, Math.max(0, (value - axisMin) / axisRange));
     return margin.top + plotInset + (1 - t) * innerH;
   };
+  const toYSecondary = hasSecondaryAxis
+    ? (value: number) => {
+        const t = Math.min(1, Math.max(0, (value - secondaryMin) / secondaryRange));
+        return margin.top + plotInset + (1 - t) * innerH;
+      }
+    : undefined;
 
   return {
     viewW,
@@ -432,6 +466,9 @@ export function buildSeriesChartLayout(input: BuildSeriesChartLayoutInput): Seri
     visibleXLabelIndices,
     toX,
     toY,
+    ...(hasSecondaryAxis
+      ? { toYSecondary, secondaryTicks, hasSecondaryAxis: true }
+      : {}),
   };
 }
 

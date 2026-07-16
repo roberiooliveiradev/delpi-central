@@ -1591,7 +1591,9 @@ api-delpi → data (cru em resolved.data)
 
 UI: painel **Preparar dados** na fonte (`DataPreparePanel`). Engine: `dataTransform.ts` + `tv_data_transform_service.py` (rename, select, filter, addColumn com DSL aritmética sandbox).
 
-**Backlog (Fase C):** diálogo Select Data; eixo secundário por série; dash/width avançado; groupBy/pivot/merge.
+**Backlog (Fase C restante):** groupBy/pivot/merge entre fontes; highlight cruzado grid↔série.
+
+**Entregue (Fase C):** diálogo «Selecionar dados»; `plotOn: primary|secondary`; estilo de linha (dash) + espessura por série no Format.
 ### 19.6 Onde implementar (sem espalhar)
 
 | Camada | Módulo canônico | Não fazer |

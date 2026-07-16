@@ -75,6 +75,8 @@ export type SeriesChartSeriesSpec = {
   name: string;
   points: SeriesChartPoint[];
   color?: string;
+  /** Eixo Y secundário (direita). */
+  plotOn?: "primary" | "secondary";
 };
 
 /** Tipos com paint SVG nativo (4H.7 + avançados). */

@@ -221,6 +221,21 @@ export function ChartAxesProjectionEditor({
                   }
                   ariaLabel={`Cor da série ${option.label}`}
                 />
+                <FormSelectControl
+                  id={`${idPrefix}-${option.field}-plot`}
+                  className={compact ? "delpi-ui-select--compact" : undefined}
+                  ariaLabel={`Eixo da série ${option.label}`}
+                  value={series.plotOn ?? "primary"}
+                  onChange={(value) =>
+                    patchSeries(option.field, {
+                      plotOn: value === "secondary" ? "secondary" : "primary",
+                    })
+                  }
+                  options={[
+                    { value: "primary", label: "Eixo primário" },
+                    { value: "secondary", label: "Eixo secundário" },
+                  ]}
+                />
               </div>
             ) : null}
           </div>

@@ -506,6 +506,61 @@ export function ChartPartInspector({ pane = false, block }: Props) {
               }
             />
           </DeckField>
+          <DeckField id="td-chart-part-series-dash" label="Estilo da linha">
+            <FormSelectControl
+              id="td-chart-part-series-dash"
+              ariaLabel="Estilo da linha"
+              value={block.chartParts?.[seriesPartKey]?.style?.strokeDasharray ?? ""}
+              onChange={(value) => {
+                const nextParts = upsertChartPartState(
+                  block.chartParts,
+                  { kind: "series", seriesIndex: activeSeriesIndex },
+                  {
+                    style: {
+                      strokeDasharray: value || undefined,
+                    },
+                  },
+                );
+                updateSelected({ chartParts: nextParts } as Partial<typeof block>);
+              }}
+              options={[
+                { value: "", label: "Contínua" },
+                { value: "6 4", label: "Tracejada" },
+                { value: "2 3", label: "Pontilhada" },
+                { value: "8 3 2 3", label: "Traço-ponto" },
+              ]}
+            />
+          </DeckField>
+          {block.chartProjection?.series?.[activeSeriesIndex] ? (
+            <DeckField id="td-chart-part-series-plot" label="Eixo de plotagem">
+              <FormSelectControl
+                id="td-chart-part-series-plot"
+                ariaLabel="Eixo de plotagem"
+                value={
+                  block.chartProjection.series[activeSeriesIndex]?.plotOn ?? "primary"
+                }
+                onChange={(value) => {
+                  const seriesList = [...(block.chartProjection?.series ?? [])];
+                  const current = seriesList[activeSeriesIndex];
+                  if (!current) return;
+                  seriesList[activeSeriesIndex] = {
+                    ...current,
+                    plotOn: value === "secondary" ? "secondary" : "primary",
+                  };
+                  updateSelected({
+                    chartProjection: {
+                      ...block.chartProjection,
+                      series: seriesList,
+                    },
+                  } as Partial<typeof block>);
+                }}
+                options={[
+                  { value: "primary", label: "Eixo primário (esquerda)" },
+                  { value: "secondary", label: "Eixo secundário (direita)" },
+                ]}
+              />
+            </DeckField>
+          ) : null}
         </>
       ) : null}
 

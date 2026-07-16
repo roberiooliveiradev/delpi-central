@@ -42,6 +42,7 @@ export function TvDataSeriesChartWidget({
     .map((series) => ({
       name: series.name,
       color: series.color,
+      plotOn: series.plotOn,
       points: series.points.map((point) => ({
         label: point.label != null ? String(point.label) : undefined,
         value: point.value == null ? null : Number(point.value),

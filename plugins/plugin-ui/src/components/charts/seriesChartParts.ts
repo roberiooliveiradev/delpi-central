@@ -128,6 +128,8 @@ export type ChartPartStyle = {
   verticalAlign?: "top" | "middle" | "bottom";
   /** Raio do marcador (primitivo point). */
   markerRadius?: number;
+  /** Traço da linha (SVG stroke-dasharray), ex.: "6 4". */
+  strokeDasharray?: string;
   /** Cantos (Format Shape) — padrão visual Delpi = DECK_CHART_DEFAULTS.borderRadius. */
   borderRadius?: number;
   /** Sombra do box (CSS box-shadow) — tipicamente na parte `chartArea`. */

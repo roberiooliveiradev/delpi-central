@@ -251,3 +251,28 @@ describe("golden layout fixture OTD", () => {
     expect(snapshot.xLast - snapshot.x0).toBeGreaterThan(snapshot.plotW * 0.5);
   });
 });
+
+describe("buildSeriesChartLayout secondary axis", () => {
+  it("reserva eixo direito e toYSecondary quando há secondaryAxisValues", () => {
+    const layout = buildSeriesChartLayout({
+      points: [
+        { label: "a", value: 10 },
+        { label: "b", value: 20 },
+      ],
+      axisValues: [10, 20],
+      secondaryAxisValues: [100, 200],
+      showXAxisLabels: true,
+      showXAxisTitle: false,
+      viewW: 400,
+      viewH: 240,
+    });
+    expect(layout.hasSecondaryAxis).toBe(true);
+    expect(layout.toYSecondary).toBeTypeOf("function");
+    expect(layout.secondaryTicks?.length).toBeGreaterThan(0);
+    expect(layout.margin.right).toBeGreaterThan(20);
+    const yPrimary = layout.toY(20);
+    const ySecondary = layout.toYSecondary!(200);
+    expect(yPrimary).toBeTypeOf("number");
+    expect(ySecondary).toBeTypeOf("number");
+  });
+});

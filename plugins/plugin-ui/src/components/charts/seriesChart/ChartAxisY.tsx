@@ -115,6 +115,30 @@ export function ChartAxisY({
             );
           })
         : null}
+      {showLabels && layout.hasSecondaryAxis && layout.secondaryTicks && layout.toYSecondary
+        ? layout.secondaryTicks.map((tick, tickIndex) => {
+            const y = layout.toYSecondary!(tick);
+            const baseline =
+              tickIndex === layout.secondaryTicks!.length - 1
+                ? "hanging"
+                : tickIndex === 0
+                  ? "auto"
+                  : "middle";
+            return (
+              <text
+                key={`y2-${tick}`}
+                x={layout.viewW - margin.right + 6}
+                y={y}
+                className={`${cn.tick} ${cn.tickY}`}
+                textAnchor="start"
+                dominantBaseline={baseline}
+                style={axisTypography}
+              >
+                {formatChartTick(tick, valueFormat)}
+              </text>
+            );
+          })
+        : null}
     </g>
   );
 }

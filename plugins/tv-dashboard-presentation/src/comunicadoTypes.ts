@@ -388,6 +388,7 @@ export type ComunicadoDataResolved = {
       name: string;
       field?: string;
       color?: string;
+      plotOn?: "primary" | "secondary";
       points: Array<{ label?: unknown; value?: unknown }>;
     }>;
   };

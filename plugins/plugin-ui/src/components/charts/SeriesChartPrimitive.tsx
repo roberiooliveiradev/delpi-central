@@ -109,8 +109,20 @@ export function SeriesChartPrimitive({
       ? seriesWithData[0]!.points
       : usableSeriesChartPoints(points);
   const multiSeries = Boolean(seriesWithData && seriesWithData.length > 1);
+  const primarySeriesForAxis =
+    seriesWithData?.filter((series) => series.plotOn !== "secondary") ?? [];
+  const secondarySeriesForAxis =
+    seriesWithData?.filter((series) => series.plotOn === "secondary") ?? [];
+  const axisSourceSeries =
+    primarySeriesForAxis.length > 0 ? primarySeriesForAxis : seriesWithData;
+  const collectSeriesValues = (list: NonNullable<typeof seriesWithData>) =>
+    list.flatMap((series) =>
+      series.points
+        .map((point) => (point.value == null ? null : Number(point.value)))
+        .filter((value): value is number => value != null && Number.isFinite(value)),
+    );
   const axisValues = multiSeries
-      ? chartType === "stacked_bar"
+    ? chartType === "stacked_bar"
       ? (() => {
           const n = Math.max(...seriesWithData!.map((series) => series.points.length), 0);
           const sums: number[] = [];
@@ -124,12 +136,14 @@ export function SeriesChartPrimitive({
           }
           return sums;
         })()
-      : seriesWithData!.flatMap((series) =>
-          series.points
-            .map((point) => (point.value == null ? null : Number(point.value)))
-            .filter((value): value is number => value != null && Number.isFinite(value)),
-        )
+      : axisSourceSeries && axisSourceSeries.length > 0
+        ? collectSeriesValues(axisSourceSeries)
+        : undefined
     : undefined;
+  const secondaryAxisValues =
+    multiSeries && chartType !== "stacked_bar" && secondarySeriesForAxis.length > 0
+      ? collectSeriesValues(secondarySeriesForAxis)
+      : undefined;
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const plotHostRef = useRef<HTMLDivElement>(null);
   const [viewSize, setViewSize] = useState({ w: SERIES_CHART_VIEW_W, h: SERIES_CHART_VIEW_H });
@@ -203,6 +217,7 @@ export function SeriesChartPrimitive({
   const layout = buildSeriesChartLayout({
     points: usable,
     axisValues,
+    secondaryAxisValues,
     showXAxisLabels: config.showAxes !== false && config.showXAxisLabels !== false,
     showXAxisTitle: config.showXAxisTitle !== false,
     viewW: viewSize.w,

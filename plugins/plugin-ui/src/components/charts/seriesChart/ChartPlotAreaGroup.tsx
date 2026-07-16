@@ -252,6 +252,7 @@ export function ChartPlotAreaGroup({
                     points={series.points}
                     seriesColor={color}
                     strokeWidth={strokeWidth}
+                    plotOn={series.plotOn}
                     interaction={interaction}
                     chartParts={chartParts}
                     seriesIndex={index}
@@ -264,6 +265,7 @@ export function ChartPlotAreaGroup({
                     interaction={interaction}
                     chartParts={chartParts}
                     seriesIndex={index}
+                    plotOn={series.plotOn}
                   />
                 </g>
               );

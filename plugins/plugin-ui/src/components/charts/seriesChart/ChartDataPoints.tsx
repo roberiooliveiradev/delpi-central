@@ -13,6 +13,7 @@ export type ChartDataPointsProps = Pick<SeriesChartSharedProps, "layout" | "poin
   interaction?: SeriesChartInteraction | null;
   chartParts?: ChartPartsMap | null;
   seriesIndex?: number;
+  plotOn?: "primary" | "secondary";
 };
 
 export function ChartDataPoints({
@@ -23,11 +24,13 @@ export function ChartDataPoints({
   interaction,
   chartParts,
   seriesIndex = 0,
+  plotOn = "primary",
 }: ChartDataPointsProps) {
   const cn = useSeriesChartClasses();
   if (!visible) return null;
 
-  const { toX, toY } = layout;
+  const { toX, toY, toYSecondary } = layout;
+  const mapY = plotOn === "secondary" && toYSecondary ? toYSecondary : toY;
 
   return (
     <>
@@ -42,7 +45,7 @@ export function ChartDataPoints({
           <circle
             key={`dot-${index}`}
             cx={toX(index, points.length)}
-            cy={toY(Number(point.value))}
+            cy={mapY(Number(point.value))}
             r={marker.radius ?? CHART_MARKER_RADIUS}
             fill={marker.fill}
             stroke={marker.stroke}

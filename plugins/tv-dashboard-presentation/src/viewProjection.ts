@@ -40,6 +40,8 @@ export type ChartSeriesProjection = {
   aggregation?: ViewAggregation;
   label?: string;
   color?: string;
+  /** Eixo Y: primário (esquerda) ou secundário (direita). */
+  plotOn?: "primary" | "secondary";
 };
 
 export type ChartViewProjection = {
@@ -204,6 +206,10 @@ export function normalizeChartProjection(raw: unknown): ChartViewProjection | un
         if (typeof (item as ChartSeriesProjection).color === "string") {
           entry.color = (item as ChartSeriesProjection).color;
         }
+        const plotOn = (item as ChartSeriesProjection).plotOn;
+        if (plotOn === "primary" || plotOn === "secondary") {
+          entry.plotOn = plotOn;
+        }
         return entry;
       })
       .filter((item): item is ChartSeriesProjection => item != null);
@@ -338,6 +344,7 @@ function buildSeriesFromTable(
               field: def.field,
               points,
               color: def.color,
+              plotOn: def.plotOn,
             },
           ]
         : undefined,
@@ -348,6 +355,7 @@ function buildSeriesFromTable(
     name: def.label?.trim() || def.field,
     field: def.field,
     color: def.color,
+    plotOn: def.plotOn,
     points: rows.map((row, index) => ({
       label: categories[index],
       value: aggregateValues([row[def.field]], def.aggregation ?? "first"),
@@ -384,6 +392,7 @@ function applyChartProjection(
           name: def.label?.trim() || metric.label || def.field,
           field: def.field,
           color: def.color,
+          plotOn: def.plotOn,
           points: [{ label: metric.label, value: asFiniteNumber(metric.value) }],
         };
       })

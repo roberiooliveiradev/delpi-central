@@ -90,6 +90,19 @@ describe("applyViewProjection", () => {
     expect(next?.chart?.series?.[1]?.points?.[1]).toMatchObject({ label: "Fev", value: 95 });
   });
 
+  it("preserva plotOn secondary na série do chart", () => {
+    const next = applyViewProjection(sampleResolved, {
+      chartProjection: {
+        categoryField: "periodo",
+        series: [
+          { field: "oee", label: "OEE", plotOn: "primary" },
+          { field: "otd", label: "OTD", plotOn: "secondary" },
+        ],
+      },
+    });
+    expect(next?.chart?.series?.[1]?.plotOn).toBe("secondary");
+  });
+
   it("migra selectedValueFields para kpiProjection helper", () => {
     expect(kpiProjectionFromSelectedFields(["a", "b"])?.metrics?.map((m) => m.field)).toEqual([
       "a",
