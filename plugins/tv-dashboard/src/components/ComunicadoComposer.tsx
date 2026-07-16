@@ -3,7 +3,9 @@ import {
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
   buildViewDataLinkPatch,
+  buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
+  isComunicadoVisualBoxBlock,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
@@ -627,6 +629,24 @@ export function ComunicadoComposerCanvas() {
                           tableProjection:
                             "tableProjection" in selected ? selected.tableProjection : undefined,
                         },
+                      }) as Partial<ComunicadoBlock>,
+                    );
+                    return;
+                  }
+                  if (
+                    isDataSourceBlockType(block.type) &&
+                    selected &&
+                    isComunicadoVisualBoxBlock(selected) &&
+                    !selected.dataSourceId?.trim()
+                  ) {
+                    const resolved =
+                      "resolved" in block ? block.resolved : undefined;
+                    updateBlock(
+                      selected.id,
+                      buildTextDataLinkPatch({
+                        dataSourceId: block.id,
+                        resolved,
+                        existing: selected.textProjection,
                       }) as Partial<ComunicadoBlock>,
                     );
                     return;

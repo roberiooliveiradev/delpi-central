@@ -103,6 +103,7 @@ import {
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
+  isTextDataBoundBlockType,
 } from "./comunicadoDataArchitecture";
 import { normalizeSelectedValueFields } from "./resolveKpiMetrics";
 import { normalizeDataTransform } from "./dataTransform";

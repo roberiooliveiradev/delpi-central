@@ -14,6 +14,7 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
 import { DataPreparePanel } from "../DataPreparePanel";
+import { TextDataBindingInspector, canShowTextDataBindingInspector } from "../TextDataBindingInspector";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
@@ -56,6 +57,7 @@ export function ComunicadoElementInspector({
     selectedInputPart,
     updateSelected,
     updateBlockLink,
+    blocks,
   } = useComunicadoEditor();
 
   const hasPartSelection = Boolean(
@@ -69,17 +71,26 @@ export function ComunicadoElementInspector({
   const isSidebarLinkBlock = isMediaBlock || isVisualBox || isIconBlock;
   const isDataBlock = selected ? isDataBlockType(selected.type) || isDataSourceBlockType(selected.type) : false;
   const isViewBlock = selected ? isDataViewBlockType(selected.type) : false;
+  const isVisualBoxData = selected ? canShowTextDataBindingInspector(selected) : false;
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
 
   useEffect(() => {
-    if (!isDataBlock) return;
+    if (!isDataBlock && !isVisualBoxData) return;
     void listDataRoutes().then(setRoutes).catch(() => setRoutes([]));
-  }, [isDataBlock]);
+  }, [isDataBlock, isVisualBoxData]);
 
   const selectedRoute = useMemo(() => {
-    if (!isDataBlock || !selected || !("dataBinding" in selected)) return null;
-    return routes.find((route) => route.operationId === selected.dataBinding.operationId) ?? null;
-  }, [isDataBlock, routes, selected]);
+    if (isDataBlock && selected && "dataBinding" in selected) {
+      return routes.find((route) => route.operationId === selected.dataBinding.operationId) ?? null;
+    }
+    if (isVisualBoxData && selected?.dataSourceId) {
+      const source = blocks.find((block) => block.id === selected.dataSourceId);
+      if (source && "dataBinding" in source) {
+        return routes.find((route) => route.operationId === source.dataBinding.operationId) ?? null;
+      }
+    }
+    return null;
+  }, [blocks, isDataBlock, isVisualBoxData, routes, selected]);
 
   if (selectedIds.length === 0 || !selected) {
     return (
@@ -144,6 +155,13 @@ export function ComunicadoElementInspector({
       ) : null}
       {!multiSelect && isViewBlock ? (
         <VisualDataViewInspector
+          pane={pane}
+          route={selectedRoute}
+          onOpenDataSources={onOpenDataSources}
+        />
+      ) : null}
+      {!multiSelect && isVisualBoxData ? (
+        <TextDataBindingInspector
           pane={pane}
           route={selectedRoute}
           onOpenDataSources={onOpenDataSources}

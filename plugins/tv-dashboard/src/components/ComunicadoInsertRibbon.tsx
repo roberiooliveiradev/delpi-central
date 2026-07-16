@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { BarChart3, Database, Filter, Gauge, Grid3X3, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
+import { BarChart3, Braces, Database, Filter, Gauge, Grid3X3, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
 import {
   AnchoredPanelPortal,
   ChartTypeCatalogPanel,
@@ -45,6 +45,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
     addKpiViewBlock,
     openDataCatalog,
     openMediaLibrary,
+    insertTextDataFieldBlock,
   } = useComunicadoEditor();
   const shapeAnchorRef = useRef<HTMLDivElement>(null);
   const iconAnchorRef = useRef<HTMLDivElement>(null);
@@ -210,6 +211,12 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
             label="Filtro"
             hint="Campo no palco que filtra fontes (params da rota). Editável também na TV."
             onClick={() => addInputBlock()}
+          />
+          <DeckRibbonTile
+            icon={Braces}
+            label="Campo em texto"
+            hint={H.insertTextDataField ?? H.insertDataSource}
+            onClick={() => insertTextDataFieldBlock()}
           />
           <DeckRibbonTile
             icon={Gauge}

@@ -126,6 +126,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",
     insertKpi: "Insere um card KPI. Conecte a uma fonte de dados e configure ícone, textos e cores.",
     insertTable: "Escolha o tamanho ou estilo da tabela e conecte-a a uma fonte de dados.",
+    insertTextDataField:
+      "Vincula título, texto ou forma à fonte do slide e projeta o primeiro campo disponível. Sem fonte, abre o catálogo.",
     insertHeading: "Caixa de título em destaque para comunicados e chamadas principais.",
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
@@ -260,6 +262,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramBranch:
       "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
+    textDataBinding:
+      "Projeta um campo da fonte no bloco. Prefixo/sufixo e formato aplicam-se ao valor dinâmico; alterar filtros atualiza o preview.",
+    textDataColorRules:
+      "Regras por limiar aplicam cor ao valor dinâmico (mesma semântica dos cards KPI).",
+    insertFieldAtCursor:
+      "Insere um trecho dinâmico na posição do cursor — útil para misturar texto fixo e dados (ex.: «OEE: 42%»).",
     viewBinding:
       "Conecte o gráfico, tabela ou KPI a qualquer fonte do palco. A forma sugerida no catálogo não restringe o vínculo.",
     valueFields:
@@ -277,7 +285,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */
     connectFlowRibbon: "Sem fonte — escolha no seletor do painel ou abra o catálogo.",
     connectOnStage:
-      "Com um gráfico, tabela ou KPI selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
+      "Com um gráfico, tabela, KPI ou texto/forma selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
     kpiCard: "Título, subtítulo, unidade, ícone e tom de cor do card KPI (padrão visual Delpi).",
     kpiElements:
       "Ligue ou desligue partes do card. O detalhe abre ao selecionar a parte no palco.",

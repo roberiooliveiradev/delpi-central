@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, type MutableRefObject } from "react";
 
 import {
+  isComunicadoVisualBoxBlock,
   isDataViewBlockType,
   syncDataViewBlocksWithResolved,
+  syncTextBlocksWithResolved,
   viewHasProjectionConfigured,
   type ComunicadoBlock,
   type ComunicadoConfig,
@@ -10,8 +12,8 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 /**
- * Quando o preview da fonte chega (ou o visual é ligado sem projection),
- * materializa *Projection e dimensiona o frame — mesmo fluxo do link manual.
+ * Quando o preview da fonte chega (ou visual/texto ligado sem projection),
+ * materializa projeção e dimensiona o frame — mesmo fluxo do link manual.
  */
 export function useSyncViewDataLinks({
   configRef,
@@ -28,7 +30,7 @@ export function useSyncViewDataLinks({
   const lastSyncKeyRef = useRef("");
 
   const pendingKey = useMemo(() => {
-    return blocks
+    const viewPart = blocks
       .filter((block) => isDataViewBlockType(block.type))
       .map((block) => {
         const sourceId =
@@ -41,17 +43,32 @@ export function useSyncViewDataLinks({
       })
       .sort()
       .join("|");
+    const textPart = blocks
+      .filter((block) => isComunicadoVisualBoxBlock(block) && block.dataSourceId?.trim())
+      .map((block) => {
+        const sourceId = block.dataSourceId?.trim() ?? "";
+        const hasResolved = Boolean(sourceId && resolvedByBlockId[sourceId]);
+        const field = block.textProjection?.field ?? "";
+        return `${block.id}:${sourceId}:${field}:${hasResolved ? 1 : 0}`;
+      })
+      .sort()
+      .join("|");
+    return `${viewPart}||${textPart}`;
   }, [blocks, resolvedByBlockId]);
 
   useEffect(() => {
     const current = configRef.current.blocks ?? [];
-    const { next, changedIds } = syncDataViewBlocksWithResolved(current, resolvedByBlockId);
+    const viewSync = syncDataViewBlocksWithResolved(current, resolvedByBlockId);
+    const textSync = syncTextBlocksWithResolved(viewSync.next, resolvedByBlockId);
+    const next = textSync.next;
+    const changedIds = [...new Set([...viewSync.changedIds, ...textSync.changedIds])];
     if (changedIds.length === 0) return;
 
     const syncKey = changedIds
       .map((id) => {
         const block = next.find((item) => item.id === id);
-        if (!block || !("dataSourceId" in block)) return id;
+        if (!block) return id;
+        if (!("dataSourceId" in block)) return id;
         const frame = block.frame;
         const proj =
           block.type === "kpi_view"
@@ -60,7 +77,9 @@ export function useSyncViewDataLinks({
               ? block.chartProjection?.series?.map((s) => s.field).join(",")
               : block.type === "table_view"
                 ? block.tableProjection?.columns?.map((c) => c.key).join(",")
-                : "";
+                : isComunicadoVisualBoxBlock(block)
+                  ? block.textProjection?.field ?? ""
+                  : "";
         return `${id}:${block.dataSourceId}:${proj}:${frame.w}x${frame.h}`;
       })
       .sort()

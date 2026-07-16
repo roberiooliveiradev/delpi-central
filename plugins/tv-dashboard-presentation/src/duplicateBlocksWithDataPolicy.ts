@@ -1,4 +1,4 @@
-import { isDataSourceBlockType, isDataViewBlockType, isFetchableDataBlockType } from "./comunicadoDataArchitecture";
+import { isDataSourceBlockType, isDataViewBlockType, isFetchableDataBlockType, isTextDataBoundBlockType } from "./comunicadoDataArchitecture";
 import { isComunicadoInputBlock } from "./comunicadoInputFilters";
 import { newBlockId, nextZIndex } from "./comunicadoHelpers";
 import type {
@@ -43,6 +43,9 @@ function referencedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
     if (isDataViewBlockType(block.type) && block.dataSourceId?.trim()) {
       ids.add(block.dataSourceId.trim());
     }
+    if (isTextDataBoundBlockType(block.type) && block.dataSourceId?.trim()) {
+      ids.add(block.dataSourceId.trim());
+    }
     if (isComunicadoInputBlock(block) && block.input.targetScope === "sources") {
       for (const sourceId of block.input.targetSourceIds ?? []) {
         const trimmed = String(sourceId || "").trim();
@@ -59,6 +62,7 @@ export function needsDataSourceDuplicateChoice(sources: ComunicadoBlock[]): bool
     if (isDataSourceBlockType(block.type)) return true;
     if (block.type.startsWith("data_")) return true;
     if (isDataViewBlockType(block.type) && block.dataSourceId?.trim()) return true;
+    if (isTextDataBoundBlockType(block.type) && block.dataSourceId?.trim()) return true;
     if (
       isComunicadoInputBlock(block) &&
       block.input.targetScope === "sources" &&
@@ -123,6 +127,10 @@ export function duplicateBlocksWithDataPolicy(
 
     for (const copy of copies) {
       if (isDataViewBlockType(copy.type) && copy.dataSourceId?.trim()) {
+        const mapped = sourceIdMap.get(copy.dataSourceId.trim());
+        if (mapped) copy.dataSourceId = mapped;
+      }
+      if (isTextDataBoundBlockType(copy.type) && copy.dataSourceId?.trim()) {
         const mapped = sourceIdMap.get(copy.dataSourceId.trim());
         if (mapped) copy.dataSourceId = mapped;
       }

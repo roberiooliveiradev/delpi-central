@@ -8,9 +8,12 @@ import {
 } from "react";
 
 import {
+  isComunicadoVisualBoxBlock,
   isDataBlockType,
+  isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
+  isTextDataBoundBlockType,
   parseComunicadoConfig,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
@@ -198,6 +201,10 @@ export function ComunicadoEditorProvider({
         block.dataSourceId
       ) {
         const preview = resolvedByBlockId[block.dataSourceId];
+        if (preview) return { ...block, resolved: preview };
+      }
+      if (isComunicadoVisualBoxBlock(block) && block.dataSourceId?.trim()) {
+        const preview = resolvedByBlockId[block.dataSourceId.trim()];
         if (preview) return { ...block, resolved: preview };
       }
       if (isDataBlockType(block.type)) {
@@ -471,6 +478,7 @@ export function ComunicadoEditorProvider({
     toggleEditingTextRunStyle: selection.toggleEditingTextRunStyle,
     toggleSelectedTextListType: selection.toggleSelectedTextListType,
     applySelectedNamedTextStyle: selection.applySelectedNamedTextStyle,
+    insertDataFieldAtCursor: selection.insertDataFieldAtCursor,
     uploading: media.uploading,
     shapeMenuOpen,
     setShapeMenuOpen,
@@ -547,6 +555,8 @@ export function ComunicadoEditorProvider({
     triggerUpload: media.triggerUpload,
     setBackgroundColor: blockActions.setBackgroundColor,
     setBackgroundGradient: blockActions.setBackgroundGradient,
+    bindSelectedVisualBoxToData: blockActions.bindSelectedVisualBoxToData,
+    insertTextDataFieldBlock: blockActions.insertTextDataFieldBlock,
     applySlideTemplate: blockActions.applySlideTemplate,
     applySlideTheme: blockActions.applySlideTheme,
     alignSelected: blockActions.alignSelected,

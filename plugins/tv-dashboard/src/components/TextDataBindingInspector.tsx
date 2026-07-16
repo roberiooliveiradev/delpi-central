@@ -1,0 +1,199 @@
+import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import {
+  VIEW_AGGREGATION_OPTIONS,
+  buildTextDataLinkPatch,
+  dataSourceOptionsForInspector,
+  discoverResolvedFieldOptions,
+  isComunicadoVisualBoxBlock,
+  isDataSourceBlockType,
+  type ComunicadoTextProjection,
+  type TextProjectionFormat,
+} from "@delpi/tv-dashboard-presentation";
+
+import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
+import { useComunicadoEditor } from "./comunicadoEditorContext";
+import type { PanelLayout } from "./SelectedDataSidePanel";
+import { DeckField } from "./deck/DeckField";
+import { DeckPropertySection } from "./deck/DeckPropertySection";
+
+const H = TV_DASHBOARD_HELP_TOOLTIPS.data;
+const FORMAT_OPTIONS: Array<{ value: TextProjectionFormat; label: string }> = [
+  { value: "number", label: "Número" },
+  { value: "percent", label: "Percentual" },
+  { value: "compact", label: "Compacto" },
+  { value: "raw", label: "Texto bruto" },
+  { value: "date", label: "Data" },
+];
+
+type Props = {
+  pane?: boolean;
+  layout?: PanelLayout;
+  route?: TvDataRouteCatalogItem | null;
+  onOpenDataSources?: () => void;
+};
+
+export function TextDataBindingInspector({
+  pane = false,
+  layout = "pane",
+  route = null,
+  onOpenDataSources,
+}: Props) {
+  const { selected, blocks, updateSelected, openDataPanel } = useComunicadoEditor();
+  const isRibbon = layout === "ribbon";
+  const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
+  const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
+
+  if (!selected || !isComunicadoVisualBoxBlock(selected)) return null;
+
+  const sourceOptions = dataSourceOptionsForInspector(blocks, selected.id);
+  const sourceId = selected.dataSourceId?.trim() ?? "";
+  const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
+  const resolved =
+    linkedSource && "resolved" in linkedSource && linkedSource.resolved
+      ? linkedSource.resolved
+      : "resolved" in selected && selected.resolved
+        ? selected.resolved
+        : undefined;
+
+  const fieldOptions = discoverResolvedFieldOptions(
+    resolved,
+    (route?.valueFields ?? []).map((field) => ({
+      field: String(field),
+      label: route?.valueFieldLabels?.[String(field)] ?? String(field),
+    })),
+  );
+
+  const projection = selected.textProjection ?? { field: "" };
+
+  function patchProjection(patch: Partial<ComunicadoTextProjection>) {
+    const next: ComunicadoTextProjection = {
+      field: projection.field,
+      ...projection,
+      ...patch,
+    };
+    updateSelected({ textProjection: next.field.trim() ? next : undefined } as Partial<typeof selected>);
+  }
+
+  function linkSource(nextSourceId: string) {
+    if (!nextSourceId.trim()) {
+      updateSelected({
+        dataSourceId: undefined,
+        textProjection: undefined,
+        resolved: undefined,
+      } as Partial<typeof selected>);
+      return;
+    }
+    const source = blocks.find((block) => block.id === nextSourceId);
+    const sourceResolved =
+      source && "resolved" in source && source.resolved ? source.resolved : resolved;
+    const patch = buildTextDataLinkPatch({
+      dataSourceId: nextSourceId,
+      resolved: sourceResolved,
+      existing: selected.textProjection,
+    });
+    updateSelected(patch as Partial<typeof selected>);
+  }
+
+  const body = (
+    <>
+      <DeckPropertySection title="Fonte de dados" hint={H.viewBinding} compact={pane}>
+        <DeckField label="Fonte">
+          <FormSelectControl
+            className={compactSelect}
+            value={sourceId}
+            onChange={(value) => linkSource(value)}
+            options={[
+              { value: "", label: "Nenhuma" },
+              ...sourceOptions.map((item) => ({ value: item.value, label: item.label })),
+            ]}
+          />
+        </DeckField>
+        {sourceOptions.length === 0 ? (
+          <p className="td-deck-inspector__hint">
+            Insira uma fonte de dados no slide para vincular este bloco.
+            <button type="button" className="td-link-btn" onClick={() => (onOpenDataSources ?? openDataPanel)()}>
+              Abrir catálogo
+            </button>
+          </p>
+        ) : null}
+      </DeckPropertySection>
+
+      {sourceId ? (
+        <DeckPropertySection title="Campo dinâmico" hint={H.textDataBinding ?? H.viewBinding} compact={pane}>
+          <DeckField label="Campo">
+            <FormSelectControl
+              className={compactSelect}
+              value={projection.field ?? ""}
+              onChange={(value) => patchProjection({ field: value })}
+              options={[
+                { value: "", label: "Selecione…" },
+                ...fieldOptions.map((item) => ({ value: item.field, label: item.label })),
+              ]}
+            />
+          </DeckField>
+          <DeckField label="Agregação">
+            <FormSelectControl
+              className={compactSelect}
+              value={projection.aggregation ?? "first"}
+              onChange={(value) =>
+                patchProjection({
+                  aggregation: value as ComunicadoTextProjection["aggregation"],
+                })
+              }
+              options={VIEW_AGGREGATION_OPTIONS.map((item) => ({
+                value: item.value,
+                label: item.label,
+              }))}
+            />
+          </DeckField>
+          <DeckField label="Formato">
+            <FormSelectControl
+              className={compactSelect}
+              value={projection.format ?? "number"}
+              onChange={(value) => patchProjection({ format: value as TextProjectionFormat })}
+              options={FORMAT_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
+            />
+          </DeckField>
+          <DeckField label="Prefixo">
+            <NativeTextControl
+              className={compactNative}
+              value={projection.prefix ?? ""}
+              onChange={(value) => patchProjection({ prefix: value || undefined })}
+            />
+          </DeckField>
+          <DeckField label="Sufixo">
+            <NativeTextControl
+              className={compactNative}
+              value={projection.suffix ?? ""}
+              onChange={(value) => patchProjection({ suffix: value || undefined })}
+            />
+          </DeckField>
+          <DeckField label="Se vazio">
+            <NativeTextControl
+              className={compactNative}
+              value={projection.fallback ?? ""}
+              placeholder="—"
+              onChange={(value) => patchProjection({ fallback: value || undefined })}
+            />
+          </DeckField>
+          <DeckField label="Cores por valor">
+            <KpiColorRulesEditor
+              idPrefix="td-text-data"
+              compact={isRibbon}
+              rules={projection.colorRules ?? []}
+              onChange={(rules) => patchProjection({ colorRules: rules })}
+            />
+          </DeckField>
+        </DeckPropertySection>
+      ) : null}
+    </>
+  );
+
+  return body;
+}
+
+export function canShowTextDataBindingInspector(selected: { type: string } | null | undefined): boolean {
+  return Boolean(selected && isComunicadoVisualBoxBlock(selected as never));
+}

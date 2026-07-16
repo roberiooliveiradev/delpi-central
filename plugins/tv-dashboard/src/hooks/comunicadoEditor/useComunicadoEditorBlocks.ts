@@ -45,7 +45,9 @@ import {
   getKpiPartState,
   mergeKpiPartsWithOptions,
   buildViewDataLinkPatch,
+  buildTextDataLinkPatch,
   duplicateBlocksWithDataPolicy,
+  isComunicadoVisualBoxBlock,
   needsDataSourceDuplicateChoice,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
@@ -224,6 +226,15 @@ export function useComunicadoEditorBlocks({
       block: ComunicadoBlock,
       sourceId: string,
     ): ComunicadoBlock => {
+      if (isComunicadoVisualBoxBlock(block)) {
+        const resolved = getSourceResolved?.(sourceId);
+        const patch = buildTextDataLinkPatch({
+          dataSourceId: sourceId,
+          resolved,
+          existing: block.textProjection,
+        });
+        return { ...block, ...patch } as ComunicadoBlock;
+      }
       if (!isDataViewBlockType(block.type)) {
         return { ...block, dataSourceId: sourceId } as ComunicadoBlock;
       }
@@ -314,6 +325,15 @@ export function useComunicadoEditorBlocks({
         selectedBlock &&
         isDataViewBlockType(selectedBlock.type) &&
         !("dataSourceId" in selectedBlock && selectedBlock.dataSourceId?.trim())
+      ) {
+        linkedExistingView = true;
+        nextBlocks = nextBlocks.map((item) =>
+          item.id === selectedBlock.id ? linkViewToSource(item, withZ.id) : item,
+        );
+      } else if (
+        selectedBlock &&
+        isComunicadoVisualBoxBlock(selectedBlock) &&
+        !selectedBlock.dataSourceId?.trim()
       ) {
         linkedExistingView = true;
         nextBlocks = nextBlocks.map((item) =>
@@ -572,7 +592,11 @@ export function useComunicadoEditorBlocks({
           return { ...block, ...textFields } as ComunicadoBlock;
         }
         if (block.type === "shape") {
-          return { ...block, content: textFields.content } as ComunicadoBlock;
+          return {
+            ...block,
+            content: textFields.content,
+            contentRuns: textFields.contentRuns,
+          } as ComunicadoBlock;
         }
         return block;
       });
@@ -1049,6 +1073,64 @@ export function useComunicadoEditorBlocks({
     [commitWithHistory, configRef],
   );
 
+  const bindSelectedVisualBoxToData = useCallback(() => {
+    if (!selected || !isComunicadoVisualBoxBlock(selected)) return;
+    const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+    if (!sourceId) {
+      setDataPanelIntent("catalog");
+      setDataCatalogMode("insert");
+      setDataCatalogModalOpen(true);
+      return;
+    }
+    const linked = linkViewToSource(selected, sourceId);
+    updateSelected(linked as Partial<ComunicadoBlock>);
+    setDataPanelIntent("binding");
+    setDataPanelOpen(true);
+  }, [
+    configRef,
+    linkViewToSource,
+    selected,
+    selectedId,
+    setDataCatalogModalOpen,
+    setDataCatalogMode,
+    setDataPanelIntent,
+    setDataPanelOpen,
+    updateSelected,
+  ]);
+
+  const insertTextDataFieldBlock = useCallback(() => {
+    if (selected && isComunicadoVisualBoxBlock(selected)) {
+      bindSelectedVisualBoxToData();
+      return;
+    }
+    let block = createBlock("text", "Texto");
+    block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    const sourceId = resolvePreferredDataSourceId(configRef.current.blocks ?? [], selectedId);
+    if (sourceId) {
+      block = linkViewToSource(block, sourceId) as typeof block;
+      setDataPanelIntent("binding");
+      setDataPanelOpen(true);
+    } else {
+      setDataPanelIntent("catalog");
+      setDataCatalogMode("insert");
+      setDataCatalogModalOpen(true);
+    }
+    setSelectedId(block.id);
+    updateBlocks([...(configRef.current.blocks ?? []), block]);
+  }, [
+    bindSelectedVisualBoxToData,
+    configRef,
+    linkViewToSource,
+    selected,
+    selectedId,
+    setDataCatalogModalOpen,
+    setDataCatalogMode,
+    setDataPanelIntent,
+    setDataPanelOpen,
+    setSelectedId,
+    updateBlocks,
+  ]);
+
   return {
     updateBlocks,
     addBlock,
@@ -1092,5 +1174,7 @@ export function useComunicadoEditorBlocks({
     alignSelected,
     setBackgroundColor,
     setBackgroundGradient,
+    bindSelectedVisualBoxToData,
+    insertTextDataFieldBlock,
   };
 }
