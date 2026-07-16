@@ -5,11 +5,11 @@ import {
   BackLink,
   FieldLabel,
   IconButton,
+  NativeCheckboxControl,
   NativeSelectControl,
   NativeTextControl,
   RichTextEditor,
   UserDirectoryPicker,
-  type DirectoryUserOption,
 } from "@delpi/plugin-ui/index";
 
 import {
@@ -45,14 +45,20 @@ type ParticipantDraft = {
   must_sign: boolean;
 };
 
+function isSignerParticipant(item: ParticipantDraft): boolean {
+  return !item.is_external && Boolean(item.user_id) && item.must_sign;
+}
+
 function validateForm(values: {
   title: string;
   meetingDate: string;
-  selectedUsers: DirectoryUserOption[];
+  participants: ParticipantDraft[];
 }): string | null {
   if (!values.title.trim()) return "Informe o título da ata.";
   if (!values.meetingDate) return "Informe a data da reunião.";
-  if (values.selectedUsers.length === 0) return "Selecione ao menos um signatário obrigatório.";
+  if (!values.participants.some(isSignerParticipant)) {
+    return "Marque ao menos um participante como signatário.";
+  }
   return null;
 }
 
@@ -63,7 +69,6 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
   const [location, setLocation] = useState("");
   const [contentHtml, setContentHtml] = useState("<p></p>");
   const [participants, setParticipants] = useState<ParticipantDraft[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState<DirectoryUserOption[]>([]);
   const [externalName, setExternalName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,23 +87,34 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
         setMeetingDate(String(m.meeting_date || "").slice(0, 10));
         setLocation(String(m.location || ""));
         setContentHtml(mergeMinuteContentHtml(detail.version));
-        setParticipants(
-          (detail.participants || []).map((item) => ({
-            user_id: item.user_id ? String(item.user_id) : undefined,
+        const signerIds = new Set(
+          (detail.signers || []).map((item) => String(item.user_id)),
+        );
+        const loadedParticipants = (detail.participants || []).map((item) => {
+          const userId = item.user_id ? String(item.user_id) : undefined;
+          return {
+            user_id: userId,
             display_name: String(item.display_name || ""),
             role_in_meeting: String(item.role_in_meeting || "other"),
             presence: String(item.presence || "present"),
             is_external: Boolean(item.is_external),
-            must_sign: Boolean(item.must_sign),
-          })),
+            must_sign: Boolean(item.must_sign) || Boolean(userId && signerIds.has(userId)),
+          };
+        });
+        const participantUserIds = new Set(
+          loadedParticipants.filter((item) => item.user_id).map((item) => item.user_id),
         );
-        setSelectedUsers(
-          (detail.signers || []).map((item) => ({
-            id: String(item.user_id),
-            name: String(item.display_name),
-            email: "",
-          })),
-        );
+        const signerOnly = (detail.signers || [])
+          .filter((item) => !participantUserIds.has(String(item.user_id)))
+          .map((item) => ({
+            user_id: String(item.user_id),
+            display_name: String(item.display_name),
+            role_in_meeting: "titular_member",
+            presence: "present",
+            is_external: false,
+            must_sign: true,
+          }));
+        setParticipants([...loadedParticipants, ...signerOnly]);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro ao carregar"));
   }, [minuteId]);
@@ -123,8 +139,14 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
     setParticipants((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function toggleSigner(index: number, checked: boolean) {
+    setParticipants((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, must_sign: checked } : item)),
+    );
+  }
+
   async function saveDraft() {
-    const validationError = validateForm({ title, meetingDate, selectedUsers });
+    const validationError = validateForm({ title, meetingDate, participants });
     if (validationError) {
       setError(validationError);
       return;
@@ -150,9 +172,9 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
       setCurrentId(id);
       await setSigners(
         id,
-        selectedUsers.map((user, index) => ({
-          user_id: user.id,
-          display_name: user.name || user.email,
+        participants.filter(isSignerParticipant).map((item, index) => ({
+          user_id: item.user_id!,
+          display_name: item.display_name,
           sign_order: index + 1,
         })),
       );
@@ -165,12 +187,14 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
   }
 
   const directoryParticipants = participants
-    .filter((item) => item.user_id)
+    .filter((item) => item.user_id && !item.is_external)
     .map((item) => ({
       id: item.user_id!,
       name: item.display_name,
       email: "",
     }));
+
+  const signerParticipants = participants.filter(isSignerParticipant);
 
   return (
     <div className="cipa-page-stack cipa-editor-page">
@@ -260,15 +284,23 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
               value={directoryParticipants}
               onChange={(users) => {
                 const externals = participants.filter((item) => item.is_external);
+                const previousById = new Map(
+                  participants
+                    .filter((item) => item.user_id && !item.is_external)
+                    .map((item) => [item.user_id!, item]),
+                );
                 setParticipants([
-                  ...users.map((user) => ({
-                    user_id: user.id,
-                    display_name: user.name || user.email,
-                    role_in_meeting: "titular_member",
-                    presence: "present",
-                    is_external: false,
-                    must_sign: false,
-                  })),
+                  ...users.map((user) => {
+                    const previous = previousById.get(user.id);
+                    return {
+                      user_id: user.id,
+                      display_name: user.name || user.email,
+                      role_in_meeting: previous?.role_in_meeting ?? "titular_member",
+                      presence: previous?.presence ?? "present",
+                      is_external: false,
+                      must_sign: previous?.must_sign ?? false,
+                    };
+                  }),
                   ...externals,
                 ]);
               }}
@@ -304,19 +336,31 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
               <ul className="cipa-chip-list">
                 {participants.map((item, index) => (
                   <li key={`${item.display_name}-${index}`}>
-                    <span>
+                    <span className="cipa-chip-list__name">
                       {item.display_name}
                       {item.is_external ? (
                         <span className="cipa-chip-list__tag">externo</span>
                       ) : null}
                     </span>
-                    <IconButton
-                      tone="danger"
-                      aria-label={`Remover ${item.display_name}`}
-                      onClick={() => removeParticipant(index)}
-                    >
-                      <X size={16} />
-                    </IconButton>
+                    <div className="cipa-chip-list__actions">
+                      {item.is_external ? (
+                        <span className="cipa-chip-list__note">não assina</span>
+                      ) : (
+                        <NativeCheckboxControl
+                          checked={item.must_sign}
+                          onChange={(checked) => toggleSigner(index, checked)}
+                          label="Deve assinar"
+                          aria-label={`${item.display_name} deve assinar`}
+                        />
+                      )}
+                      <IconButton
+                        tone="danger"
+                        aria-label={`Remover ${item.display_name}`}
+                        onClick={() => removeParticipant(index)}
+                      >
+                        <X size={16} />
+                      </IconButton>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -328,15 +372,21 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
 
         <CipaSectionCard title="Signatários" className="cipa-compose__section">
           <div className="cipa-compose__panel">
-            <UserDirectoryPicker
-              value={selectedUsers}
-              onChange={setSelectedUsers}
-              searchUsers={searchDirectoryUsers}
-              labels={{
-                title: "Quem deve assinar",
-                hint: "Obrigatório antes do envio para assinatura.",
-              }}
-            />
+            <p className="cipa-compose__hint">
+              Quem deve assinar é definido marcando os participantes internos como
+              «Deve assinar». Obrigatório antes do envio para assinatura.
+            </p>
+            {signerParticipants.length > 0 ? (
+              <ol className="cipa-signer-list">
+                {signerParticipants.map((item) => (
+                  <li key={item.user_id}>{item.display_name}</li>
+                ))}
+              </ol>
+            ) : (
+              <CipaStateBanner variant="error">
+                Nenhum signatário selecionado. Marque ao menos um participante.
+              </CipaStateBanner>
+            )}
           </div>
         </CipaSectionCard>
 
