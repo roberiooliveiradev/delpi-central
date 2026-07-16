@@ -1547,31 +1547,51 @@ Regras:
 
 - Adapter `chartOptionsToParts` / `partsToChartOptions` no **módulo canônico** (`plugin-ui`), único — MFE e presentation não implementam merge paralelo.
 - Remover um marcador da série **não** apaga o ponto de dados; só `visible: false` na parte (dados continuam no enrichment).
-- Cor da série: escrever em `chartParts[series:0].style.stroke` (e fill do ponto) — `seriesColor` legado espelha via adapter.
+- Cor da série: escrever em `chartProjection.series[N].color` + `chartParts[series:N].style` (stroke/width); `seriesColor` legado espelha só a série 0.
 
 ### 19.5 Interação no editor
 
 ```text
-Pointer down no palco
-  ├─ hit parte do chart? → selectChartPart(ref); NÃO startDrag(move) do bloco
-  │     ├─ double-click título / axisTitle / dataLabel → editingChartPart (inline)
-  │     └─ inspector → ChartPartInspector (estilo do primitivo + conteúdo)
-  ├─ hit fundo / margem do chart_view? → selectBlock(chart); drag/resize frame
-  └─ hit outro bloco → fluxo atual
+Pointer down no palco (bloco já selecionado)
+  ├─ hit parte de conteúdo (série, título, métrica, coluna…)?
+  │     → select*Part(ref); NÃO startDrag do bloco  (Excel-like)
+  ├─ mesma parte já selecionada e móvel? → move da parte
+  ├─ hit moldura / fundo (chartArea, frame)? → drag do bloco
+  └─ bloco ainda não selecionado → 1º clique seleciona/arrasta o bloco
 ```
 
 | Gesto | Comportamento |
 |---|---|
 | Clique título | Seleciona `title`; ribbon Formatar / inspetor editam texto e tipografia |
-| Clique linha da série | Seleciona `series:0`; stroke/cor/espessura (primitivo `line`) |
-| Clique marcador | Seleciona `marker:i`; fill/stroke/radius (primitivo `point`) |
-| Clique legenda | Seleciona `legend`; tipografia + toggle |
-| Esc / clique fora | Limpa `selectedChartPart`; mantém bloco selecionado se ainda no chart |
+| Clique linha da série N | Seleciona `series:N`; Format grava cor/espessura na série N |
+| Clique item da legenda | Seleciona `series:N` (não só o chrome `legend`) |
+| Clique marcador | Seleciona `marker:N:j`; fill/stroke/radius |
+| Dropdown «Elemento ativo» | Troca a parte no inspetor (paridade Excel) |
+| Clique série na sidebar (Eixos) | Seleciona `series:N` no palco |
+| Esc / clique fora | Limpa parte; mantém bloco selecionado se ainda no widget |
 | Del com parte selecionada | `visible: false` na parte (não remove o bloco) |
-| Del com só o bloco | fluxo atual (exclui slide element) |
 
 **Pointer-events:** no modo editor, filhos do chart com `pointer-events: auto` e `data-chart-part="…"`; no modo TV/preview kiosk, `pointer-events: none` no miolo (só o engine de slides).
 
+Contrato canônico: `compositePartSelection.ts` (`select-part` | `part-move` | `drag-block`).
+
+### 19.5.1 Query vs View (jul/2026)
+
+```text
+api-delpi → data (cru em resolved.data)
+         → dataTransform.steps  (Query — Preparar dados)
+         → *Projection          (View — eixos/métricas/colunas)
+         → chart / kpi / table
+```
+
+| Camada | Onde | Persistência |
+|---|---|---|
+| **Query** | `data_source.dataTransform.steps` | Só steps (nunca rows) |
+| **View** | `chartProjection` / `kpiProjection` / `tableProjection` | Campos/agregação/cor de série |
+
+UI: painel **Preparar dados** na fonte (`DataPreparePanel`). Engine: `dataTransform.ts` + `tv_data_transform_service.py` (rename, select, filter, addColumn com DSL aritmética sandbox).
+
+**Backlog (Fase C):** diálogo Select Data; eixo secundário por série; dash/width avançado; groupBy/pivot/merge.
 ### 19.6 Onde implementar (sem espalhar)
 
 | Camada | Módulo canônico | Não fazer |
