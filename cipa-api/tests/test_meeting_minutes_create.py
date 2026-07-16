@@ -147,6 +147,55 @@ def test_soft_delete_allows_partially_signed_and_keeps_repository_history():
     assert result["minute"]["actor_user_id"] == "actor-1"
 
 
+def test_create_version_with_none_content_preserves_current_version():
+    """Regressão: reabrir ata (payload só com change_reason e campos None) não pode zerar o conteúdo."""
+    captured = {}
+
+    class Repo:
+        def get_version(self, _minute_id):
+            return {
+                "agenda_html": "<p>Pauta original</p>",
+                "body_html": "<p>Texto original da ata</p>",
+                "decisions_html": "<p>Decisões</p>",
+                "pending_html": "<p>Pendências</p>",
+                "observations_html": "<p>Observações</p>",
+            }
+
+        def create_new_version(self, **kwargs):
+            captured.update(kwargs)
+            return {"minute": {"id": kwargs["minute_id"]}, "version": {"id": "v2"}}
+
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    service.repo = Repo()
+    service._load_authorized = lambda *_args: {
+        "id": "minute-1",
+        "unit_code": "01",
+        "status": "partially_signed",
+        "title": "Ata",
+        "meeting_type": "ordinary",
+        "meeting_date": "2026-07-16",
+        "start_time": None,
+        "end_time": None,
+        "location": None,
+    }
+
+    payload = {
+        "change_reason": "Ata reaberta para edição pelo gestor.",
+        "agenda_html": None,
+        "body_html": None,
+        "decisions_html": None,
+        "pending_html": None,
+        "observations_html": None,
+    }
+    service.create_version(SimpleNamespace(id="actor-1"), "minute-1", payload)
+
+    assert "Texto original da ata" in captured["body_html"]
+    assert "Pauta original" in captured["agenda_html"]
+    assert "Decisões" in captured["decisions_html"]
+    assert "Pendências" in captured["pending_html"]
+    assert "Observações" in captured["observations_html"]
+
+
 @pytest.mark.parametrize("status", ["signed", "finalized"])
 def test_soft_delete_rejects_signed_or_finalized(status):
     service = MeetingMinutesService.__new__(MeetingMinutesService)

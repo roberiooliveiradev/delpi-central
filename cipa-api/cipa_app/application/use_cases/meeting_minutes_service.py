@@ -238,15 +238,19 @@ class MeetingMinutesService:
         current = self.repo.get_version(minute_id)
         if not current:
             raise LookupError("Versão atual não encontrada.")
-        agenda = CipaHtmlSanitizer.sanitize(payload.get("agenda_html", current["agenda_html"]))
-        body = CipaHtmlSanitizer.sanitize(payload.get("body_html", current["body_html"]))
-        decisions = CipaHtmlSanitizer.sanitize(
-            payload.get("decisions_html", current["decisions_html"])
-        )
-        pending = CipaHtmlSanitizer.sanitize(payload.get("pending_html", current["pending_html"]))
-        observations = CipaHtmlSanitizer.sanitize(
-            payload.get("observations_html", current["observations_html"])
-        )
+
+        def _content(field: str) -> str:
+            # None = campo não informado — preservar a versão atual (rota envia todas as chaves).
+            value = payload.get(field)
+            if value is None:
+                value = current.get(field)
+            return CipaHtmlSanitizer.sanitize(value)
+
+        agenda = _content("agenda_html")
+        body = _content("body_html")
+        decisions = _content("decisions_html")
+        pending = _content("pending_html")
+        observations = _content("observations_html")
         hash_payload = ContentHashService.build_version_payload(
             title=minute["title"],
             meeting_type=minute["meeting_type"],
