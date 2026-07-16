@@ -155,7 +155,8 @@ export async function pendingSignatures(signal?: AbortSignal) {
 }
 
 export async function searchDirectoryUsers(query: string, limit = 10, signal?: AbortSignal) {
-  const qs = new URLSearchParams({ q: query, limit: String(limit) });
+  // include_self: quem cria a ata também pode ser participante/signatário.
+  const qs = new URLSearchParams({ q: query, limit: String(limit), include_self: "true" });
   const payload = await httpGet<{ items?: DirectoryUser[] }>(
     `/core-api/me/directory/users?${qs.toString()}`,
     { signal },
