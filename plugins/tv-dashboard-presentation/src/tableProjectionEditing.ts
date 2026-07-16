@@ -23,6 +23,29 @@ export function resolveEditableTableProjectionColumns(
   }));
 }
 
+/** Distribui a largura igualmente entre as colunas visíveis (PowerPoint «Distribuir Colunas»). */
+export function distributeTableProjectionColumnWidths(
+  block: ComunicadoTableViewBlock,
+): TableViewProjection {
+  const columns = resolveEditableTableProjectionColumns(block);
+  const visibleCount = columns.filter((column) => column.visible !== false).length;
+  const evenWidthPct =
+    visibleCount > 0 ? Math.round((100 / visibleCount) * 10) / 10 : undefined;
+
+  return {
+    ...block.tableProjection,
+    columns: columns.map((column) => {
+      const next = { ...column };
+      if (column.visible === false || evenWidthPct == null) {
+        delete next.widthPct;
+      } else {
+        next.widthPct = evenWidthPct;
+      }
+      return next;
+    }),
+  };
+}
+
 export function resizeTableProjectionColumn(
   block: ComunicadoTableViewBlock,
   columnKey: string,

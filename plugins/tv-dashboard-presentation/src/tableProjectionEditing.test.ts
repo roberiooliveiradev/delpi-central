@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
 import {
+  distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
   resolveEditableTableProjectionColumns,
 } from "./tableProjectionEditing";
@@ -23,6 +24,27 @@ describe("tableProjectionEditing", () => {
     expect(projection.columns).toEqual([
       { key: "code", label: "Código", visible: true, widthPct: 35.3 },
       { key: "description", label: "Descrição", visible: true, widthPct: 60 },
+    ]);
+  });
+
+  it("distribui a largura igualmente entre colunas visíveis", () => {
+    const withHidden = {
+      type: "table_view",
+      tableProjection: {
+        columns: [
+          { key: "code", label: "Código", visible: true, widthPct: 80 },
+          { key: "description", label: "Descrição", visible: true },
+          { key: "internal", label: "Interno", visible: false, widthPct: 20 },
+        ],
+      },
+    } as ComunicadoTableViewBlock;
+
+    const projection = distributeTableProjectionColumnWidths(withHidden);
+
+    expect(projection.columns).toEqual([
+      { key: "code", label: "Código", visible: true, widthPct: 50 },
+      { key: "description", label: "Descrição", visible: true, widthPct: 50 },
+      { key: "internal", label: "Interno", visible: false },
     ]);
   });
 

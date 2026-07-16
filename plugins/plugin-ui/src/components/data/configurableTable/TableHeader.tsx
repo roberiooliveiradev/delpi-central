@@ -1,5 +1,6 @@
 import type {
   CSSProperties,
+  MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from "react";
@@ -81,6 +82,43 @@ export function TableHeaderCell({
     handle.addEventListener("pointercancel", finish);
   };
 
+  /** Duplo clique na alça: mede a largura natural do conteúdo e ajusta a coluna. */
+  const autoFitColumn = (event: ReactMouseEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const handle = event.currentTarget;
+    const cell = handle.closest("th");
+    const table = handle.closest("table");
+    const frame = table?.parentElement;
+    if (!cell || !table || !frame || !interaction?.onColumnResize) return;
+
+    const frameWidth = frame.getBoundingClientRect().width;
+    if (frameWidth <= 0) return;
+
+    const root = table.closest(`.${cn.root}`);
+    const cols = Array.from(table.querySelectorAll("colgroup col")) as HTMLElement[];
+    const previousColWidths = cols.map((col) => col.style.width);
+    const hadWrap = root?.classList.contains(cn.rootWrap) ?? false;
+    const hadFixedCols = root?.classList.contains(cn.rootFixedCols) ?? false;
+
+    // Solta larguras fixas temporariamente para o navegador calcular a largura natural.
+    root?.classList.remove(cn.rootWrap, cn.rootFixedCols);
+    for (const col of cols) col.style.width = "";
+    const naturalWidth = cell.getBoundingClientRect().width;
+    cols.forEach((col, index) => {
+      col.style.width = previousColWidths[index] ?? "";
+    });
+    if (hadWrap) root?.classList.add(cn.rootWrap);
+    if (hadFixedCols) root?.classList.add(cn.rootFixedCols);
+
+    if (naturalWidth <= 0) return;
+    const nextWidthPct = Math.max(
+      1,
+      Math.min(100, Math.round((naturalWidth / frameWidth) * 1000) / 10),
+    );
+    interaction.onColumnResize(columnKey, nextWidthPct);
+  };
+
   return (
     <th
       className={[cn.headerCell, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
@@ -98,6 +136,7 @@ export function TableHeaderCell({
             aria-orientation="vertical"
             data-column-resize-handle="top"
             onPointerDown={startColumnResize}
+            onDoubleClick={autoFitColumn}
           />
           <span
             className={`${cn.columnResizeHandle} ${cn.columnResizeHandle}--bottom`}
@@ -105,6 +144,7 @@ export function TableHeaderCell({
             aria-orientation="vertical"
             data-column-resize-handle="bottom"
             onPointerDown={startColumnResize}
+            onDoubleClick={autoFitColumn}
           />
         </>
       ) : null}

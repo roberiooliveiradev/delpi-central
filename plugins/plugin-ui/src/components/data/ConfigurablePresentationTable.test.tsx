@@ -150,6 +150,32 @@ describe("ConfigurablePresentationTable", () => {
     expect(onColumnResize).toHaveBeenLastCalledWith("name", 35);
   });
 
+  it("duplo clique na alça ajusta a largura ao conteúdo", () => {
+    const onColumnResize = vi.fn();
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+        interaction={{
+          selectedPart: { kind: "headerCell", colIndex: 0 },
+          onColumnResize,
+        }}
+      />,
+    );
+    const table = screen.getByRole("table");
+    const frame = table.parentElement as HTMLElement;
+    const header = screen.getByRole("columnheader", { name: "Produto" });
+    const handle = container.querySelector(
+      '[data-column-resize-handle="top"]',
+    ) as HTMLElement;
+
+    frame.getBoundingClientRect = () => ({ width: 400 }) as DOMRect;
+    header.getBoundingClientRect = () => ({ width: 120 }) as DOMRect;
+    fireEvent.doubleClick(handle);
+
+    expect(onColumnResize).toHaveBeenCalledWith("name", 30);
+  });
+
   it("solicita a próxima página ao chegar ao fim do scroll", () => {
     const onLoadMoreRows = vi.fn();
     const { container } = render(

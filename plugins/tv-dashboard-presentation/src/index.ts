@@ -810,6 +810,7 @@ export {
   type ViewProjectionSelection,
 } from "./viewProjection";
 export {
+  distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
   resolveEditableTableProjectionColumns,
 } from "./tableProjectionEditing";

@@ -1,6 +1,16 @@
 import { useMemo, useState } from "react";
-import { AlignCenter, AlignLeft, AlignRight, Database, Grid3x3, WrapText } from "lucide-react";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Columns3,
+  Database,
+  Grid3x3,
+  Rows3,
+  WrapText,
+} from "lucide-react";
+import {
+  distributeTableProjectionColumnWidths,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
   resizeTableProjectionColumn,
@@ -258,12 +268,35 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
     </div>
   );
 
+  const distributeTiles = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <DeckRibbonTile
+        icon={Rows3}
+        label="Distribuir linhas"
+        hint={D.tableDistributeRows}
+        onClick={() => applyOptions({ rowHeightPx: undefined })}
+      />
+      <DeckRibbonTile
+        icon={Columns3}
+        label="Distribuir colunas"
+        hint={D.tableDistributeColumns}
+        disabled={projectionColumns.length === 0}
+        onClick={() =>
+          updateSelected({
+            tableProjection: distributeTableProjectionColumnWidths(block),
+          } as Partial<ComunicadoBlock>)
+        }
+      />
+    </div>
+  );
+
   const hint = D.tableColumnSize ?? "Altura das linhas e largura relativa de cada coluna.";
 
   if (layout === "pane") {
     return (
       <SelectionPaneSection title="Tamanho" hint={hint} defaultOpen>
         {fields}
+        {distributeTiles}
       </SelectionPaneSection>
     );
   }
@@ -271,6 +304,7 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
   return (
     <DeckRibbonGroup label="Tamanho" hint={hint}>
       {fields}
+      {distributeTiles}
     </DeckRibbonGroup>
   );
 }
