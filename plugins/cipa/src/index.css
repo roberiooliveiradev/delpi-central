@@ -204,6 +204,20 @@
   color: var(--cipa-text-muted);
 }
 
+.dashboard-cipa .cipa-signers-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--cipa-border);
+}
+
+.dashboard-cipa .cipa-signers-summary__title {
+  margin: 0;
+  font-size: 14px;
+  color: var(--cipa-text);
+}
+
 .dashboard-cipa .cipa-signer-list {
   margin: 0;
   padding-left: 20px;

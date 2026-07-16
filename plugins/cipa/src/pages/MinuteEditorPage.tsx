@@ -4,9 +4,9 @@ import {
   ActionButton,
   BackLink,
   FieldLabel,
+  FormSelectControl,
   IconButton,
   NativeCheckboxControl,
-  NativeSelectControl,
   NativeTextControl,
   RichTextEditor,
   UserDirectoryPicker,
@@ -246,10 +246,11 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
             <div className="cipa-compose__meta-fields">
               <div className="cipa-field">
                 <FieldLabel label="Tipo" htmlFor="cipa-minute-type" />
-                <NativeSelectControl
+                <FormSelectControl
                   id="cipa-minute-type"
                   value={meetingType}
                   onChange={setMeetingType}
+                  portalScopeClassName="dashboard-cipa"
                   options={Object.entries(MEETING_TYPE_LABELS).map(([value, label]) => ({
                     value,
                     label,
@@ -367,26 +368,25 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
             ) : (
               <CipaStateBanner>Nenhum participante adicionado.</CipaStateBanner>
             )}
-          </div>
-        </CipaSectionCard>
 
-        <CipaSectionCard title="Signatários" className="cipa-compose__section">
-          <div className="cipa-compose__panel">
-            <p className="cipa-compose__hint">
-              Quem deve assinar é definido marcando os participantes internos como
-              «Deve assinar». Obrigatório antes do envio para assinatura.
-            </p>
-            {signerParticipants.length > 0 ? (
-              <ol className="cipa-signer-list">
-                {signerParticipants.map((item) => (
-                  <li key={item.user_id}>{item.display_name}</li>
-                ))}
-              </ol>
-            ) : (
-              <CipaStateBanner variant="error">
-                Nenhum signatário selecionado. Marque ao menos um participante.
-              </CipaStateBanner>
-            )}
+            <div className="cipa-signers-summary">
+              <h3 className="cipa-signers-summary__title">Signatários</h3>
+              <p className="cipa-compose__hint">
+                Marque «Deve assinar» nos participantes internos. É obrigatório selecionar
+                ao menos um signatário antes do envio para assinatura.
+              </p>
+              {signerParticipants.length > 0 ? (
+                <ol className="cipa-signer-list">
+                  {signerParticipants.map((item) => (
+                    <li key={item.user_id}>{item.display_name}</li>
+                  ))}
+                </ol>
+              ) : (
+                <CipaStateBanner variant="error">
+                  Nenhum signatário selecionado. Marque ao menos um participante.
+                </CipaStateBanner>
+              )}
+            </div>
           </div>
         </CipaSectionCard>
 
