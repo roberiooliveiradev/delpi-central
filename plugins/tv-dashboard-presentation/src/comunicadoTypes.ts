@@ -268,6 +268,8 @@ export type ComunicadoTablePreset = "grid" | "minimal" | "banded";
 export type ComunicadoDataSourceBlock = ComunicadoBlockBase & {
   type: "data_source";
   dataBinding: ComunicadoDataBinding;
+  /** Steps tipo Power Query (antes da View/*Projection). */
+  dataTransform?: import("./dataTransform").DataTransform;
   resolved?: ComunicadoDataResolved;
 };
 
@@ -373,6 +375,8 @@ export type ComunicadoDataResolved = {
   label?: string;
   /** Enrichment já aplicou *Projection no servidor — cliente não re-agrega. */
   serverProjectionApplied?: boolean;
+  /** Enrichment aplicou dataTransform.steps antes da View. */
+  serverTransformApplied?: boolean;
   kpi?: { value?: unknown; label?: string };
   /** Métricas escalares disponíveis (multi-campo). */
   kpiMetrics?: ComunicadoDataKpiMetric[];

@@ -11,6 +11,7 @@ from tv_app.application.services.comunicado_input_filters_service import (
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
+from tv_app.application.services.data.tv_data_transform_service import apply_data_transform_to_payload
 from tv_app.application.services.data.tv_view_projection_service import (
     apply_view_projection_to_resolved,
 )
@@ -860,6 +861,13 @@ class ComunicadoDataEnrichmentService:
         display_mode = str(binding.get("displayMode") or "kpi")
         block_type = str(block.get("type") or "")
 
+        server_transform_applied = False
+        if block_type == "data_source":
+            data, server_transform_applied, _table = apply_data_transform_to_payload(
+                data,
+                block.get("dataTransform"),
+            )
+
         resolved: dict[str, Any] = {
             "meta": meta,
             "data": data,
@@ -867,6 +875,8 @@ class ComunicadoDataEnrichmentService:
             "displayMode": normalize_display_mode(display_mode),
             "label": binding.get("label") or route_info.get("label"),
         }
+        if server_transform_applied:
+            resolved["serverTransformApplied"] = True
 
         if block_type == "data_source":
             for mode in ("kpi", "line_chart", "table"):

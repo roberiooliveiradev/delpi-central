@@ -728,6 +728,17 @@ export { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
 export { ConfigurableTable } from "./ConfigurableTable";
 export type { ComunicadoChartType, ComunicadoTablePreset, ComunicadoDataSourceBlock, ComunicadoChartViewBlock, ComunicadoTableViewBlock, ComunicadoKpiViewBlock } from "./comunicadoTypes";
 export {
+  applyDataTransformSteps,
+  applyDataTransformToPayload,
+  coercePayloadToTable,
+  evaluateSafeArithmeticExpr,
+  normalizeDataTransform,
+  type DataTransform,
+  type DataTransformCmp,
+  type DataTransformStep,
+  type DataTableSnapshot,
+} from "./dataTransform";
+export {
   resolveChartType,
   resolveEffectiveDisplayMode,
   resolveTableColumns,

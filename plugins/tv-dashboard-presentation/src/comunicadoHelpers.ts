@@ -105,6 +105,7 @@ import {
   isFetchableDataBlockType,
 } from "./comunicadoDataArchitecture";
 import { normalizeSelectedValueFields } from "./resolveKpiMetrics";
+import { normalizeDataTransform } from "./dataTransform";
 import {
   chartProjectionFromSelectedFields,
   kpiProjectionFromSelectedFields,
@@ -804,6 +805,9 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       maxRows: block.dataBinding.maxRows,
       refreshSec: block.dataBinding.refreshSec,
     };
+    if (block.dataTransform?.steps?.length) {
+      base.dataTransform = { steps: block.dataTransform.steps.map((step) => ({ ...step })) };
+    }
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
@@ -1034,6 +1038,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
           maxRows: binding.maxRows,
           refreshSec: binding.refreshSec,
         },
+        dataTransform: normalizeDataTransform(block.dataTransform),
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)
