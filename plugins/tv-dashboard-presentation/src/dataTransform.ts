@@ -255,12 +255,24 @@ export function coercePayloadToTable(data: unknown): DataTableSnapshot | null {
   }
   if (data && typeof data === "object") {
     const record = data as Record<string, unknown>;
-    for (const key of ["items", "rows", "data", "results", "values"]) {
+    if (record.success != null && "data" in record) {
+      return coercePayloadToTable(record.data);
+    }
+    for (const key of ["items", "rows", "data", "results", "values", "records", "entries", "flow", "history"]) {
       const inner = record[key];
       if (Array.isArray(inner)) {
         const nested = coercePayloadToTable(inner);
         if (nested) return nested;
       }
+    }
+    const scalarRows: Record<string, unknown>[] = [];
+    for (const [key, value] of Object.entries(record)) {
+      if (value == null || value === "") continue;
+      if (typeof value === "object") continue;
+      scalarRows.push({ campo: key, valor: value });
+    }
+    if (scalarRows.length > 0) {
+      return { columns: ["campo", "valor"], rows: scalarRows };
     }
   }
   return null;

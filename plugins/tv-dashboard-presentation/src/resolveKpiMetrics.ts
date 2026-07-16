@@ -98,7 +98,20 @@ export function applyMetricSelectionToResolved(
         "value" in row,
     );
 
-  if (looksLikeMetricTable || tableRows.length <= 1) {
+  const countOnlyMetrics =
+    metrics.length === 1 && metrics[0]?.field === "total_records";
+  const richTabularRows =
+    tableRows.length > 0 &&
+    tableRows.some((row) => {
+      if (!row || typeof row !== "object") return false;
+      const keys = Object.keys(row);
+      return keys.length > 2 || !("value" in row && ("metric" in row || "field" in row));
+    });
+
+  if (
+    looksLikeMetricTable ||
+    (tableRows.length <= 1 && metrics.length > 0 && !countOnlyMetrics && !richTabularRows)
+  ) {
     next.table = {
       rows: metrics.map((metric) => ({
         metric: metric.label,

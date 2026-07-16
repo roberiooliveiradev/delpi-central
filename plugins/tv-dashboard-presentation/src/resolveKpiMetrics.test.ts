@@ -60,4 +60,23 @@ describe("resolveKpiMetrics", () => {
       { metric: "% no prazo", field: "percent_dentro_prazo", value: 81.5 },
     ]);
   });
+
+  it("preserva tabela textual quando a métrica é só contagem", () => {
+    const resolved: ComunicadoDataResolved = {
+      kpiMetrics: [{ field: "total_records", value: 2, label: "Quantidade" }],
+      table: {
+        rows: [
+          { status: "APROVADO", owner: "Ana" },
+          { status: "PENDENTE", owner: "Bruno" },
+        ],
+        columns: [
+          { key: "status", label: "Status" },
+          { key: "owner", label: "Responsável" },
+        ],
+      },
+    };
+    const next = applyMetricSelectionToResolved(resolved, {});
+    expect(next?.table?.rows).toHaveLength(2);
+    expect(next?.table?.rows?.[0]?.status).toBe("APROVADO");
+  });
 });

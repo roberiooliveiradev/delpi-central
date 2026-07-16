@@ -7,6 +7,8 @@ import operator
 import re
 from typing import Any
 
+from tv_app.application.services.series_points_extractor import unwrap_operational_data
+
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _CMPS = frozenset({"eq", "neq", "gt", "lt", "notNull", "contains", "startsWith"})
 _AGGS = frozenset({"sum", "avg", "min", "max", "count", "first"})
@@ -164,6 +166,7 @@ def normalize_data_transform(raw: Any) -> dict[str, Any] | None:
 
 
 def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
+    data = unwrap_operational_data(data)
     if isinstance(data, list):
         rows = [dict(row) for row in data if isinstance(row, dict)]
         columns: list[str] = []
@@ -176,12 +179,21 @@ def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
                     columns.append(key_s)
         return {"columns": columns, "rows": rows}
     if isinstance(data, dict):
-        for key in ("items", "rows", "data", "results", "values"):
+        for key in ("items", "rows", "data", "results", "values", "records", "entries", "flow", "history"):
             inner = data.get(key)
             if isinstance(inner, list):
                 nested = coerce_payload_to_table(inner)
                 if nested is not None:
                     return nested
+        scalar_rows: list[dict[str, Any]] = []
+        for key, value in data.items():
+            if value is None or value == "":
+                continue
+            if isinstance(value, (dict, list)):
+                continue
+            scalar_rows.append({"campo": key, "valor": value})
+        if scalar_rows:
+            return {"columns": ["campo", "valor"], "rows": scalar_rows}
     return None
 
 

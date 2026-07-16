@@ -1017,3 +1017,121 @@ def test_decorate_input_fallback_when_param_key_without_schemas():
     assert input_block["input"]["paramAvailable"] is True
     assert input_block["input"]["resolvedField"]["type"] == "string"
     assert input_block["input"]["resolvedField"]["label"] == "Filial"
+
+
+def test_enrich_auto_resolves_table_for_text_only_list_shape():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_lmp_history_flow", "shape": "list"},
+        "data": {
+            "flow": [
+                {"status": "APROVADO", "usuario": "Ana", "data": "2026-07-01"},
+                {"status": "PENDENTE", "usuario": "Bruno", "data": "2026-07-02"},
+            ]
+        },
+        "route": {
+            "label": "Transições de fluxo",
+            "metaShape": "list",
+            "tvConstraints": {"maxRows": 10},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "flow-1",
+                "type": "data_metric",
+                "dataBinding": {
+                    "operationId": "get_lmp_history_flow",
+                    "displayMode": "auto",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) == 2
+    assert rows[0]["status"] == "APROVADO"
+
+
+def test_enrich_auto_resolves_table_for_text_only_scalar_object():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "list_hr_branches", "shape": "scalar"},
+        "data": {"status": "ATIVO", "owner": "Operações"},
+        "route": {
+            "label": "Status",
+            "metaShape": "scalar",
+            "tvConstraints": {"maxRows": 10},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "status-1",
+                "type": "data_table",
+                "dataBinding": {
+                    "operationId": "list_hr_branches",
+                    "displayMode": "auto",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) >= 2
+    assert any(row.get("valor") == "ATIVO" for row in rows)
+
+
+def test_enrich_unwraps_api_delpi_envelope_for_text_list():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "list_hr_branches", "shape": "list"},
+        "data": {
+            "success": True,
+            "data": {
+                "records": [
+                    {"codigo": "A1", "descricao": "Item A"},
+                    {"codigo": "A2", "descricao": "Item B"},
+                ]
+            },
+        },
+        "route": {
+            "label": "Registros",
+            "metaShape": "list",
+            "tvConstraints": {"maxRows": 10},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "records-1",
+                "type": "data_table",
+                "dataBinding": {
+                    "operationId": "list_hr_branches",
+                    "displayMode": "table",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) == 2
+    assert rows[0]["codigo"] == "A1"

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyDataTransformSteps,
   applyDataTransformToPayload,
+  coercePayloadToTable,
   dataTransformStepLabel,
   evaluateSafeArithmeticExpr,
   evaluateSafeColumnExpr,
@@ -183,5 +184,18 @@ describe("dataTransform", () => {
     expect(dataTransformStepLabel({ op: "merge", sourceId: "x", leftKey: "a", rightKey: "b", join: "left" })).toBe(
       "Consultas mescladas",
     );
+  });
+
+  it("coercePayloadToTable aceita envelope e objeto escalar textual", () => {
+    expect(
+      coercePayloadToTable({
+        success: true,
+        data: [{ status: "A" }, { status: "B" }],
+      })?.rows,
+    ).toHaveLength(2);
+    expect(coercePayloadToTable({ status: "ATIVO", owner: "Ops" })?.rows).toEqual([
+      { campo: "status", valor: "ATIVO" },
+      { campo: "owner", valor: "Ops" },
+    ]);
   });
 });

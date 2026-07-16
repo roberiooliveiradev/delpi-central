@@ -4,6 +4,36 @@ from __future__ import annotations
 
 from typing import Any
 
+_ENVELOPE_META_KEYS = frozenset({"meta", "success", "message", "errors", "error"})
+
+
+def unwrap_operational_data(data: Any) -> Any:
+    """Normaliza payload api-delpi (envelope `{ success, data }` ou business data)."""
+    if isinstance(data, list):
+        return data
+    if not isinstance(data, dict):
+        return data
+
+    if data.get("success") is not None and "data" in data:
+        inner = data.get("data")
+        if isinstance(inner, (dict, list)):
+            return inner
+
+    inner = data.get("data")
+    if isinstance(inner, list):
+        return inner
+    if isinstance(inner, dict):
+        other_keys = [key for key in data.keys() if key not in _ENVELOPE_META_KEYS and key != "data"]
+        if not other_keys or all(data.get(key) in (None, "", [], {}) for key in other_keys):
+            return inner
+
+    return data
+
+
+def envelope_data(envelope: dict[str, Any] | Any) -> dict[str, Any]:
+    unwrapped = unwrap_operational_data(envelope)
+    return unwrapped if isinstance(unwrapped, dict) else {}
+
 
 def extract_series_points(
     data: Any,
@@ -12,6 +42,7 @@ def extract_series_points(
     branch: str | None = None,
 ) -> list[dict[str, Any]]:
     """Converte lista `points`/`series`/`serie`/`ranking` do payload em pontos de gráfico TV."""
+    data = unwrap_operational_data(data)
     if not isinstance(data, dict):
         return []
     candidates: list[str] = []
@@ -70,8 +101,15 @@ def extract_series_points(
     return points
 
 
-def envelope_data(envelope: dict[str, Any] | Any) -> dict[str, Any]:
+def envelope_meta(envelope: dict[str, Any] | Any) -> dict[str, Any]:
     if not isinstance(envelope, dict):
         return {}
-    data = envelope.get("data")
-    return data if isinstance(data, dict) else {}
+    meta = envelope.get("meta")
+    return meta if isinstance(meta, dict) else {}
+
+
+def response_fields_from_meta(meta: dict[str, Any]) -> list[dict[str, Any]]:
+    fields = meta.get("fields")
+    if isinstance(fields, list):
+        return [field for field in fields if isinstance(field, dict)]
+    return []

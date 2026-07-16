@@ -30,7 +30,10 @@ from tv_app.application.services.tv_data_route_catalog_service import (
 )
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
 from tv_app.infrastructure.gateways.delpi_operational_gateway import DelpiOperationalGateway
-from tv_app.application.services.series_points_extractor import extract_series_points
+from tv_app.application.services.series_points_extractor import (
+    extract_series_points,
+    unwrap_operational_data,
+)
 
 _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
 
@@ -345,11 +348,31 @@ _TABLE_LIST_KEYS = (
     "centros_custo",
     "fornecedores",
     "valores",
+    "records",
+    "results",
+    "rows",
+    "entries",
+    "flow",
+    "history",
+    "transitions",
+)
+
+_SKIP_GENERIC_LIST_KEYS = frozenset(
+    {
+        "meta",
+        "summary",
+        "pagination",
+        "success",
+        "message",
+        "errors",
+        "error",
+    }
 )
 
 
 def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
     """Extrai linhas para tabela: lista bare, `items`/`tableField` e chaves list comuns."""
+    data = unwrap_operational_data(data)
     if isinstance(data, list):
         return data
     if not isinstance(data, dict):
@@ -367,12 +390,12 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
         if isinstance(raw, list) and raw:
             return raw
 
-    # Envelope api-delpi às vezes chega com data aninhado (lista ou {items}).
-    nested = data.get("data")
-    if isinstance(nested, list) and nested:
-        return nested
-    if isinstance(nested, dict):
-        return _list_from_data(nested, table_field)
+    for key, raw in data.items():
+        if key in _SKIP_GENERIC_LIST_KEYS:
+            continue
+        if isinstance(raw, list) and raw:
+            return raw
+
     return []
 
 
@@ -434,6 +457,7 @@ def _scalar_object_as_table_rows(
     max_rows: int,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     """Objeto só com escalares (health, inspector) → tabela campo/valor para preview TV."""
+    data = unwrap_operational_data(data)
     if not isinstance(data, dict):
         return [], []
     rows: list[dict[str, Any]] = []
@@ -496,14 +520,58 @@ def _scalar_as_chart_points(value: Any, label: str | None = None) -> list[dict[s
     return [{"label": label, "value": value}]
 
 
+def _rows_have_numeric_cells(rows: list[dict[str, Any]]) -> bool:
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        for value in row.values():
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, (int, float)):
+                return True
+    return False
+
+
+def _meaningful_kpi_metrics(
+    data: Any,
+    *,
+    route_info: dict[str, Any],
+    binding: dict[str, Any],
+) -> list[dict[str, Any]]:
+    metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding)
+    return [metric for metric in metrics if metric.get("field") != "total_records"]
+
+
 def _infer_auto_display_mode(
     data: Any,
     route_info: dict[str, Any],
     meta: dict[str, Any],
+    *,
+    binding: dict[str, Any] | None = None,
 ) -> str:
-    shape = str(meta.get("shape") or route_info.get("metaShape") or "scalar")
-    if shape == "paged_list" or route_info.get("tableFields"):
+    shape = str(meta.get("shape") or route_info.get("metaShape") or "scalar").lower()
+    table_field = route_info.get("tableFields")
+    binding_payload = binding if isinstance(binding, dict) else {}
+
+    if shape in {"list", "paged_list", "hierarchy"} and _list_from_data(data, table_field):
         return "table"
+
+    if route_info.get("tableFields") or shape == "paged_list":
+        return "table"
+
+    rows, _ = _extract_table_rows(
+        data,
+        table_field,
+        5,
+        meta=meta,
+        series_field=route_info.get("seriesField"),
+    )
+    if rows:
+        if not _meaningful_kpi_metrics(data, route_info=route_info, binding=binding_payload):
+            return "table"
+        if len(rows) > 1 and not _rows_have_numeric_cells(rows):
+            return "table"
+
     if route_info.get("seriesField") or shape in {"playbook_report", "composite_analysis"}:
         points = _extract_series(data, route_info.get("seriesField"))
         if points:
@@ -768,7 +836,12 @@ class ComunicadoDataEnrichmentService:
     ) -> dict[str, Any]:
         mode = normalize_display_mode(display_mode)
         if mode == "auto":
-            mode = _infer_auto_display_mode(data, route_info, meta)
+            mode = _infer_auto_display_mode(
+                data,
+                route_info,
+                meta,
+                binding=binding,
+            )
 
         value_fields = _value_fields_for_binding(route_info, binding)
         metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding)
