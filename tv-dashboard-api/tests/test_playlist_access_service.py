@@ -42,6 +42,7 @@ def _user(user_id: str, *, permissions: list[str] | None = None, is_superadmin: 
 def test_actor_id_prefers_user_id_from_delpi_auth():
     assert PlaylistAccessService.actor_id(_user("kc-sub-1")) == "kc-sub-1"
     assert PlaylistAccessService.actor_id(SimpleNamespace(sub="legacy-sub")) == "legacy-sub"
+    assert PlaylistAccessService.actor_id({"sub": "validated-jwt-sub"}) == "validated-jwt-sub"
     assert PlaylistAccessService.actor_id(SimpleNamespace()) is None
 
 

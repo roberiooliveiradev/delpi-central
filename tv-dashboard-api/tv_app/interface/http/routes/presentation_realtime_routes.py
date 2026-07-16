@@ -7,11 +7,28 @@ from fastapi import APIRouter, WebSocket, WebSocketException, status
 from delpi_auth.jwt_validator import validate_token
 from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_realtime_hub import presentation_realtime_hub
+from tv_app.application.services.presentation_realtime_models import (
+    PresentationRealtimeSession,
+)
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 
 router = APIRouter(tags=["Presentation Realtime"])
 _repo = PlaylistRepository()
 _access = PlaylistAccessService()
+
+
+def _claim(user: object, key: str) -> str:
+    raw = user.get(key) if isinstance(user, dict) else getattr(user, key, None)
+    return str(raw or "").strip()
+
+
+def _display_name(user: object) -> str:
+    full_name = _claim(user, "name")
+    if full_name:
+        return full_name
+    parts = [_claim(user, "given_name"), _claim(user, "family_name")]
+    joined = " ".join(part for part in parts if part)
+    return joined or _claim(user, "preferred_username") or "Editor"
 
 
 def _resolve_public_playlist(token: str) -> dict | None:
@@ -26,7 +43,17 @@ async def public_presentation_ws(websocket: WebSocket, token: str):
     playlist = _resolve_public_playlist(token)
     if not playlist:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
-    await presentation_realtime_hub.connect(websocket, playlist_id=str(playlist["id"]))
+    await presentation_realtime_hub.connect(
+        websocket,
+        playlist_id=str(playlist["id"]),
+        session=PresentationRealtimeSession(
+            user_id="public-display",
+            display_name="Apresentação",
+            role="viewer",
+            can_edit=False,
+            allow_presence=False,
+        ),
+    )
 
 
 @router.websocket("/playlists/{playlist_id}/presentation-ws")
@@ -50,4 +77,16 @@ async def admin_presentation_ws(
     access = _access.resolve(playlist_id, user)
     if not access.can_read:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
-    await presentation_realtime_hub.connect(websocket, playlist_id=str(playlist_id))
+    user_id = _access.actor_id(user)
+    if not user_id:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
+    await presentation_realtime_hub.connect(
+        websocket,
+        playlist_id=str(playlist_id),
+        session=PresentationRealtimeSession(
+            user_id=user_id,
+            display_name=_display_name(user),
+            role="editor" if access.can_edit else "viewer",
+            can_edit=access.can_edit,
+        ),
+    )

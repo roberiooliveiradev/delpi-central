@@ -16,6 +16,16 @@ export type PresentationSlideDraftEvent = {
   nativeConfig: Record<string, unknown>;
 };
 
+export type PresentationSelectionUpdateEvent = {
+  type: "selection_update";
+  playlistId?: string;
+  slideId: string;
+  clientId: string;
+  displayName: string;
+  selectedIds: string[];
+  updatedAt?: number;
+};
+
 export type PresentationRealtimeEvent = {
   type: string;
   reason?: string;
@@ -25,6 +35,9 @@ export type PresentationRealtimeEvent = {
   clientId?: string;
   nativeConfig?: Record<string, unknown>;
   peers?: PresentationPresencePeer[];
+  displayName?: string;
+  selectedIds?: string[];
+  updatedAt?: number;
 };
 
 type RealtimeSend = (payload: Record<string, unknown>) => void;
@@ -34,6 +47,7 @@ type Options = {
   wsUrl: string | null;
   onPresentationUpdated?: (event: PresentationRealtimeEvent) => void;
   onSlideDraft?: (event: PresentationSlideDraftEvent) => void;
+  onSelectionUpdate?: (event: PresentationSelectionUpdateEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
   onConnectionChange?: (connected: boolean) => void;
   presence?: PresentationPresencePeer;
@@ -66,6 +80,27 @@ export function parsePresentationRealtimeEvent(value: unknown): PresentationReal
       slideId,
       clientId,
       nativeConfig: nativeConfig as Record<string, unknown>,
+    };
+  }
+  if (payload.type === "selection_update") {
+    const { slideId, clientId, displayName, selectedIds } = payload;
+    if (
+      typeof slideId !== "string" ||
+      typeof clientId !== "string" ||
+      typeof displayName !== "string" ||
+      !Array.isArray(selectedIds) ||
+      !selectedIds.every((item) => typeof item === "string")
+    ) {
+      return null;
+    }
+    return {
+      type: "selection_update",
+      playlistId: typeof payload.playlistId === "string" ? payload.playlistId : undefined,
+      slideId,
+      clientId,
+      displayName,
+      selectedIds,
+      updatedAt: typeof payload.updatedAt === "number" ? payload.updatedAt : undefined,
     };
   }
   if (payload.type !== "presence_update") return payload as PresentationRealtimeEvent;
@@ -106,6 +141,7 @@ export function usePresentationRealtime({
   wsUrl,
   onPresentationUpdated,
   onSlideDraft,
+  onSelectionUpdate,
   onPresenceUpdate,
   onConnectionChange,
   presence,
@@ -118,6 +154,8 @@ export function usePresentationRealtime({
   handlerRef.current = onPresentationUpdated;
   const slideDraftHandlerRef = useRef(onSlideDraft);
   slideDraftHandlerRef.current = onSlideDraft;
+  const selectionHandlerRef = useRef(onSelectionUpdate);
+  selectionHandlerRef.current = onSelectionUpdate;
   const presenceHandlerRef = useRef(onPresenceUpdate);
   presenceHandlerRef.current = onPresenceUpdate;
   const connectionHandlerRef = useRef(onConnectionChange);
@@ -191,7 +229,10 @@ export function usePresentationRealtime({
             schedulePresentationUpdated(payload);
           }
           if (payload.type === "slide_draft") {
-            slideDraftHandlerRef.current?.(payload);
+            slideDraftHandlerRef.current?.(payload as PresentationSlideDraftEvent);
+          }
+          if (payload.type === "selection_update") {
+            selectionHandlerRef.current?.(payload as PresentationSelectionUpdateEvent);
           }
           if (payload.type === "presence_update") {
             presenceHandlerRef.current?.(payload.peers ?? []);

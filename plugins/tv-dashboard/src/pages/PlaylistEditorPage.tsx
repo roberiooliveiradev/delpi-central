@@ -3,6 +3,7 @@ import {
   parseComunicadoConfig,
   serializeComunicadoConfig,
   type PresentationPresencePeer,
+  type PresentationSelectionUpdateEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -127,6 +128,9 @@ export function PlaylistEditorPage({
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
   const [presencePeers, setPresencePeers] = useState<PresentationPresencePeer[]>([]);
+  const [remoteSelectionsByClientId, setRemoteSelectionsByClientId] = useState<
+    Record<string, PresentationSelectionUpdateEvent>
+  >({});
   /** Bump a cada mudança vinda de outro editor (WS) — o editor aceita o novo value. */
   const [remoteConfigRevision, setRemoteConfigRevision] = useState(0);
   const playlistRef = useRef<Playlist | null>(null);
@@ -266,6 +270,14 @@ export function PlaylistEditorPage({
     [presencePeers, editorPresence?.clientId],
   );
 
+  const currentRemoteSelections = useMemo(
+    () =>
+      Object.values(remoteSelectionsByClientId).filter(
+        (selection) => selection.slideId === selectedSlideId,
+      ),
+    [remoteSelectionsByClientId, selectedSlideId],
+  );
+
   const refreshPreviewThumbnails = useCallback(async () => {
     if (!slides.length) {
       setPreviewBySlideId({});
@@ -366,18 +378,58 @@ export function PlaylistEditorPage({
     writeSelectedSlideId(playlistId, null);
   }, [slides, selectedSlideId, playlistId, selectSlide]);
 
+  const handlePresenceUpdate = useCallback((peers: PresentationPresencePeer[]) => {
+    setPresencePeers(peers);
+    const activeClientIds = new Set(peers.map((peer) => peer.clientId));
+    setRemoteSelectionsByClientId((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([clientId]) => activeClientIds.has(clientId)),
+      ),
+    );
+  }, []);
+
+  const handleRemoteSelection = useCallback(
+    (event: PresentationSelectionUpdateEvent) => {
+      if (event.clientId === editorPresence?.clientId) return;
+      setRemoteSelectionsByClientId((current) => {
+        if (event.selectedIds.length === 0) {
+          const next = { ...current };
+          delete next[event.clientId];
+          return next;
+        }
+        return { ...current, [event.clientId]: event };
+      });
+    },
+    [editorPresence?.clientId],
+  );
+
   const { sendRealtime: wsSendRef } = usePlaylistEditorSync({
     playlistId,
     accessToken,
     presence: editorPresence,
-    onPresenceUpdate: setPresencePeers,
+    onPresenceUpdate: handlePresenceUpdate,
     onSync: () => {
       void reloadPlaylistFromServer();
     },
     onSlideDraft: (event) => {
       applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
     },
+    onSelectionUpdate: handleRemoteSelection,
   });
+
+  const sendSelectionUpdate = useCallback(
+    (slideId: string, selectedIds: string[]) => {
+      const clientId = editorPresence?.clientId;
+      if (!clientId) return;
+      wsSendRef.current?.({
+        type: "selection_update",
+        slideId,
+        clientId,
+        selectedIds,
+      });
+    },
+    [editorPresence?.clientId, wsSendRef],
+  );
 
   const load = useCallback(async () => {
     const cached = readPlaylistShell(playlistId);
@@ -875,6 +927,8 @@ export function PlaylistEditorPage({
           masterConfig={playlist.masterConfig}
           value={editorComunicadoValue}
           remoteRevision={remoteConfigRevision}
+          remoteSelections={currentRemoteSelections}
+          onSelectionChange={sendSelectionUpdate}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
           <CustomSlideEditorLayout

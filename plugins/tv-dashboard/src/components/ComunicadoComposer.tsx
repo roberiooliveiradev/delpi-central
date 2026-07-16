@@ -51,6 +51,7 @@ import {
   shouldShowComplexViewFloatToolbar,
 } from "./ComplexViewFloatToolbar";
 import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
+import { RemoteSelectionFrame } from "./RemoteSelectionFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const MARQUEE_THRESHOLD_PX = 4;
@@ -116,6 +117,7 @@ export function ComunicadoComposerCanvas() {
     selected,
     selectedId,
     selectedIds,
+    remoteSelections,
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,
@@ -554,6 +556,9 @@ export function ComunicadoComposerCanvas() {
               return null;
             }
             const isSelected = isBlockSelected(block.id);
+            const remoteEditors = remoteSelections.filter((selection) =>
+              selection.selectedIds.includes(block.id),
+            );
             const isPrimary = block.id === primarySelected;
             const partForChrome =
               block.type === "kpi_view"
@@ -567,7 +572,7 @@ export function ComunicadoComposerCanvas() {
                       : null;
             const hasPartChrome =
               isPrimary && shouldUsePartChromeInsteadOfBlock(block.type, partForChrome);
-            const selectionRadius = isSelected
+            const selectionRadius = isSelected || remoteEditors.length > 0
               ? resolveBlockSelectionBorderRadiusPx(block)
               : undefined;
             return (
@@ -688,6 +693,11 @@ export function ComunicadoComposerCanvas() {
                     dataPreviewLoading
                   }
                 />
+                {remoteEditors.length > 0 ? (
+                  <RemoteSelectionFrame
+                    displayNames={remoteEditors.map((selection) => selection.displayName)}
+                  />
+                ) : null}
                 {showResizeHandles(block.id) ? (
                   <div className="td-composer__block-handles">
                     {/* Outline CSS não é hit-target — anel de arraste na linha pontilhada. */}

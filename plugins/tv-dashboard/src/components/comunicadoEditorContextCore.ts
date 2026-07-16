@@ -22,6 +22,7 @@ import type {
   ContentRunSelectionStyleState,
   ContentRunStyleToggleKey,
   ComunicadoContentRun,
+  PresentationSelectionUpdateEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { MediaAsset } from "../api/tvDashboardApi";
@@ -92,6 +93,8 @@ export type ComunicadoEditorContextValue = {
   selectedId: string | null;
   selected: ComunicadoBlock | null;
   selectedBlocks: ComunicadoBlock[];
+  /** Seleções de outros editores no slide atual (chrome remoto, somente leitura). */
+  remoteSelections: PresentationSelectionUpdateEvent[];
   isBlockSelected: (blockId: string) => boolean;
   selectBlock: (blockId: string, options?: { additive?: boolean }) => void;
   selectBlocksByIds: (blockIds: string[]) => void;

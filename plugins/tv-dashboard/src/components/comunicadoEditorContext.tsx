@@ -20,6 +20,7 @@ import {
   type ComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoDataDisplayMode,
+  type PresentationSelectionUpdateEvent,
   type ComunicadoTextBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -68,6 +69,9 @@ type ProviderProps = {
   value: Record<string, unknown>;
   /** Bump a cada mudança remota (WS slide_draft / presentation_updated) — força aceitar `value`. */
   remoteRevision?: number;
+  /** Seleções remotas já filtradas para este slide. */
+  remoteSelections?: PresentationSelectionUpdateEvent[];
+  onSelectionChange?: (slideId: string, selectedIds: string[]) => void;
   onChange: (config: Record<string, unknown>) => void;
   children: ReactNode;
 };
@@ -133,6 +137,8 @@ export function ComunicadoEditorProvider({
   masterConfig,
   value,
   remoteRevision = 0,
+  remoteSelections = [],
+  onSelectionChange,
   onChange,
   children,
 }: ProviderProps) {
@@ -228,6 +234,18 @@ export function ComunicadoEditorProvider({
     updateBlockTextFieldsRef,
     updateBlocksRef,
   });
+
+  useEffect(() => {
+    if (!slideId) return;
+    onSelectionChange?.(slideId, selection.selectedIds);
+  }, [onSelectionChange, selection.selectedIds, slideId]);
+
+  useEffect(
+    () => () => {
+      if (slideId) onSelectionChange?.(slideId, []);
+    },
+    [onSelectionChange, slideId],
+  );
 
   // Troca de slide: sincroniza config no mesmo render (evita 1 frame com gráfico do slide anterior).
   if (slideId !== appliedSlideId) {
@@ -466,6 +484,7 @@ export function ComunicadoEditorProvider({
     selectedId: selection.selectedId,
     selected: selection.selected,
     selectedBlocks: selection.selectedBlocks,
+    remoteSelections,
     isBlockSelected: selection.isBlockSelected,
     selectBlock: selection.selectBlock,
     selectBlocksByIds: selection.selectBlocksByIds,

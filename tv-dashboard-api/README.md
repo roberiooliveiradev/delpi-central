@@ -127,7 +127,9 @@ Salas por `playlist_id`. Evento típico:
 
 Disparado após CRUD de slides, upload de mídia, alterações na programação e exclusão.
 
-**Editor admin:** sincronização exclusivamente via WebSocket — `presentation_updated` após persistência na API e `slide_draft` para edição ao vivo (ex.: texto do comunicado) sem esperar o autosave.
+**Editor admin:** sincronização exclusivamente via WebSocket — `presentation_updated` após persistência na API, `slide_draft` para edição ao vivo sem esperar o autosave e `selection_update` para destacar os blocos selecionados por outros editores. A identidade e o papel publicados vêm do JWT validado no servidor; o socket público é somente leitura.
+
+`selection_update` contém `slideId`, `selectedIds`, `clientId`, `displayName` e `updatedAt`. Seleção vazia limpa o chrome remoto; desconexão remove a seleção por meio do `presence_update`. O estado é transitório e não é persistido no slide.
 
 **Gateway:** `proxy_pass` estático para `tv-dashboard-api:8000` (variável `$upstream` quebra upgrade WebSocket).
 

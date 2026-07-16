@@ -19,7 +19,7 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - **Link público** sem login: `/p/tv-dashboard/present/{token}`
 - Copiar link, QR, regenerar token, desativar / excluir
 - Status «TV online» via heartbeat na rota pública
-- Presença colaborativa leve no editor («Também editando»), sem edição simultânea/CRDT
+- **Colaboração ao vivo:** alterações do slide são transmitidas por `slide_draft`; a seleção de outros editores aparece no componente com borda vermelha e balão de identidade. Não é CRDT: conflitos simultâneos no mesmo bloco continuam last-write-wins.
 - Catálogo de presets e importação de telas prontas
 - RBAC por filial e visão consolidada
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide

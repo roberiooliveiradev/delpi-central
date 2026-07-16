@@ -5,6 +5,7 @@ import {
   usePresentationRealtime,
   type PresentationPresencePeer,
   type PresentationRealtimeEvent,
+  type PresentationSelectionUpdateEvent,
   type PresentationSlideDraftEvent,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -17,6 +18,7 @@ type Options = {
   enabled?: boolean;
   onSync: (event?: PresentationRealtimeEvent) => void;
   onSlideDraft?: (event: PresentationSlideDraftEvent) => void;
+  onSelectionUpdate?: (event: PresentationSelectionUpdateEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
 };
 
@@ -27,6 +29,7 @@ export function usePlaylistEditorSync({
   enabled = true,
   onSync,
   onSlideDraft,
+  onSelectionUpdate,
   onPresenceUpdate,
 }: Options) {
   const wsUrl = accessToken ? buildAdminPresentationWsUrl(playlistId, accessToken) : null;
@@ -34,6 +37,8 @@ export function usePlaylistEditorSync({
   onSyncRef.current = onSync;
   const onSlideDraftRef = useRef(onSlideDraft);
   onSlideDraftRef.current = onSlideDraft;
+  const onSelectionUpdateRef = useRef(onSelectionUpdate);
+  onSelectionUpdateRef.current = onSelectionUpdate;
   const sendRef = useRef<RealtimeSend | null>(null);
   const connectedRef = useRef(false);
 
@@ -54,6 +59,9 @@ export function usePlaylistEditorSync({
     },
     onSlideDraft: (event) => {
       onSlideDraftRef.current?.(event);
+    },
+    onSelectionUpdate: (event) => {
+      onSelectionUpdateRef.current?.(event);
     },
     onPresenceUpdate,
   });
