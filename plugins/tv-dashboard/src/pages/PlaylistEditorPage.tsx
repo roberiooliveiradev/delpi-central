@@ -127,6 +127,8 @@ export function PlaylistEditorPage({
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
   const [presencePeers, setPresencePeers] = useState<PresentationPresencePeer[]>([]);
+  /** Bump a cada mudança vinda de outro editor (WS) — o editor aceita o novo value. */
+  const [remoteConfigRevision, setRemoteConfigRevision] = useState(0);
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
@@ -300,6 +302,7 @@ export function PlaylistEditorPage({
         });
         return current ? { ...pl, slides } : { ...pl, slides };
       });
+      setRemoteConfigRevision((revision) => revision + 1);
       await refreshPreviewThumbnails();
     } catch {
       // mantém estado local se a sincronização falhar
@@ -327,6 +330,7 @@ export function PlaylistEditorPage({
       if (selectedSlideIdRef.current === slideId) {
         liveComunicadoConfigRef.current = nativeConfig;
       }
+      setRemoteConfigRevision((revision) => revision + 1);
     },
     [editorPresence?.clientId],
   );
@@ -870,6 +874,7 @@ export function PlaylistEditorPage({
           viewportProfile={playlist.viewportProfile}
           masterConfig={playlist.masterConfig}
           value={editorComunicadoValue}
+          remoteRevision={remoteConfigRevision}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
           <CustomSlideEditorLayout

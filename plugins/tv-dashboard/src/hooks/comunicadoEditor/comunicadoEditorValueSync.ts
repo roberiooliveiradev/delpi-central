@@ -32,6 +32,23 @@ export function shouldAcceptExternalComunicadoValue(params: {
   return true;
 }
 
+/**
+ * Edição colaborativa: mudança vinda de outro editor (WS `slide_draft` /
+ * `presentation_updated`) chega com fingerprint diferente do último emit local
+ * e seria rejeitada como «eco stale». O bump de `remoteRevision` marca o valor
+ * externo como remoto legítimo — aceita, exceto quando idêntico ao atual
+ * (evita reset de gesto/seleção sem mudança real).
+ */
+export function shouldForceAcceptRemoteComunicadoValue(params: {
+  remoteRevisionChanged: boolean;
+  incomingFingerprint: string;
+  currentFingerprint: string;
+}): boolean {
+  return (
+    params.remoteRevisionChanged && params.incomingFingerprint !== params.currentFingerprint
+  );
+}
+
 export function fingerprintComunicadoValue(value: Record<string, unknown>): string {
   return JSON.stringify(value);
 }

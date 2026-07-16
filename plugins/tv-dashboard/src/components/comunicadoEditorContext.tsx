@@ -32,6 +32,7 @@ import { useComunicadoEditorHistory } from "../hooks/comunicadoEditor/useComunic
 import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
+  shouldForceAcceptRemoteComunicadoValue,
 } from "../hooks/comunicadoEditor/comunicadoEditorValueSync";
 import { useOptionalDataSourceDuplicateChoice } from "../context/DataSourceDuplicateChoiceProvider";
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
@@ -65,6 +66,8 @@ type ProviderProps = {
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
   value: Record<string, unknown>;
+  /** Bump a cada mudança remota (WS slide_draft / presentation_updated) — força aceitar `value`. */
+  remoteRevision?: number;
   onChange: (config: Record<string, unknown>) => void;
   children: ReactNode;
 };
@@ -129,6 +132,7 @@ export function ComunicadoEditorProvider({
   viewportProfile = "1080p",
   masterConfig,
   value,
+  remoteRevision = 0,
   onChange,
   children,
 }: ProviderProps) {
@@ -150,6 +154,7 @@ export function ComunicadoEditorProvider({
   const lastEmittedFingerprintRef = useRef<string | null>(null);
   const syncIdentityRef = useRef(`${playlistId}:${slideId ?? ""}`);
   const lastHistoryEpochRef = useRef(deckHistory?.historyEpoch ?? 0);
+  const lastRemoteRevisionRef = useRef(remoteRevision);
 
   const removeSelectedRef = useRef<() => void>(() => {});
   const updateBlockTextFieldsRef = useRef<
@@ -296,9 +301,18 @@ export function ComunicadoEditorProvider({
       lastHistoryEpochRef.current = historyEpoch;
     }
 
+    const remoteRevisionChanged = remoteRevision !== lastRemoteRevisionRef.current;
+    lastRemoteRevisionRef.current = remoteRevision;
+
     const enriched = enrichComunicadoConfigForEditor(value, playlistId);
     const incomingFp = fingerprintComunicadoValue(serializeComunicadoConfig(enriched));
     const currentFp = fingerprintComunicadoValue(serializeComunicadoConfig(configRef.current));
+
+    const forceAcceptFromRemote = shouldForceAcceptRemoteComunicadoValue({
+      remoteRevisionChanged,
+      incomingFingerprint: incomingFp,
+      currentFingerprint: currentFp,
+    });
 
     if (
       !shouldAcceptExternalComunicadoValue({
@@ -306,7 +320,7 @@ export function ComunicadoEditorProvider({
         incomingFingerprint: incomingFp,
         lastEmittedFingerprint: lastEmittedFingerprintRef.current,
         currentFingerprint: currentFp,
-        forceAccept: forceAcceptFromHistory,
+        forceAccept: forceAcceptFromHistory || forceAcceptFromRemote,
       })
     ) {
       return;
@@ -318,7 +332,15 @@ export function ComunicadoEditorProvider({
       clearDragSnapshot();
       resetLocalHistory();
     }
-  }, [value, playlistId, slideId, resetLocalHistory, clearDragSnapshot, deckHistory?.historyEpoch]);
+  }, [
+    value,
+    playlistId,
+    slideId,
+    remoteRevision,
+    resetLocalHistory,
+    clearDragSnapshot,
+    deckHistory?.historyEpoch,
+  ]);
 
   const chooseDataSourceDuplicatePolicy = useOptionalDataSourceDuplicateChoice();
 
