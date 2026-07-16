@@ -41,7 +41,7 @@ import {
   type CipaAccess,
   type CipaUnitCode,
 } from "../security/cipaAccess";
-import { buildMinuteHistoryTimeline } from "../utils/minuteHistoryTimeline";
+import { buildMinuteHistoryTimelineItems } from "../utils/minuteHistoryTimelineView";
 import {
   CipaContentCard,
   CipaFilterInputField,
@@ -711,7 +711,7 @@ function MinuteDetailPage({
         <CipaTimeline
           layout="tree"
           aria-label="Histórico de versões e auditoria da ata"
-          items={buildMinuteHistoryTimeline(detail?.versions || [], audit)}
+          items={buildMinuteHistoryTimelineItems(detail?.versions || [], audit)}
           emptyMessage="Nenhum evento registrado."
         />
       </CipaSectionCard>

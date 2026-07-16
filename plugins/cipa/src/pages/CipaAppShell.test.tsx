@@ -350,7 +350,13 @@ describe("CipaAppShell compartilhado", () => {
     });
     api.getAudit.mockResolvedValue({
       items: [
-        { id: "a1", action: "sign", created_at: "2026-07-16T18:45:52-03:00" },
+        {
+          id: "a1",
+          action: "sign",
+          created_at: "2026-07-16T18:45:52-03:00",
+          actor_name: "Robério Oliveira",
+          actor_email: "roberio@delpi.com.br",
+        },
       ],
     });
 
@@ -365,7 +371,9 @@ describe("CipaAppShell compartilhado", () => {
 
     await screen.findByText("Versão 1");
     expect(screen.getByText("Assinatura registrada")).toBeTruthy();
+    expect(screen.getByText("Robério Oliveira · roberio@delpi.com.br")).toBeTruthy();
     expect(container.querySelector(".delpi-ui-timeline--tree")).toBeTruthy();
     expect(container.querySelector('[data-branch-key="audit"]')).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-timeline__marker svg")).toBeTruthy();
   });
 });

@@ -21,20 +21,30 @@ function str(record: RawRecord, key: string): string {
   return value == null ? "" : String(value);
 }
 
+function actorMeta(name: string, email: string): string | undefined {
+  const parts = [name, email].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
 /**
  * Monta itens para o `Timeline` (layout `tree`) do plugin-ui:
  * tronco = versões da ata (mais recente primeiro); branches = eventos de
  * auditoria agrupados na janela temporal de cada versão.
+ *
+ * Cada item de auditoria inclui `meta` com nome e e-mail do ator quando
+ * disponíveis (snapshot gravado em `actor_name` / `actor_email`).
+ * O campo `action` fica em `branchKey` complementar via propriedade interna
+ * só para o mapeamento de ícones no MFE (`__action` não existe no modelo —
+ * use `resolveTimelineAction` / itens enriquecidos na página).
  */
 export function buildMinuteHistoryTimeline(
   versions: RawRecord[],
   audit: RawRecord[],
-): TimelineItemModel[] {
+): Array<TimelineItemModel & { action?: string }> {
   const orderedVersions = [...versions].sort((a, b) =>
     str(a, "created_at").localeCompare(str(b, "created_at")),
   );
 
-  // Versão "dona" do evento = última versão criada até o instante do evento.
   function versionIdAt(occurredAt: string): string | null {
     let owner: RawRecord | null = null;
     for (const version of orderedVersions) {
@@ -44,17 +54,23 @@ export function buildMinuteHistoryTimeline(
     return owner ? str(owner, "id") : null;
   }
 
-  const items: TimelineItemModel[] = [];
+  const items: Array<TimelineItemModel & { action?: string }> = [];
 
   const newestFirst = [...orderedVersions].reverse();
   for (const version of newestFirst) {
     const createdAt = str(version, "created_at");
+    const author = actorMeta(
+      str(version, "created_by_name"),
+      str(version, "created_by_email"),
+    );
     items.push({
       id: `version-${str(version, "id")}`,
       title: `Versão ${str(version, "version_number")}`,
       occurredAt: createdAt,
       timeLabel: formatDateTimeBr(createdAt),
       detail: str(version, "change_reason") || undefined,
+      meta: author,
+      action: "create_version",
       branchKey: "main",
     });
   }
@@ -71,9 +87,11 @@ export function buildMinuteHistoryTimeline(
       title: AUDIT_ACTION_LABELS[action] || action,
       occurredAt: createdAt,
       timeLabel: formatDateTimeBr(createdAt),
+      meta: actorMeta(str(event, "actor_name"), str(event, "actor_email")),
       tone: AUDIT_ACTION_TONES[action] ?? "default",
       parentId: ownerVersionId ? `version-${ownerVersionId}` : null,
       branchKey: "audit",
+      action,
     });
   }
 

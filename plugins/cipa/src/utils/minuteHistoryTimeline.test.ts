@@ -55,6 +55,35 @@ describe("buildMinuteHistoryTimeline", () => {
     expect(byId.get("audit-a3")?.tone).toBe("warning");
   });
 
+  it("exibe nome e e-mail do ator na meta", () => {
+    const items = buildMinuteHistoryTimeline(versions, [
+      {
+        id: "a9",
+        action: "edit",
+        created_at: "2026-07-16T19:01:44-03:00",
+        actor_name: "Robério Oliveira",
+        actor_email: "roberio@delpi.com.br",
+        actor_user_id: "11111111-1111-1111-1111-111111111111",
+      },
+    ]);
+    const event = items.find((item) => item.id === "audit-a9");
+    expect(event?.meta).toBe("Robério Oliveira · roberio@delpi.com.br");
+  });
+
+  it("versão exibe autor quando disponível", () => {
+    const items = buildMinuteHistoryTimeline(
+      [
+        {
+          ...versions[0],
+          created_by_name: "Ana Presidente",
+          created_by_email: "ana@delpi.com.br",
+        },
+      ],
+      [],
+    );
+    expect(items[0].meta).toBe("Ana Presidente · ana@delpi.com.br");
+  });
+
   it("evento anterior a qualquer versão cai na primeira versão", () => {
     const items = buildMinuteHistoryTimeline(versions, [
       { id: "a0", action: "edit", created_at: "2026-07-16T18:00:00-03:00" },

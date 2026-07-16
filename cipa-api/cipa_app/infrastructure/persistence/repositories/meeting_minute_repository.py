@@ -9,6 +9,8 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
 
+from delpi_auth.request_context import get_current_user
+
 
 def get_connection():
     host = os.getenv("PLUGINS_DB_HOST", "").strip()
@@ -534,11 +536,41 @@ class MeetingMinuteRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, minute_id, version_number, content_hash, change_reason,
-                           created_by_user_id, created_at, title
-                    FROM cipa.meeting_minute_versions
-                    WHERE minute_id = %s
-                    ORDER BY version_number DESC
+                    SELECT
+                        v.id,
+                        v.minute_id,
+                        v.version_number,
+                        v.content_hash,
+                        v.change_reason,
+                        v.created_by_user_id,
+                        COALESCE(
+                            NULLIF(TRIM(usp.display_name), ''),
+                            NULLIF(TRIM(p.display_name), ''),
+                            NULLIF(TRIM(s.display_name), '')
+                        ) AS created_by_name,
+                        v.created_at,
+                        v.title
+                    FROM cipa.meeting_minute_versions v
+                    LEFT JOIN cipa.user_signature_profiles usp
+                        ON usp.user_id = v.created_by_user_id
+                    LEFT JOIN LATERAL (
+                        SELECT display_name
+                        FROM cipa.meeting_minute_participants
+                        WHERE minute_id = v.minute_id
+                          AND user_id = v.created_by_user_id
+                        ORDER BY sort_order
+                        LIMIT 1
+                    ) p ON TRUE
+                    LEFT JOIN LATERAL (
+                        SELECT display_name
+                        FROM cipa.meeting_minute_signers
+                        WHERE minute_id = v.minute_id
+                          AND user_id = v.created_by_user_id
+                        ORDER BY sign_order
+                        LIMIT 1
+                    ) s ON TRUE
+                    WHERE v.minute_id = %s
+                    ORDER BY v.version_number DESC
                     """,
                     (_uuid(minute_id),),
                 )
@@ -1047,9 +1079,47 @@ class MeetingMinuteRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT * FROM cipa.meeting_minute_audit_logs
-                    WHERE minute_id = %s
-                    ORDER BY created_at DESC
+                    SELECT
+                        a.id,
+                        a.minute_id,
+                        a.unit_code,
+                        a.entity_type,
+                        a.entity_id,
+                        a.action,
+                        a.actor_user_id,
+                        COALESCE(
+                            NULLIF(TRIM(a.actor_name), ''),
+                            NULLIF(TRIM(usp.display_name), ''),
+                            NULLIF(TRIM(p.display_name), ''),
+                            NULLIF(TRIM(s.display_name), '')
+                        ) AS actor_name,
+                        NULLIF(TRIM(a.actor_email), '') AS actor_email,
+                        a.before_data,
+                        a.after_data,
+                        a.client_ip,
+                        a.user_agent,
+                        a.created_at
+                    FROM cipa.meeting_minute_audit_logs a
+                    LEFT JOIN cipa.user_signature_profiles usp
+                        ON usp.user_id = a.actor_user_id
+                    LEFT JOIN LATERAL (
+                        SELECT display_name
+                        FROM cipa.meeting_minute_participants
+                        WHERE minute_id = a.minute_id
+                          AND user_id = a.actor_user_id
+                        ORDER BY sort_order
+                        LIMIT 1
+                    ) p ON TRUE
+                    LEFT JOIN LATERAL (
+                        SELECT display_name
+                        FROM cipa.meeting_minute_signers
+                        WHERE minute_id = a.minute_id
+                          AND user_id = a.actor_user_id
+                        ORDER BY sign_order
+                        LIMIT 1
+                    ) s ON TRUE
+                    WHERE a.minute_id = %s
+                    ORDER BY a.created_at DESC
                     LIMIT 200
                     """,
                     (_uuid(minute_id),),
@@ -1106,12 +1176,13 @@ class MeetingMinuteRepository:
         client_ip: str | None = None,
         user_agent: str | None = None,
     ) -> None:
+        actor = self._resolve_actor_snapshot(actor_user_id)
         cur.execute(
             """
             INSERT INTO cipa.meeting_minute_audit_logs (
                 minute_id, unit_code, entity_type, entity_id, action, actor_user_id,
-                before_data, after_data, client_ip, user_agent
-            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                actor_name, actor_email, before_data, after_data, client_ip, user_agent
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             """,
             (
                 _uuid(str(minute_id)) if minute_id else None,
@@ -1119,10 +1190,33 @@ class MeetingMinuteRepository:
                 entity_type,
                 _uuid(str(entity_id)) if entity_id else None,
                 action,
-                _uuid(actor_user_id) if actor_user_id else None,
+                actor["user_id"],
+                actor["name"],
+                actor["email"],
                 Jsonb(json.loads(json.dumps(before, default=str))) if before is not None else None,
                 Jsonb(json.loads(json.dumps(after, default=str))) if after is not None else None,
                 client_ip,
                 user_agent,
             ),
         )
+
+    @staticmethod
+    def _resolve_actor_snapshot(actor_user_id: str | None) -> dict[str, Any]:
+        """Snapshot id/nome/e-mail do ator no instante da ação (usuário da request)."""
+        snapshot: dict[str, Any] = {
+            "user_id": _uuid(actor_user_id) if actor_user_id else None,
+            "name": None,
+            "email": None,
+        }
+        if not actor_user_id:
+            return snapshot
+        user = get_current_user()
+        if user is None:
+            return snapshot
+        if str(getattr(user, "id", "") or "") != str(actor_user_id):
+            return snapshot
+        name = str(getattr(user, "name", "") or "").strip()
+        email = str(getattr(user, "email", "") or "").strip()
+        snapshot["name"] = name or None
+        snapshot["email"] = email or None
+        return snapshot
