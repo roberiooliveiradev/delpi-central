@@ -767,3 +767,14 @@ import { ShapeFillMenu, ShapeOutlineMenu } from "@delpi/plugin-ui/index";
 | `cadastro-kaizen` | `FilePreviewModal`, `resolveFilePreviewKind` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
+
+
+## Família `signature` / `rich-text` / `directory` (CIPA)
+
+| Export | Uso |
+|--------|-----|
+| `SignaturePad` | Canvas de assinatura manuscrita (PNG) |
+| `RichTextEditor` | WYSIWYG básico + modo preview |
+| `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`) |
+
+CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).

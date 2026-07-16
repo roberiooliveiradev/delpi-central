@@ -1,0 +1,170 @@
+import { httpBlob, httpForm, httpGet, httpJson } from "./httpClient";
+
+const API = "/apps/cipa-api";
+
+export type ApiEnvelope<T> = {
+  success: boolean;
+  message: string;
+  data: T;
+};
+
+export type MinuteListItem = {
+  id: string;
+  unit_code: string;
+  title: string;
+  minute_number: string;
+  meeting_type: string;
+  meeting_date: string;
+  status: string;
+  responsible_name?: string | null;
+  signatures_done?: number;
+  signatures_pending?: number;
+  updated_at?: string;
+};
+
+export type MinuteDetail = {
+  minute: Record<string, unknown>;
+  version: Record<string, unknown> | null;
+  participants: Record<string, unknown>[];
+  signers: Record<string, unknown>[];
+  signatures: Record<string, unknown>[];
+  action_items: Record<string, unknown>[];
+  versions: Record<string, unknown>[];
+};
+
+function unwrap<T>(envelope: ApiEnvelope<T>): T {
+  if (!envelope?.success) {
+    throw new Error(envelope?.message || "Falha na API CIPA.");
+  }
+  return envelope.data;
+}
+
+export async function listMinutes(
+  params: Record<string, string | number | boolean | undefined>,
+  signal?: AbortSignal,
+) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === "") return;
+    qs.set(key, String(value));
+  });
+  const envelope = await httpGet<ApiEnvelope<{ items: MinuteListItem[]; total: number }>>(
+    `${API}/minutes?${qs.toString()}`,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function getMinute(id: string, signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<MinuteDetail>>(`${API}/minutes/${id}`, { signal });
+  return unwrap(envelope);
+}
+
+export async function createMinute(body: Record<string, unknown>) {
+  const envelope = await httpJson<ApiEnvelope<MinuteDetail>>("POST", `${API}/minutes`, body);
+  return unwrap(envelope);
+}
+
+export async function updateMinute(id: string, body: Record<string, unknown>) {
+  const envelope = await httpJson<ApiEnvelope<MinuteDetail>>("PATCH", `${API}/minutes/${id}`, body);
+  return unwrap(envelope);
+}
+
+export async function setSigners(id: string, signers: Record<string, unknown>[]) {
+  const envelope = await httpJson<ApiEnvelope<{ signers: Record<string, unknown>[] }>>(
+    "PUT",
+    `${API}/minutes/${id}/signers`,
+    { signers },
+  );
+  return unwrap(envelope);
+}
+
+export async function sendForSignature(id: string) {
+  const envelope = await httpJson<ApiEnvelope<{ minute: Record<string, unknown> }>>(
+    "POST",
+    `${API}/minutes/${id}/send-for-signature`,
+  );
+  return unwrap(envelope);
+}
+
+export async function getSignContext(id: string, signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<Record<string, unknown>>>(
+    `${API}/minutes/${id}/sign-context`,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function signMinute(
+  id: string,
+  form: FormData,
+  idempotencyKey: string,
+) {
+  const envelope = await httpForm<ApiEnvelope<Record<string, unknown>>>(
+    `${API}/minutes/${id}/signatures`,
+    form,
+    { idempotencyKey },
+  );
+  return unwrap(envelope);
+}
+
+export async function refuseMinute(id: string, reason: string) {
+  const envelope = await httpJson<ApiEnvelope<Record<string, unknown>>>(
+    "POST",
+    `${API}/minutes/${id}/signatures/refuse`,
+    { reason },
+  );
+  return unwrap(envelope);
+}
+
+export async function finalizeMinute(id: string) {
+  const envelope = await httpJson<ApiEnvelope<Record<string, unknown>>>(
+    "POST",
+    `${API}/minutes/${id}/finalize`,
+  );
+  return unwrap(envelope);
+}
+
+export async function createVersion(id: string, body: Record<string, unknown>) {
+  const envelope = await httpJson<ApiEnvelope<Record<string, unknown>>>(
+    "POST",
+    `${API}/minutes/${id}/versions`,
+    body,
+  );
+  return unwrap(envelope);
+}
+
+export async function getAudit(id: string, signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<{ items: Record<string, unknown>[] }>>(
+    `${API}/minutes/${id}/audit`,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function exportPdf(id: string) {
+  return httpBlob(`${API}/minutes/${id}/export.pdf`);
+}
+
+export async function pendingSignatures(signal?: AbortSignal) {
+  const envelope = await httpGet<ApiEnvelope<{ items: MinuteListItem[]; total: number }>>(
+    `${API}/minutes/pending-signatures`,
+    { signal },
+  );
+  return unwrap(envelope);
+}
+
+export async function searchDirectoryUsers(query: string, limit = 10, signal?: AbortSignal) {
+  const qs = new URLSearchParams({ q: query, limit: String(limit) });
+  const payload = await httpGet<{ items?: DirectoryUser[] }>(
+    `/core-api/me/directory/users?${qs.toString()}`,
+    { signal },
+  );
+  return payload.items ?? [];
+}
+
+export type DirectoryUser = {
+  id: string;
+  name: string;
+  email: string;
+};

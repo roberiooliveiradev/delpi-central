@@ -1,0 +1,178 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "cipa",
+  "name": "CIPA",
+  "description": "Gestão de atas, assinaturas e processos da CIPA por unidade",
+  "icon": "clipboard-check-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/cipa",
+  "entry": "/apps/cipa/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "cipa.minutes.view.filial-01",
+      "name": "Visualizar atas — Filial 01",
+      "description": "Visualizar atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.create.filial-01",
+      "name": "Criar atas — Filial 01",
+      "description": "Criar atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.edit.filial-01",
+      "name": "Editar atas — Filial 01",
+      "description": "Editar atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.delete.filial-01",
+      "name": "Excluir atas — Filial 01",
+      "description": "Excluir atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.submit.filial-01",
+      "name": "Enviar atas para assinatura — Filial 01",
+      "description": "Enviar atas para assinatura da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.sign.filial-01",
+      "name": "Assinar atas — Filial 01",
+      "description": "Assinar atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.cancel.filial-01",
+      "name": "Cancelar atas — Filial 01",
+      "description": "Cancelar atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.finalize.filial-01",
+      "name": "Finalizar atas — Filial 01",
+      "description": "Finalizar atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.export.filial-01",
+      "name": "Exportar atas em PDF — Filial 01",
+      "description": "Exportar atas em PDF da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.manage_signers.filial-01",
+      "name": "Gerenciar signatários — Filial 01",
+      "description": "Gerenciar signatários da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.view_audit.filial-01",
+      "name": "Consultar auditoria de atas — Filial 01",
+      "description": "Consultar auditoria de atas da CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.admin.filial-01",
+      "name": "Administrar CIPA — Filial 01",
+      "description": "Administração do plugin CIPA na Filial 01",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.view.filial-02",
+      "name": "Visualizar atas — Filial 02",
+      "description": "Visualizar atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.create.filial-02",
+      "name": "Criar atas — Filial 02",
+      "description": "Criar atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.edit.filial-02",
+      "name": "Editar atas — Filial 02",
+      "description": "Editar atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.delete.filial-02",
+      "name": "Excluir atas — Filial 02",
+      "description": "Excluir atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.submit.filial-02",
+      "name": "Enviar atas para assinatura — Filial 02",
+      "description": "Enviar atas para assinatura da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.sign.filial-02",
+      "name": "Assinar atas — Filial 02",
+      "description": "Assinar atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.cancel.filial-02",
+      "name": "Cancelar atas — Filial 02",
+      "description": "Cancelar atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.finalize.filial-02",
+      "name": "Finalizar atas — Filial 02",
+      "description": "Finalizar atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.export.filial-02",
+      "name": "Exportar atas em PDF — Filial 02",
+      "description": "Exportar atas em PDF da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.manage_signers.filial-02",
+      "name": "Gerenciar signatários — Filial 02",
+      "description": "Gerenciar signatários da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.minutes.view_audit.filial-02",
+      "name": "Consultar auditoria de atas — Filial 02",
+      "description": "Consultar auditoria de atas da CIPA na Filial 02",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.admin.filial-02",
+      "name": "Administrar CIPA — Filial 02",
+      "description": "Administração do plugin CIPA na Filial 02",
+      "module": "cipa"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/cipa/filial-01",
+      "label": "CIPA — Filial 01",
+      "permission": "cipa.minutes.view.filial-01",
+      "icon": "clipboard-check-icon",
+      "order": 40,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/cipa/filial-02",
+      "label": "CIPA — Filial 02",
+      "permission": "cipa.minutes.view.filial-02",
+      "icon": "clipboard-check-icon",
+      "order": 41,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -1,0 +1,129 @@
+.delpi-ui-signature-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-signature-pad__canvas {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: 180px;
+  touch-action: none;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 12px;
+  background: #fff;
+  cursor: crosshair;
+}
+
+.delpi-ui-signature-pad__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-signature-pad__clear {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  cursor: pointer;
+}
+
+.delpi-ui-rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--delpi-ui-surface, #fff);
+}
+
+.delpi-ui-rich-text__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+  border-bottom: 1px solid var(--delpi-ui-border, #e5e7eb);
+}
+
+.delpi-ui-rich-text__toolbar button {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 8%, transparent);
+  cursor: pointer;
+}
+
+.delpi-ui-rich-text__editor,
+.delpi-ui-rich-text--preview {
+  min-height: 160px;
+  padding: 12px 14px;
+  color: var(--delpi-ui-text, #111);
+  line-height: 1.5;
+}
+
+.delpi-ui-rich-text__editor:focus {
+  outline: 2px solid var(--delpi-ui-accent, #089bdb);
+  outline-offset: -2px;
+}
+
+.delpi-ui-user-directory-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delpi-ui-user-directory-picker__title {
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-user-directory-picker__hint,
+.delpi-ui-user-directory-picker__status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-user-directory-picker__input {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  padding: 0 12px;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-user-directory-picker__results,
+.delpi-ui-user-directory-picker__selected {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delpi-ui-user-directory-picker__results button,
+.delpi-ui-user-directory-picker__selected button {
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+  cursor: pointer;
+}
+
+.delpi-ui-user-directory-picker__selected li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+}

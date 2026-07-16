@@ -1,0 +1,266 @@
+.dashboard-cipa,
+.dashboard-cipa * {
+  box-sizing: border-box;
+}
+
+.dashboard-cipa {
+  --cipa-page-padding: 24px;
+  --cipa-section-gap: 20px;
+  --cipa-card-radius: 18px;
+  --cipa-card-padding: 20px;
+  --cipa-accent: var(--primary, #089bdb);
+  --cipa-title: var(--secundary, #003866);
+  --cipa-text: var(--text, #111111);
+  --cipa-text-muted: var(--text-muted, rgba(17, 17, 17, 0.7));
+  --cipa-surface: var(--surface, #ffffff);
+  --cipa-border: var(--border, #e6e6e6);
+  --cipa-danger: var(--danger, #b42318);
+
+  --delpi-ui-accent: var(--cipa-accent);
+  --delpi-ui-title: var(--cipa-title);
+  --delpi-ui-surface: var(--cipa-surface);
+  --delpi-ui-text: var(--cipa-text);
+  --delpi-ui-text-muted: var(--cipa-text-muted);
+  --delpi-ui-border: var(--cipa-border);
+  --delpi-ui-muted: var(--cipa-text-muted);
+  --delpi-ui-danger: var(--cipa-danger);
+  --delpi-ui-card-padding: var(--cipa-card-padding);
+  --delpi-ui-radius: var(--cipa-card-radius);
+  --delpi-ui-section-gap: var(--cipa-section-gap);
+}
+
+:root[data-theme="dark"] .dashboard-cipa {
+  --cipa-title: color-mix(in srgb, var(--primary, #089bdb) 72%, white);
+  --cipa-text: rgba(255, 255, 255, 0.88);
+  --cipa-text-muted: rgba(255, 255, 255, 0.64);
+  --cipa-surface: color-mix(in srgb, var(--surface, #1e293b) 92%, black);
+  --cipa-border: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-cipa.dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cipa-section-gap);
+  padding: var(--cipa-page-padding);
+  background-color: var(--app-canvas, var(--bg));
+  color: var(--cipa-text);
+}
+
+.dashboard-cipa .cipa-page-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cipa-section-gap);
+}
+
+.dashboard-cipa .cipa-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.dashboard-cipa .cipa-header h1 {
+  margin: 0;
+  color: var(--cipa-title);
+}
+
+.dashboard-cipa .cipa-header p {
+  margin: 4px 0 0;
+  color: var(--cipa-text-muted);
+}
+
+.dashboard-cipa .cipa-header__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-cipa .cipa-card {
+  background: var(--cipa-surface);
+  border: 1px solid var(--cipa-border);
+  border-radius: var(--cipa-card-radius);
+  padding: var(--cipa-card-padding);
+}
+
+.dashboard-cipa .cipa-btn {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--cipa-border);
+  background: var(--cipa-surface);
+  color: var(--cipa-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-cipa .cipa-btn--primary {
+  background: var(--cipa-accent);
+  border-color: var(--cipa-accent);
+  color: #fff;
+}
+
+.dashboard-cipa .cipa-btn--ghost {
+  background: transparent;
+}
+
+.dashboard-cipa .cipa-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.dashboard-cipa .cipa-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.dashboard-cipa .cipa-filters input,
+.dashboard-cipa .cipa-filters select,
+.dashboard-cipa .cipa-form-grid input,
+.dashboard-cipa .cipa-form-grid select,
+.dashboard-cipa .cipa-card textarea,
+.dashboard-cipa .cipa-card input {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--cipa-border);
+  padding: 0 12px;
+  background: var(--cipa-surface);
+  color: var(--cipa-text);
+}
+
+.dashboard-cipa .cipa-table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-cipa .cipa-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dashboard-cipa .cipa-table th,
+.dashboard-cipa .cipa-table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cipa-border);
+  font-size: 13px;
+}
+
+.dashboard-cipa .cipa-table tbody tr {
+  cursor: pointer;
+}
+
+.dashboard-cipa .cipa-table tbody tr:hover {
+  background: color-mix(in srgb, var(--cipa-accent) 8%, transparent);
+}
+
+.dashboard-cipa .cipa-error {
+  color: var(--cipa-danger);
+}
+
+.dashboard-cipa .cipa-state,
+.dashboard-cipa .cipa-list {
+  color: var(--cipa-text-muted);
+}
+
+.dashboard-cipa .cipa-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dashboard-cipa .cipa-steps__item {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--cipa-border);
+  background: var(--cipa-surface);
+  cursor: pointer;
+}
+
+.dashboard-cipa .cipa-steps__item.is-active {
+  border-color: var(--cipa-accent);
+  background: color-mix(in srgb, var(--cipa-accent) 12%, transparent);
+}
+
+.dashboard-cipa .cipa-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboard-cipa .cipa-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dashboard-cipa .cipa-link {
+  background: none;
+  border: none;
+  color: var(--cipa-accent);
+  cursor: pointer;
+  padding: 0;
+}
+
+.dashboard-cipa .cipa-prose {
+  line-height: 1.5;
+}
+
+.dashboard-cipa .cipa-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 12px 0;
+}
+
+.dashboard-cipa .cipa-sign-page .delpi-ui-signature-pad__canvas {
+  min-height: 240px;
+}
+
+.dashboard-cipa .cipa-status-badge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: color-mix(in srgb, var(--cipa-accent) 12%, transparent);
+}
+
+.dashboard-cipa .cipa-status-badge--success {
+  background: color-mix(in srgb, var(--success, #12b76a) 18%, transparent);
+}
+
+@media (max-width: 768px) {
+  .dashboard-cipa {
+    --cipa-page-padding: 16px;
+  }
+
+  .dashboard-cipa .cipa-header {
+    flex-direction: column;
+  }
+
+  .dashboard-cipa .cipa-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-cipa .cipa-header__actions,
+  .dashboard-cipa .cipa-footer-actions {
+    width: 100%;
+  }
+
+  .dashboard-cipa .cipa-header__actions .cipa-btn,
+  .dashboard-cipa .cipa-footer-actions .cipa-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+#root:has(> .dashboard-cipa) {
+  margin: 0;
+  min-height: 100vh;
+}
