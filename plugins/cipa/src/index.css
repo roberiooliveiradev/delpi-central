@@ -295,6 +295,78 @@
   min-height: 280px;
 }
 
+.dashboard-cipa .cipa-compose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cipa-section-gap);
+}
+
+.dashboard-cipa .cipa-compose__section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dashboard-cipa .cipa-compose__section--body {
+  padding-bottom: 16px;
+}
+
+.dashboard-cipa .cipa-compose__section-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--cipa-title);
+}
+
+.dashboard-cipa .cipa-compose__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dashboard-cipa .cipa-compose__row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.dashboard-cipa .cipa-compose__row--meta {
+  align-items: end;
+}
+
+.dashboard-cipa .cipa-compose__label {
+  padding-top: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cipa-text-muted);
+}
+
+.dashboard-cipa .cipa-compose__row--meta .cipa-compose__label {
+  padding-top: 0;
+  align-self: center;
+}
+
+.dashboard-cipa .cipa-compose__input--title {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.dashboard-cipa .cipa-compose__meta-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.dashboard-cipa .cipa-compose__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+}
+
 .dashboard-cipa .cipa-steps__item.is-done {
   border-color: color-mix(in srgb, var(--cipa-accent) 50%, var(--cipa-border));
   color: var(--cipa-text-muted);
@@ -466,6 +538,23 @@
 
   .dashboard-cipa .cipa-form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-cipa .cipa-compose__row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-cipa .cipa-compose__label {
+    padding-top: 0;
+  }
+
+  .dashboard-cipa .cipa-compose__meta-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-cipa .cipa-compose__footer .cipa-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .dashboard-cipa .cipa-field--span-2,

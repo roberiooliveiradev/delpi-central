@@ -21,6 +21,16 @@ def _plain(html: str | None) -> str:
     return text.strip() or "—"
 
 
+def _content_blocks(title: str, html: str | None, body_style: ParagraphStyle) -> list[Any]:
+    plain = _plain(html)
+    if plain == "—":
+        return []
+    return [
+        Paragraph(f"<b>{title}</b>", body_style),
+        Paragraph(plain.replace("\n", "<br/>"), body_style),
+    ]
+
+
 class MinutePdfRenderer:
     def render(self, minute: dict[str, Any], version: dict[str, Any], signatures: list[dict[str, Any]]) -> bytes:
         buffer = io.BytesIO()
@@ -72,14 +82,10 @@ class MinutePdfRenderer:
                 body_style,
             ),
             Spacer(1, 8),
-            Paragraph("<b>Pauta</b>", body_style),
-            Paragraph(_plain(version.get("agenda_html")).replace("\n", "<br/>"), body_style),
-            Paragraph("<b>Conteúdo</b>", body_style),
-            Paragraph(_plain(version.get("body_html")).replace("\n", "<br/>"), body_style),
-            Paragraph("<b>Decisões</b>", body_style),
-            Paragraph(_plain(version.get("decisions_html")).replace("\n", "<br/>"), body_style),
-            Paragraph("<b>Pendências</b>", body_style),
-            Paragraph(_plain(version.get("pending_html")).replace("\n", "<br/>"), body_style),
+            *_content_blocks("Pauta", version.get("agenda_html"), body_style),
+            *_content_blocks("Conteúdo", version.get("body_html"), body_style),
+            *_content_blocks("Decisões", version.get("decisions_html"), body_style),
+            *_content_blocks("Pendências", version.get("pending_html"), body_style),
             Spacer(1, 10),
             Paragraph("<b>Assinaturas</b>", body_style),
         ]
