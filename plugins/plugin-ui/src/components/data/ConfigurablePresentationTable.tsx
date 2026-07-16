@@ -6,7 +6,11 @@ import {
   type ConfigurableTablePreset,
   type PresentationTableColumn,
 } from "./configurableTableOptions";
-import type { TableInteraction, TablePartsMap } from "./configurableTableParts";
+import {
+  selectedTableColumnIndexes,
+  type TableInteraction,
+  type TablePartsMap,
+} from "./configurableTableParts";
 import { useConfigurableTableClasses } from "./configurableTableClasses";
 import {
   TableBody,
@@ -50,10 +54,7 @@ export function ConfigurablePresentationTable({
   const ariaLabel = title || "Tabela de dados";
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const totalRow = showTotalRow ? buildConfigurableTableTotalRow(columns, rows) : null;
-  const selectedColumnIndex =
-    interaction?.selectedPart?.kind === "headerCell"
-      ? interaction.selectedPart.colIndex
-      : undefined;
+  const selectedColumns = selectedTableColumnIndexes(interaction);
   const hasColumnWidths = columns.some((column) => column.widthPct != null && column.widthPct > 0);
   const layoutClassName = [
     className,
@@ -116,7 +117,7 @@ export function ConfigurablePresentationTable({
                   key={`${column.key}-${rowIndex}`}
                   rowIndex={rowIndex}
                   colIndex={colIndex}
-                  columnSelected={selectedColumnIndex === colIndex}
+                  columnSelected={selectedColumns.has(colIndex)}
                   interaction={interaction}
                   tableParts={tableParts}
                 >
@@ -132,7 +133,7 @@ export function ConfigurablePresentationTable({
                   key={`${column.key}-total`}
                   rowIndex={rows.length}
                   colIndex={colIndex}
-                  columnSelected={selectedColumnIndex === colIndex}
+                  columnSelected={selectedColumns.has(colIndex)}
                   interaction={interaction}
                   tableParts={tableParts}
                 >

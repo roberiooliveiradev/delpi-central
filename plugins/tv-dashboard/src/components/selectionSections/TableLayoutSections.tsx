@@ -13,8 +13,9 @@ import {
   distributeTableProjectionColumnWidths,
   mergeComunicadoTableOptions,
   mergeTablePartsWithOptions,
-  resizeTableProjectionColumn,
+  resizeTableProjectionColumns,
   resolveEditableTableProjectionColumns,
+  selectedTableProjectionColumnKeys,
   type ComunicadoBlock,
   type ComunicadoTableOptions,
   type ComunicadoTableViewBlock,
@@ -156,7 +157,8 @@ export function TableLayoutAlignSection({ layout }: { layout: SelectionSectionLa
 
 /** Altura de linha e largura por coluna (Excel Layout → Tamanho). */
 export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLayout }) {
-  const { selected, selectedTablePart, selectTablePart, updateSelected } = useComunicadoEditor();
+  const { selected, selectedTablePart, selectedTableParts, selectTablePart, updateSelected } =
+    useComunicadoEditor();
   const [columnKey, setColumnKey] = useState<string>("");
   const block = selected?.type === "table_view" ? (selected as ComunicadoTableViewBlock) : null;
   const options = block
@@ -198,10 +200,13 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
   };
 
   const activeColumn = projectionColumns.find((column) => column.key === activeKey);
+  const multiSelectedKeys = selectedTableProjectionColumnKeys(block, selectedTableParts);
   const patchColumnWidth = (widthPct: number | undefined) => {
     if (!activeKey) return;
+    /* Multi-seleção que inclui a coluna ativa → aplica a largura a todas. */
+    const keys = multiSelectedKeys.includes(activeKey) ? multiSelectedKeys : [activeKey];
     updateSelected({
-      tableProjection: resizeTableProjectionColumn(block, activeKey, widthPct),
+      tableProjection: resizeTableProjectionColumns(block, keys, widthPct),
     } as Partial<ComunicadoBlock>);
   };
 
@@ -226,7 +231,9 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
         />
       </label>
       <label className="td-deck-ribbon__frame-field">
-        <span className="td-deck-ribbon__field-label">Coluna</span>
+        <span className="td-deck-ribbon__field-label">
+          {multiSelectedKeys.length > 1 ? `Coluna (${multiSelectedKeys.length} sel.)` : "Coluna"}
+        </span>
         <TdRibbonSelect
           value={activeKey}
           disabled={projectionColumns.length === 0}

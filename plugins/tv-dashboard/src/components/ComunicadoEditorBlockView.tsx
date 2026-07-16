@@ -47,7 +47,8 @@ import {
   resolveInputRefreshSourceIds,
   resolveInputTargetScope,
   resolveComunicadoDataPageState,
-  resizeTableProjectionColumn,
+  resizeTableProjectionColumns,
+  selectedTableProjectionColumnKeys,
   resizeInputPartFrame,
   scaleInputPartTypographyOnResize,
   upsertInputPartState,
@@ -456,6 +457,7 @@ function EditorTableViewBlock({
     selectedIds,
     isBlockSelected,
     selectedTablePart,
+    selectedTableParts,
     selectBlock,
     selectBlocksByIds,
     selectTablePart,
@@ -470,6 +472,16 @@ function EditorTableViewBlock({
   const onPartPointerDown = useCallback(
     (ref: ComunicadoTablePartRef, event?: ReactPointerEvent) => {
       if (!event) return;
+      /* Ctrl/Cmd alterna a coluna; Shift estende o intervalo desde a coluna âncora. */
+      if (
+        ref.kind === "headerCell" &&
+        selectedId === block.id &&
+        (event.ctrlKey || event.metaKey || event.shiftKey)
+      ) {
+        selectTablePart(block.id, ref, event.shiftKey ? { range: true } : { additive: true });
+        requestRibbonTab("table");
+        return;
+      }
       if (event.shiftKey) {
         selectBlock(block.id, { additive: true });
         return;
@@ -528,11 +540,14 @@ function EditorTableViewBlock({
 
   const onColumnResize = useCallback(
     (columnKey: string, widthPct: number) => {
+      /* Redimensionar uma coluna da multi-seleção aplica a largura a todas (Excel-like). */
+      const selectedKeys = selectedTableProjectionColumnKeys(block, selectedTableParts);
+      const keys = selectedKeys.includes(columnKey) ? selectedKeys : [columnKey];
       updateBlock(block.id, {
-        tableProjection: resizeTableProjectionColumn(block, columnKey, widthPct),
+        tableProjection: resizeTableProjectionColumns(block, keys, widthPct),
       });
     },
-    [block, updateBlock],
+    [block, selectedTableParts, updateBlock],
   );
   const pageState = resolveComunicadoDataPageState(block.resolved);
   const sourceId = block.dataSourceId?.trim();
@@ -542,6 +557,7 @@ function EditorTableViewBlock({
     selectedId === block.id
       ? {
           selectedPart: selectedTablePart,
+          selectedParts: selectedTableParts,
           onPartPointerDown,
           onPartDoubleClick,
           onColumnResize,

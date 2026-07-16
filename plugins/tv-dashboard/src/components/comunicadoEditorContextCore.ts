@@ -108,7 +108,13 @@ export type ComunicadoEditorContextValue = {
   cancelEditChartPart: () => void;
   /** Onda 4G.8 — subseleção de parte da tabela. */
   selectedTablePart: ComunicadoTablePartRef | null;
-  selectTablePart: (blockId: string, part: ComunicadoTablePartRef) => void;
+  /** Multi-seleção de colunas (Ctrl/Shift no cabeçalho) — o último item é a parte primária. */
+  selectedTableParts: ComunicadoTablePartRef[];
+  selectTablePart: (
+    blockId: string,
+    part: ComunicadoTablePartRef,
+    options?: { additive?: boolean; range?: boolean },
+  ) => void;
   clearTablePartSelection: () => void;
   /** KPI — subseleção de parte do card (título, valor, ícone…). */
   selectedKpiPart: ComunicadoKpiPartRef | null;

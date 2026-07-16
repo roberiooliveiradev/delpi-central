@@ -150,6 +150,27 @@ describe("ConfigurablePresentationTable", () => {
     expect(onColumnResize).toHaveBeenLastCalledWith("name", 35);
   });
 
+  it("destaca todas as colunas da multi-seleção", () => {
+    const { container } = render(
+      <ConfigurablePresentationTable
+        columns={columns}
+        rows={[{ name: "Item A", value: 100 }]}
+        interaction={{
+          selectedPart: { kind: "headerCell", colIndex: 1 },
+          selectedParts: [
+            { kind: "headerCell", colIndex: 0 },
+            { kind: "headerCell", colIndex: 1 },
+          ],
+          onColumnResize: vi.fn(),
+        }}
+      />,
+    );
+    expect(container.querySelectorAll(".delpi-ui-config-table__column--selected")).toHaveLength(2);
+    const selectedHeaders = container.querySelectorAll('th[aria-selected="true"]');
+    expect(selectedHeaders).toHaveLength(2);
+    expect(container.querySelectorAll("[data-column-resize-handle]")).toHaveLength(4);
+  });
+
   it("duplo clique na alça ajusta a largura ao conteúdo", () => {
     const onColumnResize = vi.fn();
     const { container } = render(

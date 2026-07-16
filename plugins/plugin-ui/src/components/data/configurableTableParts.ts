@@ -41,6 +41,8 @@ export type TablePartsMap = Record<string, TablePartState>;
 
 export type TableInteraction = {
   selectedPart?: TablePartRef | null;
+  /** Multi-seleção (ex.: várias colunas via Ctrl/Shift) — inclui a parte primária. */
+  selectedParts?: TablePartRef[] | null;
   editingPart?: TablePartRef | null;
   onPartPointerDown?: (ref: TablePartRef, event: ReactPointerEvent) => void;
   onPartDoubleClick?: (ref: TablePartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
@@ -102,6 +104,27 @@ export function parseTablePartRef(raw: string | null | undefined): TablePartRef 
 export function isTablePartRefEqual(a?: TablePartRef | null, b?: TablePartRef | null): boolean {
   if (!a || !b) return false;
   return serializeTablePartRef(a) === serializeTablePartRef(b);
+}
+
+/** Parte está selecionada — considera a parte primária e a multi-seleção. */
+export function isTablePartSelected(
+  ref: TablePartRef,
+  interaction?: Pick<TableInteraction, "selectedPart" | "selectedParts"> | null,
+): boolean {
+  if (isTablePartRefEqual(ref, interaction?.selectedPart)) return true;
+  return (interaction?.selectedParts ?? []).some((part) => isTablePartRefEqual(ref, part));
+}
+
+/** Índices das colunas selecionadas (partes `headerCell`, primária + multi). */
+export function selectedTableColumnIndexes(
+  interaction?: Pick<TableInteraction, "selectedPart" | "selectedParts"> | null,
+): Set<number> {
+  const indexes = new Set<number>();
+  const parts = [interaction?.selectedPart, ...(interaction?.selectedParts ?? [])];
+  for (const part of parts) {
+    if (part?.kind === "headerCell") indexes.add(part.colIndex);
+  }
+  return indexes;
 }
 
 export function tablePartCapabilities(ref: TablePartRef): TablePartCapabilities {
@@ -202,9 +225,12 @@ export function tablePartDomProps(ref: TablePartRef, selectedPart?: TablePartRef
 
 export function bindTablePartPointer(ref: TablePartRef, interaction?: TableInteraction | null) {
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
-  const selected = isTablePartRefEqual(ref, interaction?.selectedPart);
+  const selected = isTablePartSelected(ref, interaction);
   const editing = isTablePartRefEqual(ref, interaction?.editingPart);
-  const dom = tablePartDomProps(ref, interaction?.selectedPart);
+  const dom = {
+    [TABLE_PART_DATA_ATTR]: serializeTablePartRef(ref),
+    "aria-selected": selected ? true : undefined,
+  };
 
   if (!interactive) {
     return {

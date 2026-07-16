@@ -4,7 +4,9 @@ import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
 import {
   distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
+  resizeTableProjectionColumns,
   resolveEditableTableProjectionColumns,
+  selectedTableProjectionColumnKeys,
 } from "./tableProjectionEditing";
 
 const block = {
@@ -25,6 +27,36 @@ describe("tableProjectionEditing", () => {
       { key: "code", label: "Código", visible: true, widthPct: 35.3 },
       { key: "description", label: "Descrição", visible: true, widthPct: 60 },
     ]);
+  });
+
+  it("aplica a mesma largura a várias colunas selecionadas", () => {
+    const projection = resizeTableProjectionColumns(block, ["code", "description"], 25);
+
+    expect(projection.columns).toEqual([
+      { key: "code", label: "Código", visible: true, widthPct: 25 },
+      { key: "description", label: "Descrição", visible: true, widthPct: 25 },
+    ]);
+  });
+
+  it("mapeia partes headerCell para chaves das colunas visíveis", () => {
+    const withHidden = {
+      type: "table_view",
+      tableProjection: {
+        columns: [
+          { key: "internal", label: "Interno", visible: false },
+          { key: "code", label: "Código", visible: true },
+          { key: "description", label: "Descrição", visible: true },
+        ],
+      },
+    } as ComunicadoTableViewBlock;
+
+    const keys = selectedTableProjectionColumnKeys(withHidden, [
+      { kind: "headerCell", colIndex: 0 },
+      { kind: "headerCell", colIndex: 1 },
+      { kind: "frame" },
+    ]);
+
+    expect(keys).toEqual(["code", "description"]);
   });
 
   it("distribui a largura igualmente entre colunas visíveis", () => {
@@ -57,7 +89,7 @@ describe("tableProjectionEditing", () => {
           rows: [{ total: 10 }],
         },
       },
-    } as ComunicadoTableViewBlock;
+    } as unknown as ComunicadoTableViewBlock;
 
     expect(resolveEditableTableProjectionColumns(withoutProjection)).toEqual([
       { key: "total", label: "Total", visible: true },

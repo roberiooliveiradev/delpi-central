@@ -1,3 +1,4 @@
+import type { ComunicadoTablePartRef } from "./comunicadoTableParts";
 import type { ComunicadoTableViewBlock } from "./comunicadoTypes";
 import { resolveTableColumns } from "./tvDataPresentation";
 import {
@@ -21,6 +22,22 @@ export function resolveEditableTableProjectionColumns(
     label: column.label,
     visible: true,
   }));
+}
+
+/** Chaves das colunas selecionadas (partes `headerCell`) na ordem das colunas visíveis. */
+export function selectedTableProjectionColumnKeys(
+  block: ComunicadoTableViewBlock,
+  parts: readonly ComunicadoTablePartRef[],
+): string[] {
+  const visibleColumns = resolveEditableTableProjectionColumns(block).filter(
+    (column) => column.visible !== false,
+  );
+  const indexes = new Set(
+    parts.flatMap((part) => (part.kind === "headerCell" ? [part.colIndex] : [])),
+  );
+  return visibleColumns.flatMap((column, colIndex) =>
+    indexes.has(colIndex) ? [column.key] : [],
+  );
 }
 
 /** Distribui a largura igualmente entre as colunas visíveis (PowerPoint «Distribuir Colunas»). */
@@ -51,6 +68,16 @@ export function resizeTableProjectionColumn(
   columnKey: string,
   widthPct: number | undefined,
 ): TableViewProjection {
+  return resizeTableProjectionColumns(block, [columnKey], widthPct);
+}
+
+/** Aplica a mesma largura a várias colunas (multi-seleção Excel-like). */
+export function resizeTableProjectionColumns(
+  block: ComunicadoTableViewBlock,
+  columnKeys: readonly string[],
+  widthPct: number | undefined,
+): TableViewProjection {
+  const keys = new Set(columnKeys);
   const normalizedWidth =
     widthPct == null || widthPct <= 0
       ? undefined
@@ -59,7 +86,7 @@ export function resizeTableProjectionColumn(
   return {
     ...block.tableProjection,
     columns: resolveEditableTableProjectionColumns(block).map((column) => {
-      if (column.key !== columnKey) return column;
+      if (!keys.has(column.key)) return column;
       const next = { ...column };
       if (normalizedWidth == null) {
         delete next.widthPct;

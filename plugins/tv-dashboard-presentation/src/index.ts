@@ -704,10 +704,12 @@ export {
   deleteTablePart,
   getTablePartState,
   isTablePartRefEqual,
+  isTablePartSelected,
   mergeTablePartsWithOptions,
   migrateLegacyTableChromeToFrame,
   normalizeTablePartsForLoad,
   parseTablePartRef,
+  selectedTableColumnIndexes,
   partsToTableOptions,
   resolveTableFrameStyle,
   resolveTableHeaderCellPaintStyle,
@@ -812,7 +814,9 @@ export {
 export {
   distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
+  resizeTableProjectionColumns,
   resolveEditableTableProjectionColumns,
+  selectedTableProjectionColumnKeys,
 } from "./tableProjectionEditing";
 export {
   mergeComunicadoDataPages,

@@ -279,7 +279,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableWrapText:
       "Quebra o texto das células em várias linhas. Ao definir ou arrastar a largura de uma coluna, a quebra é ativada automaticamente.",
     tableColumnSize:
-      "Altura mínima das linhas (px) e largura relativa de cada coluna (%). Selecione a coluna no seletor ou clique no cabeçalho e arraste as alças azuis nos cantos. Duplo clique na alça ajusta a largura ao conteúdo.",
+      "Altura mínima das linhas (px) e largura relativa de cada coluna (%). Selecione a coluna no seletor ou clique no cabeçalho e arraste as alças azuis nos cantos. Duplo clique na alça ajusta a largura ao conteúdo. Ctrl+clique alterna colunas na seleção e Shift+clique estende o intervalo — a largura vale para todas as selecionadas.",
     tableDistributeRows:
       "Remove a altura fixa: todas as linhas voltam à altura automática, ajustada ao conteúdo.",
     tableDistributeColumns:

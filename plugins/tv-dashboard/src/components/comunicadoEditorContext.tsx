@@ -457,6 +457,7 @@ export function ComunicadoEditorProvider({
     commitChartPartContent: blockActions.commitChartPartContent,
     cancelEditChartPart: selection.cancelEditChartPart,
     selectedTablePart: selection.selectedTablePart,
+    selectedTableParts: selection.selectedTableParts,
     selectTablePart: selection.selectTablePart,
     clearTablePartSelection: selection.clearTablePartSelection,
     selectedKpiPart: selection.selectedKpiPart,
