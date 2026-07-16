@@ -1,4 +1,7 @@
+import { useMemo } from "react";
+
 import { HelpTooltip } from "../help/HelpTooltip";
+import { ToolbarSelectControl } from "../forms/ToolbarSelectField";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 
 export type CompactPaginationClassNames = {
@@ -95,6 +98,14 @@ export function CompactPagination({
   const canNext = !disabled && page < resolvedTotalPages;
   const showPageSize =
     onPageSizeChange != null && pageSizeOptions != null && pageSizeOptions.length > 0;
+  const pageSizeSelectOptions = useMemo(
+    () =>
+      (pageSizeOptions ?? []).map((option) => ({
+        value: String(option),
+        label: String(option),
+      })),
+    [pageSizeOptions],
+  );
 
   if (total === 0) return null;
   if (hideWhenSinglePage && resolvedTotalPages <= 1) return null;
@@ -176,17 +187,15 @@ export function CompactPagination({
         {showPageSize ? (
           <label className={classNames.pageSize}>
             <span>{labels.pageSizeLabel}</span>
-            <select
-              value={pageSize}
+            <ToolbarSelectControl
+              value={String(pageSize)}
               disabled={disabled}
-              onChange={(event) => onPageSizeChange(Number(event.target.value))}
-            >
-              {pageSizeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => onPageSizeChange?.(Number(value))}
+              options={pageSizeSelectOptions}
+              allowEmpty={false}
+              searchable={false}
+              ariaLabel={labels.pageSizeLabel ?? "Itens por página"}
+            />
           </label>
         ) : null}
       </div>

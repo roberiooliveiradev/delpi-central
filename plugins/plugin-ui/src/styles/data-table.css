@@ -386,13 +386,18 @@ table.delpi-ui-table--clickable tbody tr.is-selected {
 
 .delpi-ui-table-page-size__select {
   min-width: 72px;
+  position: relative;
+}
+
+.delpi-ui-table-page-size .delpi-ui-toolbar-select__trigger,
+.delpi-ui-table-page-size__select.delpi-ui-toolbar-select .delpi-ui-toolbar-select__trigger,
+.delpi-ui-table-page-size__select .delpi-ui-toolbar-select__trigger {
+  min-width: 72px;
   min-height: 36px;
-  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
-  border-radius: 10px;
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
-  color: var(--delpi-ui-text, var(--text, #111111));
   padding: 6px 10px;
-  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 10px;
 }
 
 @media (max-width: 768px) {

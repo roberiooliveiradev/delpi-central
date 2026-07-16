@@ -1,6 +1,7 @@
-import { useEffect, useId, useState, type ReactElement } from "react";
+import { useEffect, useId, useMemo, useState, type ReactElement } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { ToolbarSelectControl } from "../forms/ToolbarSelectField";
 import {
   buildVisiblePageItems,
   parsePageJumpInput,
@@ -38,21 +39,27 @@ export function TablePageSizeSelect({
   labels,
   pageSizeHint,
 }: TablePageSizeSelectProps) {
+  const options = useMemo(
+    () =>
+      pageSizeOptions.map((option) => ({
+        value: String(option),
+        label: String(option),
+      })),
+    [pageSizeOptions],
+  );
+
   return (
     <label className={classNames.root}>
       <span className={classNames.label}>{labels.label}</span>
-      <select
+      <ToolbarSelectControl
         className={classNames.select}
-        value={pageSize}
-        onChange={(event) => onPageSizeChange(Number(event.target.value))}
-        aria-label={labels.selectAriaLabel}
-      >
-        {pageSizeOptions.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
+        value={String(pageSize)}
+        onChange={(value) => onPageSizeChange(Number(value))}
+        options={options}
+        allowEmpty={false}
+        searchable={false}
+        ariaLabel={labels.selectAriaLabel}
+      />
       {pageSizeHint && classNames.help ? (
         <HelpTooltip
           content={pageSizeHint}

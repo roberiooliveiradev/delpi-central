@@ -319,6 +319,8 @@ Consumidor piloto: `strategic-indicators` (`SectionBlock.tsx`).
 
 Rodapé de tabela com navegação, páginas visíveis (reticências), «Ir para» e seletor de itens por página.
 
+O `TablePageSizeSelect` usa o **`ToolbarSelectControl`** (Select do kit), não `<select>` nativo.
+
 | Prop / export | Tipo | Descrição |
 |---------------|------|-----------|
 | `page` / `totalPages` / `total` | `number` | Estado da paginação |
