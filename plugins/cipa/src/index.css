@@ -178,9 +178,25 @@
 }
 
 .dashboard-cipa .cipa-chip-list__name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dashboard-cipa .cipa-chip-list__name-main {
   display: inline-flex;
   align-items: center;
   min-width: 0;
+}
+
+.dashboard-cipa .cipa-composition-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .dashboard-cipa .cipa-chip-list__actions {

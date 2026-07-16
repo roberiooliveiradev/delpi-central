@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Plus, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus, RefreshCw, X } from "lucide-react";
 import {
   ActionButton,
   BackLink,
@@ -15,6 +15,7 @@ import {
 import {
   createMinute,
   getMinute,
+  listCipaMembers,
   searchDirectoryUsers,
   setSigners,
   updateMinute,
@@ -33,6 +34,7 @@ import {
   CipaSectionCard,
   CipaStateBanner,
 } from "../ui/cipaUi";
+import { mergeCompositionWithExternals } from "../utils/cipaComposition";
 import { mergeMinuteContentHtml, splitMinuteContentForSave } from "../utils/minuteContent";
 
 type Props = {
@@ -79,9 +81,48 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentId, setCurrentId] = useState<string | undefined>(minuteId);
+  const [participantsTouched, setParticipantsTouched] = useState(false);
+  const [compositionLoading, setCompositionLoading] = useState(false);
+  const [compositionNotice, setCompositionNotice] = useState<string | null>(null);
 
   const listPath = `/apps/cipa/filial-${unitCode}/minutes`;
   const unitLabel = UNIT_LABELS[unitCode] || `Unidade ${unitCode}`;
+  const isNewMinute = !minuteId;
+
+  const applyComposition = useCallback(
+    async (date: string, { force = false }: { force?: boolean } = {}) => {
+      if (!isNewMinute) return;
+      if (!date) return;
+      setCompositionLoading(true);
+      try {
+        const members = await listCipaMembers(unitCode, { activeOn: date });
+        setParticipants((prev) => mergeCompositionWithExternals(members, prev));
+        setParticipantsTouched(false);
+        setCompositionNotice(
+          members.length === 0
+            ? "Nenhum membro ativo na data da reunião. Cadastre a composição em Membros e cargos."
+            : null,
+        );
+        if (force) {
+          setError(null);
+        }
+      } catch (err) {
+        setCompositionNotice(
+          err instanceof Error
+            ? err.message
+            : "Não foi possível carregar a composição da CIPA.",
+        );
+      } finally {
+        setCompositionLoading(false);
+      }
+    },
+    [isNewMinute, unitCode],
+  );
+
+  useEffect(() => {
+    if (!isNewMinute || participantsTouched) return;
+    void applyComposition(meetingDate);
+  }, [applyComposition, isNewMinute, meetingDate, participantsTouched]);
 
   useEffect(() => {
     if (!minuteId) return;
@@ -127,9 +168,14 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
       .catch((err) => setError(err instanceof Error ? err.message : "Erro ao carregar"));
   }, [minuteId]);
 
+  function markParticipantsTouched() {
+    if (isNewMinute) setParticipantsTouched(true);
+  }
+
   function addExternalParticipant() {
     const value = externalName.trim();
     if (!value) return;
+    markParticipantsTouched();
     setParticipants((prev) => [
       ...prev,
       {
@@ -144,16 +190,19 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
   }
 
   function removeParticipant(index: number) {
+    markParticipantsTouched();
     setParticipants((prev) => prev.filter((_, i) => i !== index));
   }
 
   function toggleSigner(index: number, checked: boolean) {
+    markParticipantsTouched();
     setParticipants((prev) =>
       prev.map((item, i) => (i === index ? { ...item, must_sign: checked } : item)),
     );
   }
 
   function updateParticipantRole(index: number, role: string) {
+    markParticipantsTouched();
     setParticipants((prev) =>
       prev.map((item, i) => (i === index ? { ...item, role_in_meeting: role } : item)),
     );
@@ -315,9 +364,35 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
 
         <CipaSectionCard title="Participantes" className="cipa-compose__section">
           <div className="cipa-compose__panel">
+            {isNewMinute ? (
+              <div className="cipa-composition-toolbar">
+                <p className="cipa-compose__hint">
+                  Nova ata carrega a composição ativa da CIPA na data da reunião. Após editar
+                  participantes manualmente, use «Recarregar composição CIPA» para atualizar.
+                </p>
+                <ActionButton
+                  variant="ghost"
+                  disabled={compositionLoading || !meetingDate}
+                  onClick={() => void applyComposition(meetingDate, { force: true })}
+                >
+                  <RefreshCw size={16} />
+                  {compositionLoading ? "Carregando…" : "Recarregar composição CIPA"}
+                </ActionButton>
+              </div>
+            ) : (
+              <p className="cipa-compose__hint">
+                Participantes desta ata são um snapshot histórico e não são sobrescritos pelo
+                cadastro de membros.
+              </p>
+            )}
+            {compositionNotice ? (
+              <CipaStateBanner>{compositionNotice}</CipaStateBanner>
+            ) : null}
+
             <UserDirectoryPicker
               value={directoryParticipants}
               onChange={(users) => {
+                markParticipantsTouched();
                 const externals = participants.filter((item) => item.is_external);
                 const previousById = new Map(
                   participants
@@ -374,10 +449,16 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                 {participants.map((item, index) => (
                   <li key={`${item.display_name}-${index}`}>
                     <span className="cipa-chip-list__name">
-                      {item.display_name}
-                      {item.is_external ? (
-                        <span className="cipa-chip-list__tag">externo</span>
-                      ) : null}
+                      <span className="cipa-chip-list__name-main">
+                        {item.display_name}
+                        {item.is_external ? (
+                          <span className="cipa-chip-list__tag">externo</span>
+                        ) : null}
+                      </span>
+                      <span className="cipa-chip-list__role">
+                        {PARTICIPANT_ROLE_LABELS[item.role_in_meeting] ||
+                          item.role_in_meeting}
+                      </span>
                     </span>
                     <div className="cipa-chip-list__actions">
                       <FormSelectControl
