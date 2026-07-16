@@ -1,6 +1,10 @@
 import { useCallback, useRef, useState } from "react";
 
-import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+import {
+  needsDataSourceDuplicateChoice,
+  type ComunicadoBlock,
+  type DataSourceDuplicatePolicy,
+} from "@delpi/tv-dashboard-presentation";
 
 import { cloneBlocksForClipboard, pasteClipboardBlocks } from "../../utils/comunicadoEditorClipboard";
 
@@ -10,6 +14,7 @@ type Options = {
   selectBlocksByIds: (ids: string[]) => void;
   updateBlocks: (blocks: ComunicadoBlock[]) => void;
   removeSelected: () => void;
+  chooseDataSourceDuplicatePolicy?: () => Promise<DataSourceDuplicatePolicy | null>;
 };
 
 export function useComunicadoEditorClipboard({
@@ -18,6 +23,7 @@ export function useComunicadoEditorClipboard({
   selectBlocksByIds,
   updateBlocks,
   removeSelected,
+  chooseDataSourceDuplicatePolicy,
 }: Options) {
   const [clipboardRevision, setClipboardRevision] = useState(0);
   const clipboardRef = useRef<ComunicadoBlock[]>([]);
@@ -29,15 +35,30 @@ export function useComunicadoEditorClipboard({
     setClipboardRevision((tick) => tick + 1);
   }, [getSources]);
 
-  const pasteSelected = useCallback(() => {
+  const pasteSelected = useCallback(async () => {
     if (clipboardRef.current.length === 0) return;
+
+    let policy: DataSourceDuplicatePolicy = "share_source";
+    if (needsDataSourceDuplicateChoice(clipboardRef.current) && chooseDataSourceDuplicatePolicy) {
+      const choice = await chooseDataSourceDuplicatePolicy();
+      if (!choice) return;
+      policy = choice;
+    }
+
     const { blocks: nextBlocks, pastedIds } = pasteClipboardBlocks(
       getExistingBlocks(),
       clipboardRef.current,
+      { x: 2, y: 2 },
+      policy,
     );
     selectBlocksByIds(pastedIds);
     updateBlocks(nextBlocks);
-  }, [getExistingBlocks, selectBlocksByIds, updateBlocks]);
+  }, [
+    chooseDataSourceDuplicatePolicy,
+    getExistingBlocks,
+    selectBlocksByIds,
+    updateBlocks,
+  ]);
 
   const cutSelected = useCallback(() => {
     copySelected();

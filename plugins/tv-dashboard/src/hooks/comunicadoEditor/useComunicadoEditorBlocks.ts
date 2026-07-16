@@ -45,6 +45,8 @@ import {
   getKpiPartState,
   mergeKpiPartsWithOptions,
   buildViewDataLinkPatch,
+  duplicateBlocksWithDataPolicy,
+  needsDataSourceDuplicateChoice,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -52,6 +54,7 @@ import {
   type ComunicadoDataDisplayMode,
   type ComunicadoDataFilters,
   type ComunicadoDataResolved,
+  type DataSourceDuplicatePolicy,
   type ComunicadoInputBlock,
   type ComunicadoInputPartRef,
   type ComunicadoKpiPartRef,
@@ -73,6 +76,7 @@ import type {
 } from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
 import { applyComunicadoBlockStylePatch } from "../../utils/applyComunicadoBlockStylePatch";
+import { DATE_RANGE_PRESET_PARAM, PERIOD_DAYS_PARAM } from "../../utils/dateRangePresets";
 import {
   bringForward,
   bringToFront,
@@ -124,6 +128,7 @@ type Options = {
   onInputBlocksRemoved?: (payload: { sourceIds: string[] }) => void;
   /** Resolved atual da fonte (preview) — para materializar projection no link. */
   getSourceResolved?: (sourceId: string) => ComunicadoDataResolved | undefined;
+  chooseDataSourceDuplicatePolicy?: () => Promise<DataSourceDuplicatePolicy | null>;
 };
 
 /**
@@ -161,6 +166,7 @@ export function useComunicadoEditorBlocks({
   updateBlockTextFieldsRef,
   onInputBlocksRemoved,
   getSourceResolved,
+  chooseDataSourceDuplicatePolicy,
 }: Options) {
   const updateBlocks = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
@@ -386,7 +392,11 @@ export function useComunicadoEditorBlocks({
    * Trocar/limpar paramKey remove a chave antiga de dataFilters.
    */
   const patchInputBlock = useCallback(
-    (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => {
+    (
+      blockId: string,
+      inputPatch: Partial<ComunicadoInputBlock["input"]>,
+      filterBundle?: Record<string, string | number | boolean | null | undefined>,
+    ) => {
       const current = configRef.current;
       let nextFilters = current.dataFilters;
       const nextBlocks = (current.blocks ?? []).map((item) => {
@@ -399,6 +409,9 @@ export function useComunicadoEditorBlocks({
           const filters = { ...(current.dataFilters ?? {}) };
           if (prevKey && prevKey !== nextKey) {
             delete filters[prevKey];
+            if (prevKey === DATE_RANGE_PRESET_PARAM || nextKey === DATE_RANGE_PRESET_PARAM) {
+              delete filters[PERIOD_DAYS_PARAM];
+            }
           }
           if (nextKey) {
             const value = nextInput.defaultValue;
@@ -406,6 +419,12 @@ export function useComunicadoEditorBlocks({
               delete filters[nextKey];
             } else {
               filters[nextKey] = value;
+            }
+          }
+          if (filterBundle) {
+            for (const [key, value] of Object.entries(filterBundle)) {
+              if (value === undefined || value === null || value === "") delete filters[key];
+              else filters[key] = value;
             }
           }
           nextFilters = Object.keys(filters).length > 0 ? filters : undefined;
@@ -715,31 +734,32 @@ export function useComunicadoEditorBlocks({
     ],
   );
 
-  const duplicateSelected = useCallback(() => {
+  const duplicateSelected = useCallback(async () => {
     const sources = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
     if (sources.length === 0) return;
-    let nextZ = nextZIndex(configRef.current.blocks ?? []);
-    const copies: ComunicadoBlock[] = sources.map((source) => {
-      const { resolved: _omit, url: _url, ...rest } = source as ComunicadoBlock & {
-        resolved?: unknown;
-        url?: string;
-      };
-      const copy = {
-        ...rest,
-        id: newBlockId(),
-        frame: {
-          ...source.frame,
-          x: Math.min(92, source.frame.x + 2),
-          y: Math.min(92, source.frame.y + 2),
-        },
-        style: { ...source.style, zIndex: nextZ },
-      } as ComunicadoBlock;
-      nextZ += 1;
-      return copy;
-    });
-    selectBlocksByIds(copies.map((copy) => copy.id));
-    updateBlocks([...(configRef.current.blocks ?? []), ...copies]);
-  }, [configRef, selectBlocksByIds, selected, selectedBlocks, updateBlocks]);
+
+    let policy: DataSourceDuplicatePolicy = "share_source";
+    if (needsDataSourceDuplicateChoice(sources) && chooseDataSourceDuplicatePolicy) {
+      const choice = await chooseDataSourceDuplicatePolicy();
+      if (!choice) return;
+      policy = choice;
+    }
+
+    const { blocks, pastedIds } = duplicateBlocksWithDataPolicy(
+      configRef.current.blocks ?? [],
+      sources,
+      policy,
+    );
+    selectBlocksByIds(pastedIds);
+    updateBlocks(blocks);
+  }, [
+    chooseDataSourceDuplicatePolicy,
+    configRef,
+    selectBlocksByIds,
+    selected,
+    selectedBlocks,
+    updateBlocks,
+  ]);
 
   const replaceSelectedDataRoute = useCallback(
     (block: ComunicadoBlock) => {

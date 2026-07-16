@@ -2,6 +2,7 @@ import { useMemo, useRef } from "react";
 
 import { configureHttpClient } from "./api/httpClient";
 import { ConfirmDialogProvider } from "./context/ConfirmDialogProvider";
+import { DataSourceDuplicateChoiceProvider } from "./context/DataSourceDuplicateChoiceProvider";
 import { NoticeDialogProvider } from "./context/NoticeDialogProvider";
 import { useTvDashboardPath } from "./hooks/useTvDashboardPath";
 import { NewPlaylistPage } from "./pages/NewPlaylistPage";
@@ -138,6 +139,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
   return (
     <NoticeDialogProvider>
       <ConfirmDialogProvider>
+        <DataSourceDuplicateChoiceProvider>
         <div
           className={[
             "dashboard-tv-dashboard",
@@ -163,6 +165,7 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
             </div>
           </div>
         </div>
+        </DataSourceDuplicateChoiceProvider>
       </ConfirmDialogProvider>
     </NoticeDialogProvider>
   );

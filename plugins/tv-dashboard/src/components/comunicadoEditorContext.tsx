@@ -25,13 +25,12 @@ import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext
 import { useComunicadoEditorBlocks } from "../hooks/comunicadoEditor/useComunicadoEditorBlocks";
 import { useComunicadoEditorClipboard } from "../hooks/comunicadoEditor/useComunicadoEditorClipboard";
 import { useComunicadoEditorDrag } from "../hooks/comunicadoEditor/useComunicadoEditorDrag";
-import {
-  useComunicadoEditorHistory,
-} from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
+import { useComunicadoEditorHistory } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
 import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
 } from "../hooks/comunicadoEditor/comunicadoEditorValueSync";
+import { useOptionalDataSourceDuplicateChoice } from "../context/DataSourceDuplicateChoiceProvider";
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
 import { useComunicadoEditorSelection } from "../hooks/comunicadoEditor/useComunicadoEditorSelection";
 import { useComunicadoEditorStage } from "../hooks/comunicadoEditor/useComunicadoEditorStage";
@@ -312,6 +311,8 @@ export function ComunicadoEditorProvider({
     }
   }, [value, playlistId, slideId, resetLocalHistory, clearDragSnapshot, deckHistory?.historyEpoch]);
 
+  const chooseDataSourceDuplicatePolicy = useOptionalDataSourceDuplicateChoice();
+
   const blockActions = useComunicadoEditorBlocks({
     configRef,
     commitWithHistory,
@@ -344,6 +345,7 @@ export function ComunicadoEditorProvider({
     updateBlockTextFieldsRef,
     onInputBlocksRemoved,
     getSourceResolved: (sourceId: string) => resolvedByBlockId[sourceId],
+    chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
   });
 
   updateBlocksRef.current = blockActions.updateBlocks;
@@ -394,6 +396,7 @@ export function ComunicadoEditorProvider({
     selectBlocksByIds: selection.selectBlocksByIds,
     updateBlocks: updateBlocksForClipboard,
     removeSelected: () => removeSelectedRef.current(),
+    chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
   });
 
   const media = useComunicadoEditorMedia({

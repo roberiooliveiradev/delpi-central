@@ -183,7 +183,11 @@ export type ComunicadoEditorContextValue = {
   connectSelected: () => void;
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
   /** Atualiza input + espelho dataFilters (escopo slide) num único commit. */
-  patchInputBlock: (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => void;
+  patchInputBlock: (
+    blockId: string,
+    inputPatch: Partial<ComunicadoInputBlock["input"]>,
+    filterBundle?: Record<string, string | number | boolean | null | undefined>,
+  ) => void;
   /** Debounce refresh das fontes amarradas ao filtro. */
   scheduleInputFilterRefresh: (block: ComunicadoInputBlock) => void;
   scheduleInputFilterRefreshById: (blockId: string) => void;

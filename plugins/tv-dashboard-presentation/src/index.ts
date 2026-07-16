@@ -807,6 +807,12 @@ export {
   type ViewProjectionSelection,
 } from "./viewProjection";
 export {
+  duplicateBlocksWithDataPolicy,
+  isLegacyFetchableDataBlock,
+  needsDataSourceDuplicateChoice,
+  type DataSourceDuplicatePolicy,
+} from "./duplicateBlocksWithDataPolicy";
+export {
   buildViewDataLinkPatch,
   buildViewFrameFitPatch,
   countViewLayoutItems,

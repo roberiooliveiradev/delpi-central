@@ -305,6 +305,16 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     tableMaxCols:
       "Quantidade máxima de colunas visíveis (da esquerda para a direita). Deixe vazio para todas as colunas.",
     sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
+    duplicateSourceChoice: {
+      title: "Fonte de dados na duplicação",
+      message:
+        "Este elemento usa uma fonte de dados. Deseja compartilhar a mesma consulta com o original ou criar uma cópia independente (parâmetros e etapas Power Query)?",
+      shareLabel: "Compartilhar fonte",
+      cloneLabel: "Duplicar fonte",
+      cancelLabel: "Cancelar",
+    },
+    inputFilterPresets:
+      "Mesmos presets de período da fonte (ex.: Este mês até hoje). O valor alimenta os filtros do slide ou das fontes amarradas.",
   },
   /** Modal Preparar dados (Power Query). */
   dataPrepare: {
