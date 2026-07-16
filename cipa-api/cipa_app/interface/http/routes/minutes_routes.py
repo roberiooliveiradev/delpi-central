@@ -30,6 +30,7 @@ class CreateMinuteRequest(BaseModel):
     decisions_html: str = ""
     pending_html: str = ""
     observations_html: str = ""
+    participants: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class UpdateMinuteRequest(BaseModel):

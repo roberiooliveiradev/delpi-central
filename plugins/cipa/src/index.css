@@ -141,7 +141,7 @@
 
 .dashboard-cipa .cipa-compose__meta-fields {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   width: 100%;
 }
@@ -188,6 +188,10 @@
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+}
+
+.dashboard-cipa .cipa-participant-role-select {
+  width: min(210px, 32vw);
 }
 
 .dashboard-cipa .cipa-chip-list__tag {
@@ -285,6 +289,16 @@
   .dashboard-cipa .cipa-external-row > :last-child {
     width: 100%;
     justify-content: center;
+  }
+
+  .dashboard-cipa .cipa-chip-list li,
+  .dashboard-cipa .cipa-chip-list__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dashboard-cipa .cipa-participant-role-select {
+    width: 100%;
   }
 }
 

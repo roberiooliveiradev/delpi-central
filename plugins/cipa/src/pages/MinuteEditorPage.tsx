@@ -19,7 +19,11 @@ import {
   setSigners,
   updateMinute,
 } from "../api/cipaApi";
-import { MEETING_TYPE_LABELS, UNIT_LABELS } from "../constants/labels";
+import {
+  MEETING_TYPE_LABELS,
+  PARTICIPANT_ROLE_LABELS,
+  UNIT_LABELS,
+} from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
 import {
@@ -66,6 +70,8 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
   const [title, setTitle] = useState("");
   const [meetingType, setMeetingType] = useState("ordinary");
   const [meetingDate, setMeetingDate] = useState(new Date().toISOString().slice(0, 10));
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
   const [contentHtml, setContentHtml] = useState("<p></p>");
   const [participants, setParticipants] = useState<ParticipantDraft[]>([]);
@@ -85,6 +91,8 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
         setTitle(String(m.title || ""));
         setMeetingType(String(m.meeting_type || "ordinary"));
         setMeetingDate(String(m.meeting_date || "").slice(0, 10));
+        setStartTime(String(m.start_time || "").slice(0, 5));
+        setEndTime(String(m.end_time || "").slice(0, 5));
         setLocation(String(m.location || ""));
         setContentHtml(mergeMinuteContentHtml(detail.version));
         const signerIds = new Set(
@@ -145,6 +153,12 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
     );
   }
 
+  function updateParticipantRole(index: number, role: string) {
+    setParticipants((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, role_in_meeting: role } : item)),
+    );
+  }
+
   async function saveDraft() {
     const validationError = validateForm({ title, meetingDate, participants });
     if (validationError) {
@@ -161,6 +175,8 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
         title,
         meeting_type: meetingType,
         meeting_date: meetingDate,
+        start_time: startTime || null,
+        end_time: endTime || null,
         location,
         ...contentFields,
         participants,
@@ -266,6 +282,24 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                   onChange={setMeetingDate}
                 />
               </div>
+              <div className="cipa-field">
+                <FieldLabel label="Início" htmlFor="cipa-minute-start-time" />
+                <NativeTextControl
+                  id="cipa-minute-start-time"
+                  type="time"
+                  value={startTime}
+                  onChange={setStartTime}
+                />
+              </div>
+              <div className="cipa-field">
+                <FieldLabel label="Término" htmlFor="cipa-minute-end-time" />
+                <NativeTextControl
+                  id="cipa-minute-end-time"
+                  type="time"
+                  value={endTime}
+                  onChange={setEndTime}
+                />
+              </div>
               <div className="cipa-field cipa-field--grow">
                 <FieldLabel label="Local" htmlFor="cipa-minute-location" />
                 <NativeTextControl
@@ -346,6 +380,16 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                       ) : null}
                     </span>
                     <div className="cipa-chip-list__actions">
+                      <FormSelectControl
+                        value={item.role_in_meeting}
+                        onChange={(role) => updateParticipantRole(index, role)}
+                        options={Object.entries(PARTICIPANT_ROLE_LABELS).map(
+                          ([value, label]) => ({ value, label }),
+                        )}
+                        className="cipa-participant-role-select"
+                        portalScopeClassName="dashboard-cipa"
+                        ariaLabel={`Papel de ${item.display_name}`}
+                      />
                       {item.is_external ? (
                         <span className="cipa-chip-list__note">não assina</span>
                       ) : (

@@ -129,6 +129,14 @@ class MeetingMinutesService:
             content_hash=content_hash,
             created_by_user_id=self._user_id(user),
         )
+        participants = payload.get("participants") or []
+        if participants:
+            self.repo.replace_participants(
+                str(minute["id"]),
+                unit_code,
+                participants,
+                self._user_id(user),
+            )
         return self.get_detail(user, str(minute["id"]))
 
     def update(self, user, minute_id: str, payload: dict[str, Any]) -> dict[str, Any]:
