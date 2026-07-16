@@ -10,7 +10,7 @@ import { previewTvDataRoute } from "./previewTvDataRoute";
 const mockedPreview = vi.mocked(previewDataBlockV2);
 
 describe("previewTvDataRoute", () => {
-  it("chama preview-block com params do bloco e modo tabela para playbook", async () => {
+  it("chama preview-block com displayMode auto e prioriza fatia sugerida no preview", async () => {
     mockedPreview.mockResolvedValue({
       block: {
         resolved: {
@@ -51,7 +51,7 @@ describe("previewTvDataRoute", () => {
     expect(body?.playlistId).toBe("pl-1");
     const binding = (body?.block as { dataBinding?: { displayMode?: string; params?: Record<string, unknown> } })
       ?.dataBinding;
-    expect(binding?.displayMode).toBe("table");
+    expect(binding?.displayMode).toBe("auto");
     expect(binding?.params?.dateRangePreset).toBe("this_month");
     expect(binding?.params?.only_ok).toBe(false);
     expect(payload.kind).toBe("table");

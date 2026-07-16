@@ -95,6 +95,16 @@
 
 .delpi-ui-data-route-catalog__chips--kinds {
   gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.delpi-ui-data-route-catalog__kind-hint {
+  flex: 1 1 100%;
+  margin: 0 0 2px;
+  font-size: 10px;
+  line-height: 1.35;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
 }
 
 .delpi-ui-data-route-catalog__chip {

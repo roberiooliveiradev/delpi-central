@@ -32,7 +32,7 @@ function ChartTypePlaceholder({
   const hint = loading
     ? "Carregando dados…"
     : bound
-      ? "Fonte sem série ou valor"
+      ? "Sem série ou valor — escolha campos na conexão do visual"
       : interactive
         ? "Conecte uma fonte de dados"
         : label;

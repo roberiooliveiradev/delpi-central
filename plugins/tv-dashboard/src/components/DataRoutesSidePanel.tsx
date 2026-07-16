@@ -153,6 +153,7 @@ export function DataRoutesSidePanel({
         defaultParams[key] = value;
       }
     }
+    // Kind do catálogo = sugestão de visual; a fonte resolve kpi+table+chart (displayMode auto).
     const preferred = primaryDataRouteDisplayKind(
       resolveDataRouteDisplayKinds({
         metaShape: pickedRoute.metaShape,
@@ -160,15 +161,13 @@ export function DataRoutesSidePanel({
       }),
       pickedRoute.metaShape,
     );
-    const displayMode =
-      preferred === "series" ? "line_chart" : preferred === "kpi" ? "kpi" : "table";
     const block = createDataSourceBlock(pickedRoute.operationId, {
       label: label.trim() || pickedRoute.label,
       defaultParams,
       refreshSec: refreshSec.trim() ? Number(refreshSec) : undefined,
     });
     if (block.dataBinding) {
-      block.dataBinding.displayMode = displayMode;
+      block.dataBinding.displayMode = "auto";
     }
     if (mode === "replace") {
       replaceSelectedDataRoute(block);

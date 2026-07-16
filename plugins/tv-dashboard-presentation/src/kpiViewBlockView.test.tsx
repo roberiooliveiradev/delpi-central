@@ -99,5 +99,6 @@ describe("KpiViewBlockView icon visibility", () => {
     expect(container.querySelector(".tdp-data-block--table")).toBeTruthy();
     expect(screen.getByText("1001")).toBeTruthy();
     expect(screen.queryByText("Fonte sem valor numérico")).toBeNull();
+    expect(screen.queryByText(/Sem dados numéricos/)).toBeNull();
   });
 });

@@ -234,7 +234,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Ajuste de geometria da forma (handles amarelos). Cantos usam pixels; demais valores são relativos (0–1).",
   },
   data: {
-    catalogSearch: "Busque rotas GET da api-delpi por nome, path ou categoria.",
+    catalogSearch:
+      "Busque rotas GET da api-delpi. Os chips KPI / Série / Tabela só filtram o catálogo — qualquer fonte pode ligar a KPI, gráfico ou tabela.",
     sourceConfig:
       "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; no editor, «Atualizar visual» refresca o palco.",
     testRoute:
@@ -251,13 +252,14 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramBranch:
       "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
-    viewBinding: "Conecte o gráfico, tabela ou KPI a uma fonte inserida no palco (ícone de banco).",
+    viewBinding:
+      "Conecte o gráfico, tabela ou KPI a qualquer fonte do palco. A forma sugerida no catálogo não restringe o vínculo.",
     valueFields:
       "Marque quais métricas escalares da rota entram no KPI, gráfico ou tabela. Vazio (todas marcadas) = exibir todas.",
     viewValueFields:
       "Filtra métricas só neste visual, sem novo fetch. Use a fonte para limitar o conjunto disponível a todos os visuais.",
     connectFlow:
-      "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados.",
+      "1) Inserir → Dados (ou catálogo) → escolha uma rota (cria a fonte no palco). 2) Inserir → KPI, Gráficos ou Tabelas → insira o visual. 3) Selecione o visual → painel Dados → Fonte de dados. Qualquer fonte serve para qualquer visual.",
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */
     connectFlowRibbon: "Sem fonte — escolha no seletor do painel ou abra o catálogo.",
     connectOnStage:

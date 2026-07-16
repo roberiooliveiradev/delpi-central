@@ -516,8 +516,11 @@ export function DataRouteCatalogPanel({
           <div
             className="delpi-ui-data-route-catalog__chips delpi-ui-data-route-catalog__chips--kinds"
             role="group"
-            aria-label="Forma dos dados"
+            aria-label="Filtrar rotas por forma sugerida (KPI, série ou tabela)"
           >
+            <p className="delpi-ui-data-route-catalog__kind-hint">
+              KPI, Série e Tabela filtram o catálogo — não limitam o visual no palco.
+            </p>
             {(Object.keys(DISPLAY_KIND_LABELS) as DataRouteDisplayKind[]).map((kind) => (
               <button
                 key={kind}
@@ -531,6 +534,7 @@ export function DataRouteCatalogPanel({
                   .join(" ")}
                 onClick={() => toggleKind(kind)}
                 aria-pressed={kindFilters.includes(kind)}
+                title="Filtra rotas por forma sugerida; qualquer visual pode usar a fonte"
               >
                 {DISPLAY_KIND_LABELS[kind]}
               </button>
@@ -619,7 +623,10 @@ export function DataRouteCatalogPanel({
                       >
                         <span className="delpi-ui-data-route-catalog__card-head">
                           <span className="delpi-ui-data-route-catalog__card-title">{item.label}</span>
-                          <span className="delpi-ui-data-route-catalog__mode">
+                          <span
+                            className="delpi-ui-data-route-catalog__mode"
+                            title="Sugestão de forma — não limita KPI, gráfico ou tabela no palco"
+                          >
                             {DISPLAY_KIND_LABELS[item.primaryKind]}
                           </span>
                         </span>

@@ -27,30 +27,26 @@ export type PreviewTvDataRouteParams = {
   slideFilters?: Record<string, unknown>;
 };
 
-function preferredDisplayMode(route: TvDataRouteCatalogItem): {
-  preferred: "kpi" | "series" | "table";
-  displayMode: "kpi" | "line_chart" | "table";
-} {
-  const preferred = primaryDataRouteDisplayKind(
+/** Sugestão de forma no preview (não restringe o payload — data_source resolve kpi+table+chart). */
+function suggestedPreviewKind(route: TvDataRouteCatalogItem): "kpi" | "series" | "table" {
+  return primaryDataRouteDisplayKind(
     resolveDataRouteDisplayKinds({
       metaShape: route.metaShape,
       allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
     }),
     route.metaShape,
   );
-  const displayMode =
-    preferred === "series" ? "line_chart" : preferred === "kpi" ? "kpi" : "table";
-  return { preferred, displayMode };
 }
 
 /**
  * Chama preview-block com a rota/params atuais e devolve payload tipado do catálogo.
+ * O kind do catálogo só prioriza qual fatia mostrar; a fonte resolve os três formatos.
  */
 export async function previewTvDataRoute(
   args: PreviewTvDataRouteParams,
 ): Promise<DataRoutePreviewPayload> {
   const { route, block, config, playlistId, slideFilters = {} } = args;
-  const { preferred, displayMode } = preferredDisplayMode(route);
+  const preferred = suggestedPreviewKind(route);
   const binding = block.dataBinding;
   const params: NonNullable<ComunicadoDataBinding["params"]> = {
     ...(binding.params ?? {}),
@@ -67,7 +63,8 @@ export async function previewTvDataRoute(
     refreshSec: binding.refreshSec,
   });
   if (probe.dataBinding) {
-    probe.dataBinding.displayMode = displayMode;
+    // Neutro: enrichment de data_source sempre monta kpi + chart + table.
+    probe.dataBinding.displayMode = "auto";
     if (binding.selectedValueFields?.length) {
       probe.dataBinding.selectedValueFields = [...binding.selectedValueFields];
     }
