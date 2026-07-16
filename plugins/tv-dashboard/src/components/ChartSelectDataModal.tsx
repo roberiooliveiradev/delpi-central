@@ -1,5 +1,4 @@
 import {
-  applyDataTransformToPayload,
   discoverResolvedFieldOptions,
   type ChartViewProjection,
   type ComunicadoChartViewBlock,
@@ -19,6 +18,7 @@ type Props = {
 
 /**
  * Diálogo Excel «Selecionar dados» — categoria X + séries Y sobre o resultado da Query.
+ * Campos vêm de `resolved.table` já calculado no backend (não reaplica steps no browser).
  */
 export function ChartSelectDataModal({ open, onClose, block }: Props) {
   const { blocks, updateSelected, selectedChartPart, selectChartPart } = useComunicadoEditor();
@@ -30,15 +30,13 @@ export function ChartSelectDataModal({ open, onClose, block }: Props) {
   }, [block.dataSourceId, blocks]);
 
   const fieldOptions: ChartAxisFieldOption[] = useMemo(() => {
-    const resolved = block.resolved ?? source?.resolved;
+    const resolved = source?.resolved ?? block.resolved;
     if (!resolved) return [];
-    const transformed = source?.dataTransform
-      ? applyDataTransformToPayload(resolved.data, source.dataTransform).table
-      : null;
-    if (transformed?.columns.length) {
-      return transformed.columns.map((field) => ({
-        field,
-        label: field,
+    const columns = resolved.table?.columns ?? [];
+    if (columns.length) {
+      return columns.map((col) => ({
+        field: col.key,
+        label: col.label?.trim() || col.key,
       }));
     }
     return discoverResolvedFieldOptions(resolved).map((item) => ({

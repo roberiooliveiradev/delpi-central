@@ -31,12 +31,45 @@ class TvDataPreviewService:
         operation_id = str(binding.get("operationId") or "").strip() if isinstance(binding, dict) else ""
         route = self._catalog.get_route(operation_id)
         validate_data_binding(binding if isinstance(binding, dict) else None, block_type=block_type, route=route)
+        # Inclui outras fontes do slide para merge (siblingTables) no enrichment.
+        target_id = str(block.get("id") or "")
+        to_enrich = self._blocks_for_preview(block, native_config)
         enriched = self._enrichment.enrich_blocks(
-            [block],
+            to_enrich,
             cfg=native_config,
             authorization=authorization,
             playlist_defaults=playlist_defaults,
             user=user,
             force_refresh=force_refresh,
         )
-        return enriched[0] if enriched else block
+        if not enriched:
+            return block
+        if target_id:
+            for item in enriched:
+                if isinstance(item, dict) and str(item.get("id") or "") == target_id:
+                    return item
+        return enriched[0]
+
+    @staticmethod
+    def _blocks_for_preview(block: dict[str, Any], native_config: dict[str, Any]) -> list[dict[str, Any]]:
+        """Bloco alvo + data_sources do slide (necessário para merge entre consultas)."""
+        from tv_app.application.services.tv_data_route_catalog_service import DATA_BLOCK_TYPES
+
+        target_id = str(block.get("id") or "")
+        out: list[dict[str, Any]] = [block]
+        seen = {target_id} if target_id else set()
+        cfg_blocks = native_config.get("blocks") if isinstance(native_config, dict) else None
+        if not isinstance(cfg_blocks, list):
+            return out
+        for item in cfg_blocks:
+            if not isinstance(item, dict):
+                continue
+            if str(item.get("type") or "") not in DATA_BLOCK_TYPES:
+                continue
+            item_id = str(item.get("id") or "")
+            if not item_id or item_id in seen:
+                continue
+            seen.add(item_id)
+            # Preferir o payload do request quando for o alvo; demais vêm do cfg.
+            out.append(dict(item))
+        return out

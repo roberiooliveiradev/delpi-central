@@ -1,7 +1,5 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
-  applyDataTransformSteps,
-  coercePayloadToTable,
   dataTransformStepFormula,
   dataTransformStepLabel,
   isDataSourceBlockType,
@@ -40,6 +38,10 @@ import {
   linkedChartSeriesForSource,
   seriesForColumn,
 } from "../utils/dataPrepareCrossHighlight";
+import {
+  previewTransformTableOnServer,
+  type ServerTransformTable,
+} from "../utils/previewTransformTableOnServer";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { Modal } from "./ui/Modal";
 
@@ -81,10 +83,13 @@ type RibbonTab = "home" | "transform" | "addColumn" | "combine";
 /**
  * Ambiente de preparação estilo Power Query — modal.
  * «Consultas» = fontes `data_source` (rotas api-delpi) do slide.
+ * Cálculo dos steps: sempre no backend (`preview-block` / enrichment).
  */
 export function DataPrepareModal({ open, onClose, initialSourceId = null }: Props) {
   const {
     blocks,
+    config,
+    playlistId,
     updateBlock,
     refreshDataPreview,
     selected,
@@ -105,6 +110,11 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   const [editingStepIndex, setEditingStepIndex] = useState<number | null>(null);
   const [formulaDraft, setFormulaDraft] = useState("");
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
+  const [preview, setPreview] = useState<ServerTransformTable>({ columns: [], rows: [] });
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewEpoch, setPreviewEpoch] = useState(0);
+  const [forcePreviewRefresh, setForcePreviewRefresh] = useState(false);
 
   const [draftRenameFrom, setDraftRenameFrom] = useState("");
   const [draftRenameTo, setDraftRenameTo] = useState("");
@@ -173,49 +183,64 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     setFormulaDraft(dataTransformStepFormula(step));
   }, [previewStepIndex, steps]);
 
-  const baseTable = useMemo(() => {
-    if (!active) return { columns: [] as string[], rows: [] as Array<Record<string, unknown>> };
-    const fromResolved = coercePayloadToTable(active.resolved?.data);
-    if (fromResolved?.rows.length) return fromResolved;
-    if (active.resolved?.table?.rows?.length) {
-      return {
-        columns: (active.resolved.table.columns ?? []).map((col) => col.key),
-        rows: active.resolved.table.rows.map((row) => ({ ...row })),
-      };
-    }
-    return { columns: [] as string[], rows: [] as Array<Record<string, unknown>> };
-  }, [active]);
-
-  const siblingTables = useMemo(() => {
-    const map: Record<string, { columns: string[]; rows: Array<Record<string, unknown>> }> = {};
-    for (const query of queries) {
-      if (query.id === activeId) continue;
-      const table =
-        coercePayloadToTable(query.resolved?.data) ??
-        (query.resolved?.table?.rows?.length
-          ? {
-              columns: (query.resolved.table.columns ?? []).map((col) => col.key),
-              rows: query.resolved.table.rows.map((row) => ({ ...row })),
-            }
-          : null);
-      if (!table) continue;
-      const qSteps = query.dataTransform?.steps;
-      map[query.id] = qSteps?.length
-        ? applyDataTransformSteps(table, qSteps)
-        : table;
-    }
-    return map;
-  }, [queries, activeId]);
-
   const stepsThroughPreview = useMemo(() => {
-    if (previewStepIndex == null) return [];
+    if (previewStepIndex == null) return [] as DataTransformStep[];
     return steps.slice(0, previewStepIndex + 1);
   }, [previewStepIndex, steps]);
 
-  const preview = useMemo(
-    () => applyDataTransformSteps(baseTable, stepsThroughPreview, { siblingTables }),
-    [baseTable, stepsThroughPreview, siblingTables],
+  const stepsThroughKey = useMemo(
+    () => JSON.stringify(stepsThroughPreview),
+    [stepsThroughPreview],
   );
+
+  useEffect(() => {
+    if (!open || !active) {
+      setPreview({ columns: [], rows: [] });
+      setPreviewError(null);
+      return;
+    }
+    let cancelled = false;
+    const shouldForce = forcePreviewRefresh;
+    const handle = window.setTimeout(() => {
+      setPreviewLoading(true);
+      setPreviewError(null);
+      void previewTransformTableOnServer({
+        block: active,
+        config,
+        playlistId,
+        stepsThrough: stepsThroughPreview,
+        forceRefresh: shouldForce,
+      })
+        .then((table) => {
+          if (cancelled) return;
+          setPreview(table);
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          setPreviewError(err instanceof Error ? err.message : "Falha ao calcular prévia no servidor.");
+          setPreview({ columns: [], rows: [] });
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setPreviewLoading(false);
+          if (shouldForce) setForcePreviewRefresh(false);
+        });
+    }, 280);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [
+    open,
+    active,
+    activeId,
+    config,
+    playlistId,
+    stepsThroughKey,
+    previewEpoch,
+    forcePreviewRefresh,
+    stepsThroughPreview,
+  ]);
 
   const linkedSeries = useMemo(
     () => linkedChartSeriesForSource(blocks, activeId),
@@ -296,6 +321,11 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     onClose();
   };
 
+  const requestServerPreview = (force = false) => {
+    if (force) setForcePreviewRefresh(true);
+    setPreviewEpoch((n) => n + 1);
+  };
+
   const editingStep = editingStepIndex != null ? steps[editingStepIndex] : null;
 
   return (
@@ -351,13 +381,8 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                   <button
                     type="button"
                     className="td-data-pq__ribbon-action"
-                    disabled={!active}
-                    onClick={() =>
-                      void refreshDataPreview({
-                        force: true,
-                        blockIds: active ? [active.id] : undefined,
-                      })
-                    }
+                    disabled={!active || previewLoading}
+                    onClick={() => requestServerPreview(true)}
                   >
                     <RefreshCw size={16} aria-hidden />
                     Atualizar
@@ -876,22 +901,24 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
             <section className="td-data-pq__main" aria-label="Prévia">
               <div className="td-data-pq__banner">
                 <span>
-                  Prévia da rota após as etapas. Clique numa coluna ligada ao gráfico para
-                  selecionar a série.
+                  Prévia calculada no servidor após as etapas. Clique numa coluna ligada ao gráfico
+                  para selecionar a série.
+                  {previewLoading ? " Atualizando…" : null}
                 </span>
                 <button
                   type="button"
                   className="td-btn td-btn--sm td-btn--ghost"
-                  onClick={() =>
-                    void refreshDataPreview({
-                      force: true,
-                      blockIds: active ? [active.id] : undefined,
-                    })
-                  }
+                  disabled={previewLoading}
+                  onClick={() => requestServerPreview(true)}
                 >
                   Atualizar
                 </button>
               </div>
+              {previewError ? (
+                <p className="td-deck-inspector__hint" role="alert">
+                  {previewError}
+                </p>
+              ) : null}
               <div className="td-data-pq__formula" aria-label="Barra de fórmula">
                 <span className="td-data-pq__fx" aria-hidden>
                   fx

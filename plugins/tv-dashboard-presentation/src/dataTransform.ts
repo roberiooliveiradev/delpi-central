@@ -1,6 +1,10 @@
 /**
  * Transformações tipo Power Query sobre a tabela da fonte (antes da View/*Projection).
  * Persistir só `steps` — nunca rows.
+ *
+ * Canônico em runtime: Python `tv_data_transform_service` (enrichment / preview-block).
+ * Este módulo TS é espelho para testes de paridade — a UI do editor NÃO deve aplicar steps
+ * no browser; use `previewTransformTableOnServer` / `resolved.table` do backend.
  */
 
 export type DataTransformCmp = "eq" | "neq" | "gt" | "lt" | "notNull" | "contains" | "startsWith";
