@@ -109,6 +109,38 @@ export type ComunicadoContentRunStyle = {
 export type ComunicadoContentRun = {
   text: string;
   style?: ComunicadoContentRunStyle;
+  /** Campo dinâmico da fonte ligada (Onda 4P). */
+  dataRef?: ComunicadoTextDataRef;
+};
+
+/** Referência a campo da fonte em um run ou projeção de bloco. */
+export type ComunicadoTextDataRef = {
+  field: string;
+  aggregation?: import("./viewProjection").ViewAggregation;
+  format?: TextProjectionFormat;
+  label?: string;
+  colorRules?: import("@delpi/plugin-ui/index").DelpiKpiColorRule[];
+};
+
+export type TextProjectionFormat = "number" | "percent" | "compact" | "raw" | "date";
+
+export type ComunicadoTextProjection = {
+  field: string;
+  aggregation?: import("./viewProjection").ViewAggregation;
+  format?: TextProjectionFormat;
+  prefix?: string;
+  suffix?: string;
+  fallback?: string;
+  colorRules?: import("@delpi/plugin-ui/index").DelpiKpiColorRule[];
+};
+
+/** Campos compartilhados por blocos de texto/forma ligados a `data_source`. */
+export type ComunicadoTextDataBoundFields = {
+  dataSourceId?: string;
+  textProjection?: ComunicadoTextProjection;
+  /** Runtime — enrichment / preview; não persistir no native_config. */
+  resolved?: ComunicadoDataResolved;
+  serverTextProjectionApplied?: boolean;
 };
 
 export type ComunicadoBlockStyle = {
@@ -175,7 +207,8 @@ export type ComunicadoBlockBase = {
   animations?: ComunicadoBlockAnimation[];
 };
 
-export type ComunicadoTextBlock = ComunicadoBlockBase & {
+export type ComunicadoTextBlock = ComunicadoBlockBase &
+  ComunicadoTextDataBoundFields & {
   type: "heading" | "text";
   /** Texto plano — espelha a concatenação de `contentRuns` ou fallback legado. */
   content: string;
@@ -209,7 +242,8 @@ export type ComunicadoShapeConnector = {
   toAnchor?: "center" | "n" | "s" | "e" | "w";
 };
 
-export type ComunicadoShapeBlock = ComunicadoBlockBase & {
+export type ComunicadoShapeBlock = ComunicadoBlockBase &
+  ComunicadoTextDataBoundFields & {
   type: "shape";
   shape: ComunicadoShapeKind;
   /** Vértices explícitos (%): 1 ponto, ≥2 linha, ≥3 forma fechada. */
@@ -220,6 +254,8 @@ export type ComunicadoShapeBlock = ComunicadoBlockBase & {
    */
   connector?: ComunicadoShapeConnector;
   content?: string;
+  /** Rich text opcional (formas com dados ou formatação). */
+  contentRuns?: ComunicadoContentRun[];
   href?: string;
   linkTarget?: "_blank" | "_self";
 };

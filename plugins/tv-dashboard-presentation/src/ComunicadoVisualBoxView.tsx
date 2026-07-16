@@ -10,6 +10,7 @@ import {
   resolveVisualBoxContentLayoutStyle,
   resolveVisualBoxProfile,
 } from "./comunicadoVisualBox";
+import { resolveVisualBoxDisplayText, textBlockHasDataBinding } from "./textViewProjection";
 
 type Props = {
   block: ComunicadoVisualBoxBlock;
@@ -36,18 +37,43 @@ function DefaultTextContent({
   const profile = resolveVisualBoxProfile(block);
 
   if (block.type === "shape") {
-    const label = block.content?.trim();
-    if (!label) return null;
+    const display = textBlockHasDataBinding(block)
+      ? resolveVisualBoxDisplayText(block, "resolved" in block ? block.resolved : undefined)
+      : null;
+    const label = display?.content?.trim() ?? block.content?.trim();
+    if (!label && !(display?.contentRuns?.length)) return null;
+    if (display?.contentRuns?.length) {
+      return (
+        <ComunicadoTextRunsView
+          block={{
+            content: display.content,
+            contentRuns: display.contentRuns,
+            textProjection: block.textProjection,
+            resolved: "resolved" in block ? block.resolved : undefined,
+            dataSourceId: block.dataSourceId,
+          }}
+          as="span"
+          fontScale={fontScale}
+          className={className}
+        />
+      );
+    }
     return <span className={className}>{label}</span>;
   }
 
   const textBlock = block;
+  const displayBlock = textBlockHasDataBinding(textBlock)
+    ? {
+        ...textBlock,
+        ...resolveVisualBoxDisplayText(textBlock, textBlock.resolved),
+      }
+    : textBlock;
   const baseStyle = innerStyle ?? comunicadoTextInnerStyle(textBlock, { fontScale });
   const Tag = profile.textTag;
 
   return (
     <ComunicadoTextRunsView
-      block={textBlock}
+      block={displayBlock}
       as={Tag}
       baseStyle={baseStyle}
       fontScale={fontScale}

@@ -4,7 +4,6 @@ import { splitContentRunsIntoLines } from "./comunicadoContentList";
 import {
   contentRunStyleToCss,
   hasRichTextRuns,
-  resolveTextBlockDisplayRuns,
 } from "./comunicadoContentRuns";
 import { groupContentRunsForDisplay } from "./comunicadoContentList";
 import {
@@ -12,9 +11,16 @@ import {
   resolveEffectiveRunStyle,
 } from "./comunicadoNamedTextStyles";
 import type { ComunicadoContentRun, ComunicadoTextBlock } from "./comunicadoTypes";
+import {
+  resolveTextBlockDisplayRuns as resolveDynamicTextRuns,
+  textBlockHasDataBinding,
+} from "./textViewProjection";
 
 type Props = {
-  block: Pick<ComunicadoTextBlock, "content" | "contentRuns">;
+  block: Pick<
+    ComunicadoTextBlock,
+    "content" | "contentRuns" | "textProjection" | "resolved" | "dataSourceId"
+  >;
   as: "h1" | "p" | "span";
   baseStyle?: CSSProperties;
   fontScale?: number;
@@ -89,7 +95,11 @@ function RenderStyledLines({
 
 export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, className }: Props) {
   const Tag = as;
-  const runs = resolveTextBlockDisplayRuns(block);
+  const runs = textBlockHasDataBinding(block)
+    ? resolveDynamicTextRuns(block, block.resolved)
+    : block.contentRuns && block.contentRuns.length > 0
+      ? block.contentRuns
+      : [{ text: block.content }];
   const segments = groupContentRunsForDisplay(runs);
   const hasLists = segments.some((segment) => segment.kind === "list");
   const hasNamedStyles = hasNamedStyleContentRuns(runs);

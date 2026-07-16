@@ -827,6 +827,28 @@ export {
   type DataViewBlockType,
   type ViewFieldTypes,
 } from "./syncViewDataLink";
-export type { ComunicadoDataKpiMetric } from "./comunicadoTypes";
+export {
+  buildTextDataLinkPatch,
+  formatTextProjectionValue,
+  isTextDataBoundBlock,
+  normalizeTextDataRef,
+  normalizeTextProjection,
+  resolveTextBlockDisplayRuns,
+  resolveTextDataRefValue,
+  resolveTextDisplayValue,
+  resolveVisualBoxDisplayText,
+  suggestDefaultTextProjection,
+  syncTextBlocksWithResolved,
+  textBlockHasDataBinding,
+  textProjectionHasField,
+  viewHasTextProjectionConfigured,
+  type BuildTextDataLinkPatchInput,
+  type TextDataBoundBlock,
+} from "./textViewProjection";
+export type {
+  ComunicadoTextDataRef,
+  ComunicadoTextProjection,
+  TextProjectionFormat,
+} from "./comunicadoTypes";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";
