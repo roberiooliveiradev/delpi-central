@@ -41,9 +41,15 @@ export function MySignaturePage() {
         }
       })
       .catch((err) => {
-        if (!(err instanceof DOMException && err.name === "AbortError")) {
-          setError(err instanceof Error ? err.message : "Erro ao carregar assinatura.");
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        const message = err instanceof Error ? err.message : "Erro ao carregar assinatura.";
+        if (/404|not found/i.test(message)) {
+          setError(
+            "API CIPA sem a rota de assinatura pessoal (404). Reinicie/rebuild o serviço cipa-api e confira a migration V003.",
+          );
+          return;
         }
+        setError(message);
       })
       .finally(() => setLoading(false));
     return () => {
