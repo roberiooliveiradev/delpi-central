@@ -756,6 +756,7 @@ export {
   normalizeChartProjection,
   normalizeKpiProjection,
   normalizeTableProjection,
+  suggestDefaultProjections,
   tableProjectionFromSelectedFields,
   type ChartSeriesProjection,
   type ChartViewProjection,

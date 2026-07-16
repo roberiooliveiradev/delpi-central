@@ -43,7 +43,13 @@ export function TableViewBlockView({
       <div className={`tdp-data-block tdp-data-block--placeholder${loading ? " tdp-data-block--loading" : ""}`}>
         <span className="tdp-data-block__title">{label}</span>
         <span className="tdp-data-block__hint">
-          {loading ? "Carregando dados…" : interactive ? "Conecte uma fonte de dados" : "…"}
+          {loading
+            ? "Carregando dados…"
+            : interactive
+              ? block.dataSourceId?.trim()
+                ? "Sem linhas — escolha colunas na conexão do visual"
+                : "Conecte uma fonte de dados"
+              : "…"}
         </span>
       </div>
     );

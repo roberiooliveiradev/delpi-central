@@ -477,3 +477,60 @@ export function discoverResolvedFieldOptions(
   }
   return [...out.entries()].map(([field, label]) => ({ field, label }));
 }
+
+/** Sugere projeções iniciais ao conectar uma fonte (sem sobrescrever config existente). */
+export function suggestDefaultProjections(resolved: ComunicadoDataResolved | undefined): {
+  kpiProjection?: KpiViewProjection;
+  chartProjection?: ChartViewProjection;
+  tableProjection?: TableViewProjection;
+} {
+  if (!resolved) return {};
+  const fields = discoverResolvedFieldOptions(resolved);
+  const numericFields = fields.filter((item) => {
+    const metric = resolved.kpiMetrics?.find((entry) => entry.field === item.field);
+    if (metric && metric.value != null && metric.value !== "") return true;
+    const sample = resolved.table?.rows?.[0]?.[item.field];
+    return sample != null && sample !== "" && asFiniteNumber(sample) != null;
+  });
+  const categoryCandidate =
+    fields.find((item) => {
+      const sample = resolved.table?.rows?.[0]?.[item.field];
+      return typeof sample === "string" && asFiniteNumber(sample) == null;
+    })?.field ?? fields[0]?.field;
+
+  const kpiProjection: KpiViewProjection | undefined =
+    numericFields.length > 0
+      ? {
+          metrics: numericFields.slice(0, 6).map((item) => ({
+            field: item.field,
+            label: item.label,
+            visible: true,
+            aggregation: "first",
+          })),
+        }
+      : undefined;
+
+  const chartProjection: ChartViewProjection | undefined =
+    numericFields.length > 0
+      ? {
+          categoryField: categoryCandidate,
+          series: numericFields.slice(0, 3).map((item) => ({
+            field: item.field,
+            label: item.label,
+          })),
+        }
+      : undefined;
+
+  const tableProjection: TableViewProjection | undefined =
+    fields.length > 0
+      ? {
+          columns: fields.map((item) => ({
+            key: item.field,
+            label: item.label,
+            visible: true,
+          })),
+        }
+      : undefined;
+
+  return { kpiProjection, chartProjection, tableProjection };
+}

@@ -5,6 +5,7 @@ import {
   applyViewProjection,
   discoverResolvedFieldOptions,
   kpiProjectionFromSelectedFields,
+  suggestDefaultProjections,
 } from "./viewProjection";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
 
@@ -96,5 +97,13 @@ describe("applyViewProjection", () => {
     const fields = discoverResolvedFieldOptions(sampleResolved);
     expect(fields.some((item) => item.field === "oee")).toBe(true);
     expect(fields.some((item) => item.field === "a")).toBe(true);
+  });
+
+  it("sugere projeções default ao conectar fonte", () => {
+    const suggested = suggestDefaultProjections(sampleResolved);
+    expect(suggested.kpiProjection?.metrics?.some((m) => m.field === "oee")).toBe(true);
+    expect(suggested.chartProjection?.categoryField).toBe("periodo");
+    expect(suggested.chartProjection?.series?.length).toBeGreaterThan(0);
+    expect(suggested.tableProjection?.columns?.length).toBeGreaterThan(0);
   });
 });

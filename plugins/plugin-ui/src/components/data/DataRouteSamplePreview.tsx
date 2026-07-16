@@ -5,6 +5,12 @@ type Props = {
   className?: string;
 };
 
+const KIND_LABELS: Record<DataRoutePreviewPayload["kind"], string> = {
+  kpi: "KPI",
+  table: "Tabela",
+  series: "Série",
+};
+
 function SeriesMiniChart({ points }: { points: Array<{ label: string; value: number }> }) {
   const max = Math.max(...points.map((point) => point.value), 1);
   const width = 220;
@@ -47,14 +53,92 @@ function KpiMetricCard({ metric }: { metric: DataRoutePreviewMetric }) {
   );
 }
 
+function PreviewSlice({
+  kind,
+  kpi,
+  metrics,
+  table,
+  series,
+  compact = false,
+}: {
+  kind: DataRoutePreviewPayload["kind"];
+  kpi?: DataRoutePreviewMetric;
+  metrics?: DataRoutePreviewMetric[];
+  table?: DataRoutePreviewPayload["table"];
+  series?: DataRoutePreviewPayload["series"];
+  compact?: boolean;
+}) {
+  const metricList =
+    metrics && metrics.length > 1 ? metrics : kpi ? [kpi] : [];
+
+  return (
+    <div
+      className={
+        compact
+          ? "delpi-ui-data-route-preview__slice delpi-ui-data-route-preview__slice--compact"
+          : "delpi-ui-data-route-preview__slice"
+      }
+    >
+      {kind === "kpi" && metricList.length > 0 ? (
+        <div
+          className={
+            metricList.length > 1
+              ? "delpi-ui-data-route-preview__kpi-grid"
+              : "delpi-ui-data-route-preview__kpi-single"
+          }
+          aria-label={metricList.length > 1 ? "Prévia KPI summary" : "Prévia KPI"}
+        >
+          {metricList.map((metric, index) => (
+            <KpiMetricCard key={`${metric.label}-${index}`} metric={metric} />
+          ))}
+        </div>
+      ) : null}
+
+      {kind === "table" && table ? (
+        <div className="delpi-ui-data-route-preview__table-wrap">
+          <table className="delpi-ui-data-route-preview__table">
+            <thead>
+              <tr>
+                {table.columns.map((column) => (
+                  <th key={column.key}>{column.label}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {table.rows.map((row, index) => (
+                <tr key={index}>
+                  {table.columns.map((column) => (
+                    <td key={column.key}>{row[column.key] ?? "—"}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      {kind === "series" && series ? (
+        <div className="delpi-ui-data-route-preview__series">
+          <SeriesMiniChart points={series.points} />
+          {!compact ? (
+            <ul className="delpi-ui-data-route-preview__series-legend">
+              {series.points.map((point) => (
+                <li key={point.label}>
+                  <span>{point.label}</span>
+                  <strong>{point.value}</strong>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function DataRouteSamplePreview({ payload, className = "" }: Props) {
   const sourceLabel = payload.source === "live" ? "Resultado do teste" : "Exemplo de uso";
-  const metrics =
-    payload.metrics && payload.metrics.length > 1
-      ? payload.metrics
-      : payload.kpi
-        ? [payload.kpi]
-        : [];
+  const extras = payload.extraSlices ?? [];
 
   return (
     <div
@@ -69,55 +153,34 @@ export function DataRouteSamplePreview({ payload, className = "" }: Props) {
         </p>
       ) : null}
 
-      {!payload.error && payload.kind === "kpi" && metrics.length > 0 ? (
-        <div
-          className={
-            metrics.length > 1
-              ? "delpi-ui-data-route-preview__kpi-grid"
-              : "delpi-ui-data-route-preview__kpi-single"
-          }
-          aria-label={metrics.length > 1 ? "Prévia KPI summary" : "Prévia KPI"}
-        >
-          {metrics.map((metric, index) => (
-            <KpiMetricCard key={`${metric.label}-${index}`} metric={metric} />
+      {!payload.error ? (
+        <PreviewSlice
+          kind={payload.kind}
+          kpi={payload.kpi}
+          metrics={payload.metrics}
+          table={payload.table}
+          series={payload.series}
+        />
+      ) : null}
+
+      {!payload.error && extras.length > 0 ? (
+        <div className="delpi-ui-data-route-preview__extras">
+          <p className="delpi-ui-data-route-preview__extras-label">
+            Também disponível nesta fonte (qualquer visual pode usar)
+          </p>
+          {extras.map((slice) => (
+            <section key={slice.kind} className="delpi-ui-data-route-preview__extra">
+              <h4 className="delpi-ui-data-route-preview__extra-title">{KIND_LABELS[slice.kind]}</h4>
+              <PreviewSlice
+                kind={slice.kind}
+                kpi={slice.kpi}
+                metrics={slice.metrics}
+                table={slice.table}
+                series={slice.series}
+                compact
+              />
+            </section>
           ))}
-        </div>
-      ) : null}
-
-      {!payload.error && payload.kind === "table" && payload.table ? (
-        <div className="delpi-ui-data-route-preview__table-wrap">
-          <table className="delpi-ui-data-route-preview__table">
-            <thead>
-              <tr>
-                {payload.table.columns.map((column) => (
-                  <th key={column.key}>{column.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {payload.table.rows.map((row, index) => (
-                <tr key={index}>
-                  {payload.table!.columns.map((column) => (
-                    <td key={column.key}>{row[column.key] ?? "—"}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-
-      {!payload.error && payload.kind === "series" && payload.series ? (
-        <div className="delpi-ui-data-route-preview__series">
-          <SeriesMiniChart points={payload.series.points} />
-          <ul className="delpi-ui-data-route-preview__series-legend">
-            {payload.series.points.map((point) => (
-              <li key={point.label}>
-                <span>{point.label}</span>
-                <strong>{point.value}</strong>
-              </li>
-            ))}
-          </ul>
         </div>
       ) : null}
     </div>

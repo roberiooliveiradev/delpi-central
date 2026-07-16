@@ -132,5 +132,27 @@ describe("mapEnrichedBlockToDataRoutePreview", () => {
     );
     expect(playbook.kind).toBe("table");
     expect(playbook.table?.rows).toHaveLength(1);
+    expect(playbook.extraSlices?.some((slice) => slice.kind === "kpi")).toBe(true);
+  });
+
+  it("anexa fatias extras no preview triplo", () => {
+    const payload = mapEnrichedBlockToDataRoutePreview(
+      {
+        resolved: {
+          kpiMetrics: [
+            { field: "a", label: "A", value: 1 },
+            { field: "b", label: "B", value: 2 },
+          ],
+          table: {
+            columns: [{ key: "code", label: "Código" }],
+            rows: [{ code: "X" }],
+          },
+          chart: { points: [{ label: "Jan", value: 3 }] },
+        },
+      },
+      "kpi",
+    );
+    expect(payload.kind).toBe("kpi");
+    expect(payload.extraSlices?.map((slice) => slice.kind).sort()).toEqual(["series", "table"]);
   });
 });

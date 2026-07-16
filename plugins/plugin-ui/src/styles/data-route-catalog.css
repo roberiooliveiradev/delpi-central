@@ -500,6 +500,32 @@
   color: #b42318;
 }
 
+.delpi-ui-data-route-preview__extras {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed color-mix(in srgb, var(--delpi-ui-border, #e5e7eb) 90%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-data-route-preview__extras-label {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 55%, transparent));
+}
+
+.delpi-ui-data-route-preview__extra-title {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.delpi-ui-data-route-preview__slice--compact .delpi-ui-data-route-preview__table {
+  font-size: 10px;
+}
+
 .delpi-ui-data-route-preview__kpi-single {
   display: block;
 }

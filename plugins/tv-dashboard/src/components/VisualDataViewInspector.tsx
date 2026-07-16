@@ -7,6 +7,7 @@ import {
   discoverResolvedFieldOptions,
   isDataSourceBlockType,
   normalizeTableViewLimit,
+  suggestDefaultProjections,
   tablePresetLabel,
   type ComunicadoBlock,
   type ComunicadoTableViewBlock,
@@ -156,11 +157,41 @@ export function VisualDataViewInspector({
           className={compactSelect}
           ariaLabel="Fonte de dados"
           value={selected.dataSourceId ?? ""}
-          onChange={(value) =>
-            updateSelected({
-              dataSourceId: value || undefined,
-            } as Partial<ComunicadoBlock>)
-          }
+          onChange={(value) => {
+            const sourceId = value || undefined;
+            if (!sourceId) {
+              updateSelected({ dataSourceId: undefined } as Partial<ComunicadoBlock>);
+              return;
+            }
+            const source = blocks.find(
+              (block) => block.id === sourceId && isDataSourceBlockType(block.type),
+            );
+            const resolved =
+              source && "resolved" in source ? source.resolved : undefined;
+            const suggested = suggestDefaultProjections(resolved);
+            if (selected.type === "kpi_view" && !selected.kpiProjection?.metrics?.length) {
+              updateSelected({
+                dataSourceId: sourceId,
+                kpiProjection: suggested.kpiProjection,
+              } as Partial<ComunicadoBlock>);
+              return;
+            }
+            if (selected.type === "chart_view" && !selected.chartProjection?.series?.length) {
+              updateSelected({
+                dataSourceId: sourceId,
+                chartProjection: suggested.chartProjection,
+              } as Partial<ComunicadoBlock>);
+              return;
+            }
+            if (selected.type === "table_view" && !selected.tableProjection?.columns?.length) {
+              updateSelected({
+                dataSourceId: sourceId,
+                tableProjection: suggested.tableProjection,
+              } as Partial<ComunicadoBlock>);
+              return;
+            }
+            updateSelected({ dataSourceId: sourceId } as Partial<ComunicadoBlock>);
+          }}
           options={[
             {
               value: "",

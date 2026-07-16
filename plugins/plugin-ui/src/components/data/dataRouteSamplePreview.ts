@@ -13,6 +13,17 @@ export type DataRoutePreviewPayload = {
     rows: Array<Record<string, string | number>>;
   };
   series?: { points: Array<{ label: string; value: number }> };
+  /**
+   * Fatias extras do mesmo resolved (KPI/tabela/série) para preview triplo.
+   * Não inclui a fatia já refletida em kind + campos principais.
+   */
+  extraSlices?: Array<{
+    kind: DataRouteDisplayKind;
+    kpi?: DataRoutePreviewMetric;
+    metrics?: DataRoutePreviewMetric[];
+    table?: DataRoutePreviewPayload["table"];
+    series?: DataRoutePreviewPayload["series"];
+  }>;
   error?: string;
   source: "sample" | "live";
 };
@@ -179,6 +190,7 @@ function mapKpiMetricList(
 
 /**
  * Converte `block.resolved` do preview-block (tv-dashboard-api) para o payload do catálogo.
+ * Prioriza `preferred`, mas anexa as demais fatias disponíveis (preview triplo).
  */
 export function mapEnrichedBlockToDataRoutePreview(
   block: Record<string, unknown>,
@@ -216,26 +228,79 @@ export function mapEnrichedBlockToDataRoutePreview(
   const kpi = asRecord(resolved.kpi);
   const kpiMetrics = Array.isArray(resolved.kpiMetrics) ? resolved.kpiMetrics : [];
 
-  if (preferred === "series") {
-    if (chartPoints.length > 0) {
-      return { kind: "series", title, source: "live", series: mapSeriesPoints(chartPoints) };
-    }
-    if (rowsRaw.length > 0) {
-      const mapped = mapTableRows(table, rowsRaw);
-      if (mapped) return { kind: "table", title, source: "live", table: mapped };
-    }
-    return {
-      kind: "series",
-      title,
-      source: "live",
-      error: "A rota não retornou pontos de série neste teste.",
-    };
-  }
+  const metricsList = mapKpiMetricList(kpiMetrics, title);
+  const mappedTable = mapTableRows(table, rowsRaw);
+  const mappedSeries = chartPoints.length > 0 ? mapSeriesPoints(chartPoints) : undefined;
 
-  if (preferred === "table") {
-    const mapped = mapTableRows(table, rowsRaw);
-    if (mapped) return { kind: "table", title, source: "live", table: mapped };
-    const metricsList = mapKpiMetricList(kpiMetrics, title);
+  const slices: NonNullable<DataRoutePreviewPayload["extraSlices"]> = [];
+  if (metricsList.length > 1) {
+    slices.push({ kind: "kpi", metrics: metricsList, kpi: metricsList[0] });
+  } else if (metricsList.length === 1) {
+    slices.push({ kind: "kpi", kpi: metricsList[0] });
+  } else if (kpi?.value != null || typeof kpi?.label === "string") {
+    slices.push({
+      kind: "kpi",
+      kpi: {
+        label: String(kpi.label ?? title ?? "KPI"),
+        value: formatKpiValue(kpi.value),
+      },
+    });
+  }
+  if (mappedTable) slices.push({ kind: "table", table: mappedTable });
+  if (mappedSeries) slices.push({ kind: "series", series: mappedSeries });
+
+  const pickPreferred = (): DataRoutePreviewPayload | null => {
+    if (preferred === "series") {
+      if (mappedSeries) {
+        return { kind: "series", title, source: "live", series: mappedSeries };
+      }
+      if (mappedTable) {
+        return { kind: "table", title, source: "live", table: mappedTable };
+      }
+      return {
+        kind: "series",
+        title,
+        source: "live",
+        error: "A rota não retornou pontos de série neste teste.",
+      };
+    }
+
+    if (preferred === "table") {
+      if (mappedTable) {
+        return { kind: "table", title, source: "live", table: mappedTable };
+      }
+      if (metricsList.length > 1) {
+        return {
+          kind: "kpi",
+          title,
+          source: "live",
+          metrics: metricsList,
+          kpi: metricsList[0],
+        };
+      }
+      if (metricsList.length === 1) {
+        return { kind: "kpi", title, source: "live", kpi: metricsList[0] };
+      }
+      if (kpi?.value != null) {
+        return {
+          kind: "kpi",
+          title,
+          source: "live",
+          kpi: {
+            label: String(kpi.label ?? title ?? "KPI"),
+            value: formatKpiValue(kpi.value),
+          },
+        };
+      }
+      return {
+        kind: "table",
+        title,
+        source: "live",
+        error: "A rota não retornou linhas neste teste.",
+      };
+    }
+
+    // preferred === "kpi"
     if (metricsList.length > 1) {
       return {
         kind: "kpi",
@@ -248,7 +313,11 @@ export function mapEnrichedBlockToDataRoutePreview(
     if (metricsList.length === 1) {
       return { kind: "kpi", title, source: "live", kpi: metricsList[0] };
     }
-    if (kpi?.value != null) {
+    // Playbook/listagem: sem métricas de negócio, preferir tabela quando houver.
+    if (mappedTable) {
+      return { kind: "table", title, source: "live", table: mappedTable };
+    }
+    if (kpi?.value != null || typeof kpi?.label === "string") {
       return {
         kind: "kpi",
         title,
@@ -259,54 +328,24 @@ export function mapEnrichedBlockToDataRoutePreview(
         },
       };
     }
-    return {
-      kind: "table",
-      title,
-      source: "live",
-      error: "A rota não retornou linhas neste teste.",
-    };
-  }
-
-  const metricsList = mapKpiMetricList(kpiMetrics, title);
-  if (metricsList.length > 1) {
-    return {
-      kind: "kpi",
-      title,
-      source: "live",
-      metrics: metricsList,
-      kpi: metricsList[0],
-    };
-  }
-  if (metricsList.length === 1) {
-    return { kind: "kpi", title, source: "live", kpi: metricsList[0] };
-  }
-
-  const mappedTable = mapTableRows(table, rowsRaw);
-  // Preferência KPI sem métrica de negócio: usar ranking/tabela do playbook quando houver.
-  if (mappedTable) {
-    return { kind: "table", title, source: "live", table: mappedTable };
-  }
-
-  if (kpi?.value != null || typeof kpi?.label === "string") {
-    return {
-      kind: "kpi",
-      title,
-      source: "live",
-      kpi: {
-        label: String(kpi.label ?? title ?? "KPI"),
-        value: formatKpiValue(kpi.value),
-      },
-    };
-  }
-
-  if (chartPoints.length > 0) {
-    return { kind: "series", title, source: "live", series: mapSeriesPoints(chartPoints) };
-  }
-
-  return {
-    kind: preferred,
-    title,
-    source: "live",
-    error: "A rota respondeu, mas sem KPI, tabela ou série reconhecíveis neste preview.",
+    if (mappedSeries) {
+      return { kind: "series", title, source: "live", series: mappedSeries };
+    }
+    return null;
   };
+
+  const primary = pickPreferred();
+  if (!primary || primary.error) {
+    return (
+      primary ?? {
+        kind: preferred,
+        title,
+        source: "live",
+        error: "A rota respondeu, mas sem KPI, tabela ou série reconhecíveis neste preview.",
+      }
+    );
+  }
+
+  const extraSlices = slices.filter((slice) => slice.kind !== primary.kind);
+  return extraSlices.length > 0 ? { ...primary, extraSlices } : primary;
 }
