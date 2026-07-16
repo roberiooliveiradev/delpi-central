@@ -11,6 +11,7 @@ from delpi_auth.credential_guard import check_credentials
 from cipa_app.config import settings
 from cipa_app.core.responses import fail
 from cipa_app.interface.http.routes.access_routes import router as access_router
+from cipa_app.interface.http.routes.member_routes import router as member_router
 from cipa_app.interface.http.routes.minutes_routes import router as minutes_router
 from cipa_app.interface.http.routes.signature_profile_routes import (
     router as signature_profile_router,
@@ -92,3 +93,4 @@ def health():
 app.include_router(access_router)
 app.include_router(minutes_router)
 app.include_router(signature_profile_router)
+app.include_router(member_router)
