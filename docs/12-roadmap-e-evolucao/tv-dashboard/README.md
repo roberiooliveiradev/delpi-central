@@ -137,6 +137,10 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 
 Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados) · [§19.19 escopos](./PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
+- **Períodos relativos:** o editor oferece hoje; semana/mês/trimestre/ano atuais; períodos anteriores; últimos 7/30/90/N dias; e datas fixas. Presets relativos são resolvidos novamente a cada fetch.
+- **Contrato de séries:** a TV preserva a granularidade da rota. `granularity=day` permanece um ponto por dia — sem converter dias em faixas semanais.
+- **Cobertura anual diária:** a api-delpi permite até 366 buckets; assim, «Este ano (até hoje)» entrega todos os dias do ano. Períodos diários acima de um ano continuam limitados por segurança.
+- **Tabela de série:** apresenta todos os `points` retornados pela API usando apenas as colunas declaradas (`periodo` e `value`), sem mostrar `label` duplicado ou metadados como `granularity`/`truncated`.
 - **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
 - **§19.20:** aplicar estilo a irmãos; séries OEE/OTD/PPM nas nativas (SVG); rate limit `public/present`
 - **Backlog:** sombra texto, conectores, paleta recente, PDF/PPTX, colaboração
@@ -190,10 +194,14 @@ O cliente recarrega o payload HTTP; o polling periódico permanece como fallback
 ### Comandos típicos
 
 ```bash
-cd infra
+# Executar na raiz; ordem segura e um serviço por vez
 git pull
-docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api tv-dashboard public-hub
+./infra/scripts/up-dev-sequential.sh --fase api --build tv-dashboard-api
+./infra/scripts/up-dev-sequential.sh --fase mfe --build tv-dashboard
 ```
+
+Em produção, após alterar séries/períodos, reconstruir `api-delpi` e `tv-dashboard-api`
+com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serviços.
 
 ---
 

@@ -91,6 +91,17 @@ nomes HTTP canônicos; overlays sobrescrevem só o que é específico do TV. See
 
 ---
 
+## Períodos relativos e séries temporais
+
+- `dateRangePreset` é interno ao bloco TV: o gateway o converte para as chaves de data canônicas da rota e não o envia à api-delpi.
+- Presets: `today`, `this_week`, `this_month`, `this_quarter`, `this_year`, `previous_week`, `previous_month`, `previous_quarter`, `previous_year`, `last_7_days`, `last_30_days`, `last_90_days`, `last_n_days` e `custom`.
+- Presets relativos são recalculados em cada fetch; `custom` mantém as datas fixas informadas.
+- A granularidade definida pela rota é preservada. Uma rota com `granularity=day` retorna e apresenta um ponto por dia, sem agrupamento automático em semanas ou faixas de datas.
+- Rotas com `seriesField` normalizam `points` para tabela `{ periodo, value }`, sem expor metadados internos (`granularity`, `truncated`, `sort_key`) nem duplicar `label`.
+- A tabela de série consome todos os pontos retornados pela api-delpi (até 366 para um ano diário); `table_view` usa scroll interno para navegar pelas linhas.
+
+---
+
 ## Mídia persistente
 
 | Variável | Container | Host |

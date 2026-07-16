@@ -1272,6 +1272,8 @@ playlist.dataDefaults
 
 Filtro interativo (`input` / kiosk) **vence** o preset relativo da fonte: se o input fixa `periodDays` ou datas (`start_*`/`end_*`), o merge remove `dateRangePreset` da camada inferior para o intervalo do filtro valer no fetch.
 
+Presets relativos disponíveis: hoje; semana/mês/trimestre/ano atuais; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; e personalizado com datas fixas. O gateway resolve presets relativos em cada fetch e preserva a granularidade declarada pela rota. Para séries diárias, a api-delpi aceita até 366 buckets (um ano completo) e o enrichment entrega todos os `points` à tabela sem converter dias em faixas semanais, sem duplicar `label` e sem expor metadados internos.
+
 Bloco **`input`** (Inserir → Filtro): controle no palco ligado só a chaves do `paramSchema` das fontes alvo (interseção). No kiosk/prévia, overrides efêmeros via `GET …/present/{token}?filters=` (allowlist pelos blocos `input`); não gravam a playlist.
 
 Exemplo no `native_config` (v4):
@@ -1354,6 +1356,7 @@ Exemplo no `native_config` (v4):
 - [x] Painel lateral **Dados** + `DataRouteCatalogPanel` (busca por categoria).
 - [x] Gráfico com **elementos configuráveis** (`chartOptions` / `CHART_ELEMENT_CATALOG`) — título, legenda, eixos, grade, tabela de dados, marcadores.
 - [x] Séries temporais renderizam tabela derivada de `points` quando não há `items`.
+- [x] Série diária anual preserva um dia por linha e entrega até 366 pontos, sem agrupamento automático ou truncamento no enrichment.
 - [x] Filmstrip com prévia centralizada (`CenteredScaledPreview`) e menu de contexto nas telas.
 - [x] Tipos de gráfico avançados (pizza, área, combo, empilhado, histograma, dispersão, bolhas, radar, cascata, funil) — paint SVG nativo com `chartParts` (4H.7 + v1.5).
 - [x] Séries temporais nas telas nativas OEE/OTD/PPM — `seriesPoints` + `ConfigurableSeriesChart` (SVG; playbook antigo citava Recharts).

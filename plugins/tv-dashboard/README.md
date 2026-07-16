@@ -25,6 +25,8 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
+- **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
+- **Séries temporais fiéis à API:** a granularidade da rota é preservada (ex.: `day` = um dia por linha), sem reagrupar datas em faixas; a tabela recebe todos os pontos retornados pela API (até 366 pontos em séries anuais diárias).
 - **Dados em texto/forma (4P):** título, texto e forma podem projetar um campo da fonte (`textProjection` ou `contentRuns[].dataRef`) — ribbon «Campo em texto», inspetor e TV pública via enrichment
 - **Multi-métrica:** rotas com vários `valueFields` (ex. LMP summary) entregam `kpiMetrics`; o gestor marca quais campos exibir na fonte e/ou no visual (KPI em grade, barras ou tabela indicador/valor)
 - **Dois escopos no palco:** seleção **global** do widget (frame no slide) vs **subcomponente** (fundo, valor, título, chartArea, etc.) — ver [§19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
