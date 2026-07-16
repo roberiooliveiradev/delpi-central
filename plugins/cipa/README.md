@@ -15,12 +15,21 @@ Portal → plugins/cipa (MFE) → /apps/cipa-api → schema cipa (postgres-plugi
 | `/apps/cipa` | Início — escolha de unidade e pendências |
 | `/apps/cipa/filial-01` | Lista de atas SC |
 | `/apps/cipa/filial-02` | Lista de atas ES |
-| `/apps/cipa/filial-{xx}/minutes/new` | Nova ata |
+| `/apps/cipa/filial-{xx}/minutes/new` | Nova ata (pré-carrega composição CIPA vigente) |
 | `/apps/cipa/filial-{xx}/minutes/{id}` | Modo de leitura formal, impressão e download do PDF |
-| `/apps/cipa/filial-{xx}/minutes/{id}/edit` | Edição |
+| `/apps/cipa/filial-{xx}/minutes/{id}/edit` | Edição (snapshot de participantes preservado) |
 | `/apps/cipa/filial-{xx}/minutes/{id}/sign` | Assinatura da ata |
+| `/apps/cipa/filial-{xx}/members` | Cadastro permanente de membros e cargos — exige `cipa.manage` |
 | `/apps/cipa/my-signature` | Perfil de assinatura pessoal (nome + PNG) — exige `cipa.sign` |
 | `/apps/cipa/pending` | Pendências do usuário |
+
+### Membros e cargos
+
+Usuários com `cipa.manage` + unidade cadastram a composição da CIPA (cargo,
+início/fim de mandato e histórico). Em **nova ata**, a composição ativa na data
+da reunião é pré-carregada como participantes internos com `must_sign: true`.
+Após edição manual da lista, use **Recarregar composição CIPA**. Atas já
+salvas mantêm o snapshot em `role_in_meeting` (leitura e PDF).
 
 ### Assinatura pessoal
 
@@ -45,7 +54,7 @@ Modelo enxuto (6 códigos) — ver `cipa.manifest.json`:
 | Código | Escopo |
 |--------|--------|
 | `cipa.view` | Consulta e auditoria |
-| `cipa.manage` | CRUD, envio, finalização, PDF e signatários |
+| `cipa.manage` | CRUD, envio, finalização, PDF, signatários e membros/cargos |
 | `cipa.sign` | Assinar, recusar e configurar assinatura pessoal |
 | `cipa.admin` | Tudo, em todas as unidades |
 | `cipa.unit.filial-01` | Dados da filial 01 |

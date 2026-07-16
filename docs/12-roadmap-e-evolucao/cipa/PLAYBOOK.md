@@ -11,6 +11,7 @@
 | Unidade | Filiais `01` / `02` |
 | MFE | `plugins/cipa` federado |
 | Editor | `RichTextEditor` em `@delpi/plugin-ui` — tela única estilo e-mail (configurações, participantes, signatários, corpo) |
+| Membros | Cadastro permanente por filial (`cipa.members`) com mandato e histórico; nova ata pré-carrega composição vigente |
 | Assinatura | `SignaturePad` PNG + hash SHA-256 da versão; perfil pessoal em `/signatures/me` (`cipa.sign`) |
 | PDF | ReportLab autoritativo; leitura/print usa `DocumentReader` do `plugin-ui` |
 | Notificações | Core API `/integrations/notifications` |
@@ -22,6 +23,13 @@ Sequencial por unidade e ano: `YYYY/NNN` (ex.: `2026/001`).
 ## Aceite v1
 
 Criar → editar → participantes/signatários → enviar → assinar (mobile) → acompanhar → finalizar → PDF → auditoria → RBAC: ações globais + escopo por unidade (`cipa.unit.filial-*`).
+
+### Membros e cargos (entregue)
+
+- Migration `V004__cipa_members.sql` + API `/members` com RBAC por unidade
+- Tela `/apps/cipa/filial-{xx}/members` (`cipa.manage`) — diretório, cargo, mandato, histórico
+- Nova ata: `listCipaMembers(unit, activeOn=meeting_date)` → participantes com cargo e `must_sign`
+- Após edição manual da lista: ação **Recarregar composição CIPA**; edição de ata existente não sobrescreve snapshot
 
 ### Assinatura pessoal (entregue)
 
