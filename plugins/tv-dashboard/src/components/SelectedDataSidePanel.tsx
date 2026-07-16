@@ -11,6 +11,7 @@ import type {
 } from "./comunicadoEditorContextCore";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataBindingInspector } from "./DataBindingInspector";
+import { DataPreparePanel } from "./DataPreparePanel";
 import { DataRoutesSidePanel } from "./DataRoutesSidePanel";
 import { VisualDataViewInspector } from "./VisualDataViewInspector";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -200,6 +201,10 @@ export function SelectedDataSidePanel({
             Abrir catálogo de fontes
           </button>
         </DeckPropertySection>
+      ) : null}
+
+      {bindingTarget?.type === "data_source" ? (
+        <DataPreparePanel pane block={bindingTarget} />
       ) : null}
 
       {!isView && !bindingTarget ? (

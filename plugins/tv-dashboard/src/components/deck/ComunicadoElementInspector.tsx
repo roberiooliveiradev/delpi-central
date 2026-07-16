@@ -13,6 +13,7 @@ import { listDataRoutes, type BranchScope, type TvDataRouteCatalogItem } from ".
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DataBindingInspector } from "../DataBindingInspector";
+import { DataPreparePanel } from "../DataPreparePanel";
 import { ChartViewOptionsInspector } from "../ChartViewOptionsInspector";
 import { TableViewOptionsInspector } from "../TableViewOptionsInspector";
 import { VisualDataViewInspector } from "../VisualDataViewInspector";
@@ -137,6 +138,9 @@ export function ComunicadoElementInspector({
 
       {!multiSelect && isDataBlock ? (
         <DataBindingInspector route={selectedRoute} pane={pane} branchScope={branchScope} />
+      ) : null}
+      {!multiSelect && selected.type === "data_source" ? (
+        <DataPreparePanel pane={pane} block={selected} />
       ) : null}
       {!multiSelect && isViewBlock ? (
         <VisualDataViewInspector

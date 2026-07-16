@@ -861,12 +861,15 @@ class ComunicadoDataEnrichmentService:
         display_mode = str(binding.get("displayMode") or "kpi")
         block_type = str(block.get("type") or "")
 
+        presentation_data = data
         server_transform_applied = False
         if block_type == "data_source":
-            data, server_transform_applied, _table = apply_data_transform_to_payload(
+            transformed, server_transform_applied, _table = apply_data_transform_to_payload(
                 data,
                 block.get("dataTransform"),
             )
+            if server_transform_applied:
+                presentation_data = transformed
 
         resolved: dict[str, Any] = {
             "meta": meta,
@@ -883,7 +886,7 @@ class ComunicadoDataEnrichmentService:
                 resolved.update(
                     self._resolve_presentation(
                         display_mode=mode,
-                        data=data,
+                        data=presentation_data,
                         route_info=route_info,
                         meta=meta,
                         binding=binding,

@@ -240,6 +240,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Escolha o visual inicial criado junto com a fonte. A mesma fonte continua disponível para outros formatos no palco.",
     sourceConfig:
       "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; no editor, «Atualizar visual» refresca o palco.",
+    prepareData:
+      "Trate a tabela da API antes do visual: renomear, filtrar, selecionar colunas e colunas calculadas (Query). A projeção do gráfico/KPI/tabela (View) usa o resultado.",
     testRoute:
       "Chama a api-delpi com os parâmetros desta fonte (e filtros do slide) e mostra um preview tipado — igual ao catálogo.",
     dateRangePreset:
