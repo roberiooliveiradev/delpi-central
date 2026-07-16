@@ -15,4 +15,5 @@ export { PendingChangeBadge } from "./PendingChangeBadge";
 export { StateBox } from "./StateBox";
 export { StatusBadge } from "./StatusBadge";
 export { KpiCard, type KpiCardProps } from "./KpiCard";
+export { Timeline } from "./Timeline";
 export type { DataTableColumn } from "./types";

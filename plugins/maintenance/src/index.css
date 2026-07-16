@@ -636,7 +636,33 @@
   flex: 0 1 auto;
   width: 100%;
   min-width: 0;
-}.dashboard-maintenance .dm-field--invalid .dm-field__label,
+}
+/* Relatório: campos + ações na mesma linha quando a largura permite. */
+.dashboard-maintenance .dm-filter-bar--relatorio [class*="-filter-bar__grid"]{
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: end;
+}
+.dashboard-maintenance .dm-filter-bar--relatorio .dm-filter-bar__actions{
+  flex-wrap: nowrap;
+}
+.dashboard-maintenance .dm-filter-bar--relatorio .dm-field--multi-select{
+  min-width: 0;
+  width: 100%;
+}
+.dashboard-maintenance .dm-auditoria-timeline__footer{
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+}
+@media (max-width: 960px){
+  .dashboard-maintenance .dm-filter-bar--relatorio [class*="-filter-bar__grid"]{
+    grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  }
+  .dashboard-maintenance .dm-filter-bar--relatorio .dm-filter-bar__actions{
+    flex-wrap: wrap;
+  }
+}
+.dashboard-maintenance .dm-field--invalid .dm-field__label,
 .dashboard-maintenance .dm-field--invalid > span:not(.dm-field__error){
   color: #f87171;
 }.dashboard-maintenance .dm-field__error{

@@ -33,6 +33,7 @@
 @import "./styles/series-chart.css";
 @import "./styles/configurable-table.css";
 @import "./styles/tree-guides.css";
+@import "./styles/timeline.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;

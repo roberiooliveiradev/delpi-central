@@ -120,6 +120,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-07-13",
     changeNote: "Linhas pontilhadas suaves para árvores hierárquicas",
   }),
+  vc("data", "Timeline", {
+    addedAt: "2026-07-16",
+    changeNote: "Linha do tempo vertical (auditoria / histórico)",
+  }),
   // forms
   vc("forms", "SelectField"),
   vc("forms", "SelectControl", {

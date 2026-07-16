@@ -1,9 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CircleAlert, FilePenLine, PlusCircle, Trash2 } from "lucide-react";
+import {
+  createDashboardSectionCard,
+  sectionCardPacBemClasses,
+  type TimelineItemModel,
+  type TimelineTone,
+} from "@delpi/plugin-ui/index";
 
 import { auditActionLabel, auditPayloadSummary, formatAuditUser } from "../content/auditLabels";
 import { fetchFerramentaAuditoria, type FerramentaAuditItem } from "../data/api/maintenanceApi";
 import { useServerTable } from "../hooks/useServerTable";
-import { DataTableSection, type DataTableColumn } from "./data";
+import { Pagination, Timeline } from "./data";
 
 type FerramentaAuditoriaSectionProps = {
   filial: string;
@@ -11,6 +18,13 @@ type FerramentaAuditoriaSectionProps = {
   reloadKey?: number;
   getAccessToken?: () => string | undefined;
 };
+
+const SectionCard = createDashboardSectionCard({
+  classNames: sectionCardPacBemClasses("dm"),
+  labels: {
+    titleHelpAriaLabel: (title) => `Ajuda: ${title}`,
+  },
+});
 
 function formatDateTime(value?: string | null) {
   if (!value) return "—";
@@ -25,39 +39,42 @@ function formatDateTime(value?: string | null) {
   });
 }
 
-const auditColumns: DataTableColumn<FerramentaAuditItem>[] = [
-  {
-    key: "data",
-    header: "Quando",
-    sortable: false,
-    render: (item) => formatDateTime(item.data_criacao),
-  },
-  {
-    key: "acao",
-    header: "Ação",
-    sortable: false,
-    render: (item) => auditActionLabel(item.acao),
-  },
-  {
-    key: "detalhe",
-    header: "Detalhe",
-    sortable: false,
-    render: (item) => auditPayloadSummary(item.payload),
-  },
-  {
-    key: "usuario",
-    header: "Usuário",
-    sortable: false,
-    render: (item) => {
-      const label = formatAuditUser(item.usuario_nome, item.usuario_sub);
-      const id = item.usuario_sub?.trim();
-      if (item.usuario_nome?.trim() && id) {
-        return <span title={id}>{label}</span>;
-      }
-      return label;
-    },
-  },
-];
+function auditActionTone(acao: string): TimelineTone {
+  if (acao.endsWith(".delete")) return "danger";
+  if (acao.endsWith(".update")) return "warning";
+  if (acao.endsWith(".create") || acao.endsWith(".registrar")) return "success";
+  return "info";
+}
+
+function auditActionMarker(acao: string) {
+  if (acao.endsWith(".delete")) return <Trash2 size={12} strokeWidth={2.25} />;
+  if (acao.endsWith(".update")) return <FilePenLine size={12} strokeWidth={2.25} />;
+  if (acao.endsWith(".create") || acao.endsWith(".registrar")) {
+    return <PlusCircle size={12} strokeWidth={2.25} />;
+  }
+  return <CircleAlert size={12} strokeWidth={2.25} />;
+}
+
+function toTimelineItem(item: FerramentaAuditItem): TimelineItemModel {
+  const userLabel = formatAuditUser(item.usuario_nome, item.usuario_sub);
+  const userId = item.usuario_sub?.trim();
+
+  return {
+    id: item.audit_id,
+    title: auditActionLabel(item.acao),
+    occurredAt: item.data_criacao,
+    timeLabel: formatDateTime(item.data_criacao),
+    detail: auditPayloadSummary(item.payload),
+    meta:
+      item.usuario_nome?.trim() && userId ? (
+        <span title={userId}>Usuário: {userLabel}</span>
+      ) : (
+        `Usuário: ${userLabel}`
+      ),
+    tone: auditActionTone(item.acao),
+    marker: auditActionMarker(item.acao),
+  };
+}
 
 export function FerramentaAuditoriaSection({
   filial,
@@ -105,29 +122,33 @@ export function FerramentaAuditoriaSection({
     void loadAuditoria();
   }, [loadAuditoria, reloadKey]);
 
+  const timelineItems = useMemo(() => items.map(toTimelineItem), [items]);
+
   return (
     <>
       {error ? <p className="dm-inline-error">{error}</p> : null}
-      <DataTableSection
-        columnPreferencesKey="maintenance:FerramentaAuditoriaSection:auditoria-da-ferramenta:v1"
+      <SectionCard
         title="Auditoria da ferramenta"
-        titleHint="Registro cronológico de reposições e revisões programadas desta ferramenta."
-        countBadgeLabel="evento(s)"
-        columns={auditColumns}
-        rows={items}
-        loading={loading}
-        emptyMessage="Nenhum evento registrado para esta ferramenta."
-        getRowKey={(item) => item.audit_id}
-        serverTable={{
-          page: auditTable.query.page,
-          pageSize: auditTable.query.pageSize,
-          total,
-          onPageChange: auditTable.setPage,
-          sortKey: auditTable.query.sortKey,
-          sortDirection: auditTable.query.sortDirection,
-          onSortChange: auditTable.handleSortChange,
-        }}
-      />
+        hint="Registro cronológico de reposições e revisões programadas desta ferramenta."
+        subtitle="Eventos em ordem do mais recente para o mais antigo."
+        actions={<span className="dm-badge">{total} evento(s)</span>}
+      >
+        <Timeline
+          items={timelineItems}
+          loading={loading}
+          emptyMessage="Nenhum evento registrado para esta ferramenta."
+          aria-label="Auditoria da ferramenta"
+        />
+        <div className="dm-auditoria-timeline__footer">
+          <Pagination
+            page={auditTable.query.page}
+            pageSize={auditTable.query.pageSize}
+            total={total}
+            onPageChange={auditTable.setPage}
+            hideWhenSinglePage
+          />
+        </div>
+      </SectionCard>
     </>
   );
 }

@@ -224,3 +224,15 @@ export {
   TreeGuideRails,
   type TreeGuideRailsProps,
 } from "./TreeGuideRails";
+
+export {
+  Timeline,
+  createTimeline,
+  timelineBemClasses,
+  timelineMarkerToneClass,
+  type DashboardTimelineProps,
+  type TimelineClassNames,
+  type TimelineItemModel,
+  type TimelineProps,
+  type TimelineTone,
+} from "./Timeline";
