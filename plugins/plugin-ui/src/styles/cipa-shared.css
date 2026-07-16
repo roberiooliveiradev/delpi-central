@@ -8,12 +8,16 @@
   width: 100%;
   max-width: 100%;
   height: auto;
-  min-height: 180px;
+  min-height: var(--delpi-ui-signature-pad-min-height, 180px);
   touch-action: none;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 12px;
   background: #fff;
   cursor: crosshair;
+}
+
+.delpi-ui-signature-pad--tall .delpi-ui-signature-pad__canvas {
+  min-height: var(--delpi-ui-signature-pad-tall-min-height, 240px);
 }
 
 .delpi-ui-signature-pad__hint {
@@ -31,6 +35,11 @@
   background: var(--delpi-ui-surface, #fff);
   color: var(--delpi-ui-text, #111);
   cursor: pointer;
+}
+
+.delpi-ui-user-directory-picker,
+.delpi-ui-rich-text {
+  width: 100%;
 }
 
 .delpi-ui-user-directory-picker {

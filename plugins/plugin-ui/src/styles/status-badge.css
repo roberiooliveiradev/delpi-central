@@ -1,0 +1,47 @@
+/**
+ * StatusBadge — .delpi-ui-status-badge*
+ */
+
+.delpi-ui-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 12%,
+    transparent
+  );
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-status-badge--info {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 16%,
+    transparent
+  );
+}
+
+.delpi-ui-status-badge--success {
+  background: color-mix(in srgb, var(--success, #12b76a) 18%, transparent);
+}
+
+.delpi-ui-status-badge--warning {
+  background: color-mix(in srgb, var(--warning, #f79009) 18%, transparent);
+}
+
+.delpi-ui-status-badge--danger {
+  background: color-mix(in srgb, var(--delpi-ui-danger, #b42318) 16%, transparent);
+}
+
+.delpi-ui-status-badge--neutral {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 55%,
+    transparent
+  );
+}

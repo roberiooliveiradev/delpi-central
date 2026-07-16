@@ -37,6 +37,11 @@
 @import "./styles/rich-text-editor.css";
 @import "./styles/cipa-shared.css";
 @import "./styles/action-controls.css";
+@import "./styles/page-header.css";
+@import "./styles/navigation-card.css";
+@import "./styles/status-badge.css";
+@import "./styles/content-card.css";
+@import "./styles/state-banner.css";
 
 .delpi-ui-help-tooltip {
   display: inline-flex;
@@ -185,6 +190,9 @@
 
 .delpi-ui-field-label {
   display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--delpi-ui-text, var(--text, #111111));
 }
 
 .delpi-ui-field-label__text {

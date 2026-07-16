@@ -4,7 +4,7 @@ import {
   ActionButton,
   BackLink,
   FieldLabel,
-  HelpTooltip,
+  IconButton,
   NativeSelectControl,
   NativeTextControl,
   RichTextEditor,
@@ -22,6 +22,13 @@ import {
 import { MEETING_TYPE_LABELS, UNIT_LABELS } from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
+import {
+  CipaContentCard,
+  CipaFormActions,
+  CipaPageHeader,
+  CipaSectionCard,
+  CipaStateBanner,
+} from "../ui/cipaUi";
 import { mergeMinuteContentHtml, splitMinuteContentForSave } from "../utils/minuteContent";
 
 type Props = {
@@ -167,13 +174,11 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
 
   return (
     <div className="cipa-page-stack cipa-editor-page">
-      <header className="cipa-header">
-        <div>
-          <BackLink onClick={() => navigateCipa(listPath)}>Voltar para atas</BackLink>
-          <h1>{currentId ? "Editar ata" : "Nova ata"}</h1>
-          <p>{unitLabel}</p>
-        </div>
-        <div className="cipa-header__actions">
+      <CipaPageHeader
+        nav={<BackLink onClick={() => navigateCipa(listPath)}>Voltar para atas</BackLink>}
+        title={currentId ? "Editar ata" : "Nova ata"}
+        subtitle={unitLabel}
+        actions={
           <ActionButton
             variant="primary"
             disabled={saving || !title.trim()}
@@ -181,13 +186,11 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
           >
             {saving ? "Salvando…" : "Salvar ata"}
           </ActionButton>
-        </div>
-      </header>
+        }
+      />
 
       {error ? (
-        <p className="cipa-error" role="alert">
-          {error}
-        </p>
+        <CipaStateBanner variant="error">{error}</CipaStateBanner>
       ) : null}
 
       <form
@@ -197,7 +200,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
           void saveDraft();
         }}
       >
-        <section className="cipa-card cipa-compose__section">
+        <CipaContentCard className="cipa-compose__section">
           <div className="cipa-compose__row">
             <FieldLabel
               label="Título"
@@ -218,11 +221,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
             <span className="cipa-compose__label">Configurações</span>
             <div className="cipa-compose__meta-fields">
               <div className="cipa-field">
-                <FieldLabel
-                  label="Tipo"
-                  htmlFor="cipa-minute-type"
-                  className="cipa-field__label"
-                />
+                <FieldLabel label="Tipo" htmlFor="cipa-minute-type" />
                 <NativeSelectControl
                   id="cipa-minute-type"
                   value={meetingType}
@@ -234,11 +233,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                 />
               </div>
               <div className="cipa-field">
-                <FieldLabel
-                  label="Data"
-                  htmlFor="cipa-minute-date"
-                  className="cipa-field__label"
-                />
+                <FieldLabel label="Data" htmlFor="cipa-minute-date" />
                 <NativeTextControl
                   id="cipa-minute-date"
                   type="date"
@@ -247,11 +242,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                 />
               </div>
               <div className="cipa-field cipa-field--grow">
-                <FieldLabel
-                  label="Local"
-                  htmlFor="cipa-minute-location"
-                  className="cipa-field__label"
-                />
+                <FieldLabel label="Local" htmlFor="cipa-minute-location" />
                 <NativeTextControl
                   id="cipa-minute-location"
                   value={location}
@@ -261,10 +252,9 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
               </div>
             </div>
           </div>
-        </section>
+        </CipaContentCard>
 
-        <section className="cipa-card cipa-compose__section">
-          <h2 className="cipa-compose__section-title">Participantes</h2>
+        <CipaSectionCard title="Participantes" className="cipa-compose__section">
           <div className="cipa-compose__panel">
             <UserDirectoryPicker
               value={directoryParticipants}
@@ -288,11 +278,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
 
             <div className="cipa-external-row">
               <div className="cipa-field cipa-field--grow">
-                <FieldLabel
-                  label="Participante externo"
-                  htmlFor="cipa-external-name"
-                  className="cipa-field__label"
-                />
+                <FieldLabel label="Participante externo" htmlFor="cipa-external-name" />
                 <NativeTextControl
                   id="cipa-external-name"
                   value={externalName}
@@ -324,25 +310,23 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                         <span className="cipa-chip-list__tag">externo</span>
                       ) : null}
                     </span>
-                    <button
-                      type="button"
-                      className="cipa-icon-btn"
+                    <IconButton
+                      tone="danger"
                       aria-label={`Remover ${item.display_name}`}
                       onClick={() => removeParticipant(index)}
                     >
                       <X size={16} />
-                    </button>
+                    </IconButton>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="cipa-review-empty">Nenhum participante adicionado.</p>
+              <CipaStateBanner>Nenhum participante adicionado.</CipaStateBanner>
             )}
           </div>
-        </section>
+        </CipaSectionCard>
 
-        <section className="cipa-card cipa-compose__section">
-          <h2 className="cipa-compose__section-title">Signatários</h2>
+        <CipaSectionCard title="Signatários" className="cipa-compose__section">
           <div className="cipa-compose__panel">
             <UserDirectoryPicker
               value={selectedUsers}
@@ -354,12 +338,13 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
               }}
             />
           </div>
-        </section>
+        </CipaSectionCard>
 
-        <section className="cipa-card cipa-compose__section cipa-compose__section--body">
-          <h2 className="cipa-compose__section-title">
-            Conteúdo da ata <HelpTooltip content={helpTooltips.richText} />
-          </h2>
+        <CipaSectionCard
+          title="Conteúdo da ata"
+          hint={helpTooltips.richText}
+          className="cipa-compose__section cipa-compose__section--body"
+        >
           <RichTextEditor
             value={contentHtml}
             onChange={setContentHtml}
@@ -368,14 +353,14 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
             minHeight={360}
             ariaLabel="Conteúdo da ata"
           />
-        </section>
+        </CipaSectionCard>
 
-        <div className="cipa-compose__footer">
+        <CipaFormActions align="end" className="cipa-compose__footer">
           <ActionButton onClick={() => navigateCipa(listPath)}>Cancelar</ActionButton>
           <ActionButton type="submit" variant="primary" disabled={saving || !title.trim()}>
             {saving ? "Salvando…" : "Salvar ata"}
           </ActionButton>
-        </div>
+        </CipaFormActions>
       </form>
     </div>
   );

@@ -50,6 +50,10 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
     addedAt: "2026-07-16",
     description: "Navegação de retorno com seta e sem chrome de botão.",
   }),
+  vc("layout", "IconButton", {
+    addedAt: "2026-07-16",
+    description: "Botão só com ícone (remover, fechar) com tone default/danger.",
+  }),
   // help — pacote 0.1.0
   vc("help", "HelpTooltip"),
   vc("help", "FieldLabel"),
@@ -58,9 +62,19 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("help", "HintAction"),
   vc("help", "TitleWithHelp"),
   // layout
-  vc("layout", "PageHeader"),
+  vc("layout", "PageHeader", {
+    updatedAt: "2026-07-16",
+    changeNote: "Dual-class delpi-ui-page-header + slot nav",
+  }),
+  vc("layout", "NavigationCard", {
+    addedAt: "2026-07-16",
+    description: "Card clicável de navegação/atalho (unidades, submódulos).",
+  }),
   vc("layout", "PanelCard"),
-  vc("layout", "ContentCard"),
+  vc("layout", "ContentCard", {
+    updatedAt: "2026-07-16",
+    changeNote: "Dual-class delpi-ui-card + content-card",
+  }),
   vc("layout", "KpiCard"),
   vc("layout", "DelpiKpiCard"),
   vc("layout", "SimpleKpiCard"),

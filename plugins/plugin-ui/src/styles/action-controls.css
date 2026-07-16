@@ -84,3 +84,73 @@
 .delpi-ui-back-link__arrow {
   flex-shrink: 0;
 }
+
+.delpi-ui-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e5e7eb));
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, #64748b));
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.delpi-ui-icon-btn:hover:not(:disabled) {
+  color: var(--delpi-ui-text, var(--text, #111111));
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 40%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+}
+
+.delpi-ui-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)
+  );
+}
+
+.delpi-ui-icon-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-icon-btn--danger:hover:not(:disabled) {
+  color: var(--delpi-ui-danger, #b42318);
+  border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, #b42318) 40%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+}
+
+.delpi-ui-form-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.delpi-ui-form-actions--end {
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-form-actions,
+  .delpi-ui-form-actions--end {
+    width: 100%;
+  }
+
+  .delpi-ui-form-actions > *,
+  .delpi-ui-form-actions--end > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

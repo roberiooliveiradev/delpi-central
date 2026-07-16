@@ -1,0 +1,17 @@
+/**
+ * StateBanner — feedback inline (loading/erro/sucesso).
+ */
+
+.delpi-ui-state-banner {
+  margin: 0;
+  font-size: 14px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-state-banner--error {
+  color: var(--delpi-ui-danger, #b42318);
+}
+
+.delpi-ui-state-banner--success {
+  color: var(--success, #12b76a);
+}

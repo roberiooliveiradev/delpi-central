@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type ContentCardClassNames = {
   section: string;
   header: string;
@@ -22,15 +24,17 @@ export type ContentCardProps = {
 
 export function contentCardBemClasses(prefix: string): ContentCardClassNames {
   const card = `${prefix}-card`;
+  const ui = "delpi-ui-content-card";
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
 
   return {
-    section: card,
-    header: `${card}__header`,
-    headerContent: `${card}__header-content`,
-    headerRight: `${card}__header-right`,
-    title: `${card}__title`,
-    description: `${card}__description`,
-    body: `${card}__body`,
+    section: pair(card, `delpi-ui-card ${ui}`),
+    header: pair(`${card}__header`, `${ui}__header`),
+    headerContent: pair(`${card}__header-content`, `${ui}__header-content`),
+    headerRight: pair(`${card}__header-right`, `${ui}__header-right`),
+    title: pair(`${card}__title`, `${ui}__title`),
+    description: pair(`${card}__description`, `${ui}__description`),
+    body: pair(`${card}__body`, `${ui}__body`),
   };
 }
 

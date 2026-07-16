@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type PageHeaderLayout = "brand" | "titleRow" | "stack";
 
 export type PageHeaderClassNames = {
@@ -17,6 +19,7 @@ export type PageHeaderClassNames = {
   title?: string;
   badge?: string;
   description?: string;
+  nav?: string;
   primaryButton?: string;
   spinClass?: string;
 };
@@ -41,6 +44,10 @@ export type PageHeaderProps = {
   classNames: PageHeaderClassNames;
   labels: PageHeaderLabels;
 };
+
+function pair(local: string, canonical: string): string {
+  return delpiUiClass(local, canonical);
+}
 
 function RefreshButton({
   onRefresh,
@@ -93,11 +100,11 @@ function BrandLayout(props: PageHeaderProps) {
         ) : null}
         <div className={classNames.content}>
           {eyebrow && classNames.eyebrow ? <p className={classNames.eyebrow}>{eyebrow}</p> : null}
+          {nav && classNames.nav ? <div className={classNames.nav}>{nav}</div> : nav}
           <h1>{title}</h1>
           {subtitle && classNames.subtitle ? (
             <span className={classNames.subtitle}>{subtitle}</span>
           ) : null}
-          {nav}
         </div>
       </div>
       {mergedActions}
@@ -106,40 +113,52 @@ function BrandLayout(props: PageHeaderProps) {
 }
 
 function TitleRowLayout(props: PageHeaderProps) {
-  const { classNames, title, subtitle, icon, actions, onRefresh, refreshing, labels } = props;
+  const { classNames, title, subtitle, icon, nav, actions, onRefresh, refreshing, labels } = props;
 
   return (
     <>
-      <div className={classNames.titleWrap}>
-        {icon && classNames.icon ? (
-          <span className={classNames.icon} aria-hidden={true}>
-            {icon}
-          </span>
-        ) : null}
-        <div>
-          <h1>{title}</h1>
-          {subtitle ? <p>{subtitle}</p> : null}
+      <div className={classNames.titleWrap ?? classNames.content}>
+        {nav && classNames.nav ? <div className={classNames.nav}>{nav}</div> : nav}
+        <div className={classNames.titleRow}>
+          {icon && classNames.icon ? (
+            <span className={classNames.icon} aria-hidden={true}>
+              {icon}
+            </span>
+          ) : null}
+          <div>
+            <h1 className={classNames.title}>{title}</h1>
+            {subtitle ? (
+              classNames.description || classNames.subtitle ? (
+                <p className={classNames.description ?? classNames.subtitle}>{subtitle}</p>
+              ) : (
+                <p>{subtitle}</p>
+              )
+            ) : null}
+          </div>
         </div>
       </div>
-      <div className={classNames.actions}>
-        {actions}
-        <RefreshButton
-          onRefresh={onRefresh}
-          refreshing={refreshing}
-          classNames={classNames}
-          labels={labels}
-        />
-      </div>
+      {actions || onRefresh ? (
+        <div className={classNames.actions}>
+          {actions}
+          <RefreshButton
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+            classNames={classNames}
+            labels={labels}
+          />
+        </div>
+      ) : null}
     </>
   );
 }
 
 function StackLayout(props: PageHeaderProps) {
-  const { classNames, title, subtitle, eyebrow, badge, actions } = props;
+  const { classNames, title, subtitle, eyebrow, badge, nav, actions } = props;
 
   return (
     <>
       <div className={classNames.content}>
+        {nav && classNames.nav ? <div className={classNames.nav}>{nav}</div> : nav}
         {eyebrow && classNames.eyebrow ? (
           <p className={classNames.eyebrow}>{eyebrow}</p>
         ) : null}
@@ -159,27 +178,34 @@ function StackLayout(props: PageHeaderProps) {
 }
 
 export function pageHeaderBrandBemClasses(prefix: string): PageHeaderClassNames {
+  const root = `${prefix}-page-header`;
+  const ui = "delpi-ui-page-header";
   return {
-    root: `${prefix}-page-header`,
-    rootCompact: `${prefix}-page-header ${prefix}-page-header--compact`,
-    brand: `${prefix}-page-header__brand`,
-    icon: `${prefix}-header__icon`,
-    content: `${prefix}-page-header__content`,
-    eyebrow: `${prefix}-eyebrow`,
-    subtitle: `${prefix}-page-subtitle`,
-    actions: `${prefix}-header-actions`,
+    root: pair(root, ui),
+    rootCompact: pair(`${root} ${root}--compact`, `${ui} ${ui}--compact`),
+    brand: pair(`${root}__brand`, `${ui}__brand`),
+    icon: pair(`${prefix}-header__icon`, `${ui}__icon`),
+    content: pair(`${root}__content`, `${ui}__content`),
+    eyebrow: pair(`${prefix}-eyebrow`, `${ui}__eyebrow`),
+    subtitle: pair(`${prefix}-page-subtitle`, `${ui}__subtitle`),
+    nav: pair(`${root}__nav`, `${ui}__nav`),
+    actions: pair(`${prefix}-header-actions`, `${ui}__actions`),
     primaryButton: `${prefix}-primary-btn`,
   };
 }
 
 export function pageHeaderPacBrandBemClasses(prefix: string): PageHeaderClassNames {
+  const root = `${prefix}-page-header`;
+  const ui = "delpi-ui-page-header";
   return {
-    root: `${prefix}-page-header`,
-    brand: `${prefix}-page-header__brand`,
-    icon: `${prefix}-header__icon`,
-    eyebrow: `${prefix}-eyebrow`,
-    subtitle: `${prefix}-page-subtitle`,
-    actions: `${prefix}-header-actions`,
+    root: pair(root, ui),
+    brand: pair(`${root}__brand`, `${ui}__brand`),
+    icon: pair(`${prefix}-header__icon`, `${ui}__icon`),
+    content: pair(`${root}__content`, `${ui}__content`),
+    eyebrow: pair(`${prefix}-eyebrow`, `${ui}__eyebrow`),
+    subtitle: pair(`${prefix}-page-subtitle`, `${ui}__subtitle`),
+    nav: pair(`${root}__nav`, `${ui}__nav`),
+    actions: pair(`${prefix}-header-actions`, `${ui}__actions`),
   };
 }
 
@@ -187,27 +213,36 @@ export function pageHeaderTitleRowBemClasses(
   prefix: string,
   options?: { buttonClass?: string; spinClass?: string },
 ): PageHeaderClassNames {
+  const root = `${prefix}-page-header`;
+  const ui = "delpi-ui-page-header";
   const button = options?.buttonClass ?? `${prefix}-btn ${prefix}-btn--primary`;
   return {
-    root: `${prefix}-page-header`,
-    titleWrap: `${prefix}-page-header__title`,
-    icon: `${prefix}-page-header__icon`,
-    actions: `${prefix}-page-header__actions`,
+    root: pair(root, ui),
+    titleWrap: pair(`${root}__title-wrap`, `${ui}__title-wrap`),
+    titleRow: pair(`${root}__title-row`, `${ui}__title-row`),
+    title: pair(`${root}__title`, `${ui}__title`),
+    description: pair(`${root}__description`, `${ui}__description`),
+    icon: pair(`${root}__icon`, `${ui}__icon`),
+    nav: pair(`${root}__nav`, `${ui}__nav`),
+    actions: pair(`${root}__actions`, `${ui}__actions`),
     primaryButton: button,
     spinClass: options?.spinClass ?? `${prefix}-spin`,
   };
 }
 
 export function pageHeaderStackBemClasses(prefix: string): PageHeaderClassNames {
+  const root = `${prefix}-page-header`;
+  const ui = "delpi-ui-page-header";
   return {
-    root: `${prefix}-page-header`,
-    content: `${prefix}-page-header__content`,
-    eyebrow: `${prefix}-page-header__eyebrow`,
-    titleRow: `${prefix}-page-header__title-row`,
-    title: `${prefix}-page-header__title`,
-    badge: `${prefix}-page-header__badge`,
-    description: `${prefix}-page-header__description`,
-    actions: `${prefix}-page-header__actions`,
+    root: pair(root, ui),
+    content: pair(`${root}__content`, `${ui}__content`),
+    eyebrow: pair(`${root}__eyebrow`, `${ui}__eyebrow`),
+    titleRow: pair(`${root}__title-row`, `${ui}__title-row`),
+    title: pair(`${root}__title`, `${ui}__title`),
+    badge: pair(`${root}__badge`, `${ui}__badge`),
+    description: pair(`${root}__description`, `${ui}__description`),
+    nav: pair(`${root}__nav`, `${ui}__nav`),
+    actions: pair(`${root}__actions`, `${ui}__actions`),
   };
 }
 

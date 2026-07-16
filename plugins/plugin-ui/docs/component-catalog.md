@@ -10,7 +10,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 
 | Família | Exemplos no catálogo |
 |---------|----------------------|
-| actions | ActionButton, BackLink |
+| actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | PageHeader, KpiCard, DelpiKpiCard, ChartCard… |
 | feedback | EmptyState, ModalShell, DrawerShell… |
@@ -32,7 +32,7 @@ import { HelpTooltip, FieldLabel, TabHintCell } from "@delpi/plugin-ui";
 
 ---
 
-## `ActionButton` e `BackLink`
+## `ActionButton`, `BackLink` e `IconButton`
 
 Controles canônicos para ações e navegação de retorno. O MFE deve mapear apenas tokens
 `--delpi-ui-*` e layout do contêiner; não deve copiar o chrome dos botões no CSS local.
@@ -43,12 +43,37 @@ Controles canônicos para ações e navegação de retorno. O MFE deve mapear ap
 <ActionButton variant="primary" onClick={save}>Salvar</ActionButton>
 <ActionButton variant="ghost" onClick={refresh}>Atualizar</ActionButton>
 <ActionButton variant="link" onClick={manage}>Gerenciar</ActionButton>
+
+<IconButton aria-label="Remover participante" tone="danger" onClick={remove}>
+  <X size={16} />
+</IconButton>
 ```
 
 | Componente | Props principais |
 |------------|------------------|
 | `ActionButton` | `variant` (`default`, `primary`, `ghost`, `link`), `type`, `disabled`, `onClick`, `className` |
 | `BackLink` | `onClick`, `className`, `children` |
+| `IconButton` | `aria-label`, `tone` (`default`, `danger`), `disabled`, `onClick`, `children` |
+
+---
+
+## `NavigationCard`
+
+Card clicável canônico para unidades, filiais e atalhos de módulos. O conteúdo de domínio
+é fornecido pelo consumidor; o kit controla chrome, foco e acessibilidade.
+
+```tsx
+<NavigationCard
+  classNames={navigationCardBemClasses("cipa")}
+  icon={<Building2 size={22} />}
+  title="Santa Catarina"
+  meta="Filial 01"
+  onClick={openUnit}
+/>
+```
+
+Props principais: `title`, `icon`, `eyebrow`, `description`, `meta`, `onClick`,
+`orientation` (`vertical`, `horizontal`), `disabled`, `aria-label` e `classNames`.
 
 ---
 

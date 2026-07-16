@@ -1,0 +1,101 @@
+/**
+ * PageHeader — .delpi-ui-page-header*
+ * Tokens: --delpi-ui-title, --delpi-ui-text-muted, --delpi-ui-section-gap
+ */
+
+.delpi-ui-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-page-header__content,
+.delpi-ui-page-header__brand,
+.delpi-ui-page-header__title-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.delpi-ui-page-header__brand {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.delpi-ui-page-header__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-page-header__nav {
+  margin-bottom: 2px;
+}
+
+.delpi-ui-page-header h1,
+.delpi-ui-page-header__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+}
+
+.delpi-ui-page-header__eyebrow {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-page-header__subtitle,
+.delpi-ui-page-header__description,
+.delpi-ui-page-header p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-page-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-page-header__badge {
+  display: inline-flex;
+  align-items: center;
+}
+
+.delpi-ui-page-header__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .delpi-ui-page-header {
+    flex-direction: column;
+  }
+
+  .delpi-ui-page-header__actions {
+    width: 100%;
+  }
+
+  .delpi-ui-page-header__actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}

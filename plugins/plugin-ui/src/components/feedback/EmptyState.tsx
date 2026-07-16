@@ -25,7 +25,10 @@ export function emptyStateCardBemClasses(prefix: string): EmptyStateClassNames {
 
 export function emptyStatePanelBemClasses(prefix: string): EmptyStateClassNames {
   return {
-    root: `${prefix}-state ${prefix}-state--empty`,
+    root: delpiUiClass(
+      `${prefix}-state ${prefix}-state--empty`,
+      "delpi-ui-state-banner delpi-ui-state-banner--empty",
+    ),
     withTitle: true,
   };
 }
@@ -102,7 +105,10 @@ export function loadingStatePanelBemClasses(
   modifier = "loading",
 ): LoadingStateClassNames {
   return {
-    root: `${prefix}-state ${prefix}-state--${modifier}`,
+    root: delpiUiClass(
+      `${prefix}-state ${prefix}-state--${modifier}`,
+      "delpi-ui-state-banner",
+    ),
     spinner: `${prefix}-spinner`,
   };
 }

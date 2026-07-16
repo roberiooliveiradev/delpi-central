@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+
 export type StateBannerVariant = "default" | "error" | "success";
 
 export type StateBannerClassNames = {
@@ -16,11 +18,11 @@ export type StateBannerProps = {
 };
 
 export function stateBannerBemClasses(prefix: string): StateBannerClassNames {
-  const root = `${prefix}-state`;
+  const root = delpiUiClass(`${prefix}-state`, "delpi-ui-state-banner");
   return {
     root,
-    error: `${root} ${root}--error`,
-    success: `${root} ${root}--success`,
+    error: withBemModifier(root, "error"),
+    success: withBemModifier(root, "success"),
   };
 }
 
@@ -49,7 +51,9 @@ export function StateBanner({
   classNames,
 }: StateBannerProps) {
   return (
-    <div className={resolveStateBannerClass(variant, classNames, className)}>{children}</div>
+    <div className={resolveStateBannerClass(variant, classNames, className)} role="status">
+      {children}
+    </div>
   );
 }
 

@@ -19,5 +19,6 @@ describe("StatusBadge", () => {
 
     expect(screen.getByText("média 5.7")).toBeTruthy();
     expect(container.querySelector(".si-status-badge--danger")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-status-badge--danger")).toBeTruthy();
   });
 });

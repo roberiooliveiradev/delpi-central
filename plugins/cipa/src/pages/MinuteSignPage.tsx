@@ -20,6 +20,12 @@ import {
 import { UNIT_LABELS } from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
+import {
+  CipaFormActions,
+  CipaPageHeader,
+  CipaSectionCard,
+  CipaStateBanner,
+} from "../ui/cipaUi";
 
 type Props = {
   unitCode: "01" | "02";
@@ -138,40 +144,32 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
 
   return (
     <div className="cipa-page-stack cipa-sign-page">
-      <header className="cipa-header">
-        <div>
+      <CipaPageHeader
+        nav={
           <BackLink
             onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}`)}
           >
             Voltar para a ata
           </BackLink>
-          <h1>Assinatura da ata</h1>
-          <p>
-            {UNIT_LABELS[unitCode]} · {String(minute.minute_number || "")} —{" "}
-            {String(minute.title || "")}
-          </p>
-        </div>
-      </header>
+        }
+        title="Assinatura da ata"
+        subtitle={`${UNIT_LABELS[unitCode]} · ${String(minute.minute_number || "")} — ${String(minute.title || "")}`}
+      />
 
-      {error && <p className="cipa-error">{error}</p>}
+      {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
 
-      <section className="cipa-card">
-        <h2>Resumo</h2>
+      <CipaSectionCard title="Resumo">
         <div
           className="cipa-prose"
           dangerouslySetInnerHTML={{
             __html: String(version.body_html || "<p>Sem conteúdo.</p>"),
           }}
         />
-      </section>
+      </CipaSectionCard>
 
-      <section className="cipa-card">
+      <CipaSectionCard title="Confirmar assinatura">
         <div className="cipa-field">
-          <FieldLabel
-            label="Nome do signatário"
-            htmlFor="cipa-signer-name"
-            className="cipa-field__label"
-          />
+          <FieldLabel label="Nome do signatário" htmlFor="cipa-signer-name" />
           <NativeTextControl id="cipa-signer-name" value={name} onChange={setName} />
         </div>
         <NativeCheckboxControl
@@ -197,7 +195,7 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
               alt="Assinatura cadastrada"
               className="cipa-signature-img"
             />
-            <div className="cipa-footer-actions">
+            <CipaFormActions>
               <ActionButton
                 variant="primary"
                 disabled={busy}
@@ -205,7 +203,7 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
               >
                 Usar assinatura cadastrada
               </ActionButton>
-            </div>
+            </CipaFormActions>
           </div>
         ) : null}
 
@@ -213,16 +211,15 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
           Assinatura <HelpTooltip content={helpTooltips.signaturePad} />
           {hasSavedSignature ? " — ou desenhe uma nova só para esta ata" : ""}
         </p>
-        <SignaturePad onChange={setPng} />
-        <div className="cipa-footer-actions">
+        <SignaturePad className="delpi-ui-signature-pad--tall" onChange={setPng} />
+        <CipaFormActions>
           <ActionButton variant="primary" disabled={busy} onClick={() => void confirmSign()}>
             Confirmar assinatura
           </ActionButton>
-        </div>
-      </section>
+        </CipaFormActions>
+      </CipaSectionCard>
 
-      <section className="cipa-card">
-        <h2>Recusar assinatura</h2>
+      <CipaSectionCard title="Recusar assinatura">
         <NativeTextAreaControl
           value={refuseReason}
           onChange={setRefuseReason}
@@ -230,10 +227,12 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
           placeholder="Justificativa obrigatória"
           aria-label="Justificativa da recusa"
         />
-        <ActionButton disabled={busy} onClick={() => void confirmRefuse()}>
-          Recusar
-        </ActionButton>
-      </section>
+        <CipaFormActions>
+          <ActionButton disabled={busy} onClick={() => void confirmRefuse()}>
+            Recusar
+          </ActionButton>
+        </CipaFormActions>
+      </CipaSectionCard>
     </div>
   );
 }

@@ -1,6 +1,10 @@
 import { useMemo } from "react";
 import { Building2, ClipboardList, Hammer, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import {
+  NavigationCard,
+  navigationCardBemClasses,
+} from "@delpi/plugin-ui/index";
 
 import { StateBox } from "../../components/data";
 import { FilialSwitcher } from "../../components/FilialSwitcher";
@@ -21,6 +25,8 @@ const SUBMODULE_ICONS: Record<string, LucideIcon> = {
   hammer: Hammer,
   "clipboard-list": ClipboardList,
 };
+
+const navigationCardClasses = navigationCardBemClasses("dm");
 
 function SubmoduleIcon({ icon }: { icon: string }) {
   const Icon = SUBMODULE_ICONS[icon] ?? Hammer;
@@ -82,42 +88,32 @@ export function HomePage({ getAccessToken, pathname, filialScope, onNavigate }: 
 
       <section className="dm-shortcut-grid" aria-label="Atalhos do módulo">
         {canManageFiliais ? (
-          <button
-            type="button"
-            className="dm-card dm-shortcut-card"
+          <NavigationCard
+            classNames={navigationCardClasses}
+            orientation="horizontal"
+            icon={<Building2 size={22} />}
+            eyebrow="Administração"
+            title="Filiais"
+            description="Cadastro de filiais operacionais do módulo."
             onClick={() => onNavigate(MAINTENANCE_ROUTES.filiais)}
-          >
-            <div className="dm-shortcut-card__icon" aria-hidden="true">
-              <Building2 size={22} />
-            </div>
-            <div>
-              <p className="dm-shortcut-card__label">Administração</p>
-              <h2 className="dm-shortcut-card__value">Filiais</h2>
-              <p className="dm-shortcut-card__hint">Cadastro de filiais operacionais do módulo.</p>
-            </div>
-          </button>
+          />
         ) : null}
         {submodules.map((submodule) => (
-          <button
+          <NavigationCard
             key={submodule.id}
-            type="button"
-            className="dm-card dm-shortcut-card"
+            classNames={navigationCardClasses}
+            orientation="horizontal"
+            icon={<SubmoduleIcon icon={submodule.icon} />}
+            eyebrow="Submódulo"
+            title={submodule.label}
+            description={submodule.description}
+            meta={
+              activeFilial
+                ? `Filial: ${resolveFilialDisplayName(filiais, activeFilial)}`
+                : undefined
+            }
             onClick={() => handleOpenSubmodule(submodule.entry_path)}
-          >
-            <div className="dm-shortcut-card__icon" aria-hidden="true">
-              <SubmoduleIcon icon={submodule.icon} />
-            </div>
-            <div>
-              <p className="dm-shortcut-card__label">Submódulo</p>
-              <h2 className="dm-shortcut-card__value">{submodule.label}</h2>
-              <p className="dm-shortcut-card__hint">{submodule.description}</p>
-              {activeFilial ? (
-                <p className="dm-shortcut-card__meta">
-                  Filial: {resolveFilialDisplayName(filiais, activeFilial)}
-                </p>
-              ) : null}
-            </div>
-          </button>
+          />
         ))}
       </section>
 

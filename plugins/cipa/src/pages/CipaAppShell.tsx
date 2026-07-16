@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActionButton,
   BackLink,
-  FieldLabel,
-  NativeSelectControl,
-  NativeTextControl,
+  DataTable,
   StatusBadge,
-  statusBadgeBemClasses,
+  type DataTableColumn,
 } from "@delpi/plugin-ui/index";
 import { Building2, FilePlus2, PenLine, RefreshCw } from "lucide-react";
 
@@ -30,11 +28,25 @@ import {
   type CipaAccess,
   type CipaUnitCode,
 } from "../security/cipaAccess";
+import {
+  CipaContentCard,
+  CipaFilterInputField,
+  CipaFiltersRow,
+  CipaFilterSelectField,
+  CipaNavigationCard,
+  CipaPageHeader,
+  CipaSectionCard,
+  CipaStateBanner,
+  CipaStateBox,
+} from "../ui/cipaUi";
+import {
+  cipaDataTableClassNames,
+  cipaDataTableLabels,
+  cipaStatusBadgeClassNames,
+} from "../ui/cipaUiContracts";
 import { MinuteEditorPage } from "./MinuteEditorPage";
 import { MinuteSignPage } from "./MinuteSignPage";
 import { MySignaturePage } from "./MySignaturePage";
-
-const badgeClasses = statusBadgeBemClasses("cipa");
 
 type Props = {
   route: CipaRoute;
@@ -47,7 +59,7 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
   if (accessLoading) {
     return (
       <div className="dashboard-cipa dashboard-page">
-        <p className="cipa-state">Carregando permissões…</p>
+        <CipaStateBanner>Carregando permissões…</CipaStateBanner>
       </div>
     );
   }
@@ -55,7 +67,7 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
   if (accessError) {
     return (
       <div className="dashboard-cipa dashboard-page">
-        <p className="cipa-error">{accessError}</p>
+        <CipaStateBanner variant="error">{accessError}</CipaStateBanner>
       </div>
     );
   }
@@ -169,11 +181,14 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
 
 function AccessDenied({ message }: { message: string }) {
   return (
-    <section className="cipa-card">
-      <h1>Sem acesso</h1>
-      <p className="cipa-state">{message}</p>
-      <ActionButton onClick={() => navigateCipa("/apps/cipa")}>Voltar ao início</ActionButton>
-    </section>
+    <CipaStateBox
+      variant="error"
+      title="Sem acesso"
+      message={message}
+      action={
+        <ActionButton onClick={() => navigateCipa("/apps/cipa")}>Voltar ao início</ActionButton>
+      }
+    />
   );
 }
 
@@ -188,49 +203,39 @@ function CipaHomePage({ access }: { access: CipaAccess | null }) {
   }, [singleUnit]);
 
   if (singleUnit) {
-    return <p className="cipa-state">Redirecionando para {singleUnit.label}…</p>;
+    return <CipaStateBanner>Redirecionando para {singleUnit.label}…</CipaStateBanner>;
   }
 
   return (
     <div className="cipa-page-stack">
-      <header className="cipa-header">
-        <div>
-          <h1>CIPA</h1>
-          <p>Escolha a unidade ou acesse suas pendências de assinatura.</p>
-        </div>
-      </header>
+      <CipaPageHeader title="CIPA" subtitle="Escolha a unidade ou acesse suas pendências de assinatura." />
 
       {units.length > 0 ? (
-        <section className="cipa-card">
-          <h2>Unidades</h2>
+        <CipaSectionCard title="Unidades">
           <div className="cipa-unit-grid">
             {units.map((unit) => (
-              <button
+              <CipaNavigationCard
                 key={unit.id}
-                type="button"
-                className="cipa-unit-card"
+                icon={<Building2 size={22} />}
+                title={unit.label}
+                meta={`Filial ${unit.id}`}
                 onClick={() => navigateCipa(`/apps/cipa/filial-${unit.id}`)}
-              >
-                <Building2 size={22} />
-                <span className="cipa-unit-card__title">{unit.label}</span>
-                <span className="cipa-unit-card__meta">Filial {unit.id}</span>
-              </button>
+              />
             ))}
           </div>
-        </section>
+        </CipaSectionCard>
       ) : (
-        <section className="cipa-card">
-          <p className="cipa-state">
+        <CipaContentCard>
+          <CipaStateBanner>
             Nenhuma unidade disponível. Solicite <code>cipa.view</code> ou{" "}
             <code>cipa.manage</code> combinado com <code>cipa.unit.filial-01</code> /{" "}
             <code>cipa.unit.filial-02</code>.
-          </p>
-        </section>
+          </CipaStateBanner>
+        </CipaContentCard>
       )}
 
       {access?.can_sign ? (
-        <section className="cipa-card">
-          <h2>Assinaturas</h2>
+        <CipaSectionCard title="Assinaturas">
           <div className="cipa-home-actions">
             <ActionButton variant="primary" onClick={() => navigateCipa("/apps/cipa/pending")}>
               <PenLine size={16} /> Ver pendências
@@ -239,7 +244,7 @@ function CipaHomePage({ access }: { access: CipaAccess | null }) {
               <PenLine size={16} /> Minha assinatura
             </ActionButton>
           </div>
-        </section>
+        </CipaSectionCard>
       ) : null}
     </div>
   );
@@ -278,133 +283,148 @@ function MinuteListPage({
 
   useEffect(() => load(), [unitCode, status]);
 
+  const columns = useMemo<DataTableColumn<MinuteListItem>[]>(
+    () => [
+      {
+        key: "minute_number",
+        header: "Nº",
+        mobileLabel: "Nº",
+        render: (item) => item.minute_number,
+      },
+      {
+        key: "title",
+        header: "Título",
+        mobileLabel: "Título",
+        render: (item) => item.title,
+      },
+      {
+        key: "meeting_date",
+        header: "Data",
+        mobileLabel: "Data",
+        render: (item) => item.meeting_date,
+      },
+      {
+        key: "meeting_type",
+        header: "Tipo",
+        mobileLabel: "Tipo",
+        render: (item) => MEETING_TYPE_LABELS[item.meeting_type] || item.meeting_type,
+      },
+      {
+        key: "status",
+        header: "Status",
+        mobileLabel: "Status",
+        render: (item) => (
+          <StatusBadge
+            classNames={cipaStatusBadgeClassNames}
+            label={STATUS_LABELS[item.status] || item.status}
+            variant={item.status === "finalized" ? "success" : "neutral"}
+          />
+        ),
+      },
+      {
+        key: "signatures",
+        header: "Assinaturas",
+        mobileLabel: "Assinaturas",
+        render: (item) => {
+          const done = item.signatures_done ?? 0;
+          const pending = item.signatures_pending ?? 0;
+          const total = done + pending;
+          return total > 0 ? `${done}/${total}` : "—";
+        },
+      },
+    ],
+    [],
+  );
+
   return (
     <div className="cipa-page-stack">
-      <header className="cipa-header">
-        <div>
-          <BackLink onClick={() => navigateCipa("/apps/cipa")}>Unidades</BackLink>
-          <h1>CIPA — {UNIT_LABELS[unitCode]}</h1>
-          <p>Atas de reunião da unidade</p>
-        </div>
-        <div className="cipa-header__actions">
-          <ActionButton variant="ghost" onClick={() => load()}>
-            <RefreshCw size={16} /> Atualizar
-          </ActionButton>
-          {canSign ? (
-            <ActionButton onClick={() => navigateCipa("/apps/cipa/my-signature")}>
-              <PenLine size={16} /> Minha assinatura
+      <CipaPageHeader
+        nav={<BackLink onClick={() => navigateCipa("/apps/cipa")}>Unidades</BackLink>}
+        title={`CIPA — ${UNIT_LABELS[unitCode]}`}
+        subtitle="Atas de reunião da unidade"
+        actions={
+          <>
+            <ActionButton variant="ghost" onClick={() => load()}>
+              <RefreshCw size={16} /> Atualizar
             </ActionButton>
-          ) : null}
-          {canManage ? (
-            <ActionButton
-              variant="primary"
-              onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
-            >
-              <FilePlus2 size={16} /> Nova ata
-            </ActionButton>
-          ) : null}
-        </div>
-      </header>
-
-      <section className="cipa-card">
-        <div className="cipa-filters">
-          <div className="cipa-field">
-            <FieldLabel
-              label="Status"
-              hint={helpTooltips.listFilters}
-              htmlFor="cipa-filter-status"
-              className="cipa-field__label"
-            />
-            <NativeSelectControl
-              id="cipa-filter-status"
-              value={status}
-              onChange={setStatus}
-              placeholderOption="Todos"
-              options={Object.entries(STATUS_LABELS).map(([value, label]) => ({
-                value,
-                label,
-              }))}
-            />
-          </div>
-          <div className="cipa-field cipa-field--grow">
-            <FieldLabel
-              label="Busca"
-              htmlFor="cipa-filter-query"
-              className="cipa-field__label"
-            />
-            <NativeTextControl
-              id="cipa-filter-query"
-              value={q}
-              onChange={setQ}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") load();
-              }}
-              placeholder="Título ou número"
-            />
-          </div>
-          <ActionButton className="cipa-filters__submit" onClick={() => load()}>
-            Buscar
-          </ActionButton>
-        </div>
-
-        {error ? <p className="cipa-error">{error}</p> : null}
-        {loading ? (
-          <p className="cipa-state">Carregando…</p>
-        ) : !error && items.length === 0 ? (
-          <div className="cipa-empty-state">
-            <p className="cipa-state">Nenhuma ata encontrada para os filtros atuais.</p>
+            {canSign ? (
+              <ActionButton onClick={() => navigateCipa("/apps/cipa/my-signature")}>
+                <PenLine size={16} /> Minha assinatura
+              </ActionButton>
+            ) : null}
             {canManage ? (
               <ActionButton
                 variant="primary"
                 onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
               >
-                <FilePlus2 size={16} /> Criar primeira ata
+                <FilePlus2 size={16} /> Nova ata
               </ActionButton>
             ) : null}
-          </div>
+          </>
+        }
+      />
+
+      <CipaContentCard>
+        <CipaFiltersRow
+          as="div"
+          trailing={<ActionButton onClick={() => load()}>Buscar</ActionButton>}
+        >
+          <CipaFilterSelectField
+            id="cipa-filter-status"
+            label="Status"
+            hint={helpTooltips.listFilters}
+            value={status}
+            onChange={setStatus}
+            placeholderOption="Todos"
+            options={Object.entries(STATUS_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            }))}
+          />
+          <CipaFilterInputField
+            id="cipa-filter-query"
+            label="Busca"
+            type="search"
+            value={q}
+            onChange={setQ}
+            placeholder="Título ou número"
+          />
+        </CipaFiltersRow>
+
+        {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
+
+        {!error && !loading && items.length === 0 ? (
+          <CipaStateBox
+            variant="empty"
+            title="Nenhuma ata encontrada"
+            message="Nenhuma ata encontrada para os filtros atuais."
+            action={
+              canManage ? (
+                <ActionButton
+                  variant="primary"
+                  onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/new`)}
+                >
+                  <FilePlus2 size={16} /> Criar primeira ata
+                </ActionButton>
+              ) : undefined
+            }
+          />
         ) : !error ? (
-          <div className="cipa-table-wrap">
-            <table className="cipa-table">
-              <thead>
-                <tr>
-                  <th>Nº</th>
-                  <th>Título</th>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                  <th>Status</th>
-                  <th>Assinaturas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr
-                    key={item.id}
-                    onClick={() =>
-                      navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${item.id}`)
-                    }
-                  >
-                    <td>{item.minute_number}</td>
-                    <td>{item.title}</td>
-                    <td>{item.meeting_date}</td>
-                    <td>{MEETING_TYPE_LABELS[item.meeting_type] || item.meeting_type}</td>
-                    <td>
-                      <StatusBadge
-                        classNames={badgeClasses}
-                        label={STATUS_LABELS[item.status] || item.status}
-                        variant={item.status === "finalized" ? "success" : "neutral"}
-                      />
-                    </td>
-                    <td>
-                      {item.signatures_done ?? 0}/
-                      {(item.signatures_done ?? 0) + (item.signatures_pending ?? 0) || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable
+            columns={columns}
+            rows={items}
+            rowKey={(item) => item.id}
+            loading={loading}
+            onRowClick={(item) =>
+              navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${item.id}`)
+            }
+            rowClickRole="button"
+            layout="embedded"
+            classNames={cipaDataTableClassNames}
+            labels={cipaDataTableLabels}
+          />
         ) : null}
-      </section>
+      </CipaContentCard>
     </div>
   );
 }
@@ -443,79 +463,82 @@ function MinuteDetailPage({
 
   return (
     <div className="cipa-page-stack">
-      <header className="cipa-header">
-        <div>
+      <CipaPageHeader
+        nav={
           <BackLink onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}`)}>
             Voltar
           </BackLink>
-          <h1>{String(minute?.title || "Ata")}</h1>
-          <p>
-            {String(minute?.minute_number || "")} · {STATUS_LABELS[status] || status}
-          </p>
-        </div>
-        <div className="cipa-header__actions">
-          {canManage && (status === "draft" || status === "in_review") && (
-            <ActionButton
-              onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/edit`)}
-            >
-              Editar
-            </ActionButton>
-          )}
-          {canManage && (status === "draft" || status === "in_review") && (
-            <ActionButton
-              variant="primary"
-              disabled={busy}
-              onClick={() => {
-                setBusy(true);
-                sendForSignature(minuteId)
-                  .then(() => reload())
-                  .catch((err) => setError(err instanceof Error ? err.message : "Erro"))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              Enviar para assinatura
-            </ActionButton>
-          )}
-          {canSign && (status === "awaiting_signatures" || status === "partially_signed") && (
-            <ActionButton
-              variant="primary"
-              onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/sign`)}
-            >
-              <PenLine size={16} /> Assinar
-            </ActionButton>
-          )}
-          {canManage && status === "signed" && (
-            <ActionButton
-              variant="primary"
-              disabled={busy}
-              onClick={() => {
-                setBusy(true);
-                finalizeMinute(minuteId)
-                  .then(() => reload())
-                  .catch((err) => setError(err instanceof Error ? err.message : "Erro"))
-                  .finally(() => setBusy(false));
-              }}
-            >
-              Finalizar
-            </ActionButton>
-          )}
-        </div>
-      </header>
+        }
+        title={String(minute?.title || "Ata")}
+        subtitle={`${String(minute?.minute_number || "")} · ${STATUS_LABELS[status] || status}`}
+        actions={
+          <>
+            {canManage && (status === "draft" || status === "in_review") && (
+              <ActionButton
+                onClick={() =>
+                  navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/edit`)
+                }
+              >
+                Editar
+              </ActionButton>
+            )}
+            {canManage && (status === "draft" || status === "in_review") && (
+              <ActionButton
+                variant="primary"
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  sendForSignature(minuteId)
+                    .then(() => reload())
+                    .catch((err) => setError(err instanceof Error ? err.message : "Erro"))
+                    .finally(() => setBusy(false));
+                }}
+              >
+                Enviar para assinatura
+              </ActionButton>
+            )}
+            {canSign &&
+              (status === "awaiting_signatures" || status === "partially_signed") && (
+                <ActionButton
+                  variant="primary"
+                  onClick={() =>
+                    navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/sign`)
+                  }
+                >
+                  <PenLine size={16} /> Assinar
+                </ActionButton>
+              )}
+            {canManage && status === "signed" && (
+              <ActionButton
+                variant="primary"
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  finalizeMinute(minuteId)
+                    .then(() => reload())
+                    .catch((err) => setError(err instanceof Error ? err.message : "Erro"))
+                    .finally(() => setBusy(false));
+                }}
+              >
+                Finalizar
+              </ActionButton>
+            )}
+          </>
+        }
+      />
 
-      {error && <p className="cipa-error">{error}</p>}
+      {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
 
-      <section className="cipa-card">
-        <h2>Conteúdo</h2>
+      <CipaSectionCard title="Conteúdo">
         <div
           className="cipa-prose"
           dangerouslySetInnerHTML={{
             __html: String(detail?.version?.body_html || "<p>Sem conteúdo.</p>"),
           }}
         />
-      </section>
+      </CipaSectionCard>
 
-      <section className="cipa-card">
-        <h2>Signatários</h2>
+      <CipaSectionCard title="Signatários">
         <ul className="cipa-list">
           {(detail?.signers || []).map((signer) => (
             <li key={String(signer.id)}>
@@ -523,10 +546,9 @@ function MinuteDetailPage({
             </li>
           ))}
         </ul>
-      </section>
+      </CipaSectionCard>
 
-      <section className="cipa-card">
-        <h2>Versões</h2>
+      <CipaSectionCard title="Versões">
         <ul className="cipa-list">
           {(detail?.versions || []).map((version) => (
             <li key={String(version.id)}>
@@ -535,10 +557,9 @@ function MinuteDetailPage({
             </li>
           ))}
         </ul>
-      </section>
+      </CipaSectionCard>
 
-      <section className="cipa-card">
-        <h2>Auditoria</h2>
+      <CipaSectionCard title="Auditoria">
         <ul className="cipa-list">
           {audit.map((item) => (
             <li key={String(item.id)}>
@@ -546,7 +567,7 @@ function MinuteDetailPage({
             </li>
           ))}
         </ul>
-      </section>
+      </CipaSectionCard>
     </div>
   );
 }
@@ -558,29 +579,31 @@ function PendingPage() {
   }, []);
   return (
     <div className="cipa-page-stack">
-      <header className="cipa-header">
-        <div>
-          <BackLink onClick={() => navigateCipa("/apps/cipa")}>Início</BackLink>
-          <h1>Assinaturas pendentes</h1>
-          <p>Atas que aguardam sua assinatura</p>
-        </div>
-        <div className="cipa-header__actions">
+      <CipaPageHeader
+        nav={<BackLink onClick={() => navigateCipa("/apps/cipa")}>Início</BackLink>}
+        title="Assinaturas pendentes"
+        subtitle="Atas que aguardam sua assinatura"
+        actions={
           <ActionButton
             variant="primary"
             onClick={() => navigateCipa("/apps/cipa/my-signature")}
           >
             <PenLine size={16} /> Minha assinatura
           </ActionButton>
-        </div>
-      </header>
-      <section className="cipa-card">
+        }
+      />
+      <CipaContentCard>
         {items.length === 0 ? (
-          <div className="cipa-empty-state">
-            <p className="cipa-state">Nenhuma pendência.</p>
-            <ActionButton onClick={() => navigateCipa("/apps/cipa/my-signature")}>
-              <PenLine size={16} /> Configurar minha assinatura
-            </ActionButton>
-          </div>
+          <CipaStateBox
+            variant="empty"
+            title="Nenhuma pendência"
+            message="Não há atas aguardando sua assinatura."
+            action={
+              <ActionButton onClick={() => navigateCipa("/apps/cipa/my-signature")}>
+                <PenLine size={16} /> Configurar minha assinatura
+              </ActionButton>
+            }
+          />
         ) : (
           <ul className="cipa-list">
             {items.map((item) => (
@@ -597,7 +620,7 @@ function PendingPage() {
             ))}
           </ul>
         )}
-      </section>
+      </CipaContentCard>
     </div>
   );
 }

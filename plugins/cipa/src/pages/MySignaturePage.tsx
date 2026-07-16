@@ -3,7 +3,6 @@ import {
   ActionButton,
   BackLink,
   FieldLabel,
-  HelpTooltip,
   NativeTextControl,
   SignaturePad,
 } from "@delpi/plugin-ui/index";
@@ -17,6 +16,13 @@ import {
 } from "../api/cipaApi";
 import { helpTooltips } from "../content/helpTooltips";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
+import {
+  CipaFormActions,
+  CipaLoadingState,
+  CipaPageHeader,
+  CipaSectionCard,
+  CipaStateBanner,
+} from "../ui/cipaUi";
 
 export function MySignaturePage() {
   const [displayName, setDisplayName] = useState("");
@@ -118,33 +124,23 @@ export function MySignaturePage() {
   }
 
   if (loading) {
-    return <p className="cipa-state">Carregando sua assinatura…</p>;
+    return <CipaLoadingState message="Carregando sua assinatura…" />;
   }
 
   return (
     <div className="cipa-page-stack">
-      <header className="cipa-header">
-        <div>
-          <BackLink onClick={() => navigateCipa("/apps/cipa")}>Voltar ao início</BackLink>
-          <h1>Minha assinatura</h1>
-          <p>
-            Configure o nome e o traço que serão reutilizados ao assinar atas. Cada usuário
-            acessa apenas o próprio perfil.
-          </p>
-        </div>
-      </header>
+      <CipaPageHeader
+        nav={<BackLink onClick={() => navigateCipa("/apps/cipa")}>Voltar ao início</BackLink>}
+        title="Minha assinatura"
+        subtitle="Configure o nome e o traço que serão reutilizados ao assinar atas. Cada usuário acessa apenas o próprio perfil."
+      />
 
-      {error && <p className="cipa-error">{error}</p>}
-      {success && <p className="cipa-state">{success}</p>}
+      {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
+      {success ? <CipaStateBanner variant="success">{success}</CipaStateBanner> : null}
 
-      <section className="cipa-card">
-        <h2>Nome para assinatura</h2>
+      <CipaSectionCard title="Nome para assinatura">
         <div className="cipa-field">
-          <FieldLabel
-            label="Nome exibido"
-            htmlFor="cipa-my-signature-name"
-            className="cipa-field__label"
-          />
+          <FieldLabel label="Nome exibido" htmlFor="cipa-my-signature-name" />
           <NativeTextControl
             id="cipa-my-signature-name"
             value={displayName}
@@ -152,7 +148,7 @@ export function MySignaturePage() {
             placeholder="Seu nome completo"
           />
         </div>
-        <div className="cipa-footer-actions">
+        <CipaFormActions>
           <ActionButton
             variant="primary"
             disabled={savingProfile}
@@ -160,24 +156,21 @@ export function MySignaturePage() {
           >
             <Save size={16} /> Salvar nome
           </ActionButton>
-        </div>
-      </section>
+        </CipaFormActions>
+      </CipaSectionCard>
 
-      <section className="cipa-card">
-        <h2>
-          Assinatura manuscrita <HelpTooltip content={helpTooltips.signaturePad} />
-        </h2>
+      <CipaSectionCard title="Assinatura manuscrita" hint={helpTooltips.signaturePad}>
         {hasSignature && previewUrl ? (
           <div className="cipa-signature-preview">
-            <p className="cipa-state">Assinatura cadastrada</p>
+            <CipaStateBanner>Assinatura cadastrada</CipaStateBanner>
             <img src={previewUrl} alt="Assinatura cadastrada" className="cipa-signature-img" />
           </div>
         ) : (
-          <p className="cipa-state">Nenhuma assinatura cadastrada ainda.</p>
+          <CipaStateBanner>Nenhuma assinatura cadastrada ainda.</CipaStateBanner>
         )}
         <p>Desenhe abaixo para criar ou substituir a assinatura salva.</p>
-        <SignaturePad key={padKey} onChange={setPng} />
-        <div className="cipa-footer-actions">
+        <SignaturePad key={padKey} className="delpi-ui-signature-pad--tall" onChange={setPng} />
+        <CipaFormActions>
           <ActionButton
             variant="primary"
             disabled={savingImage || !png}
@@ -185,8 +178,8 @@ export function MySignaturePage() {
           >
             <PenLine size={16} /> Salvar assinatura
           </ActionButton>
-        </div>
-      </section>
+        </CipaFormActions>
+      </CipaSectionCard>
     </div>
   );
 }
