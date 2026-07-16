@@ -1589,9 +1589,9 @@ api-delpi → data (cru em resolved.data)
 | **Query** | `data_source.dataTransform.steps` | Só steps (nunca rows) |
 | **View** | `chartProjection` / `kpiProjection` / `tableProjection` | Campos/agregação/cor de série |
 
-UI: painel **Preparar dados** na fonte (`DataPreparePanel`). Engine: `dataTransform.ts` + `tv_data_transform_service.py` (rename, select, filter, addColumn com DSL aritmética sandbox).
+UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_source` (rotas api-delpi); grid + etapas aplicadas + ribbon Transformar/Adicionar coluna. Entrada no inspetor: «Abrir preparação de dados…».
 
-**Backlog (Fase C restante):** groupBy/pivot/merge entre fontes; highlight cruzado grid↔série.
+**Backlog (Fase C restante):** groupBy/pivot/merge entre fontes; highlight cruzado grid↔série; barra de fórmula editável (DSL avançada).
 
 **Entregue (Fase C):** diálogo «Selecionar dados»; `plotOn: primary|secondary`; estilo de linha (dash) + espessura por série no Format.
 ### 19.6 Onde implementar (sem espalhar)
