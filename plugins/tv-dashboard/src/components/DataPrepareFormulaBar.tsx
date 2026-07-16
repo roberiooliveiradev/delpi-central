@@ -6,21 +6,21 @@ import {
   type FormulaParseResult,
 } from "@delpi/tv-dashboard-presentation";
 import type { DataTransformStep } from "@delpi/tv-dashboard-presentation";
+import { Check, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
   step: DataTransformStep | null;
-  /** Modo criar nova coluna pela barra. */
   newColumnDraft?: boolean;
   columnHints?: string[];
   onCommit: (step: DataTransformStep) => void;
   onCancelDraft?: () => void;
-  /** Foco programático (ex.: botão Nova coluna fx). */
   focusToken?: number;
 };
 
 /**
- * Barra fx da preparação de dados — só edita texto; cálculo no backend.
+ * Barra fx estilo Power Query: edita a etapa selecionada; ✓ aplica, ✕ descarta.
+ * Cálculo permanece no backend.
  */
 export function DataPrepareFormulaBar({
   step,
@@ -31,11 +31,11 @@ export function DataPrepareFormulaBar({
   focusToken = 0,
 }: Props) {
   const editable = newColumnDraft || canEditFormula(step);
-  const [value, setValue] = useState(() =>
-    formulaBarDisplayValue(step, { newColumnDraft }),
-  );
+  const baseline = formulaBarDisplayValue(step, { newColumnDraft });
+  const [value, setValue] = useState(baseline);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dirty = editable && value !== baseline;
 
   useEffect(() => {
     setValue(formulaBarDisplayValue(step, { newColumnDraft }));
@@ -62,6 +62,12 @@ export function DataPrepareFormulaBar({
     onCommit(result.step);
   };
 
+  const discard = () => {
+    setValue(baseline);
+    setError(null);
+    if (newColumnDraft) onCancelDraft?.();
+  };
+
   const hint = (() => {
     if (!editable) return null;
     if (newColumnDraft || step?.op === "addColumn") {
@@ -69,7 +75,7 @@ export function DataPrepareFormulaBar({
         columnHints.length > 0
           ? `Colunas: ${columnHints.slice(0, 12).join(", ")}${columnHints.length > 12 ? "…" : ""}`
           : null;
-      const dsl = "DSL: if(cond, a, b), concat, abs/min/max/coalesce/len/lower/upper/trim";
+      const dsl = "DSL: if(cond, a, b), concat, abs/min/max/coalesce…";
       return cols ? `${cols} · ${dsl}` : dsl;
     }
     if (step?.op === "rename") return "Ex.: = RenameColumns(Fonte, de → para)";
@@ -87,33 +93,52 @@ export function DataPrepareFormulaBar({
           fx
         </span>
         {editable ? (
-          <input
-            ref={inputRef}
-            className="td-data-pq__formula-input"
-            value={value}
-            onChange={(event) => {
-              setValue(event.target.value);
-              if (error) setError(null);
-            }}
-            onBlur={commit}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                commit();
+          <>
+            <input
+              ref={inputRef}
+              className="td-data-pq__formula-input"
+              value={value}
+              onChange={(event) => {
+                setValue(event.target.value);
+                if (error) setError(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  commit();
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  discard();
+                }
+              }}
+              aria-label="Fórmula da etapa"
+              aria-invalid={Boolean(error)}
+              placeholder={
+                newColumnDraft
+                  ? "= AddColumn(Fonte, nome, expr)"
+                  : formatStepFormula(step)
               }
-              if (event.key === "Escape" && newColumnDraft) {
-                event.preventDefault();
-                onCancelDraft?.();
-              }
-            }}
-            aria-label="Fórmula da etapa"
-            aria-invalid={Boolean(error)}
-            placeholder={
-              newColumnDraft
-                ? "= AddColumn(Fonte, nome, expr)"
-                : formatStepFormula(step)
-            }
-          />
+            />
+            <button
+              type="button"
+              className="td-data-pq__formula-btn"
+              aria-label="Aplicar fórmula"
+              disabled={!dirty && !newColumnDraft}
+              onClick={commit}
+            >
+              <Check size={14} aria-hidden />
+            </button>
+            <button
+              type="button"
+              className="td-data-pq__formula-btn"
+              aria-label="Descartar"
+              disabled={!dirty && !newColumnDraft}
+              onClick={discard}
+            >
+              <X size={14} aria-hidden />
+            </button>
+          </>
         ) : (
           <code>{formatStepFormula(step)}</code>
         )}
@@ -124,6 +149,10 @@ export function DataPrepareFormulaBar({
         </p>
       ) : hint && editable ? (
         <p className="td-data-pq__formula-hint">{hint}</p>
+      ) : !editable && step ? (
+        <p className="td-data-pq__formula-hint">
+          Etapa só leitura na barra — use o lápis nas etapas ou a ribbon para recriar.
+        </p>
       ) : null}
     </div>
   );

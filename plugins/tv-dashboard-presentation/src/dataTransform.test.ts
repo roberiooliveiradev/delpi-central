@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyDataTransformSteps,
   applyDataTransformToPayload,
+  dataTransformStepLabel,
   evaluateSafeArithmeticExpr,
   evaluateSafeColumnExpr,
   normalizeDataTransform,
@@ -172,5 +173,15 @@ describe("dataTransform", () => {
       { g: "x", v: 1 },
       { g: "x", v: 2 },
     ]);
+  });
+
+  it("rótulos de etapa no estilo Power Query", () => {
+    expect(dataTransformStepLabel({ op: "firstRowAsHeader" })).toBe("Cabeçalhos promovidos");
+    expect(dataTransformStepLabel({ op: "addColumn", name: "gap", expr: "a-b" })).toBe(
+      "Coluna personalizada «gap»",
+    );
+    expect(dataTransformStepLabel({ op: "merge", sourceId: "x", leftKey: "a", rightKey: "b", join: "left" })).toBe(
+      "Consultas mescladas",
+    );
   });
 });

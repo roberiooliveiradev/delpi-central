@@ -767,41 +767,41 @@ export function applyDataTransformToPayload(
   return { data: next.rows, applied: true, table: next };
 }
 
-/** Rótulo PT curto para lista de etapas. */
+/** Rótulo PT curto para lista de etapas (estilo Power Query). */
 export function dataTransformStepLabel(step: DataTransformStep): string {
   switch (step.op) {
     case "rename":
-      return `Renomear ${step.from} → ${step.to}`;
+      return `Renomeado ${step.from} → ${step.to}`;
     case "select":
-      return `Colunas: ${step.columns.join(", ")}`;
+      return "Outras colunas removidas";
     case "filter":
-      return `Filtrar ${step.column} ${step.cmp}${
-        step.cmp === "notNull" ? "" : ` ${String(step.value ?? "")}`
-      }`;
+      return step.cmp === "notNull"
+        ? `Linhas filtradas (${step.column} não nulo)`
+        : `Linhas filtradas (${step.column})`;
     case "addColumn":
-      return `Coluna ${step.name} = ${step.expr}`;
+      return `Coluna personalizada «${step.name}»`;
     case "replace":
-      return `Substituir em ${step.column}`;
+      return `Valor substituído em ${step.column}`;
     case "sort":
-      return `Ordenar ${step.column} (${step.direction})`;
+      return `Linhas ordenadas (${step.column})`;
     case "keepRows":
-      return `Manter ${step.count} linhas (${step.from})`;
+      return `Linhas mantidas (${step.count}, ${step.from === "top" ? "topo" : "base"})`;
     case "removeRows":
-      return `Remover ${step.count} linhas (${step.from})`;
+      return `Linhas removidas (${step.count}, ${step.from === "top" ? "topo" : "base"})`;
     case "changeType":
-      return `Tipo ${step.column} → ${step.to}`;
+      return `Tipo alterado (${step.column})`;
     case "fillDown":
-      return `Preencher abaixo ${step.column}`;
+      return `Preenchido para baixo (${step.column})`;
     case "firstRowAsHeader":
-      return "Usar 1ª linha como cabeçalho";
+      return "Cabeçalhos promovidos";
     case "groupBy":
-      return `Agrupar por ${step.keys.join(", ")}`;
+      return `Agrupado por ${step.keys.join(", ")}`;
     case "pivot":
-      return `Pivot ${step.column}`;
+      return `Coluna dinamizada (${step.column})`;
     case "unpivot":
-      return `Unpivot ${step.columns.join(", ")}`;
+      return "Colunas dinamizadas";
     case "merge":
-      return `Mesclar ← ${step.sourceId}`;
+      return "Consultas mescladas";
     default:
       return "Etapa";
   }

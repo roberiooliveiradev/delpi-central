@@ -1589,15 +1589,15 @@ api-delpi → data (cru em resolved.data)
 | **Query** | `data_source.dataTransform.steps` | Só steps (nunca rows) |
 | **View** | `chartProjection` / `kpiProjection` / `tableProjection` | Campos/agregação/cor de série |
 
-UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_source` (rotas api-delpi); grid + etapas aplicadas + ribbon Página Inicial / Transformar / Adicionar coluna / Combinar. Entrada no inspetor: «Abrir preparação de dados…».
+UI: modal **Preparar dados** (`DataPrepareModal`) — consultas = fontes `data_source` (rotas api-delpi); grid + etapas aplicadas + ribbon Página Inicial / Transformar / Adicionar coluna / Combinar (`DataPrepareRibbon`: botões de ação → formulário só da ação ativa). Entrada no inspetor: «Abrir preparação de dados…».
 
 **Engine Query (steps):** rename, select, filter, addColumn, replace, sort, keepRows/removeRows, changeType, fillDown, firstRowAsHeader, groupBy, pivot, unpivot, merge (left join entre fontes do slide via `siblingTables`). **Cálculo sempre no backend** (`tv_data_transform_service` via enrichment / `POST /data/preview-block`). O TS `dataTransform.ts` é só espelho de teste — o modal chama a API para a prévia (não recalcula no browser).
 
-**Barra fx (Query):** componente `DataPrepareFormulaBar` + contrato `dataTransformFormula.ts` / `tv_data_transform_formula_service.py`. Editável para `addColumn` (DSL: `if(cond,a,b)`, `concat`, `abs`/`min`/`max`/`coalesce`/`len`/`lower`/`upper`/`trim`, comparadores) e etapas tipadas `RenameColumns` / `SelectColumns` / `FilterRows` / `Sort` / `ReplaceValue`. Enter/blur faz parse → atualiza `dataTransform.steps` → prévia servidor.
+**Barra fx (Query):** componente `DataPrepareFormulaBar` + contrato `dataTransformFormula.ts` / `tv_data_transform_formula_service.py`. Editável para `addColumn` (DSL: `if(cond,a,b)`, `concat`, `abs`/`min`/`max`/`coalesce`/`len`/`lower`/`upper`/`trim`, comparadores) e etapas tipadas `RenameColumns` / `SelectColumns` / `FilterRows` / `Sort` / `ReplaceValue`. **✓ aplica / ✕ descarta** (Enter / Escape); **não** commit no blur. Etapa selecionada ↔ fórmula na barra; grid = prévia até a etapa.
 
-**UX:** editar etapa (lápis); highlight cruzado grid↔série (`dataPrepareCrossHighlight`); preset `suggestedTransformSteps` no overlay da rota (ex.: OEE série); «Nova coluna (fx)» na ribbon.
+**UX (jul/2026):** ribbon cria steps (formulário contextual); clique no cabeçalho do grid define **coluna ativa** (pré-preenche transformações); highlight cruzado grid↔série; preset `suggestedTransformSteps`; «Inserir etapa (fx)» foca a barra. Labels de etapa no painel direito no estilo Power Query (ex.: «Cabeçalhos promovidos»).
 
-**Entregue (Fase C + D):** Select Data; eixo secundário; dash por série; steps avançados + merge; barra fx + DSL + parse de etapas básicas.
+**Entregue (Fase C + D + UX ribbon):** Select Data; eixo secundário; dash por série; steps avançados + merge; barra fx + DSL + parse; ribbon contextual + coluna ativa + commit explícito na fx.
 ### 19.6 Onde implementar (sem espalhar)
 
 | Camada | Módulo canônico | Não fazer |
