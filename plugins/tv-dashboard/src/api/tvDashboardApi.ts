@@ -160,6 +160,7 @@ export type PresentationStatus = {
   staleAfterSec: number;
   secondsSinceLastPresentation?: number | null;
   isActive: boolean;
+  contentRevision?: string;
 };
 
 export type MediaAsset = {

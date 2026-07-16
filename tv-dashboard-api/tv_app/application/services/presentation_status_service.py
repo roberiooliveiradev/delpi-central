@@ -18,7 +18,11 @@ def _parse_iso(value: str | None) -> datetime | None:
     return parsed
 
 
-def build_presentation_status(playlist: dict[str, Any]) -> dict[str, Any]:
+def build_presentation_status(
+    playlist: dict[str, Any],
+    *,
+    content_revision: str | None = None,
+) -> dict[str, Any]:
     interval = heartbeat_interval_sec()
     stale_after_sec = interval * 2
     last_at = _parse_iso(playlist.get("lastPresentedAt"))
@@ -33,7 +37,7 @@ def build_presentation_status(playlist: dict[str, Any]) -> dict[str, Any]:
         online = seconds_since <= stale_after_sec
         status = "online" if online else "offline"
 
-    return {
+    payload: dict[str, Any] = {
         "status": status,
         "online": online,
         "lastPresentedAt": playlist.get("lastPresentedAt"),
@@ -43,3 +47,6 @@ def build_presentation_status(playlist: dict[str, Any]) -> dict[str, Any]:
         "secondsSinceLastPresentation": seconds_since,
         "isActive": bool(playlist.get("isActive")),
     }
+    if content_revision:
+        payload["contentRevision"] = content_revision
+    return payload

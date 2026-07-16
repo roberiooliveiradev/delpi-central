@@ -5,12 +5,13 @@ from uuid import UUID
 from fastapi import APIRouter, WebSocket, WebSocketException, status
 
 from delpi_auth.jwt_validator import validate_token
+from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_realtime_hub import presentation_realtime_hub
-from tv_app.core.security import TV_READ, can
 from tv_app.infrastructure.persistence.repositories.playlist_repository import PlaylistRepository
 
 router = APIRouter(tags=["Presentation Realtime"])
 _repo = PlaylistRepository()
+_access = PlaylistAccessService()
 
 
 def _resolve_public_playlist(token: str) -> dict | None:
@@ -46,8 +47,7 @@ async def admin_presentation_ws(
         user = validate_token(token)
     except Exception as exc:  # noqa: BLE001
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION) from exc
-    if not can(user, TV_READ):
-        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
-    if not _repo.get_by_id(playlist_id):
+    access = _access.resolve(playlist_id, user)
+    if not access.can_read:
         raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION)
     await presentation_realtime_hub.connect(websocket, playlist_id=str(playlist_id))

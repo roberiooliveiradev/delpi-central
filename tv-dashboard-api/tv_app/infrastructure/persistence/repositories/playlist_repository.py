@@ -65,6 +65,44 @@ def _row_to_slide(row: dict[str, Any]) -> dict[str, Any]:
 
 
 class PlaylistRepository:
+    @staticmethod
+    def _touch_playlist_updated_at(cur, playlist_id: UUID) -> None:
+        cur.execute(
+            """
+            UPDATE tv_dashboard.playlists
+            SET updated_at = NOW()
+            WHERE id = %s
+            """,
+            (str(playlist_id),),
+        )
+
+    def get_presentation_content_revision(self, playlist_id: UUID) -> str:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                      p.updated_at AS playlist_updated,
+                      COUNT(s.id) AS slide_count,
+                      COALESCE(MAX(s.updated_at), to_timestamp(0)) AS max_slide_updated
+                    FROM tv_dashboard.playlists p
+                    LEFT JOIN tv_dashboard.slides s ON s.playlist_id = p.id
+                    WHERE p.id = %s
+                    GROUP BY p.id, p.updated_at
+                    """,
+                    (str(playlist_id),),
+                )
+                row = cur.fetchone()
+        if not row:
+            return ""
+        playlist_updated = (
+            row["playlist_updated"].isoformat() if row["playlist_updated"] else ""
+        )
+        max_slide_updated = (
+            row["max_slide_updated"].isoformat() if row["max_slide_updated"] else ""
+        )
+        return f"{playlist_updated}|{int(row['slide_count'])}|{max_slide_updated}"
+
     def list_playlists(
         self,
         *,
@@ -659,6 +697,7 @@ class PlaylistRepository:
                     ),
                 )
                 row = cur.fetchone()
+                self._touch_playlist_updated_at(cur, playlist_id)
             conn.commit()
         return _row_to_slide(row)
 
@@ -705,6 +744,8 @@ class PlaylistRepository:
                     tuple(values),
                 )
                 row = cur.fetchone()
+                if row:
+                    self._touch_playlist_updated_at(cur, UUID(str(row["playlist_id"])))
             conn.commit()
         if not row:
             raise SlideNotFoundError
@@ -723,10 +764,12 @@ class PlaylistRepository:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "DELETE FROM tv_dashboard.slides WHERE id = %s RETURNING id",
+                    "DELETE FROM tv_dashboard.slides WHERE id = %s RETURNING playlist_id",
                     (str(slide_id),),
                 )
                 row = cur.fetchone()
+                if row:
+                    self._touch_playlist_updated_at(cur, UUID(str(row["playlist_id"])))
             conn.commit()
         if not row:
             raise SlideNotFoundError
@@ -753,6 +796,7 @@ class PlaylistRepository:
                         """,
                         (item["sortOrder"], str(item["id"]), str(playlist_id)),
                     )
+                self._touch_playlist_updated_at(cur, playlist_id)
             conn.commit()
         return self.list_slides(playlist_id)
 

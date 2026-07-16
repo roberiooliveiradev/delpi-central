@@ -11,6 +11,7 @@ from tv_app.application.services.playlist_access_service import PlaylistAccessSe
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.presentation_status_service import build_presentation_status
+from tv_app.application.services.presentation_sync_service import build_presentation_content_revision
 from tv_app.application.services.public_filter_overrides_service import parse_filter_overrides_query
 from tv_app.application.services.qr_service import build_public_presentation_url, render_qr_png
 from tv_app.application.services.tv_dashboard_content_service import message
@@ -161,7 +162,13 @@ def presentation_status(request: Request, playlist_id: UUID):
     if is_access_error(guarded):
         return guarded
     _, access = guarded
-    return ok(build_presentation_status(access.playlist or {}))
+    content_revision = build_presentation_content_revision(playlist_id)
+    return ok(
+        build_presentation_status(
+            access.playlist or {},
+            content_revision=content_revision,
+        ),
+    )
 
 
 @router.patch("/{playlist_id}")

@@ -21,9 +21,11 @@ type Options = {
   wsUrl: string | null;
   onPresentationUpdated?: (event: PresentationRealtimeEvent) => void;
   onPresenceUpdate?: (peers: PresentationPresencePeer[]) => void;
+  onConnectionChange?: (connected: boolean) => void;
   presence?: PresentationPresencePeer;
   reconnectMs?: number;
   pingMs?: number;
+  updateDebounceMs?: number;
 };
 
 export function parsePresentationRealtimeEvent(value: unknown): PresentationRealtimeEvent | null {
@@ -68,22 +70,44 @@ export function usePresentationRealtime({
   wsUrl,
   onPresentationUpdated,
   onPresenceUpdate,
+  onConnectionChange,
   presence,
   reconnectMs = 5000,
   pingMs = 30000,
+  updateDebounceMs = 200,
 }: Options) {
   const handlerRef = useRef(onPresentationUpdated);
   handlerRef.current = onPresentationUpdated;
   const presenceHandlerRef = useRef(onPresenceUpdate);
   presenceHandlerRef.current = onPresenceUpdate;
+  const connectionHandlerRef = useRef(onConnectionChange);
+  connectionHandlerRef.current = onConnectionChange;
+  const updateTimerRef = useRef<number | null>(null);
+  const pendingEventRef = useRef<PresentationRealtimeEvent | null>(null);
 
   useEffect(() => {
-    if (!enabled || !wsUrl) return undefined;
+    if (!enabled || !wsUrl) {
+      connectionHandlerRef.current?.(false);
+      return undefined;
+    }
 
     let ws: WebSocket | null = null;
     let reconnectTimer: number | null = null;
     let pingTimer: number | null = null;
     let closedByUser = false;
+
+    function flushPresentationUpdated() {
+      updateTimerRef.current = null;
+      const payload = pendingEventRef.current;
+      pendingEventRef.current = null;
+      if (payload) handlerRef.current?.(payload);
+    }
+
+    function schedulePresentationUpdated(payload: PresentationRealtimeEvent) {
+      pendingEventRef.current = payload;
+      if (updateTimerRef.current != null) return;
+      updateTimerRef.current = window.setTimeout(flushPresentationUpdated, updateDebounceMs);
+    }
 
     function scheduleReconnect() {
       if (closedByUser || reconnectTimer != null) return;
@@ -97,6 +121,7 @@ export function usePresentationRealtime({
       if (!wsUrl) return;
       ws = new WebSocket(wsUrl);
       ws.onopen = () => {
+        connectionHandlerRef.current?.(true);
         if (presence) {
           ws?.send(JSON.stringify({ type: "presence_join", ...presence }));
         }
@@ -115,7 +140,7 @@ export function usePresentationRealtime({
           const payload = parsePresentationRealtimeEvent(JSON.parse(String(event.data)));
           if (!payload) return;
           if (payload.type === "presentation_updated") {
-            handlerRef.current?.(payload);
+            schedulePresentationUpdated(payload);
           }
           if (payload.type === "presence_update") {
             presenceHandlerRef.current?.(payload.peers ?? []);
@@ -125,6 +150,7 @@ export function usePresentationRealtime({
         }
       };
       ws.onclose = () => {
+        connectionHandlerRef.current?.(false);
         if (pingTimer != null) {
           window.clearInterval(pingTimer);
           pingTimer = null;
@@ -141,8 +167,14 @@ export function usePresentationRealtime({
 
     return () => {
       closedByUser = true;
+      connectionHandlerRef.current?.(false);
       if (reconnectTimer != null) window.clearTimeout(reconnectTimer);
       if (pingTimer != null) window.clearInterval(pingTimer);
+      if (updateTimerRef.current != null) {
+        window.clearTimeout(updateTimerRef.current);
+        updateTimerRef.current = null;
+      }
+      pendingEventRef.current = null;
       if (presence && ws?.readyState === WebSocket.OPEN) {
         try {
           ws.send(JSON.stringify({ type: "presence_leave", clientId: presence.clientId }));
@@ -157,6 +189,7 @@ export function usePresentationRealtime({
     wsUrl,
     reconnectMs,
     pingMs,
+    updateDebounceMs,
     presence?.clientId,
     presence?.displayName,
     presence?.role,

@@ -106,10 +106,19 @@ Migrations: `V002__media_assets.sql`, `V006__media_assets_font_kind.sql`
 Salas por `playlist_id`. Evento típico:
 
 ```json
-{ "type": "presentation_updated", "reason": "slide_updated", "revision": "…" }
+{
+  "type": "presentation_updated",
+  "reason": "slide_updated",
+  "playlistId": "…",
+  "revision": "2026-07-16T12:00:00+00:00|3|2026-07-16T12:05:00+00:00"
+}
 ```
 
 Disparado após CRUD de slides, upload de mídia, alterações na programação e exclusão.
+
+**Editor admin:** fallback de sincronização via `GET /playlists/{id}/presentation-status` (`contentRevision`) quando o WebSocket estiver indisponível — poll a cada ~4–12 s.
+
+**Gateway:** `proxy_pass` estático para `tv-dashboard-api:8000` (variável `$upstream` quebra upgrade WebSocket).
 
 ---
 

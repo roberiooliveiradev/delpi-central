@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  buildAdminPresentationWsUrl,
   parseComunicadoConfig,
   serializeComunicadoConfig,
-  usePresentationRealtime,
   type PresentationPresencePeer,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -51,6 +49,7 @@ import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCa
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
 import { useDeckEditorKeyboard } from "../hooks/useDeckEditorKeyboard";
+import { usePlaylistEditorSync } from "../hooks/usePlaylistEditorSync";
 import type { DeckEditorSnapshot } from "../utils/deckEditorHistory";
 import {
   pasteTitleFromClipboard,
@@ -243,26 +242,25 @@ export function PlaylistEditorPage({
     [slides],
   );
 
-  const realtimeConnection = useMemo(() => {
-    const token = getAccessToken();
-    if (!token) return { wsUrl: null, presence: undefined };
-    return {
-      wsUrl: buildAdminPresentationWsUrl(playlistId, token),
-      presence: {
-        clientId: getEditorPresenceClientId(),
-        displayName: resolveEditorDisplayName(token),
-        role: "editor" as const,
-      },
-    };
-  }, [playlistId]);
+  const accessToken = getAccessToken();
+  const editorPresence = useMemo(
+    () =>
+      accessToken
+        ? {
+            clientId: getEditorPresenceClientId(),
+            displayName: resolveEditorDisplayName(accessToken),
+            role: "editor" as const,
+          }
+        : undefined,
+    [accessToken],
+  );
 
   const otherEditors = useMemo(
     () =>
       presencePeers.filter(
-        (peer) =>
-          peer.role === "editor" && peer.clientId !== realtimeConnection.presence?.clientId,
+        (peer) => peer.role === "editor" && peer.clientId !== editorPresence?.clientId,
       ),
-    [presencePeers, realtimeConnection.presence?.clientId],
+    [presencePeers, editorPresence?.clientId],
   );
 
   const refreshPreviewThumbnails = useCallback(async () => {
@@ -337,12 +335,18 @@ export function PlaylistEditorPage({
     writeSelectedSlideId(playlistId, null);
   }, [slides, selectedSlideId, playlistId, selectSlide]);
 
-  usePresentationRealtime({
-    enabled: Boolean(playlistId && realtimeConnection.wsUrl),
-    wsUrl: realtimeConnection.wsUrl,
-    presence: realtimeConnection.presence,
+  const fetchContentRevision = useCallback(async (id: string) => {
+    const status = await getPresentationStatus(id);
+    return status.contentRevision ?? null;
+  }, []);
+
+  usePlaylistEditorSync({
+    playlistId,
+    accessToken,
+    presence: editorPresence,
     onPresenceUpdate: setPresencePeers,
-    onPresentationUpdated: () => {
+    fetchContentRevision,
+    onSync: () => {
       void reloadPlaylistFromServer();
     },
   });
