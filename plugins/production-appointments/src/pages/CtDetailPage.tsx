@@ -9,8 +9,6 @@ import { useAppointmentsDetailQuery } from "../hooks/useAppointmentsDetailQuery"
 import { buildAppointmentListColumns } from "../utils/appointmentListColumns";
 import {
   formatDatePtBr,
-  formatInteger,
-  formatQuantity,
 } from "../utils/formatters";
 import { exportAppointmentsExcel } from "../utils/exportTables";
 import { navigateAppointments, navigateAppointmentsBack } from "../utils/navigation";
@@ -133,35 +131,15 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
             <>
               <DetailFieldGrid
                 fields={[
-                  { label: "CT", value: workCenter },
-                  { label: "Nome", value: ctName || "—" },
                   {
                     label: "Inspeção final",
                     value: isInspection(ctSummary?.is_final_inspection) ? "Sim" : "Não",
                   },
-                  {
-                    label: "Apontamentos",
-                    value: formatInteger(
-                      ctSummary?.appointment_count ?? query.appointments.length,
-                    ),
-                  },
-                  {
-                    label: "OPs",
-                    value: formatInteger(ctSummary?.op_count ?? query.byOpRows.length),
-                  },
-                  {
-                    label: "Produzida",
-                    value: formatQuantity(
-                      ctSummary?.qty_produced ?? query.totals?.qty_produced,
-                    ),
-                  },
-                  {
-                    label: "Perdida",
-                    value: formatQuantity(ctSummary?.qty_lost ?? query.totals?.qty_lost),
-                  },
                 ]}
               />
-              {query.totals ? <SummaryCards totals={query.totals} /> : null}
+              {query.totals ? (
+                <SummaryCards totals={query.totals} omitKeys={["workCenterCount"]} />
+              ) : null}
               <SeriesChart points={query.seriesPoints} />
               <DataTableSection
                 columnPreferencesKey="production-appointments:CtDetailPage:apontamentos-do-ct:v2"

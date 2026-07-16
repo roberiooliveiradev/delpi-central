@@ -8,8 +8,6 @@ import { useAppointmentsDetailQuery } from "../hooks/useAppointmentsDetailQuery"
 import { buildAppointmentListColumns } from "../utils/appointmentListColumns";
 import {
   formatDatePtBr,
-  formatInteger,
-  formatQuantity,
 } from "../utils/formatters";
 import { exportAppointmentsExcel } from "../utils/exportTables";
 import { navigateAppointmentsBack } from "../utils/navigation";
@@ -112,36 +110,17 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
             <>
               <DetailFieldGrid
                 fields={[
-                  { label: "OP", value: productionOrder },
                   {
                     label: "Produto",
                     value: opSummary
                       ? `${opSummary.product}${opSummary.product_type ? ` (${opSummary.product_type})` : ""}`
                       : query.appointments[0]?.product || "—",
                   },
-                  {
-                    label: "Apontamentos",
-                    value: formatInteger(
-                      opSummary?.appointment_count ?? query.appointments.length,
-                    ),
-                  },
-                  {
-                    label: "CTs",
-                    value: formatInteger(opSummary?.work_center_count ?? 0),
-                  },
-                  {
-                    label: "Produzida",
-                    value: formatQuantity(
-                      opSummary?.qty_produced ?? query.totals?.qty_produced,
-                    ),
-                  },
-                  {
-                    label: "Perdida",
-                    value: formatQuantity(opSummary?.qty_lost ?? query.totals?.qty_lost),
-                  },
                 ]}
               />
-              {query.totals ? <SummaryCards totals={query.totals} /> : null}
+              {query.totals ? (
+                <SummaryCards totals={query.totals} omitKeys={["opCount"]} />
+              ) : null}
               <SeriesChart points={query.seriesPoints} />
               <DataTableSection
                 columnPreferencesKey="production-appointments:OpDetailPage:apontamentos-da-op:v2"
