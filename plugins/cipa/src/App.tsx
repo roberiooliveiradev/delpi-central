@@ -6,13 +6,24 @@ import { CipaAppShell } from "./pages/CipaAppShell";
 export type AppProps = {
   getAccessToken?: () => string | undefined;
   pathname?: string;
+  /** Permissões do portal (/core-api/me) — evita round-trip a /apps/cipa-api/access. */
+  permissions?: string[];
+  isSuperadmin?: boolean;
 };
 
-export default function App({ getAccessToken, pathname: pathnameFromHost }: AppProps) {
+export default function App({
+  getAccessToken,
+  pathname: pathnameFromHost,
+  permissions,
+  isSuperadmin,
+}: AppProps) {
   configureHttpClient(() => getAccessToken?.());
   const pathname = useCipaRouterPath(pathnameFromHost);
   const route = parseCipaRoute(pathname);
-  const { access, loading, error } = useCipaAccess(getAccessToken);
+  const { access, loading, error } = useCipaAccess(getAccessToken, {
+    permissions,
+    isSuperadmin,
+  });
   return (
     <CipaAppShell route={route} access={access} accessLoading={loading} accessError={error} />
   );
