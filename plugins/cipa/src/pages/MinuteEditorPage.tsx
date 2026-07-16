@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { Plus, X } from "lucide-react";
 import {
+  FieldLabel,
   HelpTooltip,
+  NativeSelectControl,
+  NativeTextControl,
   RichTextEditor,
   UserDirectoryPicker,
   type DirectoryUserOption,
@@ -197,11 +200,16 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
       >
         <section className="cipa-card cipa-compose__section">
           <div className="cipa-compose__row">
-            <span className="cipa-compose__label">Título</span>
-            <input
-              className="cipa-compose__input cipa-compose__input--title"
+            <FieldLabel
+              label="Título"
+              htmlFor="cipa-minute-title"
+              className="cipa-compose__label"
+            />
+            <NativeTextControl
+              id="cipa-minute-title"
+              className="cipa-compose__input--title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={setTitle}
               placeholder="Ex.: Reunião ordinária — março/2026"
               required
             />
@@ -210,32 +218,48 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
           <div className="cipa-compose__row cipa-compose__row--meta">
             <span className="cipa-compose__label">Configurações</span>
             <div className="cipa-compose__meta-fields">
-              <label className="cipa-field">
-                <span className="cipa-field__label">Tipo</span>
-                <select value={meetingType} onChange={(e) => setMeetingType(e.target.value)}>
-                  {Object.entries(MEETING_TYPE_LABELS).map(([value, label]) => (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="cipa-field">
-                <span className="cipa-field__label">Data</span>
-                <input
+              <div className="cipa-field">
+                <FieldLabel
+                  label="Tipo"
+                  htmlFor="cipa-minute-type"
+                  className="cipa-field__label"
+                />
+                <NativeSelectControl
+                  id="cipa-minute-type"
+                  value={meetingType}
+                  onChange={setMeetingType}
+                  options={Object.entries(MEETING_TYPE_LABELS).map(([value, label]) => ({
+                    value,
+                    label,
+                  }))}
+                />
+              </div>
+              <div className="cipa-field">
+                <FieldLabel
+                  label="Data"
+                  htmlFor="cipa-minute-date"
+                  className="cipa-field__label"
+                />
+                <NativeTextControl
+                  id="cipa-minute-date"
                   type="date"
                   value={meetingDate}
-                  onChange={(e) => setMeetingDate(e.target.value)}
+                  onChange={setMeetingDate}
                 />
-              </label>
-              <label className="cipa-field cipa-field--grow">
-                <span className="cipa-field__label">Local</span>
-                <input
+              </div>
+              <div className="cipa-field cipa-field--grow">
+                <FieldLabel
+                  label="Local"
+                  htmlFor="cipa-minute-location"
+                  className="cipa-field__label"
+                />
+                <NativeTextControl
+                  id="cipa-minute-location"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={setLocation}
                   placeholder="Sala, auditório ou link da reunião"
                 />
-              </label>
+              </div>
             </div>
           </div>
         </section>
@@ -264,11 +288,16 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
             />
 
             <div className="cipa-external-row">
-              <label className="cipa-field cipa-field--grow">
-                <span className="cipa-field__label">Participante externo</span>
-                <input
+              <div className="cipa-field cipa-field--grow">
+                <FieldLabel
+                  label="Participante externo"
+                  htmlFor="cipa-external-name"
+                  className="cipa-field__label"
+                />
+                <NativeTextControl
+                  id="cipa-external-name"
                   value={externalName}
-                  onChange={(e) => setExternalName(e.target.value)}
+                  onChange={setExternalName}
                   placeholder="Nome completo"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -277,7 +306,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
                     }
                   }}
                 />
-              </label>
+              </div>
               <button
                 type="button"
                 className="cipa-btn"

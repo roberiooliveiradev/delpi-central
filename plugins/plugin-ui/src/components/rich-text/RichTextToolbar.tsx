@@ -215,24 +215,22 @@ export function RichTextToolbar({
               ariaLabel={RICH_TEXT_LABELS.textColor}
               variant="text"
               value={textColor}
-              disabled={disabled}
+              className="delpi-ui-color-picker-trigger--inline"
               onChange={(color) => {
                 setTextColor(color);
                 run(() => runRichTextCommand(editor, "foreColor", color));
               }}
-              portalScopeClassName={portalScopeClassName}
             />
             <RibbonColorPicker
               label={RICH_TEXT_LABELS.highlightColor}
               ariaLabel={RICH_TEXT_LABELS.highlightColor}
               variant="fill"
               value={highlightColor}
-              disabled={disabled}
+              className="delpi-ui-color-picker-trigger--inline"
               onChange={(color) => {
                 setHighlightColor(color);
                 run(() => runRichTextCommand(editor, "hiliteColor", color));
               }}
-              portalScopeClassName={portalScopeClassName}
             />
             <RichTextIconButton
               hint={RICH_TEXT_LABELS.clearFormatting}

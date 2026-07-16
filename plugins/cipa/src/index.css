@@ -108,29 +108,17 @@
 .dashboard-cipa .cipa-filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px;
   margin-bottom: 16px;
 }
 
-.dashboard-cipa .cipa-filters label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
+.dashboard-cipa .cipa-filters .cipa-field {
+  min-width: 180px;
 }
 
-.dashboard-cipa .cipa-filters input,
-.dashboard-cipa .cipa-filters select,
-.dashboard-cipa .cipa-form-grid input,
-.dashboard-cipa .cipa-form-grid select,
-.dashboard-cipa .cipa-card textarea,
-.dashboard-cipa .cipa-card input {
-  min-height: 42px;
-  border-radius: 10px;
-  border: 1px solid var(--cipa-border);
-  padding: 0 12px;
-  background: var(--cipa-surface);
-  color: var(--cipa-text);
+.dashboard-cipa .cipa-filters__submit {
+  min-height: 36px;
 }
 
 .dashboard-cipa .cipa-table-wrap {
@@ -347,9 +335,15 @@
   align-self: center;
 }
 
-.dashboard-cipa .cipa-compose__input--title {
+.dashboard-cipa input.cipa-compose__input--title {
   font-size: 1.05rem;
   font-weight: 600;
+}
+
+.dashboard-cipa .delpi-ui-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cipa-text);
 }
 
 .dashboard-cipa .cipa-compose__meta-fields {

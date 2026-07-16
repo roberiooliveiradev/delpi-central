@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { HelpTooltip, SignaturePad } from "@delpi/plugin-ui/index";
+import {
+  FieldLabel,
+  HelpTooltip,
+  NativeCheckboxControl,
+  NativeTextAreaControl,
+  NativeTextControl,
+  SignaturePad,
+} from "@delpi/plugin-ui/index";
 
 import { getSignContext, refuseMinute, signMinute } from "../api/cipaApi";
 import { UNIT_LABELS } from "../constants/labels";
@@ -104,18 +111,20 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
       </section>
 
       <section className="cipa-card">
-        <label>
-          Nome do signatário
-          <input value={name} onChange={(e) => setName(e.target.value)} />
-        </label>
-        <label className="cipa-check">
-          <input
-            type="checkbox"
-            checked={accepted}
-            onChange={(e) => setAccepted(e.target.checked)}
+        <div className="cipa-field">
+          <FieldLabel
+            label="Nome do signatário"
+            htmlFor="cipa-signer-name"
+            className="cipa-field__label"
           />
-          {terms}
-        </label>
+          <NativeTextControl id="cipa-signer-name" value={name} onChange={setName} />
+        </div>
+        <NativeCheckboxControl
+          className="cipa-check"
+          checked={accepted}
+          onChange={setAccepted}
+          label={terms}
+        />
         <p>
           Assinatura <HelpTooltip content={helpTooltips.signaturePad} />
         </p>
@@ -134,11 +143,12 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
 
       <section className="cipa-card">
         <h2>Recusar assinatura</h2>
-        <textarea
+        <NativeTextAreaControl
           value={refuseReason}
-          onChange={(e) => setRefuseReason(e.target.value)}
+          onChange={setRefuseReason}
           rows={3}
           placeholder="Justificativa obrigatória"
+          aria-label="Justificativa da recusa"
         />
         <button
           type="button"

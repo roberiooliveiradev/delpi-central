@@ -103,6 +103,23 @@
   flex-shrink: 0;
 }
 
+/* Seletores de cor alinhados aos botões de ícone (32px). */
+.delpi-ui-rich-text-ribbon .delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__button {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+}
+
+.delpi-ui-rich-text-ribbon .delpi-ui-color-picker-trigger--inline .delpi-ui-color-picker-trigger__preview {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+}
+
 .delpi-ui-rich-text__editor,
 .delpi-ui-rich-text--preview {
   min-height: 160px;

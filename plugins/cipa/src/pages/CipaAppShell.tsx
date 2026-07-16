@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { HelpTooltip, StatusBadge, statusBadgeBemClasses } from "@delpi/plugin-ui/index";
+import {
+  FieldLabel,
+  NativeSelectControl,
+  NativeTextControl,
+  StatusBadge,
+  statusBadgeBemClasses,
+} from "@delpi/plugin-ui/index";
 import { Building2, FilePlus2, PenLine, RefreshCw } from "lucide-react";
 
 import {
@@ -282,30 +288,41 @@ function MinuteListPage({
 
       <section className="cipa-card">
         <div className="cipa-filters">
-          <label>
-            Status
-            <HelpTooltip content={helpTooltips.listFilters} />
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="">Todos</option>
-              {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Busca
-            <input
+          <div className="cipa-field">
+            <FieldLabel
+              label="Status"
+              hint={helpTooltips.listFilters}
+              htmlFor="cipa-filter-status"
+              className="cipa-field__label"
+            />
+            <NativeSelectControl
+              id="cipa-filter-status"
+              value={status}
+              onChange={setStatus}
+              placeholderOption="Todos"
+              options={Object.entries(STATUS_LABELS).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+            />
+          </div>
+          <div className="cipa-field cipa-field--grow">
+            <FieldLabel
+              label="Busca"
+              htmlFor="cipa-filter-query"
+              className="cipa-field__label"
+            />
+            <NativeTextControl
+              id="cipa-filter-query"
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={setQ}
               onKeyDown={(e) => {
                 if (e.key === "Enter") load();
               }}
               placeholder="Título ou número"
             />
-          </label>
-          <button type="button" className="cipa-btn" onClick={() => load()}>
+          </div>
+          <button type="button" className="cipa-btn cipa-filters__submit" onClick={() => load()}>
             Buscar
           </button>
         </div>
