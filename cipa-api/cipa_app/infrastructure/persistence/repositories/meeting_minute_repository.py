@@ -949,6 +949,21 @@ class MeetingMinuteRepository:
                     )
                 return cur.fetchall()
 
+    def get_signature(self, minute_id: str, signature_id: str) -> dict[str, Any] | None:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT sig.* FROM cipa.meeting_minute_signatures sig
+                    JOIN cipa.meeting_minutes m ON m.id = sig.minute_id
+                    WHERE sig.id = %s
+                      AND sig.minute_id = %s
+                      AND sig.version_id = m.current_version_id
+                    """,
+                    (_uuid(signature_id), _uuid(minute_id)),
+                )
+                return cur.fetchone()
+
     def replace_action_items(
         self, minute_id: str, unit_code: str, items: list[dict[str, Any]]
     ) -> list[dict[str, Any]]:

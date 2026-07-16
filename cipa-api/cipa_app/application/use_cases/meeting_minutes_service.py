@@ -361,11 +361,25 @@ class MeetingMinutesService:
             "minute": minute,
             "version": version,
             "signer": signer,
+            "participants": self.repo.list_participants(minute_id),
+            "signers": self.repo.list_signers(minute_id),
+            "signatures": self.repo.list_signatures(minute_id),
             "terms": (
                 "Declaro que li o conteúdo desta ata e confirmo a autenticidade "
                 "da minha assinatura eletrônica manuscrita."
             ),
         }
+
+    def signature_image(self, user, minute_id: str, signature_id: str) -> bytes:
+        minute = self.repo.get_minute(minute_id)
+        if not minute:
+            raise LookupError("Ata não encontrada.")
+        if not perms.has_unit_read_access(user, minute["unit_code"]):
+            raise PermissionError("Sem permissão para visualizar esta ata.")
+        signature = self.repo.get_signature(minute_id, signature_id)
+        if not signature or not signature.get("image_path"):
+            raise LookupError("Imagem de assinatura não encontrada.")
+        return self.signature_storage.read(str(signature["image_path"]))
 
     def sign(
         self,

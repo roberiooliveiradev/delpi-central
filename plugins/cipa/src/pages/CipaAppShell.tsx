@@ -3,12 +3,14 @@ import {
   ActionButton,
   BackLink,
   DataTable,
+  printDocumentReader,
   StatusBadge,
   type DataTableColumn,
 } from "@delpi/plugin-ui/index";
-import { Building2, FilePlus2, PenLine, RefreshCw } from "lucide-react";
+import { Building2, Download, FilePlus2, PenLine, Printer, RefreshCw } from "lucide-react";
 
 import {
+  exportPdf,
   finalizeMinute,
   getAudit,
   getMinute,
@@ -45,6 +47,7 @@ import {
   cipaStatusBadgeClassNames,
 } from "../ui/cipaUiContracts";
 import { MinuteEditorPage } from "./MinuteEditorPage";
+import { MinuteDocumentView } from "../components/MinuteDocumentView";
 import { MinuteSignPage } from "./MinuteSignPage";
 import { MySignaturePage } from "./MySignaturePage";
 
@@ -461,6 +464,26 @@ function MinuteDetailPage({
   const minute = detail?.minute;
   const status = String(minute?.status || "");
 
+  const downloadPdf = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const blob = await exportPdf(minuteId);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `ata-cipa-${String(minute?.minute_number || minuteId).replace("/", "-")}.pdf`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao baixar PDF");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="cipa-page-stack">
       <CipaPageHeader
@@ -529,24 +552,27 @@ function MinuteDetailPage({
 
       {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
 
-      <CipaSectionCard title="Conteúdo">
-        <div
-          className="cipa-prose"
-          dangerouslySetInnerHTML={{
-            __html: String(detail?.version?.body_html || "<p>Sem conteúdo.</p>"),
-          }}
+      {detail ? (
+        <MinuteDocumentView
+          detail={detail}
+          toolbar={
+            <>
+              <ActionButton onClick={printDocumentReader}>
+                <Printer size={16} /> Imprimir
+              </ActionButton>
+              <ActionButton
+                variant="primary"
+                disabled={busy}
+                onClick={() => void downloadPdf()}
+              >
+                <Download size={16} /> {busy ? "Gerando…" : "Baixar PDF"}
+              </ActionButton>
+            </>
+          }
         />
-      </CipaSectionCard>
-
-      <CipaSectionCard title="Signatários">
-        <ul className="cipa-list">
-          {(detail?.signers || []).map((signer) => (
-            <li key={String(signer.id)}>
-              {String(signer.display_name)} — {String(signer.status)}
-            </li>
-          ))}
-        </ul>
-      </CipaSectionCard>
+      ) : (
+        <CipaStateBox variant="loading" message="Carregando modo de leitura…" />
+      )}
 
       <CipaSectionCard title="Versões">
         <ul className="cipa-list">

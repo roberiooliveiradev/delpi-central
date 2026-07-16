@@ -91,3 +91,31 @@ def test_finalize_renders_pdf_with_validation_code_before_persisting(monkeypatch
     assert captured["minute_pdf"]["validation_code"] == "VALIDA-123"
     assert captured["minute_pdf"]["final_content_hash"] == "hash-final"
     assert captured["status"]["extra"]["validation_code"] == "VALIDA-123"
+
+
+def test_signature_image_checks_minute_and_reads_current_signature(monkeypatch):
+    class Repo:
+        def get_minute(self, _minute_id):
+            return {"id": "minute-1", "unit_code": "01"}
+
+        def get_signature(self, minute_id, signature_id):
+            assert minute_id == "minute-1"
+            assert signature_id == "signature-1"
+            return {"image_path": "/data/signature.png"}
+
+    class Storage:
+        def read(self, path):
+            assert path == "/data/signature.png"
+            return b"\x89PNG\r\n\x1a\n"
+
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    service.repo = Repo()
+    service.signature_storage = Storage()
+    monkeypatch.setattr(
+        "cipa_app.application.use_cases.meeting_minutes_service.perms.has_unit_read_access",
+        lambda _user, unit_code: unit_code == "01",
+    )
+
+    raw = service.signature_image(SimpleNamespace(id="reader"), "minute-1", "signature-1")
+
+    assert raw.startswith(b"\x89PNG")

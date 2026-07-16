@@ -16,7 +16,7 @@ Portal → plugins/cipa (MFE) → /apps/cipa-api → schema cipa (postgres-plugi
 | `/apps/cipa/filial-01` | Lista de atas SC |
 | `/apps/cipa/filial-02` | Lista de atas ES |
 | `/apps/cipa/filial-{xx}/minutes/new` | Nova ata |
-| `/apps/cipa/filial-{xx}/minutes/{id}` | Detalhe |
+| `/apps/cipa/filial-{xx}/minutes/{id}` | Modo de leitura formal, impressão e download do PDF |
 | `/apps/cipa/filial-{xx}/minutes/{id}/edit` | Edição |
 | `/apps/cipa/filial-{xx}/minutes/{id}/sign` | Assinatura da ata |
 | `/apps/cipa/my-signature` | Perfil de assinatura pessoal (nome + PNG) — exige `cipa.sign` |
@@ -25,6 +25,14 @@ Portal → plugins/cipa (MFE) → /apps/cipa-api → schema cipa (postgres-plugi
 ### Assinatura pessoal
 
 Cada usuário com `cipa.sign` configura **apenas a própria** assinatura em `/apps/cipa/my-signature`. Na tela de assinar uma ata, o nome é pré-preenchido e há o botão **Usar assinatura cadastrada** (o desenho no pad continua disponível só para aquela ata).
+
+### Leitura e PDF oficial
+
+O detalhe usa os componentes documentais compartilhados de `@delpi/plugin-ui`
+(`DocumentReader`, `DocumentPage`, cabeçalho, rodapé e assinatura). A impressão
+é uma conveniência do navegador; o artefato oficial é sempre gerado pelo
+`cipa-api` em `GET /minutes/{id}/export.pdf`, com logo/marca d'água, conteúdo,
+papéis, imagens de assinatura, validação e rodapé paginado.
 
 ## API
 

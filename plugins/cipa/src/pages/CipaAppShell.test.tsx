@@ -9,6 +9,9 @@ import { CipaAppShell } from "./CipaAppShell";
 const api = vi.hoisted(() => ({
   listMinutes: vi.fn(),
   getMySignatureProfile: vi.fn(),
+  getMinute: vi.fn(),
+  getAudit: vi.fn(),
+  exportPdf: vi.fn(),
 }));
 
 const navigation = vi.hoisted(() => ({
@@ -18,9 +21,11 @@ const navigation = vi.hoisted(() => ({
 vi.mock("../api/cipaApi", () => ({
   createMinute: vi.fn(),
   fetchMySignatureImageBlob: vi.fn(),
+  exportPdf: api.exportPdf,
   finalizeMinute: vi.fn(),
-  getAudit: vi.fn(),
-  getMinute: vi.fn(),
+  getAudit: api.getAudit,
+  getMinute: api.getMinute,
+  getSignatureImage: vi.fn(),
   getMySignatureProfile: api.getMySignatureProfile,
   getSignContext: vi.fn(),
   listMinutes: api.listMinutes,
@@ -66,6 +71,15 @@ beforeAll(() => {
       stroke: vi.fn(),
     })),
   });
+  Object.defineProperty(URL, "createObjectURL", {
+    configurable: true,
+    value: vi.fn(() => "blob:ata"),
+  });
+  Object.defineProperty(URL, "revokeObjectURL", {
+    configurable: true,
+    value: vi.fn(),
+  });
+  vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -93,6 +107,25 @@ beforeEach(() => {
   api.getMySignatureProfile.mockResolvedValue({
     display_name: "Ana",
     has_signature: false,
+  });
+  api.getAudit.mockResolvedValue({ items: [] });
+  api.exportPdf.mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+  api.getMinute.mockResolvedValue({
+    minute: {
+      id: "minute-1",
+      unit_code: "01",
+      title: "Reunião ordinária",
+      minute_number: "2026/001",
+      meeting_type: "ordinary",
+      meeting_date: "2026-07-16",
+      status: "draft",
+    },
+    version: { body_html: "<p>Documento da ata.</p>", content_hash: "hash" },
+    participants: [],
+    signers: [],
+    signatures: [],
+    action_items: [],
+    versions: [],
   });
 });
 
@@ -154,5 +187,22 @@ describe("CipaAppShell compartilhado", () => {
     });
     expect(screen.getByDisplayValue("Ana")).toBeTruthy();
     expect(screen.getByText("Nenhuma assinatura cadastrada ainda.")).toBeTruthy();
+  });
+
+  it("renderiza modo de leitura e baixa o PDF oficial", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "detail", unitCode: "01", minuteId: "minute-1" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByLabelText("Modo de leitura da ata");
+    expect(screen.getByText("Documento da ata.")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: /Baixar PDF/ }));
+    await waitFor(() => expect(api.exportPdf).toHaveBeenCalledWith("minute-1"));
   });
 });

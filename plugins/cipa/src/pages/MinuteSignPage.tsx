@@ -16,7 +16,9 @@ import {
   getSignContext,
   refuseMinute,
   signMinute,
+  type MinuteDetail,
 } from "../api/cipaApi";
+import { MinuteDocumentView } from "../components/MinuteDocumentView";
 import { UNIT_LABELS } from "../constants/labels";
 import { helpTooltips } from "../content/helpTooltips";
 import { navigateCipa } from "../hooks/useCipaRouterPath";
@@ -141,6 +143,15 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
   const minute = (context?.minute || {}) as Record<string, unknown>;
   const version = (context?.version || {}) as Record<string, unknown>;
   const terms = String(context?.terms || "");
+  const documentDetail: MinuteDetail = {
+    minute,
+    version,
+    participants: (context?.participants || []) as Record<string, unknown>[],
+    signers: (context?.signers || []) as Record<string, unknown>[],
+    signatures: (context?.signatures || []) as Record<string, unknown>[],
+    action_items: [],
+    versions: [],
+  };
 
   return (
     <div className="cipa-page-stack cipa-sign-page">
@@ -158,14 +169,7 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
 
       {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
 
-      <CipaSectionCard title="Resumo">
-        <div
-          className="cipa-prose"
-          dangerouslySetInnerHTML={{
-            __html: String(version.body_html || "<p>Sem conteúdo.</p>"),
-          }}
-        />
-      </CipaSectionCard>
+      {context ? <MinuteDocumentView detail={documentDetail} /> : null}
 
       <CipaSectionCard title="Confirmar assinatura">
         <div className="cipa-field">

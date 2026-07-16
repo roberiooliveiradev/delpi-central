@@ -244,6 +244,19 @@ async def register_signature(
         return _handle(exc)
 
 
+@router.get("/{minute_id}/signatures/{signature_id}/image")
+def signature_image(request: Request, minute_id: str, signature_id: str):
+    try:
+        raw = service.signature_image(request.state.user, minute_id, signature_id)
+        return Response(
+            content=raw,
+            media_type="image/png",
+            headers={"Cache-Control": "private, max-age=300"},
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
 @router.post("/{minute_id}/signatures/refuse")
 def refuse_signature(request: Request, minute_id: str, body: RefuseRequest):
     try:

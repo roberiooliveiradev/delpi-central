@@ -146,6 +146,16 @@ export async function exportPdf(id: string) {
   return httpBlob(`${API}/minutes/${id}/export.pdf`);
 }
 
+export async function getSignatureImage(
+  minuteId: string,
+  signatureId: string,
+  signal?: AbortSignal,
+) {
+  return httpBlob(`${API}/minutes/${minuteId}/signatures/${signatureId}/image`, {
+    signal,
+  });
+}
+
 export async function pendingSignatures(signal?: AbortSignal) {
   const envelope = await httpGet<ApiEnvelope<{ items: MinuteListItem[]; total: number }>>(
     `${API}/minutes/pending-signatures`,

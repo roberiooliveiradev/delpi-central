@@ -262,6 +262,73 @@
   margin-bottom: 0;
 }
 
+.dashboard-cipa .cipa-minute-document {
+  font-size: 10.5pt;
+  line-height: 1.5;
+  text-align: justify;
+}
+
+.dashboard-cipa .cipa-minute-document h1 {
+  margin: 0 0 6mm;
+  font-size: 16pt;
+  line-height: 1.25;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dashboard-cipa .cipa-minute-document h2 {
+  margin: 7mm 0 4mm;
+  font-size: 11pt;
+}
+
+.dashboard-cipa .cipa-minute-document p {
+  margin: 0 0 4mm;
+  text-indent: 12mm;
+}
+
+.dashboard-cipa .cipa-minute-document__date {
+  margin-bottom: 10mm;
+  text-align: right;
+  text-indent: 0;
+}
+
+.dashboard-cipa .cipa-minute-document__content {
+  margin-bottom: 4mm;
+}
+
+.dashboard-cipa .cipa-minute-document__content p {
+  margin: 0 0 4mm;
+}
+
+.dashboard-cipa .cipa-minute-document__content ul,
+.dashboard-cipa .cipa-minute-document__content ol {
+  margin: 0 0 4mm;
+  padding-left: 8mm;
+}
+
+.dashboard-cipa .cipa-minute-document__closing {
+  margin-top: 8mm;
+  text-indent: 0;
+}
+
+.dashboard-cipa .cipa-minute-document__signatures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5mm 8mm;
+}
+
+.dashboard-cipa .cipa-minute-document__validation {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8mm;
+  padding-top: 3mm;
+  border-top: 1px solid #d1d5db;
+  font-size: 7.5pt;
+  color: #4b5563;
+  overflow-wrap: anywhere;
+}
+
 .dashboard-cipa .cipa-check {
   display: flex;
   gap: 8px;
@@ -299,6 +366,10 @@
 
   .dashboard-cipa .cipa-participant-role-select {
     width: 100%;
+  }
+
+  .dashboard-cipa .cipa-minute-document__signatures {
+    grid-template-columns: 1fr;
   }
 }
 

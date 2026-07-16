@@ -64,6 +64,15 @@ _ROLE_LABELS = {
     "other": "Participante",
 }
 
+_MEETING_TYPE_LABELS = {
+    "ordinary": "ordinária",
+    "extraordinary": "extraordinária",
+    "installation": "de instalação",
+    "election": "de eleição",
+    "training": "de treinamento",
+    "other": "",
+}
+
 
 def format_date_br(value: Any) -> str:
     parsed = _as_date(value)
@@ -274,10 +283,14 @@ class MinutePdfRenderer:
         if participants:
             names = ", ".join(escape(str(item.get("display_name") or "—")) for item in participants)
             time_text = self._time_sentence(minute)
+            meeting_type = _MEETING_TYPE_LABELS.get(
+                str(minute.get("meeting_type") or ""),
+                str(minute.get("meeting_type") or ""),
+            )
             intro = (
                 f"Aos {format_date_long_pt(meeting_date)}, {time_text}, nas dependências de "
                 f"<b>DELPI Conexões Elétricas</b>, realizou-se reunião "
-                f"{escape(str(minute.get('meeting_type') or ''))} da Comissão Interna de "
+                f"{escape(meeting_type)} da Comissão Interna de "
                 f"Prevenção de Acidentes e de Assédio — CIPA, com a presença de {names}."
             )
             story.append(Paragraph(intro, styles["body"]))
