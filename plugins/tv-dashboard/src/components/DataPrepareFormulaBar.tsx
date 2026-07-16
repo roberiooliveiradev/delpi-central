@@ -43,6 +43,7 @@ export function DataPrepareFormulaBar({
   const dirty = editable && value !== baseline;
 
   useEffect(() => {
+    if (document.activeElement === inputRef.current) return;
     setValue(formulaBarDisplayValue(step, { newColumnDraft }));
     setError(null);
   }, [step, newColumnDraft]);

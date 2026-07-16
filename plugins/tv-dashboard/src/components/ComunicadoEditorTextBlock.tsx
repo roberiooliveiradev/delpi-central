@@ -44,6 +44,15 @@ function editorRunsForBlock(block: TextBlock) {
   return appendHrefLineToRuns(resolveTextBlockDisplayRuns(block), block.href);
 }
 
+export function externalTextBlockEditorKey(block: TextBlock, fontScale: number) {
+  return JSON.stringify({
+    content: block.content,
+    contentRuns: block.contentRuns,
+    href: block.href,
+    fontScale,
+  });
+}
+
 export function ComunicadoEditorTextBlock({
   block,
   fontScale = 1,
@@ -60,8 +69,12 @@ export function ComunicadoEditorTextBlock({
     reportTextEditSelection,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
+  const blockRef = useRef(block);
+  blockRef.current = block;
   const draftRef = useRef(syncTextBlockFromRuns(resolveTextBlockDisplayRuns(block)));
   const renderedSignatureRef = useRef("");
+  const editingInitBlockIdRef = useRef<string | null>(null);
+  const lastSyncedExternalKeyRef = useRef("");
 
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
@@ -91,7 +104,7 @@ export function ComunicadoEditorTextBlock({
 
   const syncEditorHtml = useCallback(
     (
-      runs = editorRunsForBlock(block),
+      runs = editorRunsForBlock(blockRef.current),
       selectionOverride?: { start: number; end: number } | null,
     ) => {
       const editor = editorRef.current;
@@ -106,7 +119,7 @@ export function ComunicadoEditorTextBlock({
       renderedSignatureRef.current = signature;
       if (selection) restoreEditableTextSelection(editor, selection.start, selection.end);
     },
-    [block, fontScale],
+    [fontScale],
   );
 
   const reportSelectionFromEditor = useCallback(() => {
@@ -218,8 +231,17 @@ export function ComunicadoEditorTextBlock({
   }
 
   useEffect(() => {
-    if (!isEditing) return;
-    const editorRuns = editorRunsForBlock(block);
+    if (!isEditing) {
+      editingInitBlockIdRef.current = null;
+      return;
+    }
+    if (editingInitBlockIdRef.current === block.id) return;
+    editingInitBlockIdRef.current = block.id;
+
+    const blockNow = blockRef.current;
+    lastSyncedExternalKeyRef.current = externalTextBlockEditorKey(blockNow, fontScale);
+
+    const editorRuns = editorRunsForBlock(blockNow);
     draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(editorRuns).runs);
     renderedSignatureRef.current = "";
     const editor = editorRef.current;
@@ -229,7 +251,7 @@ export function ComunicadoEditorTextBlock({
     const end = editorRuns.map((run) => run.text).join("").length;
     restoreEditableTextSelection(editor, end, end);
     reportTextEditSelection({ blockId: block.id, start: end, end }, editorRuns);
-  }, [isEditing, block.id, syncEditorHtml, reportTextEditSelection]);
+  }, [isEditing, block.id, fontScale, syncEditorHtml, reportTextEditSelection]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -239,13 +261,20 @@ export function ComunicadoEditorTextBlock({
   }, [isEditing, commitPending]);
 
   useLayoutEffect(() => {
-    if (!isEditing) return;
+    if (!isEditing) {
+      lastSyncedExternalKeyRef.current = "";
+      return;
+    }
+    const externalKey = externalTextBlockEditorKey(block, fontScale);
+    if (lastSyncedExternalKeyRef.current === externalKey) return;
+    lastSyncedExternalKeyRef.current = externalKey;
+
     const editor = editorRef.current;
     const editorRuns = editorRunsForBlock(block);
     const selection = editor ? getEditableTextSelectionOffsets(editor) : null;
     syncEditorHtml(editorRuns, selection);
     draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(editorRuns).runs);
-  }, [block.contentRuns, block.content, block.href, isEditing, fontScale, syncEditorHtml, block]);
+  }, [block.contentRuns, block.content, block.href, isEditing, fontScale, syncEditorHtml]);
 
   useEffect(() => {
     if (!isEditing) {
