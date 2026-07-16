@@ -12,6 +12,7 @@ import {
   fetchAllAppointments,
   fetchAllAppointmentsByOp,
 } from "../api/appointmentsApi";
+import { buildAppointmentListColumns } from "../utils/appointmentListColumns";
 import {
   formatInteger,
   formatProtheusDate,
@@ -133,7 +134,7 @@ export function AppointmentsTables({
   const [viewMode, setViewMode] = useState<AppointmentsTableViewMode>("appointments");
   const [exporting, setExporting] = useState(false);
 
-  const [listSortKey, setListSortKey] = useState<string | null>("appointment_date");
+  const [listSortKey, setListSortKey] = useState<string | null>("appointment_datetime");
   const [listSortDir, setListSortDir] = useState<SortDir>("desc");
   const [byOpSortKey, setByOpSortKey] = useState<string | null>("qty_produced");
   const [byOpSortDir, setByOpSortDir] = useState<SortDir>("desc");
@@ -206,63 +207,12 @@ export function AppointmentsTables({
     [],
   );
 
-  const appointmentColumns = useMemo<DataTableColumn<AppointmentRow>[]>(
-    () => [
-      {
-        key: "appointment_date",
-        header: "Data",
-        headerHint: PA_HELP_TOOLTIPS.columns.appointmentDate,
-        sortable: true,
-        sortValue: (row) => row.appointment_date,
-        render: (row) => formatProtheusDate(row.appointment_date),
-      },
-      {
-        key: "production_order",
-        header: "OP",
-        headerHint: PA_HELP_TOOLTIPS.columns.productionOrder,
-        sortable: true,
-        sortValue: (row) => row.production_order,
-        render: (row) => row.production_order,
-      },
-      {
-        key: "product",
-        header: "Produto",
-        headerHint: PA_HELP_TOOLTIPS.columns.product,
-        sortable: true,
-        sortValue: (row) => row.product,
-        className: "pa-table__col--wide",
-        render: (row) =>
-          `${row.product}${row.product_type ? ` (${row.product_type})` : ""}`,
-      },
-      {
-        key: "work_center",
-        header: "CT",
-        headerHint: PA_HELP_TOOLTIPS.columns.workCenter,
-        sortable: true,
-        sortValue: (row) => row.work_center,
-        className: "pa-table__col--wide",
-        render: (row) =>
-          `${row.work_center}${row.work_center_name ? ` — ${row.work_center_name}` : ""}`,
-      },
-      {
-        key: "qty_produced",
-        header: "Produzida",
-        headerHint: PA_HELP_TOOLTIPS.columns.qtyProduced,
-        sortable: true,
-        sortValue: (row) => row.qty_produced,
-        className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_produced),
-      },
-      {
-        key: "qty_lost",
-        header: "Perdida",
-        headerHint: PA_HELP_TOOLTIPS.columns.qtyLost,
-        sortable: true,
-        sortValue: (row) => row.qty_lost,
-        className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_lost),
-      },
-    ],
+  const appointmentColumns = useMemo(
+    () =>
+      buildAppointmentListColumns({
+        includeProductionOrder: true,
+        includeWorkCenter: true,
+      }),
     [],
   );
 
@@ -430,7 +380,7 @@ export function AppointmentsTables({
 
       {viewMode === "appointments" ? (
         <DataTableSection
-          columnPreferencesKey="production-appointments:AppointmentsTables:apontamentos-1:v1"
+          columnPreferencesKey="production-appointments:AppointmentsTables:apontamentos-1:v2"
           title="Apontamentos"
           titleHint={activeMode.hint}
           columns={appointmentColumns}

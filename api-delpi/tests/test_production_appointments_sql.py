@@ -1,4 +1,5 @@
 from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+    build_appointments_list_query,
     build_appointments_where,
     build_by_op_query,
     build_series_query,
@@ -89,3 +90,22 @@ def test_by_op_uses_offset_fetch() -> None:
     )
     assert "OFFSET 50 ROWS FETCH NEXT 25 ROWS ONLY" in query
     assert "production_order" in query
+
+
+def test_appointments_list_exposes_datetime_operator_and_resource() -> None:
+    query, _params = build_appointments_list_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        offset=0,
+        page_size=20,
+    )
+    assert "H6_HORAINI" in query
+    assert "H6_HORAFIN" in query
+    assert "H6_OPERADO" in query
+    assert "SYS_USR" in query
+    assert "AS operator_name" in query
+    assert "AS resource_name" in query
+    assert "AS start_time" in query
+    assert "AS end_time" in query
+    assert "ORDER BY SH6.H6_DTAPONT DESC, SH6.H6_HORAINI DESC" in query

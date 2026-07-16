@@ -140,13 +140,22 @@ def build_appointments_list_query(
         {_IS_FINAL_INSPECTION_EXPR} AS is_final_inspection,
         LTRIM(RTRIM(SH6.H6_OPERAC)) AS operation,
         LTRIM(RTRIM(SH6.H6_RECURSO)) AS resource,
+        LTRIM(RTRIM(SH1.H1_DESCRI)) AS resource_name,
+        LTRIM(RTRIM(SH6.H6_OPERADO)) AS operator_code,
+        LTRIM(RTRIM(U.USR_NOME)) AS operator_name,
+        LTRIM(RTRIM(SH6.H6_DATAINI)) AS start_date,
+        LTRIM(RTRIM(SH6.H6_HORAINI)) AS start_time,
+        LTRIM(RTRIM(SH6.H6_DATAFIN)) AS end_date,
+        LTRIM(RTRIM(SH6.H6_HORAFIN)) AS end_time,
         CAST(SH6.H6_QTDPROD AS FLOAT) AS qty_produced,
         CAST(SH6.H6_QTDPERD AS FLOAT) AS qty_lost,
         LTRIM(RTRIM(SH6.H6_DTAPONT)) AS appointment_date,
         SH6.R_E_C_N_O_ AS appointment_id
     {_BASE_FROM}
+    LEFT JOIN SYS_USR U WITH (NOLOCK)
+        ON LTRIM(RTRIM(U.USR_ID)) = LTRIM(RTRIM(SH6.H6_OPERADO))
     WHERE {where}
-    ORDER BY SH6.H6_DTAPONT DESC, SH6.R_E_C_N_O_ DESC
+    ORDER BY SH6.H6_DTAPONT DESC, SH6.H6_HORAINI DESC, SH6.R_E_C_N_O_ DESC
     OFFSET {int(offset)} ROWS FETCH NEXT {int(page_size)} ROWS ONLY
     """
     return sql, tuple(params)

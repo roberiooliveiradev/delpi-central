@@ -37,6 +37,12 @@ export const PA_HELP_TOOLTIPS = {
       "Quantidade perdida no apontamento (H6_QTDPERD), em peças/UN. É a perda registrada junto com o apontamento da OP — não o ranking de refugos de MP.",
     opCount: "Quantidade de OPs distintas no agrupamento.",
     appointmentDate: "Data do apontamento no Protheus (H6_DTAPONT).",
+    appointmentDateTime:
+      "Data do apontamento (H6_DTAPONT) com horário de início e fim da execução (H6_HORAINI / H6_HORAFIN), quando preenchidos.",
+    operator:
+      "Quem apontou: nome do usuário Protheus (SYS_USR) ligado a H6_OPERADO; se o nome não existir, mostra o código do operador.",
+    operation: "Código da operação apontada (H6_OPERAC).",
+    resource: "Recurso (máquina/posto) do apontamento (H6_RECURSO) e descrição em SH1.",
     productionOrder: "Número da ordem de produção (H6_OP).",
     product: "Código do produto apontado, com tipo (B1_TIPO) quando disponível.",
     workCenterCount: "Quantidade de CTs distintos com apontamento nesta OP.",

@@ -1,23 +1,22 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
-import type { AppointmentRow } from "../types/appointments";
 import type { BranchRouteCode } from "../constants/branches";
 import { BRANCH_ROUTE_LABELS, totvsBranchFromRoute } from "../constants/branches";
 import { buildOpDetailPath } from "../constants/routes";
 import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useAppointmentsDetailQuery } from "../hooks/useAppointmentsDetailQuery";
+import { buildAppointmentListColumns } from "../utils/appointmentListColumns";
 import {
   formatDatePtBr,
   formatInteger,
-  formatProtheusDate,
   formatQuantity,
 } from "../utils/formatters";
 import { exportAppointmentsExcel } from "../utils/exportTables";
 import { navigateAppointments, navigateAppointmentsBack } from "../utils/navigation";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
-import { DataTableSection, type DataTableColumn } from "../components/dataTableUi";
+import { DataTableSection } from "../components/dataTableUi";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { ExportExcelButton } from "../components/ExportExcelButton";
@@ -55,52 +54,12 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
     query.appointments[0]?.work_center_name ||
     "";
 
-  const columns = useMemo<DataTableColumn<AppointmentRow>[]>(
-    () => [
-      {
-        key: "appointment_date",
-        header: "Data",
-        headerHint: PA_HELP_TOOLTIPS.columns.appointmentDate,
-        sortable: true,
-        sortValue: (row) => row.appointment_date,
-        render: (row) => formatProtheusDate(row.appointment_date),
-      },
-      {
-        key: "production_order",
-        header: "OP",
-        headerHint: PA_HELP_TOOLTIPS.columns.productionOrder,
-        sortable: true,
-        sortValue: (row) => row.production_order,
-        render: (row) => row.production_order,
-      },
-      {
-        key: "product",
-        header: "Produto",
-        headerHint: PA_HELP_TOOLTIPS.columns.product,
-        sortable: true,
-        sortValue: (row) => row.product,
-        render: (row) =>
-          `${row.product}${row.product_type ? ` (${row.product_type})` : ""}`,
-      },
-      {
-        key: "qty_produced",
-        header: "Produzida",
-        headerHint: PA_HELP_TOOLTIPS.columns.qtyProduced,
-        sortable: true,
-        sortValue: (row) => row.qty_produced,
-        className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_produced),
-      },
-      {
-        key: "qty_lost",
-        header: "Perdida",
-        headerHint: PA_HELP_TOOLTIPS.columns.qtyLost,
-        sortable: true,
-        sortValue: (row) => row.qty_lost,
-        className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_lost),
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      buildAppointmentListColumns({
+        includeProductionOrder: true,
+        includeWorkCenter: false,
+      }),
     [],
   );
 
@@ -205,13 +164,13 @@ export function CtDetailPage({ branchRoute, workCenter }: CtDetailPageProps) {
               {query.totals ? <SummaryCards totals={query.totals} /> : null}
               <SeriesChart points={query.seriesPoints} />
               <DataTableSection
-                columnPreferencesKey="production-appointments:CtDetailPage:apontamentos-do-ct:v1"
+                columnPreferencesKey="production-appointments:CtDetailPage:apontamentos-do-ct:v2"
                 title="Apontamentos do CT"
                 titleHint={PA_HELP_TOOLTIPS.tables.ctDetailAppointments}
                 columns={columns}
                 rows={query.appointments}
                 rowKey={(row) => String(row.appointment_id)}
-                defaultSortKey="appointment_date"
+                defaultSortKey="appointment_datetime"
                 defaultSortDirection="desc"
                 onRowClick={(row) => handleOpenOp(row.production_order)}
               />

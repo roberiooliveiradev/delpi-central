@@ -1,22 +1,21 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
-import type { AppointmentRow } from "../types/appointments";
 import type { BranchRouteCode } from "../constants/branches";
 import { BRANCH_ROUTE_LABELS, totvsBranchFromRoute } from "../constants/branches";
 import { PA_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useAppointmentsDetailQuery } from "../hooks/useAppointmentsDetailQuery";
+import { buildAppointmentListColumns } from "../utils/appointmentListColumns";
 import {
   formatDatePtBr,
   formatInteger,
-  formatProtheusDate,
   formatQuantity,
 } from "../utils/formatters";
 import { exportAppointmentsExcel } from "../utils/exportTables";
 import { navigateAppointmentsBack } from "../utils/navigation";
 import { DetailCard } from "../components/DetailCard";
 import { DetailFieldGrid } from "../components/DetailFieldGrid";
-import { DataTableSection, type DataTableColumn } from "../components/dataTableUi";
+import { DataTableSection } from "../components/dataTableUi";
 import { EmptyState } from "../components/EmptyState";
 import { ErrorState } from "../components/ErrorState";
 import { ExportExcelButton } from "../components/ExportExcelButton";
@@ -40,53 +39,12 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
 
   const opSummary = query.byOpRows[0] ?? null;
 
-  const columns = useMemo<DataTableColumn<AppointmentRow>[]>(
-    () => [
-      {
-        key: "appointment_date",
-        header: "Data",
-        headerHint: PA_HELP_TOOLTIPS.columns.appointmentDate,
-        sortable: true,
-        sortValue: (row) => row.appointment_date,
-        render: (row) => formatProtheusDate(row.appointment_date),
-      },
-      {
-        key: "product",
-        header: "Produto",
-        headerHint: PA_HELP_TOOLTIPS.columns.product,
-        sortable: true,
-        sortValue: (row) => row.product,
-        render: (row) =>
-          `${row.product}${row.product_type ? ` (${row.product_type})` : ""}`,
-      },
-      {
-        key: "work_center",
-        header: "CT",
-        headerHint: PA_HELP_TOOLTIPS.columns.workCenter,
-        sortable: true,
-        sortValue: (row) => row.work_center,
-        render: (row) =>
-          `${row.work_center}${row.work_center_name ? ` — ${row.work_center_name}` : ""}`,
-      },
-      {
-        key: "qty_produced",
-        header: "Produzida",
-        headerHint: PA_HELP_TOOLTIPS.columns.qtyProduced,
-        sortable: true,
-        sortValue: (row) => row.qty_produced,
-        className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_produced),
-      },
-      {
-        key: "qty_lost",
-        header: "Perdida",
-        headerHint: PA_HELP_TOOLTIPS.columns.qtyLost,
-        sortable: true,
-        sortValue: (row) => row.qty_lost,
-        className: "pa-table__col--numeric",
-        render: (row) => formatQuantity(row.qty_lost),
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      buildAppointmentListColumns({
+        includeProductionOrder: false,
+        includeWorkCenter: true,
+      }),
     [],
   );
 
@@ -186,12 +144,13 @@ export function OpDetailPage({ branchRoute, productionOrder }: OpDetailPageProps
               {query.totals ? <SummaryCards totals={query.totals} /> : null}
               <SeriesChart points={query.seriesPoints} />
               <DataTableSection
-                columnPreferencesKey="production-appointments:OpDetailPage:apontamentos-da-op:v1"
+                columnPreferencesKey="production-appointments:OpDetailPage:apontamentos-da-op:v2"
                 title="Apontamentos da OP"
+                titleHint={PA_HELP_TOOLTIPS.tables.appointments}
                 columns={columns}
                 rows={query.appointments}
                 rowKey={(row) => String(row.appointment_id)}
-                defaultSortKey="appointment_date"
+                defaultSortKey="appointment_datetime"
                 defaultSortDirection="desc"
               />
             </>

@@ -50,6 +50,17 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 `data.totals` e `data.items[]` (por CT) incluem `qty_produced`, `qty_lost`, `appointment_count`; itens trazem `is_final_inspection` quando aplicável.
 
+Na **lista** (`GET /production/appointments`), cada item traz também:
+
+| Campo | Origem |
+|-------|--------|
+| `appointment_date` | `H6_DTAPONT` |
+| `start_date` / `start_time` | `H6_DATAINI` / `H6_HORAINI` |
+| `end_date` / `end_time` | `H6_DATAFIN` / `H6_HORAFIN` |
+| `operator_code` / `operator_name` | `H6_OPERADO` + `SYS_USR.USR_NOME` |
+| `operation` | `H6_OPERAC` |
+| `resource` / `resource_name` | `H6_RECURSO` + `SH1.H1_DESCRI` |
+
 ## Unidades (MI → UN)
 
 `H6_QTDPROD` / `H6_QTDPERD` vêm do Protheus em milheiro quando `B1_UM = MI` (ou UM vazia, tratada como MI). A API converte para peças (`UN`) antes de responder:

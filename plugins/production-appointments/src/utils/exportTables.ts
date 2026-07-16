@@ -7,9 +7,12 @@ import type {
   WorkCenterSummaryRow,
 } from "../types/appointments";
 import {
+  formatAppointmentDateTime,
   formatInteger,
+  formatOperatorLabel,
   formatProtheusDate,
   formatQuantity,
+  formatResourceLabel,
 } from "./formatters";
 
 function safeDate(value: string): string {
@@ -61,7 +64,10 @@ export async function exportAppointmentsExcel(
     title: "Apontamento de Produção — Apontamentos",
     sheetName: "Apontamentos",
     headers: [
-      "Data",
+      "Data/Hora",
+      "Operador",
+      "Operação",
+      "Recurso",
       "OP",
       "Produto",
       "Tipo",
@@ -71,7 +77,10 @@ export async function exportAppointmentsExcel(
       "Perdida",
     ],
     rows: items.map((row) => [
-      formatProtheusDate(row.appointment_date),
+      formatAppointmentDateTime(row),
+      formatOperatorLabel(row),
+      row.operation || "",
+      formatResourceLabel(row),
       row.production_order,
       row.product,
       row.product_type || "",

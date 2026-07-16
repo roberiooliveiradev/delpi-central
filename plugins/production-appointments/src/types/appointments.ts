@@ -72,6 +72,13 @@ export type AppointmentRow = {
   is_final_inspection?: number | boolean;
   operation?: string;
   resource?: string;
+  resource_name?: string;
+  operator_code?: string;
+  operator_name?: string;
+  start_date?: string;
+  start_time?: string;
+  end_date?: string;
+  end_time?: string;
   qty_produced: number;
   qty_lost: number;
   appointment_date: string;

@@ -4,7 +4,12 @@ import {
   formatCurrencyBrl,
   formatDatePtBr,
   formatProtheusDate,
+  formatProtheusTime,
+  formatAppointmentDateTime,
+  formatOperatorLabel,
   formatQuantity,
+  formatResourceLabel,
+  appointmentDateTimeSortKey,
 } from "./formatters";
 import {
   getThisMonthRange,
@@ -20,6 +25,31 @@ describe("formatters", () => {
     expect(formatDatePtBr("2026-04-27")).toBe("27/04/2026");
     expect(formatProtheusDate("20260715")).toBe("15/07/2026");
     expect(formatQuantity(3836)).toBe("3.836,00");
+  });
+
+  it("formata data/hora, operador e recurso do apontamento", () => {
+    expect(formatProtheusTime("1430")).toBe("14:30");
+    expect(formatProtheusTime("14:30:00")).toBe("14:30");
+    expect(
+      formatAppointmentDateTime({
+        appointment_date: "20260716",
+        start_time: "0800",
+        end_time: "0915",
+      }),
+    ).toBe("16/07/2026 08:00–09:15");
+    expect(
+      formatOperatorLabel({ operator_name: "Maria Silva", operator_code: "000177" }),
+    ).toBe("Maria Silva (000177)");
+    expect(formatOperatorLabel({ operator_code: "000177" })).toBe("000177");
+    expect(
+      formatResourceLabel({ resource: "MC01", resource_name: "CORTE" }),
+    ).toBe("MC01 — CORTE");
+    expect(
+      appointmentDateTimeSortKey({
+        appointment_date: "20260716",
+        start_time: "8:00",
+      }),
+    ).toBe("202607160800");
   });
 });
 

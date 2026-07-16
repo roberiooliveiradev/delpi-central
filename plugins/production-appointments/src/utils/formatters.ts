@@ -56,6 +56,66 @@ export function formatProtheusDate(value: string | null | undefined): string {
   return formatDatePtBr(raw);
 }
 
+/** Hora Protheus (HHMM, HHMMSS ou HH:MM[:SS]) → HH:MM. */
+export function formatProtheusTime(value: string | null | undefined): string {
+  if (!value) return "";
+  const raw = value.trim();
+  if (!raw) return "";
+  const colon = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(raw);
+  if (colon) {
+    return `${colon[1].padStart(2, "0")}:${colon[2]}`;
+  }
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length >= 4) {
+    return `${digits.slice(0, 2)}:${digits.slice(2, 4)}`;
+  }
+  return raw;
+}
+
+/** Data do apontamento + intervalo de horário (início–fim) quando existir. */
+export function formatAppointmentDateTime(row: {
+  appointment_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+}): string {
+  const date = formatProtheusDate(row.appointment_date);
+  const start = formatProtheusTime(row.start_time);
+  const end = formatProtheusTime(row.end_time);
+  if (!start && !end) return date;
+  if (start && end && start !== end) return `${date} ${start}–${end}`;
+  return `${date} ${start || end}`;
+}
+
+/** Chave de ordenação data+hora (AAAAMMDDHHMM). */
+export function appointmentDateTimeSortKey(row: {
+  appointment_date?: string | null;
+  start_time?: string | null;
+}): string {
+  const date = (row.appointment_date ?? "").trim().replace(/\D/g, "").padEnd(8, "0").slice(0, 8);
+  const hhmm = formatProtheusTime(row.start_time).replace(":", "");
+  return `${date}${(hhmm || "0000").padStart(4, "0").slice(0, 4)}`;
+}
+
+export function formatOperatorLabel(row: {
+  operator_name?: string | null;
+  operator_code?: string | null;
+}): string {
+  const name = (row.operator_name ?? "").trim();
+  const code = (row.operator_code ?? "").trim();
+  if (name && code) return `${name} (${code})`;
+  return name || code || "—";
+}
+
+export function formatResourceLabel(row: {
+  resource?: string | null;
+  resource_name?: string | null;
+}): string {
+  const code = (row.resource ?? "").trim();
+  const name = (row.resource_name ?? "").trim();
+  if (code && name) return `${code} — ${name}`;
+  return code || name || "—";
+}
+
 export function formatPercent(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return "—";
   return `${decimalFormatter.format(value)}%`;
