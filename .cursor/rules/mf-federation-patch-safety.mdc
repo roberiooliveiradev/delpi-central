@@ -1,0 +1,25 @@
+---
+description: Patch MF React — sem ReDoS; validar vite build do plugin-ui antes de entregar
+alwaysApply: true
+---
+
+# Module Federation — segurança do patch React
+
+Incidente jul/2026: regex multi-spec em `federationReactProxyFix` com `(?:[^}]*,)*` → **ReDoS** → `vite build` do `plugin-ui` travava em `rendering chunks…` (local e prod). Fix do console (`reading 'd'`) não pode quebrar o build do remote.
+
+## Obrigatório ao alterar `plugins/vite/federationReactProxyFix*`
+
+1. **Proibido** quantificadores aninhados ambíguos sobre texto minificado (`(?:[^}]*,)*`, `([^;]*)*` aberto, etc.) — preferir `indexOf` / `import\{([^}]*)\}` + parse linear do spec.
+2. Rodar **antes** de commit/push:
+   - `npx tsx plugins/vite/federationReactProxyFix.test.mjs` (inclui teste de linearidade / ReDoS)
+   - `cd plugins/plugin-ui && npx vite build` — deve terminar em dezenas de segundos, **não** ficar parado em `rendering chunks`
+3. Bump `DELPI_MF_PATCH_VERSION` em `federationPatchVersion.mjs` quando o patch mudar.
+4. **Nunca** atribuir hang de build só a “RAM/swap” se o diff tocou regex/patch no pipeline Vite — suspeitar ReDoS primeiro e A/B (build com/sem o plugin).
+
+## Console `reading 'd'`
+
+Bridge React ≠ react-dom: multi-spec `import{r as Lv,g as Xv}` deve ser reconhecido **sem** redirecionar o bridge com `__DOM_INTERNALS` para `__DELPI_MF_REACT__`.
+
+## Referência
+
+`plugins/plugin-ui/docs/module-federation.md` · `plugins/vite/federationReactProxyFix.ts`

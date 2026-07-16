@@ -16,6 +16,7 @@ Ao alterar código em `plugins/` (microfrontends):
 6. **Documentação:** README do plugin atualizado; se API nova/alterada, doc em `api-delpi/docs/api/` — ver `plugins-documentation.mdc`.
 7. Incluir no mesmo fluxo de entrega (commit quando o usuário pedir commit ou ao finalizar a alteração de front).
 8. **Deploy Docker (dev/prod):** orientar `infra/scripts/up-dev-sequential.sh` ou `up-prod-sequential.sh` — ver `infra-sequential-container-startup.mdc` e `infra/README-ambiente.md` § Inicialização segura.
+9. **Patch MF (`plugins/vite/federationReactProxyFix*`):** ver `mf-federation-patch-safety.mdc` — proibido ReDoS; obrigatório `federationReactProxyFix.test.mjs` + `plugin-ui` `vite build` completo.
 
 ## Strategic Indicators
 

@@ -17,6 +17,7 @@ alwaysApply: true
 | `persistent-upload-storage.mdc` | **Upload em disco** — volume no Compose; nunca só filesystem do container |
 | `test-and-commit.mdc` | Ao concluir alteração de código — testes; commit só se pedido |
 | `infra-sequential-container-startup.mdc` | **Deploy / docker up / rebuild** — orientar scripts sequenciais dev/prod |
+| `mf-federation-patch-safety.mdc` | **Patch MF / `federationReactProxyFix`** — sem ReDoS; validar `plugin-ui` vite build |
 
 ## Infra / Docker
 
@@ -24,6 +25,7 @@ alwaysApply: true
 |-------|--------|
 | `infra-sequential-container-startup.mdc` | Subir/rebuild stack — `up-dev-sequential.sh`, `up-prod-sequential.sh`; evitar OOM e ordem MF errada |
 | `persistent-upload-storage.mdc` | Volumes persistentes no Compose |
+| `mf-federation-patch-safety.mdc` | Alterar patch React MF — testes + build `plugin-ui` obrigatórios |
 
 Doc: `infra/README-ambiente.md`.
 
@@ -65,6 +67,7 @@ Doc: `infra/README-ambiente.md`.
 | `chat-prose-rendering.mdc` | Markdown, streaming, títulos do assistente (`minha-delpi-chat`) |
 | `plugins-visual-design-system.mdc` | Tokens, layout de página, **escopo CSS anti-vazamento**, claro/escuro; sem espelho `.delpi-ui-*` |
 | `plugins-frontend-build.mdc` | Build MFE, checklist CSS antes de commit |
+| `mf-federation-patch-safety.mdc` | Patch React MF — sem ReDoS; validar build `plugin-ui` |
 | `plugins-documentation.mdc` | **README + doc API + inventário** — todo plugin documentado |
 | [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) | **Scaffold MF** — vite, bootstrap, Docker, compose |
 
@@ -88,6 +91,7 @@ Plugin importa bib. irmã   → shared-libraries.manifest.json → check_plugin_
 API dashboard multi-filial → api-delpi-response-contract § RBAC filial → manifest `.view.filial-*`
 Deploy / subir stack / rebuild Docker → infra-sequential-container-startup → up-*-sequential.sh
 OOM ou build MF em prod → infra-sequential-container-startup → fase remote antes de mfe
+Patch MF / federationReactProxyFix → mf-federation-patch-safety → teste + plugin-ui vite build (nunca ReDoS)
 ```
 
 ## Ordem de prioridade em conflito
