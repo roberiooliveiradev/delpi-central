@@ -1,0 +1,120 @@
+/**
+ * FloatingNoticeStack — cards flutuantes de erro/aviso (.delpi-ui-floating-notice*).
+ * Portal no body; pilha fixa no canto superior direito.
+ */
+
+.delpi-ui-floating-notices {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.delpi-ui-floating-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-left: 4px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--delpi-ui-surface, #ffffff);
+  color: var(--delpi-ui-text, #111111);
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 12px 32px color-mix(in srgb, #000 22%, transparent);
+  pointer-events: auto;
+  animation: delpi-ui-floating-notice-in 180ms ease-out;
+}
+
+@keyframes delpi-ui-floating-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.delpi-ui-floating-notice__icon {
+  display: inline-flex;
+  flex: none;
+  margin-top: 1px;
+}
+
+.delpi-ui-floating-notice__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.delpi-ui-floating-notice__title {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.delpi-ui-floating-notice__message {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.75)));
+}
+
+.delpi-ui-floating-notice__close {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.6)));
+  cursor: pointer;
+}
+
+.delpi-ui-floating-notice__close:hover {
+  background: color-mix(in srgb, var(--delpi-ui-text, #111) 8%, transparent);
+  color: var(--delpi-ui-text, #111111);
+}
+
+.delpi-ui-floating-notice--error {
+  border-left-color: var(--delpi-ui-danger, #b42318);
+}
+
+.delpi-ui-floating-notice--error .delpi-ui-floating-notice__icon {
+  color: var(--delpi-ui-danger, #b42318);
+}
+
+.delpi-ui-floating-notice--warning {
+  border-left-color: var(--warning, #b54708);
+}
+
+.delpi-ui-floating-notice--warning .delpi-ui-floating-notice__icon {
+  color: var(--warning, #b54708);
+}
+
+.delpi-ui-floating-notice--success {
+  border-left-color: var(--success, #12b76a);
+}
+
+.delpi-ui-floating-notice--success .delpi-ui-floating-notice__icon {
+  color: var(--success, #12b76a);
+}
+
+.delpi-ui-floating-notice--info {
+  border-left-color: var(--delpi-ui-accent, #2563eb);
+}
+
+.delpi-ui-floating-notice--info .delpi-ui-floating-notice__icon {
+  color: var(--delpi-ui-accent, #2563eb);
+}

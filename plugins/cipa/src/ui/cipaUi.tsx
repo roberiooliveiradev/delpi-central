@@ -8,6 +8,7 @@ import {
   createDashboardPageHeader,
   createDashboardSectionCard,
   createDashboardStateBanner,
+  createFloatingNoticeStack,
   createStateBoxPanel,
   createTimeline,
   emptyStateCardBemClasses,
@@ -64,6 +65,41 @@ export const CipaFilterSelectField = cipaFiltersKit.FilterSelectField;
 export const CipaStateBanner = createDashboardStateBanner({
   classNames: stateBannerBemClasses(PREFIX),
 });
+
+export const CipaFloatingNotices = createFloatingNoticeStack({
+  prefix: PREFIX,
+  portalScopeClassName: "dashboard-cipa",
+});
+
+/** Cards flutuantes para erro/sucesso correntes da página (dismiss limpa o estado). */
+export function CipaPageNotices({
+  error,
+  success,
+  onDismissError,
+  onDismissSuccess,
+}: {
+  error?: string | null;
+  success?: string | null;
+  onDismissError?: () => void;
+  onDismissSuccess?: () => void;
+}) {
+  return (
+    <CipaFloatingNotices
+      items={[
+        ...(error
+          ? [{ id: "page-error", message: error, variant: "error" as const }]
+          : []),
+        ...(success
+          ? [{ id: "page-success", message: success, variant: "success" as const }]
+          : []),
+      ]}
+      onDismiss={(id) => {
+        if (id === "page-error") onDismissError?.();
+        else onDismissSuccess?.();
+      }}
+    />
+  );
+}
 
 export const CipaEmptyState = createDashboardEmptyState({
   classNames: emptyStateCardBemClasses(PREFIX),

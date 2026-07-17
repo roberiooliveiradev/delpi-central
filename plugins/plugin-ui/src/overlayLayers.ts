@@ -9,6 +9,8 @@ export const DELPI_UI_OVERLAY_Z_INDEX = {
   modal: 10400,
   /** FormSelect, menus ancorados — acima de `.td-modal` / ModalShell. */
   anchoredPanel: 10500,
+  /** Cards flutuantes de erro/aviso (FloatingNoticeStack) — acima de modais. */
+  floatingNotice: 10800,
   helpTooltip: 11000,
   /** KeyTips (atalhos Alt / letras F) — acima de HelpTooltip. */
   keyTip: 11100,

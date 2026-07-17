@@ -44,6 +44,7 @@ import {
 import { buildMinuteHistoryTimelineItems } from "../utils/minuteHistoryTimelineView";
 import {
   CipaContentCard,
+  CipaPageNotices,
   CipaFilterInputField,
   CipaFiltersRow,
   CipaFilterSelectField,
@@ -480,7 +481,7 @@ function MinuteListPage({
           />
         </CipaFiltersRow>
 
-        {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
+        <CipaPageNotices error={error} onDismissError={() => setError(null)} />
 
         {!error && !loading && items.length === 0 ? (
           <CipaStateBox
@@ -672,7 +673,7 @@ function MinuteDetailPage({
         }
       />
 
-      {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
+      <CipaPageNotices error={error} onDismissError={() => setError(null)} />
 
       <CipaConfirmModal
         open={deleteOpen}

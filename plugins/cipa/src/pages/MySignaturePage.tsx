@@ -20,6 +20,7 @@ import {
   CipaFormActions,
   CipaLoadingState,
   CipaPageHeader,
+  CipaPageNotices,
   CipaSectionCard,
   CipaStateBanner,
 } from "../ui/cipaUi";
@@ -135,8 +136,12 @@ export function MySignaturePage() {
         subtitle="Configure o nome e o traço que serão reutilizados ao assinar atas. Cada usuário acessa apenas o próprio perfil."
       />
 
-      {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
-      {success ? <CipaStateBanner variant="success">{success}</CipaStateBanner> : null}
+      <CipaPageNotices
+        error={error}
+        success={success}
+        onDismissError={() => setError(null)}
+        onDismissSuccess={() => setSuccess(null)}
+      />
 
       <CipaSectionCard title="Nome para assinatura">
         <div className="cipa-field">

@@ -29,6 +29,7 @@ import {
   CipaFormActions,
   CipaLoadingState,
   CipaPageHeader,
+  CipaPageNotices,
   CipaSectionCard,
   CipaStateBanner,
   CipaStateBox,
@@ -252,8 +253,12 @@ export function CipaMembersPage({ unitCode }: Props) {
         }
       />
 
-      {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
-      {success ? <CipaStateBanner>{success}</CipaStateBanner> : null}
+      <CipaPageNotices
+        error={error}
+        success={success}
+        onDismissError={() => setError(null)}
+        onDismissSuccess={() => setSuccess(null)}
+      />
 
       <CipaSectionCard
         title={editing ? "Editar membro" : "Incluir membro"}

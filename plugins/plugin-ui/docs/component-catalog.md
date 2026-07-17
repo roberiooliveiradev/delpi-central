@@ -462,6 +462,19 @@ Campos nativos label+controle para plugins que estilizam `<input>`/`<select>`/`<
 
 Feedback inline (`createDashboardStateBanner`) e cabeçalho de página com slots (`createDashboardPageHeader` — variantes brand/compact documentadas no código).
 
+### `FloatingNoticeStack` (`createFloatingNoticeStack`)
+
+Pilha flutuante de cards de erro/aviso/sucesso/info no canto superior direito (portal no `document.body`, tema via `useDelpiUiPortalTheme`). Controlado: o chamador mantém `items` e remove no `onDismiss`; erro/aviso persistem até fechar, sucesso/info fecham sozinhos (`autoDismissMs`).
+
+| Export | Descrição |
+|--------|-----------|
+| `FloatingNoticeStack` | Componente controlado (`items`, `onDismiss`, `defaultAutoDismissMs`) |
+| `useFloatingNotices` | Controlador `push` / `dismiss` / `clear` com ids gerados |
+| `createFloatingNoticeStack({ prefix, portalScopeClassName })` | Fábrica com classes BEM + escopo CSS do MFE |
+| `floatingNoticeStackBemClasses(prefix)` | Classes `{prefix}-floating-notice*` + `delpi-ui-floating-notice*` |
+
+CSS: `styles/floating-notice.css`. Z-index: `DELPI_UI_OVERLAY_Z_INDEX.floatingNotice`. Uso de referência: `CipaPageNotices` em `plugins/cipa/src/ui/cipaUi.tsx`.
+
 ### `ChartToolbar` + `ChartGranularityToggle`
 
 Barra de gráfico com toggle de agrupamento (segment), export CSV opcional e slots `extra` / `exportActions`.

@@ -32,6 +32,7 @@ import {
   CipaContentCard,
   CipaFormActions,
   CipaPageHeader,
+  CipaPageNotices,
   CipaSectionCard,
   CipaStateBanner,
 } from "../ui/cipaUi";
@@ -293,9 +294,7 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
         }
       />
 
-      {error ? (
-        <CipaStateBanner variant="error">{error}</CipaStateBanner>
-      ) : null}
+      <CipaPageNotices error={error} onDismissError={() => setError(null)} />
 
       {statusRequiresNewVersion(minuteStatus) ? (
         <CipaStateBanner>

@@ -25,8 +25,8 @@ import { navigateCipa } from "../hooks/useCipaRouterPath";
 import {
   CipaFormActions,
   CipaPageHeader,
+  CipaPageNotices,
   CipaSectionCard,
-  CipaStateBanner,
 } from "../ui/cipaUi";
 
 type Props = {
@@ -174,7 +174,7 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
         subtitle={`${UNIT_LABELS[unitCode]} · ${String(minute.minute_number || "")} — ${String(minute.title || "")}`}
       />
 
-      {error ? <CipaStateBanner variant="error">{error}</CipaStateBanner> : null}
+      <CipaPageNotices error={error} onDismissError={() => setError(null)} />
 
       {context ? <MinuteDocumentView detail={documentDetail} /> : null}
 

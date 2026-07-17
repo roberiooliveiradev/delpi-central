@@ -71,6 +71,19 @@ export {
   type InfoStatePanelProps,
 } from "./InfoStatePanel";
 export {
+  FloatingNoticeStack,
+  createFloatingNoticeStack,
+  floatingNoticeStackBemClasses,
+  useFloatingNotices,
+  type DashboardFloatingNoticeStackProps,
+  type FloatingNoticeInput,
+  type FloatingNoticeItem,
+  type FloatingNoticeStackClassNames,
+  type FloatingNoticeStackLabels,
+  type FloatingNoticeStackProps,
+  type FloatingNoticeVariant,
+} from "./FloatingNoticeStack";
+export {
   StateBanner,
   createDashboardStateBanner,
   stateBannerBemClasses,
