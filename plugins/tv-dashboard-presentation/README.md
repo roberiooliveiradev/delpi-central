@@ -109,7 +109,9 @@ cd plugins/tv-dashboard-presentation
 npm test
 ```
 
-Cobertura: `usePresentationEngine`, comunicado v4, `ConfigurableSeriesChart`, `chartElementCatalog`, enrichment fixtures.
+Cobertura: `usePresentationEngine`, comunicado v4, `ConfigurableSeriesChart`, `chartElementCatalog`, enrichment fixtures e paridade da IR legada com o executor Python por meio de `fixtures/tv-dashboard/m-query/v1-operations.json`.
+
+O executor TypeScript de transformação existe apenas como espelho de compatibilidade/teste. O plano [M DELPI](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) mantém compilação e execução de produção exclusivamente no backend; a Fase 0 não adiciona runtime M ao pacote.
 
 ---
 

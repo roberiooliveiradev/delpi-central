@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "profile": "m-delpi-v1",
+  "purpose": "Corpus de projeto para o futuro compilador. Nesta fase os casos não são analisados nem executados.",
+  "valid": [
+    {
+      "id": "unicode-quoted-identifiers",
+      "tags": ["unicode", "quoted-identifier"],
+      "script": "let\n    #\"Coluna São Paulo\" = Table.RenameColumns(Fonte, {{\"codigo\", \"Código peça\"}})\nin\n    #\"Coluna São Paulo\""
+    },
+    {
+      "id": "line-and-block-comments",
+      "tags": ["comments"],
+      "script": "let\n    // mantém apenas registros válidos\n    Filtrado = Table.SelectRows(Fonte, each [valor] <> null),\n    /* ordenação determinística */\n    Ordenado = Table.Sort(Filtrado, {{\"valor\", Order.Descending}})\nin\n    Ordenado"
+    },
+    {
+      "id": "all-v1-table-families",
+      "tags": ["v1-functions"],
+      "script": "let\n    Renomeado = Table.RenameColumns(Fonte, {{\"a\", \"produto\"}}),\n    Selecionado = Table.SelectColumns(Renomeado, {\"produto\", \"valor\"}),\n    Filtrado = Table.SelectRows(Selecionado, each [valor] > 0),\n    Adicionado = Table.AddColumn(Filtrado, \"dobro\", each [valor] * 2, type number),\n    Substituído = Table.ReplaceValue(Adicionado, \"x\", \"y\", Replacer.ReplaceText, {\"produto\"}),\n    Ordenado = Table.Sort(Substituído, {{\"valor\", Order.Ascending}}),\n    Mantido = Table.FirstN(Ordenado, 10),\n    Pulado = Table.Skip(Mantido, 1),\n    Tipado = Table.TransformColumnTypes(Pulado, {{\"valor\", type number}}, \"pt-BR\"),\n    Preenchido = Table.FillDown(Tipado, {\"produto\"})\nin\n    Preenchido"
+    },
+    {
+      "id": "group-pivot-unpivot",
+      "tags": ["aggregate", "reshape"],
+      "script": "let\n    Agrupado = Table.Group(Fonte, {\"filial\"}, {{\"total\", each List.Sum([valor]), type number}}),\n    Pivotado = Table.Pivot(Agrupado, List.Distinct(Agrupado[filial]), \"filial\", \"total\", List.Sum),\n    Despivotado = Table.Unpivot(Pivotado, {\"01\", \"02\"}, \"filial\", \"total\")\nin\n    Despivotado"
+    },
+    {
+      "id": "merge-controlled",
+      "tags": ["merge", "query-reference"],
+      "script": "let\n    Mesclado = Table.NestedJoin(Fonte, {\"produto\"}, #\"Cadastro produtos\", {\"sku\"}, \"cadastro\", JoinKind.LeftOuter),\n    Expandido = Table.ExpandTableColumn(Mesclado, \"cadastro\", {\"descrição\"}, {\"descrição\"})\nin\n    Expandido"
+    }
+  ],
+  "invalid": [
+    {
+      "id": "syntax-missing-in",
+      "expectedCode": "m.syntax_error",
+      "tags": ["syntax"],
+      "script": "let Resultado = Table.FirstN(Fonte, 10)"
+    },
+    {
+      "id": "duplicate-step",
+      "expectedCode": "m.duplicate_binding",
+      "tags": ["semantic"],
+      "script": "let Etapa = Fonte, Etapa = Table.FirstN(Fonte, 1) in Etapa"
+    },
+    {
+      "id": "unknown-reference",
+      "expectedCode": "m.unknown_identifier",
+      "tags": ["semantic"],
+      "script": "let Resultado = Table.FirstN(Inexistente, 1) in Resultado"
+    },
+    {
+      "id": "web-contents",
+      "expectedCode": "m.function_not_allowed",
+      "tags": ["forbidden", "io"],
+      "script": "let Resultado = Web.Contents(\"https://example.invalid\") in Resultado"
+    },
+    {
+      "id": "file-contents",
+      "expectedCode": "m.function_not_allowed",
+      "tags": ["forbidden", "io"],
+      "script": "let Resultado = File.Contents(\"/etc/passwd\") in Resultado"
+    },
+    {
+      "id": "sql-database",
+      "expectedCode": "m.function_not_allowed",
+      "tags": ["forbidden", "database"],
+      "script": "let Resultado = Sql.Database(\"host\", \"db\") in Resultado"
+    },
+    {
+      "id": "native-query",
+      "expectedCode": "m.function_not_allowed",
+      "tags": ["forbidden", "database"],
+      "script": "let Resultado = Value.NativeQuery(Fonte, \"DROP TABLE x\") in Resultado"
+    },
+    {
+      "id": "expression-evaluate",
+      "expectedCode": "m.function_not_allowed",
+      "tags": ["forbidden", "dynamic-evaluation"],
+      "script": "let Resultado = Expression.Evaluate(\"1 + 1\") in Resultado"
+    },
+    {
+      "id": "shared-environment",
+      "expectedCode": "m.identifier_not_allowed",
+      "tags": ["forbidden", "reflection"],
+      "script": "let Resultado = #shared in Resultado"
+    },
+    {
+      "id": "user-function-recursion",
+      "expectedCode": "m.user_function_not_allowed",
+      "tags": ["forbidden", "recursion"],
+      "script": "let F = (n) => if n = 0 then 0 else F(n - 1), Resultado = F(100) in Resultado"
+    },
+    {
+      "id": "adversarial-deep-expression",
+      "expectedCode": "m.limit_expression_depth",
+      "tags": ["adversarial", "depth"],
+      "script": "let Resultado = Table.AddColumn(Fonte, \"x\", each (((((((((((((((((((((((((((((((((((((((([valor] + 1))))))))))))))))))))))))))))))))))))))))) in Resultado"
+    },
+    {
+      "id": "adversarial-comment-boundary",
+      "expectedCode": "m.syntax_error",
+      "tags": ["adversarial", "comments"],
+      "script": "let /* comentário sem fechamento Resultado = Fonte in Resultado"
+    },
+    {
+      "id": "adversarial-homoglyph-function",
+      "expectedCode": "m.function_not_allowed",
+      "tags": ["adversarial", "unicode"],
+      "script": "let Resultado = Wеb.Contents(\"https://example.invalid\") in Resultado"
+    },
+    {
+      "id": "adversarial-oversized-token",
+      "expectedCode": "m.limit_script_bytes",
+      "tags": ["adversarial", "size"],
+      "generator": {"kind": "repeat", "prefix": "let Resultado = \"", "token": "á", "count": 70000, "suffix": "\" in Resultado"}
+    }
+  ]
+}

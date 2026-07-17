@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.5+ em produção (jul/2026) — editor deck + Onda 4A–4O + **dois escopos** global/parte no palco (§19.19)
-> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18 · **Gráfico/KPI/tabela compostos:** §19 (Onda 4G+) · **Escopos de seleção:** §19.19
+> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fase 0 concluída; M desativado**) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -127,7 +127,7 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 
 | Peça | Onde |
 |---|---|
-| Catálogo de rotas | `GET /data/routes` — **206** operações GET sincronizadas com OpenAPI (`scripts/generate_tv_data_routes_from_openapi.py`) |
+| Catálogo de rotas | `GET /data/routes` — **232** operações GET sincronizadas com OpenAPI (`scripts/generate_tv_data_routes_from_openapi.py`) |
 | Painel **Dados** | `DataRoutesSidePanel` + `DataRouteCatalogPanel` (`@delpi/plugin-ui`) |
 | Enrichment | `ComunicadoDataEnrichmentService` — resolve `data_source`; vincula `chart_view` / `table_view` |
 | Gráfico configurável | `ConfigurableSeriesChart` + `chartParts` / `chartOptions` (título, legenda, eixos, grade, tabela, marcadores) |
@@ -234,6 +234,9 @@ com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serv
 ## Referências
 
 - [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md)
+- [PLAYBOOK-POWER-QUERY-M.md](./PLAYBOOK-POWER-QUERY-M.md)
+- [ADR-M-DELPI-V1.md](./ADR-M-DELPI-V1.md)
+- [FASE-0-BASELINE-M-DELPI.md](./FASE-0-BASELINE-M-DELPI.md)
 - [tv-dashboard-api/README.md](../../../tv-dashboard-api/README.md)
 - [plugins/tv-dashboard/README.md](../../../plugins/tv-dashboard/README.md)
 - [plugins/tv-dashboard-presentation/README.md](../../../plugins/tv-dashboard-presentation/README.md)

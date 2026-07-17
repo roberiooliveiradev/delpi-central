@@ -4,6 +4,8 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
+Power Query M: a [Fase 0](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-0-BASELINE-M-DELPI.md) apenas congelou baseline, ADR, fixtures, corpus e limites. `mQuery.enabled` e todas as flags de rollout permanecem `false`; não existem parser, runtime ou endpoints M.
+
 ---
 
 ## Endpoints
@@ -74,6 +76,8 @@ Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
 python3 scripts/generate_tv_data_routes_from_openapi.py --check   # catálogo = gerador (OpenAPI + overlays)
 python3 scripts/check_tv_data_routes.py --check                  # allowlist ⊆ OpenAPI
 ```
+
+Baseline de 2026-07-16: **232 operationIds GET únicos**. O cache atual usa escopo amplo `user|service`, não identidade/escopo RBAC efetivo; esse risco está caracterizado e será tratado em fase posterior, sem mudança de comportamento na Fase 0.
 
 ### Catálogo a partir do OpenAPI (como o registry do chat)
 

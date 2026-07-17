@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Golden fixtures da IR legada para paridade Python/TypeScript; não define nem executa M.",
+  "operations": [
+    {
+      "name": "rename",
+      "input": {"columns": ["código", "valor"], "rows": [{"código": "A", "valor": 10}]},
+      "legacySteps": [{"op": "rename", "from": "código", "to": "produto"}],
+      "expected": {"columns": ["produto", "valor"], "rows": [{"produto": "A", "valor": 10}]}
+    },
+    {
+      "name": "select",
+      "input": {"columns": ["produto", "valor", "filial"], "rows": [{"produto": "A", "valor": 10, "filial": "01"}]},
+      "legacySteps": [{"op": "select", "columns": ["produto", "valor"]}],
+      "expected": {"columns": ["produto", "valor"], "rows": [{"produto": "A", "valor": 10}]}
+    },
+    {
+      "name": "filter",
+      "input": {"columns": ["produto", "valor"], "rows": [{"produto": "A", "valor": 10}, {"produto": "B", "valor": 20}]},
+      "legacySteps": [{"op": "filter", "column": "valor", "cmp": "gt", "value": 10}],
+      "expected": {"columns": ["produto", "valor"], "rows": [{"produto": "B", "valor": 20}]}
+    },
+    {
+      "name": "addColumn",
+      "input": {"columns": ["real", "meta"], "rows": [{"real": 80, "meta": 85}]},
+      "legacySteps": [{"op": "addColumn", "name": "gap", "expr": "meta - real"}],
+      "expected": {"columns": ["real", "meta", "gap"], "rows": [{"real": 80, "meta": 85, "gap": 5}]}
+    },
+    {
+      "name": "replace",
+      "input": {"columns": ["filial"], "rows": [{"filial": "F-01"}]},
+      "legacySteps": [{"op": "replace", "column": "filial", "find": "F-", "replaceWith": ""}],
+      "expected": {"columns": ["filial"], "rows": [{"filial": "01"}]}
+    },
+    {
+      "name": "sort",
+      "input": {"columns": ["valor"], "rows": [{"valor": 10}, {"valor": 30}, {"valor": 20}]},
+      "legacySteps": [{"op": "sort", "column": "valor", "direction": "desc"}],
+      "expected": {"columns": ["valor"], "rows": [{"valor": 30}, {"valor": 20}, {"valor": 10}]}
+    },
+    {
+      "name": "keepRows",
+      "input": {"columns": ["id"], "rows": [{"id": 1}, {"id": 2}, {"id": 3}]},
+      "legacySteps": [{"op": "keepRows", "count": 2, "from": "bottom"}],
+      "expected": {"columns": ["id"], "rows": [{"id": 2}, {"id": 3}]}
+    },
+    {
+      "name": "removeRows",
+      "input": {"columns": ["id"], "rows": [{"id": 1}, {"id": 2}, {"id": 3}]},
+      "legacySteps": [{"op": "removeRows", "count": 1, "from": "top"}],
+      "expected": {"columns": ["id"], "rows": [{"id": 2}, {"id": 3}]}
+    },
+    {
+      "name": "changeType",
+      "input": {"columns": ["valor"], "rows": [{"valor": "12,5"}, {"valor": null}]},
+      "legacySteps": [{"op": "changeType", "column": "valor", "to": "number"}],
+      "expected": {"columns": ["valor"], "rows": [{"valor": 12.5}, {"valor": null}]}
+    },
+    {
+      "name": "fillDown",
+      "input": {"columns": ["grupo", "valor"], "rows": [{"grupo": "A", "valor": 1}, {"grupo": null, "valor": 2}]},
+      "legacySteps": [{"op": "fillDown", "column": "grupo"}],
+      "expected": {"columns": ["grupo", "valor"], "rows": [{"grupo": "A", "valor": 1}, {"grupo": "A", "valor": 2}]}
+    },
+    {
+      "name": "firstRowAsHeader",
+      "input": {"columns": ["c1", "c2"], "rows": [{"c1": "Código produto", "c2": "Valor R$"}, {"c1": "A", "c2": 10}]},
+      "legacySteps": [{"op": "firstRowAsHeader"}],
+      "expected": {"columns": ["Código_produto", "Valor_R_"], "rows": [{"Código_produto": "A", "Valor_R_": 10}]},
+      "expectedTs": {"columns": ["C_digo_produto", "Valor_R_"], "rows": [{"C_digo_produto": "A", "Valor_R_": 10}]},
+      "knownDrift": "O regex TypeScript sem flag Unicode substitui caracteres acentuados; o Python preserva letras Unicode."
+    },
+    {
+      "name": "groupBy",
+      "input": {"columns": ["filial", "valor"], "rows": [{"filial": "01", "valor": 10}, {"filial": "01", "valor": 20}, {"filial": "02", "valor": 5}]},
+      "legacySteps": [{"op": "groupBy", "keys": ["filial"], "aggregations": [{"column": "valor", "fn": "sum", "as": "total"}]}],
+      "expected": {"columns": ["filial", "total"], "rows": [{"filial": "01", "total": 30}, {"filial": "02", "total": 5}]}
+    },
+    {
+      "name": "pivot",
+      "input": {"columns": ["mês", "filial", "valor"], "rows": [{"mês": "jan", "filial": "01", "valor": 10}, {"mês": "jan", "filial": "02", "valor": 20}]},
+      "legacySteps": [{"op": "pivot", "column": "filial", "valueColumn": "valor", "aggregation": "sum"}],
+      "expected": {"columns": ["mês", "_01", "_02"], "rows": [{"mês": "jan", "_01": 10, "_02": 20}]}
+    },
+    {
+      "name": "unpivot",
+      "input": {"columns": ["mês", "_01", "_02"], "rows": [{"mês": "jan", "_01": 10, "_02": 20}]},
+      "legacySteps": [{"op": "unpivot", "columns": ["_01", "_02"], "nameColumn": "filial", "valueColumn": "valor"}],
+      "expected": {"columns": ["mês", "filial", "valor"], "rows": [{"mês": "jan", "filial": "_01", "valor": 10}, {"mês": "jan", "filial": "_02", "valor": 20}]}
+    },
+    {
+      "name": "merge",
+      "input": {"columns": ["produto", "quantidade"], "rows": [{"produto": "A", "quantidade": 2}, {"produto": "B", "quantidade": 1}]},
+      "legacySteps": [{"op": "merge", "sourceId": "cadastro", "leftKey": "produto", "rightKey": "sku", "join": "left", "columns": ["descrição"]}],
+      "siblingTables": {
+        "cadastro": {"columns": ["sku", "descrição"], "rows": [{"sku": "A", "descrição": "Árvore"}, {"sku": "B", "descrição": "Bomba"}]}
+      },
+      "expected": {"columns": ["produto", "quantidade", "descrição"], "rows": [{"produto": "A", "quantidade": 2, "descrição": "Árvore"}, {"produto": "B", "quantidade": 1, "descrição": "Bomba"}]}
+    }
+  ],
+  "previewByStep": {
+    "input": {"columns": ["produto", "valor", "filial"], "rows": [{"produto": "A", "valor": 10, "filial": "01"}, {"produto": "B", "valor": 20, "filial": "02"}]},
+    "legacySteps": [
+      {"op": "filter", "column": "valor", "cmp": "gt", "value": 10},
+      {"op": "rename", "from": "valor", "to": "total"},
+      {"op": "select", "columns": ["produto", "total"]}
+    ],
+    "expectedStages": [
+      {"columns": ["produto", "valor", "filial"], "rows": [{"produto": "B", "valor": 20, "filial": "02"}]},
+      {"columns": ["produto", "total", "filial"], "rows": [{"produto": "B", "total": 20, "filial": "02"}]},
+      {"columns": ["produto", "total"], "rows": [{"produto": "B", "total": 20}]}
+    ]
+  }
+}

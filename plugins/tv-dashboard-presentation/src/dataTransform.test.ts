@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -9,6 +12,31 @@ import {
   evaluateSafeColumnExpr,
   normalizeDataTransform,
 } from "./dataTransform";
+
+type SharedOperationFixture = {
+  name: string;
+  input: { columns: string[]; rows: Array<Record<string, unknown>> };
+  legacySteps: Parameters<typeof applyDataTransformSteps>[1];
+  siblingTables?: NonNullable<Parameters<typeof applyDataTransformSteps>[2]>["siblingTables"];
+  expected: { columns: string[]; rows: Array<Record<string, unknown>> };
+  expectedTs?: { columns: string[]; rows: Array<Record<string, unknown>> };
+  knownDrift?: string;
+};
+
+function loadSharedFixtures(): {
+  operations: SharedOperationFixture[];
+  previewByStep: {
+    input: SharedOperationFixture["input"];
+    legacySteps: SharedOperationFixture["legacySteps"];
+    expectedStages: SharedOperationFixture["expected"][];
+  };
+} {
+  const fixturePath = resolve(
+    process.cwd(),
+    "../../fixtures/tv-dashboard/m-query/v1-operations.json",
+  );
+  return JSON.parse(readFileSync(fixturePath, "utf8")) as ReturnType<typeof loadSharedFixtures>;
+}
 
 describe("dataTransform", () => {
   const table = {
@@ -197,5 +225,30 @@ describe("dataTransform", () => {
       { campo: "status", valor: "ATIVO" },
       { campo: "owner", valor: "Ops" },
     ]);
+  });
+
+  it("mantém paridade TS com as fixtures v1 e congela drifts conhecidos", () => {
+    const fixture = loadSharedFixtures();
+    expect(fixture.operations.map((item) => item.name)).toHaveLength(15);
+    expect(fixture.operations.filter((item) => item.knownDrift).map((item) => item.name)).toEqual([
+      "firstRowAsHeader",
+    ]);
+
+    for (const item of fixture.operations) {
+      const actual = applyDataTransformSteps(item.input, item.legacySteps, {
+        siblingTables: item.siblingTables,
+      });
+      expect(actual, item.name).toEqual(item.expectedTs ?? item.expected);
+    }
+  });
+
+  it("mantém preview por etapa usando prefixos do mesmo plano legado", () => {
+    const preview = loadSharedFixtures().previewByStep;
+
+    preview.expectedStages.forEach((expected, index) => {
+      expect(applyDataTransformSteps(preview.input, preview.legacySteps.slice(0, index + 1))).toEqual(
+        expected,
+      );
+    });
   });
 });

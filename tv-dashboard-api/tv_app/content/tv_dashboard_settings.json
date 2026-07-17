@@ -17,6 +17,24 @@
   "nativeDataCache": {
     "ttlSeconds": 120
   },
+  "mQuery": {
+    "enabled": false,
+    "writeV2Enabled": false,
+    "advancedEditorEnabled": false,
+    "profilingEnabled": false,
+    "profile": "m-delpi-v1",
+    "defaultCulture": "pt-BR",
+    "maxScriptBytes": 65536,
+    "maxSteps": 100,
+    "maxAstNodes": 5000,
+    "maxExpressionDepth": 40,
+    "maxPreviewRows": 200,
+    "maxPreviewColumns": 200,
+    "maxPreviewCells": 40000,
+    "maxJoinInputRows": 5000,
+    "executionTimeoutMs": 2000,
+    "diagnosticSampleLimit": 20
+  },
   "tableIncrementalPageSize": 30,
   "comunicadoDataBlocks": {
     "maxPerSlide": 6
