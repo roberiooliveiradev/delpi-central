@@ -236,7 +236,7 @@ export function DataPrepareRibbon({
   };
 
   return (
-    <div className="td-data-pq__ribbon" role="toolbar" aria-label="Transformações" title={H.ribbon}>
+    <div className="td-data-pq__ribbon" role="toolbar" aria-label="Transformações">
       <div className="td-data-pq__ribbon-tabs">
           {(
             [

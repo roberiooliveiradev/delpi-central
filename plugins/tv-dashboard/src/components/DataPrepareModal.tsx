@@ -386,7 +386,6 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
       ) : (
         <div
           className="td-data-pq"
-          title={H.modal}
           onClick={() => setCtxMenu(null)}
           onContextMenu={(event) => {
             // Evita menu nativo no workspace; menus específicos usam stopPropagation.
@@ -490,7 +489,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
                 onCommit={commitFormulaStep}
                 onCancelDraft={() => setNewColumnDraft(false)}
               />
-              <div className="td-data-pq__grid-wrap" title={H.grid}>
+              <div className="td-data-pq__grid-wrap">
                 {!active ? (
                   <p className="td-deck-inspector__hint">
                     Nenhuma consulta selecionada. Clique numa consulta à esquerda.
