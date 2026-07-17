@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type {
   DataQueryCompileResult,
   DataQueryDraft,
+  DataQueryPreview,
 } from "../domain/dataQueryTypes";
 import {
   dataQueryDraftReducer,
@@ -42,6 +43,28 @@ function draft(sourceId: string, dirty = true): DataQueryDraft {
     queryNameDirty: false,
     undoStack: [],
     redoStack: [],
+  };
+}
+
+function preview(value: number): DataQueryPreview {
+  return {
+    columns: [
+      {
+        key: "value",
+        label: "Valor",
+        type: "number",
+        nullable: false,
+        typeSource: "declared",
+      },
+    ],
+    rows: [{ value }],
+    returnedRows: 1,
+    availableRows: 1,
+    truncated: false,
+    isSample: false,
+    selectedStepName: "Fonte",
+    diagnostics: [],
+    runtimeErrors: { count: 0, sample: [] },
   };
 }
 
@@ -110,7 +133,14 @@ describe("workbench M transacional", () => {
       ...INITIAL_WORKBENCH_STATE,
       activeQueryId: "q",
       draftByQueryId: { q: draft("q", false) },
-      compile: { status: "loading" as const, value: null, error: null, sequence: 2 },
+      compile: {
+        status: "loading" as const,
+        value: null,
+        error: null,
+        sequence: 2,
+        queryId: "q",
+        updatedAt: null,
+      },
     };
     const stale = dataQueryDraftReducer(initial, {
       type: "compiled",
@@ -144,5 +174,54 @@ describe("workbench M transacional", () => {
     expect(undone.draftByQueryId.q?.script).toBe(initial.draftByQueryId.q?.script);
     expect(redone.draftByQueryId.q?.script).toContain("Table.Skip(Fonte, 1)");
     expect(edited.draftByQueryId.q?.dirty).toBe(true);
+  });
+
+  it("preserva a prévia durante refresh da mesma consulta", () => {
+    const existing = preview(42);
+    const state = {
+      ...INITIAL_WORKBENCH_STATE,
+      activeQueryId: "q",
+      preview: {
+        status: "success" as const,
+        value: existing,
+        error: null,
+        sequence: 1,
+        queryId: "q",
+        updatedAt: 100,
+      },
+    };
+    const loading = dataQueryDraftReducer(state, {
+      type: "request",
+      kind: "preview",
+      queryId: "q",
+      sequence: 2,
+    });
+    expect(loading.preview.value).toBe(existing);
+    expect(loading.preview.updatedAt).toBe(100);
+  });
+
+  it("não mostra dados da consulta anterior durante troca", () => {
+    const state = {
+      ...INITIAL_WORKBENCH_STATE,
+      activeQueryId: "a",
+      preview: {
+        status: "success" as const,
+        value: preview(1),
+        error: null,
+        sequence: 1,
+        queryId: "a",
+        updatedAt: 100,
+      },
+    };
+    const selected = dataQueryDraftReducer(state, {
+      type: "select_query",
+      queryId: "b",
+    });
+    expect(selected.preview).toMatchObject({
+      status: "idle",
+      value: null,
+      queryId: "b",
+      updatedAt: null,
+    });
   });
 });

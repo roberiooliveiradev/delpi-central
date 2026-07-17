@@ -22,6 +22,7 @@ import {
   dataQueryDraftReducer,
   INITIAL_WORKBENCH_STATE,
 } from "./dataQueryDraftReducer";
+import { reconcileSelectedStepName } from "./dataQuerySelection";
 import { applyDataQueryDraftsAtomically } from "./dataQueryTransaction";
 
 function queryName(query: ComunicadoDataSourceBlock): string {
@@ -180,15 +181,25 @@ export function useDataQueryWorkbench({
   }, []);
 
   const preview = useCallback(
-    async (queryId: string, forceRefresh = false) => {
+    async (
+      queryId: string,
+      forceRefresh = false,
+      scriptOverride?: string,
+      targetStepNameOverride?: string | null,
+    ) => {
       const draft = stateRef.current.draftByQueryId[queryId];
       const query = queries.find((item) => item.id === queryId);
-      if (!draft || !query || !draft.script) return;
+      const script = scriptOverride ?? draft?.script;
+      if (!draft || !query || !script) return;
+      const targetStepName =
+        (targetStepNameOverride !== undefined
+          ? targetStepNameOverride
+          : draft.selectedStepName) ?? "Fonte";
       previewController.current?.abort();
       const controller = new AbortController();
       previewController.current = controller;
       const sequence = ++previewSequence.current;
-      dispatch({ type: "request", kind: "preview", sequence });
+      dispatch({ type: "request", kind: "preview", queryId, sequence });
       try {
         const { resolved: _resolved, ...block } = query;
         const result = await api.preview(
@@ -198,24 +209,31 @@ export function useDataQueryWorkbench({
               dataTransform: {
                 version: 2,
                 language: "m-delpi-v1",
-                script: draft.script,
+                script,
               },
             },
             nativeConfig: nativeConfigWithDrafts(),
             playlistId,
-            targetStepName: draft.selectedStepName ?? "Fonte",
+            targetStepName,
             forceRefresh,
             includeColumnProfile: profilingRequestedRef.current,
             deadlineMs: 3000,
           },
           controller.signal,
         );
-        dispatch({ type: "previewed", sequence, result });
+        dispatch({
+          type: "previewed",
+          queryId,
+          sequence,
+          completedAt: Date.now(),
+          result,
+        });
       } catch (error) {
         if (controller.signal.aborted) return;
         dispatch({
           type: "failed",
           kind: "preview",
+          queryId,
           sequence,
           error: error instanceof Error ? error.message : "Falha ao carregar prévia.",
         });
@@ -232,7 +250,7 @@ export function useDataQueryWorkbench({
       const controller = new AbortController();
       compileController.current = controller;
       const sequence = ++compileSequence.current;
-      dispatch({ type: "request", kind: "compile", sequence });
+      dispatch({ type: "request", kind: "compile", queryId, sequence });
       try {
         const result = draft.script
           ? await api.compile(compileInput(draft.script, draft.selectedStepName), controller.signal)
@@ -242,13 +260,23 @@ export function useDataQueryWorkbench({
               controller.signal,
             );
         dispatch({ type: "compiled", queryId, sequence, result, dirty });
-        window.setTimeout(() => void preview(queryId), 0);
+        const nextStepName = reconcileSelectedStepName(
+          draft.selectedStepName,
+          result.steps,
+        );
+        await preview(
+          queryId,
+          false,
+          result.canonicalScript ?? draft.script,
+          nextStepName,
+        );
         return result;
       } catch (error) {
         if (controller.signal.aborted) return null;
         dispatch({
           type: "failed",
           kind: "compile",
+          queryId,
           sequence,
           error: error instanceof Error ? error.message : "Falha ao compilar consulta.",
         });
@@ -269,7 +297,12 @@ export function useDataQueryWorkbench({
       const controller = new AbortController();
       compileController.current = controller;
       const sequence = ++compileSequence.current;
-      dispatch({ type: "request", kind: "compile", sequence });
+      dispatch({
+        type: "request",
+        kind: "compile",
+        queryId: draft.sourceId,
+        sequence,
+      });
       try {
         const result = await api.compile(
           compileInput(script, draft.selectedStepName),
@@ -282,13 +315,23 @@ export function useDataQueryWorkbench({
           result,
           dirty: true,
         });
-        window.setTimeout(() => void preview(draft.sourceId), 0);
+        const nextStepName = reconcileSelectedStepName(
+          draft.selectedStepName,
+          result.steps,
+        );
+        await preview(
+          draft.sourceId,
+          false,
+          result.canonicalScript ?? script,
+          nextStepName,
+        );
         return result;
       } catch (error) {
         if (controller.signal.aborted) return null;
         dispatch({
           type: "failed",
           kind: "compile",
+          queryId: draft.sourceId,
           sequence,
           error: error instanceof Error ? error.message : "Falha ao compilar consulta.",
         });
@@ -304,6 +347,13 @@ export function useDataQueryWorkbench({
     if (!draft || draft.compiled) return;
     void compileOrConvert(draft.sourceId);
   }, [compileOrConvert, open, state.activeQueryId, state.draftByQueryId]);
+
+  useEffect(() => {
+    if (!open || !state.activeQueryId) return;
+    const draft = state.draftByQueryId[state.activeQueryId];
+    if (!draft?.compiled || state.preview.status !== "idle") return;
+    void preview(state.activeQueryId);
+  }, [open, preview, state.activeQueryId, state.draftByQueryId, state.preview.status]);
 
   const mutate = useCallback(
     async (action: DataQueryMutationAction) => {
@@ -321,7 +371,12 @@ export function useDataQueryWorkbench({
       const controller = new AbortController();
       compileController.current = controller;
       const sequence = ++compileSequence.current;
-      dispatch({ type: "request", kind: "compile", sequence });
+      dispatch({
+        type: "request",
+        kind: "compile",
+        queryId: draft.sourceId,
+        sequence,
+      });
       try {
         const result = await api.mutate(
           {
@@ -337,12 +392,22 @@ export function useDataQueryWorkbench({
           result,
           dirty: true,
         });
-        window.setTimeout(() => void preview(draft.sourceId), 0);
+        const nextStepName = reconcileSelectedStepName(
+          draft.selectedStepName,
+          result.steps,
+        );
+        await preview(
+          draft.sourceId,
+          false,
+          result.canonicalScript ?? script,
+          nextStepName,
+        );
       } catch (error) {
         if (controller.signal.aborted) return;
         dispatch({
           type: "failed",
           kind: "compile",
+          queryId: draft.sourceId,
           sequence,
           error: error instanceof Error ? error.message : "Falha ao alterar consulta.",
         });
@@ -368,7 +433,12 @@ export function useDataQueryWorkbench({
       const controller = new AbortController();
       compileController.current = controller;
       const sequence = ++compileSequence.current;
-      dispatch({ type: "request", kind: "compile", sequence });
+      dispatch({
+        type: "request",
+        kind: "compile",
+        queryId: active.sourceId,
+        sequence,
+      });
       const bindings = currentQueryBindings().map((item) =>
         item.sourceId === active.sourceId ? { ...item, name: normalized } : item,
       );
@@ -417,6 +487,7 @@ export function useDataQueryWorkbench({
         dispatch({
           type: "failed",
           kind: "compile",
+          queryId: active.sourceId,
           sequence,
           error: error instanceof Error ? error.message : "Falha ao renomear consulta.",
         });
@@ -446,7 +517,7 @@ export function useDataQueryWorkbench({
     (stepName: string | null) => {
       dispatch({ type: "select_step", stepName });
       const queryId = stateRef.current.activeQueryId;
-      if (queryId) window.setTimeout(() => void preview(queryId), 0);
+      if (queryId) void preview(queryId, false, undefined, stepName);
     },
     [preview],
   );
@@ -469,7 +540,7 @@ export function useDataQueryWorkbench({
       profilingRequestedRef.current = enabled;
       setProfilingRequested(enabled);
       const queryId = stateRef.current.activeQueryId;
-      if (queryId) window.setTimeout(() => void preview(queryId, true), 0);
+      if (queryId) void preview(queryId, true);
     },
   };
 }

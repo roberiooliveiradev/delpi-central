@@ -25,6 +25,7 @@ import { DataPreparePreviewGrid } from "./DataPreparePreviewGrid";
 import { DataPrepareQualityPanel } from "./DataPrepareQualityPanel";
 import { DataPrepareQueryList } from "./DataPrepareQueryList";
 import { DataPrepareRibbon } from "./DataPrepareRibbon";
+import { resolveDataPrepareStatus } from "./dataPrepareStatus";
 
 export function DataQueryWorkbenchModal({
   open,
@@ -61,6 +62,7 @@ export function DataQueryWorkbenchModal({
     initialSourceId,
   });
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
   const [advancedEditorOpen, setAdvancedEditorOpen] = useState(false);
   const advancedEditorButtonRef = useRef<HTMLButtonElement>(null);
   const functionCatalog = useDataQueryFunctions(advancedEditorOpen && advancedEditorEnabled);
@@ -84,6 +86,7 @@ export function DataQueryWorkbenchModal({
 
   const apply = async () => {
     setApplyError(null);
+    setIsApplying(true);
     try {
       const changedIds = await workbench.apply(updateBlocksAtomically);
       if (changedIds.length > 0) {
@@ -92,6 +95,8 @@ export function DataQueryWorkbenchModal({
       onClose();
     } catch (error) {
       setApplyError(error instanceof Error ? error.message : "Não foi possível aplicar.");
+    } finally {
+      setIsApplying(false);
     }
   };
   const closeAdvancedEditor = () => {
@@ -137,6 +142,20 @@ export function DataQueryWorkbenchModal({
     setColumnMenu(null);
   };
 
+  const footerStatus = resolveDataPrepareStatus({
+    compileStatus: workbench.state.compile.status,
+    compileError: workbench.state.compile.error,
+    previewStatus: workbench.state.preview.status,
+    previewError: workbench.state.preview.error,
+    previewUpdatedAt: workbench.state.preview.updatedAt,
+    hasPreview: Boolean(preview),
+    rowCount: preview?.returnedRows ?? null,
+    runtimeErrorCount: preview?.runtimeErrors.count ?? 0,
+    dirtyCount,
+    isApplying,
+    applyError,
+  });
+
   return (
     <HostContainedModal
       open={open}
@@ -145,23 +164,33 @@ export function DataQueryWorkbenchModal({
       className="td-modal--data-prepare"
       footer={
         <div className="td-data-pq__footer">
-          <span role="status">
-            {dirtyCount > 0 ? `${dirtyCount} consulta(s) alterada(s)` : "Sem alterações"}
-          </span>
-          <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={onClose}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="td-btn td-btn--sm"
-            disabled={
-              workbench.state.compile.status === "loading" ||
-              diagnostics.some((item) => item.severity === "error")
-            }
-            onClick={() => void apply()}
+          <div
+            className={`td-data-pq__footer-status td-data-pq__footer-status--${footerStatus.tone}`}
+            role={footerStatus.tone === "error" ? "alert" : "status"}
           >
-            Fechar e aplicar
-          </button>
+            <span className="td-data-pq__footer-status-dot" aria-hidden />
+            <span className="td-data-pq__footer-status-text">{footerStatus.message}</span>
+            {footerStatus.meta ? (
+              <span className="td-data-pq__footer-status-meta">{footerStatus.meta}</span>
+            ) : null}
+          </div>
+          <div className="td-data-pq__footer-actions">
+            <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={onClose}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              disabled={
+                isApplying ||
+                workbench.state.compile.status === "loading" ||
+                diagnostics.some((item) => item.severity === "error")
+              }
+              onClick={() => void apply()}
+            >
+              {isApplying ? "Aplicando…" : "Fechar e aplicar"}
+            </button>
+          </div>
         </div>
       }
     >
@@ -241,11 +270,6 @@ export function DataQueryWorkbenchModal({
               }
             />
             <DataPrepareDiagnostics diagnostics={diagnostics} />
-            {applyError || workbench.state.preview.error || workbench.state.compile.error ? (
-              <p className="td-deck-inspector__hint" role="alert">
-                {applyError || workbench.state.preview.error || workbench.state.compile.error}
-              </p>
-            ) : null}
             {advancedEditorOpen && draft ? (
               <DataPrepareAdvancedEditor
                 open
@@ -272,7 +296,7 @@ export function DataQueryWorkbenchModal({
               <>
                 <DataPreparePreviewGrid
                   preview={preview}
-                  loading={workbench.state.preview.status === "loading"}
+                  loading={workbench.state.preview.status === "loading" && !preview}
                   compiledSteps={compiled?.steps ?? workbench.state.compile.value?.steps}
                   selectedColumnKey={workbench.state.selectedColumnKey}
                   selection={workbench.state.selection}

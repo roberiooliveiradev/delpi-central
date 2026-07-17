@@ -7141,9 +7141,62 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-data-pq__footer{
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   width: 100%;
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--td-muted);
+  font-size: 12px;
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status-dot{
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status--busy{
+  color: var(--td-primary);
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status--busy .td-data-pq__footer-status-dot{
+  animation: td-data-pq-status-pulse 1.2s ease-in-out infinite;
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status--success{
+  color: var(--td-success, #16835d);
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status--warning{
+  color: var(--td-warning, #b36b00);
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status--error{
+  color: var(--td-danger, #b42318);
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status-text{
+  flex: 0 1 auto;
+  font-weight: 650;
+}
+.dashboard-tv-dashboard .td-data-pq__footer-status-meta{
+  min-width: 0;
+  overflow: hidden;
+  color: var(--td-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-tv-dashboard .td-data-pq__footer-actions{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+@keyframes td-data-pq-status-pulse{
+  0%,
+  100%{ opacity: 0.35; transform: scale(0.85); }
+  50%{ opacity: 1; transform: scale(1); }
 }
 .dashboard-tv-dashboard .td-data-prepare__row{
   display: flex;
@@ -7159,6 +7212,13 @@ body.td-composer--marqueeing *{
   flex: 0 0 auto;
 }
 @media (max-width: 900px){
+  .dashboard-tv-dashboard .td-data-pq__footer{
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .dashboard-tv-dashboard .td-data-pq__footer-actions{
+    justify-content: flex-end;
+  }
   .dashboard-tv-dashboard .td-data-pq__workspace{
     grid-template-columns: 1fr;
     height: auto;

@@ -8,10 +8,19 @@ import type {
 import { reconcileSelectedStepName } from "./dataQuerySelection";
 
 export type AsyncState<T> =
-  | { status: "idle"; value: T | null; error: null; sequence: number }
-  | { status: "loading"; value: T | null; error: null; sequence: number }
-  | { status: "success"; value: T; error: null; sequence: number }
-  | { status: "error"; value: T | null; error: string; sequence: number };
+  | AsyncStateRecord<"idle", T | null, null>
+  | AsyncStateRecord<"loading", T | null, null>
+  | AsyncStateRecord<"success", T, null>
+  | AsyncStateRecord<"error", T | null, string>;
+
+type AsyncStateRecord<Status extends string, Value, Error> = {
+  status: Status;
+  value: Value;
+  error: Error;
+  sequence: number;
+  queryId: string | null;
+  updatedAt: number | null;
+};
 
 export type DataQueryWorkbenchState = {
   activeQueryId: string | null;
@@ -32,7 +41,12 @@ export type DataQueryDraftAction =
   | { type: "undo_script"; queryId: string }
   | { type: "redo_script"; queryId: string }
   | { type: "rename_query"; queryId: string; queryName: string }
-  | { type: "request"; kind: "compile" | "preview"; sequence: number }
+  | {
+      type: "request";
+      kind: "compile" | "preview";
+      queryId: string;
+      sequence: number;
+    }
   | {
       type: "compiled";
       queryId: string;
@@ -40,16 +54,42 @@ export type DataQueryDraftAction =
       result: DataQueryCompileResult;
       dirty: boolean;
     }
-  | { type: "previewed"; sequence: number; result: DataQueryPreview }
-  | { type: "failed"; kind: "compile" | "preview"; sequence: number; error: string };
+  | {
+      type: "previewed";
+      queryId: string;
+      sequence: number;
+      completedAt: number;
+      result: DataQueryPreview;
+    }
+  | {
+      type: "failed";
+      kind: "compile" | "preview";
+      queryId: string;
+      sequence: number;
+      error: string;
+    };
 
 export const INITIAL_WORKBENCH_STATE: DataQueryWorkbenchState = {
   activeQueryId: null,
   draftByQueryId: {},
   selectedColumnKey: null,
   selection: null,
-  compile: { status: "idle", value: null, error: null, sequence: 0 },
-  preview: { status: "idle", value: null, error: null, sequence: 0 },
+  compile: {
+    status: "idle",
+    value: null,
+    error: null,
+    sequence: 0,
+    queryId: null,
+    updatedAt: null,
+  },
+  preview: {
+    status: "idle",
+    value: null,
+    error: null,
+    sequence: 0,
+    queryId: null,
+    updatedAt: null,
+  },
 };
 
 export function dataQueryDraftReducer(
@@ -64,11 +104,22 @@ export function dataQueryDraftReducer(
     };
   }
   if (action.type === "select_query") {
+    const changedQuery = action.queryId !== state.activeQueryId;
     return {
       ...state,
       activeQueryId: action.queryId,
       selectedColumnKey: null,
       selection: null,
+      preview: changedQuery
+        ? {
+            status: "idle",
+            value: null,
+            error: null,
+            sequence: state.preview.sequence,
+            queryId: action.queryId,
+            updatedAt: null,
+          }
+        : state.preview,
     };
   }
   if (action.type === "select_column") {
@@ -148,13 +199,17 @@ export function dataQueryDraftReducer(
       : { ...state, draftByQueryId: { ...state.draftByQueryId, [action.queryId]: next } };
   }
   if (action.type === "request") {
+    const previous = state[action.kind];
+    const sameQuery = previous.queryId === action.queryId;
     return {
       ...state,
       [action.kind]: {
         status: "loading",
-        value: state[action.kind].value,
+        value: sameQuery ? previous.value : null,
         error: null,
         sequence: action.sequence,
+        queryId: action.queryId,
+        updatedAt: sameQuery ? previous.updatedAt : null,
       },
     };
   }
@@ -185,11 +240,19 @@ export function dataQueryDraftReducer(
         value: action.result,
         error: action.result.diagnostics.find((item) => item.severity === "error")?.message ?? null,
         sequence: action.sequence,
+        queryId: action.queryId,
+        updatedAt: Date.now(),
       } as AsyncState<DataQueryCompileResult>,
     };
   }
   if (action.type === "previewed") {
-    if (action.sequence !== state.preview.sequence) return state;
+    if (
+      action.sequence !== state.preview.sequence ||
+      action.queryId !== state.preview.queryId ||
+      action.queryId !== state.activeQueryId
+    ) {
+      return state;
+    }
     return {
       ...state,
       preview: {
@@ -197,10 +260,17 @@ export function dataQueryDraftReducer(
         value: action.result,
         error: null,
         sequence: action.sequence,
+        queryId: action.queryId,
+        updatedAt: action.completedAt,
       },
     };
   }
-  if (action.sequence !== state[action.kind].sequence) return state;
+  if (
+    action.sequence !== state[action.kind].sequence ||
+    action.queryId !== state[action.kind].queryId
+  ) {
+    return state;
+  }
   return {
     ...state,
     [action.kind]: {
@@ -208,6 +278,8 @@ export function dataQueryDraftReducer(
       value: state[action.kind].value,
       error: action.error,
       sequence: action.sequence,
+      queryId: action.queryId,
+      updatedAt: state[action.kind].updatedAt,
     },
   };
 }
