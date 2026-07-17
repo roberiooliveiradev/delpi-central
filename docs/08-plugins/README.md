@@ -76,6 +76,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
 | `plugins/cipa` | `cipa` | microfrontend | plugin | `/apps/cipa` | `delpi-cipa` |
 | `plugins/scrap-monitoring` | `scrap-monitoring` | microfrontend | plugin | `/apps/scrap-monitoring` | `delpi-scrap-monitoring` |
+| `plugins/estoque-seguranca` | `estoque-seguranca` | microfrontend | plugin | `/apps/estoque-seguranca` | `delpi-estoque-seguranca` |
 | `plugins/production-appointments` | `production-appointments` | microfrontend | plugin | `/apps/production-appointments` | `delpi-production-appointments` |
 | `plugins/canal-denuncia` | `canal-denuncia` | microfrontend | plugin | `/apps/canal-denuncia` | `delpi-canal-denuncia` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
@@ -115,6 +116,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | Inspeções de Entrada | `/apps/api-delpi/inspecoes-entrada/*` (TOTVS views) |
 | Inspeções de Processo | `/apps/api-delpi/inspecoes-processo/*` (TOTVS views + auditoria QPR/QP*) |
 | Controle de Retrabalhos | `/apps/api-delpi/retrabalhos/*` (TOTVS view BI RT) |
+| Estoque de Segurança | `/apps/api-delpi/supplies/safety-stock/*` (TOTVS SBZ/SB2/SC7/SD4) — [README](../../plugins/estoque-seguranca/README.md) · [API](../../api-delpi/docs/api/estoque-seguranca.md) |
 | Minha DELPI Chat | `/apps/minha-delpi-ai/api/*` (não é Core API) |
 | Central de Agendamento | `/apps/api-delpi/scheduling/*` |
 | Dashboard DELPI | `/apps/api-delpi/products/*` (consultas produto) |
@@ -167,6 +169,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | inspecoes-processo | `inspecoes-processo` |
 | controle-retrabalhos | `controle-retrabalhos` |
 | scrap-monitoring | `scrap-monitoring` |
+| estoque-seguranca | `estoque-seguranca` |
 | production-appointments | `production-appointments` |
 | canal-denuncia | `canal-denuncia` |
 
@@ -189,6 +192,7 @@ Declaradas no manifesto e persistidas na Core API:
 | inspecoes-processo | `inspecoes-processo.view`, `inspecoes-processo.view.filial-01`, `inspecoes-processo.view.filial-02` |
 | controle-retrabalhos | `controle-retrabalhos.view.filial-sc`, `.view.filial-es`, `.view`, `.access`, `.export` |
 | scrap-monitoring | `scrap-monitoring.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
+| estoque-seguranca | `estoque-seguranca.access`, `.view.filial-sc`, `.view.filial-es` |
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
 | cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage`, `cadastro-kaizen.notify-suggestions` |

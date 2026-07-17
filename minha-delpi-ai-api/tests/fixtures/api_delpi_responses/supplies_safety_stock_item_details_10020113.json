@@ -1,0 +1,201 @@
+{
+  "success": true,
+  "message": "Detalhe de estoque de segurança carregado com sucesso.",
+  "data": {
+    "product": {
+      "product_code": "10020113",
+      "product_description": "CABO PVC 105C 1,00MM2 BN",
+      "product_type": "MP",
+      "unit": "M",
+      "secondary_unit": "",
+      "conversion_factor": null,
+      "conversion_type": "",
+      "product_group": "CAB",
+      "branch": "01",
+      "blocked": false,
+      "status": "below_safety_stock"
+    },
+    "stock": {
+      "safety_stock": 80.0,
+      "available_stock": 100.0,
+      "primary_stock": 90.0,
+      "warehouse_50_stock": 0.0,
+      "warehouse_98_stock": 5.0,
+      "warehouse_99_stock": 5.0,
+      "work_in_process_stock": 10.0,
+      "work_in_process_committed": 0.0,
+      "work_in_process_available": 10.0,
+      "deficit_quantity": 0.0
+    },
+    "purchase_coverage": {
+      "status": "sufficient",
+      "deficit_quantity": 0.0,
+      "eligible_open_quantity": 200.0,
+      "remaining_to_buy": 0.0,
+      "open_order_count": 1,
+      "eligible_order_count": 1,
+      "next_expected_delivery_date": "2026-07-30",
+      "incompatible_unit_order_count": 0,
+      "warnings": []
+    },
+    "open_purchase_orders": {
+      "items": [
+        {
+          "branch": "01",
+          "order_number": "PC200",
+          "order_item": "01",
+          "product_code": "10020113",
+          "product_description": "CABO PVC 105C 1,00MM2 BN",
+          "warehouse": "01",
+          "unit": "M",
+          "ordered_quantity": 200.0,
+          "delivered_quantity": 0.0,
+          "open_quantity": 200.0,
+          "open_quantity_primary_unit": 200.0,
+          "pre_invoice_quantity": 0.0,
+          "issue_date": "2026-07-01",
+          "expected_delivery_date": "2026-07-30",
+          "supplier_code": "F1",
+          "supplier_store": "01",
+          "supplier_name": "Fornecedor",
+          "unit_price": 1.0,
+          "open_value": 200.0,
+          "unit_compatible": true,
+          "unit_conversion_reason": null,
+          "warehouse_eligible": true,
+          "coverage_eligible": true
+        }
+      ],
+      "total": 1
+    },
+    "open_commitments": {
+      "items": [
+        {
+          "branch": "01",
+          "product_code": "10020113",
+          "product_description": "CABO PVC 105C 1,00MM2 BN",
+          "warehouse": "01",
+          "production_order": "OP150",
+          "origin_production_order": "",
+          "commitment_date": "2026-07-20",
+          "unit": "M",
+          "original_quantity": 150.0,
+          "open_quantity": 150.0,
+          "open_quantity_primary_unit": 150.0,
+          "consumed_quantity": 0.0,
+          "lot": "",
+          "commitment_sequence": "001",
+          "preserved_balance": 0.0,
+          "unit_compatible": true,
+          "unit_conversion_reason": null,
+          "warehouse_eligible": true,
+          "projection_eligible": true,
+          "date_status": "scheduled",
+          "date_semantics": "commitment_date"
+        }
+      ],
+      "total": 1,
+      "summary": {
+        "eligible_open_quantity": 150.0,
+        "next_commitment_date": "2026-07-20",
+        "incompatible_unit_commitment_count": 0,
+        "eligible_warehouses": ["01", "98", "99"],
+        "warnings": []
+      }
+    },
+    "stock_projection": {
+      "items": [
+        {
+          "sequence": 1,
+          "event_date": "2026-07-16",
+          "date_status": "today",
+          "date_semantics": "as_of_today",
+          "origin": "initial_balance",
+          "origin_label": "Saldo inicial",
+          "reference": "Saldo disponível (01+98+99)",
+          "warehouse": "",
+          "movement": 100.0,
+          "inflow": 0.0,
+          "outflow": 0.0,
+          "running_balance": 100.0,
+          "unit_compatible": true,
+          "projection_eligible": true
+        },
+        {
+          "sequence": 2,
+          "event_date": "2026-07-20",
+          "date_status": "scheduled",
+          "date_semantics": "commitment_date",
+          "origin": "commitment",
+          "origin_label": "Empenho",
+          "reference": "OP150",
+          "warehouse": "01",
+          "movement": -150.0,
+          "inflow": 0.0,
+          "outflow": 150.0,
+          "running_balance": -50.0,
+          "unit_compatible": true,
+          "projection_eligible": true
+        },
+        {
+          "sequence": 3,
+          "event_date": "2026-07-30",
+          "date_status": "scheduled",
+          "date_semantics": "expected_delivery_date",
+          "origin": "purchase_order",
+          "origin_label": "Pedido de compra",
+          "reference": "PC200/01 - Fornecedor",
+          "warehouse": "01",
+          "movement": 200.0,
+          "inflow": 200.0,
+          "outflow": 0.0,
+          "running_balance": 150.0,
+          "unit_compatible": true,
+          "projection_eligible": true
+        }
+      ],
+      "total": 3,
+      "summary": {
+        "as_of_date": "2026-07-16",
+        "initial_balance": 100.0,
+        "safety_stock": 80.0,
+        "eligible_purchase_quantity": 200.0,
+        "eligible_commitment_quantity": 150.0,
+        "final_projected_balance": 150.0,
+        "final_balance_after_safety": 70.0,
+        "minimum_projected_balance": -50.0,
+        "first_shortage_date": "2026-07-20",
+        "projected_remaining_to_buy": 0.0,
+        "status": "temporary_shortage",
+        "eligible_warehouses": ["01", "98", "99"],
+        "warnings": []
+      }
+    }
+  },
+  "meta": {
+    "dataVersion": "2026-06",
+    "operationId": "get_supplies_safety_stock_item_details",
+    "entity": "supplies_safety_stock_detail",
+    "shape": "composite_analysis",
+    "sections": [
+      {
+        "key": "open_purchase_orders",
+        "label": "Pedidos de compra em aberto",
+        "itemCount": 1,
+        "truncated": false
+      },
+      {
+        "key": "open_commitments",
+        "label": "Empenhos em aberto",
+        "itemCount": 1,
+        "truncated": false
+      },
+      {
+        "key": "stock_projection",
+        "label": "Extrato projetado de saldo",
+        "itemCount": 3,
+        "truncated": false
+      }
+    ]
+  }
+}

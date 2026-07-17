@@ -134,6 +134,12 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 |---|---|---|
 | GET | `/supplies/cpv` | Custo de produto vendido (top fornecedores). |
 | GET | `/supplies/otd` | On-Time Delivery compras. |
+| GET | `/supplies/safety-stock/filters` | Filtros do painel de estoque de segurança. |
+| GET | `/supplies/safety-stock/summary` | Resumo / KPIs de estoque de segurança. |
+| GET | `/supplies/safety-stock/items` | Lista paginada de MPs vs ESTSEG. |
+| GET | `/supplies/safety-stock/items/{code}/details` | Detalhe com SC7, SD4 e extrato projetado (`composite_analysis`). Ver [estoque-seguranca.md](./estoque-seguranca.md). |
+| GET | `/supplies/safety-stock/items/{code}/suppliers` | Fornecedores vinculados (SA5) + última compra (SD1). Ver [estoque-seguranca.md](./estoque-seguranca.md). |
+| GET | `/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history` | Histórico de preço unitário (12 meses) por fornecedor. Ver [estoque-seguranca.md](./estoque-seguranca.md). |
 
 **Performance (`/supplies/otd`):**
 

@@ -30,6 +30,8 @@
 @import "./styles/data-table.css";
 @import "./styles/pagination.css";
 @import "./styles/detail-card.css";
+@import "./styles/drawer.css";
+@import "./styles/modal.css";
 @import "./styles/series-chart.css";
 @import "./styles/configurable-table.css";
 @import "./styles/tree-guides.css";

@@ -181,6 +181,29 @@ def test_schema_driven_metadata_builds_table_for_generic_items():
     assert len(table["rows"]) == 2
 
 
+def test_composite_bundle_for_safety_stock_detail_exposes_commitments_and_timeline():
+    from tests.fixtures.api_delpi_responses_loader import load_api_delpi_fixture_with_meta
+
+    envelope = load_api_delpi_fixture_with_meta(
+        "supplies_safety_stock_item_details_10020113.json"
+    )
+    presenter = ExternalActionResultPresenter()
+    bundle = ChatSchemaDrivenPresentationService.build_composite_bundle(
+        presenter,
+        envelope["data"],
+        path="/supplies/safety-stock/items/10020113/details",
+        entity="supplies_safety_stock_detail",
+        sections=(envelope.get("meta") or {}).get("sections"),
+    )
+
+    tables = list(bundle.tables or ())
+    titles = [str(table.get("title") or "") for table in tables]
+    assert len(tables) >= 3
+    assert "open_commitments" in titles
+    assert "stock_projection" in titles
+    assert "open_purchase_orders" in titles
+
+
 def test_extract_download_artifacts_normalizes_relative_path():
     artifacts = ChatSchemaDrivenPresentationService.extract_download_artifacts(
         {

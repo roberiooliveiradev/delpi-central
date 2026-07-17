@@ -155,6 +155,30 @@
     "entity": "supplies_negotiation_savings",
     "shape": "scalar"
   },
+  "get_supplies_safety_stock_filters": {
+    "entity": "supplies_safety_stock_filters",
+    "shape": "scalar"
+  },
+  "get_supplies_safety_stock_summary": {
+    "entity": "supplies_safety_stock_summary",
+    "shape": "scalar"
+  },
+  "get_supplies_safety_stock_items": {
+    "entity": "supplies_safety_stock_item",
+    "shape": "paged_list"
+  },
+  "get_supplies_safety_stock_item_details": {
+    "entity": "supplies_safety_stock_detail",
+    "shape": "composite_analysis"
+  },
+  "get_supplies_safety_stock_item_suppliers": {
+    "entity": "supplies_safety_stock_supplier",
+    "shape": "list"
+  },
+  "get_supplies_safety_stock_supplier_purchase_price_history": {
+    "entity": "supplies_safety_stock_supplier_price_history",
+    "shape": "playbook_report"
+  },
   "list_lmps": {
     "entity": "lmp",
     "shape": "paged_list"

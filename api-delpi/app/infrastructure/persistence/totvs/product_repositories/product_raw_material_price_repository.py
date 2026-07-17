@@ -192,6 +192,11 @@ class ProductRawMaterialPriceRepository(
         with self as repo:
             return repo.execute_batch_query(sql, tuple(params))
 
+    _DATE_BASIS_COLUMNS = {
+        "issue": "SD1.D1_EMISSAO",
+        "entry": "SD1.D1_DTDIGIT",
+    }
+
     def fetch_purchase_price_history(
         self,
         code: str,
@@ -199,8 +204,24 @@ class ProductRawMaterialPriceRepository(
         date_end_exclusive: str,
         branch: str | None = None,
         limit: int = 24,
+        supplier_code: str | None = None,
+        supplier_store: str | None = None,
+        *,
+        date_basis: str = "issue",
     ) -> list[dict]:
+        date_column = self._DATE_BASIS_COLUMNS.get(date_basis)
+        if date_column is None:
+            raise ValueError("date_basis inválido. Utilize issue ou entry.")
+
+        supplier_code = (supplier_code or "").strip() or None
+        supplier_store = (supplier_store or "").strip() or None
+
         branch_filter = "AND SD1.D1_FILIAL = ?" if branch else ""
+        supplier_code_filter = "AND RTRIM(SD1.D1_FORNECE) = ?" if supplier_code else ""
+        supplier_store_filter = "AND RTRIM(SD1.D1_LOJA) = ?" if supplier_store else ""
+        # Entradas normais são obrigatórias no recorte por fornecedor (estoque de segurança).
+        tipo_filter = "AND SD1.D1_TIPO = 'N'" if supplier_code else ""
+
         params: list = [
             limit,
             code,
@@ -210,6 +231,18 @@ class ProductRawMaterialPriceRepository(
         ]
         if branch:
             params.append(branch)
+        if supplier_code:
+            params.append(supplier_code)
+        if supplier_store:
+            params.append(supplier_store)
+
+        # ORDER BY sem colunas repetidas (SQL Server rejeita duplicatas).
+        order_columns: list[str] = [date_column]
+        for column in ("SD1.D1_EMISSAO", "SD1.D1_DTDIGIT"):
+            if column not in order_columns:
+                order_columns.append(column)
+        order_columns.append("SD1.R_E_C_N_O_")
+        order_by = ",\n            ".join(f"{column} DESC" for column in order_columns)
 
         sql = f"""
         SELECT TOP (?)
@@ -234,14 +267,15 @@ class ProductRawMaterialPriceRepository(
            AND SA2.D_E_L_E_T_ = ''
         WHERE SD1.D_E_L_E_T_ = ''
           AND SD1.D1_COD = ?
-          AND SD1.D1_EMISSAO >= ?
-          AND SD1.D1_EMISSAO < ?
+          AND {date_column} >= ?
+          AND {date_column} < ?
           {PurchaseValidityFilterService.valid_purchase_filter_sql()}
+          {tipo_filter}
           {branch_filter}
+          {supplier_code_filter}
+          {supplier_store_filter}
         ORDER BY
-            SD1.D1_EMISSAO DESC,
-            SD1.D1_DTDIGIT DESC,
-            SD1.D1_DOC DESC
+            {order_by}
         """
         with self as repo:
             return repo.execute_batch_query(sql, tuple(params))

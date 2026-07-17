@@ -50,6 +50,13 @@ def test_scrap_monitoring_branch_maps_use_filial_constants() -> None:
     assert perms.SCRAP_MONITORING_ACCESS in perms.SCRAP_MONITORING_READ_PERMISSIONS
 
 
+def test_safety_stock_permissions_are_stable_strings() -> None:
+    assert perms.SAFETY_STOCK_ACCESS == "estoque-seguranca.access"
+    assert perms.SAFETY_STOCK_BRANCH_VIEW_PERMS["01"] == perms.SAFETY_STOCK_VIEW_FILIAL_SC
+    assert perms.SAFETY_STOCK_BRANCH_VIEW_PERMS["02"] == perms.SAFETY_STOCK_VIEW_FILIAL_ES
+    assert perms.SAFETY_STOCK_ACCESS in perms.SAFETY_STOCK_READ_PERMISSIONS
+
+
 def test_financeiro_centro_custo_permissions_are_stable_strings() -> None:
     assert perms.FINANCEIRO_CENTRO_CUSTO_ACCESS == "financeiro-centro-custo.access"
     assert perms.FINANCEIRO_CENTRO_CUSTO_VIEW == "financeiro-centro-custo.view"

@@ -51,6 +51,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [04-sistema-e-dados.md](./04-sistema-e-dados.md) | Metadados Protheus (SX2/SX3/SIX/SX9) e execução SQL controlada. |
 | [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) | Redirecionamento → API dedicada SI ([doc oficial](../../strategic-indicators-api/docs/README.md)). |
 | [06-modulos-departamentais.md](./06-modulos-departamentais.md) | Financeiro, comercial, produção, suprimentos, engenharia e qualidade (métricas). |
+| [estoque-seguranca.md](./estoque-seguranca.md) | Estoque de segurança — filtros, listagem, detalhe com SC7/SD4 e extrato projetado. |
 | [comercial-taxa-conversao-estagios.md](./comercial-taxa-conversao-estagios.md) | Taxa de conversão: regra `AD1_STATUS`, estágios AC2010, cadastro das 10 OVs em ENCERRADO (mai/2026) e alinhamento comercial. |
 | [financeiro-inadimplencia.md](./financeiro-inadimplencia.md) | Indicador financeiro de inadimplência — resumo, série mensal, faixas, ranking de clientes e títulos. |
 | [10-referencia-rapida-endpoints.md](./10-referencia-rapida-endpoints.md) | Tabela consolidada de todos os endpoints ativos. |

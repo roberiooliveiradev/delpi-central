@@ -167,6 +167,13 @@ PRODUCT_ENTITY_META: dict[str, dict[str, Any]] = {
         "entity": "supplies_cpv",
         "shape": "scalar",
     },
+    "supplies_safety_stock_item_details_10020113.json": {
+        "dataVersion": "2026-06",
+        "operationId": "get_supplies_safety_stock_item_details",
+        "entity": "supplies_safety_stock_detail",
+        "shape": "composite_analysis",
+    },
+
     "data_sql_rows.json": {
         "dataVersion": "2026-06",
         "operationId": "execute_readonly_sql",
