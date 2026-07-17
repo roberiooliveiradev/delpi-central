@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActionButton,
   BackLink,
@@ -44,6 +44,13 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refuseReason, setRefuseReason] = useState("");
+  const signSectionRef = useRef<HTMLDivElement | null>(null);
+
+  // Quem chega pelo botão «Assinar» quer o ponto de assinatura, não o topo da ata.
+  useEffect(() => {
+    if (!context) return;
+    signSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [context]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -171,6 +178,7 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
 
       {context ? <MinuteDocumentView detail={documentDetail} /> : null}
 
+      <div ref={signSectionRef} className="cipa-sign-anchor" />
       <CipaSectionCard title="Confirmar assinatura">
         <div className="cipa-field">
           <FieldLabel label="Nome do signatário" htmlFor="cipa-signer-name" />
