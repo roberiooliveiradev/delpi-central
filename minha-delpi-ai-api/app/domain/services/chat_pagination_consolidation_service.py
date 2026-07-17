@@ -469,6 +469,15 @@ class ChatPaginationConsolidationService:
         cls,
         previous_messages: list[Any] | None,
     ) -> str | None:
+        """Herda formato do turno anterior **apenas** quando foi escolha explícita.
+
+        Decisão automática (`presentationDecision.selected` sem
+        `explicitSessionFormat`) não é preferência do usuário: herdá-la torna o
+        formato pegajoso e transforma seleção automática em modo explícito nos
+        turnos seguintes (ex.: «text» para sempre no Automático). Escolha
+        explícita — pedido na mensagem, toolbar ou formato de sessão — sempre
+        grava `explicitSessionFormat` no metadata do turno.
+        """
         for item in reversed(previous_messages or []):
             metadata = cls._message_metadata(item)
             tool_calls = metadata.get("toolCalls") or []
@@ -478,6 +487,11 @@ class ChatPaginationConsolidationService:
                     continue
 
                 tool_meta = tool_call.get("metadata") or {}
+                explicit = str(tool_meta.get("explicitSessionFormat") or "").strip().lower()
+
+                if not explicit:
+                    continue
+
                 decision = tool_meta.get("presentationDecision")
 
                 if isinstance(decision, dict):
