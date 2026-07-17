@@ -37,6 +37,11 @@ class ChatDataInsightService:
         if not isinstance(metadata, dict) or not isinstance(data, dict):
             return None
 
+        document_commentary = cls._build_document_export_commentary(metadata)
+
+        if document_commentary is not None:
+            return ChatHumanizedDataResponseService.to_data_answer(document_commentary)
+
         if ChatPresentationScalarFieldCommentaryService.matches(metadata, data):
             commentary = ChatPresentationScalarFieldCommentaryService.build(
                 metadata,
@@ -158,6 +163,75 @@ class ChatDataInsightService:
         data_answer: dict[str, Any] | None,
     ) -> dict[str, Any] | None:
         return ChatHumanizedDataResponseService.to_commentary_mirror(data_answer)
+
+    @classmethod
+    def _build_document_export_commentary(
+        cls,
+        metadata: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        """document_export entrega arquivo, não lista — nunca tratar como resultado vazio."""
+
+        if not cls.is_document_export_metadata(metadata):
+            return None
+
+        from app.domain.services.chat_humanized_data_response_content_service import (
+            ChatHumanizedDataResponseContentService,
+        )
+
+        filename = ""
+        artifacts = metadata.get("downloadArtifacts")
+
+        if isinstance(artifacts, list):
+            for artifact in artifacts:
+                if isinstance(artifact, dict) and str(artifact.get("filename") or "").strip():
+                    filename = str(artifact["filename"]).strip()
+                    break
+
+        if filename:
+            summary = ChatHumanizedDataResponseContentService.format(
+                "documentExport",
+                "ready",
+                filename=filename,
+            )
+        else:
+            summary = ChatHumanizedDataResponseContentService.get(
+                "documentExport",
+                "readyGeneric",
+            )
+
+        next_action = ChatHumanizedDataResponseContentService.get(
+            "documentExport",
+            "nextAction",
+        )
+
+        return {
+            "profileKey": "document_export",
+            "alertLevel": "ok",
+            "summary": summary,
+            "highlights": [summary],
+            "summaryLines": [summary],
+            "nextAction": next_action,
+        }
+
+    @classmethod
+    def is_document_export_metadata(cls, metadata: dict[str, Any]) -> bool:
+        if not isinstance(metadata, dict):
+            return False
+
+        artifacts = metadata.get("downloadArtifacts")
+
+        if isinstance(artifacts, list) and any(
+            isinstance(item, dict) and str(item.get("href") or "").strip()
+            for item in artifacts
+        ):
+            return True
+
+        response_meta = metadata.get("apiDelpiResponseMeta")
+
+        if isinstance(response_meta, dict):
+            return str(response_meta.get("shape") or "").strip().lower() == "document_export"
+
+        return False
 
     @classmethod
     def _build_generic_commentary(

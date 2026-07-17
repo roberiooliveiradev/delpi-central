@@ -525,6 +525,10 @@
   },
   "pathRules": [
     {
+      "contains": "/structure/excel",
+      "profile": "document_export"
+    },
+    {
       "contains": "/structure/exclusivity",
       "profile": "structure_exclusivity"
     },

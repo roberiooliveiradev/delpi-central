@@ -353,6 +353,15 @@ class ChatErrorHandlingClassifier:
         if not isinstance(metadata, dict) or not metadata.get("ok"):
             return False
 
+        # document_export: artefato gerado é o resultado — nunca "lista vazia".
+        artifacts = metadata.get("downloadArtifacts")
+
+        if isinstance(artifacts, list) and any(
+            isinstance(item, dict) and str(item.get("href") or "").strip()
+            for item in artifacts
+        ):
+            return True
+
         for key in (
             "tablePresentations",
             "profileTablePresentation",
