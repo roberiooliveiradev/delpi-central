@@ -92,7 +92,7 @@ def test_all_15_legacy_fixtures_have_plan_formatter_and_execution_parity(case):
     assert via_plan == via_legacy == case["expected"]
 
 
-def test_dual_reader_executes_v1_and_returns_safe_feature_disabled_for_v2():
+def test_dual_reader_executes_v1_and_v2_without_persisting_runtime_artifacts():
     v1 = read_data_transform({"steps": [{"op": "select", "columns": ["a"]}]})
     v2 = read_data_transform(
         {
@@ -107,9 +107,9 @@ def test_dual_reader_executes_v1_and_returns_safe_feature_disabled_for_v2():
 
     assert v1.status == DataTransformReadStatus.READY
     assert v1.executable is True
-    assert v2.status == DataTransformReadStatus.FEATURE_DISABLED
-    assert v2.executable is False
-    assert [item.code for item in v2.diagnostics] == ["m.execution_feature_disabled"]
+    # Piloto funcional ativo: v2 executa; ast/plan/rows nunca são persistidos.
+    assert v2.status == DataTransformReadStatus.READY
+    assert v2.executable is True
     assert set(v2.normalized or {}) == {"version", "language", "script"}
 
 
@@ -127,7 +127,7 @@ def test_single_write_flag_keeps_v1_off_and_emits_only_v2_on():
     assert "Table.RenameColumns" in written["script"]
 
 
-def test_config_validation_rejects_new_v2_write_while_flag_is_disabled():
+def test_config_validation_accepts_v2_write_while_pilot_is_enabled():
     service = TvDataConfigValidationService()
     result = service.validate(
         {
@@ -149,8 +149,8 @@ def test_config_validation_rejects_new_v2_write_while_flag_is_disabled():
         }
     )
 
-    assert result["valid"] is False
-    assert any(issue["field"].endswith(".dataTransform") for issue in result["issues"])
+    # Piloto funcional ativo (writeV2Enabled): script v2 válido é aceito.
+    assert not any(issue["field"].endswith(".dataTransform") for issue in result["issues"])
 
 
 def test_config_sanitization_never_persists_runtime_plan_ast_or_rows():

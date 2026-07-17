@@ -41,23 +41,27 @@ def extract_series_points(
     *,
     branch: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Converte lista `points`/`series`/`serie`/`ranking` do payload em pontos de gráfico TV."""
-    data = unwrap_operational_data(data)
-    if not isinstance(data, dict):
-        return []
-    candidates: list[str] = []
-    if series_field and str(series_field).strip():
-        candidates.append(str(series_field).strip())
-    for key in ("points", "series", "serie", "ranking", "levelData", "statusData", "leadByLevel"):
-        if key not in candidates:
-            candidates.append(key)
+    """Converte lista `points`/`series`/`serie`/`ranking` do payload em pontos de gráfico TV.
 
+    Quando `data` já é uma lista tabular (ex.: saída de uma transformação M sobre a série),
+    ela é a própria série canônica — os pontos vêm direto das linhas, sem procurar chaves.
+    """
+    data = unwrap_operational_data(data)
     raw: list[Any] | None = None
-    for key in candidates:
-        value = data.get(key)
-        if isinstance(value, list) and value:
-            raw = value
-            break
+    if isinstance(data, list):
+        raw = data
+    elif isinstance(data, dict):
+        candidates: list[str] = []
+        if series_field and str(series_field).strip():
+            candidates.append(str(series_field).strip())
+        for key in ("points", "series", "serie", "ranking", "levelData", "statusData", "leadByLevel"):
+            if key not in candidates:
+                candidates.append(key)
+        for key in candidates:
+            value = data.get(key)
+            if isinstance(value, list) and value:
+                raw = value
+                break
     if not isinstance(raw, list):
         return []
     branch_code = str(branch).strip() if branch else ""

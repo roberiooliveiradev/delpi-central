@@ -5,6 +5,7 @@ from tv_app.application.services.comunicado_data_enrichment_service import (
     _apply_incremental_pagination_defaults,
     _extract_scalar_value,
     _extract_series,
+    _source_table_for_route,
     reset_comunicado_data_block_cache,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
@@ -675,6 +676,94 @@ def test_enrich_series_route_empty_points_yields_no_metadata_rows():
     assert table["rows"] == []
     serialized = str(table)
     assert "granularity" not in serialized and "truncated" not in serialized
+
+
+def test_source_table_for_series_route_uses_normalized_points():
+    """Fonte do M em rota de série = periodo/value (nunca campo/valor de metadados)."""
+    data = {
+        "granularity": "day",
+        "truncated": False,
+        "points": [
+            {"periodo": "2026-07-01", "oee_filial_01": 82.5},
+            {"periodo": "2026-07-02", "oee_filial_01": 84.0},
+        ],
+    }
+    route_info = {"seriesField": "points", "label": "OEE — série temporal"}
+    table = _source_table_for_route(data, route_info, branch="01")
+    assert table is not None
+    assert table["columns"] == ["periodo", "value"]
+    assert [row["value"] for row in table["rows"]] == [82.5, 84.0]
+    assert "campo" not in table["columns"] and "valor" not in table["columns"]
+
+
+def test_source_table_for_non_series_route_defers_to_generic_coerce():
+    """Sem seriesField, retorna None para o executor usar o coerce genérico."""
+    assert _source_table_for_route({"items": [{"a": 1}]}, {"shape": "list"}) is None
+    assert _source_table_for_route({"a": 1}, None) is None
+
+
+def test_enrich_series_route_with_m_transform_preview_uses_series_table():
+    """Regressão prod: preview do M em rota de série mostra periodo/value, não os
+    metadados internos (granularity/truncated) como campo/valor."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {
+            "granularity": "day",
+            "truncated": False,
+            "branch": "01",
+            "points": [
+                {"periodo": "2026-07-01", "oee_filial_01": 82.5, "oee_filial_02": None},
+                {"periodo": "2026-07-02", "oee_filial_01": 84.0, "oee_filial_02": None},
+            ],
+        },
+        "route": {
+            "label": "OEE — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {"requiresBranchPermission": True},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "params": {"branch": "01", "periodDays": 30},
+                "displayMode": "table",
+            },
+            "dataTransform": {
+                "version": 2,
+                "language": "m-delpi-v1",
+                "script": "let\n    FonteSemEtapas = Table.Skip(Fonte, 0)\nin\n    FonteSemEtapas",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    resolved = enriched[0]["resolved"]
+    # Preview consumido pelo modal Preparar dados: periodo/value, nunca campo/valor.
+    preview = resolved.get("preview")
+    assert isinstance(preview, dict)
+    preview_keys = [col["key"] for col in preview["columns"]]
+    assert preview_keys == ["periodo", "value"]
+    assert "campo" not in preview_keys and "valor" not in preview_keys
+    assert [row["value"] for row in preview["rows"]] == [82.5, 84.0]
+    # Apresentação (mesmo fluxo do gráfico/tabela) continua renderizando a série
+    # transformada, não uma tabela vazia.
+    table = resolved.get("table")
+    assert isinstance(table, dict) and table["rows"]
+    assert [row.get("value") for row in table["rows"]] == [82.5, 84.0]
+    # Nenhum metadado interno vaza como coluna/linha dos dados.
+    table_column_keys = {col["key"] for col in table["columns"]}
+    assert not ({"granularity", "truncated", "campo", "valor"} & table_column_keys)
+    assert all(
+        set(row.keys()) <= {"periodo", "value"} for row in preview["rows"]
+    )
 
 
 def test_enrich_honors_value_field_override():

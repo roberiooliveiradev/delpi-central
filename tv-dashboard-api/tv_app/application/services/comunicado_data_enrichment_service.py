@@ -571,7 +571,11 @@ def _extract_table_rows(
     # Rotas de série (seriesField no catálogo) têm a série como fonte canônica: normaliza
     # os pontos (label/valor por filial) antes do caminho de lista genérico e nunca vaza
     # metadados internos (granularity, truncated, sort_key…) como colunas ou campo/valor.
-    if series_field and str(series_field).strip():
+    # Exceção: quando os dados já são uma lista tabular (ex.: saída de uma transformação M
+    # sobre a série), eles já são a tabela canônica — usa o caminho de lista genérico e não
+    # tenta reextrair a série (que não existe mais na lista) e zerar a apresentação.
+    already_tabular = isinstance(unwrap_operational_data(data), list)
+    if series_field and str(series_field).strip() and not already_tabular:
         series_rows, series_columns = _series_to_table_rows(
             data,
             series_field,
@@ -603,6 +607,31 @@ def _extract_table_rows(
         return series_rows, series_columns
 
     return _scalar_object_as_table_rows(data, max_rows=max_rows)
+
+
+def _source_table_for_route(
+    data: Any,
+    route_info: dict[str, Any] | None,
+    *,
+    branch: str | None = None,
+) -> dict[str, Any] | None:
+    """Tabela-fonte canônica (`Fonte`) para transformações M.
+
+    Rotas de série usam a série normalizada (periodo/value), a mesma que alimenta
+    gráfico/tabela — nunca o fallback escalar campo/valor, que vazaria metadados
+    internos (granularity, truncated) como se fossem os dados. Fora de séries,
+    retorna None e o executor cai no coerce genérico do payload.
+    """
+    series_field = route_info.get("seriesField") if isinstance(route_info, dict) else None
+    if not (series_field and str(series_field).strip()):
+        return None
+    points = _extract_series(data, series_field, branch=branch)
+    return {
+        "columns": ["periodo", "value"],
+        "rows": [
+            {"periodo": point.get("label"), "value": point.get("value")} for point in points
+        ],
+    }
 
 
 def _scalar_as_chart_points(value: Any, label: str | None = None) -> list[dict[str, Any]]:
@@ -1206,6 +1235,8 @@ class ComunicadoDataEnrichmentService:
                 max(1, int(options.get("deadlineMs") or m_query_setting("previewDeadlineMaxMs", 3000))),
                 int(m_query_setting("previewDeadlineMaxMs", 3000)),
             )
+            branch = merged_params.get("branch") if isinstance(merged_params, dict) else None
+            branch_str = str(branch).strip() if branch else None
             transform_result = apply_data_transform_to_payload_result(
                 data,
                 block.get("dataTransform"),
@@ -1214,6 +1245,7 @@ class ComunicadoDataEnrichmentService:
                 target_step_name=target_step_name,
                 culture=str(m_query_setting("defaultCulture", "pt-BR")),
                 deadline_ms=deadline_ms,
+                source_table=_source_table_for_route(data, route_info, branch=branch_str),
             )
             transformed = transform_result["data"]
             server_transform_applied = bool(transform_result["applied"])

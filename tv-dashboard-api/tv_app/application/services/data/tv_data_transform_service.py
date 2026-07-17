@@ -1245,6 +1245,7 @@ def apply_data_transform_to_payload_result(
     target_step_name: str | None = None,
     culture: str | None = None,
     deadline_ms: int | None = None,
+    source_table: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     selected_culture = culture or str(m_query_setting("defaultCulture", "pt-BR"))
     read_result = read_data_transform(
@@ -1253,7 +1254,9 @@ def apply_data_transform_to_payload_result(
         target_step_name=target_step_name,
         culture=selected_culture,
     )
-    table = coerce_payload_to_table(data)
+    # A fonte canônica (`Fonte`) deve ser a tabela já normalizada pela rota (ex.: série
+    # temporal → periodo/value); só cai no coerce genérico quando o chamador não a fornece.
+    table = source_table if isinstance(source_table, dict) else coerce_payload_to_table(data)
     script_hash = (
         "sha256:"
         + hashlib.sha256((read_result.canonical_script or "").encode("utf-8")).hexdigest()
@@ -1318,6 +1321,7 @@ def apply_data_transform_to_payload(
     target_step_name: str | None = None,
     culture: str | None = None,
     deadline_ms: int | None = None,
+    source_table: dict[str, Any] | None = None,
 ) -> tuple[Any, bool, dict[str, Any] | None]:
     result = apply_data_transform_to_payload_result(
         data,
@@ -1327,5 +1331,6 @@ def apply_data_transform_to_payload(
         target_step_name=target_step_name,
         culture=culture,
         deadline_ms=deadline_ms,
+        source_table=source_table,
     )
     return result["data"], result["applied"], result["table"]
