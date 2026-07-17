@@ -83,7 +83,10 @@ export {
 export {
   ModalShell,
   createModalShell,
+  createHostContainedModalShell,
   modalShellBemClasses,
+  DELPI_MODAL_HOST_ATTR,
+  type CreateModalShellConfig,
   type DashboardModalShellProps,
   type ModalShellClassNames,
   type ModalShellProps,

@@ -2,6 +2,9 @@
  * ModalShell canônico (@delpi/plugin-ui) — classes `.delpi-ui-modal*`.
  * Usado por componentes do kit (ex.: RichTextLinkDialog); MFEs com prefixo
  * próprio continuam estilizando `{prefix}-modal*` localmente.
+ *
+ * Modo contido no host MFE (`createHostContainedModalShell`): preenche a área
+ * do plugin sem cobrir sidebar/chrome do portal Minha DELPI.
  */
 
 .delpi-ui-modal-overlay {
@@ -82,4 +85,46 @@
   gap: 8px;
   padding: 12px 16px;
   border-top: 1px solid var(--delpi-ui-border, #e5e7eb);
+}
+
+/* —— Modal contido na área do MFE (não cobre chrome do portal) —— */
+
+.delpi-ui-modal-portal--contained {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  min-height: 0;
+}
+
+.delpi-ui-modal-overlay--contained {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.delpi-ui-modal--host-fill {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+.delpi-ui-modal--host-fill .delpi-ui-modal__body,
+.delpi-ui-modal--host-fill [class$="-modal__body"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+}
+
+/**
+ * Isola o stacking do host enquanto o modal contido está aberto, para que
+ * sidebar (z≈40) e hotspot do canto esquerdo (z≈45) do portal fiquem clicáveis.
+ */
+[data-delpi-modal-host="true"] {
+  z-index: 0;
 }

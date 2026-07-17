@@ -1,7 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ModalShell, modalShellBemClasses } from "./ModalShell";
+import {
+  DELPI_MODAL_HOST_ATTR,
+  ModalShell,
+  createHostContainedModalShell,
+  modalShellBemClasses,
+} from "./ModalShell";
 
 afterEach(cleanup);
 
@@ -99,8 +104,36 @@ describe("ModalShell", () => {
     const portal = dialog.closest("[data-modal-contained='true']");
     expect(host.contains(dialog)).toBe(true);
     expect(portal).toBeTruthy();
-    expect((portal as HTMLElement).style.position).toBe("absolute");
-    expect((dialog.closest(".td-modal-overlay") as HTMLElement).style.position).toBe("absolute");
+    expect(portal?.classList.contains("delpi-ui-modal-portal--contained")).toBe(true);
+    expect(dialog.classList.contains("delpi-ui-modal--host-fill")).toBe(true);
+    expect(dialog.closest(".delpi-ui-modal-overlay--contained")).toBeTruthy();
+    expect(host.getAttribute(DELPI_MODAL_HOST_ATTR)).toBe("true");
+
+    unmount();
+    expect(host.getAttribute(DELPI_MODAL_HOST_ATTR)).toBeNull();
+    host.remove();
+  });
+
+  it("createHostContainedModalShell resolve o root do MFE automaticamente", () => {
+    const host = document.createElement("main");
+    host.className = "dashboard-tv-dashboard";
+    document.body.appendChild(host);
+
+    const HostModal = createHostContainedModalShell({
+      prefix: "td",
+      portalScopeClassName: "dashboard-tv-dashboard",
+    });
+
+    const { unmount } = render(
+      <HostModal open title="Preparar dados — M DELPI" onClose={vi.fn()}>
+        <p>Workbench</p>
+      </HostModal>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Preparar dados — M DELPI" });
+    expect(host.contains(dialog)).toBe(true);
+    expect(host.getAttribute(DELPI_MODAL_HOST_ATTR)).toBe("true");
+    expect(dialog.classList.contains("delpi-ui-modal--host-fill")).toBe(true);
 
     unmount();
     host.remove();

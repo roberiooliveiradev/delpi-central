@@ -124,7 +124,7 @@ Reexport local (barrel do plugin): `export { goalDisplayFormat } from "@delpi/pl
 | Componente | Pacote | Notas |
 |------------|--------|-------|
 | `ConfirmModalPanel` | ✅ F5 | Headless; `ModalShell` local (PAC, transformometro) |
-| `ModalShell` | ✅ F5.5 | Portal + escape; `portalTarget`/`containedInPortalTarget` para ocupar somente a área do MFE sem cobrir o chrome do host |
+| `ModalShell` | ✅ F5.5 | Portal + escape; `createHostContainedModalShell` preenche a área do MFE sem cobrir o chrome do host (`portalTarget` / `data-delpi-modal-host`) |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 

@@ -62,6 +62,9 @@ export function modalShellBemClasses(prefix: string): ModalShellClassNames {
   };
 }
 
+/** Marca o host MFE enquanto o modal contido está aberto (stacking vs chrome do portal). */
+export const DELPI_MODAL_HOST_ATTR = "data-delpi-modal-host";
+
 export function ModalShell({
   open,
   title,
@@ -127,6 +130,16 @@ export function ModalShell({
   }, [open, lockPageScroll]);
 
   useEffect(() => {
+    if (!open || !containedInPortalTarget || !(portalTarget instanceof HTMLElement)) {
+      return;
+    }
+    portalTarget.setAttribute(DELPI_MODAL_HOST_ATTR, "true");
+    return () => {
+      portalTarget.removeAttribute(DELPI_MODAL_HOST_ATTR);
+    };
+  }, [open, containedInPortalTarget, portalTarget]);
+
+  useEffect(() => {
     if (!open || hasAutoFocusedRef.current) {
       return;
     }
@@ -162,9 +175,27 @@ export function ModalShell({
     return null;
   }
 
-  const dialogClass = [classNames.dialog, className].filter(Boolean).join(" ");
-  const overlayClass = [overlayClassName, classNames.overlay].filter(Boolean).join(" ");
-  const scopeClass = [portalScopeClassName, portalTheme.hostClassName].filter(Boolean).join(" ");
+  const dialogClass = [
+    classNames.dialog,
+    containedInPortalTarget ? "delpi-ui-modal--host-fill" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const overlayClass = [
+    overlayClassName,
+    classNames.overlay,
+    containedInPortalTarget ? "delpi-ui-modal-overlay--contained" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const scopeClass = [
+    portalScopeClassName,
+    portalTheme.hostClassName,
+    containedInPortalTarget ? "delpi-ui-modal-portal--contained" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const titleNode = (
     <h2 id={titleId} className={classNames.title}>
@@ -182,7 +213,6 @@ export function ModalShell({
   const overlay = (
     <div
       className={overlayClass}
-      style={containedInPortalTarget ? { position: "absolute" } : undefined}
       onClick={onClose}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
@@ -228,12 +258,7 @@ export function ModalShell({
   return createPortal(
     <div
       className={scopeClass}
-      style={{
-        ...portalTheme.style,
-        ...(containedInPortalTarget
-          ? { position: "absolute", inset: 0, minWidth: 0, minHeight: 0 }
-          : {}),
-      }}
+      style={portalTheme.style}
       data-theme={portalTheme.dataTheme ?? undefined}
       data-modal-contained={containedInPortalTarget ? "true" : undefined}
     >
@@ -248,13 +273,15 @@ export type DashboardModalShellProps = Omit<
   "classNames" | "overlayClassName" | "portalScopeClassName"
 >;
 
-export function createModalShell(config: {
+export type CreateModalShellConfig = {
   prefix: string;
   overlayClassName?: string;
   closeAriaLabel?: string;
   /** Escopo CSS do MFE para portais no body — ver `portalScopeClassName` em ModalShell. */
   portalScopeClassName?: string;
-}) {
+};
+
+export function createModalShell(config: CreateModalShellConfig) {
   const classNames = modalShellBemClasses(config.prefix);
 
   return function DashboardModalShell(props: DashboardModalShellProps) {
@@ -265,6 +292,31 @@ export function createModalShell(config: {
         closeAriaLabel={config.closeAriaLabel}
         portalScopeClassName={config.portalScopeClassName}
         {...props}
+      />
+    );
+  };
+}
+
+/**
+ * Modal que preenche a área do MFE (portal no root do plugin), sem cobrir
+ * sidebar/chrome do host Minha DELPI.
+ */
+export function createHostContainedModalShell(
+  config: CreateModalShellConfig & { portalScopeClassName: string },
+) {
+  const Modal = createModalShell(config);
+  const hostSelector = `.${config.portalScopeClassName.trim().split(/\s+/)[0]}`;
+
+  return function HostContainedModalShell(props: DashboardModalShellProps) {
+    const portalTarget =
+      typeof document !== "undefined"
+        ? document.querySelector<HTMLElement>(hostSelector)
+        : null;
+    return (
+      <Modal
+        {...props}
+        portalTarget={portalTarget}
+        containedInPortalTarget={Boolean(portalTarget)}
       />
     );
   };
