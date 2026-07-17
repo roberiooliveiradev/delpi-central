@@ -21,6 +21,32 @@ const preview: DataQueryPreview = {
 };
 
 describe("DataPrepareRibbon M Fase 5", () => {
+  it("agrupa operações por contexto sem comprimir todos os controles", () => {
+    render(
+      <DataPrepareRibbon
+        selectedColumnKey="codigo"
+        selectedStepName="Fonte"
+        preview={preview}
+        loading={false}
+        availableQueries={["Histórico"]}
+        onRefresh={() => undefined}
+        onMutate={() => undefined}
+      />,
+    );
+
+    expect(screen.getByRole("region", { name: "Operações de coluna" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Operações de linha" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Combinar consultas" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Transformar" }));
+    expect(screen.getByRole("region", { name: "Seleção e ordenação" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Tipos e limpeza" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Adicionar coluna" }));
+    expect(screen.getByRole("region", { name: "Coluna personalizada" })).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Dividir e transformar coluna" })).toBeTruthy();
+  });
+
   it("gera somente comandos tipados para mutação canônica", () => {
     const mutate = vi.fn();
     render(

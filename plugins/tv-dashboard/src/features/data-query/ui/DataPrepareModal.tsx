@@ -214,13 +214,6 @@ export function DataQueryWorkbenchModal({
               }
             />
             <DataPrepareDiagnostics diagnostics={diagnostics} />
-            <DataPrepareQualityPanel
-              preview={preview}
-              profilingEnabled={profilingEnabled}
-              profilingRequested={workbench.profilingRequested}
-              loading={workbench.state.preview.status === "loading"}
-              onToggleProfiling={workbench.setProfilingRequested}
-            />
             {applyError || workbench.state.preview.error || workbench.state.compile.error ? (
               <p className="td-deck-inspector__hint" role="alert">
                 {applyError || workbench.state.preview.error || workbench.state.compile.error}
@@ -259,6 +252,15 @@ export function DataQueryWorkbenchModal({
                   }
                   onColumnContextMenu={openColumnMenu}
                 />
+                {profilingEnabled || preview?.columnProfile || preview?.explainPlan ? (
+                  <DataPrepareQualityPanel
+                    preview={preview}
+                    profilingEnabled={profilingEnabled}
+                    profilingRequested={workbench.profilingRequested}
+                    loading={workbench.state.preview.status === "loading"}
+                    onToggleProfiling={workbench.setProfilingRequested}
+                  />
+                ) : null}
                 <section className="td-data-pq__dependencies" aria-label="Dependências de consultas">
                   <strong>Dependências</strong>
                   {dependencyEdges.length === 0 ? (

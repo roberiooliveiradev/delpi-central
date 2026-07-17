@@ -78,14 +78,16 @@ export function DataPrepareRibbon({
         className="td-data-pq__ribbon-actions"
         role="tabpanel"
       >
-        <button
-          type="button"
-          className="td-data-pq__ribbon-action"
-          disabled={loading}
-          onClick={onRefresh}
-        >
-          <RefreshCw size={16} aria-hidden /> Atualizar
-        </button>
+        <div className="td-data-pq__ribbon-primary">
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            disabled={loading}
+            onClick={onRefresh}
+          >
+            <RefreshCw size={16} aria-hidden /> Atualizar
+          </button>
+        </div>
         {tab === "home" ? (
           <DataPrepareRibbonHomePanel
             selectedColumnKey={selectedColumnKey}

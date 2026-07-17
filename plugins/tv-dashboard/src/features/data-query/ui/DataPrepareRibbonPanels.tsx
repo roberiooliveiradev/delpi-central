@@ -97,130 +97,151 @@ export function DataPrepareRibbonHomePanel({
   const selectedQuery = availableQueries[0] ?? "";
   return (
     <>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        onClick={() => insert("Cabeçalhos promovidos", "firstRowAsHeader", {})}
-      >
-        Cabeçalhos promovidos
-      </button>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        disabled={!column}
-        onClick={() => insert("Colunas selecionadas", "select", { columns: [column] })}
-      >
-        Escolher coluna
-      </button>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        disabled={!column}
-        onClick={() =>
-          insert("Colunas reordenadas", "reorder_columns", { columns: [column] })
-        }
-      >
-        Mover coluna para início
-      </button>
-      <NativeTextControl
-        id="td-m-row-count"
-        aria-label="Quantidade de linhas"
-        value={rowCount}
-        onChange={setRowCount}
-      />
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        onClick={() =>
-          insert("Primeiras linhas", "keepRows", {
-            count: Math.max(0, Number(rowCount) || 0),
-            fromEnd: false,
-          })
-        }
-      >
-        Manter linhas
-      </button>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        onClick={() =>
-          insert("Linhas removidas", "removeRows", {
-            count: Math.max(0, Number(rowCount) || 0),
-            fromEnd: false,
-          })
-        }
-      >
-        Remover linhas
-      </button>
-      <NativeTextControl
-        id="td-m-row-offset"
-        aria-label="Deslocamento inicial"
-        value={rowOffset}
-        onChange={setRowOffset}
-      />
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        onClick={() =>
-          insert("Intervalo de linhas", "range_rows", {
-            offset: Math.max(0, Number(rowOffset) || 0),
-            count: Math.max(0, Number(rowCount) || 0),
-          })
-        }
-      >
-        Manter intervalo
-      </button>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        disabled={!column}
-        onClick={() =>
-          insert("Colunas removidas", "remove_columns", { columns: [column] })
-        }
-      >
-        Remover coluna
-      </button>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        disabled={!selectedQuery}
-        onClick={() =>
-          insert("Consultas acrescentadas", "append_queries", {
-            queries: [selectedQuery],
-          })
-        }
-      >
-        Acrescentar consulta
-      </button>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        disabled={!column || !selectedQuery}
-        onClick={() =>
-          insert("Consultas mescladas", "nested_join", {
-            query: selectedQuery,
-            leftKeys: [column],
-            rightKeys: [column],
-            newColumn: selectedQuery,
-          })
-        }
-      >
-        Mesclar consulta
-      </button>
-      <button
-        type="button"
-        className="td-data-pq__ribbon-action"
-        disabled={!column || !secondary}
-        onClick={() =>
-          insert("Tabela expandida", "expand_table_column", {
-            column,
-            columns: [secondary],
-            newColumnNames: [secondary],
-          })
-        }
-      >
-        Expandir coluna
-      </button>
+      <section className="td-data-pq__ribbon-group" aria-label="Operações de coluna">
+        <h3>Colunas</h3>
+        <div className="td-data-pq__ribbon-group-body">
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            onClick={() => insert("Cabeçalhos promovidos", "firstRowAsHeader", {})}
+          >
+            Cabeçalhos promovidos
+          </button>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            disabled={!column}
+            onClick={() => insert("Colunas selecionadas", "select", { columns: [column] })}
+          >
+            Escolher coluna
+          </button>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            disabled={!column}
+            onClick={() =>
+              insert("Colunas reordenadas", "reorder_columns", { columns: [column] })
+            }
+          >
+            Mover para o início
+          </button>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            disabled={!column}
+            onClick={() =>
+              insert("Colunas removidas", "remove_columns", { columns: [column] })
+            }
+          >
+            Remover coluna
+          </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Operações de linha">
+        <h3>Linhas</h3>
+        <div className="td-data-pq__ribbon-group-body">
+          <label className="td-data-pq__ribbon-field">
+            <span>Quantidade</span>
+            <NativeTextControl
+              id="td-m-row-count"
+              aria-label="Quantidade de linhas"
+              value={rowCount}
+              onChange={setRowCount}
+            />
+          </label>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            onClick={() =>
+              insert("Primeiras linhas", "keepRows", {
+                count: Math.max(0, Number(rowCount) || 0),
+                fromEnd: false,
+              })
+            }
+          >
+            Manter
+          </button>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            onClick={() =>
+              insert("Linhas removidas", "removeRows", {
+                count: Math.max(0, Number(rowCount) || 0),
+                fromEnd: false,
+              })
+            }
+          >
+            Remover
+          </button>
+          <label className="td-data-pq__ribbon-field">
+            <span>Início</span>
+            <NativeTextControl
+              id="td-m-row-offset"
+              aria-label="Deslocamento inicial"
+              value={rowOffset}
+              onChange={setRowOffset}
+            />
+          </label>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            onClick={() =>
+              insert("Intervalo de linhas", "range_rows", {
+                offset: Math.max(0, Number(rowOffset) || 0),
+                count: Math.max(0, Number(rowCount) || 0),
+              })
+            }
+          >
+            Manter intervalo
+          </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Combinar consultas">
+        <h3>Combinar</h3>
+        <div className="td-data-pq__ribbon-group-body">
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            disabled={!selectedQuery}
+            onClick={() =>
+              insert("Consultas acrescentadas", "append_queries", {
+                queries: [selectedQuery],
+              })
+            }
+          >
+            Acrescentar consulta
+          </button>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            disabled={!column || !selectedQuery}
+            onClick={() =>
+              insert("Consultas mescladas", "nested_join", {
+                query: selectedQuery,
+                leftKeys: [column],
+                rightKeys: [column],
+                newColumn: selectedQuery,
+              })
+            }
+          >
+            Mesclar consulta
+          </button>
+          <button
+            type="button"
+            className="td-data-pq__ribbon-action"
+            disabled={!column || !secondary}
+            onClick={() =>
+              insert("Tabela expandida", "expand_table_column", {
+                column,
+                columns: [secondary],
+                newColumnNames: [secondary],
+              })
+            }
+          >
+            Expandir coluna
+          </button>
+        </div>
+      </section>
     </>
   );
 }
@@ -239,6 +260,9 @@ export function DataPrepareRibbonTransformPanel({
   const secondary = secondaryColumn(preview, column);
   return (
     <>
+      <section className="td-data-pq__ribbon-group" aria-label="Seleção e ordenação">
+        <h3>Seleção e ordem</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <FormSelectControl
         id="td-m-selected-column"
         ariaLabel="Coluna ativa"
@@ -270,6 +294,11 @@ export function DataPrepareRibbonTransformPanel({
       >
         <ArrowDownAZ size={16} aria-hidden /> Ordenar
       </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Filtrar e substituir valores">
+        <h3>Valores</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <NativeTextControl
         id="td-m-filter-value"
         aria-label="Valor do filtro"
@@ -328,6 +357,11 @@ export function DataPrepareRibbonTransformPanel({
       >
         Substituir valor
       </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Tipos e limpeza">
+        <h3>Tipos e limpeza</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <FormSelectControl
         id="td-m-column-type"
         ariaLabel="Tipo de destino"
@@ -378,6 +412,11 @@ export function DataPrepareRibbonTransformPanel({
       >
         Inverter linhas
       </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Formato da tabela e erros">
+        <h3>Forma e erros</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <button
         type="button"
         className="td-data-pq__ribbon-action"
@@ -462,6 +501,8 @@ export function DataPrepareRibbonTransformPanel({
       >
         Anular dinamização
       </button>
+        </div>
+      </section>
     </>
   );
 }
@@ -479,6 +520,9 @@ export function DataPrepareRibbonAddColumnPanel({
   const column = selectedColumnKey ?? "";
   return (
     <>
+      <section className="td-data-pq__ribbon-group" aria-label="Coluna personalizada">
+        <h3>Personalizada</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <NativeTextControl
         id="td-m-new-column"
         aria-label="Nome da nova coluna"
@@ -507,6 +551,11 @@ export function DataPrepareRibbonAddColumnPanel({
       >
         Coluna personalizada
       </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Coluna condicional">
+        <h3>Condicional</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <NativeTextControl
         id="td-m-conditional-result"
         aria-label="Resultado da condição"
@@ -531,6 +580,11 @@ export function DataPrepareRibbonAddColumnPanel({
       >
         Coluna condicional
       </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Ações rápidas de coluna">
+        <h3>Ações rápidas</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <button
         type="button"
         className="td-data-pq__ribbon-action"
@@ -557,6 +611,11 @@ export function DataPrepareRibbonAddColumnPanel({
       >
         Índice
       </button>
+        </div>
+      </section>
+      <section className="td-data-pq__ribbon-group" aria-label="Dividir e transformar coluna">
+        <h3>Dividir e transformar</h3>
+        <div className="td-data-pq__ribbon-group-body">
       <NativeTextControl
         id="td-m-delimiter"
         aria-label="Delimitador"
@@ -603,6 +662,8 @@ export function DataPrepareRibbonAddColumnPanel({
       >
         Aplicar função
       </button>
+        </div>
+      </section>
     </>
   );
 }

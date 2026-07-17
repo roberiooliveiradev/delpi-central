@@ -89,43 +89,45 @@ export function DataPrepareAppliedSteps({
                 {step.label}
               </button>
             )}
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--ghost"
-              aria-label={`Renomear ${step.label}`}
-              onClick={() => {
-                setRenaming(step.name);
-                setRenameValue(step.name);
-              }}
-            >
-              <Pencil size={16} aria-hidden />
-            </button>
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--ghost"
-              aria-label={`Mover ${step.label} para cima`}
-              disabled={index === 0}
-              onClick={() => onMove(step.name, index - 1)}
-            >
-              <ArrowUp size={16} aria-hidden />
-            </button>
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--ghost"
-              aria-label={`Mover ${step.label} para baixo`}
-              disabled={index === steps.length - 1}
-              onClick={() => onMove(step.name, index + 1)}
-            >
-              <ArrowDown size={16} aria-hidden />
-            </button>
-            <button
-              type="button"
-              className="td-btn td-btn--sm td-btn--ghost"
-              aria-label={`Excluir ${step.label}`}
-              onClick={() => onRemove(step.name)}
-            >
-              <Trash2 size={16} aria-hidden />
-            </button>
+            <div className="td-data-pq__step-actions">
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                aria-label={`Renomear ${step.label}`}
+                onClick={() => {
+                  setRenaming(step.name);
+                  setRenameValue(step.name);
+                }}
+              >
+                <Pencil size={16} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                aria-label={`Mover ${step.label} para cima`}
+                disabled={index === 0}
+                onClick={() => onMove(step.name, index - 1)}
+              >
+                <ArrowUp size={16} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                aria-label={`Mover ${step.label} para baixo`}
+                disabled={index === steps.length - 1}
+                onClick={() => onMove(step.name, index + 1)}
+              >
+                <ArrowDown size={16} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                aria-label={`Excluir ${step.label}`}
+                onClick={() => onRemove(step.name)}
+              >
+                <Trash2 size={16} aria-hidden />
+              </button>
+            </div>
           </li>
           );
         })}
