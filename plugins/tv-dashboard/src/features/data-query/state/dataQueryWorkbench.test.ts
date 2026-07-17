@@ -47,16 +47,18 @@ function draft(sourceId: string, dirty = true): DataQueryDraft {
 }
 
 function preview(value: number): DataQueryPreview {
+  const columns: DataQueryPreview["columns"] = [
+    {
+      key: "value",
+      label: "Valor",
+      type: "number",
+      nullable: false,
+      typeSource: "declared",
+    },
+  ];
   return {
-    columns: [
-      {
-        key: "value",
-        label: "Valor",
-        type: "number",
-        nullable: false,
-        typeSource: "declared",
-      },
-    ],
+    sourceColumns: columns,
+    columns,
     rows: [{ value }],
     returnedRows: 1,
     availableRows: 1,

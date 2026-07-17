@@ -154,7 +154,7 @@ export function useDataQueryWorkbench({
     (script: string, targetStepName: string | null) => ({
       script,
       queryBindings: currentQueryBindings(),
-      sourceSchema: stateRef.current.preview.value?.columns ?? [],
+      sourceSchema: stateRef.current.preview.value?.sourceColumns ?? [],
       targetStepName,
     }),
     [currentQueryBindings],
@@ -461,7 +461,7 @@ export function useDataQueryWorkbench({
                 queryBindings: bindings,
                 sourceSchema:
                   draft.sourceId === active.sourceId
-                    ? stateRef.current.preview.value?.columns ?? []
+                    ? stateRef.current.preview.value?.sourceColumns ?? []
                     : [],
                 targetStepName: draft.selectedStepName,
               },

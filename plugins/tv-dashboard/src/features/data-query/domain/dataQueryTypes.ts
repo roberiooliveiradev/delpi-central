@@ -104,6 +104,9 @@ export type DataQueryRuntimeErrors = {
 };
 
 export type DataQueryPreview = {
+  /** Schema imutável da Fonte, antes de qualquer etapa M. */
+  sourceColumns: MColumnSchemaDto[];
+  /** Schema da saída da etapa selecionada. */
   columns: MColumnSchemaDto[];
   rows: Array<Record<string, unknown>>;
   returnedRows: number;

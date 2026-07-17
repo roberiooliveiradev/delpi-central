@@ -5,6 +5,22 @@ import type {
   DataQueryPreview,
 } from "../domain/dataQueryTypes";
 
+function adaptColumns(value: unknown): MColumnSchemaDto[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => {
+    const column = item as Record<string, unknown>;
+    return {
+      key: String(column.key || ""),
+      label: String(column.label || column.key || ""),
+      type: String(column.type || "any") as MColumnSchemaDto["type"],
+      nullable: column.nullable !== false,
+      typeSource: String(
+        column.typeSource || "unknown",
+      ) as MColumnSchemaDto["typeSource"],
+    };
+  });
+}
+
 export function adaptCompileResult(value: unknown): DataQueryCompileResult {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   const completion = (raw.completionContext && typeof raw.completionContext === "object"
@@ -90,18 +106,8 @@ export function adaptPreviewResult(value: unknown): DataQueryPreview {
     ? resolved.table
     : {}) as Record<string, unknown>;
   const rawColumns = (preview.columns ?? table.columns) as unknown;
-  const columns: MColumnSchemaDto[] = Array.isArray(rawColumns)
-    ? rawColumns.map((item) => {
-        const column = item as Record<string, unknown>;
-        return {
-          key: String(column.key || ""),
-          label: String(column.label || column.key || ""),
-          type: (String(column.type || "any") as MColumnSchemaDto["type"]),
-          nullable: column.nullable !== false,
-          typeSource: (String(column.typeSource || "unknown") as MColumnSchemaDto["typeSource"]),
-        };
-      })
-    : [];
+  const columns = adaptColumns(rawColumns);
+  const sourceColumns = adaptColumns(preview.sourceColumns);
   const rawRows = preview.rows ?? table.rows;
   const rows = Array.isArray(rawRows)
     ? rawRows.map((row) => ({ ...(row as Record<string, unknown>) }))
@@ -132,6 +138,7 @@ export function adaptPreviewResult(value: unknown): DataQueryPreview {
     : [];
   return {
     columns,
+    sourceColumns,
     rows,
     returnedRows: Number(preview.returnedRows ?? rows.length),
     availableRows: Number(preview.availableRows ?? rows.length),

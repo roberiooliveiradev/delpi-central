@@ -19,11 +19,12 @@ from tv_app.application.services.data.tv_data_transform_service import (
 from tv_app.main import app
 
 
-def _compile(script: str, *, bindings=(), target=None):
+def _compile(script: str, *, bindings=(), target=None, source_schema=()):
     result = MQueryCompiler().compile(
         MCompileRequest(
             profile="m-delpi-v1",
             script=script,
+            source_schema=tuple(source_schema),
             query_bindings=tuple(bindings),
             target_step_name=target,
             culture="pt-BR",
@@ -250,6 +251,41 @@ def test_v2_public_adapter_uses_same_facade_when_runtime_flag_is_enabled():
     assert result["data"] == [{"valor": 1}]
     assert result["selectedStepName"] == "A"
     assert result["schema"][0]["type"] == "number"
+
+
+def test_source_schema_remains_pre_transform_after_column_rename():
+    script = (
+        'let A = Table.RenameColumns(Fonte, {{"periodo", "periodo_teste"}}) '
+        "in A"
+    )
+    settings = {
+        "enabled": True,
+        "profile": "m-delpi-v1",
+        "defaultCulture": "pt-BR",
+        "maxScriptBytes": 65536,
+    }
+
+    with patch(
+        "tv_app.application.services.data.data_transform_contract.m_query_setting",
+        side_effect=lambda key, default=None: settings.get(key, default),
+    ):
+        result = apply_data_transform_to_payload_result(
+            [{"periodo": "01/01/26", "value": None}],
+            {"version": 2, "language": "m-delpi-v1", "script": script},
+        )
+
+    assert [column["key"] for column in result["sourceSchema"]] == [
+        "periodo",
+        "value",
+    ]
+    assert [column["key"] for column in result["schema"]] == [
+        "periodo_teste",
+        "value",
+    ]
+    compiled_again = _compile(script, source_schema=result["sourceSchema"])
+    assert "m.unknown_column" not in {
+        item.code for item in compiled_again.diagnostics
+    }
 
 
 def test_execution_limits_reject_abusive_join_expansion_inside_loop():

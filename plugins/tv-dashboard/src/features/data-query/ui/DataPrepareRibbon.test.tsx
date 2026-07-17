@@ -7,6 +7,10 @@ import { DataPrepareRibbon } from "./DataPrepareRibbon";
 afterEach(cleanup);
 
 const preview: DataQueryPreview = {
+  sourceColumns: [
+    { key: "codigo", label: "Código", type: "text", nullable: false, typeSource: "declared" },
+    { key: "valor", label: "Valor", type: "number", nullable: false, typeSource: "declared" },
+  ],
   columns: [
     { key: "codigo", label: "Código", type: "text", nullable: false, typeSource: "declared" },
     { key: "valor", label: "Valor", type: "number", nullable: false, typeSource: "declared" },

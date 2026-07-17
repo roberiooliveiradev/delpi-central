@@ -55,9 +55,36 @@ describe("adaptPreviewResult", () => {
   });
 
   it("normaliza contrato ausente para coleção vazia", () => {
-    expect(adaptPreviewResult({ preview: {} }).runtimeErrors).toEqual({
+    const result = adaptPreviewResult({ preview: {} });
+    expect(result.sourceColumns).toEqual([]);
+    expect(result.runtimeErrors).toEqual({
       count: 0,
       sample: [],
     });
+  });
+
+  it("mantém schema da Fonte separado do schema transformado", () => {
+    const result = adaptPreviewResult({
+      preview: {
+        sourceColumns: [
+          { key: "periodo", label: "periodo", type: "text" },
+          { key: "value", label: "value", type: "number" },
+        ],
+        columns: [
+          { key: "periodo_teste", label: "periodo_teste", type: "text" },
+          { key: "value", label: "value", type: "number" },
+        ],
+        rows: [{ periodo_teste: "01/01/26", value: null }],
+      },
+    });
+
+    expect(result.sourceColumns.map((column) => column.key)).toEqual([
+      "periodo",
+      "value",
+    ]);
+    expect(result.columns.map((column) => column.key)).toEqual([
+      "periodo_teste",
+      "value",
+    ]);
   });
 });

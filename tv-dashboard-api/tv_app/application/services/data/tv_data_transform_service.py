@@ -1257,6 +1257,7 @@ def apply_data_transform_to_payload_result(
     # A fonte canônica (`Fonte`) deve ser a tabela já normalizada pela rota (ex.: série
     # temporal → periodo/value); só cai no coerce genérico quando o chamador não a fornece.
     table = source_table if isinstance(source_table, dict) else coerce_payload_to_table(data)
+    source_schema = list(_table_schema(table, {})) if isinstance(table, dict) else []
     script_hash = (
         "sha256:"
         + hashlib.sha256((read_result.canonical_script or "").encode("utf-8")).hexdigest()
@@ -1268,6 +1269,7 @@ def apply_data_transform_to_payload_result(
             "data": data,
             "applied": False,
             "table": table,
+            "sourceSchema": source_schema,
             "transform": read_result.public_metadata(),
             "scriptHash": script_hash,
             "explainPlan": explain_transform_plan(read_result.plan),
@@ -1288,6 +1290,7 @@ def apply_data_transform_to_payload_result(
             "applied": False,
             "failed": True,
             "table": table,
+            "sourceSchema": source_schema,
             "transform": read_result.public_metadata(),
             "scriptHash": script_hash,
             "schema": list(_table_schema(table, {})),
@@ -1301,6 +1304,7 @@ def apply_data_transform_to_payload_result(
         "data": execution.table["rows"],
         "applied": True,
         "table": execution.table,
+        "sourceSchema": source_schema,
         "transform": read_result.public_metadata(),
         "scriptHash": script_hash,
         "schema": list(execution.schema),

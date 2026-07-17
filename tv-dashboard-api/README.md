@@ -78,6 +78,11 @@ célula permanecem no payload sem coerção visual. Erros localizados usam
 Falha de fetch ou estrutural continua em `resolved.error`, pois não equivale a
 um erro isolado de célula.
 
+`preview.sourceColumns` contém o schema imutável da `Fonte`, antes do plano M;
+`preview.columns` contém a saída da etapa selecionada. Compile/mutate devem
+usar somente `sourceColumns` como `sourceSchema`: reutilizar as colunas finais
+faz um rename/remove invalidar retroativamente etapas anteriores.
+
 O endpoint de mutação suporta conversão legada, inserção/substituição,
 rename/move/remove de etapa, rename de consulta e formatação. Toda resposta é
 recompilada antes de retornar, portanto diagnósticos e fórmulas exibidos na

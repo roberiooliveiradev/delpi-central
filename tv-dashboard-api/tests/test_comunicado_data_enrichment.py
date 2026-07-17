@@ -751,6 +751,10 @@ def test_enrich_series_route_with_m_transform_preview_uses_series_table():
     assert isinstance(preview, dict)
     preview_keys = [col["key"] for col in preview["columns"]]
     assert preview_keys == ["periodo", "value"]
+    assert [col["key"] for col in preview["sourceColumns"]] == [
+        "periodo",
+        "value",
+    ]
     assert "campo" not in preview_keys and "valor" not in preview_keys
     assert [row["value"] for row in preview["rows"]] == [82.5, 84.0]
     # Apresentação (mesmo fluxo do gráfico/tabela) continua renderizando a série

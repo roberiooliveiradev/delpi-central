@@ -1339,6 +1339,10 @@ class ComunicadoDataEnrichmentService:
                         for item in (transform_result.get("schema") or [])
                         if isinstance(item, dict) and item.get("key") in columns
                     ],
+                    # Schema imutável da Fonte, anterior a rename/remove/select.
+                    # O compilador semântico não pode reutilizar `columns`, que
+                    # representa a saída da etapa selecionada.
+                    "sourceColumns": transform_result.get("sourceSchema") or [],
                     "rows": rows,
                     "returnedRows": returned_rows,
                     "availableRows": available_rows,
