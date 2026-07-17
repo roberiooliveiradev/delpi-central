@@ -99,14 +99,25 @@ export function DataQueryWorkbenchModal({
     requestAnimationFrame(() => advancedEditorButtonRef.current?.focus());
   };
 
-  const openColumnMenu = (event: MouseEvent<HTMLElement>, column: string) => {
+  const openColumnMenu = (
+    event: MouseEvent<HTMLElement>,
+    column: string,
+    cellValue?: unknown,
+  ) => {
     event.preventDefault();
     const meta = preview?.columns.find((item) => item.key === column);
+    const cellText =
+      typeof cellValue === "string" ||
+      typeof cellValue === "number" ||
+      typeof cellValue === "boolean"
+        ? String(cellValue)
+        : null;
     setColumnMenu({
       position: { x: event.clientX, y: event.clientY },
       columnKey: column,
       columnLabel: meta?.label ?? column,
       columnType: meta?.type ?? "any",
+      cellValue: cellText,
     });
     workbench.dispatch({ type: "select_column", columnKey: column });
   };

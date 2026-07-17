@@ -25,7 +25,11 @@ export function DataPreparePreviewGrid({
   loading: boolean;
   selectedColumnKey: string | null;
   onSelectColumn: (key: string) => void;
-  onColumnContextMenu: (event: MouseEvent<HTMLElement>, key: string) => void;
+  onColumnContextMenu: (
+    event: MouseEvent<HTMLElement>,
+    key: string,
+    cellValue?: unknown,
+  ) => void;
 }) {
   const columns: Array<DataTableColumn<Record<string, unknown>>> = (preview?.columns ?? []).map(
     (column) => ({
@@ -64,7 +68,9 @@ export function DataPreparePreviewGrid({
         onHeaderClick={(column) => onSelectColumn(column.key)}
         onHeaderContextMenu={(event, column) => onColumnContextMenu(event, column.key)}
         onCellClick={(_, column) => onSelectColumn(column.key)}
-        onCellContextMenu={(event, _, column) => onColumnContextMenu(event, column.key)}
+        onCellContextMenu={(event, row, column) =>
+          onColumnContextMenu(event, column.key, row[column.key])
+        }
       />
       {preview?.isSample ? (
         <p className="td-deck-inspector__meta" role="status">

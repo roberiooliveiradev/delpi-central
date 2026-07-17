@@ -1,21 +1,25 @@
 import {
-  FormSelectControl,
+  ContextMenu,
+  ContextMenuDivider,
+  ContextMenuItem,
   NativeTextControl,
-  useClickOutside,
-  useDelpiUiPortalTheme,
-  useFixedPanelPosition,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
 import {
   ArrowDownAZ,
   ArrowDownZA,
+  ArrowLeft,
   Columns3,
   Copy,
   Eraser,
+  Filter,
+  FilterX,
+  Replace,
+  TextCursorInput,
   Trash2,
+  Type,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 
 import type { DataQueryInsertOperation } from "../domain/dataQueryTypes";
 
@@ -24,6 +28,7 @@ export type ColumnMenuTarget = {
   columnKey: string;
   columnLabel: string;
   columnType: string;
+  cellValue: string | null;
 };
 
 type Insert = (
@@ -32,14 +37,7 @@ type Insert = (
   arguments_: Record<string, unknown>,
 ) => void;
 
-const FILTER_COMPARATORS = [
-  { value: "eq", label: "Igual a" },
-  { value: "neq", label: "Diferente de" },
-  { value: "contains", label: "Contém" },
-  { value: "startsWith", label: "Começa com" },
-  { value: "gt", label: "Maior que" },
-  { value: "lt", label: "Menor que" },
-];
+type View = "root" | "rename" | "replace" | "type";
 
 const COLUMN_TYPES = [
   { value: "text", label: "Texto" },
@@ -51,7 +49,9 @@ const COLUMN_TYPES = [
   { value: "any", label: "Qualquer" },
 ];
 
-const VALUELESS_COMPARATORS = new Set<string>();
+function truncate(value: string): string {
+  return value.length > 18 ? `${value.slice(0, 18)}…` : value;
+}
 
 export function DataPrepareColumnMenu({
   target,
@@ -62,46 +62,23 @@ export function DataPrepareColumnMenu({
   onClose: () => void;
   onInsert: Insert;
 }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const open = Boolean(target);
-  const style = useFixedPanelPosition(open, target?.position ?? null, panelRef, 2);
-  const theme = useDelpiUiPortalTheme(open);
+  const [view, setView] = useState<View>("root");
   const [renameTo, setRenameTo] = useState("");
-  const [comparator, setComparator] = useState("eq");
-  const [filterValue, setFilterValue] = useState("");
   const [findValue, setFindValue] = useState("");
   const [replaceValue, setReplaceValue] = useState("");
-  const [columnType, setColumnType] = useState("text");
-
-  useClickOutside([panelRef], open, onClose);
 
   useEffect(() => {
     if (!target) return;
+    setView("root");
     setRenameTo(target.columnLabel);
-    setComparator("eq");
-    setFilterValue("");
-    setFindValue("");
+    setFindValue(target.cellValue ?? "");
     setReplaceValue("");
-    setColumnType(COLUMN_TYPES.some((item) => item.value === target.columnType)
-      ? target.columnType
-      : "text");
   }, [target]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, open]);
-
-  if (!target || typeof document === "undefined") return null;
+  if (!target) return null;
 
   const column = target.columnKey;
+  const cellText = target.cellValue;
   const commit = (
     stepName: string,
     operation: DataQueryInsertOperation,
@@ -110,191 +87,184 @@ export function DataPrepareColumnMenu({
     onInsert(stepName, operation, arguments_);
     onClose();
   };
-  const filterNeedsValue = !VALUELESS_COMPARATORS.has(comparator);
 
-  return createPortal(
-    <div
-      className={["dashboard-tv-dashboard", theme.hostClassName].filter(Boolean).join(" ")}
-      style={theme.style}
-      data-theme={theme.dataTheme}
+  return (
+    <ContextMenu
+      open={Boolean(target)}
+      position={target.position}
+      onClose={onClose}
+      aria-label={`Ações da coluna ${target.columnLabel}`}
     >
-      <div
-        ref={panelRef}
-        className="td-data-pq__col-menu"
-        style={style}
-        role="dialog"
-        aria-label={`Editar coluna ${target.columnLabel}`}
-      >
-        <header className="td-data-pq__col-menu-head">
-          <span className="td-data-pq__col-menu-title">{target.columnLabel}</span>
-          <span className="td-data-pq__col-menu-type">{target.columnType}</span>
-        </header>
-
-        <div className="td-data-pq__col-menu-quick" role="group" aria-label="Ações rápidas">
-          <button
-            type="button"
-            aria-label="Ordenar crescente"
-            onClick={() => commit("Linhas ordenadas", "sort", { column, direction: "asc" })}
-          >
-            <ArrowDownAZ size={16} aria-hidden />
-          </button>
-          <button
-            type="button"
-            aria-label="Ordenar decrescente"
-            onClick={() => commit("Linhas ordenadas", "sort", { column, direction: "desc" })}
-          >
-            <ArrowDownZA size={16} aria-hidden />
-          </button>
-          <button
-            type="button"
-            aria-label="Manter somente esta coluna"
-            onClick={() => commit("Colunas selecionadas", "select", { columns: [column] })}
-          >
-            <Columns3 size={16} aria-hidden />
-          </button>
-          <button
-            type="button"
-            aria-label="Duplicar coluna"
-            onClick={() =>
+      {view === "root" ? (
+        <>
+          <ContextMenuItem
+            label="Renomear coluna"
+            icon={TextCursorInput}
+            onSelect={() => setView("rename")}
+          />
+          <ContextMenuItem
+            label="Ordenar crescente"
+            icon={ArrowDownAZ}
+            onSelect={() => commit("Linhas ordenadas", "sort", { column, direction: "asc" })}
+          />
+          <ContextMenuItem
+            label="Ordenar decrescente"
+            icon={ArrowDownZA}
+            onSelect={() => commit("Linhas ordenadas", "sort", { column, direction: "desc" })}
+          />
+          <ContextMenuItem label="Alterar tipo" icon={Type} onSelect={() => setView("type")} />
+          <ContextMenuDivider />
+          {cellText != null ? (
+            <>
+              <ContextMenuItem
+                label={`Manter linhas iguais a "${truncate(cellText)}"`}
+                icon={Filter}
+                onSelect={() =>
+                  commit("Linhas filtradas", "filter", { column, cmp: "eq", value: cellText })
+                }
+              />
+              <ContextMenuItem
+                label={`Remover linhas iguais a "${truncate(cellText)}"`}
+                icon={FilterX}
+                onSelect={() =>
+                  commit("Linhas filtradas", "filter", { column, cmp: "neq", value: cellText })
+                }
+              />
+            </>
+          ) : null}
+          <ContextMenuItem
+            label="Substituir valores"
+            icon={Replace}
+            onSelect={() => setView("replace")}
+          />
+          <ContextMenuDivider />
+          <ContextMenuItem
+            label="Duplicar coluna"
+            icon={Copy}
+            onSelect={() =>
               commit("Coluna duplicada", "duplicate_column", {
                 column,
                 newName: `${target.columnLabel} cópia`,
               })
             }
-          >
-            <Copy size={16} aria-hidden />
-          </button>
-          <button
-            type="button"
-            aria-label="Remover linhas com erro"
-            onClick={() => commit("Erros removidos", "remove_errors", { columns: [column] })}
-          >
-            <Eraser size={16} aria-hidden />
-          </button>
-          <button
-            type="button"
-            className="td-data-pq__col-menu-danger"
-            aria-label="Remover coluna"
-            onClick={() => commit("Colunas removidas", "remove_columns", { columns: [column] })}
-          >
-            <Trash2 size={16} aria-hidden />
-          </button>
-        </div>
+          />
+          <ContextMenuItem
+            label="Manter somente esta coluna"
+            icon={Columns3}
+            onSelect={() => commit("Colunas selecionadas", "select", { columns: [column] })}
+          />
+          <ContextMenuItem
+            label="Remover erros"
+            icon={Eraser}
+            onSelect={() => commit("Erros removidos", "remove_errors", { columns: [column] })}
+          />
+          <ContextMenuDivider />
+          <ContextMenuItem
+            label="Remover coluna"
+            icon={Trash2}
+            destructive
+            onSelect={() => commit("Colunas removidas", "remove_columns", { columns: [column] })}
+          />
+        </>
+      ) : null}
 
-        <form
-          className="td-data-pq__col-menu-field"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!renameTo.trim() || renameTo.trim() === target.columnLabel) return;
-            commit("Colunas renomeadas", "rename", { from: column, to: renameTo.trim() });
-          }}
-        >
-          <label htmlFor="td-col-rename">Renomear</label>
-          <div className="td-data-pq__col-menu-row">
+      {view === "rename" ? (
+        <div className="dashboard-tv-dashboard td-data-pq__menu-view">
+          <form
+            className="td-data-pq__menu-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (!renameTo.trim() || renameTo.trim() === target.columnLabel) return;
+              commit("Colunas renomeadas", "rename", { from: column, to: renameTo.trim() });
+            }}
+          >
+            <label htmlFor="td-col-rename">Novo nome de “{target.columnLabel}”</label>
             <NativeTextControl
               id="td-col-rename"
+              autoFocus
               aria-label="Novo nome da coluna"
               value={renameTo}
               onChange={setRenameTo}
             />
-            <button type="submit" className="td-btn td-btn--sm">
-              Aplicar
-            </button>
-          </div>
-        </form>
+            <div className="td-data-pq__menu-form-actions">
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                onClick={() => setView("root")}
+              >
+                <ArrowLeft size={14} aria-hidden /> Voltar
+              </button>
+              <button
+                type="submit"
+                className="td-btn td-btn--sm"
+                disabled={!renameTo.trim() || renameTo.trim() === target.columnLabel}
+              >
+                Aplicar
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
 
-        <form
-          className="td-data-pq__col-menu-field"
-          onSubmit={(event) => {
-            event.preventDefault();
-            commit("Linhas filtradas", "filter", {
-              column,
-              cmp: comparator,
-              value: filterValue,
-            });
-          }}
-        >
-          <label htmlFor="td-col-filter">Filtrar linhas</label>
-          <div className="td-data-pq__col-menu-row">
-            <FormSelectControl
-              id="td-col-filter-cmp"
-              ariaLabel="Comparador do filtro"
-              value={comparator}
-              onChange={setComparator}
-              options={FILTER_COMPARATORS}
-            />
-          </div>
-          <div className="td-data-pq__col-menu-row">
-            <NativeTextControl
-              id="td-col-filter"
-              aria-label="Valor do filtro"
-              placeholder="Valor"
-              value={filterValue}
-              disabled={!filterNeedsValue}
-              onChange={setFilterValue}
-            />
-            <button type="submit" className="td-btn td-btn--sm">
-              Filtrar
-            </button>
-          </div>
-        </form>
-
-        <form
-          className="td-data-pq__col-menu-field"
-          onSubmit={(event) => {
-            event.preventDefault();
-            commit("Valor substituído", "replace", {
-              column,
-              find: findValue,
-              replaceWith: replaceValue,
-            });
-          }}
-        >
-          <label htmlFor="td-col-find">Substituir valor</label>
-          <div className="td-data-pq__col-menu-row">
+      {view === "replace" ? (
+        <div className="dashboard-tv-dashboard td-data-pq__menu-view">
+          <form
+            className="td-data-pq__menu-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              commit("Valor substituído", "replace", {
+                column,
+                find: findValue,
+                replaceWith: replaceValue,
+              });
+            }}
+          >
+            <label htmlFor="td-col-find">Localizar</label>
             <NativeTextControl
               id="td-col-find"
+              autoFocus
               aria-label="Valor a localizar"
-              placeholder="Localizar"
+              placeholder="Valor a localizar"
               value={findValue}
               onChange={setFindValue}
             />
+            <label htmlFor="td-col-replace">Substituir por</label>
             <NativeTextControl
               id="td-col-replace"
               aria-label="Novo valor"
-              placeholder="Substituir por"
+              placeholder="Novo valor"
               value={replaceValue}
               onChange={setReplaceValue}
             />
-            <button type="submit" className="td-btn td-btn--sm">
-              Aplicar
-            </button>
-          </div>
-        </form>
+            <div className="td-data-pq__menu-form-actions">
+              <button
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                onClick={() => setView("root")}
+              >
+                <ArrowLeft size={14} aria-hidden /> Voltar
+              </button>
+              <button type="submit" className="td-btn td-btn--sm">
+                Aplicar
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
 
-        <form
-          className="td-data-pq__col-menu-field"
-          onSubmit={(event) => {
-            event.preventDefault();
-            commit("Tipo alterado", "changeType", { column, to: columnType });
-          }}
-        >
-          <label htmlFor="td-col-type">Alterar tipo</label>
-          <div className="td-data-pq__col-menu-row">
-            <FormSelectControl
-              id="td-col-type"
-              ariaLabel="Novo tipo da coluna"
-              value={columnType}
-              onChange={setColumnType}
-              options={COLUMN_TYPES}
+      {view === "type" ? (
+        <>
+          {COLUMN_TYPES.map((item) => (
+            <ContextMenuItem
+              key={item.value}
+              label={item.label}
+              onSelect={() => commit("Tipo alterado", "changeType", { column, to: item.value })}
             />
-            <button type="submit" className="td-btn td-btn--sm">
-              Aplicar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>,
-    document.body,
+          ))}
+          <ContextMenuDivider />
+          <ContextMenuItem label="Voltar" icon={ArrowLeft} onSelect={() => setView("root")} />
+        </>
+      ) : null}
+    </ContextMenu>
   );
 }
