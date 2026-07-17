@@ -75,14 +75,39 @@ class MeetingMinutesService:
         if not perms.has_unit_read_access(user, minute["unit_code"]):
             raise PermissionError("Sem permissão para visualizar esta ata.")
         version = self.repo.get_version(minute_id)
+        signers = self.repo.list_signers(minute_id)
         return {
             "minute": minute,
             "version": version,
             "participants": self.repo.list_participants(minute_id),
-            "signers": self.repo.list_signers(minute_id),
+            "signers": signers,
             "signatures": self.repo.list_signatures(minute_id),
             "action_items": self.repo.list_action_items(minute_id),
             "versions": self.repo.list_versions(minute_id),
+            "viewer": self._build_viewer_context(user, minute, signers),
+        }
+
+    def _build_viewer_context(
+        self,
+        user,
+        minute: dict[str, Any],
+        signers: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Relação do usuário autenticado com a ata — o MFE apenas renderiza."""
+        user_id = self._user_id(user)
+        signer = next(
+            (item for item in signers if str(item.get("user_id") or "") == user_id),
+            None,
+        )
+        signer_status = str(signer.get("status") or "") if signer else ""
+        minute_signable = minute.get("status") in {"awaiting_signatures", "partially_signed"}
+        return {
+            "user_id": user_id or None,
+            "is_signer": signer is not None,
+            "has_signed": signer_status == "signed",
+            "can_sign_now": bool(
+                signer and minute_signable and signer_status in {"pending", "viewed"}
+            ),
         }
 
     def create(self, user, payload: dict[str, Any]) -> dict[str, Any]:

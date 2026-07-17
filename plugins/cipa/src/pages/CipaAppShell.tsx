@@ -643,17 +643,16 @@ function MinuteDetailPage({
                 Enviar para assinatura
               </ActionButton>
             )}
-            {canSign &&
-              (status === "awaiting_signatures" || status === "partially_signed") && (
-                <ActionButton
-                  variant="primary"
-                  onClick={() =>
-                    navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/sign`)
-                  }
-                >
-                  <PenLine size={16} /> Assinar
-                </ActionButton>
-              )}
+            {canSign && detail?.viewer?.can_sign_now && (
+              <ActionButton
+                variant="primary"
+                onClick={() =>
+                  navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}/sign`)
+                }
+              >
+                <PenLine size={16} /> Assinar
+              </ActionButton>
+            )}
             {canManage && status === "signed" && (
               <ActionButton
                 variant="primary"

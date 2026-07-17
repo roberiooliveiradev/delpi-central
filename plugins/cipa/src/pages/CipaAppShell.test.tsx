@@ -367,6 +367,56 @@ describe("CipaAppShell compartilhado", () => {
     await waitFor(() => expect(api.exportPdf).toHaveBeenCalledWith("minute-1"));
   });
 
+  it("mostra Assinar apenas quando o viewer ainda pode assinar", async () => {
+    const detail = {
+      minute: {
+        id: "minute-1",
+        unit_code: "01",
+        title: "Reunião ordinária",
+        minute_number: "2026/001",
+        meeting_type: "ordinary",
+        meeting_date: "2026-07-16",
+        status: "partially_signed",
+      },
+      version: { body_html: "<p>Documento da ata.</p>", content_hash: "hash" },
+      participants: [],
+      signers: [],
+      signatures: [],
+      action_items: [],
+      versions: [],
+    };
+
+    api.getMinute.mockResolvedValue({
+      ...detail,
+      viewer: { user_id: "u1", is_signer: true, has_signed: false, can_sign_now: true },
+    });
+    const { unmount } = render(
+      <CipaAppShell
+        route={{ kind: "detail", unitCode: "01", minuteId: "minute-1" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+    expect(await screen.findByRole("button", { name: /Assinar/ })).toBeTruthy();
+    unmount();
+
+    api.getMinute.mockResolvedValue({
+      ...detail,
+      viewer: { user_id: "u1", is_signer: true, has_signed: true, can_sign_now: false },
+    });
+    render(
+      <CipaAppShell
+        route={{ kind: "detail", unitCode: "01", minuteId: "minute-1" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+    await screen.findByLabelText("Modo de leitura da ata");
+    expect(screen.queryByRole("button", { name: /Assinar/ })).toBeNull();
+  });
+
   it("histórico da ata usa timeline em árvore com branches de auditoria", async () => {
     api.getMinute.mockResolvedValue({
       minute: {

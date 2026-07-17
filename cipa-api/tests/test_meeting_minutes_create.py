@@ -196,6 +196,41 @@ def test_create_version_with_none_content_preserves_current_version():
     assert "Observações" in captured["observations_html"]
 
 
+def _viewer(minute_status: str, signer: dict | None):
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    minute = {"id": "minute-1", "status": minute_status}
+    signers = [signer] if signer else []
+    return service._build_viewer_context(
+        SimpleNamespace(id="user-1"), minute, signers
+    )
+
+
+def test_viewer_context_can_sign_only_while_pending():
+    viewer = _viewer(
+        "partially_signed", {"user_id": "user-1", "status": "pending"}
+    )
+    assert viewer["is_signer"] is True
+    assert viewer["has_signed"] is False
+    assert viewer["can_sign_now"] is True
+
+
+def test_viewer_context_blocks_after_signed():
+    viewer = _viewer(
+        "partially_signed", {"user_id": "user-1", "status": "signed"}
+    )
+    assert viewer["has_signed"] is True
+    assert viewer["can_sign_now"] is False
+
+
+def test_viewer_context_blocks_non_signer_and_non_signable_status():
+    assert _viewer("partially_signed", {"user_id": "other", "status": "pending"})[
+        "can_sign_now"
+    ] is False
+    assert _viewer("draft", {"user_id": "user-1", "status": "pending"})[
+        "can_sign_now"
+    ] is False
+
+
 @pytest.mark.parametrize("status", ["signed", "finalized"])
 def test_soft_delete_rejects_signed_or_finalized(status):
     service = MeetingMinutesService.__new__(MeetingMinutesService)

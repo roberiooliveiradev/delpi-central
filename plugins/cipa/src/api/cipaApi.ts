@@ -22,6 +22,13 @@ export type MinuteListItem = {
   updated_at?: string;
 };
 
+export type MinuteViewerContext = {
+  user_id: string | null;
+  is_signer: boolean;
+  has_signed: boolean;
+  can_sign_now: boolean;
+};
+
 export type MinuteDetail = {
   minute: Record<string, unknown>;
   version: Record<string, unknown> | null;
@@ -30,6 +37,8 @@ export type MinuteDetail = {
   signatures: Record<string, unknown>[];
   action_items: Record<string, unknown>[];
   versions: Record<string, unknown>[];
+  /** Relação do usuário autenticado com a ata (API decide; MFE renderiza). */
+  viewer?: MinuteViewerContext;
 };
 
 function unwrap<T>(envelope: ApiEnvelope<T>): T {
