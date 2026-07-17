@@ -24,6 +24,9 @@
 
 .mdc-download-artifacts__button {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   border: 1px solid var(--mdc-accent, #2563eb);
   border-radius: var(--mdc-radius-sm);
   background: var(--mdc-accent, #2563eb);
@@ -33,6 +36,10 @@
   font-weight: 600;
   padding: 0.45rem 0.9rem;
   cursor: pointer;
+}
+
+.mdc-download-artifacts__click-icon {
+  flex: 0 0 auto;
 }
 
 .mdc-download-artifacts__button:disabled {

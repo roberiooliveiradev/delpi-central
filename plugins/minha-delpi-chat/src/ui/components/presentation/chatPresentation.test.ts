@@ -842,4 +842,26 @@ describe("shouldShowActionResults", () => {
 
     expect(shouldShowActionResults("", toolCalls)).toBe(false);
   });
+
+  it("oculta JSON bruto quando a entrega é download (document_export)", () => {
+    const toolCalls = fixtureToolCalls([
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          statusCode: 200,
+          responsePreview: '{"success": true, "data": {"filename": "Estrutura_90261699.xlsx"}}',
+          downloadArtifacts: [
+            {
+              href: "/apps/api-delpi/products/90261699/structure/excel?format=xlsx",
+              filename: "Estrutura_90261699.xlsx",
+              label: "Baixar Estrutura_90261699.xlsx",
+            },
+          ],
+        },
+      },
+    ]);
+
+    expect(shouldShowActionResults("", toolCalls)).toBe(false);
+  });
 });

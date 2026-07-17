@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MousePointerClick } from "lucide-react";
 
 import {
   parseContentDispositionFilename,
@@ -99,7 +100,14 @@ export function ChatDownloadArtifacts({
                 disabled={busy}
                 onClick={() => void handleDownload(artifact)}
               >
-                {busy ? "Baixando…" : artifact.label || `Baixar ${artifact.filename}`}
+                <MousePointerClick
+                  className="mdc-download-artifacts__click-icon"
+                  size={17}
+                  aria-hidden="true"
+                />
+                <span>
+                  {busy ? "Baixando…" : artifact.label || `Baixar ${artifact.filename}`}
+                </span>
               </button>
               {artifact.filename ? (
                 <span className="mdc-download-artifacts__filename">{artifact.filename}</span>

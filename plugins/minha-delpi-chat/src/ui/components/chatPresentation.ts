@@ -33,6 +33,7 @@ import {
 
 import {
   getAvailableFormatsFromToolCalls,
+  getDownloadArtifactsFromToolCalls,
   getPathFromToolCalls,
   getPreferredFormatFromToolCalls,
   getPresentationDecisionFromToolCalls,
@@ -988,6 +989,10 @@ export function shouldShowActionResults(
     externalCalls.length > 0 &&
     externalCalls.every((toolCall) => toolCall.metadata?.ok === false)
   ) {
+    return false;
+  }
+
+  if (getDownloadArtifactsFromToolCalls(toolCalls).length > 0) {
     return false;
   }
 
