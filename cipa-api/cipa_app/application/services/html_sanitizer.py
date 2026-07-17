@@ -81,6 +81,9 @@ _DANGEROUS_SELF_CLOSING_RE = re.compile(
 )
 _STYLE_ATTR_RE = re.compile(r"""\sstyle\s*=\s*(["'])(.*?)\1""", re.IGNORECASE | re.DOTALL)
 _DSTY_ATTR_RE = re.compile(r'\sdata-dsty\s*=\s*"([A-Za-z0-9+/=]*)"')
+# Run de 2+ espaços não separáveis (artefato de colagem do Word entre o número
+# da lista e o texto) — colapsa para um espaço comum.
+_NBSP_RUN_RE = re.compile(r"[ \t]*(?:(?:&nbsp;|&#0*160;|\u00a0)[ \t]*){2,}", re.IGNORECASE)
 
 
 def _filter_css(raw_style: str) -> str:
@@ -134,9 +137,14 @@ def _decode_styles(html: str) -> str:
 
 
 class CipaHtmlSanitizer:
+    @staticmethod
+    def collapse_nbsp_runs(raw_html: str | None) -> str:
+        """Remove runs de `&nbsp;` (colagem do Word) de conteúdo já gravado."""
+        return _NBSP_RUN_RE.sub(" ", raw_html or "")
+
     @classmethod
     def sanitize(cls, raw_html: str | None) -> str:
-        text = raw_html or ""
+        text = cls.collapse_nbsp_runs(raw_html)
         text = _DANGEROUS_BLOCK_RE.sub("", text)
         text = _DANGEROUS_SELF_CLOSING_RE.sub("", text)
         text = _encode_styles(text)

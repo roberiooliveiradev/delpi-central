@@ -79,6 +79,21 @@ def test_pdf_preserves_rich_text_formatting():
     assert blocks[1].style.firstLineIndent == -2.5 * mm
 
 
+def test_pdf_collapses_word_nbsp_runs_in_saved_content():
+    renderer = MinutePdfRenderer()
+    styles = renderer._styles()
+    blocks = html_to_paragraphs(
+        "<p>1.<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>"
+        "Desenvolver ferramenta digital</p>",
+        styles["body"],
+        styles["bullet"],
+    )
+    text = blocks[0].text
+    assert "\u00a0\u00a0" not in text
+    assert "&nbsp;&nbsp;" not in text
+    assert "Desenvolver ferramenta digital" in text
+
+
 def test_pdf_story_does_not_inject_intro_or_closing_text():
     renderer = MinutePdfRenderer()
     styles = renderer._styles()

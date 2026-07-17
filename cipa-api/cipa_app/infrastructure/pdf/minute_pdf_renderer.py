@@ -26,6 +26,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from cipa_app.application.services.html_sanitizer import CipaHtmlSanitizer
+
 _ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 _LOGO_PATH = _ASSETS_DIR / "logo-cipa.png"
 _PAGE_WIDTH, _PAGE_HEIGHT = A4
@@ -213,7 +215,8 @@ def html_to_paragraphs(
     bullet_style: ParagraphStyle,
 ) -> list[Flowable]:
     """Converte RichTextEditor HTML em blocos ReportLab preservando formatação."""
-    raw = raw_html or ""
+    # Atas gravadas antes da normalização podem carregar runs de &nbsp; do Word.
+    raw = CipaHtmlSanitizer.collapse_nbsp_runs(raw_html)
     raw = re.sub(r"<\s*br\s*/?\s*>", "<br/>", raw, flags=re.IGNORECASE)
     raw = _convert_rich_inline(raw)
 

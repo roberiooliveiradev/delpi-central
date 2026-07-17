@@ -68,6 +68,25 @@ def test_html_sanitizer_preserves_safe_rich_text_formatting():
     assert "text-decoration: underline line-through" in cleaned
 
 
+def test_html_sanitizer_collapses_word_nbsp_runs():
+    # Colagem do Word: número da lista seguido de vários &nbsp; até o texto.
+    cleaned = CipaHtmlSanitizer.sanitize(
+        "<p>1.<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Desenvolver ferramenta</p>"
+        "<p>Mant\u00e9m\u00a0um nbsp isolado</p>"
+    )
+    assert "&nbsp;&nbsp;" not in cleaned
+    assert "1. Desenvolver ferramenta" in cleaned.replace("<span>", "").replace("</span>", "")
+    # nbsp isolado (uso legítimo) é preservado.
+    assert "Mant\u00e9m\u00a0um" in cleaned or "Mant\u00e9m&nbsp;um" in cleaned
+
+
+def test_html_sanitizer_collapse_nbsp_runs_helper():
+    assert (
+        CipaHtmlSanitizer.collapse_nbsp_runs("a&nbsp;&#160;\u00a0&nbsp;b") == "a b"
+    )
+    assert CipaHtmlSanitizer.collapse_nbsp_runs(None) == ""
+
+
 def test_html_sanitizer_removes_unsafe_css():
     cleaned = CipaHtmlSanitizer.sanitize(
         '<span style="color:red;background-image:url(javascript:alert(1));'

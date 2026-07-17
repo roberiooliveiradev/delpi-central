@@ -9,6 +9,13 @@ export function isHtmlEmpty(html: string | null | undefined): boolean {
   return raw.length === 0;
 }
 
+const NBSP_RUN_RE = /[ \t]*(?:(?:&nbsp;|&#0*160;|\u00a0)[ \t]*){2,}/gi;
+
+/** Colapsa runs de `&nbsp;` (artefato de colagem do Word) em um espaço comum. */
+export function collapseNbspRuns(html: string | null | undefined): string {
+  return (html || "").replace(NBSP_RUN_RE, " ");
+}
+
 export function formatDateBr(isoDate: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate);
   if (!match) return isoDate;

@@ -14,7 +14,7 @@ import {
   UNIT_LABELS,
 } from "../constants/labels";
 import logoCipa from "../assets/logo-cipa.png";
-import { formatDateBr } from "../utils/htmlContent";
+import { collapseNbspRuns, formatDateBr } from "../utils/htmlContent";
 
 const MONTHS = [
   "",
@@ -162,7 +162,7 @@ export function MinuteDocumentView({
                 <div
                   key={field}
                   className="cipa-minute-document__content delpi-ui-document-rich-content"
-                  dangerouslySetInnerHTML={{ __html: html }}
+                  dangerouslySetInnerHTML={{ __html: collapseNbspRuns(html) }}
                 />
               );
             },

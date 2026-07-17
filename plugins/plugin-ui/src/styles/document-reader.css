@@ -79,6 +79,7 @@
 .delpi-ui-document-rich-content li {
   margin: 0 0 2mm;
   padding-inline-start: 1mm;
+  text-indent: 0;
 }
 
 .delpi-ui-document-rich-content li:last-child {
