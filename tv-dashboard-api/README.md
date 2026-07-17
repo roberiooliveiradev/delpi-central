@@ -69,6 +69,15 @@ habilitado. O contrato `query` pode incluir `stepMetrics` e `explainPlan`; o
 contrato `preview` pode incluir `columnProfile`. Chaves de cache usam somente
 hashes/fingerprints e metadados de autorização/fonte, nunca JWT ou script bruto.
 
+O mesmo endpoint é a fonte canônica da prévia M: resolve parâmetros e escopo,
+busca a `api-delpi`, normaliza a tabela, executa M e retorna `preview`, `query`
+e diagnostics no mesmo envelope. Valores `null`, zero, `false` e erros de
+célula permanecem no payload sem coerção visual. Erros localizados usam
+`{ error: { stepName, code, message, rowIndex?, column? } }`; o resumo
+`query.runtimeErrors` repete `count` e uma amostra para status/telemetria.
+Falha de fetch ou estrutural continua em `resolved.error`, pois não equivale a
+um erro isolado de célula.
+
 O endpoint de mutação suporta conversão legada, inserção/substituição,
 rename/move/remove de etapa, rename de consulta e formatação. Toda resposta é
 recompilada antes de retornar, portanto diagnósticos e fórmulas exibidos na

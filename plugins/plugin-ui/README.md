@@ -121,6 +121,7 @@ Demos: `src/catalog/demos/`. Tabela estilo LMPS: entradas **DataTable** / **Data
 | `goalDisplay` / `operationalUnitLabels` | Meta IDD e filiais TOTVS |
 | `DataTable` / `DataTableSection` | Tabela + seção com busca/paginação |
 | `dataTableBemClasses` / `createDashboardDataTableKit` | Helpers BEM + factory |
+| `DataCellValue` / `resolveDataCellSemantics` | Render e taxonomia compartilhada para valor, null, vazio, ausente e erro |
 
 Detalhes: [component-catalog.md](./docs/component-catalog.md).
 

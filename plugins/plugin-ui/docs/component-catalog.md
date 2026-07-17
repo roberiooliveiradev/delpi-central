@@ -496,6 +496,14 @@ coluna `#` sticky, zebra suave e seleção de coluna/linha/célula (Ctrl/Cmd tog
 Shift range). Cabeçalhos e células interativos suportam Enter/Espaço, foco visível
 e `aria-selected`.
 
+`DataCellValue` e `resolveDataCellSemantics` são a fonte canônica para células
+de dados operacionais. A taxonomia diferencia `value`, `null`, `empty`,
+`missing` e `error`; erros no formato `{ error: { code, message, ... } }`
+recebem tooltip e rótulo acessível. `selectionToTsv` usa a mesma semântica:
+`null`, `ausente` e `#ERROR:<code>` não são reduzidos a campos em branco,
+enquanto string vazia continua sendo copiada como vazia. Consumidores devem
+informar `present={false}` quando a propriedade não existe na linha.
+
 Props relevantes de `DataTableSection`:
 
 | Prop | Descrição |

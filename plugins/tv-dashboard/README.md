@@ -32,6 +32,9 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
   profiling opt-in, qualidade/distribuição amostradas, explain e tempo por etapa;
   AbortController cancela requests e o backend aplica deadline
 - **Prévia M (`DataTable` grid-preview):** grade com bordas, wrap, resize/autofit de colunas, seleção de coluna/linha/célula, sort no cabeçalho (etapa M) e drag para reordenar colunas; Ctrl+C copia a seleção em TSV
+- **Semântica de células:** `null`, texto vazio, campo ausente e erro M localizado são estados distintos; `0` e `false` permanecem valores. A grade usa `DataCellValue` do `@delpi/plugin-ui`, erros exibem tooltip/ARIA e a cópia TSV preserva `null`, `ausente` e `#ERROR:<code>`.
+- **Fluxo único da prévia M:** abrir, compilar, mutar, trocar etapa e solicitar profiling convergem em `useDataQueryWorkbench.preview`; refresh da mesma consulta mantém as linhas na tela, troca de consulta descarta dados anteriores e respostas atrasadas são rejeitadas por `queryId` + sequência.
+- **Status da prévia:** o rodapé informa carga inicial, atualização, aplicação, quantidade de linhas, alterações pendentes e erros de célula sem substituir a grade por um loading intermitente.
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
 - **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
 - **Séries temporais fiéis à API:** a granularidade da rota é preservada (ex.: `day` = um dia por linha), sem reagrupar datas em faixas; a tabela recebe todos os pontos retornados pela API (até 366 pontos em séries anuais diárias).
