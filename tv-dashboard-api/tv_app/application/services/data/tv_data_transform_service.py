@@ -685,6 +685,15 @@ def _execute_m_step(
             else [column for column in table["columns"] if column not in selected]
         )
         table = {"columns": columns, "rows": [{column: row.get(column) for column in columns} for row in table["rows"]]}
+    elif name == "Table.ReorderColumns":
+        selected = _column_list(value(0), name)
+        for column in selected:
+            _require_column(table, column, name)
+        columns = selected + [column for column in table["columns"] if column not in selected]
+        table = {
+            "columns": columns,
+            "rows": [{column: row.get(column) for column in columns} for row in table["rows"]],
+        }
     elif name == "Table.SelectRows":
         predicate = args[0]
         rows = []
@@ -742,6 +751,24 @@ def _execute_m_step(
             table["rows"] = table["rows"][count:]
         else:
             table["rows"] = table["rows"][:-count] if count else list(table["rows"])
+    elif name == "Table.Range":
+        offset = int(value(0))
+        count = int(value(1)) if len(args) > 1 else None
+        table["rows"] = table["rows"][offset:] if count is None else table["rows"][offset : offset + count]
+    elif name == "Table.ReverseRows":
+        table["rows"] = list(reversed(table["rows"]))
+    elif name == "Table.Distinct":
+        columns = _column_list(value(0), name) if args else list(table["columns"])
+        for column in columns:
+            _require_column(table, column, name)
+        seen: set[tuple[Any, ...]] = set()
+        rows = []
+        for row in table["rows"]:
+            key = tuple(repr(row.get(column)) for column in columns)
+            if key not in seen:
+                seen.add(key)
+                rows.append(row)
+        table["rows"] = rows
     elif name == "Table.TransformColumnTypes":
         transformations = value(0)
         step_culture = str(value(1) or culture) if len(args) > 1 else culture
@@ -758,17 +785,134 @@ def _execute_m_step(
                     error = MRuntimeError(step.name, exc.code, str(exc), index, column)
                     runtime_errors.append(error)
                     row[column] = {"error": error.to_dict()}
-    elif name == "Table.FillDown":
+    elif name in {"Table.FillDown", "Table.FillUp"}:
         columns = _column_list(value(0), name)
         for column in columns:
             _require_column(table, column, name)
             previous = None
-            for row in table["rows"]:
+            rows = table["rows"] if name == "Table.FillDown" else list(reversed(table["rows"]))
+            for row in rows:
                 limits.check()
                 if row.get(column) is None:
                     row[column] = previous
                 else:
                     previous = row[column]
+    elif name == "Table.DuplicateColumn":
+        source_column, target_column = str(value(0)), str(value(1))
+        target_type = str(value(2)) if len(args) > 2 else declared_types.get(source_column)
+        _require_column(table, source_column, name)
+        if target_column in table["columns"]:
+            raise MExecutionError("m.duplicate_column", f'A coluna "{target_column}" já existe.')
+        table["columns"].append(target_column)
+        for index, row in enumerate(table["rows"]):
+            try:
+                row[target_column] = (
+                    convert_m_value(row.get(source_column), target_type, culture)
+                    if target_type
+                    else row.get(source_column)
+                )
+            except MExpressionError as exc:
+                error = MRuntimeError(step.name, exc.code, str(exc), index, target_column)
+                runtime_errors.append(error)
+                row[target_column] = {"error": error.to_dict()}
+        if target_type:
+            declared_types[target_column] = target_type
+    elif name == "Table.AddIndexColumn":
+        column = str(value(0))
+        initial = float(value(1)) if len(args) > 1 else 0.0
+        increment = float(value(2)) if len(args) > 2 else 1.0
+        if column in table["columns"]:
+            raise MExecutionError("m.duplicate_column", f'A coluna "{column}" já existe.')
+        table["columns"].append(column)
+        declared_types[column] = str(value(3)) if len(args) > 3 else "number"
+        for index, row in enumerate(table["rows"]):
+            row[column] = initial + index * increment
+    elif name == "Table.SplitColumn":
+        source_column = str(value(0))
+        splitter = value(1)
+        output_columns = _column_list(value(2), name)
+        _require_column(table, source_column, name)
+        if not isinstance(splitter, dict) or splitter.get("kind") != "delimiter":
+            raise MExecutionError("m.invalid_split_spec", "Divisor de coluna inválido.")
+        delimiter = str(splitter["value"])
+        source_position = table["columns"].index(source_column)
+        table["columns"] = (
+            table["columns"][:source_position]
+            + output_columns
+            + table["columns"][source_position + 1 :]
+        )
+        for row in table["rows"]:
+            parts = str(row.get(source_column) or "").split(delimiter, len(output_columns) - 1)
+            row.pop(source_column, None)
+            for index, column in enumerate(output_columns):
+                row[column] = parts[index] if index < len(parts) else None
+        declared_types.pop(source_column, None)
+        declared_types.update({column: "text" for column in output_columns})
+    elif name == "Table.TransformColumns":
+        operations = args[0].children if args and args[0].kind == "list" else ()
+        for operation in operations:
+            if operation.kind != "list" or len(operation.children) < 2:
+                raise MExecutionError("m.invalid_transform_columns_spec", "Operação de coluna inválida.")
+            column = str(
+                _argument(
+                    operation.children[0],
+                    row=None,
+                    environment=environment,
+                    culture=culture,
+                    limits=limits,
+                )
+            )
+            _require_column(table, column, name)
+            generator = operation.children[1]
+            target_type = (
+                str(
+                    _argument(
+                        operation.children[2],
+                        row=None,
+                        environment=environment,
+                        culture=culture,
+                        limits=limits,
+                    )
+                )
+                if len(operation.children) > 2
+                else "any"
+            )
+            for index, row in enumerate(table["rows"]):
+                try:
+                    generated = _argument(
+                        generator,
+                        row=row,
+                        environment={**environment, "_": row.get(column)},
+                        culture=culture,
+                        limits=limits,
+                    )
+                    row[column] = convert_m_value(generated, target_type, culture)
+                except MExpressionError as exc:
+                    error = MRuntimeError(step.name, exc.code, str(exc), index, column)
+                    runtime_errors.append(error)
+                    row[column] = {"error": error.to_dict()}
+            if target_type != "any":
+                declared_types[column] = target_type
+    elif name == "Table.RemoveRowsWithErrors":
+        columns = _column_list(value(0), name) if args else list(table["columns"])
+        table["rows"] = [
+            row
+            for row in table["rows"]
+            if not any(
+                isinstance(row.get(column), dict) and "error" in row.get(column, {})
+                for column in columns
+            )
+        ]
+    elif name == "Table.ReplaceErrorValues":
+        replacements = value(0)
+        if not isinstance(replacements, list):
+            raise MExecutionError("m.invalid_error_replacement_spec", "Substituições inválidas.")
+        for column, replacement in replacements:
+            _require_column(table, str(column), name)
+            for row in table["rows"]:
+                current = row.get(str(column))
+                if isinstance(current, dict) and "error" in current:
+                    row[str(column)] = replacement
     elif name == "Table.PromoteHeaders":
         if table["rows"]:
             first = table["rows"][0]
@@ -942,6 +1086,31 @@ def _execute_m_step(
             "columns": [column for column in table["columns"] if column != nested_column] + aliases,
             "rows": output_rows,
         }
+    elif name == "Table.Combine":
+        tables = value(0)
+        if not isinstance(tables, list) or not all(isinstance(item, dict) for item in tables):
+            raise MExecutionError("m.invalid_combine_spec", "Table.Combine exige consultas autorizadas.")
+        columns: list[str] = []
+        for item in tables:
+            for column in item.get("columns") or []:
+                if column not in columns:
+                    columns.append(column)
+        rows = [
+            {column: row.get(column) for column in columns}
+            for item in tables
+            for row in item.get("rows") or []
+        ]
+        table = {"columns": columns, "rows": rows}
+    elif name == "Table.Transpose":
+        matrix = [[row.get(column) for column in table["columns"]] for row in table["rows"]]
+        width = len(matrix)
+        columns = [f"Column{index + 1}" for index in range(width)]
+        rows = [
+            {columns[index]: value for index, value in enumerate(values)}
+            for values in zip(*matrix)
+        ] if matrix else []
+        table = {"columns": columns, "rows": rows}
+        declared_types.clear()
     else:
         raise MExecutionError("m.function_not_allowed", f"A função {name} não pode ser executada.")
     limits.guard_table(table)

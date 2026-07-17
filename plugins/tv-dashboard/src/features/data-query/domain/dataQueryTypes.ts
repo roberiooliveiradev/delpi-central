@@ -60,7 +60,7 @@ export type DataQueryMutationAction =
       type: "insert_step";
       afterStepName?: string | null;
       stepName?: string;
-      operation: string;
+      operation: DataQueryInsertOperation;
       arguments: Record<string, unknown>;
     }
   | { type: "replace_step_expression"; stepName: string; expression: string }
@@ -70,10 +70,51 @@ export type DataQueryMutationAction =
   | { type: "rename_query"; from: string; to: string }
   | { type: "format_script" };
 
+export type DataQueryInsertOperation =
+  | "rename"
+  | "select"
+  | "remove_columns"
+  | "reorder_columns"
+  | "filter"
+  | "sort"
+  | "replace"
+  | "keepRows"
+  | "removeRows"
+  | "range_rows"
+  | "distinct_rows"
+  | "remove_errors"
+  | "replace_errors"
+  | "changeType"
+  | "fillDown"
+  | "fill_up"
+  | "firstRowAsHeader"
+  | "transpose"
+  | "reverse_rows"
+  | "duplicate_column"
+  | "split_column"
+  | "add_index"
+  | "add_custom_column"
+  | "add_conditional_column"
+  | "transform_column"
+  | "group_rows"
+  | "pivot"
+  | "unpivot"
+  | "append_queries"
+  | "nested_join"
+  | "expand_table_column";
+
 export type DataQueryFunction = {
   name: string;
+  kind: "transform" | "scalar";
   category: string;
   signature: string;
   description: string;
+  parameters: string[];
   examples: string[];
+  introducedIn: string;
+  availability: {
+    ribbon: boolean;
+    formulaBar: boolean;
+    advancedEditor: boolean;
+  };
 };

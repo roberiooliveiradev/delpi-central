@@ -55,6 +55,7 @@ _SCALAR_FUNCTIONS = frozenset(
         "List.Max",
         "List.Count",
         "List.First",
+        "Splitter.SplitTextByDelimiter",
     }
 )
 
@@ -273,6 +274,11 @@ def _call_scalar(name: str, args: list[Any], culture: str) -> Any:
             return min(present)
         if name == "List.Max":
             return max(present)
+    if name == "Splitter.SplitTextByDelimiter":
+        delimiter = _clean_text(args[0])
+        if not delimiter:
+            _raise("m.empty_delimiter", "O delimitador não pode ser vazio.")
+        return {"kind": "delimiter", "value": delimiter}
     _raise("m.function_not_allowed", f"A função {name} não é permitida.")
 
 
@@ -311,6 +317,7 @@ def evaluate_compiled_expression(
                 "Replacer.ReplaceText",
                 "Replacer.ReplaceValue",
                 "JoinKind.LeftOuter",
+                "QuoteStyle.Csv",
             }:
                 return name
             _raise("m.unknown_identifier", f'O identificador "{name}" não foi encontrado.')

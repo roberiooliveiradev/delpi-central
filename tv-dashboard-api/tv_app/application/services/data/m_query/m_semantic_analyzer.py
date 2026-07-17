@@ -34,6 +34,7 @@ _ALLOWED_QUALIFIED_SYMBOLS = {
     "Replacer.ReplaceText",
     "Replacer.ReplaceValue",
     "JoinKind.LeftOuter",
+    "QuoteStyle.Csv",
 }
 
 
@@ -205,7 +206,14 @@ class MSemanticAnalyzer:
                 )
                 continue
             self._validate_arity(expression, spec.min_args, spec.max_args, diagnostics)
-            if not expression.arguments or not isinstance(expression.arguments[0], MIdentifier):
+            combine_input = (
+                expression.function_name == "Table.Combine"
+                and expression.arguments
+                and isinstance(expression.arguments[0], MListExpression)
+            )
+            if not expression.arguments or (
+                not isinstance(expression.arguments[0], MIdentifier) and not combine_input
+            ):
                 diagnostics.append(
                     _error(
                         "m.table_input_required",
@@ -214,7 +222,27 @@ class MSemanticAnalyzer:
                     )
                 )
                 continue
-            input_identifier = expression.arguments[0]
+            input_identifier = (
+                expression.arguments[0]
+                if isinstance(expression.arguments[0], MIdentifier)
+                else next(
+                    (
+                        item
+                        for item in expression.arguments[0].items
+                        if isinstance(item, MIdentifier)
+                    ),
+                    None,
+                )
+            )
+            if input_identifier is None:
+                diagnostics.append(
+                    _error(
+                        "m.table_input_required",
+                        "Table.Combine exige ao menos uma consulta autorizada.",
+                        expression.arguments[0],
+                    )
+                )
+                continue
             self._validate_identifier(
                 input_identifier,
                 known_tables,
@@ -224,12 +252,41 @@ class MSemanticAnalyzer:
                 current_binding=binding.name,
             )
             input_columns = known_tables.get(input_identifier.name)
+            if combine_input and isinstance(expression.arguments[0], MListExpression):
+                for table_item in expression.arguments[0].items:
+                    if isinstance(table_item, MIdentifier):
+                        self._validate_identifier(
+                            table_item,
+                            known_tables,
+                            query_names,
+                            referenced_queries,
+                            diagnostics,
+                            current_binding=binding.name,
+                        )
+            if (
+                expression.function_name == "Table.NestedJoin"
+                and len(expression.arguments) >= 3
+                and isinstance(expression.arguments[2], MIdentifier)
+            ):
+                self._validate_identifier(
+                    expression.arguments[2],
+                    known_tables,
+                    query_names,
+                    referenced_queries,
+                    diagnostics,
+                    current_binding=binding.name,
+                )
             self._collect_query_references(
                 expression,
                 query_names,
                 referenced_queries,
             )
-            for argument in expression.arguments[1:]:
+            nested_arguments = (
+                expression.arguments
+                if expression.function_name == "Table.Combine"
+                else expression.arguments[1:]
+            )
+            for argument in nested_arguments:
                 if (
                     expression.function_name == "Table.PromoteHeaders"
                     and isinstance(argument, MRecordExpression)
@@ -651,6 +708,148 @@ class MSemanticAnalyzer:
                         expression,
                     )
                 )
+        elif name == "Table.Combine" and arguments:
+            tables = arguments[0]
+            valid = isinstance(tables, MListExpression) and bool(tables.items) and all(
+                isinstance(item, MIdentifier) for item in tables.items
+            )
+            if not valid:
+                diagnostics.append(
+                    _error(
+                        "m.invalid_combine_spec",
+                        "Table.Combine exige uma lista literal de consultas autorizadas.",
+                        tables,
+                    )
+                )
+        elif name in {
+            "Table.ReorderColumns",
+            "Table.Distinct",
+            "Table.FillUp",
+            "Table.RemoveRowsWithErrors",
+        } and len(arguments) >= 2:
+            if _literal_strings(arguments[1]) is None:
+                diagnostics.append(
+                    _error(
+                        "m.literal_column_list_required",
+                        "É necessária uma lista literal de nomes de coluna.",
+                        arguments[1],
+                    )
+                )
+        elif name in {"Table.DuplicateColumn", "Table.AddIndexColumn"}:
+            required = arguments[1:3] if name == "Table.DuplicateColumn" else arguments[1:2]
+            if any(not isinstance(item, MLiteral) or not isinstance(item.value, str) for item in required):
+                diagnostics.append(
+                    _error(
+                        "m.literal_column_name_required",
+                        "Os nomes de coluna devem ser textos literais.",
+                        expression,
+                    )
+                )
+            type_index = 3 if name == "Table.DuplicateColumn" else 4
+            if len(arguments) > type_index and not isinstance(
+                arguments[type_index], MTypeExpression
+            ):
+                diagnostics.append(
+                    _error(
+                        "m.type_expression_required",
+                        "O tipo opcional deve usar a sintaxe type.",
+                        arguments[type_index],
+                    )
+                )
+            if name == "Table.AddIndexColumn":
+                for item in arguments[2:4]:
+                    if (
+                        not isinstance(item, MLiteral)
+                        or isinstance(item.value, bool)
+                        or not isinstance(item.value, (int, float))
+                    ):
+                        diagnostics.append(
+                            _error(
+                                "m.number_literal_required",
+                                "Valor inicial e incremento devem ser números literais.",
+                                item,
+                            )
+                        )
+        elif name == "Table.Range" and len(arguments) >= 2:
+            for item in arguments[1:]:
+                if (
+                    not isinstance(item, MLiteral)
+                    or not isinstance(item.value, int)
+                    or isinstance(item.value, bool)
+                    or item.value < 0
+                ):
+                    diagnostics.append(
+                        _error(
+                            "m.non_negative_row_count_required",
+                            "Offset e quantidade devem ser inteiros não negativos.",
+                            item,
+                        )
+                    )
+        elif name == "Table.SplitColumn" and len(arguments) >= 4:
+            splitter = arguments[2]
+            valid = (
+                isinstance(arguments[1], MLiteral)
+                and isinstance(arguments[1].value, str)
+                and isinstance(splitter, MCallExpression)
+                and splitter.function_name == "Splitter.SplitTextByDelimiter"
+                and bool(splitter.arguments)
+                and isinstance(splitter.arguments[0], MLiteral)
+                and isinstance(splitter.arguments[0].value, str)
+                and bool(splitter.arguments[0].value)
+                and (
+                    len(splitter.arguments) < 2
+                    or (
+                        isinstance(splitter.arguments[1], MIdentifier)
+                        and splitter.arguments[1].name == "QuoteStyle.Csv"
+                    )
+                )
+                and _literal_strings(arguments[3]) is not None
+            )
+            if not valid:
+                diagnostics.append(
+                    _error(
+                        "m.invalid_split_spec",
+                        "SplitColumn exige coluna, delimitador seguro e nomes literais.",
+                        expression,
+                    )
+                )
+        elif name == "Table.TransformColumns" and len(arguments) >= 2:
+            operations = arguments[1]
+            valid = isinstance(operations, MListExpression) and all(
+                isinstance(item, MListExpression)
+                and 2 <= len(item.items) <= 3
+                and isinstance(item.items[0], MLiteral)
+                and isinstance(item.items[0].value, str)
+                and isinstance(item.items[1], MEachExpression)
+                and (len(item.items) < 3 or isinstance(item.items[2], MTypeExpression))
+                for item in operations.items
+            )
+            if not valid:
+                diagnostics.append(
+                    _error(
+                        "m.invalid_transform_columns_spec",
+                        "TransformColumns exige pares {coluna, each expressão, type opcional}.",
+                        operations,
+                    )
+                )
+        elif name == "Table.ReplaceErrorValues" and len(arguments) >= 2:
+            replacements = arguments[1]
+            valid = isinstance(replacements, MListExpression) and all(
+                isinstance(item, MListExpression)
+                and len(item.items) == 2
+                and isinstance(item.items[0], MLiteral)
+                and isinstance(item.items[0].value, str)
+                and isinstance(item.items[1], MLiteral)
+                for item in replacements.items
+            )
+            if not valid:
+                diagnostics.append(
+                    _error(
+                        "m.invalid_error_replacement_spec",
+                        "ReplaceErrorValues exige pares literais {coluna, valor}.",
+                        arguments[1],
+                    )
+                )
 
     def _infer_columns(
         self,
@@ -684,7 +883,15 @@ class MSemanticAnalyzer:
                         )
                     columns.discard(source)
                     columns.add(target)
-        elif name in {"Table.SelectColumns", "Table.RemoveColumns", "Table.FillDown"} and len(expression.arguments) >= 2:
+        elif name in {
+            "Table.SelectColumns",
+            "Table.RemoveColumns",
+            "Table.FillDown",
+            "Table.FillUp",
+            "Table.ReorderColumns",
+            "Table.Distinct",
+            "Table.RemoveRowsWithErrors",
+        } and len(expression.arguments) >= 2:
             selected = _literal_strings(expression.arguments[1])
             if selected is None:
                 diagnostics.append(
@@ -708,7 +915,9 @@ class MSemanticAnalyzer:
                     columns = set(selected)
                 elif name == "Table.RemoveColumns":
                     columns.difference_update(selected)
-        elif name == "Table.AddColumn" and len(expression.arguments) >= 2:
+                elif name == "Table.ReorderColumns":
+                    columns = set(selected) | columns
+        elif name in {"Table.AddColumn", "Table.AddIndexColumn"} and len(expression.arguments) >= 2:
             column = expression.arguments[1]
             if not isinstance(column, MLiteral) or not isinstance(column.value, str):
                 diagnostics.append(
@@ -720,6 +929,19 @@ class MSemanticAnalyzer:
                 )
             else:
                 columns.add(column.value)
+        elif name == "Table.DuplicateColumn" and len(expression.arguments) >= 3:
+            source, target = expression.arguments[1], expression.arguments[2]
+            if (
+                isinstance(source, MLiteral)
+                and isinstance(source.value, str)
+                and isinstance(target, MLiteral)
+                and isinstance(target.value, str)
+            ):
+                if source.value not in columns:
+                    diagnostics.append(
+                        _error("m.unknown_column", f'A coluna "{source.value}" não existe.', source)
+                    )
+                columns.add(target.value)
         elif name == "Table.Sort" and len(expression.arguments) >= 2:
             criteria = expression.arguments[1]
             if isinstance(criteria, MListExpression):
@@ -776,6 +998,9 @@ class MSemanticAnalyzer:
             "Table.UnpivotOtherColumns",
             "Table.NestedJoin",
             "Table.ExpandTableColumn",
+            "Table.SplitColumn",
+            "Table.Transpose",
+            "Table.Combine",
         }:
             return None
         return columns

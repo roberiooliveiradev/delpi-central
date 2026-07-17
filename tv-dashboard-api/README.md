@@ -4,7 +4,7 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
-Power Query M: a [Fase 4](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-4-STATUS-M-DELPI.md) adicionou mutação estrutural determinística e o contrato de capabilities consumido pelo workbench transacional. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false` por padrão; a escrita v2 só é exposta quando ambas permitem.
+Power Query M: a [Fase 5](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-5-STATUS-M-DELPI.md) ampliou o registry seguro, compilador, executor e mutação canônica para a paridade funcional essencial. Colunas, linhas, tipos/cultura, texto, número, data, group/pivot, append, join 1:N e tratamento explícito de erros percorrem o mesmo `TransformPlan`; gaps fora do perfil estão documentados sem suporte aparente. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false` por padrão.
 
 ---
 

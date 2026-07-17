@@ -6,7 +6,7 @@
 > **Baseline inspecionada:** branch `main`, commit `095dabdbad44dbdb000f165a9fe0cdc13c6ee334`  
 > **Versão deste playbook:** 1.0  
 > **Data:** 2026-07-16  
-> **Status:** Fases 0–4 concluídas; Fases 5–7 não iniciadas
+> **Status:** Fases 0–5 concluídas; Fases 6–7 não iniciadas
 
 ---
 
@@ -1344,6 +1344,8 @@ Podem ser extraídos depois, quando houver segundo uso comprovado.
 ---
 
 ## Fase 5 — Paridade funcional Power Query essencial
+
+**Status:** ✅ concluída em 2026-07-17. Evidências: [status da Fase 5](./FASE-5-STATUS-M-DELPI.md), registry v1.2.0 deny-by-default, mutações tipadas server-side, golden tests de execução e ribbon local. O editor avançado permanece na Fase 6; gaps fora do perfil seguro estão documentados explicitamente, sem anunciar suporte.
 
 ### Página Inicial
 

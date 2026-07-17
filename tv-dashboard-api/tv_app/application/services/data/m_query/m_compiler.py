@@ -405,10 +405,23 @@ class MQueryCompiler:
         for binding in bindings:
             if isinstance(binding.expression, MCallExpression):
                 call = binding.expression
+                combine = call.function_name == "Table.Combine"
+                combine_items = (
+                    call.arguments[0].items
+                    if combine and call.arguments and isinstance(call.arguments[0], MListExpression)
+                    else ()
+                )
                 input_name = (
                     call.arguments[0].name
                     if call.arguments and isinstance(call.arguments[0], MIdentifier)
-                    else "Fonte"
+                    else next(
+                        (
+                            item.name
+                            for item in combine_items
+                            if isinstance(item, MIdentifier)
+                        ),
+                        "Fonte",
+                    )
                 )
                 compiled_steps.append(
                     CompiledMPlanStep(
@@ -416,7 +429,8 @@ class MQueryCompiler:
                         input_name=input_name,
                         function_name=call.function_name,
                         arguments=tuple(
-                            _compile_expression(item) for item in call.arguments[1:]
+                            _compile_expression(item)
+                            for item in (call.arguments if combine else call.arguments[1:])
                         ),
                     )
                 )

@@ -8,7 +8,7 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 Gráfico / KPI / tabela compostos: [playbook §19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#19-gráfico-composto-por-primitivos--edição-no-palco-onda-4g)  
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
-Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 4](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-4-STATUS-M-DELPI.md). O workbench M usa draft transacional, compile/mutate/preview server-side e commit multi-consulta único. `enabled` + `writeV2Enabled` controlam o rollout; ambas continuam desligadas por padrão e preservam a UX v1.
+Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 5](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-5-STATUS-M-DELPI.md). O workbench usa comandos tipados, mutação/compilação/preview server-side, etapas por nome e commit multi-consulta único. A ribbon e os menus cobrem a paridade essencial publicada pelo registry; o browser não concatena nem executa M. `enabled` + `writeV2Enabled` controlam o rollout e continuam desligadas por padrão.
 
 ---
 
@@ -27,7 +27,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
 - **Histórico de revisões:** a Timeline canônica de `@delpi/plugin-ui` mostra autor (nome/e-mail), campos e telas adicionadas, removidas, editadas ou reordenadas; snapshots antigos mantêm o resumo por motivo/prévia. Undo/redo e restauração manual usam snapshots atômicos do backend com controle otimista de revisão.
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
-- **Preparar dados M (Fase 4):** seleção por `stepName`, barra `fx` server-driven, diagnósticos com range, preview tipado cancelável e aplicação atômica de todas as consultas alteradas
+- **Preparar dados M (Fase 5):** seleção por `stepName`, ribbon e menus com comandos tipados, barra `fx` server-driven, diagnósticos com range, preview tipado cancelável e aplicação atômica de todas as consultas alteradas
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
 - **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
 - **Séries temporais fiéis à API:** a granularidade da rota é preservada (ex.: `day` = um dia por linha), sem reagrupar datas em faixas; a tabela recebe todos os pontos retornados pela API (até 366 pontos em séries anuais diárias).
