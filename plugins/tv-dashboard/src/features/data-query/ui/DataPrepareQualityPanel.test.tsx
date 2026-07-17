@@ -15,6 +15,7 @@ describe("DataPrepareQualityPanel", () => {
         loading={false}
         onToggleProfiling={onToggle}
         preview={{
+          sourceColumns: [],
           columns: [],
           rows: [],
           returnedRows: 0,
@@ -23,6 +24,7 @@ describe("DataPrepareQualityPanel", () => {
           isSample: false,
           selectedStepName: "Final",
           diagnostics: [],
+          runtimeErrors: { count: 0, sample: [] },
           executionMs: 12,
           profilingStatus: "completed",
           columnProfile: {

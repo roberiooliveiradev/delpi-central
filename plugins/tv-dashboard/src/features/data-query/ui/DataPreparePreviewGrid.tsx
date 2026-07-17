@@ -15,6 +15,7 @@ export function DataPreparePreviewGrid({
   preview,
   loading,
   compiledSteps,
+  selectedStepName,
   selectedColumnKey,
   selection,
   onSelectionChange,
@@ -26,6 +27,7 @@ export function DataPreparePreviewGrid({
   preview: DataQueryPreview | null;
   loading: boolean;
   compiledSteps?: DataQueryCompiledStep[] | null;
+  selectedStepName?: string | null;
   selectedColumnKey: string | null;
   selection?: DataTableSelection | null;
   onSelectionChange?: (selection: DataTableSelection | null) => void;
@@ -39,7 +41,10 @@ export function DataPreparePreviewGrid({
   onReorderColumns?: (columnKeys: string[]) => void;
 }) {
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
-  const activeSort = useMemo(() => resolvePreviewSort(compiledSteps), [compiledSteps]);
+  const activeSort = useMemo(
+    () => resolvePreviewSort(compiledSteps, selectedStepName),
+    [compiledSteps, selectedStepName],
+  );
 
   const columns: Array<DataTableColumn<Record<string, unknown>>> = (preview?.columns ?? []).map(
     (column) => ({

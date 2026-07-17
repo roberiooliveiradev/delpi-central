@@ -22,7 +22,10 @@ import {
   dataQueryDraftReducer,
   INITIAL_WORKBENCH_STATE,
 } from "./dataQueryDraftReducer";
-import { reconcileSelectedStepName } from "./dataQuerySelection";
+import {
+  reconcileSelectedStepName,
+  resolveStepAfterMutation,
+} from "./dataQuerySelection";
 import { applyDataQueryDraftsAtomically } from "./dataQueryTransaction";
 
 function queryName(query: ComunicadoDataSourceBlock): string {
@@ -367,6 +370,10 @@ export function useDataQueryWorkbench({
         script = converted?.canonicalScript ?? "";
       }
       if (!script) return;
+      const previousSteps =
+        stateRef.current.draftByQueryId[draft.sourceId]?.compiled?.steps ??
+        draft.compiled?.steps ??
+        [];
       compileController.current?.abort();
       const controller = new AbortController();
       compileController.current = controller;
@@ -392,10 +399,15 @@ export function useDataQueryWorkbench({
           result,
           dirty: true,
         });
-        const nextStepName = reconcileSelectedStepName(
+        const nextStepName = resolveStepAfterMutation(
+          action,
           draft.selectedStepName,
+          previousSteps,
           result.steps,
         );
+        if (nextStepName !== draft.selectedStepName) {
+          dispatch({ type: "select_step", stepName: nextStepName });
+        }
         await preview(
           draft.sourceId,
           false,

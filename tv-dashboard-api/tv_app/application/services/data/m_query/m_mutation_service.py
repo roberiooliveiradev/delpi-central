@@ -393,6 +393,49 @@ def _insert_expression(operation: str, arguments: Mapping[str, Any], input_name:
     return _replace_identifier(expression, "Fonte", input_name)
 
 
+# Operações de "visão" idempotentes: reaplicar deve substituir a etapa
+# equivalente adjacente, não empilhar (ex.: clicar asc/desc no cabeçalho).
+_COALESCIBLE_INSERT_FUNCTIONS = {
+    "sort": "Table.Sort",
+    "sort_rows": "Table.Sort",
+    "reorder_columns": "Table.ReorderColumns",
+}
+
+
+def _coalesce_insert_target(
+    bindings: tuple[MBinding, ...],
+    position: int,
+    input_name: str,
+    function_name: str,
+) -> tuple[MBinding, str] | None:
+    """Localiza a etapa existente que a inserção deve substituir.
+
+    Retorna (binding alvo, input da expressão substituta) ou None para inserir.
+    """
+
+    def _same_function_input(binding: MBinding) -> str | None:
+        expression = binding.expression
+        if (
+            isinstance(expression, MCallExpression)
+            and expression.function_name == function_name
+            and expression.arguments
+            and isinstance(expression.arguments[0], MIdentifier)
+        ):
+            return expression.arguments[0].name
+        return None
+
+    anchor = next((item for item in bindings if item.name == input_name), None)
+    if anchor is not None:
+        anchor_input = _same_function_input(anchor)
+        if anchor_input is not None:
+            return anchor, anchor_input
+    if 0 <= position < len(bindings):
+        following = bindings[position]
+        if _same_function_input(following) == input_name:
+            return following, input_name
+    return None
+
+
 def _unique_name(bindings: tuple[MBinding, ...], preferred: str) -> str:
     existing = {binding.name for binding in bindings}
     if preferred not in existing:
@@ -444,23 +487,41 @@ class MQueryMutationService:
                 input_name = after
             elif bindings:
                 input_name = bindings[-1].name
-            preferred = str(action.get("stepName") or args.get("stepName") or operation).strip()
-            name = _unique_name(bindings, preferred or "Etapa")
-            expression = _insert_expression(operation, args, input_name)
-            item = MBinding(expression.source_range, name, expression, quoted=True)
-            trailing = bindings[position:]
-            if trailing and after:
-                trailing = tuple(
-                    replace(
-                        binding,
-                        expression=_replace_identifier(binding.expression, after, name),
-                    )
-                    for binding in trailing
+            coalesce_function = _COALESCIBLE_INSERT_FUNCTIONS.get(operation)
+            coalesce_target = (
+                _coalesce_insert_target(bindings, position, input_name, coalesce_function)
+                if coalesce_function
+                else None
+            )
+            if coalesce_target is not None:
+                target_binding, replacement_input = coalesce_target
+                expression = _insert_expression(operation, args, replacement_input)
+                bindings = tuple(
+                    replace(binding, expression=expression)
+                    if binding.name == target_binding.name
+                    else binding
+                    for binding in bindings
                 )
-                output = _replace_identifier(output, after, name)
             else:
-                output = MIdentifier(item.source_range, name, quoted=True)
-            bindings = (*bindings[:position], item, *trailing)
+                preferred = str(
+                    action.get("stepName") or args.get("stepName") or operation
+                ).strip()
+                name = _unique_name(bindings, preferred or "Etapa")
+                expression = _insert_expression(operation, args, input_name)
+                item = MBinding(expression.source_range, name, expression, quoted=True)
+                trailing = bindings[position:]
+                if trailing and after:
+                    trailing = tuple(
+                        replace(
+                            binding,
+                            expression=_replace_identifier(binding.expression, after, name),
+                        )
+                        for binding in trailing
+                    )
+                    output = _replace_identifier(output, after, name)
+                else:
+                    output = MIdentifier(item.source_range, name, quoted=True)
+                bindings = (*bindings[:position], item, *trailing)
         elif kind == "replace_step_expression":
             name = str(action.get("stepName") or "").strip()
             expression_text = str(action.get("expression") or "").strip()

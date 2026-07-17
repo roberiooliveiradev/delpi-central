@@ -298,6 +298,7 @@ export function DataQueryWorkbenchModal({
                   preview={preview}
                   loading={workbench.state.preview.status === "loading" && !preview}
                   compiledSteps={compiled?.steps ?? workbench.state.compile.value?.steps}
+                  selectedStepName={draft?.selectedStepName}
                   selectedColumnKey={workbench.state.selectedColumnKey}
                   selection={workbench.state.selection}
                   onSelectionChange={(selection) =>
