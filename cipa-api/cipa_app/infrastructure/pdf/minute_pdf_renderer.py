@@ -184,6 +184,9 @@ def _block_style(
     attributes: str,
 ) -> ParagraphStyle:
     style = ParagraphStyle(f"CipaRichText-{tag}", parent=body_style)
+    if tag != "p":
+        # Só parágrafos de prosa herdam o recuo de primeira linha do body.
+        style.firstLineIndent = 0
     align_match = re.search(
         r"text-align\s*:\s*(left|center|right|justify)",
         attributes,
@@ -336,6 +339,9 @@ class MinutePdfRenderer:
                 leading=15,
                 textColor=_TEXT,
                 spaceAfter=4 * mm,
+                # Recuo da primeira linha dos parágrafos de prosa — paridade
+                # com o espelho web (`.cipa-minute-document__content > p`).
+                firstLineIndent=12 * mm,
             ),
             "bullet": ParagraphStyle(
                 "CipaDocumentBullet",

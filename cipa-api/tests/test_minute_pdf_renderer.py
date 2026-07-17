@@ -79,6 +79,26 @@ def test_pdf_preserves_rich_text_formatting():
     assert blocks[1].style.firstLineIndent == -2.5 * mm
 
 
+def test_pdf_indents_first_line_of_prose_paragraphs_only():
+    """Paridade com o espelho web: <p> de prosa com recuo; títulos, divs e listas sem."""
+    renderer = MinutePdfRenderer()
+    styles = renderer._styles()
+    blocks = html_to_paragraphs(
+        "<p>Parágrafo de prosa da ata.</p>"
+        "<h2>Encaminhamentos</h2>"
+        "<div>Linha avulsa.</div>"
+        "<ul><li>Item de lista</li></ul>",
+        styles["body"],
+        styles["bullet"],
+    )
+
+    prose, heading, line, bullet = blocks
+    assert prose.style.firstLineIndent == 12 * mm
+    assert heading.style.firstLineIndent == 0
+    assert line.style.firstLineIndent == 0
+    assert bullet.style.firstLineIndent == -2.5 * mm
+
+
 def test_pdf_collapses_word_nbsp_runs_in_saved_content():
     renderer = MinutePdfRenderer()
     styles = renderer._styles()
