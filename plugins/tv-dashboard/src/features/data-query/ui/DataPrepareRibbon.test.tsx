@@ -18,6 +18,7 @@ const preview: DataQueryPreview = {
   isSample: false,
   selectedStepName: "Fonte",
   diagnostics: [],
+  runtimeErrors: { count: 0, sample: [] },
 };
 
 describe("DataPrepareRibbon M Fase 5", () => {

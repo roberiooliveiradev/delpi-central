@@ -90,6 +90,19 @@ export type DataQueryColumnProfile = {
   }>;
 };
 
+export type DataQueryRuntimeError = {
+  stepName: string;
+  code: string;
+  message: string;
+  rowIndex?: number;
+  column?: string;
+};
+
+export type DataQueryRuntimeErrors = {
+  count: number;
+  sample: DataQueryRuntimeError[];
+};
+
 export type DataQueryPreview = {
   columns: MColumnSchemaDto[];
   rows: Array<Record<string, unknown>>;
@@ -99,6 +112,7 @@ export type DataQueryPreview = {
   isSample: boolean;
   selectedStepName: string | null;
   diagnostics: DataQueryDiagnosticDto[];
+  runtimeErrors: DataQueryRuntimeErrors;
   columnProfile?: DataQueryColumnProfile | null;
   executionMs?: number;
   stepMetrics?: Array<{

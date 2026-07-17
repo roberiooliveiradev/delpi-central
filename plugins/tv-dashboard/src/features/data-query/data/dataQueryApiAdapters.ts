@@ -109,6 +109,27 @@ export function adaptPreviewResult(value: unknown): DataQueryPreview {
   const profiling = (query.profiling && typeof query.profiling === "object"
     ? query.profiling
     : {}) as Record<string, unknown>;
+  const runtimeErrors = (query.runtimeErrors && typeof query.runtimeErrors === "object"
+    ? query.runtimeErrors
+    : {}) as Record<string, unknown>;
+  const runtimeErrorSample: DataQueryPreview["runtimeErrors"]["sample"] = Array.isArray(
+    runtimeErrors.sample,
+  )
+    ? runtimeErrors.sample.flatMap((item) => {
+        if (!item || typeof item !== "object") return [];
+        const error = item as Record<string, unknown>;
+        const rowIndex = Number(error.rowIndex);
+        return [{
+          stepName: String(error.stepName ?? ""),
+          code: String(error.code ?? "m.runtime_error"),
+          message: String(error.message ?? "Erro na transformação M."),
+          ...(Number.isInteger(rowIndex) && rowIndex >= 0 ? { rowIndex } : {}),
+          ...(typeof error.column === "string" && error.column
+            ? { column: error.column }
+            : {}),
+        }];
+      })
+    : [];
   return {
     columns,
     rows,
@@ -121,6 +142,13 @@ export function adaptPreviewResult(value: unknown): DataQueryPreview {
     diagnostics: Array.isArray(query.diagnostics)
       ? (query.diagnostics as DataQueryPreview["diagnostics"])
       : [],
+    runtimeErrors: {
+      count: Math.max(
+        Number(runtimeErrors.count) || 0,
+        runtimeErrorSample.length,
+      ),
+      sample: runtimeErrorSample,
+    },
     columnProfile:
       preview.columnProfile && typeof preview.columnProfile === "object"
         ? (preview.columnProfile as DataQueryPreview["columnProfile"])
