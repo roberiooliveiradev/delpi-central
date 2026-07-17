@@ -49,6 +49,68 @@ def test_mutations_are_canonical_and_address_steps_by_name():
     assert removed.output_step_name == "Amostra"
 
 
+def test_insert_sort_replaces_adjacent_sort_instead_of_stacking():
+    service = MQueryMutationService()
+    script = (
+        "let\n"
+        "    Inicial = Table.FirstN(Fonte, 10),\n"
+        '    Ordenado = Table.Sort(Inicial, {{"valor", Order.Ascending}})\n'
+        "in\n"
+        "    Ordenado"
+    )
+
+    # Etapa selecionada é a anterior ao sort: reordenar deve atualizar o sort
+    # adjacente (comportamento Power Query), não empilhar um novo.
+    updated = service.mutate(
+        _request(script),
+        {
+            "type": "insert_step",
+            "afterStepName": "Inicial",
+            "stepName": "Linhas ordenadas",
+            "operation": "sort",
+            "arguments": {"column": "valor", "direction": "desc"},
+        },
+    )
+    assert updated.valid
+    canonical = updated.canonical_script or ""
+    assert canonical.count("Table.Sort") == 1
+    assert 'Table.Sort(Inicial, {{"valor", Order.Descending}})' in canonical
+    assert updated.output_step_name == "Ordenado"
+
+    # Etapa selecionada é o próprio sort: alternar direção substitui os critérios.
+    toggled = service.mutate(
+        _request(canonical),
+        {
+            "type": "insert_step",
+            "afterStepName": "Ordenado",
+            "stepName": "Linhas ordenadas",
+            "operation": "sort",
+            "arguments": {"column": "valor", "direction": "asc"},
+        },
+    )
+    assert toggled.valid
+    toggled_canonical = toggled.canonical_script or ""
+    assert toggled_canonical.count("Table.Sort") == 1
+    assert 'Table.Sort(Inicial, {{"valor", Order.Ascending}})' in toggled_canonical
+
+
+def test_insert_sort_after_non_sort_step_still_inserts():
+    service = MQueryMutationService()
+    result = service.mutate(
+        _request("let\n    Inicial = Table.FirstN(Fonte, 10)\nin\n    Inicial"),
+        {
+            "type": "insert_step",
+            "afterStepName": "Inicial",
+            "stepName": "Linhas ordenadas",
+            "operation": "sort",
+            "arguments": {"column": "valor", "direction": "asc"},
+        },
+    )
+    assert result.valid
+    assert (result.canonical_script or "").count("Table.Sort") == 1
+    assert result.output_step_name == "Linhas ordenadas"
+
+
 def test_replace_expression_and_format_are_server_driven():
     service = MQueryMutationService()
     replaced = service.mutate(
