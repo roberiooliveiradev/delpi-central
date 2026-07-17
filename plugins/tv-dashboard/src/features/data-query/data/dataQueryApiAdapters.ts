@@ -58,6 +58,17 @@ export function adaptCompileResult(value: unknown): DataQueryCompileResult {
             : [];
         })
       : [],
+    explainPlan:
+      raw.explainPlan && typeof raw.explainPlan === "object"
+        ? (raw.explainPlan as DataQueryCompileResult["explainPlan"])
+        : null,
+    compileMetrics:
+      raw.compileMetrics && typeof raw.compileMetrics === "object"
+        ? {
+            durationMs: Number((raw.compileMetrics as Record<string, unknown>).durationMs || 0),
+            cache: String((raw.compileMetrics as Record<string, unknown>).cache || "disabled"),
+          }
+        : undefined,
   };
 }
 
@@ -95,6 +106,9 @@ export function adaptPreviewResult(value: unknown): DataQueryPreview {
   const rows = Array.isArray(rawRows)
     ? rawRows.map((row) => ({ ...(row as Record<string, unknown>) }))
     : [];
+  const profiling = (query.profiling && typeof query.profiling === "object"
+    ? query.profiling
+    : {}) as Record<string, unknown>;
   return {
     columns,
     rows,
@@ -107,5 +121,23 @@ export function adaptPreviewResult(value: unknown): DataQueryPreview {
     diagnostics: Array.isArray(query.diagnostics)
       ? (query.diagnostics as DataQueryPreview["diagnostics"])
       : [],
+    columnProfile:
+      preview.columnProfile && typeof preview.columnProfile === "object"
+        ? (preview.columnProfile as DataQueryPreview["columnProfile"])
+        : null,
+    executionMs: Number(query.executionMs || 0),
+    stepMetrics: Array.isArray(query.stepMetrics)
+      ? (query.stepMetrics as DataQueryPreview["stepMetrics"])
+      : [],
+    explainPlan:
+      query.explainPlan && typeof query.explainPlan === "object"
+        ? (query.explainPlan as DataQueryPreview["explainPlan"])
+        : null,
+    profilingStatus:
+      profiling.status === "completed"
+        ? "completed"
+        : profiling.status === "timeout"
+          ? "timeout"
+          : "idle",
   };
 }

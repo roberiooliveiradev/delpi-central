@@ -4,7 +4,7 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
-Power Query M: a [Fase 6](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-6-STATUS-M-DELPI.md) adicionou produtividade sem mover semântica para o browser. O compile entrega contexto de completion e tokens de realce, o registry fornece ajuda completa e mutate continua responsável por formatter e rename com referências. `mQuery.enabled`, `mQuery.writeV2Enabled` e `mQuery.advancedEditorEnabled` permanecem `false` por padrão.
+Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md) adicionou profiling opt-in, explain, métricas por etapa, caches TTL/LRU particionados e telemetria segura sem mover semântica para o browser. Todas as flags de execução, escrita, editor, profiling, explain e caches permanecem `false` por padrão.
 
 ---
 
@@ -43,9 +43,10 @@ Power Query M: a [Fase 6](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-6-STAT
 | `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
 | `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
 | `POST` | `/data/m/compile` | `TV_READ` | Compila `m-delpi-v1` para `TransformPlan`, sem executar ou buscar dados |
+| `POST` | `/data/m/explain` | `TV_READ` | Plano simplificado, diagnostics e métricas de compile; exige `explainPlanEnabled` |
 | `POST` | `/data/m/mutate` | `TV_READ` | Muta AST e devolve script canônico; o frontend não concatena M |
 | `GET` | `/data/m/functions` | `TV_READ` | Catálogo versionado de funções M permitidas |
-| `GET` | `/data/m/capabilities` | `TV_READ` | Flags efetivas de runtime, escrita v2 e editor avançado |
+| `GET` | `/data/m/capabilities` | `TV_READ` | Flags efetivas de runtime, escrita v2, editor, profiling, explain, caches e telemetria |
 
 ### Compilador M DELPI v1
 
@@ -60,6 +61,12 @@ O endpoint de compile aceita `sourceSchema` como hint, `queryBindings`,
 `targetStepName` e `culture`; ele nunca chama a `api-delpi`. O runtime interpreta
 somente `CompiledExpression` e funções allowlisted, sem `eval`/`exec`. O preview
 aceita `targetStepName` e limites de amostra; a persistência v2 segue desligada.
+
+`POST /data/preview-block` aceita `previewOptions.maxRows`,
+`includeColumnProfile` e `deadlineMs`. Profiling só roda quando solicitado e
+habilitado. O contrato `query` pode incluir `stepMetrics` e `explainPlan`; o
+contrato `preview` pode incluir `columnProfile`. Chaves de cache usam somente
+hashes/fingerprints e metadados de autorização/fonte, nunca JWT ou script bruto.
 
 O endpoint de mutação suporta conversão legada, inserção/substituição,
 rename/move/remove de etapa, rename de consulta e formatação. Toda resposta é

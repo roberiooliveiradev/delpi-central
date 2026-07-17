@@ -851,6 +851,7 @@ export function DataPrepareModal(props: Props) {
     <DataQueryWorkbenchModal
       {...props}
       advancedEditorEnabled={canUseAdvancedMEditor(capabilities)}
+      profilingEnabled={capabilities.profilingEnabled}
     />
   ) : (
     <LegacyDataPrepareModal {...props} />

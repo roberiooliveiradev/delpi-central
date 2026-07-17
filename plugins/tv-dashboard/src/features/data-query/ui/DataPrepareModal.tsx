@@ -24,6 +24,7 @@ import { DataPrepareAppliedSteps } from "./DataPrepareAppliedSteps";
 import { DataPrepareDiagnostics } from "./DataPrepareDiagnostics";
 import { DataPrepareFormulaBar } from "./DataPrepareFormulaBar";
 import { DataPreparePreviewGrid } from "./DataPreparePreviewGrid";
+import { DataPrepareQualityPanel } from "./DataPrepareQualityPanel";
 import { DataPrepareQueryList } from "./DataPrepareQueryList";
 import { DataPrepareRibbon } from "./DataPrepareRibbon";
 
@@ -32,11 +33,13 @@ export function DataQueryWorkbenchModal({
   onClose,
   initialSourceId = null,
   advancedEditorEnabled,
+  profilingEnabled,
 }: {
   open: boolean;
   onClose: () => void;
   initialSourceId?: string | null;
   advancedEditorEnabled: boolean;
+  profilingEnabled: boolean;
 }) {
   const {
     blocks,
@@ -211,6 +214,13 @@ export function DataQueryWorkbenchModal({
               }
             />
             <DataPrepareDiagnostics diagnostics={diagnostics} />
+            <DataPrepareQualityPanel
+              preview={preview}
+              profilingEnabled={profilingEnabled}
+              profilingRequested={workbench.profilingRequested}
+              loading={workbench.state.preview.status === "loading"}
+              onToggleProfiling={workbench.setProfilingRequested}
+            />
             {applyError || workbench.state.preview.error || workbench.state.compile.error ? (
               <p className="td-deck-inspector__hint" role="alert">
                 {applyError || workbench.state.preview.error || workbench.state.compile.error}

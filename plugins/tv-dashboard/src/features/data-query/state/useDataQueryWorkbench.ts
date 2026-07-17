@@ -109,6 +109,8 @@ export function useDataQueryWorkbench({
   api = dataQueryApi,
 }: Options) {
   const [state, dispatch] = useReducer(dataQueryDraftReducer, INITIAL_WORKBENCH_STATE);
+  const [profilingRequested, setProfilingRequested] = useState(false);
+  const profilingRequestedRef = useRef(false);
   const stateRef = useRef(state);
   stateRef.current = state;
   const configRef = useRef(config);
@@ -124,6 +126,8 @@ export function useDataQueryWorkbench({
       previewController.current?.abort();
       return;
     }
+    setProfilingRequested(false);
+    profilingRequestedRef.current = false;
     const drafts = Object.fromEntries(queries.map((query) => [query.id, draftFor(query)]));
     const active =
       (initialSourceId && drafts[initialSourceId] ? initialSourceId : null) ??
@@ -201,6 +205,8 @@ export function useDataQueryWorkbench({
             playlistId,
             targetStepName: draft.selectedStepName ?? "Fonte",
             forceRefresh,
+            includeColumnProfile: profilingRequestedRef.current,
+            deadlineMs: 3000,
           },
           controller.signal,
         );
@@ -458,5 +464,12 @@ export function useDataQueryWorkbench({
         : Promise.resolve(),
     selectStep,
     apply,
+    profilingRequested,
+    setProfilingRequested: (enabled: boolean) => {
+      profilingRequestedRef.current = enabled;
+      setProfilingRequested(enabled);
+      const queryId = stateRef.current.activeQueryId;
+      if (queryId) window.setTimeout(() => void preview(queryId, true), 0);
+    },
   };
 }

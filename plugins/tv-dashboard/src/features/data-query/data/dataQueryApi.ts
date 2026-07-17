@@ -4,6 +4,7 @@ import { API_BASE, httpGet, httpPost } from "../../../api/httpClient";
 import type {
   DataQueryCapabilities,
   DataQueryCompileResult,
+  DataQueryExplainPlan,
   DataQueryFunction,
   DataQueryMutationAction,
   DataQueryPreview,
@@ -28,6 +29,7 @@ export type CompileInput = {
 export interface DataQueryApi {
   capabilities(signal?: AbortSignal): Promise<DataQueryCapabilities>;
   compile(input: CompileInput, signal?: AbortSignal): Promise<DataQueryCompileResult>;
+  explain(input: CompileInput, signal?: AbortSignal): Promise<DataQueryExplainPlan>;
   mutate(
     input: CompileInput,
     action: DataQueryMutationAction,
@@ -41,6 +43,8 @@ export interface DataQueryApi {
       playlistId: string;
       targetStepName?: string | null;
       forceRefresh?: boolean;
+      includeColumnProfile?: boolean;
+      deadlineMs?: number;
     },
     signal?: AbortSignal,
   ): Promise<DataQueryPreview>;
@@ -66,6 +70,14 @@ export const dataQueryApi: DataQueryApi = {
         httpPost<Envelope<unknown>>(`${API_BASE}/data/m/compile`, compileBody(input), { signal }),
       ),
     );
+  },
+  async explain(input, signal) {
+    const result = await unwrap(
+      httpPost<
+        Envelope<{ explainPlan: DataQueryExplainPlan }>
+      >(`${API_BASE}/data/m/explain`, compileBody(input), { signal }),
+    );
+    return result.explainPlan;
   },
   async mutate(input, action, signal) {
     return adaptCompileResult(
@@ -98,7 +110,11 @@ export const dataQueryApi: DataQueryApi = {
             playlistId: input.playlistId,
             forceRefresh: Boolean(input.forceRefresh),
             targetStepName: input.targetStepName ?? null,
-            previewOptions: { maxRows: 200, includeColumnProfile: false },
+            previewOptions: {
+              maxRows: 200,
+              includeColumnProfile: Boolean(input.includeColumnProfile),
+              deadlineMs: input.deadlineMs ?? 3000,
+            },
           },
           { signal },
         ),

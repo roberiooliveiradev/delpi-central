@@ -10,7 +10,36 @@ export type DataQueryCapabilities = {
   enabled: boolean;
   writeV2Enabled: boolean;
   advancedEditorEnabled: boolean;
+  profilingEnabled: boolean;
+  explainPlanEnabled: boolean;
+  compileCacheEnabled: boolean;
+  previewCacheEnabled: boolean;
+  phase7TelemetryEnabled: boolean;
+  limits?: {
+    previewRows: number;
+    profileSampleRows: number;
+    profileTimeoutMs: number;
+    previewDeadlineMaxMs: number;
+  };
   profile: "m-delpi-v1";
+};
+
+export type DataQueryExplainStep = {
+  index: number;
+  name: string;
+  input: string;
+  operation: string;
+  cost: "bounded" | "potentially_expensive";
+  cancelable: boolean;
+};
+
+export type DataQueryExplainPlan = {
+  version: number;
+  profile?: string;
+  output: string | null;
+  referencedQueries?: string[];
+  steps: DataQueryExplainStep[];
+  warnings: Array<{ code: string; stepName: string; operation: string }>;
 };
 
 export type DataQueryCompiledStep = {
@@ -43,6 +72,22 @@ export type DataQueryCompileResult = {
     startOffset: number;
     endOffset: number;
   }>;
+  explainPlan?: DataQueryExplainPlan | null;
+  compileMetrics?: { durationMs: number; cache: string };
+};
+
+export type DataQueryColumnProfile = {
+  sampled: boolean;
+  sampleRows: number;
+  availableRows: number;
+  columns: Array<{
+    key: string;
+    quality: { valid: number; empty: number; error: number };
+    distribution: { distinct: number; repeated: number; distinctRatio: number };
+    min: unknown;
+    max: unknown;
+    minMaxAvailable: boolean;
+  }>;
 };
 
 export type DataQueryPreview = {
@@ -54,6 +99,20 @@ export type DataQueryPreview = {
   isSample: boolean;
   selectedStepName: string | null;
   diagnostics: DataQueryDiagnosticDto[];
+  columnProfile?: DataQueryColumnProfile | null;
+  executionMs?: number;
+  stepMetrics?: Array<{
+    stepName: string;
+    operation: string;
+    durationMs: number;
+    inputRows: number;
+    outputRows: number;
+    inputColumns: number;
+    outputColumns: number;
+    runtimeErrors: number;
+  }>;
+  explainPlan?: DataQueryExplainPlan | null;
+  profilingStatus?: "idle" | "completed" | "timeout";
 };
 
 export type DataQueryDraft = {

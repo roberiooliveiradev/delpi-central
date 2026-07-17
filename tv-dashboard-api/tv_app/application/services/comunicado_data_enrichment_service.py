@@ -11,6 +11,11 @@ from tv_app.application.services.comunicado_input_filters_service import (
     merge_filter_layers,
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
+from tv_app.application.services.data.m_query.m_phase7_quality_service import (
+    SafeTelemetry,
+    profile_table,
+    reset_phase7_caches,
+)
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
 from tv_app.application.services.data.m_query.m_query_dependency_service import (
     MQueryDependencyService,
@@ -1196,6 +1201,11 @@ class ComunicadoDataEnrichmentService:
         transform_metadata: dict[str, Any] | None = None
         transform_result: dict[str, Any] | None = None
         if block_type == "data_source":
+            options = preview_options if isinstance(preview_options, dict) else {}
+            deadline_ms = min(
+                max(1, int(options.get("deadlineMs") or m_query_setting("previewDeadlineMaxMs", 3000))),
+                int(m_query_setting("previewDeadlineMaxMs", 3000)),
+            )
             transform_result = apply_data_transform_to_payload_result(
                 data,
                 block.get("dataTransform"),
@@ -1203,6 +1213,7 @@ class ComunicadoDataEnrichmentService:
                 query_bindings=query_bindings,
                 target_step_name=target_step_name,
                 culture=str(m_query_setting("defaultCulture", "pt-BR")),
+                deadline_ms=deadline_ms,
             )
             transformed = transform_result["data"]
             server_transform_applied = bool(transform_result["applied"])
@@ -1260,7 +1271,6 @@ class ComunicadoDataEnrichmentService:
                 and transform_metadata
                 and transform_metadata.get("version") == 2
             ):
-                options = preview_options if isinstance(preview_options, dict) else {}
                 max_rows = min(
                     max(1, int(options.get("maxRows") or m_query_setting("maxPreviewRows", 200))),
                     int(m_query_setting("maxPreviewRows", 200)),
@@ -1283,6 +1293,12 @@ class ComunicadoDataEnrichmentService:
                     "runtimeErrors": transform_result.get("runtimeErrors")
                     or {"count": 0, "sample": []},
                     "executionMs": int(transform_result.get("executionMs") or 0),
+                    "stepMetrics": transform_result.get("stepMetrics") or [],
+                    "explainPlan": (
+                        transform_result.get("explainPlan")
+                        if bool(m_query_setting("explainPlanEnabled", False))
+                        else None
+                    ),
                     "cacheHit": cache_hit,
                 }
                 resolved["preview"] = {
@@ -1301,6 +1317,32 @@ class ComunicadoDataEnrichmentService:
                     ),
                     "isSample": returned_rows < available_rows,
                 }
+                try:
+                    column_profile = profile_table(
+                        query_table,
+                        requested=bool(options.get("includeColumnProfile")),
+                        deadline_ms=deadline_ms,
+                    )
+                except TimeoutError:
+                    resolved["query"]["profiling"] = {
+                        "status": "timeout",
+                        "code": "m.profile_timeout",
+                    }
+                else:
+                    if column_profile is not None:
+                        resolved["preview"]["columnProfile"] = column_profile
+                        resolved["query"]["profiling"] = {"status": "completed"}
+                SafeTelemetry(
+                    "m.preview.completed",
+                    int(transform_result.get("executionMs") or 0),
+                    "source-hit" if cache_hit else "source-miss",
+                    rows=returned_rows,
+                    columns=len(columns),
+                    errors=int(
+                        (transform_result.get("runtimeErrors") or {}).get("count", 0)
+                    ),
+                    artifact_hash=str(transform_result.get("scriptHash") or ""),
+                ).emit()
         else:
             resolved.update(
                 self._resolve_presentation(
@@ -1357,3 +1399,4 @@ class ComunicadoDataEnrichmentService:
 
 def reset_comunicado_data_block_cache() -> None:
     _data_block_cache.invalidate_all()
+    reset_phase7_caches()

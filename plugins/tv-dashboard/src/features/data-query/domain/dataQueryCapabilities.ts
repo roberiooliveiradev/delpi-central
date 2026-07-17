@@ -4,6 +4,11 @@ export const LEGACY_SAFE_CAPABILITIES: DataQueryCapabilities = {
   enabled: false,
   writeV2Enabled: false,
   advancedEditorEnabled: false,
+  profilingEnabled: false,
+  explainPlanEnabled: false,
+  compileCacheEnabled: false,
+  previewCacheEnabled: false,
+  phase7TelemetryEnabled: false,
   profile: "m-delpi-v1",
 };
 

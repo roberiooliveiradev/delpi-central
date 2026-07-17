@@ -8,7 +8,7 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 Gráfico / KPI / tabela compostos: [playbook §19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#19-gráfico-composto-por-primitivos--edição-no-palco-onda-4g)  
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
-Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 6](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-6-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. `enabled` + `writeV2Enabled` + `advancedEditorEnabled` controlam o editor e continuam desligadas por padrão.
+Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. Profiling é opt-in e explain/métricas vêm do backend. `enabled`, `writeV2Enabled`, `advancedEditorEnabled`, `profilingEnabled`, `explainPlanEnabled` e os caches continuam desligados por padrão.
 
 ---
 
@@ -27,7 +27,9 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
 - **Histórico de revisões:** a Timeline canônica de `@delpi/plugin-ui` mostra autor (nome/e-mail), campos e telas adicionadas, removidas, editadas ou reordenadas; snapshots antigos mantêm o resumo por motivo/prévia. Undo/redo e restauração manual usam snapshots atômicos do backend com controle otimista de revisão.
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
-- **Preparar dados M (Fase 6):** editor multiline com autocomplete server-driven, formatter, diagnostics navegáveis, rename com referências, DAG, busca e undo/redo local, além da ribbon e aplicação atômica
+- **Preparar dados M (Fase 7):** editor multiline e ribbon das fases anteriores,
+  profiling opt-in, qualidade/distribuição amostradas, explain e tempo por etapa;
+  AbortController cancela requests e o backend aplica deadline
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
 - **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
 - **Séries temporais fiéis à API:** a granularidade da rota é preservada (ex.: `day` = um dia por linha), sem reagrupar datas em faixas; a tabela recebe todos os pontos retornados pela API (até 366 pontos em séries anuais diárias).
@@ -114,6 +116,10 @@ GET    /apps/tv-dashboard-api/playlists/{id}/media/{assetId}
 GET    /apps/tv-dashboard-api/data/routes
 GET    /apps/tv-dashboard-api/data/routes/{operationId}
 POST   /apps/tv-dashboard-api/data/preview-block
+POST   /apps/tv-dashboard-api/data/m/compile
+POST   /apps/tv-dashboard-api/data/m/explain
+GET    /apps/tv-dashboard-api/data/m/capabilities
+GET    /apps/tv-dashboard-api/data/m/functions
 GET    /apps/tv-dashboard-api/content/ui
 GET    /apps/tv-dashboard-api/native-screens
 ```

@@ -6,7 +6,7 @@
 > **Baseline inspecionada:** branch `main`, commit `095dabdbad44dbdb000f165a9fe0cdc13c6ee334`  
 > **Versão deste playbook:** 1.0  
 > **Data:** 2026-07-16  
-> **Status:** Fases 0–6 concluídas; Fase 7 não iniciada
+> **Status:** Fases 0–7 implementadas; Fase 7 aguarda evidência para ativação
 
 ---
 
@@ -969,7 +969,8 @@ Os valores acima são defaults propostos e devem ser validados por teste de carg
 Chave:
 
 ```text
-profile + scriptHash + compilerVersion
+profile + registryVersion + scriptHash + sourceSchema + queryBindings
++ targetStepName + culture
 ```
 
 ### Cache de preview
@@ -977,7 +978,9 @@ profile + scriptHash + compilerVersion
 Chave conceitual:
 
 ```text
-operationId + params + RBAC scope + scriptHash + targetStepName + previewOptions
+profile + registryVersion + scriptHash + sourceSchema + targetStepName + culture
++ fingerprint(identity + permissions + superadmin)
++ operationId + params + branch + sources + revisions + previewOptions
 ```
 
 Nunca compartilhar resultado entre contextos de autorização incompatíveis.
@@ -1431,6 +1434,10 @@ Cada botão da ribbon deve:
 ---
 
 ## Fase 7 — Qualidade, profiling e otimização
+
+**Status:** ✅ implementada em 2026-07-17, com flags desligadas e ativação
+condicionada a evidência de carga. Evidências e rollback:
+[status da Fase 7](./FASE-7-STATUS-M-DELPI.md).
 
 ### Entregas
 

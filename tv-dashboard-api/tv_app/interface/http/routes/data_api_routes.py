@@ -37,6 +37,7 @@ _m_mutation = MQueryMutationService(_m_compiler)
 class PreviewOptionsBody(BaseModel):
     maxRows: int | None = Field(default=None, ge=1)
     includeColumnProfile: bool = False
+    deadlineMs: int | None = Field(default=None, ge=1)
 
 
 class PreviewDataBlockBody(BaseModel):
@@ -99,7 +100,44 @@ def compile_m_query(request: Request, body: MCompileBody):
         )
     )
     message = "Consulta M válida." if result.valid else "Consulta M contém diagnósticos."
-    return ok(result.to_dict(), message=message)
+    payload = result.to_dict()
+    if not bool(m_query_setting("explainPlanEnabled", False)):
+        payload["explainPlan"] = None
+    return ok(payload, message=message)
+
+
+@router.post("/m/explain")
+def explain_m_query(request: Request, body: MCompileBody):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    if not bool(m_query_setting("explainPlanEnabled", False)):
+        return fail("Explain plan M não está habilitado.", 404)
+    result = _m_compiler.compile(
+        MCompileRequest(
+            profile=body.profile,
+            script=body.script,
+            source_schema=tuple(_model_dict(item) for item in body.sourceSchema),
+            query_bindings=tuple(_model_dict(item) for item in body.queryBindings),
+            target_step_name=body.targetStepName,
+            culture=body.culture or str(m_query_setting("defaultCulture", "pt-BR")),
+        )
+    )
+    return ok(
+        {
+            "profile": result.profile,
+            "scriptHash": result.script_hash,
+            "valid": result.valid,
+            "diagnostics": [item.to_dict() for item in result.diagnostics],
+            "explainPlan": dict(result.explain_plan or {}),
+            "compileMetrics": {
+                "durationMs": result.compile_ms,
+                "cache": result.compile_cache,
+            },
+        }
+    )
 
 
 @router.get("/m/functions")
@@ -137,6 +175,29 @@ def get_m_capabilities(request: Request):
             "advancedEditorEnabled": bool(
                 m_query_setting("advancedEditorEnabled", False)
             ),
+            "profilingEnabled": bool(m_query_setting("profilingEnabled", False)),
+            "explainPlanEnabled": bool(
+                m_query_setting("explainPlanEnabled", False)
+            ),
+            "compileCacheEnabled": bool(
+                m_query_setting("compileCacheEnabled", False)
+            ),
+            "previewCacheEnabled": bool(
+                m_query_setting("previewCacheEnabled", False)
+            ),
+            "phase7TelemetryEnabled": bool(
+                m_query_setting("phase7TelemetryEnabled", False)
+            ),
+            "limits": {
+                "previewRows": int(m_query_setting("maxPreviewRows", 200)),
+                "profileSampleRows": int(
+                    m_query_setting("profileSampleRows", 500)
+                ),
+                "profileTimeoutMs": int(m_query_setting("profileTimeoutMs", 750)),
+                "previewDeadlineMaxMs": int(
+                    m_query_setting("previewDeadlineMaxMs", 3000)
+                ),
+            },
             "profile": str(m_query_setting("profile", "m-delpi-v1")),
         }
     )

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, replace
 from typing import Any, Iterable, Mapping
 
 from tv_app.application.services.data.m_query.m_formatter import (
@@ -11,6 +12,14 @@ from tv_app.application.services.data.m_query.m_formatter import (
     format_m_expression,
 )
 from tv_app.application.services.data.m_query.m_function_registry import get_function_registry
+from tv_app.application.services.data.m_query.m_phase7_quality_service import (
+    SafeTelemetry,
+    compile_cache_enabled,
+    compile_cache_key,
+    explain_transform_plan,
+    get_cached_compile,
+    set_cached_compile,
+)
 from tv_app.application.services.data.m_query.m_parser import (
     MParseError,
     m_syntax_tokens,
@@ -65,6 +74,9 @@ class MCompileResult:
     diagnostics: tuple[Diagnostic, ...]
     referenced_queries: tuple[str, ...] = ()
     completion_context: Mapping[str, Any] | None = None
+    explain_plan: Mapping[str, Any] | None = None
+    compile_ms: int = 0
+    compile_cache: str = "disabled"
 
     @property
     def valid(self) -> bool:
@@ -108,6 +120,11 @@ class MCompileResult:
             "referencedQueries": list(self.referenced_queries),
             "completionContext": dict(self.completion_context or {}),
             "syntaxTokens": list(m_syntax_tokens(self.canonical_script or "")),
+            "explainPlan": dict(self.explain_plan or {}),
+            "compileMetrics": {
+                "durationMs": self.compile_ms,
+                "cache": self.compile_cache,
+            },
         }
 
 
@@ -219,6 +236,49 @@ def _completion_identifier(value: str) -> str:
 
 class MQueryCompiler:
     def compile(self, request: MCompileRequest) -> MCompileResult:
+        started = time.monotonic()
+        key = compile_cache_key(request)
+        cached = get_cached_compile(key)
+        if isinstance(cached, MCompileResult):
+            result = replace(
+                cached,
+                compile_ms=int((time.monotonic() - started) * 1000),
+                compile_cache="hit",
+            )
+            SafeTelemetry(
+                "m.compile.completed",
+                result.compile_ms,
+                "hit",
+                errors=sum(
+                    item.severity == DiagnosticSeverity.ERROR
+                    for item in result.diagnostics
+                ),
+                artifact_hash=result.script_hash,
+            ).emit()
+            return result
+        result = self._compile_uncached(request)
+        duration_ms = int((time.monotonic() - started) * 1000)
+        cache_status = "miss" if compile_cache_enabled() else "disabled"
+        result = replace(
+            result,
+            explain_plan=explain_transform_plan(result.plan),
+            compile_ms=duration_ms,
+            compile_cache=cache_status,
+        )
+        set_cached_compile(key, result)
+        SafeTelemetry(
+            "m.compile.completed",
+            duration_ms,
+            cache_status,
+            errors=sum(
+                item.severity == DiagnosticSeverity.ERROR
+                for item in result.diagnostics
+            ),
+            artifact_hash=result.script_hash,
+        ).emit()
+        return result
+
+    def _compile_uncached(self, request: MCompileRequest) -> MCompileResult:
         script_hash = f"sha256:{hashlib.sha256(request.script.encode('utf-8')).hexdigest()}"
         diagnostics: list[Diagnostic] = []
         expected_profile = str(m_query_setting("profile", "m-delpi-v1"))

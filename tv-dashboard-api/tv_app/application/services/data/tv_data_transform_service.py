@@ -17,6 +17,9 @@ from tv_app.application.services.data.m_query.m_legacy_adapter import (
     normalize_legacy_transform,
     plan_to_legacy_steps,
 )
+from tv_app.application.services.data.m_query.m_phase7_quality_service import (
+    explain_transform_plan,
+)
 from tv_app.application.services.data.m_query.m_expression_interpreter import (
     MExpressionError,
     convert_m_value,
@@ -506,6 +509,7 @@ class TransformExecutionResult:
     runtime_errors: tuple[MRuntimeError, ...]
     execution_ms: int
     selected_step_name: str
+    step_metrics: tuple[dict[str, Any], ...] = ()
 
     def runtime_errors_dict(self) -> dict[str, Any]:
         limit = int(m_query_setting("diagnosticSampleLimit", 20))
@@ -569,8 +573,13 @@ def _table_schema(
 
 
 class _ExecutionLimits:
-    def __init__(self) -> None:
-        self.deadline = time.monotonic() + int(m_query_setting("executionTimeoutMs", 2000)) / 1000
+    def __init__(self, *, deadline_ms: int | None = None) -> None:
+        configured_timeout = int(m_query_setting("executionTimeoutMs", 2000))
+        effective_timeout = min(
+            configured_timeout,
+            max(1, int(deadline_ms or configured_timeout)),
+        )
+        self.deadline = time.monotonic() + effective_timeout / 1000
         self.max_rows = int(m_query_setting("maxExecutionRows", 10000))
         self.max_columns = int(m_query_setting("maxExecutionColumns", 500))
         self.max_cells = int(m_query_setting("maxExecutionCells", 1000000))
@@ -1123,6 +1132,7 @@ def execute_transform_plan(
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
     culture: str = "pt-BR",
+    deadline_ms: int | None = None,
 ) -> TransformExecutionResult:
     """Único ponto de execução de TransformPlan na fachada canônica."""
 
@@ -1140,12 +1150,13 @@ def execute_transform_plan(
             int((time.monotonic() - started) * 1000),
             plan.output,
         )
-    limits = _ExecutionLimits()
+    limits = _ExecutionLimits(deadline_ms=deadline_ms)
     source = _copy_table(table)
     limits.guard_table(source)
     environment: dict[str, Any] = {"Fonte": source, **(sibling_tables or {})}
     runtime_errors: list[MRuntimeError] = []
     declared_types: dict[str, str] = {}
+    step_metrics: list[dict[str, Any]] = []
     for step in plan.steps:
         limits.check()
         input_table = environment.get(step.input_name)
@@ -1155,6 +1166,9 @@ def execute_transform_plan(
                 f'A entrada "{step.input_name}" não está disponível.',
                 step_name=step.name,
             )
+        step_started = time.monotonic()
+        input_rows = len(input_table.get("rows") or [])
+        input_columns = len(input_table.get("columns") or [])
         try:
             environment[step.name] = _execute_m_step(
                 step,
@@ -1177,6 +1191,21 @@ def execute_transform_plan(
                 f'A etapa "{step.name}" não pôde ser executada.',
                 step_name=step.name,
             ) from exc
+        output_table = environment[step.name]
+        step_metrics.append(
+            {
+                "stepName": step.name,
+                "operation": step.function_name,
+                "durationMs": int((time.monotonic() - step_started) * 1000),
+                "inputRows": input_rows,
+                "outputRows": len(output_table.get("rows") or []),
+                "inputColumns": input_columns,
+                "outputColumns": len(output_table.get("columns") or []),
+                "runtimeErrors": sum(
+                    1 for item in runtime_errors if item.step_name == step.name
+                ),
+            }
+        )
     output = environment.get(plan.output)
     if not isinstance(output, dict):
         raise MExecutionError("m.output_table_required", "A saída do plano não é uma tabela.")
@@ -1186,6 +1215,7 @@ def execute_transform_plan(
         tuple(runtime_errors),
         int((time.monotonic() - started) * 1000),
         plan.output,
+        tuple(step_metrics),
     )
 
 
@@ -1195,12 +1225,14 @@ def apply_transform_plan(
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
     culture: str = "pt-BR",
+    deadline_ms: int | None = None,
 ) -> dict[str, Any]:
     return execute_transform_plan(
         table,
         plan,
         sibling_tables=sibling_tables,
         culture=culture,
+        deadline_ms=deadline_ms,
     ).table
 
 
@@ -1212,6 +1244,7 @@ def apply_data_transform_to_payload_result(
     query_bindings: tuple[dict[str, Any], ...] = (),
     target_step_name: str | None = None,
     culture: str | None = None,
+    deadline_ms: int | None = None,
 ) -> dict[str, Any]:
     selected_culture = culture or str(m_query_setting("defaultCulture", "pt-BR"))
     read_result = read_data_transform(
@@ -1234,6 +1267,7 @@ def apply_data_transform_to_payload_result(
             "table": table,
             "transform": read_result.public_metadata(),
             "scriptHash": script_hash,
+            "explainPlan": explain_transform_plan(read_result.plan),
         }
     started = time.monotonic()
     try:
@@ -1242,6 +1276,7 @@ def apply_data_transform_to_payload_result(
             read_result.plan,
             sibling_tables=sibling_tables,
             culture=selected_culture,
+            deadline_ms=deadline_ms,
         )
     except MExecutionError as exc:
         runtime_error = MRuntimeError(exc.step_name, exc.code, str(exc))
@@ -1256,6 +1291,8 @@ def apply_data_transform_to_payload_result(
             "runtimeErrors": {"count": 1, "sample": [runtime_error.to_dict()]},
             "executionMs": int((time.monotonic() - started) * 1000),
             "selectedStepName": read_result.plan.output,
+            "stepMetrics": [],
+            "explainPlan": explain_transform_plan(read_result.plan),
         }
     return {
         "data": execution.table["rows"],
@@ -1267,6 +1304,8 @@ def apply_data_transform_to_payload_result(
         "runtimeErrors": execution.runtime_errors_dict(),
         "executionMs": execution.execution_ms,
         "selectedStepName": execution.selected_step_name,
+        "stepMetrics": list(execution.step_metrics),
+        "explainPlan": explain_transform_plan(read_result.plan),
     }
 
 
@@ -1278,6 +1317,7 @@ def apply_data_transform_to_payload(
     query_bindings: tuple[dict[str, Any], ...] = (),
     target_step_name: str | None = None,
     culture: str | None = None,
+    deadline_ms: int | None = None,
 ) -> tuple[Any, bool, dict[str, Any] | None]:
     result = apply_data_transform_to_payload_result(
         data,
@@ -1286,5 +1326,6 @@ def apply_data_transform_to_payload(
         query_bindings=query_bindings,
         target_step_name=target_step_name,
         culture=culture,
+        deadline_ms=deadline_ms,
     )
     return result["data"], result["applied"], result["table"]

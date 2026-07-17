@@ -22,6 +22,10 @@
     "writeV2Enabled": false,
     "advancedEditorEnabled": false,
     "profilingEnabled": false,
+    "explainPlanEnabled": false,
+    "compileCacheEnabled": false,
+    "previewCacheEnabled": false,
+    "phase7TelemetryEnabled": false,
     "profile": "m-delpi-v1",
     "defaultCulture": "pt-BR",
     "maxScriptBytes": 65536,
@@ -38,7 +42,15 @@
     "maxJoinOutputRows": 10000,
     "maxPivotColumns": 200,
     "executionTimeoutMs": 2000,
-    "diagnosticSampleLimit": 20
+    "diagnosticSampleLimit": 20,
+    "compileCacheTtlSeconds": 300,
+    "compileCacheMaxEntries": 256,
+    "previewCacheTtlSeconds": 30,
+    "previewCacheMaxEntries": 128,
+    "profileSampleRows": 500,
+    "profileMaxColumns": 100,
+    "profileTimeoutMs": 750,
+    "previewDeadlineMaxMs": 3000
   },
   "tableIncrementalPageSize": 30,
   "comunicadoDataBlocks": {

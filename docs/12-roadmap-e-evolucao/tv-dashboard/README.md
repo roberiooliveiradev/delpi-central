@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.5+ em produção (jul/2026) — editor deck + Onda 4A–4O + **dois escopos** global/parte no palco (§19.19)
-> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fases 0–6 concluídas; rollout desativado por flags**) · [status Fase 6](./FASE-6-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
+> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fases 0–7 implementadas; rollout desativado por flags**) · [status Fase 7](./FASE-7-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -86,6 +86,14 @@ O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OT
 | Tempo real (admin) | `/apps/tv-dashboard-api/` | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Conteúdo UI | `/apps/tv-dashboard-api/content/` | `GET /ui`, `GET /slide-presets` |
 
+Power Query M autenticado:
+
+- `POST /data/m/compile` — compile server-side;
+- `POST /data/m/explain` — plano simplificado, somente quando habilitado;
+- `POST /data/preview-block` — prévia e profiling opt-in;
+- `GET /data/m/capabilities` — flags efetivas;
+- `GET /data/m/functions` — registry seguro.
+
 Envelope padrão: `{ success, message, data }`.
 
 ---
@@ -141,7 +149,10 @@ Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicado
 - **Contrato de séries:** a TV preserva a granularidade da rota. `granularity=day` permanece um ponto por dia — sem converter dias em faixas semanais.
 - **Cobertura anual diária:** a api-delpi permite até 366 buckets; assim, «Este ano (até hoje)» entrega todos os dias do ano. Períodos diários acima de um ano continuam limitados por segurança.
 - **Tabela de série:** apresenta todos os `points` retornados pela API usando apenas as colunas declaradas (`periodo` e `value`), sem mostrar `label` duplicado ou metadados como `granularity`/`truncated`.
-- **M DELPI — Fase 1:** reader dual v1/v2, adapter para plano tipado e formatter M estão prontos. Scripts v2 não são executados enquanto as flags permanecem desligadas; o browser contém apenas DTOs.
+- **M DELPI — Fases 0–7:** parser/compilador/executor backend, workbench,
+  editor avançado, profiling opt-in, explain, métricas e caches particionados
+  estão implementados. Scripts v2 e capacidades da Fase 7 não são ativados
+  enquanto as flags permanecem desligadas; o browser contém apenas DTOs.
 - **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
 - **§19.20:** aplicar estilo a irmãos; séries OEE/OTD/PPM nas nativas (SVG); rate limit `public/present`
 - **Backlog:** sombra texto, conectores, paleta recente, PDF/PPTX, colaboração
