@@ -42,4 +42,66 @@ describe("parsePresentationRealtimeEvent", () => {
   it("rejeita frame sem tipo", () => {
     expect(parsePresentationRealtimeEvent({ peers: [] })).toBeNull();
   });
+
+  it("aceita rascunho de slide em tempo real", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "slide_draft",
+        playlistId: "playlist-1",
+        slideId: "slide-a",
+        clientId: "editor-1",
+        nativeConfig: { title: "Olá" },
+      }),
+    ).toEqual({
+      type: "slide_draft",
+      playlistId: "playlist-1",
+      slideId: "slide-a",
+      clientId: "editor-1",
+      nativeConfig: { title: "Olá" },
+    });
+  });
+
+  it("rejeita slide_draft sem nativeConfig", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "slide_draft",
+        slideId: "slide-a",
+        clientId: "editor-1",
+      }),
+    ).toBeNull();
+  });
+
+  it("aceita seleção remota validada pelo servidor", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "selection_update",
+        playlistId: "playlist-1",
+        slideId: "slide-a",
+        clientId: "editor-1",
+        displayName: "Ana Silva",
+        selectedIds: ["block-1", "block-2"],
+        updatedAt: 123,
+      }),
+    ).toEqual({
+      type: "selection_update",
+      playlistId: "playlist-1",
+      slideId: "slide-a",
+      clientId: "editor-1",
+      displayName: "Ana Silva",
+      selectedIds: ["block-1", "block-2"],
+      updatedAt: 123,
+    });
+  });
+
+  it("rejeita seleção remota com IDs inválidos", () => {
+    expect(
+      parsePresentationRealtimeEvent({
+        type: "selection_update",
+        slideId: "slide-a",
+        clientId: "editor-1",
+        displayName: "Ana",
+        selectedIds: ["block-1", 2],
+      }),
+    ).toBeNull();
+  });
 });

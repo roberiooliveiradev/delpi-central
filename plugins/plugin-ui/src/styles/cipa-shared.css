@@ -1,0 +1,99 @@
+.delpi-ui-signature-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delpi-ui-signature-pad__canvas {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  min-height: var(--delpi-ui-signature-pad-min-height, 180px);
+  touch-action: none;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  border-radius: 12px;
+  background: #fff;
+  cursor: crosshair;
+}
+
+.delpi-ui-signature-pad--tall .delpi-ui-signature-pad__canvas {
+  min-height: var(--delpi-ui-signature-pad-tall-min-height, 240px);
+}
+
+.delpi-ui-signature-pad__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-signature-pad__clear {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+  cursor: pointer;
+}
+
+.delpi-ui-user-directory-picker,
+.delpi-ui-rich-text {
+  width: 100%;
+}
+
+.delpi-ui-user-directory-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delpi-ui-user-directory-picker__title {
+  font-weight: 600;
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-user-directory-picker__hint,
+.delpi-ui-user-directory-picker__status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--delpi-ui-muted, #64748b);
+}
+
+.delpi-ui-user-directory-picker__input {
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  padding: 0 12px;
+  background: var(--delpi-ui-surface, #fff);
+  color: var(--delpi-ui-text, #111);
+}
+
+.delpi-ui-user-directory-picker__results,
+.delpi-ui-user-directory-picker__selected {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delpi-ui-user-directory-picker__results button,
+.delpi-ui-user-directory-picker__selected button {
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+  background: var(--delpi-ui-surface, #fff);
+  cursor: pointer;
+}
+
+.delpi-ui-user-directory-picker__selected li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--delpi-ui-border, #e5e7eb);
+}

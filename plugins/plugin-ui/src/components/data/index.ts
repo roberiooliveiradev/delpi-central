@@ -41,9 +41,11 @@ export {
   findTablePartFromTarget,
   getTablePartState,
   isTablePartRefEqual,
+  isTablePartSelected,
   mergeTablePartsWithOptions,
   migrateLegacyTableChromeToFrame,
   normalizeTablePartsForLoad,
+  selectedTableColumnIndexes,
   parseTablePartRef,
   partsToTableOptions,
   resolveTableFrameStyle,
@@ -132,10 +134,46 @@ export {
   dataTableBemClasses,
   type DataTableClassNames,
   type DataTableColumn,
+  type DataTableColumnWidths,
   type DataTableLabels,
   type DataTableProps,
+  type DataTableSelection,
   type DashboardDataTableProps,
 } from "./DataTable";
+
+export {
+  DataCellValue,
+  type DataCellValueProps,
+} from "./DataCellValue";
+
+export {
+  isCellSelected,
+  isColumnSelected,
+  isRowSelected,
+  primaryColumnKey,
+  resolveCellSelection,
+  resolveColumnSelection,
+  resolveRowSelection,
+  selectionFromColumnKey,
+  selectionToTsv,
+  type DataTableCellRef,
+  type DataTableSelectionModifiers,
+} from "./dataTableSelection";
+
+export {
+  resolveDataCellSemantics,
+  type DataCellError,
+  type DataCellKind,
+  type DataCellSemantics,
+  type ResolveDataCellOptions,
+} from "./dataCellSemantics";
+
+export {
+  autofitDataTableColumn,
+  clampColumnWidthPx,
+  measureDataTableColumnWidthPx,
+  startDataTableColumnResize,
+} from "./dataTableColumnResize";
 
 export {
   DataTableSection,

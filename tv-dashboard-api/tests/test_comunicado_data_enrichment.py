@@ -2,11 +2,31 @@ from unittest.mock import MagicMock
 
 from tv_app.application.services.comunicado_data_enrichment_service import (
     ComunicadoDataEnrichmentService,
+    _apply_incremental_pagination_defaults,
     _extract_scalar_value,
     _extract_series,
+    _source_table_for_route,
     reset_comunicado_data_block_cache,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
+
+
+def test_incremental_pagination_defaults_only_for_paginated_routes():
+    route = {
+        "paramSchema": {
+            "page": {"type": "integer"},
+            "page_size": {"type": "integer"},
+        }
+    }
+    assert _apply_incremental_pagination_defaults({}, route) == {
+        "page": 1,
+        "page_size": 30,
+    }
+    assert _apply_incremental_pagination_defaults(
+        {"page": 3, "page_size": 15},
+        route,
+    ) == {"page": 3, "page_size": 15}
+    assert _apply_incremental_pagination_defaults({}, {"paramSchema": {}}) == {}
 
 
 def test_enrich_data_source_block_resolves_full_payload():
@@ -561,6 +581,191 @@ def test_enrich_data_source_series_table_keeps_full_series_without_max_rows():
     assert len(resolved["table"]["rows"]) == 12
 
 
+def test_enrich_series_route_does_not_leak_internal_metadata_as_table():
+    """Regressão prod: OEE série (points + granularity/truncated) deve virar tabela de série,
+    nunca campo/valor com metadados internos (granularity, truncated)."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {
+            "granularity": "day",
+            "truncated": False,
+            "branch": "01",
+            "points": [
+                {
+                    "periodo": "2026-07-01",
+                    "sort_key": "2026-07-01",
+                    "date_start": "2026-07-01",
+                    "date_end": "2026-07-01",
+                    "oee_filial_01": 82.5,
+                    "oee_filial_02": None,
+                },
+                {
+                    "periodo": "2026-07-02",
+                    "sort_key": "2026-07-02",
+                    "date_start": "2026-07-02",
+                    "date_end": "2026-07-02",
+                    "oee_filial_01": 84.0,
+                    "oee_filial_02": None,
+                },
+            ],
+        },
+        "route": {
+            "label": "OEE — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {"requiresBranchPermission": True},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "params": {"branch": "01", "periodDays": 30},
+                "displayMode": "auto",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    table = enriched[0]["resolved"]["table"]
+    column_keys = {col["key"] for col in table["columns"]}
+    assert column_keys == {"periodo", "value"}
+    assert "campo" not in column_keys and "valor" not in column_keys
+    # Linhas só com as chaves declaradas — sem `label` duplicando a coluna Período.
+    assert all(set(row.keys()) == {"periodo", "value"} for row in table["rows"])
+    assert [row["value"] for row in table["rows"]] == [82.5, 84.0]
+    assert enriched[0]["resolved"]["kpi"]["value"] == 84.0
+
+
+def test_enrich_series_route_empty_points_yields_no_metadata_rows():
+    """Série vazia não deve vazar granularity/truncated como campo/valor."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {"granularity": "day", "truncated": False, "branch": "01", "points": []},
+        "route": {
+            "label": "OEE — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {"requiresBranchPermission": True},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "params": {"branch": "01", "periodDays": 30},
+                "displayMode": "table",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    table = enriched[0]["resolved"]["table"]
+    assert table["rows"] == []
+    serialized = str(table)
+    assert "granularity" not in serialized and "truncated" not in serialized
+
+
+def test_source_table_for_series_route_uses_normalized_points():
+    """Fonte do M em rota de série = periodo/value (nunca campo/valor de metadados)."""
+    data = {
+        "granularity": "day",
+        "truncated": False,
+        "points": [
+            {"periodo": "2026-07-01", "oee_filial_01": 82.5},
+            {"periodo": "2026-07-02", "oee_filial_01": 84.0},
+        ],
+    }
+    route_info = {"seriesField": "points", "label": "OEE — série temporal"}
+    table = _source_table_for_route(data, route_info, branch="01")
+    assert table is not None
+    assert table["columns"] == ["periodo", "value"]
+    assert [row["value"] for row in table["rows"]] == [82.5, 84.0]
+    assert "campo" not in table["columns"] and "valor" not in table["columns"]
+
+
+def test_source_table_for_non_series_route_defers_to_generic_coerce():
+    """Sem seriesField, retorna None para o executor usar o coerce genérico."""
+    assert _source_table_for_route({"items": [{"a": 1}]}, {"shape": "list"}) is None
+    assert _source_table_for_route({"a": 1}, None) is None
+
+
+def test_enrich_series_route_with_m_transform_preview_uses_series_table():
+    """Regressão prod: preview do M em rota de série mostra periodo/value, não os
+    metadados internos (granularity/truncated) como campo/valor."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_production_oee_series", "shape": "playbook_report"},
+        "data": {
+            "granularity": "day",
+            "truncated": False,
+            "branch": "01",
+            "points": [
+                {"periodo": "2026-07-01", "oee_filial_01": 82.5, "oee_filial_02": None},
+                {"periodo": "2026-07-02", "oee_filial_01": 84.0, "oee_filial_02": None},
+            ],
+        },
+        "route": {
+            "label": "OEE — série temporal",
+            "seriesField": "points",
+            "tvConstraints": {"requiresBranchPermission": True},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_production_oee_series",
+                "params": {"branch": "01", "periodDays": 30},
+                "displayMode": "table",
+            },
+            "dataTransform": {
+                "version": 2,
+                "language": "m-delpi-v1",
+                "script": "let\n    FonteSemEtapas = Table.Skip(Fonte, 0)\nin\n    FonteSemEtapas",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    resolved = enriched[0]["resolved"]
+    # Preview consumido pelo modal Preparar dados: periodo/value, nunca campo/valor.
+    preview = resolved.get("preview")
+    assert isinstance(preview, dict)
+    preview_keys = [col["key"] for col in preview["columns"]]
+    assert preview_keys == ["periodo", "value"]
+    assert "campo" not in preview_keys and "valor" not in preview_keys
+    assert [row["value"] for row in preview["rows"]] == [82.5, 84.0]
+    # Apresentação (mesmo fluxo do gráfico/tabela) continua renderizando a série
+    # transformada, não uma tabela vazia.
+    table = resolved.get("table")
+    assert isinstance(table, dict) and table["rows"]
+    assert [row.get("value") for row in table["rows"]] == [82.5, 84.0]
+    # Nenhum metadado interno vaza como coluna/linha dos dados.
+    table_column_keys = {col["key"] for col in table["columns"]}
+    assert not ({"granularity", "truncated", "campo", "valor"} & table_column_keys)
+    assert all(
+        set(row.keys()) <= {"periodo", "value"} for row in preview["rows"]
+    )
+
+
 def test_enrich_honors_value_field_override():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()
@@ -1017,3 +1222,169 @@ def test_decorate_input_fallback_when_param_key_without_schemas():
     assert input_block["input"]["paramAvailable"] is True
     assert input_block["input"]["resolvedField"]["type"] == "string"
     assert input_block["input"]["resolvedField"]["label"] == "Filial"
+
+
+def test_enrich_auto_resolves_table_for_text_only_list_shape():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_lmp_history_flow", "shape": "list"},
+        "data": {
+            "flow": [
+                {"status": "APROVADO", "usuario": "Ana", "data": "2026-07-01"},
+                {"status": "PENDENTE", "usuario": "Bruno", "data": "2026-07-02"},
+            ]
+        },
+        "route": {
+            "label": "Transições de fluxo",
+            "metaShape": "list",
+            "tvConstraints": {"maxRows": 10},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "flow-1",
+                "type": "data_metric",
+                "dataBinding": {
+                    "operationId": "get_lmp_history_flow",
+                    "displayMode": "auto",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) == 2
+    assert rows[0]["status"] == "APROVADO"
+
+
+def test_enrich_auto_resolves_table_for_text_only_scalar_object():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "list_hr_branches", "shape": "scalar"},
+        "data": {"status": "ATIVO", "owner": "Operações"},
+        "route": {
+            "label": "Status",
+            "metaShape": "scalar",
+            "tvConstraints": {"maxRows": 10},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "status-1",
+                "type": "data_table",
+                "dataBinding": {
+                    "operationId": "list_hr_branches",
+                    "displayMode": "auto",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) >= 2
+    assert any(row.get("valor") == "ATIVO" for row in rows)
+
+
+def test_enrich_unwraps_api_delpi_envelope_for_text_list():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "list_hr_branches", "shape": "list"},
+        "data": {
+            "success": True,
+            "data": {
+                "records": [
+                    {"codigo": "A1", "descricao": "Item A"},
+                    {"codigo": "A2", "descricao": "Item B"},
+                ]
+            },
+        },
+        "route": {
+            "label": "Registros",
+            "metaShape": "list",
+            "tvConstraints": {"maxRows": 10},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "records-1",
+                "type": "data_table",
+                "dataBinding": {
+                    "operationId": "list_hr_branches",
+                    "displayMode": "table",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    rows = enriched[0]["resolved"]["table"]["rows"]
+    assert len(rows) == 2
+    assert rows[0]["codigo"] == "A1"
+
+
+def test_enrich_links_text_block_to_data_source_resolved():
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {"operationId": "get_branch_rol_target_pct", "shape": "scalar"},
+        "data": {
+            "branch": "02",
+            "rol_target_pct": 111.1,
+        },
+        "route": {
+            "label": "Meta ROL",
+            "valueFields": ["rol_target_pct"],
+            "tvConstraints": {},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "src-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_branch_rol_target_pct",
+                    "displayMode": "kpi",
+                },
+            },
+            {
+                "id": "txt-1",
+                "type": "text",
+                "content": "—",
+                "dataSourceId": "src-1",
+                "textProjection": {"field": "rol_target_pct", "format": "number"},
+                "frame": {"x": 0, "y": 0, "w": 20, "h": 10},
+            },
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    source = next(b for b in enriched if b.get("id") == "src-1")
+    text = next(b for b in enriched if b.get("id") == "txt-1")
+    assert source.get("resolved", {}).get("kpi", {}).get("value") is not None
+    assert text.get("resolved", {}).get("kpi", {}).get("value") is not None
+    assert text.get("serverTextProjectionApplied") is True

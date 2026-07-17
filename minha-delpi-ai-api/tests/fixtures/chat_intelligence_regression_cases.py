@@ -838,6 +838,50 @@ SELECTION_CASES = [
         "expected_action_id": "structure-exclusivity",
     },
     {
+        "message": "baixar estrutura em excel do produto 90261757",
+        "actions": [
+            {
+                "actionId": "structure-excel",
+                "method": "GET",
+                "path": "/products/{code}/structure/excel",
+                "operationId": "get_product_structure_excel",
+                "summary": "Exportar estrutura em Excel",
+                "parametersSchema": [{"name": "code"}, {"name": "format"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "structure-excel",
+    },
+    {
+        "message": "exportar planilha BOM do 90261757",
+        "actions": [
+            {
+                "actionId": "structure-excel",
+                "method": "GET",
+                "path": "/products/{code}/structure/excel",
+                "operationId": "get_product_structure_excel",
+                "summary": "Exportar estrutura em Excel",
+                "parametersSchema": [{"name": "code"}, {"name": "format"}],
+            },
+            {
+                "actionId": "structure",
+                "method": "GET",
+                "path": "/products/{code}/structure",
+                "operationId": "get_product_structure",
+                "summary": "Estrutura do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+        ],
+        "expected_action_id": "structure-excel",
+    },
+    {
         "message": "Quais matérias-primas são exclusivas?",
         "actions": [
             {

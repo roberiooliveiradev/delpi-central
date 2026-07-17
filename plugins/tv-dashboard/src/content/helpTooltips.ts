@@ -114,6 +114,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Criar uma seta conectando os dois elementos selecionados (centros). Arrastar a seta solta a ligação.",
     insertIndicator: "Inserir bloco de indicador ou gráfico com dados da api-delpi.",
     insertIcon: "Ícones vetoriais prontos para o slide.",
+    iconEditor: "Trocar ícone Lucide, cor (padrão azul das formas) e espessura do traço.",
+    iconPicker: "Escolha outro ícone da biblioteca Lucide.",
+    iconColor: "Cor do traço do ícone. Padrão: azul accent das formas (#089bdb).",
+    iconStrokeWidth: "Espessura do traço Lucide, em pixels (0,5–6).",
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",
@@ -122,6 +126,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertChart: "Escolha o tipo de gráfico e conecte-o a uma fonte de dados no inspetor.",
     insertKpi: "Insere um card KPI. Conecte a uma fonte de dados e configure ícone, textos e cores.",
     insertTable: "Escolha o tamanho ou estilo da tabela e conecte-a a uma fonte de dados.",
+    insertTextDataField:
+      "Vincula título, texto ou forma à fonte do slide e projeta o primeiro campo disponível. Sem fonte, abre o catálogo.",
     insertHeading: "Caixa de título em destaque para comunicados e chamadas principais.",
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
@@ -199,7 +205,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     back: "Voltar à lista de programações.",
     preview: "Abrir pré-visualização em tela cheia (← → slides, Espaço pausa; controles somem após inatividade).",
     refreshVisual:
-      "No editor, os dados não atualizam sozinhos. Clique para buscar de novo na api-delpi (ignora cache). O badge «Dados desatualizados» some após o refresh.",
+      "Busca de novo na api-delpi ignorando cache. Filtros e fontes já atualizam o palco sozinhos; use para forçar refresh manual.",
     share: "Colaboradores: convidar para editar (usuário Minha DELPI ou link de edição).",
     copyLink: "Copiar o link da TV (só apresentação, sem edição).",
     qr: "Gerar QR code do link da TV (apresentação).",
@@ -222,9 +228,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     defaultDuration:
       "Duração aplicada a novas telas e às que não tiverem tempo individual definido.",
     refreshInterval:
-      "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor use «Atualizar visual» — não há poll automático.",
+      "Intervalo da TV (apresentação pública) para atualizar dados ao vivo. No editor, filtros e fontes atualizam o preview automaticamente.",
     dataBlockRefreshInterval:
-      "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview só atualiza em «Atualizar visual».",
+      "Intervalo deste bloco na TV (apresentação). Vazio = usa o padrão da programação. No editor o preview atualiza ao mudar filtros ou a fonte.",
     customSlideType:
       "Tela livre: monte o layout no palco com as abas Inserir, Exibir e as ferramentas contextuais do objeto (Forma, Gráfico, Tabela, Dados). O título acima é só o nome no filmstrip.",
     publicUrl:
@@ -239,7 +245,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertWizard:
       "Escolha o visual inicial criado junto com a fonte. A mesma fonte continua disponível para outros formatos no palco.",
     sourceConfig:
-      "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; no editor, «Atualizar visual» refresca o palco.",
+      "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; alterações aqui atualizam o palco automaticamente.",
     prepareData:
       "Abre o editor de preparação em modal: consultas = rotas api-delpi do slide; etapas transformam a tabela antes do visual.",
     testRoute:
@@ -256,6 +262,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     paramBranch:
       "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
     paramCustomerSegment: "Filtra clientes: WEG ou novos negócios. Vazio = todos os segmentos.",
+    textDataBinding:
+      "Projeta um campo da fonte no bloco. Prefixo/sufixo e formato aplicam-se ao valor dinâmico; alterar filtros atualiza o preview.",
+    textDataColorRules:
+      "Regras por limiar aplicam cor ao valor dinâmico (mesma semântica dos cards KPI).",
+    insertFieldAtCursor:
+      "Insere um trecho dinâmico na posição do cursor — útil para misturar texto fixo e dados (ex.: «OEE: 42%»).",
     viewBinding:
       "Conecte o gráfico, tabela ou KPI a qualquer fonte do palco. A forma sugerida no catálogo não restringe o vínculo.",
     valueFields:
@@ -264,6 +276,14 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Filtra métricas só neste visual, sem novo fetch. Use a fonte para limitar o conjunto disponível a todos os visuais.",
     tableColumns:
       "Escolha quais colunas aparecem e a ordem (↑↓). Vazio = todas as colunas da fonte.",
+    tableWrapText:
+      "Quebra o texto das células em várias linhas. Ao definir ou arrastar a largura de uma coluna, a quebra é ativada automaticamente.",
+    tableColumnSize:
+      "Altura mínima das linhas (px) e largura relativa de cada coluna (%). Selecione a coluna no seletor ou clique no cabeçalho e arraste as alças azuis nos cantos. Duplo clique na alça ajusta a largura ao conteúdo. Ctrl+clique alterna colunas na seleção e Shift+clique estende o intervalo — a largura vale para todas as selecionadas.",
+    tableDistributeRows:
+      "Remove a altura fixa: todas as linhas voltam à altura automática, ajustada ao conteúdo.",
+    tableDistributeColumns:
+      "Divide a largura da tabela igualmente entre as colunas visíveis.",
     kpiMetricsProjection:
       "Por coluna: ligar/desligar, agregação (soma, média…) e formato. Regras de cor globais ficam em Aparência; regras por métrica sobrescrevem quando definidas.",
     chartAxesProjection:
@@ -273,7 +293,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     /** Faixa Dados — uma linha; o fluxo completo fica no painel lateral. */
     connectFlowRibbon: "Sem fonte — escolha no seletor do painel ou abra o catálogo.",
     connectOnStage:
-      "Com um gráfico, tabela ou KPI selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
+      "Com um gráfico, tabela, KPI ou texto/forma selecionado sem fonte, clique em um bloco de fonte (ícone de banco) no palco para conectar automaticamente.",
     kpiCard: "Título, subtítulo, unidade, ícone e tom de cor do card KPI (padrão visual Delpi).",
     kpiElements:
       "Ligue ou desligue partes do card. O detalhe abre ao selecionar a parte no palco.",
@@ -294,13 +314,17 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Cores internas (cabeçalho/células) e bordas entre células. Contorno do bloco = aba Forma / Moldura.",
     tableTitle:
       "Título acima da grade (ex.: Top produtos). Ligado por padrão; vazio usa o nome da fonte de dados.",
-    tableTruncation:
-      "Limita quantas linhas e colunas a tabela mostra no slide. Vazio = exibe tudo que a fonte entregou (com scroll no bloco).",
-    tableMaxRows:
-      "Quantidade máxima de linhas visíveis. Deixe vazio para mostrar a série/lista completa com scroll.",
-    tableMaxCols:
-      "Quantidade máxima de colunas visíveis (da esquerda para a direita). Deixe vazio para todas as colunas.",
     sidePanel: "Catálogo de rotas e configuração de fontes de dados para gráficos e tabelas.",
+    duplicateSourceChoice: {
+      title: "Fonte de dados na duplicação",
+      message:
+        "Este elemento usa uma fonte de dados. Deseja compartilhar a mesma consulta com o original ou criar uma cópia independente (parâmetros e etapas Power Query)?",
+      shareLabel: "Compartilhar fonte",
+      cloneLabel: "Duplicar fonte",
+      cancelLabel: "Cancelar",
+    },
+    inputFilterPresets:
+      "Mesmos presets de período da fonte (ex.: Este mês até hoje). O valor alimenta os filtros do slide ou das fontes amarradas.",
   },
   /** Modal Preparar dados (Power Query). */
   dataPrepare: {

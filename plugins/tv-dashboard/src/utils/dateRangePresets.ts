@@ -6,18 +6,32 @@ export const PERIOD_DAYS_PARAM = "periodDays";
 export type DateRangePresetId =
   | "this_month"
   | "this_week"
+  | "this_quarter"
+  | "this_year"
   | "today"
+  | "previous_week"
+  | "previous_month"
+  | "previous_quarter"
+  | "previous_year"
   | "last_7_days"
   | "last_30_days"
+  | "last_90_days"
   | "last_n_days"
   | "custom";
 
 export const DATE_RANGE_PRESET_OPTIONS: Array<{ value: DateRangePresetId; label: string }> = [
-  { value: "this_month", label: "Este mês (até hoje)" },
-  { value: "this_week", label: "Esta semana (até hoje)" },
   { value: "today", label: "Hoje" },
+  { value: "this_week", label: "Esta semana (até hoje)" },
+  { value: "this_month", label: "Este mês (até hoje)" },
+  { value: "this_quarter", label: "Este trimestre (até hoje)" },
+  { value: "this_year", label: "Este ano (até hoje)" },
+  { value: "previous_week", label: "Semana passada" },
+  { value: "previous_month", label: "Mês passado" },
+  { value: "previous_quarter", label: "Trimestre passado" },
+  { value: "previous_year", label: "Ano passado" },
   { value: "last_7_days", label: "Últimos 7 dias" },
   { value: "last_30_days", label: "Últimos 30 dias" },
+  { value: "last_90_days", label: "Últimos 90 dias" },
   { value: "last_n_days", label: "Últimos N dias" },
   { value: "custom", label: "Personalizado (datas fixas)" },
 ];

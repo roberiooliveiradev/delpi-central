@@ -53,6 +53,8 @@ export type TableColumnProjection = {
   key: string;
   label?: string;
   visible: boolean;
+  /** Largura relativa da coluna (% do total da tabela). */
+  widthPct?: number;
 };
 
 export type TableViewProjection = {
@@ -233,6 +235,10 @@ export function normalizeTableProjection(raw: unknown): TableViewProjection | un
       };
       if (typeof (item as TableColumnProjection).label === "string") {
         col.label = (item as TableColumnProjection).label;
+      }
+      const widthPct = asFiniteNumber((item as TableColumnProjection).widthPct);
+      if (widthPct != null && widthPct > 0) {
+        col.widthPct = Math.max(1, Math.min(100, widthPct));
       }
       return col;
     })

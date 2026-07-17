@@ -1,0 +1,89 @@
+/**
+ * NavigationCard — atalho/unidade clicável.
+ * Tokens: --delpi-ui-surface, --delpi-ui-border, --delpi-ui-accent, --delpi-ui-title
+ */
+
+.delpi-ui-nav-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 18px;
+  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
+  border-radius: calc(var(--delpi-ui-radius, 18px) - 4px);
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
+  );
+  color: var(--delpi-ui-text, var(--text, #111111));
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.delpi-ui-nav-card:hover:not(:disabled) {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-nav-card--horizontal {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.delpi-ui-nav-card:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)
+  );
+}
+
+.delpi-ui-nav-card:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.delpi-ui-nav-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    transparent
+  );
+  color: var(--delpi-ui-accent, var(--primary, #089bdb));
+}
+
+.delpi-ui-nav-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  width: 100%;
+}
+
+.delpi-ui-nav-card__eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-nav-card__title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+}
+
+.delpi-ui-nav-card__description,
+.delpi-ui-nav-card__meta {
+  font-size: 0.9rem;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}

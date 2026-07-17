@@ -1,4 +1,5 @@
 import type { ComunicadoBlock, ComunicadoDataSourceBlock } from "./comunicadoTypes";
+import { isTextDataBoundBlock, textBlockHasDataBinding } from "./textViewProjection";
 
 const DATA_VIEW_BLOCK_TYPES = new Set(["chart_view", "table_view", "kpi_view"]);
 
@@ -10,12 +11,15 @@ export function isDataViewBlockType(type: string): type is "chart_view" | "table
   return DATA_VIEW_BLOCK_TYPES.has(type);
 }
 
+export function isTextDataBoundBlockType(type: string): boolean {
+  return isTextDataBoundBlock({ type });
+}
+
 /**
- * Bloco que participa do fluxo de dados no editor (fonte, visual ligado ou legado data_*).
- * Usado para aba contextual «Dados» e painel lateral.
+ * Bloco que participa do fluxo de dados no editor (fonte, visual, texto/forma ligado ou legado data_*).
  */
 export function isDataBoundEditorBlockType(type: string): boolean {
-  return isDataViewBlockType(type) || isFetchableDataBlockType(type);
+  return isDataViewBlockType(type) || isFetchableDataBlockType(type) || isTextDataBoundBlockType(type);
 }
 
 /** Blocos cujo binding dispara fetch na api-delpi. */
@@ -23,19 +27,24 @@ export function isFetchableDataBlockType(type: string): boolean {
   return type === "data_source" || type.startsWith("data_");
 }
 
-/** IDs de `data_source` referenciados por views (chart / table / kpi). */
+/** IDs de `data_source` referenciados por views ou texto/forma ligados. */
 export function getLinkedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
   const linked = new Set<string>();
   for (const block of blocks) {
     if (isDataViewBlockType(block.type)) {
       const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
       if (sourceId) linked.add(sourceId);
+      continue;
+    }
+    if (isTextDataBoundBlock(block) && textBlockHasDataBinding(block)) {
+      const sourceId = block.dataSourceId?.trim();
+      if (sourceId) linked.add(sourceId);
     }
   }
   return linked;
 }
 
-/** Fonte oculta no palco quando algum visual está conectado (continua nas camadas). */
+/** Fonte oculta no palco quando algum visual ou texto está conectado. */
 export function shouldHideDataSourceOnStage(dataSourceId: string, blocks: ComunicadoBlock[]): boolean {
   return getLinkedDataSourceIds(blocks).has(dataSourceId);
 }
@@ -49,7 +58,7 @@ export function resolveDataSourceLabel(block: ComunicadoDataSourceBlock): string
 }
 
 /**
- * Fonte preferida ao inserir um visual: a fonte selecionada, ou a única do slide.
+ * Fonte preferida ao inserir um visual ou vincular texto: a fonte selecionada, ou a única do slide.
  */
 export function resolvePreferredDataSourceId(
   blocks: ComunicadoBlock[],

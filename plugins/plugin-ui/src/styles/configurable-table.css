@@ -60,6 +60,11 @@
   table-layout: auto;
 }
 
+.delpi-ui-config-table--fixed-cols .delpi-ui-config-table__data-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
 .delpi-ui-config-table__header-cell,
 .delpi-ui-config-table__cell {
   padding: 0.25rem 0.4rem;
@@ -69,6 +74,16 @@
     var(--delpi-ui-config-table-border-color, #e2e8f0);
   text-align: left;
   white-space: nowrap;
+  min-height: var(--delpi-ui-config-table-row-height, unset);
+  height: var(--delpi-ui-config-table-row-height, auto);
+  vertical-align: middle;
+}
+
+.delpi-ui-config-table--wrap .delpi-ui-config-table__header-cell,
+.delpi-ui-config-table--wrap .delpi-ui-config-table__cell {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .delpi-ui-config-table__header-cell {
@@ -158,6 +173,39 @@
       color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 70%, #fff)
     );
   outline-offset: 0;
+}
+
+.delpi-ui-config-table__column-resize-handle {
+  position: absolute;
+  right: -4px;
+  z-index: 3;
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 75%, #fff);
+  border-radius: 1px;
+  background: var(--delpi-ui-accent, #089bdb);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.delpi-ui-config-table__column-resize-handle--top {
+  top: -4px;
+}
+
+.delpi-ui-config-table__column-resize-handle--bottom {
+  bottom: -4px;
+}
+
+.delpi-ui-config-table__column--selected {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, #089bdb) 10%,
+    var(--delpi-ui-config-table-cell-bg, #fff)
+  ) !important;
+  box-shadow:
+    inset 1px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent),
+    inset -1px 0 color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 48%, transparent);
 }
 
 /* Galeria Estilos de tabela (ribbon strip + Mais) */

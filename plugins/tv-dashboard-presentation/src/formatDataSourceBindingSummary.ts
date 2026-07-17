@@ -6,9 +6,16 @@ import { resolveDataSourceLabel } from "./comunicadoDataArchitecture";
 export const DATA_SOURCE_DATE_RANGE_PRESET_LABELS: Record<string, string> = {
   this_month: "Este mês (até hoje)",
   this_week: "Esta semana (até hoje)",
+  this_quarter: "Este trimestre (até hoje)",
+  this_year: "Este ano (até hoje)",
   today: "Hoje",
+  previous_week: "Semana passada",
+  previous_month: "Mês passado",
+  previous_quarter: "Trimestre passado",
+  previous_year: "Ano passado",
   last_7_days: "Últimos 7 dias",
   last_30_days: "Últimos 30 dias",
+  last_90_days: "Últimos 90 dias",
   last_n_days: "Últimos N dias",
   custom: "Personalizado (datas fixas)",
 };

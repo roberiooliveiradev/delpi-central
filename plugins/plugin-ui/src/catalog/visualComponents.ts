@@ -41,6 +41,19 @@ function vc(
 }
 
 export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
+  // actions
+  vc("layout", "ActionButton", {
+    addedAt: "2026-07-16",
+    description: "Botão de ação canônico com variantes primary, default, ghost e link.",
+  }),
+  vc("layout", "BackLink", {
+    addedAt: "2026-07-16",
+    description: "Navegação de retorno com seta e sem chrome de botão.",
+  }),
+  vc("layout", "IconButton", {
+    addedAt: "2026-07-16",
+    description: "Botão só com ícone (remover, fechar) com tone default/danger.",
+  }),
   // help — pacote 0.1.0
   vc("help", "HelpTooltip"),
   vc("help", "FieldLabel"),
@@ -49,9 +62,39 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("help", "HintAction"),
   vc("help", "TitleWithHelp"),
   // layout
-  vc("layout", "PageHeader"),
+  vc("layout", "PageHeader", {
+    updatedAt: "2026-07-16",
+    changeNote: "Dual-class delpi-ui-page-header + slot nav",
+  }),
+  vc("layout", "NavigationCard", {
+    addedAt: "2026-07-16",
+    description: "Card clicável de navegação/atalho (unidades, submódulos).",
+  }),
+  vc("layout", "DocumentReader", {
+    addedAt: "2026-07-16",
+    description: "Viewport e toolbar para leitura/impressão de documentos formais.",
+  }),
+  vc("layout", "DocumentPage", {
+    addedAt: "2026-07-16",
+    description: "Papel A4 com slots de cabeçalho, marca d'água, corpo e rodapé.",
+  }),
+  vc("layout", "DocumentHeader", {
+    addedAt: "2026-07-16",
+    description: "Cabeçalho documental com logo, título e subtítulo.",
+  }),
+  vc("layout", "DocumentFooter", {
+    addedAt: "2026-07-16",
+    description: "Rodapé documental em três colunas.",
+  }),
+  vc("layout", "DocumentSignatureBlock", {
+    addedAt: "2026-07-16",
+    description: "Bloco formal de assinatura com imagem, linha, nome, papel e status.",
+  }),
   vc("layout", "PanelCard"),
-  vc("layout", "ContentCard"),
+  vc("layout", "ContentCard", {
+    updatedAt: "2026-07-16",
+    changeNote: "Dual-class delpi-ui-card + content-card",
+  }),
   vc("layout", "KpiCard"),
   vc("layout", "DelpiKpiCard"),
   vc("layout", "SimpleKpiCard"),
@@ -91,8 +134,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   // data
   vc("data", "DataTable", {
     addedAt: PACKAGE_INITIAL_DATE,
-    updatedAt: CATALOG_EXPAND_DATE,
-    changeNote: "Demo no catálogo estilo dashboards LMPS",
+    updatedAt: "2026-07-17",
+    changeNote: "Modo grid-preview com eventos de header/célula, seleção e índice",
   }),
   vc("data", "DataTableSection", {
     addedAt: PACKAGE_INITIAL_DATE,
@@ -165,6 +208,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("forms", "ComboboxNumberControl"),
   vc("forms", "EditableTableCell"),
   vc("forms", "LucideIconPicker"),
+  vc("forms", "LucideIconField"),
   vc("forms", "LucideIconGridPanel"),
   vc("forms", "LucideIconByName"),
   // export
@@ -207,7 +251,15 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("shape", "ColorStandardRow"),
   vc("shape", "ColorSwatch"),
   // menu
-  vc("menu", "ContextMenu"),
+  vc("menu", "FixedPanelPortal", {
+    addedAt: "2026-07-17",
+    description:
+      "Painel flutuante posicionado por ponto (portal + tema + dismiss + escopo MFE). Base do ContextMenu.",
+  }),
+  vc("menu", "ContextMenu", {
+    updatedAt: "2026-07-17",
+    changeNote: "Reimplementado sobre FixedPanelPortal (portal/tema/dismiss compartilhados)",
+  }),
   vc("menu", "ContextMenuItem"),
   vc("menu", "ContextMenuDivider"),
   vc("menu", "ContextMenuToolbar"),

@@ -271,6 +271,14 @@ export {
   type FormActionsProps,
 } from "./FormActions";
 export {
+  NavigationCard,
+  createDashboardNavigationCard,
+  navigationCardBemClasses,
+  type DashboardNavigationCardProps,
+  type NavigationCardClassNames,
+  type NavigationCardProps,
+} from "./NavigationCard";
+export {
   SectionBlock,
   createDashboardSectionBlock,
   sectionBlockBemClasses,

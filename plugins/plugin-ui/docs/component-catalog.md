@@ -10,6 +10,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 
 | Família | Exemplos no catálogo |
 |---------|----------------------|
+| actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | PageHeader, KpiCard, DelpiKpiCard, ChartCard… |
 | feedback | EmptyState, ModalShell, DrawerShell… |
@@ -28,6 +29,63 @@ Imports:
 ```ts
 import { HelpTooltip, FieldLabel, TabHintCell } from "@delpi/plugin-ui";
 ```
+
+---
+
+## `ActionButton`, `BackLink` e `IconButton`
+
+Controles canônicos para ações e navegação de retorno. O MFE deve mapear apenas tokens
+`--delpi-ui-*` e layout do contêiner; não deve copiar o chrome dos botões no CSS local.
+
+```tsx
+<BackLink onClick={goBack}>Voltar para atas</BackLink>
+
+<ActionButton variant="primary" onClick={save}>Salvar</ActionButton>
+<ActionButton variant="ghost" onClick={refresh}>Atualizar</ActionButton>
+<ActionButton variant="link" onClick={manage}>Gerenciar</ActionButton>
+
+<IconButton aria-label="Remover participante" tone="danger" onClick={remove}>
+  <X size={16} />
+</IconButton>
+```
+
+| Componente | Props principais |
+|------------|------------------|
+| `ActionButton` | `variant` (`default`, `primary`, `ghost`, `link`), `type`, `disabled`, `onClick`, `className` |
+| `BackLink` | `onClick`, `className`, `children` |
+| `IconButton` | `aria-label`, `tone` (`default`, `danger`), `disabled`, `onClick`, `children` |
+
+---
+
+## `NavigationCard`
+
+Card clicável canônico para unidades, filiais e atalhos de módulos. O conteúdo de domínio
+é fornecido pelo consumidor; o kit controla chrome, foco e acessibilidade.
+
+```tsx
+<NavigationCard
+  classNames={navigationCardBemClasses("cipa")}
+  icon={<Building2 size={22} />}
+  title="Santa Catarina"
+  meta="Filial 01"
+  onClick={openUnit}
+/>
+```
+
+Props principais: `title`, `icon`, `eyebrow`, `description`, `meta`, `onClick`,
+`orientation` (`vertical`, `horizontal`), `disabled`, `aria-label` e `classNames`.
+
+---
+
+## `DocumentReader`
+
+Composição canônica para leitura e impressão de documentos formais em papel A4:
+`DocumentReader` (viewport/toolbar), `DocumentPage` (header/watermark/footer),
+`DocumentHeader`, `DocumentFooter` e `DocumentSignatureBlock`.
+
+O kit controla papel, responsividade e `@media print`; cabeçalho institucional,
+textos e regras do documento continuam no plugin consumidor. Use
+`printDocumentReader()` para imprimir apenas a superfície documental.
 
 ---
 
@@ -428,6 +486,24 @@ Tabela genérica com sort, empty/loading e seção completa (busca, page size, p
 
 Helpers: `dataTableBemClasses`, `dataTableSectionBemClasses`, `createDashboardDataTableKit`.
 
+O modo `grid-preview` adiciona interações genéricas sem acoplamento de domínio:
+`onHeaderClick`, `onHeaderContextMenu`, `onCellClick`, `onCellContextMenu`,
+`getHeaderClassName`, `getCellClassName`, `headerPrefix`, `selectedColumnKey` /
+`selection` + `onSelectionChange`, `indexColumn`, `wrapText` (default on),
+`resizableColumns` + `columnWidths`, `enableColumnReorder` + `onColumnOrderChange`
+e `enableCopySelection` (Ctrl+C → TSV). Grade completa (bordas em linhas e colunas),
+coluna `#` sticky, zebra suave e seleção de coluna/linha/célula (Ctrl/Cmd toggle,
+Shift range). Cabeçalhos e células interativos suportam Enter/Espaço, foco visível
+e `aria-selected`.
+
+`DataCellValue` e `resolveDataCellSemantics` são a fonte canônica para células
+de dados operacionais. A taxonomia diferencia `value`, `null`, `empty`,
+`missing` e `error`; erros no formato `{ error: { code, message, ... } }`
+recebem tooltip e rótulo acessível. `selectionToTsv` usa a mesma semântica:
+`null`, `ausente` e `#ERROR:<code>` não são reduzidos a campos em branco,
+enquanto string vazia continua sendo copiada como vazia. Consumidores devem
+informar `present={false}` quando a propriedade não existe na linha.
+
 Props relevantes de `DataTableSection`:
 
 | Prop | Descrição |
@@ -603,6 +679,33 @@ Helpers: `resolveLucideIcon`, `groupLucideIconsBySection`, `LUCIDE_ICON_SECTIONS
 Renderiza um ícone Lucide pelo nome.
 
 ```ts
+import { LucideIconByName, resolveLucideIconOrFallback } from "@delpi/plugin-ui";
+```
+
+Prop `fallback` opcional — usa `resolveLucideIconOrFallback` quando informada.
+
+### `LucideIconField` / `useLucideIconField`
+
+Campo padrão (trigger + picker embutido) e hook para layout customizado (ribbon TV).
+
+```tsx
+import { LucideIconField, useLucideIconField } from "@delpi/plugin-ui";
+
+<LucideIconField
+  value={iconName}
+  defaultIcon="Star"
+  nameFormat="pascal"
+  onChange={setIconName}
+/>
+
+// Ribbon com trigger próprio:
+const iconField = useLucideIconField({ value, onChange, defaultIcon: "Star" });
+{iconField.open ? <LucideIconPicker {...iconField.pickerProps} /> : null}
+```
+
+Catálogo rápido TV: `DECK_QUICK_LUCIDE_ICON_NAMES` + `buildLucideIconOptions`.
+
+```ts
 import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
 ```
 
@@ -751,6 +854,37 @@ import { ShapeFillMenu, ShapeOutlineMenu } from "@delpi/plugin-ui/index";
 
 ---
 
+## Família `menu` — popovers posicionados por ponto
+
+Infraestrutura de popover portaled (posição fixa a partir de cursor/rect), com tema, dismiss (clique fora + Escape) e escopo opcional do MFE.
+
+| Export | Descrição |
+|--------|-----------|
+| `FixedPanelPortal` | Primitivo de infraestrutura: portal no `body`, posição por ponto, tema (`useDelpiUiPortalTheme`), dismiss (`useClickOutside` + Escape) e `portalScopeClassName` para escopo do plugin. Base do `ContextMenu`. Para ancorar a um elemento use `AnchoredPanelPortal`. |
+| `ContextMenu` | Menu contextual (`role="menu"`) sobre `FixedPanelPortal`. |
+| `ContextMenuItem` / `ContextMenuDivider` | Itens e divisores do menu. |
+| `ContextMenuToolbar` / `ContextMenuToolbarButton` | Barra de ações compacta. |
+
+```tsx
+import { FixedPanelPortal } from "@delpi/plugin-ui/index";
+
+<FixedPanelPortal
+  open={open}
+  position={{ x, y }}
+  onDismiss={close}
+  role="menu"
+  aria-label="Ações"
+  className="delpi-ui-context-menu"
+  portalScopeClassName="dashboard-tv-dashboard"
+>
+  {/* conteúdo do painel — escopo do plugin garante tokens --{prefix}-* */}
+</FixedPanelPortal>
+```
+
+Consumidores: `ContextMenu` (kit) e `DataPrepareColumnMenu` do `tv-dashboard` (painel de coluna com sub-views/formulários que precisam do escopo MFE).
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |
@@ -767,3 +901,16 @@ import { ShapeFillMenu, ShapeOutlineMenu } from "@delpi/plugin-ui/index";
 | `cadastro-kaizen` | `FilePreviewModal`, `resolveFilePreviewKind` |
 
 Ver [migration-catalog.md](./migration-catalog.md) para plugins pendentes.
+
+
+## Família `signature` / `rich-text` / `directory` (CIPA)
+
+| Export | Uso |
+|--------|-----|
+| `SignaturePad` | Canvas de assinatura manuscrita (PNG) |
+| `RichTextEditor` | WYSIWYG com ribbon Fonte/Parágrafo (paridade tv-dashboard) + preview; link via `RichTextLinkDialog` (ModalShell) + badge flutuante clicável/editável |
+| `RichTextLinkDialog` | Diálogo de inserir/editar link do editor (sem `window.prompt`) |
+| `RichTextToolbar` | Faixa de formatação reutilizável (fonte, parágrafo, cores, listas) |
+| `UserDirectoryPicker` | Busca de usuários (callback `searchUsers`); `showSelectedList={false}` quando o consumidor renderiza a própria lista |
+
+CSS: `styles/cipa-shared.css` (classes `.delpi-ui-*`).

@@ -65,7 +65,7 @@ export function resolveSelectionSections(
       /* Tipografia → Forma (flags por tipo via VisualBoxElementSections). */
       return withCommonTail(["visualBox"]);
     case "icon":
-      return withCommonTail(["shapeChrome"]);
+      return withCommonTail(["iconEditor"]);
     case "image":
       return withCommonTail(["media", "imageCrop"]);
     case "video":
@@ -92,7 +92,7 @@ export function resolveSelectionSections(
         "tableStyles",
         "tableBorders",
         "tableLayoutData",
-        "tableLayoutDisplay",
+        "tableLayoutSize",
         "tableLayoutAlign",
       ]);
     default:
@@ -118,11 +118,12 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "visualBox",
   "shapeGallery",
   "shapeChrome",
+  "iconEditor",
   "tableStyleOptions",
   "tableStyles",
   "tableBorders",
   "tableLayoutData",
-  "tableLayoutDisplay",
+  "tableLayoutSize",
   "tableLayoutAlign",
   "chartLayout",
   "chartStyles",

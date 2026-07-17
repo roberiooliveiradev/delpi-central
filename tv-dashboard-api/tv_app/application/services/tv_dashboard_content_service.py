@@ -75,6 +75,16 @@ def branch_rejection_message() -> str:
     return str(policy.get("rejectionMessage") or message("branchNotAllowed"))
 
 
+def m_query_setting(key: str, default: Any = None) -> Any:
+    settings = _load_settings().get("mQuery") or {}
+    return settings.get(key, default) if isinstance(settings, dict) else default
+
+
+def branch_policy_setting(key: str, default: Any = None) -> Any:
+    policy = _load_settings().get("branchPolicy") or {}
+    return policy.get(key, default) if isinstance(policy, dict) else default
+
+
 def ui_content_bundle() -> dict[str, Any]:
     return dict(_load_content())
 

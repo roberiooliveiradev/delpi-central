@@ -1,7 +1,6 @@
-import { useState } from "react";
 import {
   FormSelectControl,
-  LucideIconPicker,
+  LucideIconField,
   NativeTextControl,
   type DelpiKpiCardTone,
 } from "@delpi/plugin-ui/index";
@@ -39,7 +38,6 @@ const TONE_OPTIONS: Array<{ value: DelpiKpiCardTone; label: string }> = [
 
 export function KpiViewOptionsInspector({ pane = false }: Props) {
   const { selected, updateSelected, selectKpiPart, selectedKpiPart } = useComunicadoEditor();
-  const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
   if (!selected || selected.type !== "kpi_view") return null;
 
@@ -158,27 +156,17 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
             </DeckField>
             {options.showIcon !== false ? (
               <DeckField id="td-kpi-icon" label="Ícone">
-                <button
-                  type="button"
-                  className="td-btn td-btn--sm td-btn--ghost"
-                  onClick={() => setIconPickerOpen((open) => !open)}
-                >
-                  {options.iconName ?? "Gauge"}
-                </button>
-                {iconPickerOpen ? (
-                  <LucideIconPicker
-                    embedded
-                    curatedOnly={false}
-                    nameFormat="pascal"
-                    value={options.iconName ?? "Gauge"}
-                    onChange={(name) => {
-                      patchOptions({ iconName: name?.trim() || "Gauge", showIcon: true });
-                      setIconPickerOpen(false);
-                    }}
-                    onClose={() => setIconPickerOpen(false)}
-                    labels={{ clear: "Usar ícone padrão", close: "Fechar" }}
-                  />
-                ) : null}
+                <LucideIconField
+                  value={options.iconName ?? "Gauge"}
+                  defaultIcon="Gauge"
+                  nameFormat="pascal"
+                  curatedOnly={false}
+                  labels={{ clear: "Usar ícone padrão", close: "Fechar" }}
+                  onChange={(name) =>
+                    patchOptions({ iconName: name?.trim() || "Gauge", showIcon: true })
+                  }
+                  ariaLabel="Selecionar ícone do KPI"
+                />
               </DeckField>
             ) : null}
           </DeckPropertySection>

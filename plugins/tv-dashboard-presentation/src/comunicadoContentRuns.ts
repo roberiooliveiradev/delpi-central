@@ -5,6 +5,7 @@ import type {
   ComunicadoContentRunStyle,
   ComunicadoTextBlock,
 } from "./comunicadoTypes";
+import { normalizeTextDataRef } from "./textViewProjection";
 import { applyComunicadoTextEffectsToCss } from "./comunicadoTextEffects";
 
 const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
@@ -23,6 +24,7 @@ const RUN_STYLE_KEYS: Array<keyof ComunicadoContentRunStyle> = [
 ];
 
 function hasRunStyle(run: ComunicadoContentRun): boolean {
+  if (run.dataRef?.field?.trim()) return true;
   if (!run.style) return false;
   return RUN_STYLE_KEYS.some((key) => run.style?.[key] != null);
 }
@@ -83,8 +85,13 @@ function normalizeContentRun(value: unknown): ComunicadoContentRun | null {
   const raw = value as Record<string, unknown>;
   const text = typeof raw.text === "string" ? raw.text : "";
   const style = normalizeRunStyle(raw.style);
-  if (!text && !style) return null;
-  return style ? { text, style } : { text };
+  const dataRef = normalizeTextDataRef(raw.dataRef);
+  if (!text && !style && !dataRef) return null;
+  return {
+    text,
+    ...(style ? { style } : {}),
+    ...(dataRef ? { dataRef } : {}),
+  };
 }
 
 export function normalizeContentRuns(value: unknown): ComunicadoContentRun[] | undefined {
@@ -108,6 +115,7 @@ export function serializeContentRuns(
   return (runs ?? []).map((run) => {
     const payload: Record<string, unknown> = { text: run.text };
     if (run.style && Object.keys(run.style).length > 0) payload.style = run.style;
+    if (run.dataRef?.field?.trim()) payload.dataRef = run.dataRef;
     return payload;
   });
 }
@@ -124,13 +132,6 @@ export function syncTextBlockFields(
     };
   }
   return { content, contentRuns: undefined };
-}
-
-export function resolveTextBlockDisplayRuns(
-  block: Pick<ComunicadoTextBlock, "content" | "contentRuns">,
-): ComunicadoContentRun[] {
-  if (block.contentRuns && block.contentRuns.length > 0) return block.contentRuns;
-  return [{ text: block.content }];
 }
 
 export function contentRunStyleToCss(

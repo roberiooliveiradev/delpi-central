@@ -74,7 +74,7 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("mudança de fingerprint marca stale e não chama a API", async () => {
+  it("mudança de fingerprint dispara refetch automático (debounce)", async () => {
     const { result, rerender } = renderHook(
       ({ config }: { config: ComunicadoConfig }) =>
         useComunicadoDataPreview({
@@ -89,19 +89,27 @@ describe("useComunicadoDataPreview", () => {
     });
     expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(42);
     mockedPreview.mockClear();
+    mockedPreview.mockResolvedValue({
+      block: { resolved: { kpi: { value: 77, label: "OEE" } } },
+    } as Awaited<ReturnType<typeof previewDataBlockV2>>);
 
     rerender({ config: withParams(7) });
     await act(async () => {
       await Promise.resolve();
     });
-
     expect(mockedPreview).not.toHaveBeenCalled();
-    expect(result.current.isDataPreviewStale).toBe(true);
-    expect(result.current.staleSourceIds).toContain("metric-1");
-    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(42);
+    expect(result.current.isDataPreviewStale).toBe(false);
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 450));
+    });
+
+    expect(mockedPreview).toHaveBeenCalledTimes(1);
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(77);
+    expect(result.current.isDataPreviewStale).toBe(false);
   });
 
-  it("refreshDataPreview busca de novo com forceRefresh e limpa stale", async () => {
+  it("refreshDataPreview busca de novo com forceRefresh", async () => {
     const { result, rerender } = renderHook(
       ({ config }: { config: ComunicadoConfig }) =>
         useComunicadoDataPreview({
@@ -117,9 +125,9 @@ describe("useComunicadoDataPreview", () => {
 
     rerender({ config: withParams(7) });
     await act(async () => {
-      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 450));
     });
-    expect(result.current.isDataPreviewStale).toBe(true);
+
     mockedPreview.mockClear();
     mockedPreview.mockResolvedValueOnce({
       block: { resolved: { kpi: { value: 55, label: "OEE" } } },
@@ -227,5 +235,41 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.loading).toBe(false);
     expect(mockedPreview).not.toHaveBeenCalled();
     expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(99);
+  });
+
+  it("carrega e concatena a próxima página sob demanda", async () => {
+    const pagedConfig: ComunicadoConfig = {
+      blocks: [{
+        id: "source-1",
+        type: "data_source",
+        frame: { x: 0, y: 0, w: 20, h: 20 },
+        dataBinding: { operationId: "list_items", params: {} },
+      }],
+    };
+    mockedPreview
+      .mockResolvedValueOnce({
+        block: { resolved: {
+          data: { page: 1, page_size: 30, total_pages: 2 },
+          table: { rows: [{ id: 1 }], columns: [{ key: "id", label: "ID" }] },
+        } },
+      } as Awaited<ReturnType<typeof previewDataBlockV2>>)
+      .mockResolvedValueOnce({
+        block: { resolved: {
+          data: { page: 2, page_size: 30, total_pages: 2 },
+          table: { rows: [{ id: 2 }], columns: [{ key: "id", label: "ID" }] },
+        } },
+      } as Awaited<ReturnType<typeof previewDataBlockV2>>);
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({ playlistId: "pl-1", config: pagedConfig }),
+    );
+    await act(async () => { await Promise.resolve(); });
+    await act(async () => { await result.current.loadMoreDataPreview("source-1"); });
+    expect(result.current.resolvedByBlockId["source-1"]?.table?.rows).toEqual([
+      { id: 1 },
+      { id: 2 },
+    ]);
+    expect(mockedPreview.mock.calls[1]?.[0].block).toMatchObject({
+      dataBinding: { params: { page: 2, page_size: 30 } },
+    });
   });
 });

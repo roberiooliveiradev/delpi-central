@@ -1,6 +1,4 @@
-import type { LucideIcon } from "lucide-react";
-
-import { resolveLucideIcon } from "./lucideIconResolver";
+import { resolveLucideIconOrFallback } from "./lucideIconResolver";
 
 export type LucideIconGridItem = {
   /** Nome PascalCase do Lucide (ex.: Star). */
@@ -55,8 +53,7 @@ function LucideIconGridButton({
   item: LucideIconGridItem;
   onSelect: (pascalName: string) => void;
 }) {
-  const Icon = resolveLucideIcon(item.name) as LucideIcon | null;
-  if (!Icon) return null;
+  const Icon = resolveLucideIconOrFallback(item.name, item.name);
 
   return (
     <button

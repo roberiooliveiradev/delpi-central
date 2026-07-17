@@ -8,6 +8,7 @@ import {
   groupLucideIconsBySection,
   lucideIconPtLabel,
   resolveLucideIcon,
+  resolveLucideIconOrFallback,
   toKebabCase,
   toPascalCaseFromKebab,
 } from "./lucideIconResolver";
@@ -265,6 +266,7 @@ export type LucideIconByNameProps = {
   size?: number;
   strokeWidth?: number;
   className?: string;
+  fallback?: string;
   "aria-hidden"?: boolean | "true" | "false";
 };
 
@@ -274,9 +276,11 @@ export function LucideIconByName({
   size = 24,
   strokeWidth = 2,
   className,
+  fallback,
   "aria-hidden": ariaHidden = true,
 }: LucideIconByNameProps) {
-  const Icon = resolveLucideIcon(name);
+  const Icon =
+    fallback != null ? resolveLucideIconOrFallback(name, fallback) : resolveLucideIcon(name);
   if (!Icon) return null;
   return (
     <Icon size={size} strokeWidth={strokeWidth} className={className} aria-hidden={ariaHidden} />

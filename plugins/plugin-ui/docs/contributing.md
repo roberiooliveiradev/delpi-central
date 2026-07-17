@@ -30,6 +30,17 @@ Se alguma resposta for não, o componente pertence ao plugin específico — nã
 4. Rodar `python3 scripts/ci/audit_plugin_ui_duplication.py --check` (duplicatas bloqueantes).
 ```
 
+## Popovers e portais (reuso obrigatório)
+
+Não reimplemente `createPortal` + posicionamento + dismiss (clique fora/Escape) + tema em cada popover. Use um dos primitivos de infraestrutura:
+
+| Primitivo | Quando |
+|-----------|--------|
+| `FixedPanelPortal` (`components/menu`) | Posição por **ponto** (cursor/rect): menus de contexto, popovers de célula. Base do `ContextMenu`. |
+| `AnchoredPanelPortal` (`components/shape`) | Ancorado a um **elemento** (gatilho): dropdowns, seletores de cor. |
+
+Ambos aceitam `role`, `aria-label`, `panelRef` e `onDismiss`. `FixedPanelPortal` expõe `portalScopeClassName` para levar o escopo do MFE (`dashboard-{nome}`) ao conteúdo portaled — necessário quando o painel usa tokens `--{prefix}-*` ou classes de domínio do plugin. Um popover novo no MFE que precise desse escopo é **segundo consumidor** legítimo do primitivo (não copiar a lógica de portal para o plugin).
+
 ## Catálogo visual (app do portal)
 
 O mesmo pacote expõe `./App` — app federado de listagem/prévia:

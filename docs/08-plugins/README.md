@@ -74,6 +74,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/inspecoes-entrada` | `inspecoes-entrada` | microfrontend | plugin | `/apps/inspecoes-entrada` | `delpi-inspecoes-entrada` |
 | `plugins/inspecoes-processo` | `inspecoes-processo` | microfrontend | plugin | `/apps/inspecoes-processo` | `delpi-inspecoes-processo` |
 | `plugins/controle-retrabalhos` | `controle-retrabalhos` | microfrontend | plugin | `/apps/controle-retrabalhos` | `delpi-controle-retrabalhos` |
+| `plugins/cipa` | `cipa` | microfrontend | plugin | `/apps/cipa` | `delpi-cipa` |
 | `plugins/scrap-monitoring` | `scrap-monitoring` | microfrontend | plugin | `/apps/scrap-monitoring` | `delpi-scrap-monitoring` |
 | `plugins/estoque-seguranca` | `estoque-seguranca` | microfrontend | plugin | `/apps/estoque-seguranca` | `delpi-estoque-seguranca` |
 | `plugins/production-appointments` | `production-appointments` | microfrontend | plugin | `/apps/production-appointments` | `delpi-production-appointments` |

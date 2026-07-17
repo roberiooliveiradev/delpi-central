@@ -616,3 +616,12 @@ Documentação completa: [docs/06-portal-frontend/portal-deploy-cache-cloudflare
 ```bash
 ./minha-delpi-ai-api/scripts/build_vision_profile.sh prod
 ```
+
+
+### CIPA (atas / assinaturas)
+
+| Path no container | Host (`DELPI_DATA_HOST_DIR`) |
+|---|---|
+| `/app/data/cipa/signatures` | `…/cipa/signatures` |
+| `/app/data/cipa/attachments` | `…/cipa/attachments` |
+| `/app/data/cipa/pdfs` | `…/cipa/pdfs` |

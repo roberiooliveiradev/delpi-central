@@ -90,6 +90,8 @@ def test_api_delivered_metadata_for_safety_stock_detail_composite():
     )
 
     assert meta.get("presentationDecision")
-    tables = meta.get("tablePresentations") or []
-    assert len(tables) >= 2
+    assert (meta.get("tablePresentations") or []) == []
+    dashboard = meta.get("dashboardPresentation")
+    assert isinstance(dashboard, dict)
+    assert dashboard.get("type") == "dashboard"
     assert "table" in meta.get("availableFormats", [])

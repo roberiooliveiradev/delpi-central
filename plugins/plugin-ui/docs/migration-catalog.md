@@ -124,7 +124,7 @@ Reexport local (barrel do plugin): `export { goalDisplayFormat } from "@delpi/pl
 | Componente | Pacote | Notas |
 |------------|--------|-------|
 | `ConfirmModalPanel` | ✅ F5 | Headless; `ModalShell` local (PAC, transformometro) |
-| `ModalShell` | ✅ F5.5 | Portal + escape; overlay scope no wrapper |
+| `ModalShell` | ✅ F5.5 | Portal + escape; `createHostContainedModalShell` preenche a área do MFE sem cobrir o chrome do host (`portalTarget` / `data-delpi-modal-host`) |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
@@ -141,6 +141,23 @@ Após migração:
 - [x] Reexport de tipos de API em `transformometro/src/types/diagram.ts`
 - [x] `npm run build` transformometro + testes plugin-ui diagram
 - [ ] Remover bloco CSS duplicado `tm-diagram-*` de `transformometro/src/index.css` (opcional — alias mantém compatibilidade)
+
+## Infraestrutura de popover (`menu`) — `FixedPanelPortal` (jul/2026)
+
+Primitivo de infraestrutura para popover posicionado por ponto (portal + tema + dismiss por clique fora/Escape + escopo MFE opcional). Consolida a lógica antes duplicada em cada popover de posição fixa.
+
+| Consumidor | Papel | Notas |
+|------------|-------|-------|
+| `ContextMenu` (kit) | Reimplementado sobre `FixedPanelPortal` | Removeu portal/tema/dismiss inline; API pública inalterada |
+| `DataPrepareColumnMenu` (`tv-dashboard`) | Popover de coluna (Preparar dados) | Usa `portalScopeClassName="dashboard-tv-dashboard"` para tokens/CSS de domínio nas sub-views; sem lógica de portal local |
+
+Pacote: `plugin-ui/src/components/menu/FixedPanelPortal.tsx` (+ teste). Sem CSS próprio (infra; consumidores passam `className`, ex.: `delpi-ui-context-menu`). Para ancoragem a elemento use `AnchoredPanelPortal` (`components/shape`).
+
+Após extração:
+- [x] `FixedPanelPortal` + `FixedPanelPortal.test.tsx`
+- [x] `ContextMenu` migrado (dois consumidores reais)
+- [x] Catálogo (`visualComponents.ts` + demo `menu`) + `component-catalog.md` + `contributing.md`
+- [x] `npm test` plugin-ui + `npm run build` tv-dashboard
 
 ## Status — Fase 2 (shell de dashboard)
 
@@ -226,6 +243,7 @@ Poda nos MFEs dos blocos BEM espelho cobertos por `data-table.css`, `detail-card
 |------|--------|
 | Dashboards dept. + EF/TM/scrap/CR/financeiros/inspeções/auditoria/kaizen | ✅ chrome de tabela/detalhe/paginação podado; print/composição/domínio permanece |
 | `maintenance` DataTable | ✅ `dataTableBemClasses("dm")` + CSS de domínio só (`DataTable.css`) |
+| `tv-dashboard` Preparar dados | ✅ grade local migrada para `DataTable` `grid-preview`; grade completa, wrap, resize, seleção rica, sort/reorder M |
 
 Resíduos justificados: `@media print`, `.detail-card .table*`, colunas de domínio (`a5s-table--dashboard`, `ef-table--routing`, actions), paginação custom (`a5s-pagination`, `ip-pagination`).
 
@@ -314,6 +332,8 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | **7.5** | `inspecoes-processo` (Pagination/EmptyState), `strategic-indicators` (DataTable) | ✅ |
 | **7.6** | Família `dashboard-*` + P2 (filters/state-box/table mobile) | ✅ |
 | **7.7** | Gate CI anti-reintrodução | ✅ `scripts/ci/audit_mfe_plugin_ui_css.py --check` |
+| **7.8** | `cipa` — botões de ação e voltar compartilhados | ✅ |
+| **7.9** | `cipa` — UI base completa (header, cards, tabela, estados, navegação e formulários) | ✅ |
 
 ### Checklist por plugin (preencher ao fechar onda)
 
@@ -326,7 +346,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `minha-delpi-chat` | 7.3 | ✅ | ✅ Admin* domínio (`mdc-admin-*` KPI/table; `mdc-audit-*` paginação) — **path B** (não kit shell) | ✅ checkboxes/switch/toolbar via kit + tokens; `delpi-ui-native-switch--compact` no kit |
 | `cadastro-kaizen` | 7.4 | ✅ | ghost dual `KZ_GHOST_BTN` | ✅ `dataTableBemClasses` | section-card só gap; chrome no kit |
 | `auditoria-5s` | 7.4 | ✅ | hero/list → `createAnalyticsKpiCard`; paginação domínio `a5s-list-pagination` | ✅ filtersUi dual filter-box | analytics-kpi CSS no kit; list table/filters-card domínio |
-| `maintenance` | 7.4 | ✅ | StateBox dual kit; KPI factory + atalhos `dm-shortcut-*` | ✅ | DataTable.css domínio; filter-kpi toggle dual |
+| `maintenance` | 7.9 | ✅ | StateBox dual kit; KPI factory + atalhos via `NavigationCard` horizontal | ✅ | CSS `dm-shortcut-card*` removido; DataTable.css domínio; filter-kpi toggle dual |
 | `transformometro` | 7.4 | ✅ | ghost dual `DS_GHOST_BTN` | ✅ `dataTableBemClasses` | print help-tooltip + table ghost compact no kit; tree tokens no host |
 | `financeiro-inadimplencia` | 7.4 | ✅ | secondary `createSimpleKpiCard`; hero/ranking domínio `fi-kpi-hero*` | ✅ | sem dual-class parcial no hero |
 | `inspecoes-processo` | 7.5 | ✅ | Empty dual `state-box--empty`; Pagination → CompactPagination (`hasNext` sintético) | ✅ | chrome ip-pagination/ip-empty removido |
@@ -339,6 +359,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | `eficiencia-fabril` | 7.6 | ✅ | `EF_GHOST_BTN` + table-wrap dual | ✅ | `.ef-btn--ghost` chrome removido; paginação inline domínio |
 | `propostas-comerciais` | 7.6 | ✅ | StateBoxPanel dual via kit | ✅ | CSS `.pc-state-box*` removido; table-wrap dual |
 | `financeiro-centro-custo` | 7.6 | ✅ | Empty/Loading card dual; Error dual | ✅ | `.fcc-state*` removido; filtersUi já dual |
+| `cipa` | 7.9 | ✅ | ✅ `PageHeader`, `SectionCard`, `ContentCard`, `DataTable`, estados, `NavigationCard`, `IconButton`, actions/forms | ✅ | CSS local reduzido a tokens, layout de página e domínio de ata/assinatura; zero seletor `.delpi-ui-*` |
 
 ### DoD de um plugin na Fase 7
 

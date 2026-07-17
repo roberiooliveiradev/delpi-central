@@ -19,13 +19,36 @@ def test_this_month_and_this_week(today_fixed: date | None = None):
     today = today_fixed or date(2026, 7, 13)  # segunda
     assert compute_preset_range("this_month", today=today) == (date(2026, 7, 1), today)
     assert compute_preset_range("this_week", today=today) == (date(2026, 7, 13), today)
+    assert compute_preset_range("this_quarter", today=today) == (date(2026, 7, 1), today)
+    assert compute_preset_range("this_year", today=today) == (date(2026, 1, 1), today)
     assert compute_preset_range("today", today=today) == (today, today)
     assert compute_preset_range("last_7_days", today=today) == (date(2026, 7, 7), today)
+    assert compute_preset_range("last_90_days", today=today) == (date(2026, 4, 15), today)
     assert compute_preset_range("last_n_days", period_days=10, today=today) == (
         date(2026, 7, 4),
         today,
     )
     assert compute_preset_range("custom", today=today) is None
+
+
+def test_previous_calendar_periods_cross_year_boundaries():
+    today = date(2026, 1, 2)
+    assert compute_preset_range("previous_week", today=today) == (
+        date(2025, 12, 22),
+        date(2025, 12, 28),
+    )
+    assert compute_preset_range("previous_month", today=today) == (
+        date(2025, 12, 1),
+        date(2025, 12, 31),
+    )
+    assert compute_preset_range("previous_quarter", today=today) == (
+        date(2025, 10, 1),
+        date(2025, 12, 31),
+    )
+    assert compute_preset_range("previous_year", today=today) == (
+        date(2025, 1, 1),
+        date(2025, 12, 31),
+    )
 
 
 def test_apply_preset_writes_schema_keys_and_strips_internal():

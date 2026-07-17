@@ -89,6 +89,25 @@ class ExcelStructureBuilder:
                             comp.components,
                             new_parent_factor
                         )
+                    else:
+                        # Intermediário sem MP amarrada: listar como componente
+                        # do pai — senão o item some da planilha.
+                        rows.append([
+                            parent_code,
+                            parent_desc,
+                            "",
+                            comp_qtd,
+                            code_comp,
+                            desc_comp,
+                            comp_type,
+                            comp_unit,
+                            parent_factor,
+                        ])
+
+                        meta_map[code_comp] = {
+                            "type": comp_type,
+                            "unit": comp_unit
+                        }
 
         if root.components:
             process_components(

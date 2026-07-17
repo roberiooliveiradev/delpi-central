@@ -62,9 +62,17 @@ class SchemaPresentationBundle:
     tree: dict[str, Any] | None = None
     tables: tuple[dict[str, Any], ...] = ()
     dashboard: dict[str, Any] | None = None
+    download_artifacts: tuple[dict[str, Any], ...] = ()
 
 
 class ChatSchemaDrivenPresentationService:
+    _DOWNLOAD_PATH_KEYS = ("downloadPath", "download_path")
+    _DOWNLOAD_URL_KEYS = ("downloadUrl", "download_url", "url")
+    _FILENAME_KEYS = ("filename", "fileName", "file_name")
+    _CONTENT_TYPE_KEYS = ("contentType", "content_type", "mimeType", "mediaType")
+    _LABEL_KEYS = ("label", "title", "buttonLabel")
+    _MESSAGE_KEYS = ("message", "detail", "summary")
+
     @classmethod
     def should_apply(cls, *, path: str, entity: str | None = None) -> bool:
         return ChatPresentationProfileService.uses_schema_first_presentation(path, entity)
@@ -78,10 +86,17 @@ class ChatSchemaDrivenPresentationService:
         path: str = "",
         entity: str | None = None,
         response_schema: dict[str, Any] | None = None,
+        response_shape: str | None = None,
     ) -> SchemaPresentationBundle:
         del response_schema  # labels aplicados no host antes da chamada
 
-        return cls.build_bundle(host, data, path=path, entity=entity)
+        return cls.build_bundle(
+            host,
+            data,
+            path=path,
+            entity=entity,
+            response_shape=response_shape,
+        )
 
     @classmethod
     def build_bundle(
@@ -91,6 +106,7 @@ class ChatSchemaDrivenPresentationService:
         *,
         path: str = "",
         entity: str | None = None,
+        response_shape: str | None = None,
     ) -> SchemaPresentationBundle:
         if not cls.should_apply(path=path, entity=entity):
             return SchemaPresentationBundle()
@@ -99,6 +115,18 @@ class ChatSchemaDrivenPresentationService:
 
         if root is None:
             return SchemaPresentationBundle()
+
+        shape = str(response_shape or "").strip().lower()
+        download_artifacts = ()
+
+        if shape == "document_export" or cls._looks_like_document_export(root):
+            download_artifacts = cls.extract_download_artifacts(root)
+            text = cls.build_document_export_text(host, root, path=path, entity=entity)
+
+            return SchemaPresentationBundle(
+                text=text,
+                download_artifacts=download_artifacts,
+            )
 
         rows = cls.extract_tabular_rows(root)
         kpi = cls.build_kpi(host, root, path=path, entity=entity)
@@ -121,7 +149,121 @@ class ChatSchemaDrivenPresentationService:
             chart=chart,
             kpi=kpi,
             tree=tree,
+            download_artifacts=download_artifacts,
         )
+
+    @classmethod
+    def _looks_like_document_export(cls, root: Any) -> bool:
+        if not isinstance(root, dict):
+            return False
+
+        return any(
+            str(root.get(key) or "").strip()
+            for key in (*cls._DOWNLOAD_PATH_KEYS, *cls._DOWNLOAD_URL_KEYS)
+        )
+
+    @classmethod
+    def extract_download_artifacts(cls, root: Any) -> tuple[dict[str, Any], ...]:
+        if not isinstance(root, dict):
+            return ()
+
+        path = cls._first_non_empty(root, cls._DOWNLOAD_PATH_KEYS)
+        url = cls._first_non_empty(root, cls._DOWNLOAD_URL_KEYS)
+        href = cls._normalize_download_href(path or url)
+
+        if not href:
+            return ()
+
+        filename = cls._first_non_empty(root, cls._FILENAME_KEYS) or "download.bin"
+        content_type = cls._first_non_empty(root, cls._CONTENT_TYPE_KEYS) or (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            if filename.lower().endswith(".xlsx")
+            else "application/octet-stream"
+        )
+        label = cls._first_non_empty(root, cls._LABEL_KEYS) or f"Baixar {filename}"
+
+        return (
+            {
+                "href": href,
+                "filename": filename,
+                "contentType": content_type,
+                "label": label,
+            },
+        )
+
+    @classmethod
+    def build_document_export_text(
+        cls,
+        host: SchemaDrivenPresenterHost,
+        root: Any,
+        *,
+        path: str = "",
+        entity: str | None = None,
+    ) -> dict[str, Any] | None:
+        del path, entity
+
+        if not isinstance(root, dict):
+            return None
+
+        message = cls._first_non_empty(root, cls._MESSAGE_KEYS)
+        filename = cls._first_non_empty(root, cls._FILENAME_KEYS)
+        lines: list[str] = []
+
+        if message:
+            lines.append(message)
+        elif filename:
+            lines.append(f"Arquivo pronto para download: {filename}")
+        else:
+            lines.append("Arquivo pronto para download.")
+
+        markdown = "\n\n".join(lines)
+        title = filename or "Download"
+
+        return {
+            "type": "markdown",
+            "title": title,
+            "markdown": markdown,
+        }
+
+    @classmethod
+    def _first_non_empty(cls, root: dict[str, Any], keys: tuple[str, ...]) -> str:
+        for key in keys:
+            value = str(root.get(key) or "").strip()
+
+            if value:
+                return value
+
+        return ""
+
+    @classmethod
+    def _normalize_download_href(cls, raw: str) -> str:
+        value = str(raw or "").strip()
+
+        if not value:
+            return ""
+
+        if value.startswith("/"):
+            if value.startswith("/apps/api-delpi/"):
+                return value
+
+            if value.startswith("/products/"):
+                return f"/apps/api-delpi{value}"
+
+            return value
+
+        marker = "/products/"
+        idx = value.find(marker)
+
+        if idx >= 0:
+            return f"/apps/api-delpi{value[idx:]}"
+
+        apps_marker = "/apps/api-delpi/"
+        apps_idx = value.find(apps_marker)
+
+        if apps_idx >= 0:
+            return value[apps_idx:]
+
+        return ""
 
     # ------------------------------------------------------------------
     # Shape composite_analysis (multi-seção) — inteligência do chat base
@@ -703,6 +845,7 @@ class ChatSchemaDrivenPresentationService:
         path: str = "",
         entity: str | None = None,
         response_schema: dict[str, Any] | None = None,
+        response_shape: str | None = None,
     ) -> dict[str, Any] | None:
         bundle = cls.build_from_openapi_schema(
             host,
@@ -710,6 +853,7 @@ class ChatSchemaDrivenPresentationService:
             path=path,
             entity=entity,
             response_schema=response_schema,
+            response_shape=response_shape,
         )
 
         return cls.resolve_primary_from_bundle(bundle, path=path, entity=entity)
@@ -771,6 +915,7 @@ class ChatSchemaDrivenPresentationService:
         path: str = "",
         entity: str | None = None,
         response_schema: dict[str, Any] | None = None,
+        response_shape: str | None = None,
     ) -> dict[str, Any] | None:
         """Playbook 22 — apresentação as-delivered sem fallback para presenters legacy."""
         primary = cls.build_primary(
@@ -779,6 +924,7 @@ class ChatSchemaDrivenPresentationService:
             path=path,
             entity=entity,
             response_schema=response_schema,
+            response_shape=response_shape,
         )
 
         if primary is not None:

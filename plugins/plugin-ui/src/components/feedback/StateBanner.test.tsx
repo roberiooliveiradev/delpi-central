@@ -14,7 +14,8 @@ describe("StateBanner", () => {
     );
 
     expect(screen.getByText("Carregando…")).toBeTruthy();
-    expect(container.firstElementChild?.className).toBe("kz-state");
+    expect(container.firstElementChild?.className).toContain("kz-state");
+    expect(container.firstElementChild?.className).toContain("delpi-ui-state-banner");
   });
 
   it("aplica modificador de erro", () => {

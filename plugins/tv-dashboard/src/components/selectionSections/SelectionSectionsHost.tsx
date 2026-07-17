@@ -16,6 +16,7 @@ import { ChartSeriesSection } from "./ChartSeriesSection";
 import { DataSourceHintSection } from "./DataSourceHintSection";
 import { DisplaySection } from "./DisplaySection";
 import { FrameSizeSection } from "./FrameSizeSection";
+import { IconSection } from "./IconSection";
 import { ImageCropSection } from "./ImageCropSection";
 import { InputBindingSection } from "./InputBindingSection";
 import { KpiAppearanceSection } from "./KpiAppearanceSection";
@@ -31,7 +32,7 @@ import {
 import {
   TableLayoutAlignSection,
   TableLayoutDataSection,
-  TableLayoutDisplaySection,
+  TableLayoutSizeSection,
 } from "./TableLayoutSections";
 import { TextBoxSection } from "./TextBoxSection";
 import { TypographySection } from "./TypographySection";
@@ -77,6 +78,8 @@ function renderSection(
       return <ShapeGallerySection key={id} layout={layout} />;
     case "shapeChrome":
       return <ShapeChromeSection key={id} layout={layout} />;
+    case "iconEditor":
+      return <IconSection key={id} layout={layout} />;
     case "tableStyleOptions":
       return <TableStyleOptionsSection key={id} layout={layout} />;
     case "tableStyles":
@@ -85,10 +88,10 @@ function renderSection(
       return <TableBordersSection key={id} layout={layout} />;
     case "tableLayoutData":
       return <TableLayoutDataSection key={id} layout={layout} />;
-    case "tableLayoutDisplay":
-      return <TableLayoutDisplaySection key={id} layout={layout} />;
     case "tableLayoutAlign":
       return <TableLayoutAlignSection key={id} layout={layout} />;
+    case "tableLayoutSize":
+      return <TableLayoutSizeSection key={id} layout={layout} />;
     case "chartLayout":
       return <ChartLayoutSection key={id} layout={layout} />;
     case "chartStyles":

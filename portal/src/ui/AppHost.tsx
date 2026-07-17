@@ -60,7 +60,7 @@ function getViteFederationShareScope() {
 }
 
 export const AppHost = () => {
-  const { apps, getAccessToken, refreshToken } = useContext(AuthContext);
+  const { apps, getAccessToken, refreshToken, user } = useContext(AuthContext);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -463,6 +463,8 @@ export const AppHost = () => {
           search: location.search,
           alternateEntry: routeAlternateUrl,
           routeLabel: route?.label,
+          permissions: user?.permissions,
+          isSuperadmin: user?.is_superadmin,
         };
 
         mod.mount(federatedHostRef.current, props);
@@ -519,6 +521,8 @@ export const AppHost = () => {
       search: location.search,
       alternateEntry: routeAlternateUrl,
       routeLabel: route?.label,
+      permissions: user?.permissions,
+      isSuperadmin: user?.is_superadmin,
     };
 
     const mod = mountedModuleRef.current;
@@ -540,6 +544,8 @@ export const AppHost = () => {
     getAccessToken,
     route?.label,
     routeAlternateUrl,
+    user?.permissions,
+    user?.is_superadmin,
   ]);
 
   useEffect(() => {

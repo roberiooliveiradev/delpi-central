@@ -1,18 +1,28 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Any
 
-from tv_app.application.services.branch_policy_service import validate_native_branch
+from tv_app.application.services.branch_policy_service import validate_data_route_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.application.services.comunicado_input_filters_service import (
     collect_input_filter_contributions,
     merge_filter_layers,
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
+from tv_app.application.services.data.m_query.m_phase7_quality_service import (
+    SafeTelemetry,
+    profile_table,
+    reset_phase7_caches,
+)
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
+from tv_app.application.services.data.m_query.m_query_dependency_service import (
+    MQueryDependencyService,
+)
 from tv_app.application.services.data.tv_data_transform_service import (
     apply_data_transform_to_payload,
+    apply_data_transform_to_payload_result,
     coerce_payload_to_table,
     normalize_data_transform,
 )
@@ -22,21 +32,46 @@ from tv_app.application.services.data.tv_view_projection_service import (
 from tv_app.application.services.native_screen_cache_service import (
     native_data_cache_ttl_seconds,
 )
-from tv_app.application.services.tv_dashboard_content_service import message
+from tv_app.application.services.tv_dashboard_content_service import (
+    m_query_setting,
+    message,
+    tv_dashboard_setting_int,
+)
 from tv_app.application.services.tv_data_route_catalog_service import (
     DATA_BLOCK_TYPES,
     DATA_VIEW_BLOCK_TYPES,
+    TEXT_DATA_BOUND_BLOCK_TYPES,
     TvDataRouteCatalogService,
 )
 from tv_app.infrastructure.cache.ttl_cache import TtlCache
 from tv_app.infrastructure.gateways.delpi_operational_gateway import DelpiOperationalGateway
-from tv_app.application.services.series_points_extractor import extract_series_points
+from tv_app.application.services.series_points_extractor import (
+    extract_series_points,
+    unwrap_operational_data,
+)
 
 _data_block_cache = TtlCache[dict[str, Any]](ttl_seconds=native_data_cache_ttl_seconds())
 
 # Sem maxRows explícito: série diária (~3 meses) cabe no scroll do bloco; não truncar em 5
 # (gráfico recebe a série inteira — tabela deve acompanhar).
 _DEFAULT_TABLE_MAX_ROWS = 90
+# Séries longas (ex.: «este ano» diário): tabela acompanha o gráfico com todos os pontos.
+_DEFAULT_SERIES_TABLE_MAX_ROWS = 366
+
+
+def _apply_incremental_pagination_defaults(
+    params: dict[str, Any],
+    route: dict[str, Any] | None,
+) -> dict[str, Any]:
+    schema = route.get("paramSchema") if isinstance(route, dict) else None
+    if not isinstance(schema, dict) or "page" not in schema or "page_size" not in schema:
+        return params
+    page_size = max(1, tv_dashboard_setting_int("tableIncrementalPageSize", 30))
+    return {
+        **params,
+        "page": params.get("page") or 1,
+        "page_size": params.get("page_size") or page_size,
+    }
 
 
 def _resolve_table_max_rows(binding: dict[str, Any], route_info: dict[str, Any]) -> int:
@@ -45,6 +80,9 @@ def _resolve_table_max_rows(binding: dict[str, Any], route_info: dict[str, Any])
     constraints = route_info.get("tvConstraints")
     if isinstance(constraints, dict) and constraints.get("maxRows") is not None:
         return max(1, int(constraints["maxRows"]))
+    # Rota de série: tabela traz todos os pontos da API (acompanha o gráfico), sem cap de 90.
+    if str(route_info.get("seriesField") or "").strip():
+        return _DEFAULT_SERIES_TABLE_MAX_ROWS
     return _DEFAULT_TABLE_MAX_ROWS
 
 
@@ -53,10 +91,50 @@ def _build_data_cache_key(
     operation_id: str,
     params: dict[str, Any],
     authorization: str | None,
+    user: Any | None = None,
+    service_context: str | None = None,
 ) -> str:
-    auth_scope = "user" if authorization else "service"
+    permissions = sorted(
+        {
+            str(permission).strip()
+            for permission in (getattr(user, "permissions", None) or [])
+            if str(permission).strip()
+        }
+    )
+    identity = next(
+        (
+            str(value).strip()
+            for value in (
+                getattr(user, "sub", None),
+                getattr(user, "id", None),
+                getattr(user, "user_id", None),
+                getattr(user, "email", None),
+                getattr(user, "username", None),
+            )
+            if value is not None and str(value).strip()
+        ),
+        "",
+    )
+    principal = {
+        "kind": "user" if authorization or user is not None else "service",
+        "identity": identity,
+        "permissions": permissions,
+        "isSuperadmin": bool(getattr(user, "is_superadmin", False)),
+        "serviceContext": str(service_context or "tv-dashboard").strip(),
+        # Fallback opaco quando o modelo HTTP não expõe subject; nunca serializa o token.
+        "credentialDigest": hashlib.sha256(authorization.encode("utf-8")).hexdigest()
+        if authorization and not identity
+        else "",
+    }
+    auth_fingerprint = hashlib.sha256(
+        json.dumps(principal, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     return json.dumps(
-        {"operationId": operation_id, "params": params, "authScope": auth_scope},
+        {
+            "operationId": operation_id,
+            "params": params,
+            "authorizationFingerprint": f"sha256:{auth_fingerprint}",
+        },
         sort_keys=True,
         default=str,
     )
@@ -254,6 +332,9 @@ def _list_count_metric(
     """Playbook/listagem sem escalar de negócio: KPI = quantidade de registros."""
     if not isinstance(data, dict):
         return None
+    # Série temporal: KPI é o último ponto (tratado adiante), nunca a contagem de pontos.
+    if isinstance(route_info, dict) and str(route_info.get("seriesField") or "").strip():
+        return None
     summary = data.get("summary") if isinstance(data.get("summary"), dict) else {}
     total = summary.get("total_records")
     if isinstance(total, bool) or not isinstance(total, (int, float)):
@@ -345,11 +426,31 @@ _TABLE_LIST_KEYS = (
     "centros_custo",
     "fornecedores",
     "valores",
+    "records",
+    "results",
+    "rows",
+    "entries",
+    "flow",
+    "history",
+    "transitions",
+)
+
+_SKIP_GENERIC_LIST_KEYS = frozenset(
+    {
+        "meta",
+        "summary",
+        "pagination",
+        "success",
+        "message",
+        "errors",
+        "error",
+    }
 )
 
 
 def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
     """Extrai linhas para tabela: lista bare, `items`/`tableField` e chaves list comuns."""
+    data = unwrap_operational_data(data)
     if isinstance(data, list):
         return data
     if not isinstance(data, dict):
@@ -367,12 +468,12 @@ def _list_from_data(data: Any, table_field: str | None) -> list[Any]:
         if isinstance(raw, list) and raw:
             return raw
 
-    # Envelope api-delpi às vezes chega com data aninhado (lista ou {items}).
-    nested = data.get("data")
-    if isinstance(nested, list) and nested:
-        return nested
-    if isinstance(nested, dict):
-        return _list_from_data(nested, table_field)
+    for key, raw in data.items():
+        if key in _SKIP_GENERIC_LIST_KEYS:
+            continue
+        if isinstance(raw, list) and raw:
+            return raw
+
     return []
 
 
@@ -411,11 +512,11 @@ def _series_to_table_rows(
     points = _extract_series(data, series_field, branch=branch)
     rows: list[dict[str, Any]] = []
     for point in points[:max_rows]:
-        label = point.get("label")
+        # Só as chaves declaradas nas colunas (periodo/value): evitar `label` duplicando
+        # a coluna Período na derivação de colunas do frontend (união das chaves da linha).
         rows.append(
             {
-                "label": label,
-                "periodo": label,
+                "periodo": point.get("label"),
                 "value": point.get("value"),
             }
         )
@@ -434,6 +535,7 @@ def _scalar_object_as_table_rows(
     max_rows: int,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
     """Objeto só com escalares (health, inspector) → tabela campo/valor para preview TV."""
+    data = unwrap_operational_data(data)
     if not isinstance(data, dict):
         return [], []
     rows: list[dict[str, Any]] = []
@@ -466,6 +568,23 @@ def _extract_table_rows(
     branch: str | None = None,
     value_label: str | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+    # Rotas de série (seriesField no catálogo) têm a série como fonte canônica: normaliza
+    # os pontos (label/valor por filial) antes do caminho de lista genérico e nunca vaza
+    # metadados internos (granularity, truncated, sort_key…) como colunas ou campo/valor.
+    # Exceção: quando os dados já são uma lista tabular (ex.: saída de uma transformação M
+    # sobre a série), eles já são a tabela canônica — usa o caminho de lista genérico e não
+    # tenta reextrair a série (que não existe mais na lista) e zerar a apresentação.
+    already_tabular = isinstance(unwrap_operational_data(data), list)
+    if series_field and str(series_field).strip() and not already_tabular:
+        series_rows, series_columns = _series_to_table_rows(
+            data,
+            series_field,
+            branch=branch,
+            max_rows=max_rows,
+            value_label=value_label,
+        )
+        return series_rows, series_columns
+
     raw_rows = _list_from_data(data, table_field)
     rows: list[dict[str, Any]] = []
     for row in raw_rows[:max_rows]:
@@ -490,20 +609,89 @@ def _extract_table_rows(
     return _scalar_object_as_table_rows(data, max_rows=max_rows)
 
 
+def _source_table_for_route(
+    data: Any,
+    route_info: dict[str, Any] | None,
+    *,
+    branch: str | None = None,
+) -> dict[str, Any] | None:
+    """Tabela-fonte canônica (`Fonte`) para transformações M.
+
+    Rotas de série usam a série normalizada (periodo/value), a mesma que alimenta
+    gráfico/tabela — nunca o fallback escalar campo/valor, que vazaria metadados
+    internos (granularity, truncated) como se fossem os dados. Fora de séries,
+    retorna None e o executor cai no coerce genérico do payload.
+    """
+    series_field = route_info.get("seriesField") if isinstance(route_info, dict) else None
+    if not (series_field and str(series_field).strip()):
+        return None
+    points = _extract_series(data, series_field, branch=branch)
+    return {
+        "columns": ["periodo", "value"],
+        "rows": [
+            {"periodo": point.get("label"), "value": point.get("value")} for point in points
+        ],
+    }
+
+
 def _scalar_as_chart_points(value: Any, label: str | None = None) -> list[dict[str, Any]]:
     if value is None:
         return []
     return [{"label": label, "value": value}]
 
 
+def _rows_have_numeric_cells(rows: list[dict[str, Any]]) -> bool:
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        for value in row.values():
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, (int, float)):
+                return True
+    return False
+
+
+def _meaningful_kpi_metrics(
+    data: Any,
+    *,
+    route_info: dict[str, Any],
+    binding: dict[str, Any],
+) -> list[dict[str, Any]]:
+    metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding)
+    return [metric for metric in metrics if metric.get("field") != "total_records"]
+
+
 def _infer_auto_display_mode(
     data: Any,
     route_info: dict[str, Any],
     meta: dict[str, Any],
+    *,
+    binding: dict[str, Any] | None = None,
 ) -> str:
-    shape = str(meta.get("shape") or route_info.get("metaShape") or "scalar")
-    if shape == "paged_list" or route_info.get("tableFields"):
+    shape = str(meta.get("shape") or route_info.get("metaShape") or "scalar").lower()
+    table_field = route_info.get("tableFields")
+    binding_payload = binding if isinstance(binding, dict) else {}
+
+    if shape in {"list", "paged_list", "hierarchy"} and _list_from_data(data, table_field):
         return "table"
+
+    if route_info.get("tableFields") or shape == "paged_list":
+        return "table"
+
+    rows, _ = _extract_table_rows(
+        data,
+        table_field,
+        5,
+        meta=meta,
+        series_field=route_info.get("seriesField"),
+    )
+    if rows:
+        if not _meaningful_kpi_metrics(data, route_info=route_info, binding=binding_payload):
+            return "table"
+        if len(rows) > 1 and not _rows_have_numeric_cells(rows):
+            return "table"
+
     if route_info.get("seriesField") or shape in {"playbook_report", "composite_analysis"}:
         points = _extract_series(data, route_info.get("seriesField"))
         if points:
@@ -532,6 +720,9 @@ class ComunicadoDataEnrichmentService:
         user: Any | None = None,
         force_refresh: bool = False,
         filter_overrides: dict[str, Any] | None = None,
+        target_step_name: str | None = None,
+        target_source_id: str | None = None,
+        preview_options: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
         # Preview isola um data_source em `blocks`, mas inputs vivem no slide (`cfg.blocks`).
@@ -572,6 +763,55 @@ class ComunicadoDataEnrichmentService:
             else {}
         )
 
+        graph = MQueryDependencyService().resolve(
+            blocks,
+            target_step_by_source={
+                str(target_source_id or ""): target_step_name
+            }
+            if target_source_id and target_step_name
+            else None,
+        )
+        if not graph.valid:
+            first = next(
+                item for item in graph.diagnostics if item.get("severity") == "error"
+            )
+            raise ValueError(str(first.get("message") or "Consulta M inválida."))
+        query_bindings = graph.bindings()
+        graph_nodes = {node.source_id: node for node in graph.nodes}
+
+        # Autoriza toda consulta do DAG antes do primeiro fetch. Uma irmã não autorizada
+        # jamais entra no ambiente de execução da consulta dependente.
+        for source_id in graph.ordered_source_ids:
+            node = graph_nodes[source_id]
+            binding = node.block.get("dataBinding")
+            operation_id = (
+                str(binding.get("operationId") or "").strip()
+                if isinstance(binding, dict)
+                else ""
+            )
+            if not operation_id:
+                continue
+            route = self._catalog.get_route(operation_id)
+            if not self._catalog.is_allowed(operation_id) or route is None:
+                raise ValueError("Fonte de dados indisponível.")
+            block_params = (
+                binding.get("params")
+                if isinstance(binding, dict) and isinstance(binding.get("params"), dict)
+                else {}
+            )
+            source_contrib = (
+                by_source.get(source_id)
+                if isinstance(by_source.get(source_id), dict)
+                else {}
+            )
+            merged = merge_data_params(
+                playlist_defaults=playlist_defaults,
+                slide_filters=slide_filters,
+                block_params=block_params,
+                input_overrides=merge_filter_layers(slide_input_contrib, source_contrib),
+            )
+            validate_data_route_branch(route, merged, user=user)
+
         # Dedupe in-request: mesmas operationId+params ⇒ um fetch nesta montagem.
         request_memo: dict[str, dict[str, Any]] = {}
         enrich_kwargs: dict[str, Any] = {
@@ -583,7 +823,23 @@ class ComunicadoDataEnrichmentService:
             "request_memo": request_memo,
         }
         enriched: list[dict[str, Any]] = []
-        for block in blocks:
+        source_blocks = {
+            str(block.get("id") or ""): block
+            for block in blocks
+            if isinstance(block, dict) and str(block.get("type") or "") in DATA_BLOCK_TYPES
+        }
+        ordered_blocks = [
+            source_blocks[source_id]
+            for source_id in graph.ordered_source_ids
+            if source_id in source_blocks
+        ] + [
+            block
+            for block in blocks
+            if not isinstance(block, dict)
+            or str(block.get("id") or "") not in set(graph.ordered_source_ids)
+        ]
+        query_tables: dict[str, dict[str, Any]] = {}
+        for block in ordered_blocks:
             if not isinstance(block, dict):
                 continue
             block_type = str(block.get("type") or "")
@@ -596,9 +852,28 @@ class ComunicadoDataEnrichmentService:
                     self._enrich_data_block(
                         block,
                         input_overrides=input_overrides,
+                        sibling_tables=query_tables,
+                        query_bindings=query_bindings,
+                        target_step_name=(
+                            target_step_name
+                            if source_id == str(target_source_id or "")
+                            else None
+                        ),
+                        preview_options=preview_options,
                         **enrich_kwargs,
                     )
                 )
+                resolved = enriched[-1].get("resolved")
+                query_table = (
+                    resolved.pop("_queryTable", None)
+                    if isinstance(resolved, dict)
+                    else None
+                )
+                if isinstance(query_table, dict):
+                    query_tables[source_id] = query_table
+                    node = graph_nodes.get(source_id)
+                    if node is not None:
+                        query_tables[node.query_name] = query_table
                 continue
             if block_type in DATA_VIEW_BLOCK_TYPES:
                 enriched.append(dict(block))
@@ -614,7 +889,7 @@ class ComunicadoDataEnrichmentService:
                 continue
             enriched.append(block)
 
-        # 2ª passagem: merge entre fontes precisa das tabelas irmãs já resolvidas.
+        # Compatibilidade v1: o merge legado ainda endereça sourceId.
         sibling_tables = self._build_sibling_tables(enriched)
         if sibling_tables and any(self._transform_needs_siblings(block) for block in enriched):
             re_enriched: list[dict[str, Any]] = []
@@ -631,12 +906,23 @@ class ComunicadoDataEnrichmentService:
                         block,
                         input_overrides=input_overrides,
                         sibling_tables=siblings,
+                        query_bindings=query_bindings,
                         **enrich_kwargs,
                     )
                 )
             enriched = re_enriched
-
-        return self._link_view_blocks_to_sources(enriched)
+        by_id = {
+            str(block.get("id") or ""): block
+            for block in enriched
+            if isinstance(block, dict) and str(block.get("id") or "")
+        }
+        restored = [
+            by_id.get(str(block.get("id") or ""), block)
+            if isinstance(block, dict)
+            else block
+            for block in blocks
+        ]
+        return self._link_view_blocks_to_sources(restored)
 
     @staticmethod
     def _transform_needs_siblings(block: dict[str, Any]) -> bool:
@@ -740,7 +1026,7 @@ class ComunicadoDataEnrichmentService:
         linked: list[dict[str, Any]] = []
         for block in blocks:
             block_type = str(block.get("type") or "")
-            if block_type not in DATA_VIEW_BLOCK_TYPES:
+            if block_type not in DATA_VIEW_BLOCK_TYPES and block_type not in TEXT_DATA_BOUND_BLOCK_TYPES:
                 linked.append(block)
                 continue
             source_id = str(block.get("dataSourceId") or "").strip()
@@ -748,10 +1034,14 @@ class ComunicadoDataEnrichmentService:
                 linked.append(block)
                 continue
             merged = dict(block)
-            merged["resolved"] = apply_view_projection_to_resolved(
-                source_resolved[source_id],
-                block,
-            )
+            if block_type in DATA_VIEW_BLOCK_TYPES:
+                merged["resolved"] = apply_view_projection_to_resolved(
+                    source_resolved[source_id],
+                    block,
+                )
+            else:
+                merged["resolved"] = dict(source_resolved[source_id])
+                merged["serverTextProjectionApplied"] = True
             linked.append(merged)
         return linked
 
@@ -768,7 +1058,12 @@ class ComunicadoDataEnrichmentService:
     ) -> dict[str, Any]:
         mode = normalize_display_mode(display_mode)
         if mode == "auto":
-            mode = _infer_auto_display_mode(data, route_info, meta)
+            mode = _infer_auto_display_mode(
+                data,
+                route_info,
+                meta,
+                binding=binding,
+            )
 
         value_fields = _value_fields_for_binding(route_info, binding)
         metrics = _extract_kpi_metrics(data, route_info=route_info, binding=binding)
@@ -875,6 +1170,9 @@ class ComunicadoDataEnrichmentService:
         request_memo: dict[str, dict[str, Any]] | None = None,
         input_overrides: dict[str, Any] | None = None,
         sibling_tables: dict[str, dict[str, Any]] | None = None,
+        query_bindings: tuple[dict[str, Any], ...] = (),
+        target_step_name: str | None = None,
+        preview_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -894,10 +1192,14 @@ class ComunicadoDataEnrichmentService:
             block_params=block_params,
             input_overrides=input_overrides,
         )
+        merged_params = _apply_incremental_pagination_defaults(
+            merged_params,
+            self._catalog.get_route(operation_id),
+        )
 
-        branch = merged_params.get("branch")
+        route = self._catalog.get_route(operation_id)
         try:
-            validate_native_branch({"branch": branch}, user=user)
+            validate_data_route_branch(route, merged_params, user=user)
         except ValueError as exc:
             result["resolved"] = {"error": str(exc)}
             return result
@@ -907,6 +1209,8 @@ class ComunicadoDataEnrichmentService:
                 operation_id,
                 merged_params,
                 authorization,
+                user=user,
+                service_context="user-preview" if user is not None else "presentation-service",
                 force_refresh=force_refresh,
                 request_memo=request_memo,
             )
@@ -915,6 +1219,7 @@ class ComunicadoDataEnrichmentService:
             return result
 
         route_info = payload.get("route") or {}
+        cache_hit = bool(payload.get("_tvCacheHit"))
         data = payload.get("data")
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
         display_mode = str(binding.get("displayMode") or "kpi")
@@ -922,14 +1227,33 @@ class ComunicadoDataEnrichmentService:
 
         presentation_data = data
         server_transform_applied = False
+        transform_metadata: dict[str, Any] | None = None
+        transform_result: dict[str, Any] | None = None
         if block_type == "data_source":
-            transformed, server_transform_applied, _table = apply_data_transform_to_payload(
+            options = preview_options if isinstance(preview_options, dict) else {}
+            deadline_ms = min(
+                max(1, int(options.get("deadlineMs") or m_query_setting("previewDeadlineMaxMs", 3000))),
+                int(m_query_setting("previewDeadlineMaxMs", 3000)),
+            )
+            branch = merged_params.get("branch") if isinstance(merged_params, dict) else None
+            branch_str = str(branch).strip() if branch else None
+            transform_result = apply_data_transform_to_payload_result(
                 data,
                 block.get("dataTransform"),
                 sibling_tables=sibling_tables,
+                query_bindings=query_bindings,
+                target_step_name=target_step_name,
+                culture=str(m_query_setting("defaultCulture", "pt-BR")),
+                deadline_ms=deadline_ms,
+                source_table=_source_table_for_route(data, route_info, branch=branch_str),
             )
+            transformed = transform_result["data"]
+            server_transform_applied = bool(transform_result["applied"])
+            transform_metadata = transform_result["transform"]
             if server_transform_applied:
                 presentation_data = transformed
+            elif transform_result.get("failed"):
+                presentation_data = []
 
         resolved: dict[str, Any] = {
             "meta": meta,
@@ -940,6 +1264,15 @@ class ComunicadoDataEnrichmentService:
         }
         if server_transform_applied:
             resolved["serverTransformApplied"] = True
+        if transform_metadata and transform_metadata.get("version") is not None:
+            resolved["dataTransform"] = transform_metadata
+        if isinstance(transform_result, dict) and transform_result.get("failed"):
+            errors = transform_result.get("runtimeErrors") or {}
+            sample = errors.get("sample") if isinstance(errors, dict) else None
+            first_error = sample[0] if isinstance(sample, list) and sample else {}
+            resolved["error"] = str(
+                first_error.get("message") or "A transformação M falhou."
+            )
 
         if block_type == "data_source":
             for mode in ("kpi", "line_chart", "table"):
@@ -954,6 +1287,94 @@ class ComunicadoDataEnrichmentService:
                         label=resolved.get("label"),
                     )
                 )
+            query_table = (
+                None
+                if isinstance(transform_result, dict) and transform_result.get("failed")
+                else (
+                    transform_result.get("table")
+                    if isinstance(transform_result, dict)
+                    else coerce_payload_to_table(data)
+                )
+            )
+            if isinstance(query_table, dict):
+                resolved["_queryTable"] = query_table
+            if (
+                isinstance(transform_result, dict)
+                and transform_metadata
+                and transform_metadata.get("version") == 2
+            ):
+                max_rows = min(
+                    max(1, int(options.get("maxRows") or m_query_setting("maxPreviewRows", 200))),
+                    int(m_query_setting("maxPreviewRows", 200)),
+                )
+                max_columns = int(m_query_setting("maxPreviewColumns", 200))
+                columns = list(query_table.get("columns") or [])[:max_columns] if isinstance(query_table, dict) else []
+                available_rows = len(query_table.get("rows") or []) if isinstance(query_table, dict) else 0
+                max_cells = int(m_query_setting("maxPreviewCells", 40000))
+                max_rows_by_cells = max(1, max_cells // max(1, len(columns)))
+                returned_rows = min(max_rows, max_rows_by_cells, available_rows)
+                rows = [
+                    {column: row.get(column) for column in columns}
+                    for row in (query_table.get("rows") or [])[:returned_rows]
+                ] if isinstance(query_table, dict) else []
+                resolved["query"] = {
+                    "profile": "m-delpi-v1",
+                    "scriptHash": transform_result.get("scriptHash"),
+                    "selectedStepName": transform_result.get("selectedStepName"),
+                    "diagnostics": transform_metadata.get("diagnostics") or [],
+                    "runtimeErrors": transform_result.get("runtimeErrors")
+                    or {"count": 0, "sample": []},
+                    "executionMs": int(transform_result.get("executionMs") or 0),
+                    "stepMetrics": transform_result.get("stepMetrics") or [],
+                    "explainPlan": (
+                        transform_result.get("explainPlan")
+                        if bool(m_query_setting("explainPlanEnabled", False))
+                        else None
+                    ),
+                    "cacheHit": cache_hit,
+                }
+                resolved["preview"] = {
+                    "columns": [
+                        item
+                        for item in (transform_result.get("schema") or [])
+                        if isinstance(item, dict) and item.get("key") in columns
+                    ],
+                    "rows": rows,
+                    "returnedRows": returned_rows,
+                    "availableRows": available_rows,
+                    "truncated": returned_rows < available_rows
+                    or (
+                        isinstance(query_table, dict)
+                        and len(columns) < len(query_table.get("columns") or [])
+                    ),
+                    "isSample": returned_rows < available_rows,
+                }
+                try:
+                    column_profile = profile_table(
+                        query_table,
+                        requested=bool(options.get("includeColumnProfile")),
+                        deadline_ms=deadline_ms,
+                    )
+                except TimeoutError:
+                    resolved["query"]["profiling"] = {
+                        "status": "timeout",
+                        "code": "m.profile_timeout",
+                    }
+                else:
+                    if column_profile is not None:
+                        resolved["preview"]["columnProfile"] = column_profile
+                        resolved["query"]["profiling"] = {"status": "completed"}
+                SafeTelemetry(
+                    "m.preview.completed",
+                    int(transform_result.get("executionMs") or 0),
+                    "source-hit" if cache_hit else "source-miss",
+                    rows=returned_rows,
+                    columns=len(columns),
+                    errors=int(
+                        (transform_result.get("runtimeErrors") or {}).get("count", 0)
+                    ),
+                    artifact_hash=str(transform_result.get("scriptHash") or ""),
+                ).emit()
         else:
             resolved.update(
                 self._resolve_presentation(
@@ -976,6 +1397,8 @@ class ComunicadoDataEnrichmentService:
         params: dict[str, Any],
         authorization: str | None,
         *,
+        user: Any | None = None,
+        service_context: str | None = None,
         force_refresh: bool = False,
         request_memo: dict[str, dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
@@ -983,15 +1406,17 @@ class ComunicadoDataEnrichmentService:
             operation_id=operation_id,
             params=params,
             authorization=authorization,
+            user=user,
+            service_context=service_context,
         )
         if request_memo is not None and cache_key in request_memo:
-            return request_memo[cache_key]
+            return {**request_memo[cache_key], "_tvCacheHit": True}
         if not force_refresh:
             cached = _data_block_cache.get(cache_key)
             if cached is not None:
                 if request_memo is not None:
                     request_memo[cache_key] = cached
-                return cached
+                return {**cached, "_tvCacheHit": True}
         payload = self._gateway.fetch_by_operation_id(
             operation_id,
             params=params,
@@ -1006,3 +1431,4 @@ class ComunicadoDataEnrichmentService:
 
 def reset_comunicado_data_block_cache() -> None:
     _data_block_cache.invalidate_all()
+    reset_phase7_caches()

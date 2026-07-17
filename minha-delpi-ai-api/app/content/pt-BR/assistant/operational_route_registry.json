@@ -150,6 +150,7 @@
     "productionStatus",
     "shippingStatus",
     "structureExclusivity",
+    "structureExcel",
     "billingRoute",
     "genericPricingRoute",
     "salePricingRoute",
@@ -773,6 +774,29 @@
       }
     },
     {
+      "id": "productStructureExcel",
+      "domain": "product",
+      "priority": 148,
+      "match": {
+        "customPredicate": "structureExcel"
+      },
+      "route": {
+        "pathMarkers": [
+          "/structure/excel"
+        ],
+        "operationIdMarkers": [
+          "get_product_structure_excel"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "productStructureExcel"
+      }
+    },
+    {
       "id": "productStructure",
       "domain": "product",
       "intentBinding": "structure",
@@ -785,7 +809,8 @@
           "get_product_structure"
         ],
         "excludePathMarkers": [
-          "/structure/exclusivity"
+          "/structure/exclusivity",
+          "/structure/excel"
         ],
         "method": "GET"
       },

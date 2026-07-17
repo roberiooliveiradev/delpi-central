@@ -10,10 +10,11 @@ OVERLAYS_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_data_route
 
 DATA_BLOCK_TYPES = frozenset({"data_kpi", "data_chart", "data_table", "data_metric", "data_source"})
 DATA_VIEW_BLOCK_TYPES = frozenset({"chart_view", "table_view", "kpi_view"})
+TEXT_DATA_BOUND_BLOCK_TYPES = frozenset({"heading", "text", "shape"})
 FETCHABLE_DATA_BLOCK_TYPES = DATA_BLOCK_TYPES
 
 # Campos de overlay aplicados em runtime sem regenerar o catálogo completo.
-_RUNTIME_OVERLAY_KEYS = frozenset({"suggestedTransformSteps"})
+_RUNTIME_OVERLAY_KEYS = frozenset({"suggestedTransformSteps", "tvConstraints"})
 
 
 @lru_cache(maxsize=1)
@@ -44,7 +45,10 @@ def _merge_runtime_overlay(route: dict[str, Any]) -> dict[str, Any]:
     merged = dict(route)
     for key in _RUNTIME_OVERLAY_KEYS:
         if key in overlay:
-            merged[key] = overlay[key]
+            if isinstance(overlay[key], dict) and isinstance(merged.get(key), dict):
+                merged[key] = {**merged[key], **overlay[key]}
+            else:
+                merged[key] = overlay[key]
     return merged
 
 

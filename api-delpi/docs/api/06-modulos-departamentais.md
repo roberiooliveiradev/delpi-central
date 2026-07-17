@@ -97,7 +97,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/overall_equipment_effectiveness_pct` | OEE (%) — média agregada de `EFICIENCIA_PERCENTUAL` (tempo previsto ÷ tempo real). |
 | GET | `/production/oee` | OEE produção — resumo, listagem paginada de apontamentos (view fabril), filtros `status` (`valid` / `outlier`) e `product_type` (`PA` / `PI`). |
 | GET | `/production/oee/appointments/{appointment_id}` | Detalhe do apontamento — roteiro (SG2), estrutura (BOM), análise de tempos e **`time_analysis.findings`** (alertas automáticos). |
-| GET | `/production/oee/series` | Série temporal de OEE por filial. |
+| GET | `/production/oee/series` | Série temporal de OEE por filial. Preserva a granularidade solicitada; até 366 buckets (um ano diário completo). |
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
 | GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; `appointment_id` para detalhe). |
 
@@ -120,6 +120,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 
 - `GET /production/overall_equipment_effectiveness_pct`: KPI por filial via query agrupada + `NOLOCK` (`production_fabril_oee_kpi_sql.py`); cache `production-oee` e `production-oee-by-branch`. Changelog: [producao-eficiencia-changelog-jun2026.md](./producao-eficiencia-changelog-jun2026.md) §7.
 - `GET /production/oee/series` e `GET /production/otd/series`: cache da resposta completa (`production-oee-series|…`, `production-otd-series|…`) + cache por filial/período nos repositórios (`production-oee|…`, `production-otd|…`, `production-oee-by-branch|…`). TTL: `QUERY_CACHE_TTL_SECONDS` (default 300 s).
+- Séries usam no máximo **366 buckets** (`MAX_PERIOD_BUCKETS`): cobre um ano bissexto completo com `granularity=day`, preservando um ponto por dia. Intervalos diários multi-ano acima desse limite retornam `truncated=true`; o consumidor não deve reagrupar ou renomear os pontos silenciosamente.
 - OTD: `WITH (NOLOCK)` em SC2/SB1. Console: `get_production_oee_series` / `get_production_otd_series` — após primeiro carregamento, polling do dashboard deve gerar hits na aba **Cache**.
 
 **Rotas operacionais (Playbook 15):** consumo, OPs, perdas, programação — ver [13-producao-operacional.md](./13-producao-operacional.md).  

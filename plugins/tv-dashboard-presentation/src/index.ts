@@ -17,6 +17,8 @@ export type {
   PresentationPresencePeer,
   PresentationPresenceRole,
   PresentationRealtimeEvent,
+  PresentationSelectionUpdateEvent,
+  PresentationSlideDraftEvent,
 } from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
@@ -250,6 +252,7 @@ export {
   DATA_REFRESH_SEC_MAX,
   DATA_REFRESH_SEC_MIN,
   resolveDataBlockRefreshSec,
+  resolvePreviewRefreshSourceIds,
   resolveStaleSourceIdsForPreviewChange,
 } from "./dataRefresh";
 export {
@@ -302,6 +305,7 @@ export {
   isDataSourceBlockType,
   isDataViewBlockType,
   isDataBoundEditorBlockType,
+  isTextDataBoundBlockType,
   isFetchableDataBlockType,
   getLinkedDataSourceIds,
   shouldHideDataSourceOnStage,
@@ -331,6 +335,12 @@ export {
 } from "./comunicadoHelpers";
 export type { StageHideReason } from "./comunicadoStageVisibility";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
+export {
+  ComunicadoIconGraphic,
+  resolveComunicadoIconColor,
+  resolveComunicadoIconStrokeWidth,
+  resolveComunicadoLucideIcon,
+} from "./comunicadoIconView";
 export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
 export {
   ComunicadoInputBlockView,
@@ -362,7 +372,6 @@ export {
   hasRichTextRuns,
   normalizeContentRuns,
   plainTextFromContentRuns,
-  resolveTextBlockDisplayRuns,
   serializeContentRuns,
   shouldPersistContentRuns,
   syncTextBlockFields,
@@ -381,6 +390,7 @@ export {
   getEditableTextSelectionOffsets,
   hasPersistableContentRuns,
   insertLineBreakAtOffset,
+  insertDataRefAtOffset,
   renderContentRunsHtml,
   restoreEditableTextSelection,
   selectionListTypeState,
@@ -695,10 +705,12 @@ export {
   deleteTablePart,
   getTablePartState,
   isTablePartRefEqual,
+  isTablePartSelected,
   mergeTablePartsWithOptions,
   migrateLegacyTableChromeToFrame,
   normalizeTablePartsForLoad,
   parseTablePartRef,
+  selectedTableColumnIndexes,
   partsToTableOptions,
   resolveTableFrameStyle,
   resolveTableHeaderCellPaintStyle,
@@ -735,30 +747,27 @@ export {
   dataTransformStepLabel,
   evaluateSafeArithmeticExpr,
   evaluateSafeColumnExpr,
+  isDataTransformV1,
+  isDataTransformV2,
   normalizeDataTransform,
   type DataTransform,
+  type DataTransformV1,
+  type DataTransformV2,
+  type DataQueryDiagnosticDto,
   type DataTransformAgg,
   type DataTransformCmp,
   type DataTransformContext,
   type DataTransformStep,
   type DataTableSnapshot,
+  type MColumnSchemaDto,
+  type MTypeKind,
+  type SourceRangeDto,
+  type TransformOperationDto,
+  type TransformPlanDto,
+  type TransformPlanStepDto,
 } from "./dataTransform";
-export {
-  canEditFormula,
-  canEditNewColumnFormula,
-  formatStepFormula,
-  formulaBarDisplayValue,
-  parseAddColumnFormula,
-  parseFilterFormula,
-  parseFormulaBarText,
-  parseRenameFormula,
-  parseReplaceFormula,
-  parseSelectFormula,
-  parseSortFormula,
-  type FormulaParseErr,
-  type FormulaParseOk,
-  type FormulaParseResult,
-} from "./dataTransformFormula";
+// Parser pseudo-M legado: mantido apenas para fixtures/testes diretos.
+// Não reexportar no entrypoint de runtime; a autoridade semântica é a API.
 export {
   resolveChartType,
   resolveEffectiveDisplayMode,
@@ -801,6 +810,24 @@ export {
   type ViewProjectionSelection,
 } from "./viewProjection";
 export {
+  distributeTableProjectionColumnWidths,
+  resizeTableProjectionColumn,
+  resizeTableProjectionColumns,
+  resolveEditableTableProjectionColumns,
+  selectedTableProjectionColumnKeys,
+} from "./tableProjectionEditing";
+export {
+  mergeComunicadoDataPages,
+  resolveComunicadoDataPageState,
+  type ComunicadoDataPageState,
+} from "./dataPagination";
+export {
+  duplicateBlocksWithDataPolicy,
+  isLegacyFetchableDataBlock,
+  needsDataSourceDuplicateChoice,
+  type DataSourceDuplicatePolicy,
+} from "./duplicateBlocksWithDataPolicy";
+export {
   buildViewDataLinkPatch,
   buildViewFrameFitPatch,
   countViewLayoutItems,
@@ -813,6 +840,28 @@ export {
   type DataViewBlockType,
   type ViewFieldTypes,
 } from "./syncViewDataLink";
-export type { ComunicadoDataKpiMetric } from "./comunicadoTypes";
+export {
+  buildTextDataLinkPatch,
+  formatTextProjectionValue,
+  isTextDataBoundBlock,
+  normalizeTextDataRef,
+  normalizeTextProjection,
+  resolveTextBlockDisplayRuns,
+  resolveTextDataRefValue,
+  resolveTextDisplayValue,
+  resolveVisualBoxDisplayText,
+  suggestDefaultTextProjection,
+  syncTextBlocksWithResolved,
+  textBlockHasDataBinding,
+  textProjectionHasField,
+  viewHasTextProjectionConfigured,
+  type BuildTextDataLinkPatchInput,
+  type TextDataBoundBlock,
+} from "./textViewProjection";
+export type {
+  ComunicadoTextDataRef,
+  ComunicadoTextProjection,
+  TextProjectionFormat,
+} from "./comunicadoTypes";
 export { ComunicadoMediaPlaceholder } from "./ComunicadoMediaPlaceholder";
 export type { KpiScreenData, NativeSlidePayload } from "./NativeScreens";

@@ -54,7 +54,8 @@
 .mdc-assistant-content__segments > .mdc-rich-chart,
 .mdc-assistant-content__segments > .mdc-rich-tree,
 .mdc-assistant-content__segments > .mdc-rich-kpi,
-.mdc-assistant-content__segments > .mdc-rich-dashboard {
+.mdc-assistant-content__segments > .mdc-rich-dashboard,
+.mdc-assistant-content__segments > .mdc-download-artifacts {
   margin: 0;
 }
 

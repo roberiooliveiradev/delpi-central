@@ -17,6 +17,42 @@
   "nativeDataCache": {
     "ttlSeconds": 120
   },
+  "mQuery": {
+    "enabled": true,
+    "writeV2Enabled": true,
+    "advancedEditorEnabled": true,
+    "profilingEnabled": false,
+    "explainPlanEnabled": false,
+    "compileCacheEnabled": false,
+    "previewCacheEnabled": false,
+    "phase7TelemetryEnabled": true,
+    "profile": "m-delpi-v1",
+    "defaultCulture": "pt-BR",
+    "maxScriptBytes": 65536,
+    "maxSteps": 100,
+    "maxAstNodes": 5000,
+    "maxExpressionDepth": 40,
+    "maxPreviewRows": 200,
+    "maxPreviewColumns": 200,
+    "maxPreviewCells": 40000,
+    "maxExecutionRows": 10000,
+    "maxExecutionColumns": 500,
+    "maxExecutionCells": 1000000,
+    "maxJoinInputRows": 5000,
+    "maxJoinOutputRows": 10000,
+    "maxPivotColumns": 200,
+    "executionTimeoutMs": 2000,
+    "diagnosticSampleLimit": 20,
+    "compileCacheTtlSeconds": 300,
+    "compileCacheMaxEntries": 256,
+    "previewCacheTtlSeconds": 30,
+    "previewCacheMaxEntries": 128,
+    "profileSampleRows": 500,
+    "profileMaxColumns": 100,
+    "profileTimeoutMs": 750,
+    "previewDeadlineMaxMs": 3000
+  },
+  "tableIncrementalPageSize": 30,
   "comunicadoDataBlocks": {
     "maxPerSlide": 6
   },
@@ -29,6 +65,13 @@
   },
   "branchPolicy": {
     "allowedBranches": [],
+    "canonicalParamAliases": [
+      "branch",
+      "branch_code",
+      "filial",
+      "filial_id"
+    ],
+    "compatibilityFallbackForUncuratedRoutes": true,
     "rejectionMessage": "Filial não autorizada para Painéis TV."
   },
   "mediaUpload": {

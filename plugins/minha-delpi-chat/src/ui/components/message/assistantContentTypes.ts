@@ -1,4 +1,8 @@
-import type { ChatPresentation, ChatStoryPresentation } from "../../../data/api/chatTypes";
+import type {
+  ChatDownloadArtifact,
+  ChatPresentation,
+  ChatStoryPresentation,
+} from "../../../data/api/chatTypes";
 
 import type { StackSectionChrome } from "../presentation/pipeline/presentationStackSections";
 
@@ -12,4 +16,5 @@ export type AssistantContentSegment =
   | { kind: "tree"; presentation: Extract<ChatPresentation, { type: "tree" }> }
   | { kind: "kpi"; presentation: Extract<ChatPresentation, { type: "kpi" }> }
   | { kind: "dashboard"; presentation: Extract<ChatPresentation, { type: "dashboard" }> }
+  | { kind: "download"; artifacts: ChatDownloadArtifact[] }
   | { kind: "checklist"; markdown: string; title?: string };

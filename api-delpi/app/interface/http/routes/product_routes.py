@@ -55,6 +55,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCT_SEARCH,
     PRODUCT_STOCK,
     PRODUCT_STRUCTURE,
+    PRODUCT_STRUCTURE_EXCEL,
     PRODUCT_STRUCTURE_EXCLUSIVITY,
     PRODUCT_PRODUCTION_STATUS,
     PRODUCT_SHIPPING_STATUS,
@@ -846,51 +847,62 @@ def get_raw_material_price_intelligence(
         return error_response(str(e), status_code=500)
 
 
-@router.get("/{code}/structure/excel")
+@router.get("/{code}/structure/excel", **PRODUCT_STRUCTURE_EXCEL)
 @require_permission(API_DELPI_ACCESS)
 async def structure_excel_public(
     request: Request,
     code: str,
-    format: str = Query("json")
+    format: str = Query("json"),
 ):
-
     try:
-
         dto = ExportStructureExcelRequest(code=code)
-
         use_case = build_export_structure_excel_use_case()
-
         excel_stream = use_case.execute(dto)
-
         filename = f"Estrutura_{code}.xlsx"
+        download_path = f"/products/{code}/structure/excel?format=xlsx"
 
         if format.lower() == "xlsx":
-
             return StreamingResponse(
                 excel_stream,
-                media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                media_type=(
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                ),
                 headers={
-                    "Content-Disposition": f"attachment; filename={filename}"
-                }
+                    "Content-Disposition": f"attachment; filename={filename}",
+                },
             )
 
-        public_url = str(request.url.replace(query="format=xlsx"))
+        payload = {
+            "message": "Arquivo Excel gerado com sucesso!",
+            "filename": filename,
+            "downloadPath": download_path,
+            "download_url": download_path,
+        }
+        forwarded_host = (
+            request.headers.get("x-forwarded-host")
+            or request.headers.get("x-forwarded-server")
+            or ""
+        ).strip()
+        forwarded_proto = (request.headers.get("x-forwarded-proto") or "").strip()
+        if forwarded_host and forwarded_proto:
+            # URL absoluta só com host público do proxy — nunca hostname Docker.
+            payload["downloadUrl"] = (
+                f"{forwarded_proto}://{forwarded_host}"
+                f"/apps/api-delpi{download_path}"
+            )
 
-        return JSONResponse(
-            content={
-                "message": "Arquivo Excel gerado com sucesso!",
-                "download_url": public_url
-            }
+        return product_success(
+            payload,
+            operation_id="get_product_structure_excel",
+            entity="product_structure_excel",
+            shape="document_export",
+            code=code,
+            message="Arquivo Excel gerado com sucesso!",
         )
 
     except Exception as e:
-
         log_error(f"Erro ao gerar planilha Excel pública de {code}: {e}")
-
-        return JSONResponse(
-            content={"error": str(e)},
-            status_code=500
-        )
+        return error_response(str(e), status_code=500)
     
 @router.get("/{code}/parents", **PRODUCT_PARENTS)
 @require_permission(API_DELPI_ACCESS)

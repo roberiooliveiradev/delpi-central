@@ -8,15 +8,19 @@ import {
 } from "react";
 
 import {
+  isComunicadoVisualBoxBlock,
   isDataBlockType,
+  isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
+  isTextDataBoundBlockType,
   parseComunicadoConfig,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
   type ComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoDataDisplayMode,
+  type PresentationSelectionUpdateEvent,
   type ComunicadoTextBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -25,13 +29,13 @@ import { useDeckEditorHistoryContext } from "../context/deckEditorHistoryContext
 import { useComunicadoEditorBlocks } from "../hooks/comunicadoEditor/useComunicadoEditorBlocks";
 import { useComunicadoEditorClipboard } from "../hooks/comunicadoEditor/useComunicadoEditorClipboard";
 import { useComunicadoEditorDrag } from "../hooks/comunicadoEditor/useComunicadoEditorDrag";
-import {
-  useComunicadoEditorHistory,
-} from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
+import { useComunicadoEditorHistory } from "../hooks/comunicadoEditor/useComunicadoEditorHistory";
 import {
   fingerprintComunicadoValue,
   shouldAcceptExternalComunicadoValue,
+  shouldForceAcceptRemoteComunicadoValue,
 } from "../hooks/comunicadoEditor/comunicadoEditorValueSync";
+import { useOptionalDataSourceDuplicateChoice } from "../context/DataSourceDuplicateChoiceProvider";
 import { useComunicadoEditorMedia } from "../hooks/comunicadoEditor/useComunicadoEditorMedia";
 import { useComunicadoEditorSelection } from "../hooks/comunicadoEditor/useComunicadoEditorSelection";
 import { useComunicadoEditorStage } from "../hooks/comunicadoEditor/useComunicadoEditorStage";
@@ -63,6 +67,11 @@ type ProviderProps = {
   viewportProfile?: string;
   masterConfig?: PlaylistMasterConfig;
   value: Record<string, unknown>;
+  /** Bump a cada mudança remota (WS slide_draft / presentation_updated) — força aceitar `value`. */
+  remoteRevision?: number;
+  /** Seleções remotas já filtradas para este slide. */
+  remoteSelections?: PresentationSelectionUpdateEvent[];
+  onSelectionChange?: (slideId: string, selectedIds: string[]) => void;
   onChange: (config: Record<string, unknown>) => void;
   children: ReactNode;
 };
@@ -127,6 +136,9 @@ export function ComunicadoEditorProvider({
   viewportProfile = "1080p",
   masterConfig,
   value,
+  remoteRevision = 0,
+  remoteSelections = [],
+  onSelectionChange,
   onChange,
   children,
 }: ProviderProps) {
@@ -148,6 +160,7 @@ export function ComunicadoEditorProvider({
   const lastEmittedFingerprintRef = useRef<string | null>(null);
   const syncIdentityRef = useRef(`${playlistId}:${slideId ?? ""}`);
   const lastHistoryEpochRef = useRef(deckHistory?.historyEpoch ?? 0);
+  const lastRemoteRevisionRef = useRef(remoteRevision);
 
   const removeSelectedRef = useRef<() => void>(() => {});
   const updateBlockTextFieldsRef = useRef<
@@ -162,7 +175,9 @@ export function ComunicadoEditorProvider({
     isDataPreviewStale,
     staleSourceIds,
     refreshingSourceIds,
+    loadingMoreSourceIds,
     refreshDataPreview,
+    loadMoreDataPreview,
     clearStaleForSourceIds,
   } = useComunicadoDataPreview({
     playlistId,
@@ -201,6 +216,10 @@ export function ComunicadoEditorProvider({
         const preview = resolvedByBlockId[block.dataSourceId];
         if (preview) return { ...block, resolved: preview };
       }
+      if (isComunicadoVisualBoxBlock(block) && block.dataSourceId?.trim()) {
+        const preview = resolvedByBlockId[block.dataSourceId.trim()];
+        if (preview) return { ...block, resolved: preview };
+      }
       if (isDataBlockType(block.type)) {
         const preview = resolvedByBlockId[block.id];
         if (preview) return { ...block, resolved: preview };
@@ -215,6 +234,18 @@ export function ComunicadoEditorProvider({
     updateBlockTextFieldsRef,
     updateBlocksRef,
   });
+
+  useEffect(() => {
+    if (!slideId) return;
+    onSelectionChange?.(slideId, selection.selectedIds);
+  }, [onSelectionChange, selection.selectedIds, slideId]);
+
+  useEffect(
+    () => () => {
+      if (slideId) onSelectionChange?.(slideId, []);
+    },
+    [onSelectionChange, slideId],
+  );
 
   // Troca de slide: sincroniza config no mesmo render (evita 1 frame com gráfico do slide anterior).
   if (slideId !== appliedSlideId) {
@@ -288,9 +319,18 @@ export function ComunicadoEditorProvider({
       lastHistoryEpochRef.current = historyEpoch;
     }
 
+    const remoteRevisionChanged = remoteRevision !== lastRemoteRevisionRef.current;
+    lastRemoteRevisionRef.current = remoteRevision;
+
     const enriched = enrichComunicadoConfigForEditor(value, playlistId);
     const incomingFp = fingerprintComunicadoValue(serializeComunicadoConfig(enriched));
     const currentFp = fingerprintComunicadoValue(serializeComunicadoConfig(configRef.current));
+
+    const forceAcceptFromRemote = shouldForceAcceptRemoteComunicadoValue({
+      remoteRevisionChanged,
+      incomingFingerprint: incomingFp,
+      currentFingerprint: currentFp,
+    });
 
     if (
       !shouldAcceptExternalComunicadoValue({
@@ -298,7 +338,7 @@ export function ComunicadoEditorProvider({
         incomingFingerprint: incomingFp,
         lastEmittedFingerprint: lastEmittedFingerprintRef.current,
         currentFingerprint: currentFp,
-        forceAccept: forceAcceptFromHistory,
+        forceAccept: forceAcceptFromHistory || forceAcceptFromRemote,
       })
     ) {
       return;
@@ -310,7 +350,17 @@ export function ComunicadoEditorProvider({
       clearDragSnapshot();
       resetLocalHistory();
     }
-  }, [value, playlistId, slideId, resetLocalHistory, clearDragSnapshot, deckHistory?.historyEpoch]);
+  }, [
+    value,
+    playlistId,
+    slideId,
+    remoteRevision,
+    resetLocalHistory,
+    clearDragSnapshot,
+    deckHistory?.historyEpoch,
+  ]);
+
+  const chooseDataSourceDuplicatePolicy = useOptionalDataSourceDuplicateChoice();
 
   const blockActions = useComunicadoEditorBlocks({
     configRef,
@@ -344,6 +394,7 @@ export function ComunicadoEditorProvider({
     updateBlockTextFieldsRef,
     onInputBlocksRemoved,
     getSourceResolved: (sourceId: string) => resolvedByBlockId[sourceId],
+    chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
   });
 
   updateBlocksRef.current = blockActions.updateBlocks;
@@ -364,6 +415,24 @@ export function ComunicadoEditorProvider({
       });
     },
     [commitWithHistory],
+  );
+
+  const updateBlocksAtomically = useCallback(
+    (
+      patches: ReadonlyArray<{
+        blockId: string;
+        patch: Partial<ComunicadoBlock>;
+      }>,
+    ) => {
+      if (patches.length === 0) return;
+      const byId = new Map(patches.map((item) => [item.blockId, item.patch]));
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        const patch = byId.get(block.id);
+        return patch ? ({ ...block, ...patch } as ComunicadoBlock) : block;
+      });
+      blockActions.updateBlocks(nextBlocks);
+    },
+    [blockActions],
   );
 
   const getClipboardSources = useCallback(
@@ -394,6 +463,7 @@ export function ComunicadoEditorProvider({
     selectBlocksByIds: selection.selectBlocksByIds,
     updateBlocks: updateBlocksForClipboard,
     removeSelected: () => removeSelectedRef.current(),
+    chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
   });
 
   const media = useComunicadoEditorMedia({
@@ -432,6 +502,7 @@ export function ComunicadoEditorProvider({
     selectedId: selection.selectedId,
     selected: selection.selected,
     selectedBlocks: selection.selectedBlocks,
+    remoteSelections,
     isBlockSelected: selection.isBlockSelected,
     selectBlock: selection.selectBlock,
     selectBlocksByIds: selection.selectBlocksByIds,
@@ -445,6 +516,7 @@ export function ComunicadoEditorProvider({
     commitChartPartContent: blockActions.commitChartPartContent,
     cancelEditChartPart: selection.cancelEditChartPart,
     selectedTablePart: selection.selectedTablePart,
+    selectedTableParts: selection.selectedTableParts,
     selectTablePart: selection.selectTablePart,
     clearTablePartSelection: selection.clearTablePartSelection,
     selectedKpiPart: selection.selectedKpiPart,
@@ -468,6 +540,7 @@ export function ComunicadoEditorProvider({
     toggleEditingTextRunStyle: selection.toggleEditingTextRunStyle,
     toggleSelectedTextListType: selection.toggleSelectedTextListType,
     applySelectedNamedTextStyle: selection.applySelectedNamedTextStyle,
+    insertDataFieldAtCursor: selection.insertDataFieldAtCursor,
     uploading: media.uploading,
     shapeMenuOpen,
     setShapeMenuOpen,
@@ -508,6 +581,7 @@ export function ComunicadoEditorProvider({
     setSpeakerNotes,
     updateSelected: blockActions.updateSelected,
     updateBlock: blockActions.updateBlock,
+    updateBlocksAtomically,
     updateBlockContent: blockActions.updateBlockContent,
     updateBlockTextFields: blockActions.updateBlockTextFields,
     updateBlockLink: blockActions.updateBlockLink,
@@ -544,6 +618,8 @@ export function ComunicadoEditorProvider({
     triggerUpload: media.triggerUpload,
     setBackgroundColor: blockActions.setBackgroundColor,
     setBackgroundGradient: blockActions.setBackgroundGradient,
+    bindSelectedVisualBoxToData: blockActions.bindSelectedVisualBoxToData,
+    insertTextDataFieldBlock: blockActions.insertTextDataFieldBlock,
     applySlideTemplate: blockActions.applySlideTemplate,
     applySlideTheme: blockActions.applySlideTheme,
     alignSelected: blockActions.alignSelected,
@@ -575,7 +651,9 @@ export function ComunicadoEditorProvider({
     isDataPreviewStale,
     staleSourceIds,
     refreshingSourceIds,
+    loadingMoreSourceIds,
     refreshDataPreview,
+    loadMoreDataPreview,
     scheduleInputFilterRefresh,
     scheduleInputFilterRefreshById,
     globalRefreshSec,

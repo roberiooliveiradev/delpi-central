@@ -8,9 +8,11 @@ import {
   getEditableTextSelectionOffsets,
   hasRichTextRuns,
   hrefLineStyle,
+  insertDataRefAtOffset,
   insertLineBreakAtOffset,
   applyNamedStyleInRange,
   partitionTextBlockRunsAndHref,
+  plainTextFromContentRuns,
   renderTextBlockEditorHtml,
   resolveTextBlockDisplayRuns,
   restoreEditableTextSelection,
@@ -21,6 +23,7 @@ import {
   type ComunicadoBlock,
   type ComunicadoListType,
   type ComunicadoNamedTextStyle,
+  type ComunicadoTextDataRef,
   type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -44,6 +47,15 @@ function editorRunsForBlock(block: TextBlock) {
   return appendHrefLineToRuns(resolveTextBlockDisplayRuns(block), block.href);
 }
 
+export function externalTextBlockEditorKey(block: TextBlock, fontScale: number) {
+  return JSON.stringify({
+    content: block.content,
+    contentRuns: block.contentRuns,
+    href: block.href,
+    fontScale,
+  });
+}
+
 export function ComunicadoEditorTextBlock({
   block,
   fontScale = 1,
@@ -53,6 +65,7 @@ export function ComunicadoEditorTextBlock({
 }: Props) {
   const {
     updateBlockTextFields,
+    updateBlock,
     updateBlockLink,
     setEditingTextId,
     selectBlock,
@@ -60,8 +73,12 @@ export function ComunicadoEditorTextBlock({
     reportTextEditSelection,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
+  const blockRef = useRef(block);
+  blockRef.current = block;
   const draftRef = useRef(syncTextBlockFromRuns(resolveTextBlockDisplayRuns(block)));
   const renderedSignatureRef = useRef("");
+  const editingInitBlockIdRef = useRef<string | null>(null);
+  const lastSyncedExternalKeyRef = useRef("");
 
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
@@ -91,7 +108,7 @@ export function ComunicadoEditorTextBlock({
 
   const syncEditorHtml = useCallback(
     (
-      runs = editorRunsForBlock(block),
+      runs = editorRunsForBlock(blockRef.current),
       selectionOverride?: { start: number; end: number } | null,
     ) => {
       const editor = editorRef.current;
@@ -106,7 +123,7 @@ export function ComunicadoEditorTextBlock({
       renderedSignatureRef.current = signature;
       if (selection) restoreEditableTextSelection(editor, selection.start, selection.end);
     },
-    [block, fontScale],
+    [fontScale],
   );
 
   const reportSelectionFromEditor = useCallback(() => {
@@ -127,13 +144,21 @@ export function ComunicadoEditorTextBlock({
       if (fromEditor) {
         const { runs: contentRuns, href } = partitionTextBlockRunsAndHref(fromEditor);
         draftRef.current = syncTextBlockFromRuns(contentRuns);
-        updateBlockTextFields(block.id, draftRef.current);
+        const hasDataRuns = contentRuns.some((run) => run.dataRef?.field?.trim());
+        if (hasDataRuns) {
+          updateBlock(block.id, {
+            ...draftRef.current,
+            textProjection: undefined,
+          } as Partial<ComunicadoBlock>);
+        } else {
+          updateBlockTextFields(block.id, draftRef.current);
+        }
         updateBlockLink(block.id, href);
         return;
       }
       updateBlockTextFields(block.id, draftRef.current);
     },
-    [block.id, updateBlockLink, updateBlockTextFields],
+    [block.id, updateBlock, updateBlockLink, updateBlockTextFields],
   );
 
   const commitPending = useCallback(() => {
@@ -196,6 +221,30 @@ export function ComunicadoEditorTextBlock({
     [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
   );
 
+  const insertDataRefAtSelection = useCallback(
+    (dataRef: ComunicadoTextDataRef) => {
+      const editor = editorRef.current;
+      if (!editor) return;
+      const runs = contentRunsFromEditableRoot(editor);
+      const selection = getEditableTextSelectionOffsets(editor);
+      const offset = selection?.start ?? plainTextFromContentRuns(runs).length;
+      const nextRuns = insertDataRefAtOffset(runs, offset, dataRef);
+      const nextOffset = offset + 1;
+      draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
+      renderedSignatureRef.current = "";
+      syncEditorHtml(appendHrefLineToRuns(nextRuns, blockRef.current.href), {
+        start: nextOffset,
+        end: nextOffset,
+      });
+      updateBlock(block.id, {
+        ...draftRef.current,
+        textProjection: undefined,
+      } as Partial<ComunicadoBlock>);
+      reportTextEditSelection({ blockId: block.id, start: nextOffset, end: nextOffset }, nextRuns);
+    },
+    [block.id, reportTextEditSelection, syncEditorHtml, updateBlock],
+  );
+
   const insertLineBreak = useCallback(() => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -218,8 +267,17 @@ export function ComunicadoEditorTextBlock({
   }
 
   useEffect(() => {
-    if (!isEditing) return;
-    const editorRuns = editorRunsForBlock(block);
+    if (!isEditing) {
+      editingInitBlockIdRef.current = null;
+      return;
+    }
+    if (editingInitBlockIdRef.current === block.id) return;
+    editingInitBlockIdRef.current = block.id;
+
+    const blockNow = blockRef.current;
+    lastSyncedExternalKeyRef.current = externalTextBlockEditorKey(blockNow, fontScale);
+
+    const editorRuns = editorRunsForBlock(blockNow);
     draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(editorRuns).runs);
     renderedSignatureRef.current = "";
     const editor = editorRef.current;
@@ -229,7 +287,7 @@ export function ComunicadoEditorTextBlock({
     const end = editorRuns.map((run) => run.text).join("").length;
     restoreEditableTextSelection(editor, end, end);
     reportTextEditSelection({ blockId: block.id, start: end, end }, editorRuns);
-  }, [isEditing, block.id, syncEditorHtml, reportTextEditSelection]);
+  }, [isEditing, block.id, fontScale, syncEditorHtml, reportTextEditSelection]);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -239,13 +297,20 @@ export function ComunicadoEditorTextBlock({
   }, [isEditing, commitPending]);
 
   useLayoutEffect(() => {
-    if (!isEditing) return;
+    if (!isEditing) {
+      lastSyncedExternalKeyRef.current = "";
+      return;
+    }
+    const externalKey = externalTextBlockEditorKey(block, fontScale);
+    if (lastSyncedExternalKeyRef.current === externalKey) return;
+    lastSyncedExternalKeyRef.current = externalKey;
+
     const editor = editorRef.current;
     const editorRuns = editorRunsForBlock(block);
     const selection = editor ? getEditableTextSelectionOffsets(editor) : null;
     syncEditorHtml(editorRuns, selection);
     draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(editorRuns).runs);
-  }, [block.contentRuns, block.content, block.href, isEditing, fontScale, syncEditorHtml, block]);
+  }, [block.contentRuns, block.content, block.href, isEditing, fontScale, syncEditorHtml]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -259,6 +324,7 @@ export function ComunicadoEditorTextBlock({
       applyNamedStyleToggle,
       refreshSelectionState: reportSelectionFromEditor,
       commitPending,
+      insertDataRefAtSelection,
     });
 
     return () => registerTextEditorBridge(block.id, null);
@@ -271,6 +337,7 @@ export function ComunicadoEditorTextBlock({
     reportSelectionFromEditor,
     registerTextEditorBridge,
     commitPending,
+    insertDataRefAtSelection,
   ]);
 
   if (isEditing) {

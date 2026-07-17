@@ -201,6 +201,14 @@ export {
 export { buildMultiSelectTriggerLabel } from "../../utils/multiSelectLabel";
 
 export {
+  LucideIconField,
+  useLucideIconField,
+  type LucideIconFieldProps,
+  type LucideIconFieldTriggerState,
+  type UseLucideIconFieldOptions,
+} from "./LucideIconField";
+
+export {
   LucideIconGridPanel,
   type LucideIconGridItem,
   type LucideIconGridPanelProps,
@@ -216,7 +224,9 @@ export {
 
 export {
   CURATED_LUCIDE_ICON_NAMES,
+  DECK_QUICK_LUCIDE_ICON_NAMES,
   LUCIDE_ICON_SECTIONS,
+  buildLucideIconOptions,
   countGroupedLucideIcons,
   countLucideCatalogSize,
   groupLucideIconsBySection,
@@ -225,9 +235,12 @@ export {
   lucideIconMatchesQuery,
   lucideIconPtLabel,
   resolveLucideIcon,
+  resolveLucideIconOrFallback,
   toKebabCase,
   toPascalCaseFromKebab,
   type CuratedLucideIconName,
+  type DeckQuickLucideIconName,
+  type LucideIconOption,
   type LucideIconSectionDef,
   type LucideIconSectionView,
 } from "./lucideIconResolver";

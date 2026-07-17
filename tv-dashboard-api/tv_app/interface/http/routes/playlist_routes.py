@@ -11,6 +11,7 @@ from tv_app.application.services.playlist_access_service import PlaylistAccessSe
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.presentation_payload_service import PresentationPayloadService
 from tv_app.application.services.presentation_status_service import build_presentation_status
+from tv_app.application.services.presentation_sync_service import build_presentation_content_revision
 from tv_app.application.services.public_filter_overrides_service import parse_filter_overrides_query
 from tv_app.application.services.qr_service import build_public_presentation_url, render_qr_png
 from tv_app.application.services.tv_dashboard_content_service import message
@@ -161,7 +162,13 @@ def presentation_status(request: Request, playlist_id: UUID):
     if is_access_error(guarded):
         return guarded
     _, access = guarded
-    return ok(build_presentation_status(access.playlist or {}))
+    content_revision = build_presentation_content_revision(playlist_id)
+    return ok(
+        build_presentation_status(
+            access.playlist or {},
+            content_revision=content_revision,
+        ),
+    )
 
 
 @router.patch("/{playlist_id}")
@@ -169,9 +176,15 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
     guarded = require_playlist_access(request, playlist_id, need="edit")
     if is_access_error(guarded):
         return guarded
+    user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
         playlist = _repo.update(
             playlist_id,
+            actor_user_id=actor,
+            reason="playlist_updated",
             name=body.name,
             description=body.description,
             viewport_profile=body.viewportProfile,
@@ -198,13 +211,13 @@ def delete_playlist(request: Request, playlist_id: UUID):
     if is_access_error(guarded):
         return guarded
     try:
-        notify_presentation_changed(
-            playlist_id=str(playlist_id),
-            reason="playlist_deleted",
-        )
         _repo.delete(playlist_id)
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="playlist_deleted",
+    )
     return ok(message="Programação excluída.")
 
 
@@ -213,8 +226,17 @@ def deactivate_playlist(request: Request, playlist_id: UUID):
     guarded = require_playlist_access(request, playlist_id, need="manage")
     if is_access_error(guarded):
         return guarded
+    user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
-        playlist = _repo.set_active(playlist_id, is_active=False)
+        playlist = _repo.set_active(
+            playlist_id,
+            is_active=False,
+            actor_user_id=actor,
+            reason="playlist_deactivated",
+        )
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(
@@ -230,8 +252,17 @@ def activate_playlist(request: Request, playlist_id: UUID):
     guarded = require_playlist_access(request, playlist_id, need="manage")
     if is_access_error(guarded):
         return guarded
+    user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
-        playlist = _repo.set_active(playlist_id, is_active=True)
+        playlist = _repo.set_active(
+            playlist_id,
+            is_active=True,
+            actor_user_id=actor,
+            reason="playlist_activated",
+        )
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(

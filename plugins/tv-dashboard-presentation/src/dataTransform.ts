@@ -6,6 +6,22 @@
  * Este módulo TS é espelho para testes de paridade — a UI do editor NÃO deve aplicar steps
  * no browser; use `previewTransformTableOnServer` / `resolved.table` do backend.
  */
+import {
+  isDataTransformV2,
+  type DataTransformV2,
+} from "./dataQueryTypes";
+
+export { isDataTransformV2 } from "./dataQueryTypes";
+export type {
+  DataQueryDiagnosticDto,
+  DataTransformV2,
+  MColumnSchemaDto,
+  MTypeKind,
+  SourceRangeDto,
+  TransformOperationDto,
+  TransformPlanDto,
+  TransformPlanStepDto,
+} from "./dataQueryTypes";
 
 export type DataTransformCmp = "eq" | "neq" | "gt" | "lt" | "notNull" | "contains" | "startsWith";
 
@@ -49,9 +65,15 @@ export type DataTransformStep =
       join?: "left";
     };
 
-export type DataTransform = {
+export type DataTransformV1 = {
   steps: DataTransformStep[];
 };
+
+export type DataTransform = DataTransformV1 | DataTransformV2;
+
+export function isDataTransformV1(value: DataTransform | undefined): value is DataTransformV1 {
+  return Boolean(value && "steps" in value);
+}
 
 export type DataTableSnapshot = {
   columns: string[];
@@ -82,7 +104,12 @@ function asAgg(raw: unknown): DataTransformAgg | null {
 
 export function normalizeDataTransform(raw: unknown): DataTransform | undefined {
   if (!raw || typeof raw !== "object") return undefined;
-  const stepsRaw = (raw as DataTransform).steps;
+  if ((raw as { version?: unknown }).version === 2) {
+    if (!isDataTransformV2(raw)) return undefined;
+    const script = raw.script.replace(/\0/g, "").replace(/\r\n?/g, "\n").trim();
+    return script ? { version: 2, language: "m-delpi-v1", script } : undefined;
+  }
+  const stepsRaw = (raw as DataTransformV1).steps;
   if (!Array.isArray(stepsRaw) || stepsRaw.length === 0) return undefined;
   const steps: DataTransformStep[] = [];
   for (const item of stepsRaw) {
@@ -255,12 +282,24 @@ export function coercePayloadToTable(data: unknown): DataTableSnapshot | null {
   }
   if (data && typeof data === "object") {
     const record = data as Record<string, unknown>;
-    for (const key of ["items", "rows", "data", "results", "values"]) {
+    if (record.success != null && "data" in record) {
+      return coercePayloadToTable(record.data);
+    }
+    for (const key of ["items", "rows", "data", "results", "values", "records", "entries", "flow", "history"]) {
       const inner = record[key];
       if (Array.isArray(inner)) {
         const nested = coercePayloadToTable(inner);
         if (nested) return nested;
       }
+    }
+    const scalarRows: Record<string, unknown>[] = [];
+    for (const [key, value] of Object.entries(record)) {
+      if (value == null || value === "") continue;
+      if (typeof value === "object") continue;
+      scalarRows.push({ campo: key, valor: value });
+    }
+    if (scalarRows.length > 0) {
+      return { columns: ["campo", "valor"], rows: scalarRows };
     }
   }
   return null;
@@ -752,7 +791,7 @@ export function applyDataTransformSteps(
 /** Aplica steps ao payload cru; devolve lista de rows (formato tabular simples). */
 export function applyDataTransformToPayload(
   data: unknown,
-  transform: DataTransform | undefined | null,
+  transform: DataTransformV1 | undefined | null,
   context?: DataTransformContext,
 ): { data: unknown; applied: boolean; table: DataTableSnapshot | null } {
   const steps = transform?.steps;

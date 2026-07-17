@@ -3,7 +3,9 @@ import {
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
   buildViewDataLinkPatch,
+  buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
+  isComunicadoVisualBoxBlock,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
@@ -49,6 +51,7 @@ import {
   shouldShowComplexViewFloatToolbar,
 } from "./ComplexViewFloatToolbar";
 import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
+import { RemoteSelectionFrame } from "./RemoteSelectionFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const MARQUEE_THRESHOLD_PX = 4;
@@ -114,6 +117,7 @@ export function ComunicadoComposerCanvas() {
     selected,
     selectedId,
     selectedIds,
+    remoteSelections,
     selectedChartPart,
     selectedKpiPart,
     selectedTablePart,
@@ -552,6 +556,9 @@ export function ComunicadoComposerCanvas() {
               return null;
             }
             const isSelected = isBlockSelected(block.id);
+            const remoteEditors = remoteSelections.filter((selection) =>
+              selection.selectedIds.includes(block.id),
+            );
             const isPrimary = block.id === primarySelected;
             const partForChrome =
               block.type === "kpi_view"
@@ -565,7 +572,7 @@ export function ComunicadoComposerCanvas() {
                       : null;
             const hasPartChrome =
               isPrimary && shouldUsePartChromeInsteadOfBlock(block.type, partForChrome);
-            const selectionRadius = isSelected
+            const selectionRadius = isSelected || remoteEditors.length > 0
               ? resolveBlockSelectionBorderRadiusPx(block)
               : undefined;
             return (
@@ -632,6 +639,24 @@ export function ComunicadoComposerCanvas() {
                     return;
                   }
                   if (
+                    isDataSourceBlockType(block.type) &&
+                    selected &&
+                    isComunicadoVisualBoxBlock(selected) &&
+                    !selected.dataSourceId?.trim()
+                  ) {
+                    const resolved =
+                      "resolved" in block ? block.resolved : undefined;
+                    updateBlock(
+                      selected.id,
+                      buildTextDataLinkPatch({
+                        dataSourceId: block.id,
+                        resolved,
+                        existing: selected.textProjection,
+                      }) as Partial<ComunicadoBlock>,
+                    );
+                    return;
+                  }
+                  if (
                     editingTextId === block.id &&
                     (event.target as HTMLElement).closest(".td-composer__inline-text")
                   ) {
@@ -668,6 +693,11 @@ export function ComunicadoComposerCanvas() {
                     dataPreviewLoading
                   }
                 />
+                {remoteEditors.length > 0 ? (
+                  <RemoteSelectionFrame
+                    displayNames={remoteEditors.map((selection) => selection.displayName)}
+                  />
+                ) : null}
                 {showResizeHandles(block.id) ? (
                   <div className="td-composer__block-handles">
                     {/* Outline CSS não é hit-target — anel de arraste na linha pontilhada. */}

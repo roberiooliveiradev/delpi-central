@@ -34,6 +34,7 @@ import {
 | `useFullscreenStage` | Duplo-clique → fullscreen (preview admin) |
 | `NativeSlideView` | Render por `screenKey` (OEE, OTD, comunicado…) |
 | `ComunicadoBlockView` | Render blocos comunicado (texto, mídia, crop, formas, dados) |
+| `textViewProjection` | Resolver transversal para `textProjection` / `dataRef` em heading, text e shape (Onda 4P) |
 | `ChartViewBlockView` / `TableViewBlockView` | Visuais conectados a `data_source` |
 | `DataSourceBlockView` | Ícone de fonte no editor (oculto no palco quando vinculado) |
 | `ConfigurableSeriesChart` | Gráfico linhas/colunas com título, legenda, eixos, grade, tabela de dados |
@@ -41,6 +42,7 @@ import {
 | `comunicadoDataArchitecture` | `dataSourceId`, `shouldHideDataSourceOnStage`, helpers de vínculo |
 | `comunicadoStageVisibility` | `isBlockHiddenOnStage` — render + hit-test + marquee + seleção (fonte única) |
 | `parseComunicadoConfig` / `serializeComunicadoConfig` | Schema v2–v4 (`chartOptions`, `dataSourceId`, `dataBinding`, …) |
+| DTOs `DataTransformV1/V2`, diagnósticos e schema M | Espelho de contrato da Fase 1; sem parser ou execução M no browser |
 | `comunicadoImageCropCssProperties` | CSS viewport para recorte de imagem |
 | `native-screens.css` | Layout viewport-fit (`tdp-*`, `tdp-series-chart*`) |
 
@@ -108,7 +110,9 @@ cd plugins/tv-dashboard-presentation
 npm test
 ```
 
-Cobertura: `usePresentationEngine`, comunicado v4, `ConfigurableSeriesChart`, `chartElementCatalog`, enrichment fixtures.
+Cobertura: `usePresentationEngine`, comunicado v4, `ConfigurableSeriesChart`, `chartElementCatalog`, enrichment fixtures e paridade da IR legada com o executor Python por meio de `fixtures/tv-dashboard/m-query/v1-operations.json`.
+
+O executor TypeScript de transformação existe apenas como espelho de compatibilidade/teste. O plano [M DELPI](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) mantém compilação e execução de produção exclusivamente no backend; a Fase 0 não adiciona runtime M ao pacote.
 
 ---
 

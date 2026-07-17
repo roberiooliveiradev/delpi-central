@@ -35,6 +35,7 @@ type ChatAssistantContentProps = {
   onOpenCanvas?: (payload: ChatCanvasOpenPayload) => void;
   requestChartExplanation?: boolean;
   onChartExplanationHandled?: () => void;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 export function ChatAssistantContent({
@@ -45,6 +46,7 @@ export function ChatAssistantContent({
   onOpenCanvas,
   requestChartExplanation = false,
   onChartExplanationHandled,
+  getAccessToken,
 }: ChatAssistantContentProps) {
   const {
     segments,
@@ -134,6 +136,7 @@ export function ChatAssistantContent({
     chartExplanation,
     showChartExplanation: chartExplanationOpen,
     onChartExplanationChange: setChartExplanationOpen,
+    getAccessToken,
   };
   const narrativeMarkdown = useMemo(
     () => getTextMarkdownFromToolCalls(toolCalls),

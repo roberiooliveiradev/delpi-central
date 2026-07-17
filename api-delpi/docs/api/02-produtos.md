@@ -160,20 +160,26 @@ Retorna blocos `structure`, `raw_material_stock`, `production`, `shipping`, `ind
 
 ## GET /products/{code}/structure/excel
 
-Exporta estrutura em Excel.
+Exporta estrutura em Excel. `operationId`: `get_product_structure_excel`.  
+`meta.entity`: `product_structure_excel` · `meta.shape`: `document_export`.
 
 | Query | Descrição |
 |---|---|
-| `format` | `json` (default) retorna URL de download; `xlsx` faz streaming do arquivo. |
+| `format` | `json` (default) retorna envelope com path de download; `xlsx` faz streaming do arquivo. |
 
-**Resposta (`format=json`):**
+**Resposta (`format=json`):** envelope padrão com `data`:
 
 ```json
 {
   "message": "Arquivo Excel gerado com sucesso!",
-  "download_url": "https://..."
+  "filename": "Estrutura_90261823.xlsx",
+  "downloadPath": "/products/90261823/structure/excel?format=xlsx",
+  "download_url": "/products/90261823/structure/excel?format=xlsx"
 }
 ```
+
+O chat usa `downloadPath` (relativo) e o MFE baixa com Bearer + blob.  
+`downloadUrl` absoluto só aparece com `X-Forwarded-Host` / `X-Forwarded-Proto` públicos.
 
 ---
 

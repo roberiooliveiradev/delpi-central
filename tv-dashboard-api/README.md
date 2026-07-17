@@ -4,6 +4,8 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
+Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md) adicionou profiling opt-in, explain, métricas por etapa, caches TTL/LRU particionados e telemetria segura sem mover semântica para o browser. O piloto funcional está ativo (`enabled`, `writeV2Enabled`, `advancedEditorEnabled` e telemetria); profiling, explain e caches permanecem desligados.
+
 ---
 
 ## Endpoints
@@ -23,6 +25,7 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 |---|---|
 | Programações | `/playlists` |
 | Telas | `/playlists/{id}/slides` |
+| Histórico | `/playlists/{id}/history` — até 500 versões, detalhes e restauração atômica |
 | Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload de imagem/vídeo/fonte, `GET /{assetId}` serve |
 | Tempo real | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Catálogo nativo | `/native-screens` |
@@ -39,8 +42,77 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 | `GET` | `/data/openapi/candidates` | `TV_MANAGE` | Rotas GET da api-delpi ainda fora da allowlist (curadoria) |
 | `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
 | `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
+| `POST` | `/data/m/compile` | `TV_READ` | Compila `m-delpi-v1` para `TransformPlan`, sem executar ou buscar dados |
+| `POST` | `/data/m/explain` | `TV_READ` | Plano simplificado, diagnostics e métricas de compile; exige `explainPlanEnabled` |
+| `POST` | `/data/m/mutate` | `TV_READ` | Muta AST e devolve script canônico; o frontend não concatena M |
+| `GET` | `/data/m/functions` | `TV_READ` | Catálogo versionado de funções M permitidas |
+| `GET` | `/data/m/capabilities` | `TV_READ` | Flags efetivas de runtime, escrita v2, editor, profiling, explain, caches e telemetria |
+
+### Compilador M DELPI v1
+
+O backend é a única autoridade da linguagem. O parser singleton usa gramática
+declarativa Lark LALR/contextual e produz AST imutável com ranges. O analisador
+rejeita por padrão funções desconhecidas, I/O, bancos, avaliação dinâmica,
+`#shared`, função de usuário e recursão. Os limites de bytes, etapas, nós e
+profundidade vêm de `tv_dashboard_settings.json` e são aplicados antes de
+qualquer integração de dados.
+
+O endpoint de compile aceita `sourceSchema` como hint, `queryBindings`,
+`targetStepName` e `culture`; ele nunca chama a `api-delpi`. O runtime interpreta
+somente `CompiledExpression` e funções allowlisted, sem `eval`/`exec`. O preview
+aceita `targetStepName` e limites de amostra; a persistência v2 está ativa no
+piloto funcional.
+
+`POST /data/preview-block` aceita `previewOptions.maxRows`,
+`includeColumnProfile` e `deadlineMs`. Profiling só roda quando solicitado e
+habilitado. O contrato `query` pode incluir `stepMetrics` e `explainPlan`; o
+contrato `preview` pode incluir `columnProfile`. Chaves de cache usam somente
+hashes/fingerprints e metadados de autorização/fonte, nunca JWT ou script bruto.
+
+O mesmo endpoint é a fonte canônica da prévia M: resolve parâmetros e escopo,
+busca a `api-delpi`, normaliza a tabela, executa M e retorna `preview`, `query`
+e diagnostics no mesmo envelope. Valores `null`, zero, `false` e erros de
+célula permanecem no payload sem coerção visual. Erros localizados usam
+`{ error: { stepName, code, message, rowIndex?, column? } }`; o resumo
+`query.runtimeErrors` repete `count` e uma amostra para status/telemetria.
+Falha de fetch ou estrutural continua em `resolved.error`, pois não equivale a
+um erro isolado de célula.
+
+O endpoint de mutação suporta conversão legada, inserção/substituição,
+rename/move/remove de etapa, rename de consulta e formatação. Toda resposta é
+recompilada antes de retornar, portanto diagnósticos e fórmulas exibidos na
+barra `fx` vêm da mesma autoridade server-side.
+
+O resultado de compile também expõe `completionContext` (etapas, colunas,
+consultas e `insertText` já escapado) e `syntaxTokens` com offsets. Esses campos
+são apenas projeções editoriais da análise canônica e não são persistidos.
 
 Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
+
+### Histórico persistente
+
+Cada mutação editorial concluída captura no PostgreSQL o estado anterior da
+programação e de suas telas. São mantidas as 500 versões mais recentes por
+programação; permissões, compartilhamentos, token público e métricas não fazem
+parte dos snapshots. Desde a migration `V009`, cada nova versão também preserva
+o nome e o e-mail do ator autenticado (`authorName` e `authorEmail`) no instante
+da ação; registros anteriores permanecem com esses campos nulos.
+
+| Método | Rota | Permissão | Descrição |
+|---|---|---|---|
+| `GET` | `/playlists/{id}/history?page=1&pageSize=10` | `TV_READ` | Lista versões e a revisão atual |
+| `GET` | `/playlists/{id}/history/{snapshotId}` | `TV_READ` | Retorna o snapshot completo |
+| `POST` | `/playlists/{id}/history/{snapshotId}/restore` | `TV_WRITE` | Restaura atomicamente, preservando UUIDs e ordem |
+
+O restore exige `expectedRevision` no corpo. Se a programação tiver sido
+alterada desde a leitura, a API retorna `409` com `currentRevision`.
+
+Listagem e detalhe expõem `change`: a versão `R` é comparada ao snapshot
+`R+1`, pois ela representa o estado anterior à mutação que produziu `R+1`. O
+snapshot mais recente é comparado ao estado atual somente quando
+`currentRevision = R+1`. O resumo informa campos da programação alterados,
+telas adicionadas/removidas/atualizadas, reordenação e totais. Histórico legado
+incompleto ou lacunas de revisão retornam `change.available = false`.
 
 Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
 
@@ -48,6 +120,8 @@ Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
 python3 scripts/generate_tv_data_routes_from_openapi.py --check   # catálogo = gerador (OpenAPI + overlays)
 python3 scripts/check_tv_data_routes.py --check                  # allowlist ⊆ OpenAPI
 ```
+
+Baseline de 2026-07-16: **232 operationIds GET únicos**, preservados na Fase 1. O cache agora isola por fingerprint SHA-256 de identidade/credencial opaca, permissões e contexto de serviço, sem JWT bruto. O enforcement usa `tvConstraints.requiresBranchPermission` e aliases de filial; rotas ainda sem curadoria mantêm fallback compatível configurável.
 
 ### Catálogo a partir do OpenAPI (como o registry do chat)
 
@@ -91,6 +165,17 @@ nomes HTTP canônicos; overlays sobrescrevem só o que é específico do TV. See
 
 ---
 
+## Períodos relativos e séries temporais
+
+- `dateRangePreset` é interno ao bloco TV: o gateway o converte para as chaves de data canônicas da rota e não o envia à api-delpi.
+- Presets: `today`, `this_week`, `this_month`, `this_quarter`, `this_year`, `previous_week`, `previous_month`, `previous_quarter`, `previous_year`, `last_7_days`, `last_30_days`, `last_90_days`, `last_n_days` e `custom`.
+- Presets relativos são recalculados em cada fetch; `custom` mantém as datas fixas informadas.
+- A granularidade definida pela rota é preservada. Uma rota com `granularity=day` retorna e apresenta um ponto por dia, sem agrupamento automático em semanas ou faixas de datas.
+- Rotas com `seriesField` normalizam `points` para tabela `{ periodo, value }`, sem expor metadados internos (`granularity`, `truncated`, `sort_key`) nem duplicar `label`.
+- A tabela de série consome todos os pontos retornados pela api-delpi (até 366 para um ano diário); `table_view` usa scroll interno para navegar pelas linhas.
+
+---
+
 ## Mídia persistente
 
 | Variável | Container | Host |
@@ -106,10 +191,21 @@ Migrations: `V002__media_assets.sql`, `V006__media_assets_font_kind.sql`
 Salas por `playlist_id`. Evento típico:
 
 ```json
-{ "type": "presentation_updated", "reason": "slide_updated", "revision": "…" }
+{
+  "type": "presentation_updated",
+  "reason": "slide_updated",
+  "playlistId": "…",
+  "revision": "2026-07-16T12:00:00+00:00|3|2026-07-16T12:05:00+00:00"
+}
 ```
 
 Disparado após CRUD de slides, upload de mídia, alterações na programação e exclusão.
+
+**Editor admin:** sincronização exclusivamente via WebSocket — `presentation_updated` após persistência na API, `slide_draft` para edição ao vivo sem esperar o autosave e `selection_update` para destacar os blocos selecionados por outros editores. A identidade e o papel publicados vêm do JWT validado no servidor; o socket público é somente leitura.
+
+`selection_update` contém `slideId`, `selectedIds`, `clientId`, `displayName` e `updatedAt`. Seleção vazia limpa o chrome remoto; desconexão remove a seleção por meio do `presence_update`. O estado é transitório e não é persistido no slide.
+
+**Gateway:** `proxy_pass` estático para `tv-dashboard-api:8000` (variável `$upstream` quebra upgrade WebSocket).
 
 ---
 

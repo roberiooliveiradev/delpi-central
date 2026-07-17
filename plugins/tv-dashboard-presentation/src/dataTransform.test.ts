@@ -1,13 +1,43 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
   applyDataTransformSteps,
   applyDataTransformToPayload,
+  coercePayloadToTable,
   dataTransformStepLabel,
   evaluateSafeArithmeticExpr,
   evaluateSafeColumnExpr,
+  isDataTransformV1,
   normalizeDataTransform,
 } from "./dataTransform";
+
+type SharedOperationFixture = {
+  name: string;
+  input: { columns: string[]; rows: Array<Record<string, unknown>> };
+  legacySteps: Parameters<typeof applyDataTransformSteps>[1];
+  siblingTables?: NonNullable<Parameters<typeof applyDataTransformSteps>[2]>["siblingTables"];
+  expected: { columns: string[]; rows: Array<Record<string, unknown>> };
+  expectedTs?: { columns: string[]; rows: Array<Record<string, unknown>> };
+  knownDrift?: string;
+};
+
+function loadSharedFixtures(): {
+  operations: SharedOperationFixture[];
+  previewByStep: {
+    input: SharedOperationFixture["input"];
+    legacySteps: SharedOperationFixture["legacySteps"];
+    expectedStages: SharedOperationFixture["expected"][];
+  };
+} {
+  const fixturePath = resolve(
+    process.cwd(),
+    "../../fixtures/tv-dashboard/m-query/v1-operations.json",
+  );
+  return JSON.parse(readFileSync(fixturePath, "utf8")) as ReturnType<typeof loadSharedFixtures>;
+}
 
 describe("dataTransform", () => {
   const table = {
@@ -20,18 +50,34 @@ describe("dataTransform", () => {
   };
 
   it("normaliza steps válidos", () => {
-    expect(
-      normalizeDataTransform({
-        steps: [
-          { op: "rename", from: "oee", to: "oee_pct" },
-          { op: "bogus" },
-          { op: "filter", column: "branch", cmp: "eq", value: "01" },
-        ],
-      })?.steps,
-    ).toEqual([
+    const normalized = normalizeDataTransform({
+      steps: [
+        { op: "rename", from: "oee", to: "oee_pct" },
+        { op: "bogus" },
+        { op: "filter", column: "branch", cmp: "eq", value: "01" },
+      ],
+    });
+    expect(isDataTransformV1(normalized) ? normalized.steps : undefined).toEqual([
       { op: "rename", from: "oee", to: "oee_pct" },
       { op: "filter", column: "branch", cmp: "eq", value: "01" },
     ]);
+  });
+
+  it("normaliza DTO v2 sem interpretar ou executar M", () => {
+    const normalized = normalizeDataTransform({
+      version: 2,
+      language: "m-delpi-v1",
+      script: "let\r\n    X = Fonte\r\nin\r\n    X\u0000",
+      ast: { forbidden: true },
+      rows: [{ secret: true }],
+    });
+
+    expect(normalized).toEqual({
+      version: 2,
+      language: "m-delpi-v1",
+      script: "let\n    X = Fonte\nin\n    X",
+    });
+    expect(isDataTransformV1(normalized)).toBe(false);
   });
 
   it("rename + select + filter + addColumn", () => {
@@ -183,5 +229,43 @@ describe("dataTransform", () => {
     expect(dataTransformStepLabel({ op: "merge", sourceId: "x", leftKey: "a", rightKey: "b", join: "left" })).toBe(
       "Consultas mescladas",
     );
+  });
+
+  it("coercePayloadToTable aceita envelope e objeto escalar textual", () => {
+    expect(
+      coercePayloadToTable({
+        success: true,
+        data: [{ status: "A" }, { status: "B" }],
+      })?.rows,
+    ).toHaveLength(2);
+    expect(coercePayloadToTable({ status: "ATIVO", owner: "Ops" })?.rows).toEqual([
+      { campo: "status", valor: "ATIVO" },
+      { campo: "owner", valor: "Ops" },
+    ]);
+  });
+
+  it("mantém paridade TS com as fixtures v1 e congela drifts conhecidos", () => {
+    const fixture = loadSharedFixtures();
+    expect(fixture.operations.map((item) => item.name)).toHaveLength(15);
+    expect(fixture.operations.filter((item) => item.knownDrift).map((item) => item.name)).toEqual([
+      "firstRowAsHeader",
+    ]);
+
+    for (const item of fixture.operations) {
+      const actual = applyDataTransformSteps(item.input, item.legacySteps, {
+        siblingTables: item.siblingTables,
+      });
+      expect(actual, item.name).toEqual(item.expectedTs ?? item.expected);
+    }
+  });
+
+  it("mantém preview por etapa usando prefixos do mesmo plano legado", () => {
+    const preview = loadSharedFixtures().previewByStep;
+
+    preview.expectedStages.forEach((expected, index) => {
+      expect(applyDataTransformSteps(preview.input, preview.legacySteps.slice(0, index + 1))).toEqual(
+        expected,
+      );
+    });
   });
 });

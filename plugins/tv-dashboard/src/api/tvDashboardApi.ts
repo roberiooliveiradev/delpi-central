@@ -29,6 +29,9 @@ export type PlaylistMasterConfig = {
 
 export type Playlist = {
   id: string;
+  /** Revisão otimista do agregado, quando entregue pelo backend. */
+  revision?: number;
+  currentRevision?: number;
   publicToken: string;
   name: string;
   description?: string | null;
@@ -160,6 +163,7 @@ export type PresentationStatus = {
   staleAfterSec: number;
   secondsSinceLastPresentation?: number | null;
   isActive: boolean;
+  contentRevision?: string;
 };
 
 export type MediaAsset = {
@@ -170,6 +174,78 @@ export type MediaAsset = {
   mimeType: string;
   mediaKind: "image" | "video" | "font";
   fileSizeBytes: number;
+};
+
+export type PlaylistHistoryPreview = {
+  playlistName?: string;
+  slideCount?: number;
+  slideTitles?: string[];
+  selectedSlideId?: string | null;
+};
+
+export type PlaylistHistorySlideChange =
+  | string
+  | {
+      id?: string | null;
+      title?: string | null;
+      fields?: string[];
+    };
+
+export type PlaylistHistoryChangeTotals = {
+  playlistFields?: number;
+  added?: number;
+  removed?: number;
+  updated?: number;
+  reordered?: number;
+  /** Aliases explícitos aceitos durante a evolução do contrato. */
+  playlistFieldsChanged?: number;
+  slidesAdded?: number;
+  slidesRemoved?: number;
+  slidesUpdated?: number;
+  slidesReordered?: number;
+  total?: number;
+};
+
+export type PlaylistHistoryChange = {
+  available: boolean;
+  comparedToRevision?: number | null;
+  playlistFields?: string[];
+  slides?: {
+    added?: PlaylistHistorySlideChange[];
+    removed?: PlaylistHistorySlideChange[];
+    updated?: PlaylistHistorySlideChange[];
+    reordered?: PlaylistHistorySlideChange[] | boolean;
+  };
+  totals?: PlaylistHistoryChangeTotals;
+};
+
+export type PlaylistHistoryEntry = {
+  snapshotId: string;
+  revision: number;
+  createdAt: string;
+  authorId?: string | null;
+  authorName?: string | null;
+  authorEmail?: string | null;
+  reason?: string | null;
+  preview?: PlaylistHistoryPreview | null;
+  change?: PlaylistHistoryChange | null;
+};
+
+export type PlaylistHistoryPage = {
+  items: PlaylistHistoryEntry[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  currentRevision: number | null;
+};
+
+export type PlaylistHistorySnapshot = PlaylistHistoryEntry & {
+  snapshot: {
+    playlist: Partial<Playlist>;
+    slides: Slide[];
+  };
 };
 
 export function adminMediaUrl(playlistId: string, assetId: string) {
@@ -207,6 +283,85 @@ export async function createPlaylist(name: string, description?: string) {
 
 export async function getPlaylist(id: string) {
   return unwrap(httpGet<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}`));
+}
+
+export async function listPlaylistHistory(
+  playlistId: string,
+  options: { page?: number; pageSize?: number } = {},
+) {
+  const page = Math.max(1, options.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 10));
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  const data = await unwrap(
+    httpGet<
+      ApiEnvelope<{
+        items: PlaylistHistoryEntry[];
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+        currentRevision: number | null;
+      }>
+    >(
+      `${API_BASE}/playlists/${playlistId}/history?${params.toString()}`,
+    ),
+  );
+  return {
+    ...data,
+    hasNext: data.page < data.totalPages,
+    currentRevision: data.currentRevision,
+  } satisfies PlaylistHistoryPage;
+}
+
+export async function getPlaylistHistorySnapshot(playlistId: string, snapshotId: string) {
+  const data = await unwrap(
+    httpGet<
+      ApiEnvelope<{
+        snapshotId: string;
+        revision: number;
+        authorId?: string | null;
+        authorName?: string | null;
+        authorEmail?: string | null;
+        reason?: string | null;
+        createdAt: string;
+        preview?: PlaylistHistoryPreview | null;
+        change?: PlaylistHistoryChange | null;
+        playlist: Playlist;
+      }>
+    >(
+      `${API_BASE}/playlists/${playlistId}/history/${encodeURIComponent(snapshotId)}`,
+    ),
+  );
+  const { slides = [], ...playlist } = data.playlist;
+  return {
+    snapshotId: data.snapshotId,
+    revision: data.revision,
+    createdAt: data.createdAt,
+    authorId: data.authorId,
+    authorName: data.authorName,
+    authorEmail: data.authorEmail,
+    reason: data.reason,
+    preview: data.preview,
+    change: data.change,
+    snapshot: { playlist, slides },
+  } satisfies PlaylistHistorySnapshot;
+}
+
+export async function restorePlaylistHistorySnapshot(
+  playlistId: string,
+  snapshotId: string,
+  expectedRevision: number,
+) {
+  const data = await unwrap(
+    httpPost<ApiEnvelope<{ playlist: Playlist }>>(
+      `${API_BASE}/playlists/${playlistId}/history/${encodeURIComponent(snapshotId)}/restore`,
+      { expectedRevision },
+    ),
+  );
+  return data.playlist;
 }
 
 export async function getPresentationStatus(id: string) {
@@ -380,9 +535,18 @@ export async function previewDataBlockV2(body: {
   playlistId?: string;
   /** Bypass TTL cache no servidor (Atualizar visual). */
   forceRefresh?: boolean;
+  targetStepName?: string;
+  previewOptions?: {
+    maxRows?: number;
+    includeColumnProfile?: boolean;
+  };
 }) {
   return unwrap(
-    httpPost<ApiEnvelope<{ block: Record<string, unknown> }>>(
+    httpPost<ApiEnvelope<{
+      block: Record<string, unknown>;
+      query?: Record<string, unknown>;
+      preview?: Record<string, unknown>;
+    }>>(
       `${API_BASE}/data/preview-block`,
       body,
     ),

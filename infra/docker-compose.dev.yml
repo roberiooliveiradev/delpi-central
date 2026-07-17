@@ -873,6 +873,20 @@ services:
     networks:
       - delpi-network
 
+  cipa:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: cipa/Dockerfile
+      target: production
+    container_name: delpi-cipa
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+    networks:
+      - delpi-network
+
+
   scrap-monitoring:
     <<: *plugin-ui-federated
     build:
@@ -1343,6 +1357,63 @@ services:
 
     networks:
       - delpi-network
+
+  cipa-api:
+    <<: *plugin-profile
+    build:
+      context: ..
+      dockerfile: cipa-api/Dockerfile
+
+    container_name: delpi-cipa-api
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      PORT: "8000"
+      CIPA_API_ROOT_PATH: /apps/cipa-api
+      CIPA_RUN_MIGRATIONS_ON_STARTUP: ${CIPA_RUN_MIGRATIONS_ON_STARTUP:-true}
+
+      JWT_SECRET: ${API_DELPI_JWT_SECRET}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM}
+      KEYCLOAK_AUDIENCE: ${KEYCLOAK_AUDIENCE}
+      KEYCLOAK_JWKS_URL: ${KEYCLOAK_JWKS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      JWT_ALGORITHMS: ${JWT_ALGORITHMS}
+      LOG_LEVEL: ${LOG_LEVEL}
+      TZ: ${TZ}
+
+      DELPI_AUTH_CORE_API_URL: ${DELPI_AUTH_CORE_API_URL:-http://core-api:8000}
+      CORE_API_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
+
+      PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
+      PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
+      PLUGINS_DB_NAME: ${PLUGINS_DB_NAME}
+      PLUGINS_DB_USER: ${PLUGINS_DB_USER}
+      PLUGINS_DB_PASSWORD: ${PLUGINS_DB_PASSWORD}
+      PLUGINS_DB_CONNECT_TIMEOUT: ${PLUGINS_DB_CONNECT_TIMEOUT}
+      PLUGINS_DB_SSLMODE: ${PLUGINS_DB_SSLMODE}
+
+      CIPA_SIGNATURE_UPLOAD_DIR: /app/data/cipa/signatures
+      CIPA_ATTACHMENT_UPLOAD_DIR: /app/data/cipa/attachments
+      CIPA_PDF_UPLOAD_DIR: /app/data/cipa/pdfs
+
+    volumes:
+      - ../cipa-api:/app
+      - ../shared:/shared
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/cipa/signatures:/app/data/cipa/signatures
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/cipa/attachments:/app/data/cipa/attachments
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/cipa/pdfs:/app/data/cipa/pdfs
+
+    depends_on:
+      - keycloak
+      - postgres-plugins
+      - core-api
+
+    networks:
+      - delpi-network
+
 
   customer-experience-api:
     <<: *plugin-profile

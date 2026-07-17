@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+
 export type FormActionsAlign = "start" | "end";
 
 export type FormActionsClassNames = {
@@ -15,9 +17,11 @@ export type FormActionsProps = {
 };
 
 export function formActionsBemClasses(prefix: string): FormActionsClassNames {
+  const root = `${prefix}-form-actions`;
+  const ui = "delpi-ui-form-actions";
   return {
-    root: `${prefix}-form-actions`,
-    alignEndModifier: `${prefix}-form-actions--end`,
+    root: delpiUiClass(root, ui),
+    alignEndModifier: delpiUiClass(`${root}--end`, `${ui}--end`),
   };
 }
 

@@ -56,11 +56,6 @@ function routeValueFieldOptions(route: TvDataRouteCatalogItem | null): ValueFiel
     }));
 }
 
-function routeMaxRowsLimit(route: TvDataRouteCatalogItem | null): number {
-  const limit = route?.tvConstraints?.maxRows;
-  return typeof limit === "number" && Number.isFinite(limit) ? Math.round(limit) : 90;
-}
-
 function RibbonZone({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="td-deck-ribbon__panel-zone">
@@ -150,9 +145,7 @@ export function DataBindingInspector({
   const currentDisplayMode = (binding.displayMode ?? "kpi") as ComunicadoDataDisplayMode;
   const inheritedRefreshSec = resolveDataBlockRefreshSec(undefined, globalRefreshSec);
   const valueFieldOptions = routeValueFieldOptions(route);
-  const maxRowsLimit = routeMaxRowsLimit(route);
   const showPresentationMode = isDataBlockType(target.type) && !isDataSourceBlockType(target.type);
-  const showTableOptions = showPresentationMode && currentDisplayMode === "table";
   const paramSchema = visibleParamSchema(
     (route?.paramSchema ?? undefined) as DataParamSchema | undefined,
     route?.fixedQueryParams,
@@ -338,32 +331,6 @@ export function DataBindingInspector({
 
   const refreshFields = (
     <>
-      {showTableOptions ? (
-        <DeckField id="td-data-max-rows" label="Máximo de linhas (consulta)">
-          <NativeTextControl
-            id="td-data-max-rows"
-            type="number"
-            className={compactNative}
-            min={1}
-            max={maxRowsLimit}
-            placeholder={`Padrão da rota (até ${maxRowsLimit})`}
-            value={binding.maxRows ?? ""}
-            onChange={(value) => {
-              const raw = value.trim();
-              const nextBinding: ComunicadoDataBinding = { ...binding };
-              if (!raw) {
-                delete nextBinding.maxRows;
-              } else {
-                const parsed = Number(raw);
-                if (Number.isFinite(parsed) && parsed >= 1) {
-                  nextBinding.maxRows = Math.min(Math.round(parsed), maxRowsLimit);
-                }
-              }
-              applyPatch({ dataBinding: nextBinding } as Partial<ComunicadoBlock>);
-            }}
-          />
-        </DeckField>
-      ) : null}
       <DeckField
         id="td-data-refresh"
         label="Atualizar na TV a cada (s)"
@@ -474,7 +441,7 @@ export function DataBindingInspector({
         {activeSections.includes("refresh") ? (
           <RibbonZone title="Atualização">
             <p className="td-deck-inspector__hint">
-              No editor o preview não atualiza sozinho — use «Atualizar visual». O intervalo abaixo vale só na TV.
+              No editor o preview atualiza ao mudar parâmetros ou filtros. O intervalo abaixo vale só na TV.
             </p>
             <div className="td-deck-ribbon__field-grid">{refreshFields}</div>
           </RibbonZone>
@@ -489,7 +456,7 @@ export function DataBindingInspector({
       <DeckPropertySection
         pane={pane}
         title={editingLinkedSource ? "Parâmetros da fonte" : "Dados"}
-        hint="Parâmetros deste bloco sobrescrevem filtros do slide. No editor o preview não autoatualiza — use «Atualizar visual»; o intervalo de refresh vale só na TV."
+        hint="Parâmetros deste bloco sobrescrevem filtros do slide. Alterações atualizam o palco automaticamente; o intervalo de refresh vale só na TV."
       >
         {connectionFields}
         {refreshFields}

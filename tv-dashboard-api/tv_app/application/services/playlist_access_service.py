@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 from uuid import UUID
 
 from tv_app.core.security import TV_ADMIN, can
@@ -41,7 +41,7 @@ class PlaylistAccessService:
         if user is None:
             return None
         for attr in ("id", "sub", "preferred_username"):
-            raw = getattr(user, attr, None)
+            raw = user.get(attr) if isinstance(user, Mapping) else getattr(user, attr, None)
             if raw is None:
                 continue
             value = str(raw).strip()

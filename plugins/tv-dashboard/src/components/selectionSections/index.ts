@@ -44,7 +44,7 @@ export {
 export {
   TableLayoutAlignSection,
   TableLayoutDataSection,
-  TableLayoutDisplaySection,
+  TableLayoutSizeSection,
 } from "./TableLayoutSections";
 export {
   ChartAxesSection,

@@ -11,11 +11,15 @@ export type ConfigurableTableClassNames = {
   rootAlignCenter: string;
   rootAlignRight: string;
   rootHeaderNormalCase: string;
+  rootWrap: string;
+  rootFixedCols: string;
   dataTable: string;
   tableFrame: string;
   title: string;
   header: string;
   headerCell: string;
+  columnResizeHandle: string;
+  columnSelected: string;
   body: string;
   row: string;
   rowHeader: string;
@@ -40,11 +44,15 @@ export function configurableTableBemClasses(
     rootAlignCenter: `${prefix}--align-center`,
     rootAlignRight: `${prefix}--align-right`,
     rootHeaderNormalCase: `${prefix}--header-normal-case`,
+    rootWrap: `${prefix}--wrap`,
+    rootFixedCols: `${prefix}--fixed-cols`,
     dataTable: `${prefix}__data-table`,
     tableFrame: `${prefix}__frame`,
     title: `${prefix}__title`,
     header: `${prefix}__header`,
     headerCell: `${prefix}__header-cell`,
+    columnResizeHandle: `${prefix}__column-resize-handle`,
+    columnSelected: `${prefix}__column--selected`,
     body: `${prefix}__body`,
     row: `${prefix}__row`,
     rowHeader: `${prefix}__row--header`,
@@ -68,11 +76,15 @@ export function configurableTableTvClasses(): ConfigurableTableClassNames {
     rootAlignCenter: "tdp-configurable-table--align-center",
     rootAlignRight: "tdp-configurable-table--align-right",
     rootHeaderNormalCase: "tdp-configurable-table--header-normal-case",
+    rootWrap: "tdp-configurable-table--wrap",
+    rootFixedCols: "tdp-configurable-table--fixed-cols",
     dataTable: "tdp-data-table",
     tableFrame: "tdp-table-frame",
     title: "tdp-table-title",
     header: "tdp-table-header",
     headerCell: "tdp-table-header-cell",
+    columnResizeHandle: "tdp-table-column-resize-handle",
+    columnSelected: "tdp-table-column--selected",
     body: "tdp-table-body",
     row: "tdp-table-row",
     rowHeader: "tdp-table-row--header",

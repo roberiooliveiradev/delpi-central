@@ -9,6 +9,10 @@ from typing import Any
 from fastapi import WebSocket
 from starlette.websockets import WebSocketDisconnect
 
+from tv_app.application.services.presentation_realtime_models import (
+    PresentationRealtimeSession,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -18,6 +22,7 @@ class PresentationRealtimeHub:
     def __init__(self) -> None:
         self._rooms: dict[str, set[WebSocket]] = {}
         self._client_meta: dict[str, dict[WebSocket, dict[str, Any]]] = {}
+        self._sessions: dict[WebSocket, PresentationRealtimeSession] = {}
         self._lock = asyncio.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._queue: asyncio.Queue[tuple[str, dict[str, Any]]] | None = None
@@ -41,10 +46,17 @@ class PresentationRealtimeHub:
             return
         self._loop.call_soon_threadsafe(self._queue.put_nowait, (playlist_id, payload))
 
-    async def connect(self, websocket: WebSocket, *, playlist_id: str) -> None:
+    async def connect(
+        self,
+        websocket: WebSocket,
+        *,
+        playlist_id: str,
+        session: PresentationRealtimeSession,
+    ) -> None:
         await websocket.accept()
         async with self._lock:
             self._rooms.setdefault(playlist_id, set()).add(websocket)
+            self._sessions[websocket] = session
         try:
             await websocket.send_json({"type": "connected", "playlistId": playlist_id})
             while True:
@@ -77,15 +89,16 @@ class PresentationRealtimeHub:
         message_type = payload.get("type")
         client_id = self._clean_text(payload.get("clientId"))
         if message_type == "presence_join":
-            display_name = self._clean_text(payload.get("displayName"))
-            role = payload.get("role")
-            if not client_id or not display_name or role not in {"editor", "viewer"}:
+            session = self._sessions.get(websocket)
+            if not session or not session.allow_presence or not client_id:
                 return
             async with self._lock:
                 self._client_meta.setdefault(playlist_id, {})[websocket] = {
                     "clientId": client_id,
-                    "displayName": display_name,
-                    "role": role,
+                    "userId": session.user_id,
+                    "displayName": session.display_name,
+                    "role": session.role,
+                    "canEdit": session.can_edit,
                     "lastSeen": time.monotonic(),
                 }
             await self._broadcast_presence(playlist_id)
@@ -110,6 +123,61 @@ class PresentationRealtimeHub:
                 current = self._client_meta.get(playlist_id, {}).get(websocket)
                 if current and current["clientId"] == client_id:
                     current["lastSeen"] = time.monotonic()
+            return
+
+        if message_type == "slide_draft":
+            slide_id = self._clean_text(payload.get("slideId"))
+            native_config = payload.get("nativeConfig")
+            current = self._client_meta.get(playlist_id, {}).get(websocket)
+            if (
+                not current
+                or not current.get("canEdit")
+                or current.get("clientId") != client_id
+                or not slide_id
+                or not isinstance(native_config, dict)
+            ):
+                return
+            await self.broadcast_now(
+                playlist_id,
+                {
+                    "type": "slide_draft",
+                    "playlistId": playlist_id,
+                    "slideId": slide_id,
+                    "clientId": client_id,
+                    "nativeConfig": native_config,
+                },
+            )
+            return
+
+        if message_type == "selection_update":
+            slide_id = self._clean_text(payload.get("slideId"))
+            raw_selected_ids = payload.get("selectedIds")
+            current = self._client_meta.get(playlist_id, {}).get(websocket)
+            if (
+                not current
+                or not current.get("canEdit")
+                or current.get("clientId") != client_id
+                or not slide_id
+                or not isinstance(raw_selected_ids, list)
+            ):
+                return
+            selected_ids: list[str] = []
+            for raw_id in raw_selected_ids[:100]:
+                block_id = self._clean_text(raw_id)
+                if block_id and block_id not in selected_ids:
+                    selected_ids.append(block_id)
+            await self.broadcast_now(
+                playlist_id,
+                {
+                    "type": "selection_update",
+                    "playlistId": playlist_id,
+                    "slideId": slide_id,
+                    "clientId": client_id,
+                    "displayName": current["displayName"],
+                    "selectedIds": selected_ids,
+                    "updatedAt": int(time.time() * 1000),
+                },
+            )
 
     @staticmethod
     def _clean_text(value: Any) -> str | None:
@@ -147,6 +215,7 @@ class PresentationRealtimeHub:
             presence_changed = bool(room_meta and room_meta.pop(websocket, None))
             if room_meta is not None and not room_meta:
                 del self._client_meta[playlist_id]
+            self._sessions.pop(websocket, None)
             return presence_changed
 
     async def broadcast_now(self, playlist_id: str, payload: dict[str, Any]) -> None:

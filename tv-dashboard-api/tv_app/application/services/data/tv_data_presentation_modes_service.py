@@ -14,6 +14,7 @@ _BLOCK_TYPE_FOR_MODE: dict[str, str] = {
 
 _SHAPE_DEFAULT_MODES: dict[str, list[str]] = {
     "scalar": ["kpi", "auto"],
+    "list": ["table", "auto"],
     "playbook_report": ["kpi", "line_chart", "table", "auto"],
     "paged_list": ["table", "auto"],
     "hierarchy": ["table", "auto"],

@@ -1,0 +1,22 @@
+{
+  "cases": [
+    {
+      "id": "rename-filter-add",
+      "script": "let X=Table.RenameColumns(Fonte,{{\"valor\",\"Valor\"}}),Y=Table.SelectRows(X,each [Valor]>=10 and [Valor]<>null),Z=Table.AddColumn(Y,\"dobro\",each [Valor]*2,type number) in Z",
+      "canonical": "let\n    X = Table.RenameColumns(Fonte, {{\"valor\", \"Valor\"}}),\n    Y = Table.SelectRows(X, each [Valor] >= 10 and [Valor] <> null),\n    Z = Table.AddColumn(Y, \"dobro\", each [Valor] * 2, type number)\nin\n    Z",
+      "operations": [
+        "Table.RenameColumns",
+        "Table.SelectRows",
+        "Table.AddColumn"
+      ]
+    },
+    {
+      "id": "quoted-and-options",
+      "script": "let #\"Cabeçalhos promovidos\"=Table.PromoteHeaders(Fonte,[PromoteAllScalars=true]) in #\"Cabeçalhos promovidos\"",
+      "canonical": "let\n    #\"Cabeçalhos promovidos\" = Table.PromoteHeaders(Fonte, [PromoteAllScalars = true])\nin\n    #\"Cabeçalhos promovidos\"",
+      "operations": [
+        "Table.PromoteHeaders"
+      ]
+    }
+  ]
+}

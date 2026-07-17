@@ -195,6 +195,26 @@ def test_direct_strategy_strips_date_aliases():
     assert "end_date" not in query
 
 
+def test_date_range_keeps_api_granularity_untouched():
+    """Granularidade da rota é preservada — nada de reagrupar dias em faixas."""
+    query = _build_query_params(
+        {
+            "paramStrategy": "date_range",
+            "dateRangeKeys": ["start_date", "end_date"],
+            "paramSchema": {
+                "start_date": {"type": "string"},
+                "end_date": {"type": "string"},
+                "branch": {"type": "string"},
+            },
+            "fixedQueryParams": {"granularity": "day"},
+        },
+        {"start_date": "2026-01-01", "end_date": "2026-07-16"},
+    )
+    assert query["granularity"] == "day"
+    assert query["start_date"] == "2026-01-01"
+    assert query["end_date"] == "2026-07-16"
+
+
 def test_date_range_strategy_respects_partial_end_date():
     """Só end_date do filtro — não recalcular fim=hoje."""
     query = _build_query_params(

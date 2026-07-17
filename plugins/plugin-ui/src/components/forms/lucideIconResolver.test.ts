@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildLucideIconOptions,
   countLucideCatalogSize,
+  DECK_QUICK_LUCIDE_ICON_NAMES,
   groupLucideIconsBySection,
   isLucideIconName,
   isPascalCaseLucideExport,
   listLucideIconNames,
   resolveLucideIcon,
+  resolveLucideIconOrFallback,
   toKebabCase,
   toPascalCaseFromKebab,
 } from "./lucideIconResolver";
@@ -21,6 +24,24 @@ describe("lucideIconResolver", () => {
     expect(resolveLucideIcon("Eye")).not.toBeNull();
     expect(isLucideIconName("heart")).toBe(true);
     expect(isLucideIconName("not-a-real-icon-xyz")).toBe(false);
+  });
+
+  it("resolve nomes PascalCase compostos (TV/KPI)", () => {
+    expect(resolveLucideIcon("TrendingUp")).not.toBeNull();
+    expect(resolveLucideIcon("AlertTriangle")).not.toBeNull();
+    expect(resolveLucideIcon("CheckCircle2")).not.toBeNull();
+  });
+
+  it("resolveLucideIconOrFallback usa fallback para nome inválido", () => {
+    const icon = resolveLucideIconOrFallback("not-a-real-icon-xyz", "Star");
+    expect(icon).toBe(resolveLucideIconOrFallback("Star", "Star"));
+  });
+
+  it("buildLucideIconOptions monta rótulos PT", () => {
+    const options = buildLucideIconOptions(DECK_QUICK_LUCIDE_ICON_NAMES);
+    expect(options.length).toBe(DECK_QUICK_LUCIDE_ICON_NAMES.length);
+    expect(options[0]?.name).toBe("Star");
+    expect(options[0]?.label).toBeTruthy();
   });
 
   it("exclui aliases *Icon da lista canônica", () => {

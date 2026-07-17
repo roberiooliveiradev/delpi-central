@@ -137,6 +137,7 @@ FASE_MFE=(
   guias-procedimentos
   central-agendamento
   canal-denuncia
+  cipa
   quality-labels
   tv-dashboard
   public-hub
@@ -147,6 +148,7 @@ FASE_API=(
   strategic-indicators-api
   transformometro-api
   maintenance-api
+  cipa-api
   customer-experience-api
   tv-dashboard-api
 )

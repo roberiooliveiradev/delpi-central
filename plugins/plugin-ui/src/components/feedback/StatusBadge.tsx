@@ -1,3 +1,5 @@
+import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
+
 export type StatusBadgeVariant = "neutral" | "info" | "success" | "warning" | "danger";
 
 export type StatusBadgeClassNames = {
@@ -13,7 +15,7 @@ export type StatusBadgeProps = {
 
 export function statusBadgeBemClasses(prefix: string): StatusBadgeClassNames {
   return {
-    badge: `${prefix}-status-badge`,
+    badge: delpiUiClass(`${prefix}-status-badge`, "delpi-ui-status-badge"),
   };
 }
 
@@ -23,7 +25,10 @@ export function StatusBadge({
   classNames,
   className,
 }: StatusBadgeProps) {
-  const rootClass = [classNames.badge, `${classNames.badge}--${variant}`, className]
+  const rootClass = [
+    withBemModifier(classNames.badge, variant),
+    className,
+  ]
     .filter(Boolean)
     .join(" ");
 

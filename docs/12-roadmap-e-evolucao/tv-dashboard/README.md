@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.5+ em produção (jul/2026) — editor deck + Onda 4A–4O + **dois escopos** global/parte no palco (§19.19)
-> **Playbook detalhado:** [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md) · **Editor Canva/PPT:** §17 · **Indicadores api-delpi:** §18 · **Gráfico/KPI/tabela compostos:** §19 (Onda 4G+) · **Escopos de seleção:** §19.19
+> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fases 0–7 implementadas; rollout desativado por flags**) · [status Fase 7](./FASE-7-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -86,6 +86,14 @@ O gestor monta uma **programação** (playlist) com telas nativas DELPI (OEE, OT
 | Tempo real (admin) | `/apps/tv-dashboard-api/` | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Conteúdo UI | `/apps/tv-dashboard-api/content/` | `GET /ui`, `GET /slide-presets` |
 
+Power Query M autenticado:
+
+- `POST /data/m/compile` — compile server-side;
+- `POST /data/m/explain` — plano simplificado, somente quando habilitado;
+- `POST /data/preview-block` — prévia e profiling opt-in;
+- `GET /data/m/capabilities` — flags efetivas;
+- `GET /data/m/functions` — registry seguro.
+
 Envelope padrão: `{ success, message, data }`.
 
 ---
@@ -127,7 +135,7 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 
 | Peça | Onde |
 |---|---|
-| Catálogo de rotas | `GET /data/routes` — **206** operações GET sincronizadas com OpenAPI (`scripts/generate_tv_data_routes_from_openapi.py`) |
+| Catálogo de rotas | `GET /data/routes` — **232** operações GET sincronizadas com OpenAPI (`scripts/generate_tv_data_routes_from_openapi.py`) |
 | Painel **Dados** | `DataRoutesSidePanel` + `DataRouteCatalogPanel` (`@delpi/plugin-ui`) |
 | Enrichment | `ComunicadoDataEnrichmentService` — resolve `data_source`; vincula `chart_view` / `table_view` |
 | Gráfico configurável | `ConfigurableSeriesChart` + `chartParts` / `chartOptions` (título, legenda, eixos, grade, tabela, marcadores) |
@@ -137,6 +145,15 @@ Elemento → Conexão     → chart_view/table_view.dataSourceId → data_source
 
 Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicadores-live-api-delpi-em-slides-personalizados) · [§19.19 escopos](./PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
+- **Períodos relativos:** o editor oferece hoje; semana/mês/trimestre/ano atuais; períodos anteriores; últimos 7/30/90/N dias; e datas fixas. Presets relativos são resolvidos novamente a cada fetch.
+- **Contrato de séries:** a TV preserva a granularidade da rota. `granularity=day` permanece um ponto por dia — sem converter dias em faixas semanais.
+- **Cobertura anual diária:** a api-delpi permite até 366 buckets; assim, «Este ano (até hoje)» entrega todos os dias do ano. Períodos diários acima de um ano continuam limitados por segurança.
+- **Tabela de série:** apresenta todos os `points` retornados pela API usando apenas as colunas declaradas (`periodo` e `value`), sem mostrar `label` duplicado ou metadados como `granularity`/`truncated`.
+- **M DELPI — Fases 0–7:** parser/compilador/executor backend, workbench,
+  editor avançado, profiling opt-in, explain, métricas e caches particionados
+  estão implementados. O piloto funcional de scripts v2 e editor avançado está
+  ativo com telemetria segura; profiling, explain e caches permanecem desligados.
+  O browser contém apenas DTOs e estado de draft.
 - **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
 - **§19.20:** aplicar estilo a irmãos; séries OEE/OTD/PPM nas nativas (SVG); rate limit `public/present`
 - **Backlog:** sombra texto, conectores, paleta recente, PDF/PPTX, colaboração
@@ -190,10 +207,14 @@ O cliente recarrega o payload HTTP; o polling periódico permanece como fallback
 ### Comandos típicos
 
 ```bash
-cd infra
+# Executar na raiz; ordem segura e um serviço por vez
 git pull
-docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api tv-dashboard public-hub
+./infra/scripts/up-dev-sequential.sh --fase api --build tv-dashboard-api
+./infra/scripts/up-dev-sequential.sh --fase mfe --build tv-dashboard
 ```
+
+Em produção, após alterar séries/períodos, reconstruir `api-delpi` e `tv-dashboard-api`
+com `./infra/scripts/up-prod-sequential.sh --pull --build`, filtrando esses serviços.
 
 ---
 
@@ -226,6 +247,9 @@ docker compose -f docker-compose.dev.yml up --build -d gateway tv-dashboard-api 
 ## Referências
 
 - [PLAYBOOK-EXCELENCIA.md](./PLAYBOOK-EXCELENCIA.md)
+- [PLAYBOOK-POWER-QUERY-M.md](./PLAYBOOK-POWER-QUERY-M.md)
+- [ADR-M-DELPI-V1.md](./ADR-M-DELPI-V1.md)
+- [FASE-0-BASELINE-M-DELPI.md](./FASE-0-BASELINE-M-DELPI.md)
 - [tv-dashboard-api/README.md](../../../tv-dashboard-api/README.md)
 - [plugins/tv-dashboard/README.md](../../../plugins/tv-dashboard/README.md)
 - [plugins/tv-dashboard-presentation/README.md](../../../plugins/tv-dashboard-presentation/README.md)

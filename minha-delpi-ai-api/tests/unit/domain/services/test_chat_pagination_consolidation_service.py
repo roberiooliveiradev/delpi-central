@@ -41,6 +41,7 @@ def test_collect_last_preferred_format():
                     {
                         "name": "execute_external_action",
                         "metadata": {
+                            "explicitSessionFormat": "table",
                             "preferredFormat": "table",
                         },
                     }
@@ -63,6 +64,7 @@ def test_collect_last_preferred_format_from_presentation_decision_canvas():
                     {
                         "name": "execute_external_action",
                         "metadata": {
+                            "explicitSessionFormat": "canvas",
                             "preferredFormat": "text",
                             "presentationDecision": {
                                 "selected": "canvas",
@@ -88,6 +90,7 @@ def test_collect_last_preferred_format_cross_turn_chart_subtype():
                     {
                         "name": "execute_external_action",
                         "metadata": {
+                            "explicitSessionFormat": "chart",
                             "presentationDecision": {
                                 "selected": "line_chart",
                                 "availableViews": ["table", "line_chart"],
@@ -102,6 +105,62 @@ def test_collect_last_preferred_format_cross_turn_chart_subtype():
     assert (
         ChatPaginationConsolidationService.collect_last_preferred_format(previous_messages)
         == "chart"
+    )
+
+
+def test_collect_last_preferred_format_ignores_automatic_decision():
+    """Decisão automática do turno anterior não vira formato explícito herdado.
+
+    Regressão: reenvio no modo Automático herdava `selected: text` do turno
+    anterior e gravava `explicitSessionFormat: text` para sempre.
+    """
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "preferredFormat": "text",
+                            "presentationDecision": {
+                                "selected": "text",
+                                "reason": "pergunta operacional simples",
+                            },
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    assert (
+        ChatPaginationConsolidationService.collect_last_preferred_format(previous_messages)
+        is None
+    )
+
+
+def test_collect_last_preferred_format_ignores_automatic_visual_decision():
+    previous_messages = [
+        {
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "presentationDecision": {
+                                "selected": "line_chart",
+                                "availableViews": ["table", "line_chart"],
+                            },
+                        },
+                    }
+                ]
+            }
+        }
+    ]
+
+    assert (
+        ChatPaginationConsolidationService.collect_last_preferred_format(previous_messages)
+        is None
     )
 
 

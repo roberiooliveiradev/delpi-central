@@ -12,6 +12,7 @@ import {
   comunicadoImageCropCssProperties,
   getChartPartState,
   isChartPartRefEqual,
+  isTablePartRefEqual,
   isComunicadoVisualBoxBlock,
   mergeComunicadoChartOptions,
   partsToChartOptions,
@@ -45,6 +46,9 @@ import {
   resolveInputPartFrameRoot,
   resolveInputRefreshSourceIds,
   resolveInputTargetScope,
+  resolveComunicadoDataPageState,
+  resizeTableProjectionColumns,
+  selectedTableProjectionColumnKeys,
   resizeInputPartFrame,
   scaleInputPartTypographyOnResize,
   upsertInputPartState,
@@ -453,10 +457,14 @@ function EditorTableViewBlock({
     selectedIds,
     isBlockSelected,
     selectedTablePart,
+    selectedTableParts,
     selectBlock,
     selectBlocksByIds,
     selectTablePart,
     requestRibbonTab,
+    updateBlock,
+    loadMoreDataPreview,
+    loadingMoreSourceIds,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -464,13 +472,23 @@ function EditorTableViewBlock({
   const onPartPointerDown = useCallback(
     (ref: ComunicadoTablePartRef, event?: ReactPointerEvent) => {
       if (!event) return;
+      /* Ctrl/Cmd alterna a coluna; Shift estende o intervalo desde a coluna âncora. */
+      if (
+        ref.kind === "headerCell" &&
+        selectedId === block.id &&
+        (event.ctrlKey || event.metaKey || event.shiftKey)
+      ) {
+        selectTablePart(block.id, ref, event.shiftKey ? { range: true } : { additive: true });
+        requestRibbonTab("table");
+        return;
+      }
       if (event.shiftKey) {
         selectBlock(block.id, { additive: true });
         return;
       }
       const samePartSelected =
         selectedId === block.id &&
-        Boolean(selectedTablePart && selectedTablePart.kind === ref.kind);
+        Boolean(selectedTablePart && isTablePartRefEqual(selectedTablePart, ref));
       const contentPart = isCompositeContentPart("table_view", ref);
       const action = resolveCompositePartPointerAction({
         blockSelected: selectedId === block.id,
@@ -520,12 +538,37 @@ function EditorTableViewBlock({
     [block.id, requestRibbonTab, selectTablePart],
   );
 
+  const onColumnResize = useCallback(
+    (columnKey: string, widthPct: number) => {
+      /* Redimensionar uma coluna da multi-seleção aplica a largura a todas (Excel-like). */
+      const selectedKeys = selectedTableProjectionColumnKeys(block, selectedTableParts);
+      const keys = selectedKeys.includes(columnKey) ? selectedKeys : [columnKey];
+      updateBlock(block.id, {
+        tableProjection: resizeTableProjectionColumns(block, keys, widthPct),
+      });
+    },
+    [block, selectedTableParts, updateBlock],
+  );
+  const pageState = resolveComunicadoDataPageState(block.resolved);
+  const sourceId = block.dataSourceId?.trim();
+  const loadingMoreRows = Boolean(sourceId && loadingMoreSourceIds.includes(sourceId));
+
   const interaction =
     selectedId === block.id
       ? {
           selectedPart: selectedTablePart,
+          selectedParts: selectedTableParts,
           onPartPointerDown,
           onPartDoubleClick,
+          onColumnResize,
+          hasMoreRows: Boolean(sourceId && pageState?.hasMore),
+          loadingMoreRows,
+          onLoadMoreRows:
+            sourceId && pageState?.hasMore
+              ? () => {
+                  void loadMoreDataPreview(sourceId);
+                }
+              : undefined,
         }
       : null;
 

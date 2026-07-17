@@ -4,6 +4,47 @@ from __future__ import annotations
 
 from typing import Any
 
+_ENVELOPE_META_KEYS = frozenset({"meta", "success", "message", "errors", "error"})
+
+
+def _first_non_null(row: dict[str, Any], keys: tuple[str, ...]) -> Any:
+    """Retorna o primeiro campo presente e não nulo, preservando 0, False e string vazia.
+
+    `or` não pode ser usado aqui: zero é um dado operacional válido.
+    """
+    for key in keys:
+        if key in row and row[key] is not None:
+            return row[key]
+    return None
+
+
+def unwrap_operational_data(data: Any) -> Any:
+    """Normaliza payload api-delpi (envelope `{ success, data }` ou business data)."""
+    if isinstance(data, list):
+        return data
+    if not isinstance(data, dict):
+        return data
+
+    if data.get("success") is not None and "data" in data:
+        inner = data.get("data")
+        if isinstance(inner, (dict, list)):
+            return inner
+
+    inner = data.get("data")
+    if isinstance(inner, list):
+        return inner
+    if isinstance(inner, dict):
+        other_keys = [key for key in data.keys() if key not in _ENVELOPE_META_KEYS and key != "data"]
+        if not other_keys or all(data.get(key) in (None, "", [], {}) for key in other_keys):
+            return inner
+
+    return data
+
+
+def envelope_data(envelope: dict[str, Any] | Any) -> dict[str, Any]:
+    unwrapped = unwrap_operational_data(envelope)
+    return unwrapped if isinstance(unwrapped, dict) else {}
+
 
 def extract_series_points(
     data: Any,
@@ -11,22 +52,27 @@ def extract_series_points(
     *,
     branch: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Converte lista `points`/`series`/`serie`/`ranking` do payload em pontos de gráfico TV."""
-    if not isinstance(data, dict):
-        return []
-    candidates: list[str] = []
-    if series_field and str(series_field).strip():
-        candidates.append(str(series_field).strip())
-    for key in ("points", "series", "serie", "ranking", "levelData", "statusData", "leadByLevel"):
-        if key not in candidates:
-            candidates.append(key)
+    """Converte lista `points`/`series`/`serie`/`ranking` do payload em pontos de gráfico TV.
 
+    Quando `data` já é uma lista tabular (ex.: saída de uma transformação M sobre a série),
+    ela é a própria série canônica — os pontos vêm direto das linhas, sem procurar chaves.
+    """
+    data = unwrap_operational_data(data)
     raw: list[Any] | None = None
-    for key in candidates:
-        value = data.get(key)
-        if isinstance(value, list) and value:
-            raw = value
-            break
+    if isinstance(data, list):
+        raw = data
+    elif isinstance(data, dict):
+        candidates: list[str] = []
+        if series_field and str(series_field).strip():
+            candidates.append(str(series_field).strip())
+        for key in ("points", "series", "serie", "ranking", "levelData", "statusData", "leadByLevel"):
+            if key not in candidates:
+                candidates.append(key)
+        for key in candidates:
+            value = data.get(key)
+            if isinstance(value, list) and value:
+                raw = value
+                break
     if not isinstance(raw, list):
         return []
     branch_code = str(branch).strip() if branch else ""
@@ -34,27 +80,33 @@ def extract_series_points(
     for row in raw:
         if not isinstance(row, dict):
             continue
-        label = (
-            row.get("label")
-            or row.get("bucket")
-            or row.get("periodo")
-            or row.get("date")
-            or row.get("name")
-            or row.get("centro_custo")
-            or row.get("fornecedor")
-            or row.get("level")
-            or row.get("status")
+        label = _first_non_null(
+            row,
+            (
+                "label",
+                "bucket",
+                "periodo",
+                "date",
+                "name",
+                "centro_custo",
+                "fornecedor",
+                "level",
+                "status",
+            ),
         )
         value = row.get("value")
         if value is None:
-            value = row.get("total") or row.get("qty") or row.get("quantidade") or row.get("count")
+            value = _first_non_null(row, ("total", "qty", "quantidade", "count"))
         if value is None and branch_code:
             branch_key = branch_code.zfill(2)
-            value = (
-                row.get(f"oee_filial_{branch_key}")
-                or row.get(f"otd_filial_{branch_key}")
-                or row.get(f"oee_pct_filial_{branch_key}")
-                or row.get(f"ppm_filial_{branch_key}")
+            value = _first_non_null(
+                row,
+                (
+                    f"oee_filial_{branch_key}",
+                    f"otd_filial_{branch_key}",
+                    f"oee_pct_filial_{branch_key}",
+                    f"ppm_filial_{branch_key}",
+                ),
             )
         if value is None:
             for field_key, field_value in row.items():
@@ -70,8 +122,15 @@ def extract_series_points(
     return points
 
 
-def envelope_data(envelope: dict[str, Any] | Any) -> dict[str, Any]:
+def envelope_meta(envelope: dict[str, Any] | Any) -> dict[str, Any]:
     if not isinstance(envelope, dict):
         return {}
-    data = envelope.get("data")
-    return data if isinstance(data, dict) else {}
+    meta = envelope.get("meta")
+    return meta if isinstance(meta, dict) else {}
+
+
+def response_fields_from_meta(meta: dict[str, Any]) -> list[dict[str, Any]]:
+    fields = meta.get("fields")
+    if isinstance(fields, list):
+        return [field for field in fields if isinstance(field, dict)]
+    return []

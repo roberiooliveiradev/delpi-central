@@ -409,39 +409,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--dm-grid-gap);
   margin-bottom: var(--dm-section-gap);
-}/* Domínio — atalhos de navegação (não é SimpleKpi do kit). */
-.dashboard-maintenance .dm-shortcut-card{
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-}.dashboard-maintenance .dm-shortcut-card__icon{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  flex-shrink: 0;
-  background: color-mix(in srgb, var(--dm-accent) 10%, transparent);
-  color: var(--dm-accent);
-}.dashboard-maintenance .dm-shortcut-card__label{
-  margin: 0;
-  font-size: var(--dm-font-sm);
-  color: var(--dm-text-muted);
-}.dashboard-maintenance .dm-shortcut-card__value{
-  margin: 4px 0 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--dm-title);
-}.dashboard-maintenance .dm-shortcut-card__hint,
-.dashboard-maintenance .dm-shortcut-card__meta{
-  margin: 6px 0 0;
-  font-size: var(--dm-font-sm);
-  color: var(--dm-text-muted);
 }.dashboard-maintenance .dm-nav__link--back{
   display: inline-flex;
   align-items: center;

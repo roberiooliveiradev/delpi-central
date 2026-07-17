@@ -52,7 +52,7 @@ describe("resolveSelectionSections", () => {
           } as SelectionSectionContext["selected"],
         }),
       ),
-    ).toEqual(expect.arrayContaining(["shapeChrome", "display", "organize", "actions"]));
+    ).toEqual(expect.arrayContaining(["iconEditor", "display", "organize", "actions"]));
 
     expect(
       resolveSelectionSections(
@@ -174,7 +174,7 @@ describe("resolveSelectionSections", () => {
     ]);
   });
 
-  it("tabela tipada: design + layout + display", () => {
+  it("tabela tipada: design + layout sem truncamento", () => {
     expect(
       resolveSelectionSections(
         ctx({
@@ -190,7 +190,7 @@ describe("resolveSelectionSections", () => {
       "tableStyles",
       "tableBorders",
       "tableLayoutData",
-      "tableLayoutDisplay",
+      "tableLayoutSize",
       "tableLayoutAlign",
       "display",
       "organize",
@@ -211,7 +211,7 @@ describe("resolveSelectionSections", () => {
       "tableStyles",
       "tableBorders",
       "tableLayoutData",
-      "tableLayoutDisplay",
+      "tableLayoutSize",
       "tableLayoutAlign",
       "chartLayout",
       "chartStyles",

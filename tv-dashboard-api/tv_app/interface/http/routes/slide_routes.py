@@ -12,6 +12,7 @@ from tv_app.application.services.comunicado_config_validation_service import (
 )
 from tv_app.application.services.comunicado_data_enrichment_service import ComunicadoDataEnrichmentService
 from tv_app.application.services.branch_policy_service import validate_native_branch
+from tv_app.application.services.playlist_access_service import PlaylistAccessService
 from tv_app.application.services.presentation_change_notifier import notify_presentation_changed
 from tv_app.application.services.slide_preset_service import (
     SlidePresetNotFoundError,
@@ -29,6 +30,7 @@ from tv_app.interface.http.playlist_access_http import is_access_error, require_
 
 router = APIRouter(prefix="/playlists/{playlist_id}/slides", tags=["Slides"])
 _repo = PlaylistRepository()
+_access = PlaylistAccessService()
 
 
 class CreateSlideBody(BaseModel):
@@ -85,7 +87,7 @@ class ReorderItem(BaseModel):
 
 
 class ReorderBody(BaseModel):
-    items: list[ReorderItem]
+    items: list[ReorderItem] = Field(min_length=1)
 
 
 class FromPresetBody(BaseModel):
@@ -110,12 +112,19 @@ def _prepare_native_config(
     return cleaned
 
 
+def _actor_id(user: Any) -> str | None:
+    return _access.actor_id(user)
+
+
 @router.post("")
 def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
     guarded = require_playlist_access(request, playlist_id, need="edit")
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     native_config = body.nativeConfig
     try:
         if body.slideType == "native" and native_config is not None:
@@ -135,6 +144,8 @@ def create_slide(request: Request, playlist_id: UUID, body: CreateSlideBody):
             "externalSandbox": body.externalSandbox,
             "transitionStyle": body.transitionStyle,
         },
+        actor_user_id=actor,
+        reason="slide_created",
     )
     notify_presentation_changed(
         playlist_id=str(playlist_id),
@@ -149,6 +160,9 @@ def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPres
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
         preset_payload = resolve_preset_slide(body.presetKey)
     except SlidePresetNotFoundError:
@@ -164,7 +178,12 @@ def create_slide_from_preset(request: Request, playlist_id: UUID, body: FromPres
             validate_native_branch(preset_payload.get("nativeConfig"), user=user)
         except ValueError as exc:
             return fail(str(exc), 422)
-    slide = _repo.add_slide(playlist_id, preset_payload)
+    slide = _repo.add_slide(
+        playlist_id,
+        preset_payload,
+        actor_user_id=actor,
+        reason="slide_imported",
+    )
     notify_presentation_changed(
         playlist_id=str(playlist_id),
         reason="slide_imported",
@@ -178,9 +197,14 @@ def reorder_slides(request: Request, playlist_id: UUID, body: ReorderBody):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     slides = _repo.reorder_slides(
         playlist_id,
         [{"id": str(item.id), "sortOrder": item.sortOrder} for item in body.items],
+        actor_user_id=actor,
+        reason="slides_reordered",
     )
     notify_presentation_changed(
         playlist_id=str(playlist_id),
@@ -195,6 +219,9 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     payload = body.model_dump(exclude_unset=True)
     try:
         if payload.get("nativeConfig") is not None:
@@ -203,8 +230,11 @@ def update_slide(request: Request, playlist_id: UUID, slide_id: UUID, body: Upda
         return fail(str(exc), 422)
     try:
         slide = _repo.update_slide(
+            playlist_id,
             slide_id,
             payload,
+            actor_user_id=actor,
+            reason="slide_updated",
         )
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
@@ -227,7 +257,7 @@ def preview_data_block(
         return guarded
     user, _ = guarded
     try:
-        _repo.get_slide(slide_id)
+        _repo.get_slide(slide_id, playlist_id=playlist_id)
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
     auth = request.headers.get("Authorization")
@@ -257,8 +287,16 @@ def delete_slide(request: Request, playlist_id: UUID, slide_id: UUID):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
-        _repo.delete_slide(slide_id)
+        _repo.delete_slide(
+            playlist_id,
+            slide_id,
+            actor_user_id=actor,
+            reason="slide_deleted",
+        )
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
     notify_presentation_changed(
@@ -274,14 +312,16 @@ def duplicate_slide(request: Request, playlist_id: UUID, slide_id: UUID):
     if is_access_error(guarded):
         return guarded
     user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
-        existing = _repo.get_slide(slide_id)
-    except SlideNotFoundError:
-        return fail("Tela não encontrada.", 404)
-    if existing["playlistId"] != str(playlist_id):
-        return fail("Tela não pertence a esta programação.", 404)
-    try:
-        slide = _repo.duplicate_slide(slide_id)
+        slide = _repo.duplicate_slide(
+            playlist_id,
+            slide_id,
+            actor_user_id=actor,
+            reason="slide_duplicated",
+        )
     except SlideNotFoundError:
         return fail("Tela não encontrada.", 404)
     notify_presentation_changed(

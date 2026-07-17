@@ -282,6 +282,11 @@
       "total_records"
     ]
   },
+  "documentExport": {
+    "ready": "Arquivo pronto para download: **{filename}**.",
+    "readyGeneric": "Arquivo pronto para download.",
+    "nextAction": "Baixar o arquivo pelo botão exibido na resposta"
+  },
   "generic": {
     "emptyList": "A consulta não retornou registros.",
     "rowCount": "Foram retornados **{count}** registros.",

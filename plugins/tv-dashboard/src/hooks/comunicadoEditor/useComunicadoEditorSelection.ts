@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type MutableRefObject,
+  type SetStateAction,
 } from "react";
 
 import {
@@ -12,12 +13,14 @@ import {
   defaultNamedStyleForBlockType,
   filterStageSelectableIds,
   isComunicadoVisualBoxBlock,
+  isTablePartRefEqual,
   resolveNamedStyleSelectionForBlock,
   resolveStageSelectionTargetId,
   resolveTextBlockDisplayRuns,
   selectionListTypeState,
   selectionNamedStyleState,
   selectionRunStyleState,
+  suggestDefaultTextProjection,
   syncTextBlockFromRuns,
   toggleListTypeOnAllLines,
   visualBoxEnsureRichTextBlock,
@@ -71,7 +74,19 @@ export function useComunicadoEditorSelection({
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [editingChartPart, setEditingChartPart] = useState<ComunicadoChartPartRef | null>(null);
-  const [selectedTablePart, setSelectedTablePart] = useState<ComunicadoTablePartRef | null>(null);
+  /** Multi-seleção de partes da tabela (colunas) — o último item é a parte primária. */
+  const [selectedTableParts, setSelectedTableParts] = useState<ComunicadoTablePartRef[]>([]);
+  const selectedTablePart = selectedTableParts[selectedTableParts.length - 1] ?? null;
+  const setSelectedTablePart = useCallback(
+    (value: SetStateAction<ComunicadoTablePartRef | null>) => {
+      setSelectedTableParts((current) => {
+        const primary = current[current.length - 1] ?? null;
+        const next = typeof value === "function" ? value(primary) : value;
+        return next ? [next] : [];
+      });
+    },
+    [],
+  );
   const [selectedKpiPart, setSelectedKpiPart] = useState<ComunicadoKpiPartRef | null>(null);
   const [editingKpiPart, setEditingKpiPart] = useState<ComunicadoKpiPartRef | null>(null);
   const [selectedInputPart, setSelectedInputPart] = useState<ComunicadoInputPartRef | null>(null);
@@ -281,7 +296,11 @@ export function useComunicadoEditorSelection({
   }, []);
 
   const selectTablePart = useCallback(
-    (blockId: string, part: ComunicadoTablePartRef) => {
+    (
+      blockId: string,
+      part: ComunicadoTablePartRef,
+      options?: { additive?: boolean; range?: boolean },
+    ) => {
       flushActiveTextEdit();
       setSelectedIds([blockId]);
       setEditingTextId(null);
@@ -290,14 +309,38 @@ export function useComunicadoEditorSelection({
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
       setSelectedInputPart(null);
-      setSelectedTablePart(part);
+      setSelectedTableParts((current) => {
+        /* Multi-seleção só entre colunas (headerCell) — Excel-like. */
+        if (part.kind === "headerCell" && (options?.additive || options?.range)) {
+          const headerCells = current.filter(
+            (item): item is Extract<ComunicadoTablePartRef, { kind: "headerCell" }> =>
+              item.kind === "headerCell",
+          );
+          if (options.range && headerCells.length > 0) {
+            const anchor = headerCells[headerCells.length - 1];
+            const start = Math.min(anchor.colIndex, part.colIndex);
+            const end = Math.max(anchor.colIndex, part.colIndex);
+            const range: ComunicadoTablePartRef[] = [];
+            for (let colIndex = start; colIndex <= end; colIndex += 1) {
+              if (colIndex !== part.colIndex) range.push({ kind: "headerCell", colIndex });
+            }
+            return [...range, part];
+          }
+          if (options.additive && headerCells.length > 0) {
+            const already = headerCells.some((item) => isTablePartRefEqual(item, part));
+            if (already) return headerCells.filter((item) => !isTablePartRefEqual(item, part));
+            return [...headerCells, part];
+          }
+        }
+        return [part];
+      });
       requestRibbonTab("element");
     },
     [flushActiveTextEdit, requestRibbonTab],
   );
 
   const clearTablePartSelection = useCallback(() => {
-    setSelectedTablePart(null);
+    setSelectedTableParts([]);
   }, []);
 
   const selectKpiPart = useCallback(
@@ -526,6 +569,30 @@ export function useComunicadoEditorSelection({
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
   }, [configRef, editingTextId, selected, updateBlockTextFieldsRef, updateBlocksRef]);
 
+  const insertDataFieldAtCursor = useCallback(() => {
+    if (!editingTextId) return;
+    const block = configRef.current.blocks?.find((item) => item.id === editingTextId);
+    if (!block || !isComunicadoVisualBoxBlock(block)) return;
+    const sourceId = block.dataSourceId?.trim();
+    if (!sourceId) return;
+    const source = configRef.current.blocks?.find((item) => item.id === sourceId);
+    const resolved =
+      source && "resolved" in source && source.resolved ? source.resolved : undefined;
+    const projection =
+      block.textProjection ??
+      suggestDefaultTextProjection(resolved) ??
+      undefined;
+    const field = projection?.field?.trim();
+    if (!field) return;
+    const bridge = textEditorBridgesRef.current.get(editingTextId);
+    bridge?.insertDataRefAtSelection?.({
+      field,
+      aggregation: projection?.aggregation,
+      format: projection?.format,
+      label: field,
+    });
+  }, [configRef, editingTextId]);
+
   /** Ao trocar de slide: limpa seleção (não auto-seleciona o 1º bloco). */
   const resetSelectionForSlide = useCallback(() => {
     setSelectedIds([]);
@@ -554,6 +621,7 @@ export function useComunicadoEditorSelection({
     beginEditChartPart,
     cancelEditChartPart,
     selectedTablePart,
+    selectedTableParts,
     setSelectedTablePart,
     selectTablePart,
     clearTablePartSelection,
@@ -580,6 +648,7 @@ export function useComunicadoEditorSelection({
     toggleEditingTextRunStyle,
     toggleSelectedTextListType,
     applySelectedNamedTextStyle,
+    insertDataFieldAtCursor,
     ribbonTabRequest,
     setRibbonTabRequest,
     requestRibbonTab,

@@ -2,6 +2,7 @@ import { Activity } from "lucide-react";
 import { useState } from "react";
 
 import { PUC_DASHBOARD_ROOT, PUC_PREFIX } from "../../app/bemPrefix";
+import { ActionButton, BackLink, IconButton } from "../../components/actions";
 import {
   ChartCard,
   chartCardBemClasses,
@@ -26,6 +27,8 @@ import {
   kpiCardBemClasses,
   MetricKpiCard,
   metricKpiCardBemClasses,
+  NavigationCard,
+  navigationCardBemClasses,
   PageHeader,
   pageHeaderBrandBemClasses,
   PanelCard,
@@ -40,6 +43,7 @@ import {
 import type { CatalogEntryDraft } from "../types";
 
 const pageHeaderCn = pageHeaderBrandBemClasses(PUC_PREFIX);
+const navCardCn = navigationCardBemClasses(PUC_PREFIX);
 const panelCn = panelCardBemClasses(PUC_PREFIX);
 const contentCn = contentCardBemClasses(PUC_PREFIX);
 const kpiCn = kpiCardBemClasses(PUC_PREFIX);
@@ -55,6 +59,94 @@ const formActionsCn = formActionsBemClasses(PUC_PREFIX);
 const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
 
 export const layoutCatalogEntries: CatalogEntryDraft[] = [
+  {
+    id: "layout.ActionButton",
+    family: "layout",
+    exportName: "ActionButton",
+    title: "ActionButton",
+    description: "Ações consistentes entre MFEs, com variantes sem CSS local.",
+    docAnchor: "actionbutton-e-backlink",
+    propsSummary: ["variant", "type", "disabled", "onClick"],
+    demos: [
+      {
+        id: "variants",
+        label: "Variantes",
+        render: () => (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <ActionButton variant="primary">Salvar</ActionButton>
+            <ActionButton>Editar</ActionButton>
+            <ActionButton variant="ghost">Atualizar</ActionButton>
+            <ActionButton variant="link">Gerenciar</ActionButton>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.BackLink",
+    family: "layout",
+    exportName: "BackLink",
+    title: "BackLink",
+    description: "Ação de retorno para cabeçalhos e páginas internas.",
+    docAnchor: "actionbutton-e-backlink",
+    propsSummary: ["onClick", "className"],
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => <BackLink onClick={() => undefined}>Voltar para atas</BackLink>,
+      },
+    ],
+  },
+  {
+    id: "layout.IconButton",
+    family: "layout",
+    exportName: "IconButton",
+    title: "IconButton",
+    description: "Botão compacto só com ícone.",
+    docAnchor: "iconbutton",
+    propsSummary: ["aria-label", "tone", "onClick"],
+    demos: [
+      {
+        id: "tones",
+        label: "Tons",
+        render: () => (
+          <div style={{ display: "flex", gap: 8 }}>
+            <IconButton aria-label="Fechar">×</IconButton>
+            <IconButton aria-label="Remover" tone="danger">
+              ×
+            </IconButton>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.NavigationCard",
+    family: "layout",
+    exportName: "NavigationCard",
+    title: "NavigationCard",
+    description: "Card clicável para unidades, filiais e atalhos de módulo.",
+    docAnchor: "navigationcard",
+    propsSummary: ["title", "meta", "icon", "onClick", "classNames"],
+    demos: [
+      {
+        id: "default",
+        label: "Padrão",
+        render: () => (
+          <div style={{ maxWidth: 280 }}>
+            <NavigationCard
+              classNames={navCardCn}
+              icon={<Activity size={22} />}
+              title="Santa Catarina"
+              meta="Filial 01"
+              onClick={() => undefined}
+            />
+          </div>
+        ),
+      },
+    ],
+  },
   {
     id: "layout.PageHeader",
     family: "layout",

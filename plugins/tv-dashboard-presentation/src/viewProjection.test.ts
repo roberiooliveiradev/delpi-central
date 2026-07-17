@@ -9,6 +9,7 @@ import {
   applyViewProjection,
   discoverResolvedFieldOptions,
   kpiProjectionFromSelectedFields,
+  normalizeTableProjection,
   suggestDefaultProjections,
 } from "./viewProjection";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
@@ -184,5 +185,18 @@ describe("persistência sem selectedValueFields", () => {
     const out = serialized.blocks.find((b) => b.type === "chart_view");
     expect(out?.selectedValueFields).toBeUndefined();
     expect(out?.chartProjection).toBeTruthy();
+  });
+});
+
+describe("normalizeTableProjection", () => {
+  it("preserva widthPct das colunas", () => {
+    const projection = normalizeTableProjection({
+      columns: [
+        { key: "oee", visible: true, widthPct: 40 },
+        { key: "otd", visible: true, widthPct: 200 },
+      ],
+    });
+    expect(projection?.columns?.[0]?.widthPct).toBe(40);
+    expect(projection?.columns?.[1]?.widthPct).toBe(100);
   });
 });

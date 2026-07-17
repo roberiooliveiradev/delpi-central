@@ -290,4 +290,77 @@ describe("assistantContentSegments", () => {
     expect(markdown).toContain("Panorama fabril");
     expect(markdown).toContain("305");
   });
+
+  it("modo Texto explícito mantém segmento download dos downloadArtifacts", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          explicitSessionFormat: "text",
+          downloadArtifacts: [
+            {
+              href: "/apps/api-delpi/products/90261699/structure/excel?format=xlsx",
+              filename: "Estrutura_90261699.xlsx",
+              label: "Baixar Estrutura_90261699.xlsx",
+              contentType:
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            },
+          ],
+          renderPlan: {
+            version: 1,
+            layoutMode: "single",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "assistantMessage" },
+              { kind: "download", slot: "artifacts", source: "downloadArtifacts" },
+            ],
+          },
+          presentationDecision: {
+            selected: "text",
+            fallback: "text",
+            layoutMode: "single",
+          },
+        },
+      },
+    ];
+
+    const segments = buildAssistantContentSegments(
+      "Arquivo pronto para download: **Estrutura_90261699.xlsx**.",
+      toolCalls,
+    );
+
+    const download = segments.find((item) => item.kind === "download");
+
+    expect(download).toBeDefined();
+    expect(download?.kind === "download" && download.artifacts[0]?.filename).toBe(
+      "Estrutura_90261699.xlsx",
+    );
+  });
+
+  it("decisão text sem renderPlan mantém segmento download", () => {
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          ok: true,
+          downloadArtifacts: [
+            {
+              href: "/apps/api-delpi/products/90261699/structure/excel?format=xlsx",
+              filename: "Estrutura_90261699.xlsx",
+              label: "Baixar Estrutura_90261699.xlsx",
+            },
+          ],
+          presentationDecision: {
+            selected: "text",
+            fallback: "text",
+            layoutMode: "single",
+          },
+        },
+      },
+    ];
+
+    const segments = buildAssistantContentSegments("Arquivo pronto.", toolCalls);
+
+    expect(segments.some((item) => item.kind === "download")).toBe(true);
+  });
 });

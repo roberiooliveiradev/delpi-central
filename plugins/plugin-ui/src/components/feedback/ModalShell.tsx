@@ -40,6 +40,10 @@ export type ModalShellProps = {
    * Portais vão para `document.body` — sem este escopo o CSS do plugin não aplica.
    */
   portalScopeClassName?: string;
+  /** Host alternativo do portal; útil para modais contidos na área de um MFE. */
+  portalTarget?: Element | null;
+  /** Faz overlay e wrapper ocuparem o portalTarget, não o viewport inteiro. */
+  containedInPortalTarget?: boolean;
 };
 
 export function modalShellBemClasses(prefix: string): ModalShellClassNames {
@@ -62,6 +66,9 @@ export function modalShellBemClasses(prefix: string): ModalShellClassNames {
   };
 }
 
+/** Marca o host MFE enquanto o modal contido está aberto (stacking vs chrome do portal). */
+export const DELPI_MODAL_HOST_ATTR = "data-delpi-modal-host";
+
 export function ModalShell({
   open,
   title,
@@ -79,6 +86,8 @@ export function ModalShell({
   lockPageScroll,
   overlayAriaHidden = false,
   portalScopeClassName,
+  portalTarget,
+  containedInPortalTarget = false,
 }: ModalShellProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -125,6 +134,16 @@ export function ModalShell({
   }, [open, lockPageScroll]);
 
   useEffect(() => {
+    if (!open || !containedInPortalTarget || !(portalTarget instanceof HTMLElement)) {
+      return;
+    }
+    portalTarget.setAttribute(DELPI_MODAL_HOST_ATTR, "true");
+    return () => {
+      portalTarget.removeAttribute(DELPI_MODAL_HOST_ATTR);
+    };
+  }, [open, containedInPortalTarget, portalTarget]);
+
+  useEffect(() => {
     if (!open || hasAutoFocusedRef.current) {
       return;
     }
@@ -160,9 +179,27 @@ export function ModalShell({
     return null;
   }
 
-  const dialogClass = [classNames.dialog, className].filter(Boolean).join(" ");
-  const overlayClass = [overlayClassName, classNames.overlay].filter(Boolean).join(" ");
-  const scopeClass = [portalScopeClassName, portalTheme.hostClassName].filter(Boolean).join(" ");
+  const dialogClass = [
+    classNames.dialog,
+    containedInPortalTarget ? "delpi-ui-modal--host-fill" : null,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const overlayClass = [
+    overlayClassName,
+    classNames.overlay,
+    containedInPortalTarget ? "delpi-ui-modal-overlay--contained" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const scopeClass = [
+    portalScopeClassName,
+    portalTheme.hostClassName,
+    containedInPortalTarget ? "delpi-ui-modal-portal--contained" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const titleNode = (
     <h2 id={titleId} className={classNames.title}>
@@ -177,15 +214,37 @@ export function ModalShell({
       </p>
     ) : null;
 
+  /*
+   * Geometria do modo contido é inline: CSS de MFE (`.dashboard-x .td-modal`)
+   * tem especificidade maior que as classes do kit e quebraria o host-fill.
+   */
+  const containedOverlayStyle = containedInPortalTarget
+    ? ({ position: "absolute", inset: 0, padding: 0 } as const)
+    : undefined;
+  const containedDialogStyle = containedInPortalTarget
+    ? ({
+        width: "100%",
+        height: "100%",
+        maxWidth: "none",
+        maxHeight: "none",
+        borderRadius: 0,
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+      } as const)
+    : undefined;
+
   const overlay = (
     <div
       className={overlayClass}
+      style={containedOverlayStyle}
       onClick={onClose}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
       <div
         ref={resolvedDialogRef}
         className={dialogClass}
+        style={containedDialogStyle}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -223,10 +282,20 @@ export function ModalShell({
   );
 
   return createPortal(
-    <div className={scopeClass} style={portalTheme.style} data-theme={portalTheme.dataTheme ?? undefined}>
+    <div
+      className={scopeClass}
+      style={{
+        ...portalTheme.style,
+        ...(containedInPortalTarget
+          ? { position: "absolute", inset: 0, minWidth: 0, minHeight: 0 }
+          : {}),
+      }}
+      data-theme={portalTheme.dataTheme ?? undefined}
+      data-modal-contained={containedInPortalTarget ? "true" : undefined}
+    >
       {overlay}
     </div>,
-    document.body,
+    portalTarget ?? document.body,
   );
 }
 
@@ -237,7 +306,7 @@ export type DashboardModalShellProps = Omit<
 
 export type ModalShellVariant = "default" | "wide" | "page";
 
-export function createModalShell(config: {
+export type CreateModalShellConfig = {
   prefix: string;
   overlayClassName?: string;
   closeAriaLabel?: string;
@@ -246,7 +315,9 @@ export function createModalShell(config: {
   /** Variante visual canônica (`wide` / `page` = modal quase fullscreen). */
   variant?: ModalShellVariant;
   classNames?: Partial<ModalShellClassNames>;
-}) {
+};
+
+export function createModalShell(config: CreateModalShellConfig) {
   const classNames: ModalShellClassNames = {
     ...modalShellBemClasses(config.prefix),
     ...config.classNames,
@@ -268,6 +339,31 @@ export function createModalShell(config: {
         overlayClassName={config.overlayClassName}
         closeAriaLabel={config.closeAriaLabel ?? props.closeAriaLabel}
         portalScopeClassName={config.portalScopeClassName}
+      />
+    );
+  };
+}
+
+/**
+ * Modal que preenche a área do MFE (portal no root do plugin), sem cobrir
+ * sidebar/chrome do host Minha DELPI.
+ */
+export function createHostContainedModalShell(
+  config: CreateModalShellConfig & { portalScopeClassName: string },
+) {
+  const Modal = createModalShell(config);
+  const hostSelector = `.${config.portalScopeClassName.trim().split(/\s+/)[0]}`;
+
+  return function HostContainedModalShell(props: DashboardModalShellProps) {
+    const portalTarget =
+      typeof document !== "undefined"
+        ? document.querySelector<HTMLElement>(hostSelector)
+        : null;
+    return (
+      <Modal
+        {...props}
+        portalTarget={portalTarget}
+        containedInPortalTarget={Boolean(portalTarget)}
       />
     );
   };

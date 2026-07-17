@@ -338,7 +338,71 @@ export function renderPlanHasOnlyProseSegments(
   );
 }
 
-const RENDER_PLAN_VISUAL_KINDS = new Set(["table", "chart", "tree", "kpi", "dashboard"]);
+const RENDER_PLAN_VISUAL_KINDS = new Set([
+  "table",
+  "chart",
+  "tree",
+  "kpi",
+  "dashboard",
+  "download",
+]);
+
+export type ChatDownloadArtifactReader = {
+  href: string;
+  filename: string;
+  contentType?: string;
+  label?: string;
+};
+
+export function getDownloadArtifactsFromToolCalls(
+  toolCalls?: ChatToolCall[],
+): ChatDownloadArtifactReader[] {
+  if (!Array.isArray(toolCalls)) {
+    return [];
+  }
+
+  const artifacts: ChatDownloadArtifactReader[] = [];
+  const seen = new Set<string>();
+
+  for (const toolCall of toolCalls) {
+    const metadata = toolCall.metadata as Record<string, unknown> | undefined;
+    const candidates = metadata?.downloadArtifacts;
+
+    if (!Array.isArray(candidates)) {
+      continue;
+    }
+
+    for (const candidate of candidates) {
+      if (!candidate || typeof candidate !== "object") {
+        continue;
+      }
+
+      const raw = candidate as Record<string, unknown>;
+      const href = String(raw.href || raw.downloadPath || raw.download_url || "").trim();
+      const filename = String(raw.filename || raw.fileName || "download.bin").trim();
+
+      if (!href) {
+        continue;
+      }
+
+      const key = `${href}::${filename}`;
+
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      artifacts.push({
+        href,
+        filename,
+        contentType: String(raw.contentType || raw.content_type || "").trim() || undefined,
+        label: String(raw.label || "").trim() || undefined,
+      });
+    }
+  }
+
+  return artifacts;
+}
 
 /** Kinds visuais permitidos pelo renderPlan v1; `null` = payload legado sem contrato. */
 export function getRenderPlanAllowedVisualKinds(

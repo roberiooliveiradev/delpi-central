@@ -13,6 +13,7 @@ import {
 } from "./assistantContentLayout";
 import { withDecisionLayer } from "./assistantContentDecisionLayer";
 import {
+  getDownloadArtifactsFromToolCalls,
   getPresentationDecisionFromToolCalls,
   getPresentationPairFromToolCalls,
   getRenderPlanFromToolCalls,
@@ -54,6 +55,27 @@ function withPresentationLayer(
   return withDecisionLayer(finalizePresentationSegments(segments, toolCalls), toolCalls);
 }
 
+/**
+ * Download é entrega da action, não visualização alternativa — deve aparecer
+ * inclusive em modo texto explícito ou seleção text da decisão.
+ */
+function withDownloadArtifactSegments(
+  segments: AssistantContentSegment[],
+  toolCalls: ChatToolCall[],
+): AssistantContentSegment[] {
+  if (segments.some((segment) => segment.kind === "download")) {
+    return segments;
+  }
+
+  const artifacts = getDownloadArtifactsFromToolCalls(toolCalls);
+
+  if (!artifacts.length) {
+    return segments;
+  }
+
+  return [...segments, { kind: "download", artifacts }];
+}
+
 export function buildAssistantContentSegments(
   content: string,
   toolCalls: ChatToolCall[] = [],
@@ -64,7 +86,10 @@ export function buildAssistantContentSegments(
       toolCalls,
     );
 
-    return withDecisionLayer(parseMarkdownAndCodeSegments(markdown), toolCalls);
+    return withDecisionLayer(
+      withDownloadArtifactSegments(parseMarkdownAndCodeSegments(markdown), toolCalls),
+      toolCalls,
+    );
   }
 
   const pair = getPresentationPairFromToolCalls(toolCalls);
@@ -86,7 +111,10 @@ export function buildAssistantContentSegments(
     proseOnlyRenderPlan &&
     !(nativeSingle.active && nativeSingle.kind && nativeSingle.kind !== "text" && visuals.length)
   ) {
-    return withDecisionLayer(parseMarkdownAndCodeSegments(rawMarkdown), toolCalls);
+    return withDecisionLayer(
+      withDownloadArtifactSegments(parseMarkdownAndCodeSegments(rawMarkdown), toolCalls),
+      toolCalls,
+    );
   }
 
   if (
@@ -95,7 +123,10 @@ export function buildAssistantContentSegments(
     !renderPlan &&
     !(nativeSingle.active && nativeSingle.kind && nativeSingle.kind !== "text" && visuals.length)
   ) {
-    return withDecisionLayer(parseMarkdownAndCodeSegments(rawMarkdown), toolCalls);
+    return withDecisionLayer(
+      withDownloadArtifactSegments(parseMarkdownAndCodeSegments(rawMarkdown), toolCalls),
+      toolCalls,
+    );
   }
 
   const nativeSingleSegments = buildNativeSingleViewSegments(rawMarkdown, toolCalls, visuals);

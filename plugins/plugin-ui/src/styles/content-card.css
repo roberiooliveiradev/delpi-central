@@ -1,0 +1,40 @@
+/**
+ * ContentCard — cabeçalho opcional sobre .delpi-ui-card.
+ */
+
+.delpi-ui-content-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.delpi-ui-content-card__header-content {
+  min-width: 0;
+}
+
+.delpi-ui-content-card__header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.delpi-ui-content-card__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--delpi-ui-title, var(--delpi-ui-text, var(--text, #111111)));
+}
+
+.delpi-ui-content-card__description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.7)));
+}
+
+.delpi-ui-content-card__body {
+  min-width: 0;
+}

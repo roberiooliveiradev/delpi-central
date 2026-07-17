@@ -48,6 +48,33 @@ function serializeBindingForFingerprint(binding: ComunicadoDataBinding): Record<
   };
 }
 
+type FingerprintBlock = {
+  id: string;
+  type: string;
+  dataBinding: Record<string, unknown>;
+  dataTransform?: unknown;
+};
+
+function diffChangedFetchableBlockIds(
+  prevBlocks: unknown,
+  nextBlocks: unknown,
+  allFetchableIds: string[],
+): string[] {
+  const fetchableSet = new Set(allFetchableIds);
+  const prevList = (Array.isArray(prevBlocks) ? prevBlocks : []) as FingerprintBlock[];
+  const nextList = (Array.isArray(nextBlocks) ? nextBlocks : []) as FingerprintBlock[];
+  const prevById = new Map(prevList.map((block) => [block.id, block]));
+  const changed: string[] = [];
+  for (const block of nextList) {
+    if (!block?.id || !fetchableSet.has(block.id)) continue;
+    const previous = prevById.get(block.id);
+    if (!previous || JSON.stringify(previous) !== JSON.stringify(block)) {
+      changed.push(block.id);
+    }
+  }
+  return changed.length > 0 ? changed : allFetchableIds;
+}
+
 /** Chave estável só com filtros e bindings — mudanças de layout não disparam refetch. */
 export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
   const dataFilters = config.dataFilters ?? {};
@@ -64,14 +91,29 @@ export function buildDataPreviewFingerprint(config: ComunicadoConfig): string {
       id: block.id,
       type: block.type,
       dataBinding: serializeBindingForFingerprint(block.dataBinding),
+      dataTransform: block.dataTransform ?? null,
     }));
   const viewLinks = (config.blocks ?? [])
-    .filter((block) => block.type === "chart_view" || block.type === "table_view" || block.type === "kpi_view")
+    .filter(
+      (block) =>
+        block.type === "chart_view" ||
+        block.type === "table_view" ||
+        block.type === "kpi_view" ||
+        ((block.type === "heading" || block.type === "text" || block.type === "shape") &&
+          "dataSourceId" in block &&
+          block.dataSourceId?.trim()),
+    )
     .map((block) => ({
       id: block.id,
       dataSourceId:
         block.type === "chart_view" || block.type === "table_view" || block.type === "kpi_view"
           ? block.dataSourceId
+          : "dataSourceId" in block
+            ? block.dataSourceId
+            : undefined,
+      textProjection:
+        block.type === "heading" || block.type === "text" || block.type === "shape"
+          ? block.textProjection?.field
           : undefined,
     }));
   const inputBlocks = (config.blocks ?? [])
@@ -113,11 +155,11 @@ function parsePreviewFingerprint(fingerprint: string): PreviewFingerprintPayload
 }
 
 /**
- * Quais fontes marcar stale quando o fingerprint muda.
- * Se só inputs/dataFilters mudaram → ids afetados pelos blocos input;
- * se binding/viewLink mudou → todas as fetchable.
+ * Quais fontes recarregar quando o fingerprint de dados muda.
+ * Só vínculo visual (viewLinks) → nenhum refetch (visuais leem resolved da fonte).
+ * Binding/transform de fonte → só ids alterados; filtros → fontes afetadas ou todas.
  */
-export function resolveStaleSourceIdsForPreviewChange(params: {
+export function resolvePreviewRefreshSourceIds(params: {
   previousFingerprint: string | null;
   nextFingerprint: string;
   allFetchableIds: string[];
@@ -129,20 +171,33 @@ export function resolveStaleSourceIdsForPreviewChange(params: {
   const next = parsePreviewFingerprint(nextFingerprint);
   if (!prev || !next) return allFetchableIds;
 
-  const bindingsChanged =
-    JSON.stringify(prev.blocks ?? null) !== JSON.stringify(next.blocks ?? null) ||
-    JSON.stringify(prev.viewLinks ?? null) !== JSON.stringify(next.viewLinks ?? null);
-  if (bindingsChanged) return allFetchableIds;
-
+  const blocksChanged =
+    JSON.stringify(prev.blocks ?? null) !== JSON.stringify(next.blocks ?? null);
   const inputsChanged =
     JSON.stringify(prev.inputs ?? null) !== JSON.stringify(next.inputs ?? null);
   const dataFiltersChanged =
     JSON.stringify(prev.dataFilters ?? null) !== JSON.stringify(next.dataFilters ?? null);
+  const viewLinksChanged =
+    JSON.stringify(prev.viewLinks ?? null) !== JSON.stringify(next.viewLinks ?? null);
 
-  if (!inputsChanged && !dataFiltersChanged) return allFetchableIds;
+  if (!blocksChanged && !inputsChanged && !dataFiltersChanged) {
+    return viewLinksChanged ? [] : allFetchableIds;
+  }
 
-  // Mudança só em blocos input → auto-refresh do filtro cobre; não acusar stale.
-  if (inputsChanged && !dataFiltersChanged) return [];
+  if (blocksChanged) {
+    return diffChangedFetchableBlockIds(prev.blocks, next.blocks, allFetchableIds);
+  }
 
-  return inputAffectedSourceIds.length > 0 ? inputAffectedSourceIds : allFetchableIds;
+  if (inputsChanged || dataFiltersChanged) {
+    return inputAffectedSourceIds.length > 0 ? inputAffectedSourceIds : allFetchableIds;
+  }
+
+  return allFetchableIds;
+}
+
+/** @deprecated Use resolvePreviewRefreshSourceIds */
+export function resolveStaleSourceIdsForPreviewChange(
+  params: Parameters<typeof resolvePreviewRefreshSourceIds>[0],
+): string[] {
+  return resolvePreviewRefreshSourceIds(params);
 }

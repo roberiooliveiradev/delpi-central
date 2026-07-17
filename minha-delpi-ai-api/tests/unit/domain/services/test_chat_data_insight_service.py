@@ -71,6 +71,45 @@ def test_build_generic_empty_list_detects_empty_anomaly():
     )
 
 
+def test_build_document_export_never_reports_empty_result():
+    metadata = {
+        "path": "/products/90261757/structure/excel",
+        "apiDelpiResponseMeta": {
+            "operationId": "get_product_structure_excel",
+            "entity": "product_structure_excel",
+            "shape": "document_export",
+        },
+        "downloadArtifacts": [
+            {
+                "href": "/apps/api-delpi/products/90261757/structure/excel?format=xlsx",
+                "filename": "Estrutura_90261757.xlsx",
+                "label": "Baixar Estrutura_90261757.xlsx",
+            }
+        ],
+    }
+    data = {
+        "message": "Arquivo Excel gerado com sucesso!",
+        "filename": "Estrutura_90261757.xlsx",
+        "downloadPath": "/products/90261757/structure/excel?format=xlsx",
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert data_answer.get("profileKey") == "document_export"
+
+    summary = data_answer.get("summary") or {}
+
+    assert "Estrutura_90261757.xlsx" in str(summary.get("answer") or "")
+    assert "não retornou registros" not in str(summary.get("answer") or "").lower()
+    assert summary.get("riskLevel") == "ok"
+    assert not any(
+        anomaly.get("type") == "empty_list"
+        for anomaly in (data_answer.get("anomalies") or [])
+        if isinstance(anomaly, dict)
+    )
+
+
 def test_build_sql_result_uses_presentation_rows():
     metadata = {
         "path": "/data/sql",

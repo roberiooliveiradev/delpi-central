@@ -22,6 +22,7 @@ import type {
   ContentRunSelectionStyleState,
   ContentRunStyleToggleKey,
   ComunicadoContentRun,
+  PresentationSelectionUpdateEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { MediaAsset } from "../api/tvDashboardApi";
@@ -43,6 +44,8 @@ export type TextEditorBridge = {
   refreshSelectionState: () => void;
   /** Persiste o rascunho do contentEditable antes de sair do modo edição. */
   commitPending?: () => void;
+  /** Insere run dinâmico (`dataRef`) na posição do cursor. */
+  insertDataRefAtSelection?: (dataRef: import("@delpi/tv-dashboard-presentation").ComunicadoTextDataRef) => void;
 };
 
 export type ComunicadoRibbonTabRequest =
@@ -90,6 +93,8 @@ export type ComunicadoEditorContextValue = {
   selectedId: string | null;
   selected: ComunicadoBlock | null;
   selectedBlocks: ComunicadoBlock[];
+  /** Seleções de outros editores no slide atual (chrome remoto, somente leitura). */
+  remoteSelections: PresentationSelectionUpdateEvent[];
   isBlockSelected: (blockId: string) => boolean;
   selectBlock: (blockId: string, options?: { additive?: boolean }) => void;
   selectBlocksByIds: (blockIds: string[]) => void;
@@ -106,7 +111,13 @@ export type ComunicadoEditorContextValue = {
   cancelEditChartPart: () => void;
   /** Onda 4G.8 — subseleção de parte da tabela. */
   selectedTablePart: ComunicadoTablePartRef | null;
-  selectTablePart: (blockId: string, part: ComunicadoTablePartRef) => void;
+  /** Multi-seleção de colunas (Ctrl/Shift no cabeçalho) — o último item é a parte primária. */
+  selectedTableParts: ComunicadoTablePartRef[];
+  selectTablePart: (
+    blockId: string,
+    part: ComunicadoTablePartRef,
+    options?: { additive?: boolean; range?: boolean },
+  ) => void;
   clearTablePartSelection: () => void;
   /** KPI — subseleção de parte do card (título, valor, ícone…). */
   selectedKpiPart: ComunicadoKpiPartRef | null;
@@ -183,13 +194,21 @@ export type ComunicadoEditorContextValue = {
   connectSelected: () => void;
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
   /** Atualiza input + espelho dataFilters (escopo slide) num único commit. */
-  patchInputBlock: (blockId: string, inputPatch: Partial<ComunicadoInputBlock["input"]>) => void;
+  patchInputBlock: (
+    blockId: string,
+    inputPatch: Partial<ComunicadoInputBlock["input"]>,
+    filterBundle?: Record<string, string | number | boolean | null | undefined>,
+  ) => void;
   /** Debounce refresh das fontes amarradas ao filtro. */
   scheduleInputFilterRefresh: (block: ComunicadoInputBlock) => void;
   scheduleInputFilterRefreshById: (blockId: string) => void;
   setSpeakerNotes: (notes: string) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
+  /** Aplica patches de vários blocos em um único commit de config/histórico. */
+  updateBlocksAtomically: (
+    patches: ReadonlyArray<{ blockId: string; patch: Partial<ComunicadoBlock> }>,
+  ) => void;
   updateBlockContent: (blockId: string, content: string) => void;
   updateBlockTextFields: (
     blockId: string,
@@ -213,6 +232,8 @@ export type ComunicadoEditorContextValue = {
     textStrokeWidth?: number;
     textReflection?: boolean;
   }) => void;
+  /** Insere run dinâmico no cursor do texto em edição (requer fonte + campo). */
+  insertDataFieldAtCursor: () => void;
   removeSelected: () => void;
   duplicateSelected: () => void;
   cutSelected: () => void;
@@ -249,6 +270,10 @@ export type ComunicadoEditorContextValue = {
   triggerUpload: (target: "block" | "background") => void;
   setBackgroundColor: (value: string) => void;
   setBackgroundGradient: (from: string, to: string, angle?: number) => void;
+  /** Vincula texto/forma selecionado à fonte preferida do slide (ou abre catálogo). */
+  bindSelectedVisualBoxToData: () => void;
+  /** Insere bloco de texto e vincula campo dinâmico quando há fonte no slide. */
+  insertTextDataFieldBlock: () => void;
   applySlideTemplate: (nativeConfig: Record<string, unknown>) => void;
   applySlideTheme: (theme: ComunicadoSlideTheme) => void;
   alignSelected: (command: LayoutAlignCommand) => void;
@@ -280,12 +305,14 @@ export type ComunicadoEditorContextValue = {
   uploadCustomFont: (file: File) => Promise<void>;
   dataPreviewLoading: boolean;
   dataPreviewError: string | null;
-  /** Fingerprint de dados mudou sem refetch — clicar em Atualizar visual. */
+  /** Preview desatualizado após falha de fetch — usar «Atualizar visual». */
   isDataPreviewStale: boolean;
   staleSourceIds: string[];
   /** Fontes com fetch em andamento (spinner do filtro). */
   refreshingSourceIds: string[];
+  loadingMoreSourceIds: string[];
   refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
+  loadMoreDataPreview: (blockId: string) => Promise<void>;
   globalRefreshSec: number;
   lastDataDisplayMode: ComunicadoDataDisplayMode;
   setLastDataDisplayMode: (mode: ComunicadoDataDisplayMode) => void;

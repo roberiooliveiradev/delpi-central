@@ -240,6 +240,12 @@ export function resolveVisualSegmentsForRenderSpec(
     return [];
   }
 
+  if (kind === "download") {
+    const download = visuals.find((visual) => visual.kind === "download");
+
+    return download ? [download] : [];
+  }
+
   if (kind === "table") {
     const plan = getStackPresentationPlanFromToolCalls(toolCalls);
     const tables = visuals.filter((visual) => visual.kind === "table");
@@ -535,6 +541,16 @@ export function buildSegmentsFromRenderPlan(
 
       if (visual) {
         appendUnique(segments, visual);
+      }
+
+      continue;
+    }
+
+    if (kind === "download") {
+      const download = takeVisual("download", visualPool, usedVisuals);
+
+      if (download) {
+        appendUnique(segments, download);
       }
     }
   }

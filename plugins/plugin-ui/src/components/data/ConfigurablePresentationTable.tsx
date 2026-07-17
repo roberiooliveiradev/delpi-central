@@ -6,7 +6,11 @@ import {
   type ConfigurableTablePreset,
   type PresentationTableColumn,
 } from "./configurableTableOptions";
-import type { TableInteraction, TablePartsMap } from "./configurableTableParts";
+import {
+  selectedTableColumnIndexes,
+  type TableInteraction,
+  type TablePartsMap,
+} from "./configurableTableParts";
 import { useConfigurableTableClasses } from "./configurableTableClasses";
 import {
   TableBody,
@@ -50,6 +54,16 @@ export function ConfigurablePresentationTable({
   const ariaLabel = title || "Tabela de dados";
   const interactive = Boolean(interaction?.onPartPointerDown || interaction?.onPartDoubleClick);
   const totalRow = showTotalRow ? buildConfigurableTableTotalRow(columns, rows) : null;
+  const selectedColumns = selectedTableColumnIndexes(interaction);
+  const hasColumnWidths = columns.some((column) => column.widthPct != null && column.widthPct > 0);
+  const layoutClassName = [
+    className,
+    interactive ? `${cn.root}--interactive` : null,
+    hasColumnWidths ? cn.rootWrap : null,
+    hasColumnWidths ? cn.rootFixedCols : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (rows.length === 0) {
     return (
@@ -66,7 +80,7 @@ export function ConfigurablePresentationTable({
   return (
     <TableContainer
       options={config}
-      className={[className, interactive ? `${cn.root}--interactive` : null].filter(Boolean).join(" ")}
+      className={layoutClassName}
       tableParts={tableParts}
     >
       <TableTitle
@@ -75,11 +89,18 @@ export function ConfigurablePresentationTable({
         interaction={interaction}
         tableParts={tableParts}
       />
-      <TableFrame ariaLabel={ariaLabel}>
+      <TableFrame
+        ariaLabel={ariaLabel}
+        columns={columns}
+        hasMoreRows={interaction?.hasMoreRows}
+        loadingMoreRows={interaction?.loadingMoreRows}
+        onLoadMoreRows={interaction?.onLoadMoreRows}
+      >
         <TableHeader visible={showHeader} interaction={interaction} tableParts={tableParts}>
           {columns.map((column, colIndex) => (
             <TableHeaderCell
               key={column.key}
+              columnKey={column.key}
               colIndex={colIndex}
               interaction={interaction}
               tableParts={tableParts}
@@ -96,6 +117,7 @@ export function ConfigurablePresentationTable({
                   key={`${column.key}-${rowIndex}`}
                   rowIndex={rowIndex}
                   colIndex={colIndex}
+                  columnSelected={selectedColumns.has(colIndex)}
                   interaction={interaction}
                   tableParts={tableParts}
                 >
@@ -111,6 +133,7 @@ export function ConfigurablePresentationTable({
                   key={`${column.key}-total`}
                   rowIndex={rows.length}
                   colIndex={colIndex}
+                  columnSelected={selectedColumns.has(colIndex)}
                   interaction={interaction}
                   tableParts={tableParts}
                 >

@@ -10,7 +10,11 @@ from tv_app.application.services.data.tv_data_param_defaults_service import (
     apply_catalog_param_defaults,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
-from tv_app.application.services.tv_dashboard_content_service import message
+from tv_app.application.services.series_points_extractor import (
+    envelope_meta,
+    response_fields_from_meta,
+    unwrap_operational_data,
+)
 from tv_app.application.services.tv_date_range_preset_service import (
     PERIOD_DAYS_KEY,
     apply_date_range_preset,
@@ -173,15 +177,18 @@ class DelpiOperationalGateway:
             params=query,
             authorization=self._auth(authorization),
         )
+        api_meta = envelope_meta(envelope)
+        business_data = unwrap_operational_data(envelope)
+        response_fields = response_fields_from_meta(api_meta)
         return {
             "operationId": operation_id,
             "meta": {
                 "operationId": operation_id,
-                "entity": route.get("metaShape") or "scalar",
-                "shape": route.get("metaShape") or "scalar",
-                "fields": route.get("paramSchema") or {},
+                "entity": api_meta.get("entity") or route.get("metaShape") or "scalar",
+                "shape": api_meta.get("shape") or route.get("metaShape") or "scalar",
+                "fields": response_fields or route.get("paramSchema") or {},
             },
-            "data": envelope,
+            "data": business_data,
             "route": {
                 "label": route.get("label"),
                 "category": route.get("category"),

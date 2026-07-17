@@ -103,9 +103,14 @@ import {
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
+  isTextDataBoundBlockType,
 } from "./comunicadoDataArchitecture";
 import { normalizeSelectedValueFields } from "./resolveKpiMetrics";
-import { normalizeDataTransform } from "./dataTransform";
+import {
+  isDataTransformV1,
+  isDataTransformV2,
+  normalizeDataTransform,
+} from "./dataTransform";
 import {
   chartProjectionFromSelectedFields,
   kpiProjectionFromSelectedFields,
@@ -114,11 +119,13 @@ import {
   normalizeTableProjection,
   tableProjectionFromSelectedFields,
 } from "./viewProjection";
+import { normalizeTextProjection } from "./textViewProjection";
 
 export {
   isDataBoundEditorBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
+  isTextDataBoundBlockType,
   isFetchableDataBlockType,
   getLinkedDataSourceIds,
   shouldHideDataSourceOnStage,
@@ -524,7 +531,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     return base;
   }
   if (type === "icon") {
-    return { zIndex: 2, color: DECK_COLOR_SURFACE, strokeWidth: 2 };
+    return { zIndex: 2, color: DECK_SHAPE_DEFAULTS.fill, strokeWidth: 2, opacity: 1 };
   }
   if (isDataSourceBlockType(type)) {
     /* Sem color: o chrome da fonte usa accent no CSS; injetar TEXT_STRONG
@@ -756,6 +763,8 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   if (block.type === "heading" || block.type === "text") {
     const textFields = serializeTextBlockFields(block);
     Object.assign(base, textFields);
+    if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
+    if (block.textProjection?.field?.trim()) base.textProjection = { ...block.textProjection };
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
   } else if (block.type === "image" || block.type === "video") {
@@ -766,6 +775,10 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "shape") {
     base.shape = block.shape;
     if (block.content) base.content = block.content;
+    const serializedRuns = serializeContentRuns(block.contentRuns);
+    if (serializedRuns) base.contentRuns = serializedRuns;
+    if (block.dataSourceId?.trim()) base.dataSourceId = block.dataSourceId.trim();
+    if (block.textProjection?.field?.trim()) base.textProjection = { ...block.textProjection };
     if (block.href) base.href = block.href;
     if (block.linkTarget) base.linkTarget = block.linkTarget;
     if (block.vertices && block.vertices.length > 0) {
@@ -805,8 +818,10 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       maxRows: block.dataBinding.maxRows,
       refreshSec: block.dataBinding.refreshSec,
     };
-    if (block.dataTransform?.steps?.length) {
+    if (isDataTransformV1(block.dataTransform) && block.dataTransform.steps.length) {
       base.dataTransform = { steps: block.dataTransform.steps.map((step) => ({ ...step })) };
+    } else if (isDataTransformV2(block.dataTransform)) {
+      base.dataTransform = { ...block.dataTransform };
     }
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
@@ -932,6 +947,8 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
   if (type === "heading" || type === "text") {
     const legacyContent = typeof block.content === "string" ? block.content : "";
     const textFields = syncTextBlockFields(legacyContent, block.contentRuns);
+    const dataSourceId = typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
+    const textProjection = normalizeTextProjection(block.textProjection);
     return attachBlockAnimations(
       {
         id,
@@ -940,8 +957,14 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         style,
         groupId,
         ...textFields,
+        ...(dataSourceId ? { dataSourceId } : {}),
+        ...(textProjection ? { textProjection } : {}),
         href: links.href,
         linkTarget: links.linkTarget,
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
       },
       block,
     );
@@ -950,6 +973,12 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
     const kind = shape && isComunicadoShapeKind(shape) ? shape : "rectangle";
     const vertices = normalizeVertices(block.vertices);
     const connector = normalizeShapeConnector(block.connector);
+    const shapeTextFields = syncTextBlockFields(
+      typeof block.content === "string" ? block.content : "",
+      block.contentRuns,
+    );
+    const dataSourceId = typeof block.dataSourceId === "string" ? block.dataSourceId.trim() : undefined;
+    const textProjection = normalizeTextProjection(block.textProjection);
     return attachBlockAnimations(
       {
         id,
@@ -958,11 +987,18 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         style: { ...defaultStyle("shape", kind), ...style },
         shape: kind,
         groupId,
-        content: typeof block.content === "string" ? block.content : "",
+        content: shapeTextFields.content,
+        ...(shapeTextFields.contentRuns ? { contentRuns: shapeTextFields.contentRuns } : {}),
+        ...(dataSourceId ? { dataSourceId } : {}),
+        ...(textProjection ? { textProjection } : {}),
         href: links.href,
         linkTarget: links.linkTarget,
         ...(vertices ? { vertices } : {}),
         ...(connector ? { connector } : {}),
+        resolved:
+          block.resolved && typeof block.resolved === "object"
+            ? (block.resolved as ComunicadoDataResolved)
+            : undefined,
       },
       block,
     );

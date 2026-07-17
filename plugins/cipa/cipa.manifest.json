@@ -1,0 +1,110 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "cipa",
+  "name": "CIPA",
+  "description": "Gestão de atas, assinaturas e processos da CIPA por unidade",
+  "icon": "clipboard-check-icon",
+  "version": "0.1.4",
+  "type": "microfrontend",
+  "basePath": "/apps/cipa",
+  "entry": "/apps/cipa/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "cipa.view",
+      "name": "Visualizar atas da CIPA",
+      "description": "Consultar atas, detalhes e trilha de auditoria.",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.manage",
+      "name": "Gerenciar atas da CIPA",
+      "description": "Criar, editar, excluir, enviar, cancelar, finalizar, exportar PDF, gerenciar signatários e cadastro de membros/cargos.",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.sign",
+      "name": "Assinar atas da CIPA",
+      "description": "Assinar ou recusar atas pendentes e configurar a assinatura pessoal.",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.admin",
+      "name": "Administrar CIPA",
+      "description": "Acesso total ao módulo em todas as unidades (substitui view, manage e sign).",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.unit.filial-01",
+      "name": "CIPA — Unidade Filial 01",
+      "description": "Escopo de dados da filial 01 (SC). Combine com view, manage ou sign.",
+      "module": "cipa"
+    },
+    {
+      "code": "cipa.unit.filial-02",
+      "name": "CIPA — Unidade Filial 02",
+      "description": "Escopo de dados da filial 02 (ES). Combine com view, manage ou sign.",
+      "module": "cipa"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/cipa",
+      "label": "CIPA",
+      "permission": "cipa.view",
+      "icon": "clipboard-check-icon",
+      "order": 40,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/cipa/filial-01",
+      "label": "CIPA — Filial 01",
+      "permission": "cipa.unit.filial-01",
+      "icon": "clipboard-check-icon",
+      "order": 41,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/filial-02",
+      "label": "CIPA — Filial 02",
+      "permission": "cipa.unit.filial-02",
+      "icon": "clipboard-check-icon",
+      "order": 42,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/filial-01/members",
+      "label": "CIPA — Membros Filial 01",
+      "permission": "cipa.manage",
+      "icon": "clipboard-check-icon",
+      "order": 42.1,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/filial-02/members",
+      "label": "CIPA — Membros Filial 02",
+      "permission": "cipa.manage",
+      "icon": "clipboard-check-icon",
+      "order": 42.2,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/cipa/my-signature",
+      "label": "Minha assinatura",
+      "permission": "cipa.sign",
+      "icon": "clipboard-check-icon",
+      "order": 43,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/cipa/pending",
+      "label": "CIPA — Pendências de assinatura",
+      "permission": "cipa.sign",
+      "icon": "clipboard-check-icon",
+      "order": 44,
+      "showInMenu": false
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

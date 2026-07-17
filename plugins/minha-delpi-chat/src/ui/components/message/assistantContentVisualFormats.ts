@@ -272,7 +272,7 @@ export function filterSegmentsByVisualKind(
   const filtered = !activeKind
     ? suppressRedundantStandaloneVisuals(segments)
     : segments.filter((segment) => {
-        if (segment.kind === "decision") {
+        if (segment.kind === "decision" || segment.kind === "download") {
           return true;
         }
 
@@ -336,7 +336,8 @@ export function resolveVisibleAssistantSegments(
       (segment) =>
         segment.kind === "decision" ||
         segment.kind === "markdown" ||
-        segment.kind === "code",
+        segment.kind === "code" ||
+        segment.kind === "download",
     );
 
     if (textSegments.length) {

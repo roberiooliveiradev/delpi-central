@@ -336,6 +336,13 @@ export type ChatTemplateProseArchive = {
 
 export type ChatProseDeliveryMode = "template" | "llm" | "direct";
 
+export type ChatDownloadArtifact = {
+  href: string;
+  filename: string;
+  contentType?: string;
+  label?: string;
+};
+
 export type ChatToolCall = {
   name?: string;
   arguments?: Record<string, unknown>;
@@ -345,6 +352,7 @@ export type ChatToolCall = {
     storyPresentation?: ChatStoryPresentation | null;
     dataAnswer?: ChatDataAnswer | null;
     presentation?: ChatPresentation | null;
+    downloadArtifacts?: ChatDownloadArtifact[] | null;
     responsePreview?: string | null;
     actionId?: string | null;
     provider?: string | null;

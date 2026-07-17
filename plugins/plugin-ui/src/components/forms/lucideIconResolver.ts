@@ -1,5 +1,6 @@
 import * as LucideIcons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Star } from "lucide-react";
 
 import { LUCIDE_ICON_PT_ALIASES, LUCIDE_ICON_PT_LABELS } from "./lucideIconPtLabels";
 
@@ -45,13 +46,20 @@ export function listLucideIconNames(): string[] {
 }
 
 export function resolveLucideIcon(iconName?: string | null): LucideIcon | null {
-  const normalized = String(iconName ?? "")
-    .trim()
-    .toLowerCase();
-
-  if (!normalized) {
+  const raw = String(iconName ?? "").trim();
+  if (!raw) {
     return null;
   }
+
+  if (isPascalCaseLucideExport(raw)) {
+    const direct = (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[raw] ?? null;
+    if (direct) {
+      iconCache.set(raw.toLowerCase(), direct);
+      return direct;
+    }
+  }
+
+  const normalized = raw.toLowerCase();
 
   if (iconCache.has(normalized)) {
     return iconCache.get(normalized) ?? null;
@@ -70,6 +78,14 @@ export function resolveLucideIcon(iconName?: string | null): LucideIcon | null {
 
   iconCache.set(normalized, component);
   return component;
+}
+
+/** Resolve ícone Lucide ou retorna fallback garantido (ex.: Star, Gauge). */
+export function resolveLucideIconOrFallback(
+  iconName?: string | null,
+  fallback = "Star",
+): LucideIcon {
+  return resolveLucideIcon(iconName) ?? resolveLucideIcon(fallback) ?? Star;
 }
 
 export function isLucideIconName(iconName?: string | null): boolean {
@@ -136,6 +152,43 @@ export const CURATED_LUCIDE_ICON_NAMES = [
 ] as const;
 
 export type CuratedLucideIconName = (typeof CURATED_LUCIDE_ICON_NAMES)[number];
+
+/** Inserção rápida no editor TV (ribbon) — PascalCase. */
+export const DECK_QUICK_LUCIDE_ICON_NAMES = [
+  "Star",
+  "Factory",
+  "TrendingUp",
+  "TrendingDown",
+  "Gauge",
+  "Activity",
+  "Target",
+  "Users",
+  "Shield",
+  "AlertTriangle",
+  "CheckCircle2",
+  "BarChart3",
+  "Percent",
+  "DollarSign",
+  "Package",
+] as const;
+
+export type DeckQuickLucideIconName = (typeof DECK_QUICK_LUCIDE_ICON_NAMES)[number];
+
+export type LucideIconOption = {
+  name: string;
+  label: string;
+};
+
+/** Monta itens `{ name, label }` com rótulo PT do catálogo canônico. */
+export function buildLucideIconOptions(names: readonly string[]): LucideIconOption[] {
+  return names
+    .map((name) => {
+      const pascal = name.includes("-") ? toPascalCaseFromKebab(name) : name;
+      if (!resolveLucideIcon(pascal)) return null;
+      return { name: pascal, label: lucideIconPtLabel(pascal) };
+    })
+    .filter((item): item is LucideIconOption => item != null);
+}
 
 export type LucideIconSectionDef = {
   id: string;

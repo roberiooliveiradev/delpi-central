@@ -8,6 +8,8 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 Gráfico / KPI / tabela compostos: [playbook §19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#19-gráfico-composto-por-primitivos--edição-no-palco-onda-4g)  
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
+Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. O piloto funcional está ativo com telemetria segura; profiling, explain e caches continuam desligados.
+
 ---
 
 ## Funcionalidades
@@ -19,11 +21,24 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - **Link público** sem login: `/p/tv-dashboard/present/{token}`
 - Copiar link, QR, regenerar token, desativar / excluir
 - Status «TV online» via heartbeat na rota pública
-- Presença colaborativa leve no editor («Também editando»), sem edição simultânea/CRDT
+- **Colaboração ao vivo:** alterações do slide são transmitidas por `slide_draft`; a seleção de outros editores aparece no componente com borda vermelha e balão de identidade. Não é CRDT: conflitos simultâneos no mesmo bloco continuam last-write-wins.
 - Catálogo de presets e importação de telas prontas
 - RBAC por filial e visão consolidada
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
+- **Histórico de revisões:** a Timeline canônica de `@delpi/plugin-ui` mostra autor (nome/e-mail), campos e telas adicionadas, removidas, editadas ou reordenadas; snapshots antigos mantêm o resumo por motivo/prévia. Undo/redo e restauração manual usam snapshots atômicos do backend com controle otimista de revisão.
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
+- **Preparar dados (M DELPI):** workbench de consultas em modal via `createHostContainedModalShell` do `@delpi/plugin-ui` — ocupa a área útil do MFE e não cobre a sidebar/chrome da Minha DELPI
+- **Preparar dados M (Fase 7):** editor multiline e ribbon das fases anteriores,
+  profiling opt-in, qualidade/distribuição amostradas, explain e tempo por etapa;
+  AbortController cancela requests e o backend aplica deadline
+- **Prévia M (`DataTable` grid-preview):** grade com bordas, wrap, resize/autofit de colunas, seleção de coluna/linha/célula, sort no cabeçalho (etapa M) e drag para reordenar colunas; Ctrl+C copia a seleção em TSV
+- **Semântica de células:** `null`, texto vazio, campo ausente e erro M localizado são estados distintos; `0` e `false` permanecem valores. A grade usa `DataCellValue` do `@delpi/plugin-ui`, erros exibem tooltip/ARIA e a cópia TSV preserva `null`, `ausente` e `#ERROR:<code>`.
+- **Fluxo único da prévia M:** abrir, compilar, mutar, trocar etapa e solicitar profiling convergem em `useDataQueryWorkbench.preview`; refresh da mesma consulta mantém as linhas na tela, troca de consulta descarta dados anteriores e respostas atrasadas são rejeitadas por `queryId` + sequência.
+- **Status da prévia:** o rodapé informa carga inicial, atualização, aplicação, quantidade de linhas, alterações pendentes e erros de célula sem substituir a grade por um loading intermitente.
+- **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
+- **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
+- **Séries temporais fiéis à API:** a granularidade da rota é preservada (ex.: `day` = um dia por linha), sem reagrupar datas em faixas; a tabela recebe todos os pontos retornados pela API (até 366 pontos em séries anuais diárias).
+- **Dados em texto/forma (4P):** título, texto e forma podem projetar um campo da fonte (`textProjection` ou `contentRuns[].dataRef`) — ribbon «Campo em texto», inspetor e TV pública via enrichment
 - **Multi-métrica:** rotas com vários `valueFields` (ex. LMP summary) entregam `kpiMetrics`; o gestor marca quais campos exibir na fonte e/ou no visual (KPI em grade, barras ou tabela indicador/valor)
 - **Dois escopos no palco:** seleção **global** do widget (frame no slide) vs **subcomponente** (fundo, valor, título, chartArea, etc.) — ver [§19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 - **Aplicar estilo a irmãos:** botão no inspetor KPI (título/valor/subtítulo), tabela (células/cabeçalhos) e marcadores do gráfico
@@ -75,7 +90,7 @@ Base gateway: `/apps/tv-dashboard/`
 |---|---|
 | `tv-dashboard-api` | Backend (`/apps/tv-dashboard-api/`) |
 | `@delpi/tv-dashboard-presentation` | `usePresentationEngine`, `NativeSlideView`, CSS `tdp-*` |
-| `@delpi/plugin-ui` | Tooltips, labels, `DataRouteCatalogPanel`, `FormatPaneShell`, `ContextMenu`, `CenteredScaledPreview` — **remote MF** |
+| `@delpi/plugin-ui` | Tooltips, labels, `Timeline`, `DataRouteCatalogPanel`, `FormatPaneShell`, `ContextMenu`, `CenteredScaledPreview` — **remote MF** |
 | `public-hub` | View pública `present` (rebuild separado ao alterar apresentação) |
 
 Integração: `@delpi/tv-dashboard-presentation` bundled (`COPY` no Dockerfile); `@delpi/plugin-ui` via `pluginUiRemote()` + `preparePluginUiRemote()`. Ver [module-federation.md](../plugin-ui/docs/module-federation.md).
@@ -88,6 +103,9 @@ Integração: `@delpi/tv-dashboard-presentation` bundled (`COPY` no Dockerfile);
 GET    /apps/tv-dashboard-api/playlists
 POST   /apps/tv-dashboard-api/playlists
 GET    /apps/tv-dashboard-api/playlists/{id}
+GET    /apps/tv-dashboard-api/playlists/{id}/history
+GET    /apps/tv-dashboard-api/playlists/{id}/history/{snapshotId}
+POST   /apps/tv-dashboard-api/playlists/{id}/history/{snapshotId}/restore
 PATCH  /apps/tv-dashboard-api/playlists/{id}
 DELETE /apps/tv-dashboard-api/playlists/{id}
 GET    /apps/tv-dashboard-api/playlists/{id}/preview-payload
@@ -103,9 +121,19 @@ GET    /apps/tv-dashboard-api/playlists/{id}/media/{assetId}
 GET    /apps/tv-dashboard-api/data/routes
 GET    /apps/tv-dashboard-api/data/routes/{operationId}
 POST   /apps/tv-dashboard-api/data/preview-block
+POST   /apps/tv-dashboard-api/data/m/compile
+POST   /apps/tv-dashboard-api/data/m/explain
+GET    /apps/tv-dashboard-api/data/m/capabilities
+GET    /apps/tv-dashboard-api/data/m/functions
 GET    /apps/tv-dashboard-api/content/ui
 GET    /apps/tv-dashboard-api/native-screens
 ```
+
+O histórico consome `PlaylistHistoryEntry` com `authorName`, `authorEmail` e `change`
+(`available`, `comparedToRevision`, `playlistFields`, diferenças de slides e `totals`).
+Quando `change.available` não existe ou é falso, o painel usa `reason` e `preview` como
+fallback compatível com snapshots antigos. O frontend apenas apresenta esse contrato;
+o cálculo das diferenças permanece no backend.
 
 ### Editor — blocos de dados (slide Personalizado)
 

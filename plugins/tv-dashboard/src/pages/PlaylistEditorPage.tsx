@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  buildAdminPresentationWsUrl,
   parseComunicadoConfig,
   serializeComunicadoConfig,
-  usePresentationRealtime,
   type PresentationPresencePeer,
+  type PresentationSelectionUpdateEvent,
 } from "@delpi/tv-dashboard-presentation";
 
 import {
@@ -51,6 +50,7 @@ import { KeyboardShortcutsCatalogModal } from "../components/KeyboardShortcutsCa
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { useDeckEditorHistory } from "../hooks/useDeckEditorHistory";
 import { useDeckEditorKeyboard } from "../hooks/useDeckEditorKeyboard";
+import { usePlaylistEditorSync } from "../hooks/usePlaylistEditorSync";
 import type { DeckEditorSnapshot } from "../utils/deckEditorHistory";
 import {
   pasteTitleFromClipboard,
@@ -119,6 +119,7 @@ export function PlaylistEditorPage({
     Record<string, PresentationPayload["slides"][number]>
   >({});
   const saveComunicadoTimerRef = useRef<number | null>(null);
+  const wsDraftTimerRef = useRef<number | null>(null);
   const pendingComunicadoSaveRef = useRef<{
     slide: Slide;
     nativeConfig: Record<string, unknown>;
@@ -127,6 +128,11 @@ export function PlaylistEditorPage({
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
   const [presencePeers, setPresencePeers] = useState<PresentationPresencePeer[]>([]);
+  const [remoteSelectionsByClientId, setRemoteSelectionsByClientId] = useState<
+    Record<string, PresentationSelectionUpdateEvent>
+  >({});
+  /** Bump a cada mudança vinda de outro editor (WS) — o editor aceita o novo value. */
+  const [remoteConfigRevision, setRemoteConfigRevision] = useState(0);
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
@@ -187,12 +193,21 @@ export function PlaylistEditorPage({
 
   const deckHistoryValue = useMemo<DeckEditorHistoryContextValue>(
     () => ({
+      playlistId,
       recordBeforeChange: deckHistory.recordBeforeChange,
+      confirmChange: deckHistory.confirmChange,
+      cancelChange: deckHistory.cancelChange,
       undo: deckHistory.undo,
       redo: deckHistory.redo,
       canUndo: deckHistory.canUndo,
       canRedo: deckHistory.canRedo,
       historyEpoch: deckHistory.historyEpoch,
+      historyPage: deckHistory.historyPage,
+      loading: deckHistory.loading,
+      restoring: deckHistory.restoring,
+      error: deckHistory.error,
+      loadHistory: deckHistory.loadHistory,
+      restoreRevision: deckHistory.restoreRevision,
       setLiveComunicadoConfig: (config) => {
         liveComunicadoConfigRef.current = config;
       },
@@ -200,18 +215,27 @@ export function PlaylistEditorPage({
     [
       deckHistory.canRedo,
       deckHistory.canUndo,
+      deckHistory.cancelChange,
+      deckHistory.confirmChange,
+      deckHistory.error,
+      deckHistory.historyPage,
       deckHistory.historyEpoch,
+      deckHistory.loadHistory,
+      deckHistory.loading,
       deckHistory.recordBeforeChange,
       deckHistory.redo,
+      deckHistory.restoreRevision,
+      deckHistory.restoring,
       deckHistory.undo,
+      playlistId,
     ],
   );
 
   useDeckEditorKeyboard({
     undo: deckHistory.undo,
     redo: deckHistory.redo,
-    canUndo: deckHistory.canUndo,
-    canRedo: deckHistory.canRedo,
+    canUndo: deckHistory.canUndo && !deckHistory.restoring,
+    canRedo: deckHistory.canRedo && !deckHistory.restoring,
   });
 
   const slides = useMemo(
@@ -243,26 +267,33 @@ export function PlaylistEditorPage({
     [slides],
   );
 
-  const realtimeConnection = useMemo(() => {
-    const token = getAccessToken();
-    if (!token) return { wsUrl: null, presence: undefined };
-    return {
-      wsUrl: buildAdminPresentationWsUrl(playlistId, token),
-      presence: {
-        clientId: getEditorPresenceClientId(),
-        displayName: resolveEditorDisplayName(token),
-        role: "editor" as const,
-      },
-    };
-  }, [playlistId]);
+  const accessToken = getAccessToken();
+  const editorPresence = useMemo(
+    () =>
+      accessToken
+        ? {
+            clientId: getEditorPresenceClientId(),
+            displayName: resolveEditorDisplayName(accessToken),
+            role: "editor" as const,
+          }
+        : undefined,
+    [accessToken],
+  );
 
   const otherEditors = useMemo(
     () =>
       presencePeers.filter(
-        (peer) =>
-          peer.role === "editor" && peer.clientId !== realtimeConnection.presence?.clientId,
+        (peer) => peer.role === "editor" && peer.clientId !== editorPresence?.clientId,
       ),
-    [presencePeers, realtimeConnection.presence?.clientId],
+    [presencePeers, editorPresence?.clientId],
+  );
+
+  const currentRemoteSelections = useMemo(
+    () =>
+      Object.values(remoteSelectionsByClientId).filter(
+        (selection) => selection.slideId === selectedSlideId,
+      ),
+    [remoteSelectionsByClientId, selectedSlideId],
   );
 
   const refreshPreviewThumbnails = useCallback(async () => {
@@ -285,26 +316,54 @@ export function PlaylistEditorPage({
       const pl = await getPlaylist(playlistId);
       setPlaylist((current) => {
         const remoteSlides = pl.slides ?? current?.slides ?? [];
-        const live = liveComunicadoConfigRef.current;
+        const pending = pendingComunicadoSaveRef.current;
         const activeId = selectedSlideIdRef.current;
         const slides = remoteSlides.map((slide) => {
           if (
-            live &&
+            pending &&
             activeId &&
             slide.id === activeId &&
+            slide.id === pending.slide.id &&
             slide.nativeScreenKey === "custom_message"
           ) {
-            return { ...slide, nativeConfig: live };
+            return { ...slide, nativeConfig: pending.nativeConfig };
           }
           return slide;
         });
         return current ? { ...pl, slides } : { ...pl, slides };
       });
+      setRemoteConfigRevision((revision) => revision + 1);
       await refreshPreviewThumbnails();
     } catch {
       // mantém estado local se a sincronização falhar
     }
   }, [playlistId, refreshPreviewThumbnails]);
+
+  const applyRemoteSlideDraft = useCallback(
+    (slideId: string, nativeConfig: Record<string, unknown>, clientId: string) => {
+      if (clientId === editorPresence?.clientId) return;
+      const pending = pendingComunicadoSaveRef.current;
+      if (pending?.slide.id === slideId) return;
+
+      setPlaylist((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          slides: (current.slides ?? []).map((slide) =>
+            slide.id === slideId && slide.nativeScreenKey === "custom_message"
+              ? { ...slide, nativeConfig }
+              : slide,
+          ),
+        };
+      });
+
+      if (selectedSlideIdRef.current === slideId) {
+        liveComunicadoConfigRef.current = nativeConfig;
+      }
+      setRemoteConfigRevision((revision) => revision + 1);
+    },
+    [editorPresence?.clientId],
+  );
 
   useEffect(() => {
     void refreshPreviewThumbnails();
@@ -337,15 +396,58 @@ export function PlaylistEditorPage({
     writeSelectedSlideId(playlistId, null);
   }, [slides, selectedSlideId, playlistId, selectSlide]);
 
-  usePresentationRealtime({
-    enabled: Boolean(playlistId && realtimeConnection.wsUrl),
-    wsUrl: realtimeConnection.wsUrl,
-    presence: realtimeConnection.presence,
-    onPresenceUpdate: setPresencePeers,
-    onPresentationUpdated: () => {
-      void reloadPlaylistFromServer();
+  const handlePresenceUpdate = useCallback((peers: PresentationPresencePeer[]) => {
+    setPresencePeers(peers);
+    const activeClientIds = new Set(peers.map((peer) => peer.clientId));
+    setRemoteSelectionsByClientId((current) =>
+      Object.fromEntries(
+        Object.entries(current).filter(([clientId]) => activeClientIds.has(clientId)),
+      ),
+    );
+  }, []);
+
+  const handleRemoteSelection = useCallback(
+    (event: PresentationSelectionUpdateEvent) => {
+      if (event.clientId === editorPresence?.clientId) return;
+      setRemoteSelectionsByClientId((current) => {
+        if (event.selectedIds.length === 0) {
+          const next = { ...current };
+          delete next[event.clientId];
+          return next;
+        }
+        return { ...current, [event.clientId]: event };
+      });
     },
+    [editorPresence?.clientId],
+  );
+
+  const { sendRealtime: wsSendRef } = usePlaylistEditorSync({
+    playlistId,
+    accessToken,
+    presence: editorPresence,
+    onPresenceUpdate: handlePresenceUpdate,
+    onSync: () => {
+      void reloadPlaylistFromServer().then(() => deckHistory.handleRemoteUpdate());
+    },
+    onSlideDraft: (event) => {
+      applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
+    },
+    onSelectionUpdate: handleRemoteSelection,
   });
+
+  const sendSelectionUpdate = useCallback(
+    (slideId: string, selectedIds: string[]) => {
+      const clientId = editorPresence?.clientId;
+      if (!clientId) return;
+      wsSendRef.current?.({
+        type: "selection_update",
+        slideId,
+        clientId,
+        selectedIds,
+      });
+    },
+    [editorPresence?.clientId, wsSendRef],
+  );
 
   const load = useCallback(async () => {
     const cached = readPlaylistShell(playlistId);
@@ -421,8 +523,14 @@ export function PlaylistEditorPage({
   async function saveSettings(field: string, value: string | number | Record<string, unknown>) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
-    const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
-    setPlaylist({ ...updated, slides: playlist.slides });
+    try {
+      const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
+      setPlaylist({ ...updated, slides: playlist.slides });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   async function handleExportPng() {
@@ -491,7 +599,8 @@ export function PlaylistEditorPage({
     ).length;
     const baseTitle = customCatalogItem?.label ?? "Personalizado";
     const title = customCount === 0 ? baseTitle : `${baseTitle} ${customCount + 1}`;
-    const slide = await addSlide(playlist.id, {
+    try {
+      const slide = await addSlide(playlist.id, {
       slideType: "native",
       title,
       nativeScreenKey: "custom_message",
@@ -499,9 +608,14 @@ export function PlaylistEditorPage({
         parseComunicadoConfig({ headline: "", blocks: [] }),
       ),
       durationSec: customCatalogItem?.defaultDurationSec ?? 30,
-    });
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    selectSlide(slide.id, slide);
+      });
+      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+      selectSlide(slide.id, slide);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   async function handleRemoveSlide(slide: Slide) {
@@ -514,17 +628,23 @@ export function PlaylistEditorPage({
     });
     if (!confirmed) return;
     deckHistory.recordBeforeChange();
-    await deleteSlide(playlist.id, slide.id);
-    const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
-    setPlaylist({ ...playlist, slides: remaining });
-    if (selectedSlideId === slide.id) {
-      const nextId = remaining[0]?.id ?? null;
-      if (nextId) selectSlide(nextId);
-      else {
-        setSelectedSlideId(null);
-        liveComunicadoConfigRef.current = null;
-        writeSelectedSlideId(playlistId, null);
+    try {
+      await deleteSlide(playlist.id, slide.id);
+      const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
+      setPlaylist({ ...playlist, slides: remaining });
+      if (selectedSlideId === slide.id) {
+        const nextId = remaining[0]?.id ?? null;
+        if (nextId) selectSlide(nextId);
+        else {
+          setSelectedSlideId(null);
+          liveComunicadoConfigRef.current = null;
+          writeSelectedSlideId(playlistId, null);
+        }
       }
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
     }
   }
 
@@ -579,17 +699,23 @@ export function PlaylistEditorPage({
   ) {
     if (!playlist) return;
     if (options?.recordHistory) deckHistory.recordBeforeChange();
-    const updated = await updateSlide(playlist.id, slide.id, payload);
-    if (payload.nativeConfig) {
-      clearComunicadoSlideDraft(playlist.id, slide.id);
-      if (pendingComunicadoSaveRef.current?.slide.id === slide.id) {
-        pendingComunicadoSaveRef.current = null;
+    try {
+      const updated = await updateSlide(playlist.id, slide.id, payload);
+      if (payload.nativeConfig) {
+        clearComunicadoSlideDraft(playlist.id, slide.id);
+        if (pendingComunicadoSaveRef.current?.slide.id === slide.id) {
+          pendingComunicadoSaveRef.current = null;
+        }
       }
+      setPlaylist({
+        ...playlist,
+        slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+      });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      if (options?.recordHistory) deckHistory.cancelChange();
+      throw caught;
     }
-    setPlaylist({
-      ...playlist,
-      slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
-    });
   }
 
   const flushPendingComunicadoSave = useCallback(async () => {
@@ -608,11 +734,13 @@ export function PlaylistEditorPage({
         nativeConfig: pending.nativeConfig,
       });
       clearComunicadoSlideDraft(pl.id, pending.slide.id);
+      await deckHistory.confirmChange();
     } catch {
       // Draft permanece no localStorage para o próximo load.
       pendingComunicadoSaveRef.current = pending;
+      deckHistory.cancelChange();
     }
-  }, []);
+  }, [deckHistory.cancelChange, deckHistory.confirmChange]);
 
   function scheduleCustomSlideSave(slide: Slide, nativeConfig: Record<string, unknown>) {
     liveComunicadoConfigRef.current = nativeConfig;
@@ -637,6 +765,18 @@ export function PlaylistEditorPage({
         nativeConfig,
       });
     }, 700);
+
+    if (wsDraftTimerRef.current) window.clearTimeout(wsDraftTimerRef.current);
+    wsDraftTimerRef.current = window.setTimeout(() => {
+      const clientId = editorPresence?.clientId;
+      if (!clientId) return;
+      wsSendRef.current?.({
+        type: "slide_draft",
+        slideId: slide.id,
+        clientId,
+        nativeConfig,
+      });
+    }, 120);
   }
 
   useEffect(() => {
@@ -655,9 +795,15 @@ export function PlaylistEditorPage({
   async function handleDuplicateSlide(slide: Slide) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
-    const copy = await duplicateSlide(playlist.id, slide.id);
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
-    selectSlide(copy.id, copy);
+    try {
+      const copy = await duplicateSlide(playlist.id, slide.id);
+      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
+      selectSlide(copy.id, copy);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   function handleCopySlide(slide: Slide) {
@@ -669,15 +815,21 @@ export function PlaylistEditorPage({
     if (!playlist || !slideClipboardRef.current) return;
     const payload = slideClipboardRef.current;
     deckHistory.recordBeforeChange();
-    const slide = await addSlide(playlist.id, {
-      ...payload,
-      title: pasteTitleFromClipboard(payload),
-      nativeScreenKey: payload.nativeScreenKey ?? undefined,
-      nativeConfig: payload.nativeConfig ?? undefined,
-      externalUrl: payload.externalUrl ?? undefined,
-    });
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    selectSlide(slide.id, slide);
+    try {
+      const slide = await addSlide(playlist.id, {
+        ...payload,
+        title: pasteTitleFromClipboard(payload),
+        nativeScreenKey: payload.nativeScreenKey ?? undefined,
+        nativeConfig: payload.nativeConfig ?? undefined,
+        externalUrl: payload.externalUrl ?? undefined,
+      });
+      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+      selectSlide(slide.id, slide);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   const canPasteSlide = slideClipboardRef.current != null;
@@ -686,11 +838,17 @@ export function PlaylistEditorPage({
   async function handleToggleSlideActive(slide: Slide) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
-    const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
-    setPlaylist({
-      ...playlist,
-      slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
-    });
+    try {
+      const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
+      setPlaylist({
+        ...playlist,
+        slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+      });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   function tvStatusLabel() {
@@ -715,9 +873,15 @@ export function PlaylistEditorPage({
     const [moved] = reordered.splice(dragIndex, 1);
     reordered.splice(targetIndex, 0, moved);
     const items = reordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-    const result = await reorderSlides(playlist.id, items);
-    setPlaylist({ ...playlist, slides: result.slides });
-    setDragIndex(null);
+    try {
+      const result = await reorderSlides(playlist.id, items);
+      setPlaylist({ ...playlist, slides: result.slides });
+      setDragIndex(null);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   function copyLink() {
@@ -830,6 +994,9 @@ export function PlaylistEditorPage({
           viewportProfile={playlist.viewportProfile}
           masterConfig={playlist.masterConfig}
           value={editorComunicadoValue}
+          remoteRevision={remoteConfigRevision}
+          remoteSelections={currentRemoteSelections}
+          onSelectionChange={sendSelectionUpdate}
           onChange={(config) => scheduleCustomSlideSave(selectedSlide, config)}
         >
           <CustomSlideEditorLayout

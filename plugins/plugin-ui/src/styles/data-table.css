@@ -79,7 +79,7 @@ table.delpi-ui-table--compact td {
   padding: 8px 10px;
 }
 
-table.delpi-ui-table tbody tr:last-child td {
+table.delpi-ui-table:not(.delpi-ui-table--grid-preview) tbody tr:last-child td {
   border-bottom: none;
 }
 
@@ -175,6 +175,187 @@ table.delpi-ui-table td[data-align="right"] {
 table.delpi-ui-table th[data-align="center"],
 table.delpi-ui-table td[data-align="center"] {
   text-align: center;
+}
+
+/* —— grid-preview (workbench M / grade Excel-like) —— */
+
+table.delpi-ui-table--grid-preview {
+  border-collapse: collapse;
+}
+
+table.delpi-ui-table--grid-preview th,
+table.delpi-ui-table--grid-preview td {
+  position: relative;
+  min-height: 32px;
+  padding: 6px 10px;
+  vertical-align: middle;
+  border: 1px solid var(--delpi-ui-border, var(--border, #d8dde6));
+}
+
+table.delpi-ui-table--grid-preview tbody tr:nth-child(even) td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 4%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+table.delpi-ui-table--grid-preview th[tabindex],
+table.delpi-ui-table--grid-preview td[tabindex] {
+  cursor: pointer;
+}
+
+table.delpi-ui-table--grid-preview .delpi-ui-table__column--selected,
+table.delpi-ui-table--grid-preview th[aria-selected="true"],
+table.delpi-ui-table--grid-preview td.delpi-ui-table__column--selected {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+table.delpi-ui-table--grid-preview tr.delpi-ui-table__row--selected td {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 10%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+table.delpi-ui-table--grid-preview td.delpi-ui-table__cell--selected {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 22%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  outline: 1px solid color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 55%, #fff);
+  outline-offset: -1px;
+}
+
+.delpi-ui-data-cell {
+  display: inline;
+  min-width: 0;
+}
+
+.delpi-ui-data-cell--null,
+.delpi-ui-data-cell--empty,
+.delpi-ui-data-cell--missing,
+.delpi-ui-data-cell--error {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.delpi-ui-data-cell--null,
+.delpi-ui-data-cell--empty,
+.delpi-ui-data-cell--missing {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.62)));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text-muted, var(--delpi-ui-muted, #667085)) 8%,
+    transparent
+  );
+}
+
+.delpi-ui-data-cell--missing {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.delpi-ui-data-cell--error {
+  color: var(--delpi-ui-danger, var(--danger, #b42318));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, var(--danger, #b42318)) 10%,
+    transparent
+  );
+  font-style: normal;
+  font-weight: 650;
+  cursor: help;
+}
+
+table.delpi-ui-table--grid-preview th:focus-visible,
+table.delpi-ui-table--grid-preview td:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: -2px;
+}
+
+table.delpi-ui-table--wrap th,
+table.delpi-ui-table--wrap td {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+table.delpi-ui-table--wrap .delpi-ui-table__header-label,
+table.delpi-ui-table--wrap .delpi-ui-table__header-text {
+  white-space: normal;
+  flex-wrap: wrap;
+}
+
+table.delpi-ui-table--fixed-cols {
+  table-layout: fixed;
+  width: 100%;
+}
+
+table.delpi-ui-table--grid-preview .delpi-ui-table__index-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  text-align: center;
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.55)));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-surface, var(--surface, #ffffff)) 92%,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 8%
+  );
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.delpi-ui-table-wrap--embedded table.delpi-ui-table--grid-preview thead th.delpi-ui-table__index-col {
+  z-index: 3;
+}
+
+.delpi-ui-table__column-resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  z-index: 4;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.delpi-ui-table__column-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  left: 2px;
+  width: 2px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 45%, transparent);
+  opacity: 0;
+}
+
+.delpi-ui-table__column-resize-handle:hover::after,
+th:hover > .delpi-ui-table__column-resize-handle::after {
+  opacity: 1;
+}
+
+table.delpi-ui-table--grid-preview th.delpi-ui-table__column--dragging {
+  opacity: 0.55;
 }
 
 table.delpi-ui-table th[data-align="right"] .delpi-ui-table__sort-button,

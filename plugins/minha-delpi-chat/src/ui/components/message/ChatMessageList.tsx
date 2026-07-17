@@ -1477,6 +1477,7 @@ export function ChatMessageList({
                     )}
                     onDrillDown={onDrillDown}
                     onOpenCanvas={onOpenCanvas}
+                    getAccessToken={getAccessToken}
                     requestChartExplanation={
                       inlineExplainMessageId === message.id &&
                       inlineExplainKind === "chart"
@@ -2066,6 +2067,7 @@ export function ChatMessageList({
                           toolCalls={streamingToolCalls}
                           onDrillDown={onDrillDown}
                           onOpenCanvas={onOpenCanvas}
+                          getAccessToken={getAccessToken}
                         />
                       </div>
                     ) : null}
@@ -2099,6 +2101,7 @@ export function ChatMessageList({
                       toolCalls={streamingToolCalls}
                       onDrillDown={onDrillDown}
                       onOpenCanvas={onOpenCanvas}
+                      getAccessToken={getAccessToken}
                     />
                   </div>
                 ) : null}

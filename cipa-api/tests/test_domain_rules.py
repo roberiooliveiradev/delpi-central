@@ -1,0 +1,170 @@
+from cipa_app.domain.services.minute_status_transition_service import (
+    MinuteStatusTransitionError,
+    MinuteStatusTransitionService,
+)
+from cipa_app.application.services.html_sanitizer import CipaHtmlSanitizer
+from cipa_app.application.security import cipa_permissions as perms
+
+
+def test_health_import():
+    from cipa_app.main import app
+
+    assert app.title == "CIPA API"
+
+
+def test_allowed_transitions():
+    MinuteStatusTransitionService.assert_transition("draft", "awaiting_signatures")
+    MinuteStatusTransitionService.assert_transition("awaiting_signatures", "partially_signed")
+    MinuteStatusTransitionService.assert_transition("signed", "finalized")
+    try:
+        MinuteStatusTransitionService.assert_transition("finalized", "draft")
+        assert False, "should raise"
+    except MinuteStatusTransitionError:
+        pass
+
+
+def test_signature_progress_status():
+    assert (
+        MinuteStatusTransitionService.status_after_signature_progress(
+            signed_count=1, required_count=3
+        )
+        == "partially_signed"
+    )
+    assert (
+        MinuteStatusTransitionService.status_after_signature_progress(
+            signed_count=3, required_count=3
+        )
+        == "signed"
+    )
+    assert (
+        MinuteStatusTransitionService.status_after_signature_progress(
+            signed_count=1, required_count=3, refused=True
+        )
+        == "in_review"
+    )
+
+
+def test_html_sanitizer_strips_script():
+    cleaned = CipaHtmlSanitizer.sanitize('<p>ok</p><script>alert(1)</script><a href="javascript:x">x</a>')
+    assert "<script" not in cleaned.lower()
+    assert "javascript:" not in cleaned.lower()
+    assert "ok" in cleaned
+
+
+def test_html_sanitizer_preserves_safe_rich_text_formatting():
+    cleaned = CipaHtmlSanitizer.sanitize(
+        '<p style="text-align:center">'
+        '<span style="font-size:20px;color:#f00;background-color:#ff0;'
+        'font-family:Arial;font-weight:bold;font-style:italic;'
+        'text-decoration:underline line-through">Formatado</span></p>'
+    )
+    assert "text-align: center" in cleaned
+    assert "font-size: 20px" in cleaned
+    assert "color: #f00" in cleaned
+    assert "background-color: #ff0" in cleaned
+    assert "font-family: Arial" in cleaned
+    assert "font-weight: bold" in cleaned
+    assert "font-style: italic" in cleaned
+    assert "text-decoration: underline line-through" in cleaned
+
+
+def test_html_sanitizer_collapses_word_nbsp_runs():
+    # Colagem do Word: número da lista seguido de vários &nbsp; até o texto.
+    cleaned = CipaHtmlSanitizer.sanitize(
+        "<p>1.<span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span>Desenvolver ferramenta</p>"
+        "<p>Mant\u00e9m\u00a0um nbsp isolado</p>"
+    )
+    assert "&nbsp;&nbsp;" not in cleaned
+    assert "1. Desenvolver ferramenta" in cleaned.replace("<span>", "").replace("</span>", "")
+    # nbsp isolado (uso legítimo) é preservado.
+    assert "Mant\u00e9m\u00a0um" in cleaned or "Mant\u00e9m&nbsp;um" in cleaned
+
+
+def test_html_sanitizer_collapse_nbsp_runs_helper():
+    assert (
+        CipaHtmlSanitizer.collapse_nbsp_runs("a&nbsp;&#160;\u00a0&nbsp;b") == "a b"
+    )
+    assert CipaHtmlSanitizer.collapse_nbsp_runs(None) == ""
+
+
+def test_html_sanitizer_removes_unsafe_css():
+    cleaned = CipaHtmlSanitizer.sanitize(
+        '<span style="color:red;background-image:url(javascript:alert(1));'
+        'position:fixed">Seguro</span>'
+    )
+    assert "color: red" in cleaned
+    assert "url(" not in cleaned
+    assert "position:" not in cleaned
+
+
+def test_permission_codes():
+    assert perms.unit_permission_code("01") == "cipa.unit.filial-01"
+    assert perms.action_permission_code("create") == "cipa.manage"
+    assert perms.action_permission_code("sign") == "cipa.sign"
+    assert perms.normalize_unit_code("01") == "01"
+    assert perms.normalize_unit_code("99") is None
+
+
+def test_has_unit_action_requires_unit_and_action():
+    from types import SimpleNamespace
+
+    viewer = SimpleNamespace(
+        permissions=["cipa.view", "cipa.unit.filial-01"],
+        is_superadmin=False,
+    )
+    signer = SimpleNamespace(
+        permissions=["cipa.sign", "cipa.unit.filial-02"],
+        is_superadmin=False,
+    )
+    admin = SimpleNamespace(permissions=["cipa.admin"], is_superadmin=False)
+
+    assert perms.has_unit_action(viewer, "view", "01")
+    assert not perms.has_unit_action(viewer, "create", "01")
+    assert not perms.has_unit_action(viewer, "view", "02")
+    assert perms.has_unit_action(signer, "sign", "02")
+    assert not perms.has_unit_action(signer, "view", "02")
+    assert perms.has_unit_action(admin, "finalize", "02")
+
+
+def test_build_access_payload():
+    from types import SimpleNamespace
+
+    viewer = SimpleNamespace(
+        permissions=["cipa.view", "cipa.unit.filial-01"],
+        is_superadmin=False,
+    )
+    payload = perms.build_access_payload(viewer)
+    assert payload["can_view"] is True
+    assert payload["can_manage"] is False
+    assert len(payload["units"]) == 1
+    assert payload["units"][0]["id"] == "01"
+    assert payload["units"][0]["view"] is True
+    assert payload["units"][0]["manage"] is False
+
+
+def test_unit_codes_for_read():
+    from types import SimpleNamespace
+
+    manager = SimpleNamespace(
+        permissions=["cipa.manage", "cipa.unit.filial-02"],
+        is_superadmin=False,
+    )
+    assert perms.unit_codes_for_read(manager) == ["02"]
+
+
+def test_content_editable_flags():
+    assert MinuteStatusTransitionService.can_edit_content("draft")
+    assert not MinuteStatusTransitionService.can_edit_content("awaiting_signatures")
+    assert MinuteStatusTransitionService.requires_new_version_for_content_change(
+        "awaiting_signatures"
+    )
+
+
+def test_soft_delete_flags_preserve_signed_and_finalized_minutes():
+    assert MinuteStatusTransitionService.can_delete("draft")
+    assert MinuteStatusTransitionService.can_delete("in_review")
+    assert MinuteStatusTransitionService.can_delete("awaiting_signatures")
+    assert MinuteStatusTransitionService.can_delete("partially_signed")
+    assert MinuteStatusTransitionService.can_delete("cancelled")
+    assert not MinuteStatusTransitionService.can_delete("signed")
+    assert not MinuteStatusTransitionService.can_delete("finalized")

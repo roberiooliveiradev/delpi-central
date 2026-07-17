@@ -15,6 +15,10 @@
     "entity": "product_structure",
     "shape": "hierarchy"
   },
+  "get_product_structure_excel": {
+    "entity": "product_structure_excel",
+    "shape": "document_export"
+  },
   "get_product_structure_exclusivity": {
     "entity": "product_structure_exclusivity",
     "shape": "playbook_report"

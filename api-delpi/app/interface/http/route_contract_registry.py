@@ -49,6 +49,9 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_product_detail": RouteContract("product", "product_snapshot"),
     "get_product_summary": RouteContract("product", "product_snapshot"),
     "get_product_structure": RouteContract("product_structure", "hierarchy"),
+    "get_product_structure_excel": RouteContract(
+        "product_structure_excel", "document_export"
+    ),
     "get_product_structure_exclusivity": RouteContract(
         "product_structure_exclusivity", "playbook_report"
     ),

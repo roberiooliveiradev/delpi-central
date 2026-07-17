@@ -124,4 +124,43 @@ describe("useClickOutside", () => {
 
     expect(onOutside).not.toHaveBeenCalled();
   });
+
+  it("fecha popover ao clicar no modal PAI (aria-modal aberto antes do painel)", () => {
+    // Bug jul/2026: menus do workbench M (dentro de ModalShell) nunca fechavam
+    // com clique fora, porque todo o modal casava com o seletor de overlay aninhado.
+    const parentModal = document.createElement("div");
+    parentModal.setAttribute("role", "dialog");
+    parentModal.setAttribute("aria-modal", "true");
+    parentModal.innerHTML = '<button type="button" data-testid="modal-area">área do modal</button>';
+    document.body.prepend(parentModal);
+
+    const onOutside = vi.fn();
+    render(<Probe onOutside={onOutside} />);
+
+    document
+      .querySelector('[data-testid="modal-area"]')!
+      .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(onOutside).toHaveBeenCalledTimes(1);
+    parentModal.remove();
+  });
+
+  it("não fecha ao clicar em overlay aninhado aberto DEPOIS do painel", () => {
+    const onOutside = vi.fn();
+    render(<Probe onOutside={onOutside} />);
+
+    // Simula diálogo (cor/select) portalado após o popover — filho lógico.
+    const nested = document.createElement("div");
+    nested.setAttribute("role", "dialog");
+    nested.setAttribute("aria-modal", "true");
+    nested.innerHTML = '<button type="button" data-testid="nested-after">swatch</button>';
+    document.body.appendChild(nested);
+
+    document
+      .querySelector('[data-testid="nested-after"]')!
+      .dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+
+    expect(onOutside).not.toHaveBeenCalled();
+    nested.remove();
+  });
 });

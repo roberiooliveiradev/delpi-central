@@ -1,8 +1,8 @@
 import {
   dataTransformStepLabel,
+  isDataTransformV1,
   isDataSourceBlockType,
   normalizeDataTransform,
-  type ComunicadoChartViewBlock,
   type ComunicadoDataSourceBlock,
   type DataTransform,
   type DataTransformStep,
@@ -28,7 +28,12 @@ import {
 } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
-  columnForSelectedSeries,
+  canUseAdvancedMEditor,
+  canUseMWorkbench,
+} from "../features/data-query/domain/dataQueryCapabilities";
+import { useDataQueryCapabilities } from "../features/data-query/state/useDataQueryWorkbench";
+import { DataQueryWorkbenchModal } from "../features/data-query/ui/DataPrepareModal";
+import {
   linkedChartSeriesForSource,
   seriesForColumn,
 } from "../utils/dataPrepareCrossHighlight";
@@ -47,7 +52,7 @@ import {
   type RibbonTab,
 } from "./DataPrepareRibbon";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { Modal } from "./ui/Modal";
+import { HostContainedModal } from "./ui/Modal";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.dataPrepare;
 
@@ -71,16 +76,13 @@ const EMPTY_STEPS: DataTransformStep[] = [];
  * Ambiente de preparação estilo Power Query — modal.
  * Clique esquerdo: seleciona/desseleciona. Botão direito: menu de ações.
  */
-export function DataPrepareModal({ open, onClose, initialSourceId = null }: Props) {
+function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props) {
   const {
     blocks,
     config,
     playlistId,
     updateBlock,
     refreshDataPreview,
-    selected,
-    selectedChartPart,
-    selectChartPart,
   } = useComunicadoEditor();
   const queries = useMemo(
     () =>
@@ -137,7 +139,9 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   const active = queries.find((q) => q.id === activeId) ?? null;
   const activeBlockRef = useRef(active);
   activeBlockRef.current = active;
-  const steps = active?.dataTransform?.steps ?? EMPTY_STEPS;
+  const steps = isDataTransformV1(active?.dataTransform)
+    ? active.dataTransform.steps
+    : EMPTY_STEPS;
 
   useEffect(() => {
     setPreviewStepIndex(steps.length > 0 ? steps.length - 1 : null);
@@ -215,14 +219,6 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     [blocks, activeId],
   );
 
-  const highlightedColumn = useMemo(() => {
-    if (!selected || selected.type !== "chart_view" || !selectedChartPart) return null;
-    if (selectedChartPart.kind !== "series") return null;
-    const chart = selected as ComunicadoChartViewBlock;
-    if (String(chart.dataSourceId || "").trim() !== String(activeId || "").trim()) return null;
-    return columnForSelectedSeries(linkedSeries, chart.id, selectedChartPart.seriesIndex);
-  }, [selected, selectedChartPart, linkedSeries, activeId]);
-
   const routePreset = useMemo(() => {
     const op = active?.dataBinding?.operationId?.trim();
     if (!op) return null;
@@ -281,7 +277,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     const suggested = routePreset?.suggestedTransformSteps;
     if (!Array.isArray(suggested) || !suggested.length || !active) return;
     const normalized = normalizeDataTransform({ steps: suggested });
-    if (!normalized?.steps.length) return;
+    if (!isDataTransformV1(normalized) || !normalized.steps.length) return;
     persistSteps(normalized.steps);
   };
 
@@ -352,7 +348,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   };
 
   return (
-    <Modal
+    <HostContainedModal
       open={open}
       title="Preparar dados"
       onClose={onClose}
@@ -377,7 +373,6 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
       ) : (
         <div
           className="td-data-pq"
-          title={H.modal}
           onClick={() => setCtxMenu(null)}
           onContextMenu={(event) => {
             // Evita menu nativo no workspace; menus específicos usam stopPropagation.
@@ -481,7 +476,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                 onCommit={commitFormulaStep}
                 onCancelDraft={() => setNewColumnDraft(false)}
               />
-              <div className="td-data-pq__grid-wrap" title={H.grid}>
+              <div className="td-data-pq__grid-wrap">
                 {!active ? (
                   <p className="td-deck-inspector__hint">
                     Nenhuma consulta selecionada. Clique numa consulta à esquerda.
@@ -497,7 +492,6 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                         <th className="td-data-pq__row-index">#</th>
                         {preview.columns.map((col) => {
                           const linked = seriesForColumn(linkedSeries, col);
-                          const isSeriesHl = highlightedColumn === col;
                           const isActiveCol = activeColumn === col;
                           return (
                             <th
@@ -505,7 +499,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                               data-pq-ctx="column"
                               className={[
                                 linked ? "td-data-pq__col--series" : "",
-                                isSeriesHl || isActiveCol ? "td-data-pq__col--active" : "",
+                                isActiveCol ? "td-data-pq__col--active" : "",
                               ]
                                 .filter(Boolean)
                                 .join(" ") || undefined}
@@ -517,13 +511,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                               aria-selected={isActiveCol}
                               onClick={(event) => {
                                 event.stopPropagation();
-                                const willSelect = activeColumn !== col;
                                 toggleColumn(col);
-                                if (!linked || !willSelect) return;
-                                selectChartPart(linked.chartId, {
-                                  kind: "series",
-                                  seriesIndex: linked.seriesIndex,
-                                });
                               }}
                               onContextMenu={(event) =>
                                 openContextMenu(event, { kind: "column", name: col })
@@ -555,7 +543,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
                             <td
                               key={col}
                               className={
-                                highlightedColumn === col || activeColumn === col
+                                activeColumn === col
                                   ? "td-data-pq__cell--active"
                                   : undefined
                               }
@@ -831,6 +819,20 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
           />
         </div>
       )}
-    </Modal>
+    </HostContainedModal>
+  );
+}
+
+/** Compositor fino: rollout seguro legado ou workbench M conforme capability server-side. */
+export function DataPrepareModal(props: Props) {
+  const { capabilities } = useDataQueryCapabilities();
+  return canUseMWorkbench(capabilities) ? (
+    <DataQueryWorkbenchModal
+      {...props}
+      advancedEditorEnabled={canUseAdvancedMEditor(capabilities)}
+      profilingEnabled={capabilities.profilingEnabled}
+    />
+  ) : (
+    <LegacyDataPrepareModal {...props} />
   );
 }
