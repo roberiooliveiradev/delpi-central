@@ -24,4 +24,10 @@ describe("DataPrepareModal — baseline transacional da Fase 0", () => {
     expect(WORKBENCH).toMatch(/workbench\.apply\(updateBlocksAtomically\)/);
     expect(WORKBENCH).not.toMatch(/updateBlock\(/);
   });
+
+  it("selecionar coluna não troca a seleção global nem fecha o modal", () => {
+    expect(SOURCE).toMatch(/aria-selected=\{isActiveCol\}[\s\S]*toggleColumn\(col\)/);
+    expect(SOURCE).not.toMatch(/selectChartPart/);
+    expect(SOURCE).not.toMatch(/title=\{H\.(modal|grid)\}/);
+  });
 });

@@ -3,7 +3,6 @@ import {
   isDataTransformV1,
   isDataSourceBlockType,
   normalizeDataTransform,
-  type ComunicadoChartViewBlock,
   type ComunicadoDataSourceBlock,
   type DataTransform,
   type DataTransformStep,
@@ -35,7 +34,6 @@ import {
 import { useDataQueryCapabilities } from "../features/data-query/state/useDataQueryWorkbench";
 import { DataQueryWorkbenchModal } from "../features/data-query/ui/DataPrepareModal";
 import {
-  columnForSelectedSeries,
   linkedChartSeriesForSource,
   seriesForColumn,
 } from "../utils/dataPrepareCrossHighlight";
@@ -85,9 +83,6 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
     playlistId,
     updateBlock,
     refreshDataPreview,
-    selected,
-    selectedChartPart,
-    selectChartPart,
   } = useComunicadoEditor();
   const queries = useMemo(
     () =>
@@ -223,14 +218,6 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
     () => linkedChartSeriesForSource(blocks, activeId),
     [blocks, activeId],
   );
-
-  const highlightedColumn = useMemo(() => {
-    if (!selected || selected.type !== "chart_view" || !selectedChartPart) return null;
-    if (selectedChartPart.kind !== "series") return null;
-    const chart = selected as ComunicadoChartViewBlock;
-    if (String(chart.dataSourceId || "").trim() !== String(activeId || "").trim()) return null;
-    return columnForSelectedSeries(linkedSeries, chart.id, selectedChartPart.seriesIndex);
-  }, [selected, selectedChartPart, linkedSeries, activeId]);
 
   const routePreset = useMemo(() => {
     const op = active?.dataBinding?.operationId?.trim();
@@ -505,7 +492,6 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
                         <th className="td-data-pq__row-index">#</th>
                         {preview.columns.map((col) => {
                           const linked = seriesForColumn(linkedSeries, col);
-                          const isSeriesHl = highlightedColumn === col;
                           const isActiveCol = activeColumn === col;
                           return (
                             <th
@@ -513,7 +499,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
                               data-pq-ctx="column"
                               className={[
                                 linked ? "td-data-pq__col--series" : "",
-                                isSeriesHl || isActiveCol ? "td-data-pq__col--active" : "",
+                                isActiveCol ? "td-data-pq__col--active" : "",
                               ]
                                 .filter(Boolean)
                                 .join(" ") || undefined}
@@ -525,13 +511,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
                               aria-selected={isActiveCol}
                               onClick={(event) => {
                                 event.stopPropagation();
-                                const willSelect = activeColumn !== col;
                                 toggleColumn(col);
-                                if (!linked || !willSelect) return;
-                                selectChartPart(linked.chartId, {
-                                  kind: "series",
-                                  seriesIndex: linked.seriesIndex,
-                                });
                               }}
                               onContextMenu={(event) =>
                                 openContextMenu(event, { kind: "column", name: col })
@@ -563,7 +543,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
                             <td
                               key={col}
                               className={
-                                highlightedColumn === col || activeColumn === col
+                                activeColumn === col
                                   ? "td-data-pq__cell--active"
                                   : undefined
                               }
