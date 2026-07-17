@@ -151,8 +151,9 @@ Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicado
 - **Tabela de série:** apresenta todos os `points` retornados pela API usando apenas as colunas declaradas (`periodo` e `value`), sem mostrar `label` duplicado ou metadados como `granularity`/`truncated`.
 - **M DELPI — Fases 0–7:** parser/compilador/executor backend, workbench,
   editor avançado, profiling opt-in, explain, métricas e caches particionados
-  estão implementados. Scripts v2 e capacidades da Fase 7 não são ativados
-  enquanto as flags permanecem desligadas; o browser contém apenas DTOs.
+  estão implementados. O piloto funcional de scripts v2 e editor avançado está
+  ativo com telemetria segura; profiling, explain e caches permanecem desligados.
+  O browser contém apenas DTOs e estado de draft.
 - **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
 - **§19.20:** aplicar estilo a irmãos; séries OEE/OTD/PPM nas nativas (SVG); rate limit `public/present`
 - **Backlog:** sombra texto, conectores, paleta recente, PDF/PPTX, colaboração

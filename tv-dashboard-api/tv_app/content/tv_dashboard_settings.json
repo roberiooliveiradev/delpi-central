@@ -18,14 +18,14 @@
     "ttlSeconds": 120
   },
   "mQuery": {
-    "enabled": false,
-    "writeV2Enabled": false,
-    "advancedEditorEnabled": false,
+    "enabled": true,
+    "writeV2Enabled": true,
+    "advancedEditorEnabled": true,
     "profilingEnabled": false,
     "explainPlanEnabled": false,
     "compileCacheEnabled": false,
     "previewCacheEnabled": false,
-    "phase7TelemetryEnabled": false,
+    "phase7TelemetryEnabled": true,
     "profile": "m-delpi-v1",
     "defaultCulture": "pt-BR",
     "maxScriptBytes": 65536,

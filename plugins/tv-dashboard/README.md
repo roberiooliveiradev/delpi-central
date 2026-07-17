@@ -8,7 +8,7 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 Gráfico / KPI / tabela compostos: [playbook §19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#19-gráfico-composto-por-primitivos--edição-no-palco-onda-4g)  
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
-Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. Profiling é opt-in e explain/métricas vêm do backend. `enabled`, `writeV2Enabled`, `advancedEditorEnabled`, `profilingEnabled`, `explainPlanEnabled` e os caches continuam desligados por padrão.
+Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 7](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md). O editor avançado usa o textarea canônico do kit, mas recebe realce, autocomplete/contexto, diagnostics, formatter e rename do backend. Busca de etapa, DAG simples e undo/redo vivem somente no draft local; o browser não analisa nem executa M. O piloto funcional está ativo com telemetria segura; profiling, explain e caches continuam desligados.
 
 ---
 

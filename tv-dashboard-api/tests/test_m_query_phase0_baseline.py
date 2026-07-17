@@ -83,15 +83,19 @@ def test_m_corpus_freezes_required_security_and_language_categories():
     } <= invalid_codes
 
 
-def test_m_query_settings_are_present_and_inert():
+def test_m_query_settings_expose_the_controlled_pilot_rollout():
     settings = _load_settings()["mQuery"]
 
     assert settings["profile"] == "m-delpi-v1"
     assert settings["defaultCulture"] == "pt-BR"
-    assert settings["enabled"] is False
-    assert settings["writeV2Enabled"] is False
-    assert settings["advancedEditorEnabled"] is False
+    assert settings["enabled"] is True
+    assert settings["writeV2Enabled"] is True
+    assert settings["advancedEditorEnabled"] is True
     assert settings["profilingEnabled"] is False
+    assert settings["explainPlanEnabled"] is False
+    assert settings["compileCacheEnabled"] is False
+    assert settings["previewCacheEnabled"] is False
+    assert settings["phase7TelemetryEnabled"] is True
     assert settings["maxScriptBytes"] == 65536
     assert settings["maxAstNodes"] == 5000
     assert settings["executionTimeoutMs"] == 2000

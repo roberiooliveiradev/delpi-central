@@ -4,7 +4,7 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
-Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md) adicionou profiling opt-in, explain, métricas por etapa, caches TTL/LRU particionados e telemetria segura sem mover semântica para o browser. Todas as flags de execução, escrita, editor, profiling, explain e caches permanecem `false` por padrão.
+Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STATUS-M-DELPI.md) adicionou profiling opt-in, explain, métricas por etapa, caches TTL/LRU particionados e telemetria segura sem mover semântica para o browser. O piloto funcional está ativo (`enabled`, `writeV2Enabled`, `advancedEditorEnabled` e telemetria); profiling, explain e caches permanecem desligados.
 
 ---
 
@@ -60,7 +60,8 @@ qualquer integração de dados.
 O endpoint de compile aceita `sourceSchema` como hint, `queryBindings`,
 `targetStepName` e `culture`; ele nunca chama a `api-delpi`. O runtime interpreta
 somente `CompiledExpression` e funções allowlisted, sem `eval`/`exec`. O preview
-aceita `targetStepName` e limites de amostra; a persistência v2 segue desligada.
+aceita `targetStepName` e limites de amostra; a persistência v2 está ativa no
+piloto funcional.
 
 `POST /data/preview-block` aceita `previewOptions.maxRows`,
 `includeColumnProfile` e `deadlineMs`. Profiling só roda quando solicitado e

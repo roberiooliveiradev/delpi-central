@@ -1,13 +1,14 @@
 # Fase 7 — Qualidade, profiling e otimização M DELPI
 
-**Status:** implementação concluída em 2026-07-17; ativação em produção pendente de evidência
+**Status:** implementação concluída em 2026-07-17; piloto funcional ativado em produção
 **Baseline:** `b715840eb`
 
 ## Resultado
 
 A Fase 7 foi implementada no pipeline canônico do backend. Profiling e explain
 não são decisões do browser: a UI somente solicita e apresenta contratos
-calculados pelo servidor. Nenhuma flag nova foi habilitada por padrão.
+calculados pelo servidor. O piloto habilita runtime, escrita v2, editor avançado
+e telemetria; recursos de maior custo permanecem desligados.
 
 ## Contratos entregues
 
@@ -52,11 +53,11 @@ estado `aria-pressed`, status anunciável, qualidade/distribuição por coluna e
 `details` para o plano. Não foi criado componente no `plugin-ui`: não existe
 segundo consumidor.
 
-## Flags e defaults seguros
+## Flags do piloto
 
-Todas começam `false`: `profilingEnabled`, `explainPlanEnabled`,
-`compileCacheEnabled`, `previewCacheEnabled` e `phase7TelemetryEnabled`.
-`enabled`, `writeV2Enabled` e `advancedEditorEnabled` também continuam `false`.
+Estão `true`: `enabled`, `writeV2Enabled`, `advancedEditorEnabled` e
+`phase7TelemetryEnabled`. Permanecem `false`: `profilingEnabled`,
+`explainPlanEnabled`, `compileCacheEnabled` e `previewCacheEnabled`.
 
 ## Rollout recomendado
 
@@ -90,9 +91,9 @@ funcional e os caches locais expiram/reiniciam sem migração.
 
 ## Decisão de ativação
 
-**Não habilitar em produção ainda.** A implementação está pronta, mas o aceite
-de p95 exige evidência de carga e observação de isolamento/memória em
-homologação. O código mantém defaults seguros para permitir esse gate.
+O piloto funcional foi autorizado em produção para validar o fluxo M real. A
+ativação de profiling, explain e caches continua condicionada a evidência de
+carga, p95, cancelamento e isolamento de memória.
 
 ## Validação local
 

@@ -25,12 +25,15 @@ def _compile(**overrides):
     return MCompileRequest(**values)
 
 
-def test_phase7_rollout_flags_are_safe_by_default():
+def test_phase7_pilot_enables_core_and_keeps_expensive_features_off():
+    assert m_query_setting("enabled", False) is True
+    assert m_query_setting("writeV2Enabled", False) is True
+    assert m_query_setting("advancedEditorEnabled", False) is True
     assert m_query_setting("profilingEnabled", True) is False
     assert m_query_setting("explainPlanEnabled", True) is False
     assert m_query_setting("compileCacheEnabled", True) is False
     assert m_query_setting("previewCacheEnabled", True) is False
-    assert m_query_setting("phase7TelemetryEnabled", True) is False
+    assert m_query_setting("phase7TelemetryEnabled", False) is True
 
 
 def test_compile_cache_key_covers_full_compilation_contract_without_script():

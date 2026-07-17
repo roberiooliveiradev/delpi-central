@@ -108,4 +108,6 @@ def test_mutate_and_capabilities_http_contracts():
     assert response.status_code == 200
     assert response.json()["data"]["outputStepName"] == "Y"
     assert capabilities.status_code == 200
-    assert capabilities.json()["data"]["writeV2Enabled"] is False
+    assert capabilities.json()["data"]["enabled"] is True
+    assert capabilities.json()["data"]["writeV2Enabled"] is True
+    assert capabilities.json()["data"]["advancedEditorEnabled"] is True

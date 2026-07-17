@@ -1435,8 +1435,9 @@ Cada botão da ribbon deve:
 
 ## Fase 7 — Qualidade, profiling e otimização
 
-**Status:** ✅ implementada em 2026-07-17, com flags desligadas e ativação
-condicionada a evidência de carga. Evidências e rollback:
+**Status:** ✅ implementada em 2026-07-17. Piloto funcional ativo com runtime,
+escrita v2, editor avançado e telemetria; profiling, explain e caches aguardam
+evidência de carga. Evidências e rollback:
 [status da Fase 7](./FASE-7-STATUS-M-DELPI.md).
 
 ### Entregas
