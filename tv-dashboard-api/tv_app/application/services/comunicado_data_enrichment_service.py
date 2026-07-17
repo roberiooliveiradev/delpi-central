@@ -12,6 +12,9 @@ from tv_app.application.services.comunicado_input_filters_service import (
 )
 from tv_app.application.services.data.tv_data_fetch_error_service import resolve_data_fetch_error
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
+from tv_app.application.services.data.m_query.m_query_dependency_service import (
+    MQueryDependencyService,
+)
 from tv_app.application.services.data.tv_data_transform_service import (
     apply_data_transform_to_payload,
     apply_data_transform_to_payload_result,
@@ -25,6 +28,7 @@ from tv_app.application.services.native_screen_cache_service import (
     native_data_cache_ttl_seconds,
 )
 from tv_app.application.services.tv_dashboard_content_service import (
+    m_query_setting,
     message,
     tv_dashboard_setting_int,
 )
@@ -682,6 +686,9 @@ class ComunicadoDataEnrichmentService:
         user: Any | None = None,
         force_refresh: bool = False,
         filter_overrides: dict[str, Any] | None = None,
+        target_step_name: str | None = None,
+        target_source_id: str | None = None,
+        preview_options: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         slide_filters = cfg.get("dataFilters") if isinstance(cfg.get("dataFilters"), dict) else {}
         # Preview isola um data_source em `blocks`, mas inputs vivem no slide (`cfg.blocks`).
@@ -722,6 +729,55 @@ class ComunicadoDataEnrichmentService:
             else {}
         )
 
+        graph = MQueryDependencyService().resolve(
+            blocks,
+            target_step_by_source={
+                str(target_source_id or ""): target_step_name
+            }
+            if target_source_id and target_step_name
+            else None,
+        )
+        if not graph.valid:
+            first = next(
+                item for item in graph.diagnostics if item.get("severity") == "error"
+            )
+            raise ValueError(str(first.get("message") or "Consulta M inválida."))
+        query_bindings = graph.bindings()
+        graph_nodes = {node.source_id: node for node in graph.nodes}
+
+        # Autoriza toda consulta do DAG antes do primeiro fetch. Uma irmã não autorizada
+        # jamais entra no ambiente de execução da consulta dependente.
+        for source_id in graph.ordered_source_ids:
+            node = graph_nodes[source_id]
+            binding = node.block.get("dataBinding")
+            operation_id = (
+                str(binding.get("operationId") or "").strip()
+                if isinstance(binding, dict)
+                else ""
+            )
+            if not operation_id:
+                continue
+            route = self._catalog.get_route(operation_id)
+            if not self._catalog.is_allowed(operation_id) or route is None:
+                raise ValueError("Fonte de dados indisponível.")
+            block_params = (
+                binding.get("params")
+                if isinstance(binding, dict) and isinstance(binding.get("params"), dict)
+                else {}
+            )
+            source_contrib = (
+                by_source.get(source_id)
+                if isinstance(by_source.get(source_id), dict)
+                else {}
+            )
+            merged = merge_data_params(
+                playlist_defaults=playlist_defaults,
+                slide_filters=slide_filters,
+                block_params=block_params,
+                input_overrides=merge_filter_layers(slide_input_contrib, source_contrib),
+            )
+            validate_data_route_branch(route, merged, user=user)
+
         # Dedupe in-request: mesmas operationId+params ⇒ um fetch nesta montagem.
         request_memo: dict[str, dict[str, Any]] = {}
         enrich_kwargs: dict[str, Any] = {
@@ -733,7 +789,23 @@ class ComunicadoDataEnrichmentService:
             "request_memo": request_memo,
         }
         enriched: list[dict[str, Any]] = []
-        for block in blocks:
+        source_blocks = {
+            str(block.get("id") or ""): block
+            for block in blocks
+            if isinstance(block, dict) and str(block.get("type") or "") in DATA_BLOCK_TYPES
+        }
+        ordered_blocks = [
+            source_blocks[source_id]
+            for source_id in graph.ordered_source_ids
+            if source_id in source_blocks
+        ] + [
+            block
+            for block in blocks
+            if not isinstance(block, dict)
+            or str(block.get("id") or "") not in set(graph.ordered_source_ids)
+        ]
+        query_tables: dict[str, dict[str, Any]] = {}
+        for block in ordered_blocks:
             if not isinstance(block, dict):
                 continue
             block_type = str(block.get("type") or "")
@@ -746,9 +818,28 @@ class ComunicadoDataEnrichmentService:
                     self._enrich_data_block(
                         block,
                         input_overrides=input_overrides,
+                        sibling_tables=query_tables,
+                        query_bindings=query_bindings,
+                        target_step_name=(
+                            target_step_name
+                            if source_id == str(target_source_id or "")
+                            else None
+                        ),
+                        preview_options=preview_options,
                         **enrich_kwargs,
                     )
                 )
+                resolved = enriched[-1].get("resolved")
+                query_table = (
+                    resolved.pop("_queryTable", None)
+                    if isinstance(resolved, dict)
+                    else None
+                )
+                if isinstance(query_table, dict):
+                    query_tables[source_id] = query_table
+                    node = graph_nodes.get(source_id)
+                    if node is not None:
+                        query_tables[node.query_name] = query_table
                 continue
             if block_type in DATA_VIEW_BLOCK_TYPES:
                 enriched.append(dict(block))
@@ -764,7 +855,7 @@ class ComunicadoDataEnrichmentService:
                 continue
             enriched.append(block)
 
-        # 2ª passagem: merge entre fontes precisa das tabelas irmãs já resolvidas.
+        # Compatibilidade v1: o merge legado ainda endereça sourceId.
         sibling_tables = self._build_sibling_tables(enriched)
         if sibling_tables and any(self._transform_needs_siblings(block) for block in enriched):
             re_enriched: list[dict[str, Any]] = []
@@ -781,12 +872,23 @@ class ComunicadoDataEnrichmentService:
                         block,
                         input_overrides=input_overrides,
                         sibling_tables=siblings,
+                        query_bindings=query_bindings,
                         **enrich_kwargs,
                     )
                 )
             enriched = re_enriched
-
-        return self._link_view_blocks_to_sources(enriched)
+        by_id = {
+            str(block.get("id") or ""): block
+            for block in enriched
+            if isinstance(block, dict) and str(block.get("id") or "")
+        }
+        restored = [
+            by_id.get(str(block.get("id") or ""), block)
+            if isinstance(block, dict)
+            else block
+            for block in blocks
+        ]
+        return self._link_view_blocks_to_sources(restored)
 
     @staticmethod
     def _transform_needs_siblings(block: dict[str, Any]) -> bool:
@@ -1034,6 +1136,9 @@ class ComunicadoDataEnrichmentService:
         request_memo: dict[str, dict[str, Any]] | None = None,
         input_overrides: dict[str, Any] | None = None,
         sibling_tables: dict[str, dict[str, Any]] | None = None,
+        query_bindings: tuple[dict[str, Any], ...] = (),
+        target_step_name: str | None = None,
+        preview_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         result = dict(block)
         binding = block.get("dataBinding")
@@ -1080,6 +1185,7 @@ class ComunicadoDataEnrichmentService:
             return result
 
         route_info = payload.get("route") or {}
+        cache_hit = bool(payload.get("_tvCacheHit"))
         data = payload.get("data")
         meta = payload.get("meta") if isinstance(payload.get("meta"), dict) else {}
         display_mode = str(binding.get("displayMode") or "kpi")
@@ -1088,17 +1194,23 @@ class ComunicadoDataEnrichmentService:
         presentation_data = data
         server_transform_applied = False
         transform_metadata: dict[str, Any] | None = None
+        transform_result: dict[str, Any] | None = None
         if block_type == "data_source":
             transform_result = apply_data_transform_to_payload_result(
                 data,
                 block.get("dataTransform"),
                 sibling_tables=sibling_tables,
+                query_bindings=query_bindings,
+                target_step_name=target_step_name,
+                culture=str(m_query_setting("defaultCulture", "pt-BR")),
             )
             transformed = transform_result["data"]
             server_transform_applied = bool(transform_result["applied"])
             transform_metadata = transform_result["transform"]
             if server_transform_applied:
                 presentation_data = transformed
+            elif transform_result.get("failed"):
+                presentation_data = []
 
         resolved: dict[str, Any] = {
             "meta": meta,
@@ -1111,6 +1223,13 @@ class ComunicadoDataEnrichmentService:
             resolved["serverTransformApplied"] = True
         if transform_metadata and transform_metadata.get("version") is not None:
             resolved["dataTransform"] = transform_metadata
+        if isinstance(transform_result, dict) and transform_result.get("failed"):
+            errors = transform_result.get("runtimeErrors") or {}
+            sample = errors.get("sample") if isinstance(errors, dict) else None
+            first_error = sample[0] if isinstance(sample, list) and sample else {}
+            resolved["error"] = str(
+                first_error.get("message") or "A transformação M falhou."
+            )
 
         if block_type == "data_source":
             for mode in ("kpi", "line_chart", "table"):
@@ -1125,6 +1244,63 @@ class ComunicadoDataEnrichmentService:
                         label=resolved.get("label"),
                     )
                 )
+            query_table = (
+                None
+                if isinstance(transform_result, dict) and transform_result.get("failed")
+                else (
+                    transform_result.get("table")
+                    if isinstance(transform_result, dict)
+                    else coerce_payload_to_table(data)
+                )
+            )
+            if isinstance(query_table, dict):
+                resolved["_queryTable"] = query_table
+            if (
+                isinstance(transform_result, dict)
+                and transform_metadata
+                and transform_metadata.get("version") == 2
+            ):
+                options = preview_options if isinstance(preview_options, dict) else {}
+                max_rows = min(
+                    max(1, int(options.get("maxRows") or m_query_setting("maxPreviewRows", 200))),
+                    int(m_query_setting("maxPreviewRows", 200)),
+                )
+                max_columns = int(m_query_setting("maxPreviewColumns", 200))
+                columns = list(query_table.get("columns") or [])[:max_columns] if isinstance(query_table, dict) else []
+                available_rows = len(query_table.get("rows") or []) if isinstance(query_table, dict) else 0
+                max_cells = int(m_query_setting("maxPreviewCells", 40000))
+                max_rows_by_cells = max(1, max_cells // max(1, len(columns)))
+                returned_rows = min(max_rows, max_rows_by_cells, available_rows)
+                rows = [
+                    {column: row.get(column) for column in columns}
+                    for row in (query_table.get("rows") or [])[:returned_rows]
+                ] if isinstance(query_table, dict) else []
+                resolved["query"] = {
+                    "profile": "m-delpi-v1",
+                    "scriptHash": transform_result.get("scriptHash"),
+                    "selectedStepName": transform_result.get("selectedStepName"),
+                    "diagnostics": transform_metadata.get("diagnostics") or [],
+                    "runtimeErrors": transform_result.get("runtimeErrors")
+                    or {"count": 0, "sample": []},
+                    "executionMs": int(transform_result.get("executionMs") or 0),
+                    "cacheHit": cache_hit,
+                }
+                resolved["preview"] = {
+                    "columns": [
+                        item
+                        for item in (transform_result.get("schema") or [])
+                        if isinstance(item, dict) and item.get("key") in columns
+                    ],
+                    "rows": rows,
+                    "returnedRows": returned_rows,
+                    "availableRows": available_rows,
+                    "truncated": returned_rows < available_rows
+                    or (
+                        isinstance(query_table, dict)
+                        and len(columns) < len(query_table.get("columns") or [])
+                    ),
+                    "isSample": returned_rows < available_rows,
+                }
         else:
             resolved.update(
                 self._resolve_presentation(
@@ -1160,13 +1336,13 @@ class ComunicadoDataEnrichmentService:
             service_context=service_context,
         )
         if request_memo is not None and cache_key in request_memo:
-            return request_memo[cache_key]
+            return {**request_memo[cache_key], "_tvCacheHit": True}
         if not force_refresh:
             cached = _data_block_cache.get(cache_key)
             if cached is not None:
                 if request_memo is not None:
                     request_memo[cache_key] = cached
-                return cached
+                return {**cached, "_tvCacheHit": True}
         payload = self._gateway.fetch_by_operation_id(
             operation_id,
             params=params,

@@ -33,6 +33,7 @@ _ALLOWED_QUALIFIED_SYMBOLS = {
     "Order.Descending",
     "Replacer.ReplaceText",
     "Replacer.ReplaceValue",
+    "JoinKind.LeftOuter",
 }
 
 
@@ -223,6 +224,11 @@ class MSemanticAnalyzer:
                 current_binding=binding.name,
             )
             input_columns = known_tables.get(input_identifier.name)
+            self._collect_query_references(
+                expression,
+                query_names,
+                referenced_queries,
+            )
             for argument in expression.arguments[1:]:
                 if (
                     expression.function_name == "Table.PromoteHeaders"
@@ -364,7 +370,14 @@ class MSemanticAnalyzer:
                 diagnostics.append(
                     _error("m.identifier_not_allowed", "#shared não é permitido.", expression)
                 )
-            elif "." in expression.name and expression.name not in _ALLOWED_QUALIFIED_SYMBOLS:
+            elif (
+                "." in expression.name
+                and expression.name not in _ALLOWED_QUALIFIED_SYMBOLS
+                and (
+                    self.registry.resolve(expression.name) is None
+                    or self.registry.resolve(expression.name).kind != "scalar"  # type: ignore[union-attr]
+                )
+            ):
                 diagnostics.append(
                     _error(
                         "m.identifier_not_allowed",
@@ -396,6 +409,19 @@ class MSemanticAnalyzer:
                 known_columns=known_columns,
                 user_functions=user_functions,
             )
+
+    @staticmethod
+    def _collect_query_references(
+        expression: MExpression,
+        query_names: set[str],
+        referenced_queries: set[str],
+    ) -> None:
+        stack = [expression]
+        while stack:
+            current = stack.pop()
+            if isinstance(current, MIdentifier) and current.name in query_names:
+                referenced_queries.add(current.name)
+            stack.extend(expression_children(current))
 
     def _validate_record_scope(
         self,
@@ -561,6 +587,70 @@ class MSemanticAnalyzer:
                                 field.value,
                             )
                         )
+        elif name == "Table.Group" and len(arguments) >= 3:
+            if _literal_strings(arguments[1]) is None or not isinstance(
+                arguments[2], MListExpression
+            ):
+                diagnostics.append(
+                    _error(
+                        "m.invalid_group_spec",
+                        "Table.Group exige chaves literais e agregações em lista.",
+                        expression,
+                    )
+                )
+        elif name in {"Table.Unpivot", "Table.UnpivotOtherColumns"} and len(arguments) >= 4:
+            if (
+                _literal_strings(arguments[1]) is None
+                or not isinstance(arguments[2], MLiteral)
+                or not isinstance(arguments[2].value, str)
+                or not isinstance(arguments[3], MLiteral)
+                or not isinstance(arguments[3].value, str)
+            ):
+                diagnostics.append(
+                    _error(
+                        "m.invalid_unpivot_spec",
+                        "Unpivot exige colunas e nomes de saída literais.",
+                        expression,
+                    )
+                )
+        elif name == "Table.NestedJoin" and len(arguments) >= 5:
+            valid = (
+                _literal_strings(arguments[1]) is not None
+                and isinstance(arguments[2], MIdentifier)
+                and _literal_strings(arguments[3]) is not None
+                and isinstance(arguments[4], MLiteral)
+                and isinstance(arguments[4].value, str)
+                and (
+                    len(arguments) < 6
+                    or (
+                        isinstance(arguments[5], MIdentifier)
+                        and arguments[5].name == "JoinKind.LeftOuter"
+                    )
+                )
+            )
+            if not valid:
+                diagnostics.append(
+                    _error(
+                        "m.invalid_nested_join_spec",
+                        "NestedJoin aceita somente chaves literais e JoinKind.LeftOuter.",
+                        expression,
+                    )
+                )
+        elif name == "Table.ExpandTableColumn" and len(arguments) >= 3:
+            valid = (
+                isinstance(arguments[1], MLiteral)
+                and isinstance(arguments[1].value, str)
+                and _literal_strings(arguments[2]) is not None
+                and (len(arguments) < 4 or _literal_strings(arguments[3]) is not None)
+            )
+            if not valid:
+                diagnostics.append(
+                    _error(
+                        "m.invalid_expand_spec",
+                        "ExpandTableColumn exige coluna e listas de nomes literais.",
+                        expression,
+                    )
+                )
 
     def _infer_columns(
         self,
@@ -678,5 +768,14 @@ class MSemanticAnalyzer:
                             )
                         )
         elif name == "Table.PromoteHeaders":
+            return None
+        elif name in {
+            "Table.Group",
+            "Table.Pivot",
+            "Table.Unpivot",
+            "Table.UnpivotOtherColumns",
+            "Table.NestedJoin",
+            "Table.ExpandTableColumn",
+        }:
             return None
         return columns

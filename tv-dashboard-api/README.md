@@ -4,7 +4,7 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
-Power Query M: a [Fase 2](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-2-STATUS-M-DELPI.md) adicionou compilador Lark server-side, AST com ranges, registry deny-by-default e endpoints de compilação/catálogo. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false`; não existe runtime M e v2 ainda não é executado.
+Power Query M: a [Fase 3](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-3-STATUS-M-DELPI.md) ligou o `TransformPlan` à fachada tabular canônica, adicionou execução segura, tipos/cultura, joins 1:N, DAG autorizado, preview tipado e validação real. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false` por padrão; a primeira flag controla o runtime e a segunda continua bloqueando escrita v2.
 
 ---
 
@@ -55,8 +55,9 @@ profundidade vêm de `tv_dashboard_settings.json` e são aplicados antes de
 qualquer integração de dados.
 
 O endpoint de compile aceita `sourceSchema` como hint, `queryBindings`,
-`targetStepName` e `culture`; ele nunca chama a `api-delpi`. Execução,
-preview e persistência v2 ativa permanecem para fases posteriores.
+`targetStepName` e `culture`; ele nunca chama a `api-delpi`. O runtime interpreta
+somente `CompiledExpression` e funções allowlisted, sem `eval`/`exec`. O preview
+aceita `targetStepName` e limites de amostra; a persistência v2 segue desligada.
 
 Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
 

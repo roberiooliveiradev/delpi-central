@@ -3,8 +3,13 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import operator
 import re
+import time
+from collections import defaultdict
+from dataclasses import dataclass
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from tv_app.application.services.data.data_transform_contract import read_data_transform
@@ -12,8 +17,15 @@ from tv_app.application.services.data.m_query.m_legacy_adapter import (
     normalize_legacy_transform,
     plan_to_legacy_steps,
 )
+from tv_app.application.services.data.m_query.m_expression_interpreter import (
+    MExpressionError,
+    convert_m_value,
+    evaluate_compiled_expression,
+)
+from tv_app.application.services.tv_dashboard_content_service import m_query_setting
 from tv_app.application.services.series_points_extractor import unwrap_operational_data
-from tv_app.domain.data_query.transform_plan import TransformPlan
+from tv_app.domain.data_query.m_execution import MExecutionError, MRuntimeError
+from tv_app.domain.data_query.transform_plan import CompiledExpression, CompiledMPlanStep, TransformPlan
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _CMPS = frozenset({"eq", "neq", "gt", "lt", "notNull", "contains", "startsWith"})
@@ -487,19 +499,540 @@ def apply_data_transform_steps(
     return {"columns": columns, "rows": rows}
 
 
+@dataclass(frozen=True, slots=True)
+class TransformExecutionResult:
+    table: dict[str, Any]
+    schema: tuple[dict[str, Any], ...]
+    runtime_errors: tuple[MRuntimeError, ...]
+    execution_ms: int
+    selected_step_name: str
+
+    def runtime_errors_dict(self) -> dict[str, Any]:
+        limit = int(m_query_setting("diagnosticSampleLimit", 20))
+        return {
+            "count": len(self.runtime_errors),
+            "sample": [item.to_dict() for item in self.runtime_errors[:limit]],
+        }
+
+
+def _copy_table(table: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "columns": [str(item) for item in (table.get("columns") or [])],
+        "rows": [dict(row) for row in (table.get("rows") or []) if isinstance(row, dict)],
+    }
+
+
+def _table_schema(
+    table: dict[str, Any],
+    declared_types: dict[str, str],
+) -> tuple[dict[str, Any], ...]:
+    rows = table["rows"]
+    result: list[dict[str, Any]] = []
+    for column in table["columns"]:
+        values = [row.get(column) for row in rows]
+        nullable = any(value is None for value in values) or not values
+        declared = declared_types.get(column)
+        inferred = "any"
+        if declared:
+            inferred = declared
+            source = "declared"
+        else:
+            present = [value for value in values if value is not None]
+            kinds: set[str] = set()
+            for value in present:
+                if isinstance(value, bool):
+                    kinds.add("logical")
+                elif isinstance(value, (int, float)) and not isinstance(value, bool):
+                    kinds.add("number")
+                elif isinstance(value, datetime):
+                    kinds.add("datetime")
+                elif isinstance(value, date):
+                    kinds.add("date")
+                elif isinstance(value, timedelta):
+                    kinds.add("duration")
+                elif isinstance(value, str):
+                    kinds.add("text")
+                else:
+                    kinds.add("any")
+            inferred = next(iter(kinds)) if len(kinds) == 1 else "any"
+            source = "inferred" if present else "unknown"
+        result.append(
+            {
+                "key": column,
+                "label": column,
+                "type": inferred,
+                "nullable": nullable,
+                "typeSource": source,
+            }
+        )
+    return tuple(result)
+
+
+class _ExecutionLimits:
+    def __init__(self) -> None:
+        self.deadline = time.monotonic() + int(m_query_setting("executionTimeoutMs", 2000)) / 1000
+        self.max_rows = int(m_query_setting("maxExecutionRows", 10000))
+        self.max_columns = int(m_query_setting("maxExecutionColumns", 500))
+        self.max_cells = int(m_query_setting("maxExecutionCells", 1000000))
+        self.max_join_input = int(m_query_setting("maxJoinInputRows", 5000))
+        self.max_join_output = int(m_query_setting("maxJoinOutputRows", 10000))
+        self.max_pivot_columns = int(m_query_setting("maxPivotColumns", 200))
+        self.max_depth = int(m_query_setting("maxExpressionDepth", 40))
+
+    def check(self) -> None:
+        if time.monotonic() > self.deadline:
+            raise MExecutionError("m.execution_timeout", "O tempo limite da transformação foi excedido.")
+
+    def guard_table(self, table: dict[str, Any]) -> None:
+        self.check()
+        rows = len(table["rows"])
+        columns = len(table["columns"])
+        if rows > self.max_rows:
+            raise MExecutionError("m.limit_rows", "A transformação excedeu o limite de linhas.")
+        if columns > self.max_columns:
+            raise MExecutionError("m.limit_columns", "A transformação excedeu o limite de colunas.")
+        if rows * columns > self.max_cells:
+            raise MExecutionError("m.limit_cells", "A transformação excedeu o limite de células.")
+
+
+def _argument(
+    expression: CompiledExpression,
+    *,
+    row: dict[str, Any] | None,
+    environment: dict[str, Any],
+    culture: str,
+    limits: _ExecutionLimits,
+) -> Any:
+    return evaluate_compiled_expression(
+        expression,
+        row=row,
+        environment=environment,
+        culture=culture,
+        check_deadline=limits.check,
+        max_depth=limits.max_depth,
+    )
+
+
+def _column_list(value: Any, operation: str) -> list[str]:
+    if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+        raise MExecutionError("m.literal_column_list_required", f"{operation} exige uma lista de colunas.")
+    return list(value)
+
+
+def _require_column(table: dict[str, Any], column: str, operation: str) -> None:
+    if column not in table["columns"]:
+        raise MExecutionError("m.unknown_column", f'A coluna "{column}" não existe em {operation}.')
+
+
+def _aggregate_m(values: list[Any], function_name: str, culture: str) -> Any:
+    expression = CompiledExpression(
+        "call",
+        function_name,
+        (CompiledExpression("literal", value=values),),
+    )
+    return evaluate_compiled_expression(expression, culture=culture)
+
+
+def _execute_m_step(
+    step: CompiledMPlanStep,
+    source: dict[str, Any],
+    *,
+    environment: dict[str, Any],
+    culture: str,
+    limits: _ExecutionLimits,
+    runtime_errors: list[MRuntimeError],
+    declared_types: dict[str, str],
+) -> dict[str, Any]:
+    table = _copy_table(source)
+    name = step.function_name
+    args = step.arguments
+    if name == "#identity":
+        return table
+
+    def value(index: int, row: dict[str, Any] | None = None) -> Any:
+        if index >= len(args):
+            return None
+        return _argument(
+            args[index],
+            row=row,
+            environment=environment,
+            culture=culture,
+            limits=limits,
+        )
+
+    if name == "Table.RenameColumns":
+        pairs = value(0)
+        if not isinstance(pairs, list):
+            raise MExecutionError("m.invalid_rename_spec", "Renames deve ser uma lista.")
+        for pair in pairs:
+            if not isinstance(pair, list) or len(pair) != 2:
+                raise MExecutionError("m.invalid_rename_spec", "Rename inválido.")
+            old, new = str(pair[0]), str(pair[1])
+            _require_column(table, old, name)
+            table["columns"] = [new if column == old else column for column in table["columns"]]
+            table["rows"] = [
+                {new if key == old else key: cell for key, cell in row.items()} for row in table["rows"]
+            ]
+            if old in declared_types:
+                declared_types[new] = declared_types.pop(old)
+    elif name in {"Table.SelectColumns", "Table.RemoveColumns"}:
+        selected = _column_list(value(0), name)
+        for column in selected:
+            _require_column(table, column, name)
+        columns = (
+            selected
+            if name == "Table.SelectColumns"
+            else [column for column in table["columns"] if column not in selected]
+        )
+        table = {"columns": columns, "rows": [{column: row.get(column) for column in columns} for row in table["rows"]]}
+    elif name == "Table.SelectRows":
+        predicate = args[0]
+        rows = []
+        for index, row in enumerate(table["rows"]):
+            limits.check()
+            try:
+                predicate_value = _argument(
+                    predicate,
+                    row=row,
+                    environment=environment,
+                    culture=culture,
+                    limits=limits,
+                )
+                if not isinstance(predicate_value, bool):
+                    raise MExpressionError(
+                        "m.logical_expected",
+                        "O predicado de Table.SelectRows deve produzir logical.",
+                    )
+                if predicate_value:
+                    rows.append(row)
+            except MExpressionError as exc:
+                runtime_errors.append(MRuntimeError(step.name, exc.code, str(exc), index))
+        table["rows"] = rows
+    elif name == "Table.Sort":
+        criteria = value(0)
+        if not isinstance(criteria, list):
+            raise MExecutionError("m.invalid_sort_spec", "Critérios de ordenação inválidos.")
+        for criterion in reversed(criteria):
+            column, direction = criterion
+            _require_column(table, str(column), name)
+            table["rows"].sort(
+                key=lambda row: (row.get(str(column)) is None, row.get(str(column))),
+                reverse=direction == "Order.Descending",
+            )
+    elif name == "Table.ReplaceValue":
+        old, new, replacer = value(0), value(1), value(2)
+        columns = _column_list(value(3), name)
+        for column in columns:
+            _require_column(table, column, name)
+        for row in table["rows"]:
+            for column in columns:
+                current = row.get(column)
+                row[column] = (
+                    str(current).replace(str(old), str(new))
+                    if replacer == "Replacer.ReplaceText" and current is not None
+                    else (new if current == old else current)
+                )
+    elif name in {"Table.FirstN", "Table.LastN", "Table.Skip", "Table.RemoveLastN"}:
+        count = int(value(0))
+        if name == "Table.FirstN":
+            table["rows"] = table["rows"][:count]
+        elif name == "Table.LastN":
+            table["rows"] = table["rows"][-count:] if count else []
+        elif name == "Table.Skip":
+            table["rows"] = table["rows"][count:]
+        else:
+            table["rows"] = table["rows"][:-count] if count else list(table["rows"])
+    elif name == "Table.TransformColumnTypes":
+        transformations = value(0)
+        step_culture = str(value(1) or culture) if len(args) > 1 else culture
+        for column, target_type in transformations:
+            column = str(column)
+            target_type = str(target_type)
+            _require_column(table, column, name)
+            declared_types[column] = target_type
+            for index, row in enumerate(table["rows"]):
+                limits.check()
+                try:
+                    row[column] = convert_m_value(row.get(column), target_type, step_culture)
+                except MExpressionError as exc:
+                    error = MRuntimeError(step.name, exc.code, str(exc), index, column)
+                    runtime_errors.append(error)
+                    row[column] = {"error": error.to_dict()}
+    elif name == "Table.FillDown":
+        columns = _column_list(value(0), name)
+        for column in columns:
+            _require_column(table, column, name)
+            previous = None
+            for row in table["rows"]:
+                limits.check()
+                if row.get(column) is None:
+                    row[column] = previous
+                else:
+                    previous = row[column]
+    elif name == "Table.PromoteHeaders":
+        if table["rows"]:
+            first = table["rows"][0]
+            columns = [str(first.get(column) if first.get(column) is not None else column) for column in table["columns"]]
+            table = {
+                "columns": columns,
+                "rows": [
+                    {columns[index]: row.get(old) for index, old in enumerate(source["columns"])}
+                    for row in table["rows"][1:]
+                ],
+            }
+            declared_types.clear()
+    elif name == "Table.AddColumn":
+        column = str(value(0))
+        generator = args[1]
+        target_type = str(value(2)) if len(args) > 2 else "any"
+        if column not in table["columns"]:
+            table["columns"].append(column)
+        if target_type != "any":
+            declared_types[column] = target_type
+        for index, row in enumerate(table["rows"]):
+            limits.check()
+            try:
+                generated = _argument(
+                    generator,
+                    row=row,
+                    environment=environment,
+                    culture=culture,
+                    limits=limits,
+                )
+                row[column] = convert_m_value(generated, target_type, culture)
+            except MExpressionError as exc:
+                error = MRuntimeError(step.name, exc.code, str(exc), index, column)
+                runtime_errors.append(error)
+                row[column] = {"error": error.to_dict()}
+    elif name == "Table.Group":
+        keys = _column_list(value(0), name)
+        aggregation_nodes = args[1].children
+        for key in keys:
+            _require_column(table, key, name)
+        groups: dict[tuple[Any, ...], list[dict[str, Any]]] = defaultdict(list)
+        for row in table["rows"]:
+            limits.check()
+            groups[tuple(row.get(key) for key in keys)].append(row)
+        output_rows = []
+        output_columns = list(keys)
+        for key_values, grouped_rows in groups.items():
+            out = dict(zip(keys, key_values))
+            for aggregation_node in aggregation_nodes:
+                if aggregation_node.kind != "list" or len(aggregation_node.children) < 2:
+                    raise MExecutionError("m.invalid_group_spec", "Agregação de Group inválida.")
+                output_name = str(
+                    _argument(
+                        aggregation_node.children[0],
+                        row=None,
+                        environment=environment,
+                        culture=culture,
+                        limits=limits,
+                    )
+                )
+                generator = aggregation_node.children[1]
+                group_context = {
+                    column: [row.get(column) for row in grouped_rows] for column in table["columns"]
+                }
+                try:
+                    out[output_name] = _argument(
+                        generator,
+                        row=group_context,
+                        environment=environment,
+                        culture=culture,
+                        limits=limits,
+                    )
+                except MExpressionError as exc:
+                    error = MRuntimeError(step.name, exc.code, str(exc), len(output_rows), output_name)
+                    runtime_errors.append(error)
+                    out[output_name] = {"error": error.to_dict()}
+                if len(aggregation_node.children) > 2:
+                    declared_types[output_name] = str(
+                        _argument(
+                            aggregation_node.children[2],
+                            row=None,
+                            environment=environment,
+                            culture=culture,
+                            limits=limits,
+                        )
+                    )
+                if output_name not in output_columns:
+                    output_columns.append(output_name)
+            output_rows.append(out)
+        table = {"columns": output_columns, "rows": output_rows}
+    elif name == "Table.Pivot":
+        pivot_values = value(0)
+        attribute_column = str(value(1))
+        value_column = str(value(2))
+        aggregate = str(value(3) or "List.First") if len(args) > 3 else "List.First"
+        for column in (attribute_column, value_column):
+            _require_column(table, column, name)
+        if not isinstance(pivot_values, list):
+            raise MExecutionError("m.invalid_pivot_spec", "Valores de pivot devem ser uma lista.")
+        if len(pivot_values) > limits.max_pivot_columns:
+            raise MExecutionError("m.limit_pivot_columns", "O pivot excedeu o limite de colunas.")
+        stay = [column for column in table["columns"] if column not in {attribute_column, value_column}]
+        grouped: dict[tuple[Any, ...], list[dict[str, Any]]] = defaultdict(list)
+        for row in table["rows"]:
+            grouped[tuple(row.get(column) for column in stay)].append(row)
+        output_rows = []
+        for keys, grouped_rows in grouped.items():
+            out = dict(zip(stay, keys))
+            for pivot in pivot_values:
+                matches = [row.get(value_column) for row in grouped_rows if row.get(attribute_column) == pivot]
+                out[str(pivot)] = _aggregate_m(matches, aggregate, culture)
+            output_rows.append(out)
+        table = {"columns": stay + [str(item) for item in pivot_values], "rows": output_rows}
+    elif name in {"Table.Unpivot", "Table.UnpivotOtherColumns"}:
+        selected = _column_list(value(0), name)
+        attribute_column, value_column = str(value(1)), str(value(2))
+        unpivot = (
+            selected
+            if name == "Table.Unpivot"
+            else [column for column in table["columns"] if column not in selected]
+        )
+        stay = [column for column in table["columns"] if column not in unpivot]
+        output_rows = []
+        for row in table["rows"]:
+            for column in unpivot:
+                limits.check()
+                output_rows.append(
+                    {
+                        **{key: row.get(key) for key in stay},
+                        attribute_column: column,
+                        value_column: row.get(column),
+                    }
+                )
+        table = {"columns": stay + [attribute_column, value_column], "rows": output_rows}
+    elif name == "Table.NestedJoin":
+        left_keys = _column_list(value(0), name)
+        right = value(1)
+        right_keys = _column_list(value(2), name)
+        nested_column = str(value(3))
+        join_kind = value(4) if len(args) > 4 else "JoinKind.LeftOuter"
+        if join_kind != "JoinKind.LeftOuter" or not isinstance(right, dict):
+            raise MExecutionError("m.join_kind_not_allowed", "Somente JoinKind.LeftOuter é permitido.")
+        if len(table["rows"]) > limits.max_join_input or len(right.get("rows") or []) > limits.max_join_input:
+            raise MExecutionError("m.limit_join_input_rows", "O join excedeu o limite de entrada.")
+        index: dict[tuple[Any, ...], list[dict[str, Any]]] = defaultdict(list)
+        for right_row in right["rows"]:
+            limits.check()
+            index[tuple(right_row.get(key) for key in right_keys)].append(dict(right_row))
+        for row in table["rows"]:
+            row[nested_column] = index.get(tuple(row.get(key) for key in left_keys), [])
+        table["columns"].append(nested_column)
+    elif name == "Table.ExpandTableColumn":
+        nested_column = str(value(0))
+        nested_columns = _column_list(value(1), name)
+        aliases = _column_list(value(2), name) if len(args) > 2 else nested_columns
+        if len(aliases) != len(nested_columns):
+            raise MExecutionError("m.invalid_expand_spec", "A lista de aliases deve ter o mesmo tamanho.")
+        output_rows = []
+        for row in table["rows"]:
+            matches = row.get(nested_column)
+            matches = matches if isinstance(matches, list) else []
+            for match in matches or [None]:
+                limits.check()
+                out = {key: cell for key, cell in row.items() if key != nested_column}
+                for source_column, alias in zip(nested_columns, aliases):
+                    out[alias] = match.get(source_column) if isinstance(match, dict) else None
+                output_rows.append(out)
+                if len(output_rows) > limits.max_join_output:
+                    raise MExecutionError("m.limit_join_output_rows", "A expansão do join excedeu o limite.")
+        table = {
+            "columns": [column for column in table["columns"] if column != nested_column] + aliases,
+            "rows": output_rows,
+        }
+    else:
+        raise MExecutionError("m.function_not_allowed", f"A função {name} não pode ser executada.")
+    limits.guard_table(table)
+    return table
+
+
+def execute_transform_plan(
+    table: dict[str, Any],
+    plan: TransformPlan,
+    *,
+    sibling_tables: dict[str, dict[str, Any]] | None = None,
+    culture: str = "pt-BR",
+) -> TransformExecutionResult:
+    """Único ponto de execução de TransformPlan na fachada canônica."""
+
+    started = time.monotonic()
+    if not plan.steps or not all(isinstance(step, CompiledMPlanStep) for step in plan.steps):
+        legacy_table = apply_data_transform_steps(
+            table,
+            plan_to_legacy_steps(plan),
+            sibling_tables=sibling_tables,
+        )
+        return TransformExecutionResult(
+            legacy_table,
+            _table_schema(legacy_table, {}),
+            (),
+            int((time.monotonic() - started) * 1000),
+            plan.output,
+        )
+    limits = _ExecutionLimits()
+    source = _copy_table(table)
+    limits.guard_table(source)
+    environment: dict[str, Any] = {"Fonte": source, **(sibling_tables or {})}
+    runtime_errors: list[MRuntimeError] = []
+    declared_types: dict[str, str] = {}
+    for step in plan.steps:
+        limits.check()
+        input_table = environment.get(step.input_name)
+        if not isinstance(input_table, dict):
+            raise MExecutionError(
+                "m.table_input_unavailable",
+                f'A entrada "{step.input_name}" não está disponível.',
+                step_name=step.name,
+            )
+        try:
+            environment[step.name] = _execute_m_step(
+                step,
+                input_table,
+                environment=environment,
+                culture=culture,
+                limits=limits,
+                runtime_errors=runtime_errors,
+                declared_types=declared_types,
+            )
+        except MExecutionError as exc:
+            if not exc.step_name:
+                exc.step_name = step.name
+            raise
+        except MExpressionError as exc:
+            raise MExecutionError(exc.code, str(exc), step_name=step.name) from exc
+        except (KeyError, TypeError, ValueError, OverflowError) as exc:
+            raise MExecutionError(
+                "m.execution_error",
+                f'A etapa "{step.name}" não pôde ser executada.',
+                step_name=step.name,
+            ) from exc
+    output = environment.get(plan.output)
+    if not isinstance(output, dict):
+        raise MExecutionError("m.output_table_required", "A saída do plano não é uma tabela.")
+    return TransformExecutionResult(
+        output,
+        _table_schema(output, declared_types),
+        tuple(runtime_errors),
+        int((time.monotonic() - started) * 1000),
+        plan.output,
+    )
+
+
 def apply_transform_plan(
     table: dict[str, Any],
     plan: TransformPlan,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
+    culture: str = "pt-BR",
 ) -> dict[str, Any]:
-    """Executa a IR tipada pela fachada existente, sem engine paralela."""
-
-    return apply_data_transform_steps(
+    return execute_transform_plan(
         table,
-        plan_to_legacy_steps(plan),
+        plan,
         sibling_tables=sibling_tables,
-    )
+        culture=culture,
+    ).table
 
 
 def apply_data_transform_to_payload_result(
@@ -507,26 +1040,64 @@ def apply_data_transform_to_payload_result(
     transform: Any,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
+    query_bindings: tuple[dict[str, Any], ...] = (),
+    target_step_name: str | None = None,
+    culture: str | None = None,
 ) -> dict[str, Any]:
-    read_result = read_data_transform(transform)
+    selected_culture = culture or str(m_query_setting("defaultCulture", "pt-BR"))
+    read_result = read_data_transform(
+        transform,
+        query_bindings=query_bindings,
+        target_step_name=target_step_name,
+        culture=selected_culture,
+    )
     table = coerce_payload_to_table(data)
+    script_hash = (
+        "sha256:"
+        + hashlib.sha256((read_result.canonical_script or "").encode("utf-8")).hexdigest()
+        if read_result.version == 2 and read_result.canonical_script
+        else None
+    )
     if not read_result.executable or read_result.plan is None or table is None:
         return {
             "data": data,
             "applied": False,
             "table": table,
             "transform": read_result.public_metadata(),
+            "scriptHash": script_hash,
         }
-    next_table = apply_transform_plan(
-        table,
-        read_result.plan,
-        sibling_tables=sibling_tables,
-    )
+    started = time.monotonic()
+    try:
+        execution = execute_transform_plan(
+            table,
+            read_result.plan,
+            sibling_tables=sibling_tables,
+            culture=selected_culture,
+        )
+    except MExecutionError as exc:
+        runtime_error = MRuntimeError(exc.step_name, exc.code, str(exc))
+        return {
+            "data": data,
+            "applied": False,
+            "failed": True,
+            "table": table,
+            "transform": read_result.public_metadata(),
+            "scriptHash": script_hash,
+            "schema": list(_table_schema(table, {})),
+            "runtimeErrors": {"count": 1, "sample": [runtime_error.to_dict()]},
+            "executionMs": int((time.monotonic() - started) * 1000),
+            "selectedStepName": read_result.plan.output,
+        }
     return {
-        "data": next_table["rows"],
+        "data": execution.table["rows"],
         "applied": True,
-        "table": next_table,
+        "table": execution.table,
         "transform": read_result.public_metadata(),
+        "scriptHash": script_hash,
+        "schema": list(execution.schema),
+        "runtimeErrors": execution.runtime_errors_dict(),
+        "executionMs": execution.execution_ms,
+        "selectedStepName": execution.selected_step_name,
     }
 
 
@@ -535,10 +1106,16 @@ def apply_data_transform_to_payload(
     transform: Any,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
+    query_bindings: tuple[dict[str, Any], ...] = (),
+    target_step_name: str | None = None,
+    culture: str | None = None,
 ) -> tuple[Any, bool, dict[str, Any] | None]:
     result = apply_data_transform_to_payload_result(
         data,
         transform,
         sibling_tables=sibling_tables,
+        query_bindings=query_bindings,
+        target_step_name=target_step_name,
+        culture=culture,
     )
     return result["data"], result["applied"], result["table"]

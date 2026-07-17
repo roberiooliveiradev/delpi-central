@@ -14,6 +14,9 @@ from tv_app.application.services.data.data_transform_contract import (
     DATA_TRANSFORM_V2,
     read_data_transform,
 )
+from tv_app.application.services.data.m_query.m_query_dependency_service import (
+    MQueryDependencyService,
+)
 from tv_app.application.services.data.tv_data_param_validation_service import (
     validate_data_binding,
     validate_data_filters,
@@ -59,7 +62,7 @@ class TvDataConfigValidationService:
 
         blocks = cfg.get("blocks")
         if not isinstance(blocks, list):
-            return {"valid": len(issues) == 0, "issues": issues}
+            return {"valid": len(issues) == 0, "issues": issues, "diagnostics": []}
 
         routes_for_filters: list[dict[str, Any]] = []
         for index, block in enumerate(blocks):
@@ -129,7 +132,24 @@ class TvDataConfigValidationService:
                 }
             )
 
-        return {"valid": len(issues) == 0, "issues": issues}
+        graph = MQueryDependencyService().resolve(
+            block for block in blocks if isinstance(block, dict)
+        )
+        diagnostics = list(graph.diagnostics)
+        for diagnostic in diagnostics:
+            issues.append(
+                {
+                    "field": "blocks",
+                    "message": str(diagnostic.get("message") or "Consulta M inválida."),
+                    "code": str(diagnostic.get("code") or "m.invalid"),
+                }
+            )
+        return {
+            "valid": len(issues) == 0,
+            "issues": issues,
+            "diagnostics": diagnostics,
+            "queryOrder": list(graph.ordered_source_ids),
+        }
 
     def assert_valid(self, cfg: dict[str, Any] | None, *, user: Any | None = None) -> None:
         result = self.validate(cfg, user=user)

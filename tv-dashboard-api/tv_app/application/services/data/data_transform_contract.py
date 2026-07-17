@@ -96,8 +96,15 @@ def _normalize_v2(raw: dict[str, Any]) -> tuple[dict[str, Any] | None, tuple[Dia
     }, ()
 
 
-def read_data_transform(raw: Any) -> DataTransformReadResult:
-    """Reader público: aceita v1/v2; v2 nunca é executado na Fase 1."""
+def read_data_transform(
+    raw: Any,
+    *,
+    query_bindings: tuple[dict[str, Any], ...] = (),
+    source_schema: tuple[dict[str, Any], ...] = (),
+    target_step_name: str | None = None,
+    culture: str | None = None,
+) -> DataTransformReadResult:
+    """Dual-read: v1 usa adapter; v2 compila sob a flag de runtime."""
 
     if not isinstance(raw, dict):
         return DataTransformReadResult(
@@ -144,19 +151,43 @@ def read_data_transform(raw: Any) -> DataTransformReadResult:
                 canonical_script=None,
                 diagnostics=diagnostics,
             )
+        if not bool(m_query_setting("enabled", False)):
+            return DataTransformReadResult(
+                version=DATA_TRANSFORM_V2,
+                status=DataTransformReadStatus.FEATURE_DISABLED,
+                normalized=normalized,
+                plan=None,
+                canonical_script=normalized["script"],
+                diagnostics=(
+                    _diagnostic(
+                        "m.execution_feature_disabled",
+                        "A execução de scripts M ainda não está habilitada.",
+                        severity=DiagnosticSeverity.WARNING,
+                    ),
+                ),
+            )
+        from tv_app.application.services.data.m_query.m_compiler import (
+            MCompileRequest,
+            MQueryCompiler,
+        )
+
+        compiled = MQueryCompiler().compile(
+            MCompileRequest(
+                profile=M_DELPI_V1,
+                script=normalized["script"],
+                query_bindings=query_bindings,
+                source_schema=source_schema,
+                target_step_name=target_step_name,
+                culture=culture or str(m_query_setting("defaultCulture", "pt-BR")),
+            )
+        )
         return DataTransformReadResult(
             version=DATA_TRANSFORM_V2,
-            status=DataTransformReadStatus.FEATURE_DISABLED,
+            status=DataTransformReadStatus.READY if compiled.valid else DataTransformReadStatus.INVALID,
             normalized=normalized,
-            plan=None,
-            canonical_script=normalized["script"],
-            diagnostics=(
-                _diagnostic(
-                    "m.execution_feature_disabled",
-                    "A execução de scripts M ainda não está habilitada.",
-                    severity=DiagnosticSeverity.WARNING,
-                ),
-            ),
+            plan=compiled.plan,
+            canonical_script=compiled.canonical_script or normalized["script"],
+            diagnostics=compiled.diagnostics,
         )
     return DataTransformReadResult(
         version=None,

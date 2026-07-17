@@ -29,11 +29,18 @@ _preview = TvDataPreviewService(_catalog)
 _openapi = TvDataOpenApiCatalogService(_catalog)
 _m_compiler = MQueryCompiler()
 
+class PreviewOptionsBody(BaseModel):
+    maxRows: int | None = Field(default=None, ge=1)
+    includeColumnProfile: bool = False
+
+
 class PreviewDataBlockBody(BaseModel):
     block: dict[str, Any]
     nativeConfig: dict[str, Any] = Field(default_factory=dict)
     playlistId: str | None = None
     forceRefresh: bool = False
+    targetStepName: str | None = None
+    previewOptions: PreviewOptionsBody = Field(default_factory=PreviewOptionsBody)
 
 
 class ValidateDataConfigBody(BaseModel):
@@ -175,12 +182,21 @@ def preview_data_block_v2(request: Request, body: PreviewDataBlockBody):
             user=user,
             playlist_defaults=playlist_defaults,
             force_refresh=bool(body.forceRefresh),
+            target_step_name=body.targetStepName,
+            preview_options=_model_dict(body.previewOptions),
         )
     except ValueError as exc:
         return fail(str(exc), 422)
     except Exception as exc:  # noqa: BLE001
         return fail(str(exc), 502)
-    return ok({"block": block})
+    resolved = block.get("resolved") if isinstance(block, dict) else None
+    payload: dict[str, Any] = {"block": block}
+    if isinstance(resolved, dict):
+        if isinstance(resolved.get("query"), dict):
+            payload["query"] = resolved["query"]
+        if isinstance(resolved.get("preview"), dict):
+            payload["preview"] = resolved["preview"]
+    return ok(payload)
 
 
 @router.post("/validate-config")

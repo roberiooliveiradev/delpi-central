@@ -535,9 +535,18 @@ export async function previewDataBlockV2(body: {
   playlistId?: string;
   /** Bypass TTL cache no servidor (Atualizar visual). */
   forceRefresh?: boolean;
+  targetStepName?: string;
+  previewOptions?: {
+    maxRows?: number;
+    includeColumnProfile?: boolean;
+  };
 }) {
   return unwrap(
-    httpPost<ApiEnvelope<{ block: Record<string, unknown> }>>(
+    httpPost<ApiEnvelope<{
+      block: Record<string, unknown>;
+      query?: Record<string, unknown>;
+      preview?: Record<string, unknown>;
+    }>>(
       `${API_BASE}/data/preview-block`,
       body,
     ),

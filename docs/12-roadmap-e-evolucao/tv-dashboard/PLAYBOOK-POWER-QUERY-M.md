@@ -6,7 +6,7 @@
 > **Baseline inspecionada:** branch `main`, commit `095dabdbad44dbdb000f165a9fe0cdc13c6ee334`  
 > **Versão deste playbook:** 1.0  
 > **Data:** 2026-07-16  
-> **Status:** Fases 0–2 concluídas em 2026-07-16; Fases 3–7 não iniciadas
+> **Status:** Fases 0–3 concluídas em 2026-07-16; Fases 4–7 não iniciadas
 
 ---
 
@@ -1286,6 +1286,8 @@ Podem ser extraídos depois, quando houver segundo uso comprovado.
 ---
 
 ## Fase 3 — Execução, joins e validação real
+
+**Status:** ✅ concluída em 2026-07-16. Evidências: [status da Fase 3](./FASE-3-STATUS-M-DELPI.md), executor de `TransformPlan` na fachada canônica, DAG com pré-autorização, preview tipado e testes unitários/HTTP. `mQuery.enabled` controla o runtime e `writeV2Enabled` permanece desligado.
 
 ### Entregas
 

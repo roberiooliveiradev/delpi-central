@@ -31,7 +31,12 @@
     "maxPreviewRows": 200,
     "maxPreviewColumns": 200,
     "maxPreviewCells": 40000,
+    "maxExecutionRows": 10000,
+    "maxExecutionColumns": 500,
+    "maxExecutionCells": 1000000,
     "maxJoinInputRows": 5000,
+    "maxJoinOutputRows": 10000,
+    "maxPivotColumns": 200,
     "executionTimeoutMs": 2000,
     "diagnosticSampleLimit": 20
   },

@@ -304,6 +304,8 @@ export type ComunicadoTablePreset = "grid" | "minimal" | "banded";
 
 export type ComunicadoDataSourceBlock = ComunicadoBlockBase & {
   type: "data_source";
+  /** Nome estável usado por queryBindings e referências M entre consultas. */
+  queryName?: string;
   dataBinding: ComunicadoDataBinding;
   /** Steps tipo Power Query (antes da View/*Projection). */
   dataTransform?: import("./dataTransform").DataTransform;
@@ -419,6 +421,26 @@ export type ComunicadoDataResolved = {
     version?: number | null;
     status: "absent" | "ready" | "feature_disabled" | "invalid";
     diagnostics: import("./dataQueryTypes").DataQueryDiagnosticDto[];
+  };
+  query?: {
+    profile?: "m-delpi-v1";
+    scriptHash?: string;
+    selectedStepName?: string;
+    diagnostics: import("./dataQueryTypes").DataQueryDiagnosticDto[];
+    runtimeErrors?: {
+      count: number;
+      sample: Array<Record<string, unknown>>;
+    };
+    executionMs?: number;
+    cacheHit?: boolean;
+  };
+  preview?: {
+    columns: import("./dataQueryTypes").MColumnSchemaDto[];
+    rows: Array<Record<string, unknown>>;
+    returnedRows?: number;
+    availableRows?: number;
+    truncated: boolean;
+    isSample: boolean;
   };
   kpi?: { value?: unknown; label?: string };
   /** Métricas escalares disponíveis (multi-campo). */

@@ -25,6 +25,8 @@ class TvDataPreviewService:
         user: Any | None = None,
         playlist_defaults: dict[str, Any] | None = None,
         force_refresh: bool = False,
+        target_step_name: str | None = None,
+        preview_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         block_type = str(block.get("type") or "")
         binding = block.get("dataBinding")
@@ -41,6 +43,9 @@ class TvDataPreviewService:
             playlist_defaults=playlist_defaults,
             user=user,
             force_refresh=force_refresh,
+            target_step_name=target_step_name,
+            target_source_id=target_id,
+            preview_options=preview_options,
         )
         if not enriched:
             return block
