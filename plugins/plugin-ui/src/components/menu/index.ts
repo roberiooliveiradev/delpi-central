@@ -6,4 +6,5 @@ export {
   ContextMenuToolbarButton,
   type ContextMenuToolbarButtonProps,
 } from "./ContextMenuToolbarButton";
+export { FixedPanelPortal, type FixedPanelPortalProps } from "./FixedPanelPortal";
 export { useFixedPanelPosition, type FixedPanelPoint } from "./useFixedPanelPosition";

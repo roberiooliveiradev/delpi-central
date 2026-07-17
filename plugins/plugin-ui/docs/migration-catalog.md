@@ -142,6 +142,23 @@ Após migração:
 - [x] `npm run build` transformometro + testes plugin-ui diagram
 - [ ] Remover bloco CSS duplicado `tm-diagram-*` de `transformometro/src/index.css` (opcional — alias mantém compatibilidade)
 
+## Infraestrutura de popover (`menu`) — `FixedPanelPortal` (jul/2026)
+
+Primitivo de infraestrutura para popover posicionado por ponto (portal + tema + dismiss por clique fora/Escape + escopo MFE opcional). Consolida a lógica antes duplicada em cada popover de posição fixa.
+
+| Consumidor | Papel | Notas |
+|------------|-------|-------|
+| `ContextMenu` (kit) | Reimplementado sobre `FixedPanelPortal` | Removeu portal/tema/dismiss inline; API pública inalterada |
+| `DataPrepareColumnMenu` (`tv-dashboard`) | Popover de coluna (Preparar dados) | Usa `portalScopeClassName="dashboard-tv-dashboard"` para tokens/CSS de domínio nas sub-views; sem lógica de portal local |
+
+Pacote: `plugin-ui/src/components/menu/FixedPanelPortal.tsx` (+ teste). Sem CSS próprio (infra; consumidores passam `className`, ex.: `delpi-ui-context-menu`). Para ancoragem a elemento use `AnchoredPanelPortal` (`components/shape`).
+
+Após extração:
+- [x] `FixedPanelPortal` + `FixedPanelPortal.test.tsx`
+- [x] `ContextMenu` migrado (dois consumidores reais)
+- [x] Catálogo (`visualComponents.ts` + demo `menu`) + `component-catalog.md` + `contributing.md`
+- [x] `npm test` plugin-ui + `npm run build` tv-dashboard
+
 ## Status — Fase 2 (shell de dashboard)
 
 | Plugin | Pagination | MultiSelect | FiltersRow | ChartCard | KpiCard | LoadingActivity | Notas |

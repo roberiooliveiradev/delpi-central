@@ -842,6 +842,37 @@ import { ShapeFillMenu, ShapeOutlineMenu } from "@delpi/plugin-ui/index";
 
 ---
 
+## Família `menu` — popovers posicionados por ponto
+
+Infraestrutura de popover portaled (posição fixa a partir de cursor/rect), com tema, dismiss (clique fora + Escape) e escopo opcional do MFE.
+
+| Export | Descrição |
+|--------|-----------|
+| `FixedPanelPortal` | Primitivo de infraestrutura: portal no `body`, posição por ponto, tema (`useDelpiUiPortalTheme`), dismiss (`useClickOutside` + Escape) e `portalScopeClassName` para escopo do plugin. Base do `ContextMenu`. Para ancorar a um elemento use `AnchoredPanelPortal`. |
+| `ContextMenu` | Menu contextual (`role="menu"`) sobre `FixedPanelPortal`. |
+| `ContextMenuItem` / `ContextMenuDivider` | Itens e divisores do menu. |
+| `ContextMenuToolbar` / `ContextMenuToolbarButton` | Barra de ações compacta. |
+
+```tsx
+import { FixedPanelPortal } from "@delpi/plugin-ui/index";
+
+<FixedPanelPortal
+  open={open}
+  position={{ x, y }}
+  onDismiss={close}
+  role="menu"
+  aria-label="Ações"
+  className="delpi-ui-context-menu"
+  portalScopeClassName="dashboard-tv-dashboard"
+>
+  {/* conteúdo do painel — escopo do plugin garante tokens --{prefix}-* */}
+</FixedPanelPortal>
+```
+
+Consumidores: `ContextMenu` (kit) e `DataPrepareColumnMenu` do `tv-dashboard` (painel de coluna com sub-views/formulários que precisam do escopo MFE).
+
+---
+
 ## Consumidores atuais
 
 | Plugin | Componentes usados |

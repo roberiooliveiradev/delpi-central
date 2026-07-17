@@ -6,10 +6,26 @@ import {
   ContextMenuItem,
   ContextMenuToolbar,
   ContextMenuToolbarButton,
+  FixedPanelPortal,
 } from "../../components/menu";
 import type { CatalogEntryDraft } from "../types";
 
 export const menuCatalogEntries: CatalogEntryDraft[] = [
+  {
+    id: "menu.FixedPanelPortal",
+    family: "menu",
+    exportName: "FixedPanelPortal",
+    title: "FixedPanelPortal",
+    description:
+      "Painel flutuante posicionado por ponto (portal + tema + dismiss). Base do ContextMenu e de popovers de domínio nos MFE.",
+    demos: [
+      {
+        id: "default",
+        label: "Abrir",
+        render: () => <FixedPanelPortalDemo />,
+      },
+    ],
+  },
   {
     id: "menu.ContextMenu",
     family: "menu",
@@ -94,6 +110,40 @@ export const menuCatalogEntries: CatalogEntryDraft[] = [
     ],
   },
 ];
+
+function FixedPanelPortalDemo() {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
+
+  return (
+    <div className="puc-stack">
+      <button
+        type="button"
+        className="puc-primary-btn"
+        onClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          setPosition({ x: rect.left, y: rect.bottom + 8 });
+          setOpen(true);
+        }}
+      >
+        Abrir painel
+      </button>
+      <FixedPanelPortal
+        open={open}
+        position={position}
+        onDismiss={() => setOpen(false)}
+        role="dialog"
+        aria-label="Painel flutuante"
+        className="puc-card"
+      >
+        <div className="puc-stack" style={{ padding: 12, minWidth: 200 }}>
+          <strong>Painel posicionado</strong>
+          <span>Fecha ao clicar fora ou pressionar Escape.</span>
+        </div>
+      </FixedPanelPortal>
+    </div>
+  );
+}
 
 function ContextMenuDemo() {
   const [open, setOpen] = useState(false);

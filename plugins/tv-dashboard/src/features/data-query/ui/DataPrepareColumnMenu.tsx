@@ -1,7 +1,7 @@
 import {
-  ContextMenu,
   ContextMenuDivider,
   ContextMenuItem,
+  FixedPanelPortal,
   NativeTextControl,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
@@ -89,11 +89,15 @@ export function DataPrepareColumnMenu({
   };
 
   return (
-    <ContextMenu
+    <FixedPanelPortal
       open={Boolean(target)}
       position={target.position}
-      onClose={onClose}
+      onDismiss={onClose}
+      role="menu"
       aria-label={`Ações da coluna ${target.columnLabel}`}
+      className="delpi-ui-context-menu"
+      portalScopeClassName="dashboard-tv-dashboard"
+      onContextMenu={(event) => event.preventDefault()}
     >
       {view === "root" ? (
         <>
@@ -169,7 +173,7 @@ export function DataPrepareColumnMenu({
       ) : null}
 
       {view === "rename" ? (
-        <div className="dashboard-tv-dashboard td-data-pq__menu-view">
+        <div className="td-data-pq__menu-view">
           <form
             className="td-data-pq__menu-form"
             onSubmit={(event) => {
@@ -207,7 +211,7 @@ export function DataPrepareColumnMenu({
       ) : null}
 
       {view === "replace" ? (
-        <div className="dashboard-tv-dashboard td-data-pq__menu-view">
+        <div className="td-data-pq__menu-view">
           <form
             className="td-data-pq__menu-form"
             onSubmit={(event) => {
@@ -265,6 +269,6 @@ export function DataPrepareColumnMenu({
           <ContextMenuItem label="Voltar" icon={ArrowLeft} onSelect={() => setView("root")} />
         </>
       ) : null}
-    </ContextMenu>
+    </FixedPanelPortal>
   );
 }

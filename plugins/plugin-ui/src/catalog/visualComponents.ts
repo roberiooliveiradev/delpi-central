@@ -251,7 +251,15 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("shape", "ColorStandardRow"),
   vc("shape", "ColorSwatch"),
   // menu
-  vc("menu", "ContextMenu"),
+  vc("menu", "FixedPanelPortal", {
+    addedAt: "2026-07-17",
+    description:
+      "Painel flutuante posicionado por ponto (portal + tema + dismiss + escopo MFE). Base do ContextMenu.",
+  }),
+  vc("menu", "ContextMenu", {
+    updatedAt: "2026-07-17",
+    changeNote: "Reimplementado sobre FixedPanelPortal (portal/tema/dismiss compartilhados)",
+  }),
   vc("menu", "ContextMenuItem"),
   vc("menu", "ContextMenuDivider"),
   vc("menu", "ContextMenuToolbar"),
