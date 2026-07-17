@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import bleach
+from PIL import Image as PillowImage
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
@@ -18,7 +19,6 @@ from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import (
     Flowable,
     Image,
-    KeepTogether,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -104,6 +104,26 @@ def _safe_inline_html(raw: str) -> str:
         protocols=["http", "https", "mailto"],
         strip=True,
     )
+
+
+def _transparent_signature_png(raw: bytes) -> bytes:
+    """Remove fundo branco de assinaturas antigas, preservando o traço."""
+    try:
+        with PillowImage.open(io.BytesIO(raw)) as source:
+            image = source.convert("RGBA")
+            pixels = image.load()
+            for y in range(image.height):
+                for x in range(image.width):
+                    red, green, blue, alpha = pixels[x, y]
+                    if red >= 245 and green >= 245 and blue >= 245:
+                        pixels[x, y] = (red, green, blue, 0)
+            output = io.BytesIO()
+            image.save(output, format="PNG")
+            return output.getvalue()
+    except Exception:
+        # Compatibilidade com formatos legados: ReportLab ainda tenta renderizar
+        # o original se o arquivo não puder ser normalizado pelo Pillow.
+        return raw
 
 
 _STYLE_RE = re.compile(
@@ -463,7 +483,7 @@ class MinutePdfRenderer:
         signature_by_user = {
             str(item.get("user_id")): item for item in signatures if item.get("user_id")
         }
-        blocks: list[Flowable] = []
+        cells: list[list[Flowable]] = []
         for signer in signers:
             user_id = str(signer.get("user_id") or "")
             participant = participant_by_user.get(user_id, {})
@@ -477,7 +497,11 @@ class MinutePdfRenderer:
             image_bytes = signature.get("image_bytes")
             content: list[Flowable] = [Spacer(1, 3 * mm)]
             if isinstance(image_bytes, bytes) and image_bytes:
-                image = Image(io.BytesIO(image_bytes), width=42 * mm, height=13 * mm)
+                image = Image(
+                    io.BytesIO(_transparent_signature_png(image_bytes)),
+                    width=42 * mm,
+                    height=13 * mm,
+                )
                 image.hAlign = "CENTER"
                 content.append(image)
             else:
@@ -486,7 +510,7 @@ class MinutePdfRenderer:
                 [
                     Table(
                         [[""]],
-                        colWidths=[132 * mm],
+                        colWidths=[68 * mm],
                         rowHeights=[0.5 * mm],
                         style=TableStyle(
                             [("LINEABOVE", (0, 0), (-1, 0), 0.8, colors.black)]
@@ -500,10 +524,32 @@ class MinutePdfRenderer:
                     Spacer(1, 5 * mm),
                 ]
             )
-            blocks.append(KeepTogether(content))
+            cells.append(content)
         if not signers:
-            blocks.append(Paragraph("Nenhum signatário configurado.", styles["body"]))
-        return blocks
+            return [Paragraph("Nenhum signatário configurado.", styles["body"])]
+
+        rows: list[list[Any]] = []
+        for index in range(0, len(cells), 2):
+            row: list[Any] = [cells[index]]
+            row.append(cells[index + 1] if index + 1 < len(cells) else "")
+            rows.append(row)
+
+        return [
+            Table(
+                rows,
+                colWidths=[76 * mm, 76 * mm],
+                hAlign="CENTER",
+                style=TableStyle(
+                    [
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 4 * mm),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 4 * mm),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+                    ]
+                ),
+            )
+        ]
 
     def _draw_page(
         self,

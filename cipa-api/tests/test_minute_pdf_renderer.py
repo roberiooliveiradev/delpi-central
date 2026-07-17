@@ -1,7 +1,12 @@
+import io
+
+from PIL import Image as PillowImage
 from reportlab.lib.units import mm
+from reportlab.platypus import Table
 
 from cipa_app.infrastructure.pdf.minute_pdf_renderer import (
     MinutePdfRenderer,
+    _transparent_signature_png,
     format_date_br,
     format_date_long_pt,
     html_to_paragraphs,
@@ -51,6 +56,42 @@ def test_renderer_builds_formal_pdf_with_participants_and_signers():
 
     assert raw.startswith(b"%PDF-")
     assert len(raw) > 3_000
+
+
+def test_signature_blocks_use_two_columns():
+    renderer = MinutePdfRenderer()
+    styles = renderer._styles()
+    participants = [
+        {"user_id": f"user-{index}", "display_name": f"Pessoa {index}"}
+        for index in range(1, 4)
+    ]
+    signers = [
+        {"user_id": f"user-{index}", "display_name": f"Pessoa {index}"}
+        for index in range(1, 4)
+    ]
+
+    blocks = renderer._signature_blocks(participants, signers, [], styles)
+
+    assert len(blocks) == 1
+    assert isinstance(blocks[0], Table)
+    assert len(blocks[0]._cellvalues) == 2
+    assert all(len(row) == 2 for row in blocks[0]._cellvalues)
+
+
+def test_signature_background_becomes_transparent():
+    image = PillowImage.new("RGBA", (3, 1), (255, 255, 255, 255))
+    image.putpixel((1, 0), (15, 23, 42, 255))
+    image.putpixel((2, 0), (250, 250, 250, 255))
+    raw = io.BytesIO()
+    image.save(raw, format="PNG")
+
+    normalized = PillowImage.open(
+        io.BytesIO(_transparent_signature_png(raw.getvalue()))
+    ).convert("RGBA")
+
+    assert normalized.getpixel((0, 0))[3] == 0
+    assert normalized.getpixel((1, 0))[3] == 255
+    assert normalized.getpixel((2, 0))[3] == 0
 
 
 def test_pdf_preserves_rich_text_formatting():

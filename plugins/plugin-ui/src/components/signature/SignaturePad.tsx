@@ -30,8 +30,9 @@ export function SignaturePad({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // O branco é apenas visual (CSS). O PNG deve manter transparência para
+    // funcionar sobre marca-d'água e fundos de documentos.
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   }, [width, height]);
 
   function getContext(): CanvasRenderingContext2D | null {
@@ -94,8 +95,7 @@ export function SignaturePad({
     const canvas = canvasRef.current;
     const ctx = getContext();
     if (!canvas || !ctx) return;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     setHasDrawing(false);
     onChange?.(null);
   }
