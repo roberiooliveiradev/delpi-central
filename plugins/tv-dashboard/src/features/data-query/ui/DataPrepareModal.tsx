@@ -165,7 +165,15 @@ export function DataQueryWorkbenchModal({
         </div>
       }
     >
-      <div className="td-data-pq">
+      <div
+        className="td-data-pq"
+        onContextMenu={(event) => {
+          // Menu nativo só em campos de texto (colar); no resto, menus próprios.
+          const target = event.target as HTMLElement;
+          if (target.closest("input, textarea, [contenteditable='true']")) return;
+          event.preventDefault();
+        }}
+      >
         <DataPrepareRibbon
           selectedColumnKey={workbench.state.selectedColumnKey}
           selectedStepName={draft?.selectedStepName ?? null}

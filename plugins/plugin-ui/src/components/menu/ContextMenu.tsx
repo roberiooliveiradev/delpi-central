@@ -9,6 +9,11 @@ export type ContextMenuProps = {
   onClose: () => void;
   children: ReactNode;
   "aria-label"?: string;
+  /**
+   * Classe root do plugin MFE (ex.: `dashboard-tv-dashboard`) — necessária
+   * quando o conteúdo do menu usa classes/tokens de domínio do plugin.
+   */
+  portalScopeClassName?: string;
 };
 
 export function ContextMenu({
@@ -17,6 +22,7 @@ export function ContextMenu({
   onClose,
   children,
   "aria-label": ariaLabel,
+  portalScopeClassName,
 }: ContextMenuProps) {
   return (
     <FixedPanelPortal
@@ -26,6 +32,7 @@ export function ContextMenu({
       role="menu"
       aria-label={ariaLabel}
       className="delpi-ui-context-menu"
+      portalScopeClassName={portalScopeClassName}
       onContextMenu={(event) => event.preventDefault()}
     >
       {children}

@@ -18,8 +18,24 @@ const NESTED_OVERLAY_SELECTOR = [
   '[data-delpi-anchored-exclusive="false"]',
 ].join(", ");
 
-function isInsideNestedOverlay(target: Node): boolean {
-  return target instanceof Element && Boolean(target.closest(NESTED_OVERLAY_SELECTOR));
+/**
+ * Overlay é «aninhado» só quando abriu DEPOIS do popover (portal appendado
+ * após o painel → visualmente acima). Um modal ancestral ou aberto ANTES
+ * (ex.: workbench em ModalShell `aria-modal`) é contexto pai: clique nele,
+ * fora do painel, deve fechar o popover normalmente.
+ */
+function isInsideNestedOverlay(target: Node, panels: HTMLElement[]): boolean {
+  if (!(target instanceof Element)) return false;
+  const overlay = target.closest(NESTED_OVERLAY_SELECTOR);
+  if (!overlay) return false;
+
+  return panels.every((panel) => {
+    if (overlay.contains(panel)) return false;
+    const position = overlay.compareDocumentPosition(panel);
+    // Painel vem depois do overlay no DOM → overlay abriu antes (é o pai).
+    if (position & Node.DOCUMENT_POSITION_FOLLOWING) return false;
+    return true;
+  });
 }
 
 /**
@@ -43,8 +59,11 @@ export function useClickOutside<T extends HTMLElement>(
     const handlePointerDown = (event: Event) => {
       const target = event.target as Node | null;
       if (!target) return;
-      const inside = refsRef.current.some((ref) => ref.current?.contains(target));
-      if (inside || isInsideNestedOverlay(target)) return;
+      const panels = refsRef.current
+        .map((ref) => ref.current)
+        .filter((panel): panel is T => Boolean(panel));
+      const inside = panels.some((panel) => panel.contains(target));
+      if (inside || isInsideNestedOverlay(target, panels)) return;
       onOutsideRef.current();
     };
 

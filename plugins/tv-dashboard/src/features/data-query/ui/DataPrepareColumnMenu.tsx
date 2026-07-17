@@ -1,7 +1,7 @@
 import {
+  ContextMenu,
   ContextMenuDivider,
   ContextMenuItem,
-  FixedPanelPortal,
   NativeTextControl,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
@@ -89,15 +89,12 @@ export function DataPrepareColumnMenu({
   };
 
   return (
-    <FixedPanelPortal
+    <ContextMenu
       open={Boolean(target)}
       position={target.position}
-      onDismiss={onClose}
-      role="menu"
+      onClose={onClose}
       aria-label={`Ações da coluna ${target.columnLabel}`}
-      className="delpi-ui-context-menu"
       portalScopeClassName="dashboard-tv-dashboard"
-      onContextMenu={(event) => event.preventDefault()}
     >
       {view === "root" ? (
         <>
@@ -269,6 +266,6 @@ export function DataPrepareColumnMenu({
           <ContextMenuItem label="Voltar" icon={ArrowLeft} onSelect={() => setView("root")} />
         </>
       ) : null}
-    </FixedPanelPortal>
+    </ContextMenu>
   );
 }
