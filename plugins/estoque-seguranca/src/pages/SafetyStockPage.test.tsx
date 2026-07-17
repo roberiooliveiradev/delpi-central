@@ -441,6 +441,12 @@ describe("SafetyStockPage", () => {
         deficitValues.some((el) => el.className.includes("ess-detail__balance--negative")),
       ).toBe(true);
     });
+
+    const ledgerHelp =
+      "Linha do tempo consolidada: saldo atual, saídas por empenho (D4_QUANT) e entradas por pedido aberto. A data do empenho é a data do empenho no Protheus, não a garantia de consumo fabril.";
+    expect(screen.queryByText(ledgerHelp)).toBeNull();
+    fireEvent.focus(screen.getByRole("button", { name: "Como funciona o extrato projetado" }));
+    expect(screen.getByRole("tooltip", { hidden: true }).textContent).toBe(ledgerHelp);
   });
 
   it("mantém detalhe visível quando fornecedores falham e permite retry só da seção", async () => {

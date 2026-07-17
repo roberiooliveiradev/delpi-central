@@ -4,6 +4,7 @@ import {
   createDashboardDetailFieldGrid,
   createDashboardStatusBadge,
   createModalShell,
+  HelpTooltip,
 } from "@delpi/plugin-ui/index";
 
 import { useSafetyStockItemDetails } from "../hooks/useSafetyStockItemDetails";
@@ -299,12 +300,14 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
           </section>
 
           <section className="ess-detail__section" aria-label="Extrato projetado">
-            <h3>Extrato projetado de saldo</h3>
-            <p className="ess-detail__hint">
-              Linha do tempo consolidada: saldo atual, saídas por empenho (D4_QUANT) e entradas
-              por pedido aberto. A data do empenho é a data do empenho no Protheus, não a
-              garantia de consumo fabril.
-            </p>
+            <div className="ess-detail__section-header ess-detail__section-header--help">
+              <h3>Extrato projetado de saldo</h3>
+              <HelpTooltip
+                ariaLabel="Como funciona o extrato projetado"
+                content="Linha do tempo consolidada: saldo atual, saídas por empenho (D4_QUANT) e entradas por pedido aberto. A data do empenho é a data do empenho no Protheus, não a garantia de consumo fabril."
+                placement="bottom"
+              />
+            </div>
             {ledger.length === 0 ? (
               <p className="ess-detail__empty">Nenhum movimento projetado.</p>
             ) : (

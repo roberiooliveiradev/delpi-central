@@ -376,6 +376,10 @@
   margin: 0;
 }
 
+.dashboard-estoque-seguranca .ess-detail__section-header--help {
+  justify-content: flex-start;
+}
+
 .dashboard-estoque-seguranca .ess-detail__hint,
 .dashboard-estoque-seguranca .ess-detail__empty,
 .dashboard-estoque-seguranca .ess-detail__state,

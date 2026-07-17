@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -8,6 +10,9 @@ import {
   ModalShell,
   modalShellBemClasses,
 } from "./ModalShell";
+
+const modalCss = readFileSync(resolve(process.cwd(), "src/styles/modal.css"), "utf8");
+const modalShellCss = readFileSync(resolve(process.cwd(), "src/styles/modal-shell.css"), "utf8");
 
 afterEach(cleanup);
 
@@ -102,6 +107,15 @@ describe("ModalShell", () => {
     expect(dialog.className).toContain("ess-modal--page");
     expect(dialog.className).toContain("delpi-ui-modal--page");
     expect(dialog.closest(".dashboard-estoque-seguranca")).toBeTruthy();
+  });
+
+  it("preserva o dimensionamento wide/page definido pelo CSS canônico", () => {
+    expect(modalCss).toMatch(
+      /\.delpi-ui-modal--page\s*\{[^}]*width:\s*min\(1180px,\s*calc\(100vw - 24px\)\)/s,
+    );
+    expect(modalShellCss).not.toMatch(
+      /\.delpi-ui-modal\s*\{[^}]*(?:width|max-width|max-height)\s*:/s,
+    );
   });
 
   it("permite conter o portal na área do host", () => {

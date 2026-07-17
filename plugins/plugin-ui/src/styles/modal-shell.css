@@ -21,9 +21,10 @@
 .delpi-ui-modal {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  max-width: 560px;
-  max-height: calc(100vh - 32px);
+  /*
+   * O dimensionamento pertence a modal.css. Repeti-lo aqui anulava as
+   * variantes canônicas --wide e --page por causa da ordem dos imports.
+   */
   overflow: auto;
   border: 1px solid var(--delpi-ui-border, #e5e7eb);
   border-radius: 14px;
