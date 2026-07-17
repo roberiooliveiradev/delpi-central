@@ -52,7 +52,7 @@ import {
   type RibbonTab,
 } from "./DataPrepareRibbon";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { Modal } from "./ui/Modal";
+import { HostContainedModal } from "./ui/Modal";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.dataPrepare;
 
@@ -348,7 +348,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
   };
 
   return (
-    <Modal
+    <HostContainedModal
       open={open}
       title="Preparar dados"
       onClose={onClose}
@@ -819,7 +819,7 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
           />
         </div>
       )}
-    </Modal>
+    </HostContainedModal>
   );
 }
 

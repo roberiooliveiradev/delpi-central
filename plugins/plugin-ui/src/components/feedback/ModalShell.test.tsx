@@ -1,7 +1,9 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ModalShell, modalShellBemClasses } from "./ModalShell";
+
+afterEach(cleanup);
 
 describe("ModalShell", () => {
   it("não renderiza quando fechado", () => {
@@ -72,5 +74,35 @@ describe("ModalShell", () => {
     const dialog = screen.getByRole("dialog", { name: "Remover tela" });
     expect(dialog.closest(".dashboard-tv-dashboard")).toBeTruthy();
     expect(dialog.closest(".td-modal-overlay")).toBeTruthy();
+  });
+
+  it("permite conter o portal na área do host", () => {
+    const host = document.createElement("main");
+    host.className = "dashboard-tv-dashboard";
+    document.body.appendChild(host);
+
+    const { unmount } = render(
+      <ModalShell
+        open
+        title="Preparar dados"
+        onClose={vi.fn()}
+        classNames={modalShellBemClasses("td")}
+        portalScopeClassName="dashboard-tv-dashboard"
+        portalTarget={host}
+        containedInPortalTarget
+      >
+        <p>Consulta</p>
+      </ModalShell>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Preparar dados" });
+    const portal = dialog.closest("[data-modal-contained='true']");
+    expect(host.contains(dialog)).toBe(true);
+    expect(portal).toBeTruthy();
+    expect((portal as HTMLElement).style.position).toBe("absolute");
+    expect((dialog.closest(".td-modal-overlay") as HTMLElement).style.position).toBe("absolute");
+
+    unmount();
+    host.remove();
   });
 });

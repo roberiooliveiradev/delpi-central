@@ -6,7 +6,7 @@ import { Code2 } from "lucide-react";
 import { useMemo, useRef, useState, type MouseEvent } from "react";
 
 import { useComunicadoEditor } from "../../../components/comunicadoEditorContext";
-import { Modal } from "../../../components/ui/Modal";
+import { HostContainedModal } from "../../../components/ui/Modal";
 import { dataQueryDependencyEdges } from "../domain/dataQueryDependencies";
 import type { DataQueryInsertOperation } from "../domain/dataQueryTypes";
 import {
@@ -138,7 +138,7 @@ export function DataQueryWorkbenchModal({
   };
 
   return (
-    <Modal
+    <HostContainedModal
       open={open}
       title="Preparar dados — M DELPI"
       onClose={onClose}
@@ -311,6 +311,6 @@ export function DataQueryWorkbenchModal({
           onInsert={insertForColumn}
         />
       </div>
-    </Modal>
+    </HostContainedModal>
   );
 }

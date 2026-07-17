@@ -40,6 +40,10 @@ export type ModalShellProps = {
    * Portais vão para `document.body` — sem este escopo o CSS do plugin não aplica.
    */
   portalScopeClassName?: string;
+  /** Host alternativo do portal; útil para modais contidos na área de um MFE. */
+  portalTarget?: Element | null;
+  /** Faz overlay e wrapper ocuparem o portalTarget, não o viewport inteiro. */
+  containedInPortalTarget?: boolean;
 };
 
 export function modalShellBemClasses(prefix: string): ModalShellClassNames {
@@ -75,6 +79,8 @@ export function ModalShell({
   lockPageScroll,
   overlayAriaHidden = false,
   portalScopeClassName,
+  portalTarget,
+  containedInPortalTarget = false,
 }: ModalShellProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -176,6 +182,7 @@ export function ModalShell({
   const overlay = (
     <div
       className={overlayClass}
+      style={containedInPortalTarget ? { position: "absolute" } : undefined}
       onClick={onClose}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
@@ -219,10 +226,20 @@ export function ModalShell({
   );
 
   return createPortal(
-    <div className={scopeClass} style={portalTheme.style} data-theme={portalTheme.dataTheme ?? undefined}>
+    <div
+      className={scopeClass}
+      style={{
+        ...portalTheme.style,
+        ...(containedInPortalTarget
+          ? { position: "absolute", inset: 0, minWidth: 0, minHeight: 0 }
+          : {}),
+      }}
+      data-theme={portalTheme.dataTheme ?? undefined}
+      data-modal-contained={containedInPortalTarget ? "true" : undefined}
+    >
       {overlay}
     </div>,
-    document.body,
+    portalTarget ?? document.body,
   );
 }
 
