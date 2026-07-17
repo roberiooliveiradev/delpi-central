@@ -380,6 +380,27 @@
   justify-content: flex-start;
 }
 
+.dashboard-estoque-seguranca .ess-detail__balance-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ess-grid-gap);
+}
+
+.dashboard-estoque-seguranca .ess-detail__situation {
+  margin: 0;
+  color: var(--ess-text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.dashboard-estoque-seguranca .ess-detail__situation strong {
+  font-weight: 700;
+}
+
+.dashboard-estoque-seguranca .ess-detail__situation-critical {
+  color: var(--ess-danger);
+}
+
 .dashboard-estoque-seguranca .ess-detail__hint,
 .dashboard-estoque-seguranca .ess-detail__empty,
 .dashboard-estoque-seguranca .ess-detail__state,
@@ -526,7 +547,8 @@
 
 @media (max-width: 900px) {
   .dashboard-estoque-seguranca .ess-filters__primary,
-  .dashboard-estoque-seguranca .ess-filters__secondary {
+  .dashboard-estoque-seguranca .ess-filters__secondary,
+  .dashboard-estoque-seguranca .ess-detail__balance-cards {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -545,6 +567,10 @@
   }
 
   .dashboard-estoque-seguranca .ess-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-estoque-seguranca .ess-detail__balance-cards {
     grid-template-columns: 1fr;
   }
 

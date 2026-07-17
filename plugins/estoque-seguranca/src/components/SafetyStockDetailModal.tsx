@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, PackageCheck, ShieldCheck, TriangleAlert, Warehouse } from "lucide-react";
 import {
   createDashboardDetailFieldGrid,
   createDashboardStatusBadge,
@@ -14,8 +14,10 @@ import type {
   SafetyStockItem,
   SafetyStockLinkedSupplier,
   SafetyStockProjectionLedgerEntry,
+  SafetyStockProjectionSummary,
 } from "../types/safetyStock";
 import { formatNumberPtBr } from "../utils/formatters";
+import { projectionSituationParts } from "../utils/projectionSituation";
 import {
   branchLabel,
   dateStatusLabel,
@@ -24,6 +26,7 @@ import {
   purchaseCoverageVariant,
 } from "../utils/safetyStockStatus";
 import { DataTable, type DataTableColumn } from "./dataTableUi";
+import { KpiCard } from "./KpiCard";
 import { SafetyStockDetailProductSearch } from "./SafetyStockDetailProductSearch";
 import {
   SafetyStockLinkedSuppliersSection,
@@ -53,6 +56,41 @@ type SafetyStockDetailModalProps = {
   onClose: () => void;
   onNavigate?: (item: SafetyStockItem) => void;
 };
+
+function ProjectionSituation({ summary }: { summary: SafetyStockProjectionSummary }) {
+  const parts = projectionSituationParts(summary);
+  const valueClass = (value: number) =>
+    value < 0 ? "ess-detail__situation-critical" : undefined;
+
+  return (
+    <p className="ess-detail__situation">
+      Partindo de um saldo de{" "}
+      <strong className={valueClass(summary.initial_balance)}>{parts.initialBalance}</strong>, com{" "}
+      <strong className={valueClass(summary.eligible_purchase_quantity)}>
+        {parts.purchaseQuantity}
+      </strong>{" "}
+      de entradas previstas e{" "}
+      <strong className={valueClass(summary.eligible_commitment_quantity)}>
+        {parts.commitmentQuantity}
+      </strong>{" "}
+      de consumo comprometido, o saldo final projetado é{" "}
+      <strong className={valueClass(summary.final_projected_balance)}>{parts.finalBalance}</strong>.
+      O menor saldo previsto no período é{" "}
+      <strong className={valueClass(summary.minimum_projected_balance)}>
+        {parts.minimumBalance}
+      </strong>
+      .{" "}
+      {parts.shortageDate ? (
+        <>
+          A primeira ruptura está prevista para{" "}
+          <strong className="ess-detail__situation-critical">{parts.shortageDate}</strong>.
+        </>
+      ) : (
+        <>Não há ruptura projetada no período.</>
+      )}
+    </p>
+  );
+}
 
 export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStockDetailModalProps) {
   const open = Boolean(item);
@@ -207,56 +245,47 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
         <div className="ess-detail">
           <section className="ess-detail__section" aria-label="Saldos">
             <h3>Saldos e estoque de segurança</h3>
-            <DetailFields
-              fields={[
-                { label: "Estoque de segurança", value: formatNumberPtBr(stock.safety_stock) },
-                { label: "Saldo disponível", value: formatNumberPtBr(stock.available_stock) },
-                {
-                  label: "Déficit físico",
-                  value:
-                    stock.deficit_quantity > 0 ? (
-                      <span className="ess-detail__balance--negative">
-                        {formatNumberPtBr(stock.deficit_quantity)}
-                      </span>
-                    ) : (
-                      formatNumberPtBr(stock.deficit_quantity)
-                    ),
-                },
-                { label: "Armazém 01", value: formatNumberPtBr(stock.primary_stock) },
-                { label: "Armazém 98", value: formatNumberPtBr(stock.warehouse_98_stock) },
-                { label: "Armazém 99", value: formatNumberPtBr(stock.warehouse_99_stock) },
-              ]}
-            />
+            <div className="ess-detail__balance-cards">
+              <KpiCard
+                title="Saldo disponível"
+                value={formatNumberPtBr(stock.available_stock)}
+                icon={<PackageCheck size={20} />}
+                wide
+              />
+              <KpiCard
+                title="Estoque de segurança"
+                value={formatNumberPtBr(stock.safety_stock)}
+                icon={<ShieldCheck size={20} />}
+              />
+              <KpiCard
+                title="Déficit físico"
+                value={formatNumberPtBr(stock.deficit_quantity)}
+                icon={<TriangleAlert size={20} />}
+                valueTone={stock.deficit_quantity > 0 ? "danger" : "default"}
+              />
+              <KpiCard
+                title="Armazém 01"
+                value={formatNumberPtBr(stock.primary_stock)}
+                icon={<Warehouse size={20} />}
+              />
+              <KpiCard
+                title="Armazém 98"
+                value={formatNumberPtBr(stock.warehouse_98_stock)}
+                icon={<Warehouse size={20} />}
+              />
+              <KpiCard
+                title="Armazém 99"
+                value={formatNumberPtBr(stock.warehouse_99_stock)}
+                icon={<Warehouse size={20} />}
+              />
+            </div>
           </section>
 
           <section className="ess-detail__section" aria-label="Projeção de saldo">
             <div className="ess-detail__section-header">
-              <h3>Projeção (físico + compras − empenhos)</h3>
+              <h3>Situação projetada</h3>
             </div>
-            <DetailFields
-              fields={[
-                {
-                  label: "Saldo final projetado",
-                  value: formatNumberPtBr(projectionSummary.final_projected_balance),
-                },
-                {
-                  label: "Menor saldo no período",
-                  value: formatNumberPtBr(projectionSummary.minimum_projected_balance),
-                },
-                {
-                  label: "Empenhos elegíveis",
-                  value: formatNumberPtBr(projectionSummary.eligible_commitment_quantity),
-                },
-                {
-                  label: "Pedidos elegíveis",
-                  value: formatNumberPtBr(projectionSummary.eligible_purchase_quantity),
-                },
-                {
-                  label: "Primeira ruptura",
-                  value: formatIsoDatePtBr(projectionSummary.first_shortage_date),
-                },
-              ]}
-            />
+            <ProjectionSituation summary={projectionSummary} />
             {projectionSummary.warnings.map((warning) => (
               <p key={warning} className="ess-detail__warning">
                 {warning}

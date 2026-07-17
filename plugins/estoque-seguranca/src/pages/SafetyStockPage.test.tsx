@@ -436,10 +436,29 @@ describe("SafetyStockPage", () => {
       expect(document.querySelector(".ess-detail__flow--negative")).toBeTruthy();
       expect(document.querySelector(".ess-modal__footer")).toBeTruthy();
       expect(screen.getByRole("button", { name: "Fechar" })).toBeTruthy();
-      const deficitValues = screen.getAllByText("35,00");
+      const balanceSection = screen.getByRole("region", { name: "Saldos" });
+      expect(balanceSection.querySelectorAll(".delpi-ui-kpi-card")).toHaveLength(6);
+      expect(screen.getByText("Saldo disponível").closest("article")?.className).toContain(
+        "delpi-ui-kpi-card--wide",
+      );
+      const projectionSection = screen.getByRole("region", { name: "Projeção de saldo" });
+      expect(projectionSection.textContent).toContain(
+        "Partindo de um saldo de 100,00, com 200,00 de entradas previstas e 150,00 de consumo comprometido, o saldo final projetado é 150,00.",
+      );
+      expect(projectionSection.textContent).toContain(
+        "A primeira ruptura está prevista para 20/07/2026.",
+      );
       expect(
-        deficitValues.some((el) => el.className.includes("ess-detail__balance--negative")),
-      ).toBe(true);
+        Array.from(projectionSection.querySelectorAll("strong.ess-detail__situation-critical")).map(
+          (element) => element.textContent,
+        ),
+      ).toEqual(expect.arrayContaining(["-50,00", "20/07/2026"]));
+      expect(
+        screen
+          .getByText("Déficit físico")
+          .closest("article")
+          ?.querySelector(".delpi-ui-kpi-value--danger"),
+      ).toBeTruthy();
     });
 
     const ledgerHelp =
