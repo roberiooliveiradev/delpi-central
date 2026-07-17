@@ -156,6 +156,14 @@ export {
 } from "./dataTableSelection";
 
 export {
+  resolveDataCellSemantics,
+  type DataCellError,
+  type DataCellKind,
+  type DataCellSemantics,
+  type ResolveDataCellOptions,
+} from "./dataCellSemantics";
+
+export {
   autofitDataTableColumn,
   clampColumnWidthPx,
   measureDataTableColumnWidthPx,
