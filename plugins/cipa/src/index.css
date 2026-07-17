@@ -349,7 +349,7 @@
 
 .dashboard-cipa .cipa-minute-document p {
   margin: 0 0 4mm;
-  text-indent: 12mm;
+  text-indent: 0;
 }
 
 .dashboard-cipa .cipa-minute-document__date {
@@ -364,6 +364,10 @@
 
 .dashboard-cipa .cipa-minute-document__content p {
   margin: 0 0 4mm;
+}
+
+.dashboard-cipa .cipa-minute-document__content > p {
+  text-indent: 12mm;
 }
 
 .dashboard-cipa .cipa-minute-document__signatures {
