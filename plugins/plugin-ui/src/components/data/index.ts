@@ -134,10 +134,33 @@ export {
   dataTableBemClasses,
   type DataTableClassNames,
   type DataTableColumn,
+  type DataTableColumnWidths,
   type DataTableLabels,
   type DataTableProps,
+  type DataTableSelection,
   type DashboardDataTableProps,
 } from "./DataTable";
+
+export {
+  isCellSelected,
+  isColumnSelected,
+  isRowSelected,
+  primaryColumnKey,
+  resolveCellSelection,
+  resolveColumnSelection,
+  resolveRowSelection,
+  selectionFromColumnKey,
+  selectionToTsv,
+  type DataTableCellRef,
+  type DataTableSelectionModifiers,
+} from "./dataTableSelection";
+
+export {
+  autofitDataTableColumn,
+  clampColumnWidthPx,
+  measureDataTableColumnWidthPx,
+  startDataTableColumnResize,
+} from "./dataTableColumnResize";
 
 export {
   DataTableSection,

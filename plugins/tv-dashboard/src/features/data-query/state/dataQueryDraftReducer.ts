@@ -1,3 +1,5 @@
+import type { DataTableSelection } from "@delpi/plugin-ui/index";
+
 import type {
   DataQueryCompileResult,
   DataQueryDraft,
@@ -15,6 +17,7 @@ export type DataQueryWorkbenchState = {
   activeQueryId: string | null;
   draftByQueryId: Record<string, DataQueryDraft>;
   selectedColumnKey: string | null;
+  selection: DataTableSelection | null;
   compile: AsyncState<DataQueryCompileResult>;
   preview: AsyncState<DataQueryPreview>;
 };
@@ -24,6 +27,7 @@ export type DataQueryDraftAction =
   | { type: "select_query"; queryId: string }
   | { type: "select_step"; stepName: string | null }
   | { type: "select_column"; columnKey: string | null }
+  | { type: "set_selection"; selection: DataTableSelection | null }
   | { type: "edit_script"; queryId: string; script: string }
   | { type: "undo_script"; queryId: string }
   | { type: "redo_script"; queryId: string }
@@ -43,6 +47,7 @@ export const INITIAL_WORKBENCH_STATE: DataQueryWorkbenchState = {
   activeQueryId: null,
   draftByQueryId: {},
   selectedColumnKey: null,
+  selection: null,
   compile: { status: "idle", value: null, error: null, sequence: 0 },
   preview: { status: "idle", value: null, error: null, sequence: 0 },
 };
@@ -59,10 +64,31 @@ export function dataQueryDraftReducer(
     };
   }
   if (action.type === "select_query") {
-    return { ...state, activeQueryId: action.queryId, selectedColumnKey: null };
+    return {
+      ...state,
+      activeQueryId: action.queryId,
+      selectedColumnKey: null,
+      selection: null,
+    };
   }
   if (action.type === "select_column") {
-    return { ...state, selectedColumnKey: action.columnKey };
+    const columnKey = action.columnKey || null;
+    return {
+      ...state,
+      selectedColumnKey: columnKey,
+      selection: columnKey ? { kind: "column", keys: [columnKey] } : null,
+    };
+  }
+  if (action.type === "set_selection") {
+    const selectedColumnKey =
+      action.selection?.kind === "column"
+        ? action.selection.keys[0] ?? null
+        : action.selection?.kind === "cell"
+          ? action.selection.cells[0]?.columnKey ?? null
+          : action.selection?.kind === "row"
+            ? null
+            : state.selectedColumnKey;
+    return { ...state, selection: action.selection, selectedColumnKey };
   }
   if (action.type === "select_step") {
     if (!state.activeQueryId) return state;

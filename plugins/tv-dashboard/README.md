@@ -31,6 +31,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Preparar dados M (Fase 7):** editor multiline e ribbon das fases anteriores,
   profiling opt-in, qualidade/distribuição amostradas, explain e tempo por etapa;
   AbortController cancela requests e o backend aplica deadline
+- **Prévia M (`DataTable` grid-preview):** grade com bordas, wrap, resize/autofit de colunas, seleção de coluna/linha/célula, sort no cabeçalho (etapa M) e drag para reordenar colunas; Ctrl+C copia a seleção em TSV
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
 - **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
 - **Séries temporais fiéis à API:** a granularidade da rota é preservada (ex.: `day` = um dia por linha), sem reagrupar datas em faixas; a tabela recebe todos os pontos retornados pela API (até 366 pontos em séries anuais diárias).

@@ -23,6 +23,7 @@ const TABS: ReadonlyArray<readonly [Tab, string]> = [
 
 export function DataPrepareRibbon({
   selectedColumnKey,
+  selectedColumnKeys,
   selectedStepName,
   preview,
   loading,
@@ -31,6 +32,8 @@ export function DataPrepareRibbon({
   availableQueries = [],
 }: {
   selectedColumnKey: string | null;
+  /** Seleção multi-coluna do grid; se vazia, cai em `selectedColumnKey`. */
+  selectedColumnKeys?: string[];
   selectedStepName: string | null;
   preview: DataQueryPreview | null;
   loading: boolean;
@@ -38,6 +41,13 @@ export function DataPrepareRibbon({
   onRefresh: () => void;
   availableQueries?: string[];
 }) {
+  const activeColumnKeys =
+    selectedColumnKeys && selectedColumnKeys.length > 0
+      ? selectedColumnKeys
+      : selectedColumnKey
+        ? [selectedColumnKey]
+        : [];
+  const activeColumnKey = activeColumnKeys[0] ?? null;
   const [tab, setTab] = useState<Tab>("home");
   const insert = (
     stepName: string,
@@ -97,7 +107,8 @@ export function DataPrepareRibbon({
         </div>
         {tab === "home" ? (
           <DataPrepareRibbonHomePanel
-            selectedColumnKey={selectedColumnKey}
+            selectedColumnKey={activeColumnKey}
+            selectedColumnKeys={activeColumnKeys}
             preview={preview}
             availableQueries={availableQueries}
             insert={insert}
@@ -105,14 +116,15 @@ export function DataPrepareRibbon({
         ) : null}
         {tab === "transform" ? (
           <DataPrepareRibbonTransformPanel
-            selectedColumnKey={selectedColumnKey}
+            selectedColumnKey={activeColumnKey}
+            selectedColumnKeys={activeColumnKeys}
             preview={preview}
             insert={insert}
           />
         ) : null}
         {tab === "addColumn" ? (
           <DataPrepareRibbonAddColumnPanel
-            selectedColumnKey={selectedColumnKey}
+            selectedColumnKey={activeColumnKey}
             preview={preview}
             insert={insert}
           />

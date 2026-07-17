@@ -1,40 +1,50 @@
 import {
   DataTable,
   dataTableBemClasses,
+  primaryColumnKey,
   type DataTableColumn,
+  type DataTableSelection,
 } from "@delpi/plugin-ui/index";
-import type { MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 
-import type { DataQueryPreview } from "../domain/dataQueryTypes";
-
-function typeGlyph(type: string): string {
-  if (type === "number") return "123";
-  if (type === "date" || type === "datetime") return "▣";
-  if (type === "logical") return "◉";
-  return "ABC";
-}
+import type { DataQueryCompiledStep, DataQueryPreview } from "../domain/dataQueryTypes";
+import { nextSortDirection, resolvePreviewSort } from "./resolvePreviewSort";
 
 export function DataPreparePreviewGrid({
   preview,
   loading,
+  compiledSteps,
   selectedColumnKey,
+  selection,
+  onSelectionChange,
   onSelectColumn,
   onColumnContextMenu,
+  onSortColumn,
+  onReorderColumns,
 }: {
   preview: DataQueryPreview | null;
   loading: boolean;
+  compiledSteps?: DataQueryCompiledStep[] | null;
   selectedColumnKey: string | null;
+  selection?: DataTableSelection | null;
+  onSelectionChange?: (selection: DataTableSelection | null) => void;
   onSelectColumn: (key: string) => void;
   onColumnContextMenu: (
     event: MouseEvent<HTMLElement>,
     key: string,
     cellValue?: unknown,
   ) => void;
+  onSortColumn?: (columnKey: string, direction: "asc" | "desc") => void;
+  onReorderColumns?: (columnKeys: string[]) => void;
 }) {
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({});
+  const activeSort = useMemo(() => resolvePreviewSort(compiledSteps), [compiledSteps]);
+
   const columns: Array<DataTableColumn<Record<string, unknown>>> = (preview?.columns ?? []).map(
     (column) => ({
       key: column.key,
       header: column.label,
+      sortable: Boolean(onSortColumn),
       headerPrefix: (
         <span
           className="td-data-pq__col-type"
@@ -47,6 +57,10 @@ export function DataPreparePreviewGrid({
       render: (row) => (row[column.key] == null ? "" : String(row[column.key])),
     }),
   );
+
+  const resolvedSelection =
+    selection ?? (selectedColumnKey ? { kind: "column" as const, keys: [selectedColumnKey] } : null);
+
   return (
     <div className="td-data-pq__grid-wrap">
       <DataTable
@@ -63,11 +77,38 @@ export function DataPreparePreviewGrid({
         mode="grid-preview"
         layout="embedded"
         loading={loading}
+        wrapText
+        resizableColumns
+        enableColumnReorder={Boolean(onReorderColumns)}
+        enableCopySelection
+        columnWidths={columnWidths}
+        onColumnWidthsChange={setColumnWidths}
         indexColumn={{ ariaLabel: "Número da linha" }}
-        selectedColumnKey={selectedColumnKey}
-        onHeaderClick={(column) => onSelectColumn(column.key)}
+        selection={resolvedSelection}
+        onSelectionChange={(next) => {
+          if (onSelectionChange) {
+            onSelectionChange(next);
+            return;
+          }
+          onSelectColumn(primaryColumnKey(next) ?? "");
+        }}
+        sortKey={activeSort?.key ?? null}
+        sortDirection={activeSort?.direction ?? "asc"}
+        onSortChange={
+          onSortColumn
+            ? (columnKey) => {
+                onSortColumn(columnKey, nextSortDirection(activeSort, columnKey));
+              }
+            : undefined
+        }
+        onColumnOrderChange={onReorderColumns}
+        onHeaderClick={
+          onSelectionChange ? undefined : (column) => onSelectColumn(column.key)
+        }
         onHeaderContextMenu={(event, column) => onColumnContextMenu(event, column.key)}
-        onCellClick={(_, column) => onSelectColumn(column.key)}
+        onCellClick={
+          onSelectionChange ? undefined : (_, column) => onSelectColumn(column.key)
+        }
         onCellContextMenu={(event, row, column) =>
           onColumnContextMenu(event, column.key, row[column.key])
         }
@@ -80,4 +121,11 @@ export function DataPreparePreviewGrid({
       ) : null}
     </div>
   );
+}
+
+function typeGlyph(type: string): string {
+  if (type === "number") return "123";
+  if (type === "date" || type === "datetime") return "▣";
+  if (type === "logical") return "◉";
+  return "ABC";
 }

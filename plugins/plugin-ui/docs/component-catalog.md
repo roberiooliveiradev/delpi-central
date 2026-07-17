@@ -488,9 +488,13 @@ Helpers: `dataTableBemClasses`, `dataTableSectionBemClasses`, `createDashboardDa
 
 O modo `grid-preview` adiciona interações genéricas sem acoplamento de domínio:
 `onHeaderClick`, `onHeaderContextMenu`, `onCellClick`, `onCellContextMenu`,
-`getHeaderClassName`, `getCellClassName`, `headerPrefix`, `selectedColumnKey` e
-`indexColumn`. Cabeçalhos e células interativos suportam Enter/Espaço, foco visível,
-`aria-selected` e alvo mínimo de 44 px.
+`getHeaderClassName`, `getCellClassName`, `headerPrefix`, `selectedColumnKey` /
+`selection` + `onSelectionChange`, `indexColumn`, `wrapText` (default on),
+`resizableColumns` + `columnWidths`, `enableColumnReorder` + `onColumnOrderChange`
+e `enableCopySelection` (Ctrl+C → TSV). Grade completa (bordas em linhas e colunas),
+coluna `#` sticky, zebra suave e seleção de coluna/linha/célula (Ctrl/Cmd toggle,
+Shift range). Cabeçalhos e células interativos suportam Enter/Espaço, foco visível
+e `aria-selected`.
 
 Props relevantes de `DataTableSection`:
 

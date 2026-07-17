@@ -54,5 +54,64 @@ describe("DataTable grid-preview", () => {
     expect(onCellClick).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("cell", { name: "1" })).toBeTruthy();
     expect(document.querySelector(".delpi-ui-table--grid-preview")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-table--wrap")).toBeTruthy();
+  });
+
+  it("seleciona célula/linha e expõe resize/reorder", () => {
+    const onSelectionChange = vi.fn();
+    const onColumnOrderChange = vi.fn();
+
+    render(
+      <DataTable
+        columns={[
+          { key: "a", header: "A", render: (row: { a: string; b: string }) => row.a },
+          { key: "b", header: "B", render: (row: { a: string; b: string }) => row.b },
+        ]}
+        rows={[
+          { a: "1", b: "x" },
+          { a: "2", b: "y" },
+        ]}
+        rowKey={(_, index) => String(index)}
+        classNames={dataTableBemClasses("teste")}
+        labels={labels}
+        mode="grid-preview"
+        wrapText
+        resizableColumns
+        enableColumnReorder
+        indexColumn={{ ariaLabel: "Linha" }}
+        selection={null}
+        onSelectionChange={onSelectionChange}
+        onColumnOrderChange={onColumnOrderChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("cell", { name: "x" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith({
+      kind: "cell",
+      cells: [{ rowIndex: 0, columnKey: "b" }],
+    });
+
+    const indexCell = document.querySelector(
+      "tbody tr:first-child td.delpi-ui-table__index-col",
+    );
+    expect(indexCell).toBeTruthy();
+    fireEvent.click(indexCell!);
+    expect(onSelectionChange).toHaveBeenLastCalledWith({
+      kind: "row",
+      indices: [0],
+    });
+
+    expect(document.querySelectorAll("[data-column-resize-handle]")).toHaveLength(2);
+
+    const headerA = document.querySelector('th[data-column-key="a"]');
+    const headerB = document.querySelector('th[data-column-key="b"]');
+    expect(headerA && headerB).toBeTruthy();
+    fireEvent.dragStart(headerB!, {
+      dataTransfer: { effectAllowed: "move", setData: vi.fn(), getData: () => "b" },
+    });
+    fireEvent.drop(headerA!, {
+      dataTransfer: { getData: () => "b" },
+    });
+    expect(onColumnOrderChange).toHaveBeenCalledWith(["b", "a"]);
   });
 });

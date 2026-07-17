@@ -243,7 +243,7 @@ Poda nos MFEs dos blocos BEM espelho cobertos por `data-table.css`, `detail-card
 |------|--------|
 | Dashboards dept. + EF/TM/scrap/CR/financeiros/inspeções/auditoria/kaizen | ✅ chrome de tabela/detalhe/paginação podado; print/composição/domínio permanece |
 | `maintenance` DataTable | ✅ `dataTableBemClasses("dm")` + CSS de domínio só (`DataTable.css`) |
-| `tv-dashboard` Preparar dados | ✅ grade local migrada para `DataTable` `grid-preview`; eventos/seleção/índice no contrato genérico |
+| `tv-dashboard` Preparar dados | ✅ grade local migrada para `DataTable` `grid-preview`; grade completa, wrap, resize, seleção rica, sort/reorder M |
 
 Resíduos justificados: `@media print`, `.detail-card .table*`, colunas de domínio (`a5s-table--dashboard`, `ef-table--routing`, actions), paginação custom (`a5s-pagination`, `ip-pagination`).
 

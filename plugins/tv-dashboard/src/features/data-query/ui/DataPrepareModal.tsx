@@ -176,6 +176,13 @@ export function DataQueryWorkbenchModal({
       >
         <DataPrepareRibbon
           selectedColumnKey={workbench.state.selectedColumnKey}
+          selectedColumnKeys={
+            workbench.state.selection?.kind === "column"
+              ? workbench.state.selection.keys
+              : workbench.state.selectedColumnKey
+                ? [workbench.state.selectedColumnKey]
+                : []
+          }
           selectedStepName={draft?.selectedStepName ?? null}
           preview={preview}
           loading={workbench.state.preview.status === "loading"}
@@ -266,11 +273,25 @@ export function DataQueryWorkbenchModal({
                 <DataPreparePreviewGrid
                   preview={preview}
                   loading={workbench.state.preview.status === "loading"}
+                  compiledSteps={compiled?.steps ?? workbench.state.compile.value?.steps}
                   selectedColumnKey={workbench.state.selectedColumnKey}
+                  selection={workbench.state.selection}
+                  onSelectionChange={(selection) =>
+                    workbench.dispatch({ type: "set_selection", selection })
+                  }
                   onSelectColumn={(columnKey) =>
-                    workbench.dispatch({ type: "select_column", columnKey })
+                    workbench.dispatch({
+                      type: "select_column",
+                      columnKey: columnKey || null,
+                    })
                   }
                   onColumnContextMenu={openColumnMenu}
+                  onSortColumn={(column, direction) =>
+                    insertForColumn("Linhas ordenadas", "sort", { column, direction })
+                  }
+                  onReorderColumns={(columns) =>
+                    insertForColumn("Colunas reordenadas", "reorder_columns", { columns })
+                  }
                 />
                 {profilingEnabled || preview?.columnProfile || preview?.explainPlan ? (
                   <DataPrepareQualityPanel

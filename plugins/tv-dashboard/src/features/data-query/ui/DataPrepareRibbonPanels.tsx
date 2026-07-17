@@ -45,6 +45,7 @@ type Insert = (
 
 type PanelProps = {
   selectedColumnKey: string | null;
+  selectedColumnKeys?: string[];
   preview: DataQueryPreview | null;
   insert: Insert;
 };
@@ -139,6 +140,7 @@ function functionArguments(
 
 export function DataPrepareRibbonHomePanel({
   selectedColumnKey,
+  selectedColumnKeys,
   preview,
   availableQueries,
   insert,
@@ -146,6 +148,12 @@ export function DataPrepareRibbonHomePanel({
   const [rowCount, setRowCount] = useState("10");
   const [rowOffset, setRowOffset] = useState("0");
   const column = selectedColumnKey ?? "";
+  const columns =
+    selectedColumnKeys && selectedColumnKeys.length > 0
+      ? selectedColumnKeys
+      : column
+        ? [column]
+        : [];
   const secondary = secondaryColumn(preview, column);
   const selectedQuery = availableQueries[0] ?? "";
   return (
@@ -167,8 +175,8 @@ export function DataPrepareRibbonHomePanel({
         <button
           type="button"
           className="td-data-pq__ribbon-action"
-          disabled={!column}
-          onClick={() => insert("Colunas selecionadas", "select", { columns: [column] })}
+          disabled={columns.length === 0}
+          onClick={() => insert("Colunas selecionadas", "select", { columns })}
         >
           <Columns3 size={15} aria-hidden />
           <span>Escolher coluna</span>
@@ -176,9 +184,9 @@ export function DataPrepareRibbonHomePanel({
         <button
           type="button"
           className="td-data-pq__ribbon-action"
-          disabled={!column}
+          disabled={columns.length === 0}
           onClick={() =>
-            insert("Colunas reordenadas", "reorder_columns", { columns: [column] })
+            insert("Colunas reordenadas", "reorder_columns", { columns })
           }
         >
           <ChevronsLeft size={15} aria-hidden />
@@ -187,9 +195,9 @@ export function DataPrepareRibbonHomePanel({
         <button
           type="button"
           className="td-data-pq__ribbon-action"
-          disabled={!column}
+          disabled={columns.length === 0}
           onClick={() =>
-            insert("Colunas removidas", "remove_columns", { columns: [column] })
+            insert("Colunas removidas", "remove_columns", { columns })
           }
         >
           <Trash2 size={15} aria-hidden />
