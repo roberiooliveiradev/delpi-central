@@ -347,3 +347,9 @@ def format_m_document(document: MDocument) -> str:
     ]
     output = _format_expression(document.expression.output)
     return "let\n" + ",\n".join(bindings) + f"\nin\n    {output}"
+
+
+def format_m_expression(expression: MExpression) -> str:
+    """Formata uma expressão isolada para consumidores server-driven."""
+
+    return _format_expression(expression)

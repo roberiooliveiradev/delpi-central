@@ -13,6 +13,10 @@ from tv_app.application.services.data.m_query.m_compiler import (
     MQueryCompiler,
 )
 from tv_app.application.services.data.m_query.m_function_registry import get_function_registry
+from tv_app.application.services.data.m_query.m_mutation_service import (
+    MMutationError,
+    MQueryMutationService,
+)
 from tv_app.application.services.tv_dashboard_content_service import m_query_setting
 from tv_app.application.services.data.tv_data_openapi_catalog_service import TvDataOpenApiCatalogService
 from tv_app.application.services.data.tv_data_preview_service import TvDataPreviewService
@@ -28,6 +32,7 @@ _validation = TvDataConfigValidationService(_catalog)
 _preview = TvDataPreviewService(_catalog)
 _openapi = TvDataOpenApiCatalogService(_catalog)
 _m_compiler = MQueryCompiler()
+_m_mutation = MQueryMutationService(_m_compiler)
 
 class PreviewOptionsBody(BaseModel):
     maxRows: int | None = Field(default=None, ge=1)
@@ -65,6 +70,10 @@ class MCompileBody(BaseModel):
     queryBindings: list[MQueryBindingBody] = Field(default_factory=list)
     targetStepName: str | None = None
     culture: str | None = None
+
+
+class MMutationBody(MCompileBody):
+    action: dict[str, Any]
 
 
 def _model_dict(model: BaseModel) -> dict[str, Any]:
@@ -112,6 +121,49 @@ def list_m_functions(request: Request, profile: str = "m-delpi-v1"):
             "total": len(items),
         }
     )
+
+
+@router.get("/m/capabilities")
+def get_m_capabilities(request: Request):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    return ok(
+        {
+            "enabled": bool(m_query_setting("enabled", False)),
+            "writeV2Enabled": bool(m_query_setting("writeV2Enabled", False)),
+            "advancedEditorEnabled": bool(
+                m_query_setting("advancedEditorEnabled", False)
+            ),
+            "profile": str(m_query_setting("profile", "m-delpi-v1")),
+        }
+    )
+
+
+@router.post("/m/mutate")
+def mutate_m_query(request: Request, body: MMutationBody):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    compile_request = MCompileRequest(
+        profile=body.profile,
+        script=body.script,
+        source_schema=tuple(_model_dict(item) for item in body.sourceSchema),
+        query_bindings=tuple(_model_dict(item) for item in body.queryBindings),
+        target_step_name=body.targetStepName,
+        culture=body.culture or str(m_query_setting("defaultCulture", "pt-BR")),
+    )
+    try:
+        result = _m_mutation.mutate(compile_request, body.action)
+    except (MMutationError, ValueError) as exc:
+        return fail(str(exc), 422)
+    if not result.valid:
+        return ok(result.to_dict(), message="Mutação gerou diagnósticos.")
+    return ok(result.to_dict(), message="Consulta M atualizada.")
 
 
 @router.get("/routes")

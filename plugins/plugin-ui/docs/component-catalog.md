@@ -486,6 +486,12 @@ Tabela genérica com sort, empty/loading e seção completa (busca, page size, p
 
 Helpers: `dataTableBemClasses`, `dataTableSectionBemClasses`, `createDashboardDataTableKit`.
 
+O modo `grid-preview` adiciona interações genéricas sem acoplamento de domínio:
+`onHeaderClick`, `onHeaderContextMenu`, `onCellClick`, `onCellContextMenu`,
+`getHeaderClassName`, `getCellClassName`, `headerPrefix`, `selectedColumnKey` e
+`indexColumn`. Cabeçalhos e células interativos suportam Enter/Espaço, foco visível,
+`aria-selected` e alvo mínimo de 44 px.
+
 Props relevantes de `DataTableSection`:
 
 | Prop | Descrição |

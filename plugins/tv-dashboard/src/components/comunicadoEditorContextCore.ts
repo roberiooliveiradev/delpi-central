@@ -205,6 +205,10 @@ export type ComunicadoEditorContextValue = {
   setSpeakerNotes: (notes: string) => void;
   updateSelected: (patch: Partial<ComunicadoBlock>) => void;
   updateBlock: (blockId: string, patch: Partial<ComunicadoBlock>) => void;
+  /** Aplica patches de vários blocos em um único commit de config/histórico. */
+  updateBlocksAtomically: (
+    patches: ReadonlyArray<{ blockId: string; patch: Partial<ComunicadoBlock> }>,
+  ) => void;
   updateBlockContent: (blockId: string, content: string) => void;
   updateBlockTextFields: (
     blockId: string,

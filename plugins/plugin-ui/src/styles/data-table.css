@@ -177,6 +177,32 @@ table.delpi-ui-table td[data-align="center"] {
   text-align: center;
 }
 
+table.delpi-ui-table--grid-preview th,
+table.delpi-ui-table--grid-preview td {
+  min-height: 44px;
+  vertical-align: middle;
+}
+
+table.delpi-ui-table--grid-preview th[tabindex],
+table.delpi-ui-table--grid-preview td[tabindex] {
+  cursor: pointer;
+}
+
+table.delpi-ui-table--grid-preview th[aria-selected="true"],
+table.delpi-ui-table--grid-preview td[aria-selected="true"] {
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 14%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+}
+
+table.delpi-ui-table--grid-preview th:focus-visible,
+table.delpi-ui-table--grid-preview td:focus-visible {
+  outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));
+  outline-offset: -2px;
+}
+
 table.delpi-ui-table th[data-align="right"] .delpi-ui-table__sort-button,
 table.delpi-ui-table th[data-align="right"] .delpi-ui-table__header-label {
   justify-content: flex-end;

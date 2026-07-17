@@ -766,22 +766,8 @@ export {
   type TransformPlanDto,
   type TransformPlanStepDto,
 } from "./dataTransform";
-export {
-  canEditFormula,
-  canEditNewColumnFormula,
-  formatStepFormula,
-  formulaBarDisplayValue,
-  parseAddColumnFormula,
-  parseFilterFormula,
-  parseFormulaBarText,
-  parseRenameFormula,
-  parseReplaceFormula,
-  parseSelectFormula,
-  parseSortFormula,
-  type FormulaParseErr,
-  type FormulaParseOk,
-  type FormulaParseResult,
-} from "./dataTransformFormula";
+// Parser pseudo-M legado: mantido apenas para fixtures/testes diretos.
+// Não reexportar no entrypoint de runtime; a autoridade semântica é a API.
 export {
   resolveChartType,
   resolveEffectiveDisplayMode,

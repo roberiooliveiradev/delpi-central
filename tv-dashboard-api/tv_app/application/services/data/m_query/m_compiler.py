@@ -6,7 +6,10 @@ import hashlib
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
-from tv_app.application.services.data.m_query.m_formatter import format_m_document
+from tv_app.application.services.data.m_query.m_formatter import (
+    format_m_document,
+    format_m_expression,
+)
 from tv_app.application.services.data.m_query.m_function_registry import get_function_registry
 from tv_app.application.services.data.m_query.m_parser import MParseError, parse_m_script
 from tv_app.application.services.data.m_query.m_semantic_analyzer import (
@@ -73,12 +76,21 @@ class MCompileResult:
                     if isinstance(step, CompiledMPlanStep)
                     else str(step.operation)
                 )
+                formula = operation
+                if isinstance(step, CompiledMPlanStep):
+                    source = parse_m_script(self.canonical_script or "")
+                    binding = next(
+                        (item for item in source.expression.bindings if item.name == step.name),
+                        None,
+                    )
+                    if binding is not None:
+                        formula = format_m_expression(binding.expression)
                 steps.append(
                     {
                         "name": step.name,
                         "operation": operation,
                         "label": step.name,
-                        "formula": operation,
+                        "formula": formula,
                     }
                 )
         return {
@@ -348,7 +360,7 @@ class MQueryCompiler:
 
         target_name = request.target_step_name
         all_names = [binding.name for binding in bindings]
-        if target_name is not None and target_name not in all_names:
+        if target_name is not None and target_name != "Fonte" and target_name not in all_names:
             diagnostic = _diagnostic(
                 "m.unknown_target_step",
                 f'A etapa alvo "{target_name}" não foi encontrada.',
@@ -371,6 +383,24 @@ class MQueryCompiler:
                 else None
             )
         )
+        if output_name == "Fonte":
+            plan = TransformPlan(
+                version=1,
+                profile=request.profile,
+                steps=(),
+                output="Fonte",
+                referenced_queries=analysis.referenced_queries,
+            )
+            return MCompileResult(
+                request.profile,
+                canonical,
+                script_hash,
+                "Fonte",
+                plan,
+                tuple(diagnostics[:sample_limit]),
+                analysis.referenced_queries,
+            )
+
         compiled_steps: list[CompiledMPlanStep] = []
         for binding in bindings:
             if isinstance(binding.expression, MCallExpression):

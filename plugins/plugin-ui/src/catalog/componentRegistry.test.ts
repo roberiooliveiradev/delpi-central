@@ -45,8 +45,8 @@ describe("componentRegistry", () => {
   it("merge metadados do inventário nas entradas do catálogo", () => {
     const dataTable = getCatalogEntryById("data.DataTable");
     expect(dataTable?.addedAt).toBe(PACKAGE_INITIAL_DATE);
-    expect(dataTable?.updatedAt).toBe(CATALOG_EXPAND_DATE);
-    expect(dataTable?.changeNote).toMatch(/LMPS/i);
+    expect(dataTable?.updatedAt).toBe("2026-07-17");
+    expect(dataTable?.changeNote).toMatch(/grid-preview/i);
     expect(dataTable?.lifecycle).toBeTruthy();
   });
 

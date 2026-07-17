@@ -134,8 +134,8 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   // data
   vc("data", "DataTable", {
     addedAt: PACKAGE_INITIAL_DATE,
-    updatedAt: CATALOG_EXPAND_DATE,
-    changeNote: "Demo no catálogo estilo dashboards LMPS",
+    updatedAt: "2026-07-17",
+    changeNote: "Modo grid-preview com eventos de header/célula, seleção e índice",
   }),
   vc("data", "DataTableSection", {
     addedAt: PACKAGE_INITIAL_DATE,

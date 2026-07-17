@@ -4,7 +4,7 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
-Power Query M: a [Fase 3](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-3-STATUS-M-DELPI.md) ligou o `TransformPlan` à fachada tabular canônica, adicionou execução segura, tipos/cultura, joins 1:N, DAG autorizado, preview tipado e validação real. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false` por padrão; a primeira flag controla o runtime e a segunda continua bloqueando escrita v2.
+Power Query M: a [Fase 4](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-4-STATUS-M-DELPI.md) adicionou mutação estrutural determinística e o contrato de capabilities consumido pelo workbench transacional. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false` por padrão; a escrita v2 só é exposta quando ambas permitem.
 
 ---
 
@@ -43,7 +43,9 @@ Power Query M: a [Fase 3](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-3-STAT
 | `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
 | `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
 | `POST` | `/data/m/compile` | `TV_READ` | Compila `m-delpi-v1` para `TransformPlan`, sem executar ou buscar dados |
+| `POST` | `/data/m/mutate` | `TV_READ` | Muta AST e devolve script canônico; o frontend não concatena M |
 | `GET` | `/data/m/functions` | `TV_READ` | Catálogo versionado de funções M permitidas |
+| `GET` | `/data/m/capabilities` | `TV_READ` | Flags efetivas de runtime, escrita v2 e editor avançado |
 
 ### Compilador M DELPI v1
 
@@ -58,6 +60,11 @@ O endpoint de compile aceita `sourceSchema` como hint, `queryBindings`,
 `targetStepName` e `culture`; ele nunca chama a `api-delpi`. O runtime interpreta
 somente `CompiledExpression` e funções allowlisted, sem `eval`/`exec`. O preview
 aceita `targetStepName` e limites de amostra; a persistência v2 segue desligada.
+
+O endpoint de mutação suporta conversão legada, inserção/substituição,
+rename/move/remove de etapa, rename de consulta e formatação. Toda resposta é
+recompilada antes de retornar, portanto diagnósticos e fórmulas exibidos na
+barra `fx` vêm da mesma autoridade server-side.
 
 Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
 

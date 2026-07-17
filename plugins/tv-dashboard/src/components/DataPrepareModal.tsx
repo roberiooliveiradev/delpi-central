@@ -28,6 +28,9 @@ import {
   type TvDataRouteCatalogItem,
 } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { canUseMWorkbench } from "../features/data-query/domain/dataQueryCapabilities";
+import { useDataQueryCapabilities } from "../features/data-query/state/useDataQueryWorkbench";
+import { DataQueryWorkbenchModal } from "../features/data-query/ui/DataPrepareModal";
 import {
   columnForSelectedSeries,
   linkedChartSeriesForSource,
@@ -72,7 +75,7 @@ const EMPTY_STEPS: DataTransformStep[] = [];
  * Ambiente de preparação estilo Power Query — modal.
  * Clique esquerdo: seleciona/desseleciona. Botão direito: menu de ações.
  */
-export function DataPrepareModal({ open, onClose, initialSourceId = null }: Props) {
+function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props) {
   const {
     blocks,
     config,
@@ -835,5 +838,15 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
         </div>
       )}
     </Modal>
+  );
+}
+
+/** Compositor fino: rollout seguro legado ou workbench M conforme capability server-side. */
+export function DataPrepareModal(props: Props) {
+  const { capabilities } = useDataQueryCapabilities();
+  return canUseMWorkbench(capabilities) ? (
+    <DataQueryWorkbenchModal {...props} />
+  ) : (
+    <LegacyDataPrepareModal {...props} />
   );
 }

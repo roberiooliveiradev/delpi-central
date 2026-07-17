@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
 import {
@@ -19,6 +19,8 @@ export type DataTableColumn<T> = {
   sortable?: boolean;
   sortValue?: (row: T) => string | number | null | undefined;
   mobileLabel?: string;
+  /** Conteúdo visual anterior ao título (ícone de tipo, status etc.). */
+  headerPrefix?: ReactNode;
 };
 
 export type DataTableClassNames = {
@@ -70,7 +72,26 @@ export type DataTableProps<T> = {
   sortDirection?: "asc" | "desc";
   onSortChange?: (columnKey: string) => void;
   layout?: "section" | "embedded" | "scroll";
+  mode?: "default" | "grid-preview";
   rowClickRole?: "button" | "none";
+  onHeaderClick?: (column: DataTableColumn<T>) => void;
+  onHeaderContextMenu?: (event: MouseEvent<HTMLElement>, column: DataTableColumn<T>) => void;
+  onCellClick?: (row: T, column: DataTableColumn<T>, rowIndex: number) => void;
+  onCellContextMenu?: (
+    event: MouseEvent<HTMLElement>,
+    row: T,
+    column: DataTableColumn<T>,
+    rowIndex: number,
+  ) => void;
+  getHeaderClassName?: (column: DataTableColumn<T>) => string | undefined;
+  getCellClassName?: (
+    row: T,
+    column: DataTableColumn<T>,
+    rowIndex: number,
+  ) => string | undefined;
+  selectedColumnKey?: string | null;
+  /** Coluna visual de índice; não altera o shape das linhas. */
+  indexColumn?: { header?: string; ariaLabel?: string; startAt?: number };
   classNames: DataTableClassNames;
   labels: DataTableLabels;
 };
@@ -113,6 +134,7 @@ function buildTableClassName(
   layout: "section" | "embedded" | "scroll",
   isSortable: boolean,
   clickable: boolean,
+  mode: "default" | "grid-preview",
 ): string {
   if (clickable && classNames.tableClickable) {
     return classNames.tableClickable;
@@ -127,6 +149,7 @@ function buildTableClassName(
       if (layout === "section") modifiers.push(`${token}--section`);
       if (isSortable) modifiers.push(`${token}--sortable`);
       if (clickable) modifiers.push(`${token}--clickable`);
+      if (mode === "grid-preview") modifiers.push(`${token}--grid-preview`);
       return modifiers;
     }),
   ]
@@ -172,6 +195,7 @@ function renderColumnHeader<T>(
 ) {
   return (
     <span className={classNames.headerLabel}>
+      {column.headerPrefix}
       <span className={classNames.headerText}>{column.header}</span>
       {column.headerHint ? (
         <HelpTooltip
@@ -196,7 +220,16 @@ export function DataTable<T>({
   sortDirection = "asc",
   onSortChange,
   layout = "embedded",
+  mode = "default",
   rowClickRole = "none",
+  onHeaderClick,
+  onHeaderContextMenu,
+  onCellClick,
+  onCellContextMenu,
+  getHeaderClassName,
+  getCellClassName,
+  selectedColumnKey = null,
+  indexColumn,
   classNames,
   labels,
 }: DataTableProps<T>) {
@@ -207,6 +240,7 @@ export function DataTable<T>({
     layout,
     isSortable,
     Boolean(onRowClick),
+    mode,
   );
 
   if (loading) {
@@ -214,7 +248,7 @@ export function DataTable<T>({
       classNames,
       layout,
       <table className={tableClassName}>
-        <tbody>{renderEmptyCell(labels.loadingMessage, columns.length, classNames)}</tbody>
+        <tbody>{renderEmptyCell(labels.loadingMessage, columns.length + (indexColumn ? 1 : 0), classNames)}</tbody>
       </table>,
     );
   }
@@ -224,7 +258,7 @@ export function DataTable<T>({
       classNames,
       layout,
       <table className={tableClassName}>
-        <tbody>{renderEmptyCell(resolvedEmptyMessage, columns.length, classNames)}</tbody>
+        <tbody>{renderEmptyCell(resolvedEmptyMessage, columns.length + (indexColumn ? 1 : 0), classNames)}</tbody>
       </table>,
     );
   }
@@ -235,11 +269,17 @@ export function DataTable<T>({
     <table className={tableClassName}>
       <thead>
         <tr>
+          {indexColumn ? (
+            <th scope="col" aria-label={indexColumn.ariaLabel ?? "Índice"}>
+              {indexColumn.header ?? "#"}
+            </th>
+          ) : null}
           {columns.map((column) => {
             const isSorted = sortKey === column.key;
             const columnClass = resolveDataTableColumnClassName(column.className);
             const headerClass = [
               columnClass,
+              getHeaderClassName?.(column),
               column.sortable && classNames.sortableColumn ? classNames.sortableColumn : "",
             ]
               .filter(Boolean)
@@ -251,6 +291,24 @@ export function DataTable<T>({
                 scope="col"
                 className={headerClass || undefined}
                 data-align={column.align}
+                aria-selected={selectedColumnKey === column.key || undefined}
+                tabIndex={onHeaderClick ? 0 : undefined}
+                onClick={onHeaderClick ? () => onHeaderClick(column) : undefined}
+                onContextMenu={
+                  onHeaderContextMenu
+                    ? (event) => onHeaderContextMenu(event, column)
+                    : undefined
+                }
+                onKeyDown={
+                  onHeaderClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onHeaderClick(column);
+                        }
+                      }
+                    : undefined
+                }
                 aria-sort={
                   column.sortable
                     ? isSorted
@@ -305,17 +363,43 @@ export function DataTable<T>({
                   : undefined
               }
             >
+              {indexColumn ? (
+                <td data-label={indexColumn.ariaLabel ?? "Índice"}>
+                  {(indexColumn.startAt ?? 1) + index}
+                </td>
+              ) : null}
               {columns.map((column) => (
                 <td
                   key={column.key}
-                  className={resolveDataTableColumnClassName(column.className)}
+                  className={[
+                    resolveDataTableColumnClassName(column.className),
+                    getCellClassName?.(row, column, index),
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || undefined}
                   data-label={column.mobileLabel ?? column.header}
                   data-align={column.align}
                   data-interactive={column.interactive ? "true" : undefined}
-                  onClick={
-                    column.interactive
+                  aria-selected={selectedColumnKey === column.key || undefined}
+                  tabIndex={onCellClick ? 0 : undefined}
+                  onClick={(column.interactive || onCellClick)
+                    ? (event) => {
+                        if (column.interactive) event.stopPropagation();
+                        onCellClick?.(row, column, index);
+                      }
+                    : undefined}
+                  onContextMenu={
+                    onCellContextMenu
+                      ? (event) => onCellContextMenu(event, row, column, index)
+                      : undefined
+                  }
+                  onKeyDown={
+                    onCellClick
                       ? (event) => {
-                          event.stopPropagation();
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            onCellClick(row, column, index);
+                          }
                         }
                       : undefined
                   }

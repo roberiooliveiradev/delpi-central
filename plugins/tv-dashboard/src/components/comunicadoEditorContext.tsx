@@ -417,6 +417,24 @@ export function ComunicadoEditorProvider({
     [commitWithHistory],
   );
 
+  const updateBlocksAtomically = useCallback(
+    (
+      patches: ReadonlyArray<{
+        blockId: string;
+        patch: Partial<ComunicadoBlock>;
+      }>,
+    ) => {
+      if (patches.length === 0) return;
+      const byId = new Map(patches.map((item) => [item.blockId, item.patch]));
+      const nextBlocks = (configRef.current.blocks ?? []).map((block) => {
+        const patch = byId.get(block.id);
+        return patch ? ({ ...block, ...patch } as ComunicadoBlock) : block;
+      });
+      blockActions.updateBlocks(nextBlocks);
+    },
+    [blockActions],
+  );
+
   const getClipboardSources = useCallback(
     () =>
       selection.selectedBlocks.length > 0
@@ -563,6 +581,7 @@ export function ComunicadoEditorProvider({
     setSpeakerNotes,
     updateSelected: blockActions.updateSelected,
     updateBlock: blockActions.updateBlock,
+    updateBlocksAtomically,
     updateBlockContent: blockActions.updateBlockContent,
     updateBlockTextFields: blockActions.updateBlockTextFields,
     updateBlockLink: blockActions.updateBlockLink,

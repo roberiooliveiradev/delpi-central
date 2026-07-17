@@ -6,7 +6,7 @@
 > **Baseline inspecionada:** branch `main`, commit `095dabdbad44dbdb000f165a9fe0cdc13c6ee334`  
 > **Versão deste playbook:** 1.0  
 > **Data:** 2026-07-16  
-> **Status:** Fases 0–3 concluídas em 2026-07-16; Fases 4–7 não iniciadas
+> **Status:** Fases 0–4 concluídas; Fases 5–7 não iniciadas
 
 ---
 
@@ -1314,6 +1314,8 @@ Podem ser extraídos depois, quando houver segundo uso comprovado.
 ---
 
 ## Fase 4 — Workbench M no frontend
+
+**Status:** ✅ concluída em 2026-07-16. Evidências: [status da Fase 4](./FASE-4-STATUS-M-DELPI.md), workbench em `features/data-query/{domain,data,state,ui}`, mutação canônica server-side, draft multi-consulta transacional, commit atômico do editor, `DataTable` `grid-preview` e testes de concorrência/acessibilidade. O rollout permanece protegido por `enabled + writeV2Enabled`; com escrita v2 desligada, a UX legada segura continua ativa.
 
 ### Entregas
 

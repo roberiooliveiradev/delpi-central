@@ -7,21 +7,21 @@ const SOURCE = readFileSync(
   resolve(process.cwd(), "src/components/DataPrepareModal.tsx"),
   "utf8",
 );
+const WORKBENCH = readFileSync(
+  resolve(process.cwd(), "src/features/data-query/ui/DataPrepareModal.tsx"),
+  "utf8",
+);
 
 describe("DataPrepareModal — baseline transacional da Fase 0", () => {
-  it("caracteriza que editar etapas persiste imediatamente", () => {
-    expect(SOURCE).toMatch(
-      /const persistSteps[\s\S]*updateBlock\(active\.id,\s*\{\s*dataTransform:\s*transform/,
-    );
-    expect(SOURCE).toMatch(/const addStep[\s\S]*persistSteps\(\[\.\.\.steps,\s*step\]\)/);
-    expect(SOURCE).toMatch(/const replaceStep[\s\S]*persistSteps\(next\)/);
+  it("mantém o legado isolado e o compositor escolhe capability server-side", () => {
+    expect(SOURCE).toMatch(/function LegacyDataPrepareModal/);
+    expect(SOURCE).toMatch(/canUseMWorkbench\(capabilities\)/);
+    expect(SOURCE).toMatch(/<DataQueryWorkbenchModal/);
   });
 
-  it("caracteriza que Cancelar apenas fecha e Aplicar força refresh", () => {
-    expect(SOURCE).toMatch(/>\s*Cancelar\s*<\/button>/);
-    expect(SOURCE).toMatch(/onClick=\{onClose\}[\s\S]*>\s*Cancelar/);
-    expect(SOURCE).toMatch(
-      /const handleCloseAndApply[\s\S]*refreshDataPreview\([\s\S]*force:\s*true[\s\S]*onClose\(\)/,
-    );
+  it("Cancelar só fecha e Aplicar usa o comando atômico", () => {
+    expect(WORKBENCH).toMatch(/onClick=\{onClose\}[\s\S]*Cancelar/);
+    expect(WORKBENCH).toMatch(/workbench\.apply\(updateBlocksAtomically\)/);
+    expect(WORKBENCH).not.toMatch(/updateBlock\(/);
   });
 });
