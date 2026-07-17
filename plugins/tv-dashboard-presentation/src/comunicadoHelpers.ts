@@ -106,7 +106,11 @@ import {
   isTextDataBoundBlockType,
 } from "./comunicadoDataArchitecture";
 import { normalizeSelectedValueFields } from "./resolveKpiMetrics";
-import { normalizeDataTransform } from "./dataTransform";
+import {
+  isDataTransformV1,
+  isDataTransformV2,
+  normalizeDataTransform,
+} from "./dataTransform";
 import {
   chartProjectionFromSelectedFields,
   kpiProjectionFromSelectedFields,
@@ -814,8 +818,10 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
       maxRows: block.dataBinding.maxRows,
       refreshSec: block.dataBinding.refreshSec,
     };
-    if (block.dataTransform?.steps?.length) {
+    if (isDataTransformV1(block.dataTransform) && block.dataTransform.steps.length) {
       base.dataTransform = { steps: block.dataTransform.steps.map((step) => ({ ...step })) };
+    } else if (isDataTransformV2(block.dataTransform)) {
+      base.dataTransform = { ...block.dataTransform };
     }
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;

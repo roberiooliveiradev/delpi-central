@@ -1,7 +1,7 @@
 # Painéis TV — documentação da aplicação
 
 > **Status:** v1.5+ em produção (jul/2026) — editor deck + Onda 4A–4O + **dois escopos** global/parte no palco (§19.19)
-> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fase 0 concluída; M desativado**) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
+> **Playbooks:** [Excelência](./PLAYBOOK-EXCELENCIA.md) · [Power Query M](./PLAYBOOK-POWER-QUERY-M.md) (**Fase 1 concluída; M desativado**) · [status Fase 1](./FASE-1-STATUS-M-DELPI.md) · [ADR M DELPI v1](./ADR-M-DELPI-V1.md)
 
 Sistema de **programações rotativas** para TVs corporativas: gestão autenticada no portal e **link público sem login** para exibição em loop (modo kiosk).
 
@@ -141,6 +141,7 @@ Doc completa: [PLAYBOOK-EXCELENCIA.md §18](./PLAYBOOK-EXCELENCIA.md#18-indicado
 - **Contrato de séries:** a TV preserva a granularidade da rota. `granularity=day` permanece um ponto por dia — sem converter dias em faixas semanais.
 - **Cobertura anual diária:** a api-delpi permite até 366 buckets; assim, «Este ano (até hoje)» entrega todos os dias do ano. Períodos diários acima de um ano continuam limitados por segurança.
 - **Tabela de série:** apresenta todos os `points` retornados pela API usando apenas as colunas declaradas (`periodo` e `value`), sem mostrar `label` duplicado ou metadados como `granularity`/`truncated`.
+- **M DELPI — Fase 1:** reader dual v1/v2, adapter para plano tipado e formatter M estão prontos. Scripts v2 não são executados enquanto as flags permanecem desligadas; o browser contém apenas DTOs.
 - **Onda 4G–4O (§19):** partes selecionáveis; **dois escopos** (global vs parte) para geometria e chrome (§19.19)
 - **§19.20:** aplicar estilo a irmãos; séries OEE/OTD/PPM nas nativas (SVG); rate limit `public/present`
 - **Backlog:** sombra texto, conectores, paleta recente, PDF/PPTX, colaboração

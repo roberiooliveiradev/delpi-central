@@ -42,6 +42,7 @@ import {
 | `comunicadoDataArchitecture` | `dataSourceId`, `shouldHideDataSourceOnStage`, helpers de vínculo |
 | `comunicadoStageVisibility` | `isBlockHiddenOnStage` — render + hit-test + marquee + seleção (fonte única) |
 | `parseComunicadoConfig` / `serializeComunicadoConfig` | Schema v2–v4 (`chartOptions`, `dataSourceId`, `dataBinding`, …) |
+| DTOs `DataTransformV1/V2`, diagnósticos e schema M | Espelho de contrato da Fase 1; sem parser ou execução M no browser |
 | `comunicadoImageCropCssProperties` | CSS viewport para recorte de imagem |
 | `native-screens.css` | Layout viewport-fit (`tdp-*`, `tdp-series-chart*`) |
 

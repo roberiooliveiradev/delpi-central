@@ -1,5 +1,6 @@
 import {
   dataTransformStepLabel,
+  isDataTransformV1,
   isDataSourceBlockType,
   normalizeDataTransform,
   type ComunicadoChartViewBlock,
@@ -137,7 +138,9 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
   const active = queries.find((q) => q.id === activeId) ?? null;
   const activeBlockRef = useRef(active);
   activeBlockRef.current = active;
-  const steps = active?.dataTransform?.steps ?? EMPTY_STEPS;
+  const steps = isDataTransformV1(active?.dataTransform)
+    ? active.dataTransform.steps
+    : EMPTY_STEPS;
 
   useEffect(() => {
     setPreviewStepIndex(steps.length > 0 ? steps.length - 1 : null);
@@ -281,7 +284,7 @@ export function DataPrepareModal({ open, onClose, initialSourceId = null }: Prop
     const suggested = routePreset?.suggestedTransformSteps;
     if (!Array.isArray(suggested) || !suggested.length || !active) return;
     const normalized = normalizeDataTransform({ steps: suggested });
-    if (!normalized?.steps.length) return;
+    if (!isDataTransformV1(normalized) || !normalized.steps.length) return;
     persistSteps(normalized.steps);
   };
 

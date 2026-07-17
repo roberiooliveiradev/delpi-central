@@ -414,6 +414,12 @@ export type ComunicadoDataResolved = {
   serverProjectionApplied?: boolean;
   /** Enrichment aplicou dataTransform.steps antes da View. */
   serverTransformApplied?: boolean;
+  /** Status server-side do reader v1/v2; o browser nunca executa script M. */
+  dataTransform?: {
+    version?: number | null;
+    status: "absent" | "ready" | "feature_disabled" | "invalid";
+    diagnostics: import("./dataQueryTypes").DataQueryDiagnosticDto[];
+  };
   kpi?: { value?: unknown; label?: string };
   /** Métricas escalares disponíveis (multi-campo). */
   kpiMetrics?: ComunicadoDataKpiMetric[];

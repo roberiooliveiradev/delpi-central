@@ -10,6 +10,7 @@ import {
   dataTransformStepLabel,
   evaluateSafeArithmeticExpr,
   evaluateSafeColumnExpr,
+  isDataTransformV1,
   normalizeDataTransform,
 } from "./dataTransform";
 
@@ -49,18 +50,34 @@ describe("dataTransform", () => {
   };
 
   it("normaliza steps válidos", () => {
-    expect(
-      normalizeDataTransform({
-        steps: [
-          { op: "rename", from: "oee", to: "oee_pct" },
-          { op: "bogus" },
-          { op: "filter", column: "branch", cmp: "eq", value: "01" },
-        ],
-      })?.steps,
-    ).toEqual([
+    const normalized = normalizeDataTransform({
+      steps: [
+        { op: "rename", from: "oee", to: "oee_pct" },
+        { op: "bogus" },
+        { op: "filter", column: "branch", cmp: "eq", value: "01" },
+      ],
+    });
+    expect(isDataTransformV1(normalized) ? normalized.steps : undefined).toEqual([
       { op: "rename", from: "oee", to: "oee_pct" },
       { op: "filter", column: "branch", cmp: "eq", value: "01" },
     ]);
+  });
+
+  it("normaliza DTO v2 sem interpretar ou executar M", () => {
+    const normalized = normalizeDataTransform({
+      version: 2,
+      language: "m-delpi-v1",
+      script: "let\r\n    X = Fonte\r\nin\r\n    X\u0000",
+      ast: { forbidden: true },
+      rows: [{ secret: true }],
+    });
+
+    expect(normalized).toEqual({
+      version: 2,
+      language: "m-delpi-v1",
+      script: "let\n    X = Fonte\nin\n    X",
+    });
+    expect(isDataTransformV1(normalized)).toBe(false);
   });
 
   it("rename + select + filter + addColumn", () => {

@@ -117,8 +117,7 @@ def test_baseline_catalog_has_232_unique_allowlisted_get_operations():
     assert len(set(operation_ids)) == 232
 
 
-def test_baseline_cache_key_is_shared_between_distinct_authenticated_users():
-    """Caracterização de risco: não corrigir antes do contrato de escopo da fase futura."""
+def test_cache_key_isolated_between_distinct_authenticated_users_after_phase1():
     params = {"branch": "01", "periodDays": 7}
 
     user_a = _build_data_cache_key(
@@ -132,8 +131,9 @@ def test_baseline_cache_key_is_shared_between_distinct_authenticated_users():
         authorization="Bearer user-b",
     )
 
-    assert user_a == user_b
-    assert json.loads(user_a)["authScope"] == "user"
+    assert user_a != user_b
+    assert "Bearer user-a" not in user_a
+    assert json.loads(user_a)["authorizationFingerprint"].startswith("sha256:")
 
 
 def test_baseline_empty_static_branch_policy_remains_permissive():

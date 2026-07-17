@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from typing import Any
 
-from tv_app.application.services.branch_policy_service import validate_native_branch
+from tv_app.application.services.branch_policy_service import validate_data_route_branch
 from tv_app.application.services.comunicado_data_params_service import merge_data_params
 from tv_app.application.services.comunicado_input_filters_service import (
     collect_input_filter_contributions,
@@ -13,6 +14,7 @@ from tv_app.application.services.data.tv_data_fetch_error_service import resolve
 from tv_app.application.services.data.tv_data_presentation_modes_service import normalize_display_mode
 from tv_app.application.services.data.tv_data_transform_service import (
     apply_data_transform_to_payload,
+    apply_data_transform_to_payload_result,
     coerce_payload_to_table,
     normalize_data_transform,
 )
@@ -80,10 +82,50 @@ def _build_data_cache_key(
     operation_id: str,
     params: dict[str, Any],
     authorization: str | None,
+    user: Any | None = None,
+    service_context: str | None = None,
 ) -> str:
-    auth_scope = "user" if authorization else "service"
+    permissions = sorted(
+        {
+            str(permission).strip()
+            for permission in (getattr(user, "permissions", None) or [])
+            if str(permission).strip()
+        }
+    )
+    identity = next(
+        (
+            str(value).strip()
+            for value in (
+                getattr(user, "sub", None),
+                getattr(user, "id", None),
+                getattr(user, "user_id", None),
+                getattr(user, "email", None),
+                getattr(user, "username", None),
+            )
+            if value is not None and str(value).strip()
+        ),
+        "",
+    )
+    principal = {
+        "kind": "user" if authorization or user is not None else "service",
+        "identity": identity,
+        "permissions": permissions,
+        "isSuperadmin": bool(getattr(user, "is_superadmin", False)),
+        "serviceContext": str(service_context or "tv-dashboard").strip(),
+        # Fallback opaco quando o modelo HTTP não expõe subject; nunca serializa o token.
+        "credentialDigest": hashlib.sha256(authorization.encode("utf-8")).hexdigest()
+        if authorization and not identity
+        else "",
+    }
+    auth_fingerprint = hashlib.sha256(
+        json.dumps(principal, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     return json.dumps(
-        {"operationId": operation_id, "params": params, "authScope": auth_scope},
+        {
+            "operationId": operation_id,
+            "params": params,
+            "authorizationFingerprint": f"sha256:{auth_fingerprint}",
+        },
         sort_keys=True,
         default=str,
     )
@@ -1016,9 +1058,9 @@ class ComunicadoDataEnrichmentService:
             self._catalog.get_route(operation_id),
         )
 
-        branch = merged_params.get("branch")
+        route = self._catalog.get_route(operation_id)
         try:
-            validate_native_branch({"branch": branch}, user=user)
+            validate_data_route_branch(route, merged_params, user=user)
         except ValueError as exc:
             result["resolved"] = {"error": str(exc)}
             return result
@@ -1028,6 +1070,8 @@ class ComunicadoDataEnrichmentService:
                 operation_id,
                 merged_params,
                 authorization,
+                user=user,
+                service_context="user-preview" if user is not None else "presentation-service",
                 force_refresh=force_refresh,
                 request_memo=request_memo,
             )
@@ -1043,12 +1087,16 @@ class ComunicadoDataEnrichmentService:
 
         presentation_data = data
         server_transform_applied = False
+        transform_metadata: dict[str, Any] | None = None
         if block_type == "data_source":
-            transformed, server_transform_applied, _table = apply_data_transform_to_payload(
+            transform_result = apply_data_transform_to_payload_result(
                 data,
                 block.get("dataTransform"),
                 sibling_tables=sibling_tables,
             )
+            transformed = transform_result["data"]
+            server_transform_applied = bool(transform_result["applied"])
+            transform_metadata = transform_result["transform"]
             if server_transform_applied:
                 presentation_data = transformed
 
@@ -1061,6 +1109,8 @@ class ComunicadoDataEnrichmentService:
         }
         if server_transform_applied:
             resolved["serverTransformApplied"] = True
+        if transform_metadata and transform_metadata.get("version") is not None:
+            resolved["dataTransform"] = transform_metadata
 
         if block_type == "data_source":
             for mode in ("kpi", "line_chart", "table"):
@@ -1097,6 +1147,8 @@ class ComunicadoDataEnrichmentService:
         params: dict[str, Any],
         authorization: str | None,
         *,
+        user: Any | None = None,
+        service_context: str | None = None,
         force_refresh: bool = False,
         request_memo: dict[str, dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
@@ -1104,6 +1156,8 @@ class ComunicadoDataEnrichmentService:
             operation_id=operation_id,
             params=params,
             authorization=authorization,
+            user=user,
+            service_context=service_context,
         )
         if request_memo is not None and cache_key in request_memo:
             return request_memo[cache_key]

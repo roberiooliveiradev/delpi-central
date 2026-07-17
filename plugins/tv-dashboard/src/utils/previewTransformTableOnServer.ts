@@ -1,4 +1,5 @@
 import {
+  isDataTransformV1,
   normalizeDataTransform,
   serializeComunicadoConfig,
   type ComunicadoConfig,
@@ -33,7 +34,7 @@ export async function previewTransformTableOnServer(options: {
   const payload: Record<string, unknown> = {
     ...stripResolved(options.block),
   };
-  if (transform?.steps.length) {
+  if (isDataTransformV1(transform) && transform.steps.length) {
     payload.dataTransform = transform;
   } else {
     delete payload.dataTransform;

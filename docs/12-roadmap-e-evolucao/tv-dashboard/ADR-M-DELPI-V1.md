@@ -1,9 +1,9 @@
 # ADR — M DELPI v1
 
-> **Status:** aceito para implementação futura  
+> **Status:** aceito; contratos e adapter da Fase 1 implementados
 > **Data:** 2026-07-16  
-> **Fase:** 0 — decisão e proteção de baseline  
-> **Não autoriza:** parser, compilador, runtime M, endpoints `/data/m/*` ou escrita v2
+> **Fase:** 1 — contratos v2 e compatibilidade legada
+> **Não autoriza:** parser, compilador, runtime M, endpoints `/data/m/*` ou escrita v2 enquanto `mQuery.writeV2Enabled=false`
 
 ## Contexto e causa raiz
 
@@ -24,13 +24,23 @@ script M
   → tv_data_transform_service.py
 ```
 
-Nesta Fase 0:
+Na Fase 0:
 
 - `lark==1.3.1` fica fixado em `requirements.txt`;
 - flags e limites existem em `tv_dashboard_settings.json`, todos inertes;
 - nenhum módulo importa Lark e nenhum script M é interpretado;
 - o executor legado e os parsers atuais não são ampliados;
 - fixtures golden preservam o comportamento v1 em Python e TypeScript.
+
+Na Fase 1:
+
+- `domain/data_query` define ranges, diagnósticos, tipos, schema de coluna e `TransformPlan` imutáveis;
+- o adapter v1 converte as 15 operações legadas para o plano tipado;
+- o formatter produz M canônico para migração, sem parser M;
+- o reader aceita v1 e v2; v2 retorna diagnóstico seguro e não executa;
+- a fachada `tv_data_transform_service.py` executa o plano pelo executor existente;
+- o cache usa fingerprint SHA-256 de identidade, permissões e contexto, nunca JWT bruto;
+- `requiresBranchPermission` e aliases de filial são aplicados declarativamente, com fallback documentado para rotas ainda não curadas.
 
 ## Parser generator versus parser próprio
 
@@ -110,7 +120,7 @@ O range deriva dos tokens do parser, nunca de busca textual posterior. Diagnóst
 - logs por hash/código, sem JWT ou linhas;
 - erro estruturado, sem conversão implícita para `null`.
 
-**Risco baseline preservado:** o cache atual distingue apenas `user` versus `service`, portanto dois JWTs de usuários diferentes compartilham a mesma chave. A Fase 0 testa e documenta esse fato sem alterar produção.
+**Risco corrigido na Fase 1:** cache de usuários distintos e contextos de serviço não compartilha chave. A fingerprint é não reversível e inclui identidade/credencial opaca, permissões e contexto; o token não aparece na chave.
 
 ## Arquitetura canônica
 

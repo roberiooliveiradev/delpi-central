@@ -7,7 +7,13 @@ import operator
 import re
 from typing import Any
 
+from tv_app.application.services.data.data_transform_contract import read_data_transform
+from tv_app.application.services.data.m_query.m_legacy_adapter import (
+    normalize_legacy_transform,
+    plan_to_legacy_steps,
+)
 from tv_app.application.services.series_points_extractor import unwrap_operational_data
+from tv_app.domain.data_query.transform_plan import TransformPlan
 
 _IDENT_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _CMPS = frozenset({"eq", "neq", "gt", "lt", "notNull", "contains", "startsWith"})
@@ -39,130 +45,8 @@ def _as_agg(raw: Any) -> str | None:
 
 
 def normalize_data_transform(raw: Any) -> dict[str, Any] | None:
-    if not isinstance(raw, dict):
-        return None
-    steps_raw = raw.get("steps")
-    if not isinstance(steps_raw, list) or not steps_raw:
-        return None
-    steps: list[dict[str, Any]] = []
-    for item in steps_raw:
-        if not isinstance(item, dict):
-            continue
-        op = str(item.get("op") or "").strip()
-        if op == "rename":
-            frm = str(item.get("from") or "").strip()
-            to = str(item.get("to") or "").strip()
-            if frm and to:
-                steps.append({"op": "rename", "from": frm, "to": to})
-        elif op == "select":
-            columns = [str(col).strip() for col in (item.get("columns") or []) if str(col).strip()]
-            if columns:
-                steps.append({"op": "select", "columns": columns})
-        elif op == "filter":
-            column = str(item.get("column") or "").strip()
-            cmp_ = str(item.get("cmp") or "").strip()
-            if column and cmp_ in _CMPS:
-                step: dict[str, Any] = {"op": "filter", "column": column, "cmp": cmp_}
-                if "value" in item:
-                    step["value"] = item.get("value")
-                steps.append(step)
-        elif op == "addColumn":
-            name = str(item.get("name") or "").strip()
-            expr = str(item.get("expr") or "").strip()
-            if name and expr:
-                steps.append({"op": "addColumn", "name": name, "expr": expr})
-        elif op == "replace":
-            column = str(item.get("column") or "").strip()
-            find = str(item.get("find") if item.get("find") is not None else "")
-            replace_with = str(
-                item.get("replaceWith")
-                if item.get("replaceWith") is not None
-                else item.get("replace")
-                if item.get("replace") is not None
-                else ""
-            )
-            if column:
-                steps.append(
-                    {"op": "replace", "column": column, "find": find, "replaceWith": replace_with}
-                )
-        elif op == "sort":
-            column = str(item.get("column") or "").strip()
-            direction = "desc" if str(item.get("direction") or "").strip() == "desc" else "asc"
-            if column:
-                steps.append({"op": "sort", "column": column, "direction": direction})
-        elif op in {"keepRows", "removeRows"}:
-            try:
-                count = max(0, int(item.get("count") or 0))
-            except (TypeError, ValueError):
-                count = 0
-            from_ = "bottom" if str(item.get("from") or "").strip() == "bottom" else "top"
-            if count > 0:
-                steps.append({"op": op, "count": count, "from": from_})
-        elif op == "changeType":
-            column = str(item.get("column") or "").strip()
-            to = "number" if str(item.get("to") or "").strip() == "number" else "string"
-            if column:
-                steps.append({"op": "changeType", "column": column, "to": to})
-        elif op == "fillDown":
-            column = str(item.get("column") or "").strip()
-            if column:
-                steps.append({"op": "fillDown", "column": column})
-        elif op == "firstRowAsHeader":
-            steps.append({"op": "firstRowAsHeader"})
-        elif op == "groupBy":
-            keys = [str(k).strip() for k in (item.get("keys") or []) if str(k).strip()]
-            aggregations: list[dict[str, Any]] = []
-            for agg in item.get("aggregations") or []:
-                if not isinstance(agg, dict):
-                    continue
-                column = str(agg.get("column") or "").strip()
-                fn = _as_agg(agg.get("fn"))
-                as_name = str(agg.get("as") or "").strip() or f"{column}_{fn}"
-                if column and fn:
-                    aggregations.append({"column": column, "fn": fn, "as": as_name})
-            if keys and aggregations:
-                steps.append({"op": "groupBy", "keys": keys, "aggregations": aggregations})
-        elif op == "pivot":
-            column = str(item.get("column") or "").strip()
-            value_column = str(item.get("valueColumn") or "").strip()
-            aggregation = _as_agg(item.get("aggregation")) or "sum"
-            if column and value_column:
-                steps.append(
-                    {
-                        "op": "pivot",
-                        "column": column,
-                        "valueColumn": value_column,
-                        "aggregation": aggregation,
-                    }
-                )
-        elif op == "unpivot":
-            columns = [str(col).strip() for col in (item.get("columns") or []) if str(col).strip()]
-            if columns:
-                steps.append(
-                    {
-                        "op": "unpivot",
-                        "columns": columns,
-                        "nameColumn": str(item.get("nameColumn") or "").strip() or "atributo",
-                        "valueColumn": str(item.get("valueColumn") or "").strip() or "valor",
-                    }
-                )
-        elif op == "merge":
-            source_id = str(item.get("sourceId") or "").strip()
-            left_key = str(item.get("leftKey") or "").strip()
-            right_key = str(item.get("rightKey") or "").strip()
-            columns = [str(col).strip() for col in (item.get("columns") or []) if str(col).strip()]
-            if source_id and left_key and right_key:
-                step = {
-                    "op": "merge",
-                    "sourceId": source_id,
-                    "leftKey": left_key,
-                    "rightKey": right_key,
-                    "join": "left",
-                }
-                if columns:
-                    step["columns"] = columns
-                steps.append(step)
-    return {"steps": steps} if steps else None
+    result = read_data_transform(raw)
+    return result.normalized
 
 
 def coerce_payload_to_table(data: Any) -> dict[str, Any] | None:
@@ -603,18 +487,58 @@ def apply_data_transform_steps(
     return {"columns": columns, "rows": rows}
 
 
+def apply_transform_plan(
+    table: dict[str, Any],
+    plan: TransformPlan,
+    *,
+    sibling_tables: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Executa a IR tipada pela fachada existente, sem engine paralela."""
+
+    return apply_data_transform_steps(
+        table,
+        plan_to_legacy_steps(plan),
+        sibling_tables=sibling_tables,
+    )
+
+
+def apply_data_transform_to_payload_result(
+    data: Any,
+    transform: Any,
+    *,
+    sibling_tables: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    read_result = read_data_transform(transform)
+    table = coerce_payload_to_table(data)
+    if not read_result.executable or read_result.plan is None or table is None:
+        return {
+            "data": data,
+            "applied": False,
+            "table": table,
+            "transform": read_result.public_metadata(),
+        }
+    next_table = apply_transform_plan(
+        table,
+        read_result.plan,
+        sibling_tables=sibling_tables,
+    )
+    return {
+        "data": next_table["rows"],
+        "applied": True,
+        "table": next_table,
+        "transform": read_result.public_metadata(),
+    }
+
+
 def apply_data_transform_to_payload(
     data: Any,
     transform: Any,
     *,
     sibling_tables: dict[str, dict[str, Any]] | None = None,
 ) -> tuple[Any, bool, dict[str, Any] | None]:
-    normalized = normalize_data_transform(transform)
-    steps = normalized.get("steps") if normalized else None
-    if not steps:
-        return data, False, coerce_payload_to_table(data)
-    table = coerce_payload_to_table(data)
-    if table is None:
-        return data, False, None
-    next_table = apply_data_transform_steps(table, steps, sibling_tables=sibling_tables)
-    return next_table["rows"], True, next_table
+    result = apply_data_transform_to_payload_result(
+        data,
+        transform,
+        sibling_tables=sibling_tables,
+    )
+    return result["data"], result["applied"], result["table"]

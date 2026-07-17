@@ -8,7 +8,7 @@ Indicadores live api-delpi: [playbook §18](../../docs/12-roadmap-e-evolucao/tv-
 Gráfico / KPI / tabela compostos: [playbook §19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#19-gráfico-composto-por-primitivos--edição-no-palco-onda-4g)  
 Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md#1919-dois-escopos-de-seleção--chrome-de-partes-jul2026)
 
-Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [baseline da Fase 0](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-0-BASELINE-M-DELPI.md). A Fase 0 não ativa M: o editor continua usando `dataTransform.steps` e preview server-side legado.
+Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-POWER-QUERY-M.md) · [status da Fase 1](../../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-1-STATUS-M-DELPI.md). A Fase 1 mantém M desativado: o editor continua gravando `dataTransform.steps`, enquanto backend e apresentação já aceitam o DTO v2 sem executar script.
 
 ---
 

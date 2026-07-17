@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from tv_app.application.services.data.data_transform_contract import (
+    sanitize_data_transform_for_persistence,
+)
 from tv_app.application.services.tv_dashboard_content_service import tv_dashboard_setting_int
 
 
@@ -13,6 +16,12 @@ def _strip_runtime_fields(block: dict[str, Any]) -> dict[str, Any]:
     cleaned = dict(block)
     cleaned.pop("resolved", None)
     cleaned.pop("url", None)
+    if "dataTransform" in cleaned:
+        transform = sanitize_data_transform_for_persistence(cleaned.get("dataTransform"))
+        if transform is None:
+            cleaned.pop("dataTransform", None)
+        else:
+            cleaned["dataTransform"] = transform
     return cleaned
 
 

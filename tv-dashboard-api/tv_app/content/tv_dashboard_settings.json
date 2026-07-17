@@ -48,6 +48,13 @@
   },
   "branchPolicy": {
     "allowedBranches": [],
+    "canonicalParamAliases": [
+      "branch",
+      "branch_code",
+      "filial",
+      "filial_id"
+    ],
+    "compatibilityFallbackForUncuratedRoutes": true,
     "rejectionMessage": "Filial não autorizada para Painéis TV."
   },
   "mediaUpload": {
