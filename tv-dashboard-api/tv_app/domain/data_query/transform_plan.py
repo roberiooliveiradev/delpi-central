@@ -9,6 +9,23 @@ from typing import TypeAlias
 FilterValue: TypeAlias = str | int | float | bool | None
 
 
+@dataclass(frozen=True, slots=True)
+class CompiledExpression:
+    """Expressão segura serializável; nunca contém código Python executável."""
+
+    kind: str
+    value: FilterValue | str | None = None
+    children: tuple["CompiledExpression", ...] = ()
+
+    def to_dict(self) -> dict[str, object]:
+        payload: dict[str, object] = {"kind": self.kind}
+        if self.value is not None:
+            payload["value"] = self.value
+        if self.children:
+            payload["children"] = [child.to_dict() for child in self.children]
+        return payload
+
+
 class TransformOperation(StrEnum):
     RENAME = "rename"
     SELECT = "select"
@@ -152,6 +169,18 @@ class MergeStep(PlanStepBase):
     operation = TransformOperation.MERGE
 
 
+@dataclass(frozen=True, slots=True)
+class CompiledMPlanStep(PlanStepBase):
+    """Etapa produzida pelo compilador M; execução pertence à Fase 3."""
+
+    function_name: str
+    arguments: tuple[CompiledExpression, ...]
+
+    @property
+    def operation(self) -> str:
+        return self.function_name
+
+
 PlanStep: TypeAlias = (
     RenameStep
     | SelectStep
@@ -167,6 +196,7 @@ PlanStep: TypeAlias = (
     | PivotStep
     | UnpivotStep
     | MergeStep
+    | CompiledMPlanStep
 )
 
 

@@ -1,0 +1,90 @@
+start: let_expression
+
+let_expression: LET binding ("," binding)* IN expression
+binding: identifier EQUAL expression
+
+?expression: if_expression
+           | each_expression
+           | function_expression
+           | or_expression
+
+if_expression: IF expression THEN expression ELSE expression
+each_expression: EACH expression
+function_expression: FUNCTION_PARAMS FAT_ARROW expression
+
+?or_expression: and_expression (OR and_expression)*
+?and_expression: comparison_expression (AND comparison_expression)*
+?comparison_expression: concat_expression (comparison_operator concat_expression)*
+?comparison_operator: COMPARISON_OP | EQUAL
+?concat_expression: additive_expression (AMP additive_expression)*
+?additive_expression: multiplicative_expression (ADD_OP multiplicative_expression)*
+?multiplicative_expression: unary_expression (MUL_OP unary_expression)*
+?unary_expression: NOT unary_expression  -> unary_not
+                 | ADD_OP unary_expression -> unary_sign
+                 | primary
+
+?primary: literal
+        | type_expression
+        | call_expression
+        | list_expression
+        | record_expression
+        | field_access
+        | qualified_symbol
+        | identifier
+        | parenthesized
+
+parenthesized: "(" expression ")"
+
+call_expression: callable_name "(" [argument_list] ")"
+argument_list: expression ("," expression)*
+callable_name: identifier ("." identifier)*
+list_expression: "{" [argument_list] "}"
+record_expression: "[" [record_fields] "]"
+record_fields: record_field ("," record_field)*
+record_field: identifier EQUAL expression
+field_access: "[" identifier "]"
+qualified_symbol: identifier ("." identifier)+
+type_expression: TYPE TYPE_NAME
+
+?literal: STRING -> string
+        | NUMBER -> number
+        | TRUE -> true
+        | FALSE -> false
+        | NULL -> null
+
+identifier: SIMPLE_IDENTIFIER -> simple_identifier
+          | QUOTED_IDENTIFIER -> quoted_identifier
+          | SHARED_IDENTIFIER -> shared_identifier
+
+LET.10: "let"
+IN.10: "in"
+EACH.10: "each"
+IF.10: "if"
+THEN.10: "then"
+ELSE.10: "else"
+AND.10: "and"
+OR.10: "or"
+NOT.10: "not"
+TYPE.10: "type"
+TRUE.10: "true"
+FALSE.10: "false"
+NULL.10: "null"
+FAT_ARROW: "=>"
+FUNCTION_PARAMS: /\([^()\r\n]*\)(?=[ \t]*=>)/
+AMP: "&"
+COMPARISON_OP: "<>" | "<=" | ">=" | "<" | ">"
+EQUAL: "="
+ADD_OP: "+" | "-"
+MUL_OP: "*" | "/"
+TYPE_NAME.10: "text" | "number" | "logical" | "date" | "datetime" | "duration" | "any"
+SHARED_IDENTIFIER.10: "#shared"
+QUOTED_IDENTIFIER: /#"(?:[^"]|"")*"/
+STRING: /"(?:[^"]|"")*"/
+NUMBER: /(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/
+SIMPLE_IDENTIFIER: /[^\W\d][\w]*/u
+
+LINE_COMMENT: /\/\/[^\r\n]*/
+BLOCK_COMMENT: /\/\*(?:[^*]|\*(?!\/))*\*\//
+%ignore LINE_COMMENT
+%ignore BLOCK_COMMENT
+%ignore /[ \t\f\r\n]+/

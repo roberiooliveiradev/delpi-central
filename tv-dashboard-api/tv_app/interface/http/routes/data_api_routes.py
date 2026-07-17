@@ -8,6 +8,12 @@ from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from tv_app.application.services.data.tv_data_config_validation_service import TvDataConfigValidationService
+from tv_app.application.services.data.m_query.m_compiler import (
+    MCompileRequest,
+    MQueryCompiler,
+)
+from tv_app.application.services.data.m_query.m_function_registry import get_function_registry
+from tv_app.application.services.tv_dashboard_content_service import m_query_setting
 from tv_app.application.services.data.tv_data_openapi_catalog_service import TvDataOpenApiCatalogService
 from tv_app.application.services.data.tv_data_preview_service import TvDataPreviewService
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
@@ -21,6 +27,7 @@ _catalog = TvDataRouteCatalogService()
 _validation = TvDataConfigValidationService(_catalog)
 _preview = TvDataPreviewService(_catalog)
 _openapi = TvDataOpenApiCatalogService(_catalog)
+_m_compiler = MQueryCompiler()
 
 class PreviewDataBlockBody(BaseModel):
     block: dict[str, Any]
@@ -31,6 +38,73 @@ class PreviewDataBlockBody(BaseModel):
 
 class ValidateDataConfigBody(BaseModel):
     nativeConfig: dict[str, Any] = Field(default_factory=dict)
+
+
+class MSourceColumnBody(BaseModel):
+    key: str
+    type: str = "any"
+    nullable: bool = True
+
+
+class MQueryBindingBody(BaseModel):
+    name: str
+    sourceId: str
+
+
+class MCompileBody(BaseModel):
+    profile: str = "m-delpi-v1"
+    script: str
+    sourceSchema: list[MSourceColumnBody] = Field(default_factory=list)
+    queryBindings: list[MQueryBindingBody] = Field(default_factory=list)
+    targetStepName: str | None = None
+    culture: str | None = None
+
+
+def _model_dict(model: BaseModel) -> dict[str, Any]:
+    dump = getattr(model, "model_dump", None)
+    return dump() if callable(dump) else model.dict()
+
+
+@router.post("/m/compile")
+def compile_m_query(request: Request, body: MCompileBody):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    result = _m_compiler.compile(
+        MCompileRequest(
+            profile=body.profile,
+            script=body.script,
+            source_schema=tuple(_model_dict(item) for item in body.sourceSchema),
+            query_bindings=tuple(_model_dict(item) for item in body.queryBindings),
+            target_step_name=body.targetStepName,
+            culture=body.culture or str(m_query_setting("defaultCulture", "pt-BR")),
+        )
+    )
+    message = "Consulta M válida." if result.valid else "Consulta M contém diagnósticos."
+    return ok(result.to_dict(), message=message)
+
+
+@router.get("/m/functions")
+def list_m_functions(request: Request, profile: str = "m-delpi-v1"):
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_READ)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    registry = get_function_registry()
+    if profile != registry.profile:
+        return fail("Profile M não suportado.", 422)
+    items = registry.catalog()
+    return ok(
+        {
+            "profile": registry.profile,
+            "registryVersion": registry.version,
+            "items": items,
+            "total": len(items),
+        }
+    )
 
 
 @router.get("/routes")

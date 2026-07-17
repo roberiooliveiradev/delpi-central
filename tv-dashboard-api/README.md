@@ -4,7 +4,7 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
-Power Query M: a [Fase 1](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-1-STATUS-M-DELPI.md) adicionou domínio tipado, adapter v1, formatter e dual-read v1/v2. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false`; não existem parser, runtime ou endpoints M, e v2 retorna diagnóstico seguro sem execução.
+Power Query M: a [Fase 2](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-2-STATUS-M-DELPI.md) adicionou compilador Lark server-side, AST com ranges, registry deny-by-default e endpoints de compilação/catálogo. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false`; não existe runtime M e v2 ainda não é executado.
 
 ---
 
@@ -42,6 +42,21 @@ Power Query M: a [Fase 1](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-1-STAT
 | `GET` | `/data/openapi/candidates` | `TV_MANAGE` | Rotas GET da api-delpi ainda fora da allowlist (curadoria) |
 | `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
 | `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
+| `POST` | `/data/m/compile` | `TV_READ` | Compila `m-delpi-v1` para `TransformPlan`, sem executar ou buscar dados |
+| `GET` | `/data/m/functions` | `TV_READ` | Catálogo versionado de funções M permitidas |
+
+### Compilador M DELPI v1
+
+O backend é a única autoridade da linguagem. O parser singleton usa gramática
+declarativa Lark LALR/contextual e produz AST imutável com ranges. O analisador
+rejeita por padrão funções desconhecidas, I/O, bancos, avaliação dinâmica,
+`#shared`, função de usuário e recursão. Os limites de bytes, etapas, nós e
+profundidade vêm de `tv_dashboard_settings.json` e são aplicados antes de
+qualquer integração de dados.
+
+O endpoint de compile aceita `sourceSchema` como hint, `queryBindings`,
+`targetStepName` e `culture`; ele nunca chama a `api-delpi`. Execução,
+preview e persistência v2 ativa permanecem para fases posteriores.
 
 Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
 

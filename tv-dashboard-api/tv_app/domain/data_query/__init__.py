@@ -1,5 +1,6 @@
 """Domínio puro de consultas e planos tabulares."""
 
+from .m_ast import MDocument, MExpression, MLetExpression, MNode
 from .m_diagnostics import Diagnostic, DiagnosticSeverity, SourceRange
 from .m_types import ColumnSchema, ColumnTypeSource, MType, MTypeKind
 from .transform_plan import TransformOperation, TransformPlan
@@ -11,6 +12,10 @@ __all__ = [
     "DiagnosticSeverity",
     "MType",
     "MTypeKind",
+    "MDocument",
+    "MExpression",
+    "MLetExpression",
+    "MNode",
     "SourceRange",
     "TransformOperation",
     "TransformPlan",

@@ -6,7 +6,7 @@
 > **Baseline inspecionada:** branch `main`, commit `095dabdbad44dbdb000f165a9fe0cdc13c6ee334`  
 > **Versão deste playbook:** 1.0  
 > **Data:** 2026-07-16  
-> **Status:** Fase 0 concluída em 2026-07-16; Fases 1–7 não iniciadas
+> **Status:** Fases 0–2 concluídas em 2026-07-16; Fases 3–7 não iniciadas
 
 ---
 
@@ -1223,6 +1223,8 @@ Podem ser extraídos depois, quando houver segundo uso comprovado.
 
 ## Fase 1 — Contratos v2 e adapter legado
 
+**Status:** ✅ concluída em 2026-07-16. Evidências: [status da Fase 1](./FASE-1-STATUS-M-DELPI.md).
+
 ### Entregas
 
 - tipos Python e TypeScript para `dataTransform.version=2`;
@@ -1243,6 +1245,8 @@ Podem ser extraídos depois, quando houver segundo uso comprovado.
 ---
 
 ## Fase 2 — Compilador M MVP
+
+**Status:** ✅ concluída em 2026-07-16. Evidências: [status da Fase 2](./FASE-2-STATUS-M-DELPI.md), gramática Lark declarativa, registry JSON, testes golden/corpus/adversariais e endpoints protegidos por `TV_READ`. O compilador produz `TransformPlan`, mas não executa M.
 
 ### Entregas
 

@@ -1,9 +1,9 @@
 # ADR — M DELPI v1
 
-> **Status:** aceito; contratos e adapter da Fase 1 implementados
+> **Status:** aceito; compilador MVP da Fase 2 implementado
 > **Data:** 2026-07-16  
-> **Fase:** 1 — contratos v2 e compatibilidade legada
-> **Não autoriza:** parser, compilador, runtime M, endpoints `/data/m/*` ou escrita v2 enquanto `mQuery.writeV2Enabled=false`
+> **Fase:** 2 — compilador M MVP
+> **Não autoriza:** runtime M, fetch por script, preview M ou escrita v2 enquanto `mQuery.writeV2Enabled=false`
 
 ## Contexto e causa raiz
 
@@ -41,6 +41,18 @@ Na Fase 1:
 - a fachada `tv_data_transform_service.py` executa o plano pelo executor existente;
 - o cache usa fingerprint SHA-256 de identidade, permissões e contexto, nunca JWT bruto;
 - `requiresBranchPermission` e aliases de filial são aplicados declarativamente, com fallback documentado para rotas ainda não curadas.
+
+Na Fase 2:
+
+- Lark 1.3.1 carrega uma gramática declarativa em parser singleton
+  `lalr`/`contextual`, com `propagate_positions=True`;
+- AST e ranges são próprios e imutáveis;
+- registry JSON define todas as funções disponíveis e qualquer ausência é
+  negada;
+- análise semântica e compiler produzem `TransformPlan`, mas não o executam;
+- limites de bytes, etapas, nós e profundidade são aplicados durante compile;
+- `/data/m/compile` e `/data/m/functions` preservam envelope e `TV_READ`;
+- o runtime, o frontend e os parsers legados permanecem inalterados.
 
 ## Parser generator versus parser próprio
 
@@ -135,7 +147,7 @@ O range deriva dos tokens do parser, nunca de busca textual posterior. Diagnóst
 | preview | fluxo server-side existente, evoluído por `targetStepName` |
 | frontend | draft e render dos contratos HTTP; zero interpretação M |
 
-O compilador produzirá `TransformPlan`; não haverá “M engine” paralela nem executor de produção TypeScript.
+O compilador produz `TransformPlan`; não há “M engine” paralela nem executor de produção TypeScript. A Fase 3 deverá ligar esse plano exclusivamente à fachada `tv_data_transform_service.py`.
 
 ## Decisões de `plugin-ui`
 

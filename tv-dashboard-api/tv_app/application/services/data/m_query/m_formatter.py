@@ -5,6 +5,23 @@ from __future__ import annotations
 import ast
 import re
 
+from tv_app.domain.data_query.m_ast import (
+    MBinaryExpression,
+    MCallExpression,
+    MDocument,
+    MEachExpression,
+    MExpression,
+    MFieldAccess,
+    MFunctionExpression,
+    MIdentifier,
+    MIfExpression,
+    MListExpression,
+    MLiteral,
+    MParenthesizedExpression,
+    MRecordExpression,
+    MTypeExpression,
+    MUnaryExpression,
+)
 from tv_app.domain.data_query.transform_plan import (
     AddColumnStep,
     ChangeTypeStep,
@@ -233,3 +250,100 @@ def format_transform_plan_as_m(plan: TransformPlan) -> str:
         for step in plan.steps
     ]
     return "let\n" + ",\n".join(bindings) + f"\nin\n    {_step_reference(plan.output)}"
+
+
+_M_KEYWORDS = {
+    "and",
+    "each",
+    "else",
+    "false",
+    "if",
+    "in",
+    "let",
+    "not",
+    "null",
+    "or",
+    "then",
+    "true",
+    "type",
+}
+_PRECEDENCE = {
+    "or": 1,
+    "and": 2,
+    "=": 3,
+    "<>": 3,
+    "<": 3,
+    "<=": 3,
+    ">": 3,
+    ">=": 3,
+    "&": 4,
+    "+": 5,
+    "-": 5,
+    "*": 6,
+    "/": 6,
+}
+
+
+def _canonical_identifier(value: str) -> str:
+    if value != "#shared" and value.isidentifier() and value.casefold() not in _M_KEYWORDS:
+        return value
+    return f'#"{value.replace(chr(34), chr(34) * 2)}"'
+
+
+def _format_expression(expression: MExpression, parent_precedence: int = 0) -> str:
+    if isinstance(expression, MIdentifier):
+        if "." in expression.name and not expression.quoted:
+            return ".".join(_canonical_identifier(part) for part in expression.name.split("."))
+        return _canonical_identifier(expression.name)
+    if isinstance(expression, MLiteral):
+        return _m_literal(expression.value)
+    if isinstance(expression, MTypeExpression):
+        return f"type {expression.name}"
+    if isinstance(expression, MFieldAccess):
+        return f"[{_canonical_identifier(expression.field_name)}]"
+    if isinstance(expression, MListExpression):
+        return "{" + ", ".join(_format_expression(item) for item in expression.items) + "}"
+    if isinstance(expression, MRecordExpression):
+        fields = ", ".join(
+            f"{_canonical_identifier(field.name)} = {_format_expression(field.value)}"
+            for field in expression.fields
+        )
+        return f"[{fields}]"
+    if isinstance(expression, MCallExpression):
+        arguments = ", ".join(_format_expression(item) for item in expression.arguments)
+        return f"{expression.function_name}({arguments})"
+    if isinstance(expression, MEachExpression):
+        return f"each {_format_expression(expression.body)}"
+    if isinstance(expression, MIfExpression):
+        return (
+            f"if {_format_expression(expression.condition)} "
+            f"then {_format_expression(expression.then_value)} "
+            f"else {_format_expression(expression.else_value)}"
+        )
+    if isinstance(expression, MUnaryExpression):
+        rendered = f"{expression.operator} {_format_expression(expression.operand, 7)}"
+        return f"({rendered})" if parent_precedence > 7 else rendered
+    if isinstance(expression, MBinaryExpression):
+        precedence = _PRECEDENCE[expression.operator]
+        rendered = (
+            f"{_format_expression(expression.left, precedence)} {expression.operator} "
+            f"{_format_expression(expression.right, precedence + 1)}"
+        )
+        return f"({rendered})" if precedence < parent_precedence else rendered
+    if isinstance(expression, MParenthesizedExpression):
+        return _format_expression(expression.expression, parent_precedence)
+    if isinstance(expression, MFunctionExpression):
+        parameters = ", ".join(_canonical_identifier(item) for item in expression.parameters)
+        return f"({parameters}) => {_format_expression(expression.body)}"
+    raise TypeError(f"Nó M não suportado: {type(expression).__name__}")
+
+
+def format_m_document(document: MDocument) -> str:
+    """Formata AST M de modo determinístico e idempotente."""
+
+    bindings = [
+        f"    {_canonical_identifier(binding.name)} = {_format_expression(binding.expression)}"
+        for binding in document.expression.bindings
+    ]
+    output = _format_expression(document.expression.output)
+    return "let\n" + ",\n".join(bindings) + f"\nin\n    {output}"
