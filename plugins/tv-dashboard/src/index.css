@@ -6335,9 +6335,12 @@ body.td-composer--marqueeing *{
 }
 /*
  * Layout do workbench «Preparar dados» (domínio TV). Chrome do modal contido
- * (host-fill / overlay / stacking vs sidebar) vive em plugin-ui/modal-shell.css.
+ * (host-fill / overlay / stacking vs sidebar) vive no ModalShell do plugin-ui
+ * (geometria inline). Width/max-height abaixo valem só para o fallback sem host.
  */
 .dashboard-tv-dashboard .td-modal--data-prepare{
+  width: min(1280px, calc(100vw - 24px));
+  max-height: min(90dvh, 900px);
   display: flex;
   flex-direction: column;
 }

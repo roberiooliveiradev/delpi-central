@@ -210,15 +210,37 @@ export function ModalShell({
       </p>
     ) : null;
 
+  /*
+   * Geometria do modo contido é inline: CSS de MFE (`.dashboard-x .td-modal`)
+   * tem especificidade maior que as classes do kit e quebraria o host-fill.
+   */
+  const containedOverlayStyle = containedInPortalTarget
+    ? ({ position: "absolute", inset: 0, padding: 0 } as const)
+    : undefined;
+  const containedDialogStyle = containedInPortalTarget
+    ? ({
+        width: "100%",
+        height: "100%",
+        maxWidth: "none",
+        maxHeight: "none",
+        borderRadius: 0,
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+      } as const)
+    : undefined;
+
   const overlay = (
     <div
       className={overlayClass}
+      style={containedOverlayStyle}
       onClick={onClose}
       aria-hidden={overlayAriaHidden ? true : undefined}
     >
       <div
         ref={resolvedDialogRef}
         className={dialogClass}
+        style={containedDialogStyle}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -258,7 +280,12 @@ export function ModalShell({
   return createPortal(
     <div
       className={scopeClass}
-      style={portalTheme.style}
+      style={{
+        ...portalTheme.style,
+        ...(containedInPortalTarget
+          ? { position: "absolute", inset: 0, minWidth: 0, minHeight: 0 }
+          : {}),
+      }}
       data-theme={portalTheme.dataTheme ?? undefined}
       data-modal-contained={containedInPortalTarget ? "true" : undefined}
     >
