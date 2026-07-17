@@ -28,6 +28,14 @@ export async function applyDataQueryDraftsAtomically(
     dirty.map((draft, index) => ({
       blockId: draft.sourceId,
       patch: {
+        ...(draft.queryNameDirty
+          ? {
+              dataBinding: {
+                ...draft.persistedBinding,
+                label: draft.queryName,
+              },
+            }
+          : {}),
         dataTransform: {
           version: 2,
           language: "m-delpi-v1",

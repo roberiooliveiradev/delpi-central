@@ -8,13 +8,18 @@ import {
   isDataSourceBlockType,
   type ComunicadoDataSourceBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { ArrowDownAZ, ArrowDownZA, Columns3, Copy, Eraser, Trash2 } from "lucide-react";
-import { useMemo, useState, type MouseEvent } from "react";
+import { ArrowDownAZ, ArrowDownZA, Code2, Columns3, Copy, Eraser, Trash2 } from "lucide-react";
+import { useMemo, useRef, useState, type MouseEvent } from "react";
 
 import { useComunicadoEditor } from "../../../components/comunicadoEditorContext";
 import { Modal } from "../../../components/ui/Modal";
+import { dataQueryDependencyEdges } from "../domain/dataQueryDependencies";
 import type { DataQueryInsertOperation } from "../domain/dataQueryTypes";
-import { useDataQueryWorkbench } from "../state/useDataQueryWorkbench";
+import {
+  useDataQueryFunctions,
+  useDataQueryWorkbench,
+} from "../state/useDataQueryWorkbench";
+import { DataPrepareAdvancedEditor } from "./DataPrepareAdvancedEditor";
 import { DataPrepareAppliedSteps } from "./DataPrepareAppliedSteps";
 import { DataPrepareDiagnostics } from "./DataPrepareDiagnostics";
 import { DataPrepareFormulaBar } from "./DataPrepareFormulaBar";
@@ -26,10 +31,12 @@ export function DataQueryWorkbenchModal({
   open,
   onClose,
   initialSourceId = null,
+  advancedEditorEnabled,
 }: {
   open: boolean;
   onClose: () => void;
   initialSourceId?: string | null;
+  advancedEditorEnabled: boolean;
 }) {
   const {
     blocks,
@@ -53,6 +60,9 @@ export function DataQueryWorkbenchModal({
     initialSourceId,
   });
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [advancedEditorOpen, setAdvancedEditorOpen] = useState(false);
+  const advancedEditorButtonRef = useRef<HTMLButtonElement>(null);
+  const functionCatalog = useDataQueryFunctions(advancedEditorOpen && advancedEditorEnabled);
   const [columnMenu, setColumnMenu] = useState<{
     position: FixedPanelPoint;
     column: string;
@@ -70,6 +80,9 @@ export function DataQueryWorkbenchModal({
   const dirtyCount = Object.values(workbench.state.draftByQueryId).filter(
     (item) => item.dirty,
   ).length;
+  const dependencyEdges = dataQueryDependencyEdges(
+    Object.values(workbench.state.draftByQueryId),
+  );
 
   const apply = async () => {
     setApplyError(null);
@@ -82,6 +95,10 @@ export function DataQueryWorkbenchModal({
     } catch (error) {
       setApplyError(error instanceof Error ? error.message : "Não foi possível aplicar.");
     }
+  };
+  const closeAdvancedEditor = () => {
+    setAdvancedEditorOpen(false);
+    requestAnimationFrame(() => advancedEditorButtonRef.current?.focus());
   };
 
   const openColumnMenu = (event: MouseEvent<HTMLElement>, column: string) => {
@@ -152,8 +169,33 @@ export function DataQueryWorkbenchModal({
             onSelect={(queryId) =>
               workbench.dispatch({ type: "select_query", queryId })
             }
+            onRename={async (name) => {
+              setApplyError(null);
+              try {
+                await workbench.renameQuery(name);
+              } catch (error) {
+                setApplyError(
+                  error instanceof Error ? error.message : "Não foi possível renomear.",
+                );
+              }
+            }}
           />
           <main className="td-data-pq__main" aria-label="Prévia da consulta">
+            <div className="td-data-pq__editor-launch">
+              <button
+                ref={advancedEditorButtonRef}
+                type="button"
+                className="td-btn td-btn--sm td-btn--ghost"
+                disabled={!advancedEditorEnabled || !draft}
+                onClick={() => setAdvancedEditorOpen(true)}
+              >
+                <Code2 size={16} aria-hidden />
+                Editor avançado
+              </button>
+              {!advancedEditorEnabled ? (
+                <span>Editor avançado indisponível pelas capabilities.</span>
+              ) : null}
+            </div>
             <DataPrepareFormulaBar
               stepName={draft?.selectedStepName ?? null}
               formula={selectedStep?.formula ?? ""}
@@ -174,15 +216,55 @@ export function DataQueryWorkbenchModal({
                 {applyError || workbench.state.preview.error || workbench.state.compile.error}
               </p>
             ) : null}
-            <DataPreparePreviewGrid
-              preview={preview}
-              loading={workbench.state.preview.status === "loading"}
-              selectedColumnKey={workbench.state.selectedColumnKey}
-              onSelectColumn={(columnKey) =>
-                workbench.dispatch({ type: "select_column", columnKey })
-              }
-              onColumnContextMenu={openColumnMenu}
-            />
+            {advancedEditorOpen && draft ? (
+              <DataPrepareAdvancedEditor
+                open
+                script={draft.script}
+                compiled={compiled ?? workbench.state.compile.value}
+                functions={functionCatalog.items}
+                loadingFunctions={functionCatalog.loading}
+                canUndo={draft.undoStack.length > 0}
+                canRedo={draft.redoStack.length > 0}
+                onChange={(script) =>
+                  workbench.dispatch({ type: "edit_script", queryId: draft.sourceId, script })
+                }
+                onCompile={workbench.compileScript}
+                onFormat={() => workbench.mutate({ type: "format_script" })}
+                onUndo={() =>
+                  workbench.dispatch({ type: "undo_script", queryId: draft.sourceId })
+                }
+                onRedo={() =>
+                  workbench.dispatch({ type: "redo_script", queryId: draft.sourceId })
+                }
+                onClose={closeAdvancedEditor}
+              />
+            ) : (
+              <>
+                <DataPreparePreviewGrid
+                  preview={preview}
+                  loading={workbench.state.preview.status === "loading"}
+                  selectedColumnKey={workbench.state.selectedColumnKey}
+                  onSelectColumn={(columnKey) =>
+                    workbench.dispatch({ type: "select_column", columnKey })
+                  }
+                  onColumnContextMenu={openColumnMenu}
+                />
+                <section className="td-data-pq__dependencies" aria-label="Dependências de consultas">
+                  <strong>Dependências</strong>
+                  {dependencyEdges.length === 0 ? (
+                    <span>Nenhuma dependência entre consultas.</span>
+                  ) : (
+                    <ul>
+                      {dependencyEdges.map((edge) => (
+                        <li key={`${edge.sourceId}-${edge.targetName}`}>
+                          {edge.sourceName} → {edge.targetName}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </>
+            )}
           </main>
           <DataPrepareAppliedSteps
             steps={compiled?.steps ?? []}
@@ -193,6 +275,9 @@ export function DataQueryWorkbenchModal({
             }
             onRemove={(stepName) =>
               void workbench.mutate({ type: "remove_step", stepName })
+            }
+            onRename={(stepName, newName) =>
+              void workbench.mutate({ type: "rename_step", stepName, newName })
             }
           />
         </div>

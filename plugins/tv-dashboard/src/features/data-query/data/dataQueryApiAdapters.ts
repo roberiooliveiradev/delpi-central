@@ -7,6 +7,9 @@ import type {
 
 export function adaptCompileResult(value: unknown): DataQueryCompileResult {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const completion = (raw.completionContext && typeof raw.completionContext === "object"
+    ? raw.completionContext
+    : {}) as Record<string, unknown>;
   return {
     profile: String(raw.profile || "m-delpi-v1"),
     canonicalScript: typeof raw.canonicalScript === "string" ? raw.canonicalScript : null,
@@ -28,6 +31,32 @@ export function adaptCompileResult(value: unknown): DataQueryCompileResult {
       : [],
     referencedQueries: Array.isArray(raw.referencedQueries)
       ? raw.referencedQueries.map(String)
+      : [],
+    completionContext: {
+      steps: Array.isArray(completion.steps) ? completion.steps.map(String) : [],
+      columns: Array.isArray(completion.columns) ? completion.columns.map(String) : [],
+      queries: Array.isArray(completion.queries) ? completion.queries.map(String) : [],
+      items: Array.isArray(completion.items)
+        ? completion.items.map((item) => {
+            const suggestion = item as Record<string, unknown>;
+            return {
+              label: String(suggestion.label || ""),
+              insertText: String(suggestion.insertText || suggestion.label || ""),
+              kind: String(suggestion.kind || "step") as "step" | "column" | "query",
+            };
+          })
+        : [],
+    },
+    syntaxTokens: Array.isArray(raw.syntaxTokens)
+      ? raw.syntaxTokens.flatMap((item) => {
+          const token = item as Record<string, unknown>;
+          const startOffset = Number(token.startOffset);
+          const endOffset = Number(token.endOffset);
+          const kind = String(token.kind) as DataQueryCompileResult["syntaxTokens"][number]["kind"];
+          return Number.isFinite(startOffset) && Number.isFinite(endOffset)
+            ? [{ kind, startOffset, endOffset }]
+            : [];
+        })
       : [],
   };
 }

@@ -74,6 +74,8 @@ describe("useDataQueryWorkbench concorrência", () => {
         ],
         diagnostics: [],
         referencedQueries: [],
+        completionContext: { steps: ["q2"], columns: [], queries: [], items: [] },
+        syntaxTokens: [],
       });
     });
   });

@@ -10,3 +10,7 @@ export const LEGACY_SAFE_CAPABILITIES: DataQueryCapabilities = {
 export function canUseMWorkbench(capabilities: DataQueryCapabilities): boolean {
   return capabilities.enabled && capabilities.writeV2Enabled;
 }
+
+export function canUseAdvancedMEditor(capabilities: DataQueryCapabilities): boolean {
+  return canUseMWorkbench(capabilities) && capabilities.advancedEditorEnabled;
+}

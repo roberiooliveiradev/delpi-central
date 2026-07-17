@@ -6,7 +6,7 @@
 > **Baseline inspecionada:** branch `main`, commit `095dabdbad44dbdb000f165a9fe0cdc13c6ee334`  
 > **Versão deste playbook:** 1.0  
 > **Data:** 2026-07-16  
-> **Status:** Fases 0–5 concluídas; Fases 6–7 não iniciadas
+> **Status:** Fases 0–6 concluídas; Fase 7 não iniciada
 
 ---
 
@@ -1403,6 +1403,8 @@ Cada botão da ribbon deve:
 ---
 
 ## Fase 6 — Editor avançado e produtividade
+
+**Status:** ✅ concluída em 2026-07-17. Evidências: [status da Fase 6](./FASE-6-STATUS-M-DELPI.md), contexto de completion e tokens emitidos pelo compile, catálogo de funções server-driven, editor local com draft/undo/redo e testes de teclado, acessibilidade e responsividade. Nenhum parser M foi criado no frontend e nenhum componente novo entrou no `plugin-ui`.
 
 ### Entregas
 

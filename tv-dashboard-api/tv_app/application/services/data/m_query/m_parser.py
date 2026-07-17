@@ -57,6 +57,41 @@ def get_m_parser() -> Lark:
     )
 
 
+def m_syntax_tokens(script: str) -> tuple[dict[str, Any], ...]:
+    """Expõe classificação léxica server-side para realce sem parser no browser."""
+
+    categories = {
+        "LET": "keyword",
+        "IN": "keyword",
+        "EACH": "keyword",
+        "IF": "keyword",
+        "THEN": "keyword",
+        "ELSE": "keyword",
+        "TYPE": "keyword",
+        "TRUE": "literal",
+        "FALSE": "literal",
+        "NULL": "literal",
+        "NUMBER": "number",
+        "STRING": "string",
+        "QUOTED_IDENTIFIER": "identifier",
+        "QUALIFIED_IDENTIFIER": "function",
+        "IDENTIFIER": "identifier",
+    }
+    try:
+        tokens = get_m_parser().lex(script)
+        return tuple(
+            {
+                "kind": categories.get(str(token.type), "operator"),
+                "startOffset": int(token.start_pos),
+                "endOffset": int(token.end_pos),
+            }
+            for token in tokens
+            if token.start_pos is not None and token.end_pos is not None
+        )
+    except UnexpectedInput:
+        return ()
+
+
 def _range(meta: Any) -> SourceRange:
     return SourceRange(
         start_line=meta.line,

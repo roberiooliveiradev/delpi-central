@@ -24,6 +24,10 @@ export type DataQueryDraftAction =
   | { type: "select_query"; queryId: string }
   | { type: "select_step"; stepName: string | null }
   | { type: "select_column"; columnKey: string | null }
+  | { type: "edit_script"; queryId: string; script: string }
+  | { type: "undo_script"; queryId: string }
+  | { type: "redo_script"; queryId: string }
+  | { type: "rename_query"; queryId: string; queryName: string }
   | { type: "request"; kind: "compile" | "preview"; sequence: number }
   | {
       type: "compiled";
@@ -71,6 +75,51 @@ export function dataQueryDraftReducer(
         [draft.sourceId]: { ...draft, selectedStepName: action.stepName },
       },
     };
+  }
+  if (
+    action.type === "edit_script" ||
+    action.type === "undo_script" ||
+    action.type === "redo_script" ||
+    action.type === "rename_query"
+  ) {
+    const draft = state.draftByQueryId[action.queryId];
+    if (!draft) return state;
+    let next = draft;
+    if (action.type === "edit_script" && action.script !== draft.script) {
+      next = {
+        ...draft,
+        script: action.script,
+        compiled: null,
+        dirty: true,
+        undoStack: [...draft.undoStack, draft.script].slice(-100),
+        redoStack: [],
+      };
+    } else if (action.type === "undo_script" && draft.undoStack.length > 0) {
+      const script = draft.undoStack[draft.undoStack.length - 1]!;
+      next = {
+        ...draft,
+        script,
+        compiled: null,
+        dirty: true,
+        undoStack: draft.undoStack.slice(0, -1),
+        redoStack: [draft.script, ...draft.redoStack].slice(0, 100),
+      };
+    } else if (action.type === "redo_script" && draft.redoStack.length > 0) {
+      const [script, ...redoStack] = draft.redoStack;
+      next = {
+        ...draft,
+        script: script!,
+        compiled: null,
+        dirty: true,
+        undoStack: [...draft.undoStack, draft.script].slice(-100),
+        redoStack,
+      };
+    } else if (action.type === "rename_query" && action.queryName !== draft.queryName) {
+      next = { ...draft, queryName: action.queryName, queryNameDirty: true, dirty: true };
+    }
+    return next === draft
+      ? state
+      : { ...state, draftByQueryId: { ...state.draftByQueryId, [action.queryId]: next } };
   }
   if (action.type === "request") {
     return {

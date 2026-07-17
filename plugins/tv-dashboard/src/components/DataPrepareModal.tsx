@@ -28,7 +28,10 @@ import {
   type TvDataRouteCatalogItem,
 } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
-import { canUseMWorkbench } from "../features/data-query/domain/dataQueryCapabilities";
+import {
+  canUseAdvancedMEditor,
+  canUseMWorkbench,
+} from "../features/data-query/domain/dataQueryCapabilities";
 import { useDataQueryCapabilities } from "../features/data-query/state/useDataQueryWorkbench";
 import { DataQueryWorkbenchModal } from "../features/data-query/ui/DataPrepareModal";
 import {
@@ -845,7 +848,10 @@ function LegacyDataPrepareModal({ open, onClose, initialSourceId = null }: Props
 export function DataPrepareModal(props: Props) {
   const { capabilities } = useDataQueryCapabilities();
   return canUseMWorkbench(capabilities) ? (
-    <DataQueryWorkbenchModal {...props} />
+    <DataQueryWorkbenchModal
+      {...props}
+      advancedEditorEnabled={canUseAdvancedMEditor(capabilities)}
+    />
   ) : (
     <LegacyDataPrepareModal {...props} />
   );

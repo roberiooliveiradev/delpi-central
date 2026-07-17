@@ -2,6 +2,7 @@ import type {
   DataQueryDiagnosticDto,
   DataTransformStep,
   DataTransformV2,
+  ComunicadoDataSourceBlock,
   MColumnSchemaDto,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -27,6 +28,21 @@ export type DataQueryCompileResult = {
   steps: DataQueryCompiledStep[];
   diagnostics: DataQueryDiagnosticDto[];
   referencedQueries: string[];
+  completionContext: {
+    steps: string[];
+    columns: string[];
+    queries: string[];
+    items: Array<{
+      label: string;
+      insertText: string;
+      kind: "step" | "column" | "query";
+    }>;
+  };
+  syntaxTokens: Array<{
+    kind: "keyword" | "literal" | "number" | "string" | "identifier" | "function" | "operator";
+    startOffset: number;
+    endOffset: number;
+  }>;
 };
 
 export type DataQueryPreview = {
@@ -44,11 +60,15 @@ export type DataQueryDraft = {
   sourceId: string;
   queryName: string;
   persistedTransform?: DataTransformV2;
+  persistedBinding?: ComunicadoDataSourceBlock["dataBinding"];
   legacySteps: DataTransformStep[];
   script: string;
   compiled: DataQueryCompileResult | null;
   selectedStepName: string | null;
   dirty: boolean;
+  queryNameDirty: boolean;
+  undoStack: string[];
+  redoStack: string[];
 };
 
 export type DataQueryMutationAction =

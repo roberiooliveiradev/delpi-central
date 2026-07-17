@@ -11,7 +11,11 @@ from tv_app.application.services.data.m_query.m_formatter import (
     format_m_expression,
 )
 from tv_app.application.services.data.m_query.m_function_registry import get_function_registry
-from tv_app.application.services.data.m_query.m_parser import MParseError, parse_m_script
+from tv_app.application.services.data.m_query.m_parser import (
+    MParseError,
+    m_syntax_tokens,
+    parse_m_script,
+)
 from tv_app.application.services.data.m_query.m_semantic_analyzer import (
     MSemanticAnalyzer,
     ast_metrics,
@@ -60,6 +64,7 @@ class MCompileResult:
     plan: TransformPlan | None
     diagnostics: tuple[Diagnostic, ...]
     referenced_queries: tuple[str, ...] = ()
+    completion_context: Mapping[str, Any] | None = None
 
     @property
     def valid(self) -> bool:
@@ -101,6 +106,8 @@ class MCompileResult:
             "steps": steps,
             "diagnostics": [item.to_dict() for item in self.diagnostics],
             "referencedQueries": list(self.referenced_queries),
+            "completionContext": dict(self.completion_context or {}),
+            "syntaxTokens": list(m_syntax_tokens(self.canonical_script or "")),
         }
 
 
@@ -200,6 +207,14 @@ def _binding_names(bindings: Iterable[Mapping[str, Any]]) -> tuple[str, ...]:
         for item in bindings
         if str(item.get("name") or "").strip()
     )
+
+
+def _completion_identifier(value: str) -> str:
+    if value.isidentifier() and value.casefold() not in {
+        "and", "each", "else", "false", "if", "in", "let", "not", "null", "or", "then", "true", "type"
+    }:
+        return value
+    return f'#"{value.replace(chr(34), chr(34) * 2)}"'
 
 
 class MQueryCompiler:
@@ -476,4 +491,40 @@ class MQueryCompiler:
             plan,
             (),
             analysis.referenced_queries,
+            {
+                "steps": [step.name for step in compiled_steps],
+                "columns": [
+                    str(item.get("key") or "")
+                    for item in request.source_schema
+                    if str(item.get("key") or "")
+                ],
+                "queries": list(_binding_names(request.query_bindings)),
+                "items": [
+                    *(
+                        {
+                            "label": step.name,
+                            "insertText": _completion_identifier(step.name),
+                            "kind": "step",
+                        }
+                        for step in compiled_steps
+                    ),
+                    *(
+                        {
+                            "label": str(item.get("key") or ""),
+                            "insertText": f"[{_completion_identifier(str(item.get('key') or ''))}]",
+                            "kind": "column",
+                        }
+                        for item in request.source_schema
+                        if str(item.get("key") or "")
+                    ),
+                    *(
+                        {
+                            "label": name,
+                            "insertText": _completion_identifier(name),
+                            "kind": "query",
+                        }
+                        for name in _binding_names(request.query_bindings)
+                    ),
+                ],
+            },
         )

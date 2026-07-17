@@ -6,7 +6,7 @@ import {
   type ComunicadoConfig,
   type ComunicadoDataSourceBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
 import { dataQueryApi, type DataQueryApi } from "../data/dataQueryApi";
 import {
@@ -15,6 +15,7 @@ import {
 import type {
   DataQueryCapabilities,
   DataQueryDraft,
+  DataQueryFunction,
   DataQueryMutationAction,
 } from "../domain/dataQueryTypes";
 import {
@@ -37,11 +38,15 @@ function draftFor(query: ComunicadoDataSourceBlock): DataQueryDraft {
     sourceId: query.id,
     queryName: queryName(query),
     persistedTransform: v2,
+    persistedBinding: query.dataBinding,
     legacySteps: isDataTransformV1(query.dataTransform) ? query.dataTransform.steps : [],
     script: v2?.script ?? "",
     compiled: null,
     selectedStepName: null,
     dirty: false,
+    queryNameDirty: false,
+    undoStack: [],
+    redoStack: [],
   };
 }
 
@@ -59,6 +64,31 @@ export function useDataQueryCapabilities(api: DataQueryApi = dataQueryApi) {
     return () => controller.abort();
   }, [api]);
   return { capabilities, loading };
+}
+
+export function useDataQueryFunctions(enabled: boolean, api: DataQueryApi = dataQueryApi) {
+  const [items, setItems] = useState<DataQueryFunction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const sequence = useRef(0);
+  useEffect(() => {
+    if (!enabled) return;
+    const controller = new AbortController();
+    const request = ++sequence.current;
+    setLoading(true);
+    void api
+      .functions(controller.signal)
+      .then((result) => {
+        if (request === sequence.current) setItems(result);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted && request === sequence.current) setItems([]);
+      })
+      .finally(() => {
+        if (request === sequence.current) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [api, enabled]);
+  return { items, loading };
 }
 
 type Options = {
@@ -106,9 +136,23 @@ export function useDataQueryWorkbench({
     ? state.draftByQueryId[state.activeQueryId] ?? null
     : null;
 
-  const queryBindings = useMemo(
-    () => queries.map((query) => ({ name: queryName(query), sourceId: query.id })),
-    [queries],
+  const currentQueryBindings = useCallback(
+    () =>
+      Object.values(stateRef.current.draftByQueryId).map((draft) => ({
+        name: draft.queryName,
+        sourceId: draft.sourceId,
+      })),
+    [],
+  );
+
+  const compileInput = useCallback(
+    (script: string, targetStepName: string | null) => ({
+      script,
+      queryBindings: currentQueryBindings(),
+      sourceSchema: stateRef.current.preview.value?.columns ?? [],
+      targetStepName,
+    }),
+    [currentQueryBindings],
   );
 
   const nativeConfigWithDrafts = useCallback(() => {
@@ -185,16 +229,9 @@ export function useDataQueryWorkbench({
       dispatch({ type: "request", kind: "compile", sequence });
       try {
         const result = draft.script
-          ? await api.compile(
-              {
-                script: draft.script,
-                queryBindings,
-                targetStepName: draft.selectedStepName,
-              },
-              controller.signal,
-            )
+          ? await api.compile(compileInput(draft.script, draft.selectedStepName), controller.signal)
           : await api.mutate(
-              { script: "", queryBindings },
+              { script: "", queryBindings: currentQueryBindings() },
               { type: "convert_legacy", legacySteps: draft.legacySteps },
               controller.signal,
             );
@@ -212,7 +249,47 @@ export function useDataQueryWorkbench({
         return null;
       }
     },
-    [api, preview, queryBindings],
+    [api, compileInput, currentQueryBindings, preview],
+  );
+
+  const compileScript = useCallback(
+    async (script: string) => {
+      const draft = stateRef.current.activeQueryId
+        ? stateRef.current.draftByQueryId[stateRef.current.activeQueryId]
+        : null;
+      if (!draft || !script.trim()) return null;
+      dispatch({ type: "edit_script", queryId: draft.sourceId, script });
+      compileController.current?.abort();
+      const controller = new AbortController();
+      compileController.current = controller;
+      const sequence = ++compileSequence.current;
+      dispatch({ type: "request", kind: "compile", sequence });
+      try {
+        const result = await api.compile(
+          compileInput(script, draft.selectedStepName),
+          controller.signal,
+        );
+        dispatch({
+          type: "compiled",
+          queryId: draft.sourceId,
+          sequence,
+          result,
+          dirty: true,
+        });
+        window.setTimeout(() => void preview(draft.sourceId), 0);
+        return result;
+      } catch (error) {
+        if (controller.signal.aborted) return null;
+        dispatch({
+          type: "failed",
+          kind: "compile",
+          sequence,
+          error: error instanceof Error ? error.message : "Falha ao compilar consulta.",
+        });
+        return null;
+      }
+    },
+    [api, compileInput, preview],
   );
 
   useEffect(() => {
@@ -242,9 +319,7 @@ export function useDataQueryWorkbench({
       try {
         const result = await api.mutate(
           {
-            script,
-            queryBindings,
-            targetStepName: draft.selectedStepName,
+            ...compileInput(script, draft.selectedStepName),
           },
           action,
           controller.signal,
@@ -267,7 +342,82 @@ export function useDataQueryWorkbench({
         });
       }
     },
-    [api, compileOrConvert, preview, queryBindings],
+    [api, compileInput, compileOrConvert, preview],
+  );
+
+  const renameQuery = useCallback(
+    async (newName: string) => {
+      const activeId = stateRef.current.activeQueryId;
+      const active = activeId ? stateRef.current.draftByQueryId[activeId] : null;
+      const normalized = newName.trim();
+      if (!active || !normalized || normalized === active.queryName) return;
+      if (
+        Object.values(stateRef.current.draftByQueryId).some(
+          (draft) => draft.sourceId !== active.sourceId && draft.queryName === normalized,
+        )
+      ) {
+        throw new Error("Já existe uma consulta com esse nome.");
+      }
+      compileController.current?.abort();
+      const controller = new AbortController();
+      compileController.current = controller;
+      const sequence = ++compileSequence.current;
+      dispatch({ type: "request", kind: "compile", sequence });
+      const bindings = currentQueryBindings().map((item) =>
+        item.sourceId === active.sourceId ? { ...item, name: normalized } : item,
+      );
+      try {
+        const drafts = Object.values(stateRef.current.draftByQueryId);
+        const results = await Promise.all(
+          drafts.map(async (draft) => {
+            const script = draft.script
+              ? draft.script
+              : (
+                  await api.mutate(
+                    { script: "", queryBindings: bindings },
+                    { type: "convert_legacy", legacySteps: draft.legacySteps },
+                    controller.signal,
+                  )
+                ).canonicalScript ?? "";
+            return api.mutate(
+              {
+                script,
+                queryBindings: bindings,
+                sourceSchema:
+                  draft.sourceId === active.sourceId
+                    ? stateRef.current.preview.value?.columns ?? []
+                    : [],
+                targetStepName: draft.selectedStepName,
+              },
+              { type: "rename_query", from: active.queryName, to: normalized },
+              controller.signal,
+            );
+          }),
+        );
+        dispatch({ type: "rename_query", queryId: active.sourceId, queryName: normalized });
+        results.forEach((result, index) => {
+          const draft = drafts[index];
+          if (!draft) return;
+          dispatch({
+            type: "compiled",
+            queryId: draft.sourceId,
+            sequence,
+            result,
+            dirty: result.canonicalScript !== draft.script || draft.sourceId === active.sourceId,
+          });
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        dispatch({
+          type: "failed",
+          kind: "compile",
+          sequence,
+          error: error instanceof Error ? error.message : "Falha ao renomear consulta.",
+        });
+        throw error;
+      }
+    },
+    [api, currentQueryBindings],
   );
 
   const apply = useCallback(
@@ -279,11 +429,11 @@ export function useDataQueryWorkbench({
       return applyDataQueryDraftsAtomically(
         Object.values(stateRef.current.draftByQueryId),
         (draft) =>
-          api.compile({ script: draft.script, queryBindings, targetStepName: null }),
+          api.compile({ script: draft.script, queryBindings: currentQueryBindings(), targetStepName: null }),
         updateBlocksAtomically,
       );
     },
-    [api, queryBindings],
+    [api, currentQueryBindings],
   );
 
   const selectStep = useCallback(
@@ -300,6 +450,8 @@ export function useDataQueryWorkbench({
     activeDraft,
     dispatch,
     mutate,
+    compileScript,
+    renameQuery,
     preview: (force = false) =>
       stateRef.current.activeQueryId
         ? preview(stateRef.current.activeQueryId, force)

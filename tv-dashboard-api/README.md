@@ -4,7 +4,7 @@ API dedicada do plugin **Painéis TV** — programações rotativas, slides, mí
 
 Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](../docs/12-roadmap-e-evolucao/tv-dashboard/README.md)
 
-Power Query M: a [Fase 5](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-5-STATUS-M-DELPI.md) ampliou o registry seguro, compilador, executor e mutação canônica para a paridade funcional essencial. Colunas, linhas, tipos/cultura, texto, número, data, group/pivot, append, join 1:N e tratamento explícito de erros percorrem o mesmo `TransformPlan`; gaps fora do perfil estão documentados sem suporte aparente. `mQuery.enabled` e `mQuery.writeV2Enabled` permanecem `false` por padrão.
+Power Query M: a [Fase 6](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-6-STATUS-M-DELPI.md) adicionou produtividade sem mover semântica para o browser. O compile entrega contexto de completion e tokens de realce, o registry fornece ajuda completa e mutate continua responsável por formatter e rename com referências. `mQuery.enabled`, `mQuery.writeV2Enabled` e `mQuery.advancedEditorEnabled` permanecem `false` por padrão.
 
 ---
 
@@ -65,6 +65,10 @@ O endpoint de mutação suporta conversão legada, inserção/substituição,
 rename/move/remove de etapa, rename de consulta e formatação. Toda resposta é
 recompilada antes de retornar, portanto diagnósticos e fórmulas exibidos na
 barra `fx` vêm da mesma autoridade server-side.
+
+O resultado de compile também expõe `completionContext` (etapas, colunas,
+consultas e `insertText` já escapado) e `syntaxTokens` com offsets. Esses campos
+são apenas projeções editoriais da análise canônica e não são persistidos.
 
 Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
 
