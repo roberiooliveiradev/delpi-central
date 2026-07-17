@@ -48,6 +48,7 @@ export type { ViewFormat, PresentationRenderHints, PresentationRenderPlan } from
 export {
   getAvailableFormatsFromToolCalls,
   getDataAnswerFromToolCalls,
+  getDownloadArtifactsFromToolCalls,
   getDataCoverageNoticeFromToolCall,
   getDataCoverageNoticeFromToolCalls,
   getDepthStateFromToolCall,

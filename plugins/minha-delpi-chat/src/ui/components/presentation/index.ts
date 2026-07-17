@@ -3,6 +3,7 @@ export { ChatRichChart } from "./ChatRichChart";
 export { ChatRichKpi } from "./ChatRichKpi";
 export { ChatRichTree } from "./ChatRichTree";
 export { ChatRichDashboard } from "./ChatRichDashboard";
+export { ChatDownloadArtifacts } from "./ChatDownloadArtifacts";
 export { ChatPresentationCopyButton } from "./ChatPresentationCopyButton";
 export { ChatPresentationExportButtons } from "./ChatPresentationExportButtons";
 export { buildChartPointMenuActions, buildTableRowMenuActions, buildTreePointMenuActions } from "./chatDrillDown";

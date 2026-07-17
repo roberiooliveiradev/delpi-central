@@ -746,6 +746,7 @@
     "productFactoryStatus": "A pergunta solicita visão fabril integrada (estrutura, estoque MP, produção e expedição).",
     "productShippingStatus": "A pergunta solicita expedição/inspeção final do PA (playbook SHB010 + apontamentos SH6010).",
     "productStructureExclusivity": "A pergunta solicita estrutura vigente com exclusividade de matérias-primas.",
+    "productStructureExcel": "A pergunta solicita exportar/baixar a estrutura (BOM) em Excel.",
     "productStructure": "A pergunta solicita estrutura (BOM) do produto via OpenAPI.",
     "productParents": "A pergunta solicita produtos pai do item via OpenAPI.",
     "productSales": "A pergunta solicita vendas do produto via OpenAPI.",

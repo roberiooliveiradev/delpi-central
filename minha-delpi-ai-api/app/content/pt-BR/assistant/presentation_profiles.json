@@ -58,7 +58,8 @@
     },
     "document_export": {
       "defaultViewPolicy": "text_when_available",
-      "chartPolicy": "skip"
+      "chartPolicy": "skip",
+      "humanizedNarrative": "skip"
     }
   },
   "openapiShapeProfileEquivalents": {
@@ -69,7 +70,7 @@
     "product_snapshot": "table_list",
     "hierarchy": "tree_hierarchy",
     "composite_analysis": "analyser",
-    "document_export": "generic"
+    "document_export": "document_export"
   },
   "openapiReplaceableProfileKeys": [
     "kpi_series",
@@ -81,6 +82,7 @@
     "product_analyser": "analyser",
     "product_stock": "stock",
     "product_structure": "tree_hierarchy",
+    "product_structure_excel": "document_export",
     "product_parents": "tree_hierarchy",
     "product_factory_status": "factory_status",
     "product_production_status": "production_status",
@@ -1267,6 +1269,15 @@
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary",
       "humanizedNarrative": "enrich"
+    },
+    "document_export": {
+      "defaultViewPolicy": "text_when_available",
+      "viewOrder": ["text"],
+      "stackPlan": "default",
+      "flags": [],
+      "chartPolicy": "skip",
+      "humanizedNarrative": "skip",
+      "commentaryProfileKey": "generic_list"
     }
   },
   "stackPlans": {

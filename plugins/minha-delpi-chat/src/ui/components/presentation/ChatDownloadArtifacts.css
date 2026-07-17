@@ -1,0 +1,52 @@
+.mdc-download-artifacts {
+  margin: 0.75rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--mdc-card-border);
+  border-radius: var(--mdc-radius-sm);
+  background: var(--mdc-card-bg);
+}
+
+.mdc-download-artifacts__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mdc-download-artifacts__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.mdc-download-artifacts__button {
+  appearance: none;
+  border: 1px solid var(--mdc-accent, #2563eb);
+  border-radius: var(--mdc-radius-sm);
+  background: var(--mdc-accent, #2563eb);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.mdc-download-artifacts__button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.mdc-download-artifacts__filename {
+  color: var(--mdc-muted, #64748b);
+  font-size: 0.85rem;
+}
+
+.mdc-download-artifacts__error {
+  margin: 0.5rem 0 0;
+  color: var(--mdc-danger, #b91c1c);
+  font-size: 0.85rem;
+}

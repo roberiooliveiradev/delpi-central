@@ -1,6 +1,9 @@
 import type { ChatPresentation, ChatToolCall } from "../../../../data/api/chatTypes";
 import type { AssistantContentSegment } from "../../message/assistantContentTypes";
-import { isRenderPlanVisualKindAllowed } from "../../chatPresentation";
+import {
+  getDownloadArtifactsFromToolCalls,
+  isRenderPlanVisualKindAllowed,
+} from "../../chatPresentation";
 import { normalizeChartPresentation } from "../pipeline/chartPresentationNormalize";
 import {
   dedupeTablePresentations,
@@ -154,6 +157,14 @@ export function collectVisualSegments(toolCalls: ChatToolCall[]): AssistantConte
 
   for (const table of dedupeTablePresentations(tableCandidates)) {
     appendVisualSegment(segments, { kind: "table", presentation: table });
+  }
+
+  if (shouldCollectVisualKind("download", toolCalls)) {
+    const artifacts = getDownloadArtifactsFromToolCalls(toolCalls);
+
+    if (artifacts.length) {
+      appendVisualSegment(segments, { kind: "download", artifacts });
+    }
   }
 
   return dedupeTableSegments(segments);

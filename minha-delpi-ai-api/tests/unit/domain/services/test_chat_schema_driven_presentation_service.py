@@ -179,3 +179,57 @@ def test_schema_driven_metadata_builds_table_for_generic_items():
     assert isinstance(table, dict)
     assert table["type"] == "table"
     assert len(table["rows"]) == 2
+
+
+def test_extract_download_artifacts_normalizes_relative_path():
+    artifacts = ChatSchemaDrivenPresentationService.extract_download_artifacts(
+        {
+            "message": "Arquivo Excel gerado com sucesso!",
+            "filename": "Estrutura_90261757.xlsx",
+            "downloadPath": "/products/90261757/structure/excel?format=xlsx",
+        }
+    )
+
+    assert len(artifacts) == 1
+    assert artifacts[0]["filename"] == "Estrutura_90261757.xlsx"
+    assert artifacts[0]["href"] == (
+        "/apps/api-delpi/products/90261757/structure/excel?format=xlsx"
+    )
+    assert "Baixar" in artifacts[0]["label"]
+
+
+def test_schema_driven_metadata_builds_document_export_download_artifacts():
+    use_case = _use_case()
+    meta = use_case._build_presentation_metadata(
+        action={
+            "path": "/products/{code}/structure/excel",
+            "operationId": "get_product_structure_excel",
+        },
+        sanitized_data={
+            "success": True,
+            "data": {
+                "message": "Arquivo Excel gerado com sucesso!",
+                "filename": "Estrutura_90261757.xlsx",
+                "downloadPath": "/products/90261757/structure/excel?format=xlsx",
+                "download_url": "/products/90261757/structure/excel?format=xlsx",
+            },
+            "meta": {
+                "operationId": "get_product_structure_excel",
+                "entity": "product_structure_excel",
+                "shape": "document_export",
+            },
+        },
+        resolved_path="/products/90261757/structure/excel",
+        request_parameters={"code": "90261757"},
+    )
+
+    artifacts = meta.get("downloadArtifacts") or []
+    assert len(artifacts) == 1
+    assert artifacts[0]["href"].endswith(
+        "/products/90261757/structure/excel?format=xlsx"
+    )
+
+    render_plan = meta.get("renderPlan") or {}
+    kinds = [str(segment.get("kind") or "") for segment in render_plan.get("segments") or []]
+    assert "download" in kinds
+    assert meta.get("textPresentation", {}).get("type") == "markdown"

@@ -140,6 +140,17 @@ PRODUCT_STRUCTURE = agent_route(
     operation_id="get_product_structure",
 )
 
+PRODUCT_STRUCTURE_EXCEL = agent_route(
+    summary="Exportar estrutura (BOM) em Excel",
+    description=(
+        "Gera a planilha Excel da estrutura/BOM do produto. "
+        "Com format=json (padrão) retorna message, filename e downloadPath para o chat; "
+        "com format=xlsx faz streaming do arquivo XLSX. "
+        "Use quando o usuário pedir baixar, exportar ou planilha da estrutura."
+    ),
+    operation_id="get_product_structure_excel",
+)
+
 PRODUCT_STRUCTURE_EXCLUSIVITY = agent_route(
     summary="Estrutura do produto com exclusividade de matérias-primas",
     description=(

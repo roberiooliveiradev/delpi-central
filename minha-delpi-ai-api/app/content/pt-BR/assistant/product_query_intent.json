@@ -487,6 +487,27 @@
         }
       ]
     },
+    "structureExcel": {
+      "allOf": [
+        {
+          "anyOf": [
+            { "hasProductIdentifier": true },
+            { "hasSpecificProductScope": true }
+          ]
+        },
+        {
+          "anyOf": [
+            { "termsFrom": "product_query_intent.structureExcel.terms" },
+            {
+              "allOf": [
+                { "termsFrom": "product_query_intent.structureExcel.exportMarkers" },
+                { "termsFrom": "product_query_intent.structureExcel.structureMarkers" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
     "exclusiveRawMaterialCatalog": {
       "noneOf": [
         { "termsFrom": "product_query_intent.exclusiveRawMaterialCatalog.excludeTerms" },
@@ -970,6 +991,38 @@
       "materia prima exclus",
       "matéria-prima exclus",
       "matéria prima exclus"
+    ]
+  },
+  "structureExcel": {
+    "terms": [
+      "estrutura em excel",
+      "estrutura excel",
+      "bom em excel",
+      "bom excel",
+      "exportar estrutura",
+      "exportar bom",
+      "baixar estrutura",
+      "baixar bom",
+      "planilha da estrutura",
+      "planilha de estrutura",
+      "planilha da bom",
+      "structure/excel",
+      "structure excel"
+    ],
+    "exportMarkers": [
+      "excel",
+      "xlsx",
+      "planilha",
+      "exportar",
+      "baixar",
+      "download"
+    ],
+    "structureMarkers": [
+      "estrutura",
+      "bom",
+      "bill of material",
+      "composicao",
+      "composição"
     ]
   },
   "directives": {

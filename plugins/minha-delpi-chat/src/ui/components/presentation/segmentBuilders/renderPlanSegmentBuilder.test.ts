@@ -371,4 +371,48 @@ describe("renderPlanSegmentBuilder", () => {
     expect(segments.some((segment) => segment.kind === "markdown")).toBe(true);
     expect(segments.some((segment) => segment.kind === "table")).toBe(true);
   });
+
+  it("monta segmento download a partir do renderPlan", () => {
+    const visuals: AssistantContentSegment[] = [
+      {
+        kind: "download",
+        artifacts: [
+          {
+            href: "/apps/api-delpi/products/90261757/structure/excel?format=xlsx",
+            filename: "Estrutura_90261757.xlsx",
+            label: "Baixar Estrutura_90261757.xlsx",
+          },
+        ],
+      },
+    ];
+    const toolCalls = [
+      {
+        name: "execute_external_action",
+        metadata: {
+          downloadArtifacts: visuals[0]?.kind === "download" ? visuals[0].artifacts : [],
+          renderPlan: {
+            version: 1,
+            layoutMode: "stack",
+            segments: [
+              { kind: "markdown", slot: "lead", source: "textPresentation" },
+              { kind: "download", slot: "artifacts", source: "downloadArtifacts" },
+            ],
+          },
+        },
+      },
+    ] as never;
+
+    const segments =
+      buildSegmentsFromRenderPlan(
+        "Arquivo pronto para download: Estrutura_90261757.xlsx",
+        visuals,
+        parseMarkdown,
+        (target, segment) => {
+          target.push(segment);
+        },
+        toolCalls,
+      ) ?? [];
+
+    expect(segments.some((segment) => segment.kind === "download")).toBe(true);
+  });
 });

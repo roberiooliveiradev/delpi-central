@@ -52,6 +52,17 @@ class ChatPresentationRenderPlanService:
                 decision if isinstance(decision, dict) else None,
             )
 
+        artifacts = metadata.get("downloadArtifacts")
+
+        if isinstance(artifacts, list) and artifacts:
+            segments.append(
+                {
+                    "kind": "download",
+                    "slot": "artifacts",
+                    "source": "downloadArtifacts",
+                }
+            )
+
         metadata["renderPlan"] = {
             "version": 1,
             "layoutMode": layout_mode,

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { ChatCanvasOpenPayload, ChatPresentation } from "../../../data/api/chatTypes";
 
 import type { AssistantContentSegment } from "./assistantContentTypes";
+import { ChatDownloadArtifacts } from "../presentation/ChatDownloadArtifacts";
 import { ChatRichChart } from "../presentation/ChatRichChart";
 import { ChatRichDashboard } from "../presentation/ChatRichDashboard";
 import { ChatRichKpi } from "../presentation/ChatRichKpi";
@@ -18,6 +19,7 @@ export type AssistantSegmentRenderContext = {
   chartExplanation?: string;
   showChartExplanation?: boolean;
   onChartExplanationChange?: (open: boolean) => void;
+  getAccessToken?: () => string | undefined | Promise<string | undefined>;
 };
 
 export type AssistantSegmentRenderer = (
@@ -140,6 +142,19 @@ const BASE_RENDERERS: Record<AssistantContentSegment["kind"], AssistantSegmentRe
       <ChatMarkdown
         key={`checklist-${index}`}
         content={segment.markdown}
+      />
+    );
+  },
+  download: (segment, index, context) => {
+    if (segment.kind !== "download") {
+      return null;
+    }
+
+    return (
+      <ChatDownloadArtifacts
+        key={`download-${index}`}
+        artifacts={segment.artifacts}
+        getAccessToken={context.getAccessToken}
       />
     );
   },

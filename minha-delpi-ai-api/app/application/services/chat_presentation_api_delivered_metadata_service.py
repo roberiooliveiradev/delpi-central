@@ -48,6 +48,7 @@ class ChatPresentationApiDeliveredMetadataService:
 
         composite_tables: list[Any] = []
         dashboard_presentation: dict[str, Any] | None = None
+        download_artifacts: list[Any] = []
         primary = None
 
         is_composite = ChatSchemaDrivenPresentationService.is_composite_shape(
@@ -78,6 +79,7 @@ class ChatPresentationApiDeliveredMetadataService:
                 path=resolved_path,
                 entity=entity,
                 response_schema=response_schema,
+                response_shape=response_shape,
             )
 
             bundle = ChatSchemaDrivenPresentationService.build_bundle(
@@ -85,6 +87,7 @@ class ChatPresentationApiDeliveredMetadataService:
                 sanitized_data,
                 path=resolved_path,
                 entity=entity,
+                response_shape=response_shape,
             )
 
             text_presentation = bundle.text
@@ -92,6 +95,7 @@ class ChatPresentationApiDeliveredMetadataService:
             kpi_presentation = bundle.kpi
             chart_presentation = bundle.chart
             tree_presentation = bundle.tree
+            download_artifacts = list(bundle.download_artifacts)
 
             if isinstance(primary, dict):
                 primary_type = str(primary.get("type") or "").strip().lower()
@@ -189,6 +193,9 @@ class ChatPresentationApiDeliveredMetadataService:
             "path": resolved_path,
             "apiDelpiResponseMeta": response_meta,
         }
+
+        if download_artifacts:
+            metadata["downloadArtifacts"] = download_artifacts
 
         if composite_tables:
             metadata["tablePresentations"] = composite_tables

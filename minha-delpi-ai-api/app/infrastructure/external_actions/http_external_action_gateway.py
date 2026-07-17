@@ -1,3 +1,4 @@
+import re
 import time
 from urllib.parse import quote
 
@@ -167,10 +168,37 @@ class HttpExternalActionGateway:
         return body not in (None, "", {}, []) and isinstance(body, str)
 
     def _parse_response(self, response):
-        content_type = response.headers.get("content-type", "")
+        content_type = str(response.headers.get("content-type") or "")
+        disposition = str(response.headers.get("content-disposition") or "")
 
         if "application/json" in content_type:
             return response.json()
+
+        lower_type = content_type.lower()
+        is_binary = any(
+            marker in lower_type
+            for marker in (
+                "application/vnd.openxmlformats",
+                "application/octet-stream",
+                "application/pdf",
+                "application/zip",
+                "spreadsheetml",
+            )
+        ) or "attachment" in disposition.lower()
+
+        if is_binary:
+            filename = self._filename_from_content_disposition(disposition)
+
+            return {
+                "contentType": content_type,
+                "contentDisposition": disposition or None,
+                "filename": filename,
+                "binary": True,
+                "message": (
+                    "Resposta binária recebida; use format=json na action de export "
+                    "para obter downloadPath."
+                ),
+            }
 
         text = response.text or ""
 
@@ -178,3 +206,12 @@ class HttpExternalActionGateway:
             "contentType": content_type,
             "text": text[:8000],
         }
+
+    @staticmethod
+    def _filename_from_content_disposition(header: str) -> str | None:
+        match = re.search(r'filename="?([^";]+)"?', str(header or ""), flags=re.I)
+
+        if not match:
+            return None
+
+        return match.group(1).strip() or None

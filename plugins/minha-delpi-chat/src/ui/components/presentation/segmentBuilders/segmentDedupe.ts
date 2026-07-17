@@ -69,6 +69,17 @@ export function sameAssistantSegment(
     return left.presentation.title === right.presentation.title;
   }
 
+  if (left.kind === "download" && right.kind === "download") {
+    return (
+      left.artifacts.length === right.artifacts.length &&
+      left.artifacts.every(
+        (artifact, index) =>
+          artifact.href === right.artifacts[index]?.href &&
+          artifact.filename === right.artifacts[index]?.filename,
+      )
+    );
+  }
+
   if (
     left.kind === "chart" ||
     left.kind === "tree" ||
