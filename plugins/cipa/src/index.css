@@ -53,6 +53,27 @@
   gap: var(--cipa-section-gap);
 }
 
+.dashboard-cipa.dashboard-page.dashboard-cipa--minute-list {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.dashboard-cipa .cipa-page-stack--minute-list,
+.dashboard-cipa .cipa-minute-list-card,
+.dashboard-cipa .cipa-minute-list-card .cipa-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dashboard-cipa .cipa-minute-list-card .delpi-ui-table-wrap--embedded {
+  flex: 1 1 auto;
+  min-height: 180px;
+  max-height: none;
+  margin-bottom: 0;
+}
+
 .dashboard-cipa .cipa-field {
   display: flex;
   flex-direction: column;

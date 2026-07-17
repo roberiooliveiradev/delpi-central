@@ -175,6 +175,9 @@ describe("CipaAppShell compartilhado", () => {
     const row = container.querySelector(".delpi-ui-table__row--clickable");
     expect(table).toBeTruthy();
     expect(row).toBeTruthy();
+    expect(screen.queryByRole("columnheader", { name: "Nº" })).toBeNull();
+    expect(container.querySelector(".dashboard-cipa--minute-list")).toBeTruthy();
+    expect(container.querySelector(".cipa-minute-list-card")).toBeTruthy();
     expect(screen.getByRole("button", { name: /^Editar$/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: /^Excluir$/ })).toBeTruthy();
 
@@ -182,6 +185,47 @@ describe("CipaAppShell compartilhado", () => {
     expect(navigation.navigateCipa).toHaveBeenCalledWith(
       "/apps/cipa/filial-01/minutes/minute-1",
     );
+  });
+
+  it("ordena atas pela data mais recente antes de renderizar", async () => {
+    api.listMinutes.mockResolvedValue({
+      items: [
+        {
+          id: "older",
+          unit_code: "01",
+          title: "Ata antiga",
+          minute_number: "2026/001",
+          meeting_type: "ordinary",
+          meeting_date: "2026-05-08",
+          status: "draft",
+        },
+        {
+          id: "newer",
+          unit_code: "01",
+          title: "Ata recente",
+          minute_number: "2026/002",
+          meeting_type: "ordinary",
+          meeting_date: "2026-07-16",
+          status: "draft",
+        },
+      ],
+      total: 2,
+    });
+
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    const recent = await screen.findByText("Ata recente");
+    const old = screen.getByText("Ata antiga");
+    expect(
+      recent.compareDocumentPosition(old) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("edita e exclui rascunho pela listagem com confirmação", async () => {

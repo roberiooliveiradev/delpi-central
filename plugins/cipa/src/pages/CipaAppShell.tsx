@@ -201,7 +201,7 @@ export function CipaAppShell({ route, access, accessLoading, accessError }: Prop
   }
   if (route.kind === "list") {
     return (
-      <div className="dashboard-cipa dashboard-page">
+      <div className="dashboard-cipa dashboard-page dashboard-cipa--minute-list">
         <MinuteListPage unitCode={route.unitCode} access={access} />
       </div>
     );
@@ -310,7 +310,13 @@ function MinuteListPage({
       controller.signal,
     )
       .then((data) => {
-        setItems(data.items);
+        setItems(
+          [...data.items].sort((left, right) => {
+            const byDate = right.meeting_date.localeCompare(left.meeting_date);
+            if (byDate !== 0) return byDate;
+            return String(right.updated_at || "").localeCompare(String(left.updated_at || ""));
+          }),
+        );
         setError(null);
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Erro ao listar."))
@@ -337,12 +343,6 @@ function MinuteListPage({
 
   const columns = useMemo<DataTableColumn<MinuteListItem>[]>(
     () => [
-      {
-        key: "minute_number",
-        header: "Nº",
-        mobileLabel: "Nº",
-        render: (item) => item.minute_number,
-      },
       {
         key: "title",
         header: "Título",
@@ -419,7 +419,7 @@ function MinuteListPage({
   );
 
   return (
-    <div className="cipa-page-stack">
+    <div className="cipa-page-stack cipa-page-stack--minute-list">
       <CipaPageHeader
         nav={<BackLink onClick={() => navigateCipa("/apps/cipa")}>Unidades</BackLink>}
         title={`CIPA — ${UNIT_LABELS[unitCode]}`}
@@ -453,7 +453,7 @@ function MinuteListPage({
         }
       />
 
-      <CipaContentCard>
+      <CipaContentCard className="cipa-minute-list-card">
         <CipaFiltersRow
           as="div"
           trailing={<ActionButton onClick={() => load()}>Buscar</ActionButton>}
