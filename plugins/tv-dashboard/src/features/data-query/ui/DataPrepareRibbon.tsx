@@ -85,7 +85,8 @@ export function DataPrepareRibbon({
             disabled={loading}
             onClick={onRefresh}
           >
-            <RefreshCw size={16} aria-hidden /> Atualizar
+            <RefreshCw size={15} aria-hidden />
+            <span>Atualizar</span>
           </button>
         </div>
         {tab === "home" ? (

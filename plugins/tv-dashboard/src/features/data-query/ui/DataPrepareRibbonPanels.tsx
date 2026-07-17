@@ -1,5 +1,35 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
-import { ArrowDownAZ, Filter, Type } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowDownAZ,
+  ArrowUp,
+  Braces,
+  ChevronsLeft,
+  Columns3,
+  Copy,
+  Eraser,
+  Expand,
+  Filter,
+  FlipVertical2,
+  GitBranch,
+  GitMerge,
+  Group,
+  Hash,
+  Heading,
+  LayoutGrid,
+  ListEnd,
+  ListStart,
+  ListX,
+  Replace,
+  Rows3,
+  ShieldX,
+  SplitSquareHorizontal,
+  TableProperties,
+  TextCursorInput,
+  Trash2,
+  Type,
+  Wand2,
+} from "lucide-react";
 import { useState } from "react";
 
 import type {
@@ -103,9 +133,11 @@ export function DataPrepareRibbonHomePanel({
           <button
             type="button"
             className="td-data-pq__ribbon-action"
+            aria-label="Promover cabeçalhos"
             onClick={() => insert("Cabeçalhos promovidos", "firstRowAsHeader", {})}
           >
-            Cabeçalhos promovidos
+            <Heading size={15} aria-hidden />
+            <span>Cabeçalhos</span>
           </button>
           <button
             type="button"
@@ -113,7 +145,8 @@ export function DataPrepareRibbonHomePanel({
             disabled={!column}
             onClick={() => insert("Colunas selecionadas", "select", { columns: [column] })}
           >
-            Escolher coluna
+            <Columns3 size={15} aria-hidden />
+            <span>Escolher coluna</span>
           </button>
           <button
             type="button"
@@ -123,7 +156,8 @@ export function DataPrepareRibbonHomePanel({
               insert("Colunas reordenadas", "reorder_columns", { columns: [column] })
             }
           >
-            Mover para o início
+            <ChevronsLeft size={15} aria-hidden />
+            <span>Mover ao início</span>
           </button>
           <button
             type="button"
@@ -133,7 +167,8 @@ export function DataPrepareRibbonHomePanel({
               insert("Colunas removidas", "remove_columns", { columns: [column] })
             }
           >
-            Remover coluna
+            <Trash2 size={15} aria-hidden />
+            <span>Remover coluna</span>
           </button>
         </div>
       </section>
@@ -152,6 +187,7 @@ export function DataPrepareRibbonHomePanel({
           <button
             type="button"
             className="td-data-pq__ribbon-action"
+            aria-label="Manter primeiras linhas"
             onClick={() =>
               insert("Primeiras linhas", "keepRows", {
                 count: Math.max(0, Number(rowCount) || 0),
@@ -159,11 +195,13 @@ export function DataPrepareRibbonHomePanel({
               })
             }
           >
-            Manter
+            <ListStart size={15} aria-hidden />
+            <span>Manter</span>
           </button>
           <button
             type="button"
             className="td-data-pq__ribbon-action"
+            aria-label="Remover primeiras linhas"
             onClick={() =>
               insert("Linhas removidas", "removeRows", {
                 count: Math.max(0, Number(rowCount) || 0),
@@ -171,7 +209,8 @@ export function DataPrepareRibbonHomePanel({
               })
             }
           >
-            Remover
+            <ListX size={15} aria-hidden />
+            <span>Remover</span>
           </button>
           <label className="td-data-pq__ribbon-field">
             <span>Início</span>
@@ -192,7 +231,8 @@ export function DataPrepareRibbonHomePanel({
               })
             }
           >
-            Manter intervalo
+            <Rows3 size={15} aria-hidden />
+            <span>Manter intervalo</span>
           </button>
         </div>
       </section>
@@ -203,18 +243,21 @@ export function DataPrepareRibbonHomePanel({
             type="button"
             className="td-data-pq__ribbon-action"
             disabled={!selectedQuery}
+            aria-label="Acrescentar consulta"
             onClick={() =>
               insert("Consultas acrescentadas", "append_queries", {
                 queries: [selectedQuery],
               })
             }
           >
-            Acrescentar consulta
+            <ListEnd size={15} aria-hidden />
+            <span>Acrescentar</span>
           </button>
           <button
             type="button"
             className="td-data-pq__ribbon-action"
             disabled={!column || !selectedQuery}
+            aria-label="Mesclar consulta"
             onClick={() =>
               insert("Consultas mescladas", "nested_join", {
                 query: selectedQuery,
@@ -224,12 +267,14 @@ export function DataPrepareRibbonHomePanel({
               })
             }
           >
-            Mesclar consulta
+            <GitMerge size={15} aria-hidden />
+            <span>Mesclar</span>
           </button>
           <button
             type="button"
             className="td-data-pq__ribbon-action"
             disabled={!column || !secondary}
+            aria-label="Expandir coluna"
             onClick={() =>
               insert("Tabela expandida", "expand_table_column", {
                 column,
@@ -238,7 +283,8 @@ export function DataPrepareRibbonHomePanel({
               })
             }
           >
-            Expandir coluna
+            <Expand size={15} aria-hidden />
+            <span>Expandir</span>
           </button>
         </div>
       </section>
@@ -292,7 +338,8 @@ export function DataPrepareRibbonTransformPanel({
         disabled={!column}
         onClick={() => insert("Linhas ordenadas", "sort", { column, direction })}
       >
-        <ArrowDownAZ size={16} aria-hidden /> Ordenar
+        <ArrowDownAZ size={15} aria-hidden />
+        <span>Ordenar</span>
       </button>
         </div>
       </section>
@@ -314,7 +361,8 @@ export function DataPrepareRibbonTransformPanel({
           insert("Linhas filtradas", "filter", { column, cmp: "eq", value })
         }
       >
-        <Filter size={16} aria-hidden /> Filtrar
+        <Filter size={15} aria-hidden />
+        <span>Filtrar</span>
       </button>
       <NativeTextControl
         id="td-m-rename-column"
@@ -334,7 +382,8 @@ export function DataPrepareRibbonTransformPanel({
           })
         }
       >
-        Renomear
+        <TextCursorInput size={15} aria-hidden />
+        <span>Renomear</span>
       </button>
       <NativeTextControl
         id="td-m-replacement-value"
@@ -347,6 +396,7 @@ export function DataPrepareRibbonTransformPanel({
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column}
+        aria-label="Substituir valor"
         onClick={() =>
           insert("Valor substituído", "replace", {
             column,
@@ -355,7 +405,8 @@ export function DataPrepareRibbonTransformPanel({
           })
         }
       >
-        Substituir valor
+        <Replace size={15} aria-hidden />
+        <span>Substituir</span>
       </button>
         </div>
       </section>
@@ -377,17 +428,20 @@ export function DataPrepareRibbonTransformPanel({
           insert("Tipo alterado", "changeType", { column, to: columnType })
         }
       >
-        <Type size={16} aria-hidden /> Alterar tipo
+        <Type size={15} aria-hidden />
+        <span>Alterar tipo</span>
       </button>
       <button
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column}
+        aria-label="Remover duplicatas"
         onClick={() =>
           insert("Duplicatas removidas", "distinct_rows", { columns: [column] })
         }
       >
-        Remover duplicatas
+        <Copy size={15} aria-hidden />
+        <span>Sem duplicatas</span>
       </button>
       <button
         type="button"
@@ -395,7 +449,8 @@ export function DataPrepareRibbonTransformPanel({
         disabled={!column}
         onClick={() => insert("Preenchido abaixo", "fillDown", { column })}
       >
-        Preencher abaixo
+        <ArrowDown size={15} aria-hidden />
+        <span>Preencher abaixo</span>
       </button>
       <button
         type="button"
@@ -403,14 +458,16 @@ export function DataPrepareRibbonTransformPanel({
         disabled={!column}
         onClick={() => insert("Preenchido acima", "fill_up", { column })}
       >
-        Preencher acima
+        <ArrowUp size={15} aria-hidden />
+        <span>Preencher acima</span>
       </button>
       <button
         type="button"
         className="td-data-pq__ribbon-action"
         onClick={() => insert("Linhas invertidas", "reverse_rows", {})}
       >
-        Inverter linhas
+        <FlipVertical2 size={15} aria-hidden />
+        <span>Inverter linhas</span>
       </button>
         </div>
       </section>
@@ -422,7 +479,8 @@ export function DataPrepareRibbonTransformPanel({
         className="td-data-pq__ribbon-action"
         onClick={() => insert("Tabela transposta", "transpose", {})}
       >
-        Transpor
+        <TableProperties size={15} aria-hidden />
+        <span>Transpor</span>
       </button>
       <button
         type="button"
@@ -432,7 +490,8 @@ export function DataPrepareRibbonTransformPanel({
           insert("Erros removidos", "remove_errors", { columns: [column] })
         }
       >
-        Remover erros
+        <Eraser size={15} aria-hidden />
+        <span>Remover erros</span>
       </button>
       <button
         type="button"
@@ -445,12 +504,14 @@ export function DataPrepareRibbonTransformPanel({
           })
         }
       >
-        Substituir erros
+        <ShieldX size={15} aria-hidden />
+        <span>Substituir erros</span>
       </button>
       <button
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column || !secondary}
+        aria-label="Agrupar linhas"
         onClick={() =>
           insert("Linhas agrupadas", "group_rows", {
             keys: [column],
@@ -460,12 +521,14 @@ export function DataPrepareRibbonTransformPanel({
           })
         }
       >
-        Agrupar linhas
+        <Group size={15} aria-hidden />
+        <span>Agrupar</span>
       </button>
       <button
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column || !secondary}
+        aria-label="Coluna dinâmica"
         onClick={() =>
           insert("Coluna dinâmica", "pivot", {
             values: Array.from(
@@ -485,12 +548,14 @@ export function DataPrepareRibbonTransformPanel({
           })
         }
       >
-        Coluna dinâmica
+        <LayoutGrid size={15} aria-hidden />
+        <span>Dinâmica</span>
       </button>
       <button
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column}
+        aria-label="Anular dinamização"
         onClick={() =>
           insert("Colunas anuladas", "unpivot", {
             columns: [column],
@@ -499,7 +564,8 @@ export function DataPrepareRibbonTransformPanel({
           })
         }
       >
-        Anular dinamização
+        <Rows3 size={15} aria-hidden />
+        <span>Anular dinâmica</span>
       </button>
         </div>
       </section>
@@ -541,6 +607,7 @@ export function DataPrepareRibbonAddColumnPanel({
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!newName.trim() || !expression.trim()}
+        aria-label="Coluna personalizada"
         onClick={() =>
           insert("Coluna personalizada", "add_custom_column", {
             newName: newName.trim(),
@@ -549,7 +616,8 @@ export function DataPrepareRibbonAddColumnPanel({
           })
         }
       >
-        Coluna personalizada
+        <Braces size={15} aria-hidden />
+        <span>Personalizada</span>
       </button>
         </div>
       </section>
@@ -567,6 +635,7 @@ export function DataPrepareRibbonAddColumnPanel({
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column || !newName.trim()}
+        aria-label="Coluna condicional"
         onClick={() =>
           insert("Coluna condicional", "add_conditional_column", {
             column,
@@ -578,7 +647,8 @@ export function DataPrepareRibbonAddColumnPanel({
           })
         }
       >
-        Coluna condicional
+        <GitBranch size={15} aria-hidden />
+        <span>Condicional</span>
       </button>
         </div>
       </section>
@@ -589,6 +659,7 @@ export function DataPrepareRibbonAddColumnPanel({
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column || !newName.trim()}
+        aria-label="Duplicar coluna"
         onClick={() =>
           insert("Coluna duplicada", "duplicate_column", {
             column,
@@ -596,7 +667,8 @@ export function DataPrepareRibbonAddColumnPanel({
           })
         }
       >
-        Duplicar coluna
+        <Copy size={15} aria-hidden />
+        <span>Duplicar</span>
       </button>
       <button
         type="button"
@@ -609,7 +681,8 @@ export function DataPrepareRibbonAddColumnPanel({
           })
         }
       >
-        Índice
+        <Hash size={15} aria-hidden />
+        <span>Índice</span>
       </button>
         </div>
       </section>
@@ -626,6 +699,7 @@ export function DataPrepareRibbonAddColumnPanel({
         type="button"
         className="td-data-pq__ribbon-action"
         disabled={!column || !delimiter || !newName.trim()}
+        aria-label="Dividir coluna"
         onClick={() =>
           insert("Coluna dividida", "split_column", {
             column,
@@ -634,7 +708,8 @@ export function DataPrepareRibbonAddColumnPanel({
           })
         }
       >
-        Dividir coluna
+        <SplitSquareHorizontal size={15} aria-hidden />
+        <span>Dividir</span>
       </button>
       <FormSelectControl
         id="td-m-column-function"
@@ -660,7 +735,8 @@ export function DataPrepareRibbonAddColumnPanel({
           })
         }
       >
-        Aplicar função
+        <Wand2 size={15} aria-hidden />
+        <span>Aplicar função</span>
       </button>
         </div>
       </section>

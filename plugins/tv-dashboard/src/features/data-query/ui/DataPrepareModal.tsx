@@ -1,14 +1,8 @@
 import {
-  ContextMenu,
-  ContextMenuDivider,
-  ContextMenuItem,
-  type FixedPanelPoint,
-} from "@delpi/plugin-ui/index";
-import {
   isDataSourceBlockType,
   type ComunicadoDataSourceBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { ArrowDownAZ, ArrowDownZA, Code2, Columns3, Copy, Eraser, Trash2 } from "lucide-react";
+import { Code2 } from "lucide-react";
 import { useMemo, useRef, useState, type MouseEvent } from "react";
 
 import { useComunicadoEditor } from "../../../components/comunicadoEditorContext";
@@ -21,6 +15,10 @@ import {
 } from "../state/useDataQueryWorkbench";
 import { DataPrepareAdvancedEditor } from "./DataPrepareAdvancedEditor";
 import { DataPrepareAppliedSteps } from "./DataPrepareAppliedSteps";
+import {
+  DataPrepareColumnMenu,
+  type ColumnMenuTarget,
+} from "./DataPrepareColumnMenu";
 import { DataPrepareDiagnostics } from "./DataPrepareDiagnostics";
 import { DataPrepareFormulaBar } from "./DataPrepareFormulaBar";
 import { DataPreparePreviewGrid } from "./DataPreparePreviewGrid";
@@ -66,10 +64,7 @@ export function DataQueryWorkbenchModal({
   const [advancedEditorOpen, setAdvancedEditorOpen] = useState(false);
   const advancedEditorButtonRef = useRef<HTMLButtonElement>(null);
   const functionCatalog = useDataQueryFunctions(advancedEditorOpen && advancedEditorEnabled);
-  const [columnMenu, setColumnMenu] = useState<{
-    position: FixedPanelPoint;
-    column: string;
-  } | null>(null);
+  const [columnMenu, setColumnMenu] = useState<ColumnMenuTarget | null>(null);
   const draft = workbench.activeDraft;
   const compiled = draft?.compiled;
   const selectedStep = compiled?.steps.find(
@@ -106,7 +101,13 @@ export function DataQueryWorkbenchModal({
 
   const openColumnMenu = (event: MouseEvent<HTMLElement>, column: string) => {
     event.preventDefault();
-    setColumnMenu({ position: { x: event.clientX, y: event.clientY }, column });
+    const meta = preview?.columns.find((item) => item.key === column);
+    setColumnMenu({
+      position: { x: event.clientX, y: event.clientY },
+      columnKey: column,
+      columnLabel: meta?.label ?? column,
+      columnType: meta?.type ?? "any",
+    });
     workbench.dispatch({ type: "select_column", columnKey: column });
   };
 
@@ -293,78 +294,11 @@ export function DataQueryWorkbenchModal({
             }
           />
         </div>
-        <ContextMenu
-          open={Boolean(columnMenu)}
-          position={columnMenu?.position ?? null}
+        <DataPrepareColumnMenu
+          target={columnMenu}
           onClose={() => setColumnMenu(null)}
-          aria-label="Ações da coluna"
-        >
-          <ContextMenuItem
-            label="Ordenar crescente"
-            icon={ArrowDownAZ}
-            onSelect={() =>
-              columnMenu &&
-              insertForColumn("Linhas ordenadas", "sort", {
-                column: columnMenu.column,
-                direction: "asc",
-              })
-            }
-          />
-          <ContextMenuItem
-            label="Ordenar decrescente"
-            icon={ArrowDownZA}
-            onSelect={() =>
-              columnMenu &&
-              insertForColumn("Linhas ordenadas", "sort", {
-                column: columnMenu.column,
-                direction: "desc",
-              })
-            }
-          />
-          <ContextMenuItem
-            label="Manter somente esta coluna"
-            icon={Columns3}
-            onSelect={() =>
-              columnMenu &&
-              insertForColumn("Colunas selecionadas", "select", {
-                columns: [columnMenu.column],
-              })
-            }
-          />
-          <ContextMenuDivider />
-          <ContextMenuItem
-            label="Duplicar coluna"
-            icon={Copy}
-            onSelect={() =>
-              columnMenu &&
-              insertForColumn("Coluna duplicada", "duplicate_column", {
-                column: columnMenu.column,
-                newName: `${columnMenu.column} cópia`,
-              })
-            }
-          />
-          <ContextMenuItem
-            label="Remover linhas com erro"
-            icon={Eraser}
-            onSelect={() =>
-              columnMenu &&
-              insertForColumn("Erros removidos", "remove_errors", {
-                columns: [columnMenu.column],
-              })
-            }
-          />
-          <ContextMenuItem
-            label="Remover coluna"
-            icon={Trash2}
-            destructive
-            onSelect={() =>
-              columnMenu &&
-              insertForColumn("Colunas removidas", "remove_columns", {
-                columns: [columnMenu.column],
-              })
-            }
-          />
-        </ContextMenu>
+          onInsert={insertForColumn}
+        />
       </div>
     </Modal>
   );
