@@ -6,7 +6,12 @@ import {
   OFFICE_CHART_SERIES_COLOR,
 } from "../../theme/deckColorCatalog";
 
-export type SeriesChartValueFormat = "auto" | "number" | "currency" | "percent";
+export type SeriesChartValueFormat =
+  | "auto"
+  | "number"
+  | "currency"
+  | "currency4"
+  | "percent";
 
 export type SeriesChartLegendPosition = "top" | "bottom" | "left" | "right" | "hidden";
 
@@ -220,6 +225,7 @@ export const SERIES_CHART_VALUE_FORMAT_OPTIONS = [
   { value: "auto", label: "Automático" },
   { value: "number", label: "Número" },
   { value: "currency", label: "Moeda (R$)" },
+  { value: "currency4", label: "Moeda (R$ · 4 casas)" },
   { value: "percent", label: "Percentual" },
 ] as const;
 
@@ -241,6 +247,14 @@ export function usableSeriesChartPoints(points: SeriesChartPoint[]): SeriesChart
 export function formatSeriesChartValue(value: number, format: SeriesChartValueFormat): string {
   if (format === "currency") {
     return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  }
+  if (format === "currency4") {
+    return value.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4,
+    });
   }
   if (format === "percent") {
     return `${value.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;

@@ -1,6 +1,9 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
+import { delpiUiClass } from "../../utils/delpiUiClass";
+import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
+
 export type DrawerShellClassNames = {
   root: string;
   backdrop: string;
@@ -27,17 +30,26 @@ export type DrawerShellProps = {
   backdropAriaLabel?: string;
   /** Substitui o lock padrão (`document.body.style.overflow`). */
   lockPageScroll?: () => () => void;
+  /**
+   * Classe root do plugin MFE (ex.: `dashboard-estoque-seguranca`).
+   * Portais vão para `document.body` — sem este escopo o CSS do plugin não aplica.
+   */
+  portalScopeClassName?: string;
 };
 
 export function drawerShellBemClasses(prefix: string): DrawerShellClassNames {
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   return {
-    root: `${prefix}-drawer-root`,
-    backdrop: `${prefix}-drawer-root__backdrop`,
-    panel: `${prefix}-drawer`,
-    header: `${prefix}-drawer__header`,
-    title: `${prefix}-drawer__title`,
-    closeButton: `${prefix}-drawer__close`,
-    body: `${prefix}-drawer__body`,
+    root: pair(`${prefix}-drawer-root`, "delpi-ui-drawer-root"),
+    backdrop: pair(`${prefix}-drawer-root__backdrop`, "delpi-ui-drawer-root__backdrop"),
+    panel: pair(`${prefix}-drawer`, "delpi-ui-drawer"),
+    header: pair(`${prefix}-drawer__header`, "delpi-ui-drawer__header"),
+    title: pair(`${prefix}-drawer__title`, "delpi-ui-drawer__title"),
+    closeButton: pair(`${prefix}-drawer__close`, "delpi-ui-drawer__close"),
+    body: pair(`${prefix}-drawer__body`, "delpi-ui-drawer__body"),
+    headerText: pair(`${prefix}-drawer__header-text`, "delpi-ui-drawer__header-text"),
+    description: pair(`${prefix}-drawer__description`, "delpi-ui-drawer__description"),
+    footer: pair(`${prefix}-drawer__footer`, "delpi-ui-drawer__footer"),
   };
 }
 
@@ -53,11 +65,14 @@ export function DrawerShell({
   closeAriaLabel = "Fechar",
   backdropAriaLabel = "Fechar painel",
   lockPageScroll,
+  portalScopeClassName,
 }: DrawerShellProps) {
   const titleId = useId();
   const descriptionId = useId();
   const onCloseRef = useRef(onClose);
+  const panelRef = useRef<HTMLElement | null>(null);
   const structuredHeader = Boolean(classNames.headerText);
+  const portalTheme = useDelpiUiPortalTheme(open);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -86,9 +101,17 @@ export function DrawerShell({
           };
         })();
 
+    const rafId = requestAnimationFrame(() => {
+      const focusTarget = panelRef.current?.querySelector<HTMLElement>(
+        "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
+      );
+      focusTarget?.focus();
+    });
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       unlockPageScroll();
+      cancelAnimationFrame(rafId);
     };
   }, [open, lockPageScroll]);
 
@@ -97,6 +120,7 @@ export function DrawerShell({
   }
 
   const panelClass = [classNames.panel, className].filter(Boolean).join(" ");
+  const scopeClass = [portalScopeClassName, portalTheme.hostClassName].filter(Boolean).join(" ");
 
   const titleNode = (
     <h2 id={titleId} className={classNames.title}>
@@ -112,50 +136,53 @@ export function DrawerShell({
     ) : null;
 
   return createPortal(
-    <div className={classNames.root} role="presentation">
-      <button
-        type="button"
-        className={classNames.backdrop}
-        aria-label={backdropAriaLabel}
-        onClick={onClose}
-      />
+    <div className={scopeClass} style={portalTheme.style} data-theme={portalTheme.dataTheme ?? undefined}>
+      <div className={classNames.root} role="presentation">
+        <button
+          type="button"
+          className={classNames.backdrop}
+          aria-label={backdropAriaLabel}
+          onClick={onClose}
+        />
 
-      <aside
-        className={panelClass}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={description && classNames.description ? descriptionId : undefined}
-      >
-        <header className={classNames.header}>
-          {structuredHeader ? (
-            <div className={classNames.headerText}>
-              {titleNode}
-              {descriptionNode}
-            </div>
-          ) : (
-            <>
-              {titleNode}
-              {descriptionNode}
-            </>
-          )}
+        <aside
+          ref={panelRef}
+          className={panelClass}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          aria-describedby={description && classNames.description ? descriptionId : undefined}
+        >
+          <header className={classNames.header}>
+            {structuredHeader ? (
+              <div className={classNames.headerText}>
+                {titleNode}
+                {descriptionNode}
+              </div>
+            ) : (
+              <>
+                {titleNode}
+                {descriptionNode}
+              </>
+            )}
 
-          <button
-            type="button"
-            className={classNames.closeButton}
-            aria-label={closeAriaLabel}
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </header>
+            <button
+              type="button"
+              className={classNames.closeButton}
+              aria-label={closeAriaLabel}
+              onClick={onClose}
+            >
+              ×
+            </button>
+          </header>
 
-        <div className={classNames.body}>{children}</div>
+          <div className={classNames.body}>{children}</div>
 
-        {footer && classNames.footer ? (
-          <footer className={classNames.footer}>{footer}</footer>
-        ) : null}
-      </aside>
+          {footer && classNames.footer ? (
+            <footer className={classNames.footer}>{footer}</footer>
+          ) : null}
+        </aside>
+      </div>
     </div>,
     document.body,
   );
@@ -168,6 +195,7 @@ export function createDrawerShell(config: {
   closeAriaLabel?: string;
   backdropAriaLabel?: string;
   classNames?: Partial<DrawerShellClassNames>;
+  portalScopeClassName?: string;
 }) {
   const classNames: DrawerShellClassNames = {
     ...drawerShellBemClasses(config.prefix),
@@ -180,6 +208,7 @@ export function createDrawerShell(config: {
         classNames={classNames}
         closeAriaLabel={config.closeAriaLabel}
         backdropAriaLabel={config.backdropAriaLabel}
+        portalScopeClassName={config.portalScopeClassName}
         {...props}
       />
     );

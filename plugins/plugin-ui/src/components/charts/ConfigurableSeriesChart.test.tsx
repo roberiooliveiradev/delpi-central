@@ -309,6 +309,12 @@ describe("formatSeriesChartValue", () => {
     expect(formatted).toContain("R$");
     expect(formatted).toContain("1.400.000");
   });
+
+  it("formata moeda com até 4 casas (currency4)", () => {
+    const formatted = formatSeriesChartValue(0.0123, "currency4");
+    expect(formatted).toContain("R$");
+    expect(formatted).toMatch(/0,0123/);
+  });
 });
 
 describe("mergeSeriesChartOptions", () => {

@@ -71,3 +71,25 @@ def test_api_delivered_metadata_for_composite_payload():
     assert isinstance(primary, dict)
     assert primary.get("type") in {"table", "markdown"}
     assert "table" in meta.get("availableFormats", [])
+
+
+def test_api_delivered_metadata_for_safety_stock_detail_composite():
+    use_case = _use_case()
+    envelope = load_api_delpi_fixture_with_meta(
+        "supplies_safety_stock_item_details_10020113.json"
+    )
+    path = "/supplies/safety-stock/items/10020113/details"
+
+    meta = ChatPresentationApiDeliveredMetadataService.build(
+        action={"path": path},
+        sanitized_data=envelope["data"],
+        resolved_path=path,
+        request_parameters={"branch": "01"},
+        presenter=use_case.presenter,
+        extract_response_meta=lambda _data: envelope.get("meta"),
+    )
+
+    assert meta.get("presentationDecision")
+    tables = meta.get("tablePresentations") or []
+    assert len(tables) >= 2
+    assert "table" in meta.get("availableFormats", [])

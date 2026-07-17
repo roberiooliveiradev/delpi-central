@@ -141,6 +141,28 @@ SELECTION_CASES = [
         "expected_action_id": "supplies-stock",
     },
     {
+        "message": "estoque de segurança do produto 10010005 e pedidos de compra em aberto",
+        "actions": [
+            {
+                "actionId": "product-stock",
+                "method": "GET",
+                "path": "/products/{code}/stock",
+                "operationId": "get_product_stock",
+                "summary": "Estoque do produto",
+                "parametersSchema": [{"name": "code"}],
+            },
+            {
+                "actionId": "safety-stock-details",
+                "method": "GET",
+                "path": "/supplies/safety-stock/items/{code}/details",
+                "operationId": "get_supplies_safety_stock_item_details",
+                "summary": "Detalhe estoque de segurança",
+                "parametersSchema": [{"name": "code"}, {"name": "branch"}],
+            },
+        ],
+        "expected_action_id": "safety-stock-details",
+    },
+    {
         "message": "detalhe da LMP da OV 123456",
         "actions": [
             {

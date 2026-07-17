@@ -1422,6 +1422,31 @@
       }
     },
     {
+      "id": "safetyStockItemDetails",
+      "domain": "safety_stock",
+      "priority": 168,
+      "match": {
+        "termsFrom": "external_action_responses.actionSelection.kpiQuestions.safetyStockDetailTerms",
+        "requiresProductIdentifier": true
+      },
+      "route": {
+        "pathMarkers": [
+          "/supplies/safety-stock/items/",
+          "/details"
+        ],
+        "operationIdMarkers": [
+          "get_supplies_safety_stock_item_details"
+        ],
+        "method": "GET"
+      },
+      "parameters": {
+        "strategy": "product_code"
+      },
+      "presentation": {
+        "reasonKey": "safetyStockItemDetails"
+      }
+    },
+    {
       "id": "productionOtdDetail",
       "domain": "domainProductionKpi",
       "priority": 128,

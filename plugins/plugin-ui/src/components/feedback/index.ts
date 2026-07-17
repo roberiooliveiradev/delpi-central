@@ -87,6 +87,7 @@ export {
   type DashboardModalShellProps,
   type ModalShellClassNames,
   type ModalShellProps,
+  type ModalShellVariant,
 } from "./ModalShell";
 export {
   DrawerShell,

@@ -897,6 +897,22 @@ services:
     networks:
       - delpi-network
 
+  estoque-seguranca:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: estoque-seguranca/Dockerfile
+
+    container_name: delpi-estoque-seguranca
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   production-appointments:
     depends_on:
       - plugin-ui
@@ -1523,6 +1539,7 @@ services:
       - central-agendamento
       - controle-retrabalhos
       - scrap-monitoring
+      - estoque-seguranca
       - production-appointments
       - canal-denuncia
       - dashboard-supplies

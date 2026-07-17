@@ -1,7 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { ModalShell, modalShellBemClasses } from "./ModalShell";
+import {
+  createModalShell,
+  ModalShell,
+  modalShellBemClasses,
+} from "./ModalShell";
 
 describe("ModalShell", () => {
   it("não renderiza quando fechado", () => {
@@ -30,8 +34,14 @@ describe("ModalShell", () => {
     expect(screen.getByText("Mensagem")).toBeTruthy();
   });
 
-  it("inclui footer no BEM padrão", () => {
-    expect(modalShellBemClasses("td").footer).toBe("td-modal__footer");
+  it("emite dual-class canônico delpi-ui-modal*", () => {
+    const classes = modalShellBemClasses("td");
+    expect(classes.dialog).toContain("td-modal");
+    expect(classes.dialog).toContain("delpi-ui-modal");
+    expect(classes.overlay).toContain("delpi-ui-modal-overlay");
+    expect(classes.description).toContain("delpi-ui-modal__description");
+    expect(classes.footer).toContain("td-modal__footer");
+    expect(classes.footer).toContain("delpi-ui-modal__footer");
   });
 
   it("renderiza description e footer quando informados", () => {
@@ -42,11 +52,7 @@ describe("ModalShell", () => {
         description="Ajuste os valores do indicador."
         footer={<button type="button">Salvar</button>}
         onClose={vi.fn()}
-        classNames={{
-          ...modalShellBemClasses("si"),
-          headerText: "si-modal__header-text",
-          description: "si-modal__description",
-        }}
+        classNames={modalShellBemClasses("si")}
       >
         <p>Corpo</p>
       </ModalShell>,
@@ -72,5 +78,25 @@ describe("ModalShell", () => {
     const dialog = screen.getByRole("dialog", { name: "Remover tela" });
     expect(dialog.closest(".dashboard-tv-dashboard")).toBeTruthy();
     expect(dialog.closest(".td-modal-overlay")).toBeTruthy();
+    expect(dialog.className).toContain("delpi-ui-modal");
+  });
+
+  it("createModalShell aplica variante page com dual-class", () => {
+    const PageModal = createModalShell({
+      prefix: "ess",
+      variant: "page",
+      portalScopeClassName: "dashboard-estoque-seguranca",
+    });
+
+    render(
+      <PageModal open title="Detalhe" onClose={vi.fn()}>
+        <p>Extrato</p>
+      </PageModal>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Detalhe" });
+    expect(dialog.className).toContain("ess-modal--page");
+    expect(dialog.className).toContain("delpi-ui-modal--page");
+    expect(dialog.closest(".dashboard-estoque-seguranca")).toBeTruthy();
   });
 });

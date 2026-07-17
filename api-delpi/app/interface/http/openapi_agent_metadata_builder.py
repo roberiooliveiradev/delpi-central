@@ -53,6 +53,19 @@ _ENTITY_LABELS: dict[str, str] = {
     "depreciation_pct": "depreciação percentual",
     "overall_equipment_effectiveness": "OEE (eficiência global dos equipamentos)",
     "production_otd": "OTD de produção",
+    "supplies_safety_stock_detail": (
+        "detalhe de estoque de segurança com cobertura de compras, "
+        "empenhos e extrato projetado de saldo"
+    ),
+    "supplies_safety_stock_supplier": (
+        "fornecedores vinculados ao produto com última compra"
+    ),
+    "supplies_safety_stock_supplier_price_history": (
+        "histórico de preço unitário do produto com um fornecedor"
+    ),
+    "supplies_safety_stock_item": "itens de estoque de segurança",
+    "supplies_safety_stock_summary": "resumo de estoque de segurança",
+    "supplies_safety_stock_filters": "filtros de estoque de segurança",
 }
 
 _SHAPE_SUMMARY_PREFIX: dict[str, str] = {

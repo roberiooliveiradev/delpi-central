@@ -43,18 +43,22 @@ export type ModalShellProps = {
 };
 
 export function modalShellBemClasses(prefix: string): ModalShellClassNames {
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
   const ghostIcon = withBemModifier(
     delpiUiClass(`${prefix}-ghost-btn`, "delpi-ui-ghost-btn"),
     "icon",
   );
   return {
-    overlay: `${prefix}-modal-overlay`,
-    dialog: `${prefix}-modal`,
-    header: `${prefix}-modal__header`,
-    title: `${prefix}-modal__title`,
-    closeButton: `${ghostIcon} ${prefix}-modal__close`,
-    body: `${prefix}-modal__body`,
-    footer: `${prefix}-modal__footer`,
+    overlay: pair(`${prefix}-modal-overlay`, "delpi-ui-modal-overlay"),
+    dialog: pair(`${prefix}-modal`, "delpi-ui-modal"),
+    header: pair(`${prefix}-modal__header`, "delpi-ui-modal__header"),
+    headerText: pair(`${prefix}-modal__header-text`, "delpi-ui-modal__header-text"),
+    title: pair(`${prefix}-modal__title`, "delpi-ui-modal__title"),
+    description: pair(`${prefix}-modal__description`, "delpi-ui-modal__description"),
+    closeButton: `${ghostIcon} ${pair(`${prefix}-modal__close`, "delpi-ui-modal__close")}`,
+    body: pair(`${prefix}-modal__body`, "delpi-ui-modal__body"),
+    footer: pair(`${prefix}-modal__footer`, "delpi-ui-modal__footer"),
+    headerActions: pair(`${prefix}-modal__header-actions`, "delpi-ui-modal__header-actions"),
   };
 }
 
@@ -231,23 +235,39 @@ export type DashboardModalShellProps = Omit<
   "classNames" | "overlayClassName" | "portalScopeClassName"
 >;
 
+export type ModalShellVariant = "default" | "wide" | "page";
+
 export function createModalShell(config: {
   prefix: string;
   overlayClassName?: string;
   closeAriaLabel?: string;
   /** Escopo CSS do MFE para portais no body — ver `portalScopeClassName` em ModalShell. */
   portalScopeClassName?: string;
+  /** Variante visual canônica (`wide` / `page` = modal quase fullscreen). */
+  variant?: ModalShellVariant;
+  classNames?: Partial<ModalShellClassNames>;
 }) {
-  const classNames = modalShellBemClasses(config.prefix);
+  const classNames: ModalShellClassNames = {
+    ...modalShellBemClasses(config.prefix),
+    ...config.classNames,
+  };
+  const variantClass =
+    config.variant === "page"
+      ? withBemModifier(classNames.dialog, "page")
+      : config.variant === "wide"
+        ? withBemModifier(classNames.dialog, "wide")
+        : undefined;
 
   return function DashboardModalShell(props: DashboardModalShellProps) {
+    const mergedClassName = [variantClass, props.className].filter(Boolean).join(" ") || undefined;
     return (
       <ModalShell
-        classNames={classNames}
-        overlayClassName={config.overlayClassName}
-        closeAriaLabel={config.closeAriaLabel}
-        portalScopeClassName={config.portalScopeClassName}
         {...props}
+        classNames={classNames}
+        className={mergedClassName}
+        overlayClassName={config.overlayClassName}
+        closeAriaLabel={config.closeAriaLabel ?? props.closeAriaLabel}
+        portalScopeClassName={config.portalScopeClassName}
       />
     );
   };

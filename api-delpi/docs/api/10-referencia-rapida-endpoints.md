@@ -200,6 +200,12 @@ Legenda de permissões:
 | GET | `/supplies/stock-value` | A |
 | GET | `/supplies/inventory-turnover` | A |
 | GET | `/supplies/negotiation-savings/summary` | A |
+| GET | `/supplies/safety-stock/filters` | A |
+| GET | `/supplies/safety-stock/summary` | A |
+| GET | `/supplies/safety-stock/items` | A |
+| GET | `/supplies/safety-stock/items/{code}/details` | A |
+| GET | `/supplies/safety-stock/items/{code}/suppliers` | A |
+| GET | `/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history` | A |
 
 ---
 

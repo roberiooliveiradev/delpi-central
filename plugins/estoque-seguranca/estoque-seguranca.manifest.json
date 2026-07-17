@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "estoque-seguranca",
+  "name": "Estoque de Segurança",
+  "description": "Análise de matérias-primas, saldos disponíveis e estoques de segurança.",
+  "icon": "shield-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+
+  "basePath": "/apps/estoque-seguranca",
+  "entry": "/apps/estoque-seguranca/assets/remoteEntry.js",
+
+  "permissions": [
+    {
+      "code": "estoque-seguranca.access",
+      "name": "Acessar Estoque de Segurança",
+      "description": "Acessar o aplicativo Estoque de Segurança.",
+      "module": "estoque-seguranca"
+    },
+    {
+      "code": "estoque-seguranca.view.filial-sc",
+      "name": "Estoque de Segurança — Filial SC",
+      "description": "Consultar dados de estoque de segurança da filial 01.",
+      "module": "estoque-seguranca"
+    },
+    {
+      "code": "estoque-seguranca.view.filial-es",
+      "name": "Estoque de Segurança — Filial ES",
+      "description": "Consultar dados de estoque de segurança da filial 02.",
+      "module": "estoque-seguranca"
+    }
+  ],
+
+  "routes": [
+    {
+      "path": "/apps/estoque-seguranca",
+      "label": "Estoque de Segurança",
+      "permission": "estoque-seguranca.access",
+      "icon": "shield-icon",
+      "order": 23,
+      "showInMenu": true
+    }
+  ],
+
+  "ui": {
+    "renderMode": "federated"
+  }
+}

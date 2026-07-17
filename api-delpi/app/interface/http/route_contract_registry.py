@@ -116,6 +116,24 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "get_supplies_negotiation_savings_summary": RouteContract(
         "supplies_negotiation_savings", "scalar"
     ),
+    "get_supplies_safety_stock_filters": RouteContract(
+        "supplies_safety_stock_filters", "scalar"
+    ),
+    "get_supplies_safety_stock_summary": RouteContract(
+        "supplies_safety_stock_summary", "scalar"
+    ),
+    "get_supplies_safety_stock_items": RouteContract(
+        "supplies_safety_stock_item", "paged_list"
+    ),
+    "get_supplies_safety_stock_item_details": RouteContract(
+        "supplies_safety_stock_detail", "composite_analysis"
+    ),
+    "get_supplies_safety_stock_item_suppliers": RouteContract(
+        "supplies_safety_stock_supplier", "list"
+    ),
+    "get_supplies_safety_stock_supplier_purchase_price_history": RouteContract(
+        "supplies_safety_stock_supplier_price_history", "playbook_report"
+    ),
     # Engenharia
     "list_lmps": RouteContract("lmp", "paged_list"),
     "list_lmps_dashboard": RouteContract("lmp_dashboard", "composite_analysis"),

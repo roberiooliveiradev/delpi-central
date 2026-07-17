@@ -31,6 +31,10 @@ class ProductRawMaterialPriceRepositoryPort(ABC):
         date_end_exclusive: str,
         branch: str | None = None,
         limit: int = 24,
+        supplier_code: str | None = None,
+        supplier_store: str | None = None,
+        *,
+        date_basis: str = "issue",
     ) -> list[dict]:
         ...
 

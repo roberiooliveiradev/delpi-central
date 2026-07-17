@@ -889,6 +889,22 @@ services:
     networks:
       - delpi-network
 
+  estoque-seguranca:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: estoque-seguranca/Dockerfile
+      target: production
+
+    container_name: delpi-estoque-seguranca
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   production-appointments:
     <<: *plugin-ui-federated
     build:

@@ -105,7 +105,14 @@
     "supplies_kpi": {
       "label": "KPI suprimentos",
       "pathMarkers": ["/supplies/"],
+      "excludePathMarkers": ["/supplies/safety-stock/"],
       "parameterStrategy": "date_branch",
+      "method": "GET"
+    },
+    "safety_stock": {
+      "label": "Estoque de segurança",
+      "pathMarkers": ["/supplies/safety-stock/"],
+      "parameterStrategy": "product_code",
       "method": "GET"
     },
     "lmp": {

@@ -111,6 +111,7 @@ FASE_MFE=(
   dashboard-production
   dashboard-quality
   dashboard-supplies
+  estoque-seguranca
   transformometro
   quality-action-plans
   cadastro-kaizen
