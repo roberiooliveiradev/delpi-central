@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, RotateCcw } from "lucide-react";
+import { createTimeline, type TimelineItemModel } from "@delpi/plugin-ui/index";
 
 import {
   getPlaylistHistorySnapshot,
@@ -8,6 +9,11 @@ import {
 } from "../../api/tvDashboardApi";
 import { useConfirm } from "../../context/ConfirmDialogProvider";
 import { useDeckEditorHistoryContext } from "../../context/deckEditorHistoryContext";
+import {
+  playlistHistoryAuthor,
+  playlistHistoryPreview,
+  summarizePlaylistHistoryChange,
+} from "../../utils/playlistHistoryTimeline";
 import { Modal } from "../ui/Modal";
 
 type Props = {
@@ -23,23 +29,7 @@ function formatDate(value: string): string {
     : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(date);
 }
 
-function authorLabel(item: PlaylistHistoryEntry): string {
-  return item.authorName?.trim() || item.authorId?.trim() || "Sistema";
-}
-
-function previewLabel(item: PlaylistHistoryEntry): string {
-  const preview = item.preview;
-  if (!preview) return "Prévia disponível ao selecionar a revisão.";
-  const slides =
-    preview.slideTitles?.filter(Boolean).slice(0, 3).join(", ") ||
-    `${preview.slideCount ?? 0} tela(s)`;
-  return [preview.playlistName, slides].filter(Boolean).join(" · ");
-}
-
-function reasonLabel(reason?: string | null): string {
-  if (!reason?.trim()) return "Alteração da programação";
-  return reason.replaceAll("_", " ");
-}
+const TvDashboardTimeline = createTimeline({ prefix: "td" });
 
 export function DeckRevisionHistoryPanel({ open, playlistId, onClose }: Props) {
   const history = useDeckEditorHistoryContext();
@@ -81,6 +71,50 @@ export function DeckRevisionHistoryPanel({ open, playlistId, onClose }: Props) {
     await restoreRevision?.(item.snapshotId, item.revision);
   }
 
+  const timelineItems: TimelineItemModel[] = (page?.items ?? []).map((item) => {
+    const author = playlistHistoryAuthor(item);
+    const selected = detail?.snapshotId === item.snapshotId;
+    return {
+      id: item.snapshotId,
+      title: `Revisão ${item.revision}`,
+      occurredAt: item.createdAt,
+      timeLabel: formatDate(item.createdAt),
+      marker: <History size={12} />,
+      tone: selected ? "info" : "default",
+      detail: summarizePlaylistHistoryChange(item),
+      meta: (
+        <>
+          <span>
+            {author.name}
+            {author.email ? ` · ${author.email}` : ""}
+          </span>
+          <br />
+          <span>{playlistHistoryPreview(item)}</span>
+          <div className="td-history__actions">
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              onClick={() => void selectRevision(item)}
+              aria-label={`Ver detalhes da revisão ${item.revision}`}
+              aria-pressed={selected}
+            >
+              Ver detalhes
+            </button>
+            <button
+              type="button"
+              className="td-btn td-btn--sm"
+              disabled={history.restoring}
+              onClick={() => void restore(item)}
+            >
+              <RotateCcw size={14} aria-hidden="true" />
+              Restaurar
+            </button>
+          </div>
+        </>
+      ),
+    };
+  });
+
   return (
     <Modal open={open} title="Histórico de revisões" onClose={onClose} className="td-modal--history">
       {history.error ? (
@@ -88,37 +122,15 @@ export function DeckRevisionHistoryPanel({ open, playlistId, onClose }: Props) {
           {history.error}
         </div>
       ) : null}
-      {history.loading && !page ? <div className="td-history__state">Carregando revisões…</div> : null}
-      {!history.loading && page?.items.length === 0 ? (
-        <div className="td-history__state">Nenhuma revisão registrada.</div>
-      ) : null}
       <div className="td-history__layout">
-        <ol className="td-history__list" aria-label="Revisões da programação">
-          {page?.items.map((item) => (
-            <li key={item.snapshotId} className="td-history__item">
-              <button
-                type="button"
-                className="td-history__summary"
-                onClick={() => void selectRevision(item)}
-                aria-label={`Ver prévia da revisão ${item.revision}`}
-              >
-                <strong>Revisão {item.revision}</strong>
-                <span>{formatDate(item.createdAt)} · {authorLabel(item)}</span>
-                <span>{reasonLabel(item.reason)}</span>
-                <small>{previewLabel(item)}</small>
-              </button>
-              <button
-                type="button"
-                className="td-btn td-btn--sm td-history__restore"
-                disabled={history.restoring}
-                onClick={() => void restore(item)}
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                Restaurar
-              </button>
-            </li>
-          ))}
-        </ol>
+        <TvDashboardTimeline
+          layout="linear"
+          aria-label="Revisões da programação"
+          items={timelineItems}
+          loading={history.loading}
+          loadingMessage="Carregando revisões…"
+          emptyMessage="Nenhuma revisão registrada."
+        />
         <aside className="td-history__preview" aria-label="Prévia da revisão">
           {detailLoading ? <p>Carregando prévia…</p> : null}
           {detailError ? <p role="alert">{detailError}</p> : null}

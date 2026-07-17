@@ -48,7 +48,9 @@ Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}
 Cada mutação editorial concluída captura no PostgreSQL o estado anterior da
 programação e de suas telas. São mantidas as 500 versões mais recentes por
 programação; permissões, compartilhamentos, token público e métricas não fazem
-parte dos snapshots.
+parte dos snapshots. Desde a migration `V009`, cada nova versão também preserva
+o nome e o e-mail do ator autenticado (`authorName` e `authorEmail`) no instante
+da ação; registros anteriores permanecem com esses campos nulos.
 
 | Método | Rota | Permissão | Descrição |
 |---|---|---|---|
@@ -58,6 +60,13 @@ parte dos snapshots.
 
 O restore exige `expectedRevision` no corpo. Se a programação tiver sido
 alterada desde a leitura, a API retorna `409` com `currentRevision`.
+
+Listagem e detalhe expõem `change`: a versão `R` é comparada ao snapshot
+`R+1`, pois ela representa o estado anterior à mutação que produziu `R+1`. O
+snapshot mais recente é comparado ao estado atual somente quando
+`currentRevision = R+1`. O resumo informa campos da programação alterados,
+telas adicionadas/removidas/atualizadas, reordenação e totais. Histórico legado
+incompleto ou lacunas de revisão retornam `change.available = false`.
 
 Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
 

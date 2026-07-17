@@ -2,9 +2,15 @@ from __future__ import annotations
 
 import json
 import math
+from collections.abc import Mapping
 from typing import Any
 from uuid import UUID
 
+from delpi_auth.request_context import get_current_user
+
+from tv_app.application.services.playlist_history_change_service import (
+    PlaylistHistoryChangeService,
+)
 from tv_app.infrastructure.persistence.plugins_postgres_connection import get_connection
 
 HISTORY_LIMIT_PER_PLAYLIST = 500
@@ -26,7 +32,8 @@ def _history_summary(row: dict[str, Any]) -> dict[str, Any]:
         "playlistId": str(row["playlist_id"]),
         "revision": int(row["revision"]),
         "authorId": row["actor_user_id"],
-        "authorName": None,
+        "authorName": row.get("actor_name"),
+        "authorEmail": row.get("actor_email"),
         "reason": row["reason"],
         "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
     }
@@ -58,7 +65,117 @@ def _history_summary(row: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+def _parsed_snapshot(value: Any) -> Any:
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except (TypeError, ValueError):
+            return None
+    return value
+
+
+def _history_change(
+    row: dict[str, Any],
+    *,
+    current_revision: int | None,
+    live_snapshot: Any,
+) -> dict[str, Any]:
+    revision = int(row["revision"])
+    next_snapshot = _parsed_snapshot(row.get("next_snapshot"))
+    if next_snapshot is not None:
+        return PlaylistHistoryChangeService.compare(
+            _parsed_snapshot(row.get("snapshot")),
+            next_snapshot,
+            compared_to_revision=revision + 1,
+        )
+    if current_revision == revision + 1 and live_snapshot is not None:
+        return PlaylistHistoryChangeService.compare(
+            _parsed_snapshot(row.get("snapshot")),
+            _parsed_snapshot(live_snapshot),
+            compared_to_revision=current_revision,
+        )
+    return PlaylistHistoryChangeService.unavailable()
+
+
 class PlaylistHistoryRepository:
+    @staticmethod
+    def _resolve_actor_snapshot(actor_user_id: str | None) -> dict[str, str | None]:
+        """Captura nome/e-mail somente para o mesmo usuário autenticado da ação."""
+        snapshot = {"name": None, "email": None}
+        expected_id = str(actor_user_id or "").strip()
+        if not expected_id:
+            return snapshot
+        user = get_current_user()
+        if user is None:
+            return snapshot
+
+        def user_value(field: str) -> Any:
+            if isinstance(user, Mapping):
+                return user.get(field)
+            return getattr(user, field, None)
+
+        current_id = str(user_value("id") or "").strip()
+        if current_id != expected_id:
+            return snapshot
+        name = str(user_value("name") or "").strip()
+        email = str(user_value("email") or "").strip()
+        snapshot["name"] = name or None
+        snapshot["email"] = email or None
+        return snapshot
+
+    @staticmethod
+    def _load_live_state(cur: Any, playlist_id: UUID) -> tuple[int | None, Any]:
+        cur.execute(
+            """
+            SELECT
+              p.revision AS current_revision,
+              jsonb_build_object(
+                'playlist', jsonb_build_object(
+                  'id', p.id,
+                  'name', p.name,
+                  'description', p.description,
+                  'viewportProfile', p.viewport_profile,
+                  'transitionStyle', p.transition_style,
+                  'defaultDurationSec', p.default_duration_sec,
+                  'globalRefreshSec', p.global_refresh_sec,
+                  'dataDefaults', p.data_defaults,
+                  'masterConfig', p.master_config,
+                  'isActive', p.is_active
+                ),
+                'slides', COALESCE((
+                  SELECT jsonb_agg(
+                    jsonb_build_object(
+                      'id', s.id,
+                      'playlistId', s.playlist_id,
+                      'sortOrder', s.sort_order,
+                      'slideType', s.slide_type,
+                      'durationSec', s.duration_sec,
+                      'title', s.title,
+                      'nativeScreenKey', s.native_screen_key,
+                      'nativeConfig', s.native_config,
+                      'externalUrl', s.external_url,
+                      'externalSandbox', s.external_sandbox,
+                      'isActive', s.is_active,
+                      'transitionStyle', s.transition_style,
+                      'createdAt', s.created_at,
+                      'updatedAt', s.updated_at
+                    )
+                    ORDER BY s.sort_order ASC, s.id ASC
+                  )
+                  FROM tv_dashboard.slides s
+                  WHERE s.playlist_id = p.id
+                ), '[]'::jsonb)
+              ) AS snapshot
+            FROM tv_dashboard.playlists p
+            WHERE p.id = %s
+            """,
+            (str(playlist_id),),
+        )
+        row = cur.fetchone()
+        if not row:
+            return None, None
+        return int(row["current_revision"]), row["snapshot"]
+
     @staticmethod
     def capture_before_mutation(
         cur: Any,
@@ -68,14 +185,17 @@ class PlaylistHistoryRepository:
         reason: str,
     ) -> None:
         """Captura o estado bloqueado e poda versões antigas na transação chamadora."""
+        actor = PlaylistHistoryRepository._resolve_actor_snapshot(actor_user_id)
         cur.execute(
             """
             INSERT INTO tv_dashboard.playlist_history (
-              playlist_id, revision, actor_user_id, reason, snapshot
+              playlist_id, revision, actor_user_id, actor_name, actor_email, reason, snapshot
             )
             SELECT
               p.id,
               p.revision,
+              %s,
+              %s,
               %s,
               %s,
               jsonb_build_object(
@@ -119,7 +239,13 @@ class PlaylistHistoryRepository:
             WHERE p.id = %s
             FOR UPDATE
             """,
-            (actor_user_id.strip(), reason.strip(), str(playlist_id)),
+            (
+                actor_user_id.strip(),
+                actor["name"],
+                actor["email"],
+                reason.strip(),
+                str(playlist_id),
+            ),
         )
         if cur.rowcount != 1:
             raise PlaylistHistoryNotFoundError
@@ -157,8 +283,18 @@ class PlaylistHistoryRepository:
                       h.playlist_id,
                       h.revision,
                       h.actor_user_id,
+                      h.actor_name,
+                      h.actor_email,
                       h.reason,
                       h.created_at,
+                      h.snapshot,
+                      (
+                        SELECT next.snapshot
+                        FROM tv_dashboard.playlist_history next
+                        WHERE next.playlist_id = h.playlist_id
+                          AND next.revision = h.revision + 1
+                        LIMIT 1
+                      ) AS next_snapshot,
                       h.snapshot #>> '{playlist,name}' AS playlist_name,
                       jsonb_array_length(COALESCE(h.snapshot -> 'slides', '[]'::jsonb))
                         AS slide_count,
@@ -197,14 +333,29 @@ class PlaylistHistoryRepository:
                     (str(playlist_id),),
                 )
                 metadata = cur.fetchone()
+                live_revision, live_snapshot = self._load_live_state(cur, playlist_id)
         total = int(metadata["total"]) if metadata else 0
+        current_revision = (
+            live_revision
+            if live_revision is not None
+            else (int(metadata["current_revision"]) if metadata else None)
+        )
+        items = []
+        for row in rows:
+            item = _history_summary(row)
+            item["change"] = _history_change(
+                row,
+                current_revision=current_revision,
+                live_snapshot=live_snapshot,
+            )
+            items.append(item)
         return {
-            "items": [_history_summary(row) for row in rows],
+            "items": items,
             "page": safe_page,
             "pageSize": safe_page_size,
             "total": total,
             "totalPages": math.ceil(total / safe_page_size) if total else 0,
-            "currentRevision": int(metadata["current_revision"]) if metadata else None,
+            "currentRevision": current_revision,
             "currentSnapshotId": (
                 str(metadata["current_snapshot_id"])
                 if metadata and metadata["current_snapshot_id"]
@@ -217,19 +368,37 @@ class PlaylistHistoryRepository:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    SELECT id, playlist_id, revision, actor_user_id, reason, snapshot, created_at
+                    SELECT
+                      id, playlist_id, revision, actor_user_id, actor_name, actor_email,
+                      reason, snapshot, created_at
                     FROM tv_dashboard.playlist_history
                     WHERE id = %s AND playlist_id = %s
                     """,
                     (str(history_id), str(playlist_id)),
                 )
                 row = cur.fetchone()
+                if row:
+                    cur.execute(
+                        """
+                        SELECT snapshot
+                        FROM tv_dashboard.playlist_history
+                        WHERE playlist_id = %s AND revision = %s
+                        LIMIT 1
+                        """,
+                        (str(playlist_id), int(row["revision"]) + 1),
+                    )
+                    next_row = cur.fetchone()
+                    row["next_snapshot"] = next_row["snapshot"] if next_row else None
+                current_revision, live_snapshot = self._load_live_state(cur, playlist_id)
         if not row:
             raise PlaylistHistoryNotFoundError
         result = _history_summary(row)
-        snapshot = row["snapshot"]
-        if isinstance(snapshot, str):
-            snapshot = json.loads(snapshot)
+        result["change"] = _history_change(
+            row,
+            current_revision=current_revision,
+            live_snapshot=live_snapshot,
+        )
+        snapshot = _parsed_snapshot(row["snapshot"])
         playlist = dict(snapshot.get("playlist") or {})
         playlist["slides"] = list(snapshot.get("slides") or [])
         result["playlist"] = playlist

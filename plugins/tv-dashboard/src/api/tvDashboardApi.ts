@@ -183,14 +183,52 @@ export type PlaylistHistoryPreview = {
   selectedSlideId?: string | null;
 };
 
+export type PlaylistHistorySlideChange =
+  | string
+  | {
+      id?: string | null;
+      title?: string | null;
+      fields?: string[];
+    };
+
+export type PlaylistHistoryChangeTotals = {
+  playlistFields?: number;
+  added?: number;
+  removed?: number;
+  updated?: number;
+  reordered?: number;
+  /** Aliases explícitos aceitos durante a evolução do contrato. */
+  playlistFieldsChanged?: number;
+  slidesAdded?: number;
+  slidesRemoved?: number;
+  slidesUpdated?: number;
+  slidesReordered?: number;
+  total?: number;
+};
+
+export type PlaylistHistoryChange = {
+  available: boolean;
+  comparedToRevision?: number | null;
+  playlistFields?: string[];
+  slides?: {
+    added?: PlaylistHistorySlideChange[];
+    removed?: PlaylistHistorySlideChange[];
+    updated?: PlaylistHistorySlideChange[];
+    reordered?: PlaylistHistorySlideChange[] | boolean;
+  };
+  totals?: PlaylistHistoryChangeTotals;
+};
+
 export type PlaylistHistoryEntry = {
   snapshotId: string;
   revision: number;
   createdAt: string;
   authorId?: string | null;
   authorName?: string | null;
+  authorEmail?: string | null;
   reason?: string | null;
   preview?: PlaylistHistoryPreview | null;
+  change?: PlaylistHistoryChange | null;
 };
 
 export type PlaylistHistoryPage = {
@@ -286,8 +324,11 @@ export async function getPlaylistHistorySnapshot(playlistId: string, snapshotId:
         revision: number;
         authorId?: string | null;
         authorName?: string | null;
+        authorEmail?: string | null;
         reason?: string | null;
         createdAt: string;
+        preview?: PlaylistHistoryPreview | null;
+        change?: PlaylistHistoryChange | null;
         playlist: Playlist;
       }>
     >(
@@ -301,7 +342,10 @@ export async function getPlaylistHistorySnapshot(playlistId: string, snapshotId:
     createdAt: data.createdAt,
     authorId: data.authorId,
     authorName: data.authorName,
+    authorEmail: data.authorEmail,
     reason: data.reason,
+    preview: data.preview,
+    change: data.change,
     snapshot: { playlist, slides },
   } satisfies PlaylistHistorySnapshot;
 }

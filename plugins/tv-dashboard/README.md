@@ -23,7 +23,7 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - Catálogo de presets e importação de telas prontas
 - RBAC por filial e visão consolidada
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
-- **Histórico de revisões:** undo/redo e restauração manual usam snapshots atômicos do backend com controle otimista de revisão; o navegador guarda somente IDs/revisões como cache leve.
+- **Histórico de revisões:** a Timeline canônica de `@delpi/plugin-ui` mostra autor (nome/e-mail), campos e telas adicionadas, removidas, editadas ou reordenadas; snapshots antigos mantêm o resumo por motivo/prévia. Undo/redo e restauração manual usam snapshots atômicos do backend com controle otimista de revisão.
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
 - **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
@@ -80,7 +80,7 @@ Base gateway: `/apps/tv-dashboard/`
 |---|---|
 | `tv-dashboard-api` | Backend (`/apps/tv-dashboard-api/`) |
 | `@delpi/tv-dashboard-presentation` | `usePresentationEngine`, `NativeSlideView`, CSS `tdp-*` |
-| `@delpi/plugin-ui` | Tooltips, labels, `DataRouteCatalogPanel`, `FormatPaneShell`, `ContextMenu`, `CenteredScaledPreview` — **remote MF** |
+| `@delpi/plugin-ui` | Tooltips, labels, `Timeline`, `DataRouteCatalogPanel`, `FormatPaneShell`, `ContextMenu`, `CenteredScaledPreview` — **remote MF** |
 | `public-hub` | View pública `present` (rebuild separado ao alterar apresentação) |
 
 Integração: `@delpi/tv-dashboard-presentation` bundled (`COPY` no Dockerfile); `@delpi/plugin-ui` via `pluginUiRemote()` + `preparePluginUiRemote()`. Ver [module-federation.md](../plugin-ui/docs/module-federation.md).
@@ -114,6 +114,12 @@ POST   /apps/tv-dashboard-api/data/preview-block
 GET    /apps/tv-dashboard-api/content/ui
 GET    /apps/tv-dashboard-api/native-screens
 ```
+
+O histórico consome `PlaylistHistoryEntry` com `authorName`, `authorEmail` e `change`
+(`available`, `comparedToRevision`, `playlistFields`, diferenças de slides e `totals`).
+Quando `change.available` não existe ou é falso, o painel usa `reason` e `preview` como
+fallback compatível com snapshots antigos. O frontend apenas apresenta esse contrato;
+o cálculo das diferenças permanece no backend.
 
 ### Editor — blocos de dados (slide Personalizado)
 
