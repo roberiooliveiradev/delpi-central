@@ -49,4 +49,21 @@ describe("BackLink", () => {
     expect(onClick).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".delpi-ui-back-link__arrow")).toBeTruthy();
   });
+
+  it("aplica variante destacada sem alterar o padrão", () => {
+    const { container, rerender } = render(
+      <BackLink variant="prominent" onClick={() => undefined}>
+        Voltar
+      </BackLink>,
+    );
+
+    expect(container.firstElementChild?.className).toContain(
+      "delpi-ui-back-link--prominent",
+    );
+
+    rerender(<BackLink onClick={() => undefined}>Voltar</BackLink>);
+    expect(container.firstElementChild?.className).not.toContain(
+      "delpi-ui-back-link--prominent",
+    );
+  });
 });

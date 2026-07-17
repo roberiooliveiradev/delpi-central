@@ -165,6 +165,7 @@ export function MinuteSignPage({ unitCode, minuteId }: Props) {
       <CipaPageHeader
         nav={
           <BackLink
+            variant="prominent"
             onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}/minutes/${minuteId}`)}
           >
             Voltar para a ata

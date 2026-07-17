@@ -422,7 +422,11 @@ function MinuteListPage({
   return (
     <div className="cipa-page-stack cipa-page-stack--minute-list">
       <CipaPageHeader
-        nav={<BackLink onClick={() => navigateCipa("/apps/cipa")}>Unidades</BackLink>}
+        nav={
+          <BackLink variant="prominent" onClick={() => navigateCipa("/apps/cipa")}>
+            Unidades
+          </BackLink>
+        }
         title={`CIPA — ${UNIT_LABELS[unitCode]}`}
         subtitle="Atas de reunião da unidade"
         actions={
@@ -605,7 +609,10 @@ function MinuteDetailPage({
     <div className="cipa-page-stack">
       <CipaPageHeader
         nav={
-          <BackLink onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}`)}>
+          <BackLink
+            variant="prominent"
+            onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}`)}
+          >
             Voltar
           </BackLink>
         }
@@ -727,7 +734,11 @@ function PendingPage() {
   return (
     <div className="cipa-page-stack">
       <CipaPageHeader
-        nav={<BackLink onClick={() => navigateCipa("/apps/cipa")}>Início</BackLink>}
+        nav={
+          <BackLink variant="prominent" onClick={() => navigateCipa("/apps/cipa")}>
+            Início
+          </BackLink>
+        }
         title="Assinaturas pendentes"
         subtitle="Atas que aguardam sua assinatura"
         actions={

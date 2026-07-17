@@ -81,8 +81,46 @@
   text-decoration: underline;
 }
 
+.delpi-ui-back-link--prominent {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 35%,
+    var(--delpi-ui-border, var(--border, #e5e7eb))
+  );
+  border-radius: 10px;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 9%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  font-weight: 650;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.delpi-ui-back-link--prominent:hover {
+  border-color: var(--delpi-ui-accent, var(--primary, #089bdb));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-accent, var(--primary, #089bdb)) 15%,
+    var(--delpi-ui-surface, var(--surface, #ffffff))
+  );
+  text-decoration: none;
+}
+
+.delpi-ui-back-link--prominent:focus-visible {
+  outline: none;
+  box-shadow: var(
+    --delpi-ui-focus-ring,
+    0 0 0 2px color-mix(in srgb, var(--primary, #089bdb) 35%, transparent)
+  );
+}
+
 .delpi-ui-back-link__arrow {
   flex-shrink: 0;
+  font-size: 1.1em;
+  font-weight: 700;
 }
 
 .delpi-ui-icon-btn {

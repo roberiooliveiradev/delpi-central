@@ -39,6 +39,7 @@ Controles canônicos para ações e navegação de retorno. O MFE deve mapear ap
 
 ```tsx
 <BackLink onClick={goBack}>Voltar para atas</BackLink>
+<BackLink variant="prominent" onClick={goBack}>Voltar</BackLink>
 
 <ActionButton variant="primary" onClick={save}>Salvar</ActionButton>
 <ActionButton variant="ghost" onClick={refresh}>Atualizar</ActionButton>
@@ -52,7 +53,7 @@ Controles canônicos para ações e navegação de retorno. O MFE deve mapear ap
 | Componente | Props principais |
 |------------|------------------|
 | `ActionButton` | `variant` (`default`, `primary`, `ghost`, `link`), `type`, `disabled`, `onClick`, `className` |
-| `BackLink` | `onClick`, `className`, `children` |
+| `BackLink` | `variant` (`default`, `prominent`), `onClick`, `className`, `children` |
 | `IconButton` | `aria-label`, `tone` (`default`, `danger`), `disabled`, `onClick`, `children` |
 
 ---

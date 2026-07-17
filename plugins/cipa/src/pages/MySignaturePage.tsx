@@ -131,7 +131,11 @@ export function MySignaturePage() {
   return (
     <div className="cipa-page-stack">
       <CipaPageHeader
-        nav={<BackLink onClick={() => navigateCipa("/apps/cipa")}>Voltar ao início</BackLink>}
+        nav={
+          <BackLink variant="prominent" onClick={() => navigateCipa("/apps/cipa")}>
+            Voltar ao início
+          </BackLink>
+        }
         title="Minha assinatura"
         subtitle="Configure o nome e o traço que serão reutilizados ao assinar atas. Cada usuário acessa apenas o próprio perfil."
       />

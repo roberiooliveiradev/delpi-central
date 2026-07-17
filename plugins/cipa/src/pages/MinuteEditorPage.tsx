@@ -280,7 +280,11 @@ export function MinuteEditorPage({ unitCode, minuteId }: Props) {
   return (
     <div className="cipa-page-stack cipa-editor-page">
       <CipaPageHeader
-        nav={<BackLink onClick={() => navigateCipa(listPath)}>Voltar para atas</BackLink>}
+        nav={
+          <BackLink variant="prominent" onClick={() => navigateCipa(listPath)}>
+            Voltar para atas
+          </BackLink>
+        }
         title={currentId ? "Editar ata" : "Nova ata"}
         subtitle={unitLabel}
         actions={

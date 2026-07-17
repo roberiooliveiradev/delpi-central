@@ -240,7 +240,10 @@ export function CipaMembersPage({ unitCode }: Props) {
     <div className="cipa-page-stack">
       <CipaPageHeader
         nav={
-          <BackLink onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}`)}>
+          <BackLink
+            variant="prominent"
+            onClick={() => navigateCipa(`/apps/cipa/filial-${unitCode}`)}
+          >
             Atas da unidade
           </BackLink>
         }
