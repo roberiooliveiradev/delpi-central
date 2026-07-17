@@ -6342,6 +6342,14 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard[data-modal-contained="true"] .td-modal-overlay{
   padding: 0;
 }
+/*
+ * Modal contido aberto: isola o stacking do MFE (z-index 0) para o chrome do
+ * portal continuar por cima — sidebar (z 40) e hotspot do canto esquerdo (z 45)
+ * seguem clicáveis; internamente o overlay (10400) ainda cobre todo o editor.
+ */
+.dashboard-tv-dashboard.dashboard-page--deck-edit:has(> .dashboard-tv-dashboard[data-modal-contained="true"]){
+  z-index: 0;
+}
 .dashboard-tv-dashboard[data-modal-contained="true"] .td-modal--data-prepare{
   width: 100%;
   height: 100%;
