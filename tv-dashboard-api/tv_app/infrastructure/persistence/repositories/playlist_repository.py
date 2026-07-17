@@ -8,6 +8,10 @@ from typing import Any
 from uuid import UUID
 
 from tv_app.infrastructure.persistence.plugins_postgres_connection import get_connection
+from tv_app.infrastructure.persistence.repositories.playlist_history_repository import (
+    PlaylistHistoryNotFoundError,
+    PlaylistHistoryRepository,
+)
 
 NATIVE_SCREENS_PATH = Path(__file__).resolve().parents[3] / "content" / "native_screens.json"
 
@@ -42,6 +46,7 @@ def _row_to_playlist(row: dict[str, Any]) -> dict[str, Any]:
         "ownerUserId": owner,
         "createdAt": row["created_at"].isoformat() if row["created_at"] else None,
         "updatedAt": row["updated_at"].isoformat() if row["updated_at"] else None,
+        "revision": int(row.get("revision") or 0),
         "dataDefaults": row.get("data_defaults") or {},
         "masterConfig": row.get("master_config") or {},
     }
@@ -66,11 +71,30 @@ def _row_to_slide(row: dict[str, Any]) -> dict[str, Any]:
 
 class PlaylistRepository:
     @staticmethod
+    def _capture_before_mutation(
+        cur,
+        playlist_id: UUID,
+        *,
+        actor_user_id: str,
+        reason: str,
+    ) -> None:
+        try:
+            PlaylistHistoryRepository.capture_before_mutation(
+                cur,
+                playlist_id,
+                actor_user_id=actor_user_id,
+                reason=reason,
+            )
+        except PlaylistHistoryNotFoundError as exc:
+            raise PlaylistNotFoundError from exc
+
+    @staticmethod
     def _touch_playlist_updated_at(cur, playlist_id: UUID) -> None:
         cur.execute(
             """
             UPDATE tv_dashboard.playlists
-            SET updated_at = NOW()
+            SET updated_at = NOW(),
+                revision = revision + 1
             WHERE id = %s
             """,
             (str(playlist_id),),
@@ -418,6 +442,8 @@ class PlaylistRepository:
         self,
         playlist_id: UUID,
         *,
+        actor_user_id: str,
+        reason: str = "playlist_updated",
         name: str | None = None,
         description: str | None = None,
         viewport_profile: str | None = None,
@@ -456,10 +482,17 @@ class PlaylistRepository:
         values.append(str(playlist_id))
         with get_connection() as conn:
             with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
                 cur.execute(
                     f"""
                     UPDATE tv_dashboard.playlists
-                    SET {", ".join(fields)}
+                    SET {", ".join(fields)},
+                        revision = revision + 1
                     WHERE id = %s
                     RETURNING *
                     """,
@@ -471,13 +504,28 @@ class PlaylistRepository:
             raise PlaylistNotFoundError
         return _row_to_playlist(row)
 
-    def set_active(self, playlist_id: UUID, *, is_active: bool) -> dict[str, Any]:
+    def set_active(
+        self,
+        playlist_id: UUID,
+        *,
+        is_active: bool,
+        actor_user_id: str,
+        reason: str,
+    ) -> dict[str, Any]:
         with get_connection() as conn:
             with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
                 cur.execute(
                     """
                     UPDATE tv_dashboard.playlists
-                    SET is_active = %s, updated_at = NOW()
+                    SET is_active = %s,
+                        updated_at = NOW(),
+                        revision = revision + 1
                     WHERE id = %s
                     RETURNING *
                     """,
@@ -589,9 +637,15 @@ class PlaylistRepository:
             conn.commit()
         return _row_to_playlist(new_row)
 
-    def duplicate_slide(self, slide_id: UUID) -> dict[str, Any]:
-        slide = self.get_slide(slide_id)
-        playlist_id = UUID(slide["playlistId"])
+    def duplicate_slide(
+        self,
+        playlist_id: UUID,
+        slide_id: UUID,
+        *,
+        actor_user_id: str,
+        reason: str = "slide_duplicated",
+    ) -> dict[str, Any]:
+        slide = self.get_slide(slide_id, playlist_id=playlist_id)
         copy_title = f"{slide['title']} (cópia)".strip()
         return self.add_slide(
             playlist_id,
@@ -599,13 +653,15 @@ class PlaylistRepository:
                 "slideType": slide["slideType"],
                 "title": copy_title,
                 "durationSec": slide.get("durationSec"),
-                "sortOrder": self.next_sort_order(playlist_id),
+                "sortOrder": None,
                 "nativeScreenKey": slide.get("nativeScreenKey"),
                 "nativeConfig": slide.get("nativeConfig") or {},
                 "externalUrl": slide.get("externalUrl"),
                 "externalSandbox": slide.get("externalSandbox"),
                 "transitionStyle": slide.get("transitionStyle"),
             },
+            actor_user_id=actor_user_id,
+            reason=reason,
         )
 
     def touch_view(self, token: str) -> None:
@@ -668,12 +724,34 @@ class PlaylistRepository:
                 row = cur.fetchone()
         return int(row["next_order"]) if row else 0
 
-    def add_slide(self, playlist_id: UUID, payload: dict[str, Any]) -> dict[str, Any]:
+    def add_slide(
+        self,
+        playlist_id: UUID,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str,
+        reason: str = "slide_created",
+    ) -> dict[str, Any]:
         sort_order = payload.get("sortOrder")
-        if sort_order is None:
-            sort_order = self.next_sort_order(playlist_id)
         with get_connection() as conn:
             with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
+                if sort_order is None:
+                    cur.execute(
+                        """
+                        SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order
+                        FROM tv_dashboard.slides
+                        WHERE playlist_id = %s
+                        """,
+                        (str(playlist_id),),
+                    )
+                    next_row = cur.fetchone()
+                    sort_order = int(next_row["next_order"]) if next_row else 0
                 cur.execute(
                     """
                     INSERT INTO tv_dashboard.slides (
@@ -701,7 +779,15 @@ class PlaylistRepository:
             conn.commit()
         return _row_to_slide(row)
 
-    def update_slide(self, slide_id: UUID, payload: dict[str, Any]) -> dict[str, Any]:
+    def update_slide(
+        self,
+        playlist_id: UUID,
+        slide_id: UUID,
+        payload: dict[str, Any],
+        *,
+        actor_user_id: str,
+        reason: str = "slide_updated",
+    ) -> dict[str, Any]:
         fields: list[str] = []
         values: list[Any] = []
         if "transitionStyle" in payload:
@@ -729,54 +815,102 @@ class PlaylistRepository:
                     fields.append(f"{column} = %s")
                 values.append(value)
         if not fields:
-            return self.get_slide(slide_id)
+            return self.get_slide(slide_id, playlist_id=playlist_id)
         fields.append("updated_at = NOW()")
         values.append(str(slide_id))
+        values.append(str(playlist_id))
         with get_connection() as conn:
             with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
                 cur.execute(
                     f"""
                     UPDATE tv_dashboard.slides
                     SET {", ".join(fields)}
-                    WHERE id = %s
+                    WHERE id = %s AND playlist_id = %s
                     RETURNING *
                     """,
                     tuple(values),
                 )
                 row = cur.fetchone()
-                if row:
-                    self._touch_playlist_updated_at(cur, UUID(str(row["playlist_id"])))
+                if not row:
+                    raise SlideNotFoundError
+                self._touch_playlist_updated_at(cur, playlist_id)
             conn.commit()
-        if not row:
-            raise SlideNotFoundError
         return _row_to_slide(row)
 
-    def get_slide(self, slide_id: UUID) -> dict[str, Any]:
+    def get_slide(self, slide_id: UUID, *, playlist_id: UUID | None = None) -> dict[str, Any]:
         with get_connection() as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM tv_dashboard.slides WHERE id = %s", (str(slide_id),))
+                if playlist_id is None:
+                    cur.execute(
+                        "SELECT * FROM tv_dashboard.slides WHERE id = %s",
+                        (str(slide_id),),
+                    )
+                else:
+                    cur.execute(
+                        """
+                        SELECT *
+                        FROM tv_dashboard.slides
+                        WHERE id = %s AND playlist_id = %s
+                        """,
+                        (str(slide_id), str(playlist_id)),
+                    )
                 row = cur.fetchone()
         if not row:
             raise SlideNotFoundError
         return _row_to_slide(row)
 
-    def delete_slide(self, slide_id: UUID) -> None:
+    def delete_slide(
+        self,
+        playlist_id: UUID,
+        slide_id: UUID,
+        *,
+        actor_user_id: str,
+        reason: str = "slide_deleted",
+    ) -> None:
         with get_connection() as conn:
             with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
                 cur.execute(
-                    "DELETE FROM tv_dashboard.slides WHERE id = %s RETURNING playlist_id",
-                    (str(slide_id),),
+                    """
+                    DELETE FROM tv_dashboard.slides
+                    WHERE id = %s AND playlist_id = %s
+                    RETURNING playlist_id
+                    """,
+                    (str(slide_id), str(playlist_id)),
                 )
                 row = cur.fetchone()
-                if row:
-                    self._touch_playlist_updated_at(cur, UUID(str(row["playlist_id"])))
+                if not row:
+                    raise SlideNotFoundError
+                self._touch_playlist_updated_at(cur, playlist_id)
             conn.commit()
-        if not row:
-            raise SlideNotFoundError
 
-    def reorder_slides(self, playlist_id: UUID, items: list[dict[str, int | str]]) -> list[dict[str, Any]]:
+    def reorder_slides(
+        self,
+        playlist_id: UUID,
+        items: list[dict[str, int | str]],
+        *,
+        actor_user_id: str,
+        reason: str = "slides_reordered",
+    ) -> list[dict[str, Any]]:
         with get_connection() as conn:
             with conn.cursor() as cur:
+                self._capture_before_mutation(
+                    cur,
+                    playlist_id,
+                    actor_user_id=actor_user_id,
+                    reason=reason,
+                )
                 # Fase 1: ordens temporárias negativas — evita violar idx_slides_playlist_order ao trocar posições.
                 for offset, item in enumerate(items):
                     cur.execute(

@@ -23,6 +23,7 @@ Dois escopos de seleção: [playbook §19.19](../../docs/12-roadmap-e-evolucao/t
 - Catálogo de presets e importação de telas prontas
 - RBAC por filial e visão consolidada
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
+- **Histórico de revisões:** undo/redo e restauração manual usam snapshots atômicos do backend com controle otimista de revisão; o navegador guarda somente IDs/revisões como cache leve.
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
 - **Tabela live incremental:** rotas paginadas carregam a próxima página ao chegar ao fim do scroll; cabeçalho seleciona a coluna inteira, com alças de largura e quebra automática
 - **Períodos relativos:** hoje; esta semana/mês/trimestre/ano; semana/mês/trimestre/ano anteriores; últimos 7/30/90/N dias; ou datas fixas. As datas relativas são recalculadas no fetch.
@@ -92,6 +93,9 @@ Integração: `@delpi/tv-dashboard-presentation` bundled (`COPY` no Dockerfile);
 GET    /apps/tv-dashboard-api/playlists
 POST   /apps/tv-dashboard-api/playlists
 GET    /apps/tv-dashboard-api/playlists/{id}
+GET    /apps/tv-dashboard-api/playlists/{id}/history
+GET    /apps/tv-dashboard-api/playlists/{id}/history/{snapshotId}
+POST   /apps/tv-dashboard-api/playlists/{id}/history/{snapshotId}/restore
 PATCH  /apps/tv-dashboard-api/playlists/{id}
 DELETE /apps/tv-dashboard-api/playlists/{id}
 GET    /apps/tv-dashboard-api/playlists/{id}/preview-payload

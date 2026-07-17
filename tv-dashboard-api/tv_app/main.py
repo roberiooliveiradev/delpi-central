@@ -18,6 +18,7 @@ from tv_app.interface.http.routes.content_routes import router as content_router
 from tv_app.interface.http.routes.media_routes import router as media_router
 from tv_app.interface.http.routes.native_screen_routes import router as native_screen_router
 from tv_app.application.services.presentation_realtime_hub import presentation_realtime_hub
+from tv_app.interface.http.routes.playlist_history_routes import router as playlist_history_router
 from tv_app.interface.http.routes.playlist_routes import router as playlist_router
 from tv_app.interface.http.routes.presentation_realtime_routes import router as presentation_realtime_router
 from tv_app.interface.http.routes.public_routes import router as public_router
@@ -105,6 +106,7 @@ def health():
 
 
 app.include_router(playlist_router)
+app.include_router(playlist_history_router)
 app.include_router(slide_router)
 app.include_router(media_router)
 app.include_router(content_router)

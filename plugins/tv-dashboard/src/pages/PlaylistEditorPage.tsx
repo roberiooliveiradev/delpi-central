@@ -193,12 +193,21 @@ export function PlaylistEditorPage({
 
   const deckHistoryValue = useMemo<DeckEditorHistoryContextValue>(
     () => ({
+      playlistId,
       recordBeforeChange: deckHistory.recordBeforeChange,
+      confirmChange: deckHistory.confirmChange,
+      cancelChange: deckHistory.cancelChange,
       undo: deckHistory.undo,
       redo: deckHistory.redo,
       canUndo: deckHistory.canUndo,
       canRedo: deckHistory.canRedo,
       historyEpoch: deckHistory.historyEpoch,
+      historyPage: deckHistory.historyPage,
+      loading: deckHistory.loading,
+      restoring: deckHistory.restoring,
+      error: deckHistory.error,
+      loadHistory: deckHistory.loadHistory,
+      restoreRevision: deckHistory.restoreRevision,
       setLiveComunicadoConfig: (config) => {
         liveComunicadoConfigRef.current = config;
       },
@@ -206,18 +215,27 @@ export function PlaylistEditorPage({
     [
       deckHistory.canRedo,
       deckHistory.canUndo,
+      deckHistory.cancelChange,
+      deckHistory.confirmChange,
+      deckHistory.error,
+      deckHistory.historyPage,
       deckHistory.historyEpoch,
+      deckHistory.loadHistory,
+      deckHistory.loading,
       deckHistory.recordBeforeChange,
       deckHistory.redo,
+      deckHistory.restoreRevision,
+      deckHistory.restoring,
       deckHistory.undo,
+      playlistId,
     ],
   );
 
   useDeckEditorKeyboard({
     undo: deckHistory.undo,
     redo: deckHistory.redo,
-    canUndo: deckHistory.canUndo,
-    canRedo: deckHistory.canRedo,
+    canUndo: deckHistory.canUndo && !deckHistory.restoring,
+    canRedo: deckHistory.canRedo && !deckHistory.restoring,
   });
 
   const slides = useMemo(
@@ -409,7 +427,7 @@ export function PlaylistEditorPage({
     presence: editorPresence,
     onPresenceUpdate: handlePresenceUpdate,
     onSync: () => {
-      void reloadPlaylistFromServer();
+      void reloadPlaylistFromServer().then(() => deckHistory.handleRemoteUpdate());
     },
     onSlideDraft: (event) => {
       applyRemoteSlideDraft(event.slideId, event.nativeConfig, event.clientId);
@@ -505,8 +523,14 @@ export function PlaylistEditorPage({
   async function saveSettings(field: string, value: string | number | Record<string, unknown>) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
-    const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
-    setPlaylist({ ...updated, slides: playlist.slides });
+    try {
+      const updated = await updatePlaylist(playlist.id, { [field]: value } as Parameters<typeof updatePlaylist>[1]);
+      setPlaylist({ ...updated, slides: playlist.slides });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   async function handleExportPng() {
@@ -575,7 +599,8 @@ export function PlaylistEditorPage({
     ).length;
     const baseTitle = customCatalogItem?.label ?? "Personalizado";
     const title = customCount === 0 ? baseTitle : `${baseTitle} ${customCount + 1}`;
-    const slide = await addSlide(playlist.id, {
+    try {
+      const slide = await addSlide(playlist.id, {
       slideType: "native",
       title,
       nativeScreenKey: "custom_message",
@@ -583,9 +608,14 @@ export function PlaylistEditorPage({
         parseComunicadoConfig({ headline: "", blocks: [] }),
       ),
       durationSec: customCatalogItem?.defaultDurationSec ?? 30,
-    });
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    selectSlide(slide.id, slide);
+      });
+      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+      selectSlide(slide.id, slide);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   async function handleRemoveSlide(slide: Slide) {
@@ -598,17 +628,23 @@ export function PlaylistEditorPage({
     });
     if (!confirmed) return;
     deckHistory.recordBeforeChange();
-    await deleteSlide(playlist.id, slide.id);
-    const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
-    setPlaylist({ ...playlist, slides: remaining });
-    if (selectedSlideId === slide.id) {
-      const nextId = remaining[0]?.id ?? null;
-      if (nextId) selectSlide(nextId);
-      else {
-        setSelectedSlideId(null);
-        liveComunicadoConfigRef.current = null;
-        writeSelectedSlideId(playlistId, null);
+    try {
+      await deleteSlide(playlist.id, slide.id);
+      const remaining = (playlist.slides ?? []).filter((item) => item.id !== slide.id);
+      setPlaylist({ ...playlist, slides: remaining });
+      if (selectedSlideId === slide.id) {
+        const nextId = remaining[0]?.id ?? null;
+        if (nextId) selectSlide(nextId);
+        else {
+          setSelectedSlideId(null);
+          liveComunicadoConfigRef.current = null;
+          writeSelectedSlideId(playlistId, null);
+        }
       }
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
     }
   }
 
@@ -663,17 +699,23 @@ export function PlaylistEditorPage({
   ) {
     if (!playlist) return;
     if (options?.recordHistory) deckHistory.recordBeforeChange();
-    const updated = await updateSlide(playlist.id, slide.id, payload);
-    if (payload.nativeConfig) {
-      clearComunicadoSlideDraft(playlist.id, slide.id);
-      if (pendingComunicadoSaveRef.current?.slide.id === slide.id) {
-        pendingComunicadoSaveRef.current = null;
+    try {
+      const updated = await updateSlide(playlist.id, slide.id, payload);
+      if (payload.nativeConfig) {
+        clearComunicadoSlideDraft(playlist.id, slide.id);
+        if (pendingComunicadoSaveRef.current?.slide.id === slide.id) {
+          pendingComunicadoSaveRef.current = null;
+        }
       }
+      setPlaylist({
+        ...playlist,
+        slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+      });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      if (options?.recordHistory) deckHistory.cancelChange();
+      throw caught;
     }
-    setPlaylist({
-      ...playlist,
-      slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
-    });
   }
 
   const flushPendingComunicadoSave = useCallback(async () => {
@@ -692,11 +734,13 @@ export function PlaylistEditorPage({
         nativeConfig: pending.nativeConfig,
       });
       clearComunicadoSlideDraft(pl.id, pending.slide.id);
+      await deckHistory.confirmChange();
     } catch {
       // Draft permanece no localStorage para o próximo load.
       pendingComunicadoSaveRef.current = pending;
+      deckHistory.cancelChange();
     }
-  }, []);
+  }, [deckHistory.cancelChange, deckHistory.confirmChange]);
 
   function scheduleCustomSlideSave(slide: Slide, nativeConfig: Record<string, unknown>) {
     liveComunicadoConfigRef.current = nativeConfig;
@@ -751,9 +795,15 @@ export function PlaylistEditorPage({
   async function handleDuplicateSlide(slide: Slide) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
-    const copy = await duplicateSlide(playlist.id, slide.id);
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
-    selectSlide(copy.id, copy);
+    try {
+      const copy = await duplicateSlide(playlist.id, slide.id);
+      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), copy] });
+      selectSlide(copy.id, copy);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   function handleCopySlide(slide: Slide) {
@@ -765,15 +815,21 @@ export function PlaylistEditorPage({
     if (!playlist || !slideClipboardRef.current) return;
     const payload = slideClipboardRef.current;
     deckHistory.recordBeforeChange();
-    const slide = await addSlide(playlist.id, {
-      ...payload,
-      title: pasteTitleFromClipboard(payload),
-      nativeScreenKey: payload.nativeScreenKey ?? undefined,
-      nativeConfig: payload.nativeConfig ?? undefined,
-      externalUrl: payload.externalUrl ?? undefined,
-    });
-    setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
-    selectSlide(slide.id, slide);
+    try {
+      const slide = await addSlide(playlist.id, {
+        ...payload,
+        title: pasteTitleFromClipboard(payload),
+        nativeScreenKey: payload.nativeScreenKey ?? undefined,
+        nativeConfig: payload.nativeConfig ?? undefined,
+        externalUrl: payload.externalUrl ?? undefined,
+      });
+      setPlaylist({ ...playlist, slides: [...(playlist.slides ?? []), slide] });
+      selectSlide(slide.id, slide);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   const canPasteSlide = slideClipboardRef.current != null;
@@ -782,11 +838,17 @@ export function PlaylistEditorPage({
   async function handleToggleSlideActive(slide: Slide) {
     if (!playlist) return;
     deckHistory.recordBeforeChange();
-    const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
-    setPlaylist({
-      ...playlist,
-      slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
-    });
+    try {
+      const updated = await updateSlide(playlist.id, slide.id, { isActive: !slide.isActive });
+      setPlaylist({
+        ...playlist,
+        slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+      });
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   function tvStatusLabel() {
@@ -811,9 +873,15 @@ export function PlaylistEditorPage({
     const [moved] = reordered.splice(dragIndex, 1);
     reordered.splice(targetIndex, 0, moved);
     const items = reordered.map((item, sortOrder) => ({ id: item.id, sortOrder }));
-    const result = await reorderSlides(playlist.id, items);
-    setPlaylist({ ...playlist, slides: result.slides });
-    setDragIndex(null);
+    try {
+      const result = await reorderSlides(playlist.id, items);
+      setPlaylist({ ...playlist, slides: result.slides });
+      setDragIndex(null);
+      await deckHistory.confirmChange();
+    } catch (caught) {
+      deckHistory.cancelChange();
+      throw caught;
+    }
   }
 
   function copyLink() {

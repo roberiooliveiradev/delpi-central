@@ -176,9 +176,15 @@ def update_playlist(request: Request, playlist_id: UUID, body: UpdatePlaylistBod
     guarded = require_playlist_access(request, playlist_id, need="edit")
     if is_access_error(guarded):
         return guarded
+    user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
         playlist = _repo.update(
             playlist_id,
+            actor_user_id=actor,
+            reason="playlist_updated",
             name=body.name,
             description=body.description,
             viewport_profile=body.viewportProfile,
@@ -205,13 +211,13 @@ def delete_playlist(request: Request, playlist_id: UUID):
     if is_access_error(guarded):
         return guarded
     try:
-        notify_presentation_changed(
-            playlist_id=str(playlist_id),
-            reason="playlist_deleted",
-        )
         _repo.delete(playlist_id)
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
+    notify_presentation_changed(
+        playlist_id=str(playlist_id),
+        reason="playlist_deleted",
+    )
     return ok(message="Programação excluída.")
 
 
@@ -220,8 +226,17 @@ def deactivate_playlist(request: Request, playlist_id: UUID):
     guarded = require_playlist_access(request, playlist_id, need="manage")
     if is_access_error(guarded):
         return guarded
+    user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
-        playlist = _repo.set_active(playlist_id, is_active=False)
+        playlist = _repo.set_active(
+            playlist_id,
+            is_active=False,
+            actor_user_id=actor,
+            reason="playlist_deactivated",
+        )
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(
@@ -237,8 +252,17 @@ def activate_playlist(request: Request, playlist_id: UUID):
     guarded = require_playlist_access(request, playlist_id, need="manage")
     if is_access_error(guarded):
         return guarded
+    user, _ = guarded
+    actor = _actor_id(user)
+    if not actor:
+        return fail("Usuário não identificado.", 401)
     try:
-        playlist = _repo.set_active(playlist_id, is_active=True)
+        playlist = _repo.set_active(
+            playlist_id,
+            is_active=True,
+            actor_user_id=actor,
+            reason="playlist_activated",
+        )
     except PlaylistNotFoundError:
         return fail(message("playlistNotFound"), 404)
     notify_presentation_changed(

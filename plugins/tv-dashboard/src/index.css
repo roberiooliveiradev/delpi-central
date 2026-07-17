@@ -651,6 +651,104 @@
   max-height: min(70vh, 640px);
   overflow: auto;
 }
+.dashboard-tv-dashboard .td-modal--history{
+  width: min(980px, calc(100vw - 24px));
+}
+.dashboard-tv-dashboard .td-modal--history .td-modal__body{
+  max-height: min(76vh, 720px);
+  overflow: auto;
+}
+.dashboard-tv-dashboard .td-history__layout{
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+  gap: 16px;
+}
+.dashboard-tv-dashboard .td-history__list{
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dashboard-tv-dashboard .td-history__item{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--td-border);
+  border-radius: 10px;
+  background: var(--td-surface);
+}
+.dashboard-tv-dashboard .td-history__summary{
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--td-text);
+  text-align: left;
+  cursor: pointer;
+}
+.dashboard-tv-dashboard .td-history__summary span,
+.dashboard-tv-dashboard .td-history__summary small,
+.dashboard-tv-dashboard .td-history__preview span{
+  color: var(--td-muted);
+}
+.dashboard-tv-dashboard .td-history__preview{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 180px;
+  padding: 14px;
+  border: 1px solid var(--td-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--td-accent) 4%, var(--td-surface));
+}
+.dashboard-tv-dashboard .td-history__preview p,
+.dashboard-tv-dashboard .td-history__preview ul{
+  margin: 0;
+}
+.dashboard-tv-dashboard .td-history__preview ul{
+  padding-left: 20px;
+}
+.dashboard-tv-dashboard .td-history__pagination{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+.dashboard-tv-dashboard .td-history__restore,
+.dashboard-tv-dashboard .td-history__pagination .td-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dashboard-tv-dashboard .td-history__error{
+  padding: 10px 12px;
+  border: 1px solid var(--danger, var(--td-accent));
+  border-radius: 8px;
+  color: var(--danger, var(--td-accent));
+}
+.dashboard-tv-dashboard .td-history__state{
+  padding: 24px;
+  color: var(--td-muted);
+  text-align: center;
+}
+@media (max-width: 768px){
+  .dashboard-tv-dashboard .td-history__layout{
+    grid-template-columns: 1fr;
+  }
+  .dashboard-tv-dashboard .td-history__item{
+    grid-template-columns: 1fr;
+  }
+  .dashboard-tv-dashboard .td-history__restore{
+    min-height: 44px;
+    justify-content: center;
+  }
+}
 /* Âncora fallback quando o catálogo abre sem gatilho (KeyTip / API). */
 .dashboard-tv-dashboard .td-data-catalog-popover__fallback-anchor{
   position: fixed;

@@ -29,6 +29,9 @@ export type PlaylistMasterConfig = {
 
 export type Playlist = {
   id: string;
+  /** Revisão otimista do agregado, quando entregue pelo backend. */
+  revision?: number;
+  currentRevision?: number;
   publicToken: string;
   name: string;
   description?: string | null;
@@ -173,6 +176,40 @@ export type MediaAsset = {
   fileSizeBytes: number;
 };
 
+export type PlaylistHistoryPreview = {
+  playlistName?: string;
+  slideCount?: number;
+  slideTitles?: string[];
+  selectedSlideId?: string | null;
+};
+
+export type PlaylistHistoryEntry = {
+  snapshotId: string;
+  revision: number;
+  createdAt: string;
+  authorId?: string | null;
+  authorName?: string | null;
+  reason?: string | null;
+  preview?: PlaylistHistoryPreview | null;
+};
+
+export type PlaylistHistoryPage = {
+  items: PlaylistHistoryEntry[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  currentRevision: number | null;
+};
+
+export type PlaylistHistorySnapshot = PlaylistHistoryEntry & {
+  snapshot: {
+    playlist: Partial<Playlist>;
+    slides: Slide[];
+  };
+};
+
 export function adminMediaUrl(playlistId: string, assetId: string) {
   return `${API_BASE}/playlists/${playlistId}/media/${assetId}`;
 }
@@ -208,6 +245,79 @@ export async function createPlaylist(name: string, description?: string) {
 
 export async function getPlaylist(id: string) {
   return unwrap(httpGet<ApiEnvelope<Playlist>>(`${API_BASE}/playlists/${id}`));
+}
+
+export async function listPlaylistHistory(
+  playlistId: string,
+  options: { page?: number; pageSize?: number } = {},
+) {
+  const page = Math.max(1, options.page ?? 1);
+  const pageSize = Math.min(100, Math.max(1, options.pageSize ?? 10));
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  });
+  const data = await unwrap(
+    httpGet<
+      ApiEnvelope<{
+        items: PlaylistHistoryEntry[];
+        page: number;
+        pageSize: number;
+        total: number;
+        totalPages: number;
+        currentRevision: number | null;
+      }>
+    >(
+      `${API_BASE}/playlists/${playlistId}/history?${params.toString()}`,
+    ),
+  );
+  return {
+    ...data,
+    hasNext: data.page < data.totalPages,
+    currentRevision: data.currentRevision,
+  } satisfies PlaylistHistoryPage;
+}
+
+export async function getPlaylistHistorySnapshot(playlistId: string, snapshotId: string) {
+  const data = await unwrap(
+    httpGet<
+      ApiEnvelope<{
+        snapshotId: string;
+        revision: number;
+        authorId?: string | null;
+        authorName?: string | null;
+        reason?: string | null;
+        createdAt: string;
+        playlist: Playlist;
+      }>
+    >(
+      `${API_BASE}/playlists/${playlistId}/history/${encodeURIComponent(snapshotId)}`,
+    ),
+  );
+  const { slides = [], ...playlist } = data.playlist;
+  return {
+    snapshotId: data.snapshotId,
+    revision: data.revision,
+    createdAt: data.createdAt,
+    authorId: data.authorId,
+    authorName: data.authorName,
+    reason: data.reason,
+    snapshot: { playlist, slides },
+  } satisfies PlaylistHistorySnapshot;
+}
+
+export async function restorePlaylistHistorySnapshot(
+  playlistId: string,
+  snapshotId: string,
+  expectedRevision: number,
+) {
+  const data = await unwrap(
+    httpPost<ApiEnvelope<{ playlist: Playlist }>>(
+      `${API_BASE}/playlists/${playlistId}/history/${encodeURIComponent(snapshotId)}/restore`,
+      { expectedRevision },
+    ),
+  );
+  return data.playlist;
 }
 
 export async function getPresentationStatus(id: string) {

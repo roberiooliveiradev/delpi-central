@@ -1,10 +1,12 @@
 import { HintAction } from "@delpi/plugin-ui/index";
-import { Redo2, Undo2 } from "lucide-react";
+import { History, Redo2, Undo2 } from "lucide-react";
+import { useState } from "react";
 
 import { getKeyboardShortcut, formatShortcutKeys } from "../../content/keyboardShortcuts";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useDeckEditorHistoryContext } from "../../context/deckEditorHistoryContext";
 import { ShortcutTip } from "../ShortcutTip";
+import { DeckRevisionHistoryPanel } from "./DeckRevisionHistoryPanel";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
@@ -19,6 +21,7 @@ function hintWithShortcut(base: string, shortcutId: string): string {
 /** Desfazer/refazer global — ícones compactos na faixa de abas. */
 export function DeckHistoryTabActions() {
   const history = useDeckEditorHistoryContext();
+  const [panelOpen, setPanelOpen] = useState(false);
   if (!history) return null;
 
   return (
@@ -29,8 +32,8 @@ export function DeckHistoryTabActions() {
             <button
               type="button"
               className="td-deck-chrome__history-btn"
-              disabled={!history.canUndo}
-              onClick={history.undo}
+              disabled={!history.canUndo || history.restoring}
+              onClick={() => void history.undo()}
               aria-label="Desfazer"
             >
               <Undo2 size={14} aria-hidden="true" />
@@ -44,8 +47,8 @@ export function DeckHistoryTabActions() {
             <button
               type="button"
               className="td-deck-chrome__history-btn"
-              disabled={!history.canRedo}
-              onClick={history.redo}
+              disabled={!history.canRedo || history.restoring}
+              onClick={() => void history.redo()}
               aria-label="Refazer"
             >
               <Redo2 size={14} aria-hidden="true" />
@@ -53,6 +56,21 @@ export function DeckHistoryTabActions() {
           </HintAction>
         </span>
       </ShortcutTip>
+      <HintAction hint="Abrir histórico de revisões" ariaLabel="Abrir histórico de revisões">
+        <button
+          type="button"
+          className="td-deck-chrome__history-btn"
+          onClick={() => setPanelOpen(true)}
+          aria-label="Abrir histórico de revisões"
+        >
+          <History size={14} aria-hidden="true" />
+        </button>
+      </HintAction>
+      <DeckRevisionHistoryPanel
+        open={panelOpen}
+        playlistId={history.playlistId}
+        onClose={() => setPanelOpen(false)}
+      />
     </div>
   );
 }

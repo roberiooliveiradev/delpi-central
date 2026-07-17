@@ -23,6 +23,7 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 |---|---|
 | Programações | `/playlists` |
 | Telas | `/playlists/{id}/slides` |
+| Histórico | `/playlists/{id}/history` — até 500 versões, detalhes e restauração atômica |
 | Mídia | `/playlists/{id}/media` — `GET` lista `{ items }`, `POST` upload de imagem/vídeo/fonte, `GET /{assetId}` serve |
 | Tempo real | `WS /playlists/{id}/presentation-ws?access_token=…` |
 | Catálogo nativo | `/native-screens` |
@@ -41,6 +42,22 @@ Documentação completa: [`docs/12-roadmap-e-evolucao/tv-dashboard/README.md`](.
 | `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
 
 Filtros padrão da programação: campo `dataDefaults` em `PATCH /playlists/{id}` (migration `V003__playlist_data_defaults.sql`).
+
+### Histórico persistente
+
+Cada mutação editorial concluída captura no PostgreSQL o estado anterior da
+programação e de suas telas. São mantidas as 500 versões mais recentes por
+programação; permissões, compartilhamentos, token público e métricas não fazem
+parte dos snapshots.
+
+| Método | Rota | Permissão | Descrição |
+|---|---|---|---|
+| `GET` | `/playlists/{id}/history?page=1&pageSize=10` | `TV_READ` | Lista versões e a revisão atual |
+| `GET` | `/playlists/{id}/history/{snapshotId}` | `TV_READ` | Retorna o snapshot completo |
+| `POST` | `/playlists/{id}/history/{snapshotId}/restore` | `TV_WRITE` | Restaura atomicamente, preservando UUIDs e ordem |
+
+O restore exige `expectedRevision` no corpo. Se a programação tiver sido
+alterada desde a leitura, a API retorna `409` com `currentRevision`.
 
 Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
 
