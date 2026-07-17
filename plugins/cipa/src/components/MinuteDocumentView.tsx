@@ -161,7 +161,7 @@ export function MinuteDocumentView({
               return (
                 <div
                   key={field}
-                  className="cipa-minute-document__content"
+                  className="cipa-minute-document__content delpi-ui-document-rich-content"
                   dangerouslySetInnerHTML={{ __html: html }}
                 />
               );

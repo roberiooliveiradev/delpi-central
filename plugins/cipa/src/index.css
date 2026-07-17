@@ -345,17 +345,6 @@
   margin: 0 0 4mm;
 }
 
-.dashboard-cipa .cipa-minute-document__content ul,
-.dashboard-cipa .cipa-minute-document__content ol {
-  margin: 0 0 4mm;
-  padding-left: 8mm;
-}
-
-.dashboard-cipa .cipa-minute-document__closing {
-  margin-top: 8mm;
-  text-indent: 0;
-}
-
 .dashboard-cipa .cipa-minute-document__signatures {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

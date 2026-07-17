@@ -1,3 +1,5 @@
+from reportlab.lib.units import mm
+
 from cipa_app.infrastructure.pdf.minute_pdf_renderer import (
     MinutePdfRenderer,
     format_date_br,
@@ -73,6 +75,8 @@ def test_pdf_preserves_rich_text_formatting():
     assert formatted.backColor.green == 1
     assert blocks[1].bulletText == "1."
     assert blocks[2].bulletText == "2."
+    assert blocks[1].style.leftIndent == 5 * mm
+    assert blocks[1].style.firstLineIndent == -2.5 * mm
 
 
 def test_pdf_story_does_not_inject_intro_or_closing_text():

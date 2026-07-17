@@ -70,6 +70,40 @@
   padding: 10mm 2mm 12mm;
 }
 
+.delpi-ui-document-rich-content ul,
+.delpi-ui-document-rich-content ol {
+  margin: 0 0 4mm;
+  padding-inline-start: 6mm;
+}
+
+.delpi-ui-document-rich-content li {
+  margin: 0 0 2mm;
+  padding-inline-start: 1mm;
+}
+
+.delpi-ui-document-rich-content li:last-child {
+  margin-bottom: 0;
+}
+
+.delpi-ui-document-page
+  .delpi-ui-document-page__body
+  .delpi-ui-document-rich-content
+  li
+  > p,
+.delpi-ui-document-page
+  .delpi-ui-document-page__body
+  .delpi-ui-document-rich-content
+  li
+  > div {
+  margin: 0;
+  text-indent: 0;
+}
+
+.delpi-ui-document-rich-content li > p + p,
+.delpi-ui-document-rich-content li > div + div {
+  margin-top: 1mm;
+}
+
 .delpi-ui-document-header {
   display: grid;
   grid-template-columns: 24mm minmax(0, 1fr);

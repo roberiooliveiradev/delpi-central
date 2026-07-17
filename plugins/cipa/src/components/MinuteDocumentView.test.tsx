@@ -51,7 +51,9 @@ const detail: MinuteDetail = {
 
 describe("MinuteDocumentView", () => {
   it("renderiza leitura formal com participantes, conteúdo e assinaturas", () => {
-    render(<MinuteDocumentView detail={detail} toolbar={<button>Baixar PDF</button>} />);
+    const { container } = render(
+      <MinuteDocumentView detail={detail} toolbar={<button>Baixar PDF</button>} />,
+    );
 
     expect(screen.getByLabelText("Modo de leitura da ata")).toBeTruthy();
     expect(screen.getByText("Ata de reunião da CIPA")).toBeTruthy();
@@ -59,6 +61,7 @@ describe("MinuteDocumentView", () => {
     expect(screen.getByText("Conteúdo formal da reunião.")).toBeTruthy();
     expect(screen.getByText("Presidente da CIPA")).toBeTruthy();
     expect(screen.getByText("Baixar PDF")).toBeTruthy();
+    expect(container.querySelector(".delpi-ui-document-rich-content")).toBeTruthy();
     expect(screen.queryByText(/realizou-se reunião/)).toBeNull();
     expect(screen.queryByText(/DELPI Conexões Elétricas, 16 de julho/)).toBeNull();
   });
