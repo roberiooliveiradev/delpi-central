@@ -1,3 +1,5 @@
+import { resolveDataCellSemantics } from "./dataCellSemantics";
+
 export type DataTableCellRef = { rowIndex: number; columnKey: string };
 
 export type DataTableSelection =
@@ -19,6 +21,10 @@ function uniquePreserveOrder<T>(items: T[]): T[] {
     next.push(item);
   }
   return next;
+}
+
+function hasOwn(row: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(row, key);
 }
 
 export function selectionFromColumnKey(columnKey: string | null | undefined): DataTableSelection | null {
@@ -171,7 +177,11 @@ export function selectionToTsv(
     if (keys.length === 0) return "";
     const header = keys.join("\t");
     const body = rows
-      .map((row) => keys.map((key) => stringifyCell(row[key])).join("\t"))
+      .map((row) =>
+        keys
+          .map((key) => stringifyCell(row[key], hasOwn(row, key)))
+          .join("\t"),
+      )
       .join("\n");
     return `${header}\n${body}`;
   }
@@ -181,7 +191,12 @@ export function selectionToTsv(
     if (indices.length === 0) return "";
     const header = columnKeys.join("\t");
     const body = indices
-      .map((index) => columnKeys.map((key) => stringifyCell(rows[index]?.[key])).join("\t"))
+      .map((index) => {
+        const row = rows[index] ?? {};
+        return columnKeys
+          .map((key) => stringifyCell(row[key], hasOwn(row, key)))
+          .join("\t");
+      })
       .join("\n");
     return `${header}\n${body}`;
   }
@@ -194,20 +209,26 @@ export function selectionToTsv(
   );
   if (cells.length === 0) return "";
   if (cells.length === 1) {
-    return stringifyCell(rows[cells[0]!.rowIndex]?.[cells[0]!.columnKey]);
+    const cell = cells[0]!;
+    const row = rows[cell.rowIndex] ?? {};
+    return stringifyCell(row[cell.columnKey], hasOwn(row, cell.columnKey));
   }
   const rowSet = uniquePreserveOrder(cells.map((cell) => cell.rowIndex)).sort((a, b) => a - b);
   const colSet = uniquePreserveOrder(
     cells.map((cell) => cell.columnKey).filter((key) => columnKeys.includes(key)),
   );
   return rowSet
-    .map((rowIndex) => colSet.map((key) => stringifyCell(rows[rowIndex]?.[key])).join("\t"))
+    .map((rowIndex) => {
+      const row = rows[rowIndex] ?? {};
+      return colSet
+        .map((key) => stringifyCell(row[key], hasOwn(row, key)))
+        .join("\t");
+    })
     .join("\n");
 }
 
-function stringifyCell(value: unknown): string {
-  if (value == null) return "";
-  const text = String(value);
+function stringifyCell(value: unknown, present: boolean): string {
+  const text = resolveDataCellSemantics(value, { present }).copyText;
   if (/[\t\n\r"]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;
   }

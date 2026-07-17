@@ -51,4 +51,14 @@ describe("dataTableSelection", () => {
       selectionToTsv({ kind: "cell", cells: [{ rowIndex: 1, columnKey: "b" }] }, rows, columns),
     ).toBe("y");
   });
+
+  it("preserva null, campo ausente, vazio e erro na cópia TSV", () => {
+    const rows = [
+      { a: null, b: "", c: { error: { code: "m.cast", message: "Inválido" } } },
+      { a: 0, b: false },
+    ];
+    expect(selectionToTsv({ kind: "row", indices: [0, 1] }, rows, columns)).toBe(
+      "a\tb\tc\nnull\t\t#ERROR:m.cast\n0\tfalse\tausente",
+    );
+  });
 });

@@ -233,6 +233,53 @@ table.delpi-ui-table--grid-preview td.delpi-ui-table__cell--selected {
   outline-offset: -1px;
 }
 
+.delpi-ui-data-cell {
+  display: inline;
+  min-width: 0;
+}
+
+.delpi-ui-data-cell--null,
+.delpi-ui-data-cell--empty,
+.delpi-ui-data-cell--missing,
+.delpi-ui-data-cell--error {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.delpi-ui-data-cell--null,
+.delpi-ui-data-cell--empty,
+.delpi-ui-data-cell--missing {
+  color: var(--delpi-ui-text-muted, var(--delpi-ui-muted, rgba(17, 17, 17, 0.62)));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text-muted, var(--delpi-ui-muted, #667085)) 8%,
+    transparent
+  );
+}
+
+.delpi-ui-data-cell--missing {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.delpi-ui-data-cell--error {
+  color: var(--delpi-ui-danger, var(--danger, #b42318));
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-danger, var(--danger, #b42318)) 10%,
+    transparent
+  );
+  font-style: normal;
+  font-weight: 650;
+  cursor: help;
+}
+
 table.delpi-ui-table--grid-preview th:focus-visible,
 table.delpi-ui-table--grid-preview td:focus-visible {
   outline: 2px solid var(--delpi-ui-accent, var(--primary, #089bdb));

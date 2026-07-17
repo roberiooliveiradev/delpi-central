@@ -142,6 +142,11 @@ export {
 } from "./DataTable";
 
 export {
+  DataCellValue,
+  type DataCellValueProps,
+} from "./DataCellValue";
+
+export {
   isCellSelected,
   isColumnSelected,
   isRowSelected,

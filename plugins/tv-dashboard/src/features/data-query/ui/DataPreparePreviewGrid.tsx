@@ -1,4 +1,5 @@
 import {
+  DataCellValue,
   DataTable,
   dataTableBemClasses,
   primaryColumnKey,
@@ -54,7 +55,12 @@ export function DataPreparePreviewGrid({
           {typeGlyph(column.type)}
         </span>
       ),
-      render: (row) => (row[column.key] == null ? "" : String(row[column.key])),
+      render: (row) => (
+        <DataCellValue
+          value={row[column.key]}
+          present={Object.prototype.hasOwnProperty.call(row, column.key)}
+        />
+      ),
     }),
   );
 
