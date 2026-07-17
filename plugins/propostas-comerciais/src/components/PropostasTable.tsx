@@ -14,7 +14,7 @@ type PropostasTableProps = {
 export function PropostasTable({ items, onSelect }: PropostasTableProps) {
   return (
     <div className={PC_TABLE.wrap}>
-      <table className="pc-table">
+      <table className={PC_TABLE.table}>
         <thead>
           <tr>
             <th>Nº OV</th>
@@ -31,7 +31,7 @@ export function PropostasTable({ items, onSelect }: PropostasTableProps) {
           {items.map((item) => (
             <tr
               key={`${item.proposta_interna}-${item.versao}`}
-              className="pc-table__row--clickable"
+              className={PC_TABLE.rowClickable}
               onClick={() => onSelect(item.proposta_interna)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {

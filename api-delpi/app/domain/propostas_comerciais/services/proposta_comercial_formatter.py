@@ -101,7 +101,7 @@ class PropostaComercialFormatter:
         if value is None or value == "":
             return None
         try:
-            number = float(value) / 100.0
+            number = float(value) / 1000.0
         except (TypeError, ValueError):
             return None
         if math.isnan(number):

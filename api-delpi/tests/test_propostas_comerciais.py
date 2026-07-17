@@ -181,7 +181,8 @@ def test_formatter_formats_document_fields() -> None:
     assert PropostaComercialFormatter.format_currency(40041.56) == "R$ 40.041,56"
     assert PropostaComercialFormatter.format_date("20260612") == "12/06/2026"
     assert PropostaComercialFormatter.format_integer_days(45.0) == 45
-    assert PropostaComercialFormatter.format_lote_minimo_mil(3000.0) == "30,000"
+    assert PropostaComercialFormatter.format_lote_minimo_mil(3000.0) == "3,000"
+    assert PropostaComercialFormatter.format_lote_minimo_mil(2000.0) == "2,000"
     assert PropostaComercialFormatter.format_lote_minimo_mil(0.0) == "0,000"
     assert PropostaComercialFormatter.format_minimum_lot(1000.0) == 1000
     assert PropostaComercialFormatter.format_icms_rate(12.0) == "12%"

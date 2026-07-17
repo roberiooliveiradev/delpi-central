@@ -99,7 +99,7 @@ export function ItensTable(props: ItensTableProps) {
 
   return (
     <div className={PC_TABLE.wrap}>
-      <table className="pc-table pc-table--items">
+      <table className={`${PC_TABLE.table} pc-table--items`}>
         <thead>
           <tr>
             {ITEM_COLUMN_KEYS.map((columnKey) => (

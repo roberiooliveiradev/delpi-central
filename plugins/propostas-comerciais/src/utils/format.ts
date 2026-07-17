@@ -50,12 +50,12 @@ export function displayValue(value: string | number | null | undefined): string 
   return text || "—";
 }
 
-/** Lote mínimo Protheus → milheiro (÷100), sempre 3 casas decimais. */
+/** Lote mínimo Protheus → milheiro (÷1000), sempre 3 casas decimais. */
 export function formatLoteMinimoMil(value: number | string | null | undefined): string {
   if (value === null || value === undefined || value === "") return "—";
   const number = typeof value === "number" ? value : Number(String(value).replace(",", "."));
   if (!Number.isFinite(number)) return "—";
-  return (number / 100).toLocaleString("pt-BR", {
+  return (number / 1000).toLocaleString("pt-BR", {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
   });
