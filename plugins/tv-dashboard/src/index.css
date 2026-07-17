@@ -6376,10 +6376,10 @@ body.td-composer--marqueeing *{
   color: var(--td-muted);
   font: inherit;
   font-size: 12px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   cursor: pointer;
   border-bottom: 2px solid transparent;
-  min-height: 44px;
+  min-height: 36px;
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-tab--active{
   color: var(--td-text);
@@ -6390,24 +6390,30 @@ body.td-composer--marqueeing *{
   display: flex;
   align-items: stretch;
   gap: 0;
-  padding: 8px;
+  padding: 5px 6px;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-gutter: stable;
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-primary{
   flex: 0 0 auto;
-  padding: 22px 10px 0 2px;
+  padding: 20px 10px 0 2px;
   border-right: 1px solid var(--td-border);
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-group{
   display: flex;
   flex: 0 0 auto;
   flex-direction: column;
-  gap: 6px;
-  min-width: 180px;
-  padding: 0 10px 6px;
+  gap: 4px;
+  min-width: 168px;
+  padding: 0 9px 2px;
   border-right: 1px solid var(--td-border);
+}
+.dashboard-tv-dashboard .td-data-pq__ribbon-group-head{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 16px;
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-group h3{
   margin: 0;
@@ -6420,18 +6426,18 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-group-body{
   display: grid;
-  grid-auto-columns: minmax(132px, max-content);
+  grid-auto-columns: minmax(122px, max-content);
   grid-auto-flow: column;
-  grid-template-rows: repeat(2, minmax(44px, auto));
-  gap: 6px;
+  grid-template-rows: repeat(2, minmax(32px, auto));
+  gap: 5px;
   align-items: stretch;
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-field{
   display: grid;
-  grid-template-columns: minmax(54px, auto) minmax(64px, 1fr);
+  grid-template-columns: minmax(50px, auto) minmax(60px, 1fr);
   align-items: center;
   gap: 6px;
-  min-width: 132px;
+  min-width: 122px;
   color: var(--td-muted);
   font-size: 10px;
 }
@@ -6440,8 +6446,8 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-group-body > .delpi-ui-select,
 .dashboard-tv-dashboard .td-data-pq__ribbon-group-body > input.delpi-ui-native-control{
-  min-width: 150px;
-  width: 180px;
+  min-width: 140px;
+  width: 168px;
 }
 .dashboard-tv-dashboard .td-data-pq__ribbon-action{
   display: inline-flex;
@@ -6455,10 +6461,10 @@ body.td-composer--marqueeing *{
   font-size: 11px;
   font-weight: 500;
   line-height: 1.1;
-  padding: 6px 10px;
+  padding: 5px 9px;
   border-radius: 6px;
   cursor: pointer;
-  min-height: 44px;
+  min-height: 32px;
   white-space: nowrap;
   transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
 }
@@ -6622,9 +6628,8 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-data-pq__workspace{
   display: grid;
   grid-template-columns: minmax(180px, 210px) minmax(0, 1fr) minmax(260px, 300px);
-  min-height: 0;
+  min-height: min(64dvh, 620px);
   flex: 1 1 auto;
-  height: min(58dvh, 560px);
 }
 .dashboard-tv-dashboard .td-data-pq__queries,
 .dashboard-tv-dashboard .td-data-pq__settings{

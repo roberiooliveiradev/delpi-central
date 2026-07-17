@@ -1,3 +1,4 @@
+import { HintAction } from "@delpi/plugin-ui/index";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 
@@ -79,15 +80,20 @@ export function DataPrepareRibbon({
         role="tabpanel"
       >
         <div className="td-data-pq__ribbon-primary">
-          <button
-            type="button"
-            className="td-data-pq__ribbon-action"
-            disabled={loading}
-            onClick={onRefresh}
+          <HintAction
+            hint="Recarrega a prévia com os dados atuais da consulta e reaplica as etapas."
+            ariaLabel="Sobre atualizar a prévia"
           >
-            <RefreshCw size={15} aria-hidden />
-            <span>Atualizar</span>
-          </button>
+            <button
+              type="button"
+              className="td-data-pq__ribbon-action"
+              disabled={loading}
+              onClick={onRefresh}
+            >
+              <RefreshCw size={15} aria-hidden />
+              <span>Atualizar</span>
+            </button>
+          </HintAction>
         </div>
         {tab === "home" ? (
           <DataPrepareRibbonHomePanel
