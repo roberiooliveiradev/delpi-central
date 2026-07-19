@@ -169,9 +169,15 @@ export function suggestDefaultTextProjection(
   resolved: ComunicadoDataResolved | undefined,
 ): ComunicadoTextProjection | undefined {
   const fields = discoverResolvedFieldOptions(resolved);
-  const first = fields[0]?.field;
-  if (!first) return undefined;
-  return { field: first, aggregation: "first", format: "number" };
+  if (fields.length === 0) return undefined;
+  // Prefere o primeiro campo com valor real (muitas rotas têm colunas iniciais
+  // vazias); só cai no primeiro campo quando nenhum tem valor no resolved.
+  const populated = fields.find((option) => {
+    const value = extractFieldRawValue(resolved, option.field);
+    return value != null && value !== "";
+  });
+  const field = (populated ?? fields[0]).field;
+  return { field, aggregation: "first", format: "number" };
 }
 
 export function resolveTextBlockDisplayRuns(
