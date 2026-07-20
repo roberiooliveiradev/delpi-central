@@ -247,7 +247,6 @@ export function ProcessoDetailPage({
 
   const activeSection = useProcessoWorkspaceSection();
   const activeNodeId = resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
-  const showMelhoriasForm = openInstanciaForm || activeSection === "melhorias";
   const [mountedSections, setMountedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
     () => new Set([activeSection])
   );
@@ -519,7 +518,7 @@ export function ProcessoDetailPage({
             options={options}
             processoEscopo={processoEscopoFromEntity(processo)}
             busy={refreshing}
-            initialShowForm={showMelhoriasForm}
+            initialShowForm={openInstanciaForm}
             instanciasComRevisao={instanciasComRevisao}
             navigateOnSelect
             onSelect={(instanciaId) => onNavigate(buildInstanciaPath(processoId, instanciaId))}

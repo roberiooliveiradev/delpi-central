@@ -4,6 +4,7 @@ import { Copy, Plus, Trash2 } from "lucide-react";
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DataTableSection } from "../../components/DataTableSection";
+import { DS_TABLE_SECTION_CLASS_NAMES } from "../../components/dataTableUi";
 import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
@@ -723,7 +724,7 @@ export function ProcessoInstanciasPanel({
     <div className="tm-panel-stack">
       {hideTable ? null : (
       <section className="ds-card">
-        <div className="ds-table-section__header">
+        <div className={DS_TABLE_SECTION_CLASS_NAMES.header}>
           <div>
             <h2 className="ds-section-title">
               <span className="ds-field-label">
@@ -739,10 +740,12 @@ export function ProcessoInstanciasPanel({
               Abra para definir escopo, baseline, cenários e medições.
             </p>
           </div>
-          <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
-            <Plus size={16} />
-            Nova melhoria
-          </button>
+          <div className={DS_TABLE_SECTION_CLASS_NAMES.actions}>
+            <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
+              <Plus size={16} />
+              Nova melhoria
+            </button>
+          </div>
         </div>
         <DataTableSection
           columnPreferencesKey="transformometro:ProcessoInstanciasPanel:processoinstanciaspanel:v1"
