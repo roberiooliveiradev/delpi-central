@@ -114,4 +114,24 @@ describe("NativeTextField", () => {
     input.blur();
     expect(blurred).toBe(true);
   });
+
+  it("encaminha step em type=number (permite decimais)", () => {
+    render(
+      <NativeTextField
+        id="tm-valor"
+        label="Valor unit. (R$)"
+        type="number"
+        min={0}
+        step="0.01"
+        value="38.61"
+        onChange={() => undefined}
+        classNames={formFieldShellKaizenClasses("tm")}
+      />,
+    );
+
+    const input = screen.getByLabelText("Valor unit. (R$)");
+    expect(input.getAttribute("type")).toBe("number");
+    expect(input.getAttribute("step")).toBe("0.01");
+    expect(input.getAttribute("min")).toBe("0");
+  });
 });

@@ -34,3 +34,40 @@ export function labelSimNao(value: boolean | undefined): string {
   if (value === undefined) return "—";
   return value ? "Sim" : "Não";
 }
+
+const TIPO_INVESTIMENTO_LABELS: Record<string, string> = {
+  fixo: "Fixo",
+  variavel: "Variável",
+  recorrente: "Recorrente",
+  unico: "Único",
+};
+
+const CATEGORIA_INVESTIMENTO_LABELS: Record<string, string> = {
+  software: "Software",
+  treinamento: "Treinamento",
+  consultoria: "Consultoria",
+  equipamento: "Equipamento",
+  horas_internas: "Horas internas",
+  terceiros: "Terceiros",
+};
+
+const RECORRENCIA_LABELS: Record<string, string> = {
+  unico: "Único",
+  mensal: "Mensal",
+  anual: "Anual",
+};
+
+export function labelTipoInvestimento(value?: string | null): string {
+  if (!value) return "—";
+  return TIPO_INVESTIMENTO_LABELS[value] ?? value;
+}
+
+export function labelCategoriaInvestimento(value?: string | null): string {
+  if (!value) return "—";
+  return CATEGORIA_INVESTIMENTO_LABELS[value] ?? value;
+}
+
+export function labelRecorrencia(value?: string | null): string {
+  if (!value) return "—";
+  return RECORRENCIA_LABELS[value] ?? value;
+}

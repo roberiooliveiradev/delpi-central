@@ -37,6 +37,7 @@ export type NativeTextFieldProps = BaseNativeFieldProps & {
   maxLength?: number;
   min?: number | string;
   max?: number | string;
+  step?: number | string;
   inputMode?: "decimal" | "numeric";
   autoFocus?: boolean;
 };
@@ -63,6 +64,7 @@ export function NativeTextField({
   maxLength,
   min,
   max,
+  step,
   inputMode,
   autoFocus,
 }: NativeTextFieldProps) {
@@ -90,6 +92,7 @@ export function NativeTextField({
         maxLength={maxLength}
         min={min}
         max={max}
+        step={step}
         inputMode={inputMode}
         autoFocus={autoFocus}
         onBlur={onBlur}

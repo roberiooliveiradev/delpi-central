@@ -2271,6 +2271,26 @@
   font-size: var(--ds-font-sm);
   font-weight: 600;
   color: var(--ds-title);
+}.dashboard-transformometro .tm-investimento-form__total{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: flex-end;
+  min-width: 8.5rem;
+}.dashboard-transformometro .tm-investimento-form__total-value{
+  margin: 0;
+  min-height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px;
+  font-size: var(--ds-font-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-title);
+  background: var(--ds-surface-inset);
+  border: 1px solid var(--ds-card-border);
+  border-radius: 8px;
 }.dashboard-transformometro .ds-resource-preview{
   margin: 0.75rem 0 1rem;
   padding: 12px 14px;
