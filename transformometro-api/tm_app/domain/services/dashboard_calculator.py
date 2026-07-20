@@ -966,6 +966,12 @@ class DashboardCalculatorService:
                 ganho_capacidade *= bd_factor
                 economia_reducao_volume *= bd_factor
 
+        # Capacidade entra na bruta (e no ROI); breakdown de custo permanece nos componentes.
+        savings["economia_bruta"] = calc_rules.compose_economia_bruta(
+            economia_custo=float(savings.get("economia_bruta") or 0),
+            ganho_capacidade=ganho_capacidade,
+        )
+
         investimento_total_mes = (
             investimento_unico_mes + custo_recorrente_mes + current_shared_cost
         )

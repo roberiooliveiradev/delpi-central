@@ -19,7 +19,7 @@ EXPORT_COLUMNS: tuple[tuple[str, str], ...] = (
     ("beneficio_calculo_categoria", "Categoria de cálculo"),
     ("economia_bruta", "Economia bruta"),
     ("economia_liquida_mes", "Economia líquida mês"),
-    ("ganho_capacidade", "Ganho de capacidade (fora do ROI)"),
+    ("ganho_capacidade", "Ganho de capacidade"),
     ("economia_reducao_volume", "Sinal redução de volume"),
     ("delta_volume", "Δ volume vs. referência"),
     ("investimento_unico_mes", "Investimento único mês"),

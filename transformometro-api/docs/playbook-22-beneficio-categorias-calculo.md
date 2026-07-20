@@ -207,7 +207,7 @@ Sem reimplementar fórmula no front.
 | Mudança silenciosa de economia | Fase A–B sem alterar fórmula; golden tests |
 | Cache velho sem colunas novas | DEFAULT 0 + recalc pós-deploy documentado |
 | Seed em migration | Proibido; DEFAULT + seed app/script |
-| Confusão ROI × capacidade | Labels explícitos; capacidade fora do ROI na Fase C |
+| Confusão ROI × capacidade | Capacidade entra na bruta; campo `ganho_capacidade` só decompõe |
 | Views desatualizadas | Migration só recria views (DDL) |
 
 ---
@@ -237,3 +237,4 @@ Sem reimplementar fórmula no front.
 - Cadastros até hoje = **economia de tempo**.
 - Default de novas revisões = **economia de tempo**.
 - Migrations = **somente tabelas e colunas** (e views/constraints); **sem alteração de dados** via migration.
+- **Ganho de capacidade entra no ROI** (soma em `economia_bruta`); `economia_reducao_volume` permanece sinal analítico sem double-count.

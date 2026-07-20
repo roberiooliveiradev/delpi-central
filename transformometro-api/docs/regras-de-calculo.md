@@ -29,19 +29,18 @@ Campo na revisão: `beneficio_calculo_categoria` (default **`economia_tempo`** �
 |---|---|
 | `economia_tempo` | Foco em Δtempo/custo; orientação de cadastro: volumes iguais à referência (1:1). O motor **não** força 1:1. |
 | `reducao_volume` | Benefício principal = menos execuções (volumes reais). |
-| `ganho_capacidade` | `vol_rev > vol_ref` → capacidade valorizada **à parte** do ROI. |
+| `ganho_capacidade` | `vol_rev > vol_ref` → capacidade valorizada e **incluída** na economia bruta / ROI. |
 | `economia_qualidade` | Ênfase em retrabalho/erro (já entram na bruta). |
 | `misto` / `automatico` | Rotulagem; totais financeiros seguem regras fixas abaixo. |
 
 ```text
-economia_bruta = Σ componentes de custo (tempo, retrabalho, erro, outros, recursos)
-                 — inalterada pela categoria na Fase A/C
-
-Δvolume = vol_rev − vol_ref
+economia_custo = Σ componentes (tempo, retrabalho, erro, outros, recursos)
 ganho_capacidade = max(0, Δvolume) × (tempo_ref / 60) × custo_hora_ref
-                   × fração_mês_útil   [fora do ROI]
+                   × fração_mês_útil
+economia_bruta = economia_custo + ganho_capacidade   [entra no ROI]
+economia_liquida = economia_bruta − investimento_total_mês
 economia_reducao_volume = max(0, −Δvolume) × (tempo_ref / 60) × custo_hora_ref
-                          [sinal analítico; sem double-count na bruta]
+                          [sinal analítico; sem double-count — já está em economia_custo]
 ```
 
 Persistência em `dashboard_calculos`: colunas `beneficio_calculo_categoria`, `ganho_capacidade`, `economia_reducao_volume`, `delta_volume`. Recalcular cache após deploy da migration (não na migration).

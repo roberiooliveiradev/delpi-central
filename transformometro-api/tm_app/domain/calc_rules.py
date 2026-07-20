@@ -186,13 +186,26 @@ def capacity_gain_month(
 ) -> float:
     """Ganho de capacidade em R$/mês quando vol_rev > vol_ref.
 
-    Fora de economia_bruta / ROI até política explícita.
+    Entra na economia_bruta (e no ROI). Campo próprio permanece para breakdown.
     Fórmula: Δvolume × (tempo_ref / 60) × custo_hora_ref
     """
     delta = float(volume_rev or 0) - float(volume_ref or 0)
     if delta <= 0:
         return 0.0
     return delta * (float(tempo_medio_ref_min or 0) / 60.0) * float(custo_hora_ref or 0)
+
+
+def compose_economia_bruta(
+    *,
+    economia_custo: float,
+    ganho_capacidade: float = 0.0,
+) -> float:
+    """Economia bruta total = ganho de custo operacional + ganho de capacidade.
+
+    ``economia_reducao_volume`` não entra aqui: a queda de volume já está no
+    diferencial de custo (evitar double-count).
+    """
+    return float(economia_custo or 0) + float(ganho_capacidade or 0)
 
 
 def volume_reduction_signal_month(

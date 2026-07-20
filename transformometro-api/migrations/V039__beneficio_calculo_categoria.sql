@@ -44,7 +44,7 @@ ALTER TABLE transformometro.dashboard_calculos
     NOT NULL DEFAULT 0;
 
 COMMENT ON COLUMN transformometro.dashboard_calculos.ganho_capacidade IS
-  'Benefício de capacidade (vol_rev > vol_ref); fora do ROI até política explícita.';
+  'Benefício de capacidade (vol_rev > vol_ref); soma em economia_bruta e entra no ROI.';
 
 COMMENT ON COLUMN transformometro.dashboard_calculos.economia_reducao_volume IS
   'Sinal informativo quando vol_rev < vol_ref (parcela analítica; sem double-count na bruta).';

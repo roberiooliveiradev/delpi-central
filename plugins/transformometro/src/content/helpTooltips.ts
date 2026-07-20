@@ -32,7 +32,7 @@ export const TM_HELP_TOOLTIPS = {
     economiaReducaoVolume:
       "Sinal analítico quando o volume cai vs. a referência (sem double-count na bruta).",
     ganhoCapacidade:
-      "Benefício de volume acima da referência (capacidade). Não entra no ROI até decisão explícita.",
+      "Benefício de volume acima da referência (capacidade). Soma-se à economia bruta e entra no ROI.",
     deltaVolume: "Diferença de volume mensal da revisão em relação à referência (última competência).",
     beneficioCategoria: "Como a revisão interpreta o benefício vs. a referência de comparação.",
     economiaLiquida: "Ganho após descontar investimentos e rateio de recursos compartilhados.",
@@ -90,9 +90,9 @@ export const TM_HELP_TOOLTIPS = {
       economiaLiquida:
         "Economia líquida do recorte: economia bruta menos os custos (investimentos e rateio de recursos) no período. Instâncias «todas as unidades ativas» multiplicam só a economia operacional no Consolidado (não investimento nem recursos).",
       economiaBruta:
-        "Ganho bruto estimado no período, antes de descontar custos. No Consolidado, instâncias multi-unidade contam uma vez por unidade ativa cadastrada.",
+        "Ganho bruto do período (economia de custo + ganho de capacidade), antes de descontar investimentos. No Consolidado, instâncias multi-unidade contam uma vez por unidade ativa cadastrada.",
       ganhoCapacidade:
-        "Volume acima da referência valorizado à parte. Não entra no ROI nem na economia bruta.",
+        "Parcela da economia bruta relativa a volume acima da referência. Entra no ROI via economia bruta/líquida.",
       solucoes:
         "Melhorias (instâncias) com revisão comparável ativa (melhoria, automação ou correção) no recorte de visão — snapshot do cadastro, independente do período filtrado.",
       horas:
@@ -246,7 +246,7 @@ export const TM_HELP_TOOLTIPS = {
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:
-      "Compara economia bruta, líquida, ganho de capacidade (fora do ROI), investimentos, recursos e horas entre as revisões desta instância.",
+      "Compara economia bruta (inclui capacidade), líquida, ganho de capacidade, investimentos, recursos e horas entre as revisões desta instância.",
     comparativoTable:
       "Tabela com economia, breakdown (tempo/retrabalho/erros), categoria, Δ volume, capacidade e meses com dados.",
     comparativoAvisos:

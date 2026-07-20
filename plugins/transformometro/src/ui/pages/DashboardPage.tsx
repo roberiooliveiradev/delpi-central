@@ -795,7 +795,7 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           title="Ganho de capacidade"
           titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.ganhoCapacidade}
           value={formatCurrency(resumo?.ganho_capacidade_total)}
-          subtitle={`Fora do ROI · ${periodLabel}`}
+          subtitle={`Incluído no ROI · ${periodLabel}`}
           icon={<TrendingUp size={22} />}
           loading={isBusy && !resumo}
         />

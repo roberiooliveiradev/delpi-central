@@ -46,8 +46,8 @@ def test_golden_baseline_melhoria_economia_bruta_positiva():
     assert row["volume_abaixo_referencia"] is False
 
 
-def test_golden_volume_increase_exposes_capacity_without_changing_bruta_formula():
-    """↑ volume gera ganho_capacidade; economia_bruta continua custo(ref)−custo(rev)."""
+def test_golden_volume_increase_capacity_enters_bruta_and_roi():
+    """↑ volume gera ganho_capacidade e soma na economia_bruta (ROI)."""
     raw = _load_fixture("golden_baseline_melhoria.json")
     for med in raw.medicoes:
         if med["revisao_id"] == "r-melhoria":
@@ -64,13 +64,22 @@ def test_golden_volume_increase_exposes_capacity_without_changing_bruta_formula(
     assert row["volume_acima_referencia"] is True
     # Δ20 × (60/60) × 50 = 1000
     assert row["ganho_capacidade"] == 1000.0
-    # bruta ainda é diferença de custos (volume da melhoria entra no custo da revisão)
-    assert row["economia_bruta"] == row["economia_tempo"] + row["economia_retrabalho"] + row[
-        "economia_erros"
-    ] + row["economia_outros"] + row["economia_recursos_compartilhados"]
+    economia_custo = (
+        row["economia_tempo"]
+        + row["economia_retrabalho"]
+        + row["economia_erros"]
+        + row["economia_outros"]
+        + row["economia_recursos_compartilhados"]
+    )
+    assert row["economia_bruta"] == economia_custo + row["ganho_capacidade"]
+    assert row["economia_liquida_mes"] == row["economia_bruta"] - row["investimento_total_mes"]
     summary = calc.build_summary(raw, None, "2025-02-01", "2025-02-28")
     assert summary["ganho_capacidade_total"] == row["ganho_capacidade"]
     assert summary["economia_bruta_total"] == calc._round_final(row["economia_bruta"])
+    # ROI usa líquida (já com capacidade na bruta)
+    assert summary["roi_medio"] == calc._round_final(
+        summary["economia_liquida_total"] / summary["investimento_total"]
+    )
 
 
 def test_baseline_row_is_not_materialized():

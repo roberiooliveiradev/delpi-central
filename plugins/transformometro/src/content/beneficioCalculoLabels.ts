@@ -17,7 +17,7 @@ export const BENEFICIO_MEDICAO_ORIENTACAO: Record<string, string> = {
   reducao_volume:
     "O benefício principal é menos execuções: informe o volume real (pode ser menor que a referência).",
   ganho_capacidade:
-    "Volume acima da referência gera ganho de capacidade (fora do ROI). A economia bruta continua medindo custo operacional.",
+    "Volume acima da referência gera ganho de capacidade, somado à economia bruta e ao ROI. Os componentes de custo continuam no breakdown.",
   economia_qualidade:
     "Foque em retrabalho, erro e outros desperdícios — esses componentes já entram na economia bruta.",
   misto:

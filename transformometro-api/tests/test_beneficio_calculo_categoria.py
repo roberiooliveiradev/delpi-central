@@ -44,7 +44,10 @@ def test_revisao_body_defaults_beneficio_economia_tempo():
     assert body.beneficio_calculo_categoria == "economia_tempo"
 
 
-def test_capacity_gain_only_when_volume_above_reference():
+def test_compose_economia_bruta_adds_capacity():
+    assert calc_rules.compose_economia_bruta(economia_custo=2500, ganho_capacidade=1000) == 3500
+    assert calc_rules.compose_economia_bruta(economia_custo=2500, ganho_capacidade=0) == 2500
+
     assert (
         calc_rules.capacity_gain_month(
             volume_ref=100,

@@ -221,7 +221,7 @@ class ProcessRevisionCompareService:
                     "delta_volume": delta_volume,
                     "message": (
                         "Volume acima da referência — há ganho de capacidade "
-                        "(fora do ROI) além da economia de custo."
+                        "incluído na economia bruta e no ROI, além da economia de custo unitário."
                     ),
                 }
             )
