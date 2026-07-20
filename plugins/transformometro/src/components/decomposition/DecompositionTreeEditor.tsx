@@ -25,6 +25,8 @@ type Props = {
   readOnly?: boolean;
   title?: string;
   invalidNodeIds?: ReadonlySet<string>;
+  /** Quando false, oculta + Processo-chave (escopo parcial da melhoria). */
+  allowRootProcessoChave?: boolean;
   onChange: (tree: DecompositionTreeV1) => void;
 };
 
@@ -37,6 +39,7 @@ export function DecompositionTreeEditor({
   readOnly = false,
   title,
   invalidNodeIds,
+  allowRootProcessoChave = true,
   onChange,
 }: Props) {
   const nodeById = useMemo(() => new Map(tree.nodes.map((node) => [node.id, node])), [tree.nodes]);
@@ -139,10 +142,12 @@ export function DecompositionTreeEditor({
     <div className="tm-decomposition-editor">
       {!readOnly ? (
         <div className="tm-decomposition-editor__toolbar">
-          <button type="button" className={DS_GHOST_BTN} onClick={() => addNode("processo_chave", null)}>
-            <Plus size={14} />
-            Processo-chave
-          </button>
+          {allowRootProcessoChave ? (
+            <button type="button" className={DS_GHOST_BTN} onClick={() => addNode("processo_chave", null)}>
+              <Plus size={14} />
+              Processo-chave
+            </button>
+          ) : null}
           <span className="ds-hint tm-decomposition-editor__drag-hint">
             Arraste pelo ícone ⋮⋮ para reordenar ou mover entre processos-chave.
           </span>

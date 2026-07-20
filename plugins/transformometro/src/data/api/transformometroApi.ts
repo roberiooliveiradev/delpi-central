@@ -546,6 +546,7 @@ export function updateRevisao(
     versao_revisao: string;
     cenario_tipo: string;
     data_inicio_vigencia: string;
+    confirm_vigencia_change?: boolean;
   },
   getAccessToken?: () => string | undefined
 ) {

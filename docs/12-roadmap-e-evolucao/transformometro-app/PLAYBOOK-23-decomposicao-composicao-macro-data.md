@@ -1,6 +1,6 @@
 # Playbook 23 — Composição do macro WBS por revisões (data + escopo + conflitos)
 
-**Status:** Fase A–C MVP (jul/2026)  
+**Status:** Fase A–D entregue (jul/2026)  
 **Escopo:** `transformometro-api` + plugin `transformometro`  
 **Complementa:** [PLAYBOOK-20](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) (árvore + escopo + overlay)
 
@@ -25,17 +25,18 @@ macro_base
 | # | Regra |
 |---|--------|
 | 1 | **Escopo da melhoria** = nós que a revisão pode alterar (já em `instancia_decomposicao_escopo`). |
-| 2 | **Delta da revisão** = overlay (`label`, `descricao`, `highlight`, `disabled_node_ids`) **somente** dentro do escopo. |
+| 2 | **Delta da revisão** = overlay (`label`, `descricao`, `highlight`, `disabled_node_ids`, `extra_nodes`, reparent/`ordem`) **somente** dentro do escopo. |
 | 3 | **Data de composição** = `data_inicio_vigencia` … `data_fim_vigencia` (implantação não entra na janela). |
 | 4 | Sem revisão vigente no nó em D → mostra **base**. |
 | 5 | Interseção → **nunca merge silencioso**: badge/lista `conflicts[]`; vencedor de exibição = início mais recente (empate → `versao_revisao`). |
-| 6 | Alterar datas de vigência → **aviso de impacto** na UI (recompõe o macro). |
+| 6 | Alterar datas de vigência → **aviso de impacto** na UI; com medição existente exige confirmação (`confirm_vigencia_change`). |
 | 7 | PUT overlay fora do escopo → **400** (não só warning). |
 
-### Fora do MVP (Fase D+)
+### Fase D+ (estrutural)
 
-- CRUD estrutural livre no delta (`extra_nodes` / reparent) — requer evolução de schema do overlay.
-- Travas rígidas de data após medição (só confirmação no MVP).
+- CRUD no delta: `extra_nodes` + `disabled_node_ids` + `parent_id`/`ordem` em `node_overrides`.
+- Processo-chave novo no delta só com `inherit_all` no escopo.
+- UI da revisão usa o mesmo editor de árvore do processo (diff → overlay).
 
 ---
 
@@ -75,6 +76,12 @@ macro_base
 ### PUT overlay
 
 Rejeita `node_overrides` / `disabled_node_ids` fora de `expand_escopo_node_ids`.
+Aceita `extra_nodes` (pais no escopo/extras) e `parent_id`/`ordem` em overrides.
+GET merged inclui `tree_base` (escopo sem delta) para a UI fazer diff.
+
+### PUT revisão (vigência)
+
+Se já existe medição e início/fim mudaram → **409** sem `confirm_vigencia_change=true`.
 
 ---
 
@@ -85,6 +92,7 @@ Rejeita `node_overrides` / `disabled_node_ids` fora de `expand_escopo_node_ids`.
 | A | Validação de escopo no PUT; UI revisão com highlight/disable + warnings/diff |
 | B | Serviço + GET `composed?at=` + testes |
 | C | Seção «Macro composto» no processo + aviso ao mudar datas |
+| D | CRUD estrutural no delta (`extra_nodes`/reparent) + confirmação de vigência com medição |
 
 ---
 
@@ -95,3 +103,4 @@ Rejeita `node_overrides` / `disabled_node_ids` fora de `expand_escopo_node_ids`.
 - [x] GET composed
 - [x] Testes unitários composição/conflito
 - [x] MFE delta + composed + aviso data
+- [x] Fase D: extra_nodes / reparent + editor livre + trava vigência com medição

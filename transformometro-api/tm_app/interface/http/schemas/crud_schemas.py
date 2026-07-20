@@ -201,6 +201,7 @@ class RevisaoBody(BaseModel):
     data_implantacao: Optional[str] = None
     data_fim_vigencia: Optional[str] = None
     observacoes: Optional[str] = None
+    confirm_vigencia_change: bool = False
 
     @field_validator("beneficio_calculo_categoria", mode="before")
     @classmethod

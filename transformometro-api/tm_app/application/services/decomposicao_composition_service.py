@@ -6,6 +6,9 @@ import copy
 from datetime import date, datetime
 from typing import Any
 
+from tm_app.application.services.revisao_decomposicao_merge_service import (
+    RevisaoDecomposicaoMergeService,
+)
 from tm_app.domain import calc_rules
 from tm_app.domain.decomposition.decomposition_tree_v1 import (
     empty_escopo,
@@ -65,8 +68,23 @@ def _sort_key_revisao(revisao: dict[str, Any]) -> tuple:
     return (start, versao)
 
 
+def _node_signature(node: dict[str, Any] | None, *, present: bool) -> tuple:
+    if not present or node is None:
+        return ("absent",)
+    return (
+        "present",
+        str(node.get("label") or ""),
+        str(node.get("parent_id") or ""),
+        int(node.get("ordem") or 0),
+        str(node.get("highlight") or ""),
+    )
+
+
 class DecomposicaoCompositionService:
     """Compõe árvore do processo na data D com overlays das revisões vigentes."""
+
+    def __init__(self) -> None:
+        self._merge = RevisaoDecomposicaoMergeService()
 
     def compose_for_processo(
         self,
@@ -74,11 +92,12 @@ class DecomposicaoCompositionService:
         *,
         at: date | None = None,
         instancia_id: str | None = None,
-    ) -> dict[str, Any] | None:
+    ) -> dict[str, Any]:
         at = at or date.today()
         tree_row = ProcessoDecomposicaoRepository().get(processo_id)
         base_raw = (tree_row or {}).get("conteudo") if tree_row else None
         base = copy.deepcopy(validate_decomposition_tree_v1(base_raw or empty_tree()))
+        base_ids = tree_node_ids(base)
 
         revisoes = RevisaoRepository().list_by_processo(processo_id)
         if instancia_id:
@@ -91,9 +110,12 @@ class DecomposicaoCompositionService:
             key=_sort_key_revisao,
         )
 
-        # Por nó: lista de contribuições (ordem cronológica)
-        contributions: dict[str, list[dict[str, Any]]] = {}
+        composed_nodes = copy.deepcopy(
+            [n for n in base.get("nodes", []) if isinstance(n, dict)]
+        )
         applied: list[dict[str, Any]] = []
+        conflicts: list[dict[str, Any]] = []
+        last_writer: dict[str, dict[str, Any]] = {}
 
         for revisao in vigentes:
             revisao_id = str(revisao.get("revisao_id") or "")
@@ -113,54 +135,95 @@ class DecomposicaoCompositionService:
                 }
                 if escopo_row
                 else empty_escopo(),
-                tree_node_ids_set=tree_node_ids(base),
+                tree_node_ids_set=base_ids,
             )
             overlay_row = RevisaoDecomposicaoOverlayRepository().get(revisao_id)
             overlay = validate_decomposition_overlay_v1(
                 (overlay_row or {}).get("conteudo") if overlay_row else empty_overlay()
             )
             allowed = expand_escopo_node_ids(base, escopo)
+
+            before_by_id = {
+                str(n["id"]): copy.deepcopy(n)
+                for n in composed_nodes
+                if isinstance(n, dict) and n.get("id")
+            }
+
+            next_nodes = self._merge.apply_overlay_to_nodes(
+                composed_nodes,
+                overlay,
+                allowed_base_ids=allowed,
+            )
+            after_by_id = {
+                str(n["id"]): n
+                for n in next_nodes
+                if isinstance(n, dict) and n.get("id")
+            }
+
             touched: list[str] = []
+            candidate_ids = (
+                set(before_by_id)
+                | set(after_by_id)
+                | {str(x) for x in (overlay.get("disabled_node_ids") or [])}
+                | {str(n["id"]) for n in (overlay.get("extra_nodes") or []) if n.get("id")}
+                | {str(x) for x in (overlay.get("node_overrides") or {})}
+            )
 
-            overrides = overlay.get("node_overrides") or {}
-            for node_id, override in overrides.items():
-                nid = str(node_id)
-                if nid not in allowed or not isinstance(override, dict):
+            for node_id in candidate_ids:
+                before = before_by_id.get(node_id)
+                after = after_by_id.get(node_id)
+                before_sig = _node_signature(before, present=before is not None)
+                after_sig = _node_signature(after, present=after is not None)
+                if before_sig == after_sig:
                     continue
-                touched.append(nid)
-                contributions.setdefault(nid, []).append(
-                    {
-                        "revisao_id": revisao_id,
-                        "instancia_id": inst_id,
-                        "versao_revisao": revisao.get("versao_revisao"),
-                        "cenario_tipo": revisao.get("cenario_tipo"),
-                        "data_inicio_vigencia": str(revisao.get("data_inicio_vigencia") or "")[:10],
-                        "label": override.get("label"),
-                        "descricao": override.get("descricao"),
-                        "highlight": override.get("highlight"),
-                        "disabled": False,
-                    }
-                )
-
-            for node_id in overlay.get("disabled_node_ids") or []:
-                nid = str(node_id)
-                if nid not in allowed:
+                # só conta toque se o nó base está no escopo ou é extra desta revisão
+                is_extra = node_id not in base_ids
+                if node_id not in allowed and not is_extra:
                     continue
-                touched.append(nid)
-                contributions.setdefault(nid, []).append(
-                    {
-                        "revisao_id": revisao_id,
-                        "instancia_id": inst_id,
-                        "versao_revisao": revisao.get("versao_revisao"),
-                        "cenario_tipo": revisao.get("cenario_tipo"),
-                        "data_inicio_vigencia": str(revisao.get("data_inicio_vigencia") or "")[:10],
-                        "label": None,
-                        "descricao": None,
-                        "highlight": "removed",
-                        "disabled": True,
-                    }
-                )
+                if is_extra and node_id not in {
+                    str(n["id"]) for n in (overlay.get("extra_nodes") or []) if n.get("id")
+                }:
+                    # extra de outra revisão — só conta se disable/override desta
+                    if node_id not in (overlay.get("node_overrides") or {}) and node_id not in set(
+                        overlay.get("disabled_node_ids") or []
+                    ):
+                        continue
 
+                touched.append(node_id)
+                prev = last_writer.get(node_id)
+                if prev and prev.get("signature") != after_sig:
+                    field = "disabled" if after is None or before is None else "structure"
+                    if (
+                        before is not None
+                        and after is not None
+                        and str(before.get("label")) != str(after.get("label"))
+                    ):
+                        field = "label"
+                    conflicts.append(
+                        {
+                            "node_id": node_id,
+                            "field": field,
+                            "winner_revisao_id": revisao_id,
+                            "revisoes": [
+                                {
+                                    "revisao_id": prev["revisao_id"],
+                                    "versao_revisao": prev.get("versao_revisao"),
+                                },
+                                {
+                                    "revisao_id": revisao_id,
+                                    "versao_revisao": revisao.get("versao_revisao"),
+                                    "label": (after or {}).get("label") if after else None,
+                                },
+                            ],
+                        }
+                    )
+                last_writer[node_id] = {
+                    "revisao_id": revisao_id,
+                    "versao_revisao": revisao.get("versao_revisao"),
+                    "signature": after_sig,
+                }
+
+            composed_nodes = next_nodes
             if touched:
                 applied.append(
                     {
@@ -173,92 +236,20 @@ class DecomposicaoCompositionService:
                     }
                 )
 
-        conflicts: list[dict[str, Any]] = []
-        composed_nodes: list[dict[str, Any]] = []
-        disabled_ids: set[str] = set()
-
-        base_by_id = {
-            str(n["id"]): n
-            for n in base.get("nodes", [])
-            if isinstance(n, dict) and n.get("id")
-        }
-
-        for node_id, contribs in contributions.items():
-            label_contribs = [c for c in contribs if c.get("label")]
-            disabled_contribs = [c for c in contribs if c.get("disabled")]
-            distinct_labels = {str(c.get("label") or "") for c in label_contribs}
-            if len(distinct_labels) > 1:
-                winner = label_contribs[-1]
-                conflicts.append(
-                    {
-                        "node_id": node_id,
-                        "field": "label",
-                        "winner_revisao_id": winner["revisao_id"],
-                        "revisoes": [
-                            {
-                                "revisao_id": c["revisao_id"],
-                                "versao_revisao": c.get("versao_revisao"),
-                                "label": c.get("label"),
-                            }
-                            for c in label_contribs
-                        ],
-                    }
-                )
-
-            disabled_revisao_ids = {c["revisao_id"] for c in disabled_contribs}
-            label_revisao_ids = {c["revisao_id"] for c in label_contribs}
-            if len(disabled_revisao_ids) > 1 or (
-                disabled_revisao_ids and (label_revisao_ids - disabled_revisao_ids)
-            ):
-                winner = contribs[-1]
-                conflicts.append(
-                    {
-                        "node_id": node_id,
-                        "field": "disabled",
-                        "winner_revisao_id": winner["revisao_id"],
-                        "revisoes": [
-                            {
-                                "revisao_id": c["revisao_id"],
-                                "versao_revisao": c.get("versao_revisao"),
-                                "disabled": bool(c.get("disabled")),
-                                "label": c.get("label"),
-                            }
-                            for c in contribs
-                        ],
-                    }
-                )
-
-            winner = contribs[-1]
-            if winner.get("disabled"):
-                disabled_ids.add(node_id)
-
         conflict_node_ids = {c["node_id"] for c in conflicts}
-
-        for node in base.get("nodes", []):
-            if not isinstance(node, dict):
+        for node in composed_nodes:
+            if not isinstance(node, dict) or not node.get("id"):
                 continue
-            node_id = str(node.get("id") or "")
-            if node_id in disabled_ids:
+            node_id = str(node["id"])
+            writer = last_writer.get(node_id)
+            if not writer:
                 continue
-            merged = copy.deepcopy(node)
-            contribs = contributions.get(node_id) or []
-            for contrib in contribs:
-                if contrib.get("disabled"):
-                    continue
-                if contrib.get("label"):
-                    merged["label"] = contrib["label"]
-                if contrib.get("descricao") is not None:
-                    merged["descricao"] = contrib["descricao"]
-                if contrib.get("highlight"):
-                    merged["highlight"] = contrib["highlight"]
-            if contribs:
-                meta = dict(merged.get("meta") or {})
-                meta["composition"] = {
-                    "revisao_ids": [c["revisao_id"] for c in contribs],
-                    "conflict": node_id in conflict_node_ids,
-                }
-                merged["meta"] = meta
-            composed_nodes.append(merged)
+            meta = dict(node.get("meta") or {})
+            meta["composition"] = {
+                "revisao_ids": [writer["revisao_id"]],
+                "conflict": node_id in conflict_node_ids,
+            }
+            node["meta"] = meta
 
         return {
             "processo_id": processo_id,
@@ -267,5 +258,5 @@ class DecomposicaoCompositionService:
             "tree": {**base, "nodes": composed_nodes},
             "applied_revisoes": applied,
             "conflicts": conflicts,
-            "base_node_count": len(base_by_id),
+            "base_node_count": len(base_ids),
         }

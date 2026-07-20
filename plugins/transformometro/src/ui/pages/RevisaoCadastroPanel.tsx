@@ -206,11 +206,31 @@ export function RevisaoCadastroPanel({
     setSavingVigencia(true);
     onError(null);
     try {
+      const datesChanged =
+        revisaoVigencia.data_inicio_vigencia !== revisaoVigenciaBaseline.data_inicio_vigencia ||
+        revisaoVigencia.data_fim_vigencia !== revisaoVigenciaBaseline.data_fim_vigencia;
+      const hasMedicao = Boolean(medicao.medicao_id);
+      let confirmVigenciaChange = false;
+      if (hasMedicao && datesChanged) {
+        const ok = await confirm({
+          title: "Alterar vigência com medição?",
+          message:
+            "Esta revisão já possui medição. Mudar início ou fim de vigência recalcula o macro composto e pode afetar o histórico. Deseja continuar?",
+          confirmLabel: "Confirmar alteração",
+          cancelLabel: "Cancelar",
+          variant: "danger",
+        });
+        if (!ok) {
+          return;
+        }
+        confirmVigenciaChange = true;
+      }
       await updateRevisao(
         revisao.revisao_id,
         {
           processo_id: revisao.processo_id,
           ...revisaoPayloadFromVigenciaForm(revisaoVigencia),
+          confirm_vigencia_change: confirmVigenciaChange,
         },
         getAccessToken
       );
@@ -389,7 +409,7 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
       <EditableSectionCard
         title="Mapeamento da revisão"
-        description="Só rótulos as-is/to-be desta revisão. Incluir ou remover nós: Mapeamento do processo ou Escopo no mapeamento da melhoria."
+        description="Edite o WBS no escopo desta melhoria (rótulos, ordem, exclusão e novos nós). O delta compõe o macro pela vigência."
         hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao}
         isEditing={sectionEdit.isEditing("decomposicao_revisao")}
         onEdit={() => void sectionEdit.startEdit("decomposicao_revisao")}

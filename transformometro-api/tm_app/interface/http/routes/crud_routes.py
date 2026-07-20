@@ -797,6 +797,25 @@ def create_revisao(body: RevisaoBody, request: Request):
 
 @router.put("/revisoes/{revisao_id}")
 def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
+    existing = RevisaoRepository().get(revisao_id)
+    if not existing:
+        return fail("Revisão não encontrada.", 404)
+
+    payload = body.model_dump()
+    confirm_vigencia = bool(payload.pop("confirm_vigencia_change", False))
+    has_medicao = MedicaoRepository().get_by_revisao(revisao_id) is not None
+    if has_medicao:
+        old_inicio = str(existing.get("data_inicio_vigencia") or "")[:10]
+        old_fim = str(existing.get("data_fim_vigencia") or "")[:10]
+        new_inicio = str(body.data_inicio_vigencia or "")[:10]
+        new_fim = str(body.data_fim_vigencia or "")[:10]
+        if (old_inicio != new_inicio or old_fim != new_fim) and not confirm_vigencia:
+            return fail(
+                "Esta revisão já possui medição. Alterar a vigência recalcula o macro composto "
+                "e pode afetar o histórico. Confirme a alteração para continuar.",
+                409,
+            )
+
     try:
         assert_in(body.cenario_tipo, CENARIO_TIPO, "cenario_tipo")
         assert_in(
@@ -804,14 +823,14 @@ def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
             BENEFICIO_CALCULO_CATEGORIA,
             "beneficio_calculo_categoria",
         )
-        row = RevisaoRepository().update(revisao_id, body.model_dump())
+        row = RevisaoRepository().update(revisao_id, payload)
     except ValueError as exc:
         return fail(str(exc), 400)
 
     if not row:
         return fail("Revisão não encontrada.", 404)
 
-    _audit(request, "revisao", revisao_id, "update", body.model_dump())
+    _audit(request, "revisao", revisao_id, "update", payload)
     _recalc_after_revisao(revisao_id, processo_id=str(row["processo_id"]))
     return ok(row_to_json(row), "Revisão atualizada.")
 

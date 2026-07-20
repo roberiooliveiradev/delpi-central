@@ -6,6 +6,8 @@ from tm_app.application.services.decomposition_flat_export_service import (
 from tm_app.application.services.revisao_decomposicao_merge_service import (
     RevisaoDecomposicaoMergeService,
 )
+from tm_app.domain.decomposition.decomposition_tree_v1 import DecompositionValidationError
+import pytest
 
 
 def _sample_tree():
@@ -57,7 +59,56 @@ def test_merge_applies_overlay_label():
     assert "Notificação automática" in labels
 
 
-def test_export_flat_rows_legacy_format():
+def test_merge_applies_extra_node_and_disable():
+    merged = RevisaoDecomposicaoMergeService().merge(
+        tree=_sample_tree(),
+        escopo={"inherit_all": True},
+        overlay={
+            "format": "decomposition_overlay_v1",
+            "format_version": 1,
+            "disabled_node_ids": ["st_notificacao"],
+            "extra_nodes": [
+                {
+                    "id": "st_auto",
+                    "level": "sub_tarefa",
+                    "ordem": 9,
+                    "label": "Disparo automático",
+                    "parent_id": "pk_crm",
+                    "highlight": "tobe",
+                }
+            ],
+        },
+    )
+    ids = {node["id"] for node in merged["tree"]["nodes"]}
+    assert "st_notificacao" not in ids
+    assert "st_auto" in ids
+    assert "tree_base" in merged
+    assert "st_notificacao" in {n["id"] for n in merged["tree_base"]["nodes"]}
+
+
+def test_assert_extra_outside_parent_raises():
+    with pytest.raises(DecompositionValidationError, match="parent_id"):
+        RevisaoDecomposicaoMergeService().assert_overlay_within_escopo(
+            tree=_sample_tree(),
+            escopo={
+                "node_ids": ["st_notificacao"],
+                "inherit_all": False,
+                "include_descendants": False,
+            },
+            overlay={
+                "format": "decomposition_overlay_v1",
+                "format_version": 1,
+                "extra_nodes": [
+                    {
+                        "id": "st_novo",
+                        "level": "sub_tarefa",
+                        "ordem": 1,
+                        "label": "Novo",
+                        "parent_id": "pk_crm",
+                    }
+                ],
+            },
+        )
     rows = DecompositionFlatExportService().build_rows(
         tree=_sample_tree(),
         macroprocesso="LMP",

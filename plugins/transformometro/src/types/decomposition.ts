@@ -32,11 +32,14 @@ export type DecompositionOverlayV1 = {
     {
       label?: string;
       descricao?: string | null;
+      parent_id?: string | null;
+      ordem?: number;
       highlight?: "asis" | "tobe" | "changed" | "removed";
       meta?: Record<string, unknown>;
     }
   >;
   disabled_node_ids?: string[];
+  extra_nodes?: DecompositionNode[];
 };
 
 export type InstanciaContextoV1 = {
@@ -79,6 +82,7 @@ export type MergedRevisaoDecomposition = {
   revisao_id: string;
   cenario_tipo?: string;
   tree: DecompositionTreeV1;
+  tree_base?: DecompositionTreeV1;
   escopo: DecompositionEscopo;
   overlay: DecompositionOverlayV1;
   warnings: string[];
@@ -130,6 +134,7 @@ export function emptyDecompositionOverlay(): DecompositionOverlayV1 {
     format_version: 1,
     node_overrides: {},
     disabled_node_ids: [],
+    extra_nodes: [],
   };
 }
 
