@@ -4,6 +4,8 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import SORT_DIR_QUERY_DESC as SORT_DIR_QUERY
+
 from app.application.dto.financeiro_inadimplencia.clientes_request import (
     InadimplenciaClientesRequest,
 )
@@ -161,11 +163,7 @@ PAGE_SIZE_QUERY = Query(
 )
 SEARCH_QUERY = Query(None, description="Busca textual parametrizada.")
 SORT_BY_QUERY = Query(None, description="Campo de ordenação permitido (whitelist).")
-SORT_DIR_QUERY = Query(
-    DEFAULT_SORT_DIR,
-    pattern="^(asc|desc)$",
-    description="Direção da ordenação: asc ou desc.",
-)
+# SORT_DIR_QUERY imported from query_param_enums
 ONLY_WITH_DELAYS_QUERY = Query(
     True,
     description="Se true, retorna apenas clientes com pelo menos um título em atraso.",

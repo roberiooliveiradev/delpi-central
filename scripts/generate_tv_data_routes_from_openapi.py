@@ -2,14 +2,16 @@
 """Gera catálogo TV (tv_data_routes.json) a partir do OpenAPI baseline api-delpi.
 
 Fonte de verdade (como o registry operacional do chat):
-  api-delpi openapi → openapi_baseline.json (v2: parameters + xDelpi)
+  api-delpi openapi → openapi_baseline.json (v3: parameters + xDelpi.locale/params/category)
   → generate --write → tv_data_routes.json
   → overlays em tv_data_route_overlays.json (TV-only)
 
 Campos do OpenAPI (sempre regenerados / mergeados):
   operationId, path, httpMethod, paramSchema, paramStrategy (inferido),
   metaShape (x-delpi.shape quando houver),
-  whenToUse/label/description de audiência (x-delpi.tv quando houver)
+  whenToUse/label/description de audiência (x-delpi.locale.pt-BR ou x-delpi.tv),
+  category (x-delpi.category quando houver),
+  labels de params (x-delpi.params.*.locale.pt-BR)
 
 Overlays TV (preservados / arquivo overlays):
   valueFields, seriesField, tableFields, tvConstraints, fixedQueryParams,
@@ -58,11 +60,14 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "Auditoria 5S": "quality",
     "Clientes": "commercial",
     "Comercial": "commercial",
+    "Commercial": "commercial",
     "Compras operacionais": "supplies",
     "Cultura DELPI": "strategic",
     "Dashboard": "system",
     "Engenharia": "engineering",
+    "Engineering": "engineering",
     "Financeiro": "financial",
+    "Financial": "financial",
     "Health": "system",
     "Inspeções de Entrada": "quality",
     "Kaizen — cadastro": "quality",
@@ -71,14 +76,18 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "PAC Qualidade — planos de ação": "quality",
     "Pedidos de Venda em Aberto": "commercial",
     "Produção": "production",
+    "Production": "production",
     "Produção operacional": "production",
     "Propostas Comerciais": "commercial",
     "Qualidade": "quality",
+    "Quality": "quality",
     "Qualidade — PPM": "quality",
     "Quality Labels": "quality",
     "Quality Labels (público)": "quality",
     "Recursos Humanos": "hr",
+    "Human Resources": "hr",
     "Suprimentos": "supplies",
+    "Supplies": "supplies",
     "products": "products",
     "sales": "commercial",
     "system": "system",
@@ -394,43 +403,62 @@ PARAM_HINTS_PT: dict[str, str] = {
     "work_center": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
 }
 
-KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {
-    "granularity": ["day", "week", "month", "year"],
-    "customer_segment": ["weg", "new_business"],
-    "loss_type": ["refugo", "scrap", "both"],
-    "product_type": ["PA", "PI"],
-    "sort_dir": ["asc", "desc"],
-    "direction": ["asc", "desc"],
-    "orderDir": ["asc", "desc"],
-    "linked_sort_dir": ["asc", "desc"],
-    "stock_method": ["auto", "hybrid", "estimated", "official_closure"],
-}
+# Fallback temporário (Onda 2/3): preferir enum/default do OpenAPI.
+# Mantido vazio de propósito — inventário paralelo é falha de contrato.
+KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {}
 
 KNOWN_PARAM_DEFAULTS: dict[str, Any] = {
-    "granularity": "day",
+    # Defaults de UX TV (filial) — ainda não declarados em todos os Query da api-delpi.
     "branch": "01",
     "filial": "01",
     "branch_code": "01",
 }
 
+_FALLBACK_PARAM_USAGE: set[str] = set()
 
-def enrich_param_schema_entry(name: str, entry: dict[str, Any]) -> dict[str, Any]:
-    """Aplica label, hint, enum e default canônicos TV sobre o campo OpenAPI."""
+
+def _note_param_fallback(kind: str, name: str) -> None:
+    _FALLBACK_PARAM_USAGE.add(f"{kind}:{name}")
+
+
+def enrich_param_schema_entry(
+    name: str,
+    entry: dict[str, Any],
+    *,
+    locale_label: str | None = None,
+    locale_description: str | None = None,
+) -> dict[str, Any]:
+    """Aplica label/hint/enum/default — OpenAPI + x-delpi primeiro; dicts locais só fallback."""
     enriched = dict(entry)
-    if name in PARAM_LABELS_PT:
+    if locale_label:
+        enriched["label"] = locale_label
+    elif name in PARAM_LABELS_PT and not enriched.get("label"):
         enriched["label"] = PARAM_LABELS_PT[name]
-    hint = PARAM_HINTS_PT.get(name) or str(enriched.get("description") or "").strip()
-    if hint:
-        enriched["description"] = hint
+        _note_param_fallback("label", name)
+    elif name in PARAM_LABELS_PT:
+        # Mantém compat: label PT canônico se não veio do OpenAPI locale.
+        enriched["label"] = PARAM_LABELS_PT[name]
+        _note_param_fallback("label", name)
+
+    if locale_description:
+        enriched["description"] = locale_description
+    else:
+        hint = PARAM_HINTS_PT.get(name) or str(enriched.get("description") or "").strip()
+        if hint:
+            if name in PARAM_HINTS_PT:
+                _note_param_fallback("hint", name)
+            enriched["description"] = hint
+
     if name in KNOWN_PARAM_ENUMS and not enriched.get("enum"):
         enriched["enum"] = list(KNOWN_PARAM_ENUMS[name])
+        _note_param_fallback("enum", name)
     # Período em dias: input numérico livre — nunca enum/select.
     if name == "periodDays":
         enriched.pop("enum", None)
     if name in KNOWN_PARAM_DEFAULTS and enriched.get("default") is None:
         enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
-        # Com default TV, não bloquear preview se o campo vier vazio na UI.
         enriched["optional"] = True
+        _note_param_fallback("default", name)
     return enriched
 
 
@@ -482,6 +510,10 @@ def humanize_param_label(name: str, description: str | None = None) -> str:
 
 
 def resolve_category(operation: dict[str, Any]) -> str:
+    x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    category = str(x_delpi.get("category") or "").strip()
+    if category:
+        return category
     tags = operation.get("tags") or []
     if isinstance(tags, list) and tags:
         tag = str(tags[0]).strip()
@@ -490,6 +522,18 @@ def resolve_category(operation: dict[str, Any]) -> str:
     path = str(operation.get("path") or "").strip()
     segment = path.strip("/").split("/")[0].lower() if path else ""
     return PATH_SEGMENT_TO_CATEGORY.get(segment, "other")
+
+
+def extract_param_locale_pt(operation: dict[str, Any], param_name: str) -> tuple[str | None, str | None]:
+    """Retorna (label, description) de xDelpi.params.<name>.locale.pt-BR quando curados."""
+    x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    params = x_delpi.get("params") if isinstance(x_delpi.get("params"), dict) else {}
+    entry = params.get(param_name) if isinstance(params.get(param_name), dict) else {}
+    locale = entry.get("locale") if isinstance(entry.get("locale"), dict) else {}
+    pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
+    label = str(pt.get("label") or "").strip() or None
+    description = str(pt.get("description") or "").strip() or None
+    return label, description
 
 
 def infer_allowed_display_modes(operation: dict[str, Any]) -> list[str]:
@@ -550,33 +594,44 @@ def detect_openapi_date_range_keys(names: set[str]) -> tuple[str, str] | None:
 
 def build_param_schema_from_openapi(
     parameters: list[dict[str, Any]] | None,
+    operation: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], str, tuple[str, str] | None]:
     """Converte parameters do baseline → paramSchema TV + paramStrategy + dateRangeKeys.
 
     Mantém as chaves de data canônicas no schema (UI de período relativo) e registra
     `dateRangeKeys` para o gateway emitir exatamente os nomes HTTP da api-delpi.
+    Preferência: enum/default do OpenAPI; label/description de x-delpi.params.locale.pt-BR.
     """
     params = [p for p in (parameters or []) if isinstance(p, dict) and p.get("name")]
     names = {str(p["name"]) for p in params}
     date_range_keys = detect_openapi_date_range_keys(names)
     strategy = "date_range" if date_range_keys else "direct"
     schema: dict[str, Any] = {}
+    op = operation if isinstance(operation, dict) else {}
 
     for param in params:
         name = str(param["name"])
+        locale_label, locale_description = extract_param_locale_pt(op, name)
         entry: dict[str, Any] = {
             "type": map_openapi_type(param),
             "optional": not bool(param.get("required")),
-            "label": humanize_param_label(name, param.get("description")),
+            "label": locale_label or humanize_param_label(name, param.get("description")),
         }
         if param.get("default") is not None:
             entry["default"] = param["default"]
         if isinstance(param.get("enum"), list) and param["enum"]:
             entry["enum"] = list(param["enum"])
         openapi_desc = str(param.get("description") or "").strip()
-        if openapi_desc:
+        if locale_description:
+            entry["description"] = locale_description
+        elif openapi_desc:
             entry["description"] = openapi_desc
-        schema[name] = enrich_param_schema_entry(name, entry)
+        schema[name] = enrich_param_schema_entry(
+            name,
+            entry,
+            locale_label=locale_label,
+            locale_description=locale_description,
+        )
 
     return schema, strategy, date_range_keys
 
@@ -609,17 +664,19 @@ def merge_param_schema(
 
 
 def extract_tv_audience(operation: dict[str, Any]) -> dict[str, Any]:
-    """Campos de audiência TV a partir de x-delpi.tv (baseline / OpenAPI)."""
+    """Campos de audiência TV a partir de x-delpi.locale.pt-BR (preferido) ou x-delpi.tv."""
     x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    locale = x_delpi.get("locale") if isinstance(x_delpi.get("locale"), dict) else {}
+    pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
     tv = x_delpi.get("tv") if isinstance(x_delpi.get("tv"), dict) else {}
     audience: dict[str, Any] = {}
-    when_to_use = str(tv.get("whenToUse") or "").strip()
+    when_to_use = str(pt.get("whenToUse") or tv.get("whenToUse") or "").strip()
     if when_to_use:
         audience["whenToUse"] = when_to_use
-    label = str(tv.get("label") or "").strip()
+    label = str(pt.get("label") or pt.get("summary") or tv.get("label") or "").strip()
     if label:
         audience["label"] = label
-    description = str(tv.get("description") or "").strip()
+    description = str(pt.get("description") or tv.get("description") or "").strip()
     if description:
         audience["description"] = description
     return audience
@@ -630,7 +687,8 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     summary = str(operation.get("summary") or "").strip()
     description = str(operation.get("description") or "").strip()
     param_schema, param_strategy, date_range_keys = build_param_schema_from_openapi(
-        operation.get("parameters")
+        operation.get("parameters"),
+        operation,
     )
     tv_audience = extract_tv_audience(operation)
     route: dict[str, Any] = {
@@ -678,12 +736,15 @@ def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[
 
 
 def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -> dict[str, Any]:
-    """Preserva curadoria do catálogo atual (labels PT, valueFields manuais, etc.)."""
+    """Preserva curadoria TV-only do catálogo; OpenAPI/locale vence em label/description/whenToUse/category."""
     if not existing:
         return base
     merged = dict(base)
+    openapi_wins = frozenset({"label", "description", "whenToUse", "category"})
     for key in OVERLAY_KEYS:
         if key == "paramSchema":
+            continue
+        if key in openapi_wins and merged.get(key):
             continue
         value = existing.get(key)
         if value not in (None, "", [], {}):
@@ -693,7 +754,21 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 merged[key] = value
     existing_schema = existing.get("paramSchema")
     if isinstance(existing_schema, dict) and existing_schema:
-        merged["paramSchema"] = merge_param_schema(merged.get("paramSchema") or {}, existing_schema)
+        # OpenAPI enum/default vencem; overlay/existing só preenche buracos e labels extras.
+        openapi_schema = merged.get("paramSchema") if isinstance(merged.get("paramSchema"), dict) else {}
+        patched_existing: dict[str, Any] = {}
+        for key, value in existing_schema.items():
+            if not isinstance(value, dict):
+                patched_existing[key] = value
+                continue
+            entry = dict(value)
+            openapi_entry = openapi_schema.get(key) if isinstance(openapi_schema.get(key), dict) else {}
+            if openapi_entry.get("enum"):
+                entry["enum"] = list(openapi_entry["enum"])
+            if openapi_entry.get("default") is not None:
+                entry["default"] = openapi_entry["default"]
+            patched_existing[key] = entry
+        merged["paramSchema"] = merge_param_schema(openapi_schema, patched_existing)
     return merged
 
 

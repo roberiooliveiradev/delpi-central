@@ -124,6 +124,7 @@ Regras: somente rotas **GET** na allowlist (`tv_data_routes.json`); gates CI:
 ```bash
 python3 scripts/generate_tv_data_routes_from_openapi.py --check   # catálogo = gerador (OpenAPI + overlays)
 python3 scripts/check_tv_data_routes.py --check                  # allowlist ⊆ OpenAPI
+python3 scripts/check_tv_openapi_catalog_parity.py --check       # enums TV = OpenAPI (anti-catálogo paralelo)
 ```
 
 Baseline de 2026-07-16: **232 operationIds GET únicos**, preservados na Fase 1. O cache agora isola por fingerprint SHA-256 de identidade/credencial opaca, permissões e contexto de serviço, sem JWT bruto. O enforcement usa `tvConstraints.requiresBranchPermission` e aliases de filial; rotas ainda sem curadoria mantêm fallback compatível configurável.

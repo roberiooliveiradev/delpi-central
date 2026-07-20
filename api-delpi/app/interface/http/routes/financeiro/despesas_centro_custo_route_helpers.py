@@ -4,6 +4,8 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import SORT_DIR_QUERY_DESC as SORT_DIR_QUERY
+
 from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_lancamentos_request import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
@@ -144,8 +146,4 @@ SORT_BY_QUERY = Query(
     DEFAULT_SORT_BY,
     description="Campo de ordenação permitido.",
 )
-SORT_DIR_QUERY = Query(
-    DEFAULT_SORT_DIR,
-    pattern="^(asc|desc)$",
-    description="Direção da ordenação: asc ou desc.",
-)
+# SORT_DIR_QUERY imported from query_param_enums

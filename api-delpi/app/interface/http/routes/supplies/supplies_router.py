@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Query
 
+from app.interface.http.query_param_enums import STOCK_METHOD_QUERY
+
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import KPI_SUPPLIES_ACCESS
@@ -154,10 +156,7 @@ def get_stock_value(
         default=False,
         description="Quando true, retorna apenas o resumo consolidado (sem breakdown por filial/local/produto).",
     ),
-    stock_method: str = Query(
-        default="auto",
-        description="Método do estoque histórico: auto, hybrid, estimated ou official_closure.",
-    ),
+    stock_method: str = STOCK_METHOD_QUERY,
 ):
     try:
         use_case = build_get_stock_value_use_case()

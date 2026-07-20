@@ -35,6 +35,16 @@ def test_build_x_delpi_extension_includes_tv_audience_when_curated():
     tv = extension.get("tv") or {}
     assert "whenToUse" in tv
     assert "OEE" in tv["whenToUse"] or "oee" in tv["whenToUse"].lower() or "KPI" in tv["whenToUse"]
+    locale = extension.get("locale") or {}
+    assert "en" in locale and "pt-BR" in locale
+    assert extension.get("category") == "production"
+
+
+def test_build_x_delpi_extension_department_idd_locale():
+    extension = build_x_delpi_extension("get_dashboard_department_idd")
+    assert extension["entity"] == "dashboard_department_idd"
+    assert extension["locale"]["pt-BR"]["summary"]
+    assert extension["params"]["department_id"]["locale"]["pt-BR"]["label"] == "Departamento"
 
 
 def test_inject_delpi_extensions_on_operations_with_operation_id():

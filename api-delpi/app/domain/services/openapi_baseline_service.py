@@ -10,8 +10,8 @@ _BASELINE_PATH = Path(__file__).resolve().parents[2] / "content" / "openapi_base
 
 _HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
 
-# Versão 2: inclui parameters (query) e x-delpi para o gerador TV.
-BASELINE_VERSION = "2"
+# Versão 3: parameters + x-delpi com locale EN/pt-BR, params.locale e category.
+BASELINE_VERSION = "3"
 
 
 def _operation_key(method: str, path: str) -> str:
@@ -67,6 +67,24 @@ def simplify_openapi_parameter(param: dict[str, Any]) -> dict[str, Any] | None:
     return entry
 
 
+def _clean_locale_map(raw: Any) -> dict[str, dict[str, str]] | None:
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, dict[str, str]] = {}
+    for lang, block in raw.items():
+        lang_key = str(lang or "").strip()
+        if not lang_key or not isinstance(block, dict):
+            continue
+        cleaned: dict[str, str] = {}
+        for field in ("summary", "description", "whenToUse", "label"):
+            value = str(block.get(field) or "").strip()
+            if value:
+                cleaned[field] = value
+        if cleaned:
+            out[lang_key] = cleaned
+    return out or None
+
+
 def extract_x_delpi(operation: dict[str, Any]) -> dict[str, Any] | None:
     raw = operation.get("x-delpi")
     if not isinstance(raw, dict):
@@ -81,7 +99,60 @@ def extract_x_delpi(operation: dict[str, Any]) -> dict[str, Any] | None:
     presentation = raw.get("presentation")
     if isinstance(presentation, dict) and presentation.get("strategy") is not None:
         out["presentationStrategy"] = str(presentation.get("strategy"))
+    category = str(raw.get("category") or "").strip()
+    if category:
+        out["category"] = category
+    locale = _clean_locale_map(raw.get("locale"))
+    if locale:
+        out["locale"] = locale
+    params_raw = raw.get("params")
+    if isinstance(params_raw, dict) and params_raw:
+        params_out: dict[str, Any] = {}
+        for name, value in params_raw.items():
+            key = str(name or "").strip()
+            if not key or not isinstance(value, dict):
+                continue
+            param_locale = _clean_locale_map(value.get("locale"))
+            if param_locale:
+                params_out[key] = {"locale": param_locale}
+        if params_out:
+            out["params"] = params_out
+    tv = raw.get("tv")
+    if isinstance(tv, dict) and tv:
+        tv_clean: dict[str, str] = {}
+        for field in ("whenToUse", "description", "label"):
+            value = str(tv.get(field) or "").strip()
+            if value:
+                tv_clean[field] = value
+        if tv_clean:
+            out["tv"] = tv_clean
     return out or None
+
+
+def merge_audience_into_x_delpi(
+    x_delpi: dict[str, Any] | None,
+    operation_id: str | None,
+) -> dict[str, Any] | None:
+    """Garante locale/params/category do JSON curado também no baseline (sem depender só do runtime)."""
+    from app.domain.services.route_locale_catalog_service import apply_route_locale_to_x_delpi
+
+    base = dict(x_delpi or {})
+    if not operation_id:
+        return base or None
+    # apply espera o formato x-delpi (presentation aninhada); baseline usa presentationStrategy.
+    runtime_shape = dict(base)
+    if "presentationStrategy" in runtime_shape and "presentation" not in runtime_shape:
+        runtime_shape["presentation"] = {"strategy": runtime_shape.pop("presentationStrategy")}
+    merged = apply_route_locale_to_x_delpi(runtime_shape, str(operation_id))
+    # Re-flatten para formato baseline.
+    strategy = None
+    presentation = merged.get("presentation")
+    if isinstance(presentation, dict):
+        strategy = presentation.get("strategy")
+        merged = {k: v for k, v in merged.items() if k != "presentation"}
+    if strategy is not None:
+        merged["presentationStrategy"] = str(strategy)
+    return merged or None
 
 
 def extract_operations_from_openapi(spec: dict[str, Any]) -> list[dict[str, Any]]:
@@ -108,7 +179,10 @@ def extract_operations_from_openapi(spec: dict[str, Any]) -> list[dict[str, Any]
                     parameters.append(simplified)
             if parameters:
                 row["parameters"] = parameters
-            x_delpi = extract_x_delpi(operation)
+            x_delpi = merge_audience_into_x_delpi(
+                extract_x_delpi(operation),
+                operation.get("operationId"),
+            )
             if x_delpi:
                 row["xDelpi"] = x_delpi
             description = str(operation.get("description") or "").strip()
@@ -118,6 +192,38 @@ def extract_operations_from_openapi(spec: dict[str, Any]) -> list[dict[str, Any]
 
     operations.sort(key=lambda row: (row["path"], row["method"]))
     return operations
+
+
+def enrich_baseline_payload_locale(payload: dict[str, Any]) -> dict[str, Any]:
+    """Atualiza xDelpi.locale/params/category de um baseline já existente (sem reabrir FastAPI)."""
+    ops = payload.get("operations")
+    if not isinstance(ops, list):
+        return payload
+    enriched_ops: list[dict[str, Any]] = []
+    for row in ops:
+        if not isinstance(row, dict):
+            continue
+        next_row = dict(row)
+        x_delpi = next_row.get("xDelpi") if isinstance(next_row.get("xDelpi"), dict) else {}
+        merged = merge_audience_into_x_delpi(x_delpi, next_row.get("operationId"))
+        if merged:
+            next_row["xDelpi"] = merged
+        enriched_ops.append(next_row)
+    return {
+        **payload,
+        "version": BASELINE_VERSION,
+        "operation_count": len(enriched_ops),
+        "operations": enriched_ops,
+    }
+
+
+def enrich_saved_openapi_baseline() -> Path:
+    payload = enrich_baseline_payload_locale(load_openapi_baseline())
+    _BASELINE_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return _BASELINE_PATH
 
 
 def build_baseline_payload(spec: dict[str, Any]) -> dict[str, Any]:

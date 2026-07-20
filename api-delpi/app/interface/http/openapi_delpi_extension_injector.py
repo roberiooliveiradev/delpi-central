@@ -9,7 +9,7 @@ from app.interface.http.route_contract_registry import (
     presentation_strategy_for_entity,
     resolve_contract,
 )
-from app.interface.http.tv_route_audience import tv_audience_for_operation
+from app.domain.services.route_locale_catalog_service import apply_route_locale_to_x_delpi
 
 HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
 
@@ -29,10 +29,7 @@ def build_x_delpi_extension(operation_id: str) -> dict[str, Any]:
         "shape": shape,
         "presentation": {"strategy": strategy},
     }
-    tv = tv_audience_for_operation(operation_id)
-    if tv:
-        extension["tv"] = tv
-    return extension
+    return apply_route_locale_to_x_delpi(extension, operation_id)
 
 
 def inject_delpi_extensions(openapi_schema: dict[str, Any]) -> dict[str, int]:

@@ -1,5 +1,11 @@
 from fastapi import APIRouter, Path, Query
 
+from app.interface.http.query_param_enums import (
+    GRANULARITY_QUERY_REQUIRED,
+    PRODUCT_TYPE_QUERY,
+    SORT_DIR_QUERY,
+)
+
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import (
@@ -236,7 +242,7 @@ def get_depreciation_pct(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_oee_series(
-    granularity: str = Query(..., min_length=3, max_length=10),
+    granularity: str = GRANULARITY_QUERY_REQUIRED,
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     branch: str | None = Query(default=None, min_length=2, max_length=2),
@@ -279,7 +285,7 @@ def get_production_oee_series(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_otd_series(
-    granularity: str = Query(..., min_length=3, max_length=10),
+    granularity: str = GRANULARITY_QUERY_REQUIRED,
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     branch: str | None = Query(default=None, min_length=2, max_length=2),
@@ -323,7 +329,7 @@ def get_production_otd(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: str | None = Query(default=None),
-    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY,
 ):
     try:
         use_case = build_get_production_otd_use_case()
@@ -390,11 +396,11 @@ def get_production_oee(
         default=None,
         description="Código(s) do operador (csv)",
     ),
-    product_type: str | None = Query(default=None, pattern="^(PA|PI)$"),
+    product_type: str | None = PRODUCT_TYPE_QUERY,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: str | None = Query(default=None),
-    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY,
 ):
     try:
         use_case = build_get_production_oee_use_case()

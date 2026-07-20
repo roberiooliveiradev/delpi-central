@@ -127,7 +127,11 @@
       "suggestedTransformSteps": [
         {
           "op": "select",
-          "columns": ["periodo", "oee_filial_01", "oee_filial_02"]
+          "columns": [
+            "periodo",
+            "oee_filial_01",
+            "oee_filial_02"
+          ]
         },
         {
           "op": "sort",
@@ -225,13 +229,22 @@
         "avg_lead_time": "Lead time médio",
         "total_items": "Total de itens"
       },
-      "allowedDisplayModes": ["kpi", "bar_chart", "table", "auto"],
+      "allowedDisplayModes": [
+        "kpi",
+        "bar_chart",
+        "table",
+        "auto"
+      ],
       "label": "LMPs — resumo do painel",
       "description": "KPIs agregados do painel de LMPs (volume, prazo e lead time).",
       "whenToUse": "Quando a TV deve mostrar o pulso das LMPs: totais e % no prazo. Depois escolha no visual quais métricas exibir."
     },
     "get_production_allocation_gaps": {
-      "allowedDisplayModes": ["table", "kpi", "auto"],
+      "allowedDisplayModes": [
+        "table",
+        "kpi",
+        "auto"
+      ],
       "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
@@ -269,6 +282,22 @@
           "default": 5,
           "label": "Linhas (TOP N)"
         }
+      }
+    },
+    "get_dashboard_department_idd": {
+      "valueFields": [
+        "score",
+        "value",
+        "idd"
+      ],
+      "paramSchema": {
+        "department_id": {
+          "default": "commercial",
+          "optional": true
+        }
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     }
   }

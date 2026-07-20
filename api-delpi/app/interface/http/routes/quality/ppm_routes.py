@@ -3,6 +3,8 @@
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Query
+
+from app.interface.http.query_param_enums import GRANULARITY_QUERY_MONTH
 from delpi_auth.authorization import require_any_permission
 
 from app.application.dto.ppm.list_ppm_request import ListPpmRequest
@@ -232,7 +234,7 @@ def get_external_ppm_summary(
 @router.get("/ppm/internal/series", operation_id="get_ppm_internal_series")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_series(
-    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
+    granularity: str = GRANULARITY_QUERY_MONTH,
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
@@ -254,7 +256,7 @@ def get_internal_ppm_series(
 @router.get("/ppm/external/series", operation_id="get_ppm_external_series")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_series(
-    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
+    granularity: str = GRANULARITY_QUERY_MONTH,
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,

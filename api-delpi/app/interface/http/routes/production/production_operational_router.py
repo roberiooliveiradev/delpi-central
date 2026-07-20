@@ -1,6 +1,12 @@
-from typing import Literal, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Query
+
+from app.interface.http.query_param_enums import (
+    LOSS_TYPE_QUERY,
+    PRODUCT_TYPE_QUERY,
+    SORT_DIR_QUERY,
+)
 from delpi_auth.authorization import require_permission
 
 from app.application.dto.production.get_production_order_by_op_request import (
@@ -59,9 +65,9 @@ router = APIRouter(prefix="/production", tags=["Produção operacional"])
 def get_production_order_by_op(
     production_order: str,
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
-    product_type: Optional[Literal["PA", "PI"]] = Query(default=None),
+    product_type: Optional[str] = PRODUCT_TYPE_QUERY,
     linked_sort_by: Optional[str] = Query(default=None),
-    linked_sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    linked_sort_dir: str = SORT_DIR_QUERY,
 ):
     try:
         result = build_get_production_order_by_op_use_case().execute(
@@ -134,7 +140,7 @@ def get_losses_records(
     date_end: Optional[str] = Query(default=None),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    loss_type: Literal["refugo", "scrap", "both"] = Query(default="both"),
+    loss_type: str = LOSS_TYPE_QUERY,
 ):
     try:
         dto = ProductionOperationalRequest(
@@ -165,7 +171,7 @@ def get_losses_top_materials(
     date_end: Optional[str] = Query(default=None),
     branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    loss_type: Literal["refugo", "scrap", "both"] = Query(default="both"),
+    loss_type: str = LOSS_TYPE_QUERY,
 ):
     try:
         dto = ProductionOperationalRequest(

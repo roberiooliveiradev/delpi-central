@@ -97,6 +97,71 @@ def test_extract_operations_includes_parameters_and_x_delpi() -> None:
     assert payload["operation_count"] == 1
 
 
-def test_extract_x_delpi_empty() -> None:
-    assert extract_x_delpi({}) is None
-    assert extract_x_delpi({"x-delpi": {"shape": "paged_list"}}) == {"shape": "paged_list"}
+def test_extract_x_delpi_persists_locale_params_category() -> None:
+    extension = extract_x_delpi(
+        {
+            "x-delpi": {
+                "entity": "dashboard_department_idd",
+                "shape": "scalar",
+                "presentation": {"strategy": "as_delivered"},
+                "category": "system",
+                "locale": {
+                    "en": {"summary": "Department IDD score"},
+                    "pt-BR": {"summary": "IDD departamental", "whenToUse": "Card KPI"},
+                },
+                "params": {
+                    "department_id": {
+                        "locale": {
+                            "en": {"label": "Department"},
+                            "pt-BR": {"label": "Departamento"},
+                        }
+                    }
+                },
+                "tv": {"whenToUse": "Card KPI", "label": "IDD departamental"},
+            }
+        }
+    )
+    assert extension is not None
+    assert extension["category"] == "system"
+    assert extension["locale"]["en"]["summary"] == "Department IDD score"
+    assert extension["params"]["department_id"]["locale"]["pt-BR"]["label"] == "Departamento"
+    assert extension["tv"]["whenToUse"] == "Card KPI"
+    assert BASELINE_VERSION == "3"
+
+
+def test_extract_operations_merges_audience_locale() -> None:
+    spec = {
+        "openapi": "3.0.3",
+        "info": {"title": "API", "version": "1"},
+        "paths": {
+            "/dashboard/department-idd": {
+                "get": {
+                    "operationId": "get_dashboard_department_idd",
+                    "summary": "Department IDD score",
+                    "tags": ["Dashboard"],
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "department_id",
+                            "required": True,
+                            "schema": {
+                                "type": "string",
+                                "enum": ["commercial", "hr"],
+                            },
+                        }
+                    ],
+                    "x-delpi": {
+                        "entity": "dashboard_department_idd",
+                        "shape": "scalar",
+                        "presentation": {"strategy": "as_delivered"},
+                    },
+                }
+            }
+        },
+    }
+    ops = extract_operations_from_openapi(spec)
+    assert len(ops) == 1
+    x_delpi = ops[0]["xDelpi"]
+    assert x_delpi["entity"] == "dashboard_department_idd"
+    assert x_delpi.get("locale", {}).get("pt-BR", {}).get("whenToUse")
+    assert ops[0]["parameters"][0]["enum"] == ["commercial", "hr"]

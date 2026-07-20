@@ -1,4 +1,9 @@
 from fastapi import APIRouter, Query
+
+from app.interface.http.query_param_enums import (
+    GRANULARITY_QUERY_MONTH,
+    NONCONFORMITY_TYPE_QUERY,
+)
 from typing import Optional
 
 from delpi_auth.authorization import require_any_permission
@@ -105,8 +110,8 @@ def list_quality_branches(
 @router.get("/nonconformities/series")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_nonconformity_series(
-    type: str = Query("all", pattern="^(internal|external|all)$"),
-    granularity: str = Query("month", pattern="^(day|week|month|year)$"),
+    type: str = NONCONFORMITY_TYPE_QUERY,
+    granularity: str = GRANULARITY_QUERY_MONTH,
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,

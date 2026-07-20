@@ -49,19 +49,38 @@ ALLOWED_DEPARTMENT_IDS = frozenset(
         "quality",
     }
 )
+_DEPARTMENT_ID_ENUM = sorted(ALLOWED_DEPARTMENT_IDS)
 
 
-@router.get("/department-idd")
+@router.get(
+    "/department-idd",
+    operation_id="get_dashboard_department_idd",
+    summary="Department IDD score",
+    description="Strategic Indicators department score for dashboards.",
+)
 @require_any_permission(DASHBOARD_IDD_ACCESS)
 def get_dashboard_department_idd(
     department_id: str = Query(
         ...,
-        description="Departamento no SI (commercial, hr, production, financial, supplies, engineering, quality).",
+        description="SI department id.",
+        enum=_DEPARTMENT_ID_ENUM,
     ),
-    competence: str | None = Query(default=None),
-    start_date: str | None = Query(default=None),
-    end_date: str | None = Query(default=None),
-    branch: str | None = Query(default=None),
+    competence: str | None = Query(
+        default=None,
+        description="Reference month as YYYY-MM.",
+    ),
+    start_date: str | None = Query(
+        default=None,
+        description="Period start (YYYY-MM-DD).",
+    ),
+    end_date: str | None = Query(
+        default=None,
+        description="Period end (YYYY-MM-DD).",
+    ),
+    branch: str | None = Query(
+        default=None,
+        description="Branch code (optional).",
+    ),
 ):
     normalized_id = department_id.strip().lower()
     if normalized_id not in ALLOWED_DEPARTMENT_IDS:

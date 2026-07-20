@@ -24,7 +24,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from app.domain.services.openapi_baseline_service import save_openapi_baseline  # noqa: E402
+from app.domain.services.openapi_baseline_service import (  # noqa: E402
+    enrich_saved_openapi_baseline,
+    save_openapi_baseline,
+)
 
 
 def main() -> int:
@@ -34,7 +37,17 @@ def main() -> int:
         type=Path,
         help="OpenAPI completo já serializado (evita importar app.main)",
     )
+    parser.add_argument(
+        "--enrich-locale-only",
+        action="store_true",
+        help="Só mescla tv_route_audience.json no baseline já salvo (sem reabrir FastAPI)",
+    )
     args = parser.parse_args()
+
+    if args.enrich_locale_only:
+        target = enrich_saved_openapi_baseline()
+        print(f"Baseline OpenAPI enriquecido com locale: {target}")
+        return 0
 
     if args.from_json:
         if not args.from_json.is_file():
