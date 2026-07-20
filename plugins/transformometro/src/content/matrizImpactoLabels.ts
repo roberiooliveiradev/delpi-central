@@ -21,6 +21,16 @@ export const MATRIZ_QUADRANTE_LABELS_GRAFICO: ImpactEffortQuadrantLabels = {
   rethink: "Reavaliar",
 };
 
+export const MATRIZ_QUADRANTE_DESCRIPTIONS: Record<
+  keyof ImpactEffortQuadrantLabels,
+  string
+> = {
+  quick_win: "Alto impacto e baixo esforço — priorize primeiro.",
+  strategic: "Alto impacto e alto esforço — planeje com recursos dedicados.",
+  fill_in: "Baixo impacto e baixo esforço — faça quando houver folga.",
+  rethink: "Baixo impacto e alto esforço — reavalie escopo ou adie.",
+};
+
 export const MATRIZ_CONFIANCA_LABELS: Record<ImpactEffortConfidence, string> = {
   alta: "Alta",
   media: "Média",

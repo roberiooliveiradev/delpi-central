@@ -733,6 +733,17 @@
   cursor: default;
 }
 
+.delpi-ui-impact-effort-matrix__point-hit {
+  fill: transparent;
+  stroke: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.delpi-ui-impact-effort-matrix__point-hit--muted {
+  cursor: default;
+}
+
 .delpi-ui-impact-effort-matrix__point--active {
   fill: var(--impact-effort-point);
   stroke-width: 0.55;
@@ -747,6 +758,47 @@
   fill: var(--impact-effort-text);
   font-weight: 600;
   pointer-events: none;
+}
+
+.delpi-ui-impact-effort-matrix__plot-shell {
+  position: relative;
+  width: 100%;
+}
+
+.delpi-ui-impact-effort-matrix__tooltip {
+  position: absolute;
+  z-index: 4;
+  min-width: 10rem;
+  max-width: min(18rem, 70%);
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--impact-effort-border, var(--delpi-ui-border, #e5e7eb));
+  border-radius: 10px;
+  background: var(--impact-effort-surface, var(--delpi-ui-surface, #ffffff));
+  color: var(--impact-effort-text, var(--delpi-ui-text, #111111));
+  box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 10px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.delpi-ui-impact-effort-matrix__tooltip-title {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.delpi-ui-impact-effort-matrix__tooltip-scores,
+.delpi-ui-impact-effort-matrix__tooltip-quadrant {
+  color: var(--impact-effort-muted, var(--delpi-ui-text-muted, #6b7280));
+  font-size: 11px;
+}
+
+.delpi-ui-impact-effort-matrix__tooltip-quadrant {
+  font-weight: 600;
+  color: var(--impact-effort-text, var(--delpi-ui-text, #111111));
 }
 
 .delpi-ui-impact-effort-matrix__active-caption {
@@ -783,15 +835,47 @@
   color: var(--impact-effort-muted);
 }
 
+.delpi-ui-impact-effort-matrix__legend--explained {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.65rem 1rem;
+  margin-top: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--impact-effort-border, var(--delpi-ui-border, #e5e7eb));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--impact-effort-surface, var(--delpi-ui-surface, #fff)) 88%, transparent);
+}
+
 .delpi-ui-impact-effort-matrix__legend-item {
   display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.delpi-ui-impact-effort-matrix__legend-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.delpi-ui-impact-effort-matrix__legend-title {
+  color: var(--impact-effort-text, var(--delpi-ui-text, #111111));
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.delpi-ui-impact-effort-matrix__legend-desc {
+  color: var(--impact-effort-muted, var(--delpi-ui-text-muted, #6b7280));
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .delpi-ui-impact-effort-matrix__legend-swatch {
   width: 10px;
   height: 10px;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
   border-radius: 3px;
 }
 

@@ -35,6 +35,7 @@ import { buildProcessoPath } from "../../utils/routeParser";
 import { formatCurrency, formatHours } from "../../utils/format";
 import {
   MATRIZ_CONFIANCA_LABELS,
+  MATRIZ_QUADRANTE_DESCRIPTIONS,
   MATRIZ_QUADRANTE_LABELS,
   MATRIZ_QUADRANTE_LABELS_GRAFICO,
 } from "../../content/matrizImpactoLabels";
@@ -365,6 +366,7 @@ export function RevisaoMatrizImpactoSection({
               <ImpactEffortMatrixLegend
                 className="tm-impact-effort-section__legend"
                 quadrantLabels={MATRIZ_QUADRANTE_LABELS}
+                quadrantDescriptions={MATRIZ_QUADRANTE_DESCRIPTIONS}
               />
             </div>
 

@@ -272,7 +272,7 @@ export const TM_HELP_TOOLTIPS = {
     confianca:
       "Indica a robustez do score automático conforme completude de medição, referência, investimentos e recursos.",
     quadrantes:
-      "Ganho rápido = alto impacto e baixo esforço; Estratégico = alto em ambos; Complementar = baixo em ambos; Reavaliar = baixo impacto e alto esforço.",
+      "Legenda dos quatro quadrantes: Ganho rápido (alto impacto / baixo esforço), Estratégico (alto / alto), Complementar (baixo / baixo) e Reavaliar (baixo impacto / alto esforço).",
     modoLabel: "Modo de cálculo",
     confiancaLabel: "Confiança do score",
     posicaoAtual:

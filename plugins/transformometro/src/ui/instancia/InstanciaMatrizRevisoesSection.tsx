@@ -16,6 +16,7 @@ import { cenarioLabel } from "../../content/cenarioLabels";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   MATRIZ_QUADRANTE_BADGE_CLASS,
+  MATRIZ_QUADRANTE_DESCRIPTIONS,
   MATRIZ_QUADRANTE_LABELS,
   MATRIZ_QUADRANTE_LABELS_GRAFICO,
 } from "../../content/matrizImpactoLabels";
@@ -153,6 +154,7 @@ export function InstanciaMatrizRevisoesSection({
               <ImpactEffortMatrixLegend
                 className="tm-impact-effort-section__legend"
                 quadrantLabels={MATRIZ_QUADRANTE_LABELS}
+                quadrantDescriptions={MATRIZ_QUADRANTE_DESCRIPTIONS}
               />
             </div>
 
