@@ -109,6 +109,60 @@ def test_enrich_data_kpi_block_resolves_scalar():
     assert call_kwargs["params"]["periodDays"] == 7
 
 
+def test_enrich_dashboard_department_indicators_unwraps_item_wrapper():
+    """Ponte SI devolve `{ item: { idd, indicators } }` — preview TV precisa do IDD e da tabela."""
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_dashboard_department_indicators",
+            "shape": "playbook_report",
+        },
+        "data": {
+            "item": {
+                "department_id": "commercial",
+                "idd": 8.1,
+                "score": 8.1,
+                "indicators": [
+                    {
+                        "indicator_id": "commercial.otd",
+                        "name": "OTD",
+                        "score": 7.5,
+                        "goals": {"consolidated": 95.0},
+                        "realized": {"consolidated": 92.0},
+                    }
+                ],
+            }
+        },
+        "route": {
+            "label": "Departamento — IDD, metas e realizado",
+            "valueFields": ["idd", "score"],
+            "tableFields": "indicators",
+            "allowedDisplayModes": ["kpi", "table", "auto"],
+            "tvConstraints": {"maxRows": 20},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    blocks = [
+        {
+            "id": "src-1",
+            "type": "data_source",
+            "dataBinding": {
+                "operationId": "get_dashboard_department_indicators",
+                "params": {"department_id": "commercial"},
+                "displayMode": "auto",
+            },
+        }
+    ]
+    enriched = service.enrich_blocks(blocks, cfg={}, authorization="Bearer x")
+    resolved = enriched[0]["resolved"]
+    assert resolved["kpi"]["value"] == 8.1
+    assert resolved["table"]["rows"]
+    assert resolved["table"]["rows"][0]["indicator_id"] == "commercial.otd"
+
+
 def test_enrich_rejects_disallowed_route():
     service = ComunicadoDataEnrichmentService(catalog=TvDataRouteCatalogService(), gateway=MagicMock())
     blocks = [

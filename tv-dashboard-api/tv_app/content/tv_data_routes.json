@@ -1268,6 +1268,7 @@
       "path": "/dashboard/department-indicators",
       "allowedDisplayModes": [
         "kpi",
+        "table",
         "auto"
       ],
       "metaShape": "playbook_report",
@@ -1287,7 +1288,8 @@
             "quality",
             "supplies"
           ],
-          "description": "Identificador do departamento no painel IDD."
+          "description": "Identificador do departamento no painel IDD.",
+          "default": "commercial"
         },
         "competence": {
           "type": "string",
@@ -1326,6 +1328,14 @@
       ],
       "defaultParams": {
         "periodDays": 30
+      },
+      "valueFields": [
+        "idd",
+        "score"
+      ],
+      "tableFields": "indicators",
+      "tvConstraints": {
+        "maxRows": 20
       }
     },
     {
@@ -1336,6 +1346,7 @@
       "path": "/dashboard/departments-indicators",
       "allowedDisplayModes": [
         "kpi",
+        "table",
         "auto"
       ],
       "metaShape": "playbook_report",
@@ -1394,6 +1405,14 @@
       ],
       "defaultParams": {
         "periodDays": 30
+      },
+      "valueFields": [
+        "idd",
+        "score"
+      ],
+      "tableFields": "items",
+      "tvConstraints": {
+        "maxRows": 20
       }
     },
     {
@@ -5823,6 +5842,24 @@
         "periodDays": 7
       },
       "seriesField": "points",
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -5837,25 +5874,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      }
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -5915,14 +5934,14 @@
         "value",
         "otdPct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -6265,9 +6284,6 @@
       "fixedQueryParams": {
         "granularity": "day"
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -6275,6 +6291,9 @@
         "date_end": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       }
     },
     {
@@ -6335,14 +6354,14 @@
         "value",
         "oeePct"
       ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
       }
     },
     {
@@ -6866,14 +6885,14 @@
         }
       },
       "paramStrategy": "direct",
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": false
-      },
       "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
+      },
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": false
       }
     },
     {
@@ -12603,6 +12622,7 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
@@ -12611,8 +12631,7 @@
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
-      },
-      "tableFields": "top_products"
+      }
     },
     {
       "operationId": "get_caller_stats",

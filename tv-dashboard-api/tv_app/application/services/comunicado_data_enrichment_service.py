@@ -1057,6 +1057,7 @@ class ComunicadoDataEnrichmentService:
         label: str | None,
     ) -> dict[str, Any]:
         mode = normalize_display_mode(display_mode)
+        data = unwrap_operational_data(data)
         if mode == "auto":
             mode = _infer_auto_display_mode(
                 data,

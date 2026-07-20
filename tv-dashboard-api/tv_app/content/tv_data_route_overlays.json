@@ -299,6 +299,41 @@
       "tvConstraints": {
         "maxRows": 1
       }
+    },
+    "get_dashboard_department_indicators": {
+      "valueFields": [
+        "idd",
+        "score"
+      ],
+      "tableFields": "indicators",
+      "allowedDisplayModes": [
+        "kpi",
+        "table",
+        "auto"
+      ],
+      "paramSchema": {
+        "department_id": {
+          "default": "commercial"
+        }
+      },
+      "tvConstraints": {
+        "maxRows": 20
+      }
+    },
+    "get_dashboard_departments_indicators": {
+      "valueFields": [
+        "idd",
+        "score"
+      ],
+      "tableFields": "items",
+      "allowedDisplayModes": [
+        "kpi",
+        "table",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 20
+      }
     }
   }
 }

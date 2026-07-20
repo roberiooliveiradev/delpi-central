@@ -28,15 +28,38 @@ def unwrap_operational_data(data: Any) -> Any:
     if data.get("success") is not None and "data" in data:
         inner = data.get("data")
         if isinstance(inner, (dict, list)):
-            return inner
+            data = inner
+            if isinstance(data, list):
+                return data
 
-    inner = data.get("data")
-    if isinstance(inner, list):
-        return inner
-    if isinstance(inner, dict):
-        other_keys = [key for key in data.keys() if key not in _ENVELOPE_META_KEYS and key != "data"]
-        if not other_keys or all(data.get(key) in (None, "", [], {}) for key in other_keys):
+    if isinstance(data, dict):
+        inner = data.get("data")
+        if isinstance(inner, list):
             return inner
+        if isinstance(inner, dict):
+            other_keys = [
+                key
+                for key in data.keys()
+                if key not in _ENVELOPE_META_KEYS and key != "data"
+            ]
+            if not other_keys or all(
+                data.get(key) in (None, "", [], {}) for key in other_keys
+            ):
+                data = inner
+
+    # Ponte dashboard SI: `{ "item": { idd, indicators, … } }` (único payload útil).
+    if isinstance(data, dict):
+        item = data.get("item")
+        if isinstance(item, dict):
+            other_keys = [
+                key
+                for key in data.keys()
+                if key not in _ENVELOPE_META_KEYS and key != "item"
+            ]
+            if not other_keys or all(
+                data.get(key) in (None, "", [], {}) for key in other_keys
+            ):
+                return item
 
     return data
 

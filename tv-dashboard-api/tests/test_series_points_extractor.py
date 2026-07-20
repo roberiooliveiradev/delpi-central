@@ -15,6 +15,33 @@ def test_unwrap_operational_data_envelope_list():
     assert unwrap_operational_data(payload) == [{"id": "1"}, {"id": "2"}]
 
 
+def test_unwrap_operational_data_singleton_item_wrapper():
+    payload = {
+        "success": True,
+        "data": {
+            "item": {
+                "department_id": "commercial",
+                "idd": 8.1,
+                "indicators": [{"indicator_id": "commercial.otd", "score": 7.0}],
+            }
+        },
+    }
+    assert unwrap_operational_data(payload) == {
+        "department_id": "commercial",
+        "idd": 8.1,
+        "indicators": [{"indicator_id": "commercial.otd", "score": 7.0}],
+    }
+
+
+def test_unwrap_operational_data_keeps_item_when_siblings_present():
+    payload = {
+        "item": {"idd": 8.1},
+        "partial_success": True,
+        "errors": [{"message": "upstream"}],
+    }
+    assert unwrap_operational_data(payload) == payload
+
+
 def test_envelope_data_returns_dict_only():
     assert envelope_data({"success": True, "data": {"value": 1}}) == {"value": 1}
     assert envelope_data([{"value": 1}]) == {}
