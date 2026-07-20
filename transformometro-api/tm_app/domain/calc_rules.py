@@ -159,6 +159,52 @@ def is_comparable_scenario(cenario_tipo: Optional[str]) -> bool:
     return (cenario_tipo or "").lower() in COMPARABLE_SCENARIOS
 
 
+def benefit_volume_signals(
+    *,
+    volume_ref: float,
+    volume_rev: float,
+) -> dict[str, Any]:
+    """Sinais de volume revisão vs. referência (Playbook 22)."""
+    delta = float(volume_rev or 0) - float(volume_ref or 0)
+    return {
+        "delta_volume": delta,
+        "volume_acima_referencia": delta > 0,
+        "volume_abaixo_referencia": delta < 0,
+    }
+
+
+def capacity_gain_month(
+    *,
+    volume_ref: float,
+    volume_rev: float,
+    tempo_medio_ref_min: float,
+    custo_hora_ref: float,
+) -> float:
+    """Ganho de capacidade em R$/mês quando vol_rev > vol_ref.
+
+    Fora de economia_bruta / ROI até política explícita.
+    Fórmula: Δvolume × (tempo_ref / 60) × custo_hora_ref
+    """
+    delta = float(volume_rev or 0) - float(volume_ref or 0)
+    if delta <= 0:
+        return 0.0
+    return delta * (float(tempo_medio_ref_min or 0) / 60.0) * float(custo_hora_ref or 0)
+
+
+def volume_reduction_signal_month(
+    *,
+    volume_ref: float,
+    volume_rev: float,
+    tempo_medio_ref_min: float,
+    custo_hora_ref: float,
+) -> float:
+    """Sinal analítico (R$) quando vol_rev < vol_ref — sem double-count na bruta."""
+    delta = float(volume_rev or 0) - float(volume_ref or 0)
+    if delta >= 0:
+        return 0.0
+    return abs(delta) * (float(tempo_medio_ref_min or 0) / 60.0) * float(custo_hora_ref or 0)
+
+
 def _is_truthy(value: Any) -> bool:
     if isinstance(value, bool):
         return value

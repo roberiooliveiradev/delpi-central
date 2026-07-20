@@ -201,6 +201,8 @@ export const TM_HELP_TOOLTIPS = {
     versao: "Identificador da revisão (ex.: 1.0.0). Deve ser único dentro da instância.",
     cenario:
       "Linha de base = as-is (sem referência). Demais cenários exigem escolher contra qual revisão comparar.",
+    beneficioCalculoCategoria:
+      "Como interpretar o benefício vs. a referência. «Economia de tempo» (padrão) assume volumes comparáveis; «Ganho de capacidade» destaca volume acima da referência como métrica à parte do ROI.",
     referenciaComparacao:
       "Revisão anterior usada como referência para economia, payback e diffs de diagrama/WBS. A baseline não precisa deste campo.",
     inicioVigencia: "Data a partir da qual a revisão passa a valer para medições e dashboard.",
@@ -210,7 +212,8 @@ export const TM_HELP_TOOLTIPS = {
     descricao: "Resumo do que a revisão representa (ex.: automação do fechamento).",
     motivo: "Motivo da criação ou alteração (ex.: nova ferramenta, mudança de escopo).",
     observacoes: "Notas complementares sobre a revisão.",
-    volumeMensal: "Volume de execuções ou transações por mês usado no cálculo de economia.",
+    volumeMensal:
+      "Volume de execuções ou transações por mês usado no cálculo de economia. Em «Economia de tempo», mantenha o mesmo volume da referência para comparar custo 1:1.",
     tempoMedio: "Tempo médio de execução por unidade, em minutos.",
     tempoRetrabalho: "Tempo médio de retrabalho por unidade, em minutos.",
     custoHoraMo: "Custo hora da mão de obra usado para converter tempo em R$.",

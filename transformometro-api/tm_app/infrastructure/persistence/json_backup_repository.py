@@ -134,6 +134,7 @@ ENTITY_SPECS: tuple[EntitySpec, ...] = (
             "descricao_revisao",
             "motivo_revisao",
             "cenario_tipo",
+            "beneficio_calculo_categoria",
             "data_implantacao",
             "data_inicio_vigencia",
             "data_fim_vigencia",

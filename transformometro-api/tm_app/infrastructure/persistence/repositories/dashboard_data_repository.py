@@ -196,14 +196,15 @@ class DashboardCalculoRepository(PluginBaseRepository):
             INSERT INTO transformometro.dashboard_calculos (
                 revisao_id, processo_id, instancia_id, competencia,
                 filial_id, setor_id, codigo_filial, codigo_setor,
-                cenario_tipo, revisao_ativa,
+                cenario_tipo, revisao_ativa, beneficio_calculo_categoria,
                 economia_tempo, economia_retrabalho, economia_erros, economia_outros,
                 economia_recursos_compartilhados, economia_bruta,
+                ganho_capacidade, economia_reducao_volume, delta_volume,
                 investimento_unico_mes, custo_recorrente_mes, economia_liquida_mes,
                 custo_recursos_compartilhados_mes, horas_economizadas_mes
             ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
             ON CONFLICT (revisao_id, competencia) DO UPDATE SET
                 processo_id = EXCLUDED.processo_id,
@@ -214,12 +215,16 @@ class DashboardCalculoRepository(PluginBaseRepository):
                 codigo_setor = EXCLUDED.codigo_setor,
                 cenario_tipo = EXCLUDED.cenario_tipo,
                 revisao_ativa = EXCLUDED.revisao_ativa,
+                beneficio_calculo_categoria = EXCLUDED.beneficio_calculo_categoria,
                 economia_tempo = EXCLUDED.economia_tempo,
                 economia_retrabalho = EXCLUDED.economia_retrabalho,
                 economia_erros = EXCLUDED.economia_erros,
                 economia_outros = EXCLUDED.economia_outros,
                 economia_recursos_compartilhados = EXCLUDED.economia_recursos_compartilhados,
                 economia_bruta = EXCLUDED.economia_bruta,
+                ganho_capacidade = EXCLUDED.ganho_capacidade,
+                economia_reducao_volume = EXCLUDED.economia_reducao_volume,
+                delta_volume = EXCLUDED.delta_volume,
                 investimento_unico_mes = EXCLUDED.investimento_unico_mes,
                 custo_recorrente_mes = EXCLUDED.custo_recorrente_mes,
                 economia_liquida_mes = EXCLUDED.economia_liquida_mes,
@@ -286,12 +291,16 @@ class DashboardCalculoRepository(PluginBaseRepository):
             row.get("codigo_setor"),
             row["cenario_tipo"],
             row.get("revisao_ativa", False),
+            row.get("beneficio_calculo_categoria") or "economia_tempo",
             row.get("economia_tempo", 0),
             row.get("economia_retrabalho", 0),
             row.get("economia_erros", 0),
             row.get("economia_outros", 0),
             row.get("economia_recursos_compartilhados", 0),
             row.get("economia_bruta", 0),
+            row.get("ganho_capacidade", 0),
+            row.get("economia_reducao_volume", 0),
+            row.get("delta_volume", 0),
             row.get("investimento_unico_mes", 0),
             row.get("custo_recorrente_mes", 0),
             row.get("economia_liquida_mes", 0),

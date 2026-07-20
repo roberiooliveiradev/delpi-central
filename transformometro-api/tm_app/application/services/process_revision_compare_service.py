@@ -49,6 +49,10 @@ class ProcessRevisionCompareService:
                     "revisao_id": rid,
                     "versao_revisao": revisao.get("versao_revisao"),
                     "cenario_tipo": revisao.get("cenario_tipo"),
+                    "beneficio_calculo_categoria": revisao.get(
+                        "beneficio_calculo_categoria"
+                    )
+                    or "economia_tempo",
                     "revisao_ativa": bool(revisao.get("revisao_ativa")),
                     "data_inicio_vigencia": revisao.get("data_inicio_vigencia"),
                     "data_fim_vigencia": revisao.get("data_fim_vigencia"),
@@ -141,11 +145,15 @@ class ProcessRevisionCompareService:
                 "custo_recursos_compartilhados_mes": 0.0,
                 "investimento_total_mes": 0.0,
                 "horas_economizadas_mes": 0.0,
+                "ganho_capacidade": 0.0,
+                "economia_reducao_volume": 0.0,
+                "delta_volume": 0.0,
             }
 
         investimento_unico = sum(float(r.get("investimento_unico_mes") or 0) for r in rows)
         custo_recorrente = sum(float(r.get("custo_recorrente_mes") or 0) for r in rows)
         custo_recursos = sum(float(r.get("custo_recursos_compartilhados_mes") or 0) for r in rows)
+        latest = rows[-1] if rows else {}
 
         return {
             "economia_bruta": round(sum(float(r.get("economia_bruta") or 0) for r in rows), 2),
@@ -161,4 +169,11 @@ class ProcessRevisionCompareService:
             "horas_economizadas_mes": round(
                 sum(float(r.get("horas_economizadas_mes") or 0) for r in rows), 2
             ),
+            "ganho_capacidade": round(
+                sum(float(r.get("ganho_capacidade") or 0) for r in rows), 2
+            ),
+            "economia_reducao_volume": round(
+                sum(float(r.get("economia_reducao_volume") or 0) for r in rows), 2
+            ),
+            "delta_volume": round(float(latest.get("delta_volume") or 0), 4),
         }

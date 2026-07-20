@@ -23,6 +23,10 @@ import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { cenarioSelectLabel } from "../../content/cenarioLabels";
+import {
+  BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+  beneficioCalculoSelectLabel,
+} from "../../content/beneficioCalculoLabels";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
@@ -107,6 +111,7 @@ export function InstanciaDetailPage({
   const [revForm, setRevForm] = useState({
     versao_revisao: "1.0.0",
     cenario_tipo: "baseline",
+    beneficio_calculo_categoria: BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
     revisao_referencia_id: "",
     data_inicio_vigencia: todayDateInput(),
     data_implantacao: "",
@@ -188,6 +193,7 @@ export function InstanciaDetailPage({
     setRevForm({
       versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
       cenario_tipo: revisoes.length ? "melhoria" : "baseline",
+      beneficio_calculo_categoria: BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
       revisao_referencia_id: defaultReferenciaId,
       data_inicio_vigencia: todayDateInput(),
       data_implantacao: "",
@@ -238,6 +244,7 @@ export function InstanciaDetailPage({
     setRevForm({
       versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
       cenario_tipo: revisoes.length ? "melhoria" : "baseline",
+      beneficio_calculo_categoria: BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
       revisao_referencia_id: defaultReferenciaId,
       data_inicio_vigencia: todayDateInput(),
       data_implantacao: "",
@@ -307,6 +314,10 @@ export function InstanciaDetailPage({
           instancia_id: instanciaId,
           versao_revisao: revForm.versao_revisao,
           cenario_tipo: revForm.cenario_tipo,
+          beneficio_calculo_categoria:
+            revForm.cenario_tipo === "baseline"
+              ? BENEFICIO_CALCULO_CATEGORIA_DEFAULT
+              : revForm.beneficio_calculo_categoria || BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
           revisao_referencia_id:
             revForm.cenario_tipo === "baseline" ? undefined : revForm.revisao_referencia_id,
           data_inicio_vigencia: revForm.data_inicio_vigencia,
@@ -598,6 +609,25 @@ export function InstanciaDetailPage({
                     }
                     options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
                   />
+                  {revForm.cenario_tipo !== "baseline" ? (
+                    <SelectField
+                      id="tm-rev-beneficio-categoria"
+                      label="Categoria de cálculo"
+                      hint={TM_HELP_TOOLTIPS.revisao.beneficioCalculoCategoria}
+                      value={revForm.beneficio_calculo_categoria}
+                      onChange={(beneficio_calculo_categoria) =>
+                        setRevForm({ ...revForm, beneficio_calculo_categoria })
+                      }
+                      options={mapSelectOptions(
+                        options.beneficio_calculo_categoria ?? [
+                          BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+                        ],
+                        (value) =>
+                          options.beneficio_calculo_categoria_labels?.[value] ??
+                          beneficioCalculoSelectLabel(value)
+                      )}
+                    />
+                  ) : null}
                   {revForm.cenario_tipo !== "baseline" ? (
                     <SelectField
                       id="tm-rev-referencia"

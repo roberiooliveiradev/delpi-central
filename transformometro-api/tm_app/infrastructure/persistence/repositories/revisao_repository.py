@@ -83,9 +83,10 @@ class RevisaoRepository(PluginBaseRepository):
             INSERT INTO transformometro.revisoes (
                 processo_id, instancia_id, versao_revisao, chave_unica_processo_revisao,
                 descricao_revisao, motivo_revisao, cenario_tipo,
+                beneficio_calculo_categoria,
                 data_implantacao, data_inicio_vigencia, data_fim_vigencia,
                 revisao_ativa, observacoes, status_aprovacao, revisao_referencia_id
-            ) VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid)
+            ) VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid)
             RETURNING *
             """,
             (
@@ -96,6 +97,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("descricao_revisao"),
                 data.get("motivo_revisao"),
                 data["cenario_tipo"],
+                data.get("beneficio_calculo_categoria") or "economia_tempo",
                 data.get("data_implantacao"),
                 data["data_inicio_vigencia"],
                 data.get("data_fim_vigencia"),
@@ -137,6 +139,7 @@ class RevisaoRepository(PluginBaseRepository):
                 descricao_revisao = %s,
                 motivo_revisao = %s,
                 cenario_tipo = %s,
+                beneficio_calculo_categoria = %s,
                 data_implantacao = %s,
                 data_inicio_vigencia = %s,
                 data_fim_vigencia = %s,
@@ -154,6 +157,7 @@ class RevisaoRepository(PluginBaseRepository):
                 data.get("descricao_revisao"),
                 data.get("motivo_revisao"),
                 data["cenario_tipo"],
+                data.get("beneficio_calculo_categoria") or "economia_tempo",
                 data.get("data_implantacao"),
                 data["data_inicio_vigencia"],
                 data.get("data_fim_vigencia"),

@@ -2,6 +2,11 @@ import type { OptionsData, Revisao } from "../../../data/api/transformometroApi"
 import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import { SelectField } from "../../../components/ui/SelectField";
 import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
+import {
+  BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+  beneficioCalculoLabel,
+  beneficioCalculoSelectLabel,
+} from "../../../content/beneficioCalculoLabels";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
 import { revisaoDisplayLabel } from "../../../utils/revisaoLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
@@ -15,6 +20,7 @@ const R = TM_HELP_TOOLTIPS.revisao;
 export type RevisaoVigenciaForm = {
   versao_revisao: string;
   cenario_tipo: string;
+  beneficio_calculo_categoria: string;
   revisao_referencia_id: string;
   data_inicio_vigencia: string;
   data_implantacao: string;
@@ -53,6 +59,12 @@ function VigenciaReadContent({
       <dl className="ds-dl-grid">
         <div><dt>Versão</dt><dd>{revisaoVigencia.versao_revisao}</dd></div>
         <div><dt>Cenário</dt><dd>{cenarioLabel(revisaoVigencia.cenario_tipo)}</dd></div>
+        {revisaoVigencia.cenario_tipo !== "baseline" ? (
+          <div>
+            <dt>Categoria de cálculo</dt>
+            <dd>{beneficioCalculoLabel(revisaoVigencia.beneficio_calculo_categoria)}</dd>
+          </div>
+        ) : null}
         {revisaoVigencia.cenario_tipo !== "baseline" ? (
           <div>
             <dt>Compara com</dt>
@@ -142,6 +154,25 @@ export function RevisaoVigenciaSection({
             }}
             options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
           />
+          {!isBaseline ? (
+            <SelectField
+              label="Categoria de cálculo *"
+              hint={R.beneficioCalculoCategoria}
+              required
+              value={revisaoVigencia.beneficio_calculo_categoria}
+              onChange={(beneficio_calculo_categoria) =>
+                onChange({ ...revisaoVigencia, beneficio_calculo_categoria })
+              }
+              options={mapSelectOptions(
+                options.beneficio_calculo_categoria ?? [
+                  BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+                ],
+                (value) =>
+                  options.beneficio_calculo_categoria_labels?.[value] ??
+                  beneficioCalculoSelectLabel(value)
+              )}
+            />
+          ) : null}
           {!isBaseline ? (
             <SelectField
               label="Compara com *"
@@ -255,6 +286,8 @@ export function buildRevisaoVigenciaFromRevisao(revisao: Revisao): RevisaoVigenc
   return {
     versao_revisao: revisao.versao_revisao ?? "",
     cenario_tipo: revisao.cenario_tipo ?? "baseline",
+    beneficio_calculo_categoria:
+      revisao.beneficio_calculo_categoria ?? BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
     revisao_referencia_id: revisao.revisao_referencia_id ?? "",
     data_inicio_vigencia: toDateInputValue(revisao.data_inicio_vigencia),
     data_implantacao: toDateInputValue(revisao.data_implantacao),
@@ -270,6 +303,10 @@ export function revisaoPayloadFromVigenciaForm(form: RevisaoVigenciaForm) {
   return {
     versao_revisao: form.versao_revisao.trim(),
     cenario_tipo: form.cenario_tipo,
+    beneficio_calculo_categoria:
+      form.cenario_tipo === "baseline"
+        ? BENEFICIO_CALCULO_CATEGORIA_DEFAULT
+        : form.beneficio_calculo_categoria || BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
     revisao_referencia_id:
       form.cenario_tipo === "baseline" ? undefined : form.revisao_referencia_id || undefined,
     data_inicio_vigencia: form.data_inicio_vigencia,

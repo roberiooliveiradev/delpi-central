@@ -11,6 +11,7 @@ from tm_app.core.errors import format_api_error
 
 from tm_app.core.catalogs import (
     BASE_COMPETENCIA_RECURSO,
+    BENEFICIO_CALCULO_CATEGORIA,
     CENARIO_TIPO,
     CATEGORIAS,
     CRITERIO_RATEIO,
@@ -777,6 +778,11 @@ def list_revisoes(processo_id: str):
 def create_revisao(body: RevisaoBody, request: Request):
     try:
         assert_in(body.cenario_tipo, CENARIO_TIPO, "cenario_tipo")
+        assert_in(
+            body.beneficio_calculo_categoria,
+            BENEFICIO_CALCULO_CATEGORIA,
+            "beneficio_calculo_categoria",
+        )
         row = RevisaoRepository().create(body.model_dump())
     except ValueError as exc:
         return fail(str(exc), 400)
@@ -793,6 +799,11 @@ def create_revisao(body: RevisaoBody, request: Request):
 def update_revisao(revisao_id: str, body: RevisaoBody, request: Request):
     try:
         assert_in(body.cenario_tipo, CENARIO_TIPO, "cenario_tipo")
+        assert_in(
+            body.beneficio_calculo_categoria,
+            BENEFICIO_CALCULO_CATEGORIA,
+            "beneficio_calculo_categoria",
+        )
         row = RevisaoRepository().update(revisao_id, body.model_dump())
     except ValueError as exc:
         return fail(str(exc), 400)

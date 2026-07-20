@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class ProcessoEscopoFields(BaseModel):
@@ -195,11 +195,21 @@ class RevisaoBody(BaseModel):
     data_inicio_vigencia: str
     revisao_ativa: bool = False
     revisao_referencia_id: Optional[str] = None
+    beneficio_calculo_categoria: str = "economia_tempo"
     descricao_revisao: Optional[str] = None
     motivo_revisao: Optional[str] = None
     data_implantacao: Optional[str] = None
     data_fim_vigencia: Optional[str] = None
     observacoes: Optional[str] = None
+
+    @field_validator("beneficio_calculo_categoria", mode="before")
+    @classmethod
+    def _normalize_beneficio_categoria(cls, value: object) -> str:
+        from tm_app.core.catalogs import normalize_beneficio_calculo_categoria
+
+        return normalize_beneficio_calculo_categoria(
+            None if value is None else str(value)
+        )
 
     @model_validator(mode="after")
     def _validate_referencia(self) -> "RevisaoBody":

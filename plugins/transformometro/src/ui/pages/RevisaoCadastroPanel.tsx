@@ -116,6 +116,7 @@ export function RevisaoCadastroPanel({
   const confirm = useConfirm();
   const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
+  const [volumeReferencia, setVolumeReferencia] = useState<number | null>(null);
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
   const [recursos, setRecursos] = useState<RecursoCompartilhado[]>([]);
@@ -137,6 +138,7 @@ export function RevisaoCadastroPanel({
     revisao.revisao_id,
     revisao.versao_revisao,
     revisao.cenario_tipo,
+    revisao.beneficio_calculo_categoria,
     revisao.revisao_referencia_id,
     revisao.data_inicio_vigencia,
     revisao.data_implantacao,
@@ -151,19 +153,28 @@ export function RevisaoCadastroPanel({
     setLoading(true);
     onError(null);
     try {
-      const [med, inv, vin, rec, ev, diag] = await Promise.all([
+      const refId = revisao.revisao_referencia_id || undefined;
+      const [med, inv, vin, rec, ev, diag, medRef] = await Promise.all([
         fetchMedicao(revisao.revisao_id, getAccessToken),
         fetchInvestimentos(revisao.revisao_id, getAccessToken),
         fetchVinculos(revisao.revisao_id, getAccessToken),
         fetchRecursos(getAccessToken),
         fetchRevisaoEvidencias(revisao.revisao_id, getAccessToken).catch(() => []),
         fetchRevisaoDiagnosticoRateio(revisao.revisao_id, getAccessToken).catch(() => null),
+        refId
+          ? fetchMedicao(refId, getAccessToken).catch(() => null)
+          : Promise.resolve(null),
       ]);
       const nextMedicao = med
         ? { ...med, revisao_id: revisao.revisao_id }
         : emptyMedicao(revisao.revisao_id);
       setMedicao(nextMedicao);
       medicaoSnapshot.current = nextMedicao;
+      setVolumeReferencia(
+        medRef && Number.isFinite(Number(medRef.volume_mensal))
+          ? Number(medRef.volume_mensal)
+          : null
+      );
       setInvestimentos(inv.items);
       setVinculos(vin.items);
       setRecursos(rec.items);
@@ -174,7 +185,7 @@ export function RevisaoCadastroPanel({
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken, onError, revisao.revisao_id]);
+  }, [getAccessToken, onError, revisao.revisao_id, revisao.revisao_referencia_id]);
 
   const sectionEdit = useCollaborativeSectionEdit({
     entityType: "revisao",
@@ -457,6 +468,8 @@ export function RevisaoCadastroPanel({
             embeddedInCard
             readOnly
             medicao={medicao}
+            beneficioCalculoCategoria={revisaoVigencia.beneficio_calculo_categoria}
+            volumeReferencia={volumeReferencia}
             onChange={setMedicao}
             onSubmit={(event) => event.preventDefault()}
           />
@@ -466,6 +479,8 @@ export function RevisaoCadastroPanel({
             embeddedInCard
             hideSubmit
             medicao={medicao}
+            beneficioCalculoCategoria={revisaoVigencia.beneficio_calculo_categoria}
+            volumeReferencia={volumeReferencia}
             onChange={setMedicao}
             onSubmit={(event) => {
               event.preventDefault();

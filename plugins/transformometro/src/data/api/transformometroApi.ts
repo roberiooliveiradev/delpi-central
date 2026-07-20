@@ -132,6 +132,7 @@ export type Revisao = {
   instancia_id?: string;
   versao_revisao: string;
   cenario_tipo: string;
+  beneficio_calculo_categoria?: string | null;
   revisao_referencia_id?: string | null;
   data_inicio_vigencia: string;
   revisao_ativa: boolean;
@@ -213,6 +214,9 @@ export type OptionsData = {
   status_setor: string[];
   status_processo: string[];
   cenario_tipo: string[];
+  beneficio_calculo_categoria?: string[];
+  beneficio_calculo_categoria_default?: string;
+  beneficio_calculo_categoria_labels?: Record<string, string>;
   recorrencias: string[];
   criterio_rateio: string[];
   base_competencia_recurso?: string[];

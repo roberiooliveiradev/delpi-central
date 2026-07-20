@@ -21,6 +21,31 @@ economia(instância, mês)   = Σ revisões comparáveis válidas no mês
 economia(processo, mês)  = Σ instâncias ativas
 ```
 
+## Categorias de cálculo de benefício (Playbook 22)
+
+Campo na revisão: `beneficio_calculo_categoria` (default **`economia_tempo`** — legado e novos cadastros sem escolha explícita).
+
+| Código | Interpretação |
+|---|---|
+| `economia_tempo` | Foco em Δtempo/custo; orientação de cadastro: volumes iguais à referência (1:1). O motor **não** força 1:1. |
+| `reducao_volume` | Benefício principal = menos execuções (volumes reais). |
+| `ganho_capacidade` | `vol_rev > vol_ref` → capacidade valorizada **à parte** do ROI. |
+| `economia_qualidade` | Ênfase em retrabalho/erro (já entram na bruta). |
+| `misto` / `automatico` | Rotulagem; totais financeiros seguem regras fixas abaixo. |
+
+```text
+economia_bruta = Σ componentes de custo (tempo, retrabalho, erro, outros, recursos)
+                 — inalterada pela categoria na Fase A/C
+
+Δvolume = vol_rev − vol_ref
+ganho_capacidade = max(0, Δvolume) × (tempo_ref / 60) × custo_hora_ref
+                   × fração_mês_útil   [fora do ROI]
+economia_reducao_volume = max(0, −Δvolume) × (tempo_ref / 60) × custo_hora_ref
+                          [sinal analítico; sem double-count na bruta]
+```
+
+Persistência em `dashboard_calculos`: colunas `beneficio_calculo_categoria`, `ganho_capacidade`, `economia_reducao_volume`, `delta_volume`. Recalcular cache após deploy da migration (não na migration).
+
 - **Instância ativa no mês**: tem pelo menos uma revisão comparável válida naquela competência. Se a unidade B começou depois, só entra nos meses em que está ativa.
 - **Investimento** e **horas** seguem a mesma soma por instância.
 - **ROI** consolidado = `Σ economia_líquida / Σ investimento` do recorte.

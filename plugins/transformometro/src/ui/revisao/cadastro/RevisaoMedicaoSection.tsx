@@ -10,6 +10,8 @@ const R = TM_HELP_TOOLTIPS.revisao;
 
 type Props = {
   medicao: Medicao;
+  beneficioCalculoCategoria?: string | null;
+  volumeReferencia?: number | null;
   readOnly?: boolean;
   embeddedInCard?: boolean;
   hideSubmit?: boolean;
@@ -17,9 +19,28 @@ type Props = {
   onSubmit: (e: React.FormEvent) => void;
 };
 
-function MedicaoReadContent({ medicao }: { medicao: Medicao }) {
+function volumeHint(
+  categoria: string | null | undefined,
+  volume: number,
+  volumeReferencia: number | null | undefined
+): string | null {
+  const cat = (categoria || "economia_tempo").toLowerCase();
+  if (cat !== "economia_tempo") return null;
+  if (volumeReferencia == null || !Number.isFinite(volumeReferencia)) return null;
+  if (Math.abs(Number(volume) - Number(volumeReferencia)) < 1e-9) return null;
+  return `Categoria «Economia de tempo»: o volume da referência é ${volumeReferencia}. Volumes diferentes misturam Δtempo com Δvolume na economia.`;
+}
+
+function MedicaoReadContent({
+  medicao,
+  volumeWarning,
+}: {
+  medicao: Medicao;
+  volumeWarning: string | null;
+}) {
   return (
     <>
+      {volumeWarning ? <p className="ds-hint">{volumeWarning}</p> : null}
       <dl className="ds-dl-grid">
         <div><dt>Volume mensal</dt><dd>{medicao.volume_mensal}</dd></div>
         <div><dt>Tempo médio (min)</dt><dd>{medicao.tempo_medio_execucao_min}</dd></div>
@@ -42,14 +63,24 @@ function MedicaoReadContent({ medicao }: { medicao: Medicao }) {
 
 export function RevisaoMedicaoSection({
   medicao,
+  beneficioCalculoCategoria,
+  volumeReferencia,
   readOnly = false,
   embeddedInCard = false,
   hideSubmit = false,
   onChange,
   onSubmit,
 }: Props) {
+  const volumeWarning = volumeHint(
+    beneficioCalculoCategoria,
+    medicao.volume_mensal,
+    volumeReferencia
+  );
+
   if (readOnly) {
-    const content = <MedicaoReadContent medicao={medicao} />;
+    const content = (
+      <MedicaoReadContent medicao={medicao} volumeWarning={volumeWarning} />
+    );
     if (embeddedInCard) return content;
     return (
       <CadastroSection embedded title="Medição operacional">
@@ -60,6 +91,7 @@ export function RevisaoMedicaoSection({
 
   const form = (
     <form onSubmit={onSubmit}>
+      {volumeWarning ? <p className="ds-hint">{volumeWarning}</p> : null}
       <div className={DS_FILTERS_ROW}>
         <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Volume mensal" hint={R.volumeMensal} />

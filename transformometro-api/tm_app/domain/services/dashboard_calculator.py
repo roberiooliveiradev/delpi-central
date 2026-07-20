@@ -904,6 +904,29 @@ class DashboardCalculatorService:
                 "economia_bruta": 0.0,
             }
 
+        volume_ref = self._to_float(baseline_measurement.get("volume_mensal")) or 0.0
+        volume_rev = self._to_float(current_measurement.get("volume_mensal")) or 0.0
+        tempo_ref = self._to_float(baseline_measurement.get("tempo_medio_execucao_min")) or 0.0
+        custo_hora_ref = self._to_float(baseline_measurement.get("custo_hora_mao_obra")) or 0.0
+        volume_signals = calc_rules.benefit_volume_signals(
+            volume_ref=volume_ref, volume_rev=volume_rev
+        )
+        ganho_capacidade = 0.0
+        economia_reducao_volume = 0.0
+        if self._is_comparable_review(review):
+            ganho_capacidade = calc_rules.capacity_gain_month(
+                volume_ref=volume_ref,
+                volume_rev=volume_rev,
+                tempo_medio_ref_min=tempo_ref,
+                custo_hora_ref=custo_hora_ref,
+            )
+            economia_reducao_volume = calc_rules.volume_reduction_signal_month(
+                volume_ref=volume_ref,
+                volume_rev=volume_rev,
+                tempo_medio_ref_min=tempo_ref,
+                custo_hora_ref=custo_hora_ref,
+            )
+
         investimento_unico_mes = self._calculate_unique_investment_month(
             investments=context.investimentos_by_revisao.get(review_id, []),
             competencia_date=competencia_date,
@@ -937,6 +960,8 @@ class DashboardCalculatorService:
                 ):
                     savings[key] = float(savings.get(key) or 0) * bd_factor
                 horas_economizadas_mes *= bd_factor
+                ganho_capacidade *= bd_factor
+                economia_reducao_volume *= bd_factor
 
         investimento_total_mes = (
             investimento_unico_mes + custo_recorrente_mes + current_shared_cost
@@ -950,6 +975,10 @@ class DashboardCalculatorService:
             process_row,
             instancias_by_id=context.instancias_by_id,
         )
+        beneficio_categoria = (
+            self._empty_to_none(review.get("beneficio_calculo_categoria"))
+            or "economia_tempo"
+        ).lower()
 
         return {
             "revisao_id": review_id,
@@ -962,12 +991,18 @@ class DashboardCalculatorService:
             "codigo_setor": scope.get("codigo_setor"),
             "cenario_tipo": (self._empty_to_none(review.get("cenario_tipo")) or "").lower(),
             "revisao_ativa": self._is_true(review.get("revisao_ativa")),
+            "beneficio_calculo_categoria": beneficio_categoria,
             "economia_tempo": savings["economia_tempo"],
             "economia_retrabalho": savings["economia_retrabalho"],
             "economia_erros": savings["economia_erros"],
             "economia_outros": savings["economia_outros"],
             "economia_recursos_compartilhados": savings["economia_recursos_compartilhados"],
             "economia_bruta": savings["economia_bruta"],
+            "ganho_capacidade": ganho_capacidade,
+            "economia_reducao_volume": economia_reducao_volume,
+            "delta_volume": volume_signals["delta_volume"],
+            "volume_acima_referencia": volume_signals["volume_acima_referencia"],
+            "volume_abaixo_referencia": volume_signals["volume_abaixo_referencia"],
             "investimento_unico_mes": investimento_unico_mes,
             "custo_recorrente_mes": custo_recorrente_mes,
             "investimento_total_mes": investimento_total_mes,
