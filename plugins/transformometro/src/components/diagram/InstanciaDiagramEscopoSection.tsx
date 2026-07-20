@@ -11,7 +11,6 @@ import {
   FieldLabel,
   emptyEscopo,
   emptyFlowchart,
-  DiagramMermaidPreview,
   DiagramFullscreenFrame,
   NativeCheckboxControl,
   useEditableDraft,
@@ -42,7 +41,6 @@ export function InstanciaDiagramEscopoSection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [macro, setMacro] = useState<FlowchartV1>(emptyFlowchart());
-  const [mermaid, setMermaid] = useState("");
   const { value: escopo, setValue, dirty, replace } = useEditableDraft<FlowchartEscopo>(emptyEscopo());
 
   const selectedScopeIds = new Set(
@@ -58,7 +56,6 @@ export function InstanciaDiagramEscopoSection({
         fetchInstanciaDiagramEscopo(instanciaId, getAccessToken),
       ]);
       setMacro(macroData.conteudo ?? emptyFlowchart());
-      setMermaid(macroData.mermaid ?? "");
       replace({
         node_ids: escopoData.node_ids ?? [],
         inherit_all: escopoData.inherit_all ?? true,
@@ -168,10 +165,7 @@ export function InstanciaDiagramEscopoSection({
           selectedScopeIds={selectedScopeIds}
           onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
           showTemplates={false}
-          showPreviewTab={false}
         />
-
-        {mermaid ? <DiagramMermaidPreview code={mermaid} /> : null}
 
         {!readOnly ? (
           <DirtySaveActions
