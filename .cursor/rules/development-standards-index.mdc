@@ -18,6 +18,7 @@ alwaysApply: true
 | `test-and-commit.mdc` | Ao concluir alteração de código — testes; commit só se pedido |
 | `infra-sequential-container-startup.mdc` | **Deploy / docker up / rebuild** — orientar scripts sequenciais dev/prod |
 | `mf-federation-patch-safety.mdc` | **Patch MF / `federationReactProxyFix`** — sem ReDoS; validar `plugin-ui` vite build |
+| `migrations-immutable-checksum.mdc` | **Migrations SQL** — nunca editar arquivo já aplicado/commitado (checksum) |
 
 ## Infra / Docker
 
@@ -26,6 +27,7 @@ alwaysApply: true
 | `infra-sequential-container-startup.mdc` | Subir/rebuild stack — `up-dev-sequential.sh`, `up-prod-sequential.sh`; evitar OOM e ordem MF errada |
 | `persistent-upload-storage.mdc` | Volumes persistentes no Compose |
 | `mf-federation-patch-safety.mdc` | Alterar patch React MF — testes + build `plugin-ui` obrigatórios |
+| `migrations-immutable-checksum.mdc` | Migrations versionadas — imutáveis após apply/commit |
 
 Doc: `infra/README-ambiente.md`.
 
@@ -97,6 +99,7 @@ API dashboard multi-filial → api-delpi-response-contract § RBAC filial → ma
 Deploy / subir stack / rebuild Docker → infra-sequential-container-startup → up-*-sequential.sh
 OOM ou build MF em prod → infra-sequential-container-startup → fase remote antes de mfe
 Patch MF / federationReactProxyFix → mf-federation-patch-safety → teste + plugin-ui vite build (nunca ReDoS)
+Migration SQL nova/ajuste         → migrations-immutable-checksum → sempre V0NN novo (nunca editar aplicada)
 ```
 
 ## Ordem de prioridade em conflito
