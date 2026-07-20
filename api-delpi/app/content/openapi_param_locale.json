@@ -78,7 +78,7 @@
       "locale": {
         "en": {
           "label": "Branches",
-          "description": "Branches."
+          "description": "Branches query parameter."
         },
         "pt-BR": {
           "label": "Filiais",
@@ -90,7 +90,7 @@
       "locale": {
         "en": {
           "label": "Catalog version",
-          "description": "Catalog version."
+          "description": "Catalog version query parameter."
         },
         "pt-BR": {
           "label": "Versão do catálogo",
@@ -102,7 +102,7 @@
       "locale": {
         "en": {
           "label": "Cost center",
-          "description": "Cost center."
+          "description": "Cost center query parameter."
         },
         "pt-BR": {
           "label": "Centro de custo",
@@ -114,7 +114,7 @@
       "locale": {
         "en": {
           "label": "Code",
-          "description": "code do registro a Filtersr."
+          "description": "Code query parameter."
         },
         "pt-BR": {
           "label": "Código",
@@ -126,7 +126,7 @@
       "locale": {
         "en": {
           "label": "Exact code",
-          "description": "Exact code."
+          "description": "Exact code query parameter."
         },
         "pt-BR": {
           "label": "Código exato",
@@ -138,7 +138,7 @@
       "locale": {
         "en": {
           "label": "Code",
-          "description": "code do registro a Filtersr."
+          "description": "Code query parameter."
         },
         "pt-BR": {
           "label": "Código",
@@ -150,7 +150,7 @@
       "locale": {
         "en": {
           "label": "Operator code",
-          "description": "code do operador in Protheus."
+          "description": "Operator code query parameter."
         },
         "pt-BR": {
           "label": "Código do operador",
@@ -162,7 +162,7 @@
       "locale": {
         "en": {
           "label": "Part code",
-          "description": "Part code."
+          "description": "Part code query parameter."
         },
         "pt-BR": {
           "label": "Código da peça",
@@ -174,7 +174,7 @@
       "locale": {
         "en": {
           "label": "Competence",
-          "description": "Competence."
+          "description": "Competence query parameter."
         },
         "pt-BR": {
           "label": "Competência",
@@ -186,7 +186,7 @@
       "locale": {
         "en": {
           "label": "Cost center",
-          "description": "Cost center."
+          "description": "Cost center query parameter."
         },
         "pt-BR": {
           "label": "Centro de custo",
@@ -198,7 +198,7 @@
       "locale": {
         "en": {
           "label": "Customer",
-          "description": "code ou Identifier do customer."
+          "description": "Customer query parameter."
         },
         "pt-BR": {
           "label": "Cliente",
@@ -210,7 +210,7 @@
       "locale": {
         "en": {
           "label": "Customer name",
-          "description": "Customer name."
+          "description": "Customer name query parameter."
         },
         "pt-BR": {
           "label": "Nome do cliente",
@@ -222,7 +222,7 @@
       "locale": {
         "en": {
           "label": "Customer reference",
-          "description": "Customer reference."
+          "description": "Customer reference query parameter."
         },
         "pt-BR": {
           "label": "Referência do cliente",
@@ -246,7 +246,7 @@
       "locale": {
         "en": {
           "label": "End date",
-          "description": "end date do period (AAAA-MM-DD)."
+          "description": "End date query parameter."
         },
         "pt-BR": {
           "label": "Data fim",
@@ -258,7 +258,7 @@
       "locale": {
         "en": {
           "label": "Start date",
-          "description": "start date do period (AAAA-MM-DD)."
+          "description": "Start date query parameter."
         },
         "pt-BR": {
           "label": "Data início",
@@ -270,7 +270,7 @@
       "locale": {
         "en": {
           "label": "End date",
-          "description": "end date do period consultado (AAAA-MM-DD)."
+          "description": "End date query parameter."
         },
         "pt-BR": {
           "label": "Data final",
@@ -282,7 +282,7 @@
       "locale": {
         "en": {
           "label": "Start date",
-          "description": "start date do period consultado (AAAA-MM-DD)."
+          "description": "Start date query parameter."
         },
         "pt-BR": {
           "label": "Data inicial",
@@ -294,7 +294,7 @@
       "locale": {
         "en": {
           "label": "Date",
-          "description": "Date."
+          "description": "Date query parameter."
         },
         "pt-BR": {
           "label": "Data",
@@ -306,7 +306,7 @@
       "locale": {
         "en": {
           "label": "End date",
-          "description": "end date do period consultado (AAAA-MM-DD)."
+          "description": "End date query parameter."
         },
         "pt-BR": {
           "label": "Data fim",
@@ -318,7 +318,7 @@
       "locale": {
         "en": {
           "label": "Start date",
-          "description": "start date do period consultado (AAAA-MM-DD)."
+          "description": "Start date query parameter."
         },
         "pt-BR": {
           "label": "Data início",
@@ -330,7 +330,7 @@
       "locale": {
         "en": {
           "label": "Start date",
-          "description": "start date do period consultado (AAAA-MM-DD)."
+          "description": "Start date query parameter."
         },
         "pt-BR": {
           "label": "Data início",
@@ -342,7 +342,7 @@
       "locale": {
         "en": {
           "label": "End date",
-          "description": "end date do period consultado (AAAA-MM-DD)."
+          "description": "End date query parameter."
         },
         "pt-BR": {
           "label": "Data fim",
@@ -354,7 +354,7 @@
       "locale": {
         "en": {
           "label": "Department",
-          "description": "Identifier ou nome do department."
+          "description": "Department query parameter."
         },
         "pt-BR": {
           "label": "Departamento",
@@ -378,7 +378,7 @@
       "locale": {
         "en": {
           "label": "Description",
-          "description": "Description."
+          "description": "Description query parameter."
         },
         "pt-BR": {
           "label": "Descrição",
@@ -390,7 +390,7 @@
       "locale": {
         "en": {
           "label": "Part description",
-          "description": "Part description."
+          "description": "Part description query parameter."
         },
         "pt-BR": {
           "label": "Descrição da peça",
@@ -402,7 +402,7 @@
       "locale": {
         "en": {
           "label": "Description",
-          "description": "Description."
+          "description": "Description query parameter."
         },
         "pt-BR": {
           "label": "Descrição",
@@ -414,7 +414,7 @@
       "locale": {
         "en": {
           "label": "Details limit",
-          "description": "Details limit."
+          "description": "Details limit query parameter."
         },
         "pt-BR": {
           "label": "Limite de detalhes",
@@ -426,7 +426,7 @@
       "locale": {
         "en": {
           "label": "Direction",
-          "description": "Direction."
+          "description": "Direction query parameter."
         },
         "pt-BR": {
           "label": "Direção",
@@ -438,7 +438,7 @@
       "locale": {
         "en": {
           "label": "Efficiency bands",
-          "description": "Efficiency bands."
+          "description": "Efficiency bands query parameter."
         },
         "pt-BR": {
           "label": "Faixas de eficiência",
@@ -450,7 +450,7 @@
       "locale": {
         "en": {
           "label": "Employee",
-          "description": "Employee."
+          "description": "Employee query parameter."
         },
         "pt-BR": {
           "label": "Colaborador",
@@ -474,7 +474,7 @@
       "locale": {
         "en": {
           "label": "Event types",
-          "description": "types de evento a incluir (CSV)."
+          "description": "Event types query parameter."
         },
         "pt-BR": {
           "label": "Tipos de evento",
@@ -486,7 +486,7 @@
       "locale": {
         "en": {
           "label": "Evidence type",
-          "description": "Evidence type."
+          "description": "Evidence type query parameter."
         },
         "pt-BR": {
           "label": "Tipo de evidência",
@@ -498,7 +498,7 @@
       "locale": {
         "en": {
           "label": "Failure mode",
-          "description": "Failure mode."
+          "description": "Failure mode query parameter."
         },
         "pt-BR": {
           "label": "Modo de falha",
@@ -510,7 +510,7 @@
       "locale": {
         "en": {
           "label": "File kind",
-          "description": "type/categoria do arquivo."
+          "description": "File kind query parameter."
         },
         "pt-BR": {
           "label": "Tipo de arquivo",
@@ -522,7 +522,7 @@
       "locale": {
         "en": {
           "label": "File name",
-          "description": "Filter parcial pelo nome do arquivo."
+          "description": "File name query parameter."
         },
         "pt-BR": {
           "label": "Nome do arquivo",
@@ -546,7 +546,7 @@
       "locale": {
         "en": {
           "label": "Branch ID",
-          "description": "Branch ID."
+          "description": "Branch ID query parameter."
         },
         "pt-BR": {
           "label": "ID da filial",
@@ -558,7 +558,7 @@
       "locale": {
         "en": {
           "label": "Finished product code",
-          "description": "code do product acabado (PA)."
+          "description": "Finished product code query parameter."
         },
         "pt-BR": {
           "label": "Código do produto acabado",
@@ -570,7 +570,7 @@
       "locale": {
         "en": {
           "label": "Format",
-          "description": "Format."
+          "description": "Format query parameter."
         },
         "pt-BR": {
           "label": "Formato",
@@ -582,7 +582,7 @@
       "locale": {
         "en": {
           "label": "From",
-          "description": "From."
+          "description": "From query parameter."
         },
         "pt-BR": {
           "label": "De",
@@ -618,7 +618,7 @@
       "locale": {
         "en": {
           "label": "Group code",
-          "description": "Group code."
+          "description": "Group code query parameter."
         },
         "pt-BR": {
           "label": "Código do grupo",
@@ -630,7 +630,7 @@
       "locale": {
         "en": {
           "label": "Has revision",
-          "description": "Has revision."
+          "description": "Has revision query parameter."
         },
         "pt-BR": {
           "label": "Com revisão",
@@ -642,7 +642,7 @@
       "locale": {
         "en": {
           "label": "Has variant",
-          "description": "Filters arquivos que possuem sufixo de variante."
+          "description": "Has variant query parameter."
         },
         "pt-BR": {
           "label": "Com variante",
@@ -654,7 +654,7 @@
       "locale": {
         "en": {
           "label": "History limit",
-          "description": "History limit."
+          "description": "History limit query parameter."
         },
         "pt-BR": {
           "label": "Limite do histórico",
@@ -666,7 +666,7 @@
       "locale": {
         "en": {
           "label": "ID",
-          "description": "ID."
+          "description": "ID query parameter."
         },
         "pt-BR": {
           "label": "ID",
@@ -678,7 +678,7 @@
       "locale": {
         "en": {
           "label": "Include completed",
-          "description": "Include completed."
+          "description": "Include completed query parameter."
         },
         "pt-BR": {
           "label": "Incluir concluídos",
@@ -690,7 +690,7 @@
       "locale": {
         "en": {
           "label": "Include PI quantity",
-          "description": "Include PI quantity."
+          "description": "Include PI quantity query parameter."
         },
         "pt-BR": {
           "label": "Incluir quantidade PI",
@@ -702,7 +702,7 @@
       "locale": {
         "en": {
           "label": "Include test products",
-          "description": "Inclui products de teste no resultado."
+          "description": "Include test products query parameter."
         },
         "pt-BR": {
           "label": "Incluir produtos de teste",
@@ -726,7 +726,7 @@
       "locale": {
         "en": {
           "label": "Inspection",
-          "description": "Inspection."
+          "description": "Inspection query parameter."
         },
         "pt-BR": {
           "label": "Inspeção",
@@ -738,7 +738,7 @@
       "locale": {
         "en": {
           "label": "Inspector",
-          "description": "code ou nome do inspetor."
+          "description": "Inspector query parameter."
         },
         "pt-BR": {
           "label": "Inspetor",
@@ -750,7 +750,7 @@
       "locale": {
         "en": {
           "label": "Invoice number",
-          "description": "Invoice number."
+          "description": "Invoice number query parameter."
         },
         "pt-BR": {
           "label": "Número da nota",
@@ -762,7 +762,7 @@
       "locale": {
         "en": {
           "label": "Issue date (end)",
-          "description": "Issue date (end)."
+          "description": "Issue date (end) query parameter."
         },
         "pt-BR": {
           "label": "Data de emissão (fim)",
@@ -774,7 +774,7 @@
       "locale": {
         "en": {
           "label": "Issue date (start)",
-          "description": "Issue date (start)."
+          "description": "Issue date (start) query parameter."
         },
         "pt-BR": {
           "label": "Data de emissão (início)",
@@ -786,7 +786,7 @@
       "locale": {
         "en": {
           "label": "Item code",
-          "description": "code do item/material in Protheus."
+          "description": "Item code query parameter."
         },
         "pt-BR": {
           "label": "Código do item",
@@ -798,7 +798,7 @@
       "locale": {
         "en": {
           "label": "Legacy mode",
-          "description": "Usa comportamento legado da API (campos/alias antigos)."
+          "description": "Legacy mode query parameter."
         },
         "pt-BR": {
           "label": "Modo legado",
@@ -810,7 +810,7 @@
       "locale": {
         "en": {
           "label": "Limit",
-          "description": "Limit."
+          "description": "Limit query parameter."
         },
         "pt-BR": {
           "label": "Limite",
@@ -822,7 +822,7 @@
       "locale": {
         "en": {
           "label": "Linked sort by",
-          "description": "Linked sort by."
+          "description": "Linked sort by query parameter."
         },
         "pt-BR": {
           "label": "Ordenar vínculos por",
@@ -834,7 +834,7 @@
       "locale": {
         "en": {
           "label": "Linked sort direction",
-          "description": "Linked sort direction."
+          "description": "Linked sort direction query parameter."
         },
         "pt-BR": {
           "label": "Direção da ordenação dos vínculos",
@@ -846,7 +846,7 @@
       "locale": {
         "en": {
           "label": "Listing type",
-          "description": "Filter for type da listagem (e.g. Todos, LMP, Amostra)."
+          "description": "Listing type query parameter."
         },
         "pt-BR": {
           "label": "Tipo de listagem",
@@ -858,7 +858,7 @@
       "locale": {
         "en": {
           "label": "Location",
-          "description": "Location."
+          "description": "Location query parameter."
         },
         "pt-BR": {
           "label": "Localização",
@@ -870,7 +870,7 @@
       "locale": {
         "en": {
           "label": "Loss type",
-          "description": "Loss type."
+          "description": "Loss type query parameter."
         },
         "pt-BR": {
           "label": "Tipo de perda",
@@ -882,7 +882,7 @@
       "locale": {
         "en": {
           "label": "Lot",
-          "description": "Lot."
+          "description": "Lot query parameter."
         },
         "pt-BR": {
           "label": "Lote",
@@ -894,7 +894,7 @@
       "locale": {
         "en": {
           "label": "Max depth",
-          "description": "Max depth."
+          "description": "Max depth query parameter."
         },
         "pt-BR": {
           "label": "Profundidade máxima",
@@ -906,7 +906,7 @@
       "locale": {
         "en": {
           "label": "Max size (bytes)",
-          "description": "Max size (bytes)."
+          "description": "Max size (bytes) query parameter."
         },
         "pt-BR": {
           "label": "Tamanho máximo (bytes)",
@@ -918,7 +918,7 @@
       "locale": {
         "en": {
           "label": "Minimum plans",
-          "description": "Minimum plans."
+          "description": "Minimum plans query parameter."
         },
         "pt-BR": {
           "label": "Mínimo de planos",
@@ -930,7 +930,7 @@
       "locale": {
         "en": {
           "label": "Min size (bytes)",
-          "description": "Min size (bytes)."
+          "description": "Min size (bytes) query parameter."
         },
         "pt-BR": {
           "label": "Tamanho mínimo (bytes)",
@@ -942,7 +942,7 @@
       "locale": {
         "en": {
           "label": "Modified from",
-          "description": "Modified from."
+          "description": "Modified from query parameter."
         },
         "pt-BR": {
           "label": "Modificado a partir de",
@@ -954,7 +954,7 @@
       "locale": {
         "en": {
           "label": "Modified to",
-          "description": "Modified to."
+          "description": "Modified to query parameter."
         },
         "pt-BR": {
           "label": "Modificado até",
@@ -966,7 +966,7 @@
       "locale": {
         "en": {
           "label": "Months",
-          "description": "quantity de meses no intervalo analisado."
+          "description": "Months query parameter."
         },
         "pt-BR": {
           "label": "Meses",
@@ -978,7 +978,7 @@
       "locale": {
         "en": {
           "label": "Name",
-          "description": "Name."
+          "description": "Name query parameter."
         },
         "pt-BR": {
           "label": "Nome",
@@ -990,7 +990,7 @@
       "locale": {
         "en": {
           "label": "Process name",
-          "description": "Nome do processo Transforma Mais."
+          "description": "Process name query parameter."
         },
         "pt-BR": {
           "label": "Nome do processo",
@@ -1002,7 +1002,7 @@
       "locale": {
         "en": {
           "label": "Nonconformity scope",
-          "description": "Nonconformity scope."
+          "description": "Nonconformity scope query parameter."
         },
         "pt-BR": {
           "label": "Escopo de NC",
@@ -1014,7 +1014,7 @@
       "locale": {
         "en": {
           "label": "Offset",
-          "description": "Offset."
+          "description": "Offset query parameter."
         },
         "pt-BR": {
           "label": "Deslocamento",
@@ -1026,7 +1026,7 @@
       "locale": {
         "en": {
           "label": "Production order",
-          "description": "Production order."
+          "description": "Production order query parameter."
         },
         "pt-BR": {
           "label": "Ordem de produção",
@@ -1038,7 +1038,7 @@
       "locale": {
         "en": {
           "label": "Operation",
-          "description": "Operation."
+          "description": "Operation query parameter."
         },
         "pt-BR": {
           "label": "Operação",
@@ -1050,7 +1050,7 @@
       "locale": {
         "en": {
           "label": "Operator code",
-          "description": "code(s) do operador (CSV)."
+          "description": "Operator code query parameter."
         },
         "pt-BR": {
           "label": "Código do operador",
@@ -1062,7 +1062,7 @@
       "locale": {
         "en": {
           "label": "Order by",
-          "description": "Order by."
+          "description": "Order by query parameter."
         },
         "pt-BR": {
           "label": "Ordenar por",
@@ -1074,7 +1074,7 @@
       "locale": {
         "en": {
           "label": "Sort direction",
-          "description": "Sort direction."
+          "description": "Sort direction query parameter."
         },
         "pt-BR": {
           "label": "Direção da ordenação",
@@ -1086,7 +1086,7 @@
       "locale": {
         "en": {
           "label": "Overdue only",
-          "description": "Overdue only."
+          "description": "Lista only itens atrasados."
         },
         "pt-BR": {
           "label": "Somente atrasados",
@@ -1098,7 +1098,7 @@
       "locale": {
         "en": {
           "label": "Owner",
-          "description": "Owner."
+          "description": "Owner query parameter."
         },
         "pt-BR": {
           "label": "Responsável",
@@ -1158,7 +1158,7 @@
       "locale": {
         "en": {
           "label": "Plan",
-          "description": "Plan."
+          "description": "Plan query parameter."
         },
         "pt-BR": {
           "label": "Plano",
@@ -1170,7 +1170,7 @@
       "locale": {
         "en": {
           "label": "Price source",
-          "description": "Price source."
+          "description": "Price source query parameter."
         },
         "pt-BR": {
           "label": "Fonte de preço",
@@ -1182,7 +1182,7 @@
       "locale": {
         "en": {
           "label": "Problem category",
-          "description": "Categoria do problema reportado."
+          "description": "Problem category query parameter."
         },
         "pt-BR": {
           "label": "Categoria do problema",
@@ -1194,7 +1194,7 @@
       "locale": {
         "en": {
           "label": "Product",
-          "description": "code ou Identifier do product."
+          "description": "Product query parameter."
         },
         "pt-BR": {
           "label": "Produto",
@@ -1206,7 +1206,7 @@
       "locale": {
         "en": {
           "label": "Product code",
-          "description": "code do product in Protheus (e.g. 90xxxxxx)."
+          "description": "Product code query parameter."
         },
         "pt-BR": {
           "label": "Código do produto",
@@ -1218,7 +1218,7 @@
       "locale": {
         "en": {
           "label": "Product group",
-          "description": "Grupo de product in Protheus."
+          "description": "Product group query parameter."
         },
         "pt-BR": {
           "label": "Grupo de produto",
@@ -1230,7 +1230,7 @@
       "locale": {
         "en": {
           "label": "Product prefix",
-          "description": "Product prefix."
+          "description": "Product prefix query parameter."
         },
         "pt-BR": {
           "label": "Prefixo do produto",
@@ -1254,7 +1254,7 @@
       "locale": {
         "en": {
           "label": "Production order",
-          "description": "Production order."
+          "description": "Production order query parameter."
         },
         "pt-BR": {
           "label": "Ordem de produção",
@@ -1266,7 +1266,7 @@
       "locale": {
         "en": {
           "label": "Search",
-          "description": "Search."
+          "description": "Search query parameter."
         },
         "pt-BR": {
           "label": "Busca",
@@ -1278,7 +1278,7 @@
       "locale": {
         "en": {
           "label": "Raw material code",
-          "description": "Raw material code."
+          "description": "Raw material code query parameter."
         },
         "pt-BR": {
           "label": "Código da matéria-prima",
@@ -1290,7 +1290,7 @@
       "locale": {
         "en": {
           "label": "Resource",
-          "description": "Resource."
+          "description": "Resource query parameter."
         },
         "pt-BR": {
           "label": "Recurso",
@@ -1302,7 +1302,7 @@
       "locale": {
         "en": {
           "label": "Reference date",
-          "description": "Reference date."
+          "description": "Reference date query parameter."
         },
         "pt-BR": {
           "label": "Data de referência",
@@ -1314,7 +1314,7 @@
       "locale": {
         "en": {
           "label": "Resource",
-          "description": "Resource."
+          "description": "Resource query parameter."
         },
         "pt-BR": {
           "label": "Recurso",
@@ -1326,7 +1326,7 @@
       "locale": {
         "en": {
           "label": "Result",
-          "description": "Result."
+          "description": "Result query parameter."
         },
         "pt-BR": {
           "label": "Resultado",
@@ -1338,7 +1338,7 @@
       "locale": {
         "en": {
           "label": "Revision",
-          "description": "Revision."
+          "description": "Revision query parameter."
         },
         "pt-BR": {
           "label": "Revisão",
@@ -1350,7 +1350,7 @@
       "locale": {
         "en": {
           "label": "Root cause category",
-          "description": "Categoria da causa raiz."
+          "description": "Root cause category query parameter."
         },
         "pt-BR": {
           "label": "Categoria da causa raiz",
@@ -1362,7 +1362,7 @@
       "locale": {
         "en": {
           "label": "Savings type",
-          "description": "type de economia (Kaizen)."
+          "description": "Savings type query parameter."
         },
         "pt-BR": {
           "label": "Tipo de economia",
@@ -1374,7 +1374,7 @@
       "locale": {
         "en": {
           "label": "Search",
-          "description": "free text de search."
+          "description": "Search query parameter."
         },
         "pt-BR": {
           "label": "Busca",
@@ -1386,7 +1386,7 @@
       "locale": {
         "en": {
           "label": "Section",
-          "description": "Section."
+          "description": "Section query parameter."
         },
         "pt-BR": {
           "label": "Seção",
@@ -1398,7 +1398,7 @@
       "locale": {
         "en": {
           "label": "Sector",
-          "description": "Nome do setor."
+          "description": "Sector query parameter."
         },
         "pt-BR": {
           "label": "Setor",
@@ -1410,7 +1410,7 @@
       "locale": {
         "en": {
           "label": "5S sense order",
-          "description": "Ordem do senso na auditoria 5S."
+          "description": "5S sense order query parameter."
         },
         "pt-BR": {
           "label": "Ordem do senso",
@@ -1422,7 +1422,7 @@
       "locale": {
         "en": {
           "label": "Severity",
-          "description": "Severity."
+          "description": "Severity query parameter."
         },
         "pt-BR": {
           "label": "Severidade",
@@ -1434,7 +1434,7 @@
       "locale": {
         "en": {
           "label": "Shift",
-          "description": "Shift."
+          "description": "Shift query parameter."
         },
         "pt-BR": {
           "label": "Turno",
@@ -1446,7 +1446,7 @@
       "locale": {
         "en": {
           "label": "Sort",
-          "description": "Sort."
+          "description": "Sort query parameter."
         },
         "pt-BR": {
           "label": "Ordenação",
@@ -1458,7 +1458,7 @@
       "locale": {
         "en": {
           "label": "Sort by",
-          "description": "Campo usado para ordenar a listagem."
+          "description": "Sort by query parameter."
         },
         "pt-BR": {
           "label": "Ordenar por",
@@ -1494,7 +1494,7 @@
       "locale": {
         "en": {
           "label": "Status",
-          "description": "status do registro in the workflow."
+          "description": "Status query parameter."
         },
         "pt-BR": {
           "label": "Status",
@@ -1506,7 +1506,7 @@
       "locale": {
         "en": {
           "label": "OK status only",
-          "description": "OK status only."
+          "description": "OK status only query parameter."
         },
         "pt-BR": {
           "label": "Somente status OK",
@@ -1530,7 +1530,7 @@
       "locale": {
         "en": {
           "label": "Store",
-          "description": "Store."
+          "description": "Store query parameter."
         },
         "pt-BR": {
           "label": "Loja",
@@ -1542,7 +1542,7 @@
       "locale": {
         "en": {
           "label": "Strict IDD period",
-          "description": "Strict IDD period."
+          "description": "Strict IDD period query parameter."
         },
         "pt-BR": {
           "label": "Período IDD estrito",
@@ -1566,7 +1566,7 @@
       "locale": {
         "en": {
           "label": "Supplier",
-          "description": "code ou nome do supplier."
+          "description": "Supplier query parameter."
         },
         "pt-BR": {
           "label": "Fornecedor",
@@ -1578,7 +1578,7 @@
       "locale": {
         "en": {
           "label": "Supplier code",
-          "description": "code do supplier in Protheus."
+          "description": "Supplier code query parameter."
         },
         "pt-BR": {
           "label": "Código do fornecedor",
@@ -1590,7 +1590,7 @@
       "locale": {
         "en": {
           "label": "Supplier store",
-          "description": "Loja do supplier."
+          "description": "Supplier store query parameter."
         },
         "pt-BR": {
           "label": "Loja do fornecedor",
@@ -1602,7 +1602,7 @@
       "locale": {
         "en": {
           "label": "Template key",
-          "description": "Chave do modelo/template usado."
+          "description": "Template key query parameter."
         },
         "pt-BR": {
           "label": "Chave do template",
@@ -1614,7 +1614,7 @@
       "locale": {
         "en": {
           "label": "Title",
-          "description": "Title."
+          "description": "Title query parameter."
         },
         "pt-BR": {
           "label": "Título",
@@ -1638,7 +1638,7 @@
       "locale": {
         "en": {
           "label": "To",
-          "description": "Fim do intervalo (data ou value)."
+          "description": "To query parameter."
         },
         "pt-BR": {
           "label": "Até",
@@ -1650,7 +1650,7 @@
       "locale": {
         "en": {
           "label": "Ranking limit",
-          "description": "Ranking limit."
+          "description": "Ranking limit query parameter."
         },
         "pt-BR": {
           "label": "Limite do ranking",
@@ -1662,7 +1662,7 @@
       "locale": {
         "en": {
           "label": "Top N",
-          "description": "quantity de itens no Top N."
+          "description": "Top N query parameter."
         },
         "pt-BR": {
           "label": "Top N",
@@ -1674,7 +1674,7 @@
       "locale": {
         "en": {
           "label": "Type",
-          "description": "type do registro a Filtersr."
+          "description": "Type query parameter."
         },
         "pt-BR": {
           "label": "Tipo",
@@ -1686,7 +1686,7 @@
       "locale": {
         "en": {
           "label": "View",
-          "description": "View."
+          "description": "View query parameter."
         },
         "pt-BR": {
           "label": "Visão",
@@ -1698,7 +1698,7 @@
       "locale": {
         "en": {
           "label": "Warehouse",
-          "description": "Warehouse."
+          "description": "Warehouse query parameter."
         },
         "pt-BR": {
           "label": "Armazém",
@@ -1710,7 +1710,7 @@
       "locale": {
         "en": {
           "label": "Work center",
-          "description": "Work center."
+          "description": "Work center query parameter."
         },
         "pt-BR": {
           "label": "Centro de trabalho",

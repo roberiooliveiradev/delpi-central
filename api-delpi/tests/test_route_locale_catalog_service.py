@@ -35,10 +35,25 @@ def test_apply_route_locale_to_x_delpi_merges():
         "shape": "scalar",
         "presentation": {"strategy": "as_delivered"},
     }
-    merged = apply_route_locale_to_x_delpi(base, "get_dashboard_department_idd")
+    merged = apply_route_locale_to_x_delpi(
+        base,
+        "get_dashboard_department_idd",
+        param_names={"department_id", "branch"},
+    )
     assert merged["locale"]["en"]["summary"]
     assert merged["tv"]["whenToUse"]
-    # Params globais entram mesmo sem override na rota.
+    # Params globais entram só quando listados em param_names.
     assert merged["params"]["branch"]["locale"]["pt-BR"]["label"] == "Filial"
     # Route-specific sobrescreve / complementa.
     assert merged["params"]["department_id"]["locale"]["pt-BR"]["label"] == "Departamento"
+
+
+def test_apply_route_locale_filters_global_params_to_route():
+    base = {"entity": "x", "shape": "scalar", "presentation": {"strategy": "as_delivered"}}
+    merged = apply_route_locale_to_x_delpi(
+        base,
+        "get_dashboard_department_idd",
+        param_names={"department_id"},
+    )
+    assert "department_id" in merged["params"]
+    assert "branch" not in merged.get("params", {})

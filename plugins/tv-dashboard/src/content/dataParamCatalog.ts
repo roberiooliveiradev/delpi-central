@@ -1,8 +1,8 @@
 /**
  * Fonte única de rótulos e enums de fallback para parâmetros de dados no MFE TV Dashboard.
- * Preferir `meta`/OpenAPI da API quando disponível; estes mapas cobrem UI estável entre rotas.
- * Manter alinhado a `PARAM_LABELS_PT` / `PARAM_HINTS_PT` em
- * `scripts/generate_tv_data_routes_from_openapi.py`.
+ * Labels/hints gerados de api-delpi/app/content/openapi_param_locale.json —
+ * rode: python3 scripts/sync_tv_data_param_catalog.py --write
+ * Preferir meta/OpenAPI da API quando disponível; estes mapas cobrem UI estável entre rotas.
  */
 
 export const PARAM_FIELD_LABELS: Record<string, string> = {
@@ -31,9 +31,9 @@ export const PARAM_FIELD_LABELS: Record<string, string> = {
   "data_final": "Data final",
   "data_inicial": "Data inicial",
   "date": "Data",
+  "dateRangePreset": "Período",
   "date_end": "Data fim",
   "date_from": "Data início",
-  "dateRangePreset": "Período",
   "date_start": "Data início",
   "date_to": "Data fim",
   "department": "Departamento",
@@ -178,6 +178,7 @@ export const PARAM_FIELD_HINTS: Record<string, string> = {
   "data_final": "Data final do período consultado (AAAA-MM-DD).",
   "data_inicial": "Data inicial do período consultado (AAAA-MM-DD).",
   "date": "Data de referência (AAAA-MM-DD).",
+  "dateRangePreset": "Atalho de período (este mês, últimos 30 dias etc.).",
   "date_end": "Data final do período consultado (AAAA-MM-DD).",
   "date_from": "Data inicial do período consultado (AAAA-MM-DD).",
   "date_start": "Data inicial do período consultado (AAAA-MM-DD).",

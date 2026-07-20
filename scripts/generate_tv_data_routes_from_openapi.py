@@ -148,12 +148,22 @@ _PARAM_LOCALE_PT = _load_param_locale_catalog()
 # Mantido vazio de propósito — inventário paralelo é falha de contrato.
 KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {}
 
-KNOWN_PARAM_DEFAULTS: dict[str, Any] = {
-    # Defaults de UX TV (filial) — ainda não declarados em todos os Query da api-delpi.
-    "branch": "01",
-    "filial": "01",
-    "branch_code": "01",
-}
+# Defaults HTTP inventados no gerador — proibido. UX TV: tv_param_ux_defaults.json.
+KNOWN_PARAM_DEFAULTS: dict[str, Any] = {}
+
+
+def _load_tv_param_ux_defaults() -> dict[str, Any]:
+    path = ROOT / "tv-dashboard-api" / "tv_app" / "content" / "tv_param_ux_defaults.json"
+    if not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    raw = payload.get("defaults") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    return {str(k): v for k, v in raw.items() if str(k).strip()}
+
+
+_TV_PARAM_UX_DEFAULTS = _load_tv_param_ux_defaults()
 
 _FALLBACK_PARAM_USAGE: set[str] = set()
 
@@ -169,7 +179,7 @@ def enrich_param_schema_entry(
     locale_label: str | None = None,
     locale_description: str | None = None,
 ) -> dict[str, Any]:
-    """Aplica label/hint/enum/default — OpenAPI + x-delpi + catálogo JSON; sem dict paralelo."""
+    """Aplica label/hint/enum/default — OpenAPI + x-delpi + catálogo JSON; UX defaults TV-only."""
     enriched = dict(entry)
     catalog = _PARAM_LOCALE_PT.get(name) or {}
     if locale_label:
@@ -196,6 +206,10 @@ def enrich_param_schema_entry(
         enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
         enriched["optional"] = True
         _note_param_fallback("default", name)
+    elif name in _TV_PARAM_UX_DEFAULTS and enriched.get("default") is None:
+        # Default só de UX TV — não inventa contrato HTTP.
+        enriched["default"] = _TV_PARAM_UX_DEFAULTS[name]
+        enriched["optional"] = True
     return enriched
 
 

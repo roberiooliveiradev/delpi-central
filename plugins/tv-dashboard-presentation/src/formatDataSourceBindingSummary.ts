@@ -20,13 +20,13 @@ export const DATA_SOURCE_DATE_RANGE_PRESET_LABELS: Record<string, string> = {
   custom: "Personalizado (datas fixas)",
 };
 
-/** Rótulos mínimos para o cartão no palco (UI completa fica no catálogo do MFE). */
+/** Rótulos mínimos para o cartão no palco (gerado de openapi_param_locale / TV-only). */
 export const DATA_SOURCE_PARAM_LABELS: Record<string, string> = {
   branch: "Filial",
   filial: "Filial",
   branches: "Filiais",
   dateRangePreset: "Período",
-  periodDays: "Dias",
+  periodDays: "Período (dias)",
   date_start: "Data início",
   date_end: "Data fim",
   start_date: "Data início",
@@ -38,8 +38,10 @@ export const DATA_SOURCE_PARAM_LABELS: Record<string, string> = {
   work_center: "Centro de trabalho",
   cost_center: "Centro de custo",
   granularity: "Granularidade",
-  group_by: "Agrupar por",
-  limit: "Limite",
+  customer_segment: "Segmento",
+  product_type: "Tipo de produto",
+  loss_type: "Tipo de perda",
+  stock_method: "Método de estoque",
 };
 
 const DATE_START_KEYS = new Set([

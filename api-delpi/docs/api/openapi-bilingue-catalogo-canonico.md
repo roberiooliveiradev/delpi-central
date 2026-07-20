@@ -40,7 +40,9 @@ Arquivo: [`app/content/tv_route_audience.json`](../../app/content/tv_route_audie
 
 Loader: `app.domain.services.route_locale_catalog_service` → injector `openapi_delpi_extension_injector` e baseline v3.
 
-Params **globais** (branch, periodDays, …): [`app/content/openapi_param_locale.json`](../../app/content/openapi_param_locale.json) — mesclados em todo `x-delpi.params`; override por rota em `tv_route_audience.json` ganha.
+Params **globais** (branch, periodDays, …): [`app/content/openapi_param_locale.json`](../../app/content/openapi_param_locale.json) — mesclados em `x-delpi.params` **somente** para nomes presentes nos `parameters` da operação; override por rota em `tv_route_audience.json` ganha.
+
+MFE TV: labels/hints gerados por `python3 scripts/sync_tv_data_param_catalog.py --write` (sem inventário paralelo manual).
 
 Polimento EN em lote (stubs `locale.en` + summary nativo do baseline):
 
@@ -59,6 +61,8 @@ No router FastAPI:
 - `description` do Query em **inglês**
 
 O gerador TV prefere `enum`/`default` do OpenAPI e labels de `x-delpi.params` / `openapi_param_locale.json`. **Não** há inventário paralelo `PARAM_LABELS_PT` / `PARAM_HINTS_PT` no script.
+
+Defaults de filial no inspetor TV (`branch` → `"01"`) vivem em [`tv_param_ux_defaults.json`](../../../tv-dashboard-api/tv_app/content/tv_param_ux_defaults.json) — **UX apenas**, não alteram o contrato HTTP (`Query(None)` = consolidado quando permitido).
 
 ## Sync (procedimento)
 
@@ -97,6 +101,7 @@ Inventário versionado: [`app/content/openapi_operation_id_inventory.json`](../.
 | R3 | Locale não-GET | feito (300/300 com locale) |
 | R4 | Labels em `openapi_param_locale.json` + polimento EN | feito |
 | R5 | Chat prefere `locale.pt-BR` no import OpenAPI | feito |
+| R6 | Fechar gaps: 5S operation_id, enums Query, UX defaults TV, params por rota, sync MFE | feito |
 
 Gate estrito (catálogo TV sem auto-id):
 

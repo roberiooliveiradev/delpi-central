@@ -3,6 +3,7 @@ from fastapi import APIRouter, Query
 from app.interface.http.query_param_enums import (
     CUSTOMER_SEGMENT_QUERY,
     GRANULARITY_QUERY_REQUIRED,
+    SORT_DIR_QUERY,
 )
 from typing import Optional
 
@@ -447,7 +448,7 @@ def list_commercial_proposals(
             "proposal_date, end_date, status_code, customer_code, customer_store."
         ),
     ),
-    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY,
     search: Optional[str] = Query(
         None,
         max_length=80,
@@ -732,7 +733,7 @@ def get_sales_order_otd_panel(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: Optional[str] = Query(default=None),
-    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY,
 ):
     try:
         use_case = build_get_sales_order_otd_panel_use_case()

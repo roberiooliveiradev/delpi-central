@@ -185,6 +185,60 @@ def load_aliases() -> dict[str, str]:
     }
 
 
+
+def check_decorator_envelope_alignment(
+    routers_root: Path | None = None,
+    *,
+    path_contains: str | None = None,
+) -> list[str]:
+    """Falha quando decorator omite operation_id e o def != envelope, ou decorator != envelope.
+
+    Rotas com ``**META`` (agent_route / from_contract) já carregam operation_id — ignorar.
+    """
+    root = routers_root or (API_ROOT / "app" / "interface" / "http" / "routes")
+    problems: list[str] = []
+    decorator_re = re.compile(
+        r"@(?:router|public_router)\.(get|post|put|patch|delete)\((.*?)\)\s*\n"
+        r"(?:@[^\n]+\n)*"
+        r"(?:async )?def (\w+)\(",
+        re.S,
+    )
+    next_block_re = re.compile(r"\n(?:async )?def \w+\(|\n@(?:router|public_router)\.")
+    for path in sorted(root.rglob("*.py")):
+        rel = str(path.relative_to(API_ROOT))
+        if path_contains and path_contains not in rel.replace("\\", "/"):
+            continue
+        src = path.read_text(encoding="utf-8")
+        for match in decorator_re.finditer(src):
+            args = match.group(2)
+            fn = match.group(3)
+            if "**" in args:
+                continue
+            dec_oids = re.findall(r'operation_id\s*=\s*["\']([a-zA-Z0-9_]+)["\']', args)
+            start = match.end()
+            nxt = next_block_re.search(src[start:])
+            body = src[start : start + nxt.start()] if nxt else src[start:]
+            env_oids = re.findall(
+                r'api_delpi_success\([\s\S]*?operation_id\s*=\s*["\']([a-zA-Z0-9_]+)["\']',
+                body,
+            )
+            if not env_oids:
+                if not dec_oids and any(
+                    x in body for x in ("FileResponse", "StreamingResponse")
+                ):
+                    problems.append(f"{rel}:{fn}: missing operation_id (file download)")
+                continue
+            env = env_oids[0]
+            if dec_oids:
+                if dec_oids[0] != env:
+                    problems.append(f"{rel}:{fn}: decorator={dec_oids[0]} envelope={env}")
+            elif fn != env:
+                problems.append(
+                    f"{rel}:{fn}: missing decorator operation_id (envelope={env})"
+                )
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", type=Path, default=BASELINE_PATH)
@@ -196,6 +250,11 @@ def main() -> int:
         "--check-aliases-coverage",
         action="store_true",
         help="Falha se operationId auto do baseline não tiver alias TV (onda estrita)",
+    )
+    parser.add_argument(
+        "--check-decorator-envelope",
+        action="store_true",
+        help="Falha se operation_id do decorator divergir do api_delpi_success (ou faltar quando def != envelope)",
     )
     args = parser.parse_args()
 
@@ -248,8 +307,29 @@ def main() -> int:
             print("Drift autoCount — rode com --write.", file=sys.stderr)
             return 1
         print(f"OK — inventário sincronizado (auto={inventory['autoCount']}).")
+        problems = check_decorator_envelope_alignment(
+            path_contains="quality/audit_5s_operational_router.py"
+        )
+        if problems:
+            print(f"Falha — {len(problems)} desalinhamento(s) 5S decorator↔envelope:", file=sys.stderr)
+            for row in problems[:50]:
+                print(f"  - {row}", file=sys.stderr)
+            return 1
+        print("OK — Audit 5S decorator operation_id alinhado ao envelope.")
+
+    if args.check_decorator_envelope:
+        problems = check_decorator_envelope_alignment()
+        if problems:
+            print(f"Falha — {len(problems)} desalinhamento(s) decorator↔envelope:", file=sys.stderr)
+            for row in problems[:50]:
+                print(f"  - {row}", file=sys.stderr)
+            if len(problems) > 50:
+                print(f"  … +{len(problems) - 50}", file=sys.stderr)
+            return 1
+        print("OK — decorator operation_id alinhado ao envelope.")
 
     if args.check_aliases_coverage:
+
         aliases = load_aliases()
         missing = [
             str(row.get("operationId"))

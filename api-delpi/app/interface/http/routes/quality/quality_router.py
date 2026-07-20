@@ -151,7 +151,7 @@ def get_nonconformity_series(
 @router.get("/nonconformities", operation_id="list_nonconformities")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_nonconformity_route(
-    type: str = Query("all", pattern="^(internal|external|all)$"),
+    type: str = NONCONFORMITY_TYPE_QUERY,
     branch: Optional[str] = None,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,

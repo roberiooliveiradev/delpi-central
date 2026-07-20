@@ -207,14 +207,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -1177,14 +1177,14 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "score",
         "value",
         "idd"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      ]
     },
     {
       "operationId": "list_lmps",
@@ -1263,7 +1263,8 @@
         "auto"
       ],
       "metaShape": "composite_analysis",
-      "description": "Análise composta: «Dashboard de LMPs».",
+      "description": "Listagem do painel de LMPs da engenharia.",
+      "whenToUse": "Use para a visão do dashboard de LMPs.",
       "paramSchema": {
         "date_start": {
           "type": "string",
@@ -1502,18 +1503,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items"
-      ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
         "total_items": "Total de itens"
-      }
+      },
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items"
+      ]
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -3915,14 +3916,24 @@
       "defaultParams": {
         "periodDays": 7
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
       "valueFields": [
         "oee_filial_01",
         "oee_filial_02"
       ],
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "seriesField": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -3938,17 +3949,7 @@
           "direction": "asc"
         }
       ],
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      }
+      "seriesField": "points"
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -4325,7 +4326,6 @@
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
       },
@@ -4336,7 +4336,8 @@
         "date_end": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      }
+      },
+      "seriesField": "points"
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -7615,7 +7616,7 @@
     {
       "operationId": "lookup_quality_label_op",
       "httpMethod": "GET",
-      "label": "Lookup Op",
+      "label": "Consultar qualidade etiqueta op",
       "category": "quality",
       "path": "/quality/labels/lookup-op/{production_order}",
       "allowedDisplayModes": [
@@ -7624,6 +7625,7 @@
       ],
       "metaShape": "scalar",
       "description": "Indicador numérico para «Lookup Op».",
+      "whenToUse": "Use para consultar qualidade etiqueta op.",
       "paramSchema": {
         "branch": {
           "type": "string",
@@ -8056,15 +8058,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -8241,15 +8243,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -9193,15 +9195,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
       ],
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
       "tableFields": "top_products"
     },
     {

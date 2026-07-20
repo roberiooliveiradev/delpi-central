@@ -132,6 +132,8 @@ def extract_x_delpi(operation: dict[str, Any]) -> dict[str, Any] | None:
 def merge_audience_into_x_delpi(
     x_delpi: dict[str, Any] | None,
     operation_id: str | None,
+    *,
+    param_names: set[str] | frozenset[str] | None = None,
 ) -> dict[str, Any] | None:
     """Garante locale/params/category do JSON curado também no baseline (sem depender só do runtime)."""
     from app.domain.services.route_locale_catalog_service import apply_route_locale_to_x_delpi
@@ -143,7 +145,11 @@ def merge_audience_into_x_delpi(
     runtime_shape = dict(base)
     if "presentationStrategy" in runtime_shape and "presentation" not in runtime_shape:
         runtime_shape["presentation"] = {"strategy": runtime_shape.pop("presentationStrategy")}
-    merged = apply_route_locale_to_x_delpi(runtime_shape, str(operation_id))
+    merged = apply_route_locale_to_x_delpi(
+        runtime_shape,
+        str(operation_id),
+        param_names=param_names,
+    )
     # Re-flatten para formato baseline.
     strategy = None
     presentation = merged.get("presentation")
@@ -153,6 +159,16 @@ def merge_audience_into_x_delpi(
     if strategy is not None:
         merged["presentationStrategy"] = str(strategy)
     return merged or None
+
+
+def _param_names_from_baseline_row(row: dict[str, Any]) -> set[str]:
+    names: set[str] = set()
+    for param in row.get("parameters") or []:
+        if isinstance(param, dict):
+            name = str(param.get("name") or "").strip()
+            if name:
+                names.add(name)
+    return names
 
 
 def extract_operations_from_openapi(spec: dict[str, Any]) -> list[dict[str, Any]]:
@@ -182,6 +198,7 @@ def extract_operations_from_openapi(spec: dict[str, Any]) -> list[dict[str, Any]
             x_delpi = merge_audience_into_x_delpi(
                 extract_x_delpi(operation),
                 operation.get("operationId"),
+                param_names={str(p.get("name") or "") for p in parameters if p.get("name")},
             )
             if x_delpi:
                 row["xDelpi"] = x_delpi
@@ -205,7 +222,11 @@ def enrich_baseline_payload_locale(payload: dict[str, Any]) -> dict[str, Any]:
             continue
         next_row = dict(row)
         x_delpi = next_row.get("xDelpi") if isinstance(next_row.get("xDelpi"), dict) else {}
-        merged = merge_audience_into_x_delpi(x_delpi, next_row.get("operationId"))
+        merged = merge_audience_into_x_delpi(
+            x_delpi,
+            next_row.get("operationId"),
+            param_names=_param_names_from_baseline_row(next_row),
+        )
         if merged:
             next_row["xDelpi"] = merged
         enriched_ops.append(next_row)

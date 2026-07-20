@@ -14,7 +14,11 @@ from app.domain.services.route_locale_catalog_service import apply_route_locale_
 HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
 
 
-def build_x_delpi_extension(operation_id: str) -> dict[str, Any]:
+def build_x_delpi_extension(
+    operation_id: str,
+    *,
+    param_names: set[str] | frozenset[str] | None = None,
+) -> dict[str, Any]:
     contract = ROUTE_CONTRACTS.get(str(operation_id or "").strip())
 
     if contract is not None:
@@ -29,7 +33,18 @@ def build_x_delpi_extension(operation_id: str) -> dict[str, Any]:
         "shape": shape,
         "presentation": {"strategy": strategy},
     }
-    return apply_route_locale_to_x_delpi(extension, operation_id)
+    return apply_route_locale_to_x_delpi(extension, operation_id, param_names=param_names)
+
+
+def _parameter_names_from_operation(operation: dict[str, Any]) -> set[str]:
+    names: set[str] = set()
+    for param in operation.get("parameters") or []:
+        if not isinstance(param, dict):
+            continue
+        name = str(param.get("name") or "").strip()
+        if name:
+            names.add(name)
+    return names
 
 
 def inject_delpi_extensions(openapi_schema: dict[str, Any]) -> dict[str, int]:
@@ -57,7 +72,10 @@ def inject_delpi_extensions(openapi_schema: dict[str, Any]) -> dict[str, int]:
                 skipped += 1
                 continue
 
-            operation["x-delpi"] = build_x_delpi_extension(operation_id)
+            operation["x-delpi"] = build_x_delpi_extension(
+                operation_id,
+                param_names=_parameter_names_from_operation(operation),
+            )
             with_extension += 1
 
     return {

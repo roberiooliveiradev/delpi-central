@@ -24,6 +24,9 @@ from app.core.responses import error_response, not_found_response
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_REQUIRED,
+)
 
 router = APIRouter(
     prefix="/inspecoes-entrada",
@@ -69,7 +72,7 @@ def _branch_access_error(branch: str):
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_resumo_route(
-    branch: str = Query(..., min_length=2, max_length=2, pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED,
 ):
     branch_error = _branch_access_error(branch)
     if branch_error:
@@ -106,7 +109,7 @@ def get_inspecoes_entrada_resumo_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_pendentes_route(
-    branch: str = Query(..., min_length=2, max_length=2, pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -149,7 +152,7 @@ def get_inspecoes_entrada_pendentes_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_pendentes_fornecedor_route(
-    branch: str = Query(..., min_length=2, max_length=2, pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED,
 ):
     branch_error = _branch_access_error(branch)
     if branch_error:
@@ -188,7 +191,7 @@ def get_inspecoes_entrada_pendentes_fornecedor_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_rejeitadas_ensaiador_route(
-    branch: str = Query(..., min_length=2, max_length=2, pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED,
 ):
     branch_error = _branch_access_error(branch)
     if branch_error:
@@ -227,7 +230,7 @@ def get_inspecoes_entrada_rejeitadas_ensaiador_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_rejeitadas_produto_route(
-    branch: str = Query(..., min_length=2, max_length=2, pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED,
     limit: int = Query(default=50, ge=1, le=200),
 ):
     branch_error = _branch_access_error(branch)
@@ -267,7 +270,7 @@ def get_inspecoes_entrada_rejeitadas_produto_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_historico_route(
-    branch: str = Query(..., min_length=2, max_length=2, pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
     result: str | None = Query(default=None),
@@ -326,7 +329,7 @@ def get_inspecoes_entrada_historico_route(
 )
 @require_any_permission(INSPECOES_ENTRADA_READ_PERMISSIONS)
 def get_inspecoes_entrada_historico_detalhe_route(
-    branch: str = Query(..., min_length=2, max_length=2, pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED,
     inspection_id: str = Query(..., min_length=1),
 ):
     branch_error = _branch_access_error(branch)

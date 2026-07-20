@@ -156,8 +156,14 @@ def _merge_param_locale(
 def apply_route_locale_to_x_delpi(
     extension: dict[str, Any],
     operation_id: str,
+    *,
+    param_names: set[str] | frozenset[str] | None = None,
 ) -> dict[str, Any]:
-    """Mescla locale/params/category curados + params globais; espelha tv a partir de pt-BR."""
+    """Mescla locale/params/category curados + params globais da rota; espelha tv a partir de pt-BR.
+
+    Quando ``param_names`` é informado, só anexa locale global para esses nomes
+    (evita dump de todo ``openapi_param_locale.json`` em cada operação).
+    """
     merged = dict(extension)
     entry = route_locale_for_operation(operation_id) or {}
     category = str(entry.get("category") or "").strip()
@@ -168,10 +174,21 @@ def apply_route_locale_to_x_delpi(
         merged["locale"] = locale
     route_params = entry.get("params") if isinstance(entry.get("params"), dict) else {}
     global_params = load_global_param_locale()
+    if param_names is not None:
+        allowed = {str(n).strip() for n in param_names if str(n).strip()}
+        global_params = {k: v for k, v in global_params.items() if k in allowed}
+        route_params = {k: v for k, v in route_params.items() if k in allowed}
     params = _merge_param_locale(global_params, route_params)
-    if params:
-        # Preserve any params already on the extension (higher priority).
-        existing = merged.get("params") if isinstance(merged.get("params"), dict) else {}
+    existing = merged.get("params") if isinstance(merged.get("params"), dict) else {}
+    if param_names is not None:
+        allowed = {str(n).strip() for n in param_names if str(n).strip()}
+        existing = {k: v for k, v in _clean_params(existing).items() if k in allowed}
+        merged_params = _merge_param_locale(params, existing)
+        if merged_params:
+            merged["params"] = merged_params
+        else:
+            merged.pop("params", None)
+    elif params:
         merged["params"] = _merge_param_locale(params, _clean_params(existing))
     tv = tv_audience_for_operation(operation_id)
     if tv:

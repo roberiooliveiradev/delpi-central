@@ -27,6 +27,9 @@ from app.interface.http.openapi_agent_metadata import (
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+)
 
 router = APIRouter(prefix="/kaizens/records", tags=["Kaizen — cadastro"])
 
@@ -158,7 +161,7 @@ def _body_to_fields(body: BaseModel) -> dict:
 @router.get("", **QUALITY_KAIZEN_RECORDS_LIST)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
-    branch: str | None = Query(default=None, pattern="^(01|02)$"),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
     status: str | None = Query(
         default=None,
         pattern=_STATUS_PATTERN,
@@ -273,7 +276,7 @@ def import_kaizen_records(body: ImportKaizensBody = Body(...)):
 @router.get("/summary", operation_id="get_kaizen_records_summary")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_records_summary(
-    branch: str | None = Query(default=None, pattern="^(01|02)$"),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
 ):

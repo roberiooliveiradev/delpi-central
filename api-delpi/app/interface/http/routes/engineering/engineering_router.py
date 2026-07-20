@@ -70,6 +70,9 @@ from app.interface.http.openapi_agent_metadata import (
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    SORT_DIR_QUERY,
+)
 
 router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 
@@ -565,7 +568,7 @@ def list_mini_applicators_ferramentas_route(
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(None),
-    sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
+    sort_dir: Optional[str] = SORT_DIR_QUERY,
     incluir_bloqueados: bool = Query(False),
     codigo_peca: Optional[str] = Query(None),
     descricao_peca: Optional[str] = Query(None),
@@ -633,7 +636,7 @@ def list_mini_applicators_pecas_reposicao_route(
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(None),
-    sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
+    sort_dir: Optional[str] = SORT_DIR_QUERY,
 ):
     try:
         request = ListMiniApplicatorsPecasReposicaoRequest(

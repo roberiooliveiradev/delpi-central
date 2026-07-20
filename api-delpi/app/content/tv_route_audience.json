@@ -2162,14 +2162,16 @@
     "list_lmps_dashboard": {
       "locale": {
         "en": {
-          "summary": "Dashboard de LMPs",
-          "description": "Lmps dashboard.",
+          "summary": "LMPs dashboard",
+          "description": "Engineering LMPs dashboard listing.",
+          "whenToUse": "Use for the LMPs dashboard view.",
           "label": "Dashboard de LMPs"
         },
         "pt-BR": {
-          "label": "Dashboard de LMPs",
           "summary": "Dashboard de LMPs",
-          "description": "Análise composta: «Dashboard de LMPs»."
+          "description": "Listagem do painel de LMPs da engenharia.",
+          "whenToUse": "Use para a visão do dashboard de LMPs.",
+          "label": "Dashboard de LMPs"
         }
       },
       "category": "engineering"
@@ -3032,14 +3034,16 @@
     "lookup_quality_label_op": {
       "locale": {
         "en": {
-          "summary": "Lookup Op",
+          "summary": "Lookup quality label op",
           "description": "Lookup quality label op.",
-          "label": "Lookup Op"
+          "label": "Lookup Op",
+          "whenToUse": "Use to lookup quality label op."
         },
         "pt-BR": {
-          "label": "Lookup Op",
-          "summary": "Lookup Op",
-          "description": "Indicador numérico para «Lookup Op»."
+          "label": "Consultar qualidade etiqueta op",
+          "summary": "Consultar qualidade etiqueta op",
+          "description": "Indicador numérico para «Lookup Op».",
+          "whenToUse": "Use para consultar qualidade etiqueta op."
         }
       },
       "category": "quality"
@@ -3197,14 +3201,16 @@
     "get_product_structure_excel_public": {
       "locale": {
         "en": {
-          "summary": "Structure Excel Public",
+          "summary": "Get product structure Excel public",
           "description": "Product structure excel public.",
-          "label": "Structure Excel Public"
+          "label": "Structure Excel Public",
+          "whenToUse": "Use to get product structure Excel public."
         },
         "pt-BR": {
-          "label": "Structure Excel Public",
-          "summary": "Structure Excel Public",
-          "description": "Indicador numérico para «Structure Excel Public»."
+          "label": "Obter produto estrutura Excel público",
+          "summary": "Obter produto estrutura Excel público",
+          "description": "Indicador numérico para «Structure Excel Public».",
+          "whenToUse": "Use para obter produto estrutura Excel público."
         }
       },
       "category": "products"
@@ -3527,14 +3533,16 @@
     "update_cultura_delpi_content": {
       "locale": {
         "en": {
-          "summary": "Update Cultura Delpi Content",
-          "description": "Update Cultura Delpi Content",
-          "label": "Update Cultura Delpi Content"
+          "summary": "Update culture Delpi content",
+          "description": "Update culture Delpi content.",
+          "label": "Update Cultura Delpi Content",
+          "whenToUse": "Use to update culture Delpi content."
         },
         "pt-BR": {
-          "summary": "Update Cultura Delpi Content",
+          "summary": "Atualizar cultura Delpi conteúdo",
           "description": "Update Cultura Delpi Content",
-          "label": "Update Cultura Delpi Content"
+          "label": "Atualizar cultura Delpi conteúdo",
+          "whenToUse": "Use para atualizar cultura Delpi conteúdo."
         }
       },
       "category": "strategic"
@@ -3556,14 +3564,16 @@
     "export_proposta_comercial_pdf_with_overrides": {
       "locale": {
         "en": {
-          "summary": "Export Proposta Comercial Pdf With Overrides Route",
-          "description": "Export Proposta Comercial Pdf With Overrides Route",
-          "label": "Export Proposta Comercial Pdf With Overrides Route"
+          "summary": "Export proposal commercial PDF with overrides",
+          "description": "Export proposal commercial PDF with overrides.",
+          "label": "Export Proposta Comercial Pdf With Overrides Route",
+          "whenToUse": "Use to export proposal commercial PDF with overrides."
         },
         "pt-BR": {
-          "summary": "Export Proposta Comercial Pdf With Overrides Route",
+          "summary": "Exportar proposta comercial PDF with sobrescritas",
           "description": "Export Proposta Comercial Pdf With Overrides Route",
-          "label": "Export Proposta Comercial Pdf With Overrides Route"
+          "label": "Exportar proposta comercial PDF with sobrescritas",
+          "whenToUse": "Use para exportar proposta comercial PDF with sobrescritas."
         }
       },
       "category": "commercial"
@@ -3931,14 +3941,16 @@
     "create_audit_5s_area": {
       "locale": {
         "en": {
-          "summary": "Create Area",
-          "description": "Create Area",
-          "label": "Create Area"
+          "summary": "Create audit 5S area",
+          "description": "Create audit 5S area.",
+          "label": "Create Area",
+          "whenToUse": "Use to create audit 5S area."
         },
         "pt-BR": {
-          "summary": "Create Area",
-          "description": "Create Area",
-          "label": "Create Area"
+          "summary": "Criar auditoria 5S área",
+          "description": "Criar auditoria 5S área.",
+          "label": "Criar auditoria 5S área",
+          "whenToUse": "Use para criar auditoria 5S área."
         }
       },
       "category": "quality"
@@ -3946,14 +3958,16 @@
     "create_audit_5s_audit": {
       "locale": {
         "en": {
-          "summary": "Create Audit",
-          "description": "Create Audit",
-          "label": "Create Audit"
+          "summary": "Create audit 5S audit",
+          "description": "Create audit 5S audit.",
+          "label": "Create Audit",
+          "whenToUse": "Use to create audit 5S audit."
         },
         "pt-BR": {
-          "summary": "Create Audit",
-          "description": "Create Audit",
-          "label": "Create Audit"
+          "summary": "Criar auditoria 5S auditoria",
+          "description": "Criar auditoria 5S auditoria.",
+          "label": "Criar auditoria 5S auditoria",
+          "whenToUse": "Use para criar auditoria 5S auditoria."
         }
       },
       "category": "quality"
@@ -3961,14 +3975,16 @@
     "update_audit_5s_audit": {
       "locale": {
         "en": {
-          "summary": "Update Audit",
-          "description": "Update Audit",
-          "label": "Update Audit"
+          "summary": "Update audit 5S audit",
+          "description": "Update audit 5S audit.",
+          "label": "Update Audit",
+          "whenToUse": "Use to update audit 5S audit."
         },
         "pt-BR": {
-          "summary": "Update Audit",
+          "summary": "Atualizar auditoria 5S auditoria",
           "description": "Update Audit",
-          "label": "Update Audit"
+          "label": "Atualizar auditoria 5S auditoria",
+          "whenToUse": "Use para atualizar auditoria 5S auditoria."
         }
       },
       "category": "quality"
@@ -3976,14 +3992,16 @@
     "close_audit_5s_audit": {
       "locale": {
         "en": {
-          "summary": "Close Audit",
-          "description": "Close Audit",
-          "label": "Close Audit"
+          "summary": "Close audit 5S audit",
+          "description": "Close audit 5S audit.",
+          "label": "Close Audit",
+          "whenToUse": "Use to close audit 5S audit."
         },
         "pt-BR": {
-          "summary": "Close Audit",
+          "summary": "Encerrar auditoria 5S auditoria",
           "description": "Close Audit",
-          "label": "Close Audit"
+          "label": "Encerrar auditoria 5S auditoria",
+          "whenToUse": "Use para encerrar auditoria 5S auditoria."
         }
       },
       "category": "quality"
@@ -3991,14 +4009,16 @@
     "complete_audit_5s_evaluation": {
       "locale": {
         "en": {
-          "summary": "Complete Evaluation",
-          "description": "Complete Evaluation",
-          "label": "Complete Evaluation"
+          "summary": "Complete audit 5S evaluation",
+          "description": "Complete audit 5S evaluation.",
+          "label": "Complete Evaluation",
+          "whenToUse": "Use to complete audit 5S evaluation."
         },
         "pt-BR": {
-          "summary": "Complete Evaluation",
+          "summary": "Concluir auditoria 5S avaliação",
           "description": "Complete Evaluation",
-          "label": "Complete Evaluation"
+          "label": "Concluir auditoria 5S avaliação",
+          "whenToUse": "Use para concluir auditoria 5S avaliação."
         }
       },
       "category": "quality"
@@ -4006,14 +4026,16 @@
     "delete_audit_5s_audit": {
       "locale": {
         "en": {
-          "summary": "Delete Audit",
-          "description": "Delete Audit",
-          "label": "Delete Audit"
+          "summary": "Delete audit 5S audit",
+          "description": "Delete audit 5S audit.",
+          "label": "Delete Audit",
+          "whenToUse": "Use to delete audit 5S audit."
         },
         "pt-BR": {
-          "summary": "Delete Audit",
+          "summary": "Excluir auditoria 5S auditoria",
           "description": "Delete Audit",
-          "label": "Delete Audit"
+          "label": "Excluir auditoria 5S auditoria",
+          "whenToUse": "Use para excluir auditoria 5S auditoria."
         }
       },
       "category": "quality"
@@ -4021,14 +4043,16 @@
     "force_delete_audit_5s_audit": {
       "locale": {
         "en": {
-          "summary": "Force Delete Audit",
-          "description": "Force Delete Audit",
-          "label": "Force Delete Audit"
+          "summary": "Force delete audit 5S audit",
+          "description": "Force delete audit 5S audit.",
+          "label": "Force Delete Audit",
+          "whenToUse": "Use to force delete audit 5S audit."
         },
         "pt-BR": {
-          "summary": "Force Delete Audit",
+          "summary": "Excluir forçado auditoria 5S auditoria",
           "description": "Force Delete Audit",
-          "label": "Force Delete Audit"
+          "label": "Excluir forçado auditoria 5S auditoria",
+          "whenToUse": "Use para excluir forçado auditoria 5S auditoria."
         }
       },
       "category": "quality"
@@ -4036,14 +4060,16 @@
     "join_audit_5s_audit": {
       "locale": {
         "en": {
-          "summary": "Join Audit",
-          "description": "Join Audit",
-          "label": "Join Audit"
+          "summary": "Join audit 5S audit",
+          "description": "Join audit 5S audit.",
+          "label": "Join Audit",
+          "whenToUse": "Use to join audit 5S audit."
         },
         "pt-BR": {
-          "summary": "Join Audit",
+          "summary": "Entrar auditoria 5S auditoria",
           "description": "Join Audit",
-          "label": "Join Audit"
+          "label": "Entrar auditoria 5S auditoria",
+          "whenToUse": "Use para entrar auditoria 5S auditoria."
         }
       },
       "category": "quality"
@@ -4051,14 +4077,16 @@
     "create_audit_5s_nonconformity": {
       "locale": {
         "en": {
-          "summary": "Create Nonconformity",
-          "description": "Create Nonconformity",
-          "label": "Create Nonconformity"
+          "summary": "Create audit 5S nonconformity",
+          "description": "Create audit 5S nonconformity.",
+          "label": "Create Nonconformity",
+          "whenToUse": "Use to create audit 5S nonconformity."
         },
         "pt-BR": {
-          "summary": "Create Nonconformity",
-          "description": "Create Nonconformity",
-          "label": "Create Nonconformity"
+          "summary": "Criar auditoria 5S não conformidade",
+          "description": "Criar auditoria 5S não conformidade.",
+          "label": "Criar auditoria 5S não conformidade",
+          "whenToUse": "Use para criar auditoria 5S não conformidade."
         }
       },
       "category": "quality"
@@ -4066,14 +4094,16 @@
     "reopen_audit_5s_evaluation": {
       "locale": {
         "en": {
-          "summary": "Reopen Evaluation",
-          "description": "Reopen Evaluation",
-          "label": "Reopen Evaluation"
+          "summary": "Reopen audit 5S evaluation",
+          "description": "Reopen audit 5S evaluation.",
+          "label": "Reopen Evaluation",
+          "whenToUse": "Use to reopen audit 5S evaluation."
         },
         "pt-BR": {
-          "summary": "Reopen Evaluation",
+          "summary": "Reabrir auditoria 5S avaliação",
           "description": "Reopen Evaluation",
-          "label": "Reopen Evaluation"
+          "label": "Reabrir auditoria 5S avaliação",
+          "whenToUse": "Use para reabrir auditoria 5S avaliação."
         }
       },
       "category": "quality"
@@ -4081,14 +4111,16 @@
     "audit_5s_upsert_response": {
       "locale": {
         "en": {
-          "summary": "Upsert Response",
-          "description": "Upsert Response",
-          "label": "Upsert Response"
+          "summary": "Audit 5S upsert response",
+          "description": "Audit 5S upsert response.",
+          "label": "Upsert Response",
+          "whenToUse": "Use to audit 5S upsert response."
         },
         "pt-BR": {
-          "summary": "Upsert Response",
+          "summary": "Auditoria 5S upsert resposta",
           "description": "Upsert Response",
-          "label": "Upsert Response"
+          "label": "Auditoria 5S upsert resposta",
+          "whenToUse": "Use para auditoria 5S upsert resposta."
         }
       },
       "category": "quality"
@@ -4096,14 +4128,16 @@
     "upload_audit_5s_response_attachment": {
       "locale": {
         "en": {
-          "summary": "Upload Response Attachment",
-          "description": "Upload Response Attachment",
-          "label": "Upload Response Attachment"
+          "summary": "Upload audit 5S response attachment",
+          "description": "Upload audit 5S response attachment.",
+          "label": "Upload Response Attachment",
+          "whenToUse": "Use to upload audit 5S response attachment."
         },
         "pt-BR": {
-          "summary": "Upload Response Attachment",
+          "summary": "Enviar auditoria 5S resposta anexo",
           "description": "Upload Response Attachment",
-          "label": "Upload Response Attachment"
+          "label": "Enviar auditoria 5S resposta anexo",
+          "whenToUse": "Use para enviar auditoria 5S resposta anexo."
         }
       },
       "category": "quality"
@@ -4111,14 +4145,16 @@
     "delete_audit_5s_response_photo": {
       "locale": {
         "en": {
-          "summary": "Delete Response Attachment",
-          "description": "Delete Response Attachment",
-          "label": "Delete Response Attachment"
+          "summary": "Delete audit 5S response photo",
+          "description": "Delete audit 5S response photo.",
+          "label": "Delete Response Attachment",
+          "whenToUse": "Use to delete audit 5S response photo."
         },
         "pt-BR": {
-          "summary": "Delete Response Attachment",
+          "summary": "Excluir auditoria 5S resposta foto",
           "description": "Delete Response Attachment",
-          "label": "Delete Response Attachment"
+          "label": "Excluir auditoria 5S resposta foto",
+          "whenToUse": "Use para excluir auditoria 5S resposta foto."
         }
       },
       "category": "quality"
@@ -4126,14 +4162,16 @@
     "publish_audit_5s_catalog": {
       "locale": {
         "en": {
-          "summary": "Publish Catalog",
-          "description": "Publish Catalog",
-          "label": "Publish Catalog"
+          "summary": "Publish audit 5S catalog",
+          "description": "Publish audit 5S catalog.",
+          "label": "Publish Catalog",
+          "whenToUse": "Use to publish audit 5S catalog."
         },
         "pt-BR": {
-          "summary": "Publish Catalog",
+          "summary": "Publicar auditoria 5S catálogo",
           "description": "Publish Catalog",
-          "label": "Publish Catalog"
+          "label": "Publicar auditoria 5S catálogo",
+          "whenToUse": "Use para publicar auditoria 5S catálogo."
         }
       },
       "category": "quality"
@@ -4141,14 +4179,16 @@
     "update_audit_5s_nonconformity": {
       "locale": {
         "en": {
-          "summary": "Update Nonconformity",
-          "description": "Update Nonconformity",
-          "label": "Update Nonconformity"
+          "summary": "Update audit 5S nonconformity",
+          "description": "Update audit 5S nonconformity.",
+          "label": "Update Nonconformity",
+          "whenToUse": "Use to update audit 5S nonconformity."
         },
         "pt-BR": {
-          "summary": "Update Nonconformity",
+          "summary": "Atualizar auditoria 5S não conformidade",
           "description": "Update Nonconformity",
-          "label": "Update Nonconformity"
+          "label": "Atualizar auditoria 5S não conformidade",
+          "whenToUse": "Use para atualizar auditoria 5S não conformidade."
         }
       },
       "category": "quality"
@@ -4156,14 +4196,16 @@
     "create_audit_5s_nc_action": {
       "locale": {
         "en": {
-          "summary": "Add Nc Action",
-          "description": "Add Nc Action",
-          "label": "Add Nc Action"
+          "summary": "Create audit 5S NC action",
+          "description": "Create audit 5S NC action.",
+          "label": "Add Nc Action",
+          "whenToUse": "Use to create audit 5S NC action."
         },
         "pt-BR": {
-          "summary": "Add Nc Action",
+          "summary": "Criar auditoria 5S NC ação",
           "description": "Add Nc Action",
-          "label": "Add Nc Action"
+          "label": "Criar auditoria 5S NC ação",
+          "whenToUse": "Use para criar auditoria 5S NC ação."
         }
       },
       "category": "quality"
@@ -4171,14 +4213,16 @@
     "upload_audit_5s_nc_attachment": {
       "locale": {
         "en": {
-          "summary": "Upload Nc Attachment",
-          "description": "Upload Nc Attachment",
-          "label": "Upload Nc Attachment"
+          "summary": "Upload audit 5S NC attachment",
+          "description": "Upload audit 5S NC attachment.",
+          "label": "Upload Nc Attachment",
+          "whenToUse": "Use to upload audit 5S NC attachment."
         },
         "pt-BR": {
-          "summary": "Upload Nc Attachment",
+          "summary": "Enviar auditoria 5S NC anexo",
           "description": "Upload Nc Attachment",
-          "label": "Upload Nc Attachment"
+          "label": "Enviar auditoria 5S NC anexo",
+          "whenToUse": "Use para enviar auditoria 5S NC anexo."
         }
       },
       "category": "quality"
@@ -4186,14 +4230,16 @@
     "complete_audit_5s_nc_action": {
       "locale": {
         "en": {
-          "summary": "Complete Nc Action",
-          "description": "Complete Nc Action",
-          "label": "Complete Nc Action"
+          "summary": "Complete audit 5S NC action",
+          "description": "Complete audit 5S NC action.",
+          "label": "Complete Nc Action",
+          "whenToUse": "Use to complete audit 5S NC action."
         },
         "pt-BR": {
-          "summary": "Complete Nc Action",
+          "summary": "Concluir auditoria 5S NC ação",
           "description": "Complete Nc Action",
-          "label": "Complete Nc Action"
+          "label": "Concluir auditoria 5S NC ação",
+          "whenToUse": "Use para concluir auditoria 5S NC ação."
         }
       },
       "category": "quality"
@@ -4201,14 +4247,16 @@
     "create_kaizen_record": {
       "locale": {
         "en": {
-          "summary": "Create Kaizen Record",
-          "description": "Create Kaizen Record",
-          "label": "Create Kaizen Record"
+          "summary": "Create kaizen record",
+          "description": "Create kaizen record.",
+          "label": "Create Kaizen Record",
+          "whenToUse": "Use to create kaizen record."
         },
         "pt-BR": {
-          "summary": "Create Kaizen Record",
-          "description": "Create Kaizen Record",
-          "label": "Create Kaizen Record"
+          "summary": "Criar kaizen registro",
+          "description": "Criar kaizen registro.",
+          "label": "Criar kaizen registro",
+          "whenToUse": "Use para criar kaizen registro."
         }
       },
       "category": "quality"
@@ -4216,14 +4264,16 @@
     "import_kaizen_records": {
       "locale": {
         "en": {
-          "summary": "Import Kaizen Records",
-          "description": "Import Kaizen Records",
-          "label": "Import Kaizen Records"
+          "summary": "Import kaizen records",
+          "description": "Import kaizen records.",
+          "label": "Import Kaizen Records",
+          "whenToUse": "Use to import kaizen records."
         },
         "pt-BR": {
-          "summary": "Import Kaizen Records",
+          "summary": "Importar kaizen registros",
           "description": "Import Kaizen Records",
-          "label": "Import Kaizen Records"
+          "label": "Importar kaizen registros",
+          "whenToUse": "Use para importar kaizen registros."
         }
       },
       "category": "quality"
@@ -4231,14 +4281,16 @@
     "delete_kaizen_record": {
       "locale": {
         "en": {
-          "summary": "Delete Kaizen Record",
-          "description": "Delete Kaizen Record",
-          "label": "Delete Kaizen Record"
+          "summary": "Delete kaizen record",
+          "description": "Delete kaizen record.",
+          "label": "Delete Kaizen Record",
+          "whenToUse": "Use to delete kaizen record."
         },
         "pt-BR": {
-          "summary": "Delete Kaizen Record",
+          "summary": "Excluir kaizen registro",
           "description": "Delete Kaizen Record",
-          "label": "Delete Kaizen Record"
+          "label": "Excluir kaizen registro",
+          "whenToUse": "Use para excluir kaizen registro."
         }
       },
       "category": "quality"
@@ -4246,14 +4298,16 @@
     "update_kaizen_record": {
       "locale": {
         "en": {
-          "summary": "Update Kaizen Record",
-          "description": "Update Kaizen Record",
-          "label": "Update Kaizen Record"
+          "summary": "Update kaizen record",
+          "description": "Update kaizen record.",
+          "label": "Update Kaizen Record",
+          "whenToUse": "Use to update kaizen record."
         },
         "pt-BR": {
-          "summary": "Update Kaizen Record",
+          "summary": "Atualizar kaizen registro",
           "description": "Update Kaizen Record",
-          "label": "Update Kaizen Record"
+          "label": "Atualizar kaizen registro",
+          "whenToUse": "Use para atualizar kaizen registro."
         }
       },
       "category": "quality"
@@ -4261,14 +4315,16 @@
     "attach_kaizen_evidence": {
       "locale": {
         "en": {
-          "summary": "Attach Kaizen Evidence",
-          "description": "Attach Kaizen Evidence",
-          "label": "Attach Kaizen Evidence"
+          "summary": "Attach kaizen evidence",
+          "description": "Attach kaizen evidence.",
+          "label": "Attach Kaizen Evidence",
+          "whenToUse": "Use to attach kaizen evidence."
         },
         "pt-BR": {
-          "summary": "Attach Kaizen Evidence",
+          "summary": "Anexar kaizen evidência",
           "description": "Attach Kaizen Evidence",
-          "label": "Attach Kaizen Evidence"
+          "label": "Anexar kaizen evidência",
+          "whenToUse": "Use para anexar kaizen evidência."
         }
       },
       "category": "quality"
@@ -4276,14 +4332,16 @@
     "delete_kaizen_evidence": {
       "locale": {
         "en": {
-          "summary": "Delete Kaizen Evidence",
-          "description": "Delete Kaizen Evidence",
-          "label": "Delete Kaizen Evidence"
+          "summary": "Delete kaizen evidence",
+          "description": "Delete kaizen evidence.",
+          "label": "Delete Kaizen Evidence",
+          "whenToUse": "Use to delete kaizen evidence."
         },
         "pt-BR": {
-          "summary": "Delete Kaizen Evidence",
+          "summary": "Excluir kaizen evidência",
           "description": "Delete Kaizen Evidence",
-          "label": "Delete Kaizen Evidence"
+          "label": "Excluir kaizen evidência",
+          "whenToUse": "Use para excluir kaizen evidência."
         }
       },
       "category": "quality"
@@ -4291,14 +4349,16 @@
     "update_kaizen_evidence": {
       "locale": {
         "en": {
-          "summary": "Update Kaizen Evidence",
-          "description": "Update Kaizen Evidence",
-          "label": "Update Kaizen Evidence"
+          "summary": "Update kaizen evidence",
+          "description": "Update kaizen evidence.",
+          "label": "Update Kaizen Evidence",
+          "whenToUse": "Use to update kaizen evidence."
         },
         "pt-BR": {
-          "summary": "Update Kaizen Evidence",
+          "summary": "Atualizar kaizen evidência",
           "description": "Update Kaizen Evidence",
-          "label": "Update Kaizen Evidence"
+          "label": "Atualizar kaizen evidência",
+          "whenToUse": "Use para atualizar kaizen evidência."
         }
       },
       "category": "quality"
@@ -4306,14 +4366,16 @@
     "create_kaizen_version": {
       "locale": {
         "en": {
-          "summary": "Create Kaizen Version",
-          "description": "Create Kaizen Version",
-          "label": "Create Kaizen Version"
+          "summary": "Create kaizen version",
+          "description": "Create kaizen version.",
+          "label": "Create Kaizen Version",
+          "whenToUse": "Use to create kaizen version."
         },
         "pt-BR": {
-          "summary": "Create Kaizen Version",
-          "description": "Create Kaizen Version",
-          "label": "Create Kaizen Version"
+          "summary": "Criar kaizen versão",
+          "description": "Criar kaizen versão.",
+          "label": "Criar kaizen versão",
+          "whenToUse": "Use para criar kaizen versão."
         }
       },
       "category": "quality"
@@ -4321,14 +4383,16 @@
     "delete_kaizen_version": {
       "locale": {
         "en": {
-          "summary": "Delete Kaizen Version",
-          "description": "Delete Kaizen Version",
-          "label": "Delete Kaizen Version"
+          "summary": "Delete kaizen version",
+          "description": "Delete kaizen version.",
+          "label": "Delete Kaizen Version",
+          "whenToUse": "Use to delete kaizen version."
         },
         "pt-BR": {
-          "summary": "Delete Kaizen Version",
+          "summary": "Excluir kaizen versão",
           "description": "Delete Kaizen Version",
-          "label": "Delete Kaizen Version"
+          "label": "Excluir kaizen versão",
+          "whenToUse": "Use para excluir kaizen versão."
         }
       },
       "category": "quality"
@@ -4336,14 +4400,16 @@
     "update_kaizen_version": {
       "locale": {
         "en": {
-          "summary": "Update Kaizen Version",
-          "description": "Update Kaizen Version",
-          "label": "Update Kaizen Version"
+          "summary": "Update kaizen version",
+          "description": "Update kaizen version.",
+          "label": "Update Kaizen Version",
+          "whenToUse": "Use to update kaizen version."
         },
         "pt-BR": {
-          "summary": "Update Kaizen Version",
+          "summary": "Atualizar kaizen versão",
           "description": "Update Kaizen Version",
-          "label": "Update Kaizen Version"
+          "label": "Atualizar kaizen versão",
+          "whenToUse": "Use para atualizar kaizen versão."
         }
       },
       "category": "quality"
@@ -4351,14 +4417,16 @@
     "implement_kaizen_version": {
       "locale": {
         "en": {
-          "summary": "Implement Kaizen Version",
-          "description": "Implement Kaizen Version",
-          "label": "Implement Kaizen Version"
+          "summary": "Implement kaizen version",
+          "description": "Implement kaizen version.",
+          "label": "Implement Kaizen Version",
+          "whenToUse": "Use to implement kaizen version."
         },
         "pt-BR": {
-          "summary": "Implement Kaizen Version",
+          "summary": "Implementar kaizen versão",
           "description": "Implement Kaizen Version",
-          "label": "Implement Kaizen Version"
+          "label": "Implementar kaizen versão",
+          "whenToUse": "Use para implementar kaizen versão."
         }
       },
       "category": "quality"
@@ -4366,14 +4434,16 @@
     "create_quality_label": {
       "locale": {
         "en": {
-          "summary": "Create Label",
-          "description": "Create Label",
-          "label": "Create Label"
+          "summary": "Create quality label",
+          "description": "Create quality label.",
+          "label": "Create Label",
+          "whenToUse": "Use to create quality label."
         },
         "pt-BR": {
-          "summary": "Create Label",
-          "description": "Create Label",
-          "label": "Create Label"
+          "summary": "Criar qualidade etiqueta",
+          "description": "Criar qualidade etiqueta.",
+          "label": "Criar qualidade etiqueta",
+          "whenToUse": "Use para criar qualidade etiqueta."
         }
       },
       "category": "quality"
@@ -4381,14 +4451,16 @@
     "save_quality_label_inspector": {
       "locale": {
         "en": {
-          "summary": "Save My Inspector",
-          "description": "Save My Inspector",
-          "label": "Save My Inspector"
+          "summary": "Save quality label inspector",
+          "description": "Save quality label inspector.",
+          "label": "Save My Inspector",
+          "whenToUse": "Use to save quality label inspector."
         },
         "pt-BR": {
-          "summary": "Save My Inspector",
+          "summary": "Save qualidade etiqueta inspector",
           "description": "Save My Inspector",
-          "label": "Save My Inspector"
+          "label": "Save qualidade etiqueta inspector",
+          "whenToUse": "Use para save qualidade etiqueta inspector."
         }
       },
       "category": "quality"
@@ -4396,14 +4468,16 @@
     "upload_my_signature": {
       "locale": {
         "en": {
-          "summary": "Upload My Signature",
-          "description": "Upload My Signature",
-          "label": "Upload My Signature"
+          "summary": "Upload my signature",
+          "description": "Upload my signature.",
+          "label": "Upload My Signature",
+          "whenToUse": "Use to upload my signature."
         },
         "pt-BR": {
-          "summary": "Upload My Signature",
+          "summary": "Enviar my signature",
           "description": "Upload My Signature",
-          "label": "Upload My Signature"
+          "label": "Enviar my signature",
+          "whenToUse": "Use para enviar my signature."
         }
       },
       "category": "quality"
@@ -4411,14 +4485,16 @@
     "delete_quality_label": {
       "locale": {
         "en": {
-          "summary": "Delete Label",
-          "description": "Delete Label",
-          "label": "Delete Label"
+          "summary": "Delete quality label",
+          "description": "Delete quality label.",
+          "label": "Delete Label",
+          "whenToUse": "Use to delete quality label."
         },
         "pt-BR": {
-          "summary": "Delete Label",
+          "summary": "Excluir qualidade etiqueta",
           "description": "Delete Label",
-          "label": "Delete Label"
+          "label": "Excluir qualidade etiqueta",
+          "whenToUse": "Use para excluir qualidade etiqueta."
         }
       },
       "category": "quality"
@@ -4426,14 +4502,16 @@
     "set_quality_label_active": {
       "locale": {
         "en": {
-          "summary": "Set Label Active",
-          "description": "Set Label Active",
-          "label": "Set Label Active"
+          "summary": "Set quality label active",
+          "description": "Set quality label active.",
+          "label": "Set Label Active",
+          "whenToUse": "Use to set quality label active."
         },
         "pt-BR": {
-          "summary": "Set Label Active",
+          "summary": "Set qualidade etiqueta active",
           "description": "Set Label Active",
-          "label": "Set Label Active"
+          "label": "Set qualidade etiqueta active",
+          "whenToUse": "Use para set qualidade etiqueta active."
         }
       },
       "category": "quality"
@@ -4441,14 +4519,16 @@
     "save_quality_label_certificate": {
       "locale": {
         "en": {
-          "summary": "Save Certificate",
-          "description": "Save Certificate",
-          "label": "Save Certificate"
+          "summary": "Save quality label certificate",
+          "description": "Save quality label certificate.",
+          "label": "Save Certificate",
+          "whenToUse": "Use to save quality label certificate."
         },
         "pt-BR": {
-          "summary": "Save Certificate",
+          "summary": "Save qualidade etiqueta certificate",
           "description": "Save Certificate",
-          "label": "Save Certificate"
+          "label": "Save qualidade etiqueta certificate",
+          "whenToUse": "Use para save qualidade etiqueta certificate."
         }
       },
       "category": "quality"
@@ -4456,14 +4536,16 @@
     "create_booking": {
       "locale": {
         "en": {
-          "summary": "Create Booking",
-          "description": "Create Booking",
-          "label": "Create Booking"
+          "summary": "Create booking",
+          "description": "Create booking.",
+          "label": "Create Booking",
+          "whenToUse": "Use to create booking."
         },
         "pt-BR": {
-          "summary": "Create Booking",
-          "description": "Create Booking",
-          "label": "Create Booking"
+          "summary": "Criar agendamento",
+          "description": "Criar agendamento.",
+          "label": "Criar agendamento",
+          "whenToUse": "Use para criar agendamento."
         }
       },
       "category": "scheduling"
@@ -4471,14 +4553,16 @@
     "cancel_scheduling_booking": {
       "locale": {
         "en": {
-          "summary": "Cancel Booking",
-          "description": "Cancel Booking",
-          "label": "Cancel Booking"
+          "summary": "Cancel scheduling booking",
+          "description": "Cancel scheduling booking.",
+          "label": "Cancel Booking",
+          "whenToUse": "Use to cancel scheduling booking."
         },
         "pt-BR": {
-          "summary": "Cancel Booking",
+          "summary": "Cancel agendamento agendamento",
           "description": "Cancel Booking",
-          "label": "Cancel Booking"
+          "label": "Cancel agendamento agendamento",
+          "whenToUse": "Use para cancel agendamento agendamento."
         }
       },
       "category": "scheduling"
@@ -4486,14 +4570,16 @@
     "create_scheduling_resource": {
       "locale": {
         "en": {
-          "summary": "Create Resource",
-          "description": "Create Resource",
-          "label": "Create Resource"
+          "summary": "Create scheduling resource",
+          "description": "Create scheduling resource.",
+          "label": "Create Resource",
+          "whenToUse": "Use to create scheduling resource."
         },
         "pt-BR": {
-          "summary": "Create Resource",
-          "description": "Create Resource",
-          "label": "Create Resource"
+          "summary": "Criar agendamento recurso",
+          "description": "Criar agendamento recurso.",
+          "label": "Criar agendamento recurso",
+          "whenToUse": "Use para criar agendamento recurso."
         }
       },
       "category": "scheduling"
@@ -4501,14 +4587,16 @@
     "update_scheduling_resource": {
       "locale": {
         "en": {
-          "summary": "Update Resource",
-          "description": "Update Resource",
-          "label": "Update Resource"
+          "summary": "Update scheduling resource",
+          "description": "Update scheduling resource.",
+          "label": "Update Resource",
+          "whenToUse": "Use to update scheduling resource."
         },
         "pt-BR": {
-          "summary": "Update Resource",
+          "summary": "Atualizar agendamento recurso",
           "description": "Update Resource",
-          "label": "Update Resource"
+          "label": "Atualizar agendamento recurso",
+          "whenToUse": "Use para atualizar agendamento recurso."
         }
       },
       "category": "scheduling"
@@ -4516,14 +4604,16 @@
     "evaluate_console_alerts": {
       "locale": {
         "en": {
-          "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
-          "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
-          "label": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+          "summary": "Evaluate console alerts",
+          "description": "Evaluates console alerts (p95, SQL) and returns findings.",
+          "whenToUse": "Use to evaluate API console health alerts.",
+          "label": "Avaliar alertas"
         },
         "pt-BR": {
-          "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
-          "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
-          "label": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+          "summary": "Avaliar alertas do console",
+          "description": "Avalia alertas do console (p95, SQL) e retorna achados.",
+          "whenToUse": "Use para avaliar alertas de saúde do console da API.",
+          "label": "Avaliar alertas"
         }
       },
       "category": "system"
@@ -4531,14 +4621,16 @@
     "notify_console_smoke_alerts": {
       "locale": {
         "en": {
-          "summary": "Registra resultado de smoke e dispara alertas",
-          "description": "Registra resultado de smoke e dispara alertas",
-          "label": "Registra resultado de smoke e dispara alertas"
+          "summary": "Notify console smoke alerts",
+          "description": "Records smoke-test alert results in the console.",
+          "whenToUse": "Use after smoke checks to register alert outcomes.",
+          "label": "Notificar smoke"
         },
         "pt-BR": {
-          "summary": "Registra resultado de smoke e dispara alertas",
-          "description": "Registra resultado de smoke e dispara alertas",
-          "label": "Registra resultado de smoke e dispara alertas"
+          "summary": "Notificar alertas de smoke do console",
+          "description": "Registra o resultado de alertas de smoke no console.",
+          "whenToUse": "Use após smoke checks para registrar alertas.",
+          "label": "Notificar smoke"
         }
       },
       "category": "system"

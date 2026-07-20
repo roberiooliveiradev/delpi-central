@@ -36,6 +36,10 @@ from app.infrastructure.persistence.plugins.repositories.scheduling.postgres_sch
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    SCHEDULING_BRANCH_QUERY,
+    SCHEDULING_SCOPE_QUERY,
+)
 
 router = APIRouter(tags=["Agendamento"])
 
@@ -170,7 +174,7 @@ def _parse_iso_datetime(value: str) -> datetime | None:
 @router.get("/resources", operation_id="list_scheduling_resources")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_resources(
-    branch: str = Query(..., pattern="^(ES|SC)$"),
+    branch: str = SCHEDULING_BRANCH_QUERY,
     active: bool = Query(True),
 ):
     branch_error = _branch_access_error(branch)
@@ -261,7 +265,7 @@ def update_resource(resource_id: str, body: UpdateResourceBody):
 @router.get("/bookings", operation_id="list_scheduling_bookings")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_bookings(
-    branch: str = Query(..., pattern="^(ES|SC)$"),
+    branch: str = SCHEDULING_BRANCH_QUERY,
     from_at: str = Query(..., alias="from"),
     to_at: str = Query(..., alias="to"),
     resource_id: str | None = Query(default=None),
@@ -295,7 +299,7 @@ def list_bookings(
 @router.get("/bookings/pending", operation_id="list_pending_scheduling_bookings")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_pending_bookings(
-    branch: str = Query(..., pattern="^(ES|SC)$"),
+    branch: str = SCHEDULING_BRANCH_QUERY,
     mine: bool = Query(False),
 ):
     branch_error = _branch_access_error(branch)
@@ -322,7 +326,7 @@ def list_pending_bookings(
 @router.get("/bookings/mine", operation_id="list_my_scheduling_bookings")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_my_bookings(
-    branch: str = Query(..., pattern="^(ES|SC)$"),
+    branch: str = SCHEDULING_BRANCH_QUERY,
     limit: int = Query(100, ge=1, le=200),
 ):
     branch_error = _branch_access_error(branch)
@@ -464,7 +468,7 @@ def reject_booking(booking_id: str, body: RejectBookingBody):
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def cancel_booking(
     booking_id: str,
-    scope: str = Query(default="occurrence", pattern="^(occurrence|future|all)$"),
+    scope: str = SCHEDULING_SCOPE_QUERY,
 ):
     try:
         repo = build_scheduling_repository()
