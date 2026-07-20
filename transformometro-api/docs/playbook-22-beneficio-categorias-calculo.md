@@ -1,33 +1,34 @@
 # Playbook 22 — Categorias de cálculo de benefício (plano de refatoração)
 
-**Status:** Fases A–C (MFE) entregues — breakdown/chips/hints no plugin; ROI inalterado  
+**Status:** Fases A–C entregues; default canônico **`automatico`** (V041: DEFAULT + backfill a partir de `economia_tempo`)  
 **Escopo:** `transformometro-api` + plugin `transformometro`  
-**Restrição de migration:** apenas **DDL** (tabelas/colunas/constraints/índices/views). **Proibido** `UPDATE`/`INSERT` de backfill em migrations — legado fica no **DEFAULT** da coluna + lógica de aplicação.
+**Restrição de migration:** V039 foi só DDL. **V041** altera DEFAULT e faz `UPDATE` pontual (`economia_tempo` → `automatico`) por decisão de produto — demais categorias explícitas são preservadas. Não editar migrations já aplicadas.
 
 ---
 
 ## 1. Objetivo
 
-Explicitar **categorias de cálculo** do benefício da revisão vs. referência, sem quebrar o comportamento atual dos cadastros existentes (tratados como **economia de tempo**).
+Explicitar **categorias de cálculo** do benefício da revisão vs. referência. Cadastros sem classificação usam **`automatico`**.
 
 | Categoria (código) | Significado | Fase |
 |---|---|---|
-| `economia_tempo` | Mesmo volume implícito / foco em Δtempo (comportamento atual dominante) | **Fase 0 — default** |
+| `automatico` | Não classificado; dados/avisos destacam sinais | **Default (V041)** |
+| `economia_tempo` | Mesmo volume implícito / foco em Δtempo | Opção explícita |
 | `reducao_volume` | Benefício principal = menos execuções (volumes reais) | Fase 1 (breakdown/UI) |
-| `ganho_capacidade` | `vol_rev > vol_ref` → capacidade valorizada à parte | Fase 2 |
+| `ganho_capacidade` | `vol_rev > vol_ref` → capacidade valorizada e na bruta/ROI | Fase 2 |
 | `economia_qualidade` | Retrabalho / erro / outros (já entram na bruta; breakdown) | Fase 1–2 |
-| `misto` / `automatico` | Motor deriva breakdown; ROI usa regras declaradas | Fase 2+ |
+| `misto` | Declaração explícita de mais de um tipo | Fase 2+ |
 
-**Default canônico:** `economia_tempo`.
+**Default canônico:** `automatico`.
 
 ---
 
 ## 2. Princípios
 
 1. **Escopo da categoria:** declaração na **revisão** (ou medição 1:1 da revisão); cálculo em `revisão × competência` vs. referência.
-2. **Dados existentes:** nenhuma migration altera linhas. Coluna nova com `DEFAULT 'economia_tempo' NOT NULL` → linhas antigas passam a ler o default no Postgres sem `UPDATE`.
-3. **Compatibilidade:** `economia_bruta` / `economia_liquida_mes` / ROI **não mudam numericamente** na Fase 0–1 para revisões em `economia_tempo` (mesmo motor de custo atual).
-4. **Separação de KPIs:** capacidade **não** entra em `economia_bruta` até decisão explícita de produto; campo próprio.
+2. **Dados existentes:** V039 só DDL com default `economia_tempo`. **V041** troca DEFAULT para `automatico` e backfill de linhas ainda em `economia_tempo`.
+3. **Compatibilidade numérica:** totais financeiros **não** dependem da categoria (fórmulas fixas); trocar rótulo não altera ROI.
+4. **Capacidade no ROI:** `ganho_capacidade` entra em `economia_bruta` (decisão de produto; ver V040 / `regras-de-calculo.md`).
 5. **Uma fonte de verdade:** fórmulas em `calc_rules` + doc `regras-de-calculo.md`; API e MFE só consomem.
 
 ---
@@ -234,7 +235,7 @@ Sem reimplementar fórmula no front.
 
 ## 12. Decisão registrada (produto)
 
-- Cadastros até hoje = **economia de tempo**.
-- Default de novas revisões = **economia de tempo**.
-- Migrations = **somente tabelas e colunas** (e views/constraints); **sem alteração de dados** via migration.
+- Default canônico = **`automatico`** (novos + backfill V041 de linhas em `economia_tempo`).
+- Categorias explícitas distintas de `economia_tempo` **não** são sobrescritas no V041.
+- V039 permanece imutável (só DDL histórico); V041 é a migration de DEFAULT + `UPDATE`.
 - **Ganho de capacidade entra no ROI** (soma em `economia_bruta`); `economia_reducao_volume` permanece sinal analítico sem double-count.

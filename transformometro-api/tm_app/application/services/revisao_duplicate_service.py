@@ -92,7 +92,7 @@ class RevisaoDuplicateService:
                     "beneficio_calculo_categoria": source.get(
                         "beneficio_calculo_categoria"
                     )
-                    or "economia_tempo",
+                    or "automatico",
                     "data_inicio_vigencia": source["data_inicio_vigencia"],
                     "data_implantacao": source.get("data_implantacao"),
                     "data_fim_vigencia": source.get("data_fim_vigencia"),

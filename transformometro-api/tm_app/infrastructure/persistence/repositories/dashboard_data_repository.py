@@ -291,7 +291,7 @@ class DashboardCalculoRepository(PluginBaseRepository):
             row.get("codigo_setor"),
             row["cenario_tipo"],
             row.get("revisao_ativa", False),
-            row.get("beneficio_calculo_categoria") or "economia_tempo",
+            row.get("beneficio_calculo_categoria") or "automatico",
             row.get("economia_tempo", 0),
             row.get("economia_retrabalho", 0),
             row.get("economia_erros", 0),

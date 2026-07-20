@@ -35,7 +35,7 @@ export const TM_HELP_TOOLTIPS = {
       "Benefício de volume acima da referência (capacidade). Soma-se à economia bruta e entra no ROI.",
     deltaVolume: "Diferença de volume mensal da revisão em relação à referência (última competência).",
     beneficioCategoria:
-      "Classificação do benefício da revisão (tempo, volume, capacidade, qualidade, misto ou automático). Orienta interpretação; a bruta/ROI já incluem capacidade quando o volume sobe.",
+      "Classificação do benefício da revisão (automático por padrão, ou tempo/volume/capacidade/qualidade/misto). Orienta interpretação; a bruta/ROI já incluem capacidade quando o volume sobe.",
     economiaLiquida: "Ganho após descontar investimentos e rateio de recursos compartilhados.",
     investimentoTotal: "Soma dos investimentos apropriados no período da revisão.",
     recursosComp: "Custo mensal de recursos compartilhados rateados para a revisão.",
@@ -215,7 +215,7 @@ export const TM_HELP_TOOLTIPS = {
     cenario:
       "Tipo da revisão: linha de base (as-is, sem comparação) ou melhoria/automação/correção (exigem «Compara com»). Define se a revisão entra no cálculo de economia.",
     beneficioCalculoCategoria:
-      "Classifica o tipo principal de benefício desta revisão frente à referência (tempo, menos execuções, mais capacidade, qualidade, misto ou automático). Não troca a fórmula: a economia bruta já soma ganho de custo e, se o volume subir, ganho de capacidade — esse valor entra no ROI. A categoria orienta o cadastro e a leitura; o texto sob o campo detalha a opção selecionada.",
+      "Classifica o tipo principal de benefício desta revisão frente à referência (automático, tempo, menos execuções, mais capacidade, qualidade ou misto). Default: Automático (não classificado). Não troca a fórmula: a economia bruta já soma ganho de custo e, se o volume subir, ganho de capacidade — esse valor entra no ROI. A categoria orienta o cadastro e a leitura; o texto sob o campo detalha a opção selecionada.",
     referenciaComparacao:
       "Revisão usada como base de comparação (economia, ROI, diffs de diagrama/WBS). Em geral a baseline ou a versão anterior ativa da mesma melhoria.",
     inicioVigencia: "Data a partir da qual a revisão passa a valer para medições e dashboard.",

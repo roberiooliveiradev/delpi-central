@@ -25,23 +25,23 @@ ESCOPO_RECURSO = ("empresa", "filial", "setor")
 STATUS_APROVACAO_REVISAO = ("rascunho", "em_analise", "aprovada", "rejeitada")
 
 # Playbook 22 — categoria de cálculo de benefício (revisão vs. referência)
-BENEFICIO_CALCULO_CATEGORIA_DEFAULT = "economia_tempo"
+BENEFICIO_CALCULO_CATEGORIA_DEFAULT = "automatico"
 BENEFICIO_CALCULO_CATEGORIA = (
+    "automatico",
     "economia_tempo",
     "reducao_volume",
     "ganho_capacidade",
     "economia_qualidade",
     "misto",
-    "automatico",
 )
 
 BENEFICIO_CALCULO_CATEGORIA_LABELS: dict[str, str] = {
+    "automatico": "Automático",
     "economia_tempo": "Economia de tempo",
     "reducao_volume": "Redução de execuções",
     "ganho_capacidade": "Ganho de capacidade",
     "economia_qualidade": "Economia de qualidade",
     "misto": "Misto",
-    "automatico": "Automático",
 }
 
 

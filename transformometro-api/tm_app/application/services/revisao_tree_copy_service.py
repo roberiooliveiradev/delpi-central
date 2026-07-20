@@ -114,7 +114,7 @@ def copy_revisao_tree(
                 "beneficio_calculo_categoria": revisao.get(
                     "beneficio_calculo_categoria"
                 )
-                or "economia_tempo",
+                or "automatico",
                 "data_inicio_vigencia": revisao["data_inicio_vigencia"],
                 "data_implantacao": revisao.get("data_implantacao"),
                 "data_fim_vigencia": revisao.get("data_fim_vigencia"),

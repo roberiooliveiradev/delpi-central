@@ -1,23 +1,23 @@
 /** Rótulos e apresentação da categoria de cálculo de benefício (Playbook 22). */
-export const BENEFICIO_CALCULO_CATEGORIA_DEFAULT = "economia_tempo";
+export const BENEFICIO_CALCULO_CATEGORIA_DEFAULT = "automatico";
 
 export const BENEFICIO_CALCULO_LABELS: Record<string, string> = {
+  automatico: "Automático",
   economia_tempo: "Economia de tempo",
   reducao_volume: "Redução de execuções",
   ganho_capacidade: "Ganho de capacidade",
   economia_qualidade: "Economia de qualidade",
   misto: "Misto",
-  automatico: "Automático",
 };
 
 /** Frase curta no select (ao lado do rótulo). */
 export const BENEFICIO_CALCULO_SELECT_SHORT: Record<string, string> = {
+  automatico: "não classificar — dados destacam os sinais",
   economia_tempo: "menos tempo por execução (volumes iguais)",
   reducao_volume: "menos execuções no mês",
   ganho_capacidade: "mais volume atendido",
   economia_qualidade: "menos retrabalho/erro",
   misto: "mais de um tipo de ganho (ex.: tempo + capacidade)",
-  automatico: "deixar os dados destacarem os sinais",
 };
 
 /** Orientação de cadastro na medição / sob o select, por categoria. */

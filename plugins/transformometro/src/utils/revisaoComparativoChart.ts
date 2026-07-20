@@ -69,7 +69,7 @@ export function collectComparativoCategorias(items: ProcessoComparativoItem[]): 
   const ordered: string[] = [];
   for (const item of items) {
     if ((item.cenario_tipo ?? "").toLowerCase() === "baseline") continue;
-    const cat = (item.beneficio_calculo_categoria || "economia_tempo").trim().toLowerCase();
+    const cat = (item.beneficio_calculo_categoria || "automatico").trim().toLowerCase();
     if (!cat || seen.has(cat)) continue;
     seen.add(cat);
     ordered.push(cat);

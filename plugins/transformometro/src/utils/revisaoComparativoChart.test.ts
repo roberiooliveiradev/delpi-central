@@ -11,7 +11,7 @@ function item(partial: Partial<ProcessoComparativoItem>): ProcessoComparativoIte
     revisao_id: partial.revisao_id ?? "r1",
     versao_revisao: partial.versao_revisao ?? "2.0.0",
     cenario_tipo: partial.cenario_tipo ?? "melhoria",
-    beneficio_calculo_categoria: partial.beneficio_calculo_categoria ?? "economia_tempo",
+    beneficio_calculo_categoria: partial.beneficio_calculo_categoria ?? "automatico",
     totais: {
       economia_bruta: 0,
       economia_liquida_mes: 0,

@@ -17,9 +17,10 @@ from tm_app.interface.http.schemas.crud_schemas import RevisaoBody
 
 
 def test_normalize_beneficio_default_when_empty():
-    assert normalize_beneficio_calculo_categoria(None) == "economia_tempo"
-    assert normalize_beneficio_calculo_categoria("") == "economia_tempo"
-    assert normalize_beneficio_calculo_categoria("  ") == "economia_tempo"
+    assert normalize_beneficio_calculo_categoria(None) == "automatico"
+    assert normalize_beneficio_calculo_categoria("") == "automatico"
+    assert normalize_beneficio_calculo_categoria("  ") == "automatico"
+    assert BENEFICIO_CALCULO_CATEGORIA_DEFAULT == "automatico"
 
 
 def test_normalize_beneficio_rejects_unknown():
@@ -30,18 +31,18 @@ def test_normalize_beneficio_rejects_unknown():
 def test_options_payload_exposes_beneficio_categorias():
     payload = options_payload()
     assert payload["beneficio_calculo_categoria_default"] == BENEFICIO_CALCULO_CATEGORIA_DEFAULT
-    assert "economia_tempo" in payload["beneficio_calculo_categoria"]
-    assert payload["beneficio_calculo_categoria_labels"]["economia_tempo"]
+    assert "automatico" in payload["beneficio_calculo_categoria"]
+    assert payload["beneficio_calculo_categoria_labels"]["automatico"]
 
 
-def test_revisao_body_defaults_beneficio_economia_tempo():
+def test_revisao_body_defaults_beneficio_automatico():
     body = RevisaoBody(
         processo_id="p1",
         versao_revisao="1.0.0",
         cenario_tipo="baseline",
         data_inicio_vigencia="2026-01-01",
     )
-    assert body.beneficio_calculo_categoria == "economia_tempo"
+    assert body.beneficio_calculo_categoria == "automatico"
 
 
 def test_compose_economia_bruta_adds_capacity():
@@ -103,3 +104,16 @@ def test_migration_v039_is_ddl_only():
     assert "ADD COLUMN" in text
     assert re.search(r"\bUPDATE\b", text, re.IGNORECASE) is None
     assert re.search(r"\bINSERT\b", text, re.IGNORECASE) is None
+
+
+def test_migration_v041_backfills_default_automatico():
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "migrations"
+        / "V041__beneficio_categoria_default_automatico.sql"
+    )
+    text = path.read_text(encoding="utf-8")
+    assert "SET DEFAULT 'automatico'" in text
+    assert re.search(r"\bUPDATE\b", text, re.IGNORECASE)
+    assert "economia_tempo" in text
+    assert "automatico" in text

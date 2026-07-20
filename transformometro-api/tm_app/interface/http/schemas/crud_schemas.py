@@ -195,7 +195,7 @@ class RevisaoBody(BaseModel):
     data_inicio_vigencia: str
     revisao_ativa: bool = False
     revisao_referencia_id: Optional[str] = None
-    beneficio_calculo_categoria: str = "economia_tempo"
+    beneficio_calculo_categoria: str = "automatico"
     descricao_revisao: Optional[str] = None
     motivo_revisao: Optional[str] = None
     data_implantacao: Optional[str] = None

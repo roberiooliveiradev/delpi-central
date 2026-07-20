@@ -23,15 +23,16 @@ economia(processo, mês)  = Σ instâncias ativas
 
 ## Categorias de cálculo de benefício (Playbook 22)
 
-Campo na revisão: `beneficio_calculo_categoria` (default **`economia_tempo`** — legado e novos cadastros sem escolha explícita).
+Campo na revisão: `beneficio_calculo_categoria` (default **`automatico`** — novos cadastros e backfill V041 a partir de `economia_tempo` legado).
 
 | Código | Interpretação |
 |---|---|
+| `automatico` | Não classificado; avisos/breakdown destacam o que os dados mostram. Totais = regras fixas abaixo. |
 | `economia_tempo` | Foco em Δtempo/custo; orientação de cadastro: volumes iguais à referência (1:1). O motor **não** força 1:1. |
 | `reducao_volume` | Benefício principal = menos execuções (volumes reais). |
 | `ganho_capacidade` | `vol_rev > vol_ref` → capacidade valorizada e **incluída** na economia bruta / ROI. |
 | `economia_qualidade` | Ênfase em retrabalho/erro (já entram na bruta). |
-| `misto` / `automatico` | Rotulagem; totais financeiros seguem regras fixas abaixo. |
+| `misto` | Declaração explícita de mais de um tipo; totais financeiros iguais às regras fixas. |
 
 ```text
 economia_custo = Σ componentes (tempo, retrabalho, erro, outros, recursos)

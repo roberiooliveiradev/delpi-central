@@ -39,7 +39,7 @@ def test_golden_baseline_melhoria_economia_bruta_positiva():
     assert row["codigo_setor"] == "engenharia"
     assert "dashboard_calculo_id" not in row
     # Playbook 22 — volumes iguais: capacidade zero; bruta inalterada
-    assert row.get("beneficio_calculo_categoria", "economia_tempo") == "economia_tempo"
+    assert row.get("beneficio_calculo_categoria", "automatico") == "automatico"
     assert row["ganho_capacidade"] == 0.0
     assert row["delta_volume"] == 0.0
     assert row["volume_acima_referencia"] is False

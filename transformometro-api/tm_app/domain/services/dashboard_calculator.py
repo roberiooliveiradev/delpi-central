@@ -11,6 +11,7 @@ from tm_app.core.business_days import (
     business_days_overlap_in_competencia,
     count_business_days,
 )
+from tm_app.core.catalogs import BENEFICIO_CALCULO_CATEGORIA_DEFAULT
 from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
@@ -986,7 +987,7 @@ class DashboardCalculatorService:
         )
         beneficio_categoria = (
             self._empty_to_none(review.get("beneficio_calculo_categoria"))
-            or "economia_tempo"
+            or BENEFICIO_CALCULO_CATEGORIA_DEFAULT
         ).lower()
 
         return {

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from tm_app.application.services.dashboard_view_scope_service import count_active_filiais
+from tm_app.core.catalogs import BENEFICIO_CALCULO_CATEGORIA_DEFAULT
 from tm_app.domain.services.dashboard_calculator import DashboardCalculatorService
 from tm_app.infrastructure.persistence.repositories.dashboard_data_repository import (
     DashboardDataRepository,
@@ -47,7 +48,8 @@ class ProcessRevisionCompareService:
             volume_acima = bool(latest and latest.get("volume_acima_referencia"))
             volume_abaixo = bool(latest and latest.get("volume_abaixo_referencia"))
             categoria = (
-                revisao.get("beneficio_calculo_categoria") or "economia_tempo"
+                revisao.get("beneficio_calculo_categoria")
+                or BENEFICIO_CALCULO_CATEGORIA_DEFAULT
             )
             items.append(
                 {
@@ -212,7 +214,7 @@ class ProcessRevisionCompareService:
         delta_volume: float,
     ) -> list[dict[str, Any]]:
         avisos: list[dict[str, Any]] = []
-        cat = (categoria or "economia_tempo").strip().lower()
+        cat = (categoria or BENEFICIO_CALCULO_CATEGORIA_DEFAULT).strip().lower()
         if volume_acima:
             avisos.append(
                 {
