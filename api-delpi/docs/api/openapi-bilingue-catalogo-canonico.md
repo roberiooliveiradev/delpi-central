@@ -70,7 +70,25 @@ cd ..
 python3 scripts/generate_tv_data_routes_from_openapi.py --write
 python3 scripts/generate_tv_data_routes_from_openapi.py --check
 python3 scripts/check_tv_openapi_catalog_parity.py --check
+python api-delpi/scripts/audit_openapi_operation_ids.py --check
+# Onda estrita (após aliases completos):
+# python api-delpi/scripts/audit_openapi_operation_ids.py --check-aliases-coverage
 ```
+
+## Ondas de estabilização de operationId
+
+Inventário versionado: [`app/content/openapi_operation_id_inventory.json`](../../app/content/openapi_operation_id_inventory.json).
+
+| Onda | Escopo |
+|------|--------|
+| R0 | Tooling + inventário + gates |
+| R1 | Qualidade (auto-ids) |
+| R2 | system / Agendamento / satélites |
+| R3 | Locale não-GET |
+| R4 | Enums / labels / EN nativo |
+| R5 | Chat + doc |
+
+Aliases TV: [`tv_operation_id_aliases.json`](../../../tv-dashboard-api/tv_app/content/tv_operation_id_aliases.json) — playlists com id legado continuam resolvendo.
 
 ## Overlay TV-only
 

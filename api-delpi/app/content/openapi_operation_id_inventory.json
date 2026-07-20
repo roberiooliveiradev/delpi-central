@@ -1,0 +1,2337 @@
+{
+  "version": 1,
+  "baselineVersion": "3",
+  "operationCount": 300,
+  "stableCount": 192,
+  "autoCount": 108,
+  "recommendationCollisions": [],
+  "autoByTag": {
+    "Qualidade": 75,
+    "system": 19,
+    "Agendamento": 6,
+    "Cultura DELPI": 2,
+    "Propostas Comerciais": 2,
+    "Clientes": 1,
+    "Health": 1,
+    "products": 1,
+    "Quality Labels (público)": 1
+  },
+  "operations": [
+    {
+      "operationId": "get_branch_new_business_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/branch_new_business_rol_target_pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_branch_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/branch_rol_target_pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_branch_weg_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/branch_weg_rol_target_pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_conversion_rate",
+      "method": "GET",
+      "path": "/commercial/closing-rate",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_head_office_new_business_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/head_office_new_business_rol_target_pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_head_office_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/head_office_rol_target_pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_head_office_weg_rol_target_pct",
+      "method": "GET",
+      "path": "/commercial/head_office_weg_rol_target_pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_new_business_rol_pct",
+      "method": "GET",
+      "path": "/commercial/new-business-rol-pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_new_clients_average",
+      "method": "GET",
+      "path": "/commercial/new-clients-average",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_new_clients_rol_pct",
+      "method": "GET",
+      "path": "/commercial/new-clients-rol-pct",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "list_commercial_proposals",
+      "method": "GET",
+      "path": "/commercial/proposals",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_commercial_proposal",
+      "method": "GET",
+      "path": "/commercial/proposals/{proposal_number}",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_commercial_proposal_history_events",
+      "method": "GET",
+      "path": "/commercial/proposals/{proposal_number}/history/events",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_commercial_rol_series",
+      "method": "GET",
+      "path": "/commercial/rol/series",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_order_otd",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_line_detail",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/lines/{branch}/{order_number}/{line_item}",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_panel",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/panel",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_sales_order_otd_series",
+      "method": "GET",
+      "path": "/commercial/sales-order-otd/series",
+      "tag": "Comercial",
+      "stable": true
+    },
+    {
+      "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
+      "method": "GET",
+      "path": "/cultura-delpi/content",
+      "tag": "Cultura DELPI",
+      "stable": false,
+      "functionName": "get_cultura_delpi_content",
+      "recommendedCanonical": "get_cultura_delpi_content"
+    },
+    {
+      "operationId": "update_cultura_delpi_content_cultura_delpi_content_put",
+      "method": "PUT",
+      "path": "/cultura-delpi/content",
+      "tag": "Cultura DELPI",
+      "stable": false,
+      "functionName": "update_cultura_delpi_content",
+      "recommendedCanonical": "update_cultura_delpi_content"
+    },
+    {
+      "operationId": "search_customers_route_customers_search_get",
+      "method": "GET",
+      "path": "/customers/search",
+      "tag": "Clientes",
+      "stable": false,
+      "functionName": "search_customers_route",
+      "recommendedCanonical": "search_customers"
+    },
+    {
+      "operationId": "get_dashboard_department_idd",
+      "method": "GET",
+      "path": "/dashboard/department-idd",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "execute_readonly_sql",
+      "method": "POST",
+      "path": "/data/sql",
+      "tag": "data",
+      "stable": true
+    },
+    {
+      "operationId": "list_lmps",
+      "method": "GET",
+      "path": "/engineering/lmps",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_lmps_dashboard",
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmps_dashboard_charts",
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/charts",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_lmps_dashboard_items",
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/items",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmps_dashboard_summary",
+      "method": "GET",
+      "path": "/engineering/lmps/dashboard/summary",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_by_sale_number",
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_history_events",
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}/history/events",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_lmp_history_flow",
+      "method": "GET",
+      "path": "/engineering/lmps/{sale_number}/history/flow",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_mini_applicators_ferramentas",
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_mini_applicators_ferramenta",
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_mini_applicators_componentes",
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/componentes",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_mini_applicators_golpes",
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/golpes",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_mini_applicators_pecas",
+      "method": "GET",
+      "path": "/engineering/mini-applicators/ferramentas/{codigo}/pecas",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_mini_applicators_pecas_reposicao",
+      "method": "GET",
+      "path": "/engineering/mini-applicators/pecas-reposicao",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "list_transforma_mais_processes",
+      "method": "GET",
+      "path": "/engineering/transforma-mais/processes",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_transforma_mais_summary",
+      "method": "GET",
+      "path": "/engineering/transforma-mais/processes/summary",
+      "tag": "Engenharia",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_filtros",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/filtros",
+      "tag": "Financeiro — Despesas por Centro de Custo",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_lancamentos",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/lancamentos",
+      "tag": "Financeiro — Despesas por Centro de Custo",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_ranking_centros",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/ranking-centros",
+      "tag": "Financeiro — Despesas por Centro de Custo",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_ranking_fornecedores",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/ranking-fornecedores",
+      "tag": "Financeiro — Despesas por Centro de Custo",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_resumo",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/resumo",
+      "tag": "Financeiro — Despesas por Centro de Custo",
+      "stable": true
+    },
+    {
+      "operationId": "get_financeiro_despesas_centro_custo_serie",
+      "method": "GET",
+      "path": "/financeiro/despesas-centro-custo/serie",
+      "tag": "Financeiro — Despesas por Centro de Custo",
+      "stable": true
+    },
+    {
+      "operationId": "get_financial_ebitda_pct",
+      "method": "GET",
+      "path": "/financial/ebitda_pct",
+      "tag": "Financeiro",
+      "stable": true
+    },
+    {
+      "operationId": "get_financial_fixed_cost_pct",
+      "method": "GET",
+      "path": "/financial/fixed_cost_pct",
+      "tag": "Financeiro",
+      "stable": true
+    },
+    {
+      "operationId": "get_financial_pmr",
+      "method": "GET",
+      "path": "/financial/pmr",
+      "tag": "Financeiro",
+      "stable": true
+    },
+    {
+      "operationId": "get_financial_rol",
+      "method": "GET",
+      "path": "/financial/rol",
+      "tag": "Financeiro",
+      "stable": true
+    },
+    {
+      "operationId": "root_health_get",
+      "method": "GET",
+      "path": "/health",
+      "tag": "Health",
+      "stable": false,
+      "functionName": "root",
+      "recommendedCanonical": "get_health"
+    },
+    {
+      "operationId": "get_hr_active_pdi_count",
+      "method": "GET",
+      "path": "/hr/active-pdi-count",
+      "tag": "Recursos Humanos",
+      "stable": true
+    },
+    {
+      "operationId": "list_hr_branches",
+      "method": "GET",
+      "path": "/hr/branches",
+      "tag": "Recursos Humanos",
+      "stable": true
+    },
+    {
+      "operationId": "get_hr_performance_reviews_completion",
+      "method": "GET",
+      "path": "/hr/performance-reviews-completion",
+      "tag": "Recursos Humanos",
+      "stable": true
+    },
+    {
+      "operationId": "get_hr_snapshot",
+      "method": "GET",
+      "path": "/hr/snapshot",
+      "tag": "Recursos Humanos",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_entrada_historico",
+      "method": "GET",
+      "path": "/inspecoes-entrada/historico",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_entrada_historico_detalhe",
+      "method": "GET",
+      "path": "/inspecoes-entrada/historico/detalhe",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_entrada_pendentes",
+      "method": "GET",
+      "path": "/inspecoes-entrada/pendentes",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_entrada_pendentes_fornecedor",
+      "method": "GET",
+      "path": "/inspecoes-entrada/pendentes-fornecedor",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_entrada_rejeitadas_ensaiador",
+      "method": "GET",
+      "path": "/inspecoes-entrada/rejeitadas-ensaiador",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_entrada_rejeitadas_produto",
+      "method": "GET",
+      "path": "/inspecoes-entrada/rejeitadas-produto",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
+      "operationId": "get_inspecoes_entrada_resumo",
+      "method": "GET",
+      "path": "/inspecoes-entrada/resumo",
+      "tag": "Inspeções de Entrada",
+      "stable": true
+    },
+    {
+      "operationId": "list_pedidos_venda_abertos",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "list_ops_abertas_pedidos_venda",
+      "method": "GET",
+      "path": "/pedidos-venda-abertos/ops-abertas",
+      "tag": "Pedidos de Venda em Aberto",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_allocation_gaps",
+      "method": "GET",
+      "path": "/production/allocation-gaps",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_consumption_by_item",
+      "method": "GET",
+      "path": "/production/consumption/by-item/{code}",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_consumption_top_items",
+      "method": "GET",
+      "path": "/production/consumption/top-items",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_consumption_top_items_by_work_center",
+      "method": "GET",
+      "path": "/production/consumption/top-items-by-work-center",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_consumption_top_items_validated",
+      "method": "GET",
+      "path": "/production/consumption/top-items-validated",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_depreciation_pct",
+      "method": "GET",
+      "path": "/production/depreciation_pct",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_direct_labor_cost_pct",
+      "method": "GET",
+      "path": "/production/direct_labor_cost_pct",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "list_eficiencia_fabril_appointments",
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/appointments",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_eficiencia_fabril_dashboard",
+      "method": "GET",
+      "path": "/production/eficiencia-fabril/dashboard",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_losses_records",
+      "method": "GET",
+      "path": "/production/losses/records",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_losses_top_materials",
+      "method": "GET",
+      "path": "/production/losses/top-materials",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_oee",
+      "method": "GET",
+      "path": "/production/oee",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_oee_appointment_by_id",
+      "method": "GET",
+      "path": "/production/oee/appointments/{appointment_id}",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_oee_series",
+      "method": "GET",
+      "path": "/production/oee/series",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_on_time_delivery_pct",
+      "method": "GET",
+      "path": "/production/on_time_delivery_pct",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_order_by_op",
+      "method": "GET",
+      "path": "/production/orders/by-op/{production_order}",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_orders_finished",
+      "method": "GET",
+      "path": "/production/orders/finished",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_orders_finished_without_consumption",
+      "method": "GET",
+      "path": "/production/orders/finished-without-consumption",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_orders_open",
+      "method": "GET",
+      "path": "/production/orders/open",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_otd",
+      "method": "GET",
+      "path": "/production/otd",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_otd_series",
+      "method": "GET",
+      "path": "/production/otd/series",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_overall_equipment_effectiveness_pct",
+      "method": "GET",
+      "path": "/production/overall_equipment_effectiveness_pct",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_planned_vs_real_time",
+      "method": "GET",
+      "path": "/production/planned-vs-real-time",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_cost_pct",
+      "method": "GET",
+      "path": "/production/production_cost_pct",
+      "tag": "Produção",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_schedule_today",
+      "method": "GET",
+      "path": "/production/schedule/today",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_work_center_average_planned_time",
+      "method": "GET",
+      "path": "/production/work-centers/average-planned-time",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_production_work_center_order_summary",
+      "method": "GET",
+      "path": "/production/work-centers/order-summary",
+      "tag": "Produção operacional",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_directives",
+      "method": "GET",
+      "path": "/products/directives/{identifier}",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "list_product_drawings",
+      "method": "GET",
+      "path": "/products/drawings",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "list_exclusive_raw_materials_catalog",
+      "method": "GET",
+      "path": "/products/exclusive-raw-materials/catalog",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "search_products",
+      "method": "GET",
+      "path": "/products/search",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_detail",
+      "method": "GET",
+      "path": "/products/{code}",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_analyser",
+      "method": "GET",
+      "path": "/products/{code}/analyser",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_cost_impact_simulation",
+      "method": "GET",
+      "path": "/products/{code}/cost-impact-simulation",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_customers",
+      "method": "GET",
+      "path": "/products/{code}/customers",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_drawing",
+      "method": "GET",
+      "path": "/products/{code}/drawing",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_drawing_pdf",
+      "method": "GET",
+      "path": "/products/{code}/drawing/pdf",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_factory_status",
+      "method": "GET",
+      "path": "/products/{code}/factory-status",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_guide",
+      "method": "GET",
+      "path": "/products/{code}/guide",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_inbound_invoice_items",
+      "method": "GET",
+      "path": "/products/{code}/inbound-invoice-items",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_inspection",
+      "method": "GET",
+      "path": "/products/{code}/inspection",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_internal_movements",
+      "method": "GET",
+      "path": "/products/{code}/internal-movements",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_last_purchase",
+      "method": "GET",
+      "path": "/products/{code}/last-purchase",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_outbound_invoice_items",
+      "method": "GET",
+      "path": "/products/{code}/outbound-invoice-items",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_parents",
+      "method": "GET",
+      "path": "/products/{code}/parents",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_pricing",
+      "method": "GET",
+      "path": "/products/{code}/pricing",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_production_status",
+      "method": "GET",
+      "path": "/products/{code}/production-status",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_purchase_budget_history",
+      "method": "GET",
+      "path": "/products/{code}/purchase-budget-history",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_purchase_price_history",
+      "method": "GET",
+      "path": "/products/{code}/purchase-price-history",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_purchases",
+      "method": "GET",
+      "path": "/products/{code}/purchases",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_raw_material_price_intelligence",
+      "method": "GET",
+      "path": "/products/{code}/raw-material-price-intelligence",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_sales_summary",
+      "method": "GET",
+      "path": "/products/{code}/sales",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_sales_billing",
+      "method": "GET",
+      "path": "/products/{code}/sales/billing",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_sales_open_orders",
+      "method": "GET",
+      "path": "/products/{code}/sales/open-orders",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_shipping_status",
+      "method": "GET",
+      "path": "/products/{code}/shipping-status",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_stock",
+      "method": "GET",
+      "path": "/products/{code}/stock",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_structure",
+      "method": "GET",
+      "path": "/products/{code}/structure",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "structure_excel_public_products__code__structure_excel_get",
+      "method": "GET",
+      "path": "/products/{code}/structure/excel",
+      "tag": "products",
+      "stable": false,
+      "functionName": "structure_excel_public",
+      "recommendedCanonical": "get_product_structure_excel_public"
+    },
+    {
+      "operationId": "get_product_structure_exclusivity",
+      "method": "GET",
+      "path": "/products/{code}/structure/exclusivity",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_summary",
+      "method": "GET",
+      "path": "/products/{code}/summary",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "get_product_suppliers",
+      "method": "GET",
+      "path": "/products/{code}/suppliers",
+      "tag": "products",
+      "stable": true
+    },
+    {
+      "operationId": "list_propostas_comerciais",
+      "method": "GET",
+      "path": "/propostas-comerciais/",
+      "tag": "Propostas Comerciais",
+      "stable": true
+    },
+    {
+      "operationId": "get_proposta_comercial",
+      "method": "GET",
+      "path": "/propostas-comerciais/{proposta_interna}",
+      "tag": "Propostas Comerciais",
+      "stable": true
+    },
+    {
+      "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
+      "method": "GET",
+      "path": "/propostas-comerciais/{proposta_interna}/pdf",
+      "tag": "Propostas Comerciais",
+      "stable": false,
+      "functionName": "export_proposta_comercial_pdf_route",
+      "recommendedCanonical": "export_proposta_comercial_pdf"
+    },
+    {
+      "operationId": "export_proposta_comercial_pdf_with_overrides_route_propostas_comerciais__proposta_interna__pdf_post",
+      "method": "POST",
+      "path": "/propostas-comerciais/{proposta_interna}/pdf",
+      "tag": "Propostas Comerciais",
+      "stable": false,
+      "functionName": "export_proposta_comercial_pdf_with_overrides_route",
+      "recommendedCanonical": "export_proposta_comercial_pdf_with_overrides"
+    },
+    {
+      "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
+      "method": "GET",
+      "path": "/public/quality-labels/inspection/{token}",
+      "tag": "Quality Labels (público)",
+      "stable": false,
+      "functionName": "get_public_inspection",
+      "recommendedCanonical": "get_public_quality_label_inspection"
+    },
+    {
+      "operationId": "get_purchases_top_products",
+      "method": "GET",
+      "path": "/purchases/top-products",
+      "tag": "Compras operacionais",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plans",
+      "method": "GET",
+      "path": "/quality/action-plans",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "create_quality_action_plan",
+      "method": "POST",
+      "path": "/quality/action-plans",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plan_assignable_users",
+      "method": "GET",
+      "path": "/quality/action-plans/assignable-users",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_action_plans_dashboard",
+      "method": "GET",
+      "path": "/quality/action-plans/dashboard",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plan_pending_effectiveness_reviews",
+      "method": "GET",
+      "path": "/quality/action-plans/effectiveness-review/pending",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "search_quality_action_plan_evidences",
+      "method": "GET",
+      "path": "/quality/action-plans/evidences/search",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plan_export_templates",
+      "method": "GET",
+      "path": "/quality/action-plans/export-templates",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_action_plan_knowledge_graph",
+      "method": "GET",
+      "path": "/quality/action-plans/intelligence/knowledge-graph",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "assess_quality_action_plan_recurrence_on_opening",
+      "method": "POST",
+      "path": "/quality/action-plans/intelligence/recurrence-opening-assessment",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "suggest_quality_action_plan_evidence_tags",
+      "method": "POST",
+      "path": "/quality/action-plans/intelligence/suggest-evidence-tags",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "suggest_quality_action_plan_evidence_tags_from_image",
+      "method": "POST",
+      "path": "/quality/action-plans/intelligence/suggest-evidence-tags/from-image",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plan_my_queue",
+      "method": "GET",
+      "path": "/quality/action-plans/my-queue",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "dispatch_quality_action_plan_notifications",
+      "method": "POST",
+      "path": "/quality/action-plans/notifications/dispatch",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plans_overdue",
+      "method": "GET",
+      "path": "/quality/action-plans/overdue",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plans_recurrence",
+      "method": "GET",
+      "path": "/quality/action-plans/recurrence",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "delete_quality_action_plan",
+      "method": "DELETE",
+      "path": "/quality/action-plans/{plan_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_action_plan_detail",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "update_quality_action_plan",
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "create_quality_action_plan_actions",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/actions",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "delete_quality_action_plan_action",
+      "method": "DELETE",
+      "path": "/quality/action-plans/{plan_id}/actions/{action_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "update_quality_action_plan_action",
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}/actions/{action_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plan_audit_log",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/audit-log",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "record_quality_action_plan_effectiveness",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "approve_quality_action_plan_effectiveness_review",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review/approve",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "reject_quality_action_plan_effectiveness_review",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review/reject",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "submit_quality_action_plan_effectiveness_review",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/effectiveness-review/submit",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plan_evidences",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/evidences",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "attach_quality_action_plan_evidence",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/evidences",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "delete_quality_action_plan_evidence",
+      "method": "DELETE",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "update_quality_action_plan_evidence",
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_action_plan_evidence_content",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/content",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "download_quality_action_plan_evidence",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/evidences/{evidence_id}/file",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "export_quality_action_plan_pdf",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/export/pdf",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "export_quality_action_plan_rnc_8d",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/export/rnc-8d",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "export_quality_action_plan_rnc_8d_pdf",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/export/rnc-8d/pdf",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_quality_action_plan_five_whys",
+      "method": "PUT",
+      "path": "/quality/action-plans/{plan_id}/five-whys",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_quality_action_plan_ishikawa",
+      "method": "PUT",
+      "path": "/quality/action-plans/{plan_id}/ishikawa",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "promote_quality_action_plan_solution_pattern",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/promote-solution-pattern",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "reopen_quality_action_plan",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/reopen",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_action_plan_revisions",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/revisions",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_action_plan_revision",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/revisions/{revision_number}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "restore_quality_action_plan_revision",
+      "method": "POST",
+      "path": "/quality/action-plans/{plan_id}/revisions/{revision_number}/restore",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "upsert_quality_action_plan_rnc_8d",
+      "method": "PUT",
+      "path": "/quality/action-plans/{plan_id}/rnc-8d",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_quality_action_plan_similar_cases",
+      "method": "GET",
+      "path": "/quality/action-plans/{plan_id}/similar-cases",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "update_quality_action_plan_status",
+      "method": "PATCH",
+      "path": "/quality/action-plans/{plan_id}/status",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/analytics/dashboard",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_audit_5s_dashboard",
+      "recommendedCanonical": "get_audit_5s_dashboard"
+    },
+    {
+      "operationId": "list_areas_quality_audit_5s_areas_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/areas",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_areas",
+      "recommendedCanonical": "list_audit_5s_areas"
+    },
+    {
+      "operationId": "create_area_quality_audit_5s_areas_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/areas",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "create_area",
+      "recommendedCanonical": "create_audit_5s_area"
+    },
+    {
+      "operationId": "list_audits_quality_audit_5s_audits_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_audits",
+      "recommendedCanonical": "list_audit_5s_audits"
+    },
+    {
+      "operationId": "create_audit_quality_audit_5s_audits_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "create_audit",
+      "recommendedCanonical": "create_audit_5s_audit"
+    },
+    {
+      "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_audit",
+      "recommendedCanonical": "get_audit_5s_audit"
+    },
+    {
+      "operationId": "update_audit_quality_audit_5s_audits__audit_id__patch",
+      "method": "PATCH",
+      "path": "/quality/audit-5s/audits/{audit_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "update_audit",
+      "recommendedCanonical": "update_audit_5s_audit"
+    },
+    {
+      "operationId": "close_audit_quality_audit_5s_audits__audit_id__close_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/close",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "close_audit",
+      "recommendedCanonical": "close_audit_5s_audit"
+    },
+    {
+      "operationId": "complete_evaluation_quality_audit_5s_audits__audit_id__complete_evaluation_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/complete-evaluation",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "complete_evaluation",
+      "recommendedCanonical": "complete_audit_5s_evaluation"
+    },
+    {
+      "operationId": "delete_audit_quality_audit_5s_audits__audit_id__delete_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/delete",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "delete_audit",
+      "recommendedCanonical": "delete_audit_5s_audit"
+    },
+    {
+      "operationId": "force_delete_audit_quality_audit_5s_audits__audit_id__force_delete_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/force-delete",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "force_delete_audit",
+      "recommendedCanonical": "force_delete_audit_5s_audit"
+    },
+    {
+      "operationId": "join_audit_quality_audit_5s_audits__audit_id__join_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/join",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "join_audit",
+      "recommendedCanonical": "join_audit_5s_audit"
+    },
+    {
+      "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_audit_nc_attachments",
+      "recommendedCanonical": "list_audit_5s_audit_nc_attachments"
+    },
+    {
+      "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_nc_candidates",
+      "recommendedCanonical": "list_audit_5s_nc_candidates"
+    },
+    {
+      "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_audit_nonconformities",
+      "recommendedCanonical": "list_audit_5s_audit_nonconformities"
+    },
+    {
+      "operationId": "create_nonconformity_quality_audit_5s_audits__audit_id__nonconformities_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "create_nonconformity",
+      "recommendedCanonical": "create_audit_5s_nonconformity"
+    },
+    {
+      "operationId": "reopen_evaluation_quality_audit_5s_audits__audit_id__reopen_evaluation_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/reopen-evaluation",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "reopen_evaluation",
+      "recommendedCanonical": "reopen_audit_5s_evaluation"
+    },
+    {
+      "operationId": "upsert_response_quality_audit_5s_audits__audit_id__responses__criterion_id__put",
+      "method": "PUT",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "upsert_response",
+      "recommendedCanonical": "audit_5s_upsert_response"
+    },
+    {
+      "operationId": "list_response_attachments_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_response_attachments",
+      "recommendedCanonical": "list_audit_5s_response_attachments"
+    },
+    {
+      "operationId": "upload_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "upload_response_attachment",
+      "recommendedCanonical": "upload_audit_5s_response_attachment"
+    },
+    {
+      "operationId": "delete_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__delete",
+      "method": "DELETE",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "delete_response_attachment",
+      "recommendedCanonical": "delete_audit_5s_response_attachment"
+    },
+    {
+      "operationId": "download_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__file_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}/file",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "download_response_attachment",
+      "recommendedCanonical": "download_audit_5s_response_attachment"
+    },
+    {
+      "operationId": "get_catalog_quality_audit_5s_catalog_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/catalog",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_catalog",
+      "recommendedCanonical": "get_audit_5s_catalog"
+    },
+    {
+      "operationId": "list_catalog_publications_quality_audit_5s_catalog_publications_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/catalog/publications",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_catalog_publications",
+      "recommendedCanonical": "list_audit_5s_catalog_publications"
+    },
+    {
+      "operationId": "publish_catalog_quality_audit_5s_catalog_publish_put",
+      "method": "PUT",
+      "path": "/quality/audit-5s/catalog/publish",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "publish_catalog",
+      "recommendedCanonical": "publish_audit_5s_catalog"
+    },
+    {
+      "operationId": "list_criteria_quality_audit_5s_criteria_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/criteria",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_criteria",
+      "recommendedCanonical": "list_audit_5s_criteria"
+    },
+    {
+      "operationId": "update_nonconformity_quality_audit_5s_nonconformities__nc_id__patch",
+      "method": "PATCH",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "update_nonconformity",
+      "recommendedCanonical": "update_audit_5s_nonconformity"
+    },
+    {
+      "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_nc_actions",
+      "recommendedCanonical": "list_audit_5s_nc_actions"
+    },
+    {
+      "operationId": "add_nc_action_quality_audit_5s_nonconformities__nc_id__actions_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "add_nc_action",
+      "recommendedCanonical": "add_audit_5s_nc_action"
+    },
+    {
+      "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_nc_attachments",
+      "recommendedCanonical": "list_audit_5s_nc_attachments"
+    },
+    {
+      "operationId": "upload_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "upload_nc_attachment",
+      "recommendedCanonical": "upload_audit_5s_nc_attachment"
+    },
+    {
+      "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "download_nc_attachment",
+      "recommendedCanonical": "download_audit_5s_nc_attachment"
+    },
+    {
+      "operationId": "complete_nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post",
+      "method": "POST",
+      "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "complete_nc_action",
+      "recommendedCanonical": "complete_audit_5s_nc_action"
+    },
+    {
+      "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
+      "method": "GET",
+      "path": "/quality/audit-5s/summary",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_audit_5s_summary",
+      "recommendedCanonical": "get_audit_5s_summary"
+    },
+    {
+      "operationId": "list_quality_branches_quality_branches_get",
+      "method": "GET",
+      "path": "/quality/branches",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_quality_branches",
+      "recommendedCanonical": "list_quality_branches"
+    },
+    {
+      "operationId": "list_kaizen_records",
+      "method": "GET",
+      "path": "/quality/kaizens/records",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "create_kaizen_record_quality_kaizens_records_post",
+      "method": "POST",
+      "path": "/quality/kaizens/records",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "create_kaizen_record",
+      "recommendedCanonical": "create_kaizen_record"
+    },
+    {
+      "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/export",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "export_kaizen_records",
+      "recommendedCanonical": "export_kaizen_records"
+    },
+    {
+      "operationId": "import_kaizen_records_quality_kaizens_records_import_post",
+      "method": "POST",
+      "path": "/quality/kaizens/records/import",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "import_kaizen_records",
+      "recommendedCanonical": "import_kaizen_records"
+    },
+    {
+      "operationId": "get_kaizen_records_summary_quality_kaizens_records_summary_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/summary",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_kaizen_records_summary",
+      "recommendedCanonical": "get_kaizen_records_summary"
+    },
+    {
+      "operationId": "delete_kaizen_record_quality_kaizens_records__record_id__delete",
+      "method": "DELETE",
+      "path": "/quality/kaizens/records/{record_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "delete_kaizen_record",
+      "recommendedCanonical": "delete_kaizen_record"
+    },
+    {
+      "operationId": "get_kaizen_record",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "update_kaizen_record_quality_kaizens_records__record_id__put",
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "update_kaizen_record",
+      "recommendedCanonical": "update_kaizen_record"
+    },
+    {
+      "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/at",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_kaizen_at_date",
+      "recommendedCanonical": "get_kaizen_at_date"
+    },
+    {
+      "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/audit-log",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_kaizen_audit_log",
+      "recommendedCanonical": "list_kaizen_audit_log"
+    },
+    {
+      "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/evidences",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_kaizen_evidences",
+      "recommendedCanonical": "list_kaizen_evidences"
+    },
+    {
+      "operationId": "attach_kaizen_evidence_quality_kaizens_records__record_id__evidences_post",
+      "method": "POST",
+      "path": "/quality/kaizens/records/{record_id}/evidences",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "attach_kaizen_evidence",
+      "recommendedCanonical": "attach_kaizen_evidence"
+    },
+    {
+      "operationId": "delete_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__delete",
+      "method": "DELETE",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "delete_kaizen_evidence",
+      "recommendedCanonical": "delete_kaizen_evidence"
+    },
+    {
+      "operationId": "update_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__patch",
+      "method": "PATCH",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "update_kaizen_evidence",
+      "recommendedCanonical": "update_kaizen_evidence"
+    },
+    {
+      "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "download_kaizen_evidence",
+      "recommendedCanonical": "download_kaizen_evidence"
+    },
+    {
+      "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/history",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_kaizen_history",
+      "recommendedCanonical": "list_kaizen_history"
+    },
+    {
+      "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/revisions",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_kaizen_revisions",
+      "recommendedCanonical": "list_kaizen_revisions"
+    },
+    {
+      "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/revisions/{revision_number}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_kaizen_revision",
+      "recommendedCanonical": "get_kaizen_revision"
+    },
+    {
+      "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
+      "method": "GET",
+      "path": "/quality/kaizens/records/{record_id}/savings-timeline",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_kaizen_savings_timeline",
+      "recommendedCanonical": "get_kaizen_savings_timeline"
+    },
+    {
+      "operationId": "create_kaizen_version_quality_kaizens_records__record_id__versions_post",
+      "method": "POST",
+      "path": "/quality/kaizens/records/{record_id}/versions",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "create_kaizen_version",
+      "recommendedCanonical": "create_kaizen_version"
+    },
+    {
+      "operationId": "delete_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__delete",
+      "method": "DELETE",
+      "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "delete_kaizen_version",
+      "recommendedCanonical": "delete_kaizen_version"
+    },
+    {
+      "operationId": "update_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__put",
+      "method": "PUT",
+      "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "update_kaizen_version",
+      "recommendedCanonical": "update_kaizen_version"
+    },
+    {
+      "operationId": "implement_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__implement_post",
+      "method": "POST",
+      "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}/implement",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "implement_kaizen_version",
+      "recommendedCanonical": "implement_kaizen_version"
+    },
+    {
+      "operationId": "get_kaizen_summary",
+      "method": "GET",
+      "path": "/quality/kaizens/summary",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_kaizen_by_id",
+      "method": "GET",
+      "path": "/quality/kaizens/{kaizen_id}",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_labels_quality_labels_get",
+      "method": "GET",
+      "path": "/quality/labels",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_labels",
+      "recommendedCanonical": "list_labels"
+    },
+    {
+      "operationId": "create_label_quality_labels_post",
+      "method": "POST",
+      "path": "/quality/labels",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "create_label",
+      "recommendedCanonical": "create_label"
+    },
+    {
+      "operationId": "list_audit_events_quality_labels_audit_events_get",
+      "method": "GET",
+      "path": "/quality/labels/audit-events",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_audit_events",
+      "recommendedCanonical": "list_audit_events"
+    },
+    {
+      "operationId": "list_checklist_template_quality_labels_checklist_template_get",
+      "method": "GET",
+      "path": "/quality/labels/checklist-template",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_checklist_template",
+      "recommendedCanonical": "list_checklist_template"
+    },
+    {
+      "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
+      "method": "GET",
+      "path": "/quality/labels/inspectors/me",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_my_inspector",
+      "recommendedCanonical": "get_my_inspector"
+    },
+    {
+      "operationId": "save_my_inspector_quality_labels_inspectors_me_put",
+      "method": "PUT",
+      "path": "/quality/labels/inspectors/me",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "save_my_inspector",
+      "recommendedCanonical": "save_my_inspector"
+    },
+    {
+      "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
+      "method": "GET",
+      "path": "/quality/labels/inspectors/me/signature",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_my_signature",
+      "recommendedCanonical": "get_my_signature"
+    },
+    {
+      "operationId": "upload_my_signature_quality_labels_inspectors_me_signature_post",
+      "method": "POST",
+      "path": "/quality/labels/inspectors/me/signature",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "upload_my_signature",
+      "recommendedCanonical": "upload_my_signature"
+    },
+    {
+      "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
+      "method": "GET",
+      "path": "/quality/labels/lookup-op/{production_order}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "lookup_op",
+      "recommendedCanonical": "lookup_op"
+    },
+    {
+      "operationId": "search_ops_quality_labels_search_ops_get",
+      "method": "GET",
+      "path": "/quality/labels/search-ops",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "search_ops",
+      "recommendedCanonical": "search_ops"
+    },
+    {
+      "operationId": "delete_label_quality_labels__label_id__delete",
+      "method": "DELETE",
+      "path": "/quality/labels/{label_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "delete_label",
+      "recommendedCanonical": "delete_label"
+    },
+    {
+      "operationId": "get_label_quality_labels__label_id__get",
+      "method": "GET",
+      "path": "/quality/labels/{label_id}",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_label",
+      "recommendedCanonical": "get_label"
+    },
+    {
+      "operationId": "set_label_active_quality_labels__label_id__active_patch",
+      "method": "PATCH",
+      "path": "/quality/labels/{label_id}/active",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "set_label_active",
+      "recommendedCanonical": "set_label_active"
+    },
+    {
+      "operationId": "get_certificate_quality_labels__label_id__certificate_get",
+      "method": "GET",
+      "path": "/quality/labels/{label_id}/certificate",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_certificate",
+      "recommendedCanonical": "get_certificate"
+    },
+    {
+      "operationId": "save_certificate_quality_labels__label_id__certificate_put",
+      "method": "PUT",
+      "path": "/quality/labels/{label_id}/certificate",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "save_certificate",
+      "recommendedCanonical": "save_certificate"
+    },
+    {
+      "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
+      "method": "GET",
+      "path": "/quality/labels/{label_id}/certificate/pdf",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_certificate_pdf",
+      "recommendedCanonical": "get_certificate_pdf"
+    },
+    {
+      "operationId": "get_label_qr_quality_labels__label_id__qr_get",
+      "method": "GET",
+      "path": "/quality/labels/{label_id}/qr",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_label_qr",
+      "recommendedCanonical": "get_label_qr"
+    },
+    {
+      "operationId": "list_nonconformity_route_quality_nonconformities_get",
+      "method": "GET",
+      "path": "/quality/nonconformities",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "list_nonconformity_route",
+      "recommendedCanonical": "list_nonconformity_route"
+    },
+    {
+      "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
+      "method": "GET",
+      "path": "/quality/nonconformities/series",
+      "tag": "Qualidade",
+      "stable": false,
+      "functionName": "get_nonconformity_series",
+      "recommendedCanonical": "get_nonconformity_series"
+    },
+    {
+      "operationId": "list_ppm_external",
+      "method": "GET",
+      "path": "/quality/ppm/external",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_ppm_external_series",
+      "method": "GET",
+      "path": "/quality/ppm/external/series",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_ppm_external_summary",
+      "method": "GET",
+      "path": "/quality/ppm/external/summary",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_ppm_internal",
+      "method": "GET",
+      "path": "/quality/ppm/internal",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_ppm_internal_series",
+      "method": "GET",
+      "path": "/quality/ppm/internal/series",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_ppm_internal_summary",
+      "method": "GET",
+      "path": "/quality/ppm/internal/summary",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_produced_quantity",
+      "method": "GET",
+      "path": "/quality/produced-quantity",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "list_quality_solution_patterns",
+      "method": "GET",
+      "path": "/quality/solution-patterns",
+      "tag": "Qualidade",
+      "stable": true
+    },
+    {
+      "operationId": "get_retrabalhos_colaboradores",
+      "method": "GET",
+      "path": "/retrabalhos/colaboradores",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
+      "operationId": "get_retrabalhos_detalhes",
+      "method": "GET",
+      "path": "/retrabalhos/detalhes",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
+      "operationId": "get_retrabalhos_filtros",
+      "method": "GET",
+      "path": "/retrabalhos/filtros",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
+      "operationId": "get_retrabalhos_health",
+      "method": "GET",
+      "path": "/retrabalhos/health",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
+      "operationId": "get_retrabalhos_mensal",
+      "method": "GET",
+      "path": "/retrabalhos/mensal",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
+      "operationId": "get_retrabalhos_recursos",
+      "method": "GET",
+      "path": "/retrabalhos/recursos",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
+      "operationId": "get_retrabalhos_resumo",
+      "method": "GET",
+      "path": "/retrabalhos/resumo",
+      "tag": "Qualidade — Controle de Retrabalhos",
+      "stable": true
+    },
+    {
+      "operationId": "list_sale_orders",
+      "method": "GET",
+      "path": "/sales/",
+      "tag": "sales",
+      "stable": true
+    },
+    {
+      "operationId": "list_bookings_scheduling_bookings_get",
+      "method": "GET",
+      "path": "/scheduling/bookings",
+      "tag": "Agendamento",
+      "stable": false,
+      "functionName": "list_bookings",
+      "recommendedCanonical": "list_bookings"
+    },
+    {
+      "operationId": "create_booking_scheduling_bookings_post",
+      "method": "POST",
+      "path": "/scheduling/bookings",
+      "tag": "Agendamento",
+      "stable": false,
+      "functionName": "create_booking",
+      "recommendedCanonical": "create_booking"
+    },
+    {
+      "operationId": "cancel_booking_scheduling_bookings__booking_id__cancel_patch",
+      "method": "PATCH",
+      "path": "/scheduling/bookings/{booking_id}/cancel",
+      "tag": "Agendamento",
+      "stable": false,
+      "functionName": "cancel_booking",
+      "recommendedCanonical": "cancel_booking"
+    },
+    {
+      "operationId": "list_resources_scheduling_resources_get",
+      "method": "GET",
+      "path": "/scheduling/resources",
+      "tag": "Agendamento",
+      "stable": false,
+      "functionName": "list_resources",
+      "recommendedCanonical": "list_resources"
+    },
+    {
+      "operationId": "create_resource_scheduling_resources_post",
+      "method": "POST",
+      "path": "/scheduling/resources",
+      "tag": "Agendamento",
+      "stable": false,
+      "functionName": "create_resource",
+      "recommendedCanonical": "create_resource"
+    },
+    {
+      "operationId": "update_resource_scheduling_resources__resource_id__patch",
+      "method": "PATCH",
+      "path": "/scheduling/resources/{resource_id}",
+      "tag": "Agendamento",
+      "stable": false,
+      "functionName": "update_resource",
+      "recommendedCanonical": "update_resource"
+    },
+    {
+      "operationId": "get_supplies_cpv",
+      "method": "GET",
+      "path": "/supplies/cpv",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_inventory_turnover",
+      "method": "GET",
+      "path": "/supplies/inventory-turnover",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_negotiation_savings_summary",
+      "method": "GET",
+      "path": "/supplies/negotiation-savings/summary",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_otd",
+      "method": "GET",
+      "path": "/supplies/otd",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_supplies_stock_value",
+      "method": "GET",
+      "path": "/supplies/stock-value",
+      "tag": "Suprimentos",
+      "stable": true
+    },
+    {
+      "operationId": "get_caller_stats_system_caller_stats_get",
+      "method": "GET",
+      "path": "/system/caller-stats",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_caller_stats",
+      "recommendedCanonical": "get_caller_stats"
+    },
+    {
+      "operationId": "search_columns_global_system_columns_search_get",
+      "method": "GET",
+      "path": "/system/columns/search",
+      "tag": "system",
+      "stable": false,
+      "functionName": "search_columns_global",
+      "recommendedCanonical": "search_columns_global"
+    },
+    {
+      "operationId": "get_console_alerts_system_console_alerts_get",
+      "method": "GET",
+      "path": "/system/console-alerts",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_console_alerts",
+      "recommendedCanonical": "get_console_alerts"
+    },
+    {
+      "operationId": "post_console_alerts_evaluate_system_console_alerts_evaluate_post",
+      "method": "POST",
+      "path": "/system/console-alerts/evaluate",
+      "tag": "system",
+      "stable": false,
+      "functionName": "post_console_alerts_evaluate",
+      "recommendedCanonical": "post_console_alerts_evaluate"
+    },
+    {
+      "operationId": "post_console_alerts_smoke_system_console_alerts_smoke_post",
+      "method": "POST",
+      "path": "/system/console-alerts/smoke",
+      "tag": "system",
+      "stable": false,
+      "functionName": "post_console_alerts_smoke",
+      "recommendedCanonical": "post_console_alerts_smoke"
+    },
+    {
+      "operationId": "get_console_health_system_console_health_get",
+      "method": "GET",
+      "path": "/system/console-health",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_console_health",
+      "recommendedCanonical": "get_console_health"
+    },
+    {
+      "operationId": "get_envelope_contracts_system_envelope_contracts_get",
+      "method": "GET",
+      "path": "/system/envelope-contracts",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_envelope_contracts",
+      "recommendedCanonical": "get_envelope_contracts"
+    },
+    {
+      "operationId": "get_observability_snapshot_system_observability_snapshot_get",
+      "method": "GET",
+      "path": "/system/observability-snapshot",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_observability_snapshot",
+      "recommendedCanonical": "get_observability_snapshot"
+    },
+    {
+      "operationId": "get_openapi_diff_system_openapi_diff_get",
+      "method": "GET",
+      "path": "/system/openapi-diff",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_openapi_diff",
+      "recommendedCanonical": "get_openapi_diff"
+    },
+    {
+      "operationId": "get_query_cache_stats_system_query_cache_stats_get",
+      "method": "GET",
+      "path": "/system/query-cache/stats",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_query_cache_stats",
+      "recommendedCanonical": "get_query_cache_stats"
+    },
+    {
+      "operationId": "get_smoke_definitions_system_smoke_definitions_get",
+      "method": "GET",
+      "path": "/system/smoke-definitions",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_smoke_definitions",
+      "recommendedCanonical": "get_smoke_definitions"
+    },
+    {
+      "operationId": "get_sql_health_system_sql_health_get",
+      "method": "GET",
+      "path": "/system/sql-health",
+      "tag": "system",
+      "stable": false,
+      "functionName": "get_sql_health",
+      "recommendedCanonical": "get_sql_health"
+    },
+    {
+      "operationId": "search_tables_system_tables_search_get",
+      "method": "GET",
+      "path": "/system/tables/search",
+      "tag": "system",
+      "stable": false,
+      "functionName": "search_tables",
+      "recommendedCanonical": "search_tables"
+    },
+    {
+      "operationId": "table_system_tables__tableName__get",
+      "method": "GET",
+      "path": "/system/tables/{tableName}",
+      "tag": "system",
+      "stable": false,
+      "functionName": "table",
+      "recommendedCanonical": "table"
+    },
+    {
+      "operationId": "table_columns_system_tables__tableName__columns_get",
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns",
+      "tag": "system",
+      "stable": false,
+      "functionName": "table_columns",
+      "recommendedCanonical": "table_columns"
+    },
+    {
+      "operationId": "search_columns_system_tables__tableName__columns_search_get",
+      "method": "GET",
+      "path": "/system/tables/{tableName}/columns/search",
+      "tag": "system",
+      "stable": false,
+      "functionName": "search_columns",
+      "recommendedCanonical": "search_columns"
+    },
+    {
+      "operationId": "table_indexes_system_tables__tableName__indexes_get",
+      "method": "GET",
+      "path": "/system/tables/{tableName}/indexes",
+      "tag": "system",
+      "stable": false,
+      "functionName": "table_indexes",
+      "recommendedCanonical": "table_indexes"
+    },
+    {
+      "operationId": "table_relations_system_tables__tableName__relations_get",
+      "method": "GET",
+      "path": "/system/tables/{tableName}/relations",
+      "tag": "system",
+      "stable": false,
+      "functionName": "table_relations",
+      "recommendedCanonical": "table_relations"
+    },
+    {
+      "operationId": "table_schema_system_tables__tableName__schema_get",
+      "method": "GET",
+      "path": "/system/tables/{tableName}/schema",
+      "tag": "system",
+      "stable": false,
+      "functionName": "table_schema",
+      "recommendedCanonical": "table_schema"
+    }
+  ]
+}
