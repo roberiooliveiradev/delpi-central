@@ -34,7 +34,8 @@ export const TM_HELP_TOOLTIPS = {
     ganhoCapacidade:
       "Benefício de volume acima da referência (capacidade). Soma-se à economia bruta e entra no ROI.",
     deltaVolume: "Diferença de volume mensal da revisão em relação à referência (última competência).",
-    beneficioCategoria: "Como a revisão interpreta o benefício vs. a referência de comparação.",
+    beneficioCategoria:
+      "Classificação do benefício da revisão (tempo, volume, capacidade, qualidade, misto ou automático). Orienta interpretação; a bruta/ROI já incluem capacidade quando o volume sobe.",
     economiaLiquida: "Ganho após descontar investimentos e rateio de recursos compartilhados.",
     investimentoTotal: "Soma dos investimentos apropriados no período da revisão.",
     recursosComp: "Custo mensal de recursos compartilhados rateados para a revisão.",
@@ -212,11 +213,11 @@ export const TM_HELP_TOOLTIPS = {
   revisao: {
     versao: "Identificador da revisão (ex.: 1.0.0). Deve ser único dentro da instância.",
     cenario:
-      "Linha de base = as-is (sem referência). Demais cenários exigem escolher contra qual revisão comparar.",
+      "Tipo da revisão: linha de base (as-is, sem comparação) ou melhoria/automação/correção (exigem «Compara com»). Define se a revisão entra no cálculo de economia.",
     beneficioCalculoCategoria:
-      "Como interpretar o benefício vs. a referência. «Economia de tempo» (padrão) assume volumes comparáveis; «Ganho de capacidade» destaca volume acima da referência como métrica à parte do ROI.",
+      "Classifica o tipo principal de benefício desta revisão frente à referência (tempo, menos execuções, mais capacidade, qualidade, misto ou automático). Não troca a fórmula: a economia bruta já soma ganho de custo e, se o volume subir, ganho de capacidade — esse valor entra no ROI. A categoria orienta o cadastro e a leitura; o texto sob o campo detalha a opção selecionada.",
     referenciaComparacao:
-      "Revisão anterior usada como referência para economia, payback e diffs de diagrama/WBS. A baseline não precisa deste campo.",
+      "Revisão usada como base de comparação (economia, ROI, diffs de diagrama/WBS). Em geral a baseline ou a versão anterior ativa da mesma melhoria.",
     inicioVigencia: "Data a partir da qual a revisão passa a valer para medições e dashboard.",
     implantacao: "Data em que a solução foi implantada — usada em relatórios de implantação.",
     fimVigencia: "Encerra a revisão. Revisões com fim não podem ser marcadas como ativas.",
@@ -225,7 +226,7 @@ export const TM_HELP_TOOLTIPS = {
     motivo: "Motivo da criação ou alteração (ex.: nova ferramenta, mudança de escopo).",
     observacoes: "Notas complementares sobre a revisão.",
     volumeMensal:
-      "Volume de execuções ou transações por mês usado no cálculo de economia. Em «Economia de tempo», mantenha o mesmo volume da referência para comparar custo 1:1.",
+      "Volume de execuções ou transações por mês. Em «Economia de tempo», alinhe ao da referência para comparar custo 1:1; em capacidade/redução, use o volume real.",
     tempoMedio: "Tempo médio de execução por unidade, em minutos.",
     tempoRetrabalho: "Tempo médio de retrabalho por unidade, em minutos.",
     custoHoraMo: "Custo hora da mão de obra usado para converter tempo em R$.",

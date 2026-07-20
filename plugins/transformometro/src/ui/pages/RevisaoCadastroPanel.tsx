@@ -349,7 +349,7 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "vigencia"} sectionId="vigencia">
       <EditableSectionCard
         title="Vigência e identificação"
-        description="Versão, cenário e período usados no dashboard."
+        description="Versão, cenário, categoria de cálculo e período usados no dashboard."
         isEditing={sectionEdit.isEditing("vigencia")}
         onEdit={() => void sectionEdit.startEdit("vigencia")}
         onCancel={cancelVigencia}

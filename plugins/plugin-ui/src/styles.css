@@ -94,6 +94,7 @@
   color: var(--delpi-ui-text, var(--text, #111111));
   font-size: 12px;
   line-height: 1.4;
+  white-space: pre-line;
   box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
   transition: opacity 0.15s ease;
 }

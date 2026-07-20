@@ -25,6 +25,7 @@ import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { cenarioSelectLabel } from "../../content/cenarioLabels";
 import {
   BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+  beneficioCalculoOrientacao,
   beneficioCalculoSelectLabel,
 } from "../../content/beneficioCalculoLabels";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
@@ -610,23 +611,28 @@ export function InstanciaDetailPage({
                     options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
                   />
                   {revForm.cenario_tipo !== "baseline" ? (
-                    <SelectField
-                      id="tm-rev-beneficio-categoria"
-                      label="Categoria de cálculo"
-                      hint={TM_HELP_TOOLTIPS.revisao.beneficioCalculoCategoria}
-                      value={revForm.beneficio_calculo_categoria}
-                      onChange={(beneficio_calculo_categoria) =>
-                        setRevForm({ ...revForm, beneficio_calculo_categoria })
-                      }
-                      options={mapSelectOptions(
-                        options.beneficio_calculo_categoria ?? [
-                          BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
-                        ],
-                        (value) =>
-                          options.beneficio_calculo_categoria_labels?.[value] ??
-                          beneficioCalculoSelectLabel(value)
-                      )}
-                    />
+                    <>
+                      <SelectField
+                        id="tm-rev-beneficio-categoria"
+                        label="Categoria de cálculo"
+                        hint={TM_HELP_TOOLTIPS.revisao.beneficioCalculoCategoria}
+                        value={revForm.beneficio_calculo_categoria}
+                        onChange={(beneficio_calculo_categoria) =>
+                          setRevForm({ ...revForm, beneficio_calculo_categoria })
+                        }
+                        options={mapSelectOptions(
+                          options.beneficio_calculo_categoria ?? [
+                            BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+                          ],
+                          beneficioCalculoSelectLabel
+                        )}
+                      />
+                      {beneficioCalculoOrientacao(revForm.beneficio_calculo_categoria) ? (
+                        <p className="ds-hint" style={{ flexBasis: "100%", margin: "0 0 0.25rem" }}>
+                          {beneficioCalculoOrientacao(revForm.beneficio_calculo_categoria)}
+                        </p>
+                      ) : null}
+                    </>
                   ) : null}
                   {revForm.cenario_tipo !== "baseline" ? (
                     <SelectField

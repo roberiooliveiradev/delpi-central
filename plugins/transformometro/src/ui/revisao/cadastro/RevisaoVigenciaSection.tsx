@@ -4,6 +4,7 @@ import { SelectField } from "../../../components/ui/SelectField";
 import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
 import {
   BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+  beneficioCalculoOrientacao,
   beneficioCalculoSelectLabel,
 } from "../../../content/beneficioCalculoLabels";
 import { BeneficioCalculoChip } from "../../../components/BeneficioCalculoChip";
@@ -125,6 +126,10 @@ export function RevisaoVigenciaSection({
     (item) => revisaoDisplayLabel(item)
   );
 
+  const categoriaOrientacao = beneficioCalculoOrientacao(
+    revisaoVigencia.beneficio_calculo_categoria
+  );
+
   const form = (
       <form onSubmit={onSubmit}>
         <div className={DS_FILTERS_ROW}>
@@ -157,23 +162,28 @@ export function RevisaoVigenciaSection({
             options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
           />
           {!isBaseline ? (
-            <SelectField
-              label="Categoria de cálculo *"
-              hint={R.beneficioCalculoCategoria}
-              required
-              value={revisaoVigencia.beneficio_calculo_categoria}
-              onChange={(beneficio_calculo_categoria) =>
-                onChange({ ...revisaoVigencia, beneficio_calculo_categoria })
-              }
-              options={mapSelectOptions(
-                options.beneficio_calculo_categoria ?? [
-                  BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
-                ],
-                (value) =>
-                  options.beneficio_calculo_categoria_labels?.[value] ??
-                  beneficioCalculoSelectLabel(value)
-              )}
-            />
+            <>
+              <SelectField
+                label="Categoria de cálculo *"
+                hint={R.beneficioCalculoCategoria}
+                required
+                value={revisaoVigencia.beneficio_calculo_categoria}
+                onChange={(beneficio_calculo_categoria) =>
+                  onChange({ ...revisaoVigencia, beneficio_calculo_categoria })
+                }
+                options={mapSelectOptions(
+                  options.beneficio_calculo_categoria ?? [
+                    BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+                  ],
+                  beneficioCalculoSelectLabel
+                )}
+              />
+              {categoriaOrientacao ? (
+                <p className="ds-hint" style={{ flexBasis: "100%", margin: "0 0 0.25rem" }}>
+                  {categoriaOrientacao}
+                </p>
+              ) : null}
+            </>
           ) : null}
           {!isBaseline ? (
             <SelectField
@@ -277,7 +287,7 @@ export function RevisaoVigenciaSection({
     <CadastroSection
       embedded
       title="Vigência e identificação"
-      hint="Versão, cenário e período usados no dashboard. Para reativar uma revisão, remova o fim da vigência e marque como ativa."
+      hint="Versão, cenário, categoria de cálculo e período usados no dashboard. Para reativar uma revisão, remova o fim da vigência e marque como ativa."
     >
       {form}
     </CadastroSection>

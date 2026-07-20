@@ -10,20 +10,30 @@ export const BENEFICIO_CALCULO_LABELS: Record<string, string> = {
   automatico: "Automático",
 };
 
-/** Orientação de cadastro na medição, por categoria. */
+/** Frase curta no select (ao lado do rótulo). */
+export const BENEFICIO_CALCULO_SELECT_SHORT: Record<string, string> = {
+  economia_tempo: "menos tempo por execução (volumes iguais)",
+  reducao_volume: "menos execuções no mês",
+  ganho_capacidade: "mais volume atendido",
+  economia_qualidade: "menos retrabalho/erro",
+  misto: "mais de um tipo de ganho (ex.: tempo + capacidade)",
+  automatico: "deixar os dados destacarem os sinais",
+};
+
+/** Orientação de cadastro na medição / sob o select, por categoria. */
 export const BENEFICIO_MEDICAO_ORIENTACAO: Record<string, string> = {
   economia_tempo:
-    "Compare custo com o mesmo volume da referência (1:1). Diferença de volume mistura Δtempo com Δvolume.",
+    "Compare custo com o mesmo volume da referência (1:1). Diferença de volume mistura Δtempo com Δvolume na leitura — ainda assim capacidade entra na bruta se o volume subir.",
   reducao_volume:
-    "O benefício principal é menos execuções: informe o volume real (pode ser menor que a referência).",
+    "O benefício principal é menos execuções: informe o volume real (pode ser menor que a referência). O ganho já entra no diferencial de custo.",
   ganho_capacidade:
-    "Volume acima da referência gera ganho de capacidade, somado à economia bruta e ao ROI. Os componentes de custo continuam no breakdown.",
+    "Volume acima da referência gera ganho de capacidade, somado à economia bruta e ao ROI. Tempo/custo por execução continuam no breakdown.",
   economia_qualidade:
     "Foque em retrabalho, erro e outros desperdícios — esses componentes já entram na economia bruta.",
   misto:
-    "O motor mostra breakdown e sinais de volume; a economia bruta segue a soma dos componentes de custo.",
+    "Declare quando há de propósito mais de um tipo (ex.: menos tempo e mais capacidade). O motor mostra breakdown e sinais de volume; a bruta soma custo + capacidade.",
   automatico:
-    "O sistema destaca sinais de volume e breakdown; totais financeiros (ROI) não mudam pela categoria.",
+    "Não classifique o tipo principal: avisos e breakdown destacam o que os dados mostram. Totais financeiros (bruta/ROI) não mudam por esta escolha.",
 };
 
 export function beneficioCalculoLabel(value?: string | null): string {
@@ -35,7 +45,19 @@ export function beneficioCalculoLabel(value?: string | null): string {
 }
 
 export function beneficioCalculoSelectLabel(value: string): string {
-  return beneficioCalculoLabel(value);
+  const key = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  const label = BENEFICIO_CALCULO_LABELS[key] ?? value;
+  const short = BENEFICIO_CALCULO_SELECT_SHORT[key];
+  return short ? `${label} — ${short}` : label;
+}
+
+export function beneficioCalculoOrientacao(value?: string | null): string | null {
+  const key = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  return BENEFICIO_MEDICAO_ORIENTACAO[key] ?? null;
 }
 
 export function beneficioCalculoBadgeClass(value?: string | null): string {
@@ -77,7 +99,7 @@ export function medicaoCategoriaHints(
 
   if (cat === "economia_tempo") {
     hints.push(
-      `Volume da referência: ${volumeReferencia}. Volumes diferentes misturam Δtempo com Δvolume na economia.`
+      `Volume da referência: ${volumeReferencia}. Volumes diferentes misturam Δtempo com Δvolume na leitura do cadastro.`
     );
   } else if (cat === "ganho_capacidade" && delta <= 0) {
     hints.push(
