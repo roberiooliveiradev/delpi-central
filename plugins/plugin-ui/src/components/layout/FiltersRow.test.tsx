@@ -44,6 +44,7 @@ describe("FiltersRow", () => {
   });
 
   it("suporta trailing e layout div compact", () => {
+    const cn = filtersRowBemClasses("pac");
     const { container } = render(
       <FiltersRow
         as="div"
@@ -54,12 +55,7 @@ describe("FiltersRow", () => {
             <button type="button">Buscar</button>
           </>
         }
-        classNames={{
-          row: "pac-filters-row",
-          rowExtended: "pac-filters-row pac-filters-row--extended",
-          rowCompact: "pac-filters-row pac-filters-row--compact",
-          trailingBox: "pac-filter-box pac-filter-box--action delpi-ui-filter-box--action",
-        }}
+        classNames={cn}
       >
         <span>Campo</span>
       </FiltersRow>,
@@ -69,6 +65,10 @@ describe("FiltersRow", () => {
     const trailing = container.querySelector(".delpi-ui-filter-box--action");
     expect(trailing).toBeTruthy();
     expect(trailing?.querySelectorAll("button")).toHaveLength(2);
+    // Regressão: bridge `.filters-row .filter-box { flex-direction: column }`
+    // não pode sobrescrever o trailing de ações.
+    expect(trailing?.classList.contains("delpi-ui-filter-box")).toBe(true);
+    expect(trailing?.classList.contains("delpi-ui-filter-box--action")).toBe(true);
   });
 });
 
