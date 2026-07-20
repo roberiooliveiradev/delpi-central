@@ -4,7 +4,10 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
-from app.interface.http.query_param_enums import SORT_DIR_QUERY_DESC as SORT_DIR_QUERY
+from app.interface.http.query_param_enums import (
+    INADIMPLENCIA_STATUS_QUERY,
+    SORT_DIR_QUERY_DESC as SORT_DIR_QUERY,
+)
 
 from app.application.dto.financeiro_inadimplencia.clientes_request import (
     InadimplenciaClientesRequest,
@@ -178,11 +181,7 @@ NOVOS_NEGOCIOS_QUERY = Query(
     False,
     description="Se true, exclui o cliente-chave WEG (000001) e considera apenas Novos Negócios.",
 )
-STATUS_QUERY = Query(
-    "all",
-    pattern="^(all|on_time|late)$",
-    description="Filtro de status: all, on_time ou late.",
-)
+STATUS_QUERY = INADIMPLENCIA_STATUS_QUERY
 DELAY_RANGE_QUERY = Query(
     None,
     description="Código oficial de FAIXA_ATRASO.",

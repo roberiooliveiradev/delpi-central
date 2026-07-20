@@ -28,7 +28,14 @@ from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
 from app.interface.http.query_param_enums import (
+    BRANCH_CODE_VALUES,
     BRANCH_QUERY_OPTIONAL,
+    KAIZEN_EVIDENCE_STAGE_VALUES,
+    KAIZEN_ROLE_VALUES,
+    KAIZEN_SAVINGS_TYPE_QUERY,
+    KAIZEN_SAVINGS_TYPE_VALUES,
+    KAIZEN_STATUS_QUERY,
+    KAIZEN_STATUS_VALUES,
 )
 
 router = APIRouter(prefix="/kaizens/records", tags=["Kaizen — cadastro"])
@@ -36,7 +43,7 @@ router = APIRouter(prefix="/kaizens/records", tags=["Kaizen — cadastro"])
 
 class KaizenParticipantBody(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
-    role: str = Field(default="participante", pattern="^(responsavel|participante|apoio)$")
+    role: str = Field(default="participante", pattern="^(responsavel|participante|apoio)$", json_schema_extra={"enum": list(KAIZEN_ROLE_VALUES)})
     user_id: str | None = Field(default=None, max_length=100)
 
 
@@ -44,7 +51,7 @@ _STATUS_PATTERN = "^(recebido|aprovado|implantado|descontinuado|cancelado)$"
 
 
 class KaizenRecordBody(BaseModel):
-    branch_code: str = Field(..., pattern="^(01|02)$")
+    branch_code: str = Field(..., pattern="^(01|02)$", json_schema_extra={"enum": list(BRANCH_CODE_VALUES)})
     title: str = Field(..., min_length=2, max_length=500)
     accountable: str | None = Field(default=None, max_length=200)
     sector: str | None = Field(default=None, max_length=200)
@@ -52,6 +59,7 @@ class KaizenRecordBody(BaseModel):
     savings_type: str | None = Field(
         default=None,
         pattern="^(tempo|material|financeiro|qualitativo|misto)$",
+        json_schema_extra={"enum": list(KAIZEN_SAVINGS_TYPE_VALUES)},
     )
     seconds_per_occurrence: float | None = None
     occurrences_per_day: float | None = None
@@ -63,6 +71,7 @@ class KaizenRecordBody(BaseModel):
     status: str = Field(
         default="recebido",
         pattern=_STATUS_PATTERN,
+        json_schema_extra={"enum": list(KAIZEN_STATUS_VALUES)},
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
@@ -91,7 +100,7 @@ class ImportKaizensBody(BaseModel):
 
 
 class UpdateKaizenRecordBody(BaseModel):
-    branch_code: str | None = Field(default=None, pattern="^(01|02)$")
+    branch_code: str | None = Field(default=None, pattern="^(01|02)$", json_schema_extra={"enum": list(BRANCH_CODE_VALUES)})
     title: str | None = Field(default=None, min_length=2, max_length=500)
     accountable: str | None = Field(default=None, max_length=200)
     sector: str | None = Field(default=None, max_length=200)
@@ -99,6 +108,7 @@ class UpdateKaizenRecordBody(BaseModel):
     savings_type: str | None = Field(
         default=None,
         pattern="^(tempo|material|financeiro|qualitativo|misto)$",
+        json_schema_extra={"enum": list(KAIZEN_SAVINGS_TYPE_VALUES)},
     )
     seconds_per_occurrence: float | None = None
     occurrences_per_day: float | None = None
@@ -110,6 +120,7 @@ class UpdateKaizenRecordBody(BaseModel):
     status: str | None = Field(
         default=None,
         pattern=_STATUS_PATTERN,
+        json_schema_extra={"enum": list(KAIZEN_STATUS_VALUES)},
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
@@ -128,7 +139,7 @@ class UpdateKaizenRecordBody(BaseModel):
 
 
 class UpdateKaizenEvidenceBody(BaseModel):
-    stage: str | None = Field(default=None, pattern="^(antes|depois|geral)$")
+    stage: str | None = Field(default=None, pattern="^(antes|depois|geral)$", json_schema_extra={"enum": list(KAIZEN_EVIDENCE_STAGE_VALUES)})
     description: str | None = None
 
 
@@ -162,14 +173,8 @@ def _body_to_fields(body: BaseModel) -> dict:
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
     branch: str | None = BRANCH_QUERY_OPTIONAL,
-    status: str | None = Query(
-        default=None,
-        pattern=_STATUS_PATTERN,
-    ),
-    savings_type: str | None = Query(
-        default=None,
-        pattern="^(tempo|material|financeiro|qualitativo|misto)$",
-    ),
+    status: str | None = KAIZEN_STATUS_QUERY,
+    savings_type: str | None = KAIZEN_SAVINGS_TYPE_QUERY,
     title: str | None = Query(default=None),
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),

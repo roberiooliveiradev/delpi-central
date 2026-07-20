@@ -7,7 +7,12 @@ from delpi_auth.authorization import require_permission
 
 from app.application.security.api_delpi_permissions import API_DELPI_ACCESS
 from app.core.responses import error_response, not_found_response
-from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    PRODUCT_DETAIL_VIEW_QUERY,
+    PRODUCT_EXCLUSIVITY_VIEW_QUERY,
+    SORT_DIR_QUERY_OPTIONAL,
+)
 from app.utils.logger import log_error
 
 from app.application.dto.product.list_products_requests import ListProductsRequest
@@ -151,7 +156,7 @@ def search_products_route(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     sort: Optional[str]=Query(None),
-    direction: Optional[str] = Query(None)
+    direction: Optional[str] = SORT_DIR_QUERY_OPTIONAL
 ):
     try:
 
@@ -189,10 +194,7 @@ def search_products_route(
 )
 @require_permission(API_DELPI_ACCESS)
 def list_exclusive_raw_materials_catalog(
-    view: str = Query(
-        default="by_material",
-        description="by_material=lista MPs exclusivas; by_finished_product=lista PAs com MP exclusiva",
-    ),
+    view: str = PRODUCT_EXCLUSIVITY_VIEW_QUERY,
     limit: Optional[int] = Query(default=None, ge=1, le=500),
     offset: Optional[int] = Query(default=None, ge=0),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
@@ -297,10 +299,7 @@ def get_product_directives(
 @require_permission(API_DELPI_ACCESS)
 def get_product_detail(
     code: str,
-    view: str = Query(
-        "full",
-        description="full=cadastro completo; summary=subconjunto (~15 campos)",
-    ),
+    view: str = PRODUCT_DETAIL_VIEW_QUERY,
     legacy: bool = Query(
         False,
         description="Reservado para campos normalizados futuros no cadastro",
@@ -1424,10 +1423,7 @@ def product_pricing(code: str):
 @require_permission(API_DELPI_ACCESS)
 def product_analyser(
     code: str,
-    view: str = Query(
-        "full",
-        description="full=dimensões completas; summary=amostra leve (opt-in)",
-    ),
+    view: str = PRODUCT_DETAIL_VIEW_QUERY,
 ):
 
     try:

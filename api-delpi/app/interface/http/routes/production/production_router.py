@@ -3,6 +3,8 @@ from fastapi import APIRouter, Path, Query
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     GRANULARITY_QUERY_REQUIRED,
+    PRODUCTION_OEE_STATUS_QUERY,
+    PRODUCTION_OTD_STATUS_QUERY,
     PRODUCT_TYPE_QUERY,
     SORT_DIR_QUERY,
 )
@@ -326,7 +328,7 @@ def get_production_otd(
     branch: str | None = BRANCH_QUERY_OPTIONAL,
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = PRODUCTION_OTD_STATUS_QUERY,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: str | None = Query(default=None),
@@ -380,7 +382,7 @@ def get_production_oee(
     branch: str | None = BRANCH_QUERY_OPTIONAL,
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = PRODUCTION_OEE_STATUS_QUERY,
     efficiency_bands: str | None = Query(
         default=None,
         description="Faixas de eficiência (csv): ok, low, verify",

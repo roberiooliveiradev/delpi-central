@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
+    CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY,
     LOSS_TYPE_QUERY,
     PRODUCT_TYPE_QUERY,
     SORT_DIR_QUERY,
@@ -109,7 +110,7 @@ def get_consumption_top_items(
     date_end: Optional[str] = Query(default=None),
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    group_by: str = Query(default="general"),
+    group_by: str = CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY,
 ):
     try:
         normalized_group_by = ProductionConsumptionTopItemsGroupByService.normalize(group_by)

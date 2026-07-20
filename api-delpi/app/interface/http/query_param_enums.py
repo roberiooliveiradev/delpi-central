@@ -17,6 +17,126 @@ SEVERITY_VALUES = ("low", "medium", "high", "critical")
 SHIFT_5S_VALUES = ("TURNO_1", "TURNO_2", "TURNO_3", "ADMINISTRATIVO")
 ACTIVE_BOOL_VALUES = ("true", "false")
 YES_NO_VALUES = ("sim", "nao")
+AUDIT_5S_STATUS_VALUES = ("open", "in_progress", "closed", "cancelled")
+AUDIT_5S_LIFECYCLE_STATUS_VALUES = (
+    "draft",
+    "evaluation_complete",
+    "nc_in_progress",
+    "closed",
+    "closed_without_nc_treatment",
+)
+AUDIT_5S_NC_SORT_VALUES = (
+    "due_date_asc",
+    "due_date_desc",
+    "created_desc",
+    "priority_desc",
+)
+PRIORITY_VALUES = ("high", "medium", "low")
+SCHEDULING_BRANCH_VALUES = ("ES", "SC")
+SCHEDULING_SCOPE_VALUES = ("occurrence", "future", "all")
+SCHEDULING_RESOURCE_TYPE_VALUES = (
+    "meeting_room",
+    "training_room",
+    "company_car",
+    "other",
+)
+SCHEDULING_RECURRENCE_VALUES = ("weekly", "monthly")
+GRANULARITY_DAY_WEEK_MONTH_VALUES = ("day", "week", "month")
+GRANULARITY_DAY_MONTH_AUTO_VALUES = ("day", "month", "auto")
+INSPECTION_RESULT_VALUES = ("A", "R", "T")
+KAIZEN_STATUS_VALUES = (
+    "recebido",
+    "aprovado",
+    "implantado",
+    "descontinuado",
+    "cancelado",
+)
+KAIZEN_SAVINGS_TYPE_VALUES = (
+    "tempo",
+    "material",
+    "financeiro",
+    "qualitativo",
+    "misto",
+)
+KAIZEN_ROLE_VALUES = ("responsavel", "participante", "apoio")
+KAIZEN_EVIDENCE_STAGE_VALUES = ("antes", "depois", "geral")
+PAC_EVIDENCE_SECTION_VALUES = (
+    "general",
+    "nc_description",
+    "containment",
+    "root_cause",
+    "corrective",
+    "effectiveness",
+    "preventive",
+    "documentation",
+    "attachments",
+)
+PAC_EVIDENCE_TYPE_VALUES = (
+    "email",
+    "message",
+    "spreadsheet",
+    "pdf",
+    "image",
+    "manual_text",
+    "system_reference",
+    "other",
+)
+PAC_AREA_VALUES = ("comercial", "qualidade", "pcp", "engenharia", "outro")
+REFUGOS_DIMENSION_VALUES = (
+    "motivo",
+    "materia_prima",
+    "produto_acabado",
+    "centro_trabalho",
+    "colaborador",
+)
+RETRABALHO_ORDER_BY_RANKING_VALUES = ("horas", "custo")
+RETRABALHO_ORDER_BY_DETALHES_VALUES = ("data", "horas", "custo")
+PRODUCTION_APPOINTMENTS_GROUP_BY_VALUES = ("day", "day_work_center")
+CONSUMPTION_TOP_ITEMS_GROUP_BY_VALUES = (
+    "general",
+    "branch",
+    "product_group",
+    "unit",
+    "branch_summary",
+)
+SAFETY_STOCK_STATUS_VALUES = (
+    "without_safety_stock",
+    "below_safety_stock",
+    "at_safety_stock",
+    "above_safety_stock",
+)
+INADIMPLENCIA_STATUS_VALUES = ("all", "on_time", "late")
+COMMERCIAL_PROPOSAL_STATUS_VALUES = ("won", "open")
+COMMERCIAL_OTD_STATUS_VALUES = ("on_time", "late")
+LMP_LISTING_TYPE_VALUES = ("Todos", "LMP", "Amostra", "Outro")
+LMP_DASHBOARD_STATUS_VALUES = (
+    "Todos",
+    "Pontual",
+    "Atrasado",
+    "Andamento",
+    "Retornada",
+)
+PRODUCT_EXCLUSIVITY_VIEW_VALUES = ("by_material", "by_finished_product")
+PRODUCT_DETAIL_VIEW_VALUES = ("full", "summary")
+
+
+PRODUCTION_OTD_STATUS_VALUES = ("on_time", "late")
+PRODUCTION_OEE_STATUS_VALUES = ("valid", "outlier")
+NONCONFORMITY_QI2_STATUS_VALUES = ("1", "2", "3", "4", "5")
+GUIAS_PROCEDURE_STATUS_VALUES = ("draft", "published", "archived")
+QUALITY_LABEL_RESULT_VALUES = ("approved", "rejected", "conditional")
+
+PAC_PLAN_STATUS_VALUES = (
+    "draft",
+    "triage",
+    "containment",
+    "root_cause_analysis",
+    "action_plan_defined",
+    "in_progress",
+    "waiting_validation",
+    "completed",
+    "cancelled",
+)
 
 GRANULARITY_QUERY_REQUIRED = Query(
     ...,
@@ -35,6 +155,29 @@ SORT_DIR_QUERY = Query(
 )
 SORT_DIR_QUERY_DESC = Query(
     "desc",
+    description="Sort direction: asc or desc.",
+    enum=list(SORT_DIR_VALUES),
+)
+SORT_DIR_QUERY_OPTIONAL = Query(
+    None,
+    description="Sort direction: asc or desc.",
+    enum=list(SORT_DIR_VALUES),
+)
+SORT_DIR_QUERY_ALIAS_SORT_DIRECTION = Query(
+    "asc",
+    alias="sortDirection",
+    description="Sort direction: asc or desc.",
+    enum=list(SORT_DIR_VALUES),
+)
+SORT_DIR_QUERY_ALIAS_ORDER_DIR = Query(
+    "asc",
+    alias="orderDir",
+    description="Sort direction: asc or desc.",
+    enum=list(SORT_DIR_VALUES),
+)
+SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC = Query(
+    "desc",
+    alias="orderDir",
     description="Sort direction: asc or desc.",
     enum=list(SORT_DIR_VALUES),
 )
@@ -88,17 +231,26 @@ SHIFT_5S_QUERY = Query(
     description="5S shift: TURNO_1, TURNO_2, TURNO_3 or ADMINISTRATIVO.",
     enum=list(SHIFT_5S_VALUES),
 )
-AUDIT_5S_STATUS_VALUES = ("open", "in_progress", "closed", "cancelled")
-PRIORITY_VALUES = ("high", "medium", "low")
-SCHEDULING_BRANCH_VALUES = ("ES", "SC")
-SCHEDULING_SCOPE_VALUES = ("occurrence", "future", "all")
-GRANULARITY_DAY_WEEK_MONTH_VALUES = ("day", "week", "month")
-INSPECTION_RESULT_VALUES = ("A", "R", "T")
-
 AUDIT_5S_STATUS_QUERY = Query(
     None,
     description="5S audit status: open, in_progress, closed or cancelled.",
     enum=list(AUDIT_5S_STATUS_VALUES),
+)
+AUDIT_5S_LIFECYCLE_STATUS_QUERY = Query(
+    None,
+    alias="audit_status",
+    description="5S audit lifecycle status.",
+    enum=list(AUDIT_5S_LIFECYCLE_STATUS_VALUES),
+)
+AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN = Query(
+    None,
+    description="5S audit lifecycle status.",
+    enum=list(AUDIT_5S_LIFECYCLE_STATUS_VALUES),
+)
+AUDIT_5S_NC_SORT_QUERY = Query(
+    "due_date_asc",
+    description="NC board sort: due_date_asc, due_date_desc, created_desc or priority_desc.",
+    enum=list(AUDIT_5S_NC_SORT_VALUES),
 )
 PRIORITY_QUERY = Query(
     None,
@@ -120,8 +272,135 @@ GRANULARITY_QUERY_MONTH_DWM = Query(
     description="Series bucket size: day, week or month.",
     enum=list(GRANULARITY_DAY_WEEK_MONTH_VALUES),
 )
+GRANULARITY_QUERY_DAY_MONTH_AUTO = Query(
+    "auto",
+    alias="granularity",
+    description="Series bucket size: day, month or auto.",
+    enum=list(GRANULARITY_DAY_MONTH_AUTO_VALUES),
+)
 INSPECTION_RESULT_QUERY = Query(
     None,
     description="Inspection result: A (approved), R (rejected) or T (pending).",
     enum=list(INSPECTION_RESULT_VALUES),
+)
+KAIZEN_STATUS_QUERY = Query(
+    None,
+    description="Kaizen status: recebido, aprovado, implantado, descontinuado or cancelado.",
+    enum=list(KAIZEN_STATUS_VALUES),
+)
+KAIZEN_SAVINGS_TYPE_QUERY = Query(
+    None,
+    description="Kaizen savings type: tempo, material, financeiro, qualitativo or misto.",
+    enum=list(KAIZEN_SAVINGS_TYPE_VALUES),
+)
+PAC_EVIDENCE_SECTION_QUERY = Query(
+    None,
+    description="PAC evidence section.",
+    enum=list(PAC_EVIDENCE_SECTION_VALUES),
+)
+PAC_EVIDENCE_TYPE_QUERY = Query(
+    None,
+    description="PAC evidence type.",
+    enum=list(PAC_EVIDENCE_TYPE_VALUES),
+)
+REFUGOS_DIMENSION_QUERY = Query(
+    ...,
+    description="Refugos ranking dimension.",
+    enum=list(REFUGOS_DIMENSION_VALUES),
+)
+RETRABALHO_ORDER_BY_RANKING_QUERY = Query(
+    "horas",
+    alias="orderBy",
+    description="Retrabalho ranking sort: horas or custo.",
+    enum=list(RETRABALHO_ORDER_BY_RANKING_VALUES),
+)
+RETRABALHO_ORDER_BY_DETALHES_QUERY = Query(
+    "data",
+    alias="orderBy",
+    description="Retrabalho details sort: data, horas or custo.",
+    enum=list(RETRABALHO_ORDER_BY_DETALHES_VALUES),
+)
+PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY = Query(
+    "day",
+    description="Group appointments by day or day_work_center.",
+    enum=list(PRODUCTION_APPOINTMENTS_GROUP_BY_VALUES),
+)
+CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY = Query(
+    "general",
+    description="Consumption ranking group_by dimension.",
+    enum=list(CONSUMPTION_TOP_ITEMS_GROUP_BY_VALUES),
+)
+SAFETY_STOCK_STATUS_QUERY = Query(
+    None,
+    description=(
+        "Safety stock status: without_safety_stock, below_safety_stock, "
+        "at_safety_stock or above_safety_stock."
+    ),
+    enum=list(SAFETY_STOCK_STATUS_VALUES),
+)
+INADIMPLENCIA_STATUS_QUERY = Query(
+    "all",
+    description="Delay status filter: all, on_time or late.",
+    enum=list(INADIMPLENCIA_STATUS_VALUES),
+)
+COMMERCIAL_PROPOSAL_STATUS_QUERY = Query(
+    None,
+    description="Proposal status: won (won deals), open (others) or omit for all.",
+    enum=list(COMMERCIAL_PROPOSAL_STATUS_VALUES),
+)
+COMMERCIAL_OTD_STATUS_QUERY = Query(
+    None,
+    description="OTD status filter: on_time or late.",
+    enum=list(COMMERCIAL_OTD_STATUS_VALUES),
+)
+LMP_LISTING_TYPE_QUERY = Query(
+    None,
+    description="LMP listing type: Todos, LMP, Amostra or Outro.",
+    enum=list(LMP_LISTING_TYPE_VALUES),
+)
+LMP_DASHBOARD_STATUS_QUERY = Query(
+    "Todos",
+    description="LMP dashboard status: Todos, Pontual, Atrasado, Andamento or Retornada.",
+    enum=list(LMP_DASHBOARD_STATUS_VALUES),
+)
+LMP_DASHBOARD_STATUS_QUERY_OPTIONAL = Query(
+    None,
+    description="LMP dashboard status: Todos, Pontual, Atrasado, Andamento or Retornada.",
+    enum=list(LMP_DASHBOARD_STATUS_VALUES),
+)
+PRODUCT_EXCLUSIVITY_VIEW_QUERY = Query(
+    "by_material",
+    description="by_material=exclusive MPs; by_finished_product=PAs with exclusive MP.",
+    enum=list(PRODUCT_EXCLUSIVITY_VIEW_VALUES),
+)
+PRODUCT_DETAIL_VIEW_QUERY = Query(
+    "full",
+    description="full=complete payload; summary=lighter subset.",
+    enum=list(PRODUCT_DETAIL_VIEW_VALUES),
+)
+
+PRODUCTION_OTD_STATUS_QUERY = Query(
+    None,
+    description="OTD status filter: on_time or late.",
+    enum=list(PRODUCTION_OTD_STATUS_VALUES),
+)
+PRODUCTION_OEE_STATUS_QUERY = Query(
+    None,
+    description="OEE list status filter: valid or outlier.",
+    enum=list(PRODUCTION_OEE_STATUS_VALUES),
+)
+NONCONFORMITY_QI2_STATUS_QUERY = Query(
+    None,
+    description="QI2 status code: 1=Registrada, 2=Em análise, 3=Procede, 4=Não procede, 5=Cancelada.",
+    enum=list(NONCONFORMITY_QI2_STATUS_VALUES),
+)
+GUIAS_PROCEDURE_STATUS_QUERY = Query(
+    None,
+    description="Procedure status: draft, published or archived.",
+    enum=list(GUIAS_PROCEDURE_STATUS_VALUES),
+)
+PAC_PLAN_STATUS_QUERY = Query(
+    None,
+    description="PAC plan status.",
+    enum=list(PAC_PLAN_STATUS_VALUES),
 )

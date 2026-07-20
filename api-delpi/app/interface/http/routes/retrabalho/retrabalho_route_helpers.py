@@ -4,6 +4,13 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_REQUIRED,
+    RETRABALHO_ORDER_BY_DETALHES_QUERY,
+    RETRABALHO_ORDER_BY_RANKING_QUERY,
+    SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC,
+)
+
 from app.application.dto.retrabalho.retrabalho_detalhes_request import RetrabalhoDetalhesRequest
 from app.application.dto.retrabalho.retrabalho_query_request import RetrabalhoQueryRequest
 from app.core.responses import error_response
@@ -102,13 +109,7 @@ def execute_retrabalho_route(
         )
 
 
-FILIAL_QUERY = Query(
-    ...,
-    min_length=2,
-    max_length=2,
-    pattern="^(01|02)$",
-    description='Filial Protheus ("01" ou "02").',
-)
+FILIAL_QUERY = BRANCH_QUERY_REQUIRED
 DATA_INICIO_QUERY = Query(
     None,
     alias="dataInicio",
@@ -126,12 +127,7 @@ CODIGO_OPERADOR_QUERY = Query(
     alias="codigoOperador",
     description="Filtro por código do operador.",
 )
-ORDER_BY_RANKING_QUERY = Query(
-    "horas",
-    alias="orderBy",
-    pattern="^(horas|custo)$",
-    description="Ordenação do ranking: horas ou custo.",
-)
+ORDER_BY_RANKING_QUERY = RETRABALHO_ORDER_BY_RANKING_QUERY
 LIMIT_QUERY = Query(
     DEFAULT_RANKING_LIMIT,
     ge=1,
@@ -146,15 +142,5 @@ PAGE_SIZE_QUERY = Query(
     le=MAX_PAGE_SIZE,
     description="Registros por página (máximo 100).",
 )
-ORDER_BY_DETALHES_QUERY = Query(
-    DEFAULT_SORT_BY,
-    alias="orderBy",
-    pattern="^(data|horas|custo)$",
-    description="Ordenação dos detalhes: data, horas ou custo.",
-)
-ORDER_DIR_QUERY = Query(
-    DEFAULT_SORT_DIR,
-    alias="orderDir",
-    pattern="^(asc|desc)$",
-    description="Direção da ordenação: asc ou desc.",
-)
+ORDER_BY_DETALHES_QUERY = RETRABALHO_ORDER_BY_DETALHES_QUERY
+ORDER_DIR_QUERY = SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC

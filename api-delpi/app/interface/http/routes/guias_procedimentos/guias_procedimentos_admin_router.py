@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 from uuid import UUID
 
+from app.interface.http.query_param_enums import GUIAS_PROCEDURE_STATUS_QUERY
 from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel, Field
 
@@ -171,7 +172,7 @@ def update_admin_department(
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def list_admin_procedures(
     department_id: UUID | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = GUIAS_PROCEDURE_STATUS_QUERY,
     q: str | None = Query(default=None, max_length=200),
 ):
     try:

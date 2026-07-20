@@ -4,6 +4,12 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_REQUIRED,
+    GRANULARITY_QUERY_DAY_MONTH_AUTO,
+    REFUGOS_DIMENSION_QUERY,
+)
+
 from app.application.dto.refugos.refugos_query_request import RefugosQueryRequest
 from app.application.dto.refugos.refugos_registros_request import RefugosRegistrosRequest
 from app.application.dto.refugos.refugos_serie_request import RefugosSerieRequest
@@ -125,13 +131,7 @@ def execute_refugos_route(
         )
 
 
-FILIAL_QUERY = Query(
-    ...,
-    min_length=2,
-    max_length=2,
-    pattern="^(01|02)$",
-    description='Filial Protheus ("01" = SC, "02" = ES).',
-)
+FILIAL_QUERY = BRANCH_QUERY_REQUIRED
 DATA_INICIO_QUERY = Query(
     None,
     alias="dataInicio",
@@ -142,11 +142,7 @@ DATA_FIM_QUERY = Query(
     alias="dataFim",
     description="Data final (YYYY-MM-DD). Padrão: hoje.",
 )
-DIMENSION_QUERY = Query(
-    ...,
-    pattern="^(motivo|materia_prima|produto_acabado|centro_trabalho|colaborador)$",
-    description="Dimensão do ranking.",
-)
+DIMENSION_QUERY = REFUGOS_DIMENSION_QUERY
 MP_QUERY = Query(None, description="Filtro por código de matéria-prima.")
 PA_QUERY = Query(None, description="Filtro por código de produto acabado.")
 OP_QUERY = Query(None, description="Filtro por ordem de produção.")
@@ -170,9 +166,4 @@ PAGE_SIZE_QUERY = Query(
     le=MAX_PAGE_SIZE,
     description="Registros por página (máximo 100).",
 )
-GRANULARITY_QUERY = Query(
-    "auto",
-    alias="granularity",
-    pattern="^(day|month|auto)$",
-    description="Granularidade da série: day, month ou auto (padrão).",
-)
+GRANULARITY_QUERY = GRANULARITY_QUERY_DAY_MONTH_AUTO

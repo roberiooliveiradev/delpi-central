@@ -106,6 +106,9 @@ from app.utils.logger import log_error
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     NONCONFORMITY_SCOPE_QUERY,
+    PAC_EVIDENCE_SECTION_QUERY,
+    PAC_EVIDENCE_TYPE_QUERY,
+    PAC_PLAN_STATUS_QUERY,
     SEVERITY_QUERY,
 )
 
@@ -611,17 +614,8 @@ def search_action_plan_evidences(
     q: str = Query(..., min_length=2),
     plan_id: str | None = Query(default=None),
     branch_code: str | None = BRANCH_QUERY_OPTIONAL,
-    section: str | None = Query(
-        default=None,
-        pattern=(
-            "^(general|nc_description|containment|root_cause|corrective|"
-            "effectiveness|preventive|documentation|attachments)$"
-        ),
-    ),
-    evidence_type: str | None = Query(
-        default=None,
-        pattern="^(email|message|spreadsheet|pdf|image|manual_text|system_reference|other)$",
-    ),
+    section: str | None = PAC_EVIDENCE_SECTION_QUERY,
+    evidence_type: str | None = PAC_EVIDENCE_TYPE_QUERY,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -776,7 +770,7 @@ def list_rnc_8d_export_templates():
 @router.get("", **_pac_openapi("list_quality_action_plans", ""))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_action_plans(
-    status: str | None = Query(default=None),
+    status: str | None = PAC_PLAN_STATUS_QUERY,
     severity: str | None = SEVERITY_QUERY,
     product_code: str | None = Query(default=None),
     customer_name: str | None = Query(default=None),

@@ -22,6 +22,7 @@ from app.domain.services.quality_action_plans.pac_evidence_ocr_tag_suggestion_se
 )
 from app.infrastructure.ocr.pac_evidence_image_ocr_service import PacEvidenceImageOcrService
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
+from app.interface.http.query_param_enums import BRANCH_CODE_VALUES, BRANCH_QUERY_OPTIONAL
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 
@@ -43,7 +44,7 @@ class RecurrenceOpeningAssessmentBody(BaseModel):
     problem_description: str = Field(..., min_length=3)
     product_code: str | None = None
     failure_mode: str | None = None
-    branch_code: str | None = Field(default=None, pattern="^(01|02)$")
+    branch_code: str | None = Field(default=None, pattern="^(01|02)$", json_schema_extra={"enum": list(BRANCH_CODE_VALUES)})
     symptoms: list[str] | None = None
     root_cause_category: str | None = None
     recurrence_key: str | None = Field(default=None, max_length=500)
@@ -83,7 +84,7 @@ def _build_evidence_tag_suggestion(
 )
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_quality_knowledge_graph(
-    branch_code: str | None = None,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
     product_code: str | None = None,
     limit: int | None = None,
 ):

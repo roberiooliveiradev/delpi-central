@@ -4,7 +4,10 @@ from typing import Literal, Optional
 
 from fastapi import APIRouter, Query
 
-from app.interface.http.query_param_enums import GRANULARITY_QUERY_MONTH
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    GRANULARITY_QUERY_MONTH,
+)
 from delpi_auth.authorization import require_any_permission
 
 from app.application.dto.ppm.list_ppm_request import ListPpmRequest
@@ -194,7 +197,7 @@ def _ppm_series_response(
 @router.get("/ppm/internal/summary", operation_id="get_ppm_internal_summary")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_summary(
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
@@ -214,7 +217,7 @@ def get_internal_ppm_summary(
 @router.get("/ppm/external/summary", operation_id="get_ppm_external_summary")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_summary(
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
@@ -235,7 +238,7 @@ def get_external_ppm_summary(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_internal_ppm_series(
     granularity: str = GRANULARITY_QUERY_MONTH,
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
@@ -257,7 +260,7 @@ def get_internal_ppm_series(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_external_ppm_series(
     granularity: str = GRANULARITY_QUERY_MONTH,
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     product_prefix: Optional[str] = Query(
@@ -278,7 +281,7 @@ def get_external_ppm_series(
 @router.get("/ppm/internal", operation_id="list_ppm_internal")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_internal_ppm(
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     page: int = Query(None, ge=1),
@@ -302,7 +305,7 @@ def list_internal_ppm(
 @router.get("/ppm/external", operation_id="list_ppm_external")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_external_ppm(
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
     page: int = Query(None, ge=1),
@@ -330,7 +333,7 @@ def get_produced_quantity(
         ...,
         description="Código(s) do produto; repetível ou separado por vírgula",
     ),
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
 ):

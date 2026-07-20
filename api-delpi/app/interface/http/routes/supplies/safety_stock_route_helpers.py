@@ -4,7 +4,11 @@ from typing import Callable, Optional
 
 from fastapi import Query
 
-from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL as BRANCH_QUERY
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL as BRANCH_QUERY,
+    SAFETY_STOCK_STATUS_QUERY,
+    SORT_DIR_QUERY_ALIAS_SORT_DIRECTION,
+)
 
 from app.application.dto.supplies.safety_stock_request import (
     DEFAULT_PAGE,
@@ -141,13 +145,7 @@ PRODUCT_GROUP_QUERY = Query(
 )
 UNIT_QUERY = Query(None, description="Filtro por unidade de medida (B1_UM).")
 SEARCH_QUERY = Query(None, description="Busca por código ou descrição do produto.")
-STATUS_QUERY = Query(
-    None,
-    description=(
-        "Filtro por status: without_safety_stock, below_safety_stock, "
-        "at_safety_stock ou above_safety_stock."
-    ),
-)
+STATUS_QUERY = SAFETY_STOCK_STATUS_QUERY
 INCLUDE_WITHOUT_SAFETY_STOCK_QUERY = Query(
     True,
     alias="includeWithoutSafetyStock",
@@ -166,12 +164,7 @@ SORT_BY_QUERY = Query(
     alias="sortBy",
     description="Campo de ordenação permitido pela API.",
 )
-SORT_DIRECTION_QUERY = Query(
-    "asc",
-    alias="sortDirection",
-    pattern="^(asc|desc)$",
-    description="Direção da ordenação: asc ou desc.",
-)
+SORT_DIRECTION_QUERY = SORT_DIR_QUERY_ALIAS_SORT_DIRECTION
 SUPPLIER_STORE_QUERY = Query(
     ...,
     alias="supplierStore",

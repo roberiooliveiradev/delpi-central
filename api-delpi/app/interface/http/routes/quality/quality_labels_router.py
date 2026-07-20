@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Optional
 
+from app.interface.http.query_param_enums import BRANCH_CODE_VALUES, BRANCH_QUERY_OPTIONAL, QUALITY_LABEL_RESULT_VALUES
 from fastapi import APIRouter, Body, File, Form, Query, Response, UploadFile
 from pydantic import BaseModel, Field, field_validator
 
@@ -45,8 +46,8 @@ _ALLOWED_RESULTS = {"approved", "rejected", "conditional"}
 
 class CreateLabelBody(BaseModel):
     productionOrder: str = Field(min_length=1)
-    branch: Optional[str] = None
-    result: str = Field(default="approved")
+    branch: Optional[str] = Field(default=None, pattern="^(01|02)$", json_schema_extra={"enum": list(BRANCH_CODE_VALUES)})
+    result: str = Field(default="approved", json_schema_extra={"enum": list(QUALITY_LABEL_RESULT_VALUES)})
     notes: Optional[str] = None
     inspectedQuantity: Optional[int] = Field(default=None, ge=0)
 
@@ -281,7 +282,7 @@ def get_my_signature():
 
 @router.get("/lookup-op/{production_order}", operation_id="lookup_quality_label_op")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
-def lookup_op(production_order: str, branch: Optional[str] = None):
+def lookup_op(production_order: str, branch: Optional[str] = BRANCH_QUERY_OPTIONAL):
     try:
         service = build_quality_labels_service()
         data = service.lookup_op(production_order=production_order, branch=branch)

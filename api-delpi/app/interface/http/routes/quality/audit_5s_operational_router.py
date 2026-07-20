@@ -56,6 +56,9 @@ from app.interface.http.routes.quality.audit_5s_branch_access import branch_acce
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
 from app.interface.http.query_param_enums import (
+    AUDIT_5S_LIFECYCLE_STATUS_QUERY,
+    AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN,
+    AUDIT_5S_NC_SORT_QUERY,
     AUDIT_5S_STATUS_QUERY,
     BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
@@ -447,7 +450,7 @@ def publish_catalog(body: PublishCatalogBody = Body(...)):
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audits(
     branch: str = BRANCH_QUERY_REQUIRED,
-    status: str | None = Query(None),
+    status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN,
 ):
     try:
         repo = build_audit_5s_repository()
@@ -1264,10 +1267,7 @@ def list_audit_5s_nonconformities_board(
     search: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    sort: str = Query(
-        "due_date_asc",
-        pattern="^(due_date_asc|due_date_desc|created_desc|priority_desc)$",
-    ),
+    sort: str = AUDIT_5S_NC_SORT_QUERY,
 ):
     denied = branch_access_error(branch)
     if denied is not None:
@@ -1328,11 +1328,7 @@ def get_audit_5s_dashboard(
     date_end: str = Query(..., alias="date_end"),
     area_id: str | None = Query(None),
     shift: str | None = SHIFT_5S_QUERY,
-    audit_status: str | None = Query(
-        None,
-        alias="audit_status",
-        pattern="^(draft|evaluation_complete|nc_in_progress|closed)$",
-    ),
+    audit_status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY,
     senso_order: int | None = Query(None, ge=1, le=5),
     granularity: str = GRANULARITY_QUERY_MONTH_DWM,
     page: int = Query(1, ge=1),

@@ -3,6 +3,8 @@ from fastapi import APIRouter, Query
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
     BRANCH_QUERY_REQUIRED,
+    COMMERCIAL_OTD_STATUS_QUERY,
+    COMMERCIAL_PROPOSAL_STATUS_QUERY,
     CUSTOMER_SEGMENT_QUERY,
     GRANULARITY_QUERY_REQUIRED,
     SORT_DIR_QUERY,
@@ -436,10 +438,7 @@ def list_commercial_proposals(
     branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    status: Optional[str] = Query(
-        None,
-        description="Filtro: won (ganhas), open (demais) ou omitir para todas.",
-    ),
+    status: Optional[str] = COMMERCIAL_PROPOSAL_STATUS_QUERY,
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
@@ -728,10 +727,7 @@ def get_sales_order_otd_panel(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY,
-    status: Optional[str] = Query(
-        None,
-        description="Filtro de status: on_time ou late.",
-    ),
+    status: Optional[str] = COMMERCIAL_OTD_STATUS_QUERY,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: Optional[str] = Query(default=None),

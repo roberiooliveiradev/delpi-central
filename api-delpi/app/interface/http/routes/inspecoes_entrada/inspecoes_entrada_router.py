@@ -26,6 +26,7 @@ from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_REQUIRED,
+    INSPECTION_RESULT_QUERY,
 )
 
 router = APIRouter(
@@ -273,7 +274,7 @@ def get_inspecoes_entrada_historico_route(
     branch: str = BRANCH_QUERY_REQUIRED,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
-    result: str | None = Query(default=None),
+    result: str | None = INSPECTION_RESULT_QUERY,
     date_from: str | None = Query(default=None),
     date_to: str | None = Query(default=None),
     supplier: str | None = Query(default=None),

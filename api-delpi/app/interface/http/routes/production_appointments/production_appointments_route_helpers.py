@@ -4,6 +4,11 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_REQUIRED,
+    PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY,
+)
+
 from app.application.dto.production_appointments.production_appointments_query_request import (
     ProductionAppointmentsQueryRequest,
 )
@@ -69,13 +74,7 @@ def execute_route(
         )
 
 
-BRANCH_QUERY = Query(
-    ...,
-    min_length=2,
-    max_length=2,
-    pattern="^(01|02)$",
-    description='Filial Protheus ("01" = SC, "02" = ES).',
-)
+BRANCH_QUERY = BRANCH_QUERY_REQUIRED
 DATE_START_QUERY = Query(
     None,
     description="Data inicial (YYYY-MM-DD). Padrão: 1º dia do mês atual.",
@@ -87,11 +86,7 @@ DATE_END_QUERY = Query(
 WORK_CENTER_QUERY = Query(None, description="Filtro por centro de trabalho (ex.: CT-70).")
 OP_QUERY = Query(None, description="Filtro por ordem de produção.")
 PRODUCT_QUERY = Query(None, description="Filtro por código de produto.")
-GROUP_BY_QUERY = Query(
-    "day",
-    pattern="^(day|day_work_center)$",
-    description='Agregação da série: "day" ou "day_work_center".',
-)
+GROUP_BY_QUERY = PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY
 PAGE_QUERY = Query(DEFAULT_PAGE, ge=1, description="Página da listagem.")
 PAGE_SIZE_QUERY = Query(
     DEFAULT_PAGE_SIZE,

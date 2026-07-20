@@ -2,6 +2,8 @@ from fastapi import APIRouter, Query
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
+    KAIZEN_STATUS_QUERY,
+    NONCONFORMITY_QI2_STATUS_QUERY,
     GRANULARITY_QUERY_MONTH,
     NONCONFORMITY_TYPE_QUERY,
 )
@@ -113,10 +115,10 @@ def list_quality_branches(
 def get_nonconformity_series(
     type: str = NONCONFORMITY_TYPE_QUERY,
     granularity: str = GRANULARITY_QUERY_MONTH,
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: Optional[str] = None,
+    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY,
     item_code: Optional[str] = None,
     description: Optional[str] = None,
 ):
@@ -153,10 +155,10 @@ def get_nonconformity_series(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_nonconformity_route(
     type: str = NONCONFORMITY_TYPE_QUERY,
-    branch: Optional[str] = None,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: Optional[str] = None,
+    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY,
     item_code: Optional[str] = None,
     description: Optional[str] = None,
     page: int = Query(None, ge=1),
@@ -196,7 +198,7 @@ def list_nonconformity_route(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_summary(
     title: str | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = KAIZEN_STATUS_QUERY,
     branch: str | None = BRANCH_QUERY_OPTIONAL,
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
