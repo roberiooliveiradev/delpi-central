@@ -160,16 +160,17 @@ Campo opcional `confirm_vigencia_change` quando há medição e datas mudam.
 | PK novo no delta | Só com `inherit_all` no escopo; escopo parcial → só nós sob o recorte. |
 | Sem travas rígidas pós-medição | Só confirmação na UI/API; não bloqueia edição de overlay após medir. |
 | Conflitos = aviso | Lista `conflicts[]` + badge; não impede salvar nem força resolução. |
-| Diagrama | Playbook 19: fluxo tem overlay próprio; **não** compartilham o mesmo motor de composição WBS. |
+| Diagrama (hoje) | Playbook 19 S0–S6: overlay clássico sobre o macro; **ainda sem** seed na referência nem `diagrama/composed`. Planejado em **PB19 S7** (espelhar este playbook). |
 | Medição por nó WBS | Ainda não há ROI/medição granular por `node_id` (ideia futura PB20). |
 | Propagação ao cadastrar macro | Alterar o macro mestre **não** reescreve overlays já gravados; deltas podem ficar órfãos/avisos se nós sumirem. |
 
 ### Evoluções possíveis (não implementadas)
 
-1. Baseline da melhoria B partir do **composto na data de início** dela (foto do «agora» global).  
-2. Overlay relativo à referência na persistência (cadeia na composição).  
-3. Resolução obrigatória de conflitos / trava de vigência após medição.  
-4. Composição unificada WBS + diagrama.
+1. **Diagrama = mesmo conceito deste playbook (PB19 S7)** — âncora na referência, `GET …/diagrama/composed?at=`, visão vigente primeiro no processo, conflitos de interseção. Spec detalhada em [PLAYBOOK-19 § S7](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md).  
+2. Baseline da melhoria B partir do **composto na data de início** dela (foto do «agora» global) — WBS e, depois, diagrama.  
+3. Overlay relativo à referência na persistência (cadeia na composição).  
+4. Resolução obrigatória de conflitos / trava de vigência após medição.  
+5. Motor unificado WBS+diagrama (só se S7 mostrar duplicação excessiva; preferir serviços irmãos).
 
 ---
 

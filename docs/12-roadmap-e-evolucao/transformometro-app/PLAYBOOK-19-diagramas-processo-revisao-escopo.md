@@ -1,6 +1,6 @@
 # Playbook 19 — Diagramas de processo (macro), escopo por instância e overlays por revisão
 
-**Status:** entregue (jul/2026) — S0–S6 implementados · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)  
+**Status:** entregue S0–S6 (jul/2026) · **próximo:** S7 — alinhar ao conceito PB23 (âncora na referência + visão vigente composta) · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)  
 **Decisões fechadas (S0):**  
 - **Diagrama-macro único por processo-mestre** — mapa canônico do fluxo end-to-end; nós com **ID estável**.  
 - **Instância declara escopo** — subset de nós do macro (um ou mais subprocessos-chave).  
@@ -9,7 +9,7 @@
 - **Editor MVP** — fluxograma estruturado (React Flow ou equivalente): formas padrão, textos, conexões; templates BPMN-lite.  
 
 **Parent:** [`PLAYBOOK-MODELAGEM.md`](./PLAYBOOK-MODELAGEM.md) · [`PLAYBOOK-18-instancias-filial-setor-escopo.md`](./PLAYBOOK-18-instancias-filial-setor-escopo.md) · [`ARCHITECTURE.md`](./ARCHITECTURE.md)  
-**Relacionado:** evidências V024 · `ChatMermaidBlock` (chat) · `IshikawaFishboneDiagram` (PAC — precedente de editor custom)
+**Relacionado:** evidências V024 · [`PLAYBOOK-23`](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) (composição WBS — espelhar no diagrama) · `ChatMermaidBlock` (chat) · `IshikawaFishboneDiagram` (PAC — precedente de editor custom)
 
 ---
 
@@ -328,6 +328,38 @@ Camadas: `routes/` fino → `application/services/` → `repositories/` (padrão
 
 **Fora de S6 (backlog):** swimlanes automáticas por unidade/departamento; import BPMN XML; layout colaborativo.
 
+### S7 — Alinhar diagrama ao conceito do Playbook 23 (planejado)
+
+O **mapeamento WBS** (PB23) já oferece: (1) edição ancorada na **revisão de referência**, (2) overlay **absoluto** no macro para composição, (3) **visão vigente composta** no processo. O diagrama hoje ainda é só macro ∩ escopo + overlay próprio, com diff vs referência apenas informativo.
+
+**Objetivo S7:** o usuário percebe o **mesmo modelo mental** nos dois artefatos (WBS e fluxo).
+
+| Conceito PB23 (WBS) | Espelho no diagrama (S7) |
+|---------------------|---------------------------|
+| Âncora = mapeamento da revisão de referência (seed se overlay vazio) | Âncora = **diagrama mesclado da referência**; seed quando overlay vazio |
+| Diff «vs referência (vX.Y.Z)» | Diff estrutural vs referência (nós/arestas alterados, novos, removidos) — já há contagem; enriquecer UX |
+| Overlay absoluto no macro ∩ escopo | Manter persistência absoluta no macro (não cadeia relativa) — mesma razão da composição |
+| `GET …/decomposicao/composed?at=` | `GET …/diagrama/composed?at=` — macro + overlays vigentes |
+| «Macro composto» primeiro no processo | «Diagrama composto (visão vigente)» primeiro na seção Diagrama do processo; macro base abaixo |
+| Baseline da melhoria = macro ∩ escopo (não o composto global) | Idem: baseline de cada melhoria **não** parte do diagrama composto de outra |
+| Conflitos de interseção | `conflicts[]` quando 2+ revisões vigentes alteram o mesmo nó/aresta |
+| Confirmação de vigência com medição | Já transversal (PUT revisão); documento só reforça impacto no composto de diagrama |
+
+**Fora de S7 (não confundir):** unificar motor WBS+diagrama num único serviço; import BPMN; edição colaborativa.
+
+**Critérios de pronto (esboço):**
+
+| ID | Cenário | Esperado |
+|----|---------|----------|
+| **D1** | Overlay vazio + referência com overlay | Editor inicia no flowchart da referência (`seeded_from_reference`) |
+| **D2** | Salvar após editar a partir da referência | Overlay absoluto vs macro; composição `?at=` reflete o delta |
+| **D3** | Duas melhorias vigentes no mesmo nó | `conflicts[]` no GET composed; UI lista aviso |
+| **D4** | Processo → Diagrama | Visão vigente composta **acima** do diagrama macro base |
+
+**Dependência:** reutilizar padrões de `RevisaoDecomposicaoMergeService.build_revisao_view` / `DecomposicaoCompositionService` no domínio de flowchart (serviços irmãos, não acoplar WBS ao fluxo).
+
+Detalhe de produto e limites compartilhados: [PLAYBOOK-23 §6](./PLAYBOOK-23-decomposicao-composicao-macro-data.md).
+
 ---
 
 ## 9. Critérios de aceite (I1–I9)
@@ -409,6 +441,7 @@ Status detalhado: [playbook-19-implementation-status.md](../../../transformometr
 | Doc / módulo | Conteúdo |
 |--------------|----------|
 | [`PLAYBOOK-18`](./PLAYBOOK-18-instancias-filial-setor-escopo.md) | Instância × revisão |
+| [`PLAYBOOK-23`](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) | Composição WBS / âncora na referência — **S7 espelha no diagrama** |
 | [`PLAYBOOK-MODELAGEM`](./PLAYBOOK-MODELAGEM.md) | Hierarquia mestre → instância → revisão |
 | [`V024__revisao_evidencias.sql`](../../../../transformometro-api/migrations/V024__revisao_evidencias.sql) | Padrão anexo |
 | [`revisao_evidence_routes.py`](../../../../transformometro-api/tm_app/interface/http/routes/revisao_evidence_routes.py) | Padrão rotas |
@@ -424,6 +457,7 @@ Status detalhado: [playbook-19-implementation-status.md](../../../transformometr
 3. **Cada revisão persiste um overlay** (as-is / to-be) referenciando o macro/escopo — não um desenho isolado.  
 4. **JSON estruturado é a fonte de verdade**; Mermaid é derivado para preview e integrações.  
 5. **Implementar em 3 camadas** (macro → escopo → overlay) antes de diff, PNG e chat.  
-6. **Editor S6** — swimlanes BPMN-lite, tema, auto-layout e gestão de faixas no MFE (`FlowchartEditor`).
+6. **Editor S6** — swimlanes BPMN-lite, tema, auto-layout e gestão de faixas no MFE (`FlowchartEditor`).  
+7. **S7 (próximo)** — mesmo conceito do PB23 no diagrama: âncora na referência, diagrama composto por vigência, visão vigente primeiro no processo.
 
-**Próximo passo:** integração chat/api-delpi (Mermaid da revisão ativa) e swimlanes automáticas por cadastro — backlog pós-MVP.
+**Próximo passo:** **S7** (alinhar diagrama ao PB23). Depois: integração chat/api-delpi (Mermaid da revisão/composto vigente) e swimlanes automáticas por cadastro.
