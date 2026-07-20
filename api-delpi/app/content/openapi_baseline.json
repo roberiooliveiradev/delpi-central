@@ -1103,6 +1103,22 @@
       "xDelpi": {
         "entity": "cultura_delpi_content_cultura_delpi_content_put",
         "shape": "scalar",
+        "category": "strategic",
+        "locale": {
+          "en": {
+            "summary": "Update Cultura Delpi Content",
+            "description": "Update Cultura Delpi Content"
+          },
+          "pt-BR": {
+            "summary": "Update Cultura Delpi Content",
+            "description": "Update Cultura Delpi Content",
+            "label": "Update Cultura Delpi Content"
+          }
+        },
+        "tv": {
+          "description": "Update Cultura Delpi Content",
+          "label": "Update Cultura Delpi Content"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -1279,6 +1295,21 @@
       "xDelpi": {
         "entity": "sql_result",
         "shape": "paged_list",
+        "locale": {
+          "en": {
+            "summary": "Executar consulta SQL somente leitura",
+            "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full."
+          },
+          "pt-BR": {
+            "summary": "Executar consulta SQL somente leitura",
+            "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full.",
+            "label": "Executar consulta SQL somente leitura"
+          }
+        },
+        "tv": {
+          "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full.",
+          "label": "Executar consulta SQL somente leitura"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full."
@@ -6996,6 +7027,22 @@
       "xDelpi": {
         "entity": "export_proposta_comercial_pdf_with_overrides_route_propostas_comerciais__proposta_interna__pdf_post",
         "shape": "scalar",
+        "category": "commercial",
+        "locale": {
+          "en": {
+            "summary": "Export Proposta Comercial Pdf With Overrides Route",
+            "description": "Export Proposta Comercial Pdf With Overrides Route"
+          },
+          "pt-BR": {
+            "summary": "Export Proposta Comercial Pdf With Overrides Route",
+            "description": "Export Proposta Comercial Pdf With Overrides Route",
+            "label": "Export Proposta Comercial Pdf With Overrides Route"
+          }
+        },
+        "tv": {
+          "description": "Export Proposta Comercial Pdf With Overrides Route",
+          "label": "Export Proposta Comercial Pdf With Overrides Route"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -7205,6 +7252,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7536,6 +7599,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_recurrence_opening_assessment",
         "shape": "composite_analysis",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Análise consolidada — Quality action plan recurrence opening assessment",
+            "description": "Retorna quality action plan recurrence opening assessment via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Análise consolidada — Quality action plan recurrence opening assessment",
+            "description": "Retorna quality action plan recurrence opening assessment via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Análise consolidada — Quality action plan recurrence opening assessment"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan recurrence opening assessment via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan recurrence opening assessment"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan recurrence opening assessment via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7553,6 +7632,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_evidence_tag_suggestions",
         "shape": "composite_analysis",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+            "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+            "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Análise consolidada — Quality action plan evidence tag suggestions"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan evidence tag suggestions"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7570,6 +7665,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_evidence_tag_suggestions",
         "shape": "composite_analysis",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+            "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+            "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Análise consolidada — Quality action plan evidence tag suggestions"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan evidence tag suggestions"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7659,6 +7770,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_notifications",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan notifications",
+            "description": "Retorna quality action plan notifications via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan notifications",
+            "description": "Retorna quality action plan notifications via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan notifications"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan notifications via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan notifications"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan notifications via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7796,6 +7923,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7846,6 +7989,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7863,6 +8022,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_action",
         "shape": "paged_list",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Lista paginada — Quality action plan action",
+            "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          },
+          "pt-BR": {
+            "summary": "Lista paginada — Quality action plan action",
+            "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+            "label": "Lista paginada — Quality action plan action"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+          "label": "Lista paginada — Quality action plan action"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
@@ -7887,6 +8062,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_action",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan action",
+            "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan action",
+            "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan action"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan action"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7904,6 +8095,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_action",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan action",
+            "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan action",
+            "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan action"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan action"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7968,6 +8175,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -7992,6 +8215,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8009,6 +8248,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8026,6 +8281,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8083,6 +8354,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_evidence",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan evidence",
+            "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan evidence",
+            "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan evidence"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan evidence"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8100,6 +8387,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_evidence",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan evidence",
+            "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan evidence",
+            "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan evidence"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan evidence"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8117,6 +8420,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_evidence",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan evidence",
+            "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan evidence",
+            "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan evidence"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan evidence"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8306,6 +8625,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_five_whys",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan five whys",
+            "description": "Retorna quality action plan five whys via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan five whys",
+            "description": "Retorna quality action plan five whys via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan five whys"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan five whys via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan five whys"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan five whys via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8323,6 +8658,22 @@
       "xDelpi": {
         "entity": "quality_action_plan_ishikawa",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan ishikawa",
+            "description": "Retorna quality action plan ishikawa via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan ishikawa",
+            "description": "Retorna quality action plan ishikawa via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan ishikawa"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan ishikawa via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan ishikawa"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan ishikawa via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8340,6 +8691,22 @@
       "xDelpi": {
         "entity": "quality_solution_pattern",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality solution pattern",
+            "description": "Retorna quality solution pattern via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality solution pattern",
+            "description": "Retorna quality solution pattern via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality solution pattern"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality solution pattern via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality solution pattern"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality solution pattern via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8357,6 +8724,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8454,6 +8837,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "composite_analysis",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Análise consolidada — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Análise consolidada — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Análise consolidada — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8471,6 +8870,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "composite_analysis",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Análise consolidada — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Análise consolidada — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Análise consolidada — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8521,6 +8936,22 @@
       "xDelpi": {
         "entity": "quality_action_plan",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          },
+          "pt-BR": {
+            "summary": "Indicador — Quality action plan",
+            "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+            "label": "Indicador — Quality action plan"
+          }
+        },
+        "tv": {
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        },
         "presentationStrategy": "as_delivered"
       },
       "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
@@ -8676,6 +9107,22 @@
       "xDelpi": {
         "entity": "area_quality_audit_5s_areas_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Create Area",
+            "description": "Create Area"
+          },
+          "pt-BR": {
+            "summary": "Create Area",
+            "description": "Create Area",
+            "label": "Create Area"
+          }
+        },
+        "tv": {
+          "description": "Create Area",
+          "label": "Create Area"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8736,6 +9183,22 @@
       "xDelpi": {
         "entity": "audit_quality_audit_5s_audits_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Create Audit",
+            "description": "Create Audit"
+          },
+          "pt-BR": {
+            "summary": "Create Audit",
+            "description": "Create Audit",
+            "label": "Create Audit"
+          }
+        },
+        "tv": {
+          "description": "Create Audit",
+          "label": "Create Audit"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8784,6 +9247,22 @@
       "xDelpi": {
         "entity": "audit_quality_audit_5s_audits__audit_id__patch",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Update Audit",
+            "description": "Update Audit"
+          },
+          "pt-BR": {
+            "summary": "Update Audit",
+            "description": "Update Audit",
+            "label": "Update Audit"
+          }
+        },
+        "tv": {
+          "description": "Update Audit",
+          "label": "Update Audit"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8800,6 +9279,22 @@
       "xDelpi": {
         "entity": "audit_quality_audit_5s_audits__audit_id__close_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Close Audit",
+            "description": "Close Audit"
+          },
+          "pt-BR": {
+            "summary": "Close Audit",
+            "description": "Close Audit",
+            "label": "Close Audit"
+          }
+        },
+        "tv": {
+          "description": "Close Audit",
+          "label": "Close Audit"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8816,6 +9311,22 @@
       "xDelpi": {
         "entity": "evaluation_quality_audit_5s_audits__audit_id__complete_evaluation_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Complete Evaluation",
+            "description": "Complete Evaluation"
+          },
+          "pt-BR": {
+            "summary": "Complete Evaluation",
+            "description": "Complete Evaluation",
+            "label": "Complete Evaluation"
+          }
+        },
+        "tv": {
+          "description": "Complete Evaluation",
+          "label": "Complete Evaluation"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8832,6 +9343,22 @@
       "xDelpi": {
         "entity": "audit_quality_audit_5s_audits__audit_id__delete_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Delete Audit",
+            "description": "Delete Audit"
+          },
+          "pt-BR": {
+            "summary": "Delete Audit",
+            "description": "Delete Audit",
+            "label": "Delete Audit"
+          }
+        },
+        "tv": {
+          "description": "Delete Audit",
+          "label": "Delete Audit"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8848,6 +9375,22 @@
       "xDelpi": {
         "entity": "force_delete_audit_quality_audit_5s_audits__audit_id__force_delete_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Force Delete Audit",
+            "description": "Force Delete Audit"
+          },
+          "pt-BR": {
+            "summary": "Force Delete Audit",
+            "description": "Force Delete Audit",
+            "label": "Force Delete Audit"
+          }
+        },
+        "tv": {
+          "description": "Force Delete Audit",
+          "label": "Force Delete Audit"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8864,6 +9407,22 @@
       "xDelpi": {
         "entity": "audit_quality_audit_5s_audits__audit_id__join_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Join Audit",
+            "description": "Join Audit"
+          },
+          "pt-BR": {
+            "summary": "Join Audit",
+            "description": "Join Audit",
+            "label": "Join Audit"
+          }
+        },
+        "tv": {
+          "description": "Join Audit",
+          "label": "Join Audit"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8976,6 +9535,22 @@
       "xDelpi": {
         "entity": "nonconformity_quality_audit_5s_audits__audit_id__nonconformities_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Create Nonconformity",
+            "description": "Create Nonconformity"
+          },
+          "pt-BR": {
+            "summary": "Create Nonconformity",
+            "description": "Create Nonconformity",
+            "label": "Create Nonconformity"
+          }
+        },
+        "tv": {
+          "description": "Create Nonconformity",
+          "label": "Create Nonconformity"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -8992,6 +9567,22 @@
       "xDelpi": {
         "entity": "reopen_evaluation_quality_audit_5s_audits__audit_id__reopen_evaluation_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Reopen Evaluation",
+            "description": "Reopen Evaluation"
+          },
+          "pt-BR": {
+            "summary": "Reopen Evaluation",
+            "description": "Reopen Evaluation",
+            "label": "Reopen Evaluation"
+          }
+        },
+        "tv": {
+          "description": "Reopen Evaluation",
+          "label": "Reopen Evaluation"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9008,6 +9599,22 @@
       "xDelpi": {
         "entity": "response_quality_audit_5s_audits__audit_id__responses__criterion_id__put",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Upsert Response",
+            "description": "Upsert Response"
+          },
+          "pt-BR": {
+            "summary": "Upsert Response",
+            "description": "Upsert Response",
+            "label": "Upsert Response"
+          }
+        },
+        "tv": {
+          "description": "Upsert Response",
+          "label": "Upsert Response"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9056,6 +9663,22 @@
       "xDelpi": {
         "entity": "upload_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Upload Response Attachment",
+            "description": "Upload Response Attachment"
+          },
+          "pt-BR": {
+            "summary": "Upload Response Attachment",
+            "description": "Upload Response Attachment",
+            "label": "Upload Response Attachment"
+          }
+        },
+        "tv": {
+          "description": "Upload Response Attachment",
+          "label": "Upload Response Attachment"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9072,6 +9695,22 @@
       "xDelpi": {
         "entity": "response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__delete",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Delete Response Attachment",
+            "description": "Delete Response Attachment"
+          },
+          "pt-BR": {
+            "summary": "Delete Response Attachment",
+            "description": "Delete Response Attachment",
+            "label": "Delete Response Attachment"
+          }
+        },
+        "tv": {
+          "description": "Delete Response Attachment",
+          "label": "Delete Response Attachment"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9198,6 +9837,22 @@
       "xDelpi": {
         "entity": "publish_catalog_quality_audit_5s_catalog_publish_put",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Publish Catalog",
+            "description": "Publish Catalog"
+          },
+          "pt-BR": {
+            "summary": "Publish Catalog",
+            "description": "Publish Catalog",
+            "label": "Publish Catalog"
+          }
+        },
+        "tv": {
+          "description": "Publish Catalog",
+          "label": "Publish Catalog"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9258,6 +9913,22 @@
       "xDelpi": {
         "entity": "nonconformity_quality_audit_5s_nonconformities__nc_id__patch",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Update Nonconformity",
+            "description": "Update Nonconformity"
+          },
+          "pt-BR": {
+            "summary": "Update Nonconformity",
+            "description": "Update Nonconformity",
+            "label": "Update Nonconformity"
+          }
+        },
+        "tv": {
+          "description": "Update Nonconformity",
+          "label": "Update Nonconformity"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9306,6 +9977,22 @@
       "xDelpi": {
         "entity": "add_nc_action_quality_audit_5s_nonconformities__nc_id__actions_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Add Nc Action",
+            "description": "Add Nc Action"
+          },
+          "pt-BR": {
+            "summary": "Add Nc Action",
+            "description": "Add Nc Action",
+            "label": "Add Nc Action"
+          }
+        },
+        "tv": {
+          "description": "Add Nc Action",
+          "label": "Add Nc Action"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9354,6 +10041,22 @@
       "xDelpi": {
         "entity": "upload_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Upload Nc Attachment",
+            "description": "Upload Nc Attachment"
+          },
+          "pt-BR": {
+            "summary": "Upload Nc Attachment",
+            "description": "Upload Nc Attachment",
+            "label": "Upload Nc Attachment"
+          }
+        },
+        "tv": {
+          "description": "Upload Nc Attachment",
+          "label": "Upload Nc Attachment"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9402,6 +10105,22 @@
       "xDelpi": {
         "entity": "nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Complete Nc Action",
+            "description": "Complete Nc Action"
+          },
+          "pt-BR": {
+            "summary": "Complete Nc Action",
+            "description": "Complete Nc Action",
+            "label": "Complete Nc Action"
+          }
+        },
+        "tv": {
+          "description": "Complete Nc Action",
+          "label": "Complete Nc Action"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9586,6 +10305,22 @@
       "xDelpi": {
         "entity": "kaizen_record_quality_kaizens_records_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Create Kaizen Record",
+            "description": "Create Kaizen Record"
+          },
+          "pt-BR": {
+            "summary": "Create Kaizen Record",
+            "description": "Create Kaizen Record",
+            "label": "Create Kaizen Record"
+          }
+        },
+        "tv": {
+          "description": "Create Kaizen Record",
+          "label": "Create Kaizen Record"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9634,6 +10369,22 @@
       "xDelpi": {
         "entity": "import_kaizen_records_quality_kaizens_records_import_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Import Kaizen Records",
+            "description": "Import Kaizen Records"
+          },
+          "pt-BR": {
+            "summary": "Import Kaizen Records",
+            "description": "Import Kaizen Records",
+            "label": "Import Kaizen Records"
+          }
+        },
+        "tv": {
+          "description": "Import Kaizen Records",
+          "label": "Import Kaizen Records"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9699,6 +10450,22 @@
       "xDelpi": {
         "entity": "kaizen_record_quality_kaizens_records__record_id__delete",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Delete Kaizen Record",
+            "description": "Delete Kaizen Record"
+          },
+          "pt-BR": {
+            "summary": "Delete Kaizen Record",
+            "description": "Delete Kaizen Record",
+            "label": "Delete Kaizen Record"
+          }
+        },
+        "tv": {
+          "description": "Delete Kaizen Record",
+          "label": "Delete Kaizen Record"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9748,6 +10515,22 @@
       "xDelpi": {
         "entity": "kaizen_record_quality_kaizens_records__record_id__put",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Update Kaizen Record",
+            "description": "Update Kaizen Record"
+          },
+          "pt-BR": {
+            "summary": "Update Kaizen Record",
+            "description": "Update Kaizen Record",
+            "label": "Update Kaizen Record"
+          }
+        },
+        "tv": {
+          "description": "Update Kaizen Record",
+          "label": "Update Kaizen Record"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9868,6 +10651,22 @@
       "xDelpi": {
         "entity": "kaizen_evidence_quality_kaizens_records__record_id__evidences_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Attach Kaizen Evidence",
+            "description": "Attach Kaizen Evidence"
+          },
+          "pt-BR": {
+            "summary": "Attach Kaizen Evidence",
+            "description": "Attach Kaizen Evidence",
+            "label": "Attach Kaizen Evidence"
+          }
+        },
+        "tv": {
+          "description": "Attach Kaizen Evidence",
+          "label": "Attach Kaizen Evidence"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9884,6 +10683,22 @@
       "xDelpi": {
         "entity": "kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__delete",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Delete Kaizen Evidence",
+            "description": "Delete Kaizen Evidence"
+          },
+          "pt-BR": {
+            "summary": "Delete Kaizen Evidence",
+            "description": "Delete Kaizen Evidence",
+            "label": "Delete Kaizen Evidence"
+          }
+        },
+        "tv": {
+          "description": "Delete Kaizen Evidence",
+          "label": "Delete Kaizen Evidence"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -9900,6 +10715,22 @@
       "xDelpi": {
         "entity": "kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__patch",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Update Kaizen Evidence",
+            "description": "Update Kaizen Evidence"
+          },
+          "pt-BR": {
+            "summary": "Update Kaizen Evidence",
+            "description": "Update Kaizen Evidence",
+            "label": "Update Kaizen Evidence"
+          }
+        },
+        "tv": {
+          "description": "Update Kaizen Evidence",
+          "label": "Update Kaizen Evidence"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10088,6 +10919,22 @@
       "xDelpi": {
         "entity": "kaizen_version_quality_kaizens_records__record_id__versions_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Create Kaizen Version",
+            "description": "Create Kaizen Version"
+          },
+          "pt-BR": {
+            "summary": "Create Kaizen Version",
+            "description": "Create Kaizen Version",
+            "label": "Create Kaizen Version"
+          }
+        },
+        "tv": {
+          "description": "Create Kaizen Version",
+          "label": "Create Kaizen Version"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10104,6 +10951,22 @@
       "xDelpi": {
         "entity": "kaizen_version_quality_kaizens_records__record_id__versions__revision_number__delete",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Delete Kaizen Version",
+            "description": "Delete Kaizen Version"
+          },
+          "pt-BR": {
+            "summary": "Delete Kaizen Version",
+            "description": "Delete Kaizen Version",
+            "label": "Delete Kaizen Version"
+          }
+        },
+        "tv": {
+          "description": "Delete Kaizen Version",
+          "label": "Delete Kaizen Version"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10120,6 +10983,22 @@
       "xDelpi": {
         "entity": "kaizen_version_quality_kaizens_records__record_id__versions__revision_number__put",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Update Kaizen Version",
+            "description": "Update Kaizen Version"
+          },
+          "pt-BR": {
+            "summary": "Update Kaizen Version",
+            "description": "Update Kaizen Version",
+            "label": "Update Kaizen Version"
+          }
+        },
+        "tv": {
+          "description": "Update Kaizen Version",
+          "label": "Update Kaizen Version"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10136,6 +11015,22 @@
       "xDelpi": {
         "entity": "implement_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__implement_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Implement Kaizen Version",
+            "description": "Implement Kaizen Version"
+          },
+          "pt-BR": {
+            "summary": "Implement Kaizen Version",
+            "description": "Implement Kaizen Version",
+            "label": "Implement Kaizen Version"
+          }
+        },
+        "tv": {
+          "description": "Implement Kaizen Version",
+          "label": "Implement Kaizen Version"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10299,6 +11194,22 @@
       "xDelpi": {
         "entity": "label_quality_labels_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Create Label",
+            "description": "Create Label"
+          },
+          "pt-BR": {
+            "summary": "Create Label",
+            "description": "Create Label",
+            "label": "Create Label"
+          }
+        },
+        "tv": {
+          "description": "Create Label",
+          "label": "Create Label"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10435,6 +11346,22 @@
       "xDelpi": {
         "entity": "save_my_inspector_quality_labels_inspectors_me_put",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Save My Inspector",
+            "description": "Save My Inspector"
+          },
+          "pt-BR": {
+            "summary": "Save My Inspector",
+            "description": "Save My Inspector",
+            "label": "Save My Inspector"
+          }
+        },
+        "tv": {
+          "description": "Save My Inspector",
+          "label": "Save My Inspector"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10483,6 +11410,22 @@
       "xDelpi": {
         "entity": "upload_my_signature_quality_labels_inspectors_me_signature_post",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Upload My Signature",
+            "description": "Upload My Signature"
+          },
+          "pt-BR": {
+            "summary": "Upload My Signature",
+            "description": "Upload My Signature",
+            "label": "Upload My Signature"
+          }
+        },
+        "tv": {
+          "description": "Upload My Signature",
+          "label": "Upload My Signature"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10588,6 +11531,22 @@
       "xDelpi": {
         "entity": "label_quality_labels__label_id__delete",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Delete Label",
+            "description": "Delete Label"
+          },
+          "pt-BR": {
+            "summary": "Delete Label",
+            "description": "Delete Label",
+            "label": "Delete Label"
+          }
+        },
+        "tv": {
+          "description": "Delete Label",
+          "label": "Delete Label"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10636,6 +11595,22 @@
       "xDelpi": {
         "entity": "set_label_active_quality_labels__label_id__active_patch",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Set Label Active",
+            "description": "Set Label Active"
+          },
+          "pt-BR": {
+            "summary": "Set Label Active",
+            "description": "Set Label Active",
+            "label": "Set Label Active"
+          }
+        },
+        "tv": {
+          "description": "Set Label Active",
+          "label": "Set Label Active"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -10684,6 +11659,22 @@
       "xDelpi": {
         "entity": "save_certificate_quality_labels__label_id__certificate_put",
         "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Save Certificate",
+            "description": "Save Certificate"
+          },
+          "pt-BR": {
+            "summary": "Save Certificate",
+            "description": "Save Certificate",
+            "label": "Save Certificate"
+          }
+        },
+        "tv": {
+          "description": "Save Certificate",
+          "label": "Save Certificate"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -12022,6 +13013,22 @@
       "xDelpi": {
         "entity": "booking_scheduling_bookings_post",
         "shape": "scalar",
+        "category": "scheduling",
+        "locale": {
+          "en": {
+            "summary": "Create Booking",
+            "description": "Create Booking"
+          },
+          "pt-BR": {
+            "summary": "Create Booking",
+            "description": "Create Booking",
+            "label": "Create Booking"
+          }
+        },
+        "tv": {
+          "description": "Create Booking",
+          "label": "Create Booking"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -12046,6 +13053,22 @@
       "xDelpi": {
         "entity": "booking_scheduling_bookings__booking_id__cancel_patch",
         "shape": "scalar",
+        "category": "scheduling",
+        "locale": {
+          "en": {
+            "summary": "Cancel Booking",
+            "description": "Cancel Booking"
+          },
+          "pt-BR": {
+            "summary": "Cancel Booking",
+            "description": "Cancel Booking",
+            "label": "Cancel Booking"
+          }
+        },
+        "tv": {
+          "description": "Cancel Booking",
+          "label": "Cancel Booking"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -12107,6 +13130,22 @@
       "xDelpi": {
         "entity": "resource_scheduling_resources_post",
         "shape": "scalar",
+        "category": "scheduling",
+        "locale": {
+          "en": {
+            "summary": "Create Resource",
+            "description": "Create Resource"
+          },
+          "pt-BR": {
+            "summary": "Create Resource",
+            "description": "Create Resource",
+            "label": "Create Resource"
+          }
+        },
+        "tv": {
+          "description": "Create Resource",
+          "label": "Create Resource"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -12123,6 +13162,22 @@
       "xDelpi": {
         "entity": "resource_scheduling_resources__resource_id__patch",
         "shape": "scalar",
+        "category": "scheduling",
+        "locale": {
+          "en": {
+            "summary": "Update Resource",
+            "description": "Update Resource"
+          },
+          "pt-BR": {
+            "summary": "Update Resource",
+            "description": "Update Resource",
+            "label": "Update Resource"
+          }
+        },
+        "tv": {
+          "description": "Update Resource",
+          "label": "Update Resource"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -12584,6 +13639,22 @@
       "xDelpi": {
         "entity": "post_console_alerts_evaluate_system_console_alerts_evaluate_post",
         "shape": "scalar",
+        "category": "system",
+        "locale": {
+          "en": {
+            "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+            "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+          },
+          "pt-BR": {
+            "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+            "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+            "label": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+          }
+        },
+        "tv": {
+          "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+          "label": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+        },
         "presentationStrategy": "as_delivered"
       }
     },
@@ -12607,6 +13678,22 @@
       "xDelpi": {
         "entity": "post_console_alerts_smoke_system_console_alerts_smoke_post",
         "shape": "scalar",
+        "category": "system",
+        "locale": {
+          "en": {
+            "summary": "Registra resultado de smoke e dispara alertas",
+            "description": "Registra resultado de smoke e dispara alertas"
+          },
+          "pt-BR": {
+            "summary": "Registra resultado de smoke e dispara alertas",
+            "description": "Registra resultado de smoke e dispara alertas",
+            "label": "Registra resultado de smoke e dispara alertas"
+          }
+        },
+        "tv": {
+          "description": "Registra resultado de smoke e dispara alertas",
+          "label": "Registra resultado de smoke e dispara alertas"
+        },
         "presentationStrategy": "as_delivered"
       }
     },

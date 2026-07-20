@@ -3302,6 +3302,957 @@
         }
       },
       "category": "system"
+    },
+    "update_cultura_delpi_content": {
+      "locale": {
+        "en": {
+          "summary": "Update Cultura Delpi Content",
+          "description": "Update Cultura Delpi Content"
+        },
+        "pt-BR": {
+          "summary": "Update Cultura Delpi Content",
+          "description": "Update Cultura Delpi Content",
+          "label": "Update Cultura Delpi Content"
+        }
+      },
+      "category": "strategic"
+    },
+    "execute_readonly_sql": {
+      "locale": {
+        "en": {
+          "summary": "Executar consulta SQL somente leitura",
+          "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full."
+        },
+        "pt-BR": {
+          "summary": "Executar consulta SQL somente leitura",
+          "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full.",
+          "label": "Executar consulta SQL somente leitura"
+        }
+      }
+    },
+    "export_proposta_comercial_pdf_with_overrides": {
+      "locale": {
+        "en": {
+          "summary": "Export Proposta Comercial Pdf With Overrides Route",
+          "description": "Export Proposta Comercial Pdf With Overrides Route"
+        },
+        "pt-BR": {
+          "summary": "Export Proposta Comercial Pdf With Overrides Route",
+          "description": "Export Proposta Comercial Pdf With Overrides Route",
+          "label": "Export Proposta Comercial Pdf With Overrides Route"
+        }
+      },
+      "category": "commercial"
+    },
+    "create_quality_action_plan": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "assess_quality_action_plan_recurrence_on_opening": {
+      "locale": {
+        "en": {
+          "summary": "Análise consolidada — Quality action plan recurrence opening assessment",
+          "description": "Retorna quality action plan recurrence opening assessment via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Análise consolidada — Quality action plan recurrence opening assessment",
+          "description": "Retorna quality action plan recurrence opening assessment via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan recurrence opening assessment"
+        }
+      },
+      "category": "quality"
+    },
+    "suggest_quality_action_plan_evidence_tags": {
+      "locale": {
+        "en": {
+          "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan evidence tag suggestions"
+        }
+      },
+      "category": "quality"
+    },
+    "suggest_quality_action_plan_evidence_tags_from_image": {
+      "locale": {
+        "en": {
+          "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
+          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan evidence tag suggestions"
+        }
+      },
+      "category": "quality"
+    },
+    "dispatch_quality_action_plan_notifications": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan notifications",
+          "description": "Retorna quality action plan notifications via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan notifications",
+          "description": "Retorna quality action plan notifications via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan notifications"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_quality_action_plan": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "update_quality_action_plan": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "create_quality_action_plan_actions": {
+      "locale": {
+        "en": {
+          "summary": "Lista paginada — Quality action plan action",
+          "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+        },
+        "pt-BR": {
+          "summary": "Lista paginada — Quality action plan action",
+          "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+          "label": "Lista paginada — Quality action plan action"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_quality_action_plan_action": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan action",
+          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan action",
+          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan action"
+        }
+      },
+      "category": "quality"
+    },
+    "update_quality_action_plan_action": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan action",
+          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan action",
+          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan action"
+        }
+      },
+      "category": "quality"
+    },
+    "record_quality_action_plan_effectiveness": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "approve_quality_action_plan_effectiveness_review": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "reject_quality_action_plan_effectiveness_review": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "submit_quality_action_plan_effectiveness_review": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "attach_quality_action_plan_evidence": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan evidence",
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan evidence",
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan evidence"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_quality_action_plan_evidence": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan evidence",
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan evidence",
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan evidence"
+        }
+      },
+      "category": "quality"
+    },
+    "update_quality_action_plan_evidence": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan evidence",
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan evidence",
+          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan evidence"
+        }
+      },
+      "category": "quality"
+    },
+    "upsert_quality_action_plan_five_whys": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan five whys",
+          "description": "Retorna quality action plan five whys via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan five whys",
+          "description": "Retorna quality action plan five whys via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan five whys"
+        }
+      },
+      "category": "quality"
+    },
+    "upsert_quality_action_plan_ishikawa": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan ishikawa",
+          "description": "Retorna quality action plan ishikawa via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan ishikawa",
+          "description": "Retorna quality action plan ishikawa via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan ishikawa"
+        }
+      },
+      "category": "quality"
+    },
+    "promote_quality_action_plan_solution_pattern": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality solution pattern",
+          "description": "Retorna quality solution pattern via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality solution pattern",
+          "description": "Retorna quality solution pattern via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality solution pattern"
+        }
+      },
+      "category": "quality"
+    },
+    "reopen_quality_action_plan": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "restore_quality_action_plan_revision": {
+      "locale": {
+        "en": {
+          "summary": "Análise consolidada — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Análise consolidada — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "upsert_quality_action_plan_rnc_8d": {
+      "locale": {
+        "en": {
+          "summary": "Análise consolidada — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Análise consolidada — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Análise consolidada — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "update_quality_action_plan_status": {
+      "locale": {
+        "en": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+        },
+        "pt-BR": {
+          "summary": "Indicador — Quality action plan",
+          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+          "label": "Indicador — Quality action plan"
+        }
+      },
+      "category": "quality"
+    },
+    "create_audit_5s_area": {
+      "locale": {
+        "en": {
+          "summary": "Create Area",
+          "description": "Create Area"
+        },
+        "pt-BR": {
+          "summary": "Create Area",
+          "description": "Create Area",
+          "label": "Create Area"
+        }
+      },
+      "category": "quality"
+    },
+    "create_audit_5s_audit": {
+      "locale": {
+        "en": {
+          "summary": "Create Audit",
+          "description": "Create Audit"
+        },
+        "pt-BR": {
+          "summary": "Create Audit",
+          "description": "Create Audit",
+          "label": "Create Audit"
+        }
+      },
+      "category": "quality"
+    },
+    "update_audit_5s_audit": {
+      "locale": {
+        "en": {
+          "summary": "Update Audit",
+          "description": "Update Audit"
+        },
+        "pt-BR": {
+          "summary": "Update Audit",
+          "description": "Update Audit",
+          "label": "Update Audit"
+        }
+      },
+      "category": "quality"
+    },
+    "close_audit_5s_audit": {
+      "locale": {
+        "en": {
+          "summary": "Close Audit",
+          "description": "Close Audit"
+        },
+        "pt-BR": {
+          "summary": "Close Audit",
+          "description": "Close Audit",
+          "label": "Close Audit"
+        }
+      },
+      "category": "quality"
+    },
+    "complete_audit_5s_evaluation": {
+      "locale": {
+        "en": {
+          "summary": "Complete Evaluation",
+          "description": "Complete Evaluation"
+        },
+        "pt-BR": {
+          "summary": "Complete Evaluation",
+          "description": "Complete Evaluation",
+          "label": "Complete Evaluation"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_audit_5s_audit": {
+      "locale": {
+        "en": {
+          "summary": "Delete Audit",
+          "description": "Delete Audit"
+        },
+        "pt-BR": {
+          "summary": "Delete Audit",
+          "description": "Delete Audit",
+          "label": "Delete Audit"
+        }
+      },
+      "category": "quality"
+    },
+    "force_delete_audit_5s_audit": {
+      "locale": {
+        "en": {
+          "summary": "Force Delete Audit",
+          "description": "Force Delete Audit"
+        },
+        "pt-BR": {
+          "summary": "Force Delete Audit",
+          "description": "Force Delete Audit",
+          "label": "Force Delete Audit"
+        }
+      },
+      "category": "quality"
+    },
+    "join_audit_5s_audit": {
+      "locale": {
+        "en": {
+          "summary": "Join Audit",
+          "description": "Join Audit"
+        },
+        "pt-BR": {
+          "summary": "Join Audit",
+          "description": "Join Audit",
+          "label": "Join Audit"
+        }
+      },
+      "category": "quality"
+    },
+    "create_audit_5s_nonconformity": {
+      "locale": {
+        "en": {
+          "summary": "Create Nonconformity",
+          "description": "Create Nonconformity"
+        },
+        "pt-BR": {
+          "summary": "Create Nonconformity",
+          "description": "Create Nonconformity",
+          "label": "Create Nonconformity"
+        }
+      },
+      "category": "quality"
+    },
+    "reopen_audit_5s_evaluation": {
+      "locale": {
+        "en": {
+          "summary": "Reopen Evaluation",
+          "description": "Reopen Evaluation"
+        },
+        "pt-BR": {
+          "summary": "Reopen Evaluation",
+          "description": "Reopen Evaluation",
+          "label": "Reopen Evaluation"
+        }
+      },
+      "category": "quality"
+    },
+    "audit_5s_upsert_response": {
+      "locale": {
+        "en": {
+          "summary": "Upsert Response",
+          "description": "Upsert Response"
+        },
+        "pt-BR": {
+          "summary": "Upsert Response",
+          "description": "Upsert Response",
+          "label": "Upsert Response"
+        }
+      },
+      "category": "quality"
+    },
+    "upload_audit_5s_response_attachment": {
+      "locale": {
+        "en": {
+          "summary": "Upload Response Attachment",
+          "description": "Upload Response Attachment"
+        },
+        "pt-BR": {
+          "summary": "Upload Response Attachment",
+          "description": "Upload Response Attachment",
+          "label": "Upload Response Attachment"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_audit_5s_response_photo": {
+      "locale": {
+        "en": {
+          "summary": "Delete Response Attachment",
+          "description": "Delete Response Attachment"
+        },
+        "pt-BR": {
+          "summary": "Delete Response Attachment",
+          "description": "Delete Response Attachment",
+          "label": "Delete Response Attachment"
+        }
+      },
+      "category": "quality"
+    },
+    "publish_audit_5s_catalog": {
+      "locale": {
+        "en": {
+          "summary": "Publish Catalog",
+          "description": "Publish Catalog"
+        },
+        "pt-BR": {
+          "summary": "Publish Catalog",
+          "description": "Publish Catalog",
+          "label": "Publish Catalog"
+        }
+      },
+      "category": "quality"
+    },
+    "update_audit_5s_nonconformity": {
+      "locale": {
+        "en": {
+          "summary": "Update Nonconformity",
+          "description": "Update Nonconformity"
+        },
+        "pt-BR": {
+          "summary": "Update Nonconformity",
+          "description": "Update Nonconformity",
+          "label": "Update Nonconformity"
+        }
+      },
+      "category": "quality"
+    },
+    "create_audit_5s_nc_action": {
+      "locale": {
+        "en": {
+          "summary": "Add Nc Action",
+          "description": "Add Nc Action"
+        },
+        "pt-BR": {
+          "summary": "Add Nc Action",
+          "description": "Add Nc Action",
+          "label": "Add Nc Action"
+        }
+      },
+      "category": "quality"
+    },
+    "upload_audit_5s_nc_attachment": {
+      "locale": {
+        "en": {
+          "summary": "Upload Nc Attachment",
+          "description": "Upload Nc Attachment"
+        },
+        "pt-BR": {
+          "summary": "Upload Nc Attachment",
+          "description": "Upload Nc Attachment",
+          "label": "Upload Nc Attachment"
+        }
+      },
+      "category": "quality"
+    },
+    "complete_audit_5s_nc_action": {
+      "locale": {
+        "en": {
+          "summary": "Complete Nc Action",
+          "description": "Complete Nc Action"
+        },
+        "pt-BR": {
+          "summary": "Complete Nc Action",
+          "description": "Complete Nc Action",
+          "label": "Complete Nc Action"
+        }
+      },
+      "category": "quality"
+    },
+    "create_kaizen_record": {
+      "locale": {
+        "en": {
+          "summary": "Create Kaizen Record",
+          "description": "Create Kaizen Record"
+        },
+        "pt-BR": {
+          "summary": "Create Kaizen Record",
+          "description": "Create Kaizen Record",
+          "label": "Create Kaizen Record"
+        }
+      },
+      "category": "quality"
+    },
+    "import_kaizen_records": {
+      "locale": {
+        "en": {
+          "summary": "Import Kaizen Records",
+          "description": "Import Kaizen Records"
+        },
+        "pt-BR": {
+          "summary": "Import Kaizen Records",
+          "description": "Import Kaizen Records",
+          "label": "Import Kaizen Records"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_kaizen_record": {
+      "locale": {
+        "en": {
+          "summary": "Delete Kaizen Record",
+          "description": "Delete Kaizen Record"
+        },
+        "pt-BR": {
+          "summary": "Delete Kaizen Record",
+          "description": "Delete Kaizen Record",
+          "label": "Delete Kaizen Record"
+        }
+      },
+      "category": "quality"
+    },
+    "update_kaizen_record": {
+      "locale": {
+        "en": {
+          "summary": "Update Kaizen Record",
+          "description": "Update Kaizen Record"
+        },
+        "pt-BR": {
+          "summary": "Update Kaizen Record",
+          "description": "Update Kaizen Record",
+          "label": "Update Kaizen Record"
+        }
+      },
+      "category": "quality"
+    },
+    "attach_kaizen_evidence": {
+      "locale": {
+        "en": {
+          "summary": "Attach Kaizen Evidence",
+          "description": "Attach Kaizen Evidence"
+        },
+        "pt-BR": {
+          "summary": "Attach Kaizen Evidence",
+          "description": "Attach Kaizen Evidence",
+          "label": "Attach Kaizen Evidence"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_kaizen_evidence": {
+      "locale": {
+        "en": {
+          "summary": "Delete Kaizen Evidence",
+          "description": "Delete Kaizen Evidence"
+        },
+        "pt-BR": {
+          "summary": "Delete Kaizen Evidence",
+          "description": "Delete Kaizen Evidence",
+          "label": "Delete Kaizen Evidence"
+        }
+      },
+      "category": "quality"
+    },
+    "update_kaizen_evidence": {
+      "locale": {
+        "en": {
+          "summary": "Update Kaizen Evidence",
+          "description": "Update Kaizen Evidence"
+        },
+        "pt-BR": {
+          "summary": "Update Kaizen Evidence",
+          "description": "Update Kaizen Evidence",
+          "label": "Update Kaizen Evidence"
+        }
+      },
+      "category": "quality"
+    },
+    "create_kaizen_version": {
+      "locale": {
+        "en": {
+          "summary": "Create Kaizen Version",
+          "description": "Create Kaizen Version"
+        },
+        "pt-BR": {
+          "summary": "Create Kaizen Version",
+          "description": "Create Kaizen Version",
+          "label": "Create Kaizen Version"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_kaizen_version": {
+      "locale": {
+        "en": {
+          "summary": "Delete Kaizen Version",
+          "description": "Delete Kaizen Version"
+        },
+        "pt-BR": {
+          "summary": "Delete Kaizen Version",
+          "description": "Delete Kaizen Version",
+          "label": "Delete Kaizen Version"
+        }
+      },
+      "category": "quality"
+    },
+    "update_kaizen_version": {
+      "locale": {
+        "en": {
+          "summary": "Update Kaizen Version",
+          "description": "Update Kaizen Version"
+        },
+        "pt-BR": {
+          "summary": "Update Kaizen Version",
+          "description": "Update Kaizen Version",
+          "label": "Update Kaizen Version"
+        }
+      },
+      "category": "quality"
+    },
+    "implement_kaizen_version": {
+      "locale": {
+        "en": {
+          "summary": "Implement Kaizen Version",
+          "description": "Implement Kaizen Version"
+        },
+        "pt-BR": {
+          "summary": "Implement Kaizen Version",
+          "description": "Implement Kaizen Version",
+          "label": "Implement Kaizen Version"
+        }
+      },
+      "category": "quality"
+    },
+    "create_quality_label": {
+      "locale": {
+        "en": {
+          "summary": "Create Label",
+          "description": "Create Label"
+        },
+        "pt-BR": {
+          "summary": "Create Label",
+          "description": "Create Label",
+          "label": "Create Label"
+        }
+      },
+      "category": "quality"
+    },
+    "save_quality_label_inspector": {
+      "locale": {
+        "en": {
+          "summary": "Save My Inspector",
+          "description": "Save My Inspector"
+        },
+        "pt-BR": {
+          "summary": "Save My Inspector",
+          "description": "Save My Inspector",
+          "label": "Save My Inspector"
+        }
+      },
+      "category": "quality"
+    },
+    "upload_my_signature": {
+      "locale": {
+        "en": {
+          "summary": "Upload My Signature",
+          "description": "Upload My Signature"
+        },
+        "pt-BR": {
+          "summary": "Upload My Signature",
+          "description": "Upload My Signature",
+          "label": "Upload My Signature"
+        }
+      },
+      "category": "quality"
+    },
+    "delete_quality_label": {
+      "locale": {
+        "en": {
+          "summary": "Delete Label",
+          "description": "Delete Label"
+        },
+        "pt-BR": {
+          "summary": "Delete Label",
+          "description": "Delete Label",
+          "label": "Delete Label"
+        }
+      },
+      "category": "quality"
+    },
+    "set_quality_label_active": {
+      "locale": {
+        "en": {
+          "summary": "Set Label Active",
+          "description": "Set Label Active"
+        },
+        "pt-BR": {
+          "summary": "Set Label Active",
+          "description": "Set Label Active",
+          "label": "Set Label Active"
+        }
+      },
+      "category": "quality"
+    },
+    "save_quality_label_certificate": {
+      "locale": {
+        "en": {
+          "summary": "Save Certificate",
+          "description": "Save Certificate"
+        },
+        "pt-BR": {
+          "summary": "Save Certificate",
+          "description": "Save Certificate",
+          "label": "Save Certificate"
+        }
+      },
+      "category": "quality"
+    },
+    "create_booking": {
+      "locale": {
+        "en": {
+          "summary": "Create Booking",
+          "description": "Create Booking"
+        },
+        "pt-BR": {
+          "summary": "Create Booking",
+          "description": "Create Booking",
+          "label": "Create Booking"
+        }
+      },
+      "category": "scheduling"
+    },
+    "cancel_scheduling_booking": {
+      "locale": {
+        "en": {
+          "summary": "Cancel Booking",
+          "description": "Cancel Booking"
+        },
+        "pt-BR": {
+          "summary": "Cancel Booking",
+          "description": "Cancel Booking",
+          "label": "Cancel Booking"
+        }
+      },
+      "category": "scheduling"
+    },
+    "create_scheduling_resource": {
+      "locale": {
+        "en": {
+          "summary": "Create Resource",
+          "description": "Create Resource"
+        },
+        "pt-BR": {
+          "summary": "Create Resource",
+          "description": "Create Resource",
+          "label": "Create Resource"
+        }
+      },
+      "category": "scheduling"
+    },
+    "update_scheduling_resource": {
+      "locale": {
+        "en": {
+          "summary": "Update Resource",
+          "description": "Update Resource"
+        },
+        "pt-BR": {
+          "summary": "Update Resource",
+          "description": "Update Resource",
+          "label": "Update Resource"
+        }
+      },
+      "category": "scheduling"
+    },
+    "evaluate_console_alerts": {
+      "locale": {
+        "en": {
+          "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+          "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+        },
+        "pt-BR": {
+          "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+          "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+          "label": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+        }
+      },
+      "category": "system"
+    },
+    "notify_console_smoke_alerts": {
+      "locale": {
+        "en": {
+          "summary": "Registra resultado de smoke e dispara alertas",
+          "description": "Registra resultado de smoke e dispara alertas"
+        },
+        "pt-BR": {
+          "summary": "Registra resultado de smoke e dispara alertas",
+          "description": "Registra resultado de smoke e dispara alertas",
+          "label": "Registra resultado de smoke e dispara alertas"
+        }
+      },
+      "category": "system"
     }
   }
 }
