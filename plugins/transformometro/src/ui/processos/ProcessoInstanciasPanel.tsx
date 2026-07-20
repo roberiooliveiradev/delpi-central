@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Plus, Trash2 } from "lucide-react";
+import { Copy, Plus, Trash2, X } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { DataTableSection } from "../../components/DataTableSection";
 import { DS_TABLE_SECTION_CLASS_NAMES } from "../../components/dataTableUi";
-import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import {
+  FieldLabel,
+  HelpTooltip,
+  IconButton,
+  NativeCheckboxControl,
+  NativeTextControl,
+} from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
@@ -762,7 +768,18 @@ export function ProcessoInstanciasPanel({
 
       {showForm ? (
         <section className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">{formTitle}</h2>
+          <div className={DS_TABLE_SECTION_CLASS_NAMES.header}>
+            <h2 className="ds-section-title">{formTitle}</h2>
+            <div className={DS_TABLE_SECTION_CLASS_NAMES.actions}>
+              <IconButton
+                aria-label="Fechar formulário"
+                disabled={saving}
+                onClick={handleCancelForm}
+              >
+                <X size={16} aria-hidden="true" />
+              </IconButton>
+            </div>
+          </div>
           {isCreate ? (
             <p className="ds-hint">
               Marque unidades e departamentos. Várias melhorias podem usar a mesma combinação — cada
