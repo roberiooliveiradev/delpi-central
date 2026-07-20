@@ -74,5 +74,9 @@ describe("containedModalViewport", () => {
     expect(style.height).toBe(700);
     expect(style.top).toBe(48);
     expect(style.left).toBe(240);
+    // Regressão: inset shorthand apagava top/left → modal na posição estática.
+    expect(style).not.toHaveProperty("inset");
+    expect(style.top).not.toBe("auto");
+    expect(style.left).not.toBe("auto");
   });
 });

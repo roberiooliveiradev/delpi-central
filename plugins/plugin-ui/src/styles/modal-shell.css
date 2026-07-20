@@ -100,7 +100,9 @@
   min-width: 0;
   min-height: 0;
   box-sizing: border-box;
-  z-index: 40;
+  /* Acima do chrome do MFE; abaixo do hotspot da sidebar (~45) fica ok —
+   * o rect já exclui a sidebar. */
+  z-index: 50;
 }
 
 .delpi-ui-modal-overlay--contained {

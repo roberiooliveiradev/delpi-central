@@ -58,17 +58,18 @@ export function measureContainedModalBox(host: HTMLElement): ContainedModalBox {
 }
 
 export function containedModalBoxToStyle(box: ContainedModalBox): CSSProperties {
+  // Não usar shorthand `inset` aqui: em React/CSS ele zera top/left depois
+  // de setá-los → fixed sem âncora cai na posição estática (modal “embaixo”).
   return {
     position: "fixed",
     top: box.top,
     left: box.left,
     width: box.width,
     height: box.height,
-    minWidth: 0,
-    minHeight: 0,
     right: "auto",
     bottom: "auto",
-    inset: "auto",
+    minWidth: 0,
+    minHeight: 0,
   };
 }
 
