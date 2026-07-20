@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  activeComparativoBreakdownSeries,
   collectComparativoAvisos,
   collectComparativoCategorias,
+  shouldShowComparativoBreakdownChart,
+  toComparativoBreakdownChartRows,
 } from "./revisaoComparativoChart";
 import { medicaoCategoriaHints } from "../content/beneficioCalculoLabels";
 import type { ProcessoComparativoItem } from "../data/api/transformometroApi";
@@ -18,6 +21,7 @@ function item(partial: Partial<ProcessoComparativoItem>): ProcessoComparativoIte
       horas_economizadas_mes: 0,
       ...(partial.totais ?? {}),
     },
+    breakdown: partial.breakdown,
     avisos: partial.avisos,
   };
 }
@@ -54,5 +58,36 @@ describe("revisaoComparativoChart / beneficio UI helpers", () => {
   it("medicaoCategoriaHints warns ganho_capacidade when volume not above ref", () => {
     const hints = medicaoCategoriaHints("ganho_capacidade", 90, 100);
     expect(hints.some((h) => h.includes("acima da referência"))).toBe(true);
+  });
+
+  it("shouldShowComparativoBreakdownChart só com 2+ tipos de economia", () => {
+    expect(
+      shouldShowComparativoBreakdownChart([item({ breakdown: { economia_tempo: 100 } })]),
+    ).toBe(false);
+    expect(
+      shouldShowComparativoBreakdownChart([
+        item({ breakdown: { economia_tempo: 100, economia_retrabalho: 40 } }),
+      ]),
+    ).toBe(true);
+    expect(
+      shouldShowComparativoBreakdownChart([
+        item({ revisao_id: "a", breakdown: { economia_tempo: 50 } }),
+        item({ revisao_id: "b", breakdown: { economia_erros: 20 } }),
+      ]),
+    ).toBe(true);
+  });
+
+  it("toComparativoBreakdownChartRows e active series filtram zeros", () => {
+    const rows = toComparativoBreakdownChartRows([
+      item({
+        versao_revisao: "2.0.0",
+        cenario_tipo: "melhoria",
+        breakdown: { economia_tempo: 10, economia_retrabalho: 0, economia_erros: 5 },
+      }),
+    ]);
+    expect(rows[0].economiaTempo).toBe(10);
+    expect(rows[0].economiaErros).toBe(5);
+    const active = activeComparativoBreakdownSeries(rows);
+    expect(active.map((s) => s.key)).toEqual(["economiaTempo", "economiaErros"]);
   });
 });

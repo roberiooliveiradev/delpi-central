@@ -2802,6 +2802,8 @@
 }.dashboard-transformometro .tm-comparativo-chart .recharts-responsive-container{
   width: 100% !important;
   min-height: 320px;
+}.dashboard-transformometro .tm-comparativo-chart--breakdown .recharts-responsive-container{
+  min-height: 240px;
 }.dashboard-transformometro .tm-comparativo-table{
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);

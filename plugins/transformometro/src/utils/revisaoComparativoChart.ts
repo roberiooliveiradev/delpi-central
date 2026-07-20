@@ -1,4 +1,5 @@
 import type { ProcessoComparativoItem } from "../data/api/transformometroApi";
+import { cenarioLabel } from "../content/cenarioLabels";
 
 export type ComparativoChartRow = {
   revisao_id: string;
@@ -12,9 +13,21 @@ export type ComparativoChartRow = {
   ativa: boolean;
 };
 
+export type ComparativoBreakdownChartRow = {
+  revisao_id: string;
+  label: string;
+  economiaTempo: number;
+  economiaRetrabalho: number;
+  economiaErros: number;
+  economiaOutros: number;
+};
+
 export type ComparativoChartView = "money" | "hours";
 
-import { cenarioLabel } from "../content/cenarioLabels";
+export type ComparativoBreakdownSeriesKey = keyof Omit<
+  ComparativoBreakdownChartRow,
+  "revisao_id" | "label"
+>;
 
 export function revisaoComparativoLabel(item: ProcessoComparativoItem): string {
   const versao = item.versao_revisao?.trim() || "?";
@@ -36,6 +49,19 @@ export function toComparativoChartRows(items: ProcessoComparativoItem[]): Compar
   }));
 }
 
+export function toComparativoBreakdownChartRows(
+  items: ProcessoComparativoItem[],
+): ComparativoBreakdownChartRow[] {
+  return items.map((item) => ({
+    revisao_id: item.revisao_id,
+    label: revisaoComparativoLabel(item),
+    economiaTempo: Number(item.breakdown?.economia_tempo ?? 0),
+    economiaRetrabalho: Number(item.breakdown?.economia_retrabalho ?? 0),
+    economiaErros: Number(item.breakdown?.economia_erros ?? 0),
+    economiaOutros: Number(item.breakdown?.economia_outros ?? 0),
+  }));
+}
+
 export const COMPARATIVO_MONEY_SERIES = [
   { key: "economiaBruta" as const, label: "Economia bruta", color: "#089bdb" },
   { key: "economiaLiquida" as const, label: "Economia líquida", color: "#2e7d32" },
@@ -48,8 +74,37 @@ export const COMPARATIVO_HOURS_SERIES = [
   { key: "horas" as const, label: "Horas/mês", color: "#f59e0b" },
 ];
 
+/** Parcelas descritivas da economia de custo (capacidade fica no gráfico principal). */
+export const COMPARATIVO_BREAKDOWN_SERIES: Array<{
+  key: ComparativoBreakdownSeriesKey;
+  label: string;
+  color: string;
+}> = [
+  { key: "economiaTempo", label: "Tempo", color: "#0284c7" },
+  { key: "economiaRetrabalho", label: "Retrabalho", color: "#c2410c" },
+  { key: "economiaErros", label: "Erros", color: "#b91c1c" },
+  { key: "economiaOutros", label: "Outros", color: "#6b7280" },
+];
+
+/** Séries de breakdown com valor > 0 em pelo menos uma revisão. */
+export function activeComparativoBreakdownSeries(
+  rows: ComparativoBreakdownChartRow[],
+): typeof COMPARATIVO_BREAKDOWN_SERIES {
+  return COMPARATIVO_BREAKDOWN_SERIES.filter((series) =>
+    rows.some((row) => Number(row[series.key]) > 0),
+  );
+}
+
+/** Segundo gráfico só quando há mais de um tipo de economia com valor. */
+export function shouldShowComparativoBreakdownChart(
+  items: ProcessoComparativoItem[],
+): boolean {
+  const rows = toComparativoBreakdownChartRows(items);
+  return activeComparativoBreakdownSeries(rows).length >= 2;
+}
+
 export function collectComparativoAvisos(
-  items: ProcessoComparativoItem[]
+  items: ProcessoComparativoItem[],
 ): Array<{ revisaoLabel: string; message: string }> {
   const out: Array<{ revisaoLabel: string; message: string }> = [];
   for (const item of items) {
