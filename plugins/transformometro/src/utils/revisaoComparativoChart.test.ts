@@ -75,19 +75,44 @@ describe("revisaoComparativoChart / beneficio UI helpers", () => {
         item({ revisao_id: "b", breakdown: { economia_erros: 20 } }),
       ]),
     ).toBe(true);
+    // Caso típico «misto»: tempo + capacidade (capacidade vem de totais, não do breakdown).
+    expect(
+      shouldShowComparativoBreakdownChart([
+        item({
+          breakdown: { economia_tempo: 3788.93 },
+          totais: {
+            economia_bruta: 6568.85,
+            economia_liquida_mes: 5116.49,
+            horas_economizadas_mes: 0,
+            ganho_capacidade: 2779.92,
+          },
+        }),
+      ]),
+    ).toBe(true);
   });
 
-  it("toComparativoBreakdownChartRows e active series filtram zeros", () => {
+  it("toComparativoBreakdownChartRows inclui capacidade e active series filtram zeros", () => {
     const rows = toComparativoBreakdownChartRows([
       item({
         versao_revisao: "2.0.0",
         cenario_tipo: "melhoria",
         breakdown: { economia_tempo: 10, economia_retrabalho: 0, economia_erros: 5 },
+        totais: {
+          economia_bruta: 100,
+          economia_liquida_mes: 80,
+          horas_economizadas_mes: 0,
+          ganho_capacidade: 20,
+        },
       }),
     ]);
     expect(rows[0].economiaTempo).toBe(10);
     expect(rows[0].economiaErros).toBe(5);
+    expect(rows[0].ganhoCapacidade).toBe(20);
     const active = activeComparativoBreakdownSeries(rows);
-    expect(active.map((s) => s.key)).toEqual(["economiaTempo", "economiaErros"]);
+    expect(active.map((s) => s.key)).toEqual([
+      "economiaTempo",
+      "economiaErros",
+      "ganhoCapacidade",
+    ]);
   });
 });

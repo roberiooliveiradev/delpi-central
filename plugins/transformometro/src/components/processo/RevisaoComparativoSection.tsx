@@ -63,12 +63,7 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
   const breakdownHeight = Math.max(240, breakdownRows.length * BREAKDOWN_ROW_HEIGHT + 72);
   const avisos = useMemo(() => collectComparativoAvisos(items), [items]);
   const categorias = useMemo(() => collectComparativoCategorias(items), [items]);
-  const moneySeries = useMemo(() => {
-    const hasCapacidade = chartRows.some((row) => row.ganhoCapacidade > 0);
-    if (hasCapacidade) return COMPARATIVO_MONEY_SERIES;
-    return COMPARATIVO_MONEY_SERIES.filter((entry) => entry.key !== "ganhoCapacidade");
-  }, [chartRows]);
-  const series = view === "money" ? moneySeries : COMPARATIVO_HOURS_SERIES;
+  const series = view === "money" ? COMPARATIVO_MONEY_SERIES : COMPARATIVO_HOURS_SERIES;
 
   const formatValue = view === "money" ? formatCurrency : formatHours;
   const formatAxis = view === "money" ? formatAxisMoney : (value: number) => formatHours(value);

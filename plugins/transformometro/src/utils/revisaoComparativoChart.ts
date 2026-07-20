@@ -20,6 +20,7 @@ export type ComparativoBreakdownChartRow = {
   economiaRetrabalho: number;
   economiaErros: number;
   economiaOutros: number;
+  ganhoCapacidade: number;
 };
 
 export type ComparativoChartView = "money" | "hours";
@@ -59,13 +60,13 @@ export function toComparativoBreakdownChartRows(
     economiaRetrabalho: Number(item.breakdown?.economia_retrabalho ?? 0),
     economiaErros: Number(item.breakdown?.economia_erros ?? 0),
     economiaOutros: Number(item.breakdown?.economia_outros ?? 0),
+    ganhoCapacidade: Number(item.totais.ganho_capacidade ?? 0),
   }));
 }
 
 export const COMPARATIVO_MONEY_SERIES = [
   { key: "economiaBruta" as const, label: "Economia bruta", color: "#089bdb" },
   { key: "economiaLiquida" as const, label: "Economia líquida", color: "#2e7d32" },
-  { key: "ganhoCapacidade" as const, label: "Ganho capacidade", color: "#0d9488" },
   { key: "investimento" as const, label: "Invest. total", color: "#be123c" },
   { key: "recursos" as const, label: "Recursos comp.", color: "#7c3aed" },
 ];
@@ -74,7 +75,10 @@ export const COMPARATIVO_HOURS_SERIES = [
   { key: "horas" as const, label: "Horas/mês", color: "#f59e0b" },
 ];
 
-/** Parcelas descritivas da economia de custo (capacidade fica no gráfico principal). */
+/**
+ * Parcelas que compõem a bruta: custo (tempo/retrabalho/erros/outros) + capacidade.
+ * O gráfico principal fica só com totais executivos (bruta/líquida/invest/recursos).
+ */
 export const COMPARATIVO_BREAKDOWN_SERIES: Array<{
   key: ComparativoBreakdownSeriesKey;
   label: string;
@@ -84,6 +88,7 @@ export const COMPARATIVO_BREAKDOWN_SERIES: Array<{
   { key: "economiaRetrabalho", label: "Retrabalho", color: "#c2410c" },
   { key: "economiaErros", label: "Erros", color: "#b91c1c" },
   { key: "economiaOutros", label: "Outros", color: "#6b7280" },
+  { key: "ganhoCapacidade", label: "Ganho capacidade", color: "#0d9488" },
 ];
 
 /** Séries de breakdown com valor > 0 em pelo menos uma revisão. */

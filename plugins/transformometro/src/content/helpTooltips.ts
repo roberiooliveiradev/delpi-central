@@ -266,9 +266,9 @@ export const TM_HELP_TOOLTIPS = {
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:
-      "Compara economia bruta (inclui capacidade), líquida, ganho de capacidade, investimentos, recursos e horas entre as revisões desta instância.",
+      "Compara economia bruta (já inclui capacidade), líquida, investimentos, recursos e horas entre as revisões. O detalhe das parcelas (tempo, retrabalho, erros, outros e capacidade) fica no gráfico de composição.",
     comparativoBreakdownChart:
-      "Detalha as parcelas da economia de custo (tempo, retrabalho, erros e outros) entre as revisões. Aparece quando há mais de um tipo de economia com valor.",
+      "Barras horizontais com as parcelas da economia bruta: tempo, retrabalho, erros, outros e ganho de capacidade. Aparece quando há mais de um tipo com valor (ex.: tempo + capacidade em categoria misto).",
     comparativoTable:
       "Tabela com economia, breakdown (tempo/retrabalho/erros), categoria, Δ volume, capacidade e meses com dados.",
     comparativoAvisos:
