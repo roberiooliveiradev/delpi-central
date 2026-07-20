@@ -1,8 +1,8 @@
 {
   "version": 1,
   "baselineVersion": "3",
-  "operationCount": 300,
-  "stableCount": 300,
+  "operationCount": 366,
+  "stableCount": 366,
   "autoCount": 0,
   "recommendationCollisions": [],
   "autoByTag": {},
@@ -2119,6 +2119,390 @@
       "method": "GET",
       "path": "/system/tables/{tableName}/schema",
       "tag": "system",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_realized",
+      "path": "/dashboard/indicators/financial-ebitda/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_meta",
+      "path": "/dashboard/indicators/financial-ebitda/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_realized",
+      "path": "/dashboard/indicators/financial-fixed-cost/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_meta",
+      "path": "/dashboard/indicators/financial-fixed-cost/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_realized",
+      "path": "/dashboard/indicators/financial-pmr/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_meta",
+      "path": "/dashboard/indicators/financial-pmr/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_realized",
+      "path": "/dashboard/indicators/hr-absenteeism/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_meta",
+      "path": "/dashboard/indicators/hr-absenteeism/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_realized",
+      "path": "/dashboard/indicators/hr-turnover/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_meta",
+      "path": "/dashboard/indicators/hr-turnover/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_realized",
+      "path": "/dashboard/indicators/hr-satisfaction/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_meta",
+      "path": "/dashboard/indicators/hr-satisfaction/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_realized",
+      "path": "/dashboard/indicators/hr-pdi/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_meta",
+      "path": "/dashboard/indicators/hr-pdi/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_realized",
+      "path": "/dashboard/indicators/hr-performance-reviews/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_meta",
+      "path": "/dashboard/indicators/hr-performance-reviews/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_realized",
+      "path": "/dashboard/indicators/hr-training-hours/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_meta",
+      "path": "/dashboard/indicators/hr-training-hours/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_realized",
+      "path": "/dashboard/indicators/commercial-rol/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_meta",
+      "path": "/dashboard/indicators/commercial-rol/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_closing_rate_realized",
+      "path": "/dashboard/indicators/commercial-closing-rate/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_closing_rate_meta",
+      "path": "/dashboard/indicators/commercial-closing-rate/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
+      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
+      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_realized",
+      "path": "/dashboard/indicators/production-direct-labor/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_meta",
+      "path": "/dashboard/indicators/production-direct-labor/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_realized",
+      "path": "/dashboard/indicators/production-costs/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_meta",
+      "path": "/dashboard/indicators/production-costs/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_realized",
+      "path": "/dashboard/indicators/production-depreciation/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_meta",
+      "path": "/dashboard/indicators/production-depreciation/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_realized",
+      "path": "/dashboard/indicators/production-oee/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_meta",
+      "path": "/dashboard/indicators/production-oee/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_realized",
+      "path": "/dashboard/indicators/production-otd/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_meta",
+      "path": "/dashboard/indicators/production-otd/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_realized",
+      "path": "/dashboard/indicators/quality-ppm-internal/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_meta",
+      "path": "/dashboard/indicators/quality-ppm-internal/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_realized",
+      "path": "/dashboard/indicators/quality-ppm-external/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_meta",
+      "path": "/dashboard/indicators/quality-ppm-external/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_realized",
+      "path": "/dashboard/indicators/quality-audit-5s/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_meta",
+      "path": "/dashboard/indicators/quality-audit-5s/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
+      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
+      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_realized",
+      "path": "/dashboard/indicators/supplies-cpv/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_meta",
+      "path": "/dashboard/indicators/supplies-cpv/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_realized",
+      "path": "/dashboard/indicators/supplies-otd/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_meta",
+      "path": "/dashboard/indicators/supplies-otd/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_realized",
+      "path": "/dashboard/indicators/supplies-stock-turnover/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_meta",
+      "path": "/dashboard/indicators/supplies-stock-turnover/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_realized",
+      "path": "/dashboard/indicators/supplies-stock-value/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_meta",
+      "path": "/dashboard/indicators/supplies-stock-value/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_realized",
+      "path": "/dashboard/indicators/engineering-projects-on-time/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_meta",
+      "path": "/dashboard/indicators/engineering-projects-on-time/meta",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
+      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
+      "method": "GET",
+      "stable": true
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
+      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
+      "method": "GET",
       "stable": true
     }
   ]

@@ -15,6 +15,8 @@ def _is_dashboard_integration_path(path: str) -> bool:
         or "integrations/dashboard-department-score" in normalized
         or "integrations/dashboard-department-indicators" in normalized
         or "integrations/dashboard-departments-indicators" in normalized
+        or "integrations/dashboard-indicator-realized" in normalized
+        or "integrations/dashboard-indicator-meta" in normalized
         or "integrations/tv-dashboard-hero" in normalized
     )
 

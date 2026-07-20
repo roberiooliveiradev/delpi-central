@@ -148,3 +148,24 @@ def test_overlays_file_exists_for_curated_routes():
     overlays = payload.get("overlays") or {}
     assert "get_overall_equipment_effectiveness_pct" in overlays
     assert "get_sales_conversion_rate" in overlays
+
+
+def test_si_indicator_prefix_overlay_applies_kpi_value_fields():
+    from scripts.generate_tv_data_routes_from_openapi import (
+        generate_routes,
+        OPENAPI_BASELINE_PATH,
+    )
+
+    generated = generate_routes(
+        baseline_path=OPENAPI_BASELINE_PATH,
+        routes_path=ROUTES_PATH,
+        overlays_path=OVERLAYS_PATH,
+    )
+    sample = next(
+        item
+        for item in generated
+        if item["operationId"] == "get_si_indicator_quality_ppm_internal_realized"
+    )
+    assert sample["valueFields"] == ["value"]
+    assert sample["allowedDisplayModes"] == ["kpi", "auto"]
+    assert sample["label"] == "PPM Interno — realizado"

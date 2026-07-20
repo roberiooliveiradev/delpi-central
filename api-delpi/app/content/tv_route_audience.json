@@ -5954,6 +5954,1094 @@
           }
         }
       }
+    },
+    "get_si_indicator_financial_ebitda_realized": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "EBITDA / Receita Operacional — actual",
+          "description": "Actual value for SI indicator «EBITDA / Receita Operacional» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual EBITDA / Receita Operacional.",
+          "label": "EBITDA / Receita Operacional — actual"
+        },
+        "pt-BR": {
+          "summary": "EBITDA / Receita Operacional — realizado",
+          "description": "Valor realizado do indicador SI «EBITDA / Receita Operacional» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de EBITDA / Receita Operacional.",
+          "label": "EBITDA / Receita Operacional — realizado"
+        }
+      }
+    },
+    "get_si_indicator_financial_ebitda_meta": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "EBITDA / Receita Operacional — goal",
+          "description": "Goal (comparable) for SI indicator «EBITDA / Receita Operacional» (IGD view).",
+          "whenToUse": "Use as a KPI card for the EBITDA / Receita Operacional goal.",
+          "label": "EBITDA / Receita Operacional — goal"
+        },
+        "pt-BR": {
+          "summary": "EBITDA / Receita Operacional — meta",
+          "description": "Meta (comparable goal) do indicador SI «EBITDA / Receita Operacional» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de EBITDA / Receita Operacional.",
+          "label": "EBITDA / Receita Operacional — meta"
+        }
+      }
+    },
+    "get_si_indicator_financial_fixed_cost_realized": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "% Custos Fixos / Receita Operacional — actual",
+          "description": "Actual value for SI indicator «% Custos Fixos / Receita Operacional» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual % Custos Fixos / Receita Operacional.",
+          "label": "% Custos Fixos / Receita Operacional — actual"
+        },
+        "pt-BR": {
+          "summary": "% Custos Fixos / Receita Operacional — realizado",
+          "description": "Valor realizado do indicador SI «% Custos Fixos / Receita Operacional» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de % Custos Fixos / Receita Operacional.",
+          "label": "% Custos Fixos / Receita Operacional — realizado"
+        }
+      }
+    },
+    "get_si_indicator_financial_fixed_cost_meta": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "% Custos Fixos / Receita Operacional — goal",
+          "description": "Goal (comparable) for SI indicator «% Custos Fixos / Receita Operacional» (IGD view).",
+          "whenToUse": "Use as a KPI card for the % Custos Fixos / Receita Operacional goal.",
+          "label": "% Custos Fixos / Receita Operacional — goal"
+        },
+        "pt-BR": {
+          "summary": "% Custos Fixos / Receita Operacional — meta",
+          "description": "Meta (comparable goal) do indicador SI «% Custos Fixos / Receita Operacional» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de % Custos Fixos / Receita Operacional.",
+          "label": "% Custos Fixos / Receita Operacional — meta"
+        }
+      }
+    },
+    "get_si_indicator_financial_pmr_realized": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Prazo Médio de Recebimento (PMR) — actual",
+          "description": "Actual value for SI indicator «Prazo Médio de Recebimento (PMR)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Prazo Médio de Recebimento (PMR).",
+          "label": "Prazo Médio de Recebimento (PMR) — actual"
+        },
+        "pt-BR": {
+          "summary": "Prazo Médio de Recebimento (PMR) — realizado",
+          "description": "Valor realizado do indicador SI «Prazo Médio de Recebimento (PMR)» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Prazo Médio de Recebimento (PMR).",
+          "label": "Prazo Médio de Recebimento (PMR) — realizado"
+        }
+      }
+    },
+    "get_si_indicator_financial_pmr_meta": {
+      "category": "financial",
+      "locale": {
+        "en": {
+          "summary": "Prazo Médio de Recebimento (PMR) — goal",
+          "description": "Goal (comparable) for SI indicator «Prazo Médio de Recebimento (PMR)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Prazo Médio de Recebimento (PMR) goal.",
+          "label": "Prazo Médio de Recebimento (PMR) — goal"
+        },
+        "pt-BR": {
+          "summary": "Prazo Médio de Recebimento (PMR) — meta",
+          "description": "Meta (comparable goal) do indicador SI «Prazo Médio de Recebimento (PMR)» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Prazo Médio de Recebimento (PMR).",
+          "label": "Prazo Médio de Recebimento (PMR) — meta"
+        }
+      }
+    },
+    "get_si_indicator_hr_absenteeism_realized": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Absenteísmo — actual",
+          "description": "Actual value for SI indicator «Absenteísmo» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Absenteísmo.",
+          "label": "Absenteísmo — actual"
+        },
+        "pt-BR": {
+          "summary": "Absenteísmo — realizado",
+          "description": "Valor realizado do indicador SI «Absenteísmo» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Absenteísmo.",
+          "label": "Absenteísmo — realizado"
+        }
+      }
+    },
+    "get_si_indicator_hr_absenteeism_meta": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Absenteísmo — goal",
+          "description": "Goal (comparable) for SI indicator «Absenteísmo» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Absenteísmo goal.",
+          "label": "Absenteísmo — goal"
+        },
+        "pt-BR": {
+          "summary": "Absenteísmo — meta",
+          "description": "Meta (comparable goal) do indicador SI «Absenteísmo» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Absenteísmo.",
+          "label": "Absenteísmo — meta"
+        }
+      }
+    },
+    "get_si_indicator_hr_turnover_realized": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Turnover (Rotatividade) — actual",
+          "description": "Actual value for SI indicator «Turnover (Rotatividade)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Turnover (Rotatividade).",
+          "label": "Turnover (Rotatividade) — actual"
+        },
+        "pt-BR": {
+          "summary": "Turnover (Rotatividade) — realizado",
+          "description": "Valor realizado do indicador SI «Turnover (Rotatividade)» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Turnover (Rotatividade).",
+          "label": "Turnover (Rotatividade) — realizado"
+        }
+      }
+    },
+    "get_si_indicator_hr_turnover_meta": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Turnover (Rotatividade) — goal",
+          "description": "Goal (comparable) for SI indicator «Turnover (Rotatividade)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Turnover (Rotatividade) goal.",
+          "label": "Turnover (Rotatividade) — goal"
+        },
+        "pt-BR": {
+          "summary": "Turnover (Rotatividade) — meta",
+          "description": "Meta (comparable goal) do indicador SI «Turnover (Rotatividade)» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Turnover (Rotatividade).",
+          "label": "Turnover (Rotatividade) — meta"
+        }
+      }
+    },
+    "get_si_indicator_hr_satisfaction_realized": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Satisfação Interna (Clima/Engajamento) — actual",
+          "description": "Actual value for SI indicator «Satisfação Interna (Clima/Engajamento)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Satisfação Interna (Clima/Engajamento).",
+          "label": "Satisfação Interna (Clima/Engajamento) — actual"
+        },
+        "pt-BR": {
+          "summary": "Satisfação Interna (Clima/Engajamento) — realizado",
+          "description": "Valor realizado do indicador SI «Satisfação Interna (Clima/Engajamento)» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Satisfação Interna (Clima/Engajamento).",
+          "label": "Satisfação Interna (Clima/Engajamento) — realizado"
+        }
+      }
+    },
+    "get_si_indicator_hr_satisfaction_meta": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Satisfação Interna (Clima/Engajamento) — goal",
+          "description": "Goal (comparable) for SI indicator «Satisfação Interna (Clima/Engajamento)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Satisfação Interna (Clima/Engajamento) goal.",
+          "label": "Satisfação Interna (Clima/Engajamento) — goal"
+        },
+        "pt-BR": {
+          "summary": "Satisfação Interna (Clima/Engajamento) — meta",
+          "description": "Meta (comparable goal) do indicador SI «Satisfação Interna (Clima/Engajamento)» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Satisfação Interna (Clima/Engajamento).",
+          "label": "Satisfação Interna (Clima/Engajamento) — meta"
+        }
+      }
+    },
+    "get_si_indicator_hr_pdi_realized": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Número de PDI's Ativos — actual",
+          "description": "Actual value for SI indicator «Número de PDI's Ativos» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Número de PDI's Ativos.",
+          "label": "Número de PDI's Ativos — actual"
+        },
+        "pt-BR": {
+          "summary": "Número de PDI's Ativos — realizado",
+          "description": "Valor realizado do indicador SI «Número de PDI's Ativos» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Número de PDI's Ativos.",
+          "label": "Número de PDI's Ativos — realizado"
+        }
+      }
+    },
+    "get_si_indicator_hr_pdi_meta": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Número de PDI's Ativos — goal",
+          "description": "Goal (comparable) for SI indicator «Número de PDI's Ativos» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Número de PDI's Ativos goal.",
+          "label": "Número de PDI's Ativos — goal"
+        },
+        "pt-BR": {
+          "summary": "Número de PDI's Ativos — meta",
+          "description": "Meta (comparable goal) do indicador SI «Número de PDI's Ativos» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Número de PDI's Ativos.",
+          "label": "Número de PDI's Ativos — meta"
+        }
+      }
+    },
+    "get_si_indicator_hr_performance_reviews_realized": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "% de Avaliações de Desempenho Concluídas — actual",
+          "description": "Actual value for SI indicator «% de Avaliações de Desempenho Concluídas» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual % de Avaliações de Desempenho Concluídas.",
+          "label": "% de Avaliações de Desempenho Concluídas — actual"
+        },
+        "pt-BR": {
+          "summary": "% de Avaliações de Desempenho Concluídas — realizado",
+          "description": "Valor realizado do indicador SI «% de Avaliações de Desempenho Concluídas» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de % de Avaliações de Desempenho Concluídas.",
+          "label": "% de Avaliações de Desempenho Concluídas — realizado"
+        }
+      }
+    },
+    "get_si_indicator_hr_performance_reviews_meta": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "% de Avaliações de Desempenho Concluídas — goal",
+          "description": "Goal (comparable) for SI indicator «% de Avaliações de Desempenho Concluídas» (IGD view).",
+          "whenToUse": "Use as a KPI card for the % de Avaliações de Desempenho Concluídas goal.",
+          "label": "% de Avaliações de Desempenho Concluídas — goal"
+        },
+        "pt-BR": {
+          "summary": "% de Avaliações de Desempenho Concluídas — meta",
+          "description": "Meta (comparable goal) do indicador SI «% de Avaliações de Desempenho Concluídas» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de % de Avaliações de Desempenho Concluídas.",
+          "label": "% de Avaliações de Desempenho Concluídas — meta"
+        }
+      }
+    },
+    "get_si_indicator_hr_training_hours_realized": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Horas de Treinamento / Colaborador / mês — actual",
+          "description": "Actual value for SI indicator «Horas de Treinamento / Colaborador / mês» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Horas de Treinamento / Colaborador / mês.",
+          "label": "Horas de Treinamento / Colaborador / mês — actual"
+        },
+        "pt-BR": {
+          "summary": "Horas de Treinamento / Colaborador / mês — realizado",
+          "description": "Valor realizado do indicador SI «Horas de Treinamento / Colaborador / mês» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Horas de Treinamento / Colaborador / mês.",
+          "label": "Horas de Treinamento / Colaborador / mês — realizado"
+        }
+      }
+    },
+    "get_si_indicator_hr_training_hours_meta": {
+      "category": "hr",
+      "locale": {
+        "en": {
+          "summary": "Horas de Treinamento / Colaborador / mês — goal",
+          "description": "Goal (comparable) for SI indicator «Horas de Treinamento / Colaborador / mês» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Horas de Treinamento / Colaborador / mês goal.",
+          "label": "Horas de Treinamento / Colaborador / mês — goal"
+        },
+        "pt-BR": {
+          "summary": "Horas de Treinamento / Colaborador / mês — meta",
+          "description": "Meta (comparable goal) do indicador SI «Horas de Treinamento / Colaborador / mês» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Horas de Treinamento / Colaborador / mês.",
+          "label": "Horas de Treinamento / Colaborador / mês — meta"
+        }
+      }
+    },
+    "get_si_indicator_commercial_rol_realized": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "ROL — actual",
+          "description": "Actual value for SI indicator «ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual ROL.",
+          "label": "ROL — actual"
+        },
+        "pt-BR": {
+          "summary": "ROL — realizado",
+          "description": "Valor realizado do indicador SI «ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de ROL.",
+          "label": "ROL — realizado"
+        }
+      }
+    },
+    "get_si_indicator_commercial_rol_meta": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "ROL — goal",
+          "description": "Goal (comparable) for SI indicator «ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the ROL goal.",
+          "label": "ROL — goal"
+        },
+        "pt-BR": {
+          "summary": "ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de ROL.",
+          "label": "ROL — meta"
+        }
+      }
+    },
+    "get_si_indicator_commercial_closing_rate_realized": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "Taxa de Fechamento de Negócios — actual",
+          "description": "Actual value for SI indicator «Taxa de Fechamento de Negócios» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Taxa de Fechamento de Negócios.",
+          "label": "Taxa de Fechamento de Negócios — actual"
+        },
+        "pt-BR": {
+          "summary": "Taxa de Fechamento de Negócios — realizado",
+          "description": "Valor realizado do indicador SI «Taxa de Fechamento de Negócios» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Taxa de Fechamento de Negócios.",
+          "label": "Taxa de Fechamento de Negócios — realizado"
+        }
+      }
+    },
+    "get_si_indicator_commercial_closing_rate_meta": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "Taxa de Fechamento de Negócios — goal",
+          "description": "Goal (comparable) for SI indicator «Taxa de Fechamento de Negócios» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Taxa de Fechamento de Negócios goal.",
+          "label": "Taxa de Fechamento de Negócios — goal"
+        },
+        "pt-BR": {
+          "summary": "Taxa de Fechamento de Negócios — meta",
+          "description": "Meta (comparable goal) do indicador SI «Taxa de Fechamento de Negócios» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Taxa de Fechamento de Negócios.",
+          "label": "Taxa de Fechamento de Negócios — meta"
+        }
+      }
+    },
+    "get_si_indicator_commercial_sales_order_otd_realized": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "OTD de Pedidos de Venda — actual",
+          "description": "Actual value for SI indicator «OTD de Pedidos de Venda» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual OTD de Pedidos de Venda.",
+          "label": "OTD de Pedidos de Venda — actual"
+        },
+        "pt-BR": {
+          "summary": "OTD de Pedidos de Venda — realizado",
+          "description": "Valor realizado do indicador SI «OTD de Pedidos de Venda» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de OTD de Pedidos de Venda.",
+          "label": "OTD de Pedidos de Venda — realizado"
+        }
+      }
+    },
+    "get_si_indicator_commercial_sales_order_otd_meta": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "OTD de Pedidos de Venda — goal",
+          "description": "Goal (comparable) for SI indicator «OTD de Pedidos de Venda» (IGD view).",
+          "whenToUse": "Use as a KPI card for the OTD de Pedidos de Venda goal.",
+          "label": "OTD de Pedidos de Venda — goal"
+        },
+        "pt-BR": {
+          "summary": "OTD de Pedidos de Venda — meta",
+          "description": "Meta (comparable goal) do indicador SI «OTD de Pedidos de Venda» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de OTD de Pedidos de Venda.",
+          "label": "OTD de Pedidos de Venda — meta"
+        }
+      }
+    },
+    "get_si_indicator_commercial_new_business_rol_realized": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "% ROL de Novos Negócios — actual",
+          "description": "Actual value for SI indicator «% ROL de Novos Negócios» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual % ROL de Novos Negócios.",
+          "label": "% ROL de Novos Negócios — actual"
+        },
+        "pt-BR": {
+          "summary": "% ROL de Novos Negócios — realizado",
+          "description": "Valor realizado do indicador SI «% ROL de Novos Negócios» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de % ROL de Novos Negócios.",
+          "label": "% ROL de Novos Negócios — realizado"
+        }
+      }
+    },
+    "get_si_indicator_commercial_new_business_rol_meta": {
+      "category": "commercial",
+      "locale": {
+        "en": {
+          "summary": "% ROL de Novos Negócios — goal",
+          "description": "Goal (comparable) for SI indicator «% ROL de Novos Negócios» (IGD view).",
+          "whenToUse": "Use as a KPI card for the % ROL de Novos Negócios goal.",
+          "label": "% ROL de Novos Negócios — goal"
+        },
+        "pt-BR": {
+          "summary": "% ROL de Novos Negócios — meta",
+          "description": "Meta (comparable goal) do indicador SI «% ROL de Novos Negócios» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de % ROL de Novos Negócios.",
+          "label": "% ROL de Novos Negócios — meta"
+        }
+      }
+    },
+    "get_si_indicator_production_direct_labor_realized": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Custo Mão de Obra Direta / ROL — actual",
+          "description": "Actual value for SI indicator «Custo Mão de Obra Direta / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Custo Mão de Obra Direta / ROL.",
+          "label": "Custo Mão de Obra Direta / ROL — actual"
+        },
+        "pt-BR": {
+          "summary": "Custo Mão de Obra Direta / ROL — realizado",
+          "description": "Valor realizado do indicador SI «Custo Mão de Obra Direta / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Custo Mão de Obra Direta / ROL.",
+          "label": "Custo Mão de Obra Direta / ROL — realizado"
+        }
+      }
+    },
+    "get_si_indicator_production_direct_labor_meta": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Custo Mão de Obra Direta / ROL — goal",
+          "description": "Goal (comparable) for SI indicator «Custo Mão de Obra Direta / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Custo Mão de Obra Direta / ROL goal.",
+          "label": "Custo Mão de Obra Direta / ROL — goal"
+        },
+        "pt-BR": {
+          "summary": "Custo Mão de Obra Direta / ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «Custo Mão de Obra Direta / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Custo Mão de Obra Direta / ROL.",
+          "label": "Custo Mão de Obra Direta / ROL — meta"
+        }
+      }
+    },
+    "get_si_indicator_production_costs_realized": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Custos de Produção / ROL — actual",
+          "description": "Actual value for SI indicator «Custos de Produção / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Custos de Produção / ROL.",
+          "label": "Custos de Produção / ROL — actual"
+        },
+        "pt-BR": {
+          "summary": "Custos de Produção / ROL — realizado",
+          "description": "Valor realizado do indicador SI «Custos de Produção / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Custos de Produção / ROL.",
+          "label": "Custos de Produção / ROL — realizado"
+        }
+      }
+    },
+    "get_si_indicator_production_costs_meta": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Custos de Produção / ROL — goal",
+          "description": "Goal (comparable) for SI indicator «Custos de Produção / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Custos de Produção / ROL goal.",
+          "label": "Custos de Produção / ROL — goal"
+        },
+        "pt-BR": {
+          "summary": "Custos de Produção / ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «Custos de Produção / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Custos de Produção / ROL.",
+          "label": "Custos de Produção / ROL — meta"
+        }
+      }
+    },
+    "get_si_indicator_production_depreciation_realized": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Depreciação / ROL — actual",
+          "description": "Actual value for SI indicator «Depreciação / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Depreciação / ROL.",
+          "label": "Depreciação / ROL — actual"
+        },
+        "pt-BR": {
+          "summary": "Depreciação / ROL — realizado",
+          "description": "Valor realizado do indicador SI «Depreciação / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Depreciação / ROL.",
+          "label": "Depreciação / ROL — realizado"
+        }
+      }
+    },
+    "get_si_indicator_production_depreciation_meta": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "Depreciação / ROL — goal",
+          "description": "Goal (comparable) for SI indicator «Depreciação / ROL» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Depreciação / ROL goal.",
+          "label": "Depreciação / ROL — goal"
+        },
+        "pt-BR": {
+          "summary": "Depreciação / ROL — meta",
+          "description": "Meta (comparable goal) do indicador SI «Depreciação / ROL» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Depreciação / ROL.",
+          "label": "Depreciação / ROL — meta"
+        }
+      }
+    },
+    "get_si_indicator_production_oee_realized": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "OEE (Eficiência Global dos Equip.) — actual",
+          "description": "Actual value for SI indicator «OEE (Eficiência Global dos Equip.)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual OEE (Eficiência Global dos Equip.).",
+          "label": "OEE (Eficiência Global dos Equip.) — actual"
+        },
+        "pt-BR": {
+          "summary": "OEE (Eficiência Global dos Equip.) — realizado",
+          "description": "Valor realizado do indicador SI «OEE (Eficiência Global dos Equip.)» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de OEE (Eficiência Global dos Equip.).",
+          "label": "OEE (Eficiência Global dos Equip.) — realizado"
+        }
+      }
+    },
+    "get_si_indicator_production_oee_meta": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "OEE (Eficiência Global dos Equip.) — goal",
+          "description": "Goal (comparable) for SI indicator «OEE (Eficiência Global dos Equip.)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the OEE (Eficiência Global dos Equip.) goal.",
+          "label": "OEE (Eficiência Global dos Equip.) — goal"
+        },
+        "pt-BR": {
+          "summary": "OEE (Eficiência Global dos Equip.) — meta",
+          "description": "Meta (comparable goal) do indicador SI «OEE (Eficiência Global dos Equip.)» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de OEE (Eficiência Global dos Equip.).",
+          "label": "OEE (Eficiência Global dos Equip.) — meta"
+        }
+      }
+    },
+    "get_si_indicator_production_otd_realized": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "OTD (Entrega no Prazo) — actual",
+          "description": "Actual value for SI indicator «OTD (Entrega no Prazo)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual OTD (Entrega no Prazo).",
+          "label": "OTD (Entrega no Prazo) — actual"
+        },
+        "pt-BR": {
+          "summary": "OTD (Entrega no Prazo) — realizado",
+          "description": "Valor realizado do indicador SI «OTD (Entrega no Prazo)» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de OTD (Entrega no Prazo).",
+          "label": "OTD (Entrega no Prazo) — realizado"
+        }
+      }
+    },
+    "get_si_indicator_production_otd_meta": {
+      "category": "production",
+      "locale": {
+        "en": {
+          "summary": "OTD (Entrega no Prazo) — goal",
+          "description": "Goal (comparable) for SI indicator «OTD (Entrega no Prazo)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the OTD (Entrega no Prazo) goal.",
+          "label": "OTD (Entrega no Prazo) — goal"
+        },
+        "pt-BR": {
+          "summary": "OTD (Entrega no Prazo) — meta",
+          "description": "Meta (comparable goal) do indicador SI «OTD (Entrega no Prazo)» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de OTD (Entrega no Prazo).",
+          "label": "OTD (Entrega no Prazo) — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_internal_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Interno — actual",
+          "description": "Actual value for SI indicator «PPM Interno» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual PPM Interno.",
+          "label": "PPM Interno — actual"
+        },
+        "pt-BR": {
+          "summary": "PPM Interno — realizado",
+          "description": "Valor realizado do indicador SI «PPM Interno» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de PPM Interno.",
+          "label": "PPM Interno — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_internal_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Interno — goal",
+          "description": "Goal (comparable) for SI indicator «PPM Interno» (IGD view).",
+          "whenToUse": "Use as a KPI card for the PPM Interno goal.",
+          "label": "PPM Interno — goal"
+        },
+        "pt-BR": {
+          "summary": "PPM Interno — meta",
+          "description": "Meta (comparable goal) do indicador SI «PPM Interno» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de PPM Interno.",
+          "label": "PPM Interno — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_external_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Externo — actual",
+          "description": "Actual value for SI indicator «PPM Externo» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual PPM Externo.",
+          "label": "PPM Externo — actual"
+        },
+        "pt-BR": {
+          "summary": "PPM Externo — realizado",
+          "description": "Valor realizado do indicador SI «PPM Externo» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de PPM Externo.",
+          "label": "PPM Externo — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_external_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Externo — goal",
+          "description": "Goal (comparable) for SI indicator «PPM Externo» (IGD view).",
+          "whenToUse": "Use as a KPI card for the PPM Externo goal.",
+          "label": "PPM Externo — goal"
+        },
+        "pt-BR": {
+          "summary": "PPM Externo — meta",
+          "description": "Meta (comparable goal) do indicador SI «PPM Externo» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de PPM Externo.",
+          "label": "PPM Externo — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_kaizen_ideas_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Ideias Aprovadas para Kaizen/mês — actual",
+          "description": "Actual value for SI indicator «Ideias Aprovadas para Kaizen/mês» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Ideias Aprovadas para Kaizen/mês.",
+          "label": "Ideias Aprovadas para Kaizen/mês — actual"
+        },
+        "pt-BR": {
+          "summary": "Ideias Aprovadas para Kaizen/mês — realizado",
+          "description": "Valor realizado do indicador SI «Ideias Aprovadas para Kaizen/mês» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Ideias Aprovadas para Kaizen/mês.",
+          "label": "Ideias Aprovadas para Kaizen/mês — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_kaizen_ideas_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Ideias Aprovadas para Kaizen/mês — goal",
+          "description": "Goal (comparable) for SI indicator «Ideias Aprovadas para Kaizen/mês» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Ideias Aprovadas para Kaizen/mês goal.",
+          "label": "Ideias Aprovadas para Kaizen/mês — goal"
+        },
+        "pt-BR": {
+          "summary": "Ideias Aprovadas para Kaizen/mês — meta",
+          "description": "Meta (comparable goal) do indicador SI «Ideias Aprovadas para Kaizen/mês» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Ideias Aprovadas para Kaizen/mês.",
+          "label": "Ideias Aprovadas para Kaizen/mês — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_audit_5s_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Nota Auditoria 5S — actual",
+          "description": "Actual value for SI indicator «Nota Auditoria 5S» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Nota Auditoria 5S.",
+          "label": "Nota Auditoria 5S — actual"
+        },
+        "pt-BR": {
+          "summary": "Nota Auditoria 5S — realizado",
+          "description": "Valor realizado do indicador SI «Nota Auditoria 5S» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Nota Auditoria 5S.",
+          "label": "Nota Auditoria 5S — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_audit_5s_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Nota Auditoria 5S — goal",
+          "description": "Goal (comparable) for SI indicator «Nota Auditoria 5S» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Nota Auditoria 5S goal.",
+          "label": "Nota Auditoria 5S — goal"
+        },
+        "pt-BR": {
+          "summary": "Nota Auditoria 5S — meta",
+          "description": "Meta (comparable goal) do indicador SI «Nota Auditoria 5S» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Nota Auditoria 5S.",
+          "label": "Nota Auditoria 5S — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_kaizen_financial_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Ganhos Financeiros Kaizen/mês — actual",
+          "description": "Actual value for SI indicator «Ganhos Financeiros Kaizen/mês» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Ganhos Financeiros Kaizen/mês.",
+          "label": "Ganhos Financeiros Kaizen/mês — actual"
+        },
+        "pt-BR": {
+          "summary": "Ganhos Financeiros Kaizen/mês — realizado",
+          "description": "Valor realizado do indicador SI «Ganhos Financeiros Kaizen/mês» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Ganhos Financeiros Kaizen/mês.",
+          "label": "Ganhos Financeiros Kaizen/mês — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_kaizen_financial_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Ganhos Financeiros Kaizen/mês — goal",
+          "description": "Goal (comparable) for SI indicator «Ganhos Financeiros Kaizen/mês» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Ganhos Financeiros Kaizen/mês goal.",
+          "label": "Ganhos Financeiros Kaizen/mês — goal"
+        },
+        "pt-BR": {
+          "summary": "Ganhos Financeiros Kaizen/mês — meta",
+          "description": "Meta (comparable goal) do indicador SI «Ganhos Financeiros Kaizen/mês» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Ganhos Financeiros Kaizen/mês.",
+          "label": "Ganhos Financeiros Kaizen/mês — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_internal_plugs_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Interno Plugues — actual",
+          "description": "Actual value for SI indicator «PPM Interno Plugues» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual PPM Interno Plugues.",
+          "label": "PPM Interno Plugues — actual"
+        },
+        "pt-BR": {
+          "summary": "PPM Interno Plugues — realizado",
+          "description": "Valor realizado do indicador SI «PPM Interno Plugues» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de PPM Interno Plugues.",
+          "label": "PPM Interno Plugues — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_internal_plugs_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Interno Plugues — goal",
+          "description": "Goal (comparable) for SI indicator «PPM Interno Plugues» (IGD view).",
+          "whenToUse": "Use as a KPI card for the PPM Interno Plugues goal.",
+          "label": "PPM Interno Plugues — goal"
+        },
+        "pt-BR": {
+          "summary": "PPM Interno Plugues — meta",
+          "description": "Meta (comparable goal) do indicador SI «PPM Interno Plugues» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de PPM Interno Plugues.",
+          "label": "PPM Interno Plugues — meta"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_external_plugs_realized": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Externo Plugues — actual",
+          "description": "Actual value for SI indicator «PPM Externo Plugues» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual PPM Externo Plugues.",
+          "label": "PPM Externo Plugues — actual"
+        },
+        "pt-BR": {
+          "summary": "PPM Externo Plugues — realizado",
+          "description": "Valor realizado do indicador SI «PPM Externo Plugues» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de PPM Externo Plugues.",
+          "label": "PPM Externo Plugues — realizado"
+        }
+      }
+    },
+    "get_si_indicator_quality_ppm_external_plugs_meta": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "PPM Externo Plugues — goal",
+          "description": "Goal (comparable) for SI indicator «PPM Externo Plugues» (IGD view).",
+          "whenToUse": "Use as a KPI card for the PPM Externo Plugues goal.",
+          "label": "PPM Externo Plugues — goal"
+        },
+        "pt-BR": {
+          "summary": "PPM Externo Plugues — meta",
+          "description": "Meta (comparable goal) do indicador SI «PPM Externo Plugues» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de PPM Externo Plugues.",
+          "label": "PPM Externo Plugues — meta"
+        }
+      }
+    },
+    "get_si_indicator_supplies_cpv_realized": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "CPV Consolidado (matriz e filial) — actual",
+          "description": "Actual value for SI indicator «CPV Consolidado (matriz e filial)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual CPV Consolidado (matriz e filial).",
+          "label": "CPV Consolidado (matriz e filial) — actual"
+        },
+        "pt-BR": {
+          "summary": "CPV Consolidado (matriz e filial) — realizado",
+          "description": "Valor realizado do indicador SI «CPV Consolidado (matriz e filial)» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de CPV Consolidado (matriz e filial).",
+          "label": "CPV Consolidado (matriz e filial) — realizado"
+        }
+      }
+    },
+    "get_si_indicator_supplies_cpv_meta": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "CPV Consolidado (matriz e filial) — goal",
+          "description": "Goal (comparable) for SI indicator «CPV Consolidado (matriz e filial)» (IGD view).",
+          "whenToUse": "Use as a KPI card for the CPV Consolidado (matriz e filial) goal.",
+          "label": "CPV Consolidado (matriz e filial) — goal"
+        },
+        "pt-BR": {
+          "summary": "CPV Consolidado (matriz e filial) — meta",
+          "description": "Meta (comparable goal) do indicador SI «CPV Consolidado (matriz e filial)» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de CPV Consolidado (matriz e filial).",
+          "label": "CPV Consolidado (matriz e filial) — meta"
+        }
+      }
+    },
+    "get_si_indicator_supplies_otd_realized": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "OTD Consolidado de Compras — actual",
+          "description": "Actual value for SI indicator «OTD Consolidado de Compras» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual OTD Consolidado de Compras.",
+          "label": "OTD Consolidado de Compras — actual"
+        },
+        "pt-BR": {
+          "summary": "OTD Consolidado de Compras — realizado",
+          "description": "Valor realizado do indicador SI «OTD Consolidado de Compras» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de OTD Consolidado de Compras.",
+          "label": "OTD Consolidado de Compras — realizado"
+        }
+      }
+    },
+    "get_si_indicator_supplies_otd_meta": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "OTD Consolidado de Compras — goal",
+          "description": "Goal (comparable) for SI indicator «OTD Consolidado de Compras» (IGD view).",
+          "whenToUse": "Use as a KPI card for the OTD Consolidado de Compras goal.",
+          "label": "OTD Consolidado de Compras — goal"
+        },
+        "pt-BR": {
+          "summary": "OTD Consolidado de Compras — meta",
+          "description": "Meta (comparable goal) do indicador SI «OTD Consolidado de Compras» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de OTD Consolidado de Compras.",
+          "label": "OTD Consolidado de Compras — meta"
+        }
+      }
+    },
+    "get_si_indicator_supplies_stock_turnover_realized": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Giro de Estoque — actual",
+          "description": "Actual value for SI indicator «Giro de Estoque» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Giro de Estoque.",
+          "label": "Giro de Estoque — actual"
+        },
+        "pt-BR": {
+          "summary": "Giro de Estoque — realizado",
+          "description": "Valor realizado do indicador SI «Giro de Estoque» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Giro de Estoque.",
+          "label": "Giro de Estoque — realizado"
+        }
+      }
+    },
+    "get_si_indicator_supplies_stock_turnover_meta": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Giro de Estoque — goal",
+          "description": "Goal (comparable) for SI indicator «Giro de Estoque» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Giro de Estoque goal.",
+          "label": "Giro de Estoque — goal"
+        },
+        "pt-BR": {
+          "summary": "Giro de Estoque — meta",
+          "description": "Meta (comparable goal) do indicador SI «Giro de Estoque» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Giro de Estoque.",
+          "label": "Giro de Estoque — meta"
+        }
+      }
+    },
+    "get_si_indicator_supplies_stock_value_realized": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Valor Total do Estoque Consolidado — actual",
+          "description": "Actual value for SI indicator «Valor Total do Estoque Consolidado» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Valor Total do Estoque Consolidado.",
+          "label": "Valor Total do Estoque Consolidado — actual"
+        },
+        "pt-BR": {
+          "summary": "Valor Total do Estoque Consolidado — realizado",
+          "description": "Valor realizado do indicador SI «Valor Total do Estoque Consolidado» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Valor Total do Estoque Consolidado.",
+          "label": "Valor Total do Estoque Consolidado — realizado"
+        }
+      }
+    },
+    "get_si_indicator_supplies_stock_value_meta": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Valor Total do Estoque Consolidado — goal",
+          "description": "Goal (comparable) for SI indicator «Valor Total do Estoque Consolidado» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Valor Total do Estoque Consolidado goal.",
+          "label": "Valor Total do Estoque Consolidado — goal"
+        },
+        "pt-BR": {
+          "summary": "Valor Total do Estoque Consolidado — meta",
+          "description": "Meta (comparable goal) do indicador SI «Valor Total do Estoque Consolidado» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Valor Total do Estoque Consolidado.",
+          "label": "Valor Total do Estoque Consolidado — meta"
+        }
+      }
+    },
+    "get_si_indicator_supplies_negotiation_savings_realized": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Economia em Negociações de Compras — actual",
+          "description": "Actual value for SI indicator «Economia em Negociações de Compras» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Economia em Negociações de Compras.",
+          "label": "Economia em Negociações de Compras — actual"
+        },
+        "pt-BR": {
+          "summary": "Economia em Negociações de Compras — realizado",
+          "description": "Valor realizado do indicador SI «Economia em Negociações de Compras» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Economia em Negociações de Compras.",
+          "label": "Economia em Negociações de Compras — realizado"
+        }
+      }
+    },
+    "get_si_indicator_supplies_negotiation_savings_meta": {
+      "category": "supplies",
+      "locale": {
+        "en": {
+          "summary": "Economia em Negociações de Compras — goal",
+          "description": "Goal (comparable) for SI indicator «Economia em Negociações de Compras» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Economia em Negociações de Compras goal.",
+          "label": "Economia em Negociações de Compras — goal"
+        },
+        "pt-BR": {
+          "summary": "Economia em Negociações de Compras — meta",
+          "description": "Meta (comparable goal) do indicador SI «Economia em Negociações de Compras» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Economia em Negociações de Compras.",
+          "label": "Economia em Negociações de Compras — meta"
+        }
+      }
+    },
+    "get_si_indicator_engineering_projects_on_time_realized": {
+      "category": "engineering",
+      "locale": {
+        "en": {
+          "summary": "% de Projetos Concluídos no Prazo — actual",
+          "description": "Actual value for SI indicator «% de Projetos Concluídos no Prazo» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual % de Projetos Concluídos no Prazo.",
+          "label": "% de Projetos Concluídos no Prazo — actual"
+        },
+        "pt-BR": {
+          "summary": "% de Projetos Concluídos no Prazo — realizado",
+          "description": "Valor realizado do indicador SI «% de Projetos Concluídos no Prazo» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de % de Projetos Concluídos no Prazo.",
+          "label": "% de Projetos Concluídos no Prazo — realizado"
+        }
+      }
+    },
+    "get_si_indicator_engineering_projects_on_time_meta": {
+      "category": "engineering",
+      "locale": {
+        "en": {
+          "summary": "% de Projetos Concluídos no Prazo — goal",
+          "description": "Goal (comparable) for SI indicator «% de Projetos Concluídos no Prazo» (IGD view).",
+          "whenToUse": "Use as a KPI card for the % de Projetos Concluídos no Prazo goal.",
+          "label": "% de Projetos Concluídos no Prazo — goal"
+        },
+        "pt-BR": {
+          "summary": "% de Projetos Concluídos no Prazo — meta",
+          "description": "Meta (comparable goal) do indicador SI «% de Projetos Concluídos no Prazo» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de % de Projetos Concluídos no Prazo.",
+          "label": "% de Projetos Concluídos no Prazo — meta"
+        }
+      }
+    },
+    "get_si_indicator_engineering_transforma_plus_realized": {
+      "category": "engineering",
+      "locale": {
+        "en": {
+          "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — actual",
+          "description": "Actual value for SI indicator «Ganhos Financeiros do TRANSFORMA+ DELPI» (IGD view).",
+          "whenToUse": "Use as a KPI card for the actual Ganhos Financeiros do TRANSFORMA+ DELPI.",
+          "label": "Ganhos Financeiros do TRANSFORMA+ DELPI — actual"
+        },
+        "pt-BR": {
+          "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — realizado",
+          "description": "Valor realizado do indicador SI «Ganhos Financeiros do TRANSFORMA+ DELPI» (visão IGD).",
+          "whenToUse": "Usar no card KPI do realizado de Ganhos Financeiros do TRANSFORMA+ DELPI.",
+          "label": "Ganhos Financeiros do TRANSFORMA+ DELPI — realizado"
+        }
+      }
+    },
+    "get_si_indicator_engineering_transforma_plus_meta": {
+      "category": "engineering",
+      "locale": {
+        "en": {
+          "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — goal",
+          "description": "Goal (comparable) for SI indicator «Ganhos Financeiros do TRANSFORMA+ DELPI» (IGD view).",
+          "whenToUse": "Use as a KPI card for the Ganhos Financeiros do TRANSFORMA+ DELPI goal.",
+          "label": "Ganhos Financeiros do TRANSFORMA+ DELPI — goal"
+        },
+        "pt-BR": {
+          "summary": "Ganhos Financeiros do TRANSFORMA+ DELPI — meta",
+          "description": "Meta (comparable goal) do indicador SI «Ganhos Financeiros do TRANSFORMA+ DELPI» (visão IGD).",
+          "whenToUse": "Usar no card KPI da meta de Ganhos Financeiros do TRANSFORMA+ DELPI.",
+          "label": "Ganhos Financeiros do TRANSFORMA+ DELPI — meta"
+        }
+      }
     }
   }
 }

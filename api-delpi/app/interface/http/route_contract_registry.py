@@ -822,6 +822,11 @@ def resolve_contract(
     shape: str | None = None,
 ) -> tuple[str, str]:
     contract = ROUTE_CONTRACTS.get(operation_id)
+    if contract is None and operation_id.startswith("get_si_indicator_"):
+        if operation_id.endswith("_realized"):
+            contract = RouteContract("dashboard_si_indicator_realized", "scalar")
+        elif operation_id.endswith("_meta"):
+            contract = RouteContract("dashboard_si_indicator_meta", "scalar")
     resolved_entity = entity or (contract.entity if contract else default_entity(operation_id))
     resolved_shape = shape or (contract.shape if contract else "scalar")
     return resolved_entity, resolved_shape

@@ -735,6 +735,40 @@ def load_overlays(overlays_path: Path) -> dict[str, dict[str, Any]]:
     }
 
 
+def load_overlay_prefixes(overlays_path: Path) -> dict[str, dict[str, Any]]:
+    if not overlays_path.is_file():
+        return {}
+    payload = load_json(overlays_path)
+    raw = payload.get("overlayPrefixes") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(key): dict(value)
+        for key, value in raw.items()
+        if isinstance(value, dict) and str(key).strip()
+    }
+
+
+def resolve_overlay(
+    operation_id: str,
+    *,
+    overlays: dict[str, dict[str, Any]],
+    prefixes: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    exact = overlays.get(operation_id)
+    prefix_match: dict[str, Any] | None = None
+    # Prefixo mais longo vence (ex.: get_si_indicator_quality_ vs get_si_indicator_).
+    for prefix, overlay in sorted(prefixes.items(), key=lambda item: len(item[0]), reverse=True):
+        if operation_id.startswith(prefix):
+            prefix_match = overlay
+            break
+    if exact and prefix_match:
+        merged = dict(prefix_match)
+        merged.update(exact)
+        return merged
+    return exact or prefix_match
+
+
 def extract_overlay_from_route(route: dict[str, Any], base: dict[str, Any]) -> dict[str, Any]:
     """Extrai só o que difere do base OpenAPI (para seed de overlays)."""
     overlay: dict[str, Any] = {}
@@ -810,13 +844,18 @@ def generate_routes(
     overlays_path: Path | None = None,
 ) -> list[dict[str, Any]]:
     existing = load_existing_routes(routes_path)
-    overlays = load_overlays(overlays_path or TV_OVERLAYS_PATH)
+    overlays_file = overlays_path or TV_OVERLAYS_PATH
+    overlays = load_overlays(overlays_file)
+    prefixes = load_overlay_prefixes(overlays_file)
     generated: list[dict[str, Any]] = []
     for operation in load_openapi_get_operations(baseline_path):
         operation_id = str(operation.get("operationId") or "").strip()
         base = build_base_route(operation)
         with_existing = merge_with_existing(base, existing.get(operation_id))
-        with_overlay = apply_overlay(with_existing, overlays.get(operation_id))
+        with_overlay = apply_overlay(
+            with_existing,
+            resolve_overlay(operation_id, overlays=overlays, prefixes=prefixes),
+        )
         normalized = normalize_route_param_schema(with_overlay)
         generated.append(strip_fixed_params_from_schema(normalized))
     return generated

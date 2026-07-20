@@ -1,0 +1,207 @@
+{
+  "version": "2026.07.20",
+  "description": "Indicadores SI ativos para rotas TV escalares (meta + realizado). Fonte: seed V009 + migrações V015/V019/V026/V030/V031.",
+  "departmentCategories": {
+    "financial": "financial",
+    "hr": "hr",
+    "commercial": "commercial",
+    "production": "production",
+    "quality": "quality",
+    "supplies": "supplies",
+    "engineering": "engineering"
+  },
+  "indicators": [
+    {
+      "indicatorId": "financial-ebitda",
+      "sourceKey": "financial_ebitda",
+      "name": "EBITDA / Receita Operacional",
+      "departmentId": "financial"
+    },
+    {
+      "indicatorId": "financial-fixed-cost",
+      "sourceKey": "financial_fixed_cost",
+      "name": "% Custos Fixos / Receita Operacional",
+      "departmentId": "financial"
+    },
+    {
+      "indicatorId": "financial-pmr",
+      "sourceKey": "financial_pmr",
+      "name": "Prazo Médio de Recebimento (PMR)",
+      "departmentId": "financial"
+    },
+    {
+      "indicatorId": "hr-absenteeism",
+      "sourceKey": "hr_absenteeism",
+      "name": "Absenteísmo",
+      "departmentId": "hr"
+    },
+    {
+      "indicatorId": "hr-turnover",
+      "sourceKey": "hr_turnover",
+      "name": "Turnover (Rotatividade)",
+      "departmentId": "hr"
+    },
+    {
+      "indicatorId": "hr-satisfaction",
+      "sourceKey": "hr_satisfaction",
+      "name": "Satisfação Interna (Clima/Engajamento)",
+      "departmentId": "hr"
+    },
+    {
+      "indicatorId": "hr-pdi",
+      "sourceKey": "hr_pdi",
+      "name": "Número de PDI's Ativos",
+      "departmentId": "hr"
+    },
+    {
+      "indicatorId": "hr-performance-reviews",
+      "sourceKey": "hr_performance_reviews_completion",
+      "name": "% de Avaliações de Desempenho Concluídas",
+      "departmentId": "hr"
+    },
+    {
+      "indicatorId": "hr-training-hours",
+      "sourceKey": "hr_training_hours",
+      "name": "Horas de Treinamento / Colaborador / mês",
+      "departmentId": "hr"
+    },
+    {
+      "indicatorId": "commercial-rol",
+      "sourceKey": "commercial_rol",
+      "name": "ROL",
+      "departmentId": "commercial"
+    },
+    {
+      "indicatorId": "commercial-closing-rate",
+      "sourceKey": "commercial_sales_conversion_rate",
+      "name": "Taxa de Fechamento de Negócios",
+      "departmentId": "commercial"
+    },
+    {
+      "indicatorId": "commercial-sales-order-otd",
+      "sourceKey": "commercial_sales_order_otd",
+      "name": "OTD de Pedidos de Venda",
+      "departmentId": "commercial"
+    },
+    {
+      "indicatorId": "commercial-new-business-rol",
+      "sourceKey": "commercial_new_business_rol_pct",
+      "name": "% ROL de Novos Negócios",
+      "departmentId": "commercial"
+    },
+    {
+      "indicatorId": "production-direct-labor",
+      "sourceKey": "production_direct_labor",
+      "name": "Custo Mão de Obra Direta / ROL",
+      "departmentId": "production"
+    },
+    {
+      "indicatorId": "production-costs",
+      "sourceKey": "production_cost",
+      "name": "Custos de Produção / ROL",
+      "departmentId": "production"
+    },
+    {
+      "indicatorId": "production-depreciation",
+      "sourceKey": "production_depreciation",
+      "name": "Depreciação / ROL",
+      "departmentId": "production"
+    },
+    {
+      "indicatorId": "production-oee",
+      "sourceKey": "production_oee",
+      "name": "OEE (Eficiência Global dos Equip.)",
+      "departmentId": "production"
+    },
+    {
+      "indicatorId": "production-otd",
+      "sourceKey": "production_otd",
+      "name": "OTD (Entrega no Prazo)",
+      "departmentId": "production"
+    },
+    {
+      "indicatorId": "quality-ppm-internal",
+      "sourceKey": "quality_ppm_internal",
+      "name": "PPM Interno",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-ppm-external",
+      "sourceKey": "quality_ppm_external",
+      "name": "PPM Externo",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-kaizen-ideas",
+      "sourceKey": "quality_kaizen_ideas",
+      "name": "Ideias Aprovadas para Kaizen/mês",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-audit-5s",
+      "sourceKey": "quality_audit_5s",
+      "name": "Nota Auditoria 5S",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-kaizen-financial",
+      "sourceKey": "quality_kaizen_financial",
+      "name": "Ganhos Financeiros Kaizen/mês",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-ppm-internal-plugs",
+      "sourceKey": "quality_ppm_internal_plugs",
+      "name": "PPM Interno Plugues",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "quality-ppm-external-plugs",
+      "sourceKey": "quality_ppm_external_plugs",
+      "name": "PPM Externo Plugues",
+      "departmentId": "quality"
+    },
+    {
+      "indicatorId": "supplies-cpv",
+      "sourceKey": "supplies_cpv",
+      "name": "CPV Consolidado (matriz e filial)",
+      "departmentId": "supplies"
+    },
+    {
+      "indicatorId": "supplies-otd",
+      "sourceKey": "supplies_otd",
+      "name": "OTD Consolidado de Compras",
+      "departmentId": "supplies"
+    },
+    {
+      "indicatorId": "supplies-stock-turnover",
+      "sourceKey": "supplies_inventory_turnover",
+      "name": "Giro de Estoque",
+      "departmentId": "supplies"
+    },
+    {
+      "indicatorId": "supplies-stock-value",
+      "sourceKey": "supplies_stock_value",
+      "name": "Valor Total do Estoque Consolidado",
+      "departmentId": "supplies"
+    },
+    {
+      "indicatorId": "supplies-negotiation-savings",
+      "sourceKey": "supplies_negotiation_savings",
+      "name": "Economia em Negociações de Compras",
+      "departmentId": "supplies"
+    },
+    {
+      "indicatorId": "engineering-projects-on-time",
+      "sourceKey": "lmp",
+      "name": "% de Projetos Concluídos no Prazo",
+      "departmentId": "engineering"
+    },
+    {
+      "indicatorId": "engineering-transforma-plus",
+      "sourceKey": "transforma_mais",
+      "name": "Ganhos Financeiros do TRANSFORMA+ DELPI",
+      "departmentId": "engineering"
+    }
+  ]
+}

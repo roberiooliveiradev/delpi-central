@@ -1,6 +1,23 @@
 {
   "version": 1,
   "description": "Overlays TV por operationId — valueFields, tvConstraints, paramStrategy, labels curados e whenToUse (audiência). Mergeados sobre o schema gerado do OpenAPI.",
+  "overlayPrefixes": {
+    "get_si_indicator_": {
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    }
+  },
   "overlays": {
     "get_on_time_delivery_pct": {
       "tvConstraints": {

@@ -211,14 +211,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "sales_conversion_rate_pct",
-        "value"
-      ],
       "tvConstraints": {
         "maxRows": 1,
         "requiresBranchPermission": true
-      }
+      },
+      "valueFields": [
+        "sales_conversion_rate_pct",
+        "value"
+      ]
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -1251,14 +1251,14 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFields": [
         "score",
         "value",
         "idd"
-      ],
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      ]
     },
     {
       "operationId": "get_dashboard_department_indicators",
@@ -1329,14 +1329,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "idd",
-        "score"
-      ],
       "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
-      }
+      },
+      "valueFields": [
+        "idd",
+        "score"
+      ]
     },
     {
       "operationId": "get_dashboard_departments_indicators",
@@ -1406,13 +1406,3725 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "idd",
-        "score"
-      ],
       "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
+      },
+      "valueFields": [
+        "idd",
+        "score"
+      ]
+    },
+    {
+      "operationId": "get_si_indicator_commercial_closing_rate_meta",
+      "httpMethod": "GET",
+      "label": "Taxa de Fechamento de Negócios — meta",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-closing-rate/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Taxa de Fechamento de Negócios» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Taxa de Fechamento de Negócios.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_commercial_closing_rate_realized",
+      "httpMethod": "GET",
+      "label": "Taxa de Fechamento de Negócios — realizado",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-closing-rate/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Taxa de Fechamento de Negócios» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Taxa de Fechamento de Negócios.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
+      "httpMethod": "GET",
+      "label": "% ROL de Novos Negócios — meta",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «% ROL de Novos Negócios» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de % ROL de Novos Negócios.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
+      "httpMethod": "GET",
+      "label": "% ROL de Novos Negócios — realizado",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «% ROL de Novos Negócios» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de % ROL de Novos Negócios.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_meta",
+      "httpMethod": "GET",
+      "label": "ROL — meta",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-rol/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_realized",
+      "httpMethod": "GET",
+      "label": "ROL — realizado",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-rol/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
+      "httpMethod": "GET",
+      "label": "OTD de Pedidos de Venda — meta",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «OTD de Pedidos de Venda» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de OTD de Pedidos de Venda.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
+      "httpMethod": "GET",
+      "label": "OTD de Pedidos de Venda — realizado",
+      "category": "commercial",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «OTD de Pedidos de Venda» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de OTD de Pedidos de Venda.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_meta",
+      "httpMethod": "GET",
+      "label": "% de Projetos Concluídos no Prazo — meta",
+      "category": "engineering",
+      "path": "/dashboard/indicators/engineering-projects-on-time/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «% de Projetos Concluídos no Prazo» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de % de Projetos Concluídos no Prazo.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_realized",
+      "httpMethod": "GET",
+      "label": "% de Projetos Concluídos no Prazo — realizado",
+      "category": "engineering",
+      "path": "/dashboard/indicators/engineering-projects-on-time/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «% de Projetos Concluídos no Prazo» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de % de Projetos Concluídos no Prazo.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
+      "httpMethod": "GET",
+      "label": "Ganhos Financeiros do TRANSFORMA+ DELPI — meta",
+      "category": "engineering",
+      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Ganhos Financeiros do TRANSFORMA+ DELPI» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Ganhos Financeiros do TRANSFORMA+ DELPI.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
+      "httpMethod": "GET",
+      "label": "Ganhos Financeiros do TRANSFORMA+ DELPI — realizado",
+      "category": "engineering",
+      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Ganhos Financeiros do TRANSFORMA+ DELPI» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Ganhos Financeiros do TRANSFORMA+ DELPI.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_meta",
+      "httpMethod": "GET",
+      "label": "EBITDA / Receita Operacional — meta",
+      "category": "financial",
+      "path": "/dashboard/indicators/financial-ebitda/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «EBITDA / Receita Operacional» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de EBITDA / Receita Operacional.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_realized",
+      "httpMethod": "GET",
+      "label": "EBITDA / Receita Operacional — realizado",
+      "category": "financial",
+      "path": "/dashboard/indicators/financial-ebitda/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «EBITDA / Receita Operacional» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de EBITDA / Receita Operacional.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_meta",
+      "httpMethod": "GET",
+      "label": "% Custos Fixos / Receita Operacional — meta",
+      "category": "financial",
+      "path": "/dashboard/indicators/financial-fixed-cost/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «% Custos Fixos / Receita Operacional» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de % Custos Fixos / Receita Operacional.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_realized",
+      "httpMethod": "GET",
+      "label": "% Custos Fixos / Receita Operacional — realizado",
+      "category": "financial",
+      "path": "/dashboard/indicators/financial-fixed-cost/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «% Custos Fixos / Receita Operacional» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de % Custos Fixos / Receita Operacional.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_meta",
+      "httpMethod": "GET",
+      "label": "Prazo Médio de Recebimento (PMR) — meta",
+      "category": "financial",
+      "path": "/dashboard/indicators/financial-pmr/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Prazo Médio de Recebimento (PMR)» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Prazo Médio de Recebimento (PMR).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_realized",
+      "httpMethod": "GET",
+      "label": "Prazo Médio de Recebimento (PMR) — realizado",
+      "category": "financial",
+      "path": "/dashboard/indicators/financial-pmr/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Prazo Médio de Recebimento (PMR)» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Prazo Médio de Recebimento (PMR).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_meta",
+      "httpMethod": "GET",
+      "label": "Absenteísmo — meta",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-absenteeism/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Absenteísmo» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Absenteísmo.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_realized",
+      "httpMethod": "GET",
+      "label": "Absenteísmo — realizado",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-absenteeism/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Absenteísmo» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Absenteísmo.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_meta",
+      "httpMethod": "GET",
+      "label": "Número de PDI's Ativos — meta",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-pdi/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Número de PDI's Ativos» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Número de PDI's Ativos.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_realized",
+      "httpMethod": "GET",
+      "label": "Número de PDI's Ativos — realizado",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-pdi/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Número de PDI's Ativos» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Número de PDI's Ativos.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_meta",
+      "httpMethod": "GET",
+      "label": "% de Avaliações de Desempenho Concluídas — meta",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-performance-reviews/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «% de Avaliações de Desempenho Concluídas» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de % de Avaliações de Desempenho Concluídas.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_realized",
+      "httpMethod": "GET",
+      "label": "% de Avaliações de Desempenho Concluídas — realizado",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-performance-reviews/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «% de Avaliações de Desempenho Concluídas» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de % de Avaliações de Desempenho Concluídas.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_meta",
+      "httpMethod": "GET",
+      "label": "Satisfação Interna (Clima/Engajamento) — meta",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-satisfaction/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Satisfação Interna (Clima/Engajamento)» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Satisfação Interna (Clima/Engajamento).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_realized",
+      "httpMethod": "GET",
+      "label": "Satisfação Interna (Clima/Engajamento) — realizado",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-satisfaction/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Satisfação Interna (Clima/Engajamento)» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Satisfação Interna (Clima/Engajamento).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_meta",
+      "httpMethod": "GET",
+      "label": "Horas de Treinamento / Colaborador / mês — meta",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-training-hours/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Horas de Treinamento / Colaborador / mês» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Horas de Treinamento / Colaborador / mês.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_realized",
+      "httpMethod": "GET",
+      "label": "Horas de Treinamento / Colaborador / mês — realizado",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-training-hours/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Horas de Treinamento / Colaborador / mês» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Horas de Treinamento / Colaborador / mês.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_meta",
+      "httpMethod": "GET",
+      "label": "Turnover (Rotatividade) — meta",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-turnover/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Turnover (Rotatividade)» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Turnover (Rotatividade).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_realized",
+      "httpMethod": "GET",
+      "label": "Turnover (Rotatividade) — realizado",
+      "category": "hr",
+      "path": "/dashboard/indicators/hr-turnover/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Turnover (Rotatividade)» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Turnover (Rotatividade).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_meta",
+      "httpMethod": "GET",
+      "label": "Custos de Produção / ROL — meta",
+      "category": "production",
+      "path": "/dashboard/indicators/production-costs/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Custos de Produção / ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Custos de Produção / ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_realized",
+      "httpMethod": "GET",
+      "label": "Custos de Produção / ROL — realizado",
+      "category": "production",
+      "path": "/dashboard/indicators/production-costs/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Custos de Produção / ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Custos de Produção / ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_meta",
+      "httpMethod": "GET",
+      "label": "Depreciação / ROL — meta",
+      "category": "production",
+      "path": "/dashboard/indicators/production-depreciation/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Depreciação / ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Depreciação / ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_realized",
+      "httpMethod": "GET",
+      "label": "Depreciação / ROL — realizado",
+      "category": "production",
+      "path": "/dashboard/indicators/production-depreciation/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Depreciação / ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Depreciação / ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_meta",
+      "httpMethod": "GET",
+      "label": "Custo Mão de Obra Direta / ROL — meta",
+      "category": "production",
+      "path": "/dashboard/indicators/production-direct-labor/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Custo Mão de Obra Direta / ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Custo Mão de Obra Direta / ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_realized",
+      "httpMethod": "GET",
+      "label": "Custo Mão de Obra Direta / ROL — realizado",
+      "category": "production",
+      "path": "/dashboard/indicators/production-direct-labor/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Custo Mão de Obra Direta / ROL» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Custo Mão de Obra Direta / ROL.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_meta",
+      "httpMethod": "GET",
+      "label": "OEE (Eficiência Global dos Equip.) — meta",
+      "category": "production",
+      "path": "/dashboard/indicators/production-oee/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «OEE (Eficiência Global dos Equip.)» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de OEE (Eficiência Global dos Equip.).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_realized",
+      "httpMethod": "GET",
+      "label": "OEE (Eficiência Global dos Equip.) — realizado",
+      "category": "production",
+      "path": "/dashboard/indicators/production-oee/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «OEE (Eficiência Global dos Equip.)» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de OEE (Eficiência Global dos Equip.).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_meta",
+      "httpMethod": "GET",
+      "label": "OTD (Entrega no Prazo) — meta",
+      "category": "production",
+      "path": "/dashboard/indicators/production-otd/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «OTD (Entrega no Prazo)» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de OTD (Entrega no Prazo).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_realized",
+      "httpMethod": "GET",
+      "label": "OTD (Entrega no Prazo) — realizado",
+      "category": "production",
+      "path": "/dashboard/indicators/production-otd/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «OTD (Entrega no Prazo)» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de OTD (Entrega no Prazo).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_meta",
+      "httpMethod": "GET",
+      "label": "Nota Auditoria 5S — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-audit-5s/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Nota Auditoria 5S» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Nota Auditoria 5S.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_realized",
+      "httpMethod": "GET",
+      "label": "Nota Auditoria 5S — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-audit-5s/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Nota Auditoria 5S» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Nota Auditoria 5S.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
+      "httpMethod": "GET",
+      "label": "Ganhos Financeiros Kaizen/mês — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Ganhos Financeiros Kaizen/mês» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Ganhos Financeiros Kaizen/mês.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
+      "httpMethod": "GET",
+      "label": "Ganhos Financeiros Kaizen/mês — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Ganhos Financeiros Kaizen/mês» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Ganhos Financeiros Kaizen/mês.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
+      "httpMethod": "GET",
+      "label": "Ideias Aprovadas para Kaizen/mês — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Ideias Aprovadas para Kaizen/mês» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Ideias Aprovadas para Kaizen/mês.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
+      "httpMethod": "GET",
+      "label": "Ideias Aprovadas para Kaizen/mês — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Ideias Aprovadas para Kaizen/mês» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Ideias Aprovadas para Kaizen/mês.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
+      "httpMethod": "GET",
+      "label": "PPM Externo Plugues — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «PPM Externo Plugues» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de PPM Externo Plugues.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
+      "httpMethod": "GET",
+      "label": "PPM Externo Plugues — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «PPM Externo Plugues» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de PPM Externo Plugues.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_meta",
+      "httpMethod": "GET",
+      "label": "PPM Externo — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-external/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «PPM Externo» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de PPM Externo.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_realized",
+      "httpMethod": "GET",
+      "label": "PPM Externo — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-external/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «PPM Externo» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de PPM Externo.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
+      "httpMethod": "GET",
+      "label": "PPM Interno Plugues — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «PPM Interno Plugues» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de PPM Interno Plugues.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
+      "httpMethod": "GET",
+      "label": "PPM Interno Plugues — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «PPM Interno Plugues» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de PPM Interno Plugues.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_meta",
+      "httpMethod": "GET",
+      "label": "PPM Interno — meta",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-internal/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «PPM Interno» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de PPM Interno.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_realized",
+      "httpMethod": "GET",
+      "label": "PPM Interno — realizado",
+      "category": "quality",
+      "path": "/dashboard/indicators/quality-ppm-internal/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «PPM Interno» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de PPM Interno.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_meta",
+      "httpMethod": "GET",
+      "label": "CPV Consolidado (matriz e filial) — meta",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-cpv/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «CPV Consolidado (matriz e filial)» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de CPV Consolidado (matriz e filial).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_realized",
+      "httpMethod": "GET",
+      "label": "CPV Consolidado (matriz e filial) — realizado",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-cpv/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «CPV Consolidado (matriz e filial)» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de CPV Consolidado (matriz e filial).",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
+      "httpMethod": "GET",
+      "label": "Economia em Negociações de Compras — meta",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Economia em Negociações de Compras» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Economia em Negociações de Compras.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
+      "httpMethod": "GET",
+      "label": "Economia em Negociações de Compras — realizado",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Economia em Negociações de Compras» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Economia em Negociações de Compras.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_meta",
+      "httpMethod": "GET",
+      "label": "OTD Consolidado de Compras — meta",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-otd/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «OTD Consolidado de Compras» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de OTD Consolidado de Compras.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_realized",
+      "httpMethod": "GET",
+      "label": "OTD Consolidado de Compras — realizado",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-otd/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «OTD Consolidado de Compras» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de OTD Consolidado de Compras.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_meta",
+      "httpMethod": "GET",
+      "label": "Giro de Estoque — meta",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-stock-turnover/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Giro de Estoque» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Giro de Estoque.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_realized",
+      "httpMethod": "GET",
+      "label": "Giro de Estoque — realizado",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-stock-turnover/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Giro de Estoque» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Giro de Estoque.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_meta",
+      "httpMethod": "GET",
+      "label": "Valor Total do Estoque Consolidado — meta",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-stock-value/meta",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Meta (comparable goal) do indicador SI «Valor Total do Estoque Consolidado» (visão IGD).",
+      "whenToUse": "Usar no card KPI da meta de Valor Total do Estoque Consolidado.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_realized",
+      "httpMethod": "GET",
+      "label": "Valor Total do Estoque Consolidado — realizado",
+      "category": "supplies",
+      "path": "/dashboard/indicators/supplies-stock-value/realized",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Valor realizado do indicador SI «Valor Total do Estoque Consolidado» (visão IGD).",
+      "whenToUse": "Usar no card KPI do realizado de Valor Total do Estoque Consolidado.",
+      "paramSchema": {
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      },
+      "valueFields": [
+        "value"
+      ],
+      "valueFieldTypes": {
+        "value": "number"
+      },
+      "tvConstraints": {
+        "maxRows": 1
       }
     },
     {
@@ -1810,18 +5522,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "total_lmps",
-        "percent_dentro_prazo",
-        "avg_lead_time",
-        "total_items"
-      ],
       "valueFieldLabels": {
         "total_lmps": "Total de LMPs",
         "percent_dentro_prazo": "% no prazo",
         "avg_lead_time": "Lead time médio",
         "total_items": "Total de itens"
-      }
+      },
+      "valueFields": [
+        "total_lmps",
+        "percent_dentro_prazo",
+        "avg_lead_time",
+        "total_items"
+      ]
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -5841,21 +9553,8 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "seriesField": "points",
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
       "fixedQueryParams": {
         "granularity": "day"
-      },
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
       },
       "tvConstraints": {
         "requiresBranchPermission": true
@@ -5874,7 +9573,20 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "seriesField": "points",
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -5934,14 +9646,14 @@
         "value",
         "otdPct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -6280,10 +9992,13 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -6291,9 +10006,6 @@
         "date_end": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
       }
     },
     {
@@ -6354,14 +10066,14 @@
         "value",
         "oeePct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -6885,11 +10597,11 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
       },
+      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
@@ -10618,15 +14330,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "list_ppm_internal",
@@ -10815,15 +14527,15 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ],
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "get_produced_quantity",
@@ -12623,15 +16335,15 @@
         "periodDays": 30
       },
       "tableFields": "top_products",
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ],
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      }
+      ]
     },
     {
       "operationId": "get_caller_stats",
