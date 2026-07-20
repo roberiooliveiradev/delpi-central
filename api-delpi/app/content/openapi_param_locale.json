@@ -1,0 +1,1722 @@
+{
+  "version": 1,
+  "description": "Labels/descrições bilíngues de query params — fonte única (OpenAPI x-delpi.params + gerador TV).",
+  "params": {
+    "active": {
+      "locale": {
+        "en": {
+          "label": "Active",
+          "description": "Filters active (yes) or inactive (no) records only."
+        },
+        "pt-BR": {
+          "label": "Ativo",
+          "description": "Filtra apenas registros ativos (sim) ou inativos (não)."
+        }
+      }
+    },
+    "adjustment_percent": {
+      "locale": {
+        "en": {
+          "label": "Adjustment (%)",
+          "description": "Adjustment percentage applied in the calculation."
+        },
+        "pt-BR": {
+          "label": "Ajuste (%)",
+          "description": "Percentual de ajuste aplicado no cálculo."
+        }
+      }
+    },
+    "area_id": {
+      "locale": {
+        "en": {
+          "label": "Area",
+          "description": "Area identifier (e.g. 5S audit)."
+        },
+        "pt-BR": {
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        }
+      }
+    },
+    "audit_status": {
+      "locale": {
+        "en": {
+          "label": "Audit status",
+          "description": "Audit status in the workflow (open, completed, etc.)."
+        },
+        "pt-BR": {
+          "label": "Status da auditoria",
+          "description": "Status da auditoria no fluxo (aberta, concluída etc.)."
+        }
+      }
+    },
+    "branch": {
+      "locale": {
+        "en": {
+          "label": "Branch",
+          "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed."
+        },
+        "pt-BR": {
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido."
+        }
+      }
+    },
+    "branch_code": {
+      "locale": {
+        "en": {
+          "label": "Branch code",
+          "description": "Protheus branch code (e.g. 01 or 02)."
+        },
+        "pt-BR": {
+          "label": "Código da filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
+        }
+      }
+    },
+    "branches": {
+      "locale": {
+        "en": {
+          "label": "Branches",
+          "description": "Branches."
+        },
+        "pt-BR": {
+          "label": "Filiais",
+          "description": "Lista de filiais (CSV). Vazio = todas as filiais permitidas."
+        }
+      }
+    },
+    "catalog_version": {
+      "locale": {
+        "en": {
+          "label": "Catalog version",
+          "description": "Catalog version."
+        },
+        "pt-BR": {
+          "label": "Versão do catálogo",
+          "description": "Versão do catálogo a consultar."
+        }
+      }
+    },
+    "centroCusto": {
+      "locale": {
+        "en": {
+          "label": "Cost center",
+          "description": "Cost center."
+        },
+        "pt-BR": {
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
+        }
+      }
+    },
+    "code": {
+      "locale": {
+        "en": {
+          "label": "Code",
+          "description": "code do registro a Filtersr."
+        },
+        "pt-BR": {
+          "label": "Código",
+          "description": "Código do registro a filtrar."
+        }
+      }
+    },
+    "code_exact": {
+      "locale": {
+        "en": {
+          "label": "Exact code",
+          "description": "Exact code."
+        },
+        "pt-BR": {
+          "label": "Código exato",
+          "description": "Busca pelo código exato (sem correspondência parcial)."
+        }
+      }
+    },
+    "codigo": {
+      "locale": {
+        "en": {
+          "label": "Code",
+          "description": "code do registro a Filtersr."
+        },
+        "pt-BR": {
+          "label": "Código",
+          "description": "Código do registro a filtrar."
+        }
+      }
+    },
+    "codigoOperador": {
+      "locale": {
+        "en": {
+          "label": "Operator code",
+          "description": "code do operador in Protheus."
+        },
+        "pt-BR": {
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
+        }
+      }
+    },
+    "codigo_peca": {
+      "locale": {
+        "en": {
+          "label": "Part code",
+          "description": "Part code."
+        },
+        "pt-BR": {
+          "label": "Código da peça",
+          "description": "Código da peça no cadastro de ferramentas."
+        }
+      }
+    },
+    "competence": {
+      "locale": {
+        "en": {
+          "label": "Competence",
+          "description": "Competence."
+        },
+        "pt-BR": {
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        }
+      }
+    },
+    "cost_center": {
+      "locale": {
+        "en": {
+          "label": "Cost center",
+          "description": "Cost center."
+        },
+        "pt-BR": {
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
+        }
+      }
+    },
+    "customer": {
+      "locale": {
+        "en": {
+          "label": "Customer",
+          "description": "code ou Identifier do customer."
+        },
+        "pt-BR": {
+          "label": "Cliente",
+          "description": "Código ou identificador do cliente."
+        }
+      }
+    },
+    "customer_name": {
+      "locale": {
+        "en": {
+          "label": "Customer name",
+          "description": "Customer name."
+        },
+        "pt-BR": {
+          "label": "Nome do cliente",
+          "description": "Nome (ou parte do nome) do cliente."
+        }
+      }
+    },
+    "customer_reference": {
+      "locale": {
+        "en": {
+          "label": "Customer reference",
+          "description": "Customer reference."
+        },
+        "pt-BR": {
+          "label": "Referência do cliente",
+          "description": "Referência do cliente no pedido ou cadastro."
+        }
+      }
+    },
+    "customer_segment": {
+      "locale": {
+        "en": {
+          "label": "Segment",
+          "description": "Filter: weg or new_business. Empty = all segments."
+        },
+        "pt-BR": {
+          "label": "Segmento",
+          "description": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos."
+        }
+      }
+    },
+    "dataFim": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "end date do period (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        }
+      }
+    },
+    "dataInicio": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "start date do period (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        }
+      }
+    },
+    "data_final": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "end date do period consultado (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data final",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        }
+      }
+    },
+    "data_inicial": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "start date do period consultado (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data inicial",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        }
+      }
+    },
+    "date": {
+      "locale": {
+        "en": {
+          "label": "Date",
+          "description": "Date."
+        },
+        "pt-BR": {
+          "label": "Data",
+          "description": "Data de referência (AAAA-MM-DD)."
+        }
+      }
+    },
+    "date_end": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "end date do period consultado (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        }
+      }
+    },
+    "date_from": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "start date do period consultado (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        }
+      }
+    },
+    "date_start": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "start date do period consultado (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        }
+      }
+    },
+    "date_to": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "end date do period consultado (AAAA-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        }
+      }
+    },
+    "department": {
+      "locale": {
+        "en": {
+          "label": "Department",
+          "description": "Identifier ou nome do department."
+        },
+        "pt-BR": {
+          "label": "Departamento",
+          "description": "Identificador ou nome do departamento."
+        }
+      }
+    },
+    "department_id": {
+      "locale": {
+        "en": {
+          "label": "Department",
+          "description": "Department id in the IDD dashboard."
+        },
+        "pt-BR": {
+          "label": "Departamento",
+          "description": "Identificador do departamento no painel IDD."
+        }
+      }
+    },
+    "descricao": {
+      "locale": {
+        "en": {
+          "label": "Description",
+          "description": "Description."
+        },
+        "pt-BR": {
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
+        }
+      }
+    },
+    "descricao_peca": {
+      "locale": {
+        "en": {
+          "label": "Part description",
+          "description": "Part description."
+        },
+        "pt-BR": {
+          "label": "Descrição da peça",
+          "description": "Descrição da peça no cadastro."
+        }
+      }
+    },
+    "description": {
+      "locale": {
+        "en": {
+          "label": "Description",
+          "description": "Description."
+        },
+        "pt-BR": {
+          "label": "Descrição",
+          "description": "Descrição (ou parte dela) para filtrar."
+        }
+      }
+    },
+    "details_limit": {
+      "locale": {
+        "en": {
+          "label": "Details limit",
+          "description": "Details limit."
+        },
+        "pt-BR": {
+          "label": "Limite de detalhes",
+          "description": "Máximo de linhas de detalhe retornadas."
+        }
+      }
+    },
+    "direction": {
+      "locale": {
+        "en": {
+          "label": "Direction",
+          "description": "Direction."
+        },
+        "pt-BR": {
+          "label": "Direção",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        }
+      }
+    },
+    "efficiency_bands": {
+      "locale": {
+        "en": {
+          "label": "Efficiency bands",
+          "description": "Efficiency bands."
+        },
+        "pt-BR": {
+          "label": "Faixas de eficiência",
+          "description": "Faixas de eficiência em CSV (ex.: ok, low, verify)."
+        }
+      }
+    },
+    "employee": {
+      "locale": {
+        "en": {
+          "label": "Employee",
+          "description": "Employee."
+        },
+        "pt-BR": {
+          "label": "Colaborador",
+          "description": "Código ou matrícula do colaborador."
+        }
+      }
+    },
+    "end_date": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically."
+        },
+        "pt-BR": {
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        }
+      }
+    },
+    "eventTypes": {
+      "locale": {
+        "en": {
+          "label": "Event types",
+          "description": "types de evento a incluir (CSV)."
+        },
+        "pt-BR": {
+          "label": "Tipos de evento",
+          "description": "Tipos de evento a incluir (CSV)."
+        }
+      }
+    },
+    "evidence_type": {
+      "locale": {
+        "en": {
+          "label": "Evidence type",
+          "description": "Evidence type."
+        },
+        "pt-BR": {
+          "label": "Tipo de evidência",
+          "description": "Tipo de evidência anexa ao registro."
+        }
+      }
+    },
+    "failure_mode": {
+      "locale": {
+        "en": {
+          "label": "Failure mode",
+          "description": "Failure mode."
+        },
+        "pt-BR": {
+          "label": "Modo de falha",
+          "description": "Modo de falha associado à NC ou PAC."
+        }
+      }
+    },
+    "file_kind": {
+      "locale": {
+        "en": {
+          "label": "File kind",
+          "description": "type/categoria do arquivo."
+        },
+        "pt-BR": {
+          "label": "Tipo de arquivo",
+          "description": "Tipo/categoria do arquivo."
+        }
+      }
+    },
+    "filename": {
+      "locale": {
+        "en": {
+          "label": "File name",
+          "description": "Filter parcial pelo nome do arquivo."
+        },
+        "pt-BR": {
+          "label": "Nome do arquivo",
+          "description": "Filtro parcial pelo nome do arquivo."
+        }
+      }
+    },
+    "filial": {
+      "locale": {
+        "en": {
+          "label": "Branch",
+          "description": "Protheus branch code (e.g. 01 or 02)."
+        },
+        "pt-BR": {
+          "label": "Filial",
+          "description": "Código da filial no Protheus (ex.: 01 ou 02)."
+        }
+      }
+    },
+    "filial_id": {
+      "locale": {
+        "en": {
+          "label": "Branch ID",
+          "description": "Branch ID."
+        },
+        "pt-BR": {
+          "label": "ID da filial",
+          "description": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch."
+        }
+      }
+    },
+    "finished_product_code": {
+      "locale": {
+        "en": {
+          "label": "Finished product code",
+          "description": "code do product acabado (PA)."
+        },
+        "pt-BR": {
+          "label": "Código do produto acabado",
+          "description": "Código do produto acabado (PA)."
+        }
+      }
+    },
+    "format": {
+      "locale": {
+        "en": {
+          "label": "Format",
+          "description": "Format."
+        },
+        "pt-BR": {
+          "label": "Formato",
+          "description": "Formato de saída ou apresentação do dado."
+        }
+      }
+    },
+    "from": {
+      "locale": {
+        "en": {
+          "label": "From",
+          "description": "From."
+        },
+        "pt-BR": {
+          "label": "De",
+          "description": "Início do intervalo (data ou valor)."
+        }
+      }
+    },
+    "granularity": {
+      "locale": {
+        "en": {
+          "label": "Granularity",
+          "description": "Series bucket size: day, week, month or year."
+        },
+        "pt-BR": {
+          "label": "Granularidade",
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        }
+      }
+    },
+    "group_by": {
+      "locale": {
+        "en": {
+          "label": "Group by",
+          "description": "Como agregar o resultado (geral, branch, product etc.)."
+        },
+        "pt-BR": {
+          "label": "Agrupar por",
+          "description": "Como agregar o resultado (geral, filial, produto etc.)."
+        }
+      }
+    },
+    "group_code": {
+      "locale": {
+        "en": {
+          "label": "Group code",
+          "description": "Group code."
+        },
+        "pt-BR": {
+          "label": "Código do grupo",
+          "description": "Código do grupo de produto/material."
+        }
+      }
+    },
+    "has_revision": {
+      "locale": {
+        "en": {
+          "label": "Has revision",
+          "description": "Has revision."
+        },
+        "pt-BR": {
+          "label": "Com revisão",
+          "description": "Filtra arquivos que possuem sufixo de revisão."
+        }
+      }
+    },
+    "has_variant": {
+      "locale": {
+        "en": {
+          "label": "Has variant",
+          "description": "Filters arquivos que possuem sufixo de variante."
+        },
+        "pt-BR": {
+          "label": "Com variante",
+          "description": "Filtra arquivos que possuem sufixo de variante."
+        }
+      }
+    },
+    "history_limit": {
+      "locale": {
+        "en": {
+          "label": "History limit",
+          "description": "History limit."
+        },
+        "pt-BR": {
+          "label": "Limite do histórico",
+          "description": "Máximo de pontos no histórico retornado."
+        }
+      }
+    },
+    "id": {
+      "locale": {
+        "en": {
+          "label": "ID",
+          "description": "ID."
+        },
+        "pt-BR": {
+          "label": "ID",
+          "description": "Identificador único do registro."
+        }
+      }
+    },
+    "include_completed": {
+      "locale": {
+        "en": {
+          "label": "Include completed",
+          "description": "Include completed."
+        },
+        "pt-BR": {
+          "label": "Incluir concluídos",
+          "description": "Inclui itens já concluídos no resultado."
+        }
+      }
+    },
+    "include_qtd_pi": {
+      "locale": {
+        "en": {
+          "label": "Include PI quantity",
+          "description": "Include PI quantity."
+        },
+        "pt-BR": {
+          "label": "Incluir quantidade PI",
+          "description": "Inclui quantidade de produto intermediário (PI) no resultado."
+        }
+      }
+    },
+    "include_test_products": {
+      "locale": {
+        "en": {
+          "label": "Include test products",
+          "description": "Inclui products de teste no resultado."
+        },
+        "pt-BR": {
+          "label": "Incluir produtos de teste",
+          "description": "Inclui produtos de teste no resultado."
+        }
+      }
+    },
+    "incluir_bloqueados": {
+      "locale": {
+        "en": {
+          "label": "Include blocked",
+          "description": "Inclui records bloqueados na listagem."
+        },
+        "pt-BR": {
+          "label": "Incluir bloqueados",
+          "description": "Inclui registros bloqueados na listagem."
+        }
+      }
+    },
+    "inspection_id": {
+      "locale": {
+        "en": {
+          "label": "Inspection",
+          "description": "Inspection."
+        },
+        "pt-BR": {
+          "label": "Inspeção",
+          "description": "Identificador da inspeção."
+        }
+      }
+    },
+    "inspector": {
+      "locale": {
+        "en": {
+          "label": "Inspector",
+          "description": "code ou nome do inspetor."
+        },
+        "pt-BR": {
+          "label": "Inspetor",
+          "description": "Código ou nome do inspetor."
+        }
+      }
+    },
+    "invoice_number": {
+      "locale": {
+        "en": {
+          "label": "Invoice number",
+          "description": "Invoice number."
+        },
+        "pt-BR": {
+          "label": "Número da nota",
+          "description": "Número da nota fiscal."
+        }
+      }
+    },
+    "issue_date_end": {
+      "locale": {
+        "en": {
+          "label": "Issue date (end)",
+          "description": "Issue date (end)."
+        },
+        "pt-BR": {
+          "label": "Data de emissão (fim)",
+          "description": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD)."
+        }
+      }
+    },
+    "issue_date_start": {
+      "locale": {
+        "en": {
+          "label": "Issue date (start)",
+          "description": "Issue date (start)."
+        },
+        "pt-BR": {
+          "label": "Data de emissão (início)",
+          "description": "Início do filtro pela data de emissão do documento (AAAA-MM-DD)."
+        }
+      }
+    },
+    "item_code": {
+      "locale": {
+        "en": {
+          "label": "Item code",
+          "description": "code do item/material in Protheus."
+        },
+        "pt-BR": {
+          "label": "Código do item",
+          "description": "Código do item/material no Protheus."
+        }
+      }
+    },
+    "legacy": {
+      "locale": {
+        "en": {
+          "label": "Legacy mode",
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
+        },
+        "pt-BR": {
+          "label": "Modo legado",
+          "description": "Usa comportamento legado da API (campos/alias antigos)."
+        }
+      }
+    },
+    "limit": {
+      "locale": {
+        "en": {
+          "label": "Limit",
+          "description": "Limit."
+        },
+        "pt-BR": {
+          "label": "Limite",
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      }
+    },
+    "linked_sort_by": {
+      "locale": {
+        "en": {
+          "label": "Linked sort by",
+          "description": "Linked sort by."
+        },
+        "pt-BR": {
+          "label": "Ordenar vínculos por",
+          "description": "Campo de ordenação dos itens vinculados."
+        }
+      }
+    },
+    "linked_sort_dir": {
+      "locale": {
+        "en": {
+          "label": "Linked sort direction",
+          "description": "Linked sort direction."
+        },
+        "pt-BR": {
+          "label": "Direção da ordenação dos vínculos",
+          "description": "Direção da ordenação dos vínculos: asc ou desc."
+        }
+      }
+    },
+    "listing_type": {
+      "locale": {
+        "en": {
+          "label": "Listing type",
+          "description": "Filter for type da listagem (e.g. Todos, LMP, Amostra)."
+        },
+        "pt-BR": {
+          "label": "Tipo de listagem",
+          "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
+        }
+      }
+    },
+    "location": {
+      "locale": {
+        "en": {
+          "label": "Location",
+          "description": "Location."
+        },
+        "pt-BR": {
+          "label": "Localização",
+          "description": "Localização / endereço de estoque no Protheus."
+        }
+      }
+    },
+    "loss_type": {
+      "locale": {
+        "en": {
+          "label": "Loss type",
+          "description": "Loss type."
+        },
+        "pt-BR": {
+          "label": "Tipo de perda",
+          "description": "Tipo de perda a considerar: refugo, scrap ou ambos."
+        }
+      }
+    },
+    "lot": {
+      "locale": {
+        "en": {
+          "label": "Lot",
+          "description": "Lot."
+        },
+        "pt-BR": {
+          "label": "Lote",
+          "description": "Número do lote."
+        }
+      }
+    },
+    "max_depth": {
+      "locale": {
+        "en": {
+          "label": "Max depth",
+          "description": "Max depth."
+        },
+        "pt-BR": {
+          "label": "Profundidade máxima",
+          "description": "Profundidade máxima da hierarquia/estrutura retornada."
+        }
+      }
+    },
+    "max_size_bytes": {
+      "locale": {
+        "en": {
+          "label": "Max size (bytes)",
+          "description": "Max size (bytes)."
+        },
+        "pt-BR": {
+          "label": "Tamanho máximo (bytes)",
+          "description": "Tamanho máximo do arquivo em bytes."
+        }
+      }
+    },
+    "min_plans": {
+      "locale": {
+        "en": {
+          "label": "Minimum plans",
+          "description": "Minimum plans."
+        },
+        "pt-BR": {
+          "label": "Mínimo de planos",
+          "description": "Quantidade mínima de planos para incluir no resultado."
+        }
+      }
+    },
+    "min_size_bytes": {
+      "locale": {
+        "en": {
+          "label": "Min size (bytes)",
+          "description": "Min size (bytes)."
+        },
+        "pt-BR": {
+          "label": "Tamanho mínimo (bytes)",
+          "description": "Tamanho mínimo do arquivo em bytes."
+        }
+      }
+    },
+    "modified_from": {
+      "locale": {
+        "en": {
+          "label": "Modified from",
+          "description": "Modified from."
+        },
+        "pt-BR": {
+          "label": "Modificado a partir de",
+          "description": "Data/hora mínima de modificação (ISO)."
+        }
+      }
+    },
+    "modified_to": {
+      "locale": {
+        "en": {
+          "label": "Modified to",
+          "description": "Modified to."
+        },
+        "pt-BR": {
+          "label": "Modificado até",
+          "description": "Data/hora máxima de modificação (ISO)."
+        }
+      }
+    },
+    "months": {
+      "locale": {
+        "en": {
+          "label": "Months",
+          "description": "quantity de meses no intervalo analisado."
+        },
+        "pt-BR": {
+          "label": "Meses",
+          "description": "Quantidade de meses no intervalo analisado."
+        }
+      }
+    },
+    "name": {
+      "locale": {
+        "en": {
+          "label": "Name",
+          "description": "Name."
+        },
+        "pt-BR": {
+          "label": "Nome",
+          "description": "Nome (ou parte do nome) para filtrar."
+        }
+      }
+    },
+    "name_process": {
+      "locale": {
+        "en": {
+          "label": "Process name",
+          "description": "Nome do processo Transforma Mais."
+        },
+        "pt-BR": {
+          "label": "Nome do processo",
+          "description": "Nome do processo Transforma Mais."
+        }
+      }
+    },
+    "nonconformity_scope": {
+      "locale": {
+        "en": {
+          "label": "Nonconformity scope",
+          "description": "Nonconformity scope."
+        },
+        "pt-BR": {
+          "label": "Escopo de NC",
+          "description": "Escopo das não conformidades consideradas."
+        }
+      }
+    },
+    "offset": {
+      "locale": {
+        "en": {
+          "label": "Offset",
+          "description": "Offset."
+        },
+        "pt-BR": {
+          "label": "Deslocamento",
+          "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento)."
+        }
+      }
+    },
+    "op": {
+      "locale": {
+        "en": {
+          "label": "Production order",
+          "description": "Production order."
+        },
+        "pt-BR": {
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        }
+      }
+    },
+    "operation_id": {
+      "locale": {
+        "en": {
+          "label": "Operation",
+          "description": "Operation."
+        },
+        "pt-BR": {
+          "label": "Operação",
+          "description": "Identificador da operação."
+        }
+      }
+    },
+    "operator_code": {
+      "locale": {
+        "en": {
+          "label": "Operator code",
+          "description": "code(s) do operador (CSV)."
+        },
+        "pt-BR": {
+          "label": "Código do operador",
+          "description": "Código(s) do operador (CSV)."
+        }
+      }
+    },
+    "orderBy": {
+      "locale": {
+        "en": {
+          "label": "Order by",
+          "description": "Order by."
+        },
+        "pt-BR": {
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar o ranking (ex.: horas, custo)."
+        }
+      }
+    },
+    "orderDir": {
+      "locale": {
+        "en": {
+          "label": "Sort direction",
+          "description": "Sort direction."
+        },
+        "pt-BR": {
+          "label": "Direção da ordenação",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        }
+      }
+    },
+    "overdue_only": {
+      "locale": {
+        "en": {
+          "label": "Overdue only",
+          "description": "Overdue only."
+        },
+        "pt-BR": {
+          "label": "Somente atrasados",
+          "description": "Lista apenas itens atrasados."
+        }
+      }
+    },
+    "owner_user_id": {
+      "locale": {
+        "en": {
+          "label": "Owner",
+          "description": "Owner."
+        },
+        "pt-BR": {
+          "label": "Responsável",
+          "description": "Usuário responsável pelo registro."
+        }
+      }
+    },
+    "page": {
+      "locale": {
+        "en": {
+          "label": "Page",
+          "description": "Page number in paginated listing."
+        },
+        "pt-BR": {
+          "label": "Página",
+          "description": "Número da página na listagem paginada."
+        }
+      }
+    },
+    "pageSize": {
+      "locale": {
+        "en": {
+          "label": "Page size",
+          "description": "Rows per page."
+        },
+        "pt-BR": {
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
+        }
+      }
+    },
+    "page_size": {
+      "locale": {
+        "en": {
+          "label": "Page size",
+          "description": "Rows per page."
+        },
+        "pt-BR": {
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
+        }
+      }
+    },
+    "periodDays": {
+      "locale": {
+        "en": {
+          "label": "Period (days)",
+          "description": "How many days back to include (e.g. 30 = last month through today)."
+        },
+        "pt-BR": {
+          "label": "Período (dias)",
+          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
+        }
+      }
+    },
+    "plan_id": {
+      "locale": {
+        "en": {
+          "label": "Plan",
+          "description": "Plan."
+        },
+        "pt-BR": {
+          "label": "Plano",
+          "description": "Identificador do plano de ação."
+        }
+      }
+    },
+    "price_source": {
+      "locale": {
+        "en": {
+          "label": "Price source",
+          "description": "Price source."
+        },
+        "pt-BR": {
+          "label": "Fonte de preço",
+          "description": "Origem do preço usado no cálculo."
+        }
+      }
+    },
+    "problem_category": {
+      "locale": {
+        "en": {
+          "label": "Problem category",
+          "description": "Categoria do problema reportado."
+        },
+        "pt-BR": {
+          "label": "Categoria do problema",
+          "description": "Categoria do problema reportado."
+        }
+      }
+    },
+    "product": {
+      "locale": {
+        "en": {
+          "label": "Product",
+          "description": "code ou Identifier do product."
+        },
+        "pt-BR": {
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        }
+      }
+    },
+    "product_code": {
+      "locale": {
+        "en": {
+          "label": "Product code",
+          "description": "code do product in Protheus (e.g. 90xxxxxx)."
+        },
+        "pt-BR": {
+          "label": "Código do produto",
+          "description": "Código do produto no Protheus (ex.: 90xxxxxx)."
+        }
+      }
+    },
+    "product_group": {
+      "locale": {
+        "en": {
+          "label": "Product group",
+          "description": "Grupo de product in Protheus."
+        },
+        "pt-BR": {
+          "label": "Grupo de produto",
+          "description": "Grupo de produto no Protheus."
+        }
+      }
+    },
+    "product_prefix": {
+      "locale": {
+        "en": {
+          "label": "Product prefix",
+          "description": "Product prefix."
+        },
+        "pt-BR": {
+          "label": "Prefixo do produto",
+          "description": "Prefixo do código de produto para filtrar famílias."
+        }
+      }
+    },
+    "product_type": {
+      "locale": {
+        "en": {
+          "label": "Product type",
+          "description": "Filter by type: PA (finished) or PI (intermediate)."
+        },
+        "pt-BR": {
+          "label": "Tipo de produto",
+          "description": "Filtra por tipo: PA (acabado) ou PI (intermediário)."
+        }
+      }
+    },
+    "production_order": {
+      "locale": {
+        "en": {
+          "label": "Production order",
+          "description": "Production order."
+        },
+        "pt-BR": {
+          "label": "Ordem de produção",
+          "description": "Ordem(ns) de produção (CSV)."
+        }
+      }
+    },
+    "q": {
+      "locale": {
+        "en": {
+          "label": "Search",
+          "description": "Search."
+        },
+        "pt-BR": {
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        }
+      }
+    },
+    "raw_material_code": {
+      "locale": {
+        "en": {
+          "label": "Raw material code",
+          "description": "Raw material code."
+        },
+        "pt-BR": {
+          "label": "Código da matéria-prima",
+          "description": "Código da matéria-prima."
+        }
+      }
+    },
+    "recurso": {
+      "locale": {
+        "en": {
+          "label": "Resource",
+          "description": "Resource."
+        },
+        "pt-BR": {
+          "label": "Recurso",
+          "description": "Código do recurso de produção."
+        }
+      }
+    },
+    "reference_date": {
+      "locale": {
+        "en": {
+          "label": "Reference date",
+          "description": "Reference date."
+        },
+        "pt-BR": {
+          "label": "Data de referência",
+          "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
+        }
+      }
+    },
+    "resource_id": {
+      "locale": {
+        "en": {
+          "label": "Resource",
+          "description": "Resource."
+        },
+        "pt-BR": {
+          "label": "Recurso",
+          "description": "Identificador do recurso de agendamento."
+        }
+      }
+    },
+    "result": {
+      "locale": {
+        "en": {
+          "label": "Result",
+          "description": "Result."
+        },
+        "pt-BR": {
+          "label": "Resultado",
+          "description": "Resultado da inspeção ou avaliação."
+        }
+      }
+    },
+    "revision": {
+      "locale": {
+        "en": {
+          "label": "Revision",
+          "description": "Revision."
+        },
+        "pt-BR": {
+          "label": "Revisão",
+          "description": "Número ou código da revisão."
+        }
+      }
+    },
+    "root_cause_category": {
+      "locale": {
+        "en": {
+          "label": "Root cause category",
+          "description": "Categoria da causa raiz."
+        },
+        "pt-BR": {
+          "label": "Categoria da causa raiz",
+          "description": "Categoria da causa raiz."
+        }
+      }
+    },
+    "savings_type": {
+      "locale": {
+        "en": {
+          "label": "Savings type",
+          "description": "type de economia (Kaizen)."
+        },
+        "pt-BR": {
+          "label": "Tipo de economia",
+          "description": "Tipo de economia (Kaizen)."
+        }
+      }
+    },
+    "search": {
+      "locale": {
+        "en": {
+          "label": "Search",
+          "description": "free text de search."
+        },
+        "pt-BR": {
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        }
+      }
+    },
+    "section": {
+      "locale": {
+        "en": {
+          "label": "Section",
+          "description": "Section."
+        },
+        "pt-BR": {
+          "label": "Seção",
+          "description": "Seção ou bloco do formulário/checklist."
+        }
+      }
+    },
+    "sector_name": {
+      "locale": {
+        "en": {
+          "label": "Sector",
+          "description": "Nome do setor."
+        },
+        "pt-BR": {
+          "label": "Setor",
+          "description": "Nome do setor."
+        }
+      }
+    },
+    "senso_order": {
+      "locale": {
+        "en": {
+          "label": "5S sense order",
+          "description": "Ordem do senso na auditoria 5S."
+        },
+        "pt-BR": {
+          "label": "Ordem do senso",
+          "description": "Ordem do senso na auditoria 5S."
+        }
+      }
+    },
+    "severity": {
+      "locale": {
+        "en": {
+          "label": "Severity",
+          "description": "Severity."
+        },
+        "pt-BR": {
+          "label": "Severidade",
+          "description": "Nível de severidade."
+        }
+      }
+    },
+    "shift": {
+      "locale": {
+        "en": {
+          "label": "Shift",
+          "description": "Shift."
+        },
+        "pt-BR": {
+          "label": "Turno",
+          "description": "Turno de produção."
+        }
+      }
+    },
+    "sort": {
+      "locale": {
+        "en": {
+          "label": "Sort",
+          "description": "Sort."
+        },
+        "pt-BR": {
+          "label": "Ordenação",
+          "description": "Critério de ordenação da listagem."
+        }
+      }
+    },
+    "sort_by": {
+      "locale": {
+        "en": {
+          "label": "Sort by",
+          "description": "Campo usado para ordenar a listagem."
+        },
+        "pt-BR": {
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
+        }
+      }
+    },
+    "sort_dir": {
+      "locale": {
+        "en": {
+          "label": "Sort direction",
+          "description": "Sort direction: asc or desc."
+        },
+        "pt-BR": {
+          "label": "Direção da ordenação",
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        }
+      }
+    },
+    "start_date": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically."
+        },
+        "pt-BR": {
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        }
+      }
+    },
+    "status": {
+      "locale": {
+        "en": {
+          "label": "Status",
+          "description": "status do registro in the workflow."
+        },
+        "pt-BR": {
+          "label": "Status",
+          "description": "Status do registro no fluxo."
+        }
+      }
+    },
+    "status_ok_only": {
+      "locale": {
+        "en": {
+          "label": "OK status only",
+          "description": "OK status only."
+        },
+        "pt-BR": {
+          "label": "Somente status OK",
+          "description": "Retorna apenas registros com status OK."
+        }
+      }
+    },
+    "stock_method": {
+      "locale": {
+        "en": {
+          "label": "Stock method",
+          "description": "Historical stock method: auto, hybrid, estimated or official_closure."
+        },
+        "pt-BR": {
+          "label": "Método de estoque",
+          "description": "Método de valorização/consulta de estoque."
+        }
+      }
+    },
+    "store": {
+      "locale": {
+        "en": {
+          "label": "Store",
+          "description": "Store."
+        },
+        "pt-BR": {
+          "label": "Loja",
+          "description": "Código da loja do cliente."
+        }
+      }
+    },
+    "strict_idd_period": {
+      "locale": {
+        "en": {
+          "label": "Strict IDD period",
+          "description": "Strict IDD period."
+        },
+        "pt-BR": {
+          "label": "Período IDD estrito",
+          "description": "Exige período estrito no cálculo do IDD."
+        }
+      }
+    },
+    "summary_only": {
+      "locale": {
+        "en": {
+          "label": "Summary only",
+          "description": "When true, returns summary only without the detail list."
+        },
+        "pt-BR": {
+          "label": "Somente resumo",
+          "description": "Quando ativo, retorna só o resumo sem a lista detalhada."
+        }
+      }
+    },
+    "supplier": {
+      "locale": {
+        "en": {
+          "label": "Supplier",
+          "description": "code ou nome do supplier."
+        },
+        "pt-BR": {
+          "label": "Fornecedor",
+          "description": "Código ou nome do fornecedor."
+        }
+      }
+    },
+    "supplier_code": {
+      "locale": {
+        "en": {
+          "label": "Supplier code",
+          "description": "code do supplier in Protheus."
+        },
+        "pt-BR": {
+          "label": "Código do fornecedor",
+          "description": "Código do fornecedor no Protheus."
+        }
+      }
+    },
+    "supplier_store": {
+      "locale": {
+        "en": {
+          "label": "Supplier store",
+          "description": "Loja do supplier."
+        },
+        "pt-BR": {
+          "label": "Loja do fornecedor",
+          "description": "Loja do fornecedor."
+        }
+      }
+    },
+    "template_key": {
+      "locale": {
+        "en": {
+          "label": "Template key",
+          "description": "Chave do modelo/template usado."
+        },
+        "pt-BR": {
+          "label": "Chave do template",
+          "description": "Chave do modelo/template usado."
+        }
+      }
+    },
+    "title": {
+      "locale": {
+        "en": {
+          "label": "Title",
+          "description": "Title."
+        },
+        "pt-BR": {
+          "label": "Título",
+          "description": "Título (ou parte dele) para filtrar."
+        }
+      }
+    },
+    "tm": {
+      "locale": {
+        "en": {
+          "label": "TM",
+          "description": "code TM (Transforma Mais)."
+        },
+        "pt-BR": {
+          "label": "TM",
+          "description": "Código TM (Transforma Mais)."
+        }
+      }
+    },
+    "to": {
+      "locale": {
+        "en": {
+          "label": "To",
+          "description": "Fim do intervalo (data ou value)."
+        },
+        "pt-BR": {
+          "label": "Até",
+          "description": "Fim do intervalo (data ou valor)."
+        }
+      }
+    },
+    "top_limit": {
+      "locale": {
+        "en": {
+          "label": "Ranking limit",
+          "description": "Ranking limit."
+        },
+        "pt-BR": {
+          "label": "Limite do ranking",
+          "description": "Quantidade máxima de itens no ranking."
+        }
+      }
+    },
+    "top_n": {
+      "locale": {
+        "en": {
+          "label": "Top N",
+          "description": "quantity de itens no Top N."
+        },
+        "pt-BR": {
+          "label": "Top N",
+          "description": "Quantidade de itens no Top N."
+        }
+      }
+    },
+    "type": {
+      "locale": {
+        "en": {
+          "label": "Type",
+          "description": "type do registro a Filtersr."
+        },
+        "pt-BR": {
+          "label": "Tipo",
+          "description": "Tipo do registro a filtrar."
+        }
+      }
+    },
+    "view": {
+      "locale": {
+        "en": {
+          "label": "View",
+          "description": "View."
+        },
+        "pt-BR": {
+          "label": "Visão",
+          "description": "Modo de visualização dos dados retornados."
+        }
+      }
+    },
+    "warehouse": {
+      "locale": {
+        "en": {
+          "label": "Warehouse",
+          "description": "Warehouse."
+        },
+        "pt-BR": {
+          "label": "Armazém",
+          "description": "Código do armazém/estoque."
+        }
+      }
+    },
+    "work_center": {
+      "locale": {
+        "en": {
+          "label": "Work center",
+          "description": "Work center."
+        },
+        "pt-BR": {
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
+        }
+      }
+    }
+  }
+}

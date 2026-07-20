@@ -8,7 +8,8 @@
         "en": {
           "summary": "Department IDD score",
           "description": "Strategic Indicators department score for dashboards.",
-          "whenToUse": "Use as a single KPI card for departmental IDD."
+          "whenToUse": "Use as a single KPI card for departmental IDD.",
+          "label": "Dashboard departamental (IDD)"
         },
         "pt-BR": {
           "summary": "IDD departamental",
@@ -198,7 +199,7 @@
       "locale": {
         "en": {
           "summary": "Stock value",
-          "description": "Total stock value and ranking of top carrying items.",
+          "description": "Supplies stock value.",
           "whenToUse": "Supplies panel: KPI of total value and/or table of TOP stock-carrying items."
         },
         "pt-BR": {
@@ -226,8 +227,9 @@
     "download_quality_action_plan_evidence": {
       "locale": {
         "en": {
-          "summary": "Consulta — Quality action plan evidence",
-          "description": "Retorna quality action plan evidence via API DELPI. Resposta estruturada para consumo no chat. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan evidence",
+          "description": "Quality action plan evidence.",
+          "label": "Quality action plan evidence"
         },
         "pt-BR": {
           "label": "Consulta — Quality action plan evidence",
@@ -240,8 +242,9 @@
     "export_quality_action_plan_pdf": {
       "locale": {
         "en": {
-          "summary": "Consulta — Quality action plan export",
-          "description": "Retorna quality action plan export via API DELPI. Resposta estruturada para consumo no chat. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan export",
+          "description": "Export quality action plan pdf.",
+          "label": "Quality action plan export"
         },
         "pt-BR": {
           "label": "Consulta — Quality action plan export",
@@ -254,8 +257,9 @@
     "export_quality_action_plan_rnc_8d": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan export",
-          "description": "Retorna quality action plan export via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan export",
+          "description": "Export quality action plan rnc 8d.",
+          "label": "Indicator — Quality action plan export"
         },
         "pt-BR": {
           "label": "Indicador — Quality action plan export",
@@ -268,8 +272,9 @@
     "export_quality_action_plan_rnc_8d_pdf": {
       "locale": {
         "en": {
-          "summary": "Consulta — Quality action plan export",
-          "description": "Retorna quality action plan export via API DELPI. Resposta estruturada para consumo no chat. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan export",
+          "description": "Export quality action plan rnc 8d pdf.",
+          "label": "Quality action plan export"
         },
         "pt-BR": {
           "label": "Consulta — Quality action plan export",
@@ -282,8 +287,9 @@
     "get_branch_new_business_rol_target_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Commercial rol new business target",
-          "description": "Retorna commercial ROL new business target via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Commercial rol new business target",
+          "description": "Branch new business rol target pct.",
+          "label": "Indicator — Commercial rol new business target"
         },
         "pt-BR": {
           "label": "Indicador — Commercial rol new business target",
@@ -296,8 +302,9 @@
     "get_branch_rol_target_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Meta percentual rol comercial",
-          "description": "Retorna meta percentual ROL comercial via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Meta percentage rol comercial",
+          "description": "Branch rol target pct.",
+          "label": "Indicator — Meta percentage rol comercial"
         },
         "pt-BR": {
           "label": "Indicador — Meta percentual rol comercial",
@@ -310,8 +317,9 @@
     "get_branch_weg_rol_target_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Commercial rol weg target",
-          "description": "Retorna commercial ROL weg target via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Commercial rol weg target",
+          "description": "Branch weg rol target pct.",
+          "label": "Indicator — Commercial rol weg target"
         },
         "pt-BR": {
           "label": "Indicador — Commercial rol weg target",
@@ -324,8 +332,9 @@
     "get_commercial_proposal": {
       "locale": {
         "en": {
-          "summary": "Detalhe da proposta comercial (OV)",
-          "description": "Cabeçalho da OV no TOTVS (AD1010) por filial, número e revisão. Use para detalhar proposta comercial do dashboard — distinto da listagem paginada."
+          "summary": "Commercial proposal detail (sales order)",
+          "description": "Commercial proposal.",
+          "label": "Commercial proposal detail (sales order)"
         },
         "pt-BR": {
           "label": "Detalhe da proposta comercial (OV)",
@@ -338,8 +347,9 @@
     "get_commercial_proposal_history_events": {
       "locale": {
         "en": {
-          "summary": "Histórico de estágios da proposta comercial",
-          "description": "Eventos AIJ010 da OV (processo/estágio/status) para o painel comercial. Mesmo domínio do histórico LMP, exposto sob /commercial para o dashboard comercial."
+          "summary": "Commercial proposal stage history",
+          "description": "Commercial proposal history events.",
+          "label": "Commercial proposal stage history"
         },
         "pt-BR": {
           "label": "Histórico de estágios da proposta comercial",
@@ -352,8 +362,9 @@
     "get_commercial_rol_series": {
       "locale": {
         "en": {
-          "summary": "Indicador — Série temporal de rol comercial",
-          "description": "Retorna série temporal de ROL comercial via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Commercial rol series",
+          "description": "Commercial rol series.",
+          "label": "Commercial rol series"
         },
         "pt-BR": {
           "label": "Indicador — Série temporal de rol comercial",
@@ -366,8 +377,9 @@
     "get_depreciation_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Depreciação percentual",
-          "description": "Retorna depreciação percentual via API DELPI. Indicador agregado ou KPI pontual. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Depreciation pct",
+          "description": "Depreciation pct.",
+          "label": "Depreciation pct"
         },
         "pt-BR": {
           "label": "Indicador — Depreciação percentual",
@@ -380,8 +392,9 @@
     "get_direct_labor_cost_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Custo direto de mão de obra",
-          "description": "Retorna custo direto de mão de obra via API DELPI. Indicador agregado ou KPI pontual. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Direct labor cost pct",
+          "description": "Direct labor cost pct.",
+          "label": "Direct labor cost pct"
         },
         "pt-BR": {
           "label": "Indicador — Custo direto de mão de obra",
@@ -394,8 +407,9 @@
     "get_eficiencia_fabril_dashboard": {
       "locale": {
         "en": {
-          "summary": "Eficiência fabril — dashboard MOD e gráficos",
-          "description": "Painel de eficiência fabril: KPIs (eficiência média na faixa 0–199%, resultado MOD, horas ganhas/perdidas), gráficos por dia/operador/centro de trabalho e listagem paginada de apontamentos (view vw_Apontamentos_Eficiencia; `appointment_id` via SH6010). Use para eficiência fabril, resultado MOD, dashboard gerencial de apontamentos ou análise por CT/operador. Parâmetros: date_start, date_end (obriga"
+          "summary": "Eficiencia fabril dashboard",
+          "description": "Eficiencia fabril dashboard.",
+          "label": "Eficiencia fabril dashboard"
         },
         "pt-BR": {
           "label": "Eficiência fabril — dashboard MOD e gráficos",
@@ -408,8 +422,9 @@
     "get_financeiro_despesas_centro_custo_filtros": {
       "locale": {
         "en": {
-          "summary": "Indicador — Financeiro despesas centro custo filtros",
-          "description": "Retorna financeiro despesas centro custo filtros via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — financial expenses cost center filtros",
+          "description": "financial expenses cost center filtros.",
+          "label": "Indicator — financial expenses cost center filtros"
         },
         "pt-BR": {
           "label": "Indicador — Financeiro despesas centro custo filtros",
@@ -422,8 +437,9 @@
     "get_financeiro_despesas_centro_custo_lancamentos": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Financeiro despesas centro custo lancamento",
-          "description": "Retorna financeiro despesas centro custo lancamento via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — financial expenses cost center lancamento",
+          "description": "financial expenses cost center entries.",
+          "label": "Paged list — financial expenses cost center lancamento"
         },
         "pt-BR": {
           "label": "Lista paginada — Financeiro despesas centro custo lancamento",
@@ -436,8 +452,9 @@
     "get_financeiro_despesas_centro_custo_ranking_centros": {
       "locale": {
         "en": {
-          "summary": "Lista — Financeiro despesas centro custo ranking centros",
-          "description": "Retorna financeiro despesas centro custo ranking centros via API DELPI. Lista de itens sem paginação obrigatória. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Financial expenses cost center ranking centers",
+          "description": "Financial expenses cost center ranking centers.",
+          "label": "Financial expenses cost center ranking centers"
         },
         "pt-BR": {
           "label": "Lista — Financeiro despesas centro custo ranking centros",
@@ -450,8 +467,9 @@
     "get_financeiro_despesas_centro_custo_ranking_fornecedores": {
       "locale": {
         "en": {
-          "summary": "Lista — Financeiro despesas centro custo ranking fornecedores",
-          "description": "Retorna financeiro despesas centro custo ranking fornecedores via API DELPI. Lista de itens sem paginação obrigatória. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Financial expenses cost center ranking suppliers",
+          "description": "Financial expenses cost center ranking suppliers.",
+          "label": "Financial expenses cost center ranking suppliers"
         },
         "pt-BR": {
           "label": "Lista — Financeiro despesas centro custo ranking fornecedores",
@@ -464,8 +482,9 @@
     "get_financeiro_despesas_centro_custo_resumo": {
       "locale": {
         "en": {
-          "summary": "Indicador — Financeiro despesas centro custo resumo",
-          "description": "Retorna financeiro despesas centro custo resumo via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Financial expenses cost center summary",
+          "description": "Financial expenses cost center summary.",
+          "label": "Financial expenses cost center summary"
         },
         "pt-BR": {
           "label": "Indicador — Financeiro despesas centro custo resumo",
@@ -478,8 +497,9 @@
     "get_financeiro_despesas_centro_custo_serie": {
       "locale": {
         "en": {
-          "summary": "Lista — Financeiro despesas centro custo serie",
-          "description": "Retorna financeiro despesas centro custo serie via API DELPI. Lista de itens sem paginação obrigatória. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Financial expenses cost center series",
+          "description": "Financial expenses cost center series.",
+          "label": "Financial expenses cost center series"
         },
         "pt-BR": {
           "label": "Lista — Financeiro despesas centro custo serie",
@@ -492,8 +512,9 @@
     "get_financial_ebitda_pct": {
       "locale": {
         "en": {
-          "summary": "EBITDA percentual (financeiro)",
-          "description": "Percentual de EBITDA sobre ROL no período e filial informados. Use quando o usuário mencionar EBITDA, margem EBITDA ou indicador financeiro de EBITDA."
+          "summary": "Financial EBITDA percentage",
+          "description": "Financial ebitda pct.",
+          "label": "Financial EBITDA percentage"
         },
         "pt-BR": {
           "label": "EBITDA percentual (financeiro)",
@@ -506,8 +527,9 @@
     "get_financial_fixed_cost_pct": {
       "locale": {
         "en": {
-          "summary": "Custo fixo percentual (financeiro)",
-          "description": "Percentual de custos fixos sobre ROL. Use para «custo fixo», «custos fixos percentual» ou estrutura de custo fixo da empresa."
+          "summary": "Financial fixed cost percentage",
+          "description": "Financial fixed cost pct.",
+          "label": "Financial fixed cost percentage"
         },
         "pt-BR": {
           "label": "Custo fixo percentual (financeiro)",
@@ -520,8 +542,9 @@
     "get_financial_pmr": {
       "locale": {
         "en": {
-          "summary": "PMR — prazo médio de recebimento",
-          "description": "Prazo médio de recebimento (PMR) por filial e período. Use para «pmr», «prazo médio de recebimento» ou inadimplência/recebíveis agregados."
+          "summary": "Financial pmr",
+          "description": "Financial pmr.",
+          "label": "Financial pmr"
         },
         "pt-BR": {
           "label": "PMR — prazo médio de recebimento",
@@ -534,8 +557,9 @@
     "get_financial_rol": {
       "locale": {
         "en": {
-          "summary": "ROL financeiro (receita operacional líquida)",
-          "description": "Indicador ROL financeiro consolidado por filial e período. Use para «rol financeiro», «receita operacional líquida», «qual o rol» no contexto financeiro — não confundir com ROL comercial (/commercial/rol/series) ou metas comerciais."
+          "summary": "Financial rol",
+          "description": "Financial rol.",
+          "label": "Financial rol"
         },
         "pt-BR": {
           "label": "ROL financeiro (receita operacional líquida)",
@@ -548,8 +572,9 @@
     "get_head_office_new_business_rol_target_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Commercial rol new business target",
-          "description": "Retorna commercial ROL new business target via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Commercial rol new business target",
+          "description": "Head office new business rol target pct.",
+          "label": "Indicator — Commercial rol new business target"
         },
         "pt-BR": {
           "label": "Indicador — Commercial rol new business target",
@@ -562,8 +587,9 @@
     "get_head_office_rol_target_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Meta percentual rol comercial",
-          "description": "Retorna meta percentual ROL comercial via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Meta percentage rol comercial",
+          "description": "Head office rol target pct.",
+          "label": "Indicator — Meta percentage rol comercial"
         },
         "pt-BR": {
           "label": "Indicador — Meta percentual rol comercial",
@@ -576,8 +602,9 @@
     "get_head_office_weg_rol_target_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Commercial rol weg target",
-          "description": "Retorna commercial ROL weg target via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Commercial rol weg target",
+          "description": "Head office weg rol target pct.",
+          "label": "Indicator — Commercial rol weg target"
         },
         "pt-BR": {
           "label": "Indicador — Commercial rol weg target",
@@ -590,8 +617,9 @@
     "get_hr_active_pdi_count": {
       "locale": {
         "en": {
-          "summary": "Indicador — Pdis ativos",
-          "description": "Retorna PDIs ativos via API DELPI. Indicador agregado ou KPI pontual. Domínio: Recursos Humanos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Pdis ativos",
+          "description": "Hr active pdi count.",
+          "label": "Indicator — Pdis ativos"
         },
         "pt-BR": {
           "label": "Indicador — Pdis ativos",
@@ -604,8 +632,9 @@
     "get_hr_performance_reviews_completion": {
       "locale": {
         "en": {
-          "summary": "Indicador — Conclusão de avaliações de desempenho",
-          "description": "Retorna conclusão de avaliações de desempenho via API DELPI. Indicador agregado ou KPI pontual. Domínio: Recursos Humanos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Hr performance reviews completion",
+          "description": "Hr performance reviews completion.",
+          "label": "Hr performance reviews completion"
         },
         "pt-BR": {
           "label": "Indicador — Conclusão de avaliações de desempenho",
@@ -618,8 +647,9 @@
     "get_hr_snapshot": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Snapshot de rh",
-          "description": "Retorna snapshot de RH via API DELPI. Visão consolidada com múltiplas seções. Domínio: Recursos Humanos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Hr snapshot",
+          "description": "Hr snapshot.",
+          "label": "Hr snapshot"
         },
         "pt-BR": {
           "label": "Análise consolidada — Snapshot de rh",
@@ -632,8 +662,9 @@
     "get_inspecoes_entrada_historico": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Inspecoes entrada historico",
-          "description": "Retorna inspecoes entrada historico via API DELPI. Lista paginada de registros. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — incoming inspections history",
+          "description": "incoming inspections history.",
+          "label": "Paged list — incoming inspections history"
         },
         "pt-BR": {
           "label": "Lista paginada — Inspecoes entrada historico",
@@ -646,8 +677,9 @@
     "get_inspecoes_entrada_historico_detalhe": {
       "locale": {
         "en": {
-          "summary": "Consulta — Inspecoes entrada historico detalhe",
-          "description": "Retorna inspecoes entrada historico detalhe via API DELPI. Resposta estruturada para consumo no chat. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "incoming inspections history detail",
+          "description": "incoming inspections history detail.",
+          "label": "incoming inspections history detail"
         },
         "pt-BR": {
           "label": "Consulta — Inspecoes entrada historico detalhe",
@@ -660,8 +692,9 @@
     "get_inspecoes_entrada_pendentes": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Inspecoes entrada pendentes",
-          "description": "Retorna inspecoes entrada pendentes via API DELPI. Lista paginada de registros. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — incoming inspections pending",
+          "description": "incoming inspections pending.",
+          "label": "Paged list — incoming inspections pending"
         },
         "pt-BR": {
           "label": "Lista paginada — Inspecoes entrada pendentes",
@@ -674,8 +707,9 @@
     "get_inspecoes_entrada_pendentes_fornecedor": {
       "locale": {
         "en": {
-          "summary": "Lista — Inspecoes entrada pendentes fornecedor",
-          "description": "Retorna inspecoes entrada pendentes fornecedor via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "List — incoming inspections pending fornecedor",
+          "description": "incoming inspections pending fornecedor.",
+          "label": "List — incoming inspections pending fornecedor"
         },
         "pt-BR": {
           "label": "Lista — Inspecoes entrada pendentes fornecedor",
@@ -688,8 +722,9 @@
     "get_inspecoes_entrada_rejeitadas_ensaiador": {
       "locale": {
         "en": {
-          "summary": "Lista — Inspecoes entrada rejeitadas ensaiador",
-          "description": "Retorna inspecoes entrada rejeitadas ensaiador via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "List — incoming inspections rejected tester",
+          "description": "incoming inspections rejected tester.",
+          "label": "List — incoming inspections rejected tester"
         },
         "pt-BR": {
           "label": "Lista — Inspecoes entrada rejeitadas ensaiador",
@@ -702,8 +737,9 @@
     "get_inspecoes_entrada_rejeitadas_produto": {
       "locale": {
         "en": {
-          "summary": "Lista — Inspecoes entrada rejeitadas produto",
-          "description": "Retorna inspecoes entrada rejeitadas produto via API DELPI. Lista de itens sem paginação obrigatória. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Inspections incoming rejected product",
+          "description": "Inspections incoming rejected product.",
+          "label": "Inspections incoming rejected product"
         },
         "pt-BR": {
           "label": "Lista — Inspecoes entrada rejeitadas produto",
@@ -716,8 +752,9 @@
     "get_inspecoes_entrada_resumo": {
       "locale": {
         "en": {
-          "summary": "Indicador — Inspecoes entrada resumo",
-          "description": "Retorna inspecoes entrada resumo via API DELPI. Indicador agregado ou KPI pontual. Domínio: Inspeções de entrada. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Inspections incoming summary",
+          "description": "Inspections incoming summary.",
+          "label": "Inspections incoming summary"
         },
         "pt-BR": {
           "label": "Indicador — Inspecoes entrada resumo",
@@ -730,8 +767,9 @@
     "get_kaizen_by_id": {
       "locale": {
         "en": {
-          "summary": "Detalhe do kaizen (PostgreSQL)",
-          "description": "Retorna ficha completa de um kaizen pelo UUID do cadastro ou, para registros migrados da planilha, pelo id legado composto (filial-data-título). Inclui título, status, setor, unidade, responsável, investimento, daily_savings, annual_savings e entradas do cálculo (seconds_per_occurrence, occurrences_per_day, hourly_cost, hours_saved_per_day). Use quando o usuário pedir detalhe, ficha ou economia pr"
+          "summary": "Kaizen by id",
+          "description": "Kaizen by id.",
+          "label": "Kaizen by id"
         },
         "pt-BR": {
           "label": "Detalhe do kaizen (Google Sheets)",
@@ -744,8 +782,9 @@
     "get_kaizen_record": {
       "locale": {
         "en": {
-          "summary": "Detalhe do kaizen cadastrado (PostgreSQL)",
-          "description": "Retorna ficha completa de um kaizen pelo UUID do cadastro operacional. Use após list_kaizen_records quando o usuário pedir detalhe de um registro específico."
+          "summary": "Kaizen record",
+          "description": "Kaizen record.",
+          "label": "Kaizen record"
         },
         "pt-BR": {
           "label": "Detalhe do kaizen cadastrado (PostgreSQL)",
@@ -758,8 +797,9 @@
     "get_kaizen_summary": {
       "locale": {
         "en": {
-          "summary": "Kaizens — resumo e listagem (PostgreSQL)",
-          "description": "Resumo de melhorias kaizen cadastradas: total no período, economia acumulada (daily_savings × dias ativos) e list_kaizen. Parâmetros: title, status, branch, date_start, date_end. Sem date_start/date_end na listagem retorna todos os kaizens implantados (útil para catálogo completo no dashboard). Campos calculados: daily_savings, annual_savings (daily_savings × 365). Para detalhe de um kaizen (parâm"
+          "summary": "Kaizen summary",
+          "description": "Kaizen summary.",
+          "label": "Kaizen summary"
         },
         "pt-BR": {
           "label": "Kaizens — resumo e listagem (Google Sheets)",
@@ -772,8 +812,9 @@
     "get_lmp_by_sale_number": {
       "locale": {
         "en": {
-          "summary": "Detalhe da LMP por ordem de venda",
-          "description": "Carrega uma LMP específica pelo número da ordem de venda (OV/proposta), com produtos, cliente, vendedor, resumo de engenharia e classificação (nível, SLA, lead time útil, status). O histórico AIJ010 fica em rotas dedicadas `/history/events` e `/history/flow`. Use quando houver número de OV, ordem de venda ou referência explícita a uma LMP individual. Parâmetros opcionais `date_start`, `date_end` e"
+          "summary": "Lmp by sale number",
+          "description": "Lmp by sale number.",
+          "label": "Lmp by sale number"
         },
         "pt-BR": {
           "label": "Detalhe da LMP por ordem de venda",
@@ -786,8 +827,9 @@
     "get_lmp_history_events": {
       "locale": {
         "en": {
-          "summary": "Histórico de eventos da OV (AIJ010)",
-          "description": "Lista eventos do histórico da ordem de venda sem joins pesados por linha. Use para timeline/tabela do detalhe da LMP. Parâmetros `date_start`, `date_end` e `branch` alinham o contexto do painel; `revision` filtra uma revisão específica."
+          "summary": "Lmp history events",
+          "description": "Lmp history events.",
+          "label": "Lmp history events"
         },
         "pt-BR": {
           "label": "Histórico de eventos da OV (AIJ010)",
@@ -800,8 +842,9 @@
     "get_lmp_history_flow": {
       "locale": {
         "en": {
-          "summary": "Transições de fluxo da engenharia na OV",
-          "description": "Retorna apenas eventos de engenharia com contexto anterior/próximo para identificar entradas, avanços e retornos. Consulta leve e separada do histórico completo."
+          "summary": "Lmp history flow",
+          "description": "Lmp history flow.",
+          "label": "Lmp history flow"
         },
         "pt-BR": {
           "label": "Transições de fluxo da engenharia na OV",
@@ -814,8 +857,9 @@
     "get_lmps_dashboard_charts": {
       "locale": {
         "en": {
-          "summary": "Gráficos do painel de LMPs",
-          "description": "Dados para gráficos do dashboard de LMPs (nível, status, evolução). Uso principal do MFE — no chat prefira /dashboard/summary."
+          "summary": "Lmps dashboard charts",
+          "description": "Lmps dashboard charts.",
+          "label": "Lmps dashboard charts"
         },
         "pt-BR": {
           "label": "Gráficos do painel de LMPs",
@@ -828,8 +872,9 @@
     "get_mini_applicators_ferramenta": {
       "locale": {
         "en": {
-          "summary": "Detalhe de ferramenta mini-aplicador",
-          "description": "Retorna cadastro SB1010 de uma ferramenta mini-aplicador pelo código."
+          "summary": "Mini applicators tool",
+          "description": "Mini applicators tool.",
+          "label": "Mini applicators tool"
         },
         "pt-BR": {
           "label": "Detalhe de ferramenta mini-aplicador",
@@ -842,8 +887,9 @@
     "get_mini_applicators_golpes": {
       "locale": {
         "en": {
-          "summary": "Golpes do mini-aplicador no período",
-          "description": "Soma consumo SD4010 da ferramenta no período, filtrando apontamentos SH6010 por data/hora (legado MiniAplicadores). Aceita ISO date ou datetime em data_inicial/data_final."
+          "summary": "Golpes do mini-aplicador no period",
+          "description": "Mini applicators golpes.",
+          "label": "Golpes do mini-aplicador no period"
         },
         "pt-BR": {
           "label": "Golpes do mini-aplicador no período",
@@ -856,8 +902,9 @@
     "get_new_business_rol_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Percentual rol de novos negócios",
-          "description": "Retorna percentual ROL de novos negócios via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "New business rol pct",
+          "description": "New business rol pct.",
+          "label": "New business rol pct"
         },
         "pt-BR": {
           "label": "Indicador — Percentual rol de novos negócios",
@@ -870,8 +917,9 @@
     "get_new_clients_average": {
       "locale": {
         "en": {
-          "summary": "Indicador — Média de novos clientes",
-          "description": "Retorna média de novos clientes via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "New clients average",
+          "description": "New clients average.",
+          "label": "New clients average"
         },
         "pt-BR": {
           "label": "Indicador — Média de novos clientes",
@@ -884,8 +932,9 @@
     "get_new_clients_rol_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Percentual rol de clientes novos",
-          "description": "Retorna percentual ROL de clientes novos via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — percentage rol de clientes novos",
+          "description": "New clients rol pct.",
+          "label": "Indicator — percentage rol de clientes novos"
         },
         "pt-BR": {
           "label": "Indicador — Percentual rol de clientes novos",
@@ -899,7 +948,8 @@
       "locale": {
         "en": {
           "summary": "Get External Ppm Series",
-          "description": "Indicador numérico para «PPM externo — série temporal»."
+          "description": "Ppm external series.",
+          "label": "Ppm external series"
         },
         "pt-BR": {
           "label": "PPM externo — série temporal",
@@ -913,7 +963,8 @@
       "locale": {
         "en": {
           "summary": "Get Internal Ppm Series",
-          "description": "Indicador numérico para «PPM interno — série temporal»."
+          "description": "Ppm internal series.",
+          "label": "Ppm internal series"
         },
         "pt-BR": {
           "label": "PPM interno — série temporal",
@@ -927,7 +978,8 @@
       "locale": {
         "en": {
           "summary": "Get Produced Quantity",
-          "description": "Relatório operacional: «Quantidade produzida»."
+          "description": "Produced quantity.",
+          "label": "Quantidade produzida"
         },
         "pt-BR": {
           "label": "Quantidade produzida",
@@ -940,8 +992,9 @@
     "get_product_analyser": {
       "locale": {
         "en": {
-          "summary": "Analisador completo do produto",
-          "description": "Consolida cadastro, estrutura, roteiro e inspeção. Default view=full. Use view=summary para amostra leve. Para intenção pontual prefira rotas granulares: /stock (estoque), /structure (BOM), /guide (roteiro), /inspection (qualidade), /summary (cadastro+estoque+preços) ou /factory-status (visão fabril integrada)."
+          "summary": "Product analyser",
+          "description": "Product analyser.",
+          "label": "Product analyser"
         },
         "pt-BR": {
           "label": "Analisador completo do produto",
@@ -954,8 +1007,9 @@
     "get_product_cost_impact_simulation": {
       "locale": {
         "en": {
-          "summary": "Simulador de impacto de custos do PA",
-          "description": "Ranking das matérias-primas que mais impactam o custo de 1 PA, com base na BOM vigente (SG1010). Suporta custo padrão ou última compra e simulação percentual de reajuste (adjustment_percent). Use para perguntas sobre materiais críticos de custo, Pareto de MPs ou simulação de aumento de preço."
+          "summary": "Product cost impact simulation",
+          "description": "Product cost impact simulation.",
+          "label": "Product cost impact simulation"
         },
         "pt-BR": {
           "label": "Simulador de impacto de custos do PA",
@@ -968,8 +1022,9 @@
     "get_product_customers": {
       "locale": {
         "en": {
-          "summary": "Clientes do produto",
-          "description": "Lista clientes que compram ou estão vinculados ao item. Use para carteira de clientes do produto ou relacionamento comercial do código."
+          "summary": "Clientes do product",
+          "description": "Product customers.",
+          "label": "Clientes do product"
         },
         "pt-BR": {
           "label": "Clientes do produto",
@@ -982,8 +1037,9 @@
     "get_product_detail": {
       "locale": {
         "en": {
-          "summary": "Dados cadastrais do produto",
-          "description": "Retorna ficha cadastral completa de um código: descrição, tipo, unidade, grupo, custo, armazém, revisão e NCM. Use para cadastro, descrição ou atributos do item sem agregar estoque/preços. Para visão resumida com estoque e preços, prefira /summary; para ficha analítica ampla, /analyser."
+          "summary": "Dados cadastrais do product",
+          "description": "Product detail.",
+          "label": "Dados cadastrais do product"
         },
         "pt-BR": {
           "label": "Dados cadastrais do produto",
@@ -996,8 +1052,9 @@
     "get_product_directives": {
       "locale": {
         "en": {
-          "summary": "Diretivas do produto (referência cliente ou código DELPI)",
-          "description": "Resolve um PA pelo código DELPI (9026xxxx) ou pela referência do cliente (SB1010.B1_REFEREN) e retorna visão integrada: código DELPI, estrutura multinível, matérias-primas, fornecedores com part number (SA5010) e última NF de compra válida de cada MP (SD1010). Use para perguntas como «diretivas 90260882», «diretivas 10018137», «referência do cliente», «BOM com fornecedores e última compra»."
+          "summary": "Product directives",
+          "description": "Product directives.",
+          "label": "Product directives"
         },
         "pt-BR": {
           "label": "Diretivas do produto (referência cliente ou código DELPI)",
@@ -1010,8 +1067,9 @@
     "get_product_drawing": {
       "locale": {
         "en": {
-          "summary": "Metadados do desenho PDF do produto",
-          "description": "Localiza o PDF técnico DELPI na biblioteca corporativa pelo código do produto. Retorna filename, revisão, tamanho e data de modificação. Para baixar o arquivo use /products/{code}/drawing/pdf."
+          "summary": "Product drawing",
+          "description": "Product drawing.",
+          "label": "Product drawing"
         },
         "pt-BR": {
           "label": "Metadados do desenho PDF do produto",
@@ -1024,8 +1082,9 @@
     "get_product_drawing_pdf": {
       "locale": {
         "en": {
-          "summary": "Download do desenho PDF do produto",
-          "description": "Retorna o PDF técnico DELPI da biblioteca corporativa para o código informado. Resposta binária application/pdf (inline). Prefira /products/{code}/drawing quando só precisar saber se o arquivo existe."
+          "summary": "Product drawing pdf",
+          "description": "Product drawing pdf.",
+          "label": "Product drawing pdf"
         },
         "pt-BR": {
           "label": "Do desenho PDF do produto",
@@ -1038,8 +1097,9 @@
     "get_product_factory_status": {
       "locale": {
         "en": {
-          "summary": "Status fabril completo do produto",
-          "description": "Visão consolidada: estrutura vigente, MPs exclusivas, estoque de MPs, produção, expedição e status fabril. Preferir quando o usuário pedir status completo do produto na fábrica ou visão fabril integrada."
+          "summary": "Product factory status",
+          "description": "Product factory status.",
+          "label": "Product factory status"
         },
         "pt-BR": {
           "label": "Status fabril completo do produto",
@@ -1052,8 +1112,9 @@
     "get_product_guide": {
       "locale": {
         "en": {
-          "summary": "Roteiro de produção do produto",
-          "description": "Lista o roteiro / sequência operacional (centros de trabalho, operações) do item. Use para roteiro, operações, CTs e sequência fabril do produto."
+          "summary": "Product guide",
+          "description": "Product guide.",
+          "label": "Product guide"
         },
         "pt-BR": {
           "label": "Roteiro de produção do produto",
@@ -1066,8 +1127,9 @@
     "get_product_inbound_invoice_items": {
       "locale": {
         "en": {
-          "summary": "Itens de nota fiscal de entrada do produto",
-          "description": "Lista itens de notas fiscais de entrada (compras) vinculados ao código. Use para NF de entrada, documentos de compra ou recebimento do item."
+          "summary": "Product inbound invoice items",
+          "description": "Product inbound invoice items.",
+          "label": "Product inbound invoice items"
         },
         "pt-BR": {
           "label": "Itens de nota fiscal de entrada do produto",
@@ -1080,8 +1142,9 @@
     "get_product_inspection": {
       "locale": {
         "en": {
-          "summary": "Inspeção de qualidade do produto (QP6/QP7/QP8)",
-          "description": "Retorna dados de inspeção de qualidade e centros de trabalho de inspeção do item. Use para inspeção de qualidade, QP, CT de inspeção — não para expedição após inspeção final do PA. Para PA liberado para expedição (SHB010 + apontamento), use /shipping-status."
+          "summary": "Product inspection",
+          "description": "Product inspection.",
+          "label": "Product inspection"
         },
         "pt-BR": {
           "label": "Inspeção de qualidade do produto (QP6/QP7/QP8)",
@@ -1094,8 +1157,9 @@
     "get_product_internal_movements": {
       "locale": {
         "en": {
-          "summary": "Movimentações internas do produto",
-          "description": "Movimentações internas de estoque/produção do item com filtros de período, filial, armazém, TM e OP. Use para movimentação interna, transferências ou histórico operacional do código."
+          "summary": "Product internal movements",
+          "description": "Product internal movements.",
+          "label": "Product internal movements"
         },
         "pt-BR": {
           "label": "Movimentações internas do produto",
@@ -1108,8 +1172,9 @@
     "get_product_last_purchase": {
       "locale": {
         "en": {
-          "summary": "Última compra válida da matéria-prima",
-          "description": "Retorna a última NF de entrada válida (SD1010) com fornecedor, preço unitário, ICMS e pedido vinculado. Exclui transportadoras, fornecedores internos e NF de frete (D1_QUANT zero na MP). Use para último fornecedor ou última aquisição de MP."
+          "summary": "Product last purchase",
+          "description": "Product last purchase.",
+          "label": "Product last purchase"
         },
         "pt-BR": {
           "label": "Última compra válida da matéria-prima",
@@ -1122,8 +1187,9 @@
     "get_product_outbound_invoice_items": {
       "locale": {
         "en": {
-          "summary": "Itens de nota fiscal de saída do produto",
-          "description": "Lista itens de notas fiscais de saída (vendas) vinculados ao código. Use para NF de saída ou faturamento documental do item — distinto de /sales/billing agregado."
+          "summary": "Product outbound invoice items",
+          "description": "Product outbound invoice items.",
+          "label": "Product outbound invoice items"
         },
         "pt-BR": {
           "label": "Itens de nota fiscal de saída do produto",
@@ -1136,8 +1202,9 @@
     "get_product_parents": {
       "locale": {
         "en": {
-          "summary": "Onde o produto é usado (produtos pai / BOM reversa)",
-          "description": "Lista produtos pai que consomem o código informado (explosão reversa / where-used). Use quando o usuário perguntar onde o item é usado, em quais PAs entra ou árvore de pais. Não confundir com estrutura filha (BOM) — use /structure."
+          "summary": "Product parents",
+          "description": "Product parents.",
+          "label": "Product parents"
         },
         "pt-BR": {
           "label": "Onde o produto é usado (produtos pai / BOM reversa)",
@@ -1150,8 +1217,9 @@
     "get_product_pricing": {
       "locale": {
         "en": {
-          "summary": "Preços e tabelas comerciais do produto",
-          "description": "Tabelas de preço, condições comerciais e valores de venda do item. Use para preço de venda, tabela comercial ou valor unitário — não para custo/CPV agregado de suprimentos."
+          "summary": "Product pricing",
+          "description": "Product pricing.",
+          "label": "Product pricing"
         },
         "pt-BR": {
           "label": "Preços e tabelas comerciais do produto",
@@ -1164,8 +1232,9 @@
     "get_product_production_status": {
       "locale": {
         "en": {
-          "summary": "Situação produtiva do produto (PA, PI, OP e apontamentos)",
-          "description": "Avalia PA e intermediários com OPs da SC2010 e apontamentos da SH6010 em uma data de referência. Use para saber se produção iniciou, quanto foi apontado e equivalente em PA."
+          "summary": "Product production status",
+          "description": "Product production status.",
+          "label": "Product production status"
         },
         "pt-BR": {
           "label": "Situação produtiva do produto (PA, PI, OP e apontamentos)",
@@ -1178,8 +1247,9 @@
     "get_product_purchase_budget_history": {
       "locale": {
         "en": {
-          "summary": "Histórico de orçamento de compra (SC + PC)",
-          "description": "Unifica solicitações de compra (SC1010) e pedidos de compra (SC7010) para análise de cotação e requisição."
+          "summary": "Product purchase budget history",
+          "description": "Product purchase budget history.",
+          "label": "Product purchase budget history"
         },
         "pt-BR": {
           "label": "Histórico de orçamento de compra (SC + PC)",
@@ -1192,8 +1262,9 @@
     "get_product_purchase_price_history": {
       "locale": {
         "en": {
-          "summary": "Histórico de preço de compra da matéria-prima",
-          "description": "Série temporal de NFs de entrada com preço unitário, ICMS e variação percentual entre compras consecutivas. Filtrável por período e filial."
+          "summary": "Product purchase price history",
+          "description": "Product purchase price history.",
+          "label": "Product purchase price history"
         },
         "pt-BR": {
           "label": "Histórico de preço de compra da matéria-prima",
@@ -1206,8 +1277,9 @@
     "get_product_purchases": {
       "locale": {
         "en": {
-          "summary": "Histórico de compras do produto",
-          "description": "Lista compras / entradas de um item pelo código no path. Use quando o usuário pedir histórico de compras, últimas compras ou fornecimento do produto."
+          "summary": "Product purchases",
+          "description": "Product purchases.",
+          "label": "Product purchases"
         },
         "pt-BR": {
           "label": "Histórico de compras do produto",
@@ -1220,8 +1292,9 @@
     "get_product_raw_material_price_intelligence": {
       "locale": {
         "en": {
-          "summary": "Análise inteligente de preço de matéria-prima",
-          "description": "Visão consolidada: cadastro, última compra, ICMS, histórico de orçamento, variação de preço e status. Preferir quando o usuário pedir análise completa de preço/custo de compra de uma MP."
+          "summary": "Product raw material price intelligence",
+          "description": "Product raw material price intelligence.",
+          "label": "Product raw material price intelligence"
         },
         "pt-BR": {
           "label": "Análise inteligente de preço de matéria-prima",
@@ -1234,8 +1307,9 @@
     "get_product_sales_billing": {
       "locale": {
         "en": {
-          "summary": "Faturamento do produto",
-          "description": "Resumo de faturamento e notas fiscais de saída vinculadas ao código. Use para faturamento, NF de venda ou receita faturada do item — distinto de carteira em aberto (/sales/open-orders)."
+          "summary": "Faturamento do product",
+          "description": "Product sales billing.",
+          "label": "Faturamento do product"
         },
         "pt-BR": {
           "label": "Faturamento do produto",
@@ -1248,8 +1322,9 @@
     "get_product_sales_open_orders": {
       "locale": {
         "en": {
-          "summary": "Carteira de pedidos de venda em aberto do produto",
-          "description": "Pedidos de venda em aberto (carteira) vinculados ao código do produto. Use para carteira, pedidos abertos ou backlog de vendas do item."
+          "summary": "Product sales open orders",
+          "description": "Product sales open orders.",
+          "label": "Product sales open orders"
         },
         "pt-BR": {
           "label": "Carteira de pedidos de venda em aberto do produto",
@@ -1262,8 +1337,9 @@
     "get_product_sales_summary": {
       "locale": {
         "en": {
-          "summary": "Resumo de vendas do produto",
-          "description": "Resumo de vendas e faturamento de um item específico. Use para vendas, faturamento ou performance comercial de um código."
+          "summary": "Product sales summary",
+          "description": "Product sales summary.",
+          "label": "Product sales summary"
         },
         "pt-BR": {
           "label": "Resumo de vendas do produto",
@@ -1276,8 +1352,9 @@
     "get_product_shipping_status": {
       "locale": {
         "en": {
-          "summary": "Expedição do PA via inspeção final",
-          "description": "Retorna quantidade finalizada para expedição e perdas no CT de inspeção final (SHB010 + SH6010). Use para saber se o PA já passou pela inspeção final e quanto está liberado para expedição."
+          "summary": "Product shipping status",
+          "description": "Product shipping status.",
+          "label": "Product shipping status"
         },
         "pt-BR": {
           "label": "Expedição do PA via inspeção final",
@@ -1290,8 +1367,9 @@
     "get_product_stock": {
       "locale": {
         "en": {
-          "summary": "Estoque do produto por filial e local",
-          "description": "Saldo e posição de estoque de um item específico (código no path). Use para perguntas como estoque, saldo, disponível, quantidade em armazém de um produto. Não confundir com valor total de estoque da empresa (rota de suprimentos /stock-value)."
+          "summary": "Product stock",
+          "description": "Product stock.",
+          "label": "Product stock"
         },
         "pt-BR": {
           "label": "Estoque do produto por filial e local",
@@ -1304,8 +1382,9 @@
     "get_product_structure": {
       "locale": {
         "en": {
-          "summary": "Estrutura (BOM) do produto",
-          "description": "Lista a estrutura / lista de materiais (BOM) de um produto a partir do código. Use para árvore de componentes, itens filhos e explosão de estrutura."
+          "summary": "Product structure",
+          "description": "Product structure.",
+          "label": "Product structure"
         },
         "pt-BR": {
           "label": "Estrutura (BOM) do produto",
@@ -1318,8 +1397,9 @@
     "get_product_structure_exclusivity": {
       "locale": {
         "en": {
-          "summary": "Estrutura do produto com exclusividade de matérias-primas",
-          "description": "Abre a BOM vigente multinível e marca MPs exclusivas (presentes em apenas um PA válido). Use para estrutura com exclusividade, MPs exclusivas e quantidade acumulada por componente."
+          "summary": "Product structure exclusivity",
+          "description": "Product structure exclusivity.",
+          "label": "Product structure exclusivity"
         },
         "pt-BR": {
           "label": "Estrutura do produto com exclusividade de matérias-primas",
@@ -1332,8 +1412,9 @@
     "get_product_summary": {
       "locale": {
         "en": {
-          "summary": "Resumo do produto (cadastro + estoque + preços)",
-          "description": "Consolida cadastro, amostra de estoque por filial e tabela de preços em uma consulta leve. Use para visão geral rápida do item quando não precisa de BOM, roteiro ou analisador completo."
+          "summary": "Product summary",
+          "description": "Product summary.",
+          "label": "Product summary"
         },
         "pt-BR": {
           "label": "Resumo do produto (cadastro + estoque + preços)",
@@ -1346,8 +1427,9 @@
     "get_product_suppliers": {
       "locale": {
         "en": {
-          "summary": "Fornecedores do produto",
-          "description": "Lista fornecedores vinculados ao item no cadastro/compras. Use para quem fornece, fornecedor principal ou histórico de fornecimento cadastral do código."
+          "summary": "suppliers do product",
+          "description": "Product suppliers.",
+          "label": "suppliers do product"
         },
         "pt-BR": {
           "label": "Fornecedores do produto",
@@ -1360,8 +1442,9 @@
     "get_production_consumption_by_item": {
       "locale": {
         "en": {
-          "summary": "Consumo real de item por produto",
-          "description": "Apura consumo real (D4_QTDEORI - D4_QUANT) de um item por produto pai, opcionalmente filtrado por grupo. Path: /production/consumption/by-item/{code}."
+          "summary": "Production consumption by item",
+          "description": "Production consumption by item.",
+          "label": "Production consumption by item"
         },
         "pt-BR": {
           "label": "Consumo real de item por produto",
@@ -1374,8 +1457,9 @@
     "get_production_consumption_top_items": {
       "locale": {
         "en": {
-          "summary": "Itens mais consumidos na produção",
-          "description": "Ranking de itens com maior consumo real (SD4010) no período, usando a fórmula D4_QTDEORI - D4_QUANT. Use para «itens mais consumidos», «maior consumo» ou «ranking de consumo» — não confundir com estoque ou compras."
+          "summary": "Itens mais consumidos na production",
+          "description": "Production consumption top items.",
+          "label": "Itens mais consumidos na production"
         },
         "pt-BR": {
           "label": "Itens mais consumidos na produção",
@@ -1388,8 +1472,9 @@
     "get_production_consumption_top_items_by_work_center": {
       "locale": {
         "en": {
-          "summary": "Consumo por centro de trabalho",
-          "description": "Ranking de itens consumidos/empenhados agrupados por CT planejado (SD4010 + SH8010). Use para consumo por centro de trabalho ou CT específico."
+          "summary": "Production consumption top items by work center",
+          "description": "Production consumption top items by work center.",
+          "label": "Production consumption top items by work center"
         },
         "pt-BR": {
           "label": "Consumo por centro de trabalho",
@@ -1402,8 +1487,9 @@
     "get_production_consumption_top_items_validated": {
       "locale": {
         "en": {
-          "summary": "Consumo validado por apontamento real",
-          "description": "Ranking de consumo real com EXISTS em apontamentos SH6010 tipo produção. Use quando o usuário pedir consumo validado ou confirmado por apontamento."
+          "summary": "Production consumption top items validated",
+          "description": "Production consumption top items validated.",
+          "label": "Production consumption top items validated"
         },
         "pt-BR": {
           "label": "Consumo validado por apontamento real",
@@ -1416,8 +1502,9 @@
     "get_production_cost_pct": {
       "locale": {
         "en": {
-          "summary": "Indicador — Custo de produção percentual",
-          "description": "Retorna custo de produção percentual via API DELPI. Indicador agregado ou KPI pontual. Domínio: Produção. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Production cost pct",
+          "description": "Production cost pct.",
+          "label": "Production cost pct"
         },
         "pt-BR": {
           "label": "Indicador — Custo de produção percentual",
@@ -1430,8 +1517,9 @@
     "get_production_losses_records": {
       "locale": {
         "en": {
-          "summary": "Registros detalhados de refugo/scrap",
-          "description": "Lista linha a linha os registros de perda de matéria-prima (SBC010) no período. Use quando o usuário pedir detalhe de refugos, motivo ou OP da perda."
+          "summary": "Production losses records",
+          "description": "Production losses records.",
+          "label": "Production losses records"
         },
         "pt-BR": {
           "label": "Registros detalhados de refugo/scrap",
@@ -1444,8 +1532,9 @@
     "get_production_losses_top_materials": {
       "locale": {
         "en": {
-          "summary": "Matérias-primas com mais refugo/scrap no período",
-          "description": "Ranking agregado de perdas de matéria-prima (SBC010) por quantidade e ocorrências. Use para «refugos de MP», «scrap no período» ou «matérias-primas com mais perda»."
+          "summary": "Production losses top materials",
+          "description": "Production losses top materials.",
+          "label": "Production losses top materials"
         },
         "pt-BR": {
           "label": "Matérias-primas com mais refugo/scrap no período",
@@ -1458,8 +1547,9 @@
     "get_production_oee": {
       "locale": {
         "en": {
-          "summary": "OEE produção — resumo e apontamentos (view fabril)",
-          "description": "Painel de eficiência de produção alinhado à eficiência fabril: mesma view (vw_Apontamentos_Eficiencia), STATUS_REGISTRO=OK, CTs excluídos e faixa 0–199%. Resumo e listagem usam EFICIENCIA_PERCENTUAL (tempo previsto ÷ tempo real); detalhe SH6010 calcula a mesma métrica a partir de roteiro e horários. Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. status=valid|outlier filtra "
+          "summary": "Production oee",
+          "description": "Production oee.",
+          "label": "Production oee"
         },
         "pt-BR": {
           "label": "OEE produção — resumo e apontamentos (view fabril)",
@@ -1472,8 +1562,9 @@
     "get_production_oee_appointment_by_id": {
       "locale": {
         "en": {
-          "summary": "Detalhe do apontamento OEE (roteiro, estrutura e tempos)",
-          "description": "Retorna análise composta de um apontamento SH6010 (R_E_C_N_O_ / appointment_id): cadastro do apontamento (OP, produto PA/PI, CT, operação, operador, recurso, quantidades), time_analysis (setup, fator padrão, horas previstas/reais, eficiência por tempos, findings com motivos/alertas automáticos), routing_operations (roteiro SG2010 com operação do apontamento destacada) e structure (BOM do produto e"
+          "summary": "Production oee appointment by id",
+          "description": "Production oee appointment by id.",
+          "label": "Production oee appointment by id"
         },
         "pt-BR": {
           "label": "Detalhe do apontamento OEE (roteiro, estrutura e tempos)",
@@ -1486,8 +1577,9 @@
     "get_production_order_by_op": {
       "locale": {
         "en": {
-          "summary": "Detalhe da OP por C2_OP",
-          "description": "Retorna cadastro SC2010 da ordem de produção com datas, quantidades, status OTD e metadados do produto. Use product_type=PA ou product_type=PI para filtrar pelo tipo SB1010.B1_TIPO (PA exige C2_PRODUTO com prefixo 9 ou 8; sequência 001 preferencial). Inclui linked_orders: demais OPs com o mesmo C2_NUM (PA ou PI, exceto a consultada). Use linked_sort_by e linked_sort_dir para ordenar linked_orders "
+          "summary": "Production order by op",
+          "description": "Production order by op.",
+          "label": "Production order by op"
         },
         "pt-BR": {
           "label": "Detalhe da OP por C2_OP",
@@ -1500,8 +1592,9 @@
     "get_production_orders_finished": {
       "locale": {
         "en": {
-          "summary": "OPs finalizadas na data",
-          "description": "Lista ordens de produção finalizadas na data de referência (C2_QUANT = C2_QUJE). Use para produção concluída no dia."
+          "summary": "Production orders finished",
+          "description": "Production orders finished.",
+          "label": "Production orders finished"
         },
         "pt-BR": {
           "label": "OPs finalizadas na data",
@@ -1514,8 +1607,9 @@
     "get_production_orders_finished_without_consumption": {
       "locale": {
         "en": {
-          "summary": "OPs finalizadas sem consumo de componentes",
-          "description": "Identifica OPs finalizadas (C2_QUANT = C2_QUJE) sem baixa de material no CT/data. Use para auditoria de apontamento e inconsistências produtivas."
+          "summary": "Production orders finished without consumption",
+          "description": "Production orders finished without consumption.",
+          "label": "Production orders finished without consumption"
         },
         "pt-BR": {
           "label": "OPs finalizadas sem consumo de componentes",
@@ -1528,8 +1622,9 @@
     "get_production_orders_open": {
       "locale": {
         "en": {
-          "summary": "OPs em aberto na data",
-          "description": "Lista ordens de produção programadas para a data que ainda não foram finalizadas (C2_QUANT > C2_QUJE). Use para backlog do dia, OPs pendentes ou em execução."
+          "summary": "Production orders open",
+          "description": "Production orders open.",
+          "label": "Production orders open"
         },
         "pt-BR": {
           "label": "OPs em aberto na data",
@@ -1542,8 +1637,9 @@
     "get_production_otd": {
       "locale": {
         "en": {
-          "summary": "OTD produção — resumo e ordens (SC2010)",
-          "description": "Painel de OTD de produção: resumo (OPs no prazo/atrasadas, % OTD) e listagem paginada de ordens finalizadas (SC2010 com C2_DATPRF × C2_DATRF). Considera apenas OP mãe (C2_SEQUEN = '001', sufixo …001 em C2_OP), excluindo OPs vinculadas. Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. Use para listar OPs atrasadas ou no prazo, detalhar entrega de produção ou exportar ordens. P"
+          "summary": "Production otd",
+          "description": "Production otd.",
+          "label": "Production otd"
         },
         "pt-BR": {
           "label": "OTD produção — resumo e ordens (SC2010)",
@@ -1556,8 +1652,9 @@
     "get_production_planned_vs_real_time": {
       "locale": {
         "en": {
-          "summary": "Tempo planejado × tempo real por OP",
-          "description": "Compara tempo planejado (setup + hora-mil × quantidade em milheiro) com tempo real de apontamento para OPs finalizadas na data. Classifica desempenho em OK, ATENCAO ou ESTOURO."
+          "summary": "Production planned vs real time",
+          "description": "Production planned vs real time.",
+          "label": "Production planned vs real time"
         },
         "pt-BR": {
           "label": "Tempo planejado × tempo real por OP",
@@ -1570,8 +1667,9 @@
     "get_production_schedule_today": {
       "locale": {
         "en": {
-          "summary": "Produtos programados para produzir na data",
-          "description": "Lista produtos acabados com OP ativa e operação programada para a data de referência (SC2010 + SH8010). Use para «programados hoje», «produzir hoje» ou plano diário de PCP."
+          "summary": "product programados para produzir na data",
+          "description": "Production schedule today.",
+          "label": "product programados para produzir na data"
         },
         "pt-BR": {
           "label": "Produtos programados para produzir na data",
@@ -1584,8 +1682,9 @@
     "get_production_work_center_average_planned_time": {
       "locale": {
         "en": {
-          "summary": "Tempo médio planejado por centro de trabalho",
-          "description": "Média de horas planejadas (H8_HRINI → H8_HRFIM) por CT em OPs finalizadas na data. Use para análise de tempo planejado por centro de trabalho."
+          "summary": "Production work center average planned time",
+          "description": "Production work center average planned time.",
+          "label": "Production work center average planned time"
         },
         "pt-BR": {
           "label": "Tempo médio planejado por centro de trabalho",
@@ -1598,8 +1697,9 @@
     "get_production_work_center_order_summary": {
       "locale": {
         "en": {
-          "summary": "Resumo de OPs por centro de trabalho",
-          "description": "Conta OPs finalizadas e em aberto agrupadas por centro de trabalho (CT) na data. Use para balanceamento de carga e status produtivo por CT."
+          "summary": "Production work center order summary",
+          "description": "Production work center order summary.",
+          "label": "Production work center order summary"
         },
         "pt-BR": {
           "label": "Resumo de OPs por centro de trabalho",
@@ -1612,8 +1712,9 @@
     "get_proposta_comercial": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Proposta comercial interna (pdf/totvs)",
-          "description": "Retorna proposta comercial interna (PDF/Totvs) via API DELPI. Visão consolidada com múltiplas seções. Domínio: Propostas comerciais. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Proposta comercial",
+          "description": "Proposta comercial.",
+          "label": "Proposta comercial"
         },
         "pt-BR": {
           "label": "Análise consolidada — Proposta comercial interna (pdf/totvs)",
@@ -1626,8 +1727,9 @@
     "get_purchases_top_products": {
       "locale": {
         "en": {
-          "summary": "Produtos mais comprados no período",
-          "description": "Ranking agregado de produtos mais comprados (SD1010) por quantidade e valor, excluindo transportadoras, fornecedores internos e NF de frete (quantidade zero). Use para «produtos mais comprados» ou ranking de compras — não para última compra de um item."
+          "summary": "product mais comprados no period",
+          "description": "Purchases top products.",
+          "label": "product mais comprados no period"
         },
         "pt-BR": {
           "label": "Produtos mais comprados no período",
@@ -1640,8 +1742,9 @@
     "get_quality_action_plan_detail": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan detail",
+          "description": "Quality action plan detail.",
+          "label": "Quality action plan detail"
         },
         "pt-BR": {
           "label": "Análise consolidada — Quality action plan",
@@ -1654,8 +1757,9 @@
     "get_quality_action_plan_evidence_content": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan evidence",
-          "description": "Retorna quality action plan evidence via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan evidence content",
+          "description": "Quality action plan evidence content.",
+          "label": "Quality action plan evidence content"
         },
         "pt-BR": {
           "label": "Análise consolidada — Quality action plan evidence",
@@ -1668,8 +1772,9 @@
     "get_quality_action_plan_knowledge_graph": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan knowledge graph",
-          "description": "Retorna quality action plan knowledge graph via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan knowledge graph",
+          "description": "Quality action plan knowledge graph.",
+          "label": "Quality action plan knowledge graph"
         },
         "pt-BR": {
           "label": "Análise consolidada — Quality action plan knowledge graph",
@@ -1682,8 +1787,9 @@
     "get_quality_action_plan_revision": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan revision",
-          "description": "Retorna quality action plan revision via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan revision",
+          "description": "Quality action plan revision.",
+          "label": "Quality action plan revision"
         },
         "pt-BR": {
           "label": "Análise consolidada — Quality action plan revision",
@@ -1696,8 +1802,9 @@
     "get_quality_action_plan_similar_cases": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan similar cases",
-          "description": "Retorna quality action plan similar cases via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Quality action plan similar cases",
+          "description": "Quality action plan similar cases.",
+          "label": "Quality action plan similar cases"
         },
         "pt-BR": {
           "label": "Análise consolidada — Quality action plan similar cases",
@@ -1710,8 +1817,9 @@
     "get_quality_action_plans_dashboard": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan dashboard",
-          "description": "Retorna quality action plan dashboard via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan dashboard",
+          "description": "Quality action plans dashboard.",
+          "label": "PAC quality — painel"
         },
         "pt-BR": {
           "label": "PAC Qualidade — painel",
@@ -1724,8 +1832,9 @@
     "get_retrabalhos_colaboradores": {
       "locale": {
         "en": {
-          "summary": "Lista — Retrabalho horas improdutivas colaboradores",
-          "description": "Retorna retrabalho horas improdutivas colaboradores via API DELPI. Lista de itens sem paginação obrigatória. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "List — Retrabalho horas improdutivas colaboradores",
+          "description": "Retrabalhos colaboradores.",
+          "label": "List — Retrabalho horas improdutivas colaboradores"
         },
         "pt-BR": {
           "label": "Lista — Retrabalho horas improdutivas colaboradores",
@@ -1738,8 +1847,9 @@
     "get_retrabalhos_detalhes": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Retrabalho horas improdutivas detalhe",
-          "description": "Retorna retrabalho horas improdutivas detalhe via API DELPI. Lista paginada de registros. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Retrabalhos detalhes",
+          "description": "Retrabalhos detalhes.",
+          "label": "Retrabalhos detalhes"
         },
         "pt-BR": {
           "label": "Lista paginada — Retrabalho horas improdutivas detalhe",
@@ -1752,8 +1862,9 @@
     "get_retrabalhos_filtros": {
       "locale": {
         "en": {
-          "summary": "Indicador — Retrabalho horas improdutivas filtros",
-          "description": "Retorna retrabalho horas improdutivas filtros via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Retrabalho horas improdutivas filtros",
+          "description": "Retrabalhos filtros.",
+          "label": "Indicator — Retrabalho horas improdutivas filtros"
         },
         "pt-BR": {
           "label": "Indicador — Retrabalho horas improdutivas filtros",
@@ -1766,8 +1877,9 @@
     "get_retrabalhos_health": {
       "locale": {
         "en": {
-          "summary": "Indicador — Retrabalho horas improdutivas health",
-          "description": "Retorna retrabalho horas improdutivas health via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Retrabalho horas improdutivas health",
+          "description": "Retrabalhos health.",
+          "label": "Indicator — Retrabalho horas improdutivas health"
         },
         "pt-BR": {
           "label": "Indicador — Retrabalho horas improdutivas health",
@@ -1780,8 +1892,9 @@
     "get_retrabalhos_mensal": {
       "locale": {
         "en": {
-          "summary": "Lista — Retrabalho horas improdutivas mensal",
-          "description": "Retorna retrabalho horas improdutivas mensal via API DELPI. Lista de itens sem paginação obrigatória. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "List — Retrabalho horas improdutivas mensal",
+          "description": "Retrabalhos mensal.",
+          "label": "List — Retrabalho horas improdutivas mensal"
         },
         "pt-BR": {
           "label": "Lista — Retrabalho horas improdutivas mensal",
@@ -1794,8 +1907,9 @@
     "get_retrabalhos_recursos": {
       "locale": {
         "en": {
-          "summary": "Lista — Retrabalho horas improdutivas recursos",
-          "description": "Retorna retrabalho horas improdutivas recursos via API DELPI. Lista de itens sem paginação obrigatória. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "List — Retrabalho horas improdutivas recursos",
+          "description": "Retrabalhos recursos.",
+          "label": "List — Retrabalho horas improdutivas recursos"
         },
         "pt-BR": {
           "label": "Lista — Retrabalho horas improdutivas recursos",
@@ -1808,8 +1922,9 @@
     "get_retrabalhos_resumo": {
       "locale": {
         "en": {
-          "summary": "Indicador — Retrabalho horas improdutivas resumo",
-          "description": "Retorna retrabalho horas improdutivas resumo via API DELPI. Indicador agregado ou KPI pontual. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Retrabalhos summary",
+          "description": "Retrabalhos summary.",
+          "label": "Retrabalhos summary"
         },
         "pt-BR": {
           "label": "Indicador — Retrabalho horas improdutivas resumo",
@@ -1822,8 +1937,9 @@
     "get_sales_order_otd": {
       "locale": {
         "en": {
-          "summary": "Indicador — Otd de pedidos de venda",
-          "description": "Retorna OTD de pedidos de venda via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Sales order otd",
+          "description": "Sales order otd.",
+          "label": "Sales order otd"
         },
         "pt-BR": {
           "label": "Indicador — Otd de pedidos de venda",
@@ -1836,8 +1952,9 @@
     "get_sales_order_otd_line_detail": {
       "locale": {
         "en": {
-          "summary": "Relatório operacional — Detalhe de linha otd de pedido de venda",
-          "description": "Retorna Detalhe de linha OTD de pedido de venda via API DELPI. Relatório operacional do playbook (REST, sem SQL). Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Sales order otd line detail",
+          "description": "Sales order otd line detail.",
+          "label": "Sales order otd line detail"
         },
         "pt-BR": {
           "label": "Relatório operacional — Detalhe de linha otd de pedido de venda",
@@ -1850,8 +1967,9 @@
     "get_sales_order_otd_panel": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Painel otd de pedidos de venda",
-          "description": "Retorna Painel OTD de pedidos de venda via API DELPI. Lista paginada de registros. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Sales order otd panel",
+          "description": "Sales order otd panel.",
+          "label": "Sales order otd panel"
         },
         "pt-BR": {
           "label": "Lista paginada — Painel otd de pedidos de venda",
@@ -1864,8 +1982,9 @@
     "get_sales_order_otd_series": {
       "locale": {
         "en": {
-          "summary": "Indicador — Série temporal otd de pedidos de venda",
-          "description": "Retorna Série temporal OTD de pedidos de venda via API DELPI. Indicador agregado ou KPI pontual. Domínio: Comercial. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Sales order otd series",
+          "description": "Sales order otd series.",
+          "label": "Sales order otd series"
         },
         "pt-BR": {
           "label": "Indicador — Série temporal otd de pedidos de venda",
@@ -1878,8 +1997,9 @@
     "get_supplies_cpv": {
       "locale": {
         "en": {
-          "summary": "CPV — custo de produto vendido (Kardex / suprimentos)",
-          "description": "Indicador CPV agregado por filial e período (SD2010, SUM(D2_CUSTO1), CFOPs Kardex). Use quando o usuário mencionar CPV, custo de produto vendido ou ranking de custo em suprimentos. Não usar para estoque de um produto nem valor total de estoque da empresa."
+          "summary": "Supplies cpv",
+          "description": "Supplies cpv.",
+          "label": "Supplies cpv"
         },
         "pt-BR": {
           "label": "CPV — custo de produto vendido (Kardex / suprimentos)",
@@ -1892,8 +2012,9 @@
     "get_supplies_inventory_turnover": {
       "locale": {
         "en": {
-          "summary": "Giro de estoque / IDD (suprimentos)",
-          "description": "Giro de estoque (IDD) por filial, local e período: estoque ÷ CPV médio mensal. O valor de estoque usa o mesmo método de /supplies/stock-value (SB2 atual sem datas; SB9010+SD3010 estimado com start_date e end_date). CPV vem de SD2010 (D2_CUSTO1, D2_EMISSAO) no período, CFOPs Kardex 5101/5124/6101/6124. Use para giro, rotatividade ou IDD — não para saldo de um item."
+          "summary": "Supplies inventory turnover",
+          "description": "Supplies inventory turnover.",
+          "label": "Supplies inventory turnover"
         },
         "pt-BR": {
           "label": "Giro de estoque / IDD (suprimentos)",
@@ -1906,8 +2027,9 @@
     "get_supplies_negotiation_savings_summary": {
       "locale": {
         "en": {
-          "summary": "Economia em negociações de compras (planilha IDD Suprimentos)",
-          "description": "Soma da economia em reais por filial e período, lida da aba economia_negociacoes_compra (Google Sheets). Use para o indicador estratégico supplies_negotiation_savings / IDD Suprimentos."
+          "summary": "Supplies negotiation savings summary",
+          "description": "Supplies negotiation savings summary.",
+          "label": "Supplies negotiation savings summary"
         },
         "pt-BR": {
           "label": "Economia em negociações de compras (planilha IDD Suprimentos)",
@@ -1920,8 +2042,9 @@
     "get_supplies_otd": {
       "locale": {
         "en": {
-          "summary": "OTD — entrega no prazo (suprimentos)",
-          "description": "Indicador OTD (on-time delivery) de compras/suprimentos por filial e período. Use para perguntas sobre OTD, entrega no prazo ou atrasos de fornecimento agregados. Não confundir com OTD de produção ou entrega de pedido de venda de um produto específico."
+          "summary": "Supplies otd",
+          "description": "Supplies otd.",
+          "label": "Supplies otd"
         },
         "pt-BR": {
           "label": "OTD — entrega no prazo (suprimentos)",
@@ -1934,8 +2057,9 @@
     "get_transforma_mais_summary": {
       "locale": {
         "en": {
-          "summary": "Resumo Transforma Mais",
-          "description": "KPIs agregados dos processos Transforma Mais por filial e período. Preferir no chat para resumo de melhoria contínua vs listagem completa de processos."
+          "summary": "Transforma mais summary",
+          "description": "Transforma mais summary.",
+          "label": "Transforma mais summary"
         },
         "pt-BR": {
           "label": "Resumo Transforma Mais",
@@ -1948,8 +2072,9 @@
     "list_commercial_proposals": {
       "locale": {
         "en": {
-          "summary": "Propostas comerciais (carteira Totvs)",
-          "description": "Lista paginada de propostas comerciais com filtros de filial, período e status (ganhas, abertas ou todas). Parâmetros sort_by e sort_dir ordenam a listagem paginada no servidor. Use search para filtrar por proposta, descrição, status, cliente e demais colunas visíveis. Use para «propostas comerciais», «listar propostas», «propostas ganhas» — distinto de propostas internas PDF (/propostas-comerciai"
+          "summary": "Commercial proposals",
+          "description": "Commercial proposals.",
+          "label": "Commercial proposals"
         },
         "pt-BR": {
           "label": "Propostas comerciais (carteira Totvs)",
@@ -1962,8 +2087,9 @@
     "list_eficiencia_fabril_appointments": {
       "locale": {
         "en": {
-          "summary": "Eficiência fabril — apontamentos (carga bulk)",
-          "description": "Lista completa de apontamentos de eficiência fabril no período (sem paginação server-side). Use para volume total de apontamentos no intervalo ou integrações que recalculam localmente. Para KPIs, gráficos e paginação, prefira GET /production/eficiencia-fabril/dashboard."
+          "summary": "Eficiencia fabril appointments",
+          "description": "Eficiencia fabril appointments.",
+          "label": "Eficiencia fabril appointments"
         },
         "pt-BR": {
           "label": "Eficiência fabril — apontamentos (carga bulk)",
@@ -1976,8 +2102,9 @@
     "list_exclusive_raw_materials_catalog": {
       "locale": {
         "en": {
-          "summary": "Catálogo global de matérias-primas exclusivas",
-          "description": "Lista MPs exclusivas (presentes em apenas um PA válido) ou PAs que possuem MPs exclusivas, sem informar código de produto na pergunta. Use view=by_material para «quais matérias-primas são exclusivas?» e view=by_finished_product para «quais produtos têm MP exclusiva?». Para estrutura detalhada de um PA específico, prefira /structure/exclusivity."
+          "summary": "Exclusive raw materials catalog",
+          "description": "Exclusive raw materials catalog.",
+          "label": "Exclusive raw materials catalog"
         },
         "pt-BR": {
           "label": "Catálogo global de matérias-primas exclusivas",
@@ -1990,8 +2117,9 @@
     "list_hr_branches": {
       "locale": {
         "en": {
-          "summary": "Indicador — Filiais de rh",
-          "description": "Retorna filiais de RH via API DELPI. Indicador agregado ou KPI pontual. Domínio: Recursos Humanos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — branches de rh",
+          "description": "Hr branches.",
+          "label": "Indicator — branches de rh"
         },
         "pt-BR": {
           "label": "Indicador — Filiais de rh",
@@ -2004,8 +2132,9 @@
     "list_kaizen_records": {
       "locale": {
         "en": {
-          "summary": "Cadastro operacional de kaizens (PostgreSQL)",
-          "description": "Lista paginada de kaizens cadastrados no PostgreSQL (cadastro operacional). Filtros: filial, status, tipo de economia, título, período. Use para «kaizens cadastrados», «registros kaizen», «cadastro kaizen» — ou para edição/CRUD quando o usuário precisa alterar um registro."
+          "summary": "Kaizen records",
+          "description": "Kaizen records.",
+          "label": "Kaizen records"
         },
         "pt-BR": {
           "label": "Cadastro operacional de kaizens (PostgreSQL)",
@@ -2018,8 +2147,9 @@
     "list_lmps": {
       "locale": {
         "en": {
-          "summary": "Listar LMPs (ordens especiais / amostras)",
-          "description": "Lista paginada de LMPs com filtros de período, filial e tipo (LMP, Amostra, Outro). Use para listar, filtrar ou pesquisar várias ordens — não para detalhe de uma OV específica."
+          "summary": "list LMPs (ordens especiais / amostras)",
+          "description": "Lmps.",
+          "label": "list LMPs (ordens especiais / amostras)"
         },
         "pt-BR": {
           "label": "Listar LMPs (ordens especiais / amostras)",
@@ -2033,7 +2163,8 @@
       "locale": {
         "en": {
           "summary": "Dashboard de LMPs",
-          "description": "Painel agregado de LMPs com filtro de status. Use quando o usuário pedir dashboard, painel, resumo ou visão gerencial de LMPs."
+          "description": "Lmps dashboard.",
+          "label": "Dashboard de LMPs"
         },
         "pt-BR": {
           "label": "Dashboard de LMPs",
@@ -2046,8 +2177,9 @@
     "list_lmps_dashboard_items": {
       "locale": {
         "en": {
-          "summary": "Itens paginados do painel de LMPs",
-          "description": "Lista paginada de LMPs do dashboard com filtros de período, filial e status. Uso principal do MFE; no chat prefira /dashboard/summary para KPIs ou /lmps para listagem."
+          "summary": "Lmps dashboard items",
+          "description": "Lmps dashboard items.",
+          "label": "Lmps dashboard items"
         },
         "pt-BR": {
           "label": "Itens paginados do painel de LMPs",
@@ -2060,8 +2192,9 @@
     "list_mini_applicators_componentes": {
       "locale": {
         "en": {
-          "summary": "Componentes do mini-aplicador",
-          "description": "Explosão recursiva da estrutura (SG1010) com estoque nos locais 01 e 99 para a filial informada."
+          "summary": "Mini applicators components",
+          "description": "Mini applicators components.",
+          "label": "Mini applicators components"
         },
         "pt-BR": {
           "label": "Componentes do mini-aplicador",
@@ -2074,8 +2207,9 @@
     "list_mini_applicators_ferramentas": {
       "locale": {
         "en": {
-          "summary": "Listar ferramentas mini-aplicadores",
-          "description": "Lista ferramentas dos grupos Protheus 23 e 24 (mini-aplicadores). Filtros opcionais: codigo, descricao, filial."
+          "summary": "list ferramentas mini-aplicadores",
+          "description": "Mini applicators ferramentas.",
+          "label": "list ferramentas mini-aplicadores"
         },
         "pt-BR": {
           "label": "Listar ferramentas mini-aplicadores",
@@ -2088,8 +2222,9 @@
     "list_mini_applicators_pecas": {
       "locale": {
         "en": {
-          "summary": "Listar peças do mini-aplicador",
-          "description": "Lista peças amarradas à ferramenta (SG1010 + SB1010 grupo 3019)."
+          "summary": "Mini applicators pecas",
+          "description": "Mini applicators pecas.",
+          "label": "Mini applicators pecas"
         },
         "pt-BR": {
           "label": "Listar peças do mini-aplicador",
@@ -2102,8 +2237,9 @@
     "list_mini_applicators_pecas_reposicao": {
       "locale": {
         "en": {
-          "summary": "Listar peças de reposição amarradas",
-          "description": "Lista peças do grupo 3019 amarradas a ferramentas dos grupos 23/24 (estrutura vigente em SG1010)."
+          "summary": "Mini applicators pecas reposicao",
+          "description": "Mini applicators pecas reposicao.",
+          "label": "Mini applicators pecas reposicao"
         },
         "pt-BR": {
           "label": "Listar peças de reposição amarradas",
@@ -2116,8 +2252,9 @@
     "list_ops_abertas_pedidos_venda": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Ops abertas (pedidos de venda)",
-          "description": "Retorna OPs abertas (pedidos de venda) via API DELPI. Visão consolidada com múltiplas seções. Domínio: Pedidos de venda em aberto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Production orders open orders sales",
+          "description": "Production orders open orders sales.",
+          "label": "Production orders open orders sales"
         },
         "pt-BR": {
           "label": "Análise consolidada — Ops abertas (pedidos de venda)",
@@ -2130,8 +2267,9 @@
     "list_pedidos_venda_abertos": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Pedidos de venda em aberto",
-          "description": "Retorna pedidos de venda em aberto via API DELPI. Visão consolidada com múltiplas seções. Domínio: Pedidos de venda em aberto. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Orders sales abertos",
+          "description": "Orders sales abertos.",
+          "label": "Orders sales abertos"
         },
         "pt-BR": {
           "label": "Análise consolidada — Pedidos de venda em aberto",
@@ -2145,7 +2283,8 @@
       "locale": {
         "en": {
           "summary": "List External Ppm",
-          "description": "Listagem paginada de «PPM externo — listagem» para uso em tabela ou gráfico no TV."
+          "description": "Ppm external.",
+          "label": "PPM externo — listagem"
         },
         "pt-BR": {
           "label": "PPM externo — listagem",
@@ -2159,7 +2298,8 @@
       "locale": {
         "en": {
           "summary": "List Internal Ppm",
-          "description": "Listagem paginada de «PPM interno — listagem» para uso em tabela ou gráfico no TV."
+          "description": "Ppm internal.",
+          "label": "PPM interno — listagem"
         },
         "pt-BR": {
           "label": "PPM interno — listagem",
@@ -2172,8 +2312,9 @@
     "list_product_drawings": {
       "locale": {
         "en": {
-          "summary": "Catálogo de desenhos PDF da biblioteca",
-          "description": "Lista paginada dos PDFs técnicos DELPI disponíveis na biblioteca corporativa. Permite filtrar por código, filename, revisão, variante, tamanho e data de modificação. Use para auditar a biblioteca, localizar desenhos para análise ou validar cobertura por prefixo."
+          "summary": "Product drawings",
+          "description": "Product drawings.",
+          "label": "Product drawings"
         },
         "pt-BR": {
           "label": "Catálogo de desenhos PDF da biblioteca",
@@ -2186,8 +2327,9 @@
     "list_propostas_comerciais": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Proposta comercial interna (pdf/totvs)",
-          "description": "Retorna proposta comercial interna (PDF/Totvs) via API DELPI. Lista paginada de registros. Domínio: Propostas comerciais. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Proposta comercial interna (pdf/totvs)",
+          "description": "Proposals commercial.",
+          "label": "Paged list — Proposta comercial interna (pdf/totvs)"
         },
         "pt-BR": {
           "label": "Lista paginada — Proposta comercial interna (pdf/totvs)",
@@ -2200,8 +2342,9 @@
     "list_quality_action_plan_assignable_users": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Directory user",
-          "description": "Retorna directory user via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Directory user",
+          "description": "Quality action plan assignable users.",
+          "label": "Paged list — Directory user"
         },
         "pt-BR": {
           "label": "Lista paginada — Directory user",
@@ -2214,8 +2357,9 @@
     "list_quality_action_plan_audit_log": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan audit log",
-          "description": "Retorna quality action plan audit log via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan audit log",
+          "description": "Quality action plan audit log.",
+          "label": "Paged list — Quality action plan audit log"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan audit log",
@@ -2228,8 +2372,9 @@
     "list_quality_action_plan_evidences": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan evidence",
-          "description": "Retorna quality action plan evidence via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan evidence",
+          "description": "Quality action plan evidences.",
+          "label": "Paged list — Quality action plan evidence"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan evidence",
@@ -2242,8 +2387,9 @@
     "list_quality_action_plan_export_templates": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan export template",
-          "description": "Retorna quality action plan export template via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan export template",
+          "description": "Quality action plan export templates.",
+          "label": "Paged list — Quality action plan export template"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan export template",
@@ -2256,8 +2402,9 @@
     "list_quality_action_plan_my_queue": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan action",
-          "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan action",
+          "description": "Quality action plan my queue.",
+          "label": "Paged list — Quality action plan action"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan action",
@@ -2270,8 +2417,9 @@
     "list_quality_action_plan_pending_effectiveness_reviews": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan",
+          "description": "Quality action plan pending effectiveness reviews.",
+          "label": "Paged list — Quality action plan"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan",
@@ -2284,8 +2432,9 @@
     "list_quality_action_plan_revisions": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan revision",
-          "description": "Retorna quality action plan revision via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan revision",
+          "description": "Quality action plan revisions.",
+          "label": "Paged list — Quality action plan revision"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan revision",
@@ -2298,8 +2447,9 @@
     "list_quality_action_plans": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan",
+          "description": "Quality action plans.",
+          "label": "Paged list — Quality action plan"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan",
@@ -2312,8 +2462,9 @@
     "list_quality_action_plans_overdue": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan",
+          "description": "Quality action plans overdue.",
+          "label": "Paged list — Quality action plan"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan",
@@ -2326,8 +2477,9 @@
     "list_quality_action_plans_recurrence": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan recurrence",
-          "description": "Retorna quality action plan recurrence via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan recurrence",
+          "description": "Quality action plans recurrence.",
+          "label": "Paged list — Quality action plan recurrence"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan recurrence",
@@ -2340,8 +2492,9 @@
     "list_quality_solution_patterns": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality solution pattern",
-          "description": "Retorna quality solution pattern via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality solution pattern",
+          "description": "Quality solution patterns.",
+          "label": "Paged list — Quality solution pattern"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality solution pattern",
@@ -2354,8 +2507,9 @@
     "list_sale_orders": {
       "locale": {
         "en": {
-          "summary": "Listar ordens de venda",
-          "description": "Lista paginada de ordens de venda (OV) por período. Use para listar OVs, pedidos de venda ou vendas no período — não para detalhe de LMP de uma OV."
+          "summary": "Sale orders",
+          "description": "Sale orders.",
+          "label": "Sale orders"
         },
         "pt-BR": {
           "label": "Listar ordens de venda",
@@ -2368,8 +2522,9 @@
     "list_transforma_mais_processes": {
       "locale": {
         "en": {
-          "summary": "Listar processos Transforma Mais",
-          "description": "Lista processos de melhoria contínua (Transforma Mais) com filtros de filial, setor e status. Use para melhoria contínua e processos Transforma Mais — não confundir com LMP de engenharia."
+          "summary": "list processos Transforma Mais",
+          "description": "Transforma mais processes.",
+          "label": "list processos Transforma Mais"
         },
         "pt-BR": {
           "label": "Listar processos Transforma Mais",
@@ -2382,8 +2537,9 @@
     "search_quality_action_plan_evidences": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan evidence",
-          "description": "Retorna quality action plan evidence via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan evidence",
+          "description": "Quality action plan evidences.",
+          "label": "Paged list — Quality action plan evidence"
         },
         "pt-BR": {
           "label": "Lista paginada — Quality action plan evidence",
@@ -2397,7 +2553,8 @@
       "locale": {
         "en": {
           "summary": "Get Audit 5S Dashboard",
-          "description": "Indicador numérico para «Auditoria 5S — painel analítico»."
+          "description": "Audit 5s analytics dashboard.",
+          "label": "Audit 5s analytics dashboard"
         },
         "pt-BR": {
           "label": "Auditoria 5S — painel analítico",
@@ -2411,7 +2568,8 @@
       "locale": {
         "en": {
           "summary": "List Areas",
-          "description": "Indicador numérico para «Auditoria 5S — áreas»."
+          "description": "Audit 5s areas.",
+          "label": "Audit 5s areas"
         },
         "pt-BR": {
           "label": "Auditoria 5S — áreas",
@@ -2425,7 +2583,8 @@
       "locale": {
         "en": {
           "summary": "List Audits",
-          "description": "Indicador numérico para «Auditoria 5S — listagem»."
+          "description": "Audit 5s audits.",
+          "label": "Auditoria 5S — listagem"
         },
         "pt-BR": {
           "label": "Auditoria 5S — listagem",
@@ -2439,7 +2598,8 @@
       "locale": {
         "en": {
           "summary": "Get Audit",
-          "description": "Indicador numérico para «Auditoria 5S — detalhe»."
+          "description": "Audit 5s audit.",
+          "label": "Audit 5s audit"
         },
         "pt-BR": {
           "label": "Auditoria 5S — detalhe",
@@ -2453,7 +2613,8 @@
       "locale": {
         "en": {
           "summary": "List Audit Nc Attachments",
-          "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
+          "description": "Audit 5s audit nc attachments.",
+          "label": "Audit 5s audit nc attachments"
         },
         "pt-BR": {
           "label": "Auditoria 5S — anexos de NC da auditoria",
@@ -2467,7 +2628,8 @@
       "locale": {
         "en": {
           "summary": "List Nc Candidates",
-          "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
+          "description": "Audit 5s nc candidates.",
+          "label": "Auditoria 5S — candidatos a NC"
         },
         "pt-BR": {
           "label": "Auditoria 5S — candidatos a NC",
@@ -2481,7 +2643,8 @@
       "locale": {
         "en": {
           "summary": "List Audit Nonconformities",
-          "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
+          "description": "Audit 5s nonconformities.",
+          "label": "Audit 5s nonconformities"
         },
         "pt-BR": {
           "label": "Auditoria 5S — não conformidades",
@@ -2495,7 +2658,8 @@
       "locale": {
         "en": {
           "summary": "List Response Attachments",
-          "description": "Indicador numérico para «Response anexos»."
+          "description": "Audit 5s response attachments.",
+          "label": "Response anexos"
         },
         "pt-BR": {
           "label": "Response anexos",
@@ -2508,8 +2672,9 @@
     "download_audit_5s_response_attachment": {
       "locale": {
         "en": {
-          "summary": "Download Response Attachment",
-          "description": "Indicador numérico para «Response anexo»."
+          "summary": "Audit 5s response attachment",
+          "description": "Audit 5s response attachment.",
+          "label": "Response anexo"
         },
         "pt-BR": {
           "label": "Response anexo",
@@ -2523,7 +2688,8 @@
       "locale": {
         "en": {
           "summary": "Get Catalog",
-          "description": "Indicador numérico para «Catalog»."
+          "description": "Audit 5s catalog.",
+          "label": "Catalog"
         },
         "pt-BR": {
           "label": "Catalog",
@@ -2537,7 +2703,8 @@
       "locale": {
         "en": {
           "summary": "List Catalog Publications",
-          "description": "Indicador numérico para «Catalog Publications»."
+          "description": "Audit 5s catalog publications.",
+          "label": "Catalog Publications"
         },
         "pt-BR": {
           "label": "Catalog Publications",
@@ -2551,7 +2718,8 @@
       "locale": {
         "en": {
           "summary": "List Criteria",
-          "description": "Indicador numérico para «Auditoria 5S — critérios»."
+          "description": "Audit 5s criteria.",
+          "label": "Audit 5s criteria"
         },
         "pt-BR": {
           "label": "Auditoria 5S — critérios",
@@ -2565,7 +2733,8 @@
       "locale": {
         "en": {
           "summary": "List Nc Actions",
-          "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
+          "description": "Audit 5s nc actions.",
+          "label": "Audit 5s nc actions"
         },
         "pt-BR": {
           "label": "Auditoria 5S — ações da NC",
@@ -2579,7 +2748,8 @@
       "locale": {
         "en": {
           "summary": "List Nc Attachments",
-          "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
+          "description": "Audit 5s nc attachments.",
+          "label": "Auditoria 5S — anexos da NC"
         },
         "pt-BR": {
           "label": "Auditoria 5S — anexos da NC",
@@ -2592,8 +2762,9 @@
     "download_audit_5s_nc_attachment": {
       "locale": {
         "en": {
-          "summary": "Download Nc Attachment",
-          "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
+          "summary": "Audit 5s nc attachment",
+          "description": "Audit 5s nc attachment.",
+          "label": "Audit 5s nc attachment"
         },
         "pt-BR": {
           "label": "Auditoria 5S — download de anexo da NC",
@@ -2607,7 +2778,8 @@
       "locale": {
         "en": {
           "summary": "Get Audit 5S Summary",
-          "description": "Indicador numérico para «Auditoria 5S — resumo»."
+          "description": "Audit 5s summary.",
+          "label": "Audit 5s summary"
         },
         "pt-BR": {
           "label": "Auditoria 5S — resumo",
@@ -2621,7 +2793,8 @@
       "locale": {
         "en": {
           "summary": "List Quality Branches",
-          "description": "Indicador numérico para «Quality Branches»."
+          "description": "Quality branches.",
+          "label": "Quality Branches"
         },
         "pt-BR": {
           "label": "Quality Branches",
@@ -2635,7 +2808,8 @@
       "locale": {
         "en": {
           "summary": "Export Kaizen Records",
-          "description": "Indicador numérico para «Kaizen Records»."
+          "description": "Export kaizen records.",
+          "label": "Kaizen Records"
         },
         "pt-BR": {
           "label": "Kaizen Records",
@@ -2649,7 +2823,8 @@
       "locale": {
         "en": {
           "summary": "Get Kaizen Records Summary",
-          "description": "Indicador numérico para «Kaizen Records Summary»."
+          "description": "Kaizen records summary.",
+          "label": "Kaizen Records Summary"
         },
         "pt-BR": {
           "label": "Kaizen Records Summary",
@@ -2663,7 +2838,8 @@
       "locale": {
         "en": {
           "summary": "Get Kaizen At Date",
-          "description": "Indicador numérico para «Kaizen At Date»."
+          "description": "Kaizen at date.",
+          "label": "Kaizen At Date"
         },
         "pt-BR": {
           "label": "Kaizen At Date",
@@ -2677,7 +2853,8 @@
       "locale": {
         "en": {
           "summary": "List Kaizen Audit Log",
-          "description": "Indicador numérico para «Kaizen Audit Log»."
+          "description": "Kaizen audit log.",
+          "label": "Kaizen Audit Log"
         },
         "pt-BR": {
           "label": "Kaizen Audit Log",
@@ -2691,7 +2868,8 @@
       "locale": {
         "en": {
           "summary": "List Kaizen Evidences",
-          "description": "Indicador numérico para «Kaizen evidências»."
+          "description": "Kaizen evidences.",
+          "label": "Kaizen evidences"
         },
         "pt-BR": {
           "label": "Kaizen evidências",
@@ -2704,8 +2882,9 @@
     "download_kaizen_evidence": {
       "locale": {
         "en": {
-          "summary": "Download Kaizen Evidence",
-          "description": "Indicador numérico para «Kaizen — download de evidência»."
+          "summary": "Kaizen evidence",
+          "description": "Kaizen evidence.",
+          "label": "Kaizen evidence"
         },
         "pt-BR": {
           "label": "Kaizen — download de evidência",
@@ -2719,7 +2898,8 @@
       "locale": {
         "en": {
           "summary": "List Kaizen History",
-          "description": "Indicador numérico para «Kaizen History»."
+          "description": "Kaizen history.",
+          "label": "Kaizen History"
         },
         "pt-BR": {
           "label": "Kaizen History",
@@ -2733,7 +2913,8 @@
       "locale": {
         "en": {
           "summary": "List Kaizen Revisions",
-          "description": "Indicador numérico para «Kaizen Revisions»."
+          "description": "Kaizen revisions.",
+          "label": "Kaizen Revisions"
         },
         "pt-BR": {
           "label": "Kaizen Revisions",
@@ -2747,7 +2928,8 @@
       "locale": {
         "en": {
           "summary": "Get Kaizen Revision",
-          "description": "Indicador numérico para «Kaizen Revision»."
+          "description": "Kaizen revision.",
+          "label": "Kaizen Revision"
         },
         "pt-BR": {
           "label": "Kaizen Revision",
@@ -2761,7 +2943,8 @@
       "locale": {
         "en": {
           "summary": "Get Kaizen Savings Timeline",
-          "description": "Indicador numérico para «Kaizen Savings Timeline»."
+          "description": "Kaizen savings timeline.",
+          "label": "Kaizen Savings Timeline"
         },
         "pt-BR": {
           "label": "Kaizen Savings Timeline",
@@ -2775,7 +2958,8 @@
       "locale": {
         "en": {
           "summary": "List Labels",
-          "description": "Indicador numérico para «Etiquetas de qualidade — listagem»."
+          "description": "Quality labels.",
+          "label": "Etiquetas de quality — listagem"
         },
         "pt-BR": {
           "label": "Etiquetas de qualidade — listagem",
@@ -2789,7 +2973,8 @@
       "locale": {
         "en": {
           "summary": "List Audit Events",
-          "description": "Indicador numérico para «Etiquetas — eventos de auditoria»."
+          "description": "Quality label audit events.",
+          "label": "Etiquetas — eventos de auditoria"
         },
         "pt-BR": {
           "label": "Etiquetas — eventos de auditoria",
@@ -2803,7 +2988,8 @@
       "locale": {
         "en": {
           "summary": "List Checklist Template",
-          "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
+          "description": "Quality label checklist template.",
+          "label": "Etiquetas — modelo de checklist"
         },
         "pt-BR": {
           "label": "Etiquetas — modelo de checklist",
@@ -2817,7 +3003,8 @@
       "locale": {
         "en": {
           "summary": "Get My Inspector",
-          "description": "Indicador numérico para «Meu perfil de inspetor»."
+          "description": "Quality label inspector.",
+          "label": "Meu perfil de inspetor"
         },
         "pt-BR": {
           "label": "Meu perfil de inspetor",
@@ -2831,7 +3018,8 @@
       "locale": {
         "en": {
           "summary": "Get My Signature",
-          "description": "Indicador numérico para «Minha assinatura de inspetor»."
+          "description": "My signature.",
+          "label": "Minha assinatura de inspetor"
         },
         "pt-BR": {
           "label": "Minha assinatura de inspetor",
@@ -2845,7 +3033,8 @@
       "locale": {
         "en": {
           "summary": "Lookup Op",
-          "description": "Indicador numérico para «Lookup Op»."
+          "description": "Lookup quality label op.",
+          "label": "Lookup Op"
         },
         "pt-BR": {
           "label": "Lookup Op",
@@ -2859,7 +3048,8 @@
       "locale": {
         "en": {
           "summary": "Search Ops",
-          "description": "Indicador numérico para «Buscar Ops»."
+          "description": "Quality label ops.",
+          "label": "search Ops"
         },
         "pt-BR": {
           "label": "Buscar Ops",
@@ -2873,7 +3063,8 @@
       "locale": {
         "en": {
           "summary": "Get Label",
-          "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
+          "description": "Quality label.",
+          "label": "Quality label"
         },
         "pt-BR": {
           "label": "Etiqueta de qualidade — detalhe",
@@ -2887,7 +3078,8 @@
       "locale": {
         "en": {
           "summary": "Get Certificate",
-          "description": "Indicador numérico para «Etiqueta — certificado»."
+          "description": "Quality label certificate.",
+          "label": "Etiqueta — certificado"
         },
         "pt-BR": {
           "label": "Etiqueta — certificado",
@@ -2901,7 +3093,8 @@
       "locale": {
         "en": {
           "summary": "Get Certificate Pdf",
-          "description": "Indicador numérico para «Certificate PDF»."
+          "description": "Certificate pdf.",
+          "label": "Certificate PDF"
         },
         "pt-BR": {
           "label": "Certificate PDF",
@@ -2915,7 +3108,8 @@
       "locale": {
         "en": {
           "summary": "Get Label Qr",
-          "description": "Indicador numérico para «Etiqueta — QR Code»."
+          "description": "Label qr.",
+          "label": "Etiqueta — QR Code"
         },
         "pt-BR": {
           "label": "Etiqueta — QR Code",
@@ -2929,7 +3123,8 @@
       "locale": {
         "en": {
           "summary": "List Nonconformity Route",
-          "description": "Indicador numérico para «Não conformidades — listagem»."
+          "description": "Nonconformities.",
+          "label": "Nonconformities"
         },
         "pt-BR": {
           "label": "Não conformidades — listagem",
@@ -2943,7 +3138,8 @@
       "locale": {
         "en": {
           "summary": "Get Nonconformity Series",
-          "description": "Indicador numérico para «Não conformidades — série temporal»."
+          "description": "Nonconformity series.",
+          "label": "Nonconformity series"
         },
         "pt-BR": {
           "label": "Não conformidades — série temporal",
@@ -2957,7 +3153,8 @@
       "locale": {
         "en": {
           "summary": "Get Cultura Delpi Content",
-          "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
+          "description": "Cultura delpi content.",
+          "label": "Cultura delpi content"
         },
         "pt-BR": {
           "label": "Conteúdo Cultura Delpi",
@@ -2971,7 +3168,8 @@
       "locale": {
         "en": {
           "summary": "Search Customers Route",
-          "description": "Indicador numérico para «Busca de clientes»."
+          "description": "Customers.",
+          "label": "Busca de clientes"
         },
         "pt-BR": {
           "label": "Busca de clientes",
@@ -2985,7 +3183,8 @@
       "locale": {
         "en": {
           "summary": "Root",
-          "description": "Indicador numérico para «Saúde da API (root)»."
+          "description": "Health.",
+          "label": "Health"
         },
         "pt-BR": {
           "label": "Saúde da API (root)",
@@ -2999,7 +3198,8 @@
       "locale": {
         "en": {
           "summary": "Structure Excel Public",
-          "description": "Indicador numérico para «Structure Excel Public»."
+          "description": "Product structure excel public.",
+          "label": "Structure Excel Public"
         },
         "pt-BR": {
           "label": "Structure Excel Public",
@@ -3013,7 +3213,8 @@
       "locale": {
         "en": {
           "summary": "Export Proposta Comercial Pdf Route",
-          "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
+          "description": "Export proposta comercial pdf.",
+          "label": "Proposta comercial — exportar PDF"
         },
         "pt-BR": {
           "label": "Proposta comercial — exportar PDF",
@@ -3027,7 +3228,8 @@
       "locale": {
         "en": {
           "summary": "Get Public Inspection",
-          "description": "Indicador numérico para «Inspeção pública (etiqueta)»."
+          "description": "Public quality label inspection.",
+          "label": "Public quality label inspection"
         },
         "pt-BR": {
           "label": "Inspeção pública (etiqueta)",
@@ -3041,7 +3243,8 @@
       "locale": {
         "en": {
           "summary": "List Bookings",
-          "description": "Indicador numérico para «Agendamentos — reservas»."
+          "description": "Scheduling bookings.",
+          "label": "Agendamentos — reservas"
         },
         "pt-BR": {
           "label": "Agendamentos — reservas",
@@ -3055,7 +3258,8 @@
       "locale": {
         "en": {
           "summary": "List Resources",
-          "description": "Indicador numérico para «Agendamentos — recursos»."
+          "description": "Scheduling resources.",
+          "label": "Agendamentos — recursos"
         },
         "pt-BR": {
           "label": "Agendamentos — recursos",
@@ -3068,8 +3272,9 @@
     "get_caller_stats": {
       "locale": {
         "en": {
-          "summary": "Breakdown de requests por X-Delpi-Caller-App",
-          "description": "Indicador numérico para «Breakdown de requests por X-Delpi-Caller-App»."
+          "summary": "Caller stats",
+          "description": "Caller stats.",
+          "label": "Caller stats"
         },
         "pt-BR": {
           "label": "Breakdown de requests por X-Delpi-Caller-App",
@@ -3082,8 +3287,9 @@
     "search_protheus_columns_by_description": {
       "locale": {
         "en": {
-          "summary": "Busca colunas por descrição (SX3010 + ranking semântico)",
-          "description": "Indicador numérico para «Busca colunas por descrição (SX3010 + ranking semântico)»."
+          "summary": "Protheus columns by description",
+          "description": "Protheus columns by description.",
+          "label": "Protheus columns by description"
         },
         "pt-BR": {
           "label": "Busca colunas por descrição (SX3010 + ranking semântico)",
@@ -3096,8 +3302,9 @@
     "get_console_alerts": {
       "locale": {
         "en": {
-          "summary": "Histórico recente de alertas do console",
-          "description": "Indicador numérico para «Histórico recente de alertas do console»."
+          "summary": "Console alerts",
+          "description": "Console alerts.",
+          "label": "Console alerts"
         },
         "pt-BR": {
           "label": "Histórico recente de alertas do console",
@@ -3110,8 +3317,9 @@
     "get_console_health": {
       "locale": {
         "en": {
-          "summary": "Saúde agregada do console para Admin Stats",
-          "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
+          "summary": "Console health",
+          "description": "Console health.",
+          "label": "Console health"
         },
         "pt-BR": {
           "label": "Saúde agregada do console para Admin Stats",
@@ -3124,8 +3332,9 @@
     "get_envelope_contracts": {
       "locale": {
         "en": {
-          "summary": "Golden files de contrato de envelope (smoke)",
-          "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
+          "summary": "Envelope contracts",
+          "description": "Envelope contracts.",
+          "label": "Envelope contracts"
         },
         "pt-BR": {
           "label": "Golden files de contrato de envelope (smoke)",
@@ -3138,8 +3347,9 @@
     "get_observability_snapshot": {
       "locale": {
         "en": {
-          "summary": "Snapshot unificado para comparador de deploy",
-          "description": "Indicador numérico para «Snapshot unificado para comparador de deploy»."
+          "summary": "Observability snapshot",
+          "description": "Observability snapshot.",
+          "label": "Observability snapshot"
         },
         "pt-BR": {
           "label": "Snapshot unificado para comparador de deploy",
@@ -3152,8 +3362,9 @@
     "get_openapi_diff": {
       "locale": {
         "en": {
-          "summary": "Diff do OpenAPI atual vs baseline versionado",
-          "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
+          "summary": "Openapi diff",
+          "description": "Openapi diff.",
+          "label": "Openapi diff"
         },
         "pt-BR": {
           "label": "Diff do OpenAPI atual vs baseline versionado",
@@ -3166,8 +3377,9 @@
     "get_query_cache_stats": {
       "locale": {
         "en": {
-          "summary": "Hits e misses do cache compartilhado (LMP, estoque)",
-          "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
+          "summary": "Hits e misses do cache compartilhado (LMP, stock)",
+          "description": "Query cache stats.",
+          "label": "Hits e misses do cache compartilhado (LMP, stock)"
         },
         "pt-BR": {
           "label": "Hits e misses do cache compartilhado (LMP, estoque)",
@@ -3180,8 +3392,9 @@
     "get_smoke_definitions": {
       "locale": {
         "en": {
-          "summary": "Definições das smoke suites do console",
-          "description": "Indicador numérico para «Definições das smoke suites do console»."
+          "summary": "Smoke definitions",
+          "description": "Smoke definitions.",
+          "label": "Smoke definitions"
         },
         "pt-BR": {
           "label": "Definições das smoke suites do console",
@@ -3194,8 +3407,9 @@
     "get_sql_health": {
       "locale": {
         "en": {
-          "summary": "Telemetria SQL recente (ring buffer memória ou Redis)",
-          "description": "Indicador numérico para «Telemetria SQL recente (ring buffer memória ou Redis)»."
+          "summary": "Sql health",
+          "description": "Sql health.",
+          "label": "Sql health"
         },
         "pt-BR": {
           "label": "Telemetria SQL recente (ring buffer memória ou Redis)",
@@ -3208,8 +3422,9 @@
     "search_tables_by_description": {
       "locale": {
         "en": {
-          "summary": "Busca tabelas por descrição (SX2)",
-          "description": "Indicador numérico para «Busca tabelas por descrição (SX2)»."
+          "summary": "Tables by description",
+          "description": "Tables by description.",
+          "label": "Tables by description"
         },
         "pt-BR": {
           "label": "Busca tabelas por descrição (SX2)",
@@ -3222,8 +3437,9 @@
     "get_protheus_table": {
       "locale": {
         "en": {
-          "summary": "Consulta informações de tabela",
-          "description": "Indicador numérico para «Consulta informações de tabela»."
+          "summary": "Protheus table",
+          "description": "Protheus table.",
+          "label": "Protheus table"
         },
         "pt-BR": {
           "label": "Consulta informações de tabela",
@@ -3236,8 +3452,9 @@
     "list_protheus_table_columns": {
       "locale": {
         "en": {
-          "summary": "Consulta colunas de tabela com paginação",
-          "description": "Indicador numérico para «Consulta colunas de tabela com paginação»."
+          "summary": "Protheus table columns",
+          "description": "Protheus table columns.",
+          "label": "Protheus table columns"
         },
         "pt-BR": {
           "label": "Consulta colunas de tabela com paginação",
@@ -3250,8 +3467,9 @@
     "search_protheus_columns_in_table": {
       "locale": {
         "en": {
-          "summary": "Buscar colunas por texto",
-          "description": "Indicador numérico para «Buscar colunas por texto»."
+          "summary": "search colunas por texto",
+          "description": "Protheus columns in table.",
+          "label": "search colunas por texto"
         },
         "pt-BR": {
           "label": "Buscar colunas por texto",
@@ -3264,8 +3482,9 @@
     "get_protheus_table_indexes": {
       "locale": {
         "en": {
-          "summary": "Consulta índices (SIX010)",
-          "description": "Indicador numérico para «Consulta índices (SIX010)»."
+          "summary": "Protheus table indexes",
+          "description": "Protheus table indexes.",
+          "label": "Protheus table indexes"
         },
         "pt-BR": {
           "label": "Consulta índices (SIX010)",
@@ -3278,8 +3497,9 @@
     "get_protheus_table_relations": {
       "locale": {
         "en": {
-          "summary": "Consulta relacionamentos (SX9010)",
-          "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
+          "summary": "Protheus table relations",
+          "description": "Protheus table relations.",
+          "label": "Protheus table relations"
         },
         "pt-BR": {
           "label": "Consulta relacionamentos (SX9010)",
@@ -3292,8 +3512,9 @@
     "get_protheus_table_schema": {
       "locale": {
         "en": {
-          "summary": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
-          "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
+          "summary": "Protheus table schema",
+          "description": "Protheus table schema.",
+          "label": "Protheus table schema"
         },
         "pt-BR": {
           "label": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
@@ -3307,7 +3528,8 @@
       "locale": {
         "en": {
           "summary": "Update Cultura Delpi Content",
-          "description": "Update Cultura Delpi Content"
+          "description": "Update Cultura Delpi Content",
+          "label": "Update Cultura Delpi Content"
         },
         "pt-BR": {
           "summary": "Update Cultura Delpi Content",
@@ -3320,8 +3542,9 @@
     "execute_readonly_sql": {
       "locale": {
         "en": {
-          "summary": "Executar consulta SQL somente leitura",
-          "description": "Executa SELECT (com CTE e recursivo permitido) no Protheus. Corpo JSON com campo sql ou text/plain com a query. Requer permissão api-delpi.data ou api-delpi.access.full."
+          "summary": "Execute readonly sql",
+          "description": "Execute readonly sql.",
+          "label": "Execute readonly sql"
         },
         "pt-BR": {
           "summary": "Executar consulta SQL somente leitura",
@@ -3334,7 +3557,8 @@
       "locale": {
         "en": {
           "summary": "Export Proposta Comercial Pdf With Overrides Route",
-          "description": "Export Proposta Comercial Pdf With Overrides Route"
+          "description": "Export Proposta Comercial Pdf With Overrides Route",
+          "label": "Export Proposta Comercial Pdf With Overrides Route"
         },
         "pt-BR": {
           "summary": "Export Proposta Comercial Pdf With Overrides Route",
@@ -3347,8 +3571,9 @@
     "create_quality_action_plan": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Quality action plan.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3361,8 +3586,9 @@
     "assess_quality_action_plan_recurrence_on_opening": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan recurrence opening assessment",
-          "description": "Retorna quality action plan recurrence opening assessment via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Assess quality action plan recurrence on opening",
+          "description": "Assess quality action plan recurrence on opening.",
+          "label": "Assess quality action plan recurrence on opening"
         },
         "pt-BR": {
           "summary": "Análise consolidada — Quality action plan recurrence opening assessment",
@@ -3375,8 +3601,9 @@
     "suggest_quality_action_plan_evidence_tags": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
-          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Suggest quality action plan evidence tags",
+          "description": "Suggest quality action plan evidence tags.",
+          "label": "Suggest quality action plan evidence tags"
         },
         "pt-BR": {
           "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
@@ -3389,8 +3616,9 @@
     "suggest_quality_action_plan_evidence_tags_from_image": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
-          "description": "Retorna quality action plan evidence tag suggestions via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Suggest quality action plan evidence tags from image",
+          "description": "Suggest quality action plan evidence tags from image.",
+          "label": "Suggest quality action plan evidence tags from image"
         },
         "pt-BR": {
           "summary": "Análise consolidada — Quality action plan evidence tag suggestions",
@@ -3403,8 +3631,9 @@
     "dispatch_quality_action_plan_notifications": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan notifications",
-          "description": "Retorna quality action plan notifications via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan notifications",
+          "description": "Dispatch quality action plan notifications.",
+          "label": "Indicator — Quality action plan notifications"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan notifications",
@@ -3417,8 +3646,9 @@
     "delete_quality_action_plan": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Quality action plan.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3431,8 +3661,9 @@
     "update_quality_action_plan": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Quality action plan.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3445,8 +3676,9 @@
     "create_quality_action_plan_actions": {
       "locale": {
         "en": {
-          "summary": "Lista paginada — Quality action plan action",
-          "description": "Retorna quality action plan action via API DELPI. Lista paginada de registros. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size)."
+          "summary": "Paged list — Quality action plan action",
+          "description": "Quality action plan actions.",
+          "label": "Paged list — Quality action plan action"
         },
         "pt-BR": {
           "summary": "Lista paginada — Quality action plan action",
@@ -3459,8 +3691,9 @@
     "delete_quality_action_plan_action": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan action",
-          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan action",
+          "description": "Quality action plan action.",
+          "label": "Indicator — Quality action plan action"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan action",
@@ -3473,8 +3706,9 @@
     "update_quality_action_plan_action": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan action",
-          "description": "Retorna quality action plan action via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan action",
+          "description": "Quality action plan action.",
+          "label": "Indicator — Quality action plan action"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan action",
@@ -3487,8 +3721,9 @@
     "record_quality_action_plan_effectiveness": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Record quality action plan effectiveness.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3501,8 +3736,9 @@
     "approve_quality_action_plan_effectiveness_review": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Approve quality action plan effectiveness review.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3515,8 +3751,9 @@
     "reject_quality_action_plan_effectiveness_review": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Reject quality action plan effectiveness review.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3529,8 +3766,9 @@
     "submit_quality_action_plan_effectiveness_review": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Submit quality action plan effectiveness review.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3543,8 +3781,9 @@
     "attach_quality_action_plan_evidence": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan evidence",
-          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan evidence",
+          "description": "Attach quality action plan evidence.",
+          "label": "Indicator — Quality action plan evidence"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan evidence",
@@ -3557,8 +3796,9 @@
     "delete_quality_action_plan_evidence": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan evidence",
-          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan evidence",
+          "description": "Quality action plan evidence.",
+          "label": "Indicator — Quality action plan evidence"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan evidence",
@@ -3571,8 +3811,9 @@
     "update_quality_action_plan_evidence": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan evidence",
-          "description": "Retorna quality action plan evidence via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan evidence",
+          "description": "Quality action plan evidence.",
+          "label": "Indicator — Quality action plan evidence"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan evidence",
@@ -3585,8 +3826,9 @@
     "upsert_quality_action_plan_five_whys": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan five whys",
-          "description": "Retorna quality action plan five whys via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan five whys",
+          "description": "Upsert quality action plan five whys.",
+          "label": "Indicator — Quality action plan five whys"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan five whys",
@@ -3599,8 +3841,9 @@
     "upsert_quality_action_plan_ishikawa": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan ishikawa",
-          "description": "Retorna quality action plan ishikawa via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan ishikawa",
+          "description": "Upsert quality action plan ishikawa.",
+          "label": "Indicator — Quality action plan ishikawa"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan ishikawa",
@@ -3613,8 +3856,9 @@
     "promote_quality_action_plan_solution_pattern": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality solution pattern",
-          "description": "Retorna quality solution pattern via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality solution pattern",
+          "description": "Promote quality action plan solution pattern.",
+          "label": "Indicator — Quality solution pattern"
         },
         "pt-BR": {
           "summary": "Indicador — Quality solution pattern",
@@ -3627,8 +3871,9 @@
     "reopen_quality_action_plan": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Reopen quality action plan.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3641,8 +3886,9 @@
     "restore_quality_action_plan_revision": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Restore quality action plan revision",
+          "description": "Restore quality action plan revision.",
+          "label": "Restore quality action plan revision"
         },
         "pt-BR": {
           "summary": "Análise consolidada — Quality action plan",
@@ -3655,8 +3901,9 @@
     "upsert_quality_action_plan_rnc_8d": {
       "locale": {
         "en": {
-          "summary": "Análise consolidada — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Visão consolidada com múltiplas seções. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Upsert quality action plan rnc 8d",
+          "description": "Upsert quality action plan rnc 8d.",
+          "label": "Upsert quality action plan rnc 8d"
         },
         "pt-BR": {
           "summary": "Análise consolidada — Quality action plan",
@@ -3669,8 +3916,9 @@
     "update_quality_action_plan_status": {
       "locale": {
         "en": {
-          "summary": "Indicador — Quality action plan",
-          "description": "Retorna quality action plan via API DELPI. Indicador agregado ou KPI pontual. Domínio: Qualidade. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável."
+          "summary": "Indicator — Quality action plan",
+          "description": "Quality action plan status.",
+          "label": "Indicator — Quality action plan"
         },
         "pt-BR": {
           "summary": "Indicador — Quality action plan",
@@ -3684,7 +3932,8 @@
       "locale": {
         "en": {
           "summary": "Create Area",
-          "description": "Create Area"
+          "description": "Create Area",
+          "label": "Create Area"
         },
         "pt-BR": {
           "summary": "Create Area",
@@ -3698,7 +3947,8 @@
       "locale": {
         "en": {
           "summary": "Create Audit",
-          "description": "Create Audit"
+          "description": "Create Audit",
+          "label": "Create Audit"
         },
         "pt-BR": {
           "summary": "Create Audit",
@@ -3712,7 +3962,8 @@
       "locale": {
         "en": {
           "summary": "Update Audit",
-          "description": "Update Audit"
+          "description": "Update Audit",
+          "label": "Update Audit"
         },
         "pt-BR": {
           "summary": "Update Audit",
@@ -3726,7 +3977,8 @@
       "locale": {
         "en": {
           "summary": "Close Audit",
-          "description": "Close Audit"
+          "description": "Close Audit",
+          "label": "Close Audit"
         },
         "pt-BR": {
           "summary": "Close Audit",
@@ -3740,7 +3992,8 @@
       "locale": {
         "en": {
           "summary": "Complete Evaluation",
-          "description": "Complete Evaluation"
+          "description": "Complete Evaluation",
+          "label": "Complete Evaluation"
         },
         "pt-BR": {
           "summary": "Complete Evaluation",
@@ -3754,7 +4007,8 @@
       "locale": {
         "en": {
           "summary": "Delete Audit",
-          "description": "Delete Audit"
+          "description": "Delete Audit",
+          "label": "Delete Audit"
         },
         "pt-BR": {
           "summary": "Delete Audit",
@@ -3768,7 +4022,8 @@
       "locale": {
         "en": {
           "summary": "Force Delete Audit",
-          "description": "Force Delete Audit"
+          "description": "Force Delete Audit",
+          "label": "Force Delete Audit"
         },
         "pt-BR": {
           "summary": "Force Delete Audit",
@@ -3782,7 +4037,8 @@
       "locale": {
         "en": {
           "summary": "Join Audit",
-          "description": "Join Audit"
+          "description": "Join Audit",
+          "label": "Join Audit"
         },
         "pt-BR": {
           "summary": "Join Audit",
@@ -3796,7 +4052,8 @@
       "locale": {
         "en": {
           "summary": "Create Nonconformity",
-          "description": "Create Nonconformity"
+          "description": "Create Nonconformity",
+          "label": "Create Nonconformity"
         },
         "pt-BR": {
           "summary": "Create Nonconformity",
@@ -3810,7 +4067,8 @@
       "locale": {
         "en": {
           "summary": "Reopen Evaluation",
-          "description": "Reopen Evaluation"
+          "description": "Reopen Evaluation",
+          "label": "Reopen Evaluation"
         },
         "pt-BR": {
           "summary": "Reopen Evaluation",
@@ -3824,7 +4082,8 @@
       "locale": {
         "en": {
           "summary": "Upsert Response",
-          "description": "Upsert Response"
+          "description": "Upsert Response",
+          "label": "Upsert Response"
         },
         "pt-BR": {
           "summary": "Upsert Response",
@@ -3838,7 +4097,8 @@
       "locale": {
         "en": {
           "summary": "Upload Response Attachment",
-          "description": "Upload Response Attachment"
+          "description": "Upload Response Attachment",
+          "label": "Upload Response Attachment"
         },
         "pt-BR": {
           "summary": "Upload Response Attachment",
@@ -3852,7 +4112,8 @@
       "locale": {
         "en": {
           "summary": "Delete Response Attachment",
-          "description": "Delete Response Attachment"
+          "description": "Delete Response Attachment",
+          "label": "Delete Response Attachment"
         },
         "pt-BR": {
           "summary": "Delete Response Attachment",
@@ -3866,7 +4127,8 @@
       "locale": {
         "en": {
           "summary": "Publish Catalog",
-          "description": "Publish Catalog"
+          "description": "Publish Catalog",
+          "label": "Publish Catalog"
         },
         "pt-BR": {
           "summary": "Publish Catalog",
@@ -3880,7 +4142,8 @@
       "locale": {
         "en": {
           "summary": "Update Nonconformity",
-          "description": "Update Nonconformity"
+          "description": "Update Nonconformity",
+          "label": "Update Nonconformity"
         },
         "pt-BR": {
           "summary": "Update Nonconformity",
@@ -3894,7 +4157,8 @@
       "locale": {
         "en": {
           "summary": "Add Nc Action",
-          "description": "Add Nc Action"
+          "description": "Add Nc Action",
+          "label": "Add Nc Action"
         },
         "pt-BR": {
           "summary": "Add Nc Action",
@@ -3908,7 +4172,8 @@
       "locale": {
         "en": {
           "summary": "Upload Nc Attachment",
-          "description": "Upload Nc Attachment"
+          "description": "Upload Nc Attachment",
+          "label": "Upload Nc Attachment"
         },
         "pt-BR": {
           "summary": "Upload Nc Attachment",
@@ -3922,7 +4187,8 @@
       "locale": {
         "en": {
           "summary": "Complete Nc Action",
-          "description": "Complete Nc Action"
+          "description": "Complete Nc Action",
+          "label": "Complete Nc Action"
         },
         "pt-BR": {
           "summary": "Complete Nc Action",
@@ -3936,7 +4202,8 @@
       "locale": {
         "en": {
           "summary": "Create Kaizen Record",
-          "description": "Create Kaizen Record"
+          "description": "Create Kaizen Record",
+          "label": "Create Kaizen Record"
         },
         "pt-BR": {
           "summary": "Create Kaizen Record",
@@ -3950,7 +4217,8 @@
       "locale": {
         "en": {
           "summary": "Import Kaizen Records",
-          "description": "Import Kaizen Records"
+          "description": "Import Kaizen Records",
+          "label": "Import Kaizen Records"
         },
         "pt-BR": {
           "summary": "Import Kaizen Records",
@@ -3964,7 +4232,8 @@
       "locale": {
         "en": {
           "summary": "Delete Kaizen Record",
-          "description": "Delete Kaizen Record"
+          "description": "Delete Kaizen Record",
+          "label": "Delete Kaizen Record"
         },
         "pt-BR": {
           "summary": "Delete Kaizen Record",
@@ -3978,7 +4247,8 @@
       "locale": {
         "en": {
           "summary": "Update Kaizen Record",
-          "description": "Update Kaizen Record"
+          "description": "Update Kaizen Record",
+          "label": "Update Kaizen Record"
         },
         "pt-BR": {
           "summary": "Update Kaizen Record",
@@ -3992,7 +4262,8 @@
       "locale": {
         "en": {
           "summary": "Attach Kaizen Evidence",
-          "description": "Attach Kaizen Evidence"
+          "description": "Attach Kaizen Evidence",
+          "label": "Attach Kaizen Evidence"
         },
         "pt-BR": {
           "summary": "Attach Kaizen Evidence",
@@ -4006,7 +4277,8 @@
       "locale": {
         "en": {
           "summary": "Delete Kaizen Evidence",
-          "description": "Delete Kaizen Evidence"
+          "description": "Delete Kaizen Evidence",
+          "label": "Delete Kaizen Evidence"
         },
         "pt-BR": {
           "summary": "Delete Kaizen Evidence",
@@ -4020,7 +4292,8 @@
       "locale": {
         "en": {
           "summary": "Update Kaizen Evidence",
-          "description": "Update Kaizen Evidence"
+          "description": "Update Kaizen Evidence",
+          "label": "Update Kaizen Evidence"
         },
         "pt-BR": {
           "summary": "Update Kaizen Evidence",
@@ -4034,7 +4307,8 @@
       "locale": {
         "en": {
           "summary": "Create Kaizen Version",
-          "description": "Create Kaizen Version"
+          "description": "Create Kaizen Version",
+          "label": "Create Kaizen Version"
         },
         "pt-BR": {
           "summary": "Create Kaizen Version",
@@ -4048,7 +4322,8 @@
       "locale": {
         "en": {
           "summary": "Delete Kaizen Version",
-          "description": "Delete Kaizen Version"
+          "description": "Delete Kaizen Version",
+          "label": "Delete Kaizen Version"
         },
         "pt-BR": {
           "summary": "Delete Kaizen Version",
@@ -4062,7 +4337,8 @@
       "locale": {
         "en": {
           "summary": "Update Kaizen Version",
-          "description": "Update Kaizen Version"
+          "description": "Update Kaizen Version",
+          "label": "Update Kaizen Version"
         },
         "pt-BR": {
           "summary": "Update Kaizen Version",
@@ -4076,7 +4352,8 @@
       "locale": {
         "en": {
           "summary": "Implement Kaizen Version",
-          "description": "Implement Kaizen Version"
+          "description": "Implement Kaizen Version",
+          "label": "Implement Kaizen Version"
         },
         "pt-BR": {
           "summary": "Implement Kaizen Version",
@@ -4090,7 +4367,8 @@
       "locale": {
         "en": {
           "summary": "Create Label",
-          "description": "Create Label"
+          "description": "Create Label",
+          "label": "Create Label"
         },
         "pt-BR": {
           "summary": "Create Label",
@@ -4104,7 +4382,8 @@
       "locale": {
         "en": {
           "summary": "Save My Inspector",
-          "description": "Save My Inspector"
+          "description": "Save My Inspector",
+          "label": "Save My Inspector"
         },
         "pt-BR": {
           "summary": "Save My Inspector",
@@ -4118,7 +4397,8 @@
       "locale": {
         "en": {
           "summary": "Upload My Signature",
-          "description": "Upload My Signature"
+          "description": "Upload My Signature",
+          "label": "Upload My Signature"
         },
         "pt-BR": {
           "summary": "Upload My Signature",
@@ -4132,7 +4412,8 @@
       "locale": {
         "en": {
           "summary": "Delete Label",
-          "description": "Delete Label"
+          "description": "Delete Label",
+          "label": "Delete Label"
         },
         "pt-BR": {
           "summary": "Delete Label",
@@ -4146,7 +4427,8 @@
       "locale": {
         "en": {
           "summary": "Set Label Active",
-          "description": "Set Label Active"
+          "description": "Set Label Active",
+          "label": "Set Label Active"
         },
         "pt-BR": {
           "summary": "Set Label Active",
@@ -4160,7 +4442,8 @@
       "locale": {
         "en": {
           "summary": "Save Certificate",
-          "description": "Save Certificate"
+          "description": "Save Certificate",
+          "label": "Save Certificate"
         },
         "pt-BR": {
           "summary": "Save Certificate",
@@ -4174,7 +4457,8 @@
       "locale": {
         "en": {
           "summary": "Create Booking",
-          "description": "Create Booking"
+          "description": "Create Booking",
+          "label": "Create Booking"
         },
         "pt-BR": {
           "summary": "Create Booking",
@@ -4188,7 +4472,8 @@
       "locale": {
         "en": {
           "summary": "Cancel Booking",
-          "description": "Cancel Booking"
+          "description": "Cancel Booking",
+          "label": "Cancel Booking"
         },
         "pt-BR": {
           "summary": "Cancel Booking",
@@ -4202,7 +4487,8 @@
       "locale": {
         "en": {
           "summary": "Create Resource",
-          "description": "Create Resource"
+          "description": "Create Resource",
+          "label": "Create Resource"
         },
         "pt-BR": {
           "summary": "Create Resource",
@@ -4216,7 +4502,8 @@
       "locale": {
         "en": {
           "summary": "Update Resource",
-          "description": "Update Resource"
+          "description": "Update Resource",
+          "label": "Update Resource"
         },
         "pt-BR": {
           "summary": "Update Resource",
@@ -4230,7 +4517,8 @@
       "locale": {
         "en": {
           "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
-          "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
+          "description": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
+          "label": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook"
         },
         "pt-BR": {
           "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
@@ -4244,7 +4532,8 @@
       "locale": {
         "en": {
           "summary": "Registra resultado de smoke e dispara alertas",
-          "description": "Registra resultado de smoke e dispara alertas"
+          "description": "Registra resultado de smoke e dispara alertas",
+          "label": "Registra resultado de smoke e dispara alertas"
         },
         "pt-BR": {
           "summary": "Registra resultado de smoke e dispara alertas",

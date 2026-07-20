@@ -3134,10 +3134,10 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -3919,20 +3919,10 @@
         "oee_filial_01",
         "oee_filial_02"
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
+      "seriesField": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -3948,7 +3938,17 @@
           "direction": "asc"
         }
       ],
-      "seriesField": "points"
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -4004,14 +4004,14 @@
         "value",
         "otdPct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "on_time_delivery_pct": "number",
         "value": "number",
         "otdPct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -4322,6 +4322,13 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "seriesField": "points",
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -4329,14 +4336,7 @@
         "date_end": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -4392,14 +4392,14 @@
         "value",
         "oeePct"
       ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      },
       "valueFieldTypes": {
         "overall_equipment_effectiveness_pct": "number",
         "value": "number",
         "oeePct": "number"
-      },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
       }
     },
     {
@@ -4899,11 +4899,11 @@
         "maxRows": 6,
         "requiresBranchPermission": false
       },
-      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_product_detail",
