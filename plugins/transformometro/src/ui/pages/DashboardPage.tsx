@@ -6,7 +6,6 @@ import {
   Coins,
   Lightbulb,
   Percent,
-  TrendingUp,
 } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -789,14 +788,6 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
           value={formatCurrency(resumo?.economia_bruta_total)}
           subtitle={`Recorte · ${periodLabel}`}
           icon={<Coins size={22} />}
-          loading={isBusy && !resumo}
-        />
-        <KpiCard
-          title="Ganho de capacidade"
-          titleHint={TM_HELP_TOOLTIPS.dashboard.kpis.ganhoCapacidade}
-          value={formatCurrency(resumo?.ganho_capacidade_total)}
-          subtitle={`Incluído no ROI · ${periodLabel}`}
-          icon={<TrendingUp size={22} />}
           loading={isBusy && !resumo}
         />
         <KpiCard
