@@ -3,7 +3,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Request
+from datetime import date
+
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
@@ -12,6 +14,9 @@ from tm_app.application.services.decomposition_flat_export_service import (
 )
 from tm_app.application.services.decomposition_flowchart_link_validator import (
     DecompositionFlowchartLinkValidator,
+)
+from tm_app.application.services.decomposicao_composition_service import (
+    DecomposicaoCompositionService,
 )
 from tm_app.application.services.revisao_decomposicao_merge_service import (
     RevisaoDecomposicaoMergeService,
@@ -28,7 +33,6 @@ from tm_app.domain.decomposition.decomposition_tree_v1 import (
     empty_tree,
     tree_node_ids,
     validate_decomposition_escopo,
-    validate_decomposition_overlay_v1,
     validate_decomposition_tree_v1,
     validate_instancia_contexto_v1,
 )
@@ -57,6 +61,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/transformometro", tags=["Transformômetro — decomposição"])
 
 _merge = RevisaoDecomposicaoMergeService()
+_composition = DecomposicaoCompositionService()
 _export = DecompositionFlatExportService()
 _link_validator = DecompositionFlowchartLinkValidator()
 
@@ -198,6 +203,22 @@ def get_processo_decomposicao(processo_id: str):
         return fail("Processo não encontrado.", 404)
     row = ProcessoDecomposicaoRepository().get(processo_id)
     return ok(_tree_response(row, processo_id), "Árvore de decomposição do processo.")
+
+
+@router.get("/processos/{processo_id}/decomposicao/composed")
+def get_processo_decomposicao_composed(
+    processo_id: str,
+    at: date | None = Query(default=None, description="Data de composição (YYYY-MM-DD)"),
+    instancia_id: str | None = Query(default=None),
+):
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    composed = _composition.compose_for_processo(
+        processo_id,
+        at=at,
+        instancia_id=instancia_id,
+    )
+    return ok(composed, "Macro composto na data informada.")
 
 
 @router.put("/processos/{processo_id}/decomposicao")
@@ -482,8 +503,13 @@ def put_revisao_decomposicao_overlay(revisao_id: str, body: OverlayBody, request
     revisao = RevisaoRepository().get(revisao_id)
     if not revisao:
         return fail("Revisão não encontrada.", 404)
+    _, tree, escopo, _ = _load_decomposition_merge_context(revisao_id)
     try:
-        conteudo = validate_decomposition_overlay_v1(body.conteudo)
+        conteudo = _merge.assert_overlay_within_escopo(
+            tree=tree,
+            escopo=escopo,
+            overlay=body.conteudo,
+        )
     except DecompositionValidationError as exc:
         return fail(str(exc), 400)
 

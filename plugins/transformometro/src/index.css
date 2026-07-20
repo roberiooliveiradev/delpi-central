@@ -1214,6 +1214,40 @@
   margin-bottom: 10px;
 }.dashboard-transformometro .tm-decomposition-editor__drag-hint{
   margin: 0;
+}.dashboard-transformometro .tm-decomposition-composed__toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.75rem;
+  align-items:flex-end;
+  margin-bottom:.75rem;
+}.dashboard-transformometro .tm-decomposition-composed__date{
+  display:flex;
+  flex-direction:column;
+  gap:.25rem;
+}.dashboard-transformometro .tm-decomposition-composed__conflicts{
+  margin:.5rem 0 0;
+  padding-left:1.25rem;
+}.dashboard-transformometro .tm-processo-composed-card{
+  margin-top:1.25rem;
+  padding-top:1rem;
+  border-top:1px solid var(--ds-border, rgba(0,0,0,.08));
+}.dashboard-transformometro .tm-decomposition-revisao__node-edit{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.35rem;
+  align-items:center;
+  width:100%;
+}.dashboard-transformometro .tm-decomposition-revisao__disabled{
+  margin:.75rem 0;
+}.dashboard-transformometro .tm-decomposition-revisao__disabled ul{
+  margin:.25rem 0 0;
+  padding-left:1.25rem;
+}.dashboard-transformometro .tm-decomposition-revisao__edit-hint{
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
 }/* Rich tree — mapeamento WBS (padrão dashboard commercial).
    Tokens de guia da árvore no host (sem seletor de classe do kit no MFE). */
 .dashboard-transformometro .tm-rich-tree{

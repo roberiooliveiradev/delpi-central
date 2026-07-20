@@ -389,7 +389,7 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
       <EditableSectionCard
         title="Mapeamento da revisão"
-        description="Estado textual as-is ou to-be sobre o escopo WBS da instância."
+        description="Só rótulos as-is/to-be desta revisão. Incluir ou remover nós: Mapeamento do processo ou Escopo no mapeamento da melhoria."
         hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao}
         isEditing={sectionEdit.isEditing("decomposicao_revisao")}
         onEdit={() => void sectionEdit.startEdit("decomposicao_revisao")}

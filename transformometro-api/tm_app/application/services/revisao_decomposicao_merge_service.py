@@ -4,6 +4,7 @@ import copy
 from typing import Any
 
 from tm_app.domain.decomposition.decomposition_tree_v1 import (
+    DecompositionValidationError,
     empty_escopo,
     empty_overlay,
     empty_tree,
@@ -46,6 +47,37 @@ class RevisaoDecomposicaoMergeService:
             "overlay": overlay_doc,
             "warnings": warnings,
         }
+
+    def assert_overlay_within_escopo(
+        self,
+        *,
+        tree: dict[str, Any] | None,
+        escopo: dict[str, Any] | None,
+        overlay: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Valida overlay e garante que todos os IDs tocados estão no escopo expandido."""
+        base = validate_decomposition_tree_v1(tree or empty_tree())
+        scope = validate_decomposition_escopo(
+            escopo or empty_escopo(),
+            tree_node_ids_set=tree_node_ids(base),
+        )
+        overlay_doc = validate_decomposition_overlay_v1(overlay or empty_overlay())
+        allowed = expand_escopo_node_ids(base, scope)
+        outside: list[str] = []
+        for node_id in overlay_doc.get("node_overrides") or {}:
+            if str(node_id) not in allowed:
+                outside.append(str(node_id))
+        for node_id in overlay_doc.get("disabled_node_ids") or []:
+            if str(node_id) not in allowed:
+                outside.append(str(node_id))
+        if outside:
+            unique = sorted(set(outside))
+            raise DecompositionValidationError(
+                "Overlay fora do escopo da melhoria: " + ", ".join(unique[:8])
+                + ("…" if len(unique) > 8 else "")
+                + ". Ajuste o Escopo no mapeamento ou remova esses nós do overlay."
+            )
+        return overlay_doc
 
     def diff_highlights(
         self,

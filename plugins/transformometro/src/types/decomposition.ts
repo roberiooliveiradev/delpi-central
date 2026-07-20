@@ -89,6 +89,33 @@ export type MergedRevisaoDecomposition = {
   } | null;
 };
 
+export type ComposedProcessoDecomposition = {
+  processo_id: string;
+  at: string;
+  instancia_id?: string | null;
+  tree: DecompositionTreeV1;
+  applied_revisoes: Array<{
+    revisao_id: string;
+    instancia_id: string;
+    versao_revisao?: string;
+    cenario_tipo?: string;
+    data_inicio_vigencia?: string;
+    node_ids_tocados: string[];
+  }>;
+  conflicts: Array<{
+    node_id: string;
+    field: string;
+    winner_revisao_id: string;
+    revisoes: Array<{
+      revisao_id: string;
+      versao_revisao?: string;
+      label?: string | null;
+      disabled?: boolean;
+    }>;
+  }>;
+  base_node_count?: number;
+};
+
 export function emptyDecompositionTree(): DecompositionTreeV1 {
   return { format: "decomposition_tree_v1", format_version: 1, nodes: [] };
 }

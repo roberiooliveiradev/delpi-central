@@ -232,6 +232,12 @@ export function RevisaoVigenciaSection({
               }
             />
           </label>
+          {!isBaseline ? (
+            <p className="ds-hint tm-vigencia-composition-hint" style={{ flexBasis: "100%" }}>
+              Alterar início ou fim de vigência recalcula o <strong>macro composto</strong> do
+              processo nessa janela (e pode criar ou remover interseções com outras melhorias).
+            </p>
+          ) : null}
           <NativeCheckboxControl
             className="ds-check-label"
             checked={revisaoVigencia.revisao_ativa}

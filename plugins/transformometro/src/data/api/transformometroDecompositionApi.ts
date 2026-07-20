@@ -5,6 +5,7 @@ import type {
   DecompositionTreeV1,
   InstanciaContextoV1,
   MergedRevisaoDecomposition,
+  ComposedProcessoDecomposition,
   ProcessoDecompositionResponse,
 } from "../../types/decomposition";
 
@@ -43,6 +44,18 @@ export async function fetchProcessoDecomposicao(
   getAccessToken?: () => string | undefined
 ): Promise<ProcessoDecompositionResponse> {
   return request(`/processos/${processoId}/decomposicao`, getAccessToken);
+}
+
+export async function fetchProcessoDecomposicaoComposed(
+  processoId: string,
+  getAccessToken?: () => string | undefined,
+  params?: { at?: string; instancia_id?: string }
+): Promise<ComposedProcessoDecomposition> {
+  const qs = new URLSearchParams();
+  if (params?.at) qs.set("at", params.at);
+  if (params?.instancia_id) qs.set("instancia_id", params.instancia_id);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return request(`/processos/${processoId}/decomposicao/composed${suffix}`, getAccessToken);
 }
 
 export async function saveProcessoDecomposicao(

@@ -51,6 +51,7 @@ import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { ProcessoMatrizImpactoSection } from "../processos/ProcessoMatrizImpactoSection";
 import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
+import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
 import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
 import { ProcessoArquivosSection } from "../processo/ProcessoArquivosSection";
 import {
@@ -457,6 +458,21 @@ export function ProcessoDetailPage({
               />
             }
           />
+          <div className="tm-processo-composed-card">
+            <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
+            <p className="ds-hint">
+              Base do processo + deltas das revisões vigentes na data escolhida. Conflitos de
+              interseção aparecem em destaque.
+            </p>
+            <ProcessoDecompositionComposedSection
+              embeddedInCard
+              processoId={processoId}
+              processoNome={processo.nome_processo}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          </div>
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 

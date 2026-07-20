@@ -186,7 +186,9 @@ export const TM_HELP_TOOLTIPS = {
     contextoObservacoesRollout:
       "Notas sobre implantação, dependências, restrições locais ou plano de comunicação.",
     mapeamentoRevisao:
-      "Overlay textual as-is/to-be sobre o escopo WBS — rótulos e descrições da revisão.",
+      "Overlay textual as-is/to-be sobre o escopo WBS — rótulos, destaques e nós desativados desta revisão. Não inclui nem remove estrutura: isso vem do Mapeamento do processo; o recorte, do Escopo no mapeamento da melhoria.",
+    macroComposto:
+      "Visão do macro na data D: árvore base + overlays das revisões vigentes (início–fim de vigência). Interseções no mesmo nó geram aviso; o rótulo exibido é o da vigência mais recente.",
     arvoreVazia:
       "Nenhum processo-chave cadastrado. Use + Processo-chave ou «Sugerir do fluxo» para começar.",
   },
