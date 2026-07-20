@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type DragEvent,
   type ReactNode,
@@ -139,6 +140,7 @@ function RichTreeNodeRow({
           enableDragDrop
             ? (event) => {
                 event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
                 dragDrop?.updateDropTarget(node.id, event);
               }
             : undefined
@@ -147,23 +149,31 @@ function RichTreeNodeRow({
           enableDragDrop
             ? (event) => {
                 event.preventDefault();
+                event.stopPropagation();
                 dragDrop?.commitDrop(event);
               }
             : undefined
         }
       >
         {draggable ? (
-          <button
-            type="button"
+          <span
             className="tm-rich-tree__drag-handle"
             draggable
+            role="button"
+            tabIndex={0}
             aria-label="Arrastar para reordenar"
             title="Arrastar para reordenar ou mover entre seções"
-            onDragStart={(event) => dragDrop?.startDrag(node.id, event)}
-            onDragEnd={() => dragDrop?.endDrag()}
+            onDragStart={(event) => {
+              event.stopPropagation();
+              dragDrop?.startDrag(node.id, event);
+            }}
+            onDragEnd={(event) => {
+              event.stopPropagation();
+              dragDrop?.endDrag();
+            }}
           >
             <GripVertical size={14} aria-hidden="true" />
-          </button>
+          </span>
         ) : (
           <span className="tm-rich-tree__drag-spacer" aria-hidden="true" />
         )}
@@ -261,63 +271,93 @@ export function DecompositionRichTree({
   const nodeCount = useMemo(() => countRichTreeNodes(root), [root]);
   const [dragNodeId, setDragNodeId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  // Refs síncronas: state React ainda é null nos primeiros dragOver do HTML5 DnD.
+  const dragNodeIdRef = useRef<string | null>(null);
+  const dropTargetRef = useRef<DropTarget | null>(null);
 
   const startDrag = useCallback((nodeId: string, event: DragEvent<HTMLElement>) => {
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", nodeId);
+    try {
+      event.dataTransfer.setData("text/plain", nodeId);
+    } catch {
+      // Alguns browsers bloqueiam setData em certos contextos; o ref basta.
+    }
+    dragNodeIdRef.current = nodeId;
+    dropTargetRef.current = null;
     setDragNodeId(nodeId);
     setDropTarget(null);
   }, []);
 
   const endDrag = useCallback(() => {
+    dragNodeIdRef.current = null;
+    dropTargetRef.current = null;
     setDragNodeId(null);
     setDropTarget(null);
   }, []);
 
   const updateDropTarget = useCallback(
     (nodeId: string, event: DragEvent<HTMLElement>) => {
-      if (!dragNodeId || !dragDrop) return;
+      const currentDragId = dragNodeIdRef.current;
+      if (!currentDragId || !dragDrop) return;
       const rect = event.currentTarget.getBoundingClientRect();
-      const canDropInside = dragDrop.canDrop(dragNodeId, nodeId, "inside");
+      const canDropInside = dragDrop.canDrop(currentDragId, nodeId, "inside");
       const position = resolveDecompositionDropPosition(
         event.clientY - rect.top,
         rect.height,
         canDropInside
       );
 
-      if (!dragDrop.canDrop(dragNodeId, nodeId, position)) {
+      let next: DropTarget | null = null;
+      if (dragDrop.canDrop(currentDragId, nodeId, position)) {
+        next = { nodeId, position };
+      } else {
         const fallbackPosition = position === "inside" ? "after" : position;
-        if (!dragDrop.canDrop(dragNodeId, nodeId, fallbackPosition)) {
-          setDropTarget(null);
-          return;
+        if (dragDrop.canDrop(currentDragId, nodeId, fallbackPosition)) {
+          next = { nodeId, position: fallbackPosition };
         }
-        setDropTarget({ nodeId, position: fallbackPosition });
-        return;
       }
 
-      setDropTarget({ nodeId, position });
+      dropTargetRef.current = next;
+      setDropTarget((prev) => {
+        if (!next && !prev) return prev;
+        if (
+          prev &&
+          next &&
+          prev.nodeId === next.nodeId &&
+          prev.position === next.position
+        ) {
+          return prev;
+        }
+        return next;
+      });
     },
-    [dragDrop, dragNodeId]
+    [dragDrop]
   );
 
   const clearDropTarget = useCallback(() => {
+    dropTargetRef.current = null;
     setDropTarget(null);
   }, []);
 
   const commitDrop = useCallback(
     (event: DragEvent<HTMLElement>) => {
-      if (!dragDrop) return;
-      const draggedId = event.dataTransfer.getData("text/plain") || dragNodeId;
-      if (!draggedId || !dropTarget) {
+      if (!dragDrop) {
         endDrag();
         return;
       }
-      if (dragDrop.canDrop(draggedId, dropTarget.nodeId, dropTarget.position)) {
-        dragDrop.onMove(draggedId, dropTarget.nodeId, dropTarget.position);
+      const draggedId =
+        event.dataTransfer.getData("text/plain") || dragNodeIdRef.current;
+      const target = dropTargetRef.current;
+      if (!draggedId || !target) {
+        endDrag();
+        return;
+      }
+      if (dragDrop.canDrop(draggedId, target.nodeId, target.position)) {
+        dragDrop.onMove(draggedId, target.nodeId, target.position);
       }
       endDrag();
     },
-    [dragDrop, dragNodeId, dropTarget, endDrag]
+    [dragDrop, endDrag]
   );
 
   const getDropClass = useCallback(
