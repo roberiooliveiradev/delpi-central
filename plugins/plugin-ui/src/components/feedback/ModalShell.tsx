@@ -217,9 +217,10 @@ export function ModalShell({
   /*
    * Geometria do modo contido é inline: CSS de MFE (`.dashboard-x .td-modal`)
    * tem especificidade maior que as classes do kit e quebraria o host-fill.
+   * Margem e blur ficam no CSS (`.delpi-ui-modal-overlay--contained`).
    */
   const containedOverlayStyle = containedInPortalTarget
-    ? ({ position: "absolute", inset: 0, padding: 0 } as const)
+    ? ({ position: "absolute", inset: 0 } as const)
     : undefined;
   const containedDialogStyle = containedInPortalTarget
     ? ({
@@ -227,7 +228,6 @@ export function ModalShell({
         height: "100%",
         maxWidth: "none",
         maxHeight: "none",
-        borderRadius: 0,
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",

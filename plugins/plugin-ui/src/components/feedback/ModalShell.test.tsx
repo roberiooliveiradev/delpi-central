@@ -150,11 +150,18 @@ describe("ModalShell", () => {
     expect((portal as HTMLElement).style.position).toBe("absolute");
     const overlayEl = dialog.closest(".td-modal-overlay") as HTMLElement;
     expect(overlayEl.style.position).toBe("absolute");
-    expect(overlayEl.style.padding).toBe("0px");
+    expect(overlayEl.style.inset).toBe("0px");
     expect(dialog.style.width).toBe("100%");
     expect(dialog.style.height).toBe("100%");
     expect(dialog.style.maxWidth).toBe("none");
     expect(dialog.style.maxHeight).toBe("none");
+    // Margem + blur vêm do CSS canônico (não inline — MFE não deve anular padding).
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\s*\{[^}]*padding:\s*12px/s,
+    );
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\s*\{[^}]*backdrop-filter:\s*blur\(8px\)/s,
+    );
 
     unmount();
     expect(host.getAttribute(DELPI_MODAL_HOST_ATTR)).toBeNull();

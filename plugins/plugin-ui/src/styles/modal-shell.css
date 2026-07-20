@@ -100,9 +100,12 @@
 .delpi-ui-modal-overlay--contained {
   position: absolute;
   inset: 0;
-  padding: 0;
+  padding: 12px;
   align-items: stretch;
   justify-content: stretch;
+  background: color-mix(in srgb, #0f172a 42%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .delpi-ui-modal--host-fill {
@@ -110,8 +113,9 @@
   max-width: none;
   height: 100%;
   max-height: none;
-  border-radius: 0;
+  border-radius: 12px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .delpi-ui-modal--host-fill .delpi-ui-modal__body,
