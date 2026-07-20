@@ -41,7 +41,48 @@ class OpenApiDelpiExtensionService:
         if pres:
             normalized["presentation"] = pres
 
+        category = str(raw.get("category") or "").strip()
+        if category:
+            normalized["category"] = category
+
+        locale = raw.get("locale")
+        if isinstance(locale, dict) and locale:
+            normalized["locale"] = locale
+
+        params = raw.get("params")
+        if isinstance(params, dict) and params:
+            normalized["params"] = params
+
+        tv = raw.get("tv")
+        if isinstance(tv, dict) and tv:
+            normalized["tv"] = tv
+
         return normalized
+
+    @classmethod
+    def preferred_locale_texts(
+        cls,
+        operation: dict[str, Any],
+        *,
+        lang: str = "pt-BR",
+    ) -> dict[str, str]:
+        """Textos de produto a partir de x-delpi.locale (fallback: summary/description nativos)."""
+        raw = cls.extract_raw(operation) or {}
+        locale = raw.get("locale") if isinstance(raw.get("locale"), dict) else {}
+        block = locale.get(lang) if isinstance(locale.get(lang), dict) else {}
+        summary = str(block.get("summary") or operation.get("summary") or "").strip()
+        description = str(
+            block.get("description") or operation.get("description") or summary
+        ).strip()
+        when_to_use = str(block.get("whenToUse") or "").strip()
+        out: dict[str, str] = {}
+        if summary:
+            out["summary"] = summary
+        if description:
+            out["description"] = description
+        if when_to_use:
+            out["whenToUse"] = when_to_use
+        return out
 
     @classmethod
     def extract_from_operation(cls, operation: dict[str, Any]) -> dict[str, Any] | None:

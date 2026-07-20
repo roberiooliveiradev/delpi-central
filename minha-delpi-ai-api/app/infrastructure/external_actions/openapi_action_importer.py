@@ -54,14 +54,18 @@ class OpenApiActionImporter:
         action_id = f"{provider_token}.{primary_tag}.{self._normalize_token(operation_id)}"
 
         delpi_metadata = OpenApiDelpiExtensionService.extract_from_operation(operation)
+        locale_texts = OpenApiDelpiExtensionService.preferred_locale_texts(
+            operation,
+            lang="pt-BR",
+        )
 
         payload = {
             "action_id": action_id,
             "operation_id": operation_id,
             "method": method,
             "path": path,
-            "summary": operation.get("summary"),
-            "description": operation.get("description"),
+            "summary": locale_texts.get("summary") or operation.get("summary"),
+            "description": locale_texts.get("description") or operation.get("description"),
             "tags": tags,
             "parameters_schema": operation.get("parameters") or [],
             "request_body_schema": operation.get("requestBody"),
@@ -70,6 +74,9 @@ class OpenApiActionImporter:
             "deprecated": bool(operation.get("deprecated")),
             "enabled": True,
         }
+
+        if locale_texts.get("whenToUse"):
+            payload["when_to_use"] = locale_texts["whenToUse"]
 
         if delpi_metadata:
             payload["delpi_metadata"] = delpi_metadata
