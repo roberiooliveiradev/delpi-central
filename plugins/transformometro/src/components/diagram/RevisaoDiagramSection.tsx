@@ -24,6 +24,7 @@ import {
 import type { MergedRevisaoDiagram } from "../../types/diagram";
 import {
   formatDiffSummary,
+  mergeRemovedNodesIntoFlowchartForDiff,
   stripFlowchartHighlights,
 } from "../../utils/diffHighlightDisplay";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
@@ -62,7 +63,16 @@ export function RevisaoDiagramSection({
     () => flowchartToMermaid(stripFlowchartHighlights(editable)),
     [editable]
   );
-  const displayFlowchart = useMemo(() => stripFlowchartHighlights(editable), [editable]);
+  const diff = merged?.reference_diff ?? merged?.baseline_diff ?? null;
+  const displayFlowchart = useMemo(() => {
+    const stripped = stripFlowchartHighlights(editable);
+    if (!showDiff || !diff?.removed?.length) return stripped;
+    return mergeRemovedNodesIntoFlowchartForDiff(
+      stripped,
+      merged?.flowchart_reference,
+      diff.removed,
+    );
+  }, [editable, showDiff, diff, merged?.flowchart_reference]);
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) {
@@ -146,7 +156,6 @@ export function RevisaoDiagramSection({
   const refLabel =
     merged.referencia?.versao_revisao ||
     (merged.referencia?.revisao_id ? merged.referencia.revisao_id.slice(0, 8) : null);
-  const diff = merged.reference_diff ?? merged.baseline_diff;
   const hasDiff =
     Boolean(diff) &&
     (diff!.changed.length > 0 || diff!.added.length > 0 || diff!.removed.length > 0);
@@ -208,7 +217,25 @@ export function RevisaoDiagramSection({
         <FlowchartEditor
           ref={editorRef}
           value={displayFlowchart}
-          onChange={readOnly ? undefined : setEditable}
+          onChange={
+            readOnly
+              ? undefined
+              : (next) => {
+                  if (!showDiff || !diff?.removed?.length) {
+                    setEditable(next);
+                    return;
+                  }
+                  // Fantasmas do diff não entram no estado editável.
+                  const removed = new Set(diff.removed);
+                  setEditable({
+                    ...next,
+                    nodes: next.nodes.filter((node) => !removed.has(node.id)),
+                    edges: (next.edges ?? []).filter(
+                      (edge) => !removed.has(edge.from) && !removed.has(edge.to),
+                    ),
+                  });
+                }
+          }
           readOnly={readOnly}
           diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
         />

@@ -2102,49 +2102,69 @@
   text-align: center;
 }
 
-.delpi-ui-flowchart-shell .tm-diagram-node--asis, .dashboard-transformometro .tm-diagram-node--asis{
+.delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--asis, .dashboard-transformometro .tm-diagram-node.tm-diagram-node--asis{
   border-color: #d97706;
   background: #fef3c7;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #d97706 35%, transparent);
 }
 
-.delpi-ui-flowchart-shell .tm-diagram-node--tobe, .dashboard-transformometro .tm-diagram-node--tobe{
+.delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--tobe, .dashboard-transformometro .tm-diagram-node.tm-diagram-node--tobe{
   border-color: #2563eb;
   background: #dbeafe;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #2563eb 40%, transparent);
 }
 
-.delpi-ui-flowchart-shell .tm-diagram-node--changed, .dashboard-transformometro .tm-diagram-node--changed{
+.delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--changed, .dashboard-transformometro .tm-diagram-node.tm-diagram-node--changed{
   border-color: #db2777;
   background: #fce7f3;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #db2777 40%, transparent);
 }
 
-.delpi-ui-flowchart-shell .tm-diagram-node--removed, .dashboard-transformometro .tm-diagram-node--removed{
+.delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--removed, .dashboard-transformometro .tm-diagram-node.tm-diagram-node--removed{
   border-color: #9ca3af;
   background: #f3f4f6;
-  opacity: 0.7;
+  opacity: 0.72;
+  box-shadow: none;
 }
 
-:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node--asis, .dashboard-transformometro .tm-diagram-node--asis{
+:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--asis,
+[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--asis,
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--asis,
+[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--asis{
   border-color: #fbbf24;
   background: color-mix(in srgb, #d97706 34%, var(--ds-card-bg));
   color: #fde68a;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #fbbf24 40%, transparent);
 }
 
-:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node--tobe, .dashboard-transformometro .tm-diagram-node--tobe{
+:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--tobe,
+[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--tobe,
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--tobe,
+[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--tobe{
   border-color: #60a5fa;
   background: color-mix(in srgb, #2563eb 34%, var(--ds-card-bg));
   color: #dbeafe;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #60a5fa 45%, transparent);
 }
 
-:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node--changed, .dashboard-transformometro .tm-diagram-node--changed{
+:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--changed,
+[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--changed,
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--changed,
+[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--changed{
   border-color: #f472b6;
   background: color-mix(in srgb, #db2777 30%, var(--ds-card-bg));
   color: #fce7f3;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #f472b6 45%, transparent);
 }
 
-:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node--removed, .dashboard-transformometro .tm-diagram-node--removed{
+:root[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--removed,
+[data-theme="dark"] .delpi-ui-flowchart-shell .tm-diagram-node.tm-diagram-node--removed,
+:root[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--removed,
+[data-theme="dark"] .dashboard-transformometro .tm-diagram-node.tm-diagram-node--removed{
   border-color: rgba(255, 255, 255, 0.24);
   background: color-mix(in srgb, var(--ds-card-bg) 70%, black);
   color: var(--ds-text-muted);
+  box-shadow: none;
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-node__scope, .dashboard-transformometro .tm-diagram-node__scope{

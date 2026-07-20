@@ -696,6 +696,9 @@ function FlowchartEditorInner({
 
   useEffect(() => {
     const next = toReactFlow(value, laneRenderOptions);
+    const added = new Set(diffNodeIds?.added ?? []);
+    const changed = new Set(diffNodeIds?.changed ?? []);
+    const removed = new Set(diffNodeIds?.removed ?? []);
     setNodes((currentNodes) => {
       const activitySelectedIds = new Set(
         currentNodes
@@ -719,32 +722,30 @@ function FlowchartEditorInner({
             selected: laneSelected,
           };
         }
+        const baseData = node.data as BpmnNodeData;
+        const highlight = added.has(node.id)
+          ? "tobe"
+          : changed.has(node.id)
+            ? "changed"
+            : removed.has(node.id)
+              ? "removed"
+              : baseData.highlight;
         return {
           ...node,
-          draggable: !readOnly,
-          selectable: !readOnly,
+          draggable: !readOnly && !removed.has(node.id),
+          selectable: !readOnly && !removed.has(node.id),
           selected: activitySelectedIds.has(node.id),
-          data:
-            node.type === "lane"
-              ? node.data
-              : {
-                  ...(node.data as BpmnNodeData),
-                  readOnly,
-                  onLabelChange: readOnly ? undefined : handleNodeLabelChange,
-                  scopeSelectable: Boolean(onToggleScopeNode) && !readOnly,
-                  inScope: selectedScopeIds
-                    ? selectedScopeIds.has(node.id)
-                    : scopeNodeIds?.has(node.id),
-                  onToggleScope: onToggleScopeNode,
-                  highlight:
-                    diffNodeIds?.added?.includes(node.id)
-                      ? "tobe"
-                      : diffNodeIds?.changed?.includes(node.id)
-                        ? "changed"
-                        : diffNodeIds?.removed?.includes(node.id)
-                          ? "removed"
-                          : (node.data as BpmnNodeData).highlight,
-                },
+          data: {
+            ...baseData,
+            readOnly: readOnly || removed.has(node.id),
+            onLabelChange: readOnly || removed.has(node.id) ? undefined : handleNodeLabelChange,
+            scopeSelectable: Boolean(onToggleScopeNode) && !readOnly && !removed.has(node.id),
+            inScope: selectedScopeIds
+              ? selectedScopeIds.has(node.id)
+              : scopeNodeIds?.has(node.id),
+            onToggleScope: onToggleScopeNode,
+            highlight,
+          },
         };
       });
     });

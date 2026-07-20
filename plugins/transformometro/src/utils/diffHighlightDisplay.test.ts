@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   applyDiffHighlightsToRichTree,
   formatDiffSummary,
+  mergeRemovedNodesIntoFlowchartForDiff,
   mergeRemovedNodesIntoTreeForDiff,
 } from "./diffHighlightDisplay";
 import type { DecompositionTreeV1 } from "../types/decomposition";
 import type { RichTreeNode } from "../types/richTree";
+import type { FlowchartV1 } from "@delpi/plugin-ui/index";
 
 function tree(nodes: DecompositionTreeV1["nodes"]): DecompositionTreeV1 {
   return { format: "decomposition_tree_v1", format_version: 1, nodes };
@@ -114,5 +116,41 @@ describe("applyDiffHighlightsToRichTree + formatDiffSummary", () => {
         "1.0.0",
       ),
     ).toBe("vs referência (1.0.0): 1 alterados, 2 novos, 3 removidos.");
+  });
+});
+
+describe("mergeRemovedNodesIntoFlowchartForDiff", () => {
+  function flow(partial: Partial<FlowchartV1> & Pick<FlowchartV1, "nodes" | "edges">): FlowchartV1 {
+    return { format: "flowchart_v1", format_version: 1, ...partial };
+  }
+
+  it("reinsere nós e arestas removidos com highlight removed", () => {
+    const reference = flow({
+      lanes: [{ id: "lane_a", label: "A", height: 168 }],
+      nodes: [
+        { id: "n1", type: "start", label: "Início", position: { x: 0, y: 0 }, lane_id: "lane_a" },
+        { id: "n2", type: "process", label: "Removido", position: { x: 200, y: 0 }, lane_id: "lane_a" },
+        { id: "n3", type: "end", label: "Fim", position: { x: 400, y: 0 }, lane_id: "lane_a" },
+      ],
+      edges: [
+        { id: "e1", from: "n1", to: "n2", label: null },
+        { id: "e2", from: "n2", to: "n3", label: null },
+      ],
+    });
+    const current = flow({
+      lanes: [{ id: "lane_a", label: "A", height: 168 }],
+      nodes: [
+        { id: "n1", type: "start", label: "Início", position: { x: 0, y: 0 }, lane_id: "lane_a" },
+        { id: "n3", type: "end", label: "Fim", position: { x: 400, y: 0 }, lane_id: "lane_a" },
+      ],
+      edges: [{ id: "e_direct", from: "n1", to: "n3", label: null }],
+    });
+
+    const merged = mergeRemovedNodesIntoFlowchartForDiff(current, reference, ["n2"]);
+    expect(merged.nodes.map((n) => n.id)).toEqual(expect.arrayContaining(["n1", "n2", "n3"]));
+    expect(merged.nodes.find((n) => n.id === "n2")?.highlight).toBe("removed");
+    expect(merged.edges.map((e) => e.id)).toEqual(
+      expect.arrayContaining(["e_direct", "e1", "e2"]),
+    );
   });
 });

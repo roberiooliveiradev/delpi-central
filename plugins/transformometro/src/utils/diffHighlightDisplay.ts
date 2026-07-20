@@ -16,6 +16,59 @@ export function stripFlowchartHighlights(flowchart: FlowchartV1): FlowchartV1 {
   };
 }
 
+/**
+ * Inclui nós removidos (só na referência) no flowchart de exibição do diff.
+ * Não altera o editable — só para preview com «Destacar diferenças».
+ */
+export function mergeRemovedNodesIntoFlowchartForDiff(
+  flowchart: FlowchartV1,
+  referenceFlowchart: FlowchartV1 | null | undefined,
+  removedIds: string[] | null | undefined,
+): FlowchartV1 {
+  if (!removedIds?.length || !referenceFlowchart?.nodes?.length) return flowchart;
+
+  const currentIds = new Set(flowchart.nodes.map((node) => node.id));
+  const refById = new Map(referenceFlowchart.nodes.map((node) => [node.id, node]));
+  const extras = removedIds
+    .filter((id) => !currentIds.has(id))
+    .map((id) => refById.get(id))
+    .filter((node): node is NonNullable<typeof node> => Boolean(node))
+    .map((node) => ({
+      ...node,
+      highlight: "removed" as const,
+    }));
+
+  if (!extras.length) return flowchart;
+
+  // Arestas da referência entre nós removidos (ou removido↔vivo) para manter contexto.
+  const displayIds = new Set([...currentIds, ...extras.map((n) => n.id)]);
+  const currentEdgeIds = new Set((flowchart.edges ?? []).map((e) => e.id));
+  const extraEdges = (referenceFlowchart.edges ?? []).filter(
+    (edge) =>
+      !currentEdgeIds.has(edge.id) &&
+      displayIds.has(edge.from) &&
+      displayIds.has(edge.to) &&
+      (removedIds.includes(edge.from) || removedIds.includes(edge.to)),
+  );
+
+  // Lanes da referência que os nós removidos usam e ainda não estão no flowchart.
+  const laneIds = new Set((flowchart.lanes ?? []).map((l) => l.id));
+  const extraLanes = (referenceFlowchart.lanes ?? []).filter((lane) => {
+    if (laneIds.has(lane.id)) return false;
+    return extras.some((node) => node.lane_id === lane.id);
+  });
+
+  return {
+    ...flowchart,
+    lanes:
+      extraLanes.length > 0
+        ? [...(flowchart.lanes ?? []), ...extraLanes]
+        : flowchart.lanes,
+    nodes: [...flowchart.nodes, ...extras],
+    edges: [...(flowchart.edges ?? []), ...extraEdges],
+  };
+}
+
 export function stripDecompositionHighlights(tree: DecompositionTreeV1): DecompositionTreeV1 {
   return {
     ...tree,
