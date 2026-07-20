@@ -513,6 +513,38 @@ export function InstanciaDetailPage({
         />
       </InstanciaWorkspaceSectionPanel>
 
+      <InstanciaWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
+        <EditableSectionCard
+          title="Escopo no diagrama"
+          description="Quais etapas do diagrama-macro esta melhoria cobre — e se setas na borda do recorte entram no fluxo."
+          hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
+          isEditing={sectionEdit.isEditing("diagrama_escopo")}
+          onEdit={() => void sectionEdit.startEdit("diagrama_escopo")}
+          onCancel={() => sectionEdit.cancelEdit("diagrama_escopo")}
+          readContent={
+            <InstanciaDiagramEscopoSection
+              embeddedInCard
+              readOnly
+              processoId={processoId}
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          }
+          editContent={
+            <InstanciaDiagramEscopoSection
+              embeddedInCard
+              processoId={processoId}
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          }
+        />
+      </InstanciaWorkspaceSectionPanel>
+
       <InstanciaWorkspaceSectionPanel active={activeSection === "contexto"} sectionId="contexto">
         <EditableSectionCard
           title="Contexto operacional"
@@ -539,38 +571,6 @@ export function InstanciaDetailPage({
               onError={setError}
               resyncVersion={sectionEdit.resyncVersion}
               onSaved={() => sectionEdit.stopEdit("instancia_contexto")}
-            />
-          }
-        />
-      </InstanciaWorkspaceSectionPanel>
-
-      <InstanciaWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
-        <EditableSectionCard
-          title="Escopo no diagrama"
-          description="Subset de nós do diagrama macro relevante para esta instância."
-          hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
-          isEditing={sectionEdit.isEditing("diagrama_escopo")}
-          onEdit={() => void sectionEdit.startEdit("diagrama_escopo")}
-          onCancel={() => sectionEdit.cancelEdit("diagrama_escopo")}
-          readContent={
-            <InstanciaDiagramEscopoSection
-              embeddedInCard
-              readOnly
-              processoId={processoId}
-              instanciaId={instanciaId}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              resyncVersion={sectionEdit.resyncVersion}
-            />
-          }
-          editContent={
-            <InstanciaDiagramEscopoSection
-              embeddedInCard
-              processoId={processoId}
-              instanciaId={instanciaId}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              resyncVersion={sectionEdit.resyncVersion}
             />
           }
         />

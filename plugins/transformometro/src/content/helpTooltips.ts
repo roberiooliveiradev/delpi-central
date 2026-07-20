@@ -216,7 +216,11 @@ export const TM_HELP_TOOLTIPS = {
     rotulo:
       "Título curto da melhoria, exibido na listagem, na linha do tempo e nos relatórios. Use para distinguir melhorias no mesmo par unidade × departamento (ex.: «Automação do fechamento — Q2/2026»).",
     diagramaEscopo:
-      "Selecione quais nós do diagrama macro desta instância são relevantes neste ambiente operacional.",
+      "Define quais etapas do diagrama-macro desta melhoria entram no fluxo. O «Diagrama da revisão» e o diagrama composto usam só esse recorte — não o mapa inteiro, salvo se você marcar o macro completo.",
+    diagramaEscopoMacroCompleto:
+      "Marcado: esta melhoria enxerga todo o diagrama-macro (todas as faixas e etapas). Desmarcado: clique nos nós do desenho para escolher só as etapas relevantes; o restante fica fora do escopo e das revisões desta melhoria.",
+    diagramaEscopoArestasFronteira:
+      "Só vale com escopo parcial. Marcado: mantém setas que ligam uma etapa dentro do escopo a outra fora (fronteira). Desmarcado: só setas entre etapas ambas dentro do escopo — o fluxo fica «fechado» no recorte. Com macro completo a opção não se aplica.",
     modosVisualizacao:
       "Alterne entre ícones grandes (só título), ícones médios (+ unidade e meta), lista (+ status) e tabela detalhada com ações.",
     ordenacaoCampo: "Campo usado para ordenar a lista de melhorias em todos os modos de visualização.",

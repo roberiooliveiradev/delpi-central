@@ -93,8 +93,8 @@ describe("instancia workspace sections", () => {
     expect(sectionIds).toEqual([
       "instancia-section:inst-1:dados",
       "instancia-section:inst-1:mapeamento",
-      "instancia-section:inst-1:contexto",
       "instancia-section:inst-1:diagrama",
+      "instancia-section:inst-1:contexto",
       "instancia-section:inst-1:revisoes",
     ]);
     const revisoesFolder = instanciaNode?.children?.find(

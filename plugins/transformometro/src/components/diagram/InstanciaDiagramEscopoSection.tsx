@@ -143,6 +143,7 @@ export function InstanciaDiagramEscopoSection({
           }))
         }
         label="Usar diagrama macro completo nesta instância"
+        hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopoMacroCompleto}
       />
 
       <NativeCheckboxControl
@@ -153,11 +154,16 @@ export function InstanciaDiagramEscopoSection({
           setValue((current) => ({ ...current, include_boundary_edges }))
         }
         label="Incluir arestas na fronteira do escopo"
+        hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopoArestasFronteira}
       />
 
       <DiagramFullscreenFrame
         title="Escopo no diagrama"
-        subtitle="Selecione os nós do mapa macro que se aplicam a esta instância."
+        subtitle={
+          escopo.inherit_all
+            ? "Macro completo: todas as etapas desta melhoria. Desmarque a opção acima para selecionar um subset no desenho."
+            : "Clique nos nós para incluir ou excluir do escopo. Arestas de fronteira seguem a opção acima."
+        }
       >
         <FlowchartEditor
           value={macro}

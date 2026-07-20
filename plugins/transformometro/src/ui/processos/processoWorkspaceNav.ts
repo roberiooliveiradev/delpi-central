@@ -27,8 +27,8 @@ export type RevisaoWorkspaceSectionId =
 export type InstanciaWorkspaceSectionId =
   | "dados"
   | "mapeamento"
-  | "contexto"
   | "diagrama"
+  | "contexto"
   | "revisoes";
 
 export type ProcessoWorkspaceNodeKind =
@@ -84,8 +84,8 @@ export const INSTANCIA_WORKSPACE_SECTIONS: Array<{
 }> = [
   { id: "dados", label: "Instância operacional" },
   { id: "mapeamento", label: "Escopo no mapeamento" },
-  { id: "contexto", label: "Contexto operacional" },
   { id: "diagrama", label: "Escopo no diagrama" },
+  { id: "contexto", label: "Contexto operacional" },
   { id: "revisoes", label: "Revisões" },
 ];
 
