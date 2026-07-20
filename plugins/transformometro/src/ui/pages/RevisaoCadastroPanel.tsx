@@ -249,8 +249,8 @@ export function RevisaoCadastroPanel({
     const label = revisaoDisplayLabel(revisao);
     const confirmed = await confirm({
       title: "Excluir revisão",
-      message: `Excluir a revisão ${label}?`,
-      confirmLabel: "Excluir",
+      message: `Excluir a revisão ${label}? A melhoria e o processo-mestre não serão excluídos.`,
+      confirmLabel: "Excluir revisão",
       variant: "danger",
     });
     if (!confirmed) {

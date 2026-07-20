@@ -250,8 +250,8 @@ export function InstanciaDetailPage({
     const label = revisaoDisplayLabel(revisao);
     const confirmed = await confirm({
       title: "Excluir revisão",
-      message: `Excluir a revisão ${label}?`,
-      confirmLabel: "Excluir",
+      message: `Excluir a revisão ${label}? A melhoria e o processo-mestre não serão excluídos.`,
+      confirmLabel: "Excluir revisão",
       variant: "danger",
     });
     if (!confirmed) return;
@@ -328,33 +328,41 @@ export function InstanciaDetailPage({
     () =>
       embedded && instancia ? (
         <>
-          {showRevisaoForm ? (
-            <button
-              type="button"
-              className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
-              onClick={closeNovaRevisaoForm}
-            >
-              Cancelar revisão
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="ds-primary-btn tm-processo-workspace-sidebar__action-btn"
-              onClick={openNovaRevisaoForm}
-            >
-              <Plus size={16} />
-              Nova revisão
-            </button>
-          )}
+          {activeSection === "revisoes" || showRevisaoForm ? (
+            showRevisaoForm ? (
+              <button
+                type="button"
+                className={`${DS_GHOST_BTN} tm-processo-workspace-sidebar__action-btn`}
+                onClick={closeNovaRevisaoForm}
+              >
+                Cancelar revisão
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="ds-primary-btn tm-processo-workspace-sidebar__action-btn"
+                onClick={openNovaRevisaoForm}
+              >
+                <Plus size={16} />
+                Nova revisão
+              </button>
+            )
+          ) : null}
           <button
             type="button"
-            className={`${dsGhostBtn('danger')} tm-processo-workspace-sidebar__action-btn`}
+            className={`${dsGhostBtn("danger")} tm-processo-workspace-sidebar__action-btn`}
             onClick={() => {
               void (async () => {
+                const label =
+                  instancia.rotulo_instancia?.trim() ||
+                  (instancia.todas_filiais_ativas
+                    ? "Todas as unidades"
+                    : `${instancia.codigo_filial ?? instancia.filial_id ?? ""}`.trim()) ||
+                  "esta melhoria";
                 const confirmed = await confirm({
                   title: "Excluir melhoria",
-                  message: "Excluir esta instância operacional?",
-                  confirmLabel: "Excluir",
+                  message: `Excluir a melhoria «${label}»? O processo-mestre e as demais melhorias não serão afetados.`,
+                  confirmLabel: "Excluir melhoria",
                   variant: "danger",
                 });
                 if (!confirmed) return;
@@ -364,11 +372,12 @@ export function InstanciaDetailPage({
             }}
           >
             <Trash2 size={16} />
-            Excluir instância
+            Excluir melhoria
           </button>
         </>
       ) : null,
     [
+      activeSection,
       closeNovaRevisaoForm,
       confirm,
       embedded,
@@ -696,8 +705,8 @@ export function InstanciaDetailPage({
                   void (async () => {
                     const confirmed = await confirm({
                       title: "Excluir melhoria",
-                      message: "Excluir esta instância operacional?",
-                      confirmLabel: "Excluir",
+                      message: `Excluir a melhoria «${instanciaLabel}»? O processo-mestre e as demais melhorias não serão afetados.`,
+                      confirmLabel: "Excluir melhoria",
                       variant: "danger",
                     });
                     if (!confirmed) return;
@@ -707,7 +716,7 @@ export function InstanciaDetailPage({
                 }}
               >
                 <Trash2 size={16} />
-                Excluir instância
+                Excluir melhoria
               </button>
             </>
           }

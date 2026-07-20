@@ -393,8 +393,8 @@ export function ProcessoInstanciasPanel({
   async function handleDelete(row: ProcessoInstancia) {
     const confirmed = await confirm({
       title: "Excluir melhoria",
-      message: `Excluir melhoria ${row.todas_filiais_ativas ? "todas as unidades" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`,
-      confirmLabel: "Excluir",
+      message: `Excluir a melhoria ${row.todas_filiais_ativas ? "«Todas as unidades»" : `«${row.codigo_filial ?? row.filial_id}»`}? Só é possível sem revisões cadastradas. O processo-mestre não será afetado.`,
+      confirmLabel: "Excluir melhoria",
       variant: "danger",
     });
     if (!confirmed) {

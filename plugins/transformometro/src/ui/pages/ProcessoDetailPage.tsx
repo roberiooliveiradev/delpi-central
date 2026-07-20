@@ -236,8 +236,8 @@ export function ProcessoDetailPage({
     const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
     const confirmed = await confirm({
       title: "Excluir processo",
-      message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica). Você será redirecionado à lista.`,
-      confirmLabel: "Excluir",
+      message: `Excluir o processo-mestre ${label} e todo o cadastro associado (melhorias, revisões, medições)? Esta ação é uma exclusão lógica. Você será redirecionado à lista.`,
+      confirmLabel: "Excluir processo",
       variant: "danger",
     });
     if (!confirmed) {
