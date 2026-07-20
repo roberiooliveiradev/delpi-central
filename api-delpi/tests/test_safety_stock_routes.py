@@ -512,7 +512,11 @@ def test_consumption_analysis_summary_returns_envelope(
 
     response = safety_stock_client.get(
         "/supplies/safety-stock/consumption-analysis/summary",
-        params={"branch": "01", "analysisStatus": "below_suggested"},
+        params={
+            "branch": "01",
+            "includeBlocked": "false",
+            "analysisStatus": "below_suggested",
+        },
     )
     body = _body(response)
 
@@ -526,6 +530,7 @@ def test_consumption_analysis_summary_returns_envelope(
     assert body["meta"]["shape"] == "scalar"
     request = use_case.execute.call_args.args[0]
     assert request.analysis_status == "below_suggested"
+    assert request.include_blocked is False
 
 
 @patch(
@@ -555,7 +560,15 @@ def test_consumption_analysis_items_returns_paged_meta(
 
     response = safety_stock_client.get(
         "/supplies/safety-stock/consumption-analysis/items",
-        params={"branch": "02", "sortBy": "suggested_safety_stock"},
+        params={
+            "branch": "02",
+            "includeBlocked": "false",
+            "analysisStatus": "below_suggested",
+            "page": "1",
+            "pageSize": "50",
+            "sortBy": "difference_quantity",
+            "sortDirection": "asc",
+        },
     )
     body = _body(response)
 
@@ -567,6 +580,11 @@ def test_consumption_analysis_items_returns_paged_meta(
     assert body["meta"]["entity"] == (
         "supplies_safety_stock_consumption_analysis_item"
     )
+    request = use_case.execute.call_args.args[0]
+    assert request.include_blocked is False
+    assert request.analysis_status == "below_suggested"
+    assert request.sort_by == "difference_quantity"
+    assert request.sort_direction == "asc"
 
 
 @patch(

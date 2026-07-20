@@ -239,16 +239,20 @@ def SUPPLIER_STORE_QUERY():
     max_length=6,
     description="Loja do fornecedor (A2_LOJA / D1_LOJA).",
 )
-ANALYSIS_STATUS_QUERY = Query(
-    None,
-    alias="analysisStatus",
-    description=(
-        "Filtro da análise: below_suggested, above_suggested, "
-        "adequate ou inconsistent_data."
-    ),
-)
-ANALYSIS_SORT_BY_QUERY = Query(
-    "difference_quantity",
-    alias="sortBy",
-    description="Campo de ordenação da análise de consumo.",
-)
+def ANALYSIS_STATUS_QUERY():
+    return Query(
+        None,
+        alias="analysisStatus",
+        description=(
+            "Filtro da análise: below_suggested, above_suggested, "
+            "adequate ou inconsistent_data."
+        ),
+    )
+
+
+def ANALYSIS_SORT_BY_QUERY():
+    return Query(
+        "difference_quantity",
+        alias="sortBy",
+        description="Campo de ordenação da análise de consumo.",
+    )

@@ -326,12 +326,12 @@ def get_safety_stock_item_suppliers_route(
 )
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_summary_route(
-    branch: str = BRANCH_QUERY,
-    include_blocked: bool = INCLUDE_BLOCKED_QUERY,
-    product_group: Optional[str] = PRODUCT_GROUP_QUERY,
-    unit: Optional[str] = UNIT_QUERY,
-    search: Optional[str] = SEARCH_QUERY,
-    analysis_status: Optional[str] = ANALYSIS_STATUS_QUERY,
+    branch: str = BRANCH_QUERY(),
+    include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
+    product_group: Optional[str] = PRODUCT_GROUP_QUERY(),
+    unit: Optional[str] = UNIT_QUERY(),
+    search: Optional[str] = SEARCH_QUERY(),
+    analysis_status: Optional[str] = ANALYSIS_STATUS_QUERY(),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -368,16 +368,16 @@ def get_safety_stock_consumption_analysis_summary_route(
 )
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_items_route(
-    branch: str = BRANCH_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
-    search: Optional[str] = SEARCH_QUERY,
-    analysis_status: Optional[str] = ANALYSIS_STATUS_QUERY,
-    product_group: Optional[str] = PRODUCT_GROUP_QUERY,
-    unit: Optional[str] = UNIT_QUERY,
-    include_blocked: bool = INCLUDE_BLOCKED_QUERY,
-    sort_by: str = ANALYSIS_SORT_BY_QUERY,
-    sort_direction: str = SORT_DIRECTION_QUERY,
+    branch: str = BRANCH_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
+    search: Optional[str] = SEARCH_QUERY(),
+    analysis_status: Optional[str] = ANALYSIS_STATUS_QUERY(),
+    product_group: Optional[str] = PRODUCT_GROUP_QUERY(),
+    unit: Optional[str] = UNIT_QUERY(),
+    include_blocked: bool = INCLUDE_BLOCKED_QUERY(),
+    sort_by: str = ANALYSIS_SORT_BY_QUERY(),
+    sort_direction: str = SORT_DIRECTION_QUERY(),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
@@ -419,7 +419,7 @@ def get_safety_stock_consumption_analysis_items_route(
 @require_any_permission(SAFETY_STOCK_READ_PERMISSIONS)
 def get_safety_stock_consumption_analysis_item_details_route(
     code: str,
-    branch: str = BRANCH_QUERY,
+    branch: str = BRANCH_QUERY(),
 ):
     branch_error = branch_access_error(branch)
     if branch_error:
