@@ -409,7 +409,7 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
       <EditableSectionCard
         title="Mapeamento da revisão"
-        description="Edite o WBS no escopo desta melhoria (rótulos, ordem, exclusão e novos nós). O delta compõe o macro pela vigência."
+        description="Parte do mapeamento da revisão de referência; o delta desta revisão alimenta o macro composto pelas vigentes."
         hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao}
         isEditing={sectionEdit.isEditing("decomposicao_revisao")}
         onEdit={() => void sectionEdit.startEdit("decomposicao_revisao")}

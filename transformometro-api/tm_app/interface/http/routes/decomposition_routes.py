@@ -459,32 +459,35 @@ def get_revisao_decomposicao_merged(revisao_id: str):
     if not revisao:
         return fail("Revisão não encontrada.", 404)
 
-    merged = _merge.merge(tree=tree, escopo=escopo, overlay=overlay)
-    baseline_diff = None
+    reference_overlay = None
+    reference_meta = None
     baseline_revisao = RevisaoRepository().find_reference_for_revisao(
         revisao_id,
         revisao_row=revisao,
     )
     if baseline_revisao:
-        _, baseline_tree, baseline_escopo, baseline_overlay = _load_decomposition_merge_context(
+        _, _, _, reference_overlay = _load_decomposition_merge_context(
             str(baseline_revisao["revisao_id"])
         )
-        baseline_merged = _merge.merge(
-            tree=baseline_tree,
-            escopo=baseline_escopo,
-            overlay=baseline_overlay,
-        )
-        baseline_diff = _merge.diff_highlights(
-            baseline=baseline_merged["tree"],
-            current=merged["tree"],
-        )
+        reference_meta = {
+            "revisao_id": str(baseline_revisao["revisao_id"]),
+            "versao_revisao": baseline_revisao.get("versao_revisao"),
+            "cenario_tipo": baseline_revisao.get("cenario_tipo"),
+        }
+
+    view = _merge.build_revisao_view(
+        tree=tree,
+        escopo=escopo,
+        overlay=overlay,
+        reference_overlay=reference_overlay,
+        reference_meta=reference_meta,
+    )
 
     return ok(
         {
             "revisao_id": revisao_id,
             "cenario_tipo": revisao.get("cenario_tipo"),
-            **merged,
-            "baseline_diff": baseline_diff,
+            **view,
         },
         "Árvore de decomposição mesclada da revisão.",
     )

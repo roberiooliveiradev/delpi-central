@@ -25,7 +25,7 @@ macro_base
 | # | Regra |
 |---|--------|
 | 1 | **Escopo da melhoria** = nós que a revisão pode alterar (já em `instancia_decomposicao_escopo`). |
-| 2 | **Delta da revisão** = overlay (`label`, `descricao`, `highlight`, `disabled_node_ids`, `extra_nodes`, reparent/`ordem`) **somente** dentro do escopo. |
+| 2 | **Delta da revisão** = overlay absoluto no macro (`label`, `extra_nodes`, …) no escopo; a **UI ancora** no mapeamento da revisão de referência quando o overlay ainda está vazio. |
 | 3 | **Data de composição** = `data_inicio_vigencia` … `data_fim_vigencia` (implantação não entra na janela). |
 | 4 | Sem revisão vigente no nó em D → mostra **base**. |
 | 5 | Interseção → **nunca merge silencioso**: badge/lista `conflicts[]`; vencedor de exibição = início mais recente (empate → `versao_revisao`). |
@@ -77,7 +77,7 @@ macro_base
 
 Rejeita `node_overrides` / `disabled_node_ids` fora de `expand_escopo_node_ids`.
 Aceita `extra_nodes` (pais no escopo/extras) e `parent_id`/`ordem` em overrides.
-GET merged inclui `tree_base` (escopo sem delta) para a UI fazer diff.
+GET merged inclui `tree_base` (macro no escopo), `tree_reference` (âncora), e com overlay vazio `tree` inicia na referência.
 
 ### PUT revisão (vigência)
 
@@ -104,3 +104,4 @@ Se já existe medição e início/fim mudaram → **409** sem `confirm_vigencia_
 - [x] Testes unitários composição/conflito
 - [x] MFE delta + composed + aviso data
 - [x] Fase D: extra_nodes / reparent + editor livre + trava vigência com medição
+- [x] Âncora de edição = mapeamento da revisão de referência (seed + diff)

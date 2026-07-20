@@ -186,7 +186,7 @@ export const TM_HELP_TOOLTIPS = {
     contextoObservacoesRollout:
       "Notas sobre implantação, dependências, restrições locais ou plano de comunicação.",
     mapeamentoRevisao:
-      "Delta estrutural da revisão sobre o escopo WBS: edite rótulos, reordene, exclua ou adicione nós. O macro do processo permanece; a visão vigente usa o macro composto por data de vigência.",
+      "Âncora = mapeamento da revisão de referência (exceto baseline). Você edita o delta a partir dessa árvore; na gravação o overlay fica absoluto no macro do processo para o macro composto «agora» refletir as revisões vigentes.",
     macroComposto:
       "Visão do macro na data D: árvore base + overlays das revisões vigentes (início–fim de vigência). Interseções no mesmo nó geram aviso; o rótulo exibido é o da vigência mais recente.",
     arvoreVazia:

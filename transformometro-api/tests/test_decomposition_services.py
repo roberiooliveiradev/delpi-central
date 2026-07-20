@@ -109,6 +109,70 @@ def test_assert_extra_outside_parent_raises():
                 ],
             },
         )
+
+
+def test_build_revisao_view_seeds_from_reference_when_overlay_empty():
+    tree = _sample_tree()
+    reference_overlay = {
+        "format": "decomposition_overlay_v1",
+        "format_version": 1,
+        "node_overrides": {
+            "st_notificacao": {"label": "Notificação da referência", "highlight": "tobe"},
+        },
+    }
+    view = RevisaoDecomposicaoMergeService().build_revisao_view(
+        tree=tree,
+        escopo={"inherit_all": True},
+        overlay={
+            "format": "decomposition_overlay_v1",
+            "format_version": 1,
+            "node_overrides": {},
+            "disabled_node_ids": [],
+            "extra_nodes": [],
+        },
+        reference_overlay=reference_overlay,
+        reference_meta={
+            "revisao_id": "ref-1",
+            "versao_revisao": "1.0.0",
+            "cenario_tipo": "melhoria",
+        },
+    )
+    labels = {n["id"]: n["label"] for n in view["tree"]["nodes"]}
+    assert labels["st_notificacao"] == "Notificação da referência"
+    assert view["seeded_from_reference"] is True
+    assert view["referencia"]["versao_revisao"] == "1.0.0"
+    base_labels = {n["id"]: n["label"] for n in view["tree_base"]["nodes"]}
+    assert base_labels["st_notificacao"] == "Receber notificação"
+
+
+def test_build_revisao_view_keeps_own_overlay_when_present():
+    tree = _sample_tree()
+    view = RevisaoDecomposicaoMergeService().build_revisao_view(
+        tree=tree,
+        escopo={"inherit_all": True},
+        overlay={
+            "format": "decomposition_overlay_v1",
+            "format_version": 1,
+            "node_overrides": {
+                "st_notificacao": {"label": "Delta desta revisão", "highlight": "tobe"},
+            },
+        },
+        reference_overlay={
+            "format": "decomposition_overlay_v1",
+            "format_version": 1,
+            "node_overrides": {
+                "st_notificacao": {"label": "Da referência", "highlight": "tobe"},
+            },
+        },
+        reference_meta={"revisao_id": "ref-1", "versao_revisao": "1.0.0"},
+    )
+    labels = {n["id"]: n["label"] for n in view["tree"]["nodes"]}
+    assert labels["st_notificacao"] == "Delta desta revisão"
+    assert view["seeded_from_reference"] is False
+    assert view["reference_diff"]["changed"] == ["st_notificacao"]
+
+
+def test_export_flat_rows_legacy_format():
     rows = DecompositionFlatExportService().build_rows(
         tree=_sample_tree(),
         macroprocesso="LMP",

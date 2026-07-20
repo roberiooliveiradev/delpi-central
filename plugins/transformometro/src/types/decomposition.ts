@@ -82,11 +82,25 @@ export type MergedRevisaoDecomposition = {
   revisao_id: string;
   cenario_tipo?: string;
   tree: DecompositionTreeV1;
+  /** Macro do processo no escopo — base absoluta para gravar o overlay. */
   tree_base?: DecompositionTreeV1;
+  /** Mapeamento mesclado da revisão de referência (âncora de edição). */
+  tree_reference?: DecompositionTreeV1 | null;
   escopo: DecompositionEscopo;
   overlay: DecompositionOverlayV1;
   warnings: string[];
+  seeded_from_reference?: boolean;
+  referencia?: {
+    revisao_id: string;
+    versao_revisao?: string;
+    cenario_tipo?: string;
+  } | null;
   baseline_diff?: {
+    changed: string[];
+    added: string[];
+    removed: string[];
+  } | null;
+  reference_diff?: {
     changed: string[];
     added: string[];
     removed: string[];

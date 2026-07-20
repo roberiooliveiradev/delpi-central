@@ -38,7 +38,10 @@ export function RevisaoDecompositionSection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [merged, setMerged] = useState<MergedRevisaoDecomposition | null>(null);
-  const [treeBase, setTreeBase] = useState<DecompositionTreeV1>(emptyDecompositionTree());
+  /** Base absoluta (macro no escopo) — usada no diff de gravação. */
+  const [treeProcessBase, setTreeProcessBase] = useState<DecompositionTreeV1>(
+    emptyDecompositionTree()
+  );
   const [editable, setEditable] = useState<DecompositionTreeV1>(emptyDecompositionTree());
   const [tab, setTab] = useState<"arvore" | "planilha">("arvore");
 
@@ -48,12 +51,9 @@ export function RevisaoDecompositionSection({
     try {
       const mergedData = await fetchRevisaoDecomposicaoMerged(revisaoId, getAccessToken);
       setMerged(mergedData);
-      const base = mergedData.tree_base ?? {
-        format: "decomposition_tree_v1" as const,
-        format_version: 1 as const,
-        nodes: [],
-      };
-      setTreeBase(base);
+      const processBase = mergedData.tree_base ?? emptyDecompositionTree();
+      setTreeProcessBase(processBase);
+      // tree já vem da API: referência quando overlay vazio; senão macro+overlay
       setEditable(mergedData.tree ?? emptyDecompositionTree());
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar mapeamento da revisão.");
@@ -75,7 +75,8 @@ export function RevisaoDecompositionSection({
     setSaving(true);
     onError(null);
     try {
-      const overlay = decompositionTreeToOverlay(treeBase, editable);
+      // Overlay absoluto vs macro do processo → composição «agora» pelas vigentes.
+      const overlay = decompositionTreeToOverlay(treeProcessBase, editable);
       await saveRevisaoDecomposicaoOverlay(revisaoId, overlay, getAccessToken);
       await load();
     } catch (err) {
@@ -89,13 +90,18 @@ export function RevisaoDecompositionSection({
     return <p className="ds-hint">Carregando mapeamento da revisão…</p>;
   }
 
-  if (!merged || (!editable.nodes.length && !treeBase.nodes.length)) {
+  if (!merged || (!editable.nodes.length && !treeProcessBase.nodes.length)) {
     return (
       <p className="ds-hint">
         Nenhum mapeamento no escopo desta instância. Cadastre a árvore no processo-mestre e o escopo na instância.
       </p>
     );
   }
+
+  const refLabel =
+    merged.referencia?.versao_revisao ||
+    (merged.referencia?.revisao_id ? merged.referencia.revisao_id.slice(0, 8) : null);
+  const diff = merged.reference_diff ?? merged.baseline_diff;
 
   return (
     <div className="tm-decomposition-revisao">
@@ -109,9 +115,25 @@ export function RevisaoDecompositionSection({
 
       {!readOnly ? (
         <p className="ds-hint tm-decomposition-revisao__edit-hint">
-          Edite livremente o WBS <strong>dentro do escopo</strong> desta melhoria: rótulos, ordem,
-          exclusão e novos nós. O macro do processo permanece; o delta entra no{" "}
-          <strong>macro composto</strong> pela vigência.
+          {refLabel ? (
+            <>
+              Parte do mapeamento da revisão de referência <strong>{refLabel}</strong>. Altere só o
+              delta desta revisão; o <strong>macro composto</strong> («agora») continua a refletir
+              as revisões vigentes.
+            </>
+          ) : (
+            <>
+              Edite o WBS no escopo desta melhoria. Sem revisão de referência, a âncora é o macro do
+              processo; o macro composto «agora» usa as revisões vigentes.
+            </>
+          )}
+        </p>
+      ) : null}
+
+      {merged.seeded_from_reference ? (
+        <p className="ds-hint" role="status">
+          Overlay ainda vazio — árvore iniciada a partir da referência. Ao salvar, o delta fica
+          gravado em relação ao macro do processo.
         </p>
       ) : null}
 
@@ -123,10 +145,10 @@ export function RevisaoDecompositionSection({
         </div>
       ) : null}
 
-      {merged.baseline_diff ? (
+      {diff ? (
         <p className="ds-hint" role="status">
-          Diff vs baseline: {merged.baseline_diff.changed.length} alterados,{" "}
-          {merged.baseline_diff.added.length} novos, {merged.baseline_diff.removed.length} removidos.
+          Diff vs {refLabel ? `referência (${refLabel})` : "referência"}: {diff.changed.length}{" "}
+          alterados, {diff.added.length} novos, {diff.removed.length} removidos.
         </p>
       ) : null}
 

@@ -54,6 +54,73 @@ class RevisaoDecomposicaoMergeService:
             "warnings": warnings,
         }
 
+    @staticmethod
+    def overlay_is_empty(overlay: dict[str, Any] | None) -> bool:
+        doc = validate_decomposition_overlay_v1(overlay or empty_overlay())
+        return (
+            not (doc.get("node_overrides") or {})
+            and not (doc.get("disabled_node_ids") or [])
+            and not (doc.get("extra_nodes") or [])
+        )
+
+    def build_revisao_view(
+        self,
+        *,
+        tree: dict[str, Any] | None,
+        escopo: dict[str, Any] | None,
+        overlay: dict[str, Any] | None,
+        reference_overlay: dict[str, Any] | None = None,
+        reference_meta: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Monta visão de edição da revisão.
+
+        - tree_base: macro do processo no escopo (persistência absoluta do overlay).
+        - tree_reference: mapeamento mesclado da revisão de referência (âncora de edição).
+        - tree: overlay aplicado no macro; se overlay vazio e há referência, inicia na referência.
+        """
+        own = self.merge(tree=tree, escopo=escopo, overlay=overlay)
+        tree_base = own["tree_base"]
+        reference_tree = None
+        referencia = None
+        if reference_meta is not None or reference_overlay is not None:
+            ref_merged = self.merge(
+                tree=tree,
+                escopo=escopo,
+                overlay=reference_overlay,
+            )
+            reference_tree = ref_merged["tree"]
+            if reference_meta:
+                referencia = {
+                    "revisao_id": reference_meta.get("revisao_id"),
+                    "versao_revisao": reference_meta.get("versao_revisao"),
+                    "cenario_tipo": reference_meta.get("cenario_tipo"),
+                }
+
+        working_tree = own["tree"]
+        seeded_from_reference = False
+        if reference_tree is not None and self.overlay_is_empty(overlay):
+            working_tree = copy.deepcopy(reference_tree)
+            seeded_from_reference = True
+
+        reference_diff = None
+        if reference_tree is not None:
+            reference_diff = self.diff_highlights(
+                baseline=reference_tree,
+                current=working_tree,
+            )
+
+        return {
+            **own,
+            "tree": working_tree,
+            "tree_base": tree_base,
+            "tree_reference": reference_tree,
+            "referencia": referencia,
+            "seeded_from_reference": seeded_from_reference,
+            "baseline_diff": reference_diff,
+            "reference_diff": reference_diff,
+        }
+
     def apply_overlay_to_nodes(
         self,
         nodes: list[dict[str, Any]],
