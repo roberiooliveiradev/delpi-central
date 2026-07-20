@@ -1,4 +1,4 @@
-"""Smoke quality — lacunas Auditoria 5S operacional (29 rotas)."""
+"""Smoke — Auditoria 5S operacional (rotas restantes phase 3e)."""
 
 from __future__ import annotations
 

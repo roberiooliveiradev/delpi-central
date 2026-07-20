@@ -34,7 +34,7 @@ Toda rota que usa o **envelope** `{ success, message, data }` deve retornar **`m
 5. **Erro:** `error_response(msg, status_code=..., code="DOMAIN_CODE", recoverable=...)` — preencher `error.code` quando possível.
 6. **Shape:** um de `paged_list`, `hierarchy`, `product_snapshot`, `composite_analysis`, `playbook_report`, `scalar` (ver `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md` § 4.3).
 7. **Playbook `summary`:** `branch_filter_applied`, `consolidated_across_branches`, `is_complete` — definir via `ProductionOperationalSummarySemanticsService` + `build_period_summary`; chat consome flags (ver `presentation-operational-decoupling.mdc`).
-8. **Teste:** smoke em `api-delpi/tests/` (meta presente + `operationId` esperado) quando a rota for chat-critical ou KPI exposto ao SI.
+8. **Teste:** smoke Nível A em `api-delpi/tests/` (`meta.operationId` + envelope) para **toda** rota nova; sincronizar inventário com `audit_route_test_coverage.py --write && --check` (meta: `--check-complete`). Ver `playbook-route-test-coverage-100.md`.
 9. **RBAC:** importar permissões de `app.application.security.api_delpi_permissions` — não hardcodar códigos nos routers.
 10. **RBAC por filial (rotas com `filial`/`branch`):** mapa `{BRANCH}_VIEW_PERMS` + `branch_access_error()` no router **antes** do use case — padrão `inspecoes_entrada_router` / `scheduling_router`. Permissão `.view` genérica = ambas filiais; `.view.filial-*` = escopo único. **Teste 403** obrigatório.
 11. **Doc + catálogo:** atualizar `api-delpi/docs/api/`; curar locale/params (`tv_route_audience`, `openapi_param_locale`); sync baseline/TV; após deploy com OpenAPI novo → `12-procedimento-reimport-openapi.md`.

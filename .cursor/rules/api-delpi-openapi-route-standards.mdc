@@ -23,11 +23,12 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para TV, chat e Swagger.
 | 4 | Envelope | Só `api_delpi_success` / `error_response` — ver response-contract |
 | 5 | Summary/description nativos | **Inglês** no OpenAPI/Swagger — via `locale.en` no injector (`openapi_delpi_extension_injector`) |
 | 6 | Locale bilíngue | Entrada em `tv_route_audience.json` (`locale.en` + `locale.pt-BR`, `en.summary ≠ pt-BR.summary`) |
-| 7 | Params tipados | Domínio fechado → factory `*_QUERY()` de `query_param_enums.py` (`enum=`), **nova instância por parâmetro** — não reutilizar o mesmo `Query()` |
+| 7 | Params tipados | Domínio fechado → factory `*_QUERY()` de `query_param_enums.py` com **`enum=` + `pattern=`** (OpenAPI + **422 em runtime**); **nova instância por parâmetro** — não reutilizar o mesmo `Query()` |
 | 8 | Labels de params | Nome novo em `openapi_param_locale.json` (EN + pt-BR; datas com `"format": "date"`); injector hidrata description EN e format no Swagger |
 | 9 | Chat-critical | `**agent_route(...)` / `OpenApiAgentMetadataBuilder` — **não** duplicar `operation_id=` além do `**META` |
 | 10 | RBAC | Constantes em `api_delpi_permissions.py`; filial → `branch_access_error` |
 | 11 | Sync pós-merge | Baseline + catálogo TV + reimport chat (ver doc) |
+| 12 | Smoke Nível A | `operationId` citado em `tests/**/*.py` + inventário `route_test_coverage.json` — ver playbook cobertura 100% |
 
 ## Exemplo mínimo
 
@@ -74,6 +75,20 @@ python api-delpi/scripts/audit_openapi_operation_ids.py --check
 python3 scripts/generate_tv_data_routes_from_openapi.py --check
 python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
 python3 scripts/sync_tv_data_param_catalog.py --check
-# smoke
+# smoke da rota + inventário de cobertura HTTP
 pytest api-delpi/tests/ -q -k "<operation_id ou módulo>"
+cd api-delpi && python scripts/audit_route_test_coverage.py --write && python scripts/audit_route_test_coverage.py --check
+# meta zero-gap (após sync): --check-complete
 ```
+
+Playbook: [`playbook-route-test-coverage-100.md`](../../api-delpi/docs/roadmaps/playbook-route-test-coverage-100.md).
+
+## Query fechado — `enum` ≠ validação runtime
+
+`Query(enum=…)` no FastAPI **só documenta** o OpenAPI. Para rejeitar valores inválidos com **422**, as factories em `query_param_enums.py` devem usar também `pattern=_enum_pattern(values)`. Sem `pattern`, inválidos podem cair em 400/403 no use case.
+
+## O que NÃO fazer (cobertura)
+
+- Contar só teste de use case/SQL como “rota coberta” no inventário.
+- Entregar rota nova sem smoke Nível A (`meta.operationId` / envelope) ou sem `--write` no inventário.
+- Chamada direta ao handler sem kwargs quando o default é `Query()` (= `FieldInfo`).

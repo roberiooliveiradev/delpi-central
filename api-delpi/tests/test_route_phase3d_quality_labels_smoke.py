@@ -1,4 +1,4 @@
-"""Smoke quality — lacunas Quality Labels (17 rotas)."""
+"""Smoke — Quality Labels (rotas restantes phase 3d)."""
 
 from __future__ import annotations
 

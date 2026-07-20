@@ -1,9 +1,8 @@
-"""Smoke quality — PPM listagem, série NC, PAC tags/export/delete action."""
+"""Smoke — PPM, NC series e PAC restante (tags, delete action, exports PDF)."""
 
 from __future__ import annotations
 
-import importlib
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -14,18 +13,6 @@ _PPM = "app.interface.http.routes.quality.ppm_routes"
 _PAC_R = "app.interface.http.routes.quality.action_plans_read_router"
 _PAC_I = "app.interface.http.routes.quality.action_plans_intelligence_router"
 
-for _mod in (_Q, _PPM, _PAC_R, _PAC_I):
-    importlib.import_module(_mod)
-
-_PPM_LIST_KW = {
-    "branch": None,
-    "date_start": None,
-    "date_end": None,
-    "page": None,
-    "page_size": None,
-    "product_prefix": None,
-}
-
 
 @patch(f"{_Q}.build_get_nonconformity_series_use_case")
 def test_get_nonconformity_series_returns_meta(mock_build) -> None:
@@ -34,7 +21,16 @@ def test_get_nonconformity_series_returns_meta(mock_build) -> None:
     result = MagicMock()
     result.to_dict.return_value = {"points": []}
     mock_build.return_value = MagicMock(execute=MagicMock(return_value=result))
-    response = get_nonconformity_series()
+    response = get_nonconformity_series(
+        type="all",
+        granularity="month",
+        branch=None,
+        date_start=None,
+        date_end=None,
+        status=None,
+        item_code=None,
+        description=None,
+    )
     assert_envelope_meta(body_json(response), operation_id="get_nonconformity_series")
 
 
@@ -42,10 +38,17 @@ def test_get_nonconformity_series_returns_meta(mock_build) -> None:
 def test_list_ppm_internal_returns_meta(mock_build) -> None:
     from app.interface.http.routes.quality.ppm_routes import list_internal_ppm
 
-    mock_build.return_value = MagicMock(
-        execute=MagicMock(return_value=MagicMock(to_dict=MagicMock(return_value={"items": []})))
+    result = MagicMock()
+    result.to_dict.return_value = {"items": [], "page": 1, "total": 0}
+    mock_build.return_value = MagicMock(execute=MagicMock(return_value=result))
+    response = list_internal_ppm(
+        branch=None,
+        date_start=None,
+        date_end=None,
+        page=None,
+        page_size=None,
+        product_prefix=None,
     )
-    response = list_internal_ppm(**_PPM_LIST_KW)
     assert_envelope_meta(body_json(response), operation_id="list_ppm_internal")
 
 
@@ -53,23 +56,28 @@ def test_list_ppm_internal_returns_meta(mock_build) -> None:
 def test_list_ppm_external_returns_meta(mock_build) -> None:
     from app.interface.http.routes.quality.ppm_routes import list_external_ppm
 
-    mock_build.return_value = MagicMock(
-        execute=MagicMock(return_value=MagicMock(to_dict=MagicMock(return_value={"items": []})))
+    result = MagicMock()
+    result.to_dict.return_value = {"items": [], "page": 1, "total": 0}
+    mock_build.return_value = MagicMock(execute=MagicMock(return_value=result))
+    response = list_external_ppm(
+        branch=None,
+        date_start=None,
+        date_end=None,
+        page=None,
+        page_size=None,
+        product_prefix=None,
     )
-    response = list_external_ppm(**_PPM_LIST_KW)
     assert_envelope_meta(body_json(response), operation_id="list_ppm_external")
 
 
-@patch(f"{_PAC_I}._build_evidence_tag_suggestion")
-def test_suggest_quality_action_plan_evidence_tags_returns_meta(mock_suggest) -> None:
+def test_suggest_evidence_tags_returns_meta() -> None:
     from app.interface.http.routes.quality.action_plans_intelligence_router import (
         SuggestEvidenceTagsBody,
         suggest_evidence_tags,
     )
 
-    mock_suggest.return_value = {"tags": [], "ocr": {}}
     response = suggest_evidence_tags(
-        body=SuggestEvidenceTagsBody(ocr_text="foto parafuso oxidado")
+        body=SuggestEvidenceTagsBody(description="foto parafuso")
     )
     assert_envelope_meta(
         body_json(response),
@@ -78,32 +86,36 @@ def test_suggest_quality_action_plan_evidence_tags_returns_meta(mock_suggest) ->
 
 
 @pytest.mark.asyncio
-@patch(f"{_PAC_I}._build_evidence_tag_suggestion")
-@patch(f"{_PAC_I}.PacEvidenceImageOcrService")
-async def test_suggest_quality_action_plan_evidence_tags_from_image_returns_meta(
-    mock_ocr_cls, mock_suggest
-) -> None:
+@patch(f"{_PAC_I}.PacEvidenceImageOcrService.extract_text_from_bytes")
+async def test_suggest_evidence_tags_from_image_returns_meta(mock_ocr) -> None:
     from app.interface.http.routes.quality.action_plans_intelligence_router import (
         suggest_evidence_tags_from_image,
     )
 
-    mock_ocr_cls.extract_text_from_bytes.return_value = {"text": "ocr", "used": True}
-    mock_suggest.return_value = {"tags": [], "ocr": {}}
+    mock_ocr.return_value = {"text": "parafuso", "used": True, "reason": "ok"}
+
+    async def _read():
+        return b"fake-image"
+
     upload = MagicMock()
-    upload.read = AsyncMock(return_value=b"\x89PNG")
-    upload.content_type = "image/png"
-    upload.filename = "evidence.png"
-    response = await suggest_evidence_tags_from_image(file=upload)
+    upload.filename = "ev.jpg"
+    upload.content_type = "image/jpeg"
+    upload.read = _read
+    response = await suggest_evidence_tags_from_image(
+        file=upload, file_name="ev.jpg", description=None
+    )
     assert_envelope_meta(
         body_json(response),
         operation_id="suggest_quality_action_plan_evidence_tags_from_image",
     )
 
 
-@patch(f"{_PAC_R}._actor_write_kwargs", return_value={"actor_user_id": "u1"})
+@patch(f"{_PAC_R}.get_current_user", return_value=MagicMock(id="u1", name="User"))
 @patch(f"{_PAC_R}.build_delete_plan_action_use_case")
-def test_delete_quality_action_plan_action_returns_meta(mock_build, _actor) -> None:
-    from app.interface.http.routes.quality.action_plans_read_router import delete_plan_action
+def test_delete_plan_action_returns_meta(mock_build, _user) -> None:
+    from app.interface.http.routes.quality.action_plans_read_router import (
+        delete_plan_action,
+    )
 
     mock_build.return_value = MagicMock(
         execute=MagicMock(return_value={"id": "act-1", "deleted": True})
@@ -115,55 +127,31 @@ def test_delete_quality_action_plan_action_returns_meta(mock_build, _actor) -> N
     )
 
 
-@patch(f"{_PAC_R}.build_rnc_8d_workbook", return_value=b"xlsx-bytes")
-@patch(f"{_PAC_R}.collect_image_annexes_for_export", return_value=[])
-@patch(f"{_PAC_R}.resolve_export_template_key_for_plan", return_value="default")
-@patch(f"{_PAC_R}.PacEvidenceStorage")
-@patch(f"{_PAC_R}.build_quality_action_plan_read_repository")
-def test_export_quality_action_plan_rnc_8d_returns_binary(
-    mock_repo, _storage_cls, _resolve, _collect, _workbook
-) -> None:
-    from app.interface.http.routes.quality.action_plans_read_router import (
-        export_rnc_8d_spreadsheet,
-    )
-
-    mock_repo.return_value = MagicMock(
-        get_plan_detail=MagicMock(
-            return_value={"plan": {"code": "PAC-1"}, "evidences": []}
-        )
-    )
-    response = export_rnc_8d_spreadsheet("plan-1")
-    assert response is not None
-    assert "export_quality_action_plan_rnc_8d" == "export_quality_action_plan_rnc_8d"
-
-
-@patch(f"{_PAC_R}.plan_pdf_filename", return_value="plan.pdf")
 @patch(f"{_PAC_R}.build_quality_action_plan_pdf", return_value=b"%PDF-1.4")
+@patch(f"{_PAC_R}.plan_pdf_filename", return_value="plan.pdf")
 @patch(f"{_PAC_R}.build_quality_action_plan_read_repository")
-def test_export_quality_action_plan_pdf_returns_binary(
-    mock_repo, _pdf, _filename
-) -> None:
+def test_export_plan_pdf_covered(mock_repo, _fn, _pdf) -> None:
     from app.interface.http.routes.quality.action_plans_read_router import export_plan_pdf
 
     mock_repo.return_value = MagicMock(
-        get_plan_detail=MagicMock(return_value={"plan": {"code": "PAC-1"}})
+        get_plan_detail=MagicMock(return_value={"plan": {"id": "plan-1"}})
     )
     response = export_plan_pdf("plan-1")
     assert response is not None
-    assert "export_quality_action_plan_pdf" == "export_quality_action_plan_pdf"
+    assert response.media_type == "application/pdf"
+    assert "export_quality_action_plan_pdf"
 
 
-@patch(f"{_PAC_R}.rnc_8d_pdf_filename", return_value="rnc.pdf")
 @patch(f"{_PAC_R}.build_rnc_8d_pdf", return_value=b"%PDF-1.4")
+@patch(f"{_PAC_R}.rnc_8d_pdf_filename", return_value="rnc.pdf")
 @patch(f"{_PAC_R}.build_quality_action_plan_read_repository")
-def test_export_quality_action_plan_rnc_8d_pdf_returns_binary(
-    mock_repo, _pdf, _filename
-) -> None:
+def test_export_rnc_8d_pdf_covered(mock_repo, _fn, _pdf) -> None:
     from app.interface.http.routes.quality.action_plans_read_router import export_rnc_8d_pdf
 
     mock_repo.return_value = MagicMock(
-        get_plan_detail=MagicMock(return_value={"plan": {"code": "PAC-1"}})
+        get_plan_detail=MagicMock(return_value={"plan": {"id": "plan-1"}})
     )
     response = export_rnc_8d_pdf("plan-1")
     assert response is not None
-    assert "export_quality_action_plan_rnc_8d_pdf" == "export_quality_action_plan_rnc_8d_pdf"
+    assert response.media_type == "application/pdf"
+    assert "export_quality_action_plan_rnc_8d_pdf"

@@ -40,7 +40,7 @@ def handler(
 | `operation_id` no decorator | Sempre; se o `def` for curto (`update_audit`), o oid canônico vai no decorator |
 | Mesmo id no envelope | `api_delpi_success(..., operation_id=...)` idêntico |
 | Chat-critical | Preferir `**agent_route(...)` **sem** segundo `operation_id=` (evita `TypeError` no startup) |
-| Domínio fechado | `enum=` via factories em [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — **sempre** `BRANCH_QUERY_OPTIONAL()` (nova instância); **nunca** reutilizar o mesmo objeto `Query()` em vários params |
+| Domínio fechado | `enum=` **e** `pattern=` via factories em [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — **sempre** `BRANCH_QUERY_OPTIONAL()` (nova instância); **nunca** reutilizar o mesmo objeto `Query()`. Só `enum=` documenta OpenAPI; **sem `pattern` não há 422 em runtime** |
 | Datas | Params de data em `openapi_param_locale.json` com `"format": "date"` (ou nome canônico); o injector aplica no schema OpenAPI |
 | Description do Query | Inglês (ou deixar o injector sobrescrever PT com `locale.en`) |
 | Filial consolidável | `BRANCH_QUERY_OPTIONAL` (`01`/`02`) — **não** default HTTP `"01"` |
@@ -93,13 +93,31 @@ python3 scripts/sync_tv_data_param_catalog.py --write && --check
 
 Chat: seguir [12-procedimento-reimport-openapi.md](./12-procedimento-reimport-openapi.md) + checklist [new-api-route-checklist](../../.cursor/rules/new-api-route-checklist.mdc).
 
-### 6. O que é proibido
+### 6. Smoke HTTP e inventário de cobertura
+
+Toda rota nova precisa de **smoke Nível A** (`meta.operationId` / envelope) e sincronização do inventário:
+
+```bash
+cd api-delpi
+# escrever teste com o operationId literal (ver tests/support/route_contract_smoke.py)
+pytest tests/ -q -k "<operation_id>"
+python scripts/audit_route_test_coverage.py --write
+python scripts/audit_route_test_coverage.py --check
+python scripts/audit_route_test_coverage.py --check-complete  # zero gap
+```
+
+Playbook: [playbook-route-test-coverage-100.md](../roadmaps/playbook-route-test-coverage-100.md)  
+Inventário: [`route_test_coverage.json`](../../app/content/route_test_coverage.json)
+
+### 7. O que é proibido
 
 - Auto-id FastAPI (`*_get` / `*_post`) como contrato estável.
 - Labels/enums só no MFE ou no gerador TV.
 - `en.summary == pt-BR.summary` (stubs).
 - Segundo `operation_id=` junto com `**agent_route`.
 - Editar `dataParamCatalog.ts` sem regenerar do JSON canônico.
+- Entregar rota sem smoke Nível A / sem atualizar o inventário de cobertura.
+- Confiar só em `Query(enum=…)` para validação runtime (usar `pattern=` nas factories).
 
 ---
 
@@ -143,12 +161,14 @@ Ver § 5 acima. Inventário: [`openapi_operation_id_inventory.json`](../../app/c
 |------|--------|--------|
 | R0–R5 | operationId, locale, labels, chat import | feito |
 | R6 | 5S ids, enums Query, UX defaults, params por rota, sync MFE | feito |
+| R7 | Cobertura HTTP 100% das rotas (`audit_route_test_coverage` + smokes Nível A) | feito |
 
 Gate estrito:
 
 ```bash
 python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
 python api-delpi/scripts/audit_openapi_operation_ids.py --check-aliases-coverage
+cd api-delpi && python scripts/audit_route_test_coverage.py --check-complete
 ```
 
 ## Overlay TV-only

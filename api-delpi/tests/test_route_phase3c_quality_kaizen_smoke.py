@@ -1,4 +1,4 @@
-"""Smoke quality — lacunas Kaizen records (17 rotas)."""
+"""Smoke — Kaizen records (rotas restantes phase 3c)."""
 
 from __future__ import annotations
 

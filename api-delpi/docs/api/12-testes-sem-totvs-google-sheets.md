@@ -113,9 +113,26 @@ Integração: [rastreamento-uso-apps.md](../../../docs/04-core-api/rastreamento-
 
 ---
 
-## 7. Documentos relacionados
+## 7. Cobertura HTTP de todas as rotas (gate)
+
+Independente de TOTVS: inventário OpenAPI × menção de `operationId` em testes.
+
+```bash
+cd api-delpi
+python scripts/audit_route_test_coverage.py --report
+python scripts/audit_route_test_coverage.py --check-complete
+```
+
+Playbook: [playbook-route-test-coverage-100.md](../roadmaps/playbook-route-test-coverage-100.md).  
+Helpers: `tests/support/route_contract_smoke.py`.
+
+---
+
+## 8. Documentos relacionados
 
 - [00-visao-geral.md](./00-visao-geral.md)
 - [01-health.md](./01-health.md)
+- [openapi-bilingue-catalogo-canonico.md](./openapi-bilingue-catalogo-canonico.md)
+- [playbook-route-test-coverage-100.md](../roadmaps/playbook-route-test-coverage-100.md)
 - [visao-geral-api-delpi.md](../../../docs/07-api-delpi/visao-geral-api-delpi.md)
 - [troubleshooting.md](../../../docs/10-guias-operacionais/troubleshooting.md) §13
