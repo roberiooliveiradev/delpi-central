@@ -4,7 +4,10 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
-from app.interface.http.query_param_enums import SORT_DIR_QUERY_DESC as SORT_DIR_QUERY
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL as BRANCH_QUERY,
+    SORT_DIR_QUERY_DESC as SORT_DIR_QUERY,
+)
 
 from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_lancamentos_request import (
     DEFAULT_PAGE,
@@ -113,13 +116,6 @@ PERIOD_END_QUERY = Query(
     ...,
     min_length=8,
     description="Data final (YYYY-MM-DD ou YYYYMMDD).",
-)
-BRANCH_QUERY = Query(
-    None,
-    min_length=2,
-    max_length=2,
-    pattern="^(01|02)$",
-    description="Filial Protheus (01 ou 02).",
 )
 COST_CENTER_QUERY = Query(None, description="Centro de custo.")
 SUPPLIER_CODE_QUERY = Query(None, description="Código do fornecedor.")

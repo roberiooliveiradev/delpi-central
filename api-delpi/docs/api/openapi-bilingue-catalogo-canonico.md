@@ -37,9 +37,9 @@ def handler(
 | `operation_id` no decorator | Sempre; se o `def` for curto (`update_audit`), o oid canônico vai no decorator |
 | Mesmo id no envelope | `api_delpi_success(..., operation_id=...)` idêntico |
 | Chat-critical | Preferir `**agent_route(...)` **sem** segundo `operation_id=` (evita `TypeError` no startup) |
-| Domínio fechado | `enum=` via [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — não só `pattern=` |
+| Domínio fechado | `enum=` via [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — não só `pattern=`; no Swagger vira **select** |
 | Description do Query | Inglês |
-| Filial consolidável | `Query(None)` / `BRANCH_QUERY_OPTIONAL` — **não** default HTTP `"01"` |
+| Filial consolidável | `BRANCH_QUERY_OPTIONAL` (`01`/`02`) — **não** default HTTP `"01"` |
 
 ### 2. Contrato e segurança
 

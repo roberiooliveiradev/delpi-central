@@ -26,6 +26,9 @@ from app.interface.http.kpi_field_labels import HR_FIELD_LABELS, kpi_fields
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+)
 
 router = APIRouter(prefix="/hr", tags=["Recursos Humanos"])
 
@@ -125,7 +128,7 @@ def list_hr_branches():
 )
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_snapshot(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -179,7 +182,7 @@ def get_hr_snapshot(
 )
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_active_pdi_count(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -235,7 +238,7 @@ def get_hr_active_pdi_count(
 )
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_performance_reviews_completion(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):

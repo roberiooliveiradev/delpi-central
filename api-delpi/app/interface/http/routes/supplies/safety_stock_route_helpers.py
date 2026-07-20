@@ -4,6 +4,8 @@ from typing import Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL as BRANCH_QUERY
+
 from app.application.dto.supplies.safety_stock_request import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
@@ -127,13 +129,6 @@ def execute_safety_stock_route(
         )
 
 
-BRANCH_QUERY = Query(
-    ...,
-    min_length=2,
-    max_length=2,
-    pattern="^(01|02)$",
-    description='Filial Protheus ("01" ou "02").',
-)
 INCLUDE_BLOCKED_QUERY = Query(
     False,
     alias="includeBlocked",

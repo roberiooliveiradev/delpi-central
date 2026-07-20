@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Query
+from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL
 
 from delpi_auth.authorization import require_any_permission
 
@@ -77,10 +78,7 @@ def get_dashboard_department_idd(
         default=None,
         description="Period end (YYYY-MM-DD).",
     ),
-    branch: str | None = Query(
-        default=None,
-        description="Branch code (optional).",
-    ),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
 ):
     normalized_id = department_id.strip().lower()
     if normalized_id not in ALLOWED_DEPARTMENT_IDS:

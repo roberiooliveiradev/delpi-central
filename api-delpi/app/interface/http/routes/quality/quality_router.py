@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Query
 
 from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
     GRANULARITY_QUERY_MONTH,
     NONCONFORMITY_TYPE_QUERY,
 )
@@ -196,7 +197,7 @@ def list_nonconformity_route(
 def get_kaizen_summary(
     title: str | None = Query(default=None),
     status: str | None = Query(default=None),
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
 ):
@@ -278,7 +279,7 @@ def get_kaizen_by_id(kaizen_id: str):
 def get_audit_5s_summary(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
 ):
     try:
         use_case = build_get_audit_5s_summary_use_case()

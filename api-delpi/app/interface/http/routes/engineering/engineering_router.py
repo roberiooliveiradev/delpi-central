@@ -71,6 +71,8 @@ from app.interface.http.openapi_agent_metadata import (
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
 from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    BRANCH_QUERY_REQUIRED,
     SORT_DIR_QUERY,
 )
 
@@ -320,10 +322,7 @@ def get_lmp_history_events_route(
         default=None,
         description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
     ),
-    branch: Optional[str] = Query(
-        default=None,
-        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     revision: Optional[str] = Query(
         default=None,
         description="Filtra eventos de uma revisão específica da OV.",
@@ -373,10 +372,7 @@ def get_lmp_history_flow_route(
         default=None,
         description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
     ),
-    branch: Optional[str] = Query(
-        default=None,
-        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
     revision: Optional[str] = Query(
         default=None,
         description="Filtra transições de uma revisão específica da OV.",
@@ -426,10 +422,7 @@ def get_lmp_route(
         default=None,
         description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
     ),
-    branch: Optional[str] = Query(
-        default=None,
-        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
 ):
     try:
         dto = build_get_lmp_request(
@@ -564,7 +557,7 @@ def get_process_summary(
 def list_mini_applicators_ferramentas_route(
     codigo: Optional[str] = Query(None),
     descricao: Optional[str] = Query(None),
-    filial: Optional[str] = Query(None),
+    filial: Optional[str] = BRANCH_QUERY_OPTIONAL,
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(None),
@@ -687,7 +680,7 @@ def list_mini_applicators_pecas_route(codigo: str):
 @require_any_permission(MINI_APPLICATORS_ACCESS)
 def get_mini_applicators_golpes_route(
     codigo: str,
-    filial: str = Query(..., min_length=2, max_length=2),
+    filial: str = BRANCH_QUERY_REQUIRED,
     data_inicial: str = Query(...),
     data_final: str = Query(...),
 ):
@@ -716,7 +709,7 @@ def get_mini_applicators_golpes_route(
 @require_any_permission(MINI_APPLICATORS_ACCESS)
 def list_mini_applicators_componentes_route(
     codigo: str,
-    filial: str = Query(..., min_length=2, max_length=2),
+    filial: str = BRANCH_QUERY_REQUIRED,
 ):
     try:
         use_case = build_list_mini_applicators_componentes_use_case()
