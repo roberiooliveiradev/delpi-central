@@ -3,8 +3,8 @@
   "generatedAt": "2026-07-20",
   "baselineOperationCount": 368,
   "operationCount": 368,
-  "coveredCount": 222,
-  "gapCount": 145,
+  "coveredCount": 239,
+  "gapCount": 128,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -99,14 +99,14 @@
     },
     "production": {
       "total": 32,
-      "covered": 23,
-      "gap": 9,
+      "covered": 32,
+      "gap": 0,
       "exempt": 0
     },
     "products": {
       "total": 34,
-      "covered": 26,
-      "gap": 8,
+      "covered": 34,
+      "gap": 0,
       "exempt": 0
     },
     "propostas-comerciais": {
@@ -1151,7 +1151,7 @@
       "module": "production",
       "entity": "production_appointments_by_op",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_appointments_series",
@@ -1160,7 +1160,7 @@
       "module": "production",
       "entity": "production_appointments_series",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_appointments_summary",
@@ -1178,7 +1178,7 @@
       "module": "production",
       "entity": "production_appointment_work_center",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -1205,7 +1205,7 @@
       "module": "production",
       "entity": "production_consumption_top_items_by_work_center",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_consumption_top_items_validated",
@@ -1241,7 +1241,7 @@
       "module": "production",
       "entity": "eficiencia_fabril_appointment",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_eficiencia_fabril_dashboard",
@@ -1259,7 +1259,7 @@
       "module": "production",
       "entity": "production_losses_records",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_losses_top_materials",
@@ -1286,7 +1286,7 @@
       "module": "production",
       "entity": "production_oee_appointment",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_oee_series",
@@ -1313,7 +1313,7 @@
       "module": "production",
       "entity": "production_order_detail",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_orders_finished",
@@ -1412,7 +1412,7 @@
       "module": "production",
       "entity": "production_work_center_order_summary",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_directives",
@@ -1556,7 +1556,7 @@
       "module": "products",
       "entity": "product_last_purchase",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_outbound_invoice_items",
@@ -1601,7 +1601,7 @@
       "module": "products",
       "entity": "product_purchase_budget_history",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_purchase_price_history",
@@ -1610,7 +1610,7 @@
       "module": "products",
       "entity": "product_purchase_price_history",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_purchases",
@@ -1619,7 +1619,7 @@
       "module": "products",
       "entity": "product_purchases",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_raw_material_price_intelligence",
@@ -1628,7 +1628,7 @@
       "module": "products",
       "entity": "product_raw_material_price_intelligence",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_sales_summary",
@@ -1637,7 +1637,7 @@
       "module": "products",
       "entity": "product_sales",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_sales_billing",
@@ -1655,7 +1655,7 @@
       "module": "products",
       "entity": "product_open_orders",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_shipping_status",
@@ -1664,7 +1664,7 @@
       "module": "products",
       "entity": "product_shipping_status",
       "shape": "playbook_report",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_product_stock",
