@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  COMPARATIVO_BREAKDOWN_SERIES,
+  COMPARATIVO_HOURS_SERIES,
+  COMPARATIVO_MONEY_SERIES,
   activeComparativoBreakdownSeries,
   collectComparativoAvisos,
   collectComparativoCategorias,
@@ -7,6 +10,7 @@ import {
   toComparativoBreakdownChartRows,
 } from "./revisaoComparativoChart";
 import { medicaoCategoriaHints } from "../content/beneficioCalculoLabels";
+import { TM_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ProcessoComparativoItem } from "../data/api/transformometroApi";
 
 function item(partial: Partial<ProcessoComparativoItem>): ProcessoComparativoItem {
@@ -89,6 +93,17 @@ describe("revisaoComparativoChart / beneficio UI helpers", () => {
         }),
       ]),
     ).toBe(true);
+  });
+
+  it("toda série do comparativo tem texto na legenda (comparativoSeries)", () => {
+    const help = TM_HELP_TOOLTIPS.revisao.comparativoSeries;
+    for (const series of [
+      ...COMPARATIVO_MONEY_SERIES,
+      ...COMPARATIVO_HOURS_SERIES,
+      ...COMPARATIVO_BREAKDOWN_SERIES,
+    ]) {
+      expect(help[series.key as keyof typeof help], series.key).toBeTruthy();
+    }
   });
 
   it("toComparativoBreakdownChartRows inclui capacidade e active series filtram zeros", () => {

@@ -3,7 +3,6 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -17,6 +16,7 @@ import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { SegmentToggle } from "../SegmentToggle";
 import { CollapsiblePanel } from "../CollapsiblePanel";
 import { BeneficioCalculoChip } from "../BeneficioCalculoChip";
+import { ComparativoSeriesLegend } from "./ComparativoSeriesLegend";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoComparativoItem } from "../../data/api/transformometroApi";
 import { formatCurrency, formatHours } from "../../utils/format";
@@ -128,9 +128,6 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
                 }}
                 labelStyle={{ color: "var(--ds-text)", fontWeight: 600 }}
               />
-              <Legend
-                wrapperStyle={{ color: "var(--ds-text-muted)", fontSize: 12, paddingTop: 8 }}
-              />
               {series.map((entry) => (
                 <Bar
                   key={entry.key}
@@ -143,6 +140,10 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
               ))}
             </BarChart>
           </ResponsiveContainer>
+          <ComparativoSeriesLegend
+            items={series}
+            ariaLabel="Legenda do comparativo de revisões"
+          />
         </div>
       </ChartCard>
 
@@ -183,9 +184,6 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
                   }}
                   labelStyle={{ color: "var(--ds-text)", fontWeight: 600 }}
                 />
-                <Legend
-                  wrapperStyle={{ color: "var(--ds-text-muted)", fontSize: 12, paddingTop: 8 }}
-                />
                 {breakdownSeries.map((entry) => (
                   <Bar
                     key={entry.key}
@@ -198,6 +196,10 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
                 ))}
               </BarChart>
             </ResponsiveContainer>
+            <ComparativoSeriesLegend
+              items={breakdownSeries}
+              ariaLabel="Legenda da composição das economias"
+            />
           </div>
         </ChartCard>
       ) : null}

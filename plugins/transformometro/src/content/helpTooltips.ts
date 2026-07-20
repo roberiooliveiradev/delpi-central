@@ -269,6 +269,22 @@ export const TM_HELP_TOOLTIPS = {
       "Compara economia bruta (já inclui capacidade), líquida, investimentos, recursos e horas entre as revisões. O detalhe das parcelas (tempo, retrabalho, erros, outros e capacidade) fica no gráfico de composição.",
     comparativoBreakdownChart:
       "Barras horizontais com as parcelas da economia bruta: tempo, retrabalho, erros, outros e ganho de capacidade. Aparece quando há mais de um tipo com valor (ex.: tempo + capacidade em categoria misto).",
+    /** Textos da legenda dos gráficos do comparativo (chave = dataKey da série). */
+    comparativoSeries: {
+      economiaBruta:
+        "Ganho bruto estimado (custo + capacidade quando o volume sobe), antes de descontar investimentos e recursos.",
+      economiaLiquida:
+        "Ganho após descontar investimentos apropriados e rateio de recursos compartilhados.",
+      investimento: "Soma dos investimentos apropriados no período da revisão.",
+      recursos: "Custo mensal de recursos compartilhados rateados para a revisão.",
+      horas: "Horas de trabalho economizadas por mês na revisão.",
+      economiaTempo: "Parcela da bruta pela redução de tempo de execução.",
+      economiaRetrabalho: "Parcela da bruta ligada a menos retrabalho.",
+      economiaErros: "Parcela da bruta ligada a menos erros/refugos.",
+      economiaOutros: "Outros desperdícios evitados na comparação com a referência.",
+      ganhoCapacidade:
+        "Benefício de volume acima da referência (capacidade). Já está incluso na economia bruta e no ROI.",
+    },
     comparativoTable:
       "Tabela com economia, breakdown (tempo/retrabalho/erros), categoria, Δ volume, capacidade e meses com dados.",
     comparativoAvisos:

@@ -2804,6 +2804,38 @@
   min-height: 320px;
 }.dashboard-transformometro .tm-comparativo-chart--breakdown .recharts-responsive-container{
   min-height: 240px;
+}.dashboard-transformometro .tm-comparativo-legend{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 14px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}.dashboard-transformometro .tm-comparativo-legend__item{
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}.dashboard-transformometro .tm-comparativo-legend__swatch{
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  margin-top: 3px;
+  border-radius: 3px;
+}.dashboard-transformometro .tm-comparativo-legend__text{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}.dashboard-transformometro .tm-comparativo-legend__label{
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ds-text);
+  line-height: 1.25;
+}.dashboard-transformometro .tm-comparativo-legend__desc{
+  font-size: 0.75rem;
+  color: var(--ds-text-muted);
+  line-height: 1.35;
 }.dashboard-transformometro .tm-comparativo-table{
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);
