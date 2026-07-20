@@ -560,32 +560,23 @@
 }.dashboard-transformometro .tm-processo-workspace__sections{
   position: relative;
   isolation: isolate;
-}.dashboard-transformometro .tm-processo-workspace-section{
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
+}
+/*
+ * Seções inativas NÃO podem ser position:absolute com visibility:hidden.
+ * Descendentes abspos entram no overflow scrollável de `.content` (portal) —
+ * a página curta (ex.: escopo no mapeamento) herdava a altura das seções
+ * ocultas (revisões, diagrama…) e gerava scroll + “espaço vazio” roxo.
+ * Só a seção ativa participa do layout.
+ */
+.dashboard-transformometro .tm-processo-workspace-section{
+  display: none;
   flex-direction: column;
   gap: 1rem;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(6px);
-  transition:
-    opacity 0.22s ease,
-    visibility 0.22s ease,
-    transform 0.22s ease;
 }.dashboard-transformometro .tm-processo-workspace-section--active{
-  position: relative;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(0);
-  z-index: 1;
-}@media (prefers-reduced-motion: reduce){.dashboard-transformometro .tm-processo-workspace-section{
-    transform: none;
-    transition: none;
+  display: flex;
+  animation: tm-view-fade-in 0.22s ease-out;
+}@media (prefers-reduced-motion: reduce){.dashboard-transformometro .tm-processo-workspace-section--active{
+    animation: none;
   }.dashboard-transformometro .tm-processo-workspace-tree__children-wrap{
     transition: none;
   }
