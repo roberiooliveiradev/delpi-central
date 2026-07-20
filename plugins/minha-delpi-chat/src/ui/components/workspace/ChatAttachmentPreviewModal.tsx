@@ -82,6 +82,7 @@ export function ChatAttachmentPreviewModal({
       mimeType={target.contentType}
       fileName={target.filename}
       enabled
+      portalScopeClassName="minha-delpi-chat"
       metaItems={[typeBadge, sizeLabel, kindLabel !== "none" ? kindLabel.toUpperCase() : null]}
       labels={{
         loading: "Carregando pré-visualização...",

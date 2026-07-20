@@ -177,6 +177,7 @@ function PendingUploadCard({
         mimeType={item.file.type}
         fileName={item.file.name}
         enabled={previewable}
+        portalScopeClassName="dashboard-transformometro"
         metaItems={[formatEvidenceFileSize(item.file.size), item.file.type || "Tipo não informado"]}
       />
     </article>

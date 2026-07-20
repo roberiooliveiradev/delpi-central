@@ -36,6 +36,19 @@ describe("resolveMfePortalScopeClassName", () => {
     root.remove();
   });
 
+  it("infere host minha-delpi-chat", () => {
+    const root = document.createElement("div");
+    root.className = "minha-delpi-chat";
+    const anchor = document.createElement("div");
+    root.appendChild(anchor);
+    document.body.appendChild(root);
+
+    expect(resolveMfePortalScopeClassName(anchor)).toBe("minha-delpi-chat");
+    expect(resolveMfeHostElement({ anchor })).toBe(root);
+
+    root.remove();
+  });
+
   it("retorna undefined sem âncora nem prop", () => {
     expect(resolveMfePortalScopeClassName()).toBeUndefined();
   });
