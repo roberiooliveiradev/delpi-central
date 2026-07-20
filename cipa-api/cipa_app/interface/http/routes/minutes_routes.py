@@ -126,6 +126,41 @@ def pending_signatures(request: Request):
         return _handle(exc)
 
 
+@router.get("/export-filtered.zip")
+def export_filtered_pdfs(
+    request: Request,
+    unit_code: str = Query(...),
+    status: str | None = None,
+    meeting_type: str | None = None,
+    q: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    limit: int = Query(200, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+):
+    try:
+        raw, filename = service.export_filtered_pdfs(
+            request.state.user,
+            {
+                "unit_code": unit_code,
+                "status": status,
+                "meeting_type": meeting_type,
+                "q": q,
+                "date_from": date_from,
+                "date_to": date_to,
+                "limit": limit,
+                "offset": offset,
+            },
+        )
+        return Response(
+            content=raw,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as exc:
+        return _handle(exc)
+
+
 @router.post("")
 def create_minute(request: Request, body: CreateMinuteRequest):
     try:

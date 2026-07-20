@@ -15,6 +15,7 @@ const api = vi.hoisted(() => ({
   getMinute: vi.fn(),
   getAudit: vi.fn(),
   exportPdf: vi.fn(),
+  exportFilteredPdfs: vi.fn(),
 }));
 
 const navigation = vi.hoisted(() => ({
@@ -30,6 +31,7 @@ vi.mock("../api/cipaApi", () => ({
   endCipaMember: vi.fn(),
   fetchMySignatureImageBlob: vi.fn(),
   exportPdf: api.exportPdf,
+  exportFilteredPdfs: api.exportFilteredPdfs,
   finalizeMinute: vi.fn(),
   getAudit: api.getAudit,
   getMinute: api.getMinute,
@@ -75,6 +77,7 @@ beforeAll(() => {
     configurable: true,
     value: vi.fn(() => ({
       beginPath: vi.fn(),
+      clearRect: vi.fn(),
       fillRect: vi.fn(),
       lineTo: vi.fn(),
       moveTo: vi.fn(),
@@ -134,6 +137,7 @@ beforeEach(() => {
   ]);
   api.getAudit.mockResolvedValue({ items: [] });
   api.exportPdf.mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+  api.exportFilteredPdfs.mockResolvedValue(new Blob(["zip"], { type: "application/zip" }));
   api.getMinute.mockResolvedValue({
     minute: {
       id: "minute-1",
@@ -348,6 +352,28 @@ describe("CipaAppShell compartilhado", () => {
     });
     expect(screen.getByDisplayValue("Ana")).toBeTruthy();
     expect(screen.getByText("Nenhuma assinatura cadastrada ainda.")).toBeTruthy();
+  });
+
+  it("baixa ZIP com PDFs das atas filtradas", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByText("Reunião ordinária");
+    fireEvent.click(screen.getByRole("button", { name: /Baixar PDFs filtrados/ }));
+
+    await waitFor(() =>
+      expect(api.exportFilteredPdfs).toHaveBeenCalledWith({
+        unit_code: "01",
+        status: undefined,
+        q: undefined,
+      }),
+    );
   });
 
   it("renderiza modo de leitura e baixa o PDF oficial", async () => {

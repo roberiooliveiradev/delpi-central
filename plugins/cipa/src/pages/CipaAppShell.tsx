@@ -21,6 +21,7 @@ import {
 
 import {
   deleteMinute,
+  exportFilteredPdfs,
   exportPdf,
   finalizeMinute,
   getAudit,
@@ -299,6 +300,7 @@ function MinuteListPage({
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MinuteListItem | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -326,6 +328,31 @@ function MinuteListPage({
   };
 
   useEffect(() => load(), [unitCode, status]);
+
+  const downloadFilteredPdfs = async () => {
+    if (items.length === 0 || exporting) return;
+    setExporting(true);
+    setError(null);
+    try {
+      const blob = await exportFilteredPdfs({
+        unit_code: unitCode,
+        status: status || undefined,
+        q: q || undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `atas-cipa-${unitCode}.zip`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao baixar PDFs filtrados.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
@@ -461,7 +488,18 @@ function MinuteListPage({
       <CipaContentCard className="cipa-minute-list-card">
         <CipaFiltersRow
           as="div"
-          trailing={<ActionButton onClick={() => load()}>Buscar</ActionButton>}
+          trailing={
+            <>
+              <ActionButton
+                disabled={loading || exporting || items.length === 0}
+                onClick={() => void downloadFilteredPdfs()}
+              >
+                <Download size={16} />{" "}
+                {exporting ? "Gerando ZIP…" : "Baixar PDFs filtrados"}
+              </ActionButton>
+              <ActionButton onClick={() => load()}>Buscar</ActionButton>
+            </>
+          }
         >
           <CipaFilterSelectField
             id="cipa-filter-status"

@@ -1,4 +1,6 @@
 from types import SimpleNamespace
+import io
+import zipfile
 
 import pytest
 
@@ -229,6 +231,54 @@ def test_viewer_context_blocks_non_signer_and_non_signable_status():
     assert _viewer("draft", {"user_id": "user-1", "status": "pending"})[
         "can_sign_now"
     ] is False
+
+
+def test_export_filtered_pdfs_builds_zip_with_unique_names():
+    class Repo:
+        pass
+
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    service.repo = Repo()
+    service._assert = lambda *_args: None
+    service.list_minutes = lambda _user, _filters: {
+        "items": [
+            {"id": "minute-1", "minute_number": "2026/001"},
+            {"id": "minute-2", "minute_number": "2026/001"},
+        ]
+    }
+    calls = []
+
+    def export_pdf(_user, minute_id):
+        calls.append(minute_id)
+        return b"%PDF-" + minute_id.encode(), "ata-cipa-2026-001.pdf"
+
+    service.export_pdf = export_pdf
+
+    raw, filename = service.export_filtered_pdfs(
+        SimpleNamespace(id="actor-1"),
+        {"unit_code": "01", "status": "partially_signed"},
+    )
+
+    assert filename.startswith("atas-cipa-01-")
+    assert filename.endswith(".zip")
+    assert calls == ["minute-1", "minute-2"]
+    with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+        names = archive.namelist()
+    assert names == ["ata-cipa-2026-001.pdf", "ata-cipa-2026-001-2.pdf"]
+
+
+def test_export_filtered_pdfs_requires_unit_and_non_empty_result():
+    service = MeetingMinutesService.__new__(MeetingMinutesService)
+    service._assert = lambda *_args: None
+    service.list_minutes = lambda *_args: {"items": []}
+
+    with pytest.raises(ValueError, match="unidade"):
+        service.export_filtered_pdfs(SimpleNamespace(id="actor-1"), {})
+
+    with pytest.raises(LookupError, match="Nenhuma ata"):
+        service.export_filtered_pdfs(
+            SimpleNamespace(id="actor-1"), {"unit_code": "01"}
+        )
 
 
 @pytest.mark.parametrize("status", ["signed", "finalized"])
