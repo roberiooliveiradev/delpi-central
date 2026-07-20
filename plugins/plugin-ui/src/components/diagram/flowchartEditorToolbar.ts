@@ -126,11 +126,35 @@ export type FlowchartElementGroupTab =
   | "lanes";
 
 export function flowchartElementGroupTabs(labels: FlowchartEditorLabels) {
-  return labels.elementGroupTabs as Array<{ id: FlowchartElementGroupTab; label: string }>;
+  const icons: Record<FlowchartElementGroupTab, LucideIcon> = {
+    events: CircleDot,
+    gateways: Diamond,
+    tasks: Square,
+    activities: Layers,
+    artifacts: FileText,
+    boundary: Clock,
+    lanes: Rows3,
+  };
+  return (labels.elementGroupTabs as Array<{ id: FlowchartElementGroupTab; label: string }>).map(
+    (tab) => ({
+      ...tab,
+      icon: icons[tab.id],
+      hint: labels.elementGroupTabHints[tab.id] ?? tab.label,
+    }),
+  );
 }
 
 export function flowchartEventSubTabs(labels: FlowchartEditorLabels) {
-  return labels.eventSubTabs as Array<{ id: BpmnPaletteCategoryId; label: string }>;
+  const icons: Partial<Record<BpmnPaletteCategoryId, LucideIcon>> = {
+    events_start: CircleDot,
+    events_intermediate: Circle,
+    events_end: Circle,
+  };
+  return (labels.eventSubTabs as Array<{ id: BpmnPaletteCategoryId; label: string }>).map((tab) => ({
+    ...tab,
+    icon: icons[tab.id],
+    hint: labels.eventSubTabHints[tab.id] ?? tab.label,
+  }));
 }
 
 export function resolvePaletteCategory(

@@ -1,11 +1,13 @@
-import { CircleHelp } from "lucide-react";
+import { Boxes, CircleHelp, LayoutTemplate, type LucideIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import { TabHintCell } from "../help/TabHintCell";
 import type { FlowchartEditorLabels } from "./types/flowchartEditorLabels";
 import type { BpmnPaletteCategoryId } from "./types/bpmnNodeCatalog";
 import type { FlowchartLane, FlowchartNodeType } from "./types/diagram";
 import { DiagramEditorToolbarButton } from "./DiagramEditorToolbarButton";
+import { FlowchartEditorHistoryActions } from "./FlowchartEditorHistoryActions";
 import { FlowchartLaneToolbar } from "./FlowchartLaneToolbar";
 import {
   diagramEditorAddLaneAction,
@@ -31,6 +33,10 @@ type Props = {
   onActiveLaneChange: (laneId: string) => void;
   onAddNode: (type: FlowchartNodeType) => void;
   onEditorAction: (actionId: DiagramEditorAction["id"]) => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 };
 
 function PaletteSubTabs<T extends string>({
@@ -40,7 +46,7 @@ function PaletteSubTabs<T extends string>({
   ariaLabel,
   compact,
 }: {
-  tabs: Array<{ id: T; label: string }>;
+  tabs: Array<{ id: T; label: string; hint?: string; icon?: LucideIcon }>;
   activeId: T;
   onChange: (id: T) => void;
   ariaLabel: string;
@@ -57,22 +63,27 @@ function PaletteSubTabs<T extends string>({
       role="tablist"
       aria-label={ariaLabel}
     >
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          role="tab"
-          aria-selected={activeId === tab.id}
-          className={
-            activeId === tab.id
-              ? "tm-diagram-editor__palette-subtab is-active"
-              : "tm-diagram-editor__palette-subtab"
-          }
-          onClick={() => onChange(tab.id)}
-        >
-          {tab.label}
-        </button>
-      ))}
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        return (
+          <TabHintCell
+            key={tab.id}
+            label={tab.label}
+            hint={tab.hint ?? tab.label}
+            icon={Icon}
+            active={activeId === tab.id}
+            onSelect={() => onChange(tab.id)}
+            cellClassName="tm-diagram-editor__palette-subtab-cell"
+            tabClassName={
+              activeId === tab.id
+                ? "tm-diagram-editor__palette-subtab is-active"
+                : "tm-diagram-editor__palette-subtab"
+            }
+            tabActiveClassName="is-active"
+            hintPlacement="bottom"
+          />
+        );
+      })}
     </div>
   );
 }
@@ -86,6 +97,10 @@ export function FlowchartEditorToolbar({
   onActiveLaneChange,
   onAddNode,
   onEditorAction,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
 }: Props) {
   const addLaneAction = diagramEditorAddLaneAction(labels);
   const layoutActions = useMemo(() => diagramEditorLayoutActions(labels), [labels]);
@@ -93,10 +108,20 @@ export function FlowchartEditorToolbar({
   const eventSubTabs = useMemo(() => flowchartEventSubTabs(labels), [labels]);
   const toolbarTabs = useMemo(
     () => [
-      { id: "elements" as const, label: labels.toolbarElementsTab },
-      { id: "models" as const, label: labels.toolbarModelsTab },
+      {
+        id: "elements" as const,
+        label: labels.toolbarElementsTab,
+        hint: labels.toolbarElementsTabHint,
+        icon: Boxes,
+      },
+      {
+        id: "models" as const,
+        label: labels.toolbarModelsTab,
+        hint: labels.toolbarModelsTabHint,
+        icon: LayoutTemplate,
+      },
     ],
-    [labels.toolbarElementsTab, labels.toolbarModelsTab]
+    [labels],
   );
 
   const [elementGroup, setElementGroup] = useState<FlowchartElementGroupTab>("events");
@@ -108,22 +133,29 @@ export function FlowchartEditorToolbar({
   return (
     <div className="tm-diagram-editor__toolbar-overlay" role="toolbar" aria-label={labels.toolbarAriaLabel}>
       <div className="tm-diagram-editor__toolbar-head">
+        {onUndo && onRedo ? (
+          <FlowchartEditorHistoryActions
+            labels={labels}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={onUndo}
+            onRedo={onRedo}
+          />
+        ) : null}
         <div className="tm-diagram-editor__toolbar-tabs" role="tablist" aria-label={labels.toolbarGroupsAriaLabel}>
           {toolbarTabs.map((tab) => (
-            <button
+            <TabHintCell
               key={tab.id}
-              type="button"
-              role="tab"
-              aria-selected={toolbarTab === tab.id}
-              className={
-                toolbarTab === tab.id
-                  ? "tm-diagram-editor__toolbar-tab is-active"
-                  : "tm-diagram-editor__toolbar-tab"
-              }
-              onClick={() => onToolbarTabChange(tab.id)}
-            >
-              {tab.label}
-            </button>
+              label={tab.label}
+              hint={tab.hint}
+              icon={tab.icon}
+              active={toolbarTab === tab.id}
+              onSelect={() => onToolbarTabChange(tab.id)}
+              cellClassName="tm-diagram-editor__toolbar-tab-cell"
+              tabClassName="tm-diagram-editor__toolbar-tab"
+              tabActiveClassName="is-active"
+              hintPlacement="bottom"
+            />
           ))}
         </div>
         <HelpTooltip

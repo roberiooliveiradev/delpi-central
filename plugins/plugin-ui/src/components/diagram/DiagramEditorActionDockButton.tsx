@@ -1,5 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
+import { HelpTooltip } from "../help/HelpTooltip";
+
 type Props = {
   label: string;
   hint: string;
@@ -20,21 +22,22 @@ export function DiagramEditorActionDockButton({
   return (
     <div className="tm-diagram-editor__action-dock-item">
       <span className="tm-diagram-editor__action-dock-label">{label}</span>
-      <button
-        type="button"
-        className={[
-          "tm-diagram-editor__action-dock-btn",
-          active ? "tm-diagram-editor__action-dock-btn--active" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        onClick={onClick}
-        disabled={disabled}
-        aria-label={label}
-        title={hint}
-      >
-        <Icon size={18} aria-hidden="true" />
-      </button>
+      <HelpTooltip content={hint} ariaLabel={`Ajuda: ${label}`} wrap placement="top">
+        <button
+          type="button"
+          className={[
+            "tm-diagram-editor__action-dock-btn",
+            active ? "tm-diagram-editor__action-dock-btn--active" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          onClick={onClick}
+          disabled={disabled}
+          aria-label={label}
+        >
+          <Icon size={18} aria-hidden="true" />
+        </button>
+      </HelpTooltip>
     </div>
   );
 }

@@ -36,7 +36,9 @@ export type FlowchartEditorLabels = {
   canvasTabLabel: string;
   mermaidTabLabel: string;
   toolbarElementsTab: string;
+  toolbarElementsTabHint: string;
   toolbarModelsTab: string;
+  toolbarModelsTabHint: string;
   toolbarHowToUse: string;
   toolbarAriaLabel: string;
   toolbarGroupsAriaLabel: string;
@@ -45,6 +47,24 @@ export type FlowchartEditorLabels = {
   paletteEventsAriaLabel: string;
   selectionDockAriaLabel: string;
   laneToolbarAriaLabel: string;
+  /** Hints das categorias (Eventos, Desvios, …) indexados por id. */
+  elementGroupTabHints: Record<string, string>;
+  eventSubTabHints: Record<string, string>;
+  undo: string;
+  redo: string;
+  undoHint: string;
+  redoHint: string;
+  historyAriaLabel: string;
+  statusBarAriaLabel: string;
+  gridToggle: string;
+  gridToggleHint: string;
+  zoomLabel: string;
+  zoomIn: string;
+  zoomOut: string;
+  zoomInHint: string;
+  zoomOutHint: string;
+  zoomFit: string;
+  zoomFitHint: string;
   mermaidRefreshFromDrawing: string;
   mermaidStarterTemplate: string;
   mermaidApplyToDrawing: string;

@@ -27,7 +27,8 @@ import {
 } from "react";
 
 import { useDelpiDarkMode } from "./hooks/useDelpiDarkMode";
-import { HelpTooltip } from "../help/HelpTooltip";
+import { Pencil, Code2 } from "lucide-react";
+import { TabHintCell } from "../help/TabHintCell";
 import type { ConfirmDialogOptions } from "../feedback/useConfirmDialog";
 import { TabPanelTransition } from "./TabPanelTransition";
 import {
@@ -78,6 +79,8 @@ import {
   type FlowchartEditorToolbarTab,
 } from "./FlowchartEditorToolbar";
 import { FlowchartEditorActionDock } from "./FlowchartEditorActionDock";
+import { FlowchartEditorStatusBar } from "./FlowchartEditorStatusBar";
+import { useFlowchartEditorHistory } from "./hooks/useFlowchartEditorHistory";
 import { useDiagramEditorLayout } from "./DiagramLayoutContext";
 import {
   createStarterMermaidTemplate,
@@ -369,13 +372,44 @@ function FlowchartEditorInner({
   const selectionActions = useMemo(() => createDiagramEditorSelectionActions(labels), [labels]);
   const lanes = useMemo(() => normalizeLanes(value.lanes), [value.lanes]);
   const [activeLaneId, setActiveLaneId] = useState<string | undefined>(lanes[0]?.id);
+  const [showGrid, setShowGrid] = useState(true);
+  const history = useFlowchartEditorHistory();
+  const { pushPast, undo, redo, canUndo, canRedo } = history;
+  const valueRef = useRef(value);
+  valueRef.current = value;
+
+  const commitValue = useCallback(
+    (next: FlowchartV1) => {
+      if (readOnly) return;
+      pushPast(valueRef.current);
+      onChange?.(next);
+    },
+    [onChange, pushPast, readOnly]
+  );
+
+  const applyHistoryValue = useCallback(
+    (next: FlowchartV1) => {
+      onChange?.(next);
+    },
+    [onChange]
+  );
+
+  const handleUndo = useCallback(() => {
+    if (readOnly) return;
+    undo(valueRef.current, applyHistoryValue);
+  }, [applyHistoryValue, readOnly, undo]);
+
+  const handleRedo = useCallback(() => {
+    if (readOnly) return;
+    redo(valueRef.current, applyHistoryValue);
+  }, [applyHistoryValue, readOnly, redo]);
 
   const handleRenameLane = useCallback(
     (laneId: string, label: string) => {
       if (readOnly) return;
-      onChange?.(renameLane(value, laneId, label));
+      commitValue(renameLane(value, laneId, label));
     },
-    [onChange, readOnly, value]
+    [commitValue, readOnly, value]
   );
 
   const handleSelectLaneRef = useRef<(laneId: string) => void>(() => {});
@@ -567,7 +601,7 @@ function FlowchartEditorInner({
     try {
       const parsed = mermaidToFlowchart(mermaidDraft, value);
       const laidOut = autoLayoutFlowchart(withNormalizedLanes(parsed));
-      onChange?.(laidOut);
+      commitValue(laidOut);
       setActiveTab("canvas");
     } catch (err) {
       setMermaidApplyError(
@@ -580,7 +614,7 @@ function FlowchartEditorInner({
     } finally {
       setMermaidApplying(false);
     }
-  }, [mermaidDraft, onChange, readOnly, value]);
+  }, [commitValue, mermaidDraft, readOnly, value]);
 
   const useMermaidTemplate = useCallback(() => {
     setMermaidDraft(createStarterMermaidTemplate());
@@ -650,9 +684,9 @@ function FlowchartEditorInner({
   const emitChange = useCallback(
     (nextNodes: EditorNode[], nextEdges: Edge[]) => {
       const draft = fromReactFlow(nextNodes, nextEdges, value);
-      onChange?.(lanes.length ? fitLaneHeightsToContent(draft) : draft);
+      commitValue(lanes.length ? fitLaneHeightsToContent(draft) : draft);
     },
-    [lanes.length, onChange, value]
+    [commitValue, lanes.length, value]
   );
 
   const handleNodeLabelChange = useCallback(
@@ -851,7 +885,7 @@ function FlowchartEditorInner({
         if (!laneId || !lanes.length) return;
         const targetIndex = laneIndexFromDragY(lanes, laneId, node.position.y);
         const nextValue = reorderLanes(value, laneId, targetIndex);
-        onChange?.(nextValue);
+        commitValue(nextValue);
         return;
       }
 
@@ -896,7 +930,7 @@ function FlowchartEditorInner({
       setNodes(nextNodes);
       emitChange(nextNodes, edges);
     },
-    [edges, emitChange, getNodes, lanes, nodes, onChange, readOnly, setNodes, value]
+    [commitValue, edges, emitChange, getNodes, lanes, nodes, readOnly, setNodes, value]
   );
 
   const addNode = (type: FlowchartNodeType) => {
@@ -958,7 +992,7 @@ function FlowchartEditorInner({
       lanes: [...(value.lanes ?? []), lane],
     };
     setActiveLaneId(lane.id);
-    onChange?.(next);
+    commitValue(next);
   };
 
   const removeActiveLane = useCallback(async () => {
@@ -977,14 +1011,14 @@ function FlowchartEditorInner({
       : true;
     if (!confirmed) return false;
     const next = removeLane(value, activeLaneId);
-    onChange?.(next);
+    commitValue(next);
     setActiveLaneId(normalizeLanes(next.lanes)[0]?.id);
     return true;
-  }, [activeLaneId, confirm, labels, lanes, onChange, readOnly, value]);
+  }, [activeLaneId, commitValue, confirm, labels, lanes, readOnly, value]);
 
   const runAutoLayout = () => {
     if (readOnly) return;
-    onChange?.(autoLayoutFlowchart(withNormalizedLanes(value)));
+    commitValue(autoLayoutFlowchart(withNormalizedLanes(value)));
   };
 
   const onNodesDelete = useCallback(
@@ -1024,7 +1058,7 @@ function FlowchartEditorInner({
         : kind === "decision"
           ? applyDecisionTemplate()
           : applySwimlaneBpmnTemplate();
-    onChange?.(template);
+    commitValue(template);
   };
 
   const nudgeSelection = useCallback(
@@ -1176,6 +1210,16 @@ function FlowchartEditorInner({
 
       const mod = event.ctrlKey || event.metaKey;
       const selectedCount = getSelectionSnapshot().nodes.length;
+      if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
+        event.preventDefault();
+        handleUndo();
+        return;
+      }
+      if ((mod && event.key.toLowerCase() === "y") || (mod && event.shiftKey && event.key.toLowerCase() === "z")) {
+        event.preventDefault();
+        handleRedo();
+        return;
+      }
       if (mod && event.key.toLowerCase() === "c") {
         if (!selectedCount) return;
         event.preventDefault();
@@ -1211,6 +1255,8 @@ function FlowchartEditorInner({
     copySelection,
     duplicateSelection,
     getSelectionSnapshot,
+    handleRedo,
+    handleUndo,
     nudgeSelection,
     pasteSelection,
     readOnly,
@@ -1297,6 +1343,10 @@ function FlowchartEditorInner({
                 onActiveLaneChange={handleSelectLane}
                 onAddNode={addNode}
                 onEditorAction={runEditorAction}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
               />
             ) : null}
 
@@ -1314,41 +1364,27 @@ function FlowchartEditorInner({
             ) : null}
 
             {showPreviewTab ? (
-              <div className="tm-diagram-editor__view-tabs tm-diagram-editor__view-tabs--overlay">
-                <HelpTooltip
-                  content={labels.canvasTab}
-                  ariaLabel="Ajuda: Desenho"
-                  wrap
-                  placement="bottom"
-                  className="tm-diagram-editor__tab-wrap"
-                >
-                  <button
-                    type="button"
-                    className={
-                      activeTab === "canvas"
-                        ? "tm-diagram-editor__tab is-active"
-                        : "tm-diagram-editor__tab"
-                    }
-                    onClick={() => setActiveTab("canvas")}
-                  >
-                    {labels.canvasTabLabel}
-                  </button>
-                </HelpTooltip>
-                <HelpTooltip
-                  content={labels.mermaidTab}
-                  ariaLabel="Ajuda: Preview Mermaid"
-                  wrap
-                  placement="bottom"
-                  className="tm-diagram-editor__tab-wrap"
-                >
-                  <button
-                    type="button"
-                    className="tm-diagram-editor__tab"
-                    onClick={() => switchToMermaidTab()}
-                  >
-                    {labels.mermaidTabLabel}
-                  </button>
-                </HelpTooltip>
+              <div className="tm-diagram-editor__view-tabs tm-diagram-editor__view-tabs--overlay" role="tablist">
+                <TabHintCell
+                  label={labels.canvasTabLabel}
+                  hint={labels.canvasTab}
+                  icon={Pencil}
+                  active={activeTab === "canvas"}
+                  onSelect={() => setActiveTab("canvas")}
+                  cellClassName="tm-diagram-editor__tab-wrap"
+                  tabClassName="tm-diagram-editor__tab"
+                  tabActiveClassName="is-active"
+                />
+                <TabHintCell
+                  label={labels.mermaidTabLabel}
+                  hint={labels.mermaidTab}
+                  icon={Code2}
+                  active={false}
+                  onSelect={() => switchToMermaidTab()}
+                  cellClassName="tm-diagram-editor__tab-wrap"
+                  tabClassName="tm-diagram-editor__tab"
+                  tabActiveClassName="is-active"
+                />
               </div>
             ) : null}
 
@@ -1405,50 +1441,41 @@ function FlowchartEditorInner({
                 proOptions={{ hideAttribution: true }}
               >
                 <FlowchartSwimlaneBackdrop />
-                <Background gap={20} size={1} />
+                {showGrid ? <Background gap={20} size={1} /> : null}
                 <MiniMap pannable zoomable position="top-right" ariaLabel="Miniatura do diagrama" />
                 <Controls showInteractive={!readOnly} position="bottom-left" />
               </ReactFlow>
+              <FlowchartEditorStatusBar
+                labels={labels}
+                showGrid={showGrid}
+                onShowGridChange={setShowGrid}
+              />
             </div>
           </div>
         ) : (
           <>
             {showPreviewTab ? (
-              <div className="tm-diagram-editor__view-tabs">
-                <HelpTooltip
-                  content={labels.canvasTab}
-                  ariaLabel="Ajuda: Desenho"
-                  wrap
-                  placement="bottom"
-                  className="tm-diagram-editor__tab-wrap"
-                >
-                  <button
-                    type="button"
-                    className="tm-diagram-editor__tab"
-                    onClick={() => setActiveTab("canvas")}
-                  >
-                    {labels.canvasTabLabel}
-                  </button>
-                </HelpTooltip>
-                <HelpTooltip
-                  content={labels.mermaidTab}
-                  ariaLabel="Ajuda: Preview Mermaid"
-                  wrap
-                  placement="bottom"
-                  className="tm-diagram-editor__tab-wrap"
-                >
-                  <button
-                    type="button"
-                    className={
-                      activeTab === "mermaid"
-                        ? "tm-diagram-editor__tab is-active"
-                        : "tm-diagram-editor__tab"
-                    }
-                    onClick={() => switchToMermaidTab()}
-                  >
-                    {labels.mermaidTabLabel}
-                  </button>
-                </HelpTooltip>
+              <div className="tm-diagram-editor__view-tabs" role="tablist">
+                <TabHintCell
+                  label={labels.canvasTabLabel}
+                  hint={labels.canvasTab}
+                  icon={Pencil}
+                  active={false}
+                  onSelect={() => setActiveTab("canvas")}
+                  cellClassName="tm-diagram-editor__tab-wrap"
+                  tabClassName="tm-diagram-editor__tab"
+                  tabActiveClassName="is-active"
+                />
+                <TabHintCell
+                  label={labels.mermaidTabLabel}
+                  hint={labels.mermaidTab}
+                  icon={Code2}
+                  active={activeTab === "mermaid"}
+                  onSelect={() => switchToMermaidTab()}
+                  cellClassName="tm-diagram-editor__tab-wrap"
+                  tabClassName="tm-diagram-editor__tab"
+                  tabActiveClassName="is-active"
+                />
               </div>
             ) : null}
             <FlowchartMermaidPanel

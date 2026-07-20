@@ -495,6 +495,122 @@
   box-shadow: inset 0 0 0 1px var(--ds-accent);
 }
 
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-tab-cell, .dashboard-transformometro .tm-diagram-editor__toolbar-tab-cell,
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtab-cell, .dashboard-transformometro .tm-diagram-editor__palette-subtab-cell{
+  display: inline-flex;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__toolbar-tab, .dashboard-transformometro .tm-diagram-editor__toolbar-tab{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__palette-subtab, .dashboard-transformometro .tm-diagram-editor__palette-subtab{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__history, .dashboard-transformometro .tm-diagram-editor__history{
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__history-btn, .dashboard-transformometro .tm-diagram-editor__history-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-text-muted);
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__history-btn:hover:not(:disabled), .dashboard-transformometro .tm-diagram-editor__history-btn:hover:not(:disabled){
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__history-btn:disabled, .dashboard-transformometro .tm-diagram-editor__history-btn:disabled{
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar, .dashboard-transformometro .tm-diagram-editor__statusbar{
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: var(--ds-radius-md);
+  border: 1px solid var(--ds-border-subtle, var(--ds-card-border));
+  background: color-mix(in srgb, var(--ds-card-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-toggles,
+.dashboard-transformometro .tm-diagram-editor__statusbar-toggles,
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-zoom,
+.dashboard-transformometro .tm-diagram-editor__statusbar-zoom{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-btn, .dashboard-transformometro .tm-diagram-editor__statusbar-btn{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--ds-radius-sm);
+  background: transparent;
+  color: var(--ds-text-muted);
+  padding: 4px 8px;
+  font-size: var(--ds-font-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-btn:hover, .dashboard-transformometro .tm-diagram-editor__statusbar-btn:hover{
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-btn--active, .dashboard-transformometro .tm-diagram-editor__statusbar-btn--active{
+  background: var(--ds-accent-soft);
+  color: var(--ds-text);
+  box-shadow: inset 0 0 0 1px var(--ds-accent);
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-slider, .dashboard-transformometro .tm-diagram-editor__statusbar-slider{
+  width: 120px;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__statusbar-percent, .dashboard-transformometro .tm-diagram-editor__statusbar-percent{
+  min-width: 3.2rem;
+  text-align: right;
+  font-size: var(--ds-font-xs);
+  font-weight: 700;
+  color: var(--ds-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .delpi-ui-flowchart-shell .tm-diagram-editor__tool-btn--active:not(:disabled), .dashboard-transformometro .tm-diagram-editor__tool-btn--active:not(:disabled){
   background: var(--ds-accent-soft);
   color: var(--ds-text);
@@ -595,7 +711,7 @@
 
 .delpi-ui-flowchart-shell .tm-diagram-editor__action-dock, .dashboard-transformometro .tm-diagram-editor__action-dock{
   position: absolute;
-  bottom: 12px;
+  bottom: 56px;
   right: 12px;
   z-index: 6;
   display: flex;
@@ -712,13 +828,13 @@
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .react-flow__controls, .dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__controls{
-  bottom: 12px;
+  bottom: 56px;
   /* Cabeçalho das swimlanes (~132px) — zoom não cobre os rótulos verticais */
   left: 148px;
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor__canvas .react-flow__controls, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__controls{
-  bottom: 12px;
+  bottom: 56px;
   left: 148px;
 }
 
@@ -794,7 +910,8 @@
 .delpi-ui-flowchart-shell .tm-diagram-editor--exporting .react-flow__minimap, .dashboard-transformometro .tm-diagram-editor--exporting .react-flow__minimap,
 .delpi-ui-flowchart-shell .tm-diagram-editor--exporting .tm-diagram-editor__action-dock, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__action-dock,
 .delpi-ui-flowchart-shell .tm-diagram-editor--exporting .tm-diagram-editor__view-tabs, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__view-tabs,
-.delpi-ui-flowchart-shell .tm-diagram-editor--exporting .tm-diagram-editor__toolbar-overlay, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__toolbar-overlay{
+.delpi-ui-flowchart-shell .tm-diagram-editor--exporting .tm-diagram-editor__toolbar-overlay, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__toolbar-overlay,
+.delpi-ui-flowchart-shell .tm-diagram-editor--exporting .tm-diagram-editor__statusbar, .dashboard-transformometro .tm-diagram-editor--exporting .tm-diagram-editor__statusbar{
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
@@ -944,6 +1061,9 @@
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor__tab, .dashboard-transformometro .tm-diagram-editor__tab{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   border: 1px solid var(--ds-card-border);
   background: var(--ds-surface-muted);
   border-radius: var(--ds-radius-sm);

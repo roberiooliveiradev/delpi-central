@@ -381,7 +381,31 @@ export const TM_HELP_TOOLTIPS = {
   },
   diagramEditor: {
     usoGeral:
-      "Adicione nós pela paleta (entram na faixa ativa). Selecione vários elementos arrastando na área de desenho para desenhar a caixa de seleção, ou Ctrl+clique para acrescentar à seleção. Use os ícones empilhados no canto inferior direito (excluir, copiar, colar, duplicar, tipo de conexão). Copiar grava na memória do editor; Colar insere a cópia com deslocamento (Ctrl+V). Duplicar copia e cola de uma vez. Atalhos: Ctrl+C copiar, Ctrl+V colar, Ctrl+D duplicar, Delete excluir. Setas ← ↑ → ↓ reposicionam a seleção em passos finos. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Use Layout automático para reorganizar o fluxo.",
+      "Adicione nós pela paleta (entram na faixa ativa). Selecione vários elementos arrastando na área de desenho para desenhar a caixa de seleção, ou Ctrl+clique para acrescentar à seleção. Use os ícones empilhados no canto inferior direito (excluir, copiar, colar, duplicar, tipo de conexão). Copiar grava na memória do editor; Colar insere a cópia com deslocamento (Ctrl+V). Duplicar copia e cola de uma vez. Atalhos: Ctrl+Z desfazer, Ctrl+Y ou Ctrl+Shift+Z refazer, Ctrl+C copiar, Ctrl+V colar, Ctrl+D duplicar, Delete excluir. Setas ← ↑ → ↓ reposicionam a seleção em passos finos. Duplo clique no texto do nó, faixa ou rótulo da seta para editar inline (Enter confirma, Esc cancela). Use Layout automático para reorganizar o fluxo. Na barra inferior: grade, zoom e «Ajustar».",
+    toolbarElementsTab:
+      "Paleta BPMN: eventos, desvios, tarefas, atividades, artefatos, eventos de borda e faixas (swimlanes).",
+    toolbarModelsTab:
+      "Modelos prontos (linear, decisão, faixas) e layout automático para reorganizar o desenho.",
+    elementGroupTabs: {
+      events: "Eventos de início, intermediários e fim do processo.",
+      gateways: "Desvios (exclusivo, paralelo, inclusivo…) que ramificam o fluxo.",
+      tasks: "Tarefas humanas ou de sistema executadas na etapa.",
+      activities: "Subprocessos e atividades compostas.",
+      artifacts: "Documentos, dados, anotações e agrupamentos.",
+      boundary: "Eventos anexados à borda de uma atividade.",
+      lanes: "Faixas horizontais para papéis ou áreas responsáveis.",
+    },
+    eventSubTabs: {
+      events_start: "Eventos que iniciam o fluxo.",
+      events_intermediate: "Eventos no meio do processo (timer, mensagem…).",
+      events_end: "Eventos que encerram um caminho do fluxo.",
+    },
+    undo: "Desfaz a última alteração no diagrama. Atalho: Ctrl+Z.",
+    redo: "Refaz a alteração desfeita. Atalho: Ctrl+Y ou Ctrl+Shift+Z.",
+    gridToggle: "Mostra ou oculta a grade de fundo na área de desenho.",
+    zoomIn: "Aproxima a visualização do diagrama.",
+    zoomOut: "Afasta a visualização do diagrama.",
+    zoomFit: "Ajusta o zoom para caber todo o diagrama na área visível.",
     nodes: {
       start: "Evento de início do fluxo (círculo). Todo diagrama deve ter ao menos um início.",
       process: "Atividade ou tarefa manual/automática (retângulo). Representa trabalho executado no processo.",
