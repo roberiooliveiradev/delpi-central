@@ -109,38 +109,50 @@ def execute_retrabalho_route(
         )
 
 
-FILIAL_QUERY = BRANCH_QUERY_REQUIRED
-DATA_INICIO_QUERY = Query(
+def FILIAL_QUERY():
+    return BRANCH_QUERY_REQUIRED()
+def DATA_INICIO_QUERY():
+    return Query(
     None,
     alias="dataInicio",
-    description="Data inicial (YYYY-MM-DD). Padrão: últimos 12 meses.",
+    description="Start date (YYYY-MM-DD). Default: last 12 months.", json_schema_extra={"format": "date"},
 )
-DATA_FIM_QUERY = Query(
+def DATA_FIM_QUERY():
+    return Query(
     None,
     alias="dataFim",
-    description="Data final (YYYY-MM-DD). Padrão: hoje.",
+    description="End date (YYYY-MM-DD). Default: today.", json_schema_extra={"format": "date"},
 )
-RECURSO_QUERY = Query(None, description="Filtro por recurso.")
-CENTRO_CUSTO_QUERY = Query(None, alias="centroCusto", description="Filtro por centro de custo.")
-CODIGO_OPERADOR_QUERY = Query(
+def RECURSO_QUERY():
+    return Query(None, description="Resource filter.")
+def CENTRO_CUSTO_QUERY():
+    return Query(None, alias="centroCusto", description="Cost center filter.")
+def CODIGO_OPERADOR_QUERY():
+    return Query(
     None,
     alias="codigoOperador",
-    description="Filtro por código do operador.",
+    description="Operator code filter.",
 )
-ORDER_BY_RANKING_QUERY = RETRABALHO_ORDER_BY_RANKING_QUERY
-LIMIT_QUERY = Query(
+def ORDER_BY_RANKING_QUERY():
+    return RETRABALHO_ORDER_BY_RANKING_QUERY()
+def LIMIT_QUERY():
+    return Query(
     DEFAULT_RANKING_LIMIT,
     ge=1,
     le=MAX_RANKING_LIMIT,
-    description="Quantidade máxima de itens no ranking.",
+    description="Maximum ranking items.",
 )
-PAGE_QUERY = Query(DEFAULT_PAGE, ge=1, description="Página da listagem.")
-PAGE_SIZE_QUERY = Query(
+def PAGE_QUERY():
+    return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
+def PAGE_SIZE_QUERY():
+    return Query(
     DEFAULT_PAGE_SIZE,
     alias="pageSize",
     ge=1,
     le=MAX_PAGE_SIZE,
-    description="Registros por página (máximo 100).",
+    description="Rows per page (maximum 100).",
 )
-ORDER_BY_DETALHES_QUERY = RETRABALHO_ORDER_BY_DETALHES_QUERY
-ORDER_DIR_QUERY = SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC
+def ORDER_BY_DETALHES_QUERY():
+    return RETRABALHO_ORDER_BY_DETALHES_QUERY()
+def ORDER_DIR_QUERY():
+    return SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC()

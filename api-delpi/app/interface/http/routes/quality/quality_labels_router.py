@@ -242,7 +242,10 @@ def save_my_inspector(body: Annotated[InspectorProfileBody, Body(...)]):
         return error_response("Erro interno ao salvar o inspetor.", status_code=500)
 
 
-@router.post("/inspectors/me/signature")
+@router.post(
+    "/inspectors/me/signature",
+    operation_id="upload_quality_label_inspector_signature",
+)
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 async def upload_my_signature(signature: UploadFile = File(...)):
     try:
@@ -266,7 +269,10 @@ async def upload_my_signature(signature: UploadFile = File(...)):
         return error_response("Erro interno ao registrar a assinatura.", status_code=500)
 
 
-@router.get("/inspectors/me/signature")
+@router.get(
+    "/inspectors/me/signature",
+    operation_id="get_quality_label_inspector_signature",
+)
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def get_my_signature():
     try:
@@ -282,7 +288,7 @@ def get_my_signature():
 
 @router.get("/lookup-op/{production_order}", operation_id="lookup_quality_label_op")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
-def lookup_op(production_order: str, branch: Optional[str] = BRANCH_QUERY_OPTIONAL):
+def lookup_op(production_order: str, branch: Optional[str] = BRANCH_QUERY_OPTIONAL()):
     try:
         service = build_quality_labels_service()
         data = service.lookup_op(production_order=production_order, branch=branch)
@@ -372,7 +378,7 @@ def get_label(label_id: str):
         return error_response("Erro interno ao buscar a etiqueta.", status_code=500)
 
 
-@router.get("/{label_id}/qr")
+@router.get("/{label_id}/qr", operation_id="get_quality_label_qr")
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def get_label_qr(label_id: str):
     try:
@@ -453,7 +459,10 @@ def save_certificate(label_id: str, body: Annotated[CertificateBody, Body(...)])
         return error_response("Erro interno ao salvar o certificado.", status_code=500)
 
 
-@router.get("/{label_id}/certificate/pdf")
+@router.get(
+    "/{label_id}/certificate/pdf",
+    operation_id="get_quality_label_certificate_pdf",
+)
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def get_certificate_pdf(label_id: str):
     try:

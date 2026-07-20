@@ -56,7 +56,7 @@ router = APIRouter(prefix="/supplies", tags=["Suprimentos"])
 @router.get("/cpv", **SUPPLIES_CPV)
 @require_any_permission(KPI_SUPPLIES_ACCESS)
 def get_cpv(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     top_limit: int = Query(default=5, ge=1, le=20),
@@ -102,7 +102,7 @@ def get_cpv(
 @router.get("/otd", **SUPPLIES_OTD)
 @require_any_permission(KPI_SUPPLIES_ACCESS)
 def get_otd(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
     top_limit: int = Query(default=5, ge=1, le=20),
@@ -150,7 +150,7 @@ def get_otd(
 @router.get("/stock-value", **SUPPLIES_STOCK_VALUE)
 @require_any_permission(KPI_SUPPLIES_ACCESS)
 def get_stock_value(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     location: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
@@ -159,7 +159,7 @@ def get_stock_value(
         default=False,
         description="Quando true, retorna apenas o resumo consolidado (sem breakdown por filial/local/produto).",
     ),
-    stock_method: str = STOCK_METHOD_QUERY,
+    stock_method: str = STOCK_METHOD_QUERY(),
 ):
     try:
         use_case = build_get_stock_value_use_case()
@@ -205,7 +205,7 @@ def get_stock_value(
 @router.get("/negotiation-savings/summary", **SUPPLIES_NEGOTIATION_SAVINGS)
 @require_any_permission(KPI_SUPPLIES_ACCESS)
 def get_negotiation_savings_summary(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -251,7 +251,7 @@ def get_negotiation_savings_summary(
 @router.get("/inventory-turnover", **SUPPLIES_INVENTORY_TURNOVER)
 @require_any_permission(KPI_SUPPLIES_ACCESS)
 def get_inventory_turnover(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     location: str | None = Query(default=None),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),

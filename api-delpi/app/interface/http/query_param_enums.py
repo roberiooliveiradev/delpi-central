@@ -138,199 +138,237 @@ PAC_PLAN_STATUS_VALUES = (
     "cancelled",
 )
 
-GRANULARITY_QUERY_REQUIRED = Query(
+def GRANULARITY_QUERY_REQUIRED():
+    return Query(
     ...,
     description="Series bucket size.",
     enum=list(GRANULARITY_VALUES),
 )
-GRANULARITY_QUERY_MONTH = Query(
+def GRANULARITY_QUERY_MONTH():
+    return Query(
     "month",
     description="Series bucket size.",
     enum=list(GRANULARITY_VALUES),
 )
-SORT_DIR_QUERY = Query(
+def SORT_DIR_QUERY():
+    return Query(
     "asc",
     description="Sort direction: asc or desc.",
     enum=list(SORT_DIR_VALUES),
 )
-SORT_DIR_QUERY_DESC = Query(
+def SORT_DIR_QUERY_DESC():
+    return Query(
     "desc",
     description="Sort direction: asc or desc.",
     enum=list(SORT_DIR_VALUES),
 )
-SORT_DIR_QUERY_OPTIONAL = Query(
+def SORT_DIR_QUERY_OPTIONAL():
+    return Query(
     None,
     description="Sort direction: asc or desc.",
     enum=list(SORT_DIR_VALUES),
 )
-SORT_DIR_QUERY_ALIAS_SORT_DIRECTION = Query(
+def SORT_DIR_QUERY_ALIAS_SORT_DIRECTION():
+    return Query(
     "asc",
     alias="sortDirection",
     description="Sort direction: asc or desc.",
     enum=list(SORT_DIR_VALUES),
 )
-SORT_DIR_QUERY_ALIAS_ORDER_DIR = Query(
+def SORT_DIR_QUERY_ALIAS_ORDER_DIR():
+    return Query(
     "asc",
     alias="orderDir",
     description="Sort direction: asc or desc.",
     enum=list(SORT_DIR_VALUES),
 )
-SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC = Query(
+def SORT_DIR_QUERY_ALIAS_ORDER_DIR_DESC():
+    return Query(
     "desc",
     alias="orderDir",
     description="Sort direction: asc or desc.",
     enum=list(SORT_DIR_VALUES),
 )
-CUSTOMER_SEGMENT_QUERY = Query(
+def CUSTOMER_SEGMENT_QUERY():
+    return Query(
     None,
     description="Customer segment: weg or new_business.",
     enum=list(CUSTOMER_SEGMENT_VALUES),
 )
-PRODUCT_TYPE_QUERY = Query(
+def PRODUCT_TYPE_QUERY():
+    return Query(
     None,
     description="Product type: PA or PI.",
     enum=list(PRODUCT_TYPE_VALUES),
 )
-LOSS_TYPE_QUERY = Query(
+def LOSS_TYPE_QUERY():
+    return Query(
     "both",
     description="Loss type filter.",
     enum=list(LOSS_TYPE_VALUES),
 )
-STOCK_METHOD_QUERY = Query(
+def STOCK_METHOD_QUERY():
+    return Query(
     "auto",
     description="Historical stock method: auto, hybrid, estimated or official_closure.",
     enum=list(STOCK_METHOD_VALUES),
 )
-NONCONFORMITY_TYPE_QUERY = Query(
+def NONCONFORMITY_TYPE_QUERY():
+    return Query(
     "all",
     description="Nonconformity type filter.",
     enum=list(NONCONFORMITY_TYPE_VALUES),
 )
-NONCONFORMITY_SCOPE_QUERY = Query(
+def NONCONFORMITY_SCOPE_QUERY():
+    return Query(
     None,
     description="Nonconformity scope: internal or external.",
     enum=list(NONCONFORMITY_SCOPE_VALUES),
 )
-BRANCH_QUERY_REQUIRED = Query(
+def BRANCH_QUERY_REQUIRED():
+    return Query(
     ...,
     description="Protheus branch code (01 or 02).",
     enum=list(BRANCH_CODE_VALUES),
 )
-BRANCH_QUERY_OPTIONAL = Query(
+def BRANCH_QUERY_OPTIONAL():
+    return Query(
     None,
     description="Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
     enum=list(BRANCH_CODE_VALUES),
 )
-SEVERITY_QUERY = Query(
+def SEVERITY_QUERY():
+    return Query(
     None,
     description="Severity: low, medium, high or critical.",
     enum=list(SEVERITY_VALUES),
 )
-SHIFT_5S_QUERY = Query(
+def SHIFT_5S_QUERY():
+    return Query(
     None,
     description="5S shift: TURNO_1, TURNO_2, TURNO_3 or ADMINISTRATIVO.",
     enum=list(SHIFT_5S_VALUES),
 )
-AUDIT_5S_STATUS_QUERY = Query(
+def AUDIT_5S_STATUS_QUERY():
+    return Query(
     None,
     description="5S audit status: open, in_progress, closed or cancelled.",
     enum=list(AUDIT_5S_STATUS_VALUES),
 )
-AUDIT_5S_LIFECYCLE_STATUS_QUERY = Query(
+def AUDIT_5S_LIFECYCLE_STATUS_QUERY():
+    return Query(
     None,
     alias="audit_status",
     description="5S audit lifecycle status.",
     enum=list(AUDIT_5S_LIFECYCLE_STATUS_VALUES),
 )
-AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN = Query(
+def AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN():
+    return Query(
     None,
     description="5S audit lifecycle status.",
     enum=list(AUDIT_5S_LIFECYCLE_STATUS_VALUES),
 )
-AUDIT_5S_NC_SORT_QUERY = Query(
+def AUDIT_5S_NC_SORT_QUERY():
+    return Query(
     "due_date_asc",
     description="NC board sort: due_date_asc, due_date_desc, created_desc or priority_desc.",
     enum=list(AUDIT_5S_NC_SORT_VALUES),
 )
-PRIORITY_QUERY = Query(
+def PRIORITY_QUERY():
+    return Query(
     None,
     description="Priority: high, medium or low.",
     enum=list(PRIORITY_VALUES),
 )
-SCHEDULING_BRANCH_QUERY = Query(
+def SCHEDULING_BRANCH_QUERY():
+    return Query(
     ...,
     description="Scheduling branch: ES or SC.",
     enum=list(SCHEDULING_BRANCH_VALUES),
 )
-SCHEDULING_SCOPE_QUERY = Query(
+def SCHEDULING_SCOPE_QUERY():
+    return Query(
     "occurrence",
     description="Scheduling scope: occurrence, future or all.",
     enum=list(SCHEDULING_SCOPE_VALUES),
 )
-GRANULARITY_QUERY_MONTH_DWM = Query(
+def GRANULARITY_QUERY_MONTH_DWM():
+    return Query(
     "month",
     description="Series bucket size: day, week or month.",
     enum=list(GRANULARITY_DAY_WEEK_MONTH_VALUES),
 )
-GRANULARITY_QUERY_DAY_MONTH_AUTO = Query(
+def GRANULARITY_QUERY_DAY_MONTH_AUTO():
+    return Query(
     "auto",
     alias="granularity",
     description="Series bucket size: day, month or auto.",
     enum=list(GRANULARITY_DAY_MONTH_AUTO_VALUES),
 )
-INSPECTION_RESULT_QUERY = Query(
+def INSPECTION_RESULT_QUERY():
+    return Query(
     None,
     description="Inspection result: A (approved), R (rejected) or T (pending).",
     enum=list(INSPECTION_RESULT_VALUES),
 )
-KAIZEN_STATUS_QUERY = Query(
+def KAIZEN_STATUS_QUERY():
+    return Query(
     None,
     description="Kaizen status: recebido, aprovado, implantado, descontinuado or cancelado.",
     enum=list(KAIZEN_STATUS_VALUES),
 )
-KAIZEN_SAVINGS_TYPE_QUERY = Query(
+def KAIZEN_SAVINGS_TYPE_QUERY():
+    return Query(
     None,
     description="Kaizen savings type: tempo, material, financeiro, qualitativo or misto.",
     enum=list(KAIZEN_SAVINGS_TYPE_VALUES),
 )
-PAC_EVIDENCE_SECTION_QUERY = Query(
+def PAC_EVIDENCE_SECTION_QUERY():
+    return Query(
     None,
     description="PAC evidence section.",
     enum=list(PAC_EVIDENCE_SECTION_VALUES),
 )
-PAC_EVIDENCE_TYPE_QUERY = Query(
+def PAC_EVIDENCE_TYPE_QUERY():
+    return Query(
     None,
     description="PAC evidence type.",
     enum=list(PAC_EVIDENCE_TYPE_VALUES),
 )
-REFUGOS_DIMENSION_QUERY = Query(
+def REFUGOS_DIMENSION_QUERY():
+    return Query(
     ...,
     description="Refugos ranking dimension.",
     enum=list(REFUGOS_DIMENSION_VALUES),
 )
-RETRABALHO_ORDER_BY_RANKING_QUERY = Query(
+def RETRABALHO_ORDER_BY_RANKING_QUERY():
+    return Query(
     "horas",
     alias="orderBy",
     description="Retrabalho ranking sort: horas or custo.",
     enum=list(RETRABALHO_ORDER_BY_RANKING_VALUES),
 )
-RETRABALHO_ORDER_BY_DETALHES_QUERY = Query(
+def RETRABALHO_ORDER_BY_DETALHES_QUERY():
+    return Query(
     "data",
     alias="orderBy",
     description="Retrabalho details sort: data, horas or custo.",
     enum=list(RETRABALHO_ORDER_BY_DETALHES_VALUES),
 )
-PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY = Query(
+def PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY():
+    return Query(
     "day",
     description="Group appointments by day or day_work_center.",
     enum=list(PRODUCTION_APPOINTMENTS_GROUP_BY_VALUES),
 )
-CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY = Query(
+def CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY():
+    return Query(
     "general",
     description="Consumption ranking group_by dimension.",
     enum=list(CONSUMPTION_TOP_ITEMS_GROUP_BY_VALUES),
 )
-SAFETY_STOCK_STATUS_QUERY = Query(
+def SAFETY_STOCK_STATUS_QUERY():
+    return Query(
     None,
     description=(
         "Safety stock status: without_safety_stock, below_safety_stock, "
@@ -338,68 +376,81 @@ SAFETY_STOCK_STATUS_QUERY = Query(
     ),
     enum=list(SAFETY_STOCK_STATUS_VALUES),
 )
-INADIMPLENCIA_STATUS_QUERY = Query(
+def INADIMPLENCIA_STATUS_QUERY():
+    return Query(
     "all",
     description="Delay status filter: all, on_time or late.",
     enum=list(INADIMPLENCIA_STATUS_VALUES),
 )
-COMMERCIAL_PROPOSAL_STATUS_QUERY = Query(
+def COMMERCIAL_PROPOSAL_STATUS_QUERY():
+    return Query(
     None,
     description="Proposal status: won (won deals), open (others) or omit for all.",
     enum=list(COMMERCIAL_PROPOSAL_STATUS_VALUES),
 )
-COMMERCIAL_OTD_STATUS_QUERY = Query(
+def COMMERCIAL_OTD_STATUS_QUERY():
+    return Query(
     None,
     description="OTD status filter: on_time or late.",
     enum=list(COMMERCIAL_OTD_STATUS_VALUES),
 )
-LMP_LISTING_TYPE_QUERY = Query(
+def LMP_LISTING_TYPE_QUERY():
+    return Query(
     None,
     description="LMP listing type: Todos, LMP, Amostra or Outro.",
     enum=list(LMP_LISTING_TYPE_VALUES),
 )
-LMP_DASHBOARD_STATUS_QUERY = Query(
+def LMP_DASHBOARD_STATUS_QUERY():
+    return Query(
     "Todos",
     description="LMP dashboard status: Todos, Pontual, Atrasado, Andamento or Retornada.",
     enum=list(LMP_DASHBOARD_STATUS_VALUES),
 )
-LMP_DASHBOARD_STATUS_QUERY_OPTIONAL = Query(
+def LMP_DASHBOARD_STATUS_QUERY_OPTIONAL():
+    return Query(
     None,
     description="LMP dashboard status: Todos, Pontual, Atrasado, Andamento or Retornada.",
     enum=list(LMP_DASHBOARD_STATUS_VALUES),
 )
-PRODUCT_EXCLUSIVITY_VIEW_QUERY = Query(
+def PRODUCT_EXCLUSIVITY_VIEW_QUERY():
+    return Query(
     "by_material",
     description="by_material=exclusive MPs; by_finished_product=PAs with exclusive MP.",
     enum=list(PRODUCT_EXCLUSIVITY_VIEW_VALUES),
 )
-PRODUCT_DETAIL_VIEW_QUERY = Query(
+def PRODUCT_DETAIL_VIEW_QUERY():
+    return Query(
     "full",
     description="full=complete payload; summary=lighter subset.",
     enum=list(PRODUCT_DETAIL_VIEW_VALUES),
 )
 
-PRODUCTION_OTD_STATUS_QUERY = Query(
+def PRODUCTION_OTD_STATUS_QUERY():
+    return Query(
     None,
     description="OTD status filter: on_time or late.",
     enum=list(PRODUCTION_OTD_STATUS_VALUES),
 )
-PRODUCTION_OEE_STATUS_QUERY = Query(
+def PRODUCTION_OEE_STATUS_QUERY():
+    return Query(
     None,
     description="OEE list status filter: valid or outlier.",
     enum=list(PRODUCTION_OEE_STATUS_VALUES),
 )
-NONCONFORMITY_QI2_STATUS_QUERY = Query(
+def NONCONFORMITY_QI2_STATUS_QUERY():
+    return Query(
     None,
     description="QI2 status code: 1=Registrada, 2=Em análise, 3=Procede, 4=Não procede, 5=Cancelada.",
     enum=list(NONCONFORMITY_QI2_STATUS_VALUES),
 )
-GUIAS_PROCEDURE_STATUS_QUERY = Query(
+def GUIAS_PROCEDURE_STATUS_QUERY():
+    return Query(
     None,
     description="Procedure status: draft, published or archived.",
     enum=list(GUIAS_PROCEDURE_STATUS_VALUES),
 )
-PAC_PLAN_STATUS_QUERY = Query(
+def PAC_PLAN_STATUS_QUERY():
+    return Query(
     None,
     description="PAC plan status.",
     enum=list(PAC_PLAN_STATUS_VALUES),

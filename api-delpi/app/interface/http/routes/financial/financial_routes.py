@@ -41,7 +41,7 @@ router = APIRouter(tags=["Financeiro"])
 @router.get("/rol", **FINANCIAL_ROL)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_rol(
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
 ):
@@ -70,7 +70,7 @@ def get_rol(
 @router.get("/ebitda_pct", **FINANCIAL_EBITDA)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_ebitda_pct(
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
 ):
@@ -112,7 +112,7 @@ def get_ebitda_pct(
 @router.get("/fixed_cost_pct", **FINANCIAL_FIXED_COST)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_fixed_cost_pct(
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
 ):
@@ -154,7 +154,7 @@ def get_fixed_cost_pct(
 @router.get("/pmr", **FINANCIAL_PMR)
 @require_any_permission(KPI_FINANCIAL_ACCESS)
 def get_pmr(
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
 ):

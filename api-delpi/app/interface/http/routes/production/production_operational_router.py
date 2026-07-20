@@ -66,10 +66,10 @@ router = APIRouter(prefix="/production", tags=["Produção operacional"])
 @require_permission(API_DELPI_ACCESS)
 def get_production_order_by_op(
     production_order: str,
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
-    product_type: Optional[str] = PRODUCT_TYPE_QUERY,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    product_type: Optional[str] = PRODUCT_TYPE_QUERY(),
     linked_sort_by: Optional[str] = Query(default=None),
-    linked_sort_dir: str = SORT_DIR_QUERY,
+    linked_sort_dir: str = SORT_DIR_QUERY(),
 ):
     try:
         result = build_get_production_order_by_op_use_case().execute(
@@ -108,9 +108,9 @@ def get_production_order_by_op(
 def get_consumption_top_items(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    group_by: str = CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY,
+    group_by: str = CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY(),
 ):
     try:
         normalized_group_by = ProductionConsumptionTopItemsGroupByService.normalize(group_by)
@@ -140,9 +140,9 @@ def get_consumption_top_items(
 def get_losses_records(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    loss_type: str = LOSS_TYPE_QUERY,
+    loss_type: str = LOSS_TYPE_QUERY(),
 ):
     try:
         dto = ProductionOperationalRequest(
@@ -171,9 +171,9 @@ def get_losses_records(
 def get_losses_top_materials(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
-    loss_type: str = LOSS_TYPE_QUERY,
+    loss_type: str = LOSS_TYPE_QUERY(),
 ):
     try:
         dto = ProductionOperationalRequest(
@@ -201,7 +201,7 @@ def get_losses_top_materials(
 @require_permission(API_DELPI_ACCESS)
 def get_schedule_today(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=500),
 ):
     try:
@@ -228,7 +228,7 @@ def get_schedule_today(
 @require_permission(API_DELPI_ACCESS)
 def get_orders_open(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     work_center: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
@@ -257,7 +257,7 @@ def get_orders_open(
 @require_permission(API_DELPI_ACCESS)
 def get_orders_finished(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     work_center: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
@@ -286,7 +286,7 @@ def get_orders_finished(
 @require_permission(API_DELPI_ACCESS)
 def get_work_center_order_summary(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
     try:
@@ -317,7 +317,7 @@ def get_work_center_order_summary(
 def get_consumption_top_items_by_work_center(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     work_center: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
@@ -353,7 +353,7 @@ def get_consumption_top_items_by_work_center(
 def get_consumption_top_items_validated(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
     try:
@@ -381,7 +381,7 @@ def get_consumption_top_items_validated(
 @require_permission(API_DELPI_ACCESS)
 def get_allocation_gaps(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     work_center: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
@@ -413,7 +413,7 @@ def get_allocation_gaps(
 @require_permission(API_DELPI_ACCESS)
 def get_orders_finished_without_consumption(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     work_center: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
@@ -447,7 +447,7 @@ def get_orders_finished_without_consumption(
 @require_permission(API_DELPI_ACCESS)
 def get_work_center_average_planned_time(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
     try:
@@ -478,7 +478,7 @@ def get_consumption_by_item(
     code: str,
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     product_group: Optional[str] = Query(default=None, min_length=4, max_length=4),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
@@ -509,7 +509,7 @@ def get_consumption_by_item(
 @require_permission(API_DELPI_ACCESS)
 def get_planned_vs_real_time(
     reference_date: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     work_center: Optional[str] = Query(default=None),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):

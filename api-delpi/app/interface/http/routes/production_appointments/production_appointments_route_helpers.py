@@ -74,21 +74,30 @@ def execute_route(
         )
 
 
-BRANCH_QUERY = BRANCH_QUERY_REQUIRED
-DATE_START_QUERY = Query(
+def BRANCH_QUERY():
+    return BRANCH_QUERY_REQUIRED()
+def DATE_START_QUERY():
+    return Query(
     None,
-    description="Data inicial (YYYY-MM-DD). Padrão: 1º dia do mês atual.",
+    description="Start date (YYYY-MM-DD). Default: first day of current month.", json_schema_extra={"format": "date"},
 )
-DATE_END_QUERY = Query(
+def DATE_END_QUERY():
+    return Query(
     None,
-    description="Data final inclusiva (YYYY-MM-DD). Padrão: fim do mês corrente.",
+    description="Inclusive end date (YYYY-MM-DD). Default: end of current month.", json_schema_extra={"format": "date"},
 )
-WORK_CENTER_QUERY = Query(None, description="Filtro por centro de trabalho (ex.: CT-70).")
-OP_QUERY = Query(None, description="Filtro por ordem de produção.")
-PRODUCT_QUERY = Query(None, description="Filtro por código de produto.")
-GROUP_BY_QUERY = PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY
-PAGE_QUERY = Query(DEFAULT_PAGE, ge=1, description="Página da listagem.")
-PAGE_SIZE_QUERY = Query(
+def WORK_CENTER_QUERY():
+    return Query(None, description="Work center filter (e.g. CT-70).")
+def OP_QUERY():
+    return Query(None, description="Production order filter.")
+def PRODUCT_QUERY():
+    return Query(None, description="Product code filter.")
+def GROUP_BY_QUERY():
+    return PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY()
+def PAGE_QUERY():
+    return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
+def PAGE_SIZE_QUERY():
+    return Query(
     DEFAULT_PAGE_SIZE,
     ge=1,
     le=MAX_PAGE_SIZE,

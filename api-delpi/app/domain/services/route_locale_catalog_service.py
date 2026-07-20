@@ -39,8 +39,14 @@ def _clean_params(raw: Any) -> dict[str, dict[str, Any]]:
             block = _clean_locale_block(locale_raw.get(lang))
             if block:
                 locale[lang] = block
+        cleaned: dict[str, Any] = {}
         if locale:
-            indexed[key] = {"locale": locale}
+            cleaned["locale"] = locale
+        fmt = str(value.get("format") or "").strip()
+        if fmt:
+            cleaned["format"] = fmt
+        if cleaned:
+            indexed[key] = cleaned
     return indexed
 
 
@@ -149,6 +155,9 @@ def _merge_param_locale(
                 continue
             combined[lang] = {**(combined.get(lang) or {}), **block}
         left["locale"] = combined
+        fmt = str(value.get("format") or left.get("format") or "").strip()
+        if fmt:
+            left["format"] = fmt
         merged[name] = left
     return merged
 

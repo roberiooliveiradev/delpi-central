@@ -172,9 +172,9 @@ def _body_to_fields(body: BaseModel) -> dict:
 @router.get("", **QUALITY_KAIZEN_RECORDS_LIST)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
-    status: str | None = KAIZEN_STATUS_QUERY,
-    savings_type: str | None = KAIZEN_SAVINGS_TYPE_QUERY,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    status: str | None = KAIZEN_STATUS_QUERY(),
+    savings_type: str | None = KAIZEN_SAVINGS_TYPE_QUERY(),
     title: str | None = Query(default=None),
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
@@ -281,7 +281,7 @@ def import_kaizen_records(body: ImportKaizensBody = Body(...)):
 @router.get("/summary", operation_id="get_kaizen_records_summary")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_records_summary(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
 ):
@@ -602,7 +602,7 @@ def list_kaizen_evidences(record_id: str):
         return error_response("Erro interno ao listar evidências do kaizen.", status_code=500)
 
 
-@router.post("/{record_id}/evidences")
+@router.post("/{record_id}/evidences", operation_id="attach_kaizen_evidence")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 async def attach_kaizen_evidence(
     record_id: str,
@@ -662,7 +662,10 @@ async def attach_kaizen_evidence(
         return error_response("Erro interno ao anexar evidência do kaizen.", status_code=500)
 
 
-@router.get("/{record_id}/evidences/{evidence_id}/file")
+@router.get(
+    "/{record_id}/evidences/{evidence_id}/file",
+    operation_id="download_kaizen_evidence",
+)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def download_kaizen_evidence(record_id: str, evidence_id: str):
     try:

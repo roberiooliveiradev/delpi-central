@@ -60,8 +60,8 @@ router = APIRouter(
 )
 @require_any_permission(FINANCEIRO_INADIMPLENCIA_READ_PERMISSIONS)
 def get_financeiro_inadimplencia_resumo_route(
-    start_date: Optional[str] = PERIOD_START_QUERY,
-    end_date: Optional[str] = PERIOD_END_QUERY,
+    start_date: Optional[str] = PERIOD_START_QUERY(),
+    end_date: Optional[str] = PERIOD_END_QUERY(),
 ):
     try:
         request = build_inadimplencia_query_request(
@@ -90,12 +90,12 @@ def get_financeiro_inadimplencia_resumo_route(
 )
 @require_any_permission(FINANCEIRO_INADIMPLENCIA_READ_PERMISSIONS)
 def get_financeiro_inadimplencia_mensal_route(
-    start_date: Optional[str] = PERIOD_START_QUERY,
-    end_date: Optional[str] = PERIOD_END_QUERY,
-    customer_code: Optional[str] = CUSTOMER_CODE_QUERY,
-    store_code: Optional[str] = STORE_CODE_QUERY,
-    customers: Optional[str] = CUSTOMERS_QUERY,
-    novos_negocios: bool = NOVOS_NEGOCIOS_QUERY,
+    start_date: Optional[str] = PERIOD_START_QUERY(),
+    end_date: Optional[str] = PERIOD_END_QUERY(),
+    customer_code: Optional[str] = CUSTOMER_CODE_QUERY(),
+    store_code: Optional[str] = STORE_CODE_QUERY(),
+    customers: Optional[str] = CUSTOMERS_QUERY(),
+    novos_negocios: bool = NOVOS_NEGOCIOS_QUERY(),
 ):
     try:
         request = build_inadimplencia_mensal_request(
@@ -128,8 +128,8 @@ def get_financeiro_inadimplencia_mensal_route(
 )
 @require_any_permission(FINANCEIRO_INADIMPLENCIA_READ_PERMISSIONS)
 def get_financeiro_inadimplencia_faixas_atraso_route(
-    start_date: Optional[str] = PERIOD_START_QUERY,
-    end_date: Optional[str] = PERIOD_END_QUERY,
+    start_date: Optional[str] = PERIOD_START_QUERY(),
+    end_date: Optional[str] = PERIOD_END_QUERY(),
 ):
     try:
         request = build_inadimplencia_query_request(
@@ -158,14 +158,14 @@ def get_financeiro_inadimplencia_faixas_atraso_route(
 )
 @require_any_permission(FINANCEIRO_INADIMPLENCIA_READ_PERMISSIONS)
 def get_financeiro_inadimplencia_clientes_route(
-    start_date: Optional[str] = PERIOD_START_QUERY,
-    end_date: Optional[str] = PERIOD_END_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
-    sort_by: Optional[str] = SORT_BY_QUERY,
-    sort_dir: str = SORT_DIR_QUERY,
-    q: Optional[str] = SEARCH_QUERY,
-    only_with_delays: bool = ONLY_WITH_DELAYS_QUERY,
+    start_date: Optional[str] = PERIOD_START_QUERY(),
+    end_date: Optional[str] = PERIOD_END_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
+    sort_by: Optional[str] = SORT_BY_QUERY(),
+    sort_dir: str = SORT_DIR_QUERY(),
+    q: Optional[str] = SEARCH_QUERY(),
+    only_with_delays: bool = ONLY_WITH_DELAYS_QUERY(),
 ):
     try:
         request = build_inadimplencia_clientes_request(
@@ -200,17 +200,17 @@ def get_financeiro_inadimplencia_clientes_route(
 )
 @require_any_permission(FINANCEIRO_INADIMPLENCIA_READ_PERMISSIONS)
 def get_financeiro_inadimplencia_titulos_route(
-    start_date: Optional[str] = PERIOD_START_QUERY,
-    end_date: Optional[str] = PERIOD_END_QUERY,
-    customer_code: Optional[str] = CUSTOMER_CODE_QUERY,
-    store_code: Optional[str] = STORE_CODE_QUERY,
-    status: str = STATUS_QUERY,
-    delay_range: Optional[str] = DELAY_RANGE_QUERY,
-    q: Optional[str] = SEARCH_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
-    sort_by: Optional[str] = SORT_BY_QUERY,
-    sort_dir: str = SORT_DIR_QUERY,
+    start_date: Optional[str] = PERIOD_START_QUERY(),
+    end_date: Optional[str] = PERIOD_END_QUERY(),
+    customer_code: Optional[str] = CUSTOMER_CODE_QUERY(),
+    store_code: Optional[str] = STORE_CODE_QUERY(),
+    status: str = STATUS_QUERY(),
+    delay_range: Optional[str] = DELAY_RANGE_QUERY(),
+    q: Optional[str] = SEARCH_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
+    sort_by: Optional[str] = SORT_BY_QUERY(),
+    sort_dir: str = SORT_DIR_QUERY(),
 ):
     try:
         request = build_inadimplencia_titulos_request(

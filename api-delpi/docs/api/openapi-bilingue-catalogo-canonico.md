@@ -8,7 +8,8 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para catálogos (TV, cha
 |--------|-------------------|
 | `summary` / `description` nativos | **Inglês** — preenchidos no OpenAPI ao vivo a partir de `x-delpi.locale.en` (Swagger UI) |
 | `x-delpi.locale` | **EN + pt-BR** (summary, description, whenToUse) — chat/TV leem daqui |
-| `x-delpi.params.<name>.locale` | Labels/descrições de query params em EN + pt-BR; EN também hidrata `parameters[].description` no Swagger quando o Query não tem descrição útil |
+| `x-delpi.params.<name>.locale` | Labels/descrições de query params em EN + pt-BR; EN também hidrata `parameters[].description` no Swagger (substitui vazio, eco do nome ou texto PT) |
+| `x-delpi.params.<name>.format` | Hint OpenAPI (ex.: `"date"`) — Swagger mostra date picker; declarado em `openapi_param_locale.json` |
 | `x-delpi.category` | Categoria de produto (`commercial`, `production`, …) |
 | `x-delpi.tv` | Espelho de `locale.pt-BR` para compatibilidade |
 
@@ -37,8 +38,9 @@ def handler(
 | `operation_id` no decorator | Sempre; se o `def` for curto (`update_audit`), o oid canônico vai no decorator |
 | Mesmo id no envelope | `api_delpi_success(..., operation_id=...)` idêntico |
 | Chat-critical | Preferir `**agent_route(...)` **sem** segundo `operation_id=` (evita `TypeError` no startup) |
-| Domínio fechado | `enum=` via [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — não só `pattern=`; no Swagger vira **select** |
-| Description do Query | Inglês |
+| Domínio fechado | `enum=` via factories em [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — **sempre** `BRANCH_QUERY_OPTIONAL()` (nova instância); **nunca** reutilizar o mesmo objeto `Query()` em vários params |
+| Datas | Params de data em `openapi_param_locale.json` com `"format": "date"` (ou nome canônico); o injector aplica no schema OpenAPI |
+| Description do Query | Inglês (ou deixar o injector sobrescrever PT com `locale.en`) |
 | Filial consolidável | `BRANCH_QUERY_OPTIONAL` (`01`/`02`) — **não** default HTTP `"01"` |
 
 ### 2. Contrato e segurança

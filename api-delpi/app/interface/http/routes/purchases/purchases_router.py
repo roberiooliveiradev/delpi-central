@@ -26,7 +26,7 @@ router = APIRouter(prefix="/purchases", tags=["Compras operacionais"])
 def get_top_products(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
     try:

@@ -84,7 +84,7 @@ def _build_evidence_tag_suggestion(
 )
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_quality_knowledge_graph(
-    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
     product_code: str | None = None,
     limit: int | None = None,
 ):

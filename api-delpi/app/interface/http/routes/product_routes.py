@@ -156,7 +156,7 @@ def search_products_route(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
     sort: Optional[str]=Query(None),
-    direction: Optional[str] = SORT_DIR_QUERY_OPTIONAL
+    direction: Optional[str] = SORT_DIR_QUERY_OPTIONAL()
 ):
     try:
 
@@ -194,7 +194,7 @@ def search_products_route(
 )
 @require_permission(API_DELPI_ACCESS)
 def list_exclusive_raw_materials_catalog(
-    view: str = PRODUCT_EXCLUSIVITY_VIEW_QUERY,
+    view: str = PRODUCT_EXCLUSIVITY_VIEW_QUERY(),
     limit: Optional[int] = Query(default=None, ge=1, le=500),
     offset: Optional[int] = Query(default=None, ge=0),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
@@ -251,7 +251,7 @@ def list_exclusive_raw_materials_catalog(
 def get_product_directives(
     identifier: str,
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         dto = ProductDirectivesRequest(
@@ -299,7 +299,7 @@ def get_product_directives(
 @require_permission(API_DELPI_ACCESS)
 def get_product_detail(
     code: str,
-    view: str = PRODUCT_DETAIL_VIEW_QUERY,
+    view: str = PRODUCT_DETAIL_VIEW_QUERY(),
     legacy: bool = Query(
         False,
         description="Reservado para campos normalizados futuros no cadastro",
@@ -473,7 +473,7 @@ def get_production_status(
     code: str,
     reference_date: Optional[str] = Query(default=None),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     legacy: bool = Query(False, description="Devolve SIM/NAO em vez de booleanos"),
 ):
     try:
@@ -512,7 +512,7 @@ def get_shipping_status(
     reference_date: Optional[str] = Query(default=None),
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     legacy: bool = Query(False, description="Omite datas ISO normalizadas"),
 ):
     try:
@@ -558,7 +558,7 @@ def get_factory_status(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
     max_depth: Optional[int] = Query(default=None, ge=1, le=100),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     legacy: bool = Query(False, description="Devolve SIM/NAO em vez de booleanos"),
 ):
     try:
@@ -693,7 +693,7 @@ def _raw_material_price_dto(
 @require_permission(API_DELPI_ACCESS)
 def get_last_purchase(
     code: str,
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         dto = _raw_material_price_dto(code, None, None, branch, None)
@@ -729,7 +729,7 @@ def get_purchase_price_history(
     code: str,
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     history_limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
     try:
@@ -766,7 +766,7 @@ def get_purchase_budget_history(
     code: str,
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         dto = _raw_material_price_dto(code, date_start, date_end, branch, None)
@@ -806,7 +806,7 @@ def get_raw_material_price_intelligence(
     code: str,
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     history_limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
     try:
@@ -1048,7 +1048,7 @@ def inspection(
 @require_permission(API_DELPI_ACCESS)
 def guide(
     code: str,
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     page: int | None = Query(None, ge=1),
     page_size: int | None = Query(None, ge=1, le=500),
     max_depth: int | None = Query(None, ge=1, le=15)
@@ -1090,7 +1090,7 @@ def internal_movements(
     page_size: int = Query(50, ge=1, le=500),
     date_start: Optional[str] = Query(None),
     date_end: Optional[str] = Query(None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     location: Optional[str] = Query(None),
     tm: Optional[str] = Query(None),
     op: Optional[str] = Query(None)
@@ -1139,7 +1139,7 @@ def stock(
     code: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     warehouse: Optional[str] = Query(
         None,
         description="Filtra por armazém (preferido; equivalente a location)",
@@ -1190,7 +1190,7 @@ def inbound_invoice_items(
     issue_date_start: Optional[str] = Query(None),
     issue_date_end: Optional[str] = Query(None),
     supplier: Optional[str] = Query(None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL()
 ):
 
     try:
@@ -1231,7 +1231,7 @@ def outbound_invoice_items(
     issue_date_start: Optional[str] = Query(None),
     issue_date_end: Optional[str] = Query(None),
     customer: Optional[str] = Query(None),
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL()
 ):
 
     try:
@@ -1423,7 +1423,7 @@ def product_pricing(code: str):
 @require_permission(API_DELPI_ACCESS)
 def product_analyser(
     code: str,
-    view: str = PRODUCT_DETAIL_VIEW_QUERY,
+    view: str = PRODUCT_DETAIL_VIEW_QUERY(),
 ):
 
     try:

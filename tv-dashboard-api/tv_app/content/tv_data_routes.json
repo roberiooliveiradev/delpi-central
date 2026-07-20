@@ -166,6 +166,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -381,6 +385,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -444,6 +452,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -493,6 +505,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -546,6 +562,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -565,6 +585,10 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "won",
+            "open"
+          ],
           "description": "Status do registro no fluxo."
         },
         "customer_segment": {
@@ -648,6 +672,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -656,6 +684,17 @@
           "optional": true,
           "label": "Revisão",
           "description": "Número ou código da revisão."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -677,6 +716,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -697,6 +740,17 @@
           "optional": true,
           "label": "Data fim",
           "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct",
@@ -790,6 +844,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -901,6 +959,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -930,6 +992,10 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "on_time",
+            "late"
+          ],
           "description": "Status do registro no fluxo."
         },
         "page": {
@@ -1022,6 +1088,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1165,6 +1235,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1215,6 +1289,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1222,6 +1300,12 @@
           "type": "string",
           "optional": true,
           "label": "Tipo de listagem",
+          "enum": [
+            "Todos",
+            "LMP",
+            "Amostra",
+            "Outro"
+          ],
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         },
         "page": {
@@ -1283,12 +1367,23 @@
           "optional": true,
           "label": "Status",
           "default": "Todos",
+          "enum": [
+            "Todos",
+            "Pontual",
+            "Atrasado",
+            "Andamento",
+            "Retornada"
+          ],
           "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1296,6 +1391,12 @@
           "type": "string",
           "optional": true,
           "label": "Tipo de listagem",
+          "enum": [
+            "Todos",
+            "LMP",
+            "Amostra",
+            "Outro"
+          ],
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         },
         "page": {
@@ -1352,12 +1453,23 @@
           "optional": true,
           "label": "Status",
           "default": "Todos",
+          "enum": [
+            "Todos",
+            "Pontual",
+            "Atrasado",
+            "Andamento",
+            "Retornada"
+          ],
           "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1365,6 +1477,12 @@
           "type": "string",
           "optional": true,
           "label": "Tipo de listagem",
+          "enum": [
+            "Todos",
+            "LMP",
+            "Amostra",
+            "Outro"
+          ],
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         }
       },
@@ -1407,12 +1525,23 @@
           "optional": true,
           "label": "Status",
           "default": "Todos",
+          "enum": [
+            "Todos",
+            "Pontual",
+            "Atrasado",
+            "Andamento",
+            "Retornada"
+          ],
           "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1420,6 +1549,12 @@
           "type": "string",
           "optional": true,
           "label": "Tipo de listagem",
+          "enum": [
+            "Todos",
+            "LMP",
+            "Amostra",
+            "Outro"
+          ],
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         },
         "page": {
@@ -1479,12 +1614,23 @@
           "optional": true,
           "label": "Status",
           "default": "Todos",
+          "enum": [
+            "Todos",
+            "Pontual",
+            "Atrasado",
+            "Andamento",
+            "Retornada"
+          ],
           "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1492,6 +1638,12 @@
           "type": "string",
           "optional": true,
           "label": "Tipo de listagem",
+          "enum": [
+            "Todos",
+            "LMP",
+            "Amostra",
+            "Outro"
+          ],
           "description": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra)."
         }
       },
@@ -1545,6 +1697,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1587,6 +1743,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1635,6 +1795,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -1683,6 +1847,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -1735,6 +1903,17 @@
           "optional": true,
           "label": "Descrição da peça",
           "description": "Descrição da peça no cadastro."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -1769,6 +1948,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         }
@@ -1792,6 +1975,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -1930,6 +2117,13 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "Todos",
+            "Pontual",
+            "Atrasado",
+            "Andamento",
+            "Retornada"
+          ],
           "description": "Status do registro no fluxo."
         },
         "start_date": {
@@ -2038,6 +2232,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2093,6 +2291,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2198,6 +2400,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2266,6 +2472,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2328,6 +2538,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2395,6 +2609,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2434,6 +2652,322 @@
       }
     },
     {
+      "operationId": "get_financeiro_inadimplencia_clientes",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Financeiro inadimplencia cliente",
+      "category": "financial",
+      "path": "/financeiro/inadimplencia/clientes",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Financeiro inadimplencia cliente.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Financeiro inadimplencia cliente.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção da ordenação",
+          "default": "desc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        },
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        },
+        "only_with_delays": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente com atraso",
+          "default": true,
+          "description": "Retorna apenas títulos/clientes com atraso."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_faixas_atraso",
+      "httpMethod": "GET",
+      "label": "Lista — Financeiro inadimplencia faixas atraso",
+      "category": "financial",
+      "path": "/financeiro/inadimplencia/faixas-atraso",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Lista — Financeiro inadimplencia faixas atraso.",
+      "whenToUse": "Use quando precisar de: Lista — Financeiro inadimplencia faixas atraso.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_mensal",
+      "httpMethod": "GET",
+      "label": "Lista — Financeiro inadimplencia mensal",
+      "category": "financial",
+      "path": "/financeiro/inadimplencia/mensal",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Lista — Financeiro inadimplencia mensal.",
+      "whenToUse": "Use quando precisar de: Lista — Financeiro inadimplencia mensal.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "customer_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (CLIENTE)."
+        },
+        "store_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código da loja",
+          "description": "Loja do cliente (LOJA)."
+        },
+        "customers": {
+          "type": "string",
+          "optional": true,
+          "label": "Clientes",
+          "description": "Lista CSV de clientes CODIGO/LOJA."
+        },
+        "novos_negocios": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Novos negócios",
+          "default": false,
+          "description": "Se verdadeiro, exclui o cliente-chave WEG."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_resumo",
+      "httpMethod": "GET",
+      "label": "Indicador — Financeiro inadimplencia resumo",
+      "category": "financial",
+      "path": "/financeiro/inadimplencia/resumo",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador — Financeiro inadimplencia resumo.",
+      "whenToUse": "Use quando precisar de: Indicador — Financeiro inadimplencia resumo.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_financeiro_inadimplencia_titulos",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Financeiro inadimplencia titulo",
+      "category": "financial",
+      "path": "/financeiro/inadimplencia/titulos",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Financeiro inadimplencia titulo.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Financeiro inadimplencia titulo.",
+      "paramSchema": {
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "customer_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do cliente",
+          "description": "Código do cliente (CLIENTE)."
+        },
+        "store_code": {
+          "type": "string",
+          "optional": true,
+          "label": "Código da loja",
+          "description": "Loja do cliente (LOJA)."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "default": "all",
+          "enum": [
+            "all",
+            "on_time",
+            "late"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "delay_range": {
+          "type": "string",
+          "optional": true,
+          "label": "Faixa de atraso",
+          "description": "Código oficial de FAIXA_ATRASO."
+        },
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        },
+        "sort_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenar por",
+          "description": "Campo usado para ordenar a listagem."
+        },
+        "sort_dir": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção da ordenação",
+          "default": "desc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
       "operationId": "get_financial_ebitda_pct",
       "httpMethod": "GET",
       "label": "EBITDA percentual (financeiro)",
@@ -2450,6 +2984,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2503,6 +3041,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2556,6 +3098,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2599,12 +3145,17 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «ROL financeiro (receita operacional líquida)».",
+      "description": "Indicador ROL financeiro consolidado por filial e período. Use para rol financeiro / receita operacional líquida — não confundir com ROL comercial.",
+      "whenToUse": "Use para o KPI de ROL financeiro por filial e período.",
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2638,6 +3189,214 @@
       }
     },
     {
+      "operationId": "list_guias_procedimentos_admin_departments",
+      "httpMethod": "GET",
+      "label": "List Admin Departments",
+      "category": "quality",
+      "path": "/guias-procedimentos/admin/departments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "List Admin Departments.",
+      "whenToUse": "Use quando precisar de: List Admin Departments."
+    },
+    {
+      "operationId": "get_guias_procedimentos_admin_department",
+      "httpMethod": "GET",
+      "label": "Get Admin Department",
+      "category": "quality",
+      "path": "/guias-procedimentos/admin/departments/{department_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Get Admin Department.",
+      "whenToUse": "Use quando precisar de: Get Admin Department."
+    },
+    {
+      "operationId": "list_guias_procedimentos_admin_procedures",
+      "httpMethod": "GET",
+      "label": "List Admin Procedures",
+      "category": "quality",
+      "path": "/guias-procedimentos/admin/procedures",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "List Admin Procedures.",
+      "whenToUse": "Use quando precisar de: List Admin Procedures.",
+      "paramSchema": {
+        "department_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Departamento",
+          "description": "Identificador do departamento no painel IDD."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "draft",
+            "published",
+            "archived"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "q": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca (código, nome ou descrição)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_guias_procedimentos_admin_procedure",
+      "httpMethod": "GET",
+      "label": "Get Admin Procedure",
+      "category": "quality",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Get Admin Procedure.",
+      "whenToUse": "Use quando precisar de: Get Admin Procedure."
+    },
+    {
+      "operationId": "list_guias_procedimentos_admin_procedure_attachments",
+      "httpMethod": "GET",
+      "label": "Listar anexos do procedimento (admin)",
+      "category": "quality",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/attachments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listar anexos do procedimento (admin).",
+      "whenToUse": "Use quando precisar: Listar anexos do procedimento (admin)."
+    },
+    {
+      "operationId": "list_guias_procedimentos_admin_procedure_media",
+      "httpMethod": "GET",
+      "label": "Listar mídias do procedimento (admin)",
+      "category": "quality",
+      "path": "/guias-procedimentos/admin/procedures/{procedure_id}/media",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listar mídias do procedimento (admin).",
+      "whenToUse": "Use quando precisar: Listar mídias do procedimento (admin)."
+    },
+    {
+      "operationId": "download_guias_procedimentos_attachment_file",
+      "httpMethod": "GET",
+      "label": "Baixar arquivo de anexo",
+      "category": "quality",
+      "path": "/guias-procedimentos/attachments/{attachment_id}/file",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Baixar arquivo de anexo.",
+      "whenToUse": "Use quando precisar: Baixar arquivo de anexo."
+    },
+    {
+      "operationId": "list_guias_procedimentos_departments",
+      "httpMethod": "GET",
+      "label": "List Guias Departments",
+      "category": "quality",
+      "path": "/guias-procedimentos/departments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "List Guias Departments.",
+      "whenToUse": "Use quando precisar de: List Guias Departments."
+    },
+    {
+      "operationId": "get_guias_procedimentos_department",
+      "httpMethod": "GET",
+      "label": "Get Guias Department",
+      "category": "quality",
+      "path": "/guias-procedimentos/departments/{slug}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Get Guias Department.",
+      "whenToUse": "Use quando precisar de: Get Guias Department."
+    },
+    {
+      "operationId": "download_guias_procedimentos_media_file",
+      "httpMethod": "GET",
+      "label": "Baixar arquivo de mídia",
+      "category": "quality",
+      "path": "/guias-procedimentos/media/{media_id}/file",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Baixar arquivo de mídia.",
+      "whenToUse": "Use quando precisar: Baixar arquivo de mídia."
+    },
+    {
+      "operationId": "list_guias_procedimentos_procedure_attachments",
+      "httpMethod": "GET",
+      "label": "Listar anexos do procedimento",
+      "category": "quality",
+      "path": "/guias-procedimentos/procedures/{procedure_id}/attachments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listar anexos do procedimento.",
+      "whenToUse": "Use quando precisar: Listar anexos do procedimento."
+    },
+    {
+      "operationId": "list_guias_procedimentos_procedure_media",
+      "httpMethod": "GET",
+      "label": "Listar mídias do procedimento",
+      "category": "quality",
+      "path": "/guias-procedimentos/procedures/{procedure_id}/media",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Listar mídias do procedimento.",
+      "whenToUse": "Use quando precisar: Listar mídias do procedimento."
+    },
+    {
+      "operationId": "get_guias_procedimentos_procedure",
+      "httpMethod": "GET",
+      "label": "Get Guias Procedure",
+      "category": "quality",
+      "path": "/guias-procedimentos/procedures/{slug}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Get Guias Procedure.",
+      "whenToUse": "Use quando precisar de: Get Guias Procedure."
+    },
+    {
       "operationId": "get_health",
       "httpMethod": "GET",
       "label": "Saúde da API (root)",
@@ -2667,6 +3426,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2729,6 +3492,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2778,6 +3545,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2827,6 +3598,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2848,6 +3623,11 @@
           "type": "string",
           "optional": true,
           "label": "Resultado",
+          "enum": [
+            "A",
+            "R",
+            "T"
+          ],
           "description": "Resultado da inspeção ou avaliação."
         },
         "date_from": {
@@ -2891,6 +3671,17 @@
           "optional": true,
           "label": "Lote",
           "description": "Número do lote."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct",
@@ -2919,6 +3710,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2927,6 +3722,17 @@
           "optional": false,
           "label": "Inspeção",
           "description": "Identificador da inspeção."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -2948,6 +3754,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -2964,6 +3774,17 @@
           "label": "Tamanho da página",
           "default": 50,
           "description": "Quantidade de linhas por página."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -2985,7 +3806,22 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         }
       },
@@ -3008,7 +3844,22 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         }
       },
@@ -3031,6 +3882,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3040,6 +3895,17 @@
           "label": "Limite",
           "default": 50,
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -3061,7 +3927,462 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_auditoria_apontamentos",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Inspecoes processo auditoria apontamentos",
+      "category": "production",
+      "path": "/inspecoes-processo/auditoria-apontamentos",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Inspecoes processo auditoria apontamentos.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Inspecoes processo auditoria apontamentos.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "data": {
+          "type": "string",
+          "optional": true,
+          "label": "Data",
+          "description": "Data de referência (AAAA-MM-DD)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_historico",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Inspecoes processo historico",
+      "category": "quality",
+      "path": "/inspecoes-processo/historico",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Inspecoes processo historico.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Inspecoes processo historico.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 25,
+          "description": "Quantidade de linhas por página."
+        },
+        "ordem_producao": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Código da ordem de produção."
+        },
+        "codigo_produto": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do produto",
+          "description": "Filtro por código do produto."
+        },
+        "resultado": {
+          "type": "string",
+          "optional": true,
+          "label": "Resultado",
+          "enum": [
+            "A",
+            "R",
+            "T"
+          ],
+          "description": "Inspection result: A (approved), R (rejected) or T (pending)."
+        },
+        "data_inicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do período (AAAA-MM-DD)."
+        },
+        "data_fim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do período (AAAA-MM-DD)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "result": {
+          "type": "string",
+          "optional": true,
+          "label": "Resultado",
+          "enum": [
+            "A",
+            "R",
+            "T"
+          ],
+          "description": "Resultado da inspeção ou avaliação."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_historico_detalhe",
+      "httpMethod": "GET",
+      "label": "Consulta — Inspecoes processo historico detalhe",
+      "category": "quality",
+      "path": "/inspecoes-processo/historico/detalhe",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "object",
+      "description": "Consulta — Inspecoes processo historico detalhe.",
+      "whenToUse": "Use quando precisar de: Consulta — Inspecoes processo historico detalhe.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "ordem_producao": {
+          "type": "string",
+          "optional": false,
+          "label": "Ordem de produção",
+          "description": "Código da ordem de produção."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 100,
+          "description": "Quantidade de linhas por página."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_por_ensaiador",
+      "httpMethod": "GET",
+      "label": "Lista — Inspecoes processo por ensaiador",
+      "category": "quality",
+      "path": "/inspecoes-processo/por-ensaiador",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Lista — Inspecoes processo por ensaiador.",
+      "whenToUse": "Use quando precisar de: Lista — Inspecoes processo por ensaiador.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_por_operacao",
+      "httpMethod": "GET",
+      "label": "Lista — Inspecoes processo por operacao",
+      "category": "quality",
+      "path": "/inspecoes-processo/por-operacao",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Lista — Inspecoes processo por operacao.",
+      "whenToUse": "Use quando precisar de: Lista — Inspecoes processo por operacao.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_por_produto",
+      "httpMethod": "GET",
+      "label": "Lista — Inspecoes processo por produto",
+      "category": "quality",
+      "path": "/inspecoes-processo/por-produto",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Lista — Inspecoes processo por produto.",
+      "whenToUse": "Use quando precisar de: Lista — Inspecoes processo por produto.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_ranking_ensaio",
+      "httpMethod": "GET",
+      "label": "Lista — Inspecoes processo ranking ensaio",
+      "category": "quality",
+      "path": "/inspecoes-processo/ranking-ensaio",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Lista — Inspecoes processo ranking ensaio.",
+      "whenToUse": "Use quando precisar de: Lista — Inspecoes processo ranking ensaio.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_inspecoes_processo_resumo",
+      "httpMethod": "GET",
+      "label": "Indicador — Inspecoes processo resumo",
+      "category": "quality",
+      "path": "/inspecoes-processo/resumo",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador — Inspecoes processo resumo.",
+      "whenToUse": "Use quando precisar de: Indicador — Inspecoes processo resumo.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         }
       },
@@ -3118,6 +4439,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3139,6 +4464,388 @@
         "total_records": "Quantidade"
       },
       "tableFields": "items"
+    },
+    {
+      "operationId": "list_production_appointments",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Production appointment",
+      "category": "production",
+      "path": "/production/appointments",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Production appointment.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Production appointment.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "list_production_appointments_by_op",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Production appointments by op",
+      "category": "production",
+      "path": "/production/appointments/by-op",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Production appointments by op.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Production appointments by op.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_production_appointments_series",
+      "httpMethod": "GET",
+      "label": "Relatório operacional — Production appointments series",
+      "category": "production",
+      "path": "/production/appointments/series",
+      "allowedDisplayModes": [
+        "line_chart",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional — Production appointments series.",
+      "whenToUse": "Use quando precisar de: Relatório operacional — Production appointments series.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "group_by": {
+          "type": "string",
+          "optional": true,
+          "label": "Agrupar por",
+          "default": "day",
+          "enum": [
+            "day",
+            "day_work_center"
+          ],
+          "description": "Como agregar o resultado (geral, filial, produto etc.)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_production_appointments_summary",
+      "httpMethod": "GET",
+      "label": "Relatório operacional — Production appointments summary",
+      "category": "production",
+      "path": "/production/appointments/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional — Production appointments summary.",
+      "whenToUse": "Use quando precisar de: Relatório operacional — Production appointments summary.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "work_center": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "product": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto",
+          "description": "Código ou identificador do produto."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "list_production_appointment_work_centers",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Production appointment work center",
+      "category": "production",
+      "path": "/production/appointments/work-centers",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Production appointment work center.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Production appointment work center.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -3169,6 +4876,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3223,6 +4934,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3237,6 +4952,13 @@
           "optional": true,
           "label": "Agrupar por",
           "default": "general",
+          "enum": [
+            "general",
+            "branch",
+            "product_group",
+            "unit",
+            "branch_summary"
+          ],
           "description": "Como agregar o resultado (geral, filial, produto etc.)."
         }
       },
@@ -3278,6 +5000,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3332,6 +5058,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3368,6 +5098,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3421,6 +5155,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3486,6 +5224,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3553,6 +5295,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3633,6 +5379,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3693,6 +5443,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3741,6 +5495,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3760,6 +5518,10 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "valid",
+            "outlier"
+          ],
           "description": "Status do registro no fluxo."
         },
         "efficiency_bands": {
@@ -3861,6 +5623,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3897,6 +5663,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -3916,11 +5686,11 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "fixedQueryParams": {
         "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       },
       "valueFieldTypes": {
         "periodo": "date",
@@ -3930,6 +5700,7 @@
         "oee_filial_01": "number",
         "oee_filial_02": "number"
       },
+      "seriesField": "points",
       "valueFields": [
         "oee_filial_01",
         "oee_filial_02"
@@ -3948,8 +5719,7 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ],
-      "seriesField": "points"
+      ]
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -3969,6 +5739,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4032,6 +5806,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4088,6 +5866,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4129,6 +5911,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4170,6 +5956,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4205,6 +5995,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4224,6 +6018,10 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "on_time",
+            "late"
+          ],
           "description": "Status do registro no fluxo."
         },
         "page": {
@@ -4304,6 +6102,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4323,11 +6125,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
       "fixedQueryParams": {
         "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
       },
       "valueFieldTypes": {
         "periodo": "date",
@@ -4357,6 +6159,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4426,6 +6232,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4461,6 +6271,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4520,6 +6334,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4555,6 +6373,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4590,6 +6412,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -4625,6 +6451,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4771,6 +6601,10 @@
           "optional": true,
           "label": "Visão",
           "default": "by_material",
+          "enum": [
+            "by_material",
+            "by_finished_product"
+          ],
           "description": "Modo de visualização dos dados retornados."
         },
         "limit": {
@@ -4900,11 +6734,11 @@
         "maxRows": 6,
         "requiresBranchPermission": false
       },
+      "tableFields": "items",
       "defaultParams": {
         "page": 1,
         "page_size": 5
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "get_product_detail",
@@ -4924,6 +6758,10 @@
           "optional": true,
           "label": "Visão",
           "default": "full",
+          "enum": [
+            "full",
+            "summary"
+          ],
           "description": "Modo de visualização dos dados retornados."
         },
         "legacy": {
@@ -4954,6 +6792,10 @@
           "optional": true,
           "label": "Visão",
           "default": "full",
+          "enum": [
+            "full",
+            "summary"
+          ],
           "description": "Modo de visualização dos dados retornados."
         }
       },
@@ -5098,6 +6940,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5135,6 +6981,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5208,6 +7058,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -5298,6 +7152,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5346,6 +7204,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -5401,6 +7263,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -5490,6 +7356,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5532,6 +7402,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -5574,6 +7448,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5652,6 +7530,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5745,6 +7627,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5796,6 +7682,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -5858,15 +7748,16 @@
     {
       "operationId": "get_product_structure_excel",
       "httpMethod": "GET",
-      "label": "Structure Excel Public",
-      "category": "products",
+      "label": "Exportar estrutura (BOM) em Excel",
+      "category": "system",
       "path": "/products/{code}/structure/excel",
       "allowedDisplayModes": [
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
-      "description": "Indicador numérico para «Structure Excel Public».",
+      "metaShape": "document_export",
+      "description": "Exportar estrutura (BOM) em Excel.",
+      "whenToUse": "Use quando precisar de: Exportar estrutura (BOM) em Excel.",
       "paramSchema": {
         "format": {
           "type": "string",
@@ -5996,7 +7887,7 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "document_export",
       "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
     },
     {
@@ -6041,6 +7932,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -6077,12 +7972,29 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "draft",
+            "triage",
+            "containment",
+            "root_cause_analysis",
+            "action_plan_defined",
+            "in_progress",
+            "waiting_validation",
+            "completed",
+            "cancelled"
+          ],
           "description": "Status do registro no fluxo."
         },
         "severity": {
           "type": "string",
           "optional": true,
           "label": "Severidade",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
           "description": "Nível de severidade."
         },
         "product_code": {
@@ -6107,6 +8019,10 @@
           "type": "string",
           "optional": true,
           "label": "Código da filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -6114,6 +8030,10 @@
           "type": "string",
           "optional": true,
           "label": "Escopo de NC",
+          "enum": [
+            "internal",
+            "external"
+          ],
           "description": "Escopo das não conformidades consideradas."
         },
         "code": {
@@ -6160,6 +8080,17 @@
           "label": "Tamanho da página",
           "default": 50,
           "description": "Quantidade de linhas por página."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6210,6 +8141,10 @@
           "type": "string",
           "optional": true,
           "label": "Código da filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -6217,6 +8152,10 @@
           "type": "string",
           "optional": true,
           "label": "Escopo de NC",
+          "enum": [
+            "internal",
+            "external"
+          ],
           "description": "Escopo das não conformidades consideradas."
         },
         "product_code": {
@@ -6243,6 +8182,17 @@
           "label": "Meses",
           "default": 12,
           "description": "Quantidade de meses no intervalo analisado."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6306,6 +8256,10 @@
           "type": "string",
           "optional": true,
           "label": "Código da filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -6313,12 +8267,33 @@
           "type": "string",
           "optional": true,
           "label": "Seção",
+          "enum": [
+            "general",
+            "nc_description",
+            "containment",
+            "root_cause",
+            "corrective",
+            "effectiveness",
+            "preventive",
+            "documentation",
+            "attachments"
+          ],
           "description": "Seção ou bloco do formulário/checklist."
         },
         "evidence_type": {
           "type": "string",
           "optional": true,
           "label": "Tipo de evidência",
+          "enum": [
+            "email",
+            "message",
+            "spreadsheet",
+            "pdf",
+            "image",
+            "manual_text",
+            "system_reference",
+            "other"
+          ],
           "description": "Tipo de evidência anexa ao registro."
         },
         "page": {
@@ -6334,6 +8309,17 @@
           "label": "Tamanho da página",
           "default": 50,
           "description": "Quantidade de linhas por página."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6368,6 +8354,10 @@
           "type": "string",
           "optional": true,
           "label": "Código da filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -6382,6 +8372,17 @@
           "optional": true,
           "label": "Limite",
           "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6403,6 +8404,10 @@
           "type": "string",
           "optional": true,
           "label": "Código da filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -6433,6 +8438,17 @@
           "label": "Tamanho da página",
           "default": 50,
           "description": "Quantidade de linhas por página."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6454,6 +8470,10 @@
           "type": "string",
           "optional": true,
           "label": "Código da filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -6461,6 +8481,10 @@
           "type": "string",
           "optional": true,
           "label": "Escopo de NC",
+          "enum": [
+            "internal",
+            "external"
+          ],
           "description": "Escopo das não conformidades consideradas."
         },
         "page": {
@@ -6476,6 +8500,17 @@
           "label": "Tamanho da página",
           "default": 50,
           "description": "Quantidade de linhas por página."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6497,6 +8532,10 @@
           "type": "string",
           "optional": true,
           "label": "Código da filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -6504,6 +8543,10 @@
           "type": "string",
           "optional": true,
           "label": "Escopo de NC",
+          "enum": [
+            "internal",
+            "external"
+          ],
           "description": "Escopo das não conformidades consideradas."
         },
         "min_plans": {
@@ -6526,6 +8569,17 @@
           "label": "Tamanho da página",
           "default": 50,
           "description": "Quantidade de linhas por página."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6735,13 +8789,17 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "composite_analysis",
       "description": "Indicador numérico para «Auditoria 5S — painel analítico».",
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -6767,12 +8825,25 @@
           "type": "string",
           "optional": true,
           "label": "Turno",
+          "enum": [
+            "TURNO_1",
+            "TURNO_2",
+            "TURNO_3",
+            "ADMINISTRATIVO"
+          ],
           "description": "Turno de produção."
         },
         "audit_status": {
           "type": "string",
           "optional": true,
           "label": "Status da auditoria",
+          "enum": [
+            "draft",
+            "evaluation_complete",
+            "nc_in_progress",
+            "closed",
+            "closed_without_nc_treatment"
+          ],
           "description": "Status da auditoria no fluxo (aberta, concluída etc.)."
         },
         "senso_order": {
@@ -6789,8 +8860,7 @@
           "enum": [
             "day",
             "week",
-            "month",
-            "year"
+            "month"
           ],
           "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
         },
@@ -6807,6 +8877,17 @@
           "label": "Tamanho da página",
           "default": 20,
           "description": "Quantidade de linhas por página."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "date_range",
@@ -6828,13 +8909,17 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — áreas».",
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -6844,6 +8929,17 @@
           "label": "Ativo",
           "default": true,
           "description": "Filtra apenas registros ativos (sim) ou inativos (não)."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6858,13 +8954,17 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — listagem».",
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -6872,7 +8972,25 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "draft",
+            "evaluation_complete",
+            "nc_in_progress",
+            "closed",
+            "closed_without_nc_treatment"
+          ],
           "description": "Status do registro no fluxo."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
         }
       },
       "paramStrategy": "direct"
@@ -6900,7 +9018,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
     },
     {
@@ -6913,7 +9031,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
     },
     {
@@ -6926,7 +9044,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
     },
     {
@@ -6939,7 +9057,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Response anexos»."
     },
     {
@@ -6972,7 +9090,22 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         }
       },
@@ -6988,14 +9121,29 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Catalog Publications».",
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         }
       },
@@ -7011,7 +9159,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — critérios».",
       "paramSchema": {
         "catalog_version": {
@@ -7024,11 +9172,179 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
       },
       "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_audit_5s_nonconformities_board",
+      "httpMethod": "GET",
+      "label": "List Audit 5S Nonconformities Board",
+      "category": "quality",
+      "path": "/quality/audit-5s/nonconformities",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "List Audit 5S Nonconformities Board.",
+      "whenToUse": "Use quando precisar de: List Audit 5S Nonconformities Board.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "area_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Área",
+          "description": "Identificador da área (ex.: auditoria 5S)."
+        },
+        "shift": {
+          "type": "string",
+          "optional": true,
+          "label": "Turno",
+          "enum": [
+            "TURNO_1",
+            "TURNO_2",
+            "TURNO_3",
+            "ADMINISTRATIVO"
+          ],
+          "description": "Turno de produção."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "open",
+            "in_progress",
+            "closed",
+            "cancelled"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "priority": {
+          "type": "string",
+          "optional": true,
+          "label": "Prioridade",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ],
+          "description": "Prioridade: high, medium ou low."
+        },
+        "responsible": {
+          "type": "string",
+          "optional": true,
+          "label": "Responsável",
+          "description": "Filtro por nome do responsável."
+        },
+        "responsible_user_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Usuário responsável",
+          "description": "Filtro por id do usuário responsável."
+        },
+        "overdue_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente atrasados",
+          "default": false,
+          "description": "Lista apenas itens atrasados."
+        },
+        "pending_only": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente pendentes",
+          "default": false,
+          "description": "Retorna apenas itens pendentes quando verdadeiro."
+        },
+        "senso_order": {
+          "type": "integer",
+          "optional": true,
+          "label": "Ordem do senso",
+          "description": "Ordem do senso na auditoria 5S."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 20,
+          "description": "Quantidade de linhas por página."
+        },
+        "sort": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenação",
+          "default": "due_date_asc",
+          "enum": [
+            "due_date_asc",
+            "due_date_desc",
+            "created_desc",
+            "priority_desc"
+          ],
+          "description": "Critério de ordenação da listagem."
+        },
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_audit_5s_nc_actions",
@@ -7040,7 +9356,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
     },
     {
@@ -7053,7 +9369,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
     },
     {
@@ -7098,6 +9414,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -7163,6 +9483,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -7170,12 +9494,26 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "recebido",
+            "aprovado",
+            "implantado",
+            "descontinuado",
+            "cancelado"
+          ],
           "description": "Status do registro no fluxo."
         },
         "savings_type": {
           "type": "string",
           "optional": true,
           "label": "Tipo de economia",
+          "enum": [
+            "tempo",
+            "material",
+            "financeiro",
+            "qualitativo",
+            "misto"
+          ],
           "description": "Tipo de economia (Kaizen)."
         },
         "title": {
@@ -7250,6 +9588,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -7320,7 +9662,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Kaizen Audit Log»."
     },
     {
@@ -7333,13 +9675,13 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Kaizen evidências»."
     },
     {
       "operationId": "download_kaizen_evidence",
       "httpMethod": "GET",
-      "label": "Kaizen — download de evidência",
+      "label": "Baixar evidência de kaizen",
       "category": "quality",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
       "allowedDisplayModes": [
@@ -7347,7 +9689,8 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Kaizen — download de evidência»."
+      "description": "Baixar evidência de kaizen.",
+      "whenToUse": "Use quando precisar: Baixar evidência de kaizen."
     },
     {
       "operationId": "list_kaizen_history",
@@ -7359,7 +9702,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Kaizen History»."
     },
     {
@@ -7372,7 +9715,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Kaizen Revisions»."
     },
     {
@@ -7446,12 +9789,23 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "recebido",
+            "aprovado",
+            "implantado",
+            "descontinuado",
+            "cancelado"
+          ],
           "description": "Status do registro no fluxo."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -7500,7 +9854,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Etiquetas de qualidade — listagem».",
       "paramSchema": {
         "search": {
@@ -7542,7 +9896,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Etiquetas — eventos de auditoria».",
       "paramSchema": {
         "search": {
@@ -7584,7 +9938,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "object",
       "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
     },
     {
@@ -7601,9 +9955,9 @@
       "description": "Indicador numérico para «Meu perfil de inspetor»."
     },
     {
-      "operationId": "get_my_signature",
+      "operationId": "get_quality_label_inspector_signature",
       "httpMethod": "GET",
-      "label": "Minha assinatura de inspetor",
+      "label": "Obter assinatura do inspetor",
       "category": "quality",
       "path": "/quality/labels/inspectors/me/signature",
       "allowedDisplayModes": [
@@ -7611,7 +9965,8 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Minha assinatura de inspetor»."
+      "description": "Obter assinatura do inspetor.",
+      "whenToUse": "Use quando precisar: Obter assinatura do inspetor."
     },
     {
       "operationId": "lookup_quality_label_op",
@@ -7631,6 +9986,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -7647,7 +10006,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "object",
       "description": "Indicador numérico para «Buscar Ops».",
       "paramSchema": {
         "q": {
@@ -7699,9 +10058,9 @@
       "description": "Indicador numérico para «Etiqueta — certificado»."
     },
     {
-      "operationId": "get_certificate_pdf",
+      "operationId": "get_quality_label_certificate_pdf",
       "httpMethod": "GET",
-      "label": "Certificate PDF",
+      "label": "Baixar PDF do certificado da etiqueta",
       "category": "quality",
       "path": "/quality/labels/{label_id}/certificate/pdf",
       "allowedDisplayModes": [
@@ -7709,12 +10068,13 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Certificate PDF»."
+      "description": "Baixar PDF do certificado da etiqueta.",
+      "whenToUse": "Use quando precisar: Baixar PDF do certificado da etiqueta."
     },
     {
-      "operationId": "get_label_qr",
+      "operationId": "get_quality_label_qr",
       "httpMethod": "GET",
-      "label": "Etiqueta — QR Code",
+      "label": "Obter QR da etiqueta de qualidade",
       "category": "quality",
       "path": "/quality/labels/{label_id}/qr",
       "allowedDisplayModes": [
@@ -7722,7 +10082,8 @@
         "auto"
       ],
       "metaShape": "scalar",
-      "description": "Indicador numérico para «Etiqueta — QR Code»."
+      "description": "Obter QR da etiqueta de qualidade.",
+      "whenToUse": "Use quando precisar: Obter QR da etiqueta de qualidade."
     },
     {
       "operationId": "list_nonconformities",
@@ -7734,7 +10095,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Não conformidades — listagem».",
       "paramSchema": {
         "type": {
@@ -7742,12 +10103,21 @@
           "optional": true,
           "label": "Tipo",
           "default": "all",
+          "enum": [
+            "internal",
+            "external",
+            "all"
+          ],
           "description": "Tipo do registro a filtrar."
         },
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -7767,6 +10137,13 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
           "description": "Status do registro no fluxo."
         },
         "item_code": {
@@ -7821,6 +10198,11 @@
           "optional": true,
           "label": "Tipo",
           "default": "all",
+          "enum": [
+            "internal",
+            "external",
+            "all"
+          ],
           "description": "Tipo do registro a filtrar."
         },
         "granularity": {
@@ -7840,6 +10222,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -7859,6 +10245,13 @@
           "type": "string",
           "optional": true,
           "label": "Status",
+          "enum": [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
           "description": "Status do registro no fluxo."
         },
         "item_code": {
@@ -7900,6 +10293,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -7973,6 +10370,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8022,6 +10423,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8085,6 +10490,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8158,6 +10567,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8207,6 +10620,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8276,6 +10693,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8350,6 +10771,421 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "get_refugos_filtros",
+      "httpMethod": "GET",
+      "label": "Indicador — Refugos filtros",
+      "category": "quality",
+      "path": "/refugos/filtros",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador — Refugos filtros.",
+      "whenToUse": "Use quando precisar de: Indicador — Refugos filtros.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_refugos_health",
+      "httpMethod": "GET",
+      "label": "Indicador — Refugos health",
+      "category": "quality",
+      "path": "/refugos/health",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador — Refugos health.",
+      "whenToUse": "Use quando precisar de: Indicador — Refugos health."
+    },
+    {
+      "operationId": "get_refugos_rankings",
+      "httpMethod": "GET",
+      "label": "Relatório operacional — Refugos rankings",
+      "category": "quality",
+      "path": "/refugos/rankings",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional — Refugos rankings.",
+      "whenToUse": "Use quando precisar de: Relatório operacional — Refugos rankings.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "dimension": {
+          "type": "string",
+          "optional": false,
+          "label": "Dimensão",
+          "enum": [
+            "motivo",
+            "materia_prima",
+            "produto_acabado",
+            "centro_trabalho",
+            "colaborador"
+          ],
+          "description": "Dimensão do ranking."
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        },
+        "mp": {
+          "type": "string",
+          "optional": true,
+          "label": "Matéria-prima",
+          "description": "Filtro por código de matéria-prima."
+        },
+        "pa": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto acabado",
+          "description": "Filtro por código de produto acabado."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "motivo": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo",
+          "description": "Filtro por código de motivo (CYO)."
+        },
+        "centroTrabalho": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Filtro por centro de trabalho."
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 10,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_refugos_registros",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Refugos registros",
+      "category": "quality",
+      "path": "/refugos/registros",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Refugos registros.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Refugos registros.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        },
+        "mp": {
+          "type": "string",
+          "optional": true,
+          "label": "Matéria-prima",
+          "description": "Filtro por código de matéria-prima."
+        },
+        "pa": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto acabado",
+          "description": "Filtro por código de produto acabado."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "motivo": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo",
+          "description": "Filtro por código de motivo (CYO)."
+        },
+        "centroTrabalho": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Filtro por centro de trabalho."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "pageSize": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_refugos_resumo",
+      "httpMethod": "GET",
+      "label": "Indicador — Refugos resumo",
+      "category": "quality",
+      "path": "/refugos/resumo",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador — Refugos resumo.",
+      "whenToUse": "Use quando precisar de: Indicador — Refugos resumo.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        },
+        "mp": {
+          "type": "string",
+          "optional": true,
+          "label": "Matéria-prima",
+          "description": "Filtro por código de matéria-prima."
+        },
+        "pa": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto acabado",
+          "description": "Filtro por código de produto acabado."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "motivo": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo",
+          "description": "Filtro por código de motivo (CYO)."
+        },
+        "centroTrabalho": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Filtro por centro de trabalho."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_refugos_serie",
+      "httpMethod": "GET",
+      "label": "Relatório operacional — Refugos serie",
+      "category": "quality",
+      "path": "/refugos/serie",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional — Refugos serie.",
+      "whenToUse": "Use quando precisar de: Relatório operacional — Refugos serie.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        },
+        "granularity": {
+          "type": "string",
+          "optional": true,
+          "label": "Granularidade",
+          "default": "auto",
+          "enum": [
+            "day",
+            "month",
+            "auto"
+          ],
+          "description": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano)."
+        },
+        "mp": {
+          "type": "string",
+          "optional": true,
+          "label": "Matéria-prima",
+          "description": "Filtro por código de matéria-prima."
+        },
+        "pa": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto acabado",
+          "description": "Filtro por código de produto acabado."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "motivo": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo",
+          "description": "Filtro por código de motivo (CYO)."
+        },
+        "centroTrabalho": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Filtro por centro de trabalho."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
       "operationId": "get_retrabalhos_colaboradores",
       "httpMethod": "GET",
       "label": "Lista — Retrabalho horas improdutivas colaboradores",
@@ -8366,6 +11202,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -8404,6 +11244,10 @@
           "optional": true,
           "label": "Ordenar por",
           "default": "horas",
+          "enum": [
+            "horas",
+            "custo"
+          ],
           "description": "Campo usado para ordenar o ranking (ex.: horas, custo)."
         },
         "limit": {
@@ -8440,6 +11284,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -8492,6 +11340,11 @@
           "optional": true,
           "label": "Ordenar por",
           "default": "data",
+          "enum": [
+            "data",
+            "horas",
+            "custo"
+          ],
           "description": "Campo usado para ordenar o ranking (ex.: horas, custo)."
         },
         "orderDir": {
@@ -8532,6 +11385,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -8587,6 +11444,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -8647,6 +11508,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -8685,6 +11550,10 @@
           "optional": true,
           "label": "Ordenar por",
           "default": "horas",
+          "enum": [
+            "horas",
+            "custo"
+          ],
           "description": "Campo usado para ordenar o ranking (ex.: horas, custo)."
         },
         "limit": {
@@ -8721,6 +11590,10 @@
           "type": "string",
           "optional": false,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02).",
           "default": "01"
         },
@@ -8821,13 +11694,17 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Agendamentos — reservas».",
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "ES",
+            "SC"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8853,6 +11730,76 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "list_my_scheduling_bookings",
+      "httpMethod": "GET",
+      "label": "List My Bookings",
+      "category": "system",
+      "path": "/scheduling/bookings/mine",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "List My Bookings.",
+      "whenToUse": "Use quando precisar de: List My Bookings.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "ES",
+            "SC"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 100,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_pending_scheduling_bookings",
+      "httpMethod": "GET",
+      "label": "List Pending Bookings",
+      "category": "system",
+      "path": "/scheduling/bookings/pending",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "List Pending Bookings.",
+      "whenToUse": "Use quando precisar de: List Pending Bookings.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "ES",
+            "SC"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "mine": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Somente meus",
+          "default": false,
+          "description": "Retorna apenas registros do usuário atual."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "list_scheduling_resources",
       "httpMethod": "GET",
       "label": "Agendamentos — recursos",
@@ -8862,13 +11809,17 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Agendamentos — recursos».",
       "paramSchema": {
         "branch": {
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "ES",
+            "SC"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8899,6 +11850,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -8955,6 +11910,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -9017,6 +11976,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -9066,6 +12029,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -9113,6 +12080,307 @@
       }
     },
     {
+      "operationId": "get_supplies_safety_stock_filters",
+      "httpMethod": "GET",
+      "label": "Indicador — Filtros de estoque de segurança",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/filters",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador — Filtros de estoque de segurança.",
+      "whenToUse": "Use quando precisar de: Indicador — Filtros de estoque de segurança.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "includeBlocked": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir bloqueados",
+          "default": false,
+          "description": "Inclui materiais bloqueados quando verdadeiro."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_items",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Itens de estoque de segurança",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Lista paginada — Itens de estoque de segurança.",
+      "whenToUse": "Use quando precisar de: Lista paginada — Itens de estoque de segurança.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "pageSize": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "without_safety_stock",
+            "below_safety_stock",
+            "at_safety_stock",
+            "above_safety_stock"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "productGroup": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupo de produto",
+          "description": "Filtro por grupo de produto (B1_GRUPO)."
+        },
+        "unit": {
+          "type": "string",
+          "optional": true,
+          "label": "Unidade",
+          "description": "Filtro por unidade de medida (B1_UM)."
+        },
+        "includeBlocked": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir bloqueados",
+          "default": false,
+          "description": "Inclui materiais bloqueados quando verdadeiro."
+        },
+        "includeWithoutSafetyStock": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir sem estoque de segurança",
+          "default": true,
+          "description": "Inclui matérias-primas sem estoque de segurança cadastrado."
+        },
+        "sortBy": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenar por",
+          "default": "product_code",
+          "description": "Campo de ordenação permitido."
+        },
+        "sortDirection": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção",
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "description": "Direção da ordenação: asc ou desc."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_details",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Detalhe de estoque de segurança com cobertura de compras, empenhos e extrato projetado de saldo",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/items/{code}/details",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "composite_analysis",
+      "description": "Análise consolidada — Detalhe de estoque de segurança com cobertura de compras, empenhos e extrato projetado de saldo.",
+      "whenToUse": "Use quando precisar de: Análise consolidada — Detalhe de estoque de segurança com cobertura de compras, empenhos e extrato projetado de saldo.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_item_suppliers",
+      "httpMethod": "GET",
+      "label": "Lista — Fornecedores vinculados ao produto com última compra",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/items/{code}/suppliers",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "list",
+      "description": "Lista — Fornecedores vinculados ao produto com última compra.",
+      "whenToUse": "Use quando precisar de: Lista — Fornecedores vinculados ao produto com última compra.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_supplier_purchase_price_history",
+      "httpMethod": "GET",
+      "label": "Relatório operacional — Histórico de preço unitário do produto com um fornecedor",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Relatório operacional — Histórico de preço unitário do produto com um fornecedor.",
+      "whenToUse": "Use quando precisar de: Relatório operacional — Histórico de preço unitário do produto com um fornecedor.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "supplierStore": {
+          "type": "string",
+          "optional": false,
+          "label": "Loja do fornecedor",
+          "description": "Loja do fornecedor."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_summary",
+      "httpMethod": "GET",
+      "label": "Indicador — Resumo de estoque de segurança",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Indicador — Resumo de estoque de segurança.",
+      "whenToUse": "Use quando precisar de: Indicador — Resumo de estoque de segurança.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "includeBlocked": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir bloqueados",
+          "default": false,
+          "description": "Inclui materiais bloqueados quando verdadeiro."
+        },
+        "productGroup": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupo de produto",
+          "description": "Filtro por grupo de produto (B1_GRUPO)."
+        },
+        "unit": {
+          "type": "string",
+          "optional": true,
+          "label": "Unidade",
+          "description": "Filtro por unidade de medida (B1_UM)."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        },
+        "status": {
+          "type": "string",
+          "optional": true,
+          "label": "Status",
+          "enum": [
+            "without_safety_stock",
+            "below_safety_stock",
+            "at_safety_stock",
+            "above_safety_stock"
+          ],
+          "description": "Status do registro no fluxo."
+        },
+        "includeWithoutSafetyStock": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir sem estoque de segurança",
+          "default": true,
+          "description": "Inclui matérias-primas sem estoque de segurança cadastrado."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "get_supplies_stock_value",
       "httpMethod": "GET",
       "label": "Suprimentos — valor de estoque",
@@ -9131,6 +12399,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         },
@@ -9199,12 +12471,12 @@
         "maxRows": 6,
         "requiresBranchPermission": true
       },
+      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ],
-      "tableFields": "top_products"
+      ]
     },
     {
       "operationId": "get_caller_stats",
@@ -9239,7 +12511,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Busca colunas por descrição (SX3010 + ranking semântico)».",
       "paramSchema": {
         "description": {
@@ -9415,7 +12687,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Busca tabelas por descrição (SX2)».",
       "paramSchema": {
         "description": {
@@ -9464,7 +12736,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Consulta colunas de tabela com paginação».",
       "paramSchema": {
         "page": {
@@ -9494,7 +12766,7 @@
         "table",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Buscar colunas por texto».",
       "paramSchema": {
         "q": {
@@ -9542,7 +12814,7 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "composite_analysis",
       "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
     }
   ]

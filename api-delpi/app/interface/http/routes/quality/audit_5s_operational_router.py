@@ -321,7 +321,7 @@ def _notify_nc_responsible_if_needed(
 @router.get("/areas", operation_id="list_audit_5s_areas")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_areas(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     active: bool = Query(True),
 ):
     try:
@@ -355,7 +355,7 @@ def create_area(body: CreateAreaBody = Body(...)):
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_criteria(
     catalog_version: int | None = Query(None, ge=1),
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         repo = build_audit_5s_repository()
@@ -371,7 +371,7 @@ def list_criteria(
 
 @router.get("/catalog", operation_id="get_audit_5s_catalog")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
-def get_catalog(branch: str = BRANCH_QUERY_REQUIRED):
+def get_catalog(branch: str = BRANCH_QUERY_REQUIRED()):
     branch_error = branch_access_error(branch)
     if branch_error is not None:
         return branch_error
@@ -386,7 +386,7 @@ def get_catalog(branch: str = BRANCH_QUERY_REQUIRED):
 
 @router.get("/catalog/publications", operation_id="list_audit_5s_catalog_publications")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
-def list_catalog_publications(branch: str = BRANCH_QUERY_REQUIRED):
+def list_catalog_publications(branch: str = BRANCH_QUERY_REQUIRED()):
     branch_error = branch_access_error(branch)
     if branch_error is not None:
         return branch_error
@@ -449,8 +449,8 @@ def publish_catalog(body: PublishCatalogBody = Body(...)):
 @router.get("/audits", operation_id="list_audit_5s_audits")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audits(
-    branch: str = BRANCH_QUERY_REQUIRED,
-    status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN,
+    branch: str = BRANCH_QUERY_REQUIRED(),
+    status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN(),
 ):
     try:
         repo = build_audit_5s_repository()
@@ -1252,13 +1252,13 @@ async def reopen_nc_action(nc_id: str):
 @router.get("/nonconformities", operation_id="list_audit_5s_nonconformities_board")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_5s_nonconformities_board(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     date_start: str | None = Query(None, alias="date_start"),
     date_end: str | None = Query(None, alias="date_end"),
     area_id: str | None = Query(None),
-    shift: str | None = SHIFT_5S_QUERY,
-    status: str | None = AUDIT_5S_STATUS_QUERY,
-    priority: str | None = PRIORITY_QUERY,
+    shift: str | None = SHIFT_5S_QUERY(),
+    status: str | None = AUDIT_5S_STATUS_QUERY(),
+    priority: str | None = PRIORITY_QUERY(),
     responsible: str | None = Query(None),
     responsible_user_id: str | None = Query(None, alias="responsible_user_id"),
     overdue_only: bool = Query(False),
@@ -1267,7 +1267,7 @@ def list_audit_5s_nonconformities_board(
     search: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    sort: str = AUDIT_5S_NC_SORT_QUERY,
+    sort: str = AUDIT_5S_NC_SORT_QUERY(),
 ):
     denied = branch_access_error(branch)
     if denied is not None:
@@ -1323,14 +1323,14 @@ def list_audit_5s_nonconformities_board(
 @router.get("/analytics/dashboard", operation_id="get_audit_5s_analytics_dashboard")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def get_audit_5s_dashboard(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     date_start: str = Query(..., alias="date_start"),
     date_end: str = Query(..., alias="date_end"),
     area_id: str | None = Query(None),
-    shift: str | None = SHIFT_5S_QUERY,
-    audit_status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY,
+    shift: str | None = SHIFT_5S_QUERY(),
+    audit_status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY(),
     senso_order: int | None = Query(None, ge=1, le=5),
-    granularity: str = GRANULARITY_QUERY_MONTH_DWM,
+    granularity: str = GRANULARITY_QUERY_MONTH_DWM(),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):

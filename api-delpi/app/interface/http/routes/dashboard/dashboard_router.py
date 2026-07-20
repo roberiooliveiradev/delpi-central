@@ -78,7 +78,7 @@ def get_dashboard_department_idd(
         default=None,
         description="Period end (YYYY-MM-DD).",
     ),
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
     normalized_id = department_id.strip().lower()
     if normalized_id not in ALLOWED_DEPARTMENT_IDS:

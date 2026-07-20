@@ -75,7 +75,7 @@ def test_inject_delpi_extensions_applies_native_en_from_locale():
     assert "branch" in op["parameters"][0]["description"].lower() or "Protheus" in op["parameters"][0]["description"]
 
 
-def test_apply_native_openapi_from_locale_keeps_rich_param_description():
+def test_apply_native_openapi_from_locale_keeps_rich_english_param_description():
     operation = {
         "summary": "Old",
         "parameters": [
@@ -91,6 +91,37 @@ def test_apply_native_openapi_from_locale_keeps_rich_param_description():
     apply_native_openapi_from_locale(operation, extension)
     assert operation["summary"] == "Financial ROL"
     assert operation["parameters"][0]["description"].startswith("Already documented")
+
+
+def test_apply_native_openapi_from_locale_replaces_portuguese_param_description():
+    operation = {
+        "summary": "Old",
+        "parameters": [
+            {
+                "name": "start_date",
+                "in": "query",
+                "description": "Data inicial (YYYY-MM-DD).",
+                "schema": {"type": "string"},
+            },
+        ],
+    }
+    extension = {
+        "locale": {"en": {"summary": "Financial ROL", "description": "Financial ROL KPI."}},
+        "params": {
+            "start_date": {
+                "format": "date",
+                "locale": {
+                    "en": {
+                        "label": "Start date",
+                        "description": "Period start (YYYY-MM-DD).",
+                    }
+                },
+            },
+        },
+    }
+    apply_native_openapi_from_locale(operation, extension)
+    assert operation["parameters"][0]["description"] == "Period start (YYYY-MM-DD)."
+    assert operation["parameters"][0]["schema"]["format"] == "date"
 
 
 def test_inject_delpi_extensions_on_operations_with_operation_id():

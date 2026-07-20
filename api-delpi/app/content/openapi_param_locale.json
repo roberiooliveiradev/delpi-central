@@ -38,6 +38,19 @@
         }
       }
     },
+    "audit_date": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Audit Date",
+          "description": "audit_date (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "audit_date",
+          "description": "Data (AAAA-MM-DD)."
+        }
+      }
+    },
     "audit_status": {
       "locale": {
         "en": {
@@ -110,6 +123,18 @@
         }
       }
     },
+    "centroTrabalho": {
+      "locale": {
+        "en": {
+          "label": "Work center",
+          "description": "Work center filter."
+        },
+        "pt-BR": {
+          "label": "Centro de trabalho",
+          "description": "Filtro por centro de trabalho."
+        }
+      }
+    },
     "code": {
       "locale": {
         "en": {
@@ -146,18 +171,6 @@
         }
       }
     },
-    "codigoOperador": {
-      "locale": {
-        "en": {
-          "label": "Operator code",
-          "description": "Operator code query parameter."
-        },
-        "pt-BR": {
-          "label": "Código do operador",
-          "description": "Código do operador no Protheus."
-        }
-      }
-    },
     "codigo_peca": {
       "locale": {
         "en": {
@@ -167,6 +180,30 @@
         "pt-BR": {
           "label": "Código da peça",
           "description": "Código da peça no cadastro de ferramentas."
+        }
+      }
+    },
+    "codigo_produto": {
+      "locale": {
+        "en": {
+          "label": "Product code",
+          "description": "Product code filter."
+        },
+        "pt-BR": {
+          "label": "Código do produto",
+          "description": "Filtro por código do produto."
+        }
+      }
+    },
+    "codigoOperador": {
+      "locale": {
+        "en": {
+          "label": "Operator code",
+          "description": "Operator code query parameter."
+        },
+        "pt-BR": {
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
         }
       }
     },
@@ -206,6 +243,18 @@
         }
       }
     },
+    "customer_code": {
+      "locale": {
+        "en": {
+          "label": "Customer code",
+          "description": "Customer code (CLIENTE)."
+        },
+        "pt-BR": {
+          "label": "Código do cliente",
+          "description": "Código do cliente (CLIENTE)."
+        }
+      }
+    },
     "customer_name": {
       "locale": {
         "en": {
@@ -242,111 +291,183 @@
         }
       }
     },
-    "dataFim": {
+    "customers": {
       "locale": {
         "en": {
-          "label": "End date",
-          "description": "End date query parameter."
+          "label": "Customers",
+          "description": "CSV list of customers as CODE/STORE."
         },
         "pt-BR": {
-          "label": "Data fim",
-          "description": "Data final do período (AAAA-MM-DD)."
+          "label": "Clientes",
+          "description": "Lista CSV de clientes CODIGO/LOJA."
         }
       }
     },
-    "dataInicio": {
-      "locale": {
-        "en": {
-          "label": "Start date",
-          "description": "Start date query parameter."
-        },
-        "pt-BR": {
-          "label": "Data início",
-          "description": "Data inicial do período (AAAA-MM-DD)."
-        }
-      }
-    },
-    "data_final": {
-      "locale": {
-        "en": {
-          "label": "End date",
-          "description": "End date query parameter."
-        },
-        "pt-BR": {
-          "label": "Data final",
-          "description": "Data final do período consultado (AAAA-MM-DD)."
-        }
-      }
-    },
-    "data_inicial": {
-      "locale": {
-        "en": {
-          "label": "Start date",
-          "description": "Start date query parameter."
-        },
-        "pt-BR": {
-          "label": "Data inicial",
-          "description": "Data inicial do período consultado (AAAA-MM-DD)."
-        }
-      }
-    },
-    "date": {
+    "data": {
       "locale": {
         "en": {
           "label": "Date",
-          "description": "Date query parameter."
+          "description": "Reference date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data",
           "description": "Data de referência (AAAA-MM-DD)."
         }
-      }
+      },
+      "format": "date"
+    },
+    "data_fim": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "Period end (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data fim",
+          "description": "Fim do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "data_final": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "Period end date (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data final",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "data_inicial": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "Period start date (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data inicial",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "data_inicio": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "Period start (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data início",
+          "description": "Início do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "dataFim": {
+      "locale": {
+        "en": {
+          "label": "End date",
+          "description": "Period end date (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "dataInicio": {
+      "locale": {
+        "en": {
+          "label": "Start date",
+          "description": "Period start date (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "date": {
+      "locale": {
+        "en": {
+          "label": "Date",
+          "description": "Reference date (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "Data",
+          "description": "Data de referência (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
     },
     "date_end": {
       "locale": {
         "en": {
           "label": "End date",
-          "description": "End date query parameter."
+          "description": "Period end date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data fim",
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
-      }
+      },
+      "format": "date"
     },
     "date_from": {
       "locale": {
         "en": {
           "label": "Start date",
-          "description": "Start date query parameter."
+          "description": "Period start date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data início",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         }
-      }
+      },
+      "format": "date"
     },
     "date_start": {
       "locale": {
         "en": {
           "label": "Start date",
-          "description": "Start date query parameter."
+          "description": "Period start date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data início",
           "description": "Data inicial do período consultado (AAAA-MM-DD)."
         }
-      }
+      },
+      "format": "date"
     },
     "date_to": {
       "locale": {
         "en": {
           "label": "End date",
-          "description": "End date query parameter."
+          "description": "Period end date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data fim",
           "description": "Data final do período consultado (AAAA-MM-DD)."
+        }
+      },
+      "format": "date"
+    },
+    "delay_range": {
+      "locale": {
+        "en": {
+          "label": "Delay range",
+          "description": "Official delay range code (FAIXA_ATRASO)."
+        },
+        "pt-BR": {
+          "label": "Faixa de atraso",
+          "description": "Código oficial de FAIXA_ATRASO."
         }
       }
     },
@@ -422,6 +543,18 @@
         }
       }
     },
+    "dimension": {
+      "locale": {
+        "en": {
+          "label": "Dimension",
+          "description": "Ranking dimension."
+        },
+        "pt-BR": {
+          "label": "Dimensão",
+          "description": "Dimensão do ranking."
+        }
+      }
+    },
     "direction": {
       "locale": {
         "en": {
@@ -431,6 +564,31 @@
         "pt-BR": {
           "label": "Direção",
           "description": "Direção da ordenação: asc (crescente) ou desc (decrescente)."
+        }
+      }
+    },
+    "dry_run": {
+      "locale": {
+        "en": {
+          "label": "Dry run",
+          "description": "Validate without persisting when true."
+        },
+        "pt-BR": {
+          "label": "Simulação",
+          "description": "Valida sem persistir quando verdadeiro."
+        }
+      }
+    },
+    "due_date": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Due Date",
+          "description": "due_date (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "due_date",
+          "description": "Data (AAAA-MM-DD)."
         }
       }
     },
@@ -468,7 +626,8 @@
           "label": "Data fim",
           "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         }
-      }
+      },
+      "format": "date"
     },
     "eventTypes": {
       "locale": {
@@ -491,6 +650,18 @@
         "pt-BR": {
           "label": "Tipo de evidência",
           "description": "Tipo de evidência anexa ao registro."
+        }
+      }
+    },
+    "expected_revision_number": {
+      "locale": {
+        "en": {
+          "label": "Expected revision",
+          "description": "Optimistic concurrency revision number."
+        },
+        "pt-BR": {
+          "label": "Revisão esperada",
+          "description": "Número de revisão para concorrência otimista."
         }
       }
     },
@@ -581,14 +752,15 @@
     "from": {
       "locale": {
         "en": {
-          "label": "From",
-          "description": "From query parameter."
+          "label": "From date",
+          "description": "Interval start (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "De",
           "description": "Início do intervalo (data ou valor)."
         }
-      }
+      },
+      "format": "date"
     },
     "granularity": {
       "locale": {
@@ -710,6 +882,30 @@
         }
       }
     },
+    "includeBlocked": {
+      "locale": {
+        "en": {
+          "label": "Include blocked",
+          "description": "Include blocked materials when true."
+        },
+        "pt-BR": {
+          "label": "Incluir bloqueados",
+          "description": "Inclui materiais bloqueados quando verdadeiro."
+        }
+      }
+    },
+    "includeWithoutSafetyStock": {
+      "locale": {
+        "en": {
+          "label": "Include without safety stock",
+          "description": "Include materials without safety stock cadastrado."
+        },
+        "pt-BR": {
+          "label": "Incluir sem estoque de segurança",
+          "description": "Inclui matérias-primas sem estoque de segurança cadastrado."
+        }
+      }
+    },
     "incluir_bloqueados": {
       "locale": {
         "en": {
@@ -761,26 +957,28 @@
     "issue_date_end": {
       "locale": {
         "en": {
-          "label": "Issue date (end)",
-          "description": "Issue date (end) query parameter."
+          "label": "Issue end date",
+          "description": "Invoice issue end date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data de emissão (fim)",
           "description": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD)."
         }
-      }
+      },
+      "format": "date"
     },
     "issue_date_start": {
       "locale": {
         "en": {
-          "label": "Issue date (start)",
-          "description": "Issue date (start) query parameter."
+          "label": "Issue start date",
+          "description": "Invoice issue start date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data de emissão (início)",
           "description": "Início do filtro pela data de emissão do documento (AAAA-MM-DD)."
         }
-      }
+      },
+      "format": "date"
     },
     "item_code": {
       "locale": {
@@ -938,29 +1136,43 @@
         }
       }
     },
+    "mine": {
+      "locale": {
+        "en": {
+          "label": "Mine only",
+          "description": "Return only records owned by the current user."
+        },
+        "pt-BR": {
+          "label": "Somente meus",
+          "description": "Retorna apenas registros do usuário atual."
+        }
+      }
+    },
     "modified_from": {
       "locale": {
         "en": {
           "label": "Modified from",
-          "description": "Modified from query parameter."
+          "description": "Modification start date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Modificado a partir de",
           "description": "Data/hora mínima de modificação (ISO)."
         }
-      }
+      },
+      "format": "date"
     },
     "modified_to": {
       "locale": {
         "en": {
           "label": "Modified to",
-          "description": "Modified to query parameter."
+          "description": "Modification end date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Modificado até",
           "description": "Data/hora máxima de modificação (ISO)."
         }
-      }
+      },
+      "format": "date"
     },
     "months": {
       "locale": {
@@ -971,6 +1183,30 @@
         "pt-BR": {
           "label": "Meses",
           "description": "Quantidade de meses no intervalo analisado."
+        }
+      }
+    },
+    "motivo": {
+      "locale": {
+        "en": {
+          "label": "Reason",
+          "description": "Scrap/reason code filter (CYO)."
+        },
+        "pt-BR": {
+          "label": "Motivo",
+          "description": "Filtro por código de motivo (CYO)."
+        }
+      }
+    },
+    "mp": {
+      "locale": {
+        "en": {
+          "label": "Raw material",
+          "description": "Raw material product code filter."
+        },
+        "pt-BR": {
+          "label": "Matéria-prima",
+          "description": "Filtro por código de matéria-prima."
         }
       }
     },
@@ -1010,6 +1246,30 @@
         }
       }
     },
+    "notify": {
+      "locale": {
+        "en": {
+          "label": "Notify",
+          "description": "Send notifications when true."
+        },
+        "pt-BR": {
+          "label": "Notificar",
+          "description": "Envia notificações quando verdadeiro."
+        }
+      }
+    },
+    "novos_negocios": {
+      "locale": {
+        "en": {
+          "label": "New business",
+          "description": "When true, excludes WEG key account."
+        },
+        "pt-BR": {
+          "label": "Novos negócios",
+          "description": "Se verdadeiro, exclui o cliente-chave WEG."
+        }
+      }
+    },
     "offset": {
       "locale": {
         "en": {
@@ -1019,6 +1279,18 @@
         "pt-BR": {
           "label": "Deslocamento",
           "description": "Quantos registros pular antes de retornar a página (paginação por deslocamento)."
+        }
+      }
+    },
+    "only_with_delays": {
+      "locale": {
+        "en": {
+          "label": "Only with delays",
+          "description": "Return only titles/customers with delays."
+        },
+        "pt-BR": {
+          "label": "Somente com atraso",
+          "description": "Retorna apenas títulos/clientes com atraso."
         }
       }
     },
@@ -1055,6 +1327,18 @@
         "pt-BR": {
           "label": "Código do operador",
           "description": "Código(s) do operador (CSV)."
+        }
+      }
+    },
+    "ordem_producao": {
+      "locale": {
+        "en": {
+          "label": "Production order",
+          "description": "Production order code."
+        },
+        "pt-BR": {
+          "label": "Ordem de produção",
+          "description": "Código da ordem de produção."
         }
       }
     },
@@ -1106,6 +1390,18 @@
         }
       }
     },
+    "pa": {
+      "locale": {
+        "en": {
+          "label": "Finished product",
+          "description": "Finished product code filter."
+        },
+        "pt-BR": {
+          "label": "Produto acabado",
+          "description": "Filtro por código de produto acabado."
+        }
+      }
+    },
     "page": {
       "locale": {
         "en": {
@@ -1115,18 +1411,6 @@
         "pt-BR": {
           "label": "Página",
           "description": "Número da página na listagem paginada."
-        }
-      }
-    },
-    "pageSize": {
-      "locale": {
-        "en": {
-          "label": "Page size",
-          "description": "Rows per page."
-        },
-        "pt-BR": {
-          "label": "Tamanho da página",
-          "description": "Quantidade de linhas por página."
         }
       }
     },
@@ -1142,6 +1426,56 @@
         }
       }
     },
+    "pageSize": {
+      "locale": {
+        "en": {
+          "label": "Page size",
+          "description": "Rows per page."
+        },
+        "pt-BR": {
+          "label": "Tamanho da página",
+          "description": "Quantidade de linhas por página."
+        }
+      }
+    },
+    "pending_only": {
+      "locale": {
+        "en": {
+          "label": "Pending only",
+          "description": "Return only pending items when true."
+        },
+        "pt-BR": {
+          "label": "Somente pendentes",
+          "description": "Retorna apenas itens pendentes quando verdadeiro."
+        }
+      }
+    },
+    "period_end": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Period End",
+          "description": "period_end (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "period_end",
+          "description": "Data (AAAA-MM-DD)."
+        }
+      }
+    },
+    "period_start": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Period Start",
+          "description": "period_start (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "period_start",
+          "description": "Data (AAAA-MM-DD)."
+        }
+      }
+    },
     "periodDays": {
       "locale": {
         "en": {
@@ -1151,6 +1485,32 @@
         "pt-BR": {
           "label": "Período (dias)",
           "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
+        }
+      }
+    },
+    "periodEnd": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Periodend",
+          "description": "periodEnd (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "periodEnd",
+          "description": "Data (AAAA-MM-DD)."
+        }
+      }
+    },
+    "periodStart": {
+      "format": "date",
+      "locale": {
+        "en": {
+          "label": "Periodstart",
+          "description": "periodStart (YYYY-MM-DD)."
+        },
+        "pt-BR": {
+          "label": "periodStart",
+          "description": "Data (AAAA-MM-DD)."
         }
       }
     },
@@ -1175,6 +1535,18 @@
         "pt-BR": {
           "label": "Fonte de preço",
           "description": "Origem do preço usado no cálculo."
+        }
+      }
+    },
+    "priority": {
+      "locale": {
+        "en": {
+          "label": "Priority",
+          "description": "Priority: high, medium or low."
+        },
+        "pt-BR": {
+          "label": "Prioridade",
+          "description": "Prioridade: high, medium ou low."
         }
       }
     },
@@ -1250,6 +1622,18 @@
         }
       }
     },
+    "productGroup": {
+      "locale": {
+        "en": {
+          "label": "Product group",
+          "description": "Product group filter (B1_GRUPO)."
+        },
+        "pt-BR": {
+          "label": "Grupo de produto",
+          "description": "Filtro por grupo de produto (B1_GRUPO)."
+        }
+      }
+    },
     "production_order": {
       "locale": {
         "en": {
@@ -1302,13 +1686,14 @@
       "locale": {
         "en": {
           "label": "Reference date",
-          "description": "Reference date query parameter."
+          "description": "Reference date (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Data de referência",
           "description": "Data de referência usada no cálculo (AAAA-MM-DD)."
         }
-      }
+      },
+      "format": "date"
     },
     "resource_id": {
       "locale": {
@@ -1319,6 +1704,30 @@
         "pt-BR": {
           "label": "Recurso",
           "description": "Identificador do recurso de agendamento."
+        }
+      }
+    },
+    "responsible": {
+      "locale": {
+        "en": {
+          "label": "Responsible",
+          "description": "Responsible person name filter."
+        },
+        "pt-BR": {
+          "label": "Responsável",
+          "description": "Filtro por nome do responsável."
+        }
+      }
+    },
+    "responsible_user_id": {
+      "locale": {
+        "en": {
+          "label": "Responsible user",
+          "description": "Responsible user id filter."
+        },
+        "pt-BR": {
+          "label": "Usuário responsável",
+          "description": "Filtro por id do usuário responsável."
         }
       }
     },
@@ -1367,6 +1776,18 @@
         "pt-BR": {
           "label": "Tipo de economia",
           "description": "Tipo de economia (Kaizen)."
+        }
+      }
+    },
+    "scope": {
+      "locale": {
+        "en": {
+          "label": "Scope",
+          "description": "Scheduling or listing scope."
+        },
+        "pt-BR": {
+          "label": "Escopo",
+          "description": "Escopo da consulta (ex.: occurrence, future, all)."
         }
       }
     },
@@ -1478,6 +1899,30 @@
         }
       }
     },
+    "sortBy": {
+      "locale": {
+        "en": {
+          "label": "Sort by",
+          "description": "Allowed sort field."
+        },
+        "pt-BR": {
+          "label": "Ordenar por",
+          "description": "Campo de ordenação permitido."
+        }
+      }
+    },
+    "sortDirection": {
+      "locale": {
+        "en": {
+          "label": "Sort direction",
+          "description": "Sort direction: asc or desc."
+        },
+        "pt-BR": {
+          "label": "Direção",
+          "description": "Direção da ordenação: asc ou desc."
+        }
+      }
+    },
     "start_date": {
       "locale": {
         "en": {
@@ -1488,7 +1933,8 @@
           "label": "Data início",
           "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
         }
-      }
+      },
+      "format": "date"
     },
     "status": {
       "locale": {
@@ -1535,6 +1981,18 @@
         "pt-BR": {
           "label": "Loja",
           "description": "Código da loja do cliente."
+        }
+      }
+    },
+    "store_code": {
+      "locale": {
+        "en": {
+          "label": "Store code",
+          "description": "Customer store code (LOJA)."
+        },
+        "pt-BR": {
+          "label": "Código da loja",
+          "description": "Loja do cliente (LOJA)."
         }
       }
     },
@@ -1598,6 +2056,18 @@
         }
       }
     },
+    "supplierStore": {
+      "locale": {
+        "en": {
+          "label": "Supplier store",
+          "description": "Supplier store code."
+        },
+        "pt-BR": {
+          "label": "Loja do fornecedor",
+          "description": "Loja do fornecedor."
+        }
+      }
+    },
     "template_key": {
       "locale": {
         "en": {
@@ -1637,14 +2107,15 @@
     "to": {
       "locale": {
         "en": {
-          "label": "To",
-          "description": "To query parameter."
+          "label": "To date",
+          "description": "Interval end (YYYY-MM-DD)."
         },
         "pt-BR": {
           "label": "Até",
           "description": "Fim do intervalo (data ou valor)."
         }
-      }
+      },
+      "format": "date"
     },
     "top_limit": {
       "locale": {
@@ -1679,6 +2150,18 @@
         "pt-BR": {
           "label": "Tipo",
           "description": "Tipo do registro a filtrar."
+        }
+      }
+    },
+    "unit": {
+      "locale": {
+        "en": {
+          "label": "Unit",
+          "description": "Unit of measure filter (B1_UM)."
+        },
+        "pt-BR": {
+          "label": "Unidade",
+          "description": "Filtro por unidade de medida (B1_UM)."
         }
       }
     },

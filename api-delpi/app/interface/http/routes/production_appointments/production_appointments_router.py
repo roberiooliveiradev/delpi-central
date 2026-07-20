@@ -84,7 +84,7 @@ def _guard_and_build(
     ),
 )
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
-def list_work_centers_route(branch: str = BRANCH_QUERY):
+def list_work_centers_route(branch: str = BRANCH_QUERY()):
     request, err = _guard_and_build(branch=branch, error_context="listar centros de trabalho")
     if err:
         return err
@@ -106,14 +106,14 @@ def list_work_centers_route(branch: str = BRANCH_QUERY):
 )
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def list_appointments_route(
-    branch: str = BRANCH_QUERY,
-    date_start: Optional[str] = DATE_START_QUERY,
-    date_end: Optional[str] = DATE_END_QUERY,
-    work_center: Optional[str] = WORK_CENTER_QUERY,
-    op: Optional[str] = OP_QUERY,
-    product: Optional[str] = PRODUCT_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
+    branch: str = BRANCH_QUERY(),
+    date_start: Optional[str] = DATE_START_QUERY(),
+    date_end: Optional[str] = DATE_END_QUERY(),
+    work_center: Optional[str] = WORK_CENTER_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    product: Optional[str] = PRODUCT_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
 ):
     request, err = _guard_and_build(
         branch=branch,
@@ -146,12 +146,12 @@ def list_appointments_route(
 )
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def summary_route(
-    branch: str = BRANCH_QUERY,
-    date_start: Optional[str] = DATE_START_QUERY,
-    date_end: Optional[str] = DATE_END_QUERY,
-    work_center: Optional[str] = WORK_CENTER_QUERY,
-    op: Optional[str] = OP_QUERY,
-    product: Optional[str] = PRODUCT_QUERY,
+    branch: str = BRANCH_QUERY(),
+    date_start: Optional[str] = DATE_START_QUERY(),
+    date_end: Optional[str] = DATE_END_QUERY(),
+    work_center: Optional[str] = WORK_CENTER_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    product: Optional[str] = PRODUCT_QUERY(),
 ):
     request, err = _guard_and_build(
         branch=branch,
@@ -182,13 +182,13 @@ def summary_route(
 )
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def series_route(
-    branch: str = BRANCH_QUERY,
-    date_start: Optional[str] = DATE_START_QUERY,
-    date_end: Optional[str] = DATE_END_QUERY,
-    work_center: Optional[str] = WORK_CENTER_QUERY,
-    op: Optional[str] = OP_QUERY,
-    product: Optional[str] = PRODUCT_QUERY,
-    group_by: str = GROUP_BY_QUERY,
+    branch: str = BRANCH_QUERY(),
+    date_start: Optional[str] = DATE_START_QUERY(),
+    date_end: Optional[str] = DATE_END_QUERY(),
+    work_center: Optional[str] = WORK_CENTER_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    product: Optional[str] = PRODUCT_QUERY(),
+    group_by: str = GROUP_BY_QUERY(),
 ):
     request, err = _guard_and_build(
         branch=branch,
@@ -220,14 +220,14 @@ def series_route(
 )
 @require_any_permission(PRODUCTION_APPOINTMENTS_READ_PERMISSIONS)
 def by_op_route(
-    branch: str = BRANCH_QUERY,
-    date_start: Optional[str] = DATE_START_QUERY,
-    date_end: Optional[str] = DATE_END_QUERY,
-    work_center: Optional[str] = WORK_CENTER_QUERY,
-    op: Optional[str] = OP_QUERY,
-    product: Optional[str] = PRODUCT_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
+    branch: str = BRANCH_QUERY(),
+    date_start: Optional[str] = DATE_START_QUERY(),
+    date_end: Optional[str] = DATE_END_QUERY(),
+    work_center: Optional[str] = WORK_CENTER_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    product: Optional[str] = PRODUCT_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
 ):
     request, err = _guard_and_build(
         branch=branch,

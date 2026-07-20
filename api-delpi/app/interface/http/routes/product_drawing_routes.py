@@ -96,7 +96,7 @@ def list_product_drawings(
         default="product_code",
         description="product_code, filename, modified_at, size_bytes, revision ou file_kind.",
     ),
-    direction: str = SORT_DIR_QUERY,
+    direction: str = SORT_DIR_QUERY(),
 ):
     try:
         dto = ListProductDrawingsRequest(

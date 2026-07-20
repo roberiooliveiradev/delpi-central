@@ -143,46 +143,59 @@ def execute_inadimplencia_route(
         )
 
 
-PERIOD_START_QUERY = Query(
+def PERIOD_START_QUERY():
+    return Query(
     None,
     description=(
         "Data inicial inclusiva (YYYY-MM-DD). "
         "Omita com end_date para usar os últimos 12 meses completos."
     ),
 )
-PERIOD_END_QUERY = Query(
+def PERIOD_END_QUERY():
+    return Query(
     None,
     description=(
         "Data final exclusiva (YYYY-MM-DD). "
         "Filtro: MES_REFERENCIA >= start_date AND MES_REFERENCIA < end_date."
     ),
 )
-PAGE_QUERY = Query(DEFAULT_PAGE, ge=1, description="Página (mínimo 1).")
-PAGE_SIZE_QUERY = Query(
+def PAGE_QUERY():
+    return Query(DEFAULT_PAGE, ge=1, description="Page number (minimum 1).")
+def PAGE_SIZE_QUERY():
+    return Query(
     DEFAULT_PAGE_SIZE,
     ge=1,
     le=MAX_PAGE_SIZE,
     description=f"Tamanho da página (máximo {MAX_PAGE_SIZE}).",
 )
-SEARCH_QUERY = Query(None, description="Busca textual parametrizada.")
-SORT_BY_QUERY = Query(None, description="Campo de ordenação permitido (whitelist).")
+def SEARCH_QUERY():
+    return Query(None, description="Text search filter.")
+def SORT_BY_QUERY():
+    return Query(None, description="Allowed sort field (whitelist).")
 # SORT_DIR_QUERY imported from query_param_enums
-ONLY_WITH_DELAYS_QUERY = Query(
+def ONLY_WITH_DELAYS_QUERY():
+    return Query(
     True,
     description="Se true, retorna apenas clientes com pelo menos um título em atraso.",
 )
-CUSTOMER_CODE_QUERY = Query(None, description="Código do cliente (CLIENTE).")
-STORE_CODE_QUERY = Query(None, description="Loja do cliente (LOJA).")
-CUSTOMERS_QUERY = Query(
+def CUSTOMER_CODE_QUERY():
+    return Query(None, description="Customer code (CLIENTE).")
+def STORE_CODE_QUERY():
+    return Query(None, description="Customer store code (LOJA).")
+def CUSTOMERS_QUERY():
+    return Query(
     None,
     description="Lista de clientes CODIGO/LOJA separados por vírgula (filtro multiplo da série mensal).",
 )
-NOVOS_NEGOCIOS_QUERY = Query(
+def NOVOS_NEGOCIOS_QUERY():
+    return Query(
     False,
     description="Se true, exclui o cliente-chave WEG (000001) e considera apenas Novos Negócios.",
 )
-STATUS_QUERY = INADIMPLENCIA_STATUS_QUERY
-DELAY_RANGE_QUERY = Query(
+def STATUS_QUERY():
+    return INADIMPLENCIA_STATUS_QUERY()
+def DELAY_RANGE_QUERY():
+    return Query(
     None,
-    description="Código oficial de FAIXA_ATRASO.",
+    description="Official delay range code (FAIXA_ATRASO).",
 )

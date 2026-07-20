@@ -74,7 +74,7 @@ def _branch_access_error(branch: str):
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_resumo_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
 ):
     branch_error = _branch_access_error(branch)
     if branch_error:
@@ -111,7 +111,7 @@ def get_inspecoes_processo_resumo_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_ranking_ensaio_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
     branch_error = _branch_access_error(branch)
@@ -153,7 +153,7 @@ def get_inspecoes_processo_ranking_ensaio_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_produto_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
     branch_error = _branch_access_error(branch)
@@ -195,7 +195,7 @@ def get_inspecoes_processo_por_produto_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_operacao_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
     branch_error = _branch_access_error(branch)
@@ -237,7 +237,7 @@ def get_inspecoes_processo_por_operacao_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_por_ensaiador_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     limit: int = Query(default=10, ge=1, le=50),
 ):
     branch_error = _branch_access_error(branch)
@@ -279,12 +279,12 @@ def get_inspecoes_processo_por_ensaiador_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_historico_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=25, ge=1, le=50),
     ordem_producao: str | None = Query(default=None),
     codigo_produto: str | None = Query(default=None),
-    resultado: str | None = INSPECTION_RESULT_QUERY,
+    resultado: str | None = INSPECTION_RESULT_QUERY(),
     data_inicio: str | None = Query(default=None),
     data_fim: str | None = Query(default=None),
 ):
@@ -341,7 +341,7 @@ def get_inspecoes_processo_historico_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_historico_detalhe_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     ordem_producao: str = Query(..., min_length=1),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=100, ge=1, le=200),
@@ -400,7 +400,7 @@ def get_inspecoes_processo_historico_detalhe_route(
 )
 @require_any_permission(INSPECOES_PROCESSO_READ_PERMISSIONS)
 def get_inspecoes_processo_auditoria_apontamentos_route(
-    branch: str = BRANCH_QUERY_REQUIRED,
+    branch: str = BRANCH_QUERY_REQUIRED(),
     data: str | None = Query(
         default=None,
         description="Data de produção (YYYY-MM-DD). Default: hoje.",

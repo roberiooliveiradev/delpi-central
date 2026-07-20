@@ -133,39 +133,50 @@ def execute_safety_stock_route(
         )
 
 
-INCLUDE_BLOCKED_QUERY = Query(
+def INCLUDE_BLOCKED_QUERY():
+    return Query(
     False,
     alias="includeBlocked",
     description="Incluir produtos bloqueados (B1_MSBLQL).",
 )
-PRODUCT_GROUP_QUERY = Query(
+def PRODUCT_GROUP_QUERY():
+    return Query(
     None,
     alias="productGroup",
     description="Filtro por grupo de produto (B1_GRUPO).",
 )
-UNIT_QUERY = Query(None, description="Filtro por unidade de medida (B1_UM).")
-SEARCH_QUERY = Query(None, description="Busca por código ou descrição do produto.")
-STATUS_QUERY = SAFETY_STOCK_STATUS_QUERY
-INCLUDE_WITHOUT_SAFETY_STOCK_QUERY = Query(
+def UNIT_QUERY():
+    return Query(None, description="Filtro por unidade de medida (B1_UM).")
+def SEARCH_QUERY():
+    return Query(None, description="Busca por código ou descrição do produto.")
+def STATUS_QUERY():
+    return SAFETY_STOCK_STATUS_QUERY()
+def INCLUDE_WITHOUT_SAFETY_STOCK_QUERY():
+    return Query(
     True,
     alias="includeWithoutSafetyStock",
     description="Incluir matérias-primas sem estoque de segurança cadastrado.",
 )
-PAGE_QUERY = Query(DEFAULT_PAGE, ge=1, description="Página da listagem.")
-PAGE_SIZE_QUERY = Query(
+def PAGE_QUERY():
+    return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
+def PAGE_SIZE_QUERY():
+    return Query(
     DEFAULT_PAGE_SIZE,
     alias="pageSize",
     ge=1,
     le=MAX_PAGE_SIZE,
     description=f"Registros por página (máximo {MAX_PAGE_SIZE}).",
 )
-SORT_BY_QUERY = Query(
+def SORT_BY_QUERY():
+    return Query(
     "product_code",
     alias="sortBy",
     description="Campo de ordenação permitido pela API.",
 )
-SORT_DIRECTION_QUERY = SORT_DIR_QUERY_ALIAS_SORT_DIRECTION
-SUPPLIER_STORE_QUERY = Query(
+def SORT_DIRECTION_QUERY():
+    return SORT_DIR_QUERY_ALIAS_SORT_DIRECTION()
+def SUPPLIER_STORE_QUERY():
+    return Query(
     ...,
     alias="supplierStore",
     min_length=1,

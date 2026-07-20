@@ -131,39 +131,52 @@ def execute_refugos_route(
         )
 
 
-FILIAL_QUERY = BRANCH_QUERY_REQUIRED
-DATA_INICIO_QUERY = Query(
+def FILIAL_QUERY():
+    return BRANCH_QUERY_REQUIRED()
+def DATA_INICIO_QUERY():
+    return Query(
     None,
     alias="dataInicio",
-    description="Data inicial (YYYY-MM-DD). Padrão: 1º dia do mês atual.",
+    description="Start date (YYYY-MM-DD). Default: first day of current month.", json_schema_extra={"format": "date"},
 )
-DATA_FIM_QUERY = Query(
+def DATA_FIM_QUERY():
+    return Query(
     None,
     alias="dataFim",
-    description="Data final (YYYY-MM-DD). Padrão: hoje.",
+    description="End date (YYYY-MM-DD). Default: today.", json_schema_extra={"format": "date"},
 )
-DIMENSION_QUERY = REFUGOS_DIMENSION_QUERY
-MP_QUERY = Query(None, description="Filtro por código de matéria-prima.")
-PA_QUERY = Query(None, description="Filtro por código de produto acabado.")
-OP_QUERY = Query(None, description="Filtro por ordem de produção.")
-MOTIVO_QUERY = Query(None, description="Filtro por código de motivo (CYO).")
-RECURSO_QUERY = Query(
+def DIMENSION_QUERY():
+    return REFUGOS_DIMENSION_QUERY()
+def MP_QUERY():
+    return Query(None, description="Raw material code filter.")
+def PA_QUERY():
+    return Query(None, description="Finished product code filter.")
+def OP_QUERY():
+    return Query(None, description="Production order filter.")
+def MOTIVO_QUERY():
+    return Query(None, description="Reason code filter (CYO).")
+def RECURSO_QUERY():
+    return Query(
     None,
     alias="centroTrabalho",
-    description="Filtro por centro de trabalho (BC_RECURSO).",
+    description="Work center filter (BC_RECURSO).",
 )
-LIMIT_QUERY = Query(
+def LIMIT_QUERY():
+    return Query(
     DEFAULT_RANKING_LIMIT,
     ge=1,
     le=MAX_RANKING_LIMIT,
-    description="Quantidade máxima de itens no ranking.",
+    description="Maximum ranking items.",
 )
-PAGE_QUERY = Query(DEFAULT_PAGE, ge=1, description="Página da listagem.")
-PAGE_SIZE_QUERY = Query(
+def PAGE_QUERY():
+    return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
+def PAGE_SIZE_QUERY():
+    return Query(
     DEFAULT_PAGE_SIZE,
     alias="pageSize",
     ge=1,
     le=MAX_PAGE_SIZE,
-    description="Registros por página (máximo 100).",
+    description="Rows per page (maximum 100).",
 )
-GRANULARITY_QUERY = GRANULARITY_QUERY_DAY_MONTH_AUTO
+def GRANULARITY_QUERY():
+    return GRANULARITY_QUERY_DAY_MONTH_AUTO()

@@ -113,12 +113,12 @@ def list_quality_branches(
 @router.get("/nonconformities/series", operation_id="get_nonconformity_series")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_nonconformity_series(
-    type: str = NONCONFORMITY_TYPE_QUERY,
-    granularity: str = GRANULARITY_QUERY_MONTH,
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    type: str = NONCONFORMITY_TYPE_QUERY(),
+    granularity: str = GRANULARITY_QUERY_MONTH(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY,
+    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY(),
     item_code: Optional[str] = None,
     description: Optional[str] = None,
 ):
@@ -154,11 +154,11 @@ def get_nonconformity_series(
 @router.get("/nonconformities", operation_id="list_nonconformities")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_nonconformity_route(
-    type: str = NONCONFORMITY_TYPE_QUERY,
-    branch: Optional[str] = BRANCH_QUERY_OPTIONAL,
+    type: str = NONCONFORMITY_TYPE_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY,
+    status: Optional[str] = NONCONFORMITY_QI2_STATUS_QUERY(),
     item_code: Optional[str] = None,
     description: Optional[str] = None,
     page: int = Query(None, ge=1),
@@ -198,8 +198,8 @@ def list_nonconformity_route(
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_summary(
     title: str | None = Query(default=None),
-    status: str | None = KAIZEN_STATUS_QUERY,
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    status: str | None = KAIZEN_STATUS_QUERY(),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
 ):
@@ -281,7 +281,7 @@ def get_kaizen_by_id(kaizen_id: str):
 def get_audit_5s_summary(
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         use_case = build_get_audit_5s_summary_use_case()

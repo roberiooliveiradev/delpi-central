@@ -128,7 +128,7 @@ def list_hr_branches():
 )
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_snapshot(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -182,7 +182,7 @@ def get_hr_snapshot(
 )
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_active_pdi_count(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -238,7 +238,7 @@ def get_hr_active_pdi_count(
 )
 @require_any_permission(KPI_HR_ACCESS)
 def get_hr_performance_reviews_completion(
-    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):

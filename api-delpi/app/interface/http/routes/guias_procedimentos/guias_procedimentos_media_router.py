@@ -114,7 +114,7 @@ def _handle_domain(exc: Exception):
 # --- admin ---
 
 
-@admin_media_router.get("/admin/procedures/{procedure_id}/media")
+@admin_media_router.get("/admin/procedures/{procedure_id}/media", operation_id="list_guias_procedimentos_admin_procedure_media")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def list_admin_procedure_media(procedure_id: UUID):
     try:
@@ -128,7 +128,7 @@ def list_admin_procedure_media(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@admin_media_router.get("/admin/procedures/{procedure_id}/attachments")
+@admin_media_router.get("/admin/procedures/{procedure_id}/attachments", operation_id="list_guias_procedimentos_admin_procedure_attachments")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def list_admin_procedure_attachments(procedure_id: UUID):
     try:
@@ -144,7 +144,7 @@ def list_admin_procedure_attachments(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@admin_media_router.post("/admin/procedures/{procedure_id}/media/images")
+@admin_media_router.post("/admin/procedures/{procedure_id}/media/images", operation_id="upload_guias_procedimentos_admin_procedure_image")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 async def upload_procedure_image(
     procedure_id: UUID,
@@ -174,7 +174,7 @@ async def upload_procedure_image(
         return _handle_domain(exc)
 
 
-@admin_media_router.post("/admin/procedures/{procedure_id}/media/videos")
+@admin_media_router.post("/admin/procedures/{procedure_id}/media/videos", operation_id="upload_guias_procedimentos_admin_procedure_video")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 async def upload_procedure_video(
     procedure_id: UUID,
@@ -202,7 +202,7 @@ async def upload_procedure_video(
         return _handle_domain(exc)
 
 
-@admin_media_router.post("/admin/procedures/{procedure_id}/media/external-videos")
+@admin_media_router.post("/admin/procedures/{procedure_id}/media/external-videos", operation_id="create_guias_procedimentos_admin_external_video")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def create_external_video(procedure_id: UUID, body: ExternalVideoBody):
     try:
@@ -222,7 +222,7 @@ def create_external_video(procedure_id: UUID, body: ExternalVideoBody):
         return _handle_domain(exc)
 
 
-@admin_media_router.post("/admin/procedures/{procedure_id}/attachments")
+@admin_media_router.post("/admin/procedures/{procedure_id}/attachments", operation_id="upload_guias_procedimentos_admin_procedure_attachment")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 async def upload_procedure_attachment(
     procedure_id: UUID,
@@ -250,7 +250,7 @@ async def upload_procedure_attachment(
         return _handle_domain(exc)
 
 
-@admin_media_router.put("/admin/media/{media_id}")
+@admin_media_router.put("/admin/media/{media_id}", operation_id="update_guias_procedimentos_admin_media")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def update_media_metadata(media_id: UUID, body: MediaMetadataBody):
     try:
@@ -270,7 +270,7 @@ def update_media_metadata(media_id: UUID, body: MediaMetadataBody):
         return _handle_domain(exc)
 
 
-@admin_media_router.post("/admin/media/{media_id}/archive")
+@admin_media_router.post("/admin/media/{media_id}/archive", operation_id="archive_guias_procedimentos_admin_media")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def archive_media(media_id: UUID):
     try:
@@ -284,7 +284,7 @@ def archive_media(media_id: UUID):
         return _handle_domain(exc)
 
 
-@admin_media_router.put("/admin/attachments/{attachment_id}")
+@admin_media_router.put("/admin/attachments/{attachment_id}", operation_id="update_guias_procedimentos_admin_attachment")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def update_attachment_metadata(attachment_id: UUID, body: AttachmentMetadataBody):
     try:
@@ -303,7 +303,7 @@ def update_attachment_metadata(attachment_id: UUID, body: AttachmentMetadataBody
         return _handle_domain(exc)
 
 
-@admin_media_router.post("/admin/attachments/{attachment_id}/archive")
+@admin_media_router.post("/admin/attachments/{attachment_id}/archive", operation_id="archive_guias_procedimentos_admin_attachment")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def archive_attachment(attachment_id: UUID):
     try:
@@ -322,7 +322,7 @@ def archive_attachment(attachment_id: UUID):
 # --- leitura protegida ---
 
 
-@read_media_router.get("/procedures/{procedure_id}/media")
+@read_media_router.get("/procedures/{procedure_id}/media", operation_id="list_guias_procedimentos_procedure_media")
 @require_any_permission(GUIAS_PROCEDIMENTOS_READ_PERMISSIONS)
 def list_readable_procedure_media(procedure_id: UUID):
     try:
@@ -339,7 +339,7 @@ def list_readable_procedure_media(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@read_media_router.get("/procedures/{procedure_id}/attachments")
+@read_media_router.get("/procedures/{procedure_id}/attachments", operation_id="list_guias_procedimentos_procedure_attachments")
 @require_any_permission(GUIAS_PROCEDIMENTOS_READ_PERMISSIONS)
 def list_readable_procedure_attachments(procedure_id: UUID):
     try:
@@ -356,7 +356,7 @@ def list_readable_procedure_attachments(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@read_media_router.get("/media/{media_id}/file")
+@read_media_router.get("/media/{media_id}/file", operation_id="download_guias_procedimentos_media_file")
 @require_any_permission(GUIAS_PROCEDIMENTOS_READ_PERMISSIONS)
 def download_media_file(media_id: UUID, request: Request):
     try:
@@ -376,7 +376,7 @@ def download_media_file(media_id: UUID, request: Request):
         return _handle_domain(exc)
 
 
-@read_media_router.get("/attachments/{attachment_id}/file")
+@read_media_router.get("/attachments/{attachment_id}/file", operation_id="download_guias_procedimentos_attachment_file")
 @require_any_permission(GUIAS_PROCEDIMENTOS_READ_PERMISSIONS)
 def download_attachment_file(attachment_id: UUID, request: Request):
     try:

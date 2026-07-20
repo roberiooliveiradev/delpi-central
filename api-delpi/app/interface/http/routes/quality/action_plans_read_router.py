@@ -494,8 +494,8 @@ _TERMINAL_PLAN_STATUSES = frozenset({"completed", "cancelled"})
 @router.get("/dashboard", **_pac_openapi("get_quality_action_plans_dashboard", "/dashboard"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def get_action_plans_dashboard(
-    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
-    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
+    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY(),
     product_code: str | None = Query(default=None, max_length=50),
     customer_name: str | None = Query(default=None, max_length=200),
     failure_mode: str | None = Query(default=None, max_length=300),
@@ -558,8 +558,8 @@ def dispatch_quality_action_plan_notifications(
 @router.get("/overdue", **_pac_openapi("list_quality_action_plans_overdue", "/overdue"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_overdue_action_plans(
-    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
-    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
+    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -582,8 +582,8 @@ def list_overdue_action_plans(
 @router.get("/recurrence", **_pac_openapi("list_quality_action_plans_recurrence", "/recurrence"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_action_plans_recurrence(
-    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
-    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
+    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY(),
     min_plans: int = Query(default=2, ge=2, le=100),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
@@ -613,9 +613,9 @@ def list_action_plans_recurrence(
 def search_action_plan_evidences(
     q: str = Query(..., min_length=2),
     plan_id: str | None = Query(default=None),
-    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
-    section: str | None = PAC_EVIDENCE_SECTION_QUERY,
-    evidence_type: str | None = PAC_EVIDENCE_TYPE_QUERY,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
+    section: str | None = PAC_EVIDENCE_SECTION_QUERY(),
+    evidence_type: str | None = PAC_EVIDENCE_TYPE_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
@@ -643,7 +643,7 @@ def search_action_plan_evidences(
 @router.get("/my-queue", **_pac_openapi("list_quality_action_plan_my_queue", "/my-queue"))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_my_action_queue(
-    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
     overdue_only: bool = Query(default=False),
     include_completed: bool = Query(default=False),
     page: int = Query(default=1, ge=1),
@@ -770,13 +770,13 @@ def list_rnc_8d_export_templates():
 @router.get("", **_pac_openapi("list_quality_action_plans", ""))
 @require_any_permission(QUALITY_ACTION_PLANS_READ_PERMISSIONS)
 def list_action_plans(
-    status: str | None = PAC_PLAN_STATUS_QUERY,
-    severity: str | None = SEVERITY_QUERY,
+    status: str | None = PAC_PLAN_STATUS_QUERY(),
+    severity: str | None = SEVERITY_QUERY(),
     product_code: str | None = Query(default=None),
     customer_name: str | None = Query(default=None),
     owner_user_id: str | None = Query(default=None),
-    branch_code: str | None = BRANCH_QUERY_OPTIONAL,
-    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY,
+    branch_code: str | None = BRANCH_QUERY_OPTIONAL(),
+    nonconformity_scope: str | None = NONCONFORMITY_SCOPE_QUERY(),
     code: str | None = Query(default=None, max_length=20),
     department: str | None = Query(default=None),
     root_cause_category: str | None = Query(default=None),
