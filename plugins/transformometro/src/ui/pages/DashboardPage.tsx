@@ -62,6 +62,7 @@ import {
 } from "../../utils/format";
 import { buildEvolucaoSavingsSeries } from "../../utils/evolucaoChartSeries";
 import { useChartSeriesWindow } from "../../hooks/useChartSeriesWindow";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { currentMonthFilterRange } from "../../utils/dashboardFilters";
 import { competenceToDateRange, dateRangeToCompetence } from "../../utils/competence";
 import { horasEconomizadasDiaria } from "../../utils/calcRules";
@@ -297,6 +298,14 @@ export function DashboardPage({ getAccessToken, pathname, onNavigate }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useTransformometroCatalogWatch({
+    catalogId: "dashboard",
+    getAccessToken,
+    onUpdated: () => {
+      void load();
+    },
+  });
 
   async function handleRefresh() {
     await load();

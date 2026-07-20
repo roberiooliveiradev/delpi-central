@@ -7,6 +7,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   embeddedInCard?: boolean;
   onError: (message: string | null) => void;
   onReload?: () => void;
+  resyncVersion?: number;
 };
 
 export function RevisaoEvidenciasSection({
@@ -16,6 +17,7 @@ export function RevisaoEvidenciasSection({
   embeddedInCard = false,
   onError,
   onReload,
+  resyncVersion = 0,
 }: Props) {
   return (
     <RevisaoEvidencePanel
@@ -25,6 +27,7 @@ export function RevisaoEvidenciasSection({
       hideHeader={embeddedInCard}
       onError={onError}
       onChanged={onReload}
+      resyncVersion={resyncVersion}
     />
   );
 }

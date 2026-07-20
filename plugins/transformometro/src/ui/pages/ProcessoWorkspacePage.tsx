@@ -18,6 +18,7 @@ import {
 import { TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT } from "../../utils/navigation";
 import { buildProcessoPath } from "../../utils/routeParser";
 import type { ParsedTransformometroRoute } from "../../utils/routeParser";
+import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
 import { InstanciaDetailPage } from "../pages/InstanciaDetailPage";
 import { ProcessoDetailPage } from "../pages/ProcessoDetailPage";
 import { RevisaoDetailPage } from "../pages/RevisaoDetailPage";
@@ -152,6 +153,17 @@ export function ProcessoWorkspacePage({
     window.addEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
     return () => window.removeEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
   }, [reloadWorkspaceTree]);
+
+  // Tempo real: create/update/delete de melhoria/revisão (fan-out na sala do processo).
+  useTransformometroEntityWatch({
+    entities: [{ entityType: "processo", entityId: processoId }],
+    getAccessToken,
+    enabled: Boolean(processoId),
+    onEntityUpdated: () => {
+      missingRevisaoRefreshKey.current = null;
+      void reloadWorkspaceTree();
+    },
+  });
 
   // Self-heal: revisão aberta na URL ainda não está na árvore (ex.: criada/duplicada sem refresh).
   useEffect(() => {

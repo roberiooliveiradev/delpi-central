@@ -12,7 +12,8 @@ export type CollaborationEntityType =
   | "revisao"
   | "filial"
   | "setor"
-  | "recurso";
+  | "recurso"
+  | "catalog";
 
 export type CollaborationPresenceUser = {
   user_id?: string;

@@ -8,7 +8,16 @@ from tm_app.infrastructure.persistence.plugins.plugin_base_repository import (
 )
 
 ALLOWED_ENTITY_TYPES = frozenset(
-    {"processo", "processo_instancia", "revisao", "filial", "setor", "recurso"}
+    {
+        "processo",
+        "processo_instancia",
+        "revisao",
+        "filial",
+        "setor",
+        "recurso",
+        # Salas de listagem / dashboard (sem locks de edição colaborativa)
+        "catalog",
+    }
 )
 PRESENCE_TTL_SECONDS = 45
 LOCK_TTL_SECONDS = 90

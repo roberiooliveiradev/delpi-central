@@ -49,6 +49,7 @@ type Props = {
   onError: (message: string | null) => void;
   onNavigate?: (path: string) => void;
   rateioExcedeGanho?: boolean;
+  resyncVersion?: number;
 };
 
 const M = TM_HELP_TOOLTIPS.matriz;
@@ -137,6 +138,7 @@ export function RevisaoMatrizImpactoSection({
   onError,
   onNavigate,
   rateioExcedeGanho = false,
+  resyncVersion = 0,
 }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -172,7 +174,7 @@ export function RevisaoMatrizImpactoSection({
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, resyncVersion]);
 
   const scatterPoints = useMemo(() => {
     if (!data) return [];

@@ -12,6 +12,8 @@ from tm_app.application.services.dashboard_recalc_service import DashboardRecalc
 from tm_app.application.services.dashboard_snapshot_read_service import (
     DashboardSnapshotReadService,
 )
+from tm_app.application.services.transformometro_realtime_notify import notify_catalog_updated
+from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.errors import format_api_error
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import rows_to_json
@@ -42,6 +44,7 @@ def _scope_error_response(
 
 @router.post("/recalcular")
 def recalcular_dashboard(
+    request: Request,
     revisao_id: str | None = None,
     processo_id: str | None = None,
     competencia_inicio: str | None = None,
@@ -58,6 +61,18 @@ def recalcular_dashboard(
     except Exception as exc:
         logger.exception("dashboard_recalc_failed")
         return fail(format_api_error(exc), 500)
+
+    user_id, _email, _name = actor_from_request(request)
+    notify_catalog_updated(
+        catalog_id="dashboard",
+        action="recalcular",
+        actor_user_id=user_id,
+        payload={
+            "revisao_id": revisao_id,
+            "processo_id": processo_id,
+            "mode": result.get("mode"),
+        },
+    )
 
     result["observacao"] = (
         "Cache materializado atualizado. Os endpoints GET do dashboard não dependem deste passo."

@@ -18,20 +18,71 @@ SECTION_KEY_BY_ACTION: dict[str, str] = {
     "processo.arquivo.created": "arquivos",
     "processo.arquivo.updated": "arquivos",
     "processo.arquivo.deleted": "arquivos",
-    "update": "processo",
-    "create": "processo",
+    "revisao.evidencia.created": "evidencias",
+    "revisao.evidencia.updated": "evidencias",
+    "revisao.evidencia.deleted": "evidencias",
+    "matrix.updated": "matriz",
     "upsert": "medicao",
     "activate": "vigencia",
+    "reajuste": "custos",
+    "import_replace": "catalog",
+    "import_merge": "catalog",
+    "recalcular": "dashboard",
 }
+
+# entity_type → id da sala catalog:<id> (listagens / dashboard)
+CATALOG_ROOM_BY_ENTITY: dict[str, str] = {
+    "processo": "processo",
+    "processo_instancia": "processo",
+    "revisao": "processo",
+    "medicao": "dashboard",
+    "investimento": "dashboard",
+    "vinculo": "dashboard",
+    "filial": "filial",
+    "setor": "setor",
+    "recurso": "recurso",
+    "recurso_custo": "recurso",
+    "catalog": "dashboard",
+    "json_backup": "dashboard",
+}
+
+CRUD_ACTIONS = frozenset({"create", "update", "delete", "duplicate"})
 
 
 def room_key(entity_type: str, entity_id: str) -> str:
     return f"{entity_type}:{entity_id}"
 
 
+def catalog_room(catalog_id: str) -> str:
+    return room_key("catalog", catalog_id)
+
+
 def infer_section_key(entity_type: str, action: str) -> str | None:
     if action in SECTION_KEY_BY_ACTION:
         return SECTION_KEY_BY_ACTION[action]
+    if action in CRUD_ACTIONS:
+        if entity_type == "processo":
+            return "processo"
+        if entity_type == "processo_instancia":
+            return "instancia"
+        if entity_type == "revisao":
+            return "vigencia"
+        if entity_type == "investimento":
+            return "investimentos"
+        if entity_type == "vinculo":
+            return "recursos"
+        if entity_type == "filial":
+            return "filial"
+        if entity_type == "setor":
+            return "setor"
+        if entity_type == "recurso":
+            return "recurso"
+        if entity_type == "recurso_custo":
+            return "custos"
+        if entity_type == "medicao":
+            return "medicao"
+        if entity_type == "catalog":
+            return "catalog"
     if entity_type == "processo":
         return "processo"
     if entity_type == "processo_instancia":
@@ -52,17 +103,57 @@ def infer_section_key(entity_type: str, action: str) -> str | None:
         return "recurso"
     if entity_type == "recurso_custo":
         return "custos"
+    if entity_type == "catalog":
+        return "catalog"
     return None
 
 
 def _related_rooms(entity_type: str, entity_id: str, payload: dict[str, Any]) -> list[str]:
-    rooms = [room_key(entity_type, entity_id)]
+    rooms: list[str] = []
+    if entity_type != "catalog":
+        rooms.append(room_key(entity_type, entity_id))
+
     revisao_id = payload.get("revisao_id")
     if revisao_id and entity_type in {"medicao", "investimento", "vinculo"}:
         rooms.append(room_key("revisao", str(revisao_id)))
+
     processo_id = payload.get("processo_id")
-    if processo_id and entity_type == "processo_instancia":
+    if processo_id and entity_type in {"processo_instancia", "revisao"}:
         rooms.append(room_key("processo", str(processo_id)))
+
+    instancia_id = payload.get("instancia_id")
+    if instancia_id and entity_type == "revisao":
+        rooms.append(room_key("processo_instancia", str(instancia_id)))
+
+    recurso_id = payload.get("recurso_compartilhado_id") or payload.get("recurso_id")
+    if recurso_id and entity_type == "recurso_custo":
+        rooms.append(room_key("recurso", str(recurso_id)))
+
+    catalog_id = CATALOG_ROOM_BY_ENTITY.get(entity_type)
+    if catalog_id:
+        rooms.append(catalog_room(catalog_id))
+    # Mutações operacionais também invalidam o dashboard ao vivo
+    if entity_type in {
+        "processo",
+        "processo_instancia",
+        "revisao",
+        "medicao",
+        "investimento",
+        "vinculo",
+        "recurso",
+        "recurso_custo",
+        "filial",
+        "setor",
+    }:
+        rooms.append(catalog_room("dashboard"))
+
+    # Import JSON / backup: refresh de todas as listagens
+    if entity_type == "json_backup" or (
+        entity_type == "catalog" and str(entity_id) == "all"
+    ):
+        for cid in ("processo", "filial", "setor", "recurso", "dashboard"):
+            rooms.append(catalog_room(cid))
+
     return list(dict.fromkeys(rooms))
 
 
@@ -104,6 +195,22 @@ def notify_entity_updated(
     }
     for room in _related_rooms(entity_type, entity_id, body):
         transformometro_realtime_hub.schedule_broadcast(room, event)
+
+
+def notify_catalog_updated(
+    *,
+    catalog_id: str,
+    action: str,
+    actor_user_id: str | None = None,
+    payload: dict[str, Any] | None = None,
+) -> None:
+    notify_entity_updated(
+        entity_type="catalog",
+        entity_id=catalog_id,
+        action=action,
+        actor_user_id=actor_user_id,
+        payload=payload,
+    )
 
 
 def notify_from_audit(

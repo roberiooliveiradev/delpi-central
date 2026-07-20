@@ -330,6 +330,7 @@ export function RevisaoCadastroPanel({
             onError={onError}
             onNavigate={onNavigate}
             rateioExcedeGanho={rateioDiag?.rateio_excede_ganho ?? false}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         </RevisaoWorkspaceSectionPanel>
       ) : null}
@@ -558,6 +559,7 @@ export function RevisaoCadastroPanel({
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
         editContent={
@@ -567,6 +569,7 @@ export function RevisaoCadastroPanel({
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
       />

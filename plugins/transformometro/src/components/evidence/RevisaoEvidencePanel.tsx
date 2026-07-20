@@ -37,6 +37,8 @@ type Props = {
   onChanged?: () => void;
   readOnly?: boolean;
   hideHeader?: boolean;
+  /** Incrementado pelo collaborative edit quando chega entity.updated remoto. */
+  resyncVersion?: number;
 };
 
 function EvidenceThumb({
@@ -261,6 +263,7 @@ export function RevisaoEvidencePanel({
   onChanged,
   readOnly = false,
   hideHeader = false,
+  resyncVersion = 0,
 }: Props) {
   const confirm = useConfirm();
   const [evidences, setEvidences] = useState<RevisaoEvidence[]>([]);
@@ -286,7 +289,7 @@ export function RevisaoEvidencePanel({
 
   useEffect(() => {
     void load();
-  }, [load]);
+  }, [load, resyncVersion]);
 
   function addFiles(files: File[]) {
     if (!files.length || uploading) return;

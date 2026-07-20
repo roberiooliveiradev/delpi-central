@@ -19,6 +19,7 @@ import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useScrollToRef } from "../../hooks/useScrollToRef";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { ProcessoFormProgress } from "../../components/processo/ProcessoFormProgress";
 import { computeProcessoListCompletion } from "../../utils/processoCompletion";
 
@@ -92,6 +93,14 @@ export function ProcessosPage({
   useEffect(() => {
     void load();
   }, [load]);
+
+  useTransformometroCatalogWatch({
+    catalogId: "processo",
+    getAccessToken,
+    onUpdated: () => {
+      void load();
+    },
+  });
 
   function startCreate() {
     setForm({

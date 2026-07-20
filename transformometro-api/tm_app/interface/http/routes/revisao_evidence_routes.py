@@ -10,6 +10,7 @@ from tm_app.application.services.revisao_evidence_storage import (
     RevisaoEvidenceStorage,
     RevisaoEvidenceStorageError,
 )
+from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import row_to_json, rows_to_json
@@ -36,6 +37,31 @@ def _ensure_revisao(revisao_id: str) -> dict | None:
     return RevisaoRepository().get(revisao_id)
 
 
+def _notify_evidencia(
+    *,
+    request: Request,
+    revisao: dict,
+    evidencia_id: str,
+    action: str,
+    extra: dict | None = None,
+) -> None:
+    user_id, _email = _actor(request)
+    payload = {
+        "revisao_id": str(revisao.get("revisao_id") or ""),
+        "processo_id": str(revisao.get("processo_id") or ""),
+        "instancia_id": str(revisao.get("instancia_id") or ""),
+        "evidencia_id": evidencia_id,
+        **(extra or {}),
+    }
+    notify_entity_updated(
+        entity_type="revisao",
+        entity_id=str(revisao["revisao_id"]),
+        action=action,
+        actor_user_id=user_id,
+        payload=payload,
+    )
+
+
 @router.get("/revisoes/{revisao_id}/evidencias")
 def list_revisao_evidencias(revisao_id: str):
     if not _ensure_revisao(revisao_id):
@@ -53,7 +79,8 @@ async def attach_revisao_evidencia(
     url_externa: str | None = Form(default=None),
     file: UploadFile | None = File(default=None),
 ):
-    if not _ensure_revisao(revisao_id):
+    revisao = _ensure_revisao(revisao_id)
+    if not revisao:
         return fail("Revisão não encontrada.", 404)
 
     user_id, email = _actor(request)
@@ -98,6 +125,14 @@ async def attach_revisao_evidencia(
         logger.exception("attach_revisao_evidencia failed")
         return fail(f"Falha ao gravar evidência: {exc}", 500)
 
+    evidencia_id = str(row.get("evidencia_id") or row.get("revisao_evidencia_id") or "")
+    _notify_evidencia(
+        request=request,
+        revisao=revisao,
+        evidencia_id=evidencia_id,
+        action="revisao.evidencia.created",
+        extra={"tipo": tipo},
+    )
     return ok(row_to_json(row), "Evidência anexada.", 201)
 
 
@@ -129,16 +164,29 @@ def update_revisao_evidencia(
     revisao_id: str,
     evidencia_id: str,
     body: RevisaoEvidenceUpdateBody,
+    request: Request,
 ):
+    revisao = _ensure_revisao(revisao_id)
+    if not revisao:
+        return fail("Revisão não encontrada.", 404)
     repo = RevisaoEvidenceRepository()
     row = repo.update(revisao_id, evidencia_id, body.model_dump(exclude_unset=True))
     if not row:
         return fail("Evidência não encontrada.", 404)
+    _notify_evidencia(
+        request=request,
+        revisao=revisao,
+        evidencia_id=evidencia_id,
+        action="revisao.evidencia.updated",
+    )
     return ok(row_to_json(row), "Evidência atualizada.")
 
 
 @router.delete("/revisoes/{revisao_id}/evidencias/{evidencia_id}")
-def delete_revisao_evidencia(revisao_id: str, evidencia_id: str):
+def delete_revisao_evidencia(revisao_id: str, evidencia_id: str, request: Request):
+    revisao = _ensure_revisao(revisao_id)
+    if not revisao:
+        return fail("Revisão não encontrada.", 404)
     repo = RevisaoEvidenceRepository()
     removed = repo.soft_delete(revisao_id, evidencia_id)
     if not removed:
@@ -151,4 +199,10 @@ def delete_revisao_evidencia(revisao_id: str, evidencia_id: str):
             stored_name=str(stored_name),
         )
 
+    _notify_evidencia(
+        request=request,
+        revisao=revisao,
+        evidencia_id=evidencia_id,
+        action="revisao.evidencia.deleted",
+    )
     return ok({"evidencia_id": evidencia_id, "deleted": True}, "Evidência excluída.")
