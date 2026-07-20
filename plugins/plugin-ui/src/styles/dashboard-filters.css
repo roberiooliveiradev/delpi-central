@@ -32,9 +32,12 @@
 
 .delpi-ui-filter-box--action {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
+  min-width: min(100%, 22rem);
 }
 
 .delpi-ui-filter-box--wide {

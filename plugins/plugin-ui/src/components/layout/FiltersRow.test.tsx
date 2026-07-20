@@ -48,12 +48,17 @@ describe("FiltersRow", () => {
       <FiltersRow
         as="div"
         compact
-        trailing={<button type="button">Aplicar</button>}
+        trailing={
+          <>
+            <button type="button">Baixar</button>
+            <button type="button">Buscar</button>
+          </>
+        }
         classNames={{
           row: "pac-filters-row",
           rowExtended: "pac-filters-row pac-filters-row--extended",
           rowCompact: "pac-filters-row pac-filters-row--compact",
-          trailingBox: "pac-filter-box pac-filter-box--action",
+          trailingBox: "pac-filter-box pac-filter-box--action delpi-ui-filter-box--action",
         }}
       >
         <span>Campo</span>
@@ -61,7 +66,9 @@ describe("FiltersRow", () => {
     );
 
     expect(container.querySelector(".pac-filters-row--compact")).toBeTruthy();
-    expect(container.querySelector(".pac-filter-box--action")).toBeTruthy();
+    const trailing = container.querySelector(".delpi-ui-filter-box--action");
+    expect(trailing).toBeTruthy();
+    expect(trailing?.querySelectorAll("button")).toHaveLength(2);
   });
 });
 
