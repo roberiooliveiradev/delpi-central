@@ -155,7 +155,7 @@ def _body_to_fields(body: BaseModel) -> dict:
     return body.model_dump(exclude_unset=True)
 
 
-@router.get("", **QUALITY_KAIZEN_RECORDS_LIST, operation_id="list_kaizen_records")
+@router.get("", **QUALITY_KAIZEN_RECORDS_LIST)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
     branch: str | None = Query(default=None, pattern="^(01|02)$"),
@@ -293,7 +293,7 @@ def get_kaizen_records_summary(
         return error_response("Erro interno ao calcular indicadores de kaizen.", status_code=500)
 
 
-@router.get("/{record_id}", **QUALITY_KAIZEN_RECORD_BY_ID, operation_id="get_kaizen_record")
+@router.get("/{record_id}", **QUALITY_KAIZEN_RECORD_BY_ID)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_record(record_id: str):
     try:

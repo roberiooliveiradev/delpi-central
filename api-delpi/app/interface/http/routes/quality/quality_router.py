@@ -191,7 +191,7 @@ def list_nonconformity_route(
         )
 
 
-@router.get("/kaizens/summary", **QUALITY_KAIZEN_SUMMARY, operation_id="get_kaizen_summary")
+@router.get("/kaizens/summary", **QUALITY_KAIZEN_SUMMARY)
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_summary(
     title: str | None = Query(default=None),
@@ -249,7 +249,7 @@ def get_kaizen_summary(
         )
 
 
-@router.get("/kaizens/{kaizen_id:path}", **QUALITY_KAIZEN_BY_ID, operation_id="get_kaizen_by_id")
+@router.get("/kaizens/{kaizen_id:path}", **QUALITY_KAIZEN_BY_ID)
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_by_id(kaizen_id: str):
     try:
