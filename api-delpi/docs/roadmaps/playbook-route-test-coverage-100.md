@@ -1,6 +1,6 @@
 # Playbook — cobertura de testes em 100% das rotas (api-delpi)
 
-**Status:** em andamento (Fase 0 entregue; ondas 1–5 no backlog)  
+**Status:** concluído — inventário com `gap=0` (`--check-complete` verde); 1 exempt (`get_health`)  
 **Baseline:** ~368 operações OpenAPI (`app/content/openapi_baseline.json`)  
 **Gate:** `python scripts/audit_route_test_coverage.py`
 

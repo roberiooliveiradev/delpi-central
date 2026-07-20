@@ -3,8 +3,8 @@
   "generatedAt": "2026-07-20",
   "baselineOperationCount": 368,
   "operationCount": 368,
-  "coveredCount": 296,
-  "gapCount": 71,
+  "coveredCount": 367,
+  "gapCount": 0,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -129,8 +129,8 @@
     },
     "quality": {
       "total": 135,
-      "covered": 64,
-      "gap": 71,
+      "covered": 135,
+      "gap": 0,
       "exempt": 0
     },
     "refugos": {
@@ -1871,7 +1871,7 @@
       "module": "quality",
       "entity": "quality_action_plan_evidence_tag_suggestions",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "suggest_quality_action_plan_evidence_tags_from_image",
@@ -1880,7 +1880,7 @@
       "module": "quality",
       "entity": "quality_action_plan_evidence_tag_suggestions",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_quality_action_plan_my_queue",
@@ -1961,7 +1961,7 @@
       "module": "quality",
       "entity": "quality_action_plan_action",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_quality_action_plan_action",
@@ -2078,7 +2078,7 @@
       "module": "quality",
       "entity": "quality_action_plan_export",
       "shape": "document_export",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "export_quality_action_plan_rnc_8d",
@@ -2096,7 +2096,7 @@
       "module": "quality",
       "entity": "quality_action_plan_export",
       "shape": "document_export",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "upsert_quality_action_plan_five_whys",
@@ -2213,7 +2213,7 @@
       "module": "quality",
       "entity": "audit_5s_area",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_audits",
@@ -2231,7 +2231,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_audit_5s_audit",
@@ -2249,7 +2249,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "close_audit_5s_audit",
@@ -2258,7 +2258,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "close_audit_5s_audit_without_nc_treatment",
@@ -2267,7 +2267,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "complete_audit_5s_evaluation",
@@ -2276,7 +2276,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "delete_audit_5s_audit",
@@ -2285,7 +2285,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "force_delete_audit_5s_audit",
@@ -2294,7 +2294,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "join_audit_5s_audit",
@@ -2303,7 +2303,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_audit_nc_attachments",
@@ -2312,7 +2312,7 @@
       "module": "quality",
       "entity": "audit_5s_attachment",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_nc_candidates",
@@ -2321,7 +2321,7 @@
       "module": "quality",
       "entity": "audit_5s_nc_candidate",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_nonconformities",
@@ -2330,7 +2330,7 @@
       "module": "quality",
       "entity": "audit_5s_nonconformity",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_audit_5s_nonconformity",
@@ -2339,7 +2339,7 @@
       "module": "quality",
       "entity": "audit_5s_nonconformity",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "reopen_audit_5s_evaluation",
@@ -2348,7 +2348,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "upsert_audit_5s_response",
@@ -2357,7 +2357,7 @@
       "module": "quality",
       "entity": "audit_5s_response",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_response_attachments",
@@ -2366,7 +2366,7 @@
       "module": "quality",
       "entity": "audit_5s_response_attachment",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "attach_audit_5s_response_photo",
@@ -2375,7 +2375,7 @@
       "module": "quality",
       "entity": "audit_5s_response_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "delete_audit_5s_response_photo",
@@ -2384,7 +2384,7 @@
       "module": "quality",
       "entity": "audit_5s_response_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "download_audit_5s_response_attachment",
@@ -2393,7 +2393,7 @@
       "module": "quality",
       "entity": "download_audit_5s_response_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_audit_5s_catalog",
@@ -2420,7 +2420,7 @@
       "module": "quality",
       "entity": "audit_5s_catalog",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_criteria",
@@ -2438,7 +2438,7 @@
       "module": "quality",
       "entity": "audit_5s_nonconformity",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_audit_5s_nonconformity",
@@ -2447,7 +2447,7 @@
       "module": "quality",
       "entity": "audit_5s_nonconformity",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_nc_actions",
@@ -2456,7 +2456,7 @@
       "module": "quality",
       "entity": "audit_5s_nc_action",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_audit_5s_nc_action",
@@ -2465,7 +2465,7 @@
       "module": "quality",
       "entity": "audit_5s_nc_action",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_nc_attachments",
@@ -2474,7 +2474,7 @@
       "module": "quality",
       "entity": "audit_5s_attachment",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "attach_audit_5s_evidence",
@@ -2483,7 +2483,7 @@
       "module": "quality",
       "entity": "audit_5s_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "download_audit_5s_nc_attachment",
@@ -2492,7 +2492,7 @@
       "module": "quality",
       "entity": "download_audit_5s_nc_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "complete_audit_5s_nc_action",
@@ -2501,7 +2501,7 @@
       "module": "quality",
       "entity": "audit_5s_nc_action",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "reopen_audit_5s_nc_action",
@@ -2510,7 +2510,7 @@
       "module": "quality",
       "entity": "audit_5s_nc_action",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_audit_5s_summary",
@@ -2582,7 +2582,7 @@
       "module": "quality",
       "entity": "kaizen_record",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_kaizen_record",
@@ -2600,7 +2600,7 @@
       "module": "quality",
       "entity": "kaizen_record",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_kaizen_at_date",
@@ -2609,7 +2609,7 @@
       "module": "quality",
       "entity": "kaizen_revision",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_kaizen_audit_log",
@@ -2618,7 +2618,7 @@
       "module": "quality",
       "entity": "kaizen_audit_log",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_kaizen_evidences",
@@ -2627,7 +2627,7 @@
       "module": "quality",
       "entity": "kaizen_evidence",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "attach_kaizen_evidence",
@@ -2636,7 +2636,7 @@
       "module": "quality",
       "entity": "kaizen_evidence",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "delete_kaizen_evidence",
@@ -2645,7 +2645,7 @@
       "module": "quality",
       "entity": "kaizen_evidence",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_kaizen_evidence",
@@ -2654,7 +2654,7 @@
       "module": "quality",
       "entity": "kaizen_evidence",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "download_kaizen_evidence",
@@ -2663,7 +2663,7 @@
       "module": "quality",
       "entity": "download_kaizen_evidence",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_kaizen_history",
@@ -2672,7 +2672,7 @@
       "module": "quality",
       "entity": "kaizen_history",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_kaizen_revisions",
@@ -2681,7 +2681,7 @@
       "module": "quality",
       "entity": "kaizen_revision",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_kaizen_revision",
@@ -2690,7 +2690,7 @@
       "module": "quality",
       "entity": "kaizen_revision",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_kaizen_savings_timeline",
@@ -2699,7 +2699,7 @@
       "module": "quality",
       "entity": "kaizen_savings_timeline",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_kaizen_version",
@@ -2708,7 +2708,7 @@
       "module": "quality",
       "entity": "kaizen_revision",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "delete_kaizen_version",
@@ -2717,7 +2717,7 @@
       "module": "quality",
       "entity": "kaizen_revision",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_kaizen_version",
@@ -2726,7 +2726,7 @@
       "module": "quality",
       "entity": "kaizen_revision",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "implement_kaizen_version",
@@ -2735,7 +2735,7 @@
       "module": "quality",
       "entity": "kaizen_record",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_kaizen_summary",
@@ -2762,7 +2762,7 @@
       "module": "quality",
       "entity": "quality_label",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_quality_label",
@@ -2771,7 +2771,7 @@
       "module": "quality",
       "entity": "quality_label",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_quality_label_audit_events",
@@ -2780,7 +2780,7 @@
       "module": "quality",
       "entity": "quality_label_audit_event",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_quality_label_checklist_template",
@@ -2789,7 +2789,7 @@
       "module": "quality",
       "entity": "quality_label_checklist_item",
       "shape": "object",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_label_inspector",
@@ -2798,7 +2798,7 @@
       "module": "quality",
       "entity": "quality_label_inspector",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "save_quality_label_inspector",
@@ -2807,7 +2807,7 @@
       "module": "quality",
       "entity": "quality_label_inspector",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_label_inspector_signature",
@@ -2816,7 +2816,7 @@
       "module": "quality",
       "entity": "quality_label_inspector_signature",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "upload_quality_label_inspector_signature",
@@ -2825,7 +2825,7 @@
       "module": "quality",
       "entity": "quality_label_inspector",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "lookup_quality_label_op",
@@ -2834,7 +2834,7 @@
       "module": "quality",
       "entity": "quality_label_op_lookup",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "search_quality_label_ops",
@@ -2843,7 +2843,7 @@
       "module": "quality",
       "entity": "quality_label_op_suggestion",
       "shape": "object",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "delete_quality_label",
@@ -2852,7 +2852,7 @@
       "module": "quality",
       "entity": "quality_label",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_label",
@@ -2861,7 +2861,7 @@
       "module": "quality",
       "entity": "quality_label",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "set_quality_label_active",
@@ -2870,7 +2870,7 @@
       "module": "quality",
       "entity": "quality_label",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_label_certificate",
@@ -2879,7 +2879,7 @@
       "module": "quality",
       "entity": "quality_label_certificate",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "save_quality_label_certificate",
@@ -2888,7 +2888,7 @@
       "module": "quality",
       "entity": "quality_label_certificate",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_label_certificate_pdf",
@@ -2897,7 +2897,7 @@
       "module": "quality",
       "entity": "quality_label_certificate_pdf",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_label_qr",
@@ -2906,7 +2906,7 @@
       "module": "quality",
       "entity": "quality_label_qr",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_nonconformities",
@@ -2924,7 +2924,7 @@
       "module": "quality",
       "entity": "nonconformity_series",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_ppm_external",
@@ -2933,7 +2933,7 @@
       "module": "quality",
       "entity": "ppm_external",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_ppm_external_series",
@@ -2960,7 +2960,7 @@
       "module": "quality",
       "entity": "ppm_internal",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_ppm_internal_series",
