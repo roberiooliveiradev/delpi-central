@@ -162,6 +162,8 @@ export function ProcessoDiagramSection({
       <DiagramFullscreenFrame
         title="Diagrama macro"
         subtitle="Mapa canônico do fluxo end-to-end deste processo-mestre."
+        portalScopeClassName="dashboard-transformometro"
+        labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
       >
         <FlowchartEditor
           ref={editorRef}

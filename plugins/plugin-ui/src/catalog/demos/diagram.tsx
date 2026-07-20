@@ -1,5 +1,6 @@
 import { CatalogStub } from "../CatalogStub";
 import type { CatalogEntryDraft } from "../types";
+import { DiagramFullscreenFrame } from "../../components/diagram/DiagramFullscreenFrame";
 
 export const diagramCatalogEntries: CatalogEntryDraft[] = [
   {
@@ -39,11 +40,18 @@ export const diagramCatalogEntries: CatalogEntryDraft[] = [
     family: "diagram",
     exportName: "DiagramFullscreenFrame",
     title: "DiagramFullscreenFrame",
+    description: "Botão Tela cheia → ModalShell contido no host MFE (mesmo padrão do FilePreview).",
     demos: [
       {
-        id: "stub",
-        label: "Stub",
-        render: () => <CatalogStub name="DiagramFullscreenFrame" />,
+        id: "basic",
+        label: "Com botão",
+        render: () => (
+          <div className="dashboard-plugin-ui-catalog" style={{ minHeight: 160 }}>
+            <DiagramFullscreenFrame title="Diagrama demo" subtitle="Abre no ModalShell">
+              <p className="ds-hint">Conteúdo do editor (paleta / canvas) entra no modal.</p>
+            </DiagramFullscreenFrame>
+          </div>
+        ),
       },
     ],
   },

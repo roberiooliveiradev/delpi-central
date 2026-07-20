@@ -335,7 +335,7 @@ Ref: `FlowchartEditorHandle` (`fitView`, `exportPng`, etc.).
 | Export | Uso |
 |--------|-----|
 | `DiagramMermaidPreview` | Prévia Mermaid read-only |
-| `DiagramFullscreenFrame` | Shell fullscreen |
+| `DiagramFullscreenFrame` | Botão «Tela cheia» + `ModalShell` (host MFE) |
 | `DiagramLayoutProvider` / `useDiagramEditorLayout` | Layout fill vs. embedded |
 | `flowchartToMermaid` / `mermaidToFlowchart` | Conversão bidirecional |
 | `exportReactFlowDiagramPng` | Export PNG com faixas |

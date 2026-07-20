@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel, NativeTextControl, DiagramMermaidPreview } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl, DiagramMermaidPreview, DiagramFullscreenFrame } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { fetchProcessoDiagramaComposed } from "../../data/api/transformometroDiagramApi";
 import type { ComposedProcessoDiagram } from "../../types/diagram";
@@ -130,7 +130,12 @@ export function ProcessoDiagramComposedSection({
       ) : null}
 
       {displayFlowchart ? (
-        <>
+        <DiagramFullscreenFrame
+          title="Diagrama composto (visão vigente)"
+          subtitle="Macro do fluxo + deltas das revisões vigentes na data escolhida."
+          portalScopeClassName="dashboard-transformometro"
+          labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
+        >
           <FlowchartEditor
             value={displayFlowchart}
             readOnly
@@ -142,7 +147,7 @@ export function ProcessoDiagramComposedSection({
               <DiagramMermaidPreview code={composed.mermaid} />
             </details>
           ) : null}
-        </>
+        </DiagramFullscreenFrame>
       ) : (
         <p className="ds-hint">Diagrama macro vazio. Cadastre o fluxo no processo.</p>
       )}

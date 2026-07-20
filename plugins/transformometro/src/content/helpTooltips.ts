@@ -411,7 +411,7 @@ export const TM_HELP_TOOLTIPS = {
     mermaidTab:
       "Edite o código Mermaid ou visualize o diagrama renderizado. Use «Aplicar ao desenho» para converter em editor visual, ou «Atualizar do desenho» para sincronizar com o desenho atual.",
     fullscreen:
-      "Abre o editor em tela cheia com paleta, ferramentas e ações de salvamento. Pressione Esc ou use «Sair da tela cheia» para voltar.",
+      "Abre o diagrama no modal do kit (área do plugin, sem cobrir a sidebar). Pressione Esc ou use «Sair da tela cheia» para voltar.",
     selectionDelete:
       "Remove nós e setas selecionados. Sem seleção na área de desenho, exclui a faixa ativa (com confirmação). Atalho: Delete ou Backspace para nós/setas.",
     selectionMove:

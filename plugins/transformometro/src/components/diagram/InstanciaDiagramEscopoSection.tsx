@@ -164,6 +164,8 @@ export function InstanciaDiagramEscopoSection({
             ? "Macro completo: todas as etapas desta melhoria. Desmarque a opção acima para selecionar um subset no desenho."
             : "Clique nos nós para incluir ou excluir do escopo. Arestas de fronteira seguem a opção acima."
         }
+        portalScopeClassName="dashboard-transformometro"
+        labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
       >
         <FlowchartEditor
           value={macro}

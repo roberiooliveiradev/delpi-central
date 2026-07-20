@@ -202,6 +202,8 @@ export function RevisaoDiagramSection({
             ? `Âncora: referência ${refLabel}. Overlay as-is / to-be no escopo da melhoria.`
             : "Overlay as-is / to-be sobre o mapa macro do processo."
         }
+        portalScopeClassName="dashboard-transformometro"
+        labels={{ expandHint: TM_HELP_TOOLTIPS.diagramEditor.fullscreen }}
       >
         <FlowchartEditor
           ref={editorRef}

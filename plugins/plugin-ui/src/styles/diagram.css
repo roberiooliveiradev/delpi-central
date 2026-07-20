@@ -369,6 +369,48 @@
   gap: 6px;
 }
 
+.delpi-ui-flowchart-shell .tm-diagram-workspace--modal-body, .dashboard-transformometro .tm-diagram-workspace--modal-body{
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+  gap: 8px;
+}
+
+/* ModalShell — tela cheia do diagrama (host-fill / page) */
+.delpi-ui-diagram-modal.delpi-ui-modal--host-fill,
+.delpi-ui-diagram-modal.delpi-ui-modal--page {
+  overflow: hidden;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 12px 12px;
+  gap: 8px;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .tm-diagram-editor--fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .tm-diagram-editor--fill .tm-diagram-editor__canvas {
+  flex: 1 1 auto;
+  min-height: 280px;
+}
+
+.delpi-ui-diagram-modal .delpi-ui-diagram-modal__body .tm-diagram-section__actions {
+  flex-shrink: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--ds-border-subtle, var(--ds-card-border, #e5e7eb));
+}
+
 .delpi-ui-flowchart-shell .tm-diagram-workspace__body, .dashboard-transformometro .tm-diagram-workspace__body{
   display: flex;
   flex-direction: column;

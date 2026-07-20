@@ -1,6 +1,10 @@
 export { FlowchartEditor, type FlowchartEditorHandle } from "./FlowchartEditor";
 export { DiagramMermaidPreview } from "./DiagramMermaidPreview";
 export { DiagramFullscreenFrame } from "./DiagramFullscreenFrame";
+export type {
+  DiagramFullscreenFrameLabels,
+  DiagramFullscreenFrameProps,
+} from "./DiagramFullscreenFrame";
 export { DiagramLayoutProvider, useDiagramEditorLayout } from "./DiagramLayoutContext";
 export { TabPanelTransition } from "./TabPanelTransition";
 export { flowchartEditorShellClassName, FLOWCHART_EDITOR_ROOT_CLASS } from "./diagramShellClasses";
