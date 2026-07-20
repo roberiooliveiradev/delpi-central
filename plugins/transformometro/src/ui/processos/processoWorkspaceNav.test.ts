@@ -47,8 +47,11 @@ describe("revisao workspace sections", () => {
 
     const melhorias = tree.find((node) => node.id === "section:melhorias");
     const instanciaNode = melhorias?.children?.[0];
-    const melhoriaNode = instanciaNode?.children?.find((node) => node.id === "revisao:rev-1");
-    const baselineNode = instanciaNode?.children?.find((node) => node.id === "revisao:rev-0");
+    const revisoesFolder = instanciaNode?.children?.find(
+      (node) => node.id === "instancia-section:inst-1:revisoes"
+    );
+    const melhoriaNode = revisoesFolder?.children?.find((node) => node.id === "revisao:rev-1");
+    const baselineNode = revisoesFolder?.children?.find((node) => node.id === "revisao:rev-0");
 
     expect(melhoriaNode?.children?.length).toBeGreaterThan(0);
     expect(melhoriaNode?.children?.some((node) => node.id === "revisao-section:rev-1:matriz")).toBe(true);
@@ -94,7 +97,11 @@ describe("instancia workspace sections", () => {
       "instancia-section:inst-1:diagrama",
       "instancia-section:inst-1:revisoes",
     ]);
-    expect(instanciaNode?.children?.some((node) => node.id === "revisao:rev-1")).toBe(true);
+    const revisoesFolder = instanciaNode?.children?.find(
+      (node) => node.id === "instancia-section:inst-1:revisoes"
+    );
+    expect(revisoesFolder?.children?.some((node) => node.id === "revisao:rev-1")).toBe(true);
+    expect(revisoesFolder?.badge).toBe("1");
   });
 
   it("resolve nó ativo da subpasta da melhoria", () => {

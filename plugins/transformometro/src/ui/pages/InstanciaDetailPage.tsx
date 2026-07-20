@@ -423,7 +423,7 @@ export function InstanciaDetailPage({
     : `${instancia.codigo_filial ?? instancia.filial_id} · ${instancia.setores?.[0]?.codigo_setor ?? instancia.codigo_setor ?? ""}`;
 
   const instanciaMain = (
-    <>
+    <div className="tm-processo-workspace__sections">
       <InstanciaWorkspaceSectionPanel active={activeSection === "dados"} sectionId="dados">
         <EditableSectionCard
           title="Instância operacional"
@@ -677,7 +677,7 @@ export function InstanciaDetailPage({
           />
         </section>
       </InstanciaWorkspaceSectionPanel>
-    </>
+    </div>
   );
 
   const pageBody = (

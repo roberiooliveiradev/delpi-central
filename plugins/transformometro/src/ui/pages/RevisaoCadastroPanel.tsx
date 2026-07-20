@@ -316,6 +316,7 @@ export function RevisaoCadastroPanel({
         </div>
       ) : null}
 
+      <div className="tm-processo-workspace__sections">
       {revisao.cenario_tipo !== "baseline" ? (
         <RevisaoWorkspaceSectionPanel active={activeSection === "matriz"} sectionId="matriz">
           <RevisaoMatrizImpactoSection
@@ -566,6 +567,7 @@ export function RevisaoCadastroPanel({
         }
       />
       </RevisaoWorkspaceSectionPanel>
+      </div>
     </div>
   );
 }

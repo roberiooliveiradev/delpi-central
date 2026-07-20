@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 
@@ -41,10 +41,17 @@ function TreeNode({
   const isExpanded = expandedIds.has(node.id);
   const isActive = node.id === activeNodeId;
   const folderVariant = hasChildren ? "filled" : "empty";
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isActive) return;
+    rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [isActive]);
 
   return (
     <li className="tm-processo-workspace-tree__item">
       <div
+        ref={rowRef}
         className={`tm-processo-workspace-tree__row${isActive ? " tm-processo-workspace-tree__row--active" : ""}`}
         style={{ paddingLeft: `${0.35 + node.depth * 0.65}rem` }}
       >

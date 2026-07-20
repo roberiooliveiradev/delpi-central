@@ -129,16 +129,25 @@ export function buildInstanciaSectionHref(
 function buildInstanciaSectionNodes(input: {
   processoId: string;
   instancia: ProcessoInstancia;
+  revisaoChildren?: ProcessoWorkspaceNavNode[];
 }): ProcessoWorkspaceNavNode[] {
-  const { processoId, instancia } = input;
-  return INSTANCIA_WORKSPACE_SECTIONS.map((section) => ({
-    id: `instancia-section:${instancia.instancia_id}:${section.id}`,
-    kind: "instancia-section" as const,
-    label: section.label,
-    searchText: `${section.label} ${instanciaNavLabel(instancia)}`.toLowerCase(),
-    href: buildInstanciaSectionHref(processoId, instancia.instancia_id, section.id),
-    depth: 3,
-  }));
+  const { processoId, instancia, revisaoChildren = [] } = input;
+  return INSTANCIA_WORKSPACE_SECTIONS.map((section) => {
+    const base: ProcessoWorkspaceNavNode = {
+      id: `instancia-section:${instancia.instancia_id}:${section.id}`,
+      kind: "instancia-section" as const,
+      label: section.label,
+      searchText: `${section.label} ${instanciaNavLabel(instancia)}`.toLowerCase(),
+      href: buildInstanciaSectionHref(processoId, instancia.instancia_id, section.id),
+      depth: 3,
+    };
+    if (section.id !== "revisoes") return base;
+    return {
+      ...base,
+      badge: revisaoChildren.length > 0 ? String(revisaoChildren.length) : undefined,
+      children: revisaoChildren,
+    };
+  });
 }
 
 export function revisaoSectionsForCenario(cenarioTipo?: string | null): Array<{
@@ -190,7 +199,7 @@ function buildRevisaoSectionNodes(input: {
     label: section.label,
     searchText: `${section.label} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
     href: buildRevisaoSectionHref(processoId, instanciaId, revisao.revisao_id, section.id, revisao.cenario_tipo),
-    depth: 4,
+    depth: 5,
   }));
 }
 
@@ -226,9 +235,11 @@ export function buildProcessoWorkspaceTree(input: {
   const processoId = processo.processo_id;
 
   const melhoriaChildren: ProcessoWorkspaceNavNode[] = instancias.map((instancia) => {
-    const instanciaRevisoes = revisoes.filter((row) => row.instancia_id === instancia.instancia_id);
+    const instanciaId = String(instancia.instancia_id ?? "").toLowerCase();
+    const instanciaRevisoes = revisoes.filter(
+      (row) => String(row.instancia_id ?? "").toLowerCase() === instanciaId
+    );
     const label = instanciaNavLabel(instancia);
-    const sectionChildren = buildInstanciaSectionNodes({ processoId, instancia });
     const revisaoChildren = instanciaRevisoes.map((revisao) => {
       const revLabel = revisaoDisplayLabel(revisao);
       const matrixBadge = resolveMatrixTreeBadge({
@@ -242,7 +253,7 @@ export function buildProcessoWorkspaceTree(input: {
         label: revLabel,
         searchText: `${revLabel} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
         href: buildRevisaoSectionHref(processoId, instancia.instancia_id, revisao.revisao_id, defaultSection),
-        depth: 3,
+        depth: 4,
         matrixBadge,
         children: buildRevisaoSectionNodes({
           processoId,
@@ -259,7 +270,11 @@ export function buildProcessoWorkspaceTree(input: {
       href: buildInstanciaSectionHref(processoId, instancia.instancia_id, defaultInstanciaSection()),
       depth: 2,
       badge: instanciaRevisoes.length > 0 ? String(instanciaRevisoes.length) : undefined,
-      children: [...sectionChildren, ...revisaoChildren],
+      children: buildInstanciaSectionNodes({
+        processoId,
+        instancia,
+        revisaoChildren,
+      }),
     };
   });
 
