@@ -3,7 +3,6 @@ import { Copy, Plus, Trash2, X } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
-import { DataTableSection } from "../../components/DataTableSection";
 import { DS_TABLE_SECTION_CLASS_NAMES } from "../../components/dataTableUi";
 import {
   FieldLabel,
@@ -18,6 +17,7 @@ import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
 import { MelhoriaFaseBadge } from "../../components/melhoria/MelhoriaFaseBadge";
+import { MelhoriaFolderBrowser } from "./MelhoriaFolderBrowser";
 import {
   labelMelhoriaPrioridade,
   melhoriaFieldsFromInstancia,
@@ -730,41 +730,22 @@ export function ProcessoInstanciasPanel({
   return (
     <div className="tm-panel-stack">
       {hideTable ? null : (
-      <section className="ds-card">
-        <div className={DS_TABLE_SECTION_CLASS_NAMES.header}>
-          <div>
-            <h2 className="ds-section-title">
-              <span className="ds-field-label">
-                Melhorias
-                <HelpTooltip
-                  content={TM_HELP_TOOLTIPS.instancias.escopo}
-                  ariaLabel="Ajuda: Melhorias"
-                />
-              </span>
-            </h2>
-            <p className="ds-hint">
-              Cada melhoria aplica o processo a unidades e departamentos — podem se repetir livremente.
-              Abra para definir escopo, baseline, cenários e medições.
-            </p>
-          </div>
-          <div className={DS_TABLE_SECTION_CLASS_NAMES.actions}>
-            <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
-              <Plus size={16} />
-              Nova melhoria
-            </button>
-          </div>
+        <div className="ds-card">
+          <MelhoriaFolderBrowser
+            items={instancias}
+            activeFilialCount={activeFilialCount}
+            selectedInstanciaId={selectedInstanciaId}
+            emptyMessage="Nenhuma melhoria cadastrada."
+            detailColumns={columns}
+            onOpen={(row) => onSelect(row.instancia_id)}
+            headerActions={
+              <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
+                <Plus size={16} />
+                Nova melhoria
+              </button>
+            }
+          />
         </div>
-        <DataTableSection
-          columnPreferencesKey="transformometro:ProcessoInstanciasPanel:processoinstanciaspanel:v1"
-          embedded
-          title=""
-          columns={columns}
-          rows={instancias}
-          rowKey={(row) => row.instancia_id}
-          hideSearch
-          emptyMessage="Nenhuma melhoria cadastrada."
-        />
-      </section>
       )}
 
       {showForm ? (

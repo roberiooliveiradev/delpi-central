@@ -412,6 +412,7 @@
   border-radius: 12px;
   background: transparent;
   color: var(--ds-text);
+  font: inherit;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -419,6 +420,9 @@
     background 0.15s ease,
     border-color 0.15s ease,
     transform 0.15s ease;
+}.dashboard-transformometro .tm-processo-folder--selected .tm-processo-folder__open{
+  background: color-mix(in srgb, var(--ds-accent) 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-border));
 }.dashboard-transformometro .tm-processo-folder__open:hover,
 .dashboard-transformometro .tm-processo-folder__open:focus-visible{
   background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
@@ -490,10 +494,14 @@
   border-radius: 10px;
   background: var(--ds-card-bg);
   color: var(--ds-text);
+  font: inherit;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
+}.dashboard-transformometro .tm-processo-browser__list-item--selected{
+  background: color-mix(in srgb, var(--ds-accent) 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-border));
 }.dashboard-transformometro .tm-processo-browser__list-item:hover,
 .dashboard-transformometro .tm-processo-browser__list-item:focus-visible{
   background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));

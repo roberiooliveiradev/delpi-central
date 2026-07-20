@@ -213,6 +213,11 @@ export const TM_HELP_TOOLTIPS = {
       "Título curto da melhoria, exibido na listagem, na linha do tempo e nos relatórios. Use para distinguir melhorias no mesmo par unidade × departamento (ex.: «Automação do fechamento — Q2/2026»).",
     diagramaEscopo:
       "Selecione quais nós do diagrama macro desta instância são relevantes neste ambiente operacional.",
+    modosVisualizacao:
+      "Alterne entre ícones grandes (só título), ícones médios (+ unidade e meta), lista (+ status) e tabela detalhada com ações.",
+    ordenacaoCampo: "Campo usado para ordenar a lista de melhorias em todos os modos de visualização.",
+    ordenacaoDirecao:
+      "Menor → maior (A–Z) ou Maior → menor (Z–A) conforme o campo selecionado.",
   },
   revisao: {
     versao: "Identificador da revisão (ex.: 1.0.0). Deve ser único dentro da instância.",
