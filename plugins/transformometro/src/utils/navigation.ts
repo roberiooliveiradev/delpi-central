@@ -1,6 +1,9 @@
 import { normalizeTransformometroPath } from "./routeParser";
 
 export const TRANSFORMOMETRO_WORKSPACE_HASH_EVENT = "transformometro:workspace-hash";
+/** Árvore do processo (melhorias/revisões) ficou desatualizada após mutação. */
+export const TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT =
+  "transformometro:workspace-tree-refresh";
 
 function splitPathAndHash(path: string): { pathname: string; hash: string } {
   const hashIndex = path.indexOf("#");
@@ -17,6 +20,12 @@ export function notifyWorkspaceHashChange() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event("hashchange"));
   window.dispatchEvent(new Event(TRANSFORMOMETRO_WORKSPACE_HASH_EVENT));
+}
+
+/** Pede ao ProcessoWorkspacePage para recarregar processo/instâncias/revisões da sidebar. */
+export function requestWorkspaceTreeRefresh() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT));
 }
 
 export function navigateTransformometro(path: string) {

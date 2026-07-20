@@ -124,7 +124,7 @@ export function ProcessoWorkspaceShell({
     return () => {
       cancelled = true;
     };
-  }, [getAccessToken, instancias]);
+  }, [getAccessToken, instancias, revisoes]);
 
   const treeNodes = useMemo(() => {
     if (!processo) return [];

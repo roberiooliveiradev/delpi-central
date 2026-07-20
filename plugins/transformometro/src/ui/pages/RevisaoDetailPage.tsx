@@ -21,6 +21,7 @@ import {
   type Revisao,
 } from "../../data/api/transformometroApi";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
+import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
 import { cenarioLabel } from "../../content/cenarioLabels";
 import { RevisaoCadastroPanel } from "./RevisaoCadastroPanel";
 import { ProcessoWorkspaceShell, useRevisaoWorkspaceSection } from "../processos/ProcessoWorkspaceShell";
@@ -139,8 +140,14 @@ export function RevisaoDetailPage({
       collaborationActive={!embedded || embeddedActive}
       activeSection={activeSection}
       onError={setError}
-      onRevisaoUpdated={load}
-      onRevisaoDeleted={() => onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId))}
+      onRevisaoUpdated={() => {
+        void load();
+        requestWorkspaceTreeRefresh();
+      }}
+      onRevisaoDeleted={() => {
+        requestWorkspaceTreeRefresh();
+        onNavigate(buildInstanciaPath(processoId, resolvedInstanciaId));
+      }}
       onNavigate={onNavigate}
     />
   );

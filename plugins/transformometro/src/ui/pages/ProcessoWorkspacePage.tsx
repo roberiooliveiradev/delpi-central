@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Copy, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -15,6 +15,7 @@ import {
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import { TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT } from "../../utils/navigation";
 import { buildProcessoPath } from "../../utils/routeParser";
 import type { ParsedTransformometroRoute } from "../../utils/routeParser";
 import { InstanciaDetailPage } from "../pages/InstanciaDetailPage";
@@ -71,6 +72,22 @@ export function ProcessoWorkspacePage({
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  const missingRevisaoRefreshKey = useRef<string | null>(null);
+
+  const reloadWorkspaceTree = useCallback(async () => {
+    try {
+      const [proc, inst, revs] = await Promise.all([
+        fetchProcesso(processoId, getAccessToken),
+        fetchProcessoInstancias(processoId, getAccessToken),
+        fetchRevisoes(processoId, getAccessToken),
+      ]);
+      setProcesso(proc);
+      setInstancias(inst.items);
+      setRevisoes(revs.items);
+    } catch {
+      setProcesso(null);
+    }
+  }, [getAccessToken, processoId]);
 
   const activeRevisao = useMemo(
     () => revisoes.find((row) => row.revisao_id === route.revisaoId) ?? null,
@@ -124,26 +141,29 @@ export function ProcessoWorkspacePage({
   }, [activePanelKey]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const [proc, inst, revs] = await Promise.all([
-          fetchProcesso(processoId, getAccessToken),
-          fetchProcessoInstancias(processoId, getAccessToken),
-          fetchRevisoes(processoId, getAccessToken),
-        ]);
-        if (cancelled) return;
-        setProcesso(proc);
-        setInstancias(inst.items);
-        setRevisoes(revs.items);
-      } catch {
-        if (!cancelled) setProcesso(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
+    void reloadWorkspaceTree();
+  }, [reloadWorkspaceTree]);
+
+  useEffect(() => {
+    const onRefresh = () => {
+      missingRevisaoRefreshKey.current = null;
+      void reloadWorkspaceTree();
     };
-  }, [getAccessToken, processoId]);
+    window.addEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
+    return () => window.removeEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
+  }, [reloadWorkspaceTree]);
+
+  // Self-heal: revisão aberta na URL ainda não está na árvore (ex.: criada/duplicada sem refresh).
+  useEffect(() => {
+    if (route.view !== "revisao" || !route.revisaoId) return;
+    if (revisoes.some((row) => row.revisao_id === route.revisaoId)) {
+      missingRevisaoRefreshKey.current = null;
+      return;
+    }
+    if (missingRevisaoRefreshKey.current === route.revisaoId) return;
+    missingRevisaoRefreshKey.current = route.revisaoId;
+    void reloadWorkspaceTree();
+  }, [reloadWorkspaceTree, revisoes, route.revisaoId, route.view]);
 
   const visiblePanels = useMemo(() => {
     const next = new Set(mountedPanels);

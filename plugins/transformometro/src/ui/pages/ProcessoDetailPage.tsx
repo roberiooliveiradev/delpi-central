@@ -45,6 +45,7 @@ import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArq
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
+import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
@@ -542,18 +543,22 @@ export function ProcessoDetailPage({
               await createProcessoInstancia(processoId, payload, getAccessToken);
               setOpenInstanciaForm(false);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
             onUpdate={async (instanciaId, payload) => {
               await updateInstancia(instanciaId, payload, getAccessToken);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
             onDelete={async (instanciaId) => {
               await deleteInstancia(instanciaId, getAccessToken);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
             onDuplicate={async ({ origemInstanciaId, ...payload }) => {
               await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
           />
           </ProcessoWorkspaceSectionPanel>

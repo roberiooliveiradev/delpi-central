@@ -50,7 +50,7 @@ import {
   buildRevisaoColumns,
 } from "../../utils/processoDetailTables";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
-import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
+import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT, requestWorkspaceTreeRefresh } from "../../utils/navigation";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { processoEscopoFromEntity } from "../processos/processoEscopo";
 import {
@@ -259,6 +259,7 @@ export function InstanciaDetailPage({
     try {
       await deleteRevisao(revisao.revisao_id, getAccessToken);
       await load();
+      requestWorkspaceTreeRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir revisão");
     }
@@ -276,6 +277,7 @@ export function InstanciaDetailPage({
     try {
       const result = await duplicateRevisao(revisao.revisao_id, undefined, getAccessToken);
       await load();
+      requestWorkspaceTreeRefresh();
       onNavigate(buildProcessoPath(processoId, result.revisao.revisao_id, instanciaId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao duplicar revisão");
@@ -316,6 +318,7 @@ export function InstanciaDetailPage({
       );
       setShowRevisaoForm(false);
       await load();
+      requestWorkspaceTreeRefresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar revisão");
     }
@@ -367,6 +370,7 @@ export function InstanciaDetailPage({
                 });
                 if (!confirmed) return;
                 await deleteInstancia(instanciaId, getAccessToken);
+                requestWorkspaceTreeRefresh();
                 onNavigate(buildProcessoPath(processoId));
               })();
             }}
@@ -446,16 +450,19 @@ export function InstanciaDetailPage({
               onCreate={async (payload) => {
                 await createProcessoInstancia(processoId, payload, getAccessToken);
                 await load();
+                requestWorkspaceTreeRefresh();
               }}
               onUpdate={async (id, payload) => {
                 await updateInstancia(id, payload, getAccessToken);
                 sectionEdit.cancelEdit("instancia");
                 await load();
+                requestWorkspaceTreeRefresh();
               }}
               onDelete={async () => undefined}
               onDuplicate={async ({ origemInstanciaId, ...payload }) => {
                 await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
                 await load();
+                requestWorkspaceTreeRefresh();
               }}
             />
           }
@@ -711,6 +718,7 @@ export function InstanciaDetailPage({
                     });
                     if (!confirmed) return;
                     await deleteInstancia(instanciaId, getAccessToken);
+                    requestWorkspaceTreeRefresh();
                     onNavigate(buildProcessoPath(processoId));
                   })();
                 }}
