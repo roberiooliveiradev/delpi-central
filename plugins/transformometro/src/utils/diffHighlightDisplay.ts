@@ -27,6 +27,48 @@ export function stripDecompositionHighlights(tree: DecompositionTreeV1): Decompo
   };
 }
 
+/**
+ * Inclui nós removidos (presentes só na referência) na árvore de exibição do diff.
+ * Não altera a árvore editável — só para preview com «Destacar diferenças».
+ */
+export function mergeRemovedNodesIntoTreeForDiff(
+  tree: DecompositionTreeV1,
+  referenceTree: DecompositionTreeV1 | null | undefined,
+  removedIds: string[] | null | undefined,
+): DecompositionTreeV1 {
+  if (!removedIds?.length || !referenceTree?.nodes?.length) return tree;
+
+  const currentIds = new Set(tree.nodes.map((node) => node.id));
+  const removedSet = new Set(removedIds);
+  const refById = new Map(
+    referenceTree.nodes.filter((node) => !node.disabled).map((node) => [node.id, node]),
+  );
+
+  function resolveParentId(refParentId: string | null | undefined): string | null {
+    let parentId = refParentId ?? null;
+    while (parentId) {
+      if (currentIds.has(parentId) || removedSet.has(parentId)) return parentId;
+      parentId = refById.get(parentId)?.parent_id ?? null;
+    }
+    return null;
+  }
+
+  const extras: DecompositionNode[] = [];
+  for (const id of removedIds) {
+    if (currentIds.has(id)) continue;
+    const refNode = refById.get(id);
+    if (!refNode) continue;
+    extras.push({
+      ...refNode,
+      parent_id: resolveParentId(refNode.parent_id),
+      highlight: "removed",
+    });
+  }
+
+  if (!extras.length) return tree;
+  return { ...tree, nodes: [...tree.nodes, ...extras] };
+}
+
 /** Aplica classes de diff (changed/added/removed) sobre a árvore rica. */
 export function applyDiffHighlightsToRichTree(
   root: RichTreeNode | null,

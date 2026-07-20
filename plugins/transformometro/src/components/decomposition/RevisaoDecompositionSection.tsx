@@ -185,6 +185,7 @@ export function RevisaoDecompositionSection({
             allowRootProcessoChave={merged.escopo?.inherit_all !== false}
             suppressStoredHighlights
             diffNodeIds={showDiff && hasDiff ? diff : null}
+            diffReferenceTree={showDiff && hasDiff ? merged.tree_reference ?? null : null}
             onChange={setEditable}
           />
         ) : null}

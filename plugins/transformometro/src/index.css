@@ -1334,7 +1334,11 @@
   background: color-mix(in srgb, #d97706 14%, transparent);
 }.dashboard-transformometro .tm-rich-tree__row--removed{
   background: color-mix(in srgb, #dc2626 12%, transparent);
-  opacity: 0.85;
+  opacity: 0.9;
+}.dashboard-transformometro .tm-rich-tree__row--removed .tm-rich-tree__label,
+.dashboard-transformometro .tm-rich-tree__row--removed .tm-rich-tree__input{
+  text-decoration: line-through;
+  color: var(--ds-text-muted);
 }.dashboard-transformometro .tm-rich-tree__toggle,
 .dashboard-transformometro .tm-rich-tree__toggle-spacer{
   flex: 0 0 1.5rem;

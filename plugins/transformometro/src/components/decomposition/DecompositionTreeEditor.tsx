@@ -14,6 +14,7 @@ import {
 import type { DiagramDiff } from "../../types/diagram";
 import {
   applyDiffHighlightsToRichTree,
+  mergeRemovedNodesIntoTreeForDiff,
   stripDecompositionHighlights,
 } from "../../utils/diffHighlightDisplay";
 import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
@@ -36,6 +37,8 @@ type Props = {
   suppressStoredHighlights?: boolean;
   /** Quando definido, pinta nós alterados/novos/removidos vs referência. */
   diffNodeIds?: DiagramDiff | null;
+  /** Árvore de referência — necessária para reexibir nós removidos no diff. */
+  diffReferenceTree?: DecompositionTreeV1 | null;
   onChange: (tree: DecompositionTreeV1) => void;
 };
 
@@ -51,14 +54,19 @@ export function DecompositionTreeEditor({
   allowRootProcessoChave = true,
   suppressStoredHighlights = false,
   diffNodeIds = null,
+  diffReferenceTree = null,
   onChange,
 }: Props) {
   const nodeById = useMemo(() => new Map(tree.nodes.map((node) => [node.id, node])), [tree.nodes]);
   const richRoot = useMemo(() => {
-    const source = suppressStoredHighlights ? stripDecompositionHighlights(tree) : tree;
+    let source = suppressStoredHighlights ? stripDecompositionHighlights(tree) : tree;
+    if (diffNodeIds?.removed?.length) {
+      source = mergeRemovedNodesIntoTreeForDiff(source, diffReferenceTree, diffNodeIds.removed);
+    }
     const root = buildDecompositionRichTree(source, { title });
     return diffNodeIds ? applyDiffHighlightsToRichTree(root, diffNodeIds) : root;
-  }, [tree, title, suppressStoredHighlights, diffNodeIds]);
+  }, [tree, title, suppressStoredHighlights, diffNodeIds, diffReferenceTree]);
+  const expandDepth = diffNodeIds?.removed?.length ? 8 : 2;
   const draggableNodeIds = useMemo(
     () => new Set(tree.nodes.filter((node) => !node.disabled).map((node) => node.id)),
     [tree.nodes]
@@ -171,7 +179,7 @@ export function DecompositionTreeEditor({
       ) : (
         <DecompositionRichTree
           root={richRoot}
-          expandDepth={2}
+          expandDepth={expandDepth}
           enableDragDrop={!readOnly}
           dragDrop={readOnly ? undefined : dragDrop}
           renderLabel={
