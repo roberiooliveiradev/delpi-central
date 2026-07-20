@@ -231,6 +231,16 @@ export type SafetyStockItemDetails = {
     work_in_process_available: number;
     deficit_quantity: number;
   };
+  peer_branch_stock?: {
+    branch: string;
+    found: boolean;
+    available_stock: number;
+    primary_stock: number;
+    warehouse_98_stock: number;
+    warehouse_99_stock: number;
+    safety_stock: number;
+    last_consumption_date: string | null;
+  } | null;
   purchase_coverage: SafetyStockPurchaseCoverage;
   open_purchase_orders: SafetyStockCollectionBlock<SafetyStockOpenPurchaseOrder>;
   open_commitments: SafetyStockCollectionBlock<
@@ -241,6 +251,14 @@ export type SafetyStockItemDetails = {
     SafetyStockProjectionLedgerEntry,
     SafetyStockProjectionSummary
   >;
+  monthly_consumption?: {
+    items: import("./consumptionAnalysis").MonthlyConsumptionPoint[];
+    total: number;
+    period_consumption: number;
+    period_start?: string;
+    period_end?: string;
+  };
+  annual_comparison?: import("./consumptionAnalysis").AnnualComparisonData;
 };
 
 export type SafetyStockLinkedSupplier = {

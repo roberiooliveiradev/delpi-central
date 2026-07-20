@@ -8,6 +8,8 @@ from app.application.dto.supplies.safety_stock_request import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
+    SafetyStockConsumptionAnalysisItemsRequest,
+    SafetyStockConsumptionAnalysisQueryRequest,
     SafetyStockItemDetailsRequest,
     SafetyStockItemsRequest,
     SafetyStockQueryRequest,
@@ -44,10 +46,12 @@ def build_safety_stock_item_details_request(
     *,
     branch: str,
     product_code: str,
+    peer_branch: str | None = None,
 ) -> SafetyStockItemDetailsRequest:
     return SafetyStockItemDetailsRequest(
         branch=branch,
         product_code=product_code,
+        peer_branch=peer_branch,
     )
 
 
@@ -95,10 +99,62 @@ def build_safety_stock_items_request(
     )
 
 
+def build_consumption_analysis_query_request(
+    *,
+    branch: str,
+    include_blocked: bool = False,
+    product_group: Optional[str] = None,
+    unit: Optional[str] = None,
+    search: Optional[str] = None,
+    analysis_status: Optional[str] = None,
+) -> SafetyStockConsumptionAnalysisQueryRequest:
+    return SafetyStockConsumptionAnalysisQueryRequest(
+        branch=branch,
+        include_blocked=include_blocked,
+        product_group=product_group,
+        unit=unit,
+        search=search,
+        analysis_status=analysis_status,
+    )
+
+
+def build_consumption_analysis_items_request(
+    *,
+    branch: str,
+    page: int = DEFAULT_PAGE,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    include_blocked: bool = False,
+    product_group: Optional[str] = None,
+    unit: Optional[str] = None,
+    search: Optional[str] = None,
+    analysis_status: Optional[str] = None,
+    sort_by: str = "difference_quantity",
+    sort_direction: str = "asc",
+) -> SafetyStockConsumptionAnalysisItemsRequest:
+    return SafetyStockConsumptionAnalysisItemsRequest(
+        branch=branch,
+        page=page,
+        page_size=page_size,
+        include_blocked=include_blocked,
+        product_group=product_group,
+        unit=unit,
+        search=search,
+        analysis_status=analysis_status,
+        sort_by=sort_by,
+        sort_direction=sort_direction,
+    )
+
+
 def execute_safety_stock_route(
     *,
     use_case_builder: Callable[[], object],
-    request: SafetyStockQueryRequest | SafetyStockItemsRequest | SafetyStockItemDetailsRequest,
+    request: (
+        SafetyStockQueryRequest
+        | SafetyStockItemsRequest
+        | SafetyStockItemDetailsRequest
+        | SafetyStockConsumptionAnalysisQueryRequest
+        | SafetyStockConsumptionAnalysisItemsRequest
+    ),
     operation_id: str,
     success_message: str,
     error_context: str,
@@ -183,4 +239,17 @@ SUPPLIER_STORE_QUERY = Query(
     min_length=1,
     max_length=6,
     description="Loja do fornecedor (A2_LOJA / D1_LOJA).",
+)
+ANALYSIS_STATUS_QUERY = Query(
+    None,
+    alias="analysisStatus",
+    description=(
+        "Filtro da análise: below_suggested, above_suggested, "
+        "adequate ou inconsistent_data."
+    ),
+)
+ANALYSIS_SORT_BY_QUERY = Query(
+    "difference_quantity",
+    alias="sortBy",
+    description="Campo de ordenação da análise de consumo.",
 )

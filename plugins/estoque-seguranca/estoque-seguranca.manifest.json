@@ -2,9 +2,9 @@
   "schemaVersion": "1.0.0",
   "id": "estoque-seguranca",
   "name": "Estoque de Segurança",
-  "description": "Análise de matérias-primas, saldos disponíveis e estoques de segurança.",
+  "description": "Análise de matérias-primas, saldos disponíveis, estoques de segurança e simulação por consumo.",
   "icon": "shield-icon",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "microfrontend",
 
   "basePath": "/apps/estoque-seguranca",
@@ -38,6 +38,14 @@
       "permission": "estoque-seguranca.access",
       "icon": "shield-icon",
       "order": 23,
+      "showInMenu": true
+    },
+    {
+      "path": "/apps/estoque-seguranca/analise-consumo",
+      "label": "Análise de consumo",
+      "permission": "estoque-seguranca.access",
+      "icon": "chart-bar-icon",
+      "order": 24,
       "showInMenu": true
     }
   ],

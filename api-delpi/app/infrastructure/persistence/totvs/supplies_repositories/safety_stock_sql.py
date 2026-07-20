@@ -8,6 +8,10 @@ from app.domain.services.supplies.safety_stock_classification_service import (
     TOLERANCE,
     WORK_IN_PROCESS_WAREHOUSES,
 )
+from app.domain.services.supplies.safety_stock_consumption_analysis_service import (
+    CONSUMPTION_MOVEMENT_TYPE,
+    CONSUMPTION_WAREHOUSE,
+)
 from app.domain.services.supplies.safety_stock_supplier_scope_service import (
     INTERNAL_TRANSFER_SUPPLIER_CODES,
     internal_transfer_supplier_codes_sql,
@@ -20,7 +24,12 @@ __all__ = [
     "TOLERANCE",
     "WORK_IN_PROCESS_WAREHOUSES",
     "SORTABLE_COLUMNS",
+    "build_consumption_analysis_where_clauses",
     "build_where_clauses",
+    "consumption_agg_cte",
+    "consumption_analysis_rows_sql",
+    "consumption_last_date_sql",
+    "consumption_monthly_series_sql",
     "linked_suppliers_sql",
     "materials_base_cte",
     "open_commitments_sql",
@@ -103,6 +112,7 @@ def materials_base_cte(*, branch_param: str = "?") -> str:
             RTRIM(SB1.B1_GRUPO) AS product_group,
             RTRIM(SB1.B1_MSBLQL) AS blocked_raw,
             CAST(ISNULL(SBZ.BZ_ESTSEG, 0) AS FLOAT) AS safety_stock,
+            CAST(ISNULL(SBZ.BZ_PE, 0) AS FLOAT) AS lead_time_days,
             ISNULL(st.primary_stock, 0) AS primary_stock,
             ISNULL(st.work_in_process_stock, 0) AS work_in_process_stock,
             ISNULL(st.warehouse_50_stock, 0) AS warehouse_50_stock,
@@ -493,4 +503,163 @@ def linked_suppliers_sql(
         END ASC,
         S.supplier_code ASC,
         S.supplier_store ASC
+    """
+
+
+def consumption_agg_cte(
+    *,
+    branch_param: str = "?",
+    start_date_param: str = "?",
+) -> str:
+    """Agrega baixas SD3 elegíveis (local 99, TM 999, OP preenchida)."""
+    return f"""
+    consumption_agg AS (
+        SELECT
+            RTRIM(SD3.D3_COD) AS product_code,
+            SUM(CAST(ISNULL(SD3.D3_QUANT, 0) AS FLOAT)) AS period_consumption,
+            COUNT(*) AS movement_count,
+            MIN(RTRIM(SD3.D3_EMISSAO)) AS first_movement_date,
+            MAX(RTRIM(SD3.D3_EMISSAO)) AS last_movement_date
+        FROM SD3010 SD3 WITH (NOLOCK)
+        WHERE SD3.D_E_L_E_T_ = ''
+          AND RTRIM(SD3.D3_FILIAL) = {branch_param}
+          AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
+          AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
+          AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+          AND SD3.D3_EMISSAO >= {start_date_param}
+        GROUP BY SD3.D3_COD
+        HAVING COUNT(*) > 0
+    )
+    """
+
+
+def build_consumption_analysis_where_clauses(
+    *,
+    include_blocked: bool,
+    product_group: str | None,
+    unit: str | None,
+    search: str | None,
+    product_code: str | None = None,
+    table_alias: str = "analyzed",
+) -> tuple[str, list]:
+    clauses: list[str] = [f"{table_alias}.safety_stock <> 0"]
+    params: list = []
+
+    if not include_blocked:
+        clauses.append(
+            f"(RTRIM(LTRIM({table_alias}.blocked_raw)) NOT IN ('1', 'SIM') "
+            f"OR {table_alias}.blocked_raw IS NULL "
+            f"OR RTRIM(LTRIM({table_alias}.blocked_raw)) = '')"
+        )
+
+    if product_code:
+        clauses.append(f"RTRIM({table_alias}.product_code) = ?")
+        params.append(product_code.strip())
+
+    if product_group:
+        clauses.append(f"RTRIM({table_alias}.product_group) = ?")
+        params.append(product_group.strip())
+
+    if unit:
+        clauses.append(f"RTRIM({table_alias}.unit) = ?")
+        params.append(unit.strip())
+
+    if search:
+        term = search.strip()
+        if term:
+            clauses.append(
+                f"(RTRIM({table_alias}.product_code) LIKE ? "
+                f"OR RTRIM({table_alias}.product_description) "
+                f"COLLATE Latin1_General_CI_AI LIKE ?)"
+            )
+            params.extend([f"%{term}%", f"%{term}%"])
+
+    return " AND ".join(clauses), params
+
+
+def consumption_analysis_rows_sql(
+    *,
+    branch_param: str = "?",
+    start_date_param: str = "?",
+) -> str:
+    """Produtos com ESTSEG ≠ 0 e pelo menos uma baixa elegível no período."""
+    return f"""
+    WITH
+    {stock_agg_cte(branch_param=branch_param)}
+    , {materials_base_cte(branch_param=branch_param)}
+    , {consumption_agg_cte(branch_param=branch_param, start_date_param=start_date_param)}
+    , analyzed AS (
+        SELECT
+            mb.product_code,
+            mb.product_description,
+            mb.product_type,
+            mb.unit,
+            mb.product_group,
+            mb.blocked_raw,
+            mb.safety_stock,
+            mb.lead_time_days,
+            mb.primary_stock,
+            mb.work_in_process_stock,
+            mb.warehouse_50_stock,
+            mb.warehouse_98_stock,
+            mb.warehouse_99_stock,
+            mb.available_stock,
+            mb.work_in_process_committed,
+            mb.work_in_process_available,
+            ca.period_consumption,
+            ca.movement_count,
+            ca.first_movement_date,
+            ca.last_movement_date
+        FROM materials_base mb
+        INNER JOIN consumption_agg ca
+            ON ca.product_code = mb.product_code
+    )
+    SELECT *
+    FROM analyzed
+    WHERE {{where_sql}}
+    ORDER BY product_code ASC
+    """
+
+
+def consumption_last_date_sql(
+    *,
+    branch_param: str = "?",
+    product_param: str = "?",
+) -> str:
+    """Última baixa elegível (consumo SD3) de um produto na filial — sem janela de datas."""
+    return f"""
+    SELECT
+        MAX(RTRIM(SD3.D3_EMISSAO)) AS last_consumption_date
+    FROM SD3010 SD3 WITH (NOLOCK)
+    WHERE SD3.D_E_L_E_T_ = ''
+      AND RTRIM(SD3.D3_FILIAL) = {branch_param}
+      AND RTRIM(SD3.D3_COD) = {product_param}
+      AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
+      AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
+      AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+    """
+
+
+def consumption_monthly_series_sql(
+    *,
+    branch_param: str = "?",
+    product_param: str = "?",
+    start_date_param: str = "?",
+) -> str:
+    """Série mensal de consumo (baixas elegíveis) para um produto."""
+    return f"""
+    SELECT
+        LEFT(RTRIM(SD3.D3_EMISSAO), 6) AS year_month,
+        SUM(CAST(ISNULL(SD3.D3_QUANT, 0) AS FLOAT)) AS consumption_quantity,
+        COUNT(*) AS movement_count
+    FROM SD3010 SD3 WITH (NOLOCK)
+    WHERE SD3.D_E_L_E_T_ = ''
+      AND RTRIM(SD3.D3_FILIAL) = {branch_param}
+      AND RTRIM(SD3.D3_COD) = {product_param}
+      AND RTRIM(SD3.D3_LOCAL) = '{CONSUMPTION_WAREHOUSE}'
+      AND LTRIM(RTRIM(ISNULL(SD3.D3_OP, ''))) <> ''
+      AND RTRIM(SD3.D3_TM) = '{CONSUMPTION_MOVEMENT_TYPE}'
+      AND SD3.D3_EMISSAO >= {start_date_param}
+    GROUP BY LEFT(RTRIM(SD3.D3_EMISSAO), 6)
+    ORDER BY year_month ASC
     """

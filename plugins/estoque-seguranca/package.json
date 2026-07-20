@@ -16,7 +16,9 @@
     "@originjs/vite-plugin-federation": "^1.4.1",
     "lucide-react": "^0.576.0",
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.7",
+    "recharts": "^3.9.2",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

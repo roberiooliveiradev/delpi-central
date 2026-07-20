@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, PackageCheck, ShieldCheck, TriangleAlert, Warehouse } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronRight,
+  PackageCheck,
+  ShieldCheck,
+  Warehouse,
+} from "lucide-react";
 import {
   createDashboardDetailFieldGrid,
   createDashboardStatusBadge,
@@ -33,6 +39,7 @@ import {
   supplierRowKey,
 } from "./SafetyStockLinkedSuppliersSection";
 import { SafetyStockSupplierPriceHistoryPanel } from "./SafetyStockSupplierPriceHistoryPanel";
+import { ProductConsumptionChartsSection } from "./ProductConsumptionChartsSection";
 import { SectionError } from "./SectionError";
 
 const Modal = createModalShell({
@@ -135,6 +142,7 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
 
   const product = data?.product;
   const stock = data?.stock;
+  const peerBranchStock = data?.peer_branch_stock ?? null;
   const coverage = data?.purchase_coverage;
   const projection = data?.stock_projection;
   const projectionSummary = projection?.summary;
@@ -252,16 +260,26 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
                 icon={<PackageCheck size={20} />}
                 wide
               />
+              {peerBranchStock ? (
+                <KpiCard
+                  title={`Saldo ${branchLabel(peerBranchStock.branch)}`}
+                  titleHint="Saldo disponível (01+98+99) na outra filial — útil para avaliar transferência de MP. A legenda mostra a última baixa de consumo elegível nessa filial."
+                  value={formatNumberPtBr(peerBranchStock.available_stock)}
+                  subtitle={
+                    !peerBranchStock.found
+                      ? "Produto sem cadastro/saldo nesta filial"
+                      : peerBranchStock.last_consumption_date
+                        ? `Último consumo: ${formatIsoDatePtBr(peerBranchStock.last_consumption_date)}`
+                        : "Sem consumo registrado nesta filial"
+                  }
+                  icon={<ArrowLeftRight size={20} />}
+                  wide
+                />
+              ) : null}
               <KpiCard
                 title="Estoque de segurança"
                 value={formatNumberPtBr(stock.safety_stock)}
                 icon={<ShieldCheck size={20} />}
-              />
-              <KpiCard
-                title="Déficit físico"
-                value={formatNumberPtBr(stock.deficit_quantity)}
-                icon={<TriangleAlert size={20} />}
-                valueTone={stock.deficit_quantity > 0 ? "danger" : "default"}
               />
               <KpiCard
                 title="Armazém 01"
@@ -368,6 +386,14 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
               onRetry={reloadPriceHistory}
             />
           ) : null}
+
+          <ProductConsumptionChartsSection
+            monthlyPoints={data?.monthly_consumption?.items ?? []}
+            periodConsumption={data?.monthly_consumption?.period_consumption ?? 0}
+            annualComparison={data?.annual_comparison}
+            loading={loading}
+            resetKey={item ? `${item.branch}-${item.product_code}` : null}
+          />
         </div>
       ) : null}
     </Modal>

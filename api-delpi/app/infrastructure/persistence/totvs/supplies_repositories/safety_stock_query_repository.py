@@ -12,7 +12,11 @@ from app.infrastructure.persistence.totvs.engineering_repositories.mini_applicat
 from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql import (
     PRIMARY_WAREHOUSE,
     WORK_IN_PROCESS_WAREHOUSES,
+    build_consumption_analysis_where_clauses,
     build_where_clauses,
+    consumption_analysis_rows_sql,
+    consumption_last_date_sql,
+    consumption_monthly_series_sql,
     linked_suppliers_sql,
     materials_base_cte,
     open_commitments_sql,
@@ -290,6 +294,58 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           rows = repo.execute_query(sql, params)
       return [self._map_linked_supplier(row) for row in rows]
 
+  def fetch_consumption_analysis_rows(
+      self,
+      *,
+      branch: str,
+      period_start: str,
+      include_blocked: bool,
+      product_group: str | None,
+      unit: str | None,
+      search: str | None,
+      product_code: str | None = None,
+  ) -> list[dict[str, Any]]:
+      where_sql, filter_params = build_consumption_analysis_where_clauses(
+          include_blocked=include_blocked,
+          product_group=product_group,
+          unit=unit,
+          search=search,
+          product_code=product_code,
+      )
+      sql = consumption_analysis_rows_sql().format(where_sql=where_sql)
+      # stock_agg, materials_base, consumption_agg: branch, branch, branch, start
+      params = [branch, branch, branch, period_start] + filter_params
+      with self as repo:
+          rows = repo.execute_query(sql, params)
+      return [self._map_consumption_analysis_row(row, branch) for row in rows]
+
+  def fetch_consumption_monthly_series(
+      self,
+      *,
+      branch: str,
+      product_code: str,
+      period_start: str,
+  ) -> list[dict[str, Any]]:
+      code = product_code.strip()
+      sql = consumption_monthly_series_sql()
+      with self as repo:
+          rows = repo.execute_query(sql, [branch, code, period_start])
+      return [self._map_monthly_series_row(row) for row in rows]
+
+  def fetch_last_consumption_date(
+      self,
+      *,
+      branch: str,
+      product_code: str,
+  ) -> str | None:
+      code = product_code.strip()
+      sql = consumption_last_date_sql()
+      with self as repo:
+          row = repo.execute_one(sql, [branch, code])
+      if not row:
+          return None
+      return self._format_protheus_date(row.get("last_consumption_date"))
+
   @staticmethod
   def _format_protheus_date(value: Any) -> str | None:
       raw = str(value or "").strip()
@@ -409,6 +465,42 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           "work_in_process_available": float(row.get("work_in_process_available") or 0),
           "deficit_quantity": float(row.get("deficit_quantity") or 0),
           "status": str(row.get("status") or "").strip(),
+      }
+
+  @classmethod
+  def _map_consumption_analysis_row(
+      cls,
+      row: dict[str, Any],
+      branch: str,
+  ) -> dict[str, Any]:
+      mapped = cls._map_item_row(row, branch)
+      mapped.update(
+          {
+              "lead_time_days": float(row.get("lead_time_days") or 0),
+              "available_stock": float(row.get("available_stock") or 0),
+              "period_consumption": float(row.get("period_consumption") or 0),
+              "movement_count": int(row.get("movement_count") or 0),
+              "first_movement_date": cls._format_protheus_date(
+                  row.get("first_movement_date")
+              ),
+              "last_movement_date": cls._format_protheus_date(
+                  row.get("last_movement_date")
+              ),
+          }
+      )
+      return mapped
+
+  @classmethod
+  def _map_monthly_series_row(cls, row: dict[str, Any]) -> dict[str, Any]:
+      year_month = str(row.get("year_month") or "").strip()
+      label = year_month
+      if len(year_month) == 6 and year_month.isdigit():
+          label = f"{year_month[0:4]}-{year_month[4:6]}"
+      return {
+          "year_month": year_month,
+          "year_month_label": label,
+          "consumption_quantity": float(row.get("consumption_quantity") or 0),
+          "movement_count": int(row.get("movement_count") or 0),
       }
 
   @staticmethod

@@ -140,6 +140,9 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/supplies/safety-stock/items/{code}/details` | Detalhe com SC7, SD4 e extrato projetado (`composite_analysis`). Ver [estoque-seguranca.md](./estoque-seguranca.md). |
 | GET | `/supplies/safety-stock/items/{code}/suppliers` | Fornecedores vinculados (SA5) + última compra (SD1). Ver [estoque-seguranca.md](./estoque-seguranca.md). |
 | GET | `/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history` | Histórico de preço unitário (12 meses) por fornecedor. Ver [estoque-seguranca.md](./estoque-seguranca.md). |
+| GET | `/supplies/safety-stock/consumption-analysis/summary` | KPIs da análise consumo × ESTSEG sugerido (12 meses). |
+| GET | `/supplies/safety-stock/consumption-analysis/items` | Lista paginada da simulação de ESTSEG por consumo SD3 + lead time `BZ_PE`. |
+| GET | `/supplies/safety-stock/consumption-analysis/items/{code}` | Detalhe com série mensal, comparativo anual (3 anos) e memória de cálculo. |
 
 **Performance (`/supplies/otd`):**
 

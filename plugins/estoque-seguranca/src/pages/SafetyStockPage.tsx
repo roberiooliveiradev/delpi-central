@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { DeficitByUnit } from "../components/DeficitByUnit";
+import { EssPageNav } from "../components/EssPageNav";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { PageHeader } from "../components/PageHeader";
 import { SafetyStockDetailModal } from "../components/SafetyStockDetailModal";
@@ -122,6 +123,7 @@ export function SafetyStockPage() {
           refreshing={
             filterOptions.loading || summary.refreshing || items.refreshing
           }
+          nav={<EssPageNav active="monitor" />}
         />
 
         {initialFiltersLoading ? (
@@ -177,6 +179,7 @@ export function SafetyStockPage() {
             ) : (
               <SafetyStockTable
                 items={items.data?.items ?? []}
+                exportParams={appliedParams}
                 loading={items.loading}
                 refreshing={items.refreshing}
                 page={items.data?.page ?? page}

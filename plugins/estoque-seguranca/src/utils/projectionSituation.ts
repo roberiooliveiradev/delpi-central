@@ -25,19 +25,3 @@ export function projectionSituationParts(
       : null,
   };
 }
-
-export function projectionSituationText(summary: SafetyStockProjectionSummary): string {
-  const parts = projectionSituationParts(summary);
-  const base =
-    `Partindo de um saldo de ${parts.initialBalance}, ` +
-    `com ${parts.purchaseQuantity} de entradas previstas ` +
-    `e ${parts.commitmentQuantity} de consumo comprometido, ` +
-    `o saldo final projetado é ${parts.finalBalance}. ` +
-    `O menor saldo previsto no período é ${parts.minimumBalance}.`;
-
-  if (parts.shortageDate) {
-    return `${base} A primeira ruptura está prevista para ${parts.shortageDate}.`;
-  }
-
-  return `${base} Não há ruptura projetada no período.`;
-}

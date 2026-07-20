@@ -287,6 +287,8 @@ declare module "@delpi/plugin-ui/index" {
     serverPagination?: ServerPaginationConfig;
     onRowClick?: (row: T) => void;
     interactive?: boolean;
+    headerActions?: ReactNode;
+    toolbarExtra?: ReactNode;
   };
 
   export type DashboardDrawerShellProps = {
@@ -399,6 +401,43 @@ declare module "@delpi/plugin-ui/index" {
   };
 
   export function LineSeriesChart(props: LineSeriesChartProps): ReactElement;
+
+  export type BarSeriesChartProps = LineSeriesChartProps;
+
+  export function BarSeriesChart(props: BarSeriesChartProps): ReactElement;
+
+  export type TableExportColumn = { key: string; label: string };
+  export type TableExportPayload = {
+    title: string;
+    columns: TableExportColumn[];
+    rows: Array<Record<string, string | number | null | undefined>>;
+  };
+
+  export function exportPayloadToXlsx(
+    payload: TableExportPayload,
+    options?: { emptyMessage?: string; filename?: string },
+  ): void;
+
+  export type ExcelExportButtonProps = {
+    disabled?: boolean;
+    exporting?: boolean;
+    onExport: () => void | Promise<void>;
+    className?: string;
+    buttonClassName?: string;
+    label?: string;
+    exportingLabel?: string;
+  };
+
+  export function ExcelExportButton(props: ExcelExportButtonProps): ReactElement;
+
+  export type HelpTooltipProps = {
+    content: ReactNode;
+    ariaLabel: string;
+    className?: string;
+    placement?: "top" | "bottom" | "left" | "right" | string;
+  };
+
+  export function HelpTooltip(props: HelpTooltipProps): ReactElement;
 }
 
 declare module "@delpi/plugin-ui/styles" {}

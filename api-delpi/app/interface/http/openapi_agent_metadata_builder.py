@@ -66,6 +66,15 @@ _ENTITY_LABELS: dict[str, str] = {
     "supplies_safety_stock_item": "itens de estoque de segurança",
     "supplies_safety_stock_summary": "resumo de estoque de segurança",
     "supplies_safety_stock_filters": "filtros de estoque de segurança",
+    "supplies_safety_stock_consumption_analysis_summary": (
+        "resumo da análise de consumo versus estoque de segurança sugerido"
+    ),
+    "supplies_safety_stock_consumption_analysis_item": (
+        "itens da análise de consumo e estoque de segurança sugerido"
+    ),
+    "supplies_safety_stock_consumption_analysis_detail": (
+        "detalhe da análise de consumo com série mensal e memória de cálculo"
+    ),
 }
 
 _SHAPE_SUMMARY_PREFIX: dict[str, str] = {

@@ -4,7 +4,12 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     INTERNAL_TRANSFER_SUPPLIER_CODES,
     PRIMARY_WAREHOUSE,
     WORK_IN_PROCESS_WAREHOUSES,
+    build_consumption_analysis_where_clauses,
     build_where_clauses,
+    consumption_agg_cte,
+    consumption_analysis_rows_sql,
+    consumption_last_date_sql,
+    consumption_monthly_series_sql,
     linked_suppliers_sql,
     materials_base_cte,
     open_commitments_sql,
@@ -31,9 +36,49 @@ def test_materials_base_cte_contains_mp_and_sbz_join() -> None:
     assert "B1_TIPO = 'MP'" in sql
     assert "BZ_FILIAL" in sql
     assert "BZ_ESTSEG" in sql
+    assert "BZ_PE" in sql
     assert "without_safety_stock" in sql
     assert "below_safety_stock" in sql
     assert "available_stock" in sql
+
+
+def test_consumption_agg_cte_uses_sd3_filters() -> None:
+    sql = consumption_agg_cte()
+    assert "SD3010" in sql
+    assert "D3_LOCAL) = '99'" in sql
+    assert "D3_TM) = '999'" in sql
+    assert "D3_OP" in sql
+    assert "D3_EMISSAO >=" in sql
+    assert "HAVING COUNT(*) > 0" in sql
+
+
+def test_consumption_analysis_rows_require_estseg_and_movements() -> None:
+    where_sql, params = build_consumption_analysis_where_clauses(
+        include_blocked=False,
+        product_group="GRP",
+        unit=None,
+        search=None,
+        product_code="10020113",
+    )
+    assert "safety_stock <> 0" in where_sql
+    assert "product_code) = ?" in where_sql
+    assert params == ["10020113", "GRP"]
+    sql = consumption_analysis_rows_sql().format(where_sql=where_sql)
+    assert "consumption_agg" in sql
+    assert "INNER JOIN consumption_agg" in sql
+
+
+def test_consumption_last_date_sql() -> None:
+    sql = consumption_last_date_sql()
+    assert "MAX(RTRIM(SD3.D3_EMISSAO))" in sql
+    assert "D3_LOCAL) = '99'" in sql
+    assert "D3_TM) = '999'" in sql
+
+
+def test_consumption_monthly_series_sql() -> None:
+    sql = consumption_monthly_series_sql()
+    assert "LEFT(RTRIM(SD3.D3_EMISSAO), 6)" in sql
+    assert "D3_TM) = '999'" in sql
 
 
 def test_build_where_clauses_excludes_blocked_by_default() -> None:

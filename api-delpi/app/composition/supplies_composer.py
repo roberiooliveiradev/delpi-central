@@ -29,6 +29,15 @@ from app.infrastructure.persistence.totvs.supplies_repositories.stock_value_quer
 from app.infrastructure.persistence.google_sheets.supplies.negotiation_savings_repository import (
     NegotiationSavingsRepository,
 )
+from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_item_details_use_case import (
+    GetSafetyStockConsumptionAnalysisItemDetailsUseCase,
+)
+from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_items_use_case import (
+    GetSafetyStockConsumptionAnalysisItemsUseCase,
+)
+from app.application.use_cases.supplies.get_safety_stock_consumption_analysis_summary_use_case import (
+    GetSafetyStockConsumptionAnalysisSummaryUseCase,
+)
 from app.application.use_cases.supplies.get_safety_stock_filters_use_case import (
     GetSafetyStockFiltersUseCase,
 )
@@ -144,4 +153,28 @@ def build_get_safety_stock_supplier_price_history_use_case() -> (
 ):
     return GetSafetyStockSupplierPriceHistoryUseCase(
         repository=ProductRawMaterialPriceRepository()
+    )
+
+
+def build_get_safety_stock_consumption_analysis_summary_use_case() -> (
+    GetSafetyStockConsumptionAnalysisSummaryUseCase
+):
+    return GetSafetyStockConsumptionAnalysisSummaryUseCase(
+        repository=SafetyStockQueryRepository()
+    )
+
+
+def build_get_safety_stock_consumption_analysis_items_use_case() -> (
+    GetSafetyStockConsumptionAnalysisItemsUseCase
+):
+    return GetSafetyStockConsumptionAnalysisItemsUseCase(
+        repository=SafetyStockQueryRepository()
+    )
+
+
+def build_get_safety_stock_consumption_analysis_item_details_use_case() -> (
+    GetSafetyStockConsumptionAnalysisItemDetailsUseCase
+):
+    return GetSafetyStockConsumptionAnalysisItemDetailsUseCase(
+        repository=SafetyStockQueryRepository()
     )

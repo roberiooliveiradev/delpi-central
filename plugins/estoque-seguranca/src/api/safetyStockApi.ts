@@ -1,6 +1,12 @@
 import { httpGet } from "./httpClient";
 import { unwrapApiDelpiEnvelope } from "../types/api";
 import type {
+  ConsumptionAnalysisItemDetails,
+  ConsumptionAnalysisItemsData,
+  ConsumptionAnalysisQueryParams,
+  ConsumptionAnalysisSummaryData,
+} from "../types/consumptionAnalysis";
+import type {
   SafetyStockFiltersData,
   SafetyStockItemDetails,
   SafetyStockItemsData,
@@ -139,4 +145,60 @@ export async function bootstrapSafetyStockFilters(
   }
 
   throw lastError;
+}
+
+function analysisSharedQuery(
+  params: Pick<
+    ConsumptionAnalysisQueryParams,
+    "branch" | "includeBlocked" | "productGroup" | "unit" | "search" | "analysisStatus"
+  >,
+) {
+  return {
+    branch: params.branch,
+    includeBlocked: params.includeBlocked,
+    productGroup: params.productGroup || undefined,
+    unit: params.unit || undefined,
+    search: params.search || undefined,
+    analysisStatus: params.analysisStatus || undefined,
+  };
+}
+
+export async function fetchConsumptionAnalysisSummary(
+  params: ConsumptionAnalysisQueryParams,
+  options: RequestOptions = {},
+): Promise<ConsumptionAnalysisSummaryData> {
+  return getEnvelope<ConsumptionAnalysisSummaryData>(
+    `/consumption-analysis/summary${queryString(analysisSharedQuery(params))}`,
+    options,
+  );
+}
+
+export async function fetchConsumptionAnalysisItems(
+  params: ConsumptionAnalysisQueryParams,
+  page: number,
+  pageSize: number,
+  options: RequestOptions = {},
+): Promise<ConsumptionAnalysisItemsData> {
+  return getEnvelope<ConsumptionAnalysisItemsData>(
+    `/consumption-analysis/items${queryString({
+      ...analysisSharedQuery(params),
+      page,
+      pageSize,
+      sortBy: params.sortBy,
+      sortDirection: params.sortDirection,
+    })}`,
+    options,
+  );
+}
+
+export async function fetchConsumptionAnalysisItemDetails(
+  branch: string,
+  productCode: string,
+  options: RequestOptions = {},
+): Promise<ConsumptionAnalysisItemDetails> {
+  const encoded = encodeURIComponent(productCode.trim());
+  return getEnvelope<ConsumptionAnalysisItemDetails>(
+    `/consumption-analysis/items/${encoded}${queryString({ branch })}`,
+    options,
+  );
 }

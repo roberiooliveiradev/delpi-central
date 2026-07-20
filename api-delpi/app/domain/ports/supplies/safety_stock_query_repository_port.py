@@ -95,3 +95,36 @@ class SafetyStockQueryRepositoryPort(ABC):
         product_code: str,
     ) -> list[dict[str, Any]]:
         ...
+
+    @abstractmethod
+    def fetch_consumption_analysis_rows(
+        self,
+        *,
+        branch: str,
+        period_start: str,
+        include_blocked: bool,
+        product_group: str | None,
+        unit: str | None,
+        search: str | None,
+        product_code: str | None = None,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def fetch_consumption_monthly_series(
+        self,
+        *,
+        branch: str,
+        product_code: str,
+        period_start: str,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def fetch_last_consumption_date(
+        self,
+        *,
+        branch: str,
+        product_code: str,
+    ) -> str | None:
+        ...

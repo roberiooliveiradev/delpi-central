@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { RefreshCw } from "lucide-react";
 
 import { branchLabel } from "../utils/safetyStockStatus";
@@ -6,12 +7,22 @@ type PageHeaderProps = {
   branch: string;
   onRefresh: () => void;
   refreshing?: boolean;
+  title?: string;
+  subtitle?: string;
+  nav?: ReactNode;
 };
 
 const DELPI_LOGO_URL =
   typeof window !== "undefined" ? `${window.location.origin}/logoDelpi.svg` : "/logoDelpi.svg";
 
-export function PageHeader({ branch, onRefresh, refreshing = false }: PageHeaderProps) {
+export function PageHeader({
+  branch,
+  onRefresh,
+  refreshing = false,
+  title = "Estoque de Segurança",
+  subtitle = "Acompanhe matérias-primas abaixo do estoque de segurança e o saldo disponível.",
+  nav,
+}: PageHeaderProps) {
   return (
     <header className="ess-page-header">
       <div className="ess-page-header__shell ess-card delpi-ui-card">
@@ -25,12 +36,11 @@ export function PageHeader({ branch, onRefresh, refreshing = false }: PageHeader
             <div className="ess-page-header__titles">
               <p className="ess-page-header__eyebrow">DELPI · Suprimentos</p>
               <div className="ess-page-header__title-row">
-                <h1>Estoque de Segurança</h1>
+                <h1>{title}</h1>
                 {branch ? <span className="ess-branch-badge">{branchLabel(branch)}</span> : null}
               </div>
-              <p className="ess-page-header__subtitle">
-                Acompanhe matérias-primas abaixo do estoque de segurança e o saldo disponível.
-              </p>
+              <p className="ess-page-header__subtitle">{subtitle}</p>
+              {nav}
             </div>
           </div>
 

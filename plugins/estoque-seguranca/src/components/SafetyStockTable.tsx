@@ -1,7 +1,11 @@
-import { useMemo } from "react";
-import { createDashboardStatusBadge } from "@delpi/plugin-ui/index";
+import { useMemo, useState } from "react";
+import {
+  createDashboardStatusBadge,
+  ExcelExportButton,
+} from "@delpi/plugin-ui/index";
 
-import type { SafetyStockItem } from "../types/safetyStock";
+import type { SafetyStockItem, SafetyStockQueryParams } from "../types/safetyStock";
+import { exportSafetyStockExcel } from "../utils/exportSafetyStockExcel";
 import { computeDisplayBalance, computeDisplayDeficit, formatNumberPtBr } from "../utils/formatters";
 import {
   safetyStockStatusLabel,
@@ -17,6 +21,7 @@ const StatusBadge = createDashboardStatusBadge({ prefix: "ess" });
 
 type SafetyStockTableProps = {
   items: SafetyStockItem[];
+  exportParams: SafetyStockQueryParams | null;
   loading?: boolean;
   refreshing?: boolean;
   page: number;
@@ -30,6 +35,7 @@ type SafetyStockTableProps = {
 
 export function SafetyStockTable({
   items,
+  exportParams,
   loading = false,
   refreshing = false,
   page,
@@ -40,6 +46,8 @@ export function SafetyStockTable({
   onPageSizeChange,
   onRowClick,
 }: SafetyStockTableProps) {
+  const [exporting, setExporting] = useState(false);
+
   const columns = useMemo<DataTableColumn<SafetyStockItem>[]>(
     () => [
       {
@@ -114,6 +122,22 @@ export function SafetyStockTable({
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
 
+  const handleExportExcel = async () => {
+    if (!exportParams) return;
+    setExporting(true);
+    try {
+      await exportSafetyStockExcel(exportParams);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível exportar o Excel. Tente novamente.";
+      window.alert(message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <DataTableSection
       title="Matérias-primas"
@@ -127,6 +151,17 @@ export function SafetyStockTable({
       hideSearch
       columnPreferencesKey="estoque-seguranca:items:v3"
       onRowClick={onRowClick}
+      headerActions={
+        <ExcelExportButton
+          className="ess-export-actions"
+          buttonClassName="ess-btn ess-btn--secondary ess-export-actions__btn"
+          disabled={!exportParams || total === 0 || loading}
+          exporting={exporting}
+          onExport={handleExportExcel}
+          label="Excel"
+          exportingLabel="Exportando…"
+        />
+      }
       serverPagination={{
         page,
         pageSize,

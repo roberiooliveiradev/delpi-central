@@ -206,6 +206,9 @@ Legenda de permissões:
 | GET | `/supplies/safety-stock/items/{code}/details` | A |
 | GET | `/supplies/safety-stock/items/{code}/suppliers` | A |
 | GET | `/supplies/safety-stock/items/{code}/suppliers/{supplier_code}/purchase-price-history` | A |
+| GET | `/supplies/safety-stock/consumption-analysis/summary` | A |
+| GET | `/supplies/safety-stock/consumption-analysis/items` | A |
+| GET | `/supplies/safety-stock/consumption-analysis/items/{code}` | A |
 
 ---
 

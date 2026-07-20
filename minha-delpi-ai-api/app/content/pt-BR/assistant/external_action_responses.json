@@ -420,6 +420,25 @@
         "pedido de compra cobrindo o déficit",
         "cobertura do estoque de segurança",
         "pedidos em aberto do estoque de segurança"
+      ],
+      "safetyStockConsumptionAnalysisTerms": [
+        "análise de consumo estoque de segurança",
+        "analise de consumo estoque de seguranca",
+        "estoque de segurança sugerido",
+        "estoque de seguranca sugerido",
+        "estseg sugerido",
+        "consumo médio diário útil",
+        "consumo medio diario util",
+        "simulação de estoque de segurança",
+        "simulacao de estoque de seguranca",
+        "lead time bz_pe"
+      ],
+      "safetyStockConsumptionAnalysisDetailTerms": [
+        "memória de cálculo estoque de segurança",
+        "memoria de calculo estoque de seguranca",
+        "série mensal de consumo estoque de segurança",
+        "serie mensal de consumo estoque de seguranca",
+        "detalhe da análise de consumo estoque de segurança"
       ]
     },
     "lmpRanking": {
@@ -777,6 +796,8 @@
     "kpiIdd": "A pergunta solicita giro de estoque em suprimentos.",
     "kpiStockValue": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
     "safetyStockItemDetails": "A pergunta solicita detalhe de estoque de segurança do produto com cobertura por pedidos de compra em aberto.",
+    "safetyStockConsumptionAnalysisItems": "A pergunta solicita a análise de consumo dos últimos 12 meses versus estoque de segurança sugerido (lead time BZ_PE).",
+    "safetyStockConsumptionAnalysisItemDetails": "A pergunta solicita o detalhe da análise de consumo do produto com série mensal e memória de cálculo do ESTSEG sugerido.",
     "kpiMetricRefinementDefault": "Refino de indicador de suprimentos.",
     "departmentKpiRefinement": "Refino de KPI departamental."
   },

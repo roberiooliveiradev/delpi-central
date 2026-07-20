@@ -24,8 +24,68 @@ Envelope padrão `{ success, message, data, meta }`. Empresa padrão nesta entre
 | GET | `/items/{code}/details` | `get_supplies_safety_stock_item_details` | composite_analysis |
 | GET | `/items/{code}/suppliers` | `get_supplies_safety_stock_item_suppliers` | list |
 | GET | `/items/{code}/suppliers/{supplier_code}/purchase-price-history` | `get_supplies_safety_stock_supplier_purchase_price_history` | playbook_report |
+| GET | `/consumption-analysis/summary` | `get_supplies_safety_stock_consumption_analysis_summary` | scalar |
+| GET | `/consumption-analysis/items` | `get_supplies_safety_stock_consumption_analysis_items` | paged_list |
+| GET | `/consumption-analysis/items/{code}` | `get_supplies_safety_stock_consumption_analysis_item_details` | composite_analysis |
 
 Parâmetro comum: `branch` (`01` SC / `02` ES).
+
+---
+
+## Análise de consumo × ESTSEG sugerido
+
+Responde à pergunta gerencial: **qual estoque de segurança cobre o lead time com base no consumo real?**
+
+### Escopo
+
+- Somente MPs com `BZ_ESTSEG <> 0`
+- Somente produtos com pelo menos uma baixa elegível nos últimos **365 dias corridos** (janela inclusiva única no SQL e no denominador)
+- Simulação **somente leitura** (não atualiza SBZ)
+
+### Consumo (SD3)
+
+Soma assinada de `D3_QUANT` com:
+
+- `D_E_L_E_T_ = ''`
+- mesma filial/produto
+- `D3_LOCAL = '99'`
+- OP preenchida (`D3_OP`)
+- `D3_TM = '999'`
+
+### Fórmulas
+
+\[
+\text{consumo médio diário útil} = \frac{\sum D3\_QUANT}{\text{dias úteis do período}}
+\]
+
+Dias úteis = segunda a sexta (feriados não descontados).
+
+\[
+\text{sugerido} = \lceil \text{consumo médio diário útil} \times \text{dias úteis no lead time} \rceil
+\]
+
+`BZ_PE` é lead time em **dias corridos**; a API converte a janela futura correspondente em dias úteis.
+
+\[
+\text{cobertura (dias úteis)} = \frac{\text{saldo } 01+98+99}{\text{consumo médio diário útil}}
+\]
+
+### Status gerenciais
+
+| Status | Significado |
+|--------|-------------|
+| `below_suggested` | ESTSEG atual abaixo do sugerido |
+| `above_suggested` | ESTSEG atual acima do sugerido |
+| `adequate` | Dentro de 5% do sugerido |
+| `inconsistent_data` | Consumo/lead time inválidos para recomendar |
+
+### Cache e performance
+
+- Namespace `safety-stock-consumption-analysis` no `query_cache` (TTL padrão)
+- Agregação única por produto (sem N+1)
+- Detalhe do item: série mensal dos últimos 12 meses + `annual_comparison` (Jan–Dez × 3 anos civis) numa única consulta SD3 a partir de 01/jan do primeiro ano
+- Medição inicial (filial `01`, jul/2026): ~560 itens em ~1,8 s (SQL frio); use case aquecido via cache fica tipicamente &lt; 50 ms
+- Índices candidatos a validar no TOTVS se a latência subir: SD3 `(D3_FILIAL, D3_LOCAL, D3_TM, D3_EMISSAO, D3_COD)` e SBZ `(BZ_FILIAL, BZ_COD)`
 
 ---
 
@@ -39,12 +99,15 @@ Blocos em `data`:
 |-------|----------|
 | `product` | Identificação / cadastro |
 | `stock` | Saldos 01/98/99, ESTSEG, déficit **físico** |
+| `peer_branch_stock` | Saldo disponível na outra filial (01↔02) + `last_consumption_date` (última baixa elegível), se o usuário tiver permissão de visualização |
 | `purchase_coverage` | Cobertura do déficit físico só com SC7 elegível |
 | `open_purchase_orders` | `{ items, total }` pedidos abertos |
 | `open_commitments` | `{ items, total, summary }` empenhos SD4 com `D4_QUANT > 0` |
 | `stock_projection` | `{ items, total, summary }` extrato cronológico consolidado |
+| `monthly_consumption` | Série mensal (12 meses) + `period_consumption` para o gráfico |
+| `annual_comparison` | Pivot Jan–Dez × 3 anos civis (comparativo sazonal) |
 
-`meta.sections` lista `open_purchase_orders`, `open_commitments` e `stock_projection`.
+`meta.sections` lista `open_purchase_orders`, `open_commitments`, `stock_projection`, `monthly_consumption` e `annual_comparison`.
 
 ### Regras de negócio
 

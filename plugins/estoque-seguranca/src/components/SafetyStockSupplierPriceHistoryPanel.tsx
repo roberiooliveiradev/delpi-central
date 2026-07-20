@@ -1,12 +1,17 @@
-import { LineSeriesChart } from "@delpi/plugin-ui/index";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
+import { createDashboardDetailFieldGrid } from "@delpi/plugin-ui/index";
 
 import { SectionError } from "./SectionError";
+import { DataTable, type DataTableColumn } from "./dataTableUi";
+import { EssModernLineChart } from "./EssModernLineChart";
 import type { SectionErrorState } from "../types/api";
 import type {
   SafetyStockLinkedSupplier,
   SafetyStockSupplierPriceHistoryData,
+  SafetyStockSupplierPriceHistoryPoint,
 } from "../types/safetyStock";
-import { formatNumberPtBr, formatUnitPricePtBr } from "../utils/formatters";
+import { formatCurrencyPtBr, formatNumberPtBr, formatUnitPricePtBr } from "../utils/formatters";
 import { formatIsoDatePtBr } from "../utils/safetyStockStatus";
 
 type SafetyStockSupplierPriceHistoryPanelProps = {
@@ -16,6 +21,14 @@ type SafetyStockSupplierPriceHistoryPanelProps = {
   error: SectionErrorState | null;
   onRetry?: () => void;
 };
+
+const DetailFields = createDashboardDetailFieldGrid({
+  prefix: "ess",
+  labels: {
+    fieldHelpAriaLabel: (label) => `Ajuda: ${label}`,
+  },
+  valueFallback: "—",
+});
 
 function supplierLabel(supplier: SafetyStockLinkedSupplier): string {
   return supplier.trade_name || supplier.legal_name || supplier.supplier_code;
@@ -27,6 +40,27 @@ function formatVariation(value: number | null | undefined): string {
   return `${sign}${formatNumberPtBr(value)}%`;
 }
 
+function averageUnitPrice(points: { value: number }[]): number | null {
+  if (points.length === 0) return null;
+  return points.reduce((total, point) => total + point.value, 0) / points.length;
+}
+
+function invoiceRowKey(item: SafetyStockSupplierPriceHistoryPoint): string {
+  return [
+    item.invoice_number || "",
+    item.invoice_series || "",
+    item.purchase_date || "",
+    String(item.unit_price),
+    String(item.quantity),
+  ].join("|");
+}
+
+function invoiceLabel(item: SafetyStockSupplierPriceHistoryPoint): string {
+  const number = item.invoice_number?.trim() || "—";
+  const series = item.invoice_series?.trim() || "—";
+  return `${number}/${series}`;
+}
+
 export function SafetyStockSupplierPriceHistoryPanel({
   supplier,
   data,
@@ -36,12 +70,75 @@ export function SafetyStockSupplierPriceHistoryPanel({
 }: SafetyStockSupplierPriceHistoryPanelProps) {
   const items = data?.items ?? [];
   const summary = data?.summary;
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    setExpandedKey(null);
+  }, [supplier.supplier_code, supplier.supplier_store, data?.date_start, data?.date_end_exclusive]);
+
   const points = items
     .filter((item) => item.purchase_date)
     .map((item) => ({
       label: formatIsoDatePtBr(item.purchase_date),
       value: item.unit_price,
     }));
+
+  const expandedItem = useMemo(
+    () => items.find((item) => invoiceRowKey(item) === expandedKey) ?? null,
+    [expandedKey, items],
+  );
+
+  const columns = useMemo<DataTableColumn<SafetyStockSupplierPriceHistoryPoint>[]>(
+    () => [
+      {
+        key: "purchase_date",
+        header: "Data",
+        render: (row) => formatIsoDatePtBr(row.purchase_date),
+      },
+      {
+        key: "invoice",
+        header: "NF",
+        render: (row) => invoiceLabel(row),
+      },
+      {
+        key: "unit_price",
+        header: "Preço unitário",
+        className: "ess-table__col--numeric",
+        align: "right",
+        render: (row) => formatUnitPricePtBr(row.unit_price),
+      },
+      {
+        key: "quantity",
+        header: "Quantidade",
+        className: "ess-table__col--numeric",
+        align: "right",
+        render: (row) => formatNumberPtBr(row.quantity),
+      },
+      {
+        key: "total_value",
+        header: "Valor total",
+        className: "ess-table__col--numeric",
+        align: "right",
+        render: (row) => formatCurrencyPtBr(row.total_value),
+      },
+      {
+        key: "expand",
+        header: "Detalhes",
+        className: "ess-table__col--action",
+        interactive: true,
+        render: (row) => {
+          const key = invoiceRowKey(row);
+          const open = expandedKey === key;
+          return (
+            <span className="ess-table__action" aria-hidden="true">
+              {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </span>
+          );
+        },
+      },
+    ],
+    [expandedKey],
+  );
 
   return (
     <section
@@ -54,7 +151,7 @@ export function SafetyStockSupplierPriceHistoryPanel({
       <p className="ess-detail__hint">
         Compras do produto com este fornecedor nos últimos 12 meses (um ponto por NF, preço
         unitário D1_VUNIT, data D1_DTDIGIT). Código {supplier.supplier_code} · loja{" "}
-        {supplier.supplier_store}.
+        {supplier.supplier_store}. Clique em uma linha para ver os detalhes da nota.
       </p>
 
       {loading ? (
@@ -101,46 +198,84 @@ export function SafetyStockSupplierPriceHistoryPanel({
           </div>
 
           <div className="ess-detail__price-chart">
-            <LineSeriesChart
+            <p className="ess-detail__chart-title">Preço unitário (R$)</p>
+            <EssModernLineChart
               points={points}
+              seriesLabel="Preço unitário"
+              formatValue={formatUnitPricePtBr}
+              averageValue={averageUnitPrice(points)}
+              averageLabel="Preço médio do período"
               emptyMessage="Sem pontos para o gráfico."
-              options={{
-                title: "Preço unitário (R$)",
-                showTitle: true,
-                showLegend: false,
-                showAxes: true,
-                showXAxisLabels: true,
-                showYAxisLabels: true,
-                showXAxisTitle: false,
-                showYAxisTitle: false,
-                showDataLabels: true,
-                showGrid: true,
-                showMarkers: true,
-                valueFormat: "currency4",
-                seriesColor: "#089bdb",
-                categoryPaddingPercent: 8,
-                seriesName: "Preço unitário",
+            />
+          </div>
+
+          <div className="ess-detail__price-table">
+            <DataTable
+              columns={columns}
+              rows={items}
+              rowKey={invoiceRowKey}
+              layout="embedded"
+              emptyMessage="Sem notas no período."
+              onRowClick={(row: SafetyStockSupplierPriceHistoryPoint) => {
+                const key = invoiceRowKey(row);
+                setExpandedKey((current) => (current === key ? null : key));
               }}
             />
           </div>
 
-          <ul className="ess-detail__price-points" aria-label="Notas do período">
-            {items.map((item) => (
-              <li key={`${item.invoice_number}-${item.invoice_series}-${item.purchase_date}`}>
-                <span className="ess-detail__supplier-date">
-                  {formatIsoDatePtBr(item.purchase_date)}
-                </span>
-                {" · "}
-                <span className="ess-detail__supplier-price">
-                  {formatUnitPricePtBr(item.unit_price)}
-                </span>
-                {" · NF "}
-                {item.invoice_number || "—"}/{item.invoice_series || "—"}
-                {" · qtd "}
-                {formatNumberPtBr(item.quantity)}
-              </li>
-            ))}
-          </ul>
+          {expandedItem ? (
+            <article
+              className="ess-detail__nf-card"
+              aria-label={`Detalhes da NF ${invoiceLabel(expandedItem)}`}
+            >
+              <div className="ess-detail__nf-card-header">
+                <h4>Detalhes da NF {invoiceLabel(expandedItem)}</h4>
+                <button
+                  type="button"
+                  className="ess-btn ess-btn--secondary ess-detail__nf-card-close"
+                  onClick={() => setExpandedKey(null)}
+                >
+                  Fechar
+                </button>
+              </div>
+              <DetailFields
+                fields={[
+                  {
+                    label: "Data da compra",
+                    value: formatIsoDatePtBr(expandedItem.purchase_date),
+                  },
+                  {
+                    label: "Data de emissão",
+                    value: formatIsoDatePtBr(expandedItem.issue_date),
+                  },
+                  {
+                    label: "Número / série",
+                    value: invoiceLabel(expandedItem),
+                  },
+                  {
+                    label: "Fornecedor",
+                    value: expandedItem.supplier_name || supplierLabel(supplier),
+                  },
+                  {
+                    label: "Código / loja",
+                    value: `${expandedItem.supplier_code} · ${expandedItem.supplier_store}`,
+                  },
+                  {
+                    label: "Preço unitário",
+                    value: formatUnitPricePtBr(expandedItem.unit_price),
+                  },
+                  {
+                    label: "Quantidade",
+                    value: formatNumberPtBr(expandedItem.quantity),
+                  },
+                  {
+                    label: "Valor total",
+                    value: formatCurrencyPtBr(expandedItem.total_value),
+                  },
+                ]}
+              />
+            </article>
+          ) : null}
         </>
       ) : null}
     </section>

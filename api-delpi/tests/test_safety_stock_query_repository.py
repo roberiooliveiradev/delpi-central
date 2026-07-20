@@ -207,3 +207,62 @@ def test_fetch_linked_suppliers_binds_branch_and_product(
     assert "SD1010" in sql
     assert "D1_VUNIT" in sql
     assert params == ["01", "10010005", "01", "10010005", "01"]
+
+
+def test_map_consumption_analysis_row() -> None:
+    mapped = SafetyStockQueryRepository._map_consumption_analysis_row(
+        {
+            "product_code": "10020113",
+            "product_description": "Material",
+            "product_type": "MP",
+            "unit": "PC",
+            "product_group": "GRP",
+            "blocked_raw": "",
+            "safety_stock": 80,
+            "lead_time_days": 12,
+            "primary_stock": 10,
+            "work_in_process_stock": 5,
+            "warehouse_50_stock": 1,
+            "warehouse_98_stock": 2,
+            "warehouse_99_stock": 3,
+            "available_stock": 15,
+            "work_in_process_committed": 0,
+            "work_in_process_available": 5,
+            "deficit_quantity": 65,
+            "status": "below_safety_stock",
+            "period_consumption": 1300,
+            "movement_count": 8,
+            "first_movement_date": "20250720",
+            "last_movement_date": "20260710",
+        },
+        "01",
+    )
+    assert mapped["lead_time_days"] == 12.0
+    assert mapped["period_consumption"] == 1300.0
+    assert mapped["first_movement_date"] == "2025-07-20"
+    assert mapped["last_movement_date"] == "2026-07-10"
+
+
+@patch.object(SafetyStockQueryRepository, "execute_query")
+def test_fetch_consumption_analysis_rows_binds_period(
+    mock_execute_query: MagicMock,
+) -> None:
+    mock_execute_query.return_value = []
+    repo = SafetyStockQueryRepository()
+    with repo:
+        repo.fetch_consumption_analysis_rows(
+            branch="01",
+            period_start="20250718",
+            include_blocked=False,
+            product_group=None,
+            unit=None,
+            search=None,
+            product_code="10020113",
+        )
+
+    sql, params = mock_execute_query.call_args.args
+    assert "SD3010" in sql
+    assert "BZ_PE" in sql
+    assert "safety_stock <> 0" in sql
+    assert params[:4] == ["01", "01", "01", "20250718"]
+    assert "10020113" in params

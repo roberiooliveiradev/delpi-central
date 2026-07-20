@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import * as httpClient from "./httpClient";
 import {
+  fetchConsumptionAnalysisItemDetails,
+  fetchConsumptionAnalysisItems,
+  fetchConsumptionAnalysisSummary,
   fetchSafetyStockFilters,
   fetchSafetyStockItemDetails,
   fetchSafetyStockItemSuppliers,
@@ -167,6 +170,70 @@ describe("safetyStockApi", () => {
 
     expect(String(spy.mock.calls[0]?.[0])).toBe(
       "/apps/api-delpi/supplies/safety-stock/items/10010005/suppliers/F001/purchase-price-history?branch=01&supplierStore=01",
+    );
+  });
+
+  it("monta query da análise de consumo", async () => {
+    const spy = vi.spyOn(httpClient, "httpGet").mockResolvedValue({
+      success: true,
+      data: {
+        analyzed_items: 0,
+        below_suggested: 0,
+        above_suggested: 0,
+        adequate: 0,
+        inconsistent_data: 0,
+        net_difference_quantity: 0,
+        status_distribution: [],
+      },
+    });
+
+    await fetchConsumptionAnalysisSummary({
+      branch: "01",
+      includeBlocked: false,
+      productGroup: "",
+      unit: "",
+      search: "10020113",
+      analysisStatus: "below_suggested",
+      sortBy: "difference_quantity",
+      sortDirection: "asc",
+    });
+
+    const url = String(spy.mock.calls[0]?.[0]);
+    expect(url).toContain("/consumption-analysis/summary?");
+    expect(url).toContain("analysisStatus=below_suggested");
+    expect(url).toContain("search=10020113");
+
+    spy.mockResolvedValue({
+      success: true,
+      data: { items: [], page: 1, page_size: 50, total: 0, total_pages: 0 },
+    });
+    await fetchConsumptionAnalysisItems(
+      {
+        branch: "02",
+        includeBlocked: true,
+        productGroup: "GRP",
+        unit: "PC",
+        search: "",
+        analysisStatus: "",
+        sortBy: "suggested_safety_stock",
+        sortDirection: "desc",
+      },
+      2,
+      25,
+    );
+    const itemsUrl = String(spy.mock.calls[1]?.[0]);
+    expect(itemsUrl).toContain("/consumption-analysis/items?");
+    expect(itemsUrl).toContain("page=2");
+    expect(itemsUrl).toContain("pageSize=25");
+    expect(itemsUrl).toContain("sortBy=suggested_safety_stock");
+
+    spy.mockResolvedValue({
+      success: true,
+      data: { item: { product_code: "10020113" }, monthly_consumption: { items: [], total: 0 } },
+    });
+    await fetchConsumptionAnalysisItemDetails("01", "10020113");
+    expect(String(spy.mock.calls[2]?.[0])).toBe(
+      "/apps/api-delpi/supplies/safety-stock/consumption-analysis/items/10020113?branch=01",
     );
   });
 });

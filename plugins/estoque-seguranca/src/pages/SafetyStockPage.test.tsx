@@ -88,6 +88,16 @@ const detailsPayload = {
     work_in_process_available: 17,
     deficit_quantity: 35,
   },
+  peer_branch_stock: {
+    branch: "02",
+    found: true,
+    available_stock: 180,
+    primary_stock: 150,
+    warehouse_98_stock: 20,
+    warehouse_99_stock: 10,
+    safety_stock: 40,
+    last_consumption_date: "2025-11-20",
+  },
   purchase_coverage: {
     status: "partial" as const,
     deficit_quantity: 35,
@@ -231,6 +241,33 @@ const detailsPayload = {
       eligible_warehouses: ["01", "98", "99"],
       warnings: [],
     },
+  },
+  monthly_consumption: {
+    items: [
+      {
+        year_month: "202601",
+        year_month_label: "2026-01",
+        consumption_quantity: 40,
+        movement_count: 2,
+      },
+    ],
+    total: 1,
+    period_consumption: 40,
+    period_start: "2025-07-17",
+    period_end: "2026-07-16",
+  },
+  annual_comparison: {
+    years: ["2024", "2025", "2026"],
+    items: [
+      {
+        month: 1,
+        month_label: "Jan",
+        values_by_year: { "2024": 10, "2025": 20, "2026": 40 },
+      },
+    ],
+    total: 1,
+    period_start: "2024-01-01",
+    period_end: "2026-07-16",
   },
 };
 
@@ -441,6 +478,10 @@ describe("SafetyStockPage", () => {
       expect(screen.getByText("Saldo disponível").closest("article")?.className).toContain(
         "delpi-ui-kpi-card--wide",
       );
+      expect(screen.getByText("Saldo Filial 02 (ES)")).toBeTruthy();
+      expect(screen.getByText("180,00")).toBeTruthy();
+      expect(screen.getByText("Último consumo: 20/11/2025")).toBeTruthy();
+      expect(screen.queryByText("Déficit físico")).toBeNull();
       const projectionSection = screen.getByRole("region", { name: "Projeção de saldo" });
       expect(projectionSection.textContent).toContain(
         "Partindo de um saldo de 100,00, com 200,00 de entradas previstas e 150,00 de consumo comprometido, o saldo final projetado é 150,00.",
@@ -453,12 +494,6 @@ describe("SafetyStockPage", () => {
           (element) => element.textContent,
         ),
       ).toEqual(expect.arrayContaining(["-50,00", "20/07/2026"]));
-      expect(
-        screen
-          .getByText("Déficit físico")
-          .closest("article")
-          ?.querySelector(".delpi-ui-kpi-value--danger"),
-      ).toBeTruthy();
     });
 
     const ledgerHelp =
@@ -531,9 +566,10 @@ describe("SafetyStockPage", () => {
       expect(screen.getByText(/Oscilação de preço — ACME/)).toBeTruthy();
       expect(screen.getByText("Preço unitário (R$)")).toBeTruthy();
       expect(screen.getByText(/\+25,00%/)).toBeTruthy();
-      expect(screen.getByText(/NF 000100\/1/)).toBeTruthy();
+      expect(screen.getByRole("columnheader", { name: "NF" })).toBeTruthy();
+      expect(screen.getByText("000100/1")).toBeTruthy();
       expect(
-        document.querySelectorAll(".delpi-ui-series-chart__data-label").length,
+        document.querySelectorAll(".ess-detail__price-chart .ess-modern-line-chart").length,
       ).toBeGreaterThan(0);
     });
   });

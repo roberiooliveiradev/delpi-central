@@ -112,6 +112,19 @@
   color: var(--ess-text);
 }
 
+.dashboard-estoque-seguranca .ess-export-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-estoque-seguranca .ess-export-actions__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
 .dashboard-estoque-seguranca .ess-page-header__shell {
   overflow: hidden;
   padding: 0;
@@ -436,26 +449,46 @@
 }
 
 .dashboard-estoque-seguranca .ess-detail__price-chart {
-  height: 360px;
   min-height: 0;
   margin-bottom: 12px;
 }
 
-.dashboard-estoque-seguranca .ess-detail__price-points {
-  margin: 0;
-  padding-left: 18px;
-  color: var(--ess-text-muted);
+.dashboard-estoque-seguranca .ess-detail__chart-title {
+  margin: 0 0 4px;
+  color: var(--ess-title);
   font-size: var(--ess-font-sm);
+  font-weight: 700;
 }
 
-.dashboard-estoque-seguranca .ess-detail__price-points li {
-  margin-bottom: 4px;
+.dashboard-estoque-seguranca .ess-detail__price-table {
+  margin-top: 4px;
 }
 
-@media (max-width: 768px) {
-  .dashboard-estoque-seguranca .ess-detail__price-chart {
-    height: 300px;
-  }
+.dashboard-estoque-seguranca .ess-detail__nf-card {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--ess-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ess-accent) 5%, var(--ess-surface));
+}
+
+.dashboard-estoque-seguranca .ess-detail__nf-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.dashboard-estoque-seguranca .ess-detail__nf-card-header h4 {
+  margin: 0;
+  color: var(--ess-title);
+  font-size: 1rem;
+}
+
+.dashboard-estoque-seguranca .ess-detail__nf-card-close {
+  min-height: 36px;
+  padding: 0.35rem 0.75rem;
 }
 
 .dashboard-estoque-seguranca .ess-detail-search {
@@ -610,6 +643,177 @@
   .dashboard-estoque-seguranca .ess-deficit__quantity {
     text-align: left;
   }
+}
+
+.dashboard-estoque-seguranca .ess-page-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dashboard-estoque-seguranca .ess-page-nav__link {
+  border: 1px solid var(--ess-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ess-surface) 92%, var(--ess-accent));
+  color: var(--ess-text);
+  padding: 0.4rem 0.9rem;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: var(--ess-font-sm);
+  font-weight: 600;
+}
+
+.dashboard-estoque-seguranca .ess-page-nav__link--active {
+  background: var(--ess-accent);
+  border-color: var(--ess-accent);
+  color: #fff;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-summary__period {
+  margin: 0;
+  color: var(--ess-text-muted);
+  font-size: var(--ess-font-sm);
+}
+
+.dashboard-estoque-seguranca .ess-analysis-chart {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-chart__header h2 {
+  margin: 0 0 2px;
+  font-size: 1rem;
+  color: var(--ess-title);
+}
+
+.dashboard-estoque-seguranca .ess-analysis-chart__header p {
+  margin: 0;
+  color: var(--ess-text-muted);
+  font-size: var(--ess-font-sm);
+  line-height: 1.35;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-chart__plot {
+  height: 200px;
+  max-height: 200px;
+  min-height: 160px;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-chart__plot .delpi-ui-series-chart-shell,
+.dashboard-estoque-seguranca .ess-analysis-chart__plot .delpi-ui-series-chart {
+  height: 100%;
+  max-height: 100%;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-chart__plot .delpi-ui-series-chart {
+  padding: 0.25rem 0.35rem;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-chart__plot .delpi-ui-series-chart__title {
+  font-size: 0.85rem;
+}
+
+.dashboard-estoque-seguranca .ess-analysis-warning {
+  color: var(--ess-danger);
+}
+
+.dashboard-estoque-seguranca .ess-calc-toggle {
+  margin: 0 0 10px;
+}
+
+.dashboard-estoque-seguranca .ess-calc-card {
+  margin-top: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--ess-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ess-accent) 5%, var(--ess-surface));
+}
+
+.dashboard-estoque-seguranca .ess-calc-block {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ess-title) 4%, var(--ess-surface));
+  border: 1px solid var(--ess-border);
+  color: var(--ess-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--ess-font-sm);
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.dashboard-estoque-seguranca .ess-calc-warnings {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--ess-danger);
+  font-size: var(--ess-font-sm);
+}
+
+.dashboard-estoque-seguranca .ess-chart-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 4px;
+  border: 1px solid var(--ess-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ess-title) 3%, var(--ess-surface));
+}
+
+.dashboard-estoque-seguranca .ess-chart-tabs__btn {
+  min-height: 36px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ess-text-muted);
+  font-size: var(--ess-font-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-estoque-seguranca .ess-chart-tabs__btn:hover,
+.dashboard-estoque-seguranca .ess-chart-tabs__btn:focus-visible {
+  color: var(--ess-title);
+  background: color-mix(in srgb, var(--ess-accent) 8%, transparent);
+}
+
+.dashboard-estoque-seguranca .ess-chart-tabs__btn--active {
+  color: var(--ess-title);
+  background: var(--ess-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-estoque-seguranca .ess-modern-line-chart {
+  width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.dashboard-estoque-seguranca .ess-modern-line-chart__hint {
+  margin: 0 0 8px;
+  color: var(--ess-text-muted);
+  font-size: var(--ess-font-sm);
+}
+
+.dashboard-estoque-seguranca .ess-modern-line-chart__legend-item {
+  color: var(--ess-text);
+}
+
+.dashboard-estoque-seguranca .ess-modern-line-chart__legend-item--hidden {
+  color: var(--ess-text-muted);
+  text-decoration: line-through;
+  opacity: 0.55;
 }
 
 #root:has(> .dashboard-estoque-seguranca) {

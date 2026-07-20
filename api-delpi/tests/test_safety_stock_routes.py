@@ -43,6 +43,9 @@ def test_router_exposes_all_endpoints(safety_stock_client: TestClient) -> None:
         "/supplies/safety-stock/items/{code}/suppliers/"
         "{supplier_code}/purchase-price-history"
     ) in paths
+    assert "/supplies/safety-stock/consumption-analysis/summary" in paths
+    assert "/supplies/safety-stock/consumption-analysis/items" in paths
+    assert "/supplies/safety-stock/consumption-analysis/items/{code}" in paths
 
 
 def test_summary_requires_branch(safety_stock_client: TestClient) -> None:
@@ -109,6 +112,8 @@ def test_item_details_returns_composite_meta(
             "total": 1,
             "summary": {"status": "sufficient"},
         },
+        "monthly_consumption": {"items": [], "total": 0, "period_consumption": 0},
+        "annual_comparison": {"years": [], "items": [], "total": 0},
     }
     mock_builder.return_value = use_case
 
@@ -127,6 +132,8 @@ def test_item_details_returns_composite_meta(
         "open_purchase_orders",
         "open_commitments",
         "stock_projection",
+        "monthly_consumption",
+        "annual_comparison",
     }
     assert body["meta"]["sections"][1]["itemCount"] == 1
 
@@ -444,3 +451,127 @@ def test_items_passes_filters_to_use_case(
     assert request.include_blocked is True
     assert request.sort_by == "primary_stock"
     assert request.sort_direction == "desc"
+
+
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router."
+    "build_get_safety_stock_consumption_analysis_summary_use_case"
+)
+def test_consumption_analysis_summary_returns_envelope(
+    mock_builder,
+    _mock_branch,
+    safety_stock_client: TestClient,
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "analyzed_items": 3,
+        "below_suggested": 1,
+        "above_suggested": 1,
+        "adequate": 1,
+        "inconsistent_data": 0,
+        "net_difference_quantity": -20,
+        "status_distribution": [],
+    }
+    mock_builder.return_value = use_case
+
+    response = safety_stock_client.get(
+        "/supplies/safety-stock/consumption-analysis/summary",
+        params={"branch": "01", "analysisStatus": "below_suggested"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == (
+        "get_supplies_safety_stock_consumption_analysis_summary"
+    )
+    assert body["meta"]["entity"] == (
+        "supplies_safety_stock_consumption_analysis_summary"
+    )
+    assert body["meta"]["shape"] == "scalar"
+    request = use_case.execute.call_args.args[0]
+    assert request.analysis_status == "below_suggested"
+
+
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router."
+    "build_get_safety_stock_consumption_analysis_items_use_case"
+)
+def test_consumption_analysis_items_returns_paged_meta(
+    mock_builder,
+    _mock_branch,
+    safety_stock_client: TestClient,
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "items": [{"product_code": "10020113", "analysis_status": "below_suggested"}],
+        "page": 1,
+        "page_size": 50,
+        "total": 1,
+        "total_pages": 1,
+        "sort_by": "difference_quantity",
+        "sort_direction": "asc",
+    }
+    mock_builder.return_value = use_case
+
+    response = safety_stock_client.get(
+        "/supplies/safety-stock/consumption-analysis/items",
+        params={"branch": "02", "sortBy": "suggested_safety_stock"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == (
+        "get_supplies_safety_stock_consumption_analysis_items"
+    )
+    assert body["meta"]["shape"] == "paged_list"
+    assert body["meta"]["entity"] == (
+        "supplies_safety_stock_consumption_analysis_item"
+    )
+
+
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router."
+    "build_get_safety_stock_consumption_analysis_item_details_use_case"
+)
+def test_consumption_analysis_item_details_returns_sections(
+    mock_builder,
+    _mock_branch,
+    safety_stock_client: TestClient,
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "item": {"product_code": "10020113"},
+        "monthly_consumption": {"items": [{"year_month": "202607"}], "total": 1},
+        "annual_comparison": {"years": ["2024", "2025", "2026"], "items": [], "total": 0},
+        "calculation_memory": {"formula": "ceil(...)"},
+    }
+    mock_builder.return_value = use_case
+
+    response = safety_stock_client.get(
+        "/supplies/safety-stock/consumption-analysis/items/10020113",
+        params={"branch": "01"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == (
+        "get_supplies_safety_stock_consumption_analysis_item_details"
+    )
+    assert body["meta"]["shape"] == "composite_analysis"
+    section_keys = {section["key"] for section in body["meta"]["sections"]}
+    assert "monthly_consumption" in section_keys
+    assert "annual_comparison" in section_keys
+    assert "calculation_memory" in section_keys
+    assert "annual_comparison" in body["data"]

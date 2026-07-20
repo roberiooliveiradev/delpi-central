@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  ANALYSIS_STATUS_HEADER_HINT,
   SAFETY_STOCK_STATUS_LABELS,
+  analysisQualityWarningLabel,
   safetyStockStatusLabel,
   safetyStockStatusVariant,
   stockProjectionLabel,
@@ -33,5 +35,13 @@ describe("safetyStockStatus", () => {
     expect(unitSuffix("PC")).toBe("unidades");
     expect(unitSuffix("MT")).toBe("metros");
     expect(unitSuffix("KG")).toBe("quilos");
+  });
+
+  it("explica situação da análise e alertas em português", () => {
+    expect(ANALYSIS_STATUS_HEADER_HINT).toContain("Abaixo do sugerido");
+    expect(ANALYSIS_STATUS_HEADER_HINT).toContain("Adequado");
+    expect(analysisQualityWarningLabel("lead_time_missing_or_zero")).toContain(
+      "lead time",
+    );
   });
 });
