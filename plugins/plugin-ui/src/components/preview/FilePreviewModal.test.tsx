@@ -61,6 +61,9 @@ describe("FilePreviewModal host containment", () => {
     expect(css).toMatch(
       /\.delpi-ui-file-preview-modal\.delpi-ui-modal--host-fill\s+\.delpi-ui-spreadsheet-preview[^\{]*\{[^}]*max-height:\s*none/s,
     );
+    expect(css).toMatch(
+      /\.delpi-ui-file-preview-modal\.delpi-ui-modal--host-fill\s+\.delpi-ui-spreadsheet-preview[^\{]*\{[^}]*flex:\s*1\s+1\s+0/s,
+    );
     // Não forçar dark via overlay sem data-theme (bug: abas escuras no tema claro).
     expect(css).not.toMatch(
       /\.delpi-ui-file-preview-modal-overlay:not\(\[data-theme="light"\]\)/,

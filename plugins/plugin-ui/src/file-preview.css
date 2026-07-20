@@ -542,10 +542,11 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
 
 .delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-spreadsheet-preview,
 .delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-docx-preview {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   max-height: none;
   height: auto;
+  align-self: stretch;
 }
 
 .delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview__pdf {

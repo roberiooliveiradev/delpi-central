@@ -4,6 +4,8 @@ import { createPortal } from "react-dom";
 
 import { delpiUiClass, withBemModifier } from "../../utils/delpiUiClass";
 import { useDelpiUiPortalTheme } from "../shape/useDelpiUiPortalTheme";
+import { lockContainedModalScroll } from "./containedModalViewport";
+import { useContainedModalViewportStyle } from "./useContainedModalViewportStyle";
 
 export type ModalShellClassNames = {
   overlay: string;
@@ -97,6 +99,9 @@ export function ModalShell({
   const hasAutoFocusedRef = useRef(false);
   const structuredHeader = Boolean(classNames.headerText);
   const portalTheme = useDelpiUiPortalTheme(open);
+  const containedHost =
+    containedInPortalTarget && portalTarget instanceof HTMLElement ? portalTarget : null;
+  const containedViewportStyle = useContainedModalViewportStyle(open && Boolean(containedHost), containedHost);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -118,20 +123,22 @@ export function ModalShell({
 
     const unlockPageScroll = lockPageScroll
       ? lockPageScroll()
-      : (() => {
-          const previousOverflow = document.body.style.overflow;
-          document.body.style.overflow = "hidden";
-          return () => {
-            document.body.style.overflow = previousOverflow;
-          };
-        })();
+      : containedHost
+        ? lockContainedModalScroll(containedHost)
+        : (() => {
+            const previousOverflow = document.body.style.overflow;
+            document.body.style.overflow = "hidden";
+            return () => {
+              document.body.style.overflow = previousOverflow;
+            };
+          })();
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       unlockPageScroll();
       hasAutoFocusedRef.current = false;
     };
-  }, [open, lockPageScroll]);
+  }, [open, lockPageScroll, containedHost]);
 
   useEffect(() => {
     if (!open || !containedInPortalTarget || !(portalTarget instanceof HTMLElement)) {
@@ -217,6 +224,8 @@ export function ModalShell({
   /*
    * Geometria do modo contido é inline: CSS de MFE (`.dashboard-x .td-modal`)
    * tem especificidade maior que as classes do kit e quebraria o host-fill.
+   * O wrapper usa `position: fixed` no scrollport visível (não `absolute` no
+   * root do MFE — esse root tem height:auto e faria o modal > ou << viewport).
    * Margem e blur ficam no CSS (`.delpi-ui-modal-overlay--contained`).
    */
   const containedOverlayStyle = containedInPortalTarget
@@ -231,6 +240,7 @@ export function ModalShell({
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
+        minHeight: 0,
       } as const)
     : undefined;
 
@@ -286,9 +296,7 @@ export function ModalShell({
       className={scopeClass}
       style={{
         ...portalTheme.style,
-        ...(containedInPortalTarget
-          ? { position: "absolute", inset: 0, minWidth: 0, minHeight: 0 }
-          : {}),
+        ...(containedViewportStyle ?? {}),
       }}
       data-theme={portalTheme.dataTheme ?? undefined}
       data-modal-contained={containedInPortalTarget ? "true" : undefined}
