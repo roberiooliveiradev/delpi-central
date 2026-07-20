@@ -524,6 +524,7 @@ export function ProcessoInstanciasPanel({
         key: "setor",
         header: "Departamentos",
         headerHint: TM_HELP_TOOLTIPS.instancias.setores,
+        className: "ds-table__col--wrap",
         render: (row) => formatInstanciaSetoresDisplay(row),
       },
       {

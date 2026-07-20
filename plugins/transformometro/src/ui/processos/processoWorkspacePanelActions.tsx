@@ -8,42 +8,48 @@ import {
   type ReactNode,
 } from "react";
 
-type PanelActionsContextValue = {
-  panelActions: ReactNode;
-  setPanelActions: (actions: ReactNode) => void;
-};
+type SetPanelActions = (actions: ReactNode) => void;
 
-const ProcessoWorkspacePanelActionsContext = createContext<PanelActionsContextValue | null>(null);
+const PanelActionsStateContext = createContext<ReactNode>(null);
+const PanelActionsDispatchContext = createContext<SetPanelActions | null>(null);
 
 export function ProcessoWorkspacePanelActionsProvider({ children }: { children: ReactNode }) {
   const [panelActions, setPanelActionsState] = useState<ReactNode>(null);
 
-  const setPanelActions = useCallback((actions: ReactNode) => {
+  const setPanelActions = useCallback<SetPanelActions>((actions) => {
     setPanelActionsState(actions);
   }, []);
 
-  const value = useMemo(
-    () => ({ panelActions, setPanelActions }),
+  return (
+    <PanelActionsDispatchContext.Provider value={setPanelActions}>
+      <PanelActionsStateContext.Provider value={panelActions}>
+        {children}
+      </PanelActionsStateContext.Provider>
+    </PanelActionsDispatchContext.Provider>
+  );
+}
+
+/** Leitura das ações do painel ativo (sidebar). */
+export function useProcessoWorkspacePanelActionsRegistry() {
+  const panelActions = useContext(PanelActionsStateContext);
+  const setPanelActions = useContext(PanelActionsDispatchContext);
+  return useMemo(
+    () => (setPanelActions ? { panelActions, setPanelActions } : null),
     [panelActions, setPanelActions]
   );
-
-  return (
-    <ProcessoWorkspacePanelActionsContext.Provider value={value}>
-      {children}
-    </ProcessoWorkspacePanelActionsContext.Provider>
-  );
 }
 
-export function useProcessoWorkspacePanelActionsRegistry() {
-  return useContext(ProcessoWorkspacePanelActionsContext);
-}
-
+/**
+ * Registra ações do painel no footer da sidebar.
+ * Usa só o dispatch estável — não re-renderiza quando `panelActions` muda
+ * (evita loop React #185 Maximum update depth exceeded).
+ */
 export function useProcessoWorkspacePanelActions(actions: ReactNode, enabled: boolean) {
-  const registry = useProcessoWorkspacePanelActionsRegistry();
+  const setPanelActions = useContext(PanelActionsDispatchContext);
 
   useEffect(() => {
-    if (!registry || !enabled) return;
-    registry.setPanelActions(actions);
-    return () => registry.setPanelActions(null);
-  }, [actions, enabled, registry]);
+    if (!setPanelActions || !enabled) return;
+    setPanelActions(actions);
+    return () => setPanelActions(null);
+  }, [actions, enabled, setPanelActions]);
 }

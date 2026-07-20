@@ -171,8 +171,8 @@ export function InstanciaDetailPage({
     void load();
   }, [load]);
 
-  function buildNovaRevisaoFormState() {
-    return {
+  const openNovaRevisaoForm = useCallback(() => {
+    setRevForm({
       versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
       cenario_tipo: revisoes.length ? "melhoria" : "baseline",
       revisao_referencia_id: defaultReferenciaId,
@@ -180,18 +180,14 @@ export function InstanciaDetailPage({
       data_implantacao: "",
       data_fim_vigencia: "",
       revisao_ativa: revisoes.length > 0,
-    };
-  }
-
-  function openNovaRevisaoForm() {
-    setRevForm(buildNovaRevisaoFormState());
+    });
     if (showRevisaoForm) {
       scrollToRevisoes();
       return;
     }
     pendingRevisaoScroll.current = true;
     setShowRevisaoForm(true);
-  }
+  }, [defaultReferenciaId, revisoes.length, scrollToRevisoes, showRevisaoForm]);
 
   const closeNovaRevisaoForm = useCallback(() => {
     setShowRevisaoForm(false);
@@ -210,7 +206,7 @@ export function InstanciaDetailPage({
     consumedNovaRevisaoHash.current = true;
     window.history.replaceState(null, "", window.location.pathname);
     openNovaRevisaoForm();
-  }, [loading, instancia, revisoes.length, defaultReferenciaId]);
+  }, [loading, instancia, openNovaRevisaoForm]);
 
   async function handleDeleteRevisao(revisao: Revisao) {
     const label = revisaoDisplayLabel(revisao);

@@ -50,6 +50,9 @@ describe("resolveDataTableColumnClassName", () => {
     expect(resolveDataTableColumnClassName("pa-table__col--wide")).toBe(
       "pa-table__col--wide delpi-ui-table__col--wide",
     );
+    expect(resolveDataTableColumnClassName("ds-table__col--wrap")).toBe(
+      "ds-table__col--wrap delpi-ui-table__col--wrap",
+    );
     expect(
       resolveDataTableColumnClassName("pa-table__col--numeric delpi-ui-table__col--numeric"),
     ).toBe("pa-table__col--numeric delpi-ui-table__col--numeric");

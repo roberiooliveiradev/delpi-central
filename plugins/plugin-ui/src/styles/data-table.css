@@ -373,6 +373,15 @@ table.delpi-ui-table th[data-align="center"] .delpi-ui-table__header-label {
   max-width: 360px;
 }
 
+table.delpi-ui-table th.delpi-ui-table__col--wrap,
+table.delpi-ui-table td.delpi-ui-table__col--wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  max-width: 16rem;
+  min-width: 8rem;
+}
+
 .delpi-ui-table__col--status {
   min-width: 8.5rem;
   white-space: nowrap;
