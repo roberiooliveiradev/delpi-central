@@ -60,7 +60,13 @@ def test_commercial_closing_rate_returns_meta(mock_build, _mock_enrich) -> None:
     mock_use_case.execute.return_value = {"rate_pct": 12.5}
     mock_build.return_value = mock_use_case
 
-    response = get_sales_conversion_rate()
+    # Chamada direta: passar valores Python (defaults Query() são FieldInfo).
+    response = get_sales_conversion_rate(
+        branch=None,
+        start_date=None,
+        end_date=None,
+        customer_segment=None,
+    )
     _assert_meta(
         _body(response),
         operation_id="get_sales_conversion_rate",

@@ -5,7 +5,7 @@ from typing import Callable, Optional
 from fastapi import Query
 
 from app.interface.http.query_param_enums import (
-    BRANCH_QUERY_OPTIONAL as BRANCH_QUERY,
+    BRANCH_QUERY_REQUIRED as BRANCH_QUERY,
     SAFETY_STOCK_STATUS_QUERY,
     SORT_DIR_QUERY_ALIAS_SORT_DIRECTION,
 )

@@ -37,5 +37,7 @@ def test_build_inventory_counts() -> None:
     inventory = build_inventory(baseline)
     assert inventory["operationCount"] == baseline["operation_count"]
     assert inventory["autoCount"] + inventory["stableCount"] == inventory["operationCount"]
-    assert inventory["autoCount"] >= 1
+    # Catálogo canônico: todos os operationId estáveis (sem auto-id FastAPI).
+    assert inventory["autoCount"] == 0
+    assert inventory["stableCount"] == inventory["operationCount"]
     assert not inventory["recommendationCollisions"]
