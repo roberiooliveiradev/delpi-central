@@ -115,6 +115,33 @@ class ExternalActionOperationalRouteSelectionService:
             previous_messages=previous_messages,
         )
 
+    def select_registry_route_id(
+        self,
+        route_id: str,
+        message: str,
+        allowed_action_ids: list[str],
+        *,
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+        merge_date_parameters: Callable[..., dict] | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        """Resolve action pelo id do registry — ignora predicados ``match`` vocabulary."""
+        route = OperationalRouteRegistryService.route_by_id(str(route_id or "").strip())
+
+        if not route:
+            return None
+
+        return self._resolver.resolve_route_action(
+            route,
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            previous_messages=previous_messages,
+            build_date_branch_parameters=build_date_branch_parameters,
+            merge_date_parameters=merge_date_parameters,
+        )
+
     def select_by_intent(
         self,
         message: str,

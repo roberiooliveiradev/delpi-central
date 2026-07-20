@@ -169,6 +169,24 @@ class ExternalActionSelectionService:
             candidates_loader=self._list_allowed_candidates,
         )
 
+    def select_registry_route_id(
+        self,
+        route_id: str,
+        message: str,
+        *,
+        allowed_action_ids: list[str] | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        """Resolve action pelo id do registry (compose multi-rota departamental)."""
+        return self._route_selection.select_registry_route_id(
+            route_id,
+            message,
+            allowed_action_ids=allowed_action_ids or [],
+            candidates_loader=self._list_allowed_candidates,
+            build_date_branch_parameters=self._build_date_branch_parameters,
+            previous_messages=previous_messages,
+        )
+
     def _select_product_for_refinement(
         self,
         message: str,

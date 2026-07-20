@@ -266,6 +266,46 @@ def test_plan_actions_multi_scope_structure_and_guide(monkeypatch):
     assert action_ids == {"structure", "guide"}
 
 
+def test_plan_actions_department_meta_composition_engineering(monkeypatch):
+    monkeypatch.setattr(
+        "app.application.services.chat_external_action_orchestration_service.Settings.CHAT_MULTI_ACTION_ENABLED",
+        True,
+    )
+
+    class MetaSelectionService(FakeSelectionService):
+        def select_registry_route_id(
+            self,
+            route_id,
+            message,
+            *,
+            allowed_action_ids=None,
+            previous_messages=None,
+        ):
+            return {
+                "name": "execute_external_action",
+                "arguments": {
+                    "actionId": f"action-{route_id}",
+                    "parameters": {"department_id": "engineering"},
+                },
+            }
+
+        def select_action(self, *args, **kwargs):
+            raise AssertionError("select_action não deve ser chamado no compose engineering")
+
+    planned = ChatExternalActionOrchestrationService.plan_actions(
+        MetaSelectionService(),
+        message="qual a meta para engenharia desse mês filial 02?",
+        allowed_action_ids=["a", "b", "c"],
+        max_calls=5,
+    )
+
+    assert len(planned) >= 2
+    action_ids = [item["arguments"]["actionId"] for item in planned]
+
+    assert action_ids[0] == "action-dashboardDepartmentIndicators"
+    assert "action-dashboardDepartmentIdd" in action_ids
+
+
 def test_plan_actions_pagination_follow_up_uses_pagination_refinement(monkeypatch):
     monkeypatch.setattr(
         "app.application.services.chat_intelligence_runtime_access.resolve_chat_intelligence_runtime",

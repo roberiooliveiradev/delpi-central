@@ -1,0 +1,43 @@
+{
+  "version": "2026.07.1",
+  "triggerTerms": [
+    "meta para",
+    "meta da",
+    "meta de",
+    "meta do",
+    "metas e realizado",
+    "meta e realizado",
+    "indicadores do",
+    "indicadores da",
+    "indicadores estrategicos",
+    "indicadores estratégicos",
+    "idd com metas",
+    "painel de idd"
+  ],
+  "composeModeTerms": {
+    "full": [
+      "painel",
+      "indicadores",
+      "visao integrada",
+      "visão integrada",
+      "metas e realizado",
+      "idd com metas",
+      "completo"
+    ]
+  },
+  "defaultMode": "compose",
+  "byDepartment": {
+    "engineering": {
+      "primaryRouteId": "dashboardDepartmentIndicators",
+      "composeRouteIds": [
+        "dashboardDepartmentIdd",
+        "engineeringTransformaSummary"
+      ]
+    }
+  },
+  "selectionReasons": {
+    "primary": "Consulta o painel de metas e realizado do departamento.",
+    "compose": "Complementa a meta departamental com indicador relacionado.",
+    "iddScore": "Consulta a nota IDD estratégica do departamento."
+  }
+}

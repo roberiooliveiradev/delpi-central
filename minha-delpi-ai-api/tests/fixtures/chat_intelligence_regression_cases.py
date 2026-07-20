@@ -2790,6 +2790,22 @@ PROSE_COMMENTARY_DIRECT_CASES = [
     },
 ]
 
+# Playbook 25 — composição multi-rota de meta departamental (plan_actions).
+DEPARTMENT_META_COMPOSITION_CASES = [
+    {
+        "message": "qual a meta para engenharia desse mês?",
+        "expected_department_id": "engineering",
+        "expected_min_planned": 2,
+        "expected_primary_route_id": "dashboardDepartmentIndicators",
+    },
+    {
+        "message": "qual a meta para egenharia desse mês filial 02?",
+        "expected_department_id": "engineering",
+        "expected_min_planned": 2,
+        "expected_primary_route_id": "dashboardDepartmentIndicators",
+    },
+]
+
 # treinamento-agente-interacoes-jun2026.md — consultas operacionais (não capabilities).
 TRAINING_AGENT_CAPABILITY_GATE_CASES = [
     "estoque do produto 10080022",

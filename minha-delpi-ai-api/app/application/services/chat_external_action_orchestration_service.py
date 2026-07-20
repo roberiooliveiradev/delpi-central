@@ -469,6 +469,24 @@ class ChatExternalActionOrchestrationService:
             if len(scope_planned) == 1:
                 return _return_planned(scope_planned)
 
+        from app.domain.services.chat_department_meta_composition_planning_service import (
+            ChatDepartmentMetaCompositionPlanningService,
+        )
+
+        if ChatDepartmentMetaCompositionPlanningService.looks_like_department_meta_composition(
+            planning_message
+        ):
+            meta_planned = ChatDepartmentMetaCompositionPlanningService.plan(
+                selection_service,
+                message=planning_message,
+                allowed_action_ids=allowed_action_ids,
+                previous_messages=previous_messages,
+                max_calls=limit,
+            )
+
+            if meta_planned:
+                return _return_planned(meta_planned)
+
         selected = selection_service.select_action(
             selection_message,
             allowed_action_ids=allowed_action_ids,

@@ -400,6 +400,27 @@ class ExternalActionRouteSelectionService:
             previous_messages=previous_messages,
         )
 
+    def select_registry_route_id(
+        self,
+        route_id: str,
+        message: str,
+        *,
+        allowed_action_ids: list[str],
+        candidates_loader: Callable[..., list[dict]] | None = None,
+        build_date_branch_parameters: Callable[..., dict] | None = None,
+        merge_date_parameters: Callable[..., dict] | None = None,
+        previous_messages: list | None = None,
+    ) -> dict | None:
+        return self._operational_route.select_registry_route_id(
+            route_id,
+            message,
+            allowed_action_ids,
+            candidates_loader=candidates_loader,
+            build_date_branch_parameters=build_date_branch_parameters,
+            merge_date_parameters=merge_date_parameters,
+            previous_messages=previous_messages,
+        )
+
     def select_operational_registry(
         self,
         message: str,
