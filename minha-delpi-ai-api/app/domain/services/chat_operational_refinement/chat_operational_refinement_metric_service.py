@@ -34,9 +34,8 @@ class ChatOperationalRefinementMetricService:
         if not recent:
             return []
 
-        # Intent fresco de KPI (ex.: «meta comercial») prevalece sobre sticky do
-        # último path (ex.: novos negócios) — refino só para escopo puro (filial).
-        if cls._fresh_department_kpi_overrides_sticky(message, recent):
+        # Intent fresco (outro KPI / outro departamento) prevalece sobre sticky.
+        if cls._fresh_intent_overrides_sticky(message, recent):
             return []
 
         branch = refinement_service().extract_branch_code(normalized)
@@ -70,11 +69,14 @@ class ChatOperationalRefinementMetricService:
         ]
 
     @classmethod
-    def _fresh_department_kpi_overrides_sticky(
+    def _fresh_intent_overrides_sticky(
         cls,
         message: str,
         recent: RecentMetricRoute,
     ) -> bool:
+        if cls._mentioned_department_conflicts_with_recent(message, recent):
+            return True
+
         if recent.kind != "department_kpi":
             return False
 
@@ -95,6 +97,75 @@ class ChatOperationalRefinementMetricService:
             recent_token=str(recent.path_token or ""),
             fresh_token=str(fresh.path_token or ""),
         )
+
+    @classmethod
+    def _mentioned_department_conflicts_with_recent(
+        cls,
+        message: str,
+        recent: RecentMetricRoute,
+    ) -> bool:
+        mentioned = cls._resolve_mentioned_department_id(message)
+        recent_department = cls._department_id_for_recent_route(recent)
+
+        if not mentioned or not recent_department:
+            return False
+
+        return mentioned != recent_department
+
+    @classmethod
+    def _resolve_mentioned_department_id(cls, message: str) -> str | None:
+        from app.domain.services.chat_operational_api_domain_service import (
+            ChatOperationalApiDomainService,
+        )
+        from app.domain.services.operational_api_parameter_builder_service import (
+            OperationalApiParameterBuilderService,
+        )
+
+        spec = ChatOperationalApiDomainService.parameter_strategy_spec("department_idd")
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+
+        if not normalized or not isinstance(spec, dict):
+            return None
+
+        resolved = OperationalApiParameterBuilderService._resolve_source_value(
+            "department_id_regex",
+            {"source": "department_id_regex", "matchAliases": ["department_id"]},
+            spec,
+            {"normalized": normalized},
+        )
+
+        value = str(resolved or "").strip().lower()
+
+        return value or None
+
+    @classmethod
+    def _department_id_for_recent_route(cls, recent: RecentMetricRoute) -> str | None:
+        from app.domain.services.chat_operational_api_domain_service import (
+            ChatOperationalApiDomainService,
+        )
+
+        spec = ChatOperationalApiDomainService.parameter_strategy_spec("department_idd")
+        mapping = spec.get("pathPrefixToDepartmentId") if isinstance(spec, dict) else None
+
+        if not isinstance(mapping, dict):
+            mapping = {}
+
+        prefix = str(recent.domain_prefix or "").strip().lower()
+        path = str(recent.path or "").strip().lower()
+
+        for marker, department_id in mapping.items():
+            marker_text = str(marker or "").strip().lower()
+
+            if not marker_text:
+                continue
+
+            if marker_text == prefix or marker_text in path:
+                value = str(department_id or "").strip().lower()
+
+                if value:
+                    return value
+
+        return None
 
     @classmethod
     def _recent_route_matches_kpi_token(

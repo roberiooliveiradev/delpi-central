@@ -353,6 +353,44 @@ def test_plan_metric_follow_up_skips_when_fresh_kpi_differs_from_sticky():
     assert planned == []
 
 
+def test_plan_metric_follow_up_skips_when_other_department_mentioned():
+    """«meta engenharia» (mesmo com typo) não herda sticky comercial + filial."""
+    from app.domain.services.chat_operational_api_domain_service import (
+        invalidate_operational_api_domain_cache,
+    )
+
+    invalidate_operational_api_domain_cache()
+
+    history = [
+        {"role": "user", "content": "qual a meta para comercial desse mês filial 02?"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/commercial/branch_rol_target_pct",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    for message in (
+        "qual a meta para engenharia desse mês filial 02?",
+        "qual a meta para egenharia desse mês filial 02?",
+        "qual a meta para financeiro desse mês filial 02?",
+    ):
+        planned = ChatOperationalRefinementService.plan_metric_follow_ups(
+            message,
+            previous_messages=history,
+        )
+        assert planned == [], message
+
+
 def test_plan_metric_follow_up_keeps_sticky_when_scope_only_after_same_kpi():
     history = [
         {"role": "user", "content": "qual a meta percentual de ROL da filial?"},

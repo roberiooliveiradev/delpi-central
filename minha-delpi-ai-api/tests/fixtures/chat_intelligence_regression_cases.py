@@ -804,6 +804,55 @@ SELECTION_CASES = [
         "expected_action_id": "supplies-cpv",
     },
     {
+        "message": "qual a meta para egenharia desse mês filial 02?",
+        "previous_messages": [
+            {"role": "user", "content": "qual a meta para comercial desse mês filial 02?"},
+            {
+                "role": "assistant",
+                "metadata": {
+                    "toolCalls": [
+                        {
+                            "name": "execute_external_action",
+                            "metadata": {
+                                "ok": True,
+                                "path": "/commercial/branch_rol_target_pct",
+                            },
+                        }
+                    ]
+                },
+            },
+        ],
+        "actions": [
+            {
+                "actionId": "commercial-branch-rol-target",
+                "method": "GET",
+                "path": "/commercial/branch_rol_target_pct",
+                "operationId": "get_branch_rol_target_pct",
+                "summary": "Meta % ROL filial",
+                "parametersSchema": [
+                    {"name": "branch", "in": "query", "required": False},
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "dashboard-department-indicators",
+                "method": "GET",
+                "path": "/dashboard/department-indicators",
+                "operationId": "get_dashboard_department_indicators",
+                "summary": "IDD metas e realizado",
+                "parametersSchema": [
+                    {"name": "department_id", "in": "query", "required": False},
+                    {"name": "branch", "in": "query", "required": False},
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+        ],
+        "expected_action_id": "dashboard-department-indicators",
+        "expected_parameters": {"department_id": "engineering", "branch": "02"},
+    },
+    {
         "message": "qual a meta para comercial desse mês filial 02?",
         "previous_messages": [
             {"role": "user", "content": "meta de novos negócios"},

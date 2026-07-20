@@ -250,7 +250,7 @@
       "description": "Departamento SI (IDD) + filial/datas para metas e realizado",
       "patterns": {
         "branch": "\\bfilial\\s+(\\d{2})\\b",
-        "department_id": "\\b(comercial|commercial|qualidade|quality|producao|produção|production|financeiro|financial|suprimentos|supplies|engenharia|engineering|rh|hr|recursos humanos)\\b"
+        "department_id": "\\b(comercial|commercial|qualidade|quality|producao|produção|production|financeiro|financial|financerio|suprimentos|supplies|engenharia|engineering|egenharia|engenharria|rh|hr|recursos humanos)\\b"
       },
       "departmentIdAliases": {
         "comercial": "commercial",
@@ -262,13 +262,25 @@
         "production": "production",
         "financeiro": "financial",
         "financial": "financial",
+        "financerio": "financial",
         "suprimentos": "supplies",
         "supplies": "supplies",
         "engenharia": "engineering",
         "engineering": "engineering",
+        "egenharia": "engineering",
+        "engenharria": "engineering",
         "rh": "hr",
         "hr": "hr",
         "recursos humanos": "hr"
+      },
+      "pathPrefixToDepartmentId": {
+        "/commercial/": "commercial",
+        "/financial/": "financial",
+        "/production/": "production",
+        "/quality/": "quality",
+        "/hr/": "hr",
+        "/supplies/": "supplies",
+        "/engineering/": "engineering"
       },
       "bindings": [
         {
