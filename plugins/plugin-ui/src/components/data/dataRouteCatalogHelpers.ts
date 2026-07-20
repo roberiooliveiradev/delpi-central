@@ -3,7 +3,58 @@ export type DataRouteParamFieldSummary = {
   label: string;
   optional?: boolean;
   description?: string;
+  type?: string;
+  default?: string | number | boolean;
+  /** Opções de enum do schema (select no teste/config). */
+  enum?: string[];
 };
+
+export type DataRouteTestParams = Record<string, string | number | boolean>;
+
+/** Valores iniciais do formulário de teste a partir do resumo do schema. */
+export function initialTestParamValues(
+  params: DataRouteParamFieldSummary[],
+): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const param of params) {
+    if (param.default === undefined || param.default === null) continue;
+    values[param.key] = String(param.default);
+  }
+  return values;
+}
+
+/** Converte strings do formulário para o tipo declarado no schema. */
+export function coerceTestParamValues(
+  params: DataRouteParamFieldSummary[],
+  raw: Record<string, string>,
+): DataRouteTestParams {
+  const values: DataRouteTestParams = {};
+  for (const param of params) {
+    const text = String(raw[param.key] ?? "").trim();
+    if (!text) continue;
+    if (param.type === "integer" || param.type === "number") {
+      const number = Number(text);
+      if (Number.isFinite(number)) values[param.key] = number;
+      continue;
+    }
+    if (param.type === "boolean") {
+      values[param.key] = text === "true" || text === "1";
+      continue;
+    }
+    values[param.key] = text;
+  }
+  return values;
+}
+
+/** Valida obrigatoriedade antes de chamar a API de teste. */
+export function missingRequiredTestParams(
+  params: DataRouteParamFieldSummary[],
+  raw: Record<string, string>,
+): DataRouteParamFieldSummary[] {
+  return params.filter(
+    (param) => param.optional === false && !String(raw[param.key] ?? "").trim(),
+  );
+}
 
 const META_SHAPE_BLURB: Record<string, string> = {
   scalar: "Entrega um número indicador — ideal para card KPI na TV.",
@@ -57,7 +108,15 @@ export function summarizeRouteParams(
       description?: string;
       optional?: boolean;
       required?: boolean;
+      type?: string;
+      default?: string | number | boolean;
+      enum?: unknown;
     };
+    const enumValues = Array.isArray(field.enum)
+      ? field.enum
+          .filter((item): item is string => typeof item === "string" && item.trim().length > 0)
+          .map((item) => item.trim())
+      : undefined;
     items.push({
       key,
       label: typeof field.label === "string" && field.label.trim() ? field.label.trim() : key,
@@ -66,6 +125,11 @@ export function summarizeRouteParams(
         typeof field.description === "string" && field.description.trim()
           ? field.description.trim()
           : undefined,
+      ...(typeof field.type === "string" && field.type.trim()
+        ? { type: field.type.trim() }
+        : {}),
+      ...(field.default !== undefined && field.default !== null ? { default: field.default } : {}),
+      ...(enumValues && enumValues.length > 0 ? { enum: enumValues } : {}),
     });
   }
   return items.sort((a, b) => {

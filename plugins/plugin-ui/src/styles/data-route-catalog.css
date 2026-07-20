@@ -404,6 +404,15 @@
   gap: 2px 8px;
 }
 
+.delpi-ui-data-route-catalog__param-control {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.delpi-ui-data-route-catalog__param-control .delpi-ui-native-control {
+  width: 100%;
+}
+
 .delpi-ui-data-route-catalog__param-label {
   font-size: 12px;
   font-weight: 600;

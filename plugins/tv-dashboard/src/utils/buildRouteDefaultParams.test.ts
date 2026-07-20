@@ -37,4 +37,17 @@ describe("buildRouteDefaultParams", () => {
     expect(params.branch).toBe("SC");
     expect(params.dateRangePreset).toBe("this_month");
   });
+
+  it("preenche department_id obrigatório do IDD", () => {
+    const params = buildRouteDefaultParams({
+      operationId: "get_dashboard_department_idd",
+      label: "IDD",
+      category: "system",
+      path: "/dashboard/department-idd",
+      paramSchema: {
+        department_id: { type: "string", optional: false },
+      },
+    });
+    expect(params.department_id).toBe("commercial");
+  });
 });

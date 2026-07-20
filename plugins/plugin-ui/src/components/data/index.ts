@@ -220,6 +220,7 @@ export {
   type DataRouteDisplayKind,
   type DataRouteParamFieldSummary,
   type DataRoutePreviewPayload,
+  type DataRouteTestParams,
 } from "./DataRouteCatalogPanel";
 
 export { DataRouteSamplePreview } from "./DataRouteSamplePreview";

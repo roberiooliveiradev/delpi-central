@@ -129,12 +129,15 @@ export function DataRoutesSidePanel({
     setWizardView(preferred);
   }
 
-  async function testRoute(item: DataRouteCatalogItem): Promise<DataRoutePreviewPayload> {
+  async function testRoute(
+    item: DataRouteCatalogItem,
+    overrideParams: Record<string, string | number | boolean> = {},
+  ): Promise<DataRoutePreviewPayload> {
     const route = routes.find((entry) => entry.operationId === item.id);
     if (!route) {
       throw new Error("Rota não encontrada no catálogo.");
     }
-    const defaultParams = { ...buildRouteDefaultParams(route) };
+    const defaultParams = { ...buildRouteDefaultParams(route), ...overrideParams };
     for (const [key, value] of Object.entries(slideFilters)) {
       if ((defaultParams[key] === undefined || defaultParams[key] === "") && value != null && value !== "") {
         defaultParams[key] = value;

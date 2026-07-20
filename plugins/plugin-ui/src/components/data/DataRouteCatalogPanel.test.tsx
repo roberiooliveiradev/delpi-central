@@ -47,6 +47,24 @@ const ITEMS: DataRouteCatalogItem[] = [
     metaShape: "playbook_report",
     displayKinds: ["series", "kpi"],
   },
+  {
+    id: "get_dashboard_department_idd",
+    label: "Dashboard departamental (IDD)",
+    category: "system",
+    path: "/dashboard/department-idd",
+    httpMethod: "GET",
+    metaShape: "scalar",
+    displayKinds: ["kpi"],
+    params: [
+      {
+        key: "department_id",
+        label: "Departamento",
+        optional: false,
+        enum: ["commercial", "hr"],
+        default: "commercial",
+      },
+    ],
+  },
 ];
 
 describe("resolveDataRouteDisplayKinds", () => {
@@ -149,10 +167,52 @@ describe("DataRouteCatalogPanel", () => {
     fireEvent.click(screen.getByText("OEE geral"));
     fireEvent.click(screen.getByRole("button", { name: "Testar rota" }));
 
-    await waitFor(() => expect(onTestRoute).toHaveBeenCalled());
+    await waitFor(() => expect(onTestRoute).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "get_oee" }),
+      {},
+    ));
     expect(screen.getByText("Resultado do teste")).toBeTruthy();
     expect(screen.getByText("91,2%")).toBeTruthy();
     expect(screen.queryByText("Exemplo de uso")).toBeNull();
+  });
+
+  it("permite editar filtros obrigatórios antes de testar a rota", async () => {
+    const onTestRoute = vi.fn().mockResolvedValue({
+      kind: "kpi",
+      source: "live",
+      kpi: { label: "IDD", value: "87,4%" },
+    });
+
+    render(
+      <DataRouteCatalogPanel
+        items={ITEMS}
+        onSelect={vi.fn()}
+        onTestRoute={onTestRoute}
+        density="comfortable"
+        categoryLabels={{ system: "Sistema" }}
+        categoryOrder={["system"]}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Dashboard departamental (IDD)"));
+    const department = screen.getByLabelText("Departamento") as HTMLSelectElement;
+    expect(department.value).toBe("commercial");
+    fireEvent.change(department, { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Testar rota" }));
+    await waitFor(() =>
+      expect(screen.getByText(/Preencha o filtro obrigatório: Departamento/)).toBeTruthy(),
+    );
+    expect(onTestRoute).not.toHaveBeenCalled();
+
+    fireEvent.change(department, { target: { value: "hr" } });
+    fireEvent.click(screen.getByRole("button", { name: "Testar rota" }));
+    await waitFor(() =>
+      expect(onTestRoute).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "get_dashboard_department_idd" }),
+        { department_id: "hr" },
+      ),
+    );
+    expect(screen.getByText("87,4%")).toBeTruthy();
   });
 
   it("mantém exemplo de uso quando o teste da rota falha", async () => {

@@ -12,6 +12,7 @@ export const CONVENIENT_REQUIRED_DEFAULTS: Record<string, string> = {
   branch: "01",
   filial: "01",
   branch_code: "01",
+  department_id: "commercial",
   q: "pac",
   description: "codigo",
 };

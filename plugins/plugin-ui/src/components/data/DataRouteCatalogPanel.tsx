@@ -10,17 +10,23 @@ import {
 import { Factory, X } from "lucide-react";
 
 import {
+  coerceTestParamValues,
   formatParamHintLine,
   humanizeMetaShape,
+  initialTestParamValues,
+  missingRequiredTestParams,
   resolveRouteAudienceDescription,
   truncateText,
   type DataRouteParamFieldSummary,
+  type DataRouteTestParams,
 } from "./dataRouteCatalogHelpers";
 import { DataRouteSamplePreview } from "./DataRouteSamplePreview";
 import {
   buildSampleDataRoutePreview,
   type DataRoutePreviewPayload,
 } from "./dataRouteSamplePreview";
+import { NativeSelectControl } from "../forms/NativeSelectControl";
+import { NativeTextControl } from "../forms/NativeTextControl";
 
 export type DataRouteDisplayKind = "kpi" | "series" | "table";
 
@@ -67,9 +73,13 @@ export type DataRouteCatalogPanelProps = {
   confirmLabel?: string;
   /**
    * Teste ao vivo da rota (ex.: `POST /data/preview-block`).
-   * Sem callback, «Testar rota» só reforça o exemplo estático.
+   * Recebe os filtros editados no detalhe. Sem callback, «Testar rota»
+   * só reforça o exemplo estático.
    */
-  onTestRoute?: (item: DataRouteCatalogItem) => Promise<DataRoutePreviewPayload>;
+  onTestRoute?: (
+    item: DataRouteCatalogItem,
+    params: DataRouteTestParams,
+  ) => Promise<DataRoutePreviewPayload>;
 };
 
 const DISPLAY_KIND_LABELS: Record<DataRouteDisplayKind, string> = {
@@ -157,6 +167,7 @@ export function DataRouteCatalogPanel({
   const [livePreview, setLivePreview] = useState<DataRoutePreviewPayload | null>(null);
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState<string | null>(null);
+  const [testParams, setTestParams] = useState<Record<string, string>>({});
   const [detailTop, setDetailTop] = useState(0);
 
   const cardRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -253,7 +264,11 @@ export function DataRouteCatalogPanel({
     setLivePreview(null);
     setTestError(null);
     setTesting(false);
-  }, [selectedId]);
+    const next = selectedId
+      ? enriched.find((item) => item.id === selectedId) ?? null
+      : null;
+    setTestParams(next ? initialTestParamValues(next.params) : {});
+  }, [enriched, selectedId]);
 
   const samplePreview = useMemo(() => {
     if (!selected) return null;
@@ -331,6 +346,16 @@ export function DataRouteCatalogPanel({
     setTesting(true);
     setTestError(null);
     try {
+      const missing = missingRequiredTestParams(selected.params, testParams);
+      if (missing.length > 0) {
+        setTestError(
+          missing.length === 1
+            ? `Preencha o filtro obrigatório: ${missing[0]!.label}.`
+            : `Preencha os filtros obrigatórios: ${missing.map((item) => item.label).join(", ")}.`,
+        );
+        setLivePreview(null);
+        return;
+      }
       if (!onTestRoute) {
         setLivePreview({
           ...buildSampleDataRoutePreview({
@@ -346,7 +371,7 @@ export function DataRouteCatalogPanel({
         });
         return;
       }
-      const payload = await onTestRoute(selected);
+      const payload = await onTestRoute(selected, coerceTestParamValues(selected.params, testParams));
       if (payload.error) {
         setTestError(payload.error);
         setLivePreview(null);
@@ -408,17 +433,65 @@ export function DataRouteCatalogPanel({
         <p className="delpi-ui-data-route-catalog__detail-body">Nenhum filtro configurável.</p>
       ) : (
         <ul className="delpi-ui-data-route-catalog__param-list">
-          {selected.params.map((param) => (
-            <li key={param.key} className="delpi-ui-data-route-catalog__param-item">
-              <span className="delpi-ui-data-route-catalog__param-label">{param.label}</span>
-              <span className="delpi-ui-data-route-catalog__param-meta">
-                {param.optional === false ? "obrigatório" : "opcional"}
-              </span>
-              {param.description ? (
-                <span className="delpi-ui-data-route-catalog__param-hint">{param.description}</span>
-              ) : null}
-            </li>
-          ))}
+          {selected.params.map((param) => {
+            const fieldId = `delpi-ui-route-test-${selected.id}-${param.key}`;
+            const value = testParams[param.key] ?? "";
+            const options = param.enum?.length
+              ? [
+                  { value: "", label: param.optional === false ? "Selecione…" : "— (vazio)" },
+                  ...param.enum.map((item) => ({ value: item, label: item })),
+                ]
+              : null;
+            return (
+              <li key={param.key} className="delpi-ui-data-route-catalog__param-item">
+                <label className="delpi-ui-data-route-catalog__param-label" htmlFor={fieldId}>
+                  {param.label}
+                </label>
+                <span className="delpi-ui-data-route-catalog__param-meta">
+                  {param.optional === false ? "obrigatório" : "opcional"}
+                </span>
+                {param.description ? (
+                  <span className="delpi-ui-data-route-catalog__param-hint">{param.description}</span>
+                ) : null}
+                <div className="delpi-ui-data-route-catalog__param-control">
+                  {options ? (
+                    <NativeSelectControl
+                      id={fieldId}
+                      className="delpi-ui-native-control--compact"
+                      value={value}
+                      options={options}
+                      aria-label={param.label}
+                      required={param.optional === false}
+                      onChange={(next) =>
+                        setTestParams((previous) => ({ ...previous, [param.key]: next }))
+                      }
+                    />
+                  ) : (
+                    <NativeTextControl
+                      id={fieldId}
+                      className="delpi-ui-native-control--compact"
+                      type={
+                        param.type === "integer" || param.type === "number"
+                          ? "number"
+                          : param.key.includes("date") || param.label.toLowerCase().includes("data")
+                            ? "date"
+                            : param.key === "competence" || param.label.toLowerCase().includes("competência")
+                              ? "month"
+                              : "text"
+                      }
+                      value={value}
+                      placeholder={param.optional === false ? "Obrigatório" : "Opcional"}
+                      aria-label={param.label}
+                      required={param.optional === false}
+                      onChange={(next) =>
+                        setTestParams((previous) => ({ ...previous, [param.key]: next }))
+                      }
+                    />
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -648,18 +721,24 @@ export function DataRouteCatalogPanel({
   );
 }
 
-export type { DataRouteParamFieldSummary } from "./dataRouteCatalogHelpers";
+export type {
+  DataRouteParamFieldSummary,
+  DataRouteTestParams,
+} from "./dataRouteCatalogHelpers";
 export type { DataRoutePreviewPayload } from "./dataRouteSamplePreview";
 export {
   buildSampleDataRoutePreview,
   mapEnrichedBlockToDataRoutePreview,
 } from "./dataRouteSamplePreview";
 export {
+  coerceTestParamValues,
   countRequiredParams,
   formatParamHintLine,
   humanizeMetaShape,
+  initialTestParamValues,
   isParamFieldOptional,
   isTemplatedRouteDescription,
+  missingRequiredTestParams,
   resolveRouteAudienceDescription,
   summarizeRouteParams,
   truncateText,

@@ -1119,7 +1119,17 @@
           "type": "string",
           "optional": false,
           "label": "Departamento",
-          "description": "Identificador do departamento no painel IDD."
+          "description": "Identificador do departamento no painel IDD.",
+          "enum": [
+            "commercial",
+            "hr",
+            "production",
+            "financial",
+            "supplies",
+            "engineering",
+            "quality"
+          ],
+          "default": "commercial"
         },
         "competence": {
           "type": "string",
