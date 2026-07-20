@@ -14,6 +14,91 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para catálogos (TV, cha
 
 Consumidores **importam** o contrato (baseline / OpenAPI), não reinventam enums nem labels.
 
+Diretriz Cursor (obrigatória em rotas novas): **`.cursor/rules/api-delpi-openapi-route-standards.mdc`**.
+
+---
+
+## Como construir uma rota futura (obrigatório)
+
+### 1. Router FastAPI
+
+```python
+@router.get("/path", operation_id="get_domain_thing")  # estável, snake_case
+@require_any_permission(SOME_PERM)
+def handler(
+    branch: str | None = BRANCH_QUERY_OPTIONAL,  # de query_param_enums.py
+    granularity: str = GRANULARITY_QUERY_MONTH,
+):
+    return api_delpi_success(data, operation_id="get_domain_thing")  # igual ao decorator
+```
+
+| Regra | Detalhe |
+|-------|---------|
+| `operation_id` no decorator | Sempre; se o `def` for curto (`update_audit`), o oid canônico vai no decorator |
+| Mesmo id no envelope | `api_delpi_success(..., operation_id=...)` idêntico |
+| Chat-critical | Preferir `**agent_route(...)` **sem** segundo `operation_id=` (evita `TypeError` no startup) |
+| Domínio fechado | `enum=` via [`query_param_enums.py`](../../app/interface/http/query_param_enums.py) — não só `pattern=` |
+| Description do Query | Inglês |
+| Filial consolidável | `Query(None)` / `BRANCH_QUERY_OPTIONAL` — **não** default HTTP `"01"` |
+
+### 2. Contrato e segurança
+
+1. `route_contract_registry.py` — `entity` + `shape`.
+2. Permissão em `api_delpi_permissions.py` (sem string literal no router).
+3. Filial TOTVS: `branch_access_error` quando houver escopo por filial.
+4. Upload: volume Compose — ver `persistent-upload-storage.mdc`.
+
+### 3. Textos bilíngues
+
+| Onde | O quê |
+|------|--------|
+| [`tv_route_audience.json`](../../app/content/tv_route_audience.json) | `locale.en` + `locale.pt-BR` (`summary` **distintos**); `category`; params específicos da rota |
+| [`openapi_param_locale.json`](../../app/content/openapi_param_locale.json) | Param **novo** compartilhado (branch, periodDays, …) |
+| Summary nativo OpenAPI | Inglês (espelhado de `locale.en` no enrich do baseline) |
+
+Loader: `route_locale_catalog_service` → só anexa locale de params cujos nomes existem em `parameters` da operação.
+
+### 4. TV / MFE (sem inventário paralelo)
+
+| Artefato | Papel |
+|----------|--------|
+| Gerador `scripts/generate_tv_data_routes_from_openapi.py` | Lê baseline + overlays; **sem** `PARAM_LABELS_PT` |
+| [`tv_param_ux_defaults.json`](../../../tv-dashboard-api/tv_app/content/tv_param_ux_defaults.json) | Default UX filial `"01"` — **não** é contrato HTTP |
+| `scripts/sync_tv_data_param_catalog.py --write` | Regenera `dataParamCatalog.ts` + labels do presentation |
+
+### 5. Sync após a rota existir
+
+```bash
+# Export OpenAPI (recomendado no container)
+docker exec delpi-api-delpi python -c \
+  "from app.main import app; import json; open('/tmp/o.json','w').write(json.dumps(app.openapi()))"
+docker cp delpi-api-delpi:/tmp/o.json /tmp/openapi_full.json
+
+cd api-delpi
+python scripts/sync_openapi_baseline.py --from-json /tmp/openapi_full.json
+# ou só locale, se o baseline já tem parameters:
+# python scripts/sync_openapi_baseline.py --enrich-locale-only
+
+cd ..
+python3 scripts/generate_tv_data_routes_from_openapi.py --write
+python3 scripts/generate_tv_data_routes_from_openapi.py --check
+python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
+python api-delpi/scripts/audit_openapi_operation_ids.py --check
+python3 scripts/sync_tv_data_param_catalog.py --write && --check
+```
+
+Chat: seguir [12-procedimento-reimport-openapi.md](./12-procedimento-reimport-openapi.md) + checklist [new-api-route-checklist](../../.cursor/rules/new-api-route-checklist.mdc).
+
+### 6. O que é proibido
+
+- Auto-id FastAPI (`*_get` / `*_post`) como contrato estável.
+- Labels/enums só no MFE ou no gerador TV.
+- `en.summary == pt-BR.summary` (stubs).
+- Segundo `operation_id=` junto com `**agent_route`.
+- Editar `dataParamCatalog.ts` sem regenerar do JSON canônico.
+
+---
+
 ## Onde curar textos
 
 Arquivo: [`app/content/tv_route_audience.json`](../../app/content/tv_route_audience.json) (version ≥ 2).
@@ -38,13 +123,7 @@ Arquivo: [`app/content/tv_route_audience.json`](../../app/content/tv_route_audie
 }
 ```
 
-Loader: `app.domain.services.route_locale_catalog_service` → injector `openapi_delpi_extension_injector` e baseline v3.
-
-Params **globais** (branch, periodDays, …): [`app/content/openapi_param_locale.json`](../../app/content/openapi_param_locale.json) — mesclados em `x-delpi.params` **somente** para nomes presentes nos `parameters` da operação; override por rota em `tv_route_audience.json` ganha.
-
-MFE TV: labels/hints gerados por `python3 scripts/sync_tv_data_param_catalog.py --write` (sem inventário paralelo manual).
-
-Polimento EN em lote (stubs `locale.en` + summary nativo do baseline):
+Polimento EN em lote:
 
 ```bash
 cd api-delpi
@@ -52,58 +131,16 @@ python scripts/polish_openapi_locale_en.py --write
 python scripts/sync_openapi_baseline.py --enrich-locale-only
 ```
 
-## Params tipados na origem
+## Sync (procedimento completo)
 
-No router FastAPI:
+Ver § 5 acima. Inventário: [`openapi_operation_id_inventory.json`](../../app/content/openapi_operation_id_inventory.json).
 
-- `operation_id="…"` estável (= envelope + registry)
-- `Query(..., enum=[...], default=…)` quando o domínio for fechado
-- `description` do Query em **inglês**
+| Onda | Escopo | Estado |
+|------|--------|--------|
+| R0–R5 | operationId, locale, labels, chat import | feito |
+| R6 | 5S ids, enums Query, UX defaults, params por rota, sync MFE | feito |
 
-O gerador TV prefere `enum`/`default` do OpenAPI e labels de `x-delpi.params` / `openapi_param_locale.json`. **Não** há inventário paralelo `PARAM_LABELS_PT` / `PARAM_HINTS_PT` no script.
-
-Defaults de filial no inspetor TV (`branch` → `"01"`) vivem em [`tv_param_ux_defaults.json`](../../../tv-dashboard-api/tv_app/content/tv_param_ux_defaults.json) — **UX apenas**, não alteram o contrato HTTP (`Query(None)` = consolidado quando permitido).
-
-## Sync (procedimento)
-
-```bash
-# 1) Exportar OpenAPI do container (recomendado)
-docker exec delpi-api-delpi python -c \
-  "from app.main import app; import json; open('/tmp/o.json','w').write(json.dumps(app.openapi()))"
-docker cp delpi-api-delpi:/tmp/o.json /tmp/openapi_full.json
-
-# 2) Baseline v3 (parameters + xDelpi.locale/params/category)
-cd api-delpi
-python scripts/sync_openapi_baseline.py --from-json /tmp/openapi_full.json
-
-# Só locale (sem reabrir FastAPI), se o baseline já existe:
-python scripts/sync_openapi_baseline.py --enrich-locale-only
-
-# 3) Catálogo TV
-cd ..
-python3 scripts/generate_tv_data_routes_from_openapi.py --write
-python3 scripts/generate_tv_data_routes_from_openapi.py --check
-python3 scripts/check_tv_openapi_catalog_parity.py --check
-python api-delpi/scripts/audit_openapi_operation_ids.py --check
-# Onda estrita (após aliases completos):
-# python api-delpi/scripts/audit_openapi_operation_ids.py --check-aliases-coverage
-```
-
-## Ondas de estabilização de operationId
-
-Inventário versionado: [`app/content/openapi_operation_id_inventory.json`](../../app/content/openapi_operation_id_inventory.json).
-
-| Onda | Escopo |
-|------|--------|
-| R0 | Tooling + inventário + gates | feito |
-| R1 | Qualidade (auto-ids) | feito |
-| R2 | system / Agendamento / satélites | feito (300/300 estáveis) |
-| R3 | Locale não-GET | feito (300/300 com locale) |
-| R4 | Labels em `openapi_param_locale.json` + polimento EN | feito |
-| R5 | Chat prefere `locale.pt-BR` no import OpenAPI | feito |
-| R6 | Fechar gaps: 5S operation_id, enums Query, UX defaults TV, params por rota, sync MFE | feito |
-
-Gate estrito (catálogo TV sem auto-id):
+Gate estrito:
 
 ```bash
 python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
@@ -112,11 +149,11 @@ python api-delpi/scripts/audit_openapi_operation_ids.py --check-aliases-coverage
 
 ## Overlay TV-only
 
-[`tv-dashboard-api/tv_app/content/tv_data_route_overlays.json`](../../../tv-dashboard-api/tv_app/content/tv_data_route_overlays.json):
-`valueFields`, `tvConstraints`, `fixedQueryParams`, etc. — **não** enums/labels de domínio.
+[`tv_data_route_overlays.json`](../../../tv-dashboard-api/tv_app/content/tv_data_route_overlays.json):
+`valueFields`, `tvConstraints`, `fixedQueryParams` — **não** enums/labels de domínio.
 
 ## Apps
 
 - TV / portal → textos `pt-BR`
 - Swagger → EN nativo
-- Chat → pode usar `locale.pt-BR` no import OpenAPI
+- Chat → `locale.pt-BR` no import OpenAPI

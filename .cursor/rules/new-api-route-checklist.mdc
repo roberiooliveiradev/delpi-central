@@ -13,7 +13,9 @@ Rota exposta ao chat = entrega em **três pacotes** alinhados a clean architectu
 2. **minha-delpi-ai-api** — roteamento + apresentação + pipeline
 3. **Testes/gates** — regressão antes do merge
 
-Não entregar só o endpoint. Ver também: `development-standards-index.mdc`, `api-delpi-response-contract.mdc`, `operational-api-routing.mdc`, `clean-architecture-chat-api.mdc`.
+Não entregar só o endpoint. Ver também: `development-standards-index.mdc`, `api-delpi-response-contract.mdc`, **`api-delpi-openapi-route-standards.mdc`** (OpenAPI/locale/enums), `operational-api-routing.mdc`, `clean-architecture-chat-api.mdc`.
+
+Doc canônica: `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` § **Como construir uma rota futura**.
 
 ---
 
@@ -23,13 +25,25 @@ Não entregar só o endpoint. Ver também: `development-standards-index.mdc`, `a
 |---|---------|------|
 | 1 | `api_delpi_success(..., operation_id=...)` | router |
 | 2 | `route_contract_registry.py` — `entity` + `shape` | application |
-| 3 | `operation_id` = OpenAPI = meta | decorator + registry |
-| 4 | Chat-critical: `openapi_agent_metadata.agent_route()` | interface/http |
+| 3 | `operation_id` = OpenAPI = meta | **decorator** + envelope + registry (mesmo id) |
+| 4 | Chat-critical: `openapi_agent_metadata.agent_route()` | interface/http — **sem** `operation_id=` duplicado com `**META` |
 | 5 | Permissão em `api_delpi_permissions.py` | security |
 | 6 | Smoke: `meta.operationId` + `meta.entity` | `api-delpi/tests/` |
 | 7 | **Upload multipart/binário:** volume persistente no Compose | `persistent-upload-storage.mdc` |
+| 8 | Locale EN + pt-BR (`en.summary ≠ pt-BR.summary`) | `tv_route_audience.json` |
+| 9 | Domínio fechado → `enum=` | `query_param_enums.py` (não só `pattern=`) |
+| 10 | Param novo → labels bilíngues | `openapi_param_locale.json` + `sync_tv_data_param_catalog.py --write` |
+| 11 | Baseline + catálogo TV | `sync_openapi_baseline.py` + `generate_tv_data_routes_from_openapi.py --check` |
 
 Shapes: `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` — ver playbook-10 § 4.3.
+
+### OpenAPI / catálogo (resumo)
+
+- Summary nativo **EN**; PT em `x-delpi.locale.pt-BR`.
+- Default UX de filial (`"01"`) só em `tv_param_ux_defaults.json` — não no `Query` se consolidado = vazio.
+- Gates: `audit_openapi_operation_ids.py --check`, parity TV `--strict-auto-ids`, `sync_tv_data_param_catalog.py --check`.
+
+Detalhe: **`api-delpi-openapi-route-standards.mdc`**.
 
 ### Rotas com upload de arquivo
 
@@ -100,6 +114,10 @@ cd minha-delpi-ai-api
 pytest tests/unit/domain/services/test_chat_presentation_view_intent_service.py -q
 # api-delpi alterado:
 pytest api-delpi/tests/ -q -k "<operation_id ou smoke>"
+python api-delpi/scripts/audit_openapi_operation_ids.py --check
+python3 scripts/generate_tv_data_routes_from_openapi.py --check
+python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
+python3 scripts/sync_tv_data_param_catalog.py --check
 ```
 
 `--check-profiles` falha: tier A com `generic`, contrato **entitySet × perfil** quebrado, path sem entity em perfil proibido.
@@ -147,6 +165,8 @@ Ver **`plugins-documentation.mdc`**: README do plugin, doc API, índices `06-mod
 
 ## Referências
 
+- `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` — **como construir rotas futuras**
+- `.cursor/rules/api-delpi-openapi-route-standards.mdc`
 - `minha-delpi-ai-api/docs/roadmap/playbook-10-contrato-respostas-api-delpi.md`
 - `minha-delpi-ai-api/docs/roadmap/playbook-15-rotas-operacionais-sem-sql.md`
 - `minha-delpi-ai-api/docs/architecture/chat-intelligence-base.md`

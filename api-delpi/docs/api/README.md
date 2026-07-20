@@ -61,7 +61,7 @@ O middleware `jwt_middleware` (pacote `delpi_auth`) valida o JWT emitido pelo Ke
 | [13-producao-operacional.md](./13-producao-operacional.md) | Playbook 15 — consumo, OPs, perdas, programação, ranking de compras (sem SQL). |
 | [14-desenhos-pdf.md](./14-desenhos-pdf.md) | Biblioteca PDF de desenhos DELPI (FILESERVER) + integração chat. |
 | [12-procedimento-reimport-openapi.md](./12-procedimento-reimport-openapi.md) | Reimport OpenAPI no chat após mudanças de contrato. |
-| [openapi-bilingue-catalogo-canonico.md](./openapi-bilingue-catalogo-canonico.md) | OpenAPI bilíngue (EN nativo + `x-delpi.locale`) e catálogo TV canônico. |
+| [openapi-bilingue-catalogo-canonico.md](./openapi-bilingue-catalogo-canonico.md) | **Padrão de rotas futuras** — OpenAPI bilíngue, operationId, enums, labels, sync TV/chat. |
 | [12-testes-sem-totvs-google-sheets.md](./12-testes-sem-totvs-google-sheets.md) | Homologação sem VPN TOTVS (rotas Google Sheets + pytest). |
 
 ## Permissões principais

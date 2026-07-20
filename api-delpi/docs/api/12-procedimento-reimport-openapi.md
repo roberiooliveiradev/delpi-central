@@ -2,6 +2,8 @@
 
 Execute sempre que alterar rotas, `operationId`, `summary` ou schemas em `api-delpi`.
 
+Antes de reimportar: garantir que a rota nova seguiu [openapi-bilingue-catalogo-canonico.md](./openapi-bilingue-catalogo-canonico.md) (baseline + catálogo TV sincronizados).
+
 ## 1. Deploy da api-delpi
 
 Subir o container/serviço com a versão nova da API.

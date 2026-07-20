@@ -1,0 +1,79 @@
+---
+description: Padrão obrigatório para construir rotas futuras na api-delpi (OpenAPI canônico)
+globs: api-delpi/**
+alwaysApply: false
+---
+
+# api-delpi — padrão de rotas futuras (OpenAPI canônico)
+
+Doc completa: [`api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md`](../../api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md).  
+Checklist chat/apresentação: **`new-api-route-checklist.mdc`**. Envelope/`meta`: **`api-delpi-response-contract.mdc`**.
+
+## Princípio
+
+O **OpenAPI da api-delpi** é a única fonte de verdade para TV, chat e Swagger. Consumidores **importam** o contrato — **não** reinventam `operationId`, enums nem labels.
+
+## Checklist — toda rota nova (HTTP)
+
+| # | Obrigatório | Como |
+|---|-------------|------|
+| 1 | `operation_id` estável snake_case | No **decorator** FastAPI **e** em `api_delpi_success(..., operation_id=...)` — **iguais** |
+| 2 | Sem auto-id FastAPI | Proibido depender de `*_get` / `*_post` gerados; gate `audit_openapi_operation_ids.py --check` |
+| 3 | Contratos | `route_contract_registry.py` (`entity` + `shape`) |
+| 4 | Envelope | Só `api_delpi_success` / `error_response` — ver response-contract |
+| 5 | Summary/description nativos | **Inglês** no OpenAPI (Swagger) |
+| 6 | Locale bilíngue | Entrada em `tv_route_audience.json` (`locale.en` + `locale.pt-BR`, `en.summary ≠ pt-BR.summary`) |
+| 7 | Params tipados | Domínio fechado → `Query` de `query_param_enums.py` (`enum=`), **não** só `pattern=` |
+| 8 | Labels de params | Nome novo em `openapi_param_locale.json` (EN + pt-BR); depois `sync_tv_data_param_catalog.py --write` |
+| 9 | Chat-critical | `**agent_route(...)` / `OpenApiAgentMetadataBuilder` — **não** duplicar `operation_id=` além do `**META` |
+| 10 | RBAC | Constantes em `api_delpi_permissions.py`; filial → `branch_access_error` |
+| 11 | Sync pós-merge | Baseline + catálogo TV + reimport chat (ver doc) |
+
+## Exemplo mínimo
+
+```python
+from fastapi import APIRouter, Query
+from app.interface.http.query_param_enums import BRANCH_QUERY_OPTIONAL, GRANULARITY_QUERY_MONTH
+from app.interface.http.route_response_helpers import api_delpi_success
+from app.application.security.api_delpi_permissions import SOME_READ
+from app.interface.http.auth_decorators import require_any_permission
+
+router = APIRouter()
+
+@router.get("/example/kpi", operation_id="get_example_kpi")
+@require_any_permission(SOME_READ)
+def get_example_kpi(
+    branch: str | None = BRANCH_QUERY_OPTIONAL,
+    granularity: str = GRANULARITY_QUERY_MONTH,
+):
+    data = {...}
+    return api_delpi_success(data, operation_id="get_example_kpi")
+```
+
+Depois:
+
+1. Registrar contrato + permissão.
+2. Curar `tv_route_audience.json` (EN + pt-BR).
+3. Se param novo → `openapi_param_locale.json` + `python3 scripts/sync_tv_data_param_catalog.py --write`.
+4. `sync_openapi_baseline.py` (container ou `--enrich-locale-only`) + gerador TV `--check`.
+5. Se chat: registry + reimport OpenAPI ([`12-procedimento-reimport-openapi.md`](../../api-delpi/docs/api/12-procedimento-reimport-openapi.md)).
+
+## O que NÃO fazer
+
+- Decorator sem `operation_id` quando o `def` ≠ oid do envelope (ex.: `def update_audit` vs `update_audit_5s_audit`).
+- `**QUALITY_FOO, operation_id="..."` — `operation_id` duplicado quebra o startup.
+- Inventar labels/enums no gerador TV (`PARAM_LABELS_PT`, `KNOWN_PARAM_ENUMS`) ou editar `dataParamCatalog.ts` à mão.
+- Default HTTP `"01"` de filial quando a semântica é consolidado (`None`); default UX só em `tv_param_ux_defaults.json`.
+- Dump de todos os params globais em `x-delpi.params` — o loader filtra pelos `parameters` da operação.
+- Texto PT como `summary` nativo do OpenAPI (Swagger deve ser EN).
+
+## Gates (antes do merge em api-delpi)
+
+```bash
+python api-delpi/scripts/audit_openapi_operation_ids.py --check
+python3 scripts/generate_tv_data_routes_from_openapi.py --check
+python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
+python3 scripts/sync_tv_data_param_catalog.py --check
+# smoke
+pytest api-delpi/tests/ -q -k "<operation_id ou módulo>"
+```
