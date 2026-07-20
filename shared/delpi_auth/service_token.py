@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import os
-
-from fastapi import Request
+from typing import Any, Mapping
 
 
 def get_internal_service_token() -> str | None:
@@ -29,8 +28,13 @@ def apply_internal_service_headers(headers: dict[str, str]) -> None:
             headers["Authorization"] = auth
 
 
-def headers_have_valid_internal_service_token(headers: dict[str, str] | None) -> bool:
-    """Valida token em mapa de headers (FastAPI, Flask ou httpx)."""
+def headers_have_valid_internal_service_token(
+    headers: Mapping[str, Any] | None,
+) -> bool:
+    """Valida token em mapa de headers (FastAPI, Flask ou httpx).
+
+    Sem import de FastAPI — a imagem do chat Flask não inclui fastapi.
+    """
     expected = get_internal_service_token()
     if not expected or not headers:
         return False
@@ -49,5 +53,12 @@ def headers_have_valid_internal_service_token(headers: dict[str, str] | None) ->
     return authorization in {expected, f"Bearer {expected}"}
 
 
-def request_has_valid_internal_service_token(request: Request) -> bool:
-    return headers_have_valid_internal_service_token(dict(request.headers))
+def request_has_valid_internal_service_token(request: Any) -> bool:
+    """Aceita Starlette/FastAPI Request ou qualquer objeto com `.headers`."""
+    headers = getattr(request, "headers", None)
+    if headers is None:
+        return False
+    try:
+        return headers_have_valid_internal_service_token(dict(headers))
+    except Exception:  # noqa: BLE001 — headers opacos
+        return headers_have_valid_internal_service_token(headers)
