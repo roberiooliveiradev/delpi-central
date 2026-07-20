@@ -22,6 +22,7 @@ import { formatCurrency, formatHours } from "../../utils/format";
 import {
   COMPARATIVO_HOURS_SERIES,
   COMPARATIVO_MONEY_SERIES,
+  collectComparativoAvisos,
   toComparativoChartRows,
   type ComparativoChartView,
 } from "../../utils/revisaoComparativoChart";
@@ -46,7 +47,13 @@ function formatAxisMoney(value: number): string {
 export function RevisaoComparativoSection({ items, columns }: Props) {
   const [view, setView] = useState<ComparativoChartView>("money");
   const chartRows = useMemo(() => toComparativoChartRows(items), [items]);
-  const series = view === "money" ? COMPARATIVO_MONEY_SERIES : COMPARATIVO_HOURS_SERIES;
+  const avisos = useMemo(() => collectComparativoAvisos(items), [items]);
+  const moneySeries = useMemo(() => {
+    const hasCapacidade = chartRows.some((row) => row.ganhoCapacidade > 0);
+    if (hasCapacidade) return COMPARATIVO_MONEY_SERIES;
+    return COMPARATIVO_MONEY_SERIES.filter((entry) => entry.key !== "ganhoCapacidade");
+  }, [chartRows]);
+  const series = view === "money" ? moneySeries : COMPARATIVO_HOURS_SERIES;
 
   const formatValue = view === "money" ? formatCurrency : formatHours;
   const formatAxis = view === "money" ? formatAxisMoney : (value: number) => formatHours(value);
@@ -118,6 +125,25 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
         </div>
       </ChartCard>
 
+      {avisos.length > 0 ? (
+        <div className="ds-card" role="status">
+          <p className="ds-section-title" style={{ marginBottom: 8 }}>
+            Avisos de volume
+            <HelpTooltip
+              content={TM_HELP_TOOLTIPS.revisao.comparativoAvisos}
+              ariaLabel="Ajuda: avisos de volume no comparativo"
+            />
+          </p>
+          <ul className="ds-hint" style={{ margin: 0, paddingLeft: "1.25rem" }}>
+            {avisos.map((aviso, index) => (
+              <li key={`${aviso.revisaoLabel}-${index}`}>
+                <strong>{aviso.revisaoLabel}:</strong> {aviso.message}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <CollapsiblePanel
         className="tm-comparativo-table"
         defaultOpen={false}
@@ -134,7 +160,7 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
         bodyClassName="tm-comparativo-table__body"
       >
         <DataTableSection
-          columnPreferencesKey="transformometro:RevisaoComparativoSection:revisaocomparativosection:v1"
+          columnPreferencesKey="transformometro:RevisaoComparativoSection:revisaocomparativosection:v2"
           title=""
           columns={columns}
           rows={items}

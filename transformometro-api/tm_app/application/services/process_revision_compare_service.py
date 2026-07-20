@@ -44,20 +44,31 @@ class ProcessRevisionCompareService:
             rev_rows = sorted(by_revisao.get(rid, []), key=lambda r: r.get("competencia") or "")
             latest = rev_rows[-1] if rev_rows else None
             totals = self._sum_revision_rows(rev_rows)
+            volume_acima = bool(latest and latest.get("volume_acima_referencia"))
+            volume_abaixo = bool(latest and latest.get("volume_abaixo_referencia"))
+            categoria = (
+                revisao.get("beneficio_calculo_categoria") or "economia_tempo"
+            )
             items.append(
                 {
                     "revisao_id": rid,
                     "versao_revisao": revisao.get("versao_revisao"),
                     "cenario_tipo": revisao.get("cenario_tipo"),
-                    "beneficio_calculo_categoria": revisao.get(
-                        "beneficio_calculo_categoria"
-                    )
-                    or "economia_tempo",
+                    "beneficio_calculo_categoria": categoria,
                     "revisao_ativa": bool(revisao.get("revisao_ativa")),
                     "data_inicio_vigencia": revisao.get("data_inicio_vigencia"),
                     "data_fim_vigencia": revisao.get("data_fim_vigencia"),
                     "ultima_competencia": latest.get("competencia") if latest else None,
                     "totais": totals,
+                    "breakdown": self._breakdown_from_rows(rev_rows),
+                    "volume_acima_referencia": volume_acima,
+                    "volume_abaixo_referencia": volume_abaixo,
+                    "avisos": self._volume_avisos(
+                        categoria=str(categoria),
+                        volume_acima=volume_acima,
+                        volume_abaixo=volume_abaixo,
+                        delta_volume=float(totals.get("delta_volume") or 0),
+                    ),
                     "meses_com_dados": len(rev_rows),
                 }
             )
@@ -177,3 +188,65 @@ class ProcessRevisionCompareService:
             ),
             "delta_volume": round(float(latest.get("delta_volume") or 0), 4),
         }
+
+    def _breakdown_from_rows(self, rows: list[dict]) -> dict[str, float]:
+        keys = (
+            "economia_tempo",
+            "economia_retrabalho",
+            "economia_erros",
+            "economia_outros",
+            "economia_recursos_compartilhados",
+        )
+        if not rows:
+            return {key: 0.0 for key in keys}
+        return {
+            key: round(sum(float(r.get(key) or 0) for r in rows), 2) for key in keys
+        }
+
+    @staticmethod
+    def _volume_avisos(
+        *,
+        categoria: str,
+        volume_acima: bool,
+        volume_abaixo: bool,
+        delta_volume: float,
+    ) -> list[dict[str, Any]]:
+        avisos: list[dict[str, Any]] = []
+        cat = (categoria or "economia_tempo").strip().lower()
+        if volume_acima:
+            avisos.append(
+                {
+                    "code": "volume_acima_referencia",
+                    "severity": "capacidade",
+                    "delta_volume": delta_volume,
+                    "message": (
+                        "Volume acima da referência — há ganho de capacidade "
+                        "(fora do ROI) além da economia de custo."
+                    ),
+                }
+            )
+        if volume_abaixo:
+            avisos.append(
+                {
+                    "code": "volume_abaixo_referencia",
+                    "severity": "reducao_volume",
+                    "delta_volume": delta_volume,
+                    "message": (
+                        "Volume abaixo da referência — parte da economia vem de "
+                        "menos execuções, não só de menos tempo por execução."
+                    ),
+                }
+            )
+        if cat == "economia_tempo" and (volume_acima or volume_abaixo):
+            avisos.append(
+                {
+                    "code": "economia_tempo_volume_diverge",
+                    "severity": "cadastro",
+                    "delta_volume": delta_volume,
+                    "message": (
+                        "Categoria «Economia de tempo»: volumes diferentes misturam "
+                        "Δtempo com Δvolume. Para comparação 1:1, alinhe o volume à referência."
+                    ),
+                }
+            )
+        return avisos

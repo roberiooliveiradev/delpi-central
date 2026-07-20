@@ -35,6 +35,8 @@ PERIOD_TOTAL_KEYS = (
     "custo_recursos_compartilhados_mes",
     "investimento_total_mes",
     "horas_economizadas_mes",
+    "ganho_capacidade",
+    "economia_reducao_volume",
 )
 
 PRORATABLE_BY_DAY_KEYS = (
@@ -42,6 +44,8 @@ PRORATABLE_BY_DAY_KEYS = (
     "custo_recorrente_mes",
     "custo_recursos_compartilhados_mes",
     "horas_economizadas_mes",
+    "ganho_capacidade",
+    "economia_reducao_volume",
 )
 
 
@@ -388,6 +392,8 @@ def prorate_dashboard_row_for_period(
     )
     economia_liquida_mes = economia_bruta - investimento_total_mes
     horas_economizadas_mes = float(row.get("horas_economizadas_mes") or 0) * scale
+    ganho_capacidade = float(row.get("ganho_capacidade") or 0) * scale
+    economia_reducao_volume = float(row.get("economia_reducao_volume") or 0) * scale
 
     return {
         "economia_bruta": economia_bruta,
@@ -397,6 +403,8 @@ def prorate_dashboard_row_for_period(
         "custo_recursos_compartilhados_mes": custo_recursos_compartilhados_mes,
         "investimento_total_mes": investimento_total_mes,
         "horas_economizadas_mes": horas_economizadas_mes,
+        "ganho_capacidade": ganho_capacidade,
+        "economia_reducao_volume": economia_reducao_volume,
     }
 
 

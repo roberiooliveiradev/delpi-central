@@ -3,6 +3,7 @@ import { TableRowActions } from "../components/ui/TableRowActions";
 import { TM_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ProcessoComparativoItem, Revisao } from "../data/api/transformometroApi";
 import { cenarioLabel } from "../content/cenarioLabels";
+import { beneficioCalculoLabel } from "../content/beneficioCalculoLabels";
 import { toDateInputValue } from "./dateInputs";
 import { revisaoDisplayLabel } from "./revisaoLabels";
 import { DS_GHOST_BTN, dsGhostBtn } from "../components/ghostChrome";
@@ -25,6 +26,12 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
       header: "Cenário",
       headerHint: C.cenario,
       render: (row) => cenarioLabel(row.cenario_tipo),
+    },
+    {
+      key: "categoria",
+      header: "Categoria",
+      headerHint: C.beneficioCategoria,
+      render: (row) => beneficioCalculoLabel(row.beneficio_calculo_categoria),
     },
     {
       key: "ativa",
@@ -58,6 +65,20 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
       headerHint: C.economiaLiquida,
       className: "ds-table__col--numeric",
       render: (row) => formatProcessoNumber(row.totais.economia_liquida_mes),
+    },
+    {
+      key: "capacidade",
+      header: "Ganho capacidade",
+      headerHint: C.ganhoCapacidade,
+      className: "ds-table__col--numeric",
+      render: (row) => formatProcessoNumber(row.totais.ganho_capacidade),
+    },
+    {
+      key: "deltaVolume",
+      header: "Δ volume",
+      headerHint: C.deltaVolume,
+      className: "ds-table__col--numeric",
+      render: (row) => formatProcessoNumber(row.totais.delta_volume),
     },
     {
       key: "investimento",

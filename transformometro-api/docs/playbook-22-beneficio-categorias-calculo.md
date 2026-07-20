@@ -1,6 +1,6 @@
 # Playbook 22 — Categorias de cálculo de benefício (plano de refatoração)
 
-**Status:** Fase A implementada (DDL + API + MFE declaração + métricas de capacidade no motor)  
+**Status:** Fase A + B implementadas (transparência no comparativo/dashboard; ROI inalterado)  
 **Escopo:** `transformometro-api` + plugin `transformometro`  
 **Restrição de migration:** apenas **DDL** (tabelas/colunas/constraints/índices/views). **Proibido** `UPDATE`/`INSERT` de backfill em migrations — legado fica no **DEFAULT** da coluna + lógica de aplicação.
 

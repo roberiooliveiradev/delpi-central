@@ -25,6 +25,10 @@ export const TM_HELP_TOOLTIPS = {
     competencia: "Mês de referência dos dados consolidados (YYYY-MM).",
     mesesComDados: "Quantidade de competências com medição registrada na revisão.",
     economiaBruta: "Ganho bruto estimado antes de descontar investimentos e recursos.",
+    ganhoCapacidade:
+      "Benefício de volume acima da referência (capacidade). Não entra no ROI até decisão explícita.",
+    deltaVolume: "Diferença de volume mensal da revisão em relação à referência (última competência).",
+    beneficioCategoria: "Como a revisão interpreta o benefício vs. a referência de comparação.",
     economiaLiquida: "Ganho após descontar investimentos e rateio de recursos compartilhados.",
     investimentoTotal: "Soma dos investimentos apropriados no período da revisão.",
     recursosComp: "Custo mensal de recursos compartilhados rateados para a revisão.",
@@ -81,6 +85,8 @@ export const TM_HELP_TOOLTIPS = {
         "Economia líquida do recorte: economia bruta menos os custos (investimentos e rateio de recursos) no período. Instâncias «todas as unidades ativas» multiplicam só a economia operacional no Consolidado (não investimento nem recursos).",
       economiaBruta:
         "Ganho bruto estimado no período, antes de descontar custos. No Consolidado, instâncias multi-unidade contam uma vez por unidade ativa cadastrada.",
+      ganhoCapacidade:
+        "Volume acima da referência valorizado à parte. Não entra no ROI nem na economia bruta.",
       solucoes:
         "Melhorias (instâncias) com revisão comparável ativa (melhoria, automação ou correção) no recorte de visão — snapshot do cadastro, independente do período filtrado.",
       horas:
@@ -234,9 +240,11 @@ export const TM_HELP_TOOLTIPS = {
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:
-      "Compara economia bruta, líquida, investimentos, recursos compartilhados e horas entre as revisões desta instância.",
+      "Compara economia bruta, líquida, ganho de capacidade (fora do ROI), investimentos, recursos e horas entre as revisões desta instância.",
     comparativoTable:
-      "Tabela com os mesmos indicadores do gráfico, incluindo competência e meses com dados.",
+      "Tabela com os mesmos indicadores do gráfico, incluindo categoria, Δ volume, competência e meses com dados.",
+    comparativoAvisos:
+      "Alertas quando o volume diverge da referência — ajuda a interpretar se a economia vem de tempo, volume ou capacidade.",
   },
   matriz: {
     titulo:

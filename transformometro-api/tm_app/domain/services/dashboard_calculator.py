@@ -235,6 +235,7 @@ class DashboardCalculatorService:
             "economia_liquida_total": 0.0,
             "economia_bruta_total": 0.0,
             "horas_economizadas_total": 0.0,
+            "ganho_capacidade_total": 0.0,
             "investimento_unico_total": 0.0,
             "custo_recorrente_total": 0.0,
             "custo_recursos_compartilhados_total": 0.0,
@@ -300,6 +301,7 @@ class DashboardCalculatorService:
         total_shared_resources = period_totals["custo_recursos_compartilhados_mes"]
         total_investment = period_totals["investimento_total_mes"]
         total_hours_saved = period_totals["horas_economizadas_mes"]
+        total_capacity_gain = period_totals.get("ganho_capacidade", 0.0)
 
         implemented_solutions_count = calc_rules.count_active_implemented_improvements(
             instancias=filtered_raw.processo_instancias,
@@ -322,6 +324,7 @@ class DashboardCalculatorService:
             "economia_liquida_total": self._round_final(total_net_savings),
             "economia_bruta_total": self._round_final(total_gross_savings),
             "horas_economizadas_total": self._round_final(total_hours_saved),
+            "ganho_capacidade_total": self._round_final(total_capacity_gain),
             "investimento_unico_total": self._round_final(total_unique),
             "custo_recorrente_total": self._round_final(total_recurring),
             "custo_recursos_compartilhados_total": self._round_final(total_shared_resources),
@@ -1803,10 +1806,12 @@ class DashboardCalculatorService:
                     "custo_recursos_compartilhados_mes": 0.0,
                     "investimento_total_mes": 0.0,
                     "horas_economizadas_mes": 0.0,
+                    "ganho_capacidade": 0.0,
+                    "economia_reducao_volume": 0.0,
                 },
             )
             for key, value in prorated.items():
-                bucket[key] += value
+                bucket[key] = bucket.get(key, 0.0) + value
 
         return [
             {
@@ -1820,6 +1825,10 @@ class DashboardCalculatorService:
                 ),
                 "economia_liquida_mes": self._round_final(values["economia_liquida_mes"]),
                 "horas_economizadas_mes": self._round_final(values["horas_economizadas_mes"]),
+                "ganho_capacidade": self._round_final(values.get("ganho_capacidade", 0.0)),
+                "economia_reducao_volume": self._round_final(
+                    values.get("economia_reducao_volume", 0.0)
+                ),
             }
             for competencia, values in sorted(by_competencia.items())
         ]
