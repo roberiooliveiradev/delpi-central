@@ -19,6 +19,10 @@ export function stripFlowchartHighlights(flowchart: FlowchartV1): FlowchartV1 {
 /**
  * Inclui nós removidos (só na referência) no flowchart de exibição do diff.
  * Não altera o editable — só para preview com «Destacar diferenças».
+ *
+ * Mantém as faixas da referência: casa por id/rótulo com as faixas atuais;
+ * se a faixa «de antes» não existir, adiciona-a. Fantasmas vão à direita e
+ * com Y alinhado à faixa correta (sem empilhar no fluxo atual).
  */
 export function mergeRemovedNodesIntoFlowchartForDiff(
   flowchart: FlowchartV1,
@@ -29,18 +33,95 @@ export function mergeRemovedNodesIntoFlowchartForDiff(
 
   const currentIds = new Set(flowchart.nodes.map((node) => node.id));
   const refById = new Map(referenceFlowchart.nodes.map((node) => [node.id, node]));
-  const extras = removedIds
+  const currentLanes = [...(flowchart.lanes ?? [])];
+  const refLanes = referenceFlowchart.lanes ?? [];
+
+  const rawExtras = removedIds
     .filter((id) => !currentIds.has(id))
     .map((id) => refById.get(id))
-    .filter((node): node is NonNullable<typeof node> => Boolean(node))
-    .map((node) => ({
+    .filter((node): node is NonNullable<typeof node> => Boolean(node));
+
+  if (!rawExtras.length) return flowchart;
+
+  const lanesToAdd: NonNullable<FlowchartV1["lanes"]> = [];
+  const seenAdd = new Set<string>();
+
+  function normalizeLaneLabel(label: string): string {
+    return label
+      .trim()
+      .toLowerCase()
+      .replace(/^\d+\s*[—\-:.)]\s*/u, "")
+      .replace(/\s+/g, " ");
+  }
+
+  function resolveTargetLaneId(refLaneId: string | undefined): string | undefined {
+    if (!refLaneId) return currentLanes[0]?.id;
+    if (currentLanes.some((lane) => lane.id === refLaneId)) return refLaneId;
+    if (lanesToAdd.some((lane) => lane.id === refLaneId)) return refLaneId;
+
+    const refLane = refLanes.find((lane) => lane.id === refLaneId);
+    if (!refLane) return currentLanes[0]?.id;
+
+    const refNorm = normalizeLaneLabel(refLane.label);
+    const byLabel = currentLanes.find(
+      (lane) => normalizeLaneLabel(lane.label) === refNorm,
+    );
+    if (byLabel) return byLabel.id;
+
+    if (!seenAdd.has(refLane.id)) {
+      seenAdd.add(refLane.id);
+      lanesToAdd.push({
+        ...refLane,
+        order: currentLanes.length + lanesToAdd.length,
+      });
+    }
+    return refLane.id;
+  }
+
+  const targetLaneIds = rawExtras.map((node) => resolveTargetLaneId(node.lane_id));
+  const mergedLanes = [...currentLanes, ...lanesToAdd];
+
+  function laneTopOffset(lanes: NonNullable<FlowchartV1["lanes"]>, laneId: string): number {
+    let top = 0;
+    for (const lane of lanes) {
+      if (lane.id === laneId) return top;
+      top += Number(lane.height) > 0 ? Number(lane.height) : 168;
+    }
+    return 0;
+  }
+
+  function localYInLane(
+    node: { position: { y: number }; lane_id?: string },
+    lanes: NonNullable<FlowchartV1["lanes"]>,
+  ): number {
+    if (!node.lane_id) return 40;
+    return Math.max(28, node.position.y - laneTopOffset(lanes, node.lane_id));
+  }
+
+  const currentMaxX = flowchart.nodes.reduce(
+    (max, node) => Math.max(max, node.position.x),
+    0,
+  );
+  const extrasMinX = rawExtras.reduce(
+    (min, node) => Math.min(min, node.position.x),
+    rawExtras[0].position.x,
+  );
+  const shiftX = Math.max(0, currentMaxX + 280 - extrasMinX);
+
+  const extras = rawExtras.map((node, index) => {
+    const targetLaneId = targetLaneIds[index];
+    const localY = localYInLane(node, refLanes);
+    return {
       ...node,
+      lane_id: targetLaneId,
+      position: {
+        x: node.position.x + shiftX,
+        y: (targetLaneId ? laneTopOffset(mergedLanes, targetLaneId) : 0) + localY,
+      },
       highlight: "removed" as const,
-    }));
+    };
+  });
 
-  if (!extras.length) return flowchart;
-
-  // Arestas da referência entre nós removidos (ou removido↔vivo) para manter contexto.
   const displayIds = new Set([...currentIds, ...extras.map((n) => n.id)]);
   const currentEdgeIds = new Set((flowchart.edges ?? []).map((e) => e.id));
   const extraEdges = (referenceFlowchart.edges ?? []).filter(
@@ -51,19 +132,9 @@ export function mergeRemovedNodesIntoFlowchartForDiff(
       (removedIds.includes(edge.from) || removedIds.includes(edge.to)),
   );
 
-  // Lanes da referência que os nós removidos usam e ainda não estão no flowchart.
-  const laneIds = new Set((flowchart.lanes ?? []).map((l) => l.id));
-  const extraLanes = (referenceFlowchart.lanes ?? []).filter((lane) => {
-    if (laneIds.has(lane.id)) return false;
-    return extras.some((node) => node.lane_id === lane.id);
-  });
-
   return {
     ...flowchart,
-    lanes:
-      extraLanes.length > 0
-        ? [...(flowchart.lanes ?? []), ...extraLanes]
-        : flowchart.lanes,
+    lanes: mergedLanes.length ? mergedLanes : flowchart.lanes,
     nodes: [...flowchart.nodes, ...extras],
     edges: [...(flowchart.edges ?? []), ...extraEdges],
   };

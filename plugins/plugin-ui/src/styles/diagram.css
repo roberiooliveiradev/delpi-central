@@ -685,8 +685,17 @@
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor__canvas .react-flow__minimap, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__minimap{
-  right: 52px;
-  bottom: 12px;
+  top: 12px;
+  right: 12px;
+  bottom: auto;
+  width: 128px !important;
+  height: 88px !important;
+  border: 1px solid var(--ds-card-border);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 28%, transparent);
+  background: var(--tm-diagram-minimap-bg) !important;
+  z-index: 5;
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas, .dashboard-transformometro .tm-diagram-editor--overlay-tools .tm-diagram-editor__canvas{
@@ -697,13 +706,20 @@
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .react-flow__minimap, .dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__minimap{
-  bottom: 12px;
-  right: 52px;
+  top: 12px;
+  right: 12px;
+  bottom: auto;
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor--overlay-tools .react-flow__controls, .dashboard-transformometro .tm-diagram-editor--overlay-tools .react-flow__controls{
   bottom: 12px;
-  left: 12px;
+  /* Cabeçalho das swimlanes (~132px) — zoom não cobre os rótulos verticais */
+  left: 148px;
+}
+
+.delpi-ui-flowchart-shell .tm-diagram-editor__canvas .react-flow__controls, .dashboard-transformometro .tm-diagram-editor__canvas .react-flow__controls{
+  bottom: 12px;
+  left: 148px;
 }
 
 .delpi-ui-flowchart-shell .tm-diagram-editor__canvas--readonly .react-flow__handle, .dashboard-transformometro .tm-diagram-editor__canvas--readonly .react-flow__handle,

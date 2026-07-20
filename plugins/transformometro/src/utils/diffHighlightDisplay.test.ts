@@ -152,5 +152,80 @@ describe("mergeRemovedNodesIntoFlowchartForDiff", () => {
     expect(merged.edges.map((e) => e.id)).toEqual(
       expect.arrayContaining(["e_direct", "e1", "e2"]),
     );
+    // Fantasma deslocado à direita do fluxo atual (não sobrepõe n1/n3 em x=0/400).
+    expect(merged.nodes.find((n) => n.id === "n2")!.position.x).toBeGreaterThan(400);
+  });
+
+  it("casa faixa da referência por rótulo (ignora prefixo numérico) e alinha Y", () => {
+    const reference = flow({
+      lanes: [
+        { id: "lane_old", label: "Coleta", height: 168, order: 0 },
+        { id: "lane_calc", label: "Cálculo e consolidação de indicadores", height: 168, order: 1 },
+      ],
+      nodes: [
+        {
+          id: "gone",
+          type: "process",
+          label: "Removido",
+          position: { x: 100, y: 168 + 40 },
+          lane_id: "lane_calc",
+        },
+      ],
+      edges: [],
+    });
+    const current = flow({
+      lanes: [
+        { id: "lane_new", label: "1 — Coleta", height: 168, order: 0 },
+        {
+          id: "lane_calc_now",
+          label: "3 — Cálculo e consolidação de indicadores",
+          height: 168,
+          order: 1,
+        },
+      ],
+      nodes: [
+        {
+          id: "keep",
+          type: "process",
+          label: "Atual",
+          position: { x: 40, y: 40 },
+          lane_id: "lane_new",
+        },
+      ],
+      edges: [],
+    });
+    const merged = mergeRemovedNodesIntoFlowchartForDiff(current, reference, ["gone"]);
+    expect(merged.lanes?.map((l) => l.id)).toEqual(["lane_new", "lane_calc_now"]);
+    const gone = merged.nodes.find((n) => n.id === "gone")!;
+    expect(gone.lane_id).toBe("lane_calc_now");
+    // Y dentro da 2ª faixa (topo 168).
+    expect(gone.position.y).toBeGreaterThanOrEqual(168);
+    expect(gone.position.y).toBeLessThan(168 + 168);
+  });
+
+  it("adiciona faixa da referência quando não há equivalente atual", () => {
+    const reference = flow({
+      lanes: [{ id: "lane_only_ref", label: "Publicação", height: 168 }],
+      nodes: [
+        {
+          id: "gone",
+          type: "process",
+          label: "Removido",
+          position: { x: 80, y: 40 },
+          lane_id: "lane_only_ref",
+        },
+      ],
+      edges: [],
+    });
+    const current = flow({
+      lanes: [{ id: "lane_a", label: "Coleta", height: 168 }],
+      nodes: [
+        { id: "keep", type: "process", label: "Atual", position: { x: 40, y: 40 }, lane_id: "lane_a" },
+      ],
+      edges: [],
+    });
+    const merged = mergeRemovedNodesIntoFlowchartForDiff(current, reference, ["gone"]);
+    expect(merged.lanes?.map((l) => l.id)).toEqual(["lane_a", "lane_only_ref"]);
+    expect(merged.nodes.find((n) => n.id === "gone")?.lane_id).toBe("lane_only_ref");
   });
 });

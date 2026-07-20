@@ -1406,7 +1406,7 @@ function FlowchartEditorInner({
               >
                 <FlowchartSwimlaneBackdrop />
                 <Background gap={20} size={1} />
-                <MiniMap pannable zoomable />
+                <MiniMap pannable zoomable position="top-right" ariaLabel="Miniatura do diagrama" />
                 <Controls showInteractive={!readOnly} position="bottom-left" />
               </ReactFlow>
             </div>
