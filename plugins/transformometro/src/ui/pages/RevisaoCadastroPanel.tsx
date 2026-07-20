@@ -29,6 +29,7 @@ import {
 import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceApi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
+import { optionalTrimmedText } from "../../utils/optionalTrimmedText";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoDiagramSection } from "../../components/diagram/RevisaoDiagramSection";
@@ -215,7 +216,10 @@ export function RevisaoCadastroPanel({
     setSavingMedicao(true);
     onError(null);
     try {
-      await upsertMedicao(medicao, getAccessToken);
+      await upsertMedicao(
+        { ...medicao, observacoes: optionalTrimmedText(medicao.observacoes) },
+        getAccessToken
+      );
       sectionEdit.stopEdit("medicao");
       await load();
     } catch (err) {

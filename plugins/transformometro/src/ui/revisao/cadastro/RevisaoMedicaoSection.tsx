@@ -198,12 +198,7 @@ export function RevisaoMedicaoSection({
         span
         rows={2}
         value={medicao.observacoes ?? ""}
-        onChange={(value) =>
-          onChange({
-            ...medicao,
-            observacoes: value.trim() || undefined,
-          })
-        }
+        onChange={(value) => onChange({ ...medicao, observacoes: value })}
       />
       {hideSubmit ? null : (
         <button type="submit" className="ds-primary-btn">
