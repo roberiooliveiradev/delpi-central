@@ -261,9 +261,9 @@ export const TM_HELP_TOOLTIPS = {
   },
   matriz: {
     titulo:
-      "Posiciona a revisão em impacto (benefício) versus esforço (custo/complexidade) frente às demais revisões comparáveis da mesma melhoria.",
+      "Posiciona a revisão em impacto (benefício) versus esforço (custo/complexidade). Com várias revisões comparáveis no mesmo escopo, normaliza por percentil entre elas; com uma só (ou empate), usa escala absoluta de negócio — assim o ponto muda quando medição/investimento mudam.",
     modo:
-      "Automático usa medição, investimentos e comparativo; Híbrido combina dados com percepção qualitativa; Manual prioriza os ajustes informados.",
+      "Automático usa medição, investimentos e comparativo (e reage a mudanças nesses dados). Híbrido combina dados com percepção qualitativa; Manual prioriza os ajustes informados. Em Automático, salve medição/investimentos — os campos qualitativos só entram em Híbrido/Manual.",
     confianca:
       "Indica a robustez do score automático conforme completude de medição, referência, investimentos e recursos.",
     quadrantes:
@@ -276,8 +276,10 @@ export const TM_HELP_TOOLTIPS = {
       "Economia líquida anualizada com base na medição, investimentos e recursos rateados.",
     rateioExcedeGanho:
       "O rateio de recursos compartilhados excede a economia bruta desta revisão.",
-    impactoScore: "Score de benefício (0–100) — quanto a revisão gera de ganho.",
-    esforcoScore: "Score de esforço (0–100) — custo/complexidade de implantação e adoção.",
+    impactoScore:
+      "Score de benefício (0–100). Com peers distintos: posição relativa; sozinho: escala absoluta (economia, horas, ROI, qualidade).",
+    esforcoScore:
+      "Score de esforço (0–100). Com peers distintos: posição relativa; sozinho: escala absoluta (investimento, recursos, HH, complexidade).",
     quadranteColuna: "Classificação na matriz impacto × esforço.",
     liquidaAnualColuna: "Economia líquida projetada para 12 meses.",
     revisaoAtivaColuna: "Revisão marcada como vigente na melhoria.",

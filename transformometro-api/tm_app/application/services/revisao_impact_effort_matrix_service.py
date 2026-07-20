@@ -51,6 +51,23 @@ EFFORT_WEIGHTS: dict[str, float] = {
 
 THRESHOLD_DEFAULT = 50
 
+# Escalas absolutas (valor bruto → 1.0) quando o pool não permite percentil útil.
+# Usadas com 1 revisão comparável ou componente empatado entre peers.
+IMPACT_ABSOLUTE_REF: dict[str, float] = {
+    "economia": 60_000.0,  # R$ líquidos / ano
+    "horas": 1_200.0,  # horas economizadas / ano
+    "roi": 3.0,  # razão
+    "qualidade": 30.0,  # delta qualidade composto
+    "escopo": 8.0,  # proxy complexidade (itens)
+}
+
+EFFORT_ABSOLUTE_REF: dict[str, float] = {
+    "investimento": 80_000.0,  # R$ / ano
+    "recursos": 24_000.0,  # R$ recursos / ano
+    "hh": 200.0,  # proxy HH
+    "complexidade": 8.0,
+}
+
 
 def _clamp_score(value: float) -> float:
     if not isinstance(value, (int, float)):
@@ -68,6 +85,30 @@ def _percentile_rank(values: list[float], value: float) -> float:
     equal = sum(1 for item in sorted_vals if item == value)
     rank = below + max(equal - 1, 0) / 2 if equal else below
     return (rank / (len(sorted_vals) - 1)) * 100.0
+
+
+def _component_has_spread(values: list[float]) -> bool:
+    if len(values) < 2:
+        return False
+    return (max(values) - min(values)) > 1e-9
+
+
+def _absolute_unit_score(value: float, reference: float) -> float:
+    """Mapeia valor bruto para 0..1 com saturação linear em ``reference``."""
+    ref = max(float(reference), 1e-9)
+    return max(0.0, min(1.0, max(0.0, float(value)) / ref))
+
+
+def _normalize_component(
+    peer_values: list[float],
+    value: float,
+    *,
+    absolute_ref: float,
+) -> float:
+    """Percentil entre peers com variância; senão escala absoluta de negócio."""
+    if _component_has_spread(peer_values):
+        return _percentile_rank(peer_values, value) / 100.0
+    return _absolute_unit_score(value, absolute_ref)
 
 
 def _resolve_quadrant(impacto: float, esforco: float, threshold: float = THRESHOLD_DEFAULT) -> str:
@@ -529,15 +570,40 @@ class RevisaoImpactEffortMatrixService:
 
         impact_norm: dict[str, float] = {}
         effort_norm: dict[str, float] = {}
+        used_percentile = False
+        used_absolute = False
         for key in impact_keys:
             peer_values = [float(p["raw_components"]["impacto"][key]) for p in scoring_pool]
             value = float(item["raw_components"]["impacto"][key])
-            impact_norm[key] = _percentile_rank(peer_values, value) / 100.0
+            if _component_has_spread(peer_values):
+                used_percentile = True
+            else:
+                used_absolute = True
+            impact_norm[key] = _normalize_component(
+                peer_values,
+                value,
+                absolute_ref=IMPACT_ABSOLUTE_REF[key],
+            )
 
         for key in effort_keys:
             peer_values = [float(p["raw_components"]["esforco"][key]) for p in scoring_pool]
             value = float(item["raw_components"]["esforco"][key])
-            effort_norm[key] = _percentile_rank(peer_values, value) / 100.0
+            if _component_has_spread(peer_values):
+                used_percentile = True
+            else:
+                used_absolute = True
+            effort_norm[key] = _normalize_component(
+                peer_values,
+                value,
+                absolute_ref=EFFORT_ABSOLUTE_REF[key],
+            )
+
+        if used_percentile and used_absolute:
+            normalizacao = "mista"
+        elif used_percentile:
+            normalizacao = "percentil"
+        else:
+            normalizacao = "absoluta"
 
         impacto_auto = sum(impact_norm[key] * IMPACT_WEIGHTS[key] for key in impact_keys) * 100.0
         esforco_auto = sum(effort_norm[key] * EFFORT_WEIGHTS[key] for key in effort_keys) * 100.0
@@ -579,6 +645,7 @@ class RevisaoImpactEffortMatrixService:
             "confianca": item["confianca"],
             "modo": modo,
             "incluir_na_matriz": item["incluir_na_matriz"],
+            "normalizacao": normalizacao,
             "metricas": item["metricas"],
             "componentes": {
                 "impacto": {key: round(impact_norm[key], 2) for key in impact_keys},
