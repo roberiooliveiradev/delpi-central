@@ -678,6 +678,132 @@ SELECTION_CASES = [
         "expected_action_id": "commercial-head-office-rol-target",
     },
     {
+        "message": "qual a meta para financeiro desse mês?",
+        "actions": [
+            {
+                "actionId": "financial-ebitda",
+                "method": "GET",
+                "path": "/financial/ebitda_pct",
+                "operationId": "get_ebitda_pct",
+                "summary": "EBITDA",
+                "parametersSchema": [
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "financial-fixed-cost",
+                "method": "GET",
+                "path": "/financial/fixed_cost_pct",
+                "operationId": "get_fixed_cost_pct",
+                "summary": "Custo fixo",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "financial-ebitda",
+    },
+    {
+        "message": "qual a meta para produção desse mês?",
+        "actions": [
+            {
+                "actionId": "production-oee",
+                "method": "GET",
+                "path": "/production/oee",
+                "operationId": "get_production_oee",
+                "summary": "OEE produção",
+                "parametersSchema": [
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "production-otd",
+                "method": "GET",
+                "path": "/production/on_time_delivery_pct",
+                "operationId": "get_on_time_delivery_pct",
+                "summary": "OTD produção",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "production-oee",
+    },
+    {
+        "message": "qual a meta para qualidade desse mês?",
+        "actions": [
+            {
+                "actionId": "quality-ppm-internal",
+                "method": "GET",
+                "path": "/quality/ppm/internal",
+                "operationId": "get_ppm_internal",
+                "summary": "PPM interno",
+                "parametersSchema": [
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "quality-ppm-external",
+                "method": "GET",
+                "path": "/quality/ppm/external",
+                "operationId": "get_ppm_external",
+                "summary": "PPM externo",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "quality-ppm-internal",
+    },
+    {
+        "message": "qual a meta para rh desse mês?",
+        "actions": [
+            {
+                "actionId": "hr-snapshot",
+                "method": "GET",
+                "path": "/hr/snapshot",
+                "operationId": "get_hr_snapshot",
+                "summary": "Snapshot RH",
+                "parametersSchema": [
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "hr-pdi",
+                "method": "GET",
+                "path": "/hr/active-pdi-count",
+                "operationId": "get_active_pdi_count",
+                "summary": "PDIs ativos",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "hr-snapshot",
+    },
+    {
+        "message": "qual a meta para suprimentos desse mês?",
+        "actions": [
+            {
+                "actionId": "supplies-cpv",
+                "method": "GET",
+                "path": "/supplies/cpv",
+                "operationId": "get_supplies_cpv",
+                "summary": "CPV suprimentos",
+                "parametersSchema": [
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                    {"name": "branch", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "supplies-otd",
+                "method": "GET",
+                "path": "/supplies/otd",
+                "operationId": "get_supplies_otd",
+                "summary": "OTD suprimentos",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "supplies-cpv",
+    },
+    {
         "message": "qual a meta para comercial desse mês filial 02?",
         "previous_messages": [
             {"role": "user", "content": "meta de novos negócios"},

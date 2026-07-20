@@ -68,6 +68,7 @@ class ExternalActionKpiChartTitleService:
                     "/commercial/",
                     "/quality/",
                     "/hr/",
+                    "/supplies/",
                 }
             )
             sorted_matchers = sorted(

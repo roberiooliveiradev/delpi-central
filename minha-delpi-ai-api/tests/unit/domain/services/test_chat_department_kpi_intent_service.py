@@ -1,3 +1,5 @@
+import pytest
+
 from app.domain.services.chat_department_kpi_intent_service import (
     ChatDepartmentKpiIntentService,
 )
@@ -163,6 +165,36 @@ def test_resolve_commercial_branch_meta_para_comercial_com_filial_02():
     assert match is not None
     assert match.path_token == "branch_rol_target"
     assert match.domain_prefix == "/commercial/"
+
+
+@pytest.mark.parametrize(
+    "message,expected_token,expected_prefix",
+    [
+        ("qual a meta para financeiro desse mês?", "ebitda", "/financial/"),
+        ("qual a meta para produção desse mês?", "oee", "/production/"),
+        ("qual a meta para qualidade desse mês?", "ppm/internal", "/quality/"),
+        ("qual a meta para rh desse mês?", "snapshot", "/hr/"),
+        ("qual a meta custo fixo?", "fixed_cost", "/financial/"),
+        ("qual a meta otd de produção?", "on_time_delivery", "/production/"),
+        ("qual a meta ppm externo?", "ppm/external", "/quality/"),
+        ("qual a meta pdi?", "active-pdi", "/hr/"),
+    ],
+)
+def test_resolve_colloquial_meta_other_departments(
+    message: str,
+    expected_token: str,
+    expected_prefix: str,
+) -> None:
+    from app.domain.services.chat_department_kpi_intent_service import (
+        invalidate_department_kpi_rules_cache,
+    )
+
+    invalidate_department_kpi_rules_cache()
+    match = ChatDepartmentKpiIntentService.resolve(message)
+
+    assert match is not None
+    assert match.path_token == expected_token
+    assert match.domain_prefix == expected_prefix
 
 
 def test_branch_rol_target_question_is_not_capability_inquiry():

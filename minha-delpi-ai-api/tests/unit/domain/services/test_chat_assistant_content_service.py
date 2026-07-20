@@ -87,6 +87,24 @@ def test_presenter_kpi_title_commercial_rol_target_not_generic():
     assert "Indicador Comercial" not in head_title
 
 
+def test_presenter_kpi_title_other_departments_not_generic_domain():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+
+    assert presenter._kpi_title("/financial/ebitda_pct") == "EBITDA financeiro (%)"
+    assert presenter._kpi_title("/production/overall_equipment_effectiveness_pct") == (
+        "OEE produção (%)"
+    )
+    assert presenter._kpi_title("/quality/ppm/internal") == "PPM interno"
+    assert presenter._kpi_title("/supplies/cpv") == "CPV — Custo de Produção Vendido"
+    assert presenter._kpi_title("/dashboard/department-indicators") == (
+        "Metas e realizado do departamento"
+    )
+
+
 def test_title_for_path_prefers_longest_fragment():
     title = ChatAssistantContentService.title_for_path(
         "presenter_content",

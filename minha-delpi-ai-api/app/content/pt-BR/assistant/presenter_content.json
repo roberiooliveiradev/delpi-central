@@ -137,6 +137,50 @@
       "titleKey": "otd"
     },
     {
+      "fragment": "ppm/internal",
+      "titleKey": "quality_ppm_internal"
+    },
+    {
+      "fragment": "ppm/external",
+      "titleKey": "quality_ppm_external"
+    },
+    {
+      "fragment": "kaizens/summary",
+      "titleKey": "quality_kaizen_summary"
+    },
+    {
+      "fragment": "audit-5s/summary",
+      "titleKey": "quality_audit_5s"
+    },
+    {
+      "fragment": "ebitda_pct",
+      "titleKey": "financial_ebitda"
+    },
+    {
+      "fragment": "fixed_cost_pct",
+      "titleKey": "financial_fixed_cost"
+    },
+    {
+      "fragment": "/financial/rol",
+      "titleKey": "financial_rol"
+    },
+    {
+      "fragment": "on_time_delivery_pct",
+      "titleKey": "production_otd_pct"
+    },
+    {
+      "fragment": "overall_equipment_effectiveness_pct",
+      "titleKey": "production_oee_pct"
+    },
+    {
+      "fragment": "department-indicators",
+      "titleKey": "department_idd_indicators"
+    },
+    {
+      "fragment": "/supplies/",
+      "titleKey": "supplies"
+    },
+    {
       "fragment": "branch_rol_target_pct",
       "titleKey": "commercial_rol_target_branch"
     },
@@ -197,6 +241,17 @@
     "commercial_rol_target_branch": "Meta % ROL comercial — filial",
     "commercial_rol_target_head_office": "Meta % ROL comercial — matriz",
     "financial": "Indicador Financeiro",
+    "financial_ebitda": "EBITDA financeiro (%)",
+    "financial_fixed_cost": "Custo fixo / ROL (%)",
+    "financial_rol": "ROL financeiro",
+    "production_otd_pct": "OTD produção (%)",
+    "production_oee_pct": "OEE produção (%)",
+    "quality_ppm_internal": "PPM interno",
+    "quality_ppm_external": "PPM externo",
+    "quality_kaizen_summary": "Kaizen — resumo e metas",
+    "quality_audit_5s": "Auditoria 5S — nota e meta",
+    "department_idd_indicators": "Metas e realizado do departamento",
+    "supplies": "Indicador de Suprimentos",
     "production": "Indicador de Produção",
     "rh": "Indicador de RH",
     "quality": "Indicador de Qualidade",

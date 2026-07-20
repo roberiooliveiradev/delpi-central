@@ -395,7 +395,13 @@
         "cpv",
         "custo de produção vendido",
         "custo de producao vendido",
-        "custo producao vendido"
+        "custo producao vendido",
+        "meta suprimentos",
+        "meta para suprimentos",
+        "meta do suprimentos",
+        "meta de suprimentos",
+        "meta cpv",
+        "meta do cpv"
       ],
       "inventoryTurnoverTerms": [
         "giro de estoque",
@@ -429,7 +435,11 @@
         "idd com metas",
         "indicadores do idd",
         "indicadores estrategicos do",
-        "indicadores estratégicos do"
+        "indicadores estratégicos do",
+        "meta para engenharia",
+        "meta da engenharia",
+        "meta de engenharia",
+        "meta do engenharia"
       ],
       "departmentIddAllTerms": [
         "idds dos departamentos",

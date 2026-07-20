@@ -75,15 +75,18 @@ FINANCIAL_EBITDA_FIELD_LABELS: dict[str, str] = {
     "ebitda_value": "EBITDA (valor)",
     "ebitda_over_rol_pct": "EBITDA / ROL (%)",
     "rol_with_ipi": "ROL",
+    "target": "Meta EBITDA",
 }
 
 FINANCIAL_FIXED_COST_FIELD_LABELS: dict[str, str] = {
     "fixed_cost_value": "Custos fixos (valor)",
     "fixed_cost_over_rol_pct": "Custos fixos / ROL (%)",
+    "target": "Meta custo fixo",
 }
 
 FINANCIAL_PMR_FIELD_LABELS: dict[str, str] = {
     "pmr_days": "PMR (dias)",
+    "target": "Meta PMR (dias)",
 }
 
 SUPPLIES_CPV_FIELD_LABELS: dict[str, str] = {
@@ -94,17 +97,20 @@ SUPPLIES_CPV_FIELD_LABELS: dict[str, str] = {
     "average_cost_per_movement": "Custo médio por movimentação",
     "average_cost_per_unit": "Custo médio por unidade",
     "average_unit_value": "Valor médio unitário",
+    "target": "Meta CPV",
 }
 
 SUPPLIES_OTD_FIELD_LABELS: dict[str, str] = {
     "otd_percentage": "OTD (%)",
     "late_percentage": "% atrasos",
+    "target": "Meta OTD compras (%)",
 }
 
 SUPPLIES_STOCK_VALUE_FIELD_LABELS: dict[str, str] = {
     "total_stock_value": "Valor total de estoque",
     "total_stock_quantity": "Quantidade em estoque",
     "total_locations": "Localizações",
+    "target": "Meta valor de estoque",
 }
 
 SUPPLIES_INVENTORY_TURNOVER_FIELD_LABELS: dict[str, str] = {
@@ -113,6 +119,8 @@ SUPPLIES_INVENTORY_TURNOVER_FIELD_LABELS: dict[str, str] = {
     "calculation_mode": "Modo de cálculo",
     "idd_period_valid": "Período IDD válido",
     "strict_idd_period": "Período IDD estrito",
+    "stock_context": "Contexto de estoque",
+    "target": "Meta giro de estoque",
 }
 
 SUPPLIES_NEGOTIATION_SAVINGS_FIELD_LABELS: dict[str, str] = {
@@ -159,6 +167,7 @@ PRODUCTION_OEE_FIELD_LABELS: dict[str, str] = {
     "valid_appointments": "Apontamentos válidos",
     "outlier_appointments": "Apontamentos fora da faixa",
     "outlier_percentage": "% fora da faixa",
+    "target": "Meta OEE (%)",
 }
 
 PRODUCTION_OTD_FIELD_LABELS: dict[str, str] = {
@@ -169,12 +178,14 @@ PRODUCTION_OTD_FIELD_LABELS: dict[str, str] = {
     "total_ops_finished": "OPs finalizadas",
     "on_time_ops": "OPs no prazo",
     "late_ops": "OPs em atraso",
+    "target": "Meta OTD produção (%)",
 }
 
 PRODUCTION_COST_FIELD_LABELS: dict[str, str] = {
     "direct_labor_cost_pct": "MOD direta / ROL (%)",
     "production_cost_pct": "Custo produção / ROL (%)",
     "depreciation_pct": "Depreciação / ROL (%)",
+    "target": "Meta custo / ROL (%)",
 }
 
 QUALITY_PPM_FIELD_LABELS: dict[str, str] = {
@@ -184,6 +195,7 @@ QUALITY_PPM_FIELD_LABELS: dict[str, str] = {
     "total_produzido_milheiro": "Total produzido (milheiro)",
     "registered_date": "Data de registro",
     "returned_quantity_original": "Qtd. devolvida (original)",
+    "target": "Meta PPM",
 }
 
 QUALITY_PRODUCED_QUANTITY_FIELD_LABELS: dict[str, str] = {
@@ -209,6 +221,8 @@ QUALITY_KAIZEN_FIELD_LABELS: dict[str, str] = {
     "total_kaizens": "Total kaizens",
     "average_score": "Nota média",
     "annual_savings": "Economia projetada por ano",
+    "ideas_goal": "Meta de ideias Kaizen",
+    "target": "Meta Kaizen",
 }
 
 QUALITY_KAIZEN_DETAIL_FIELD_LABELS: dict[str, str] = {
@@ -230,6 +244,7 @@ QUALITY_KAIZEN_DETAIL_FIELD_LABELS: dict[str, str] = {
 QUALITY_AUDIT_5S_FIELD_LABELS: dict[str, str] = {
     "average_score": "Nota média 5S",
     "list_audits": "Auditorias",
+    "target": "Meta nota 5S",
 }
 
 HR_FIELD_LABELS: dict[str, str] = {
@@ -245,6 +260,8 @@ HR_FIELD_LABELS: dict[str, str] = {
     "completed_reviews": "Avaliações concluídas",
     "total_reviews": "Total avaliações",
     "measurement_date": "Data da medição",
+    "goals_by_metric": "Metas por indicador",
+    "target": "Meta RH",
 }
 
 ENGINEERING_LMP_FIELD_LABELS: dict[str, str] = {

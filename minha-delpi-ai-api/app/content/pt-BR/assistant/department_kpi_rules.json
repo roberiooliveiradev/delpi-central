@@ -129,10 +129,20 @@
       "domainPrefix": "/financial/",
       "pathToken": "ebitda",
       "keywords": [
-        "ebitda"
+        "ebitda",
+        "meta financeiro",
+        "meta para financeiro",
+        "meta do financeiro",
+        "meta de financeiro",
+        "meta ebitda",
+        "meta percentual financeiro",
+        "meta do ebitda"
       ],
       "excludes": [
-        "comercial"
+        "comercial",
+        "custo fixo",
+        "custos fixos",
+        "pmr"
       ],
       "label": "EBITDA percentual"
     },
@@ -141,7 +151,10 @@
       "pathToken": "fixed_cost",
       "keywords": [
         "custo fixo",
-        "custos fixos"
+        "custos fixos",
+        "meta custo fixo",
+        "meta de custos fixos",
+        "meta percentual custo fixo"
       ],
       "excludes": [],
       "label": "custo fixo percentual"
@@ -152,7 +165,10 @@
       "keywords": [
         "pmr",
         "prazo medio de recebimento",
-        "prazo médio de recebimento"
+        "prazo médio de recebimento",
+        "meta pmr",
+        "meta prazo medio",
+        "meta prazo médio de recebimento"
       ],
       "excludes": [
         "suprimentos"
@@ -223,13 +239,24 @@
         "oee de produção",
         "oee da producao",
         "oee da produção",
-        "fora da faixa"
+        "fora da faixa",
+        "meta producao",
+        "meta produção",
+        "meta para producao",
+        "meta para produção",
+        "meta da producao",
+        "meta da produção",
+        "meta de producao",
+        "meta de produção",
+        "meta oee",
+        "meta do oee"
       ],
       "excludes": [
         "fabril",
         "resultado mod",
         "mod fabril",
-        "equipamento global"
+        "equipamento global",
+        "otd"
       ],
       "label": "OEE produção — resumo e apontamentos"
     },
@@ -292,7 +319,10 @@
         "otd de producao",
         "otd de produção",
         "entrega no prazo producao",
-        "entrega no prazo produção"
+        "entrega no prazo produção",
+        "meta otd producao",
+        "meta otd de produção",
+        "meta entrega no prazo producao"
       ],
       "excludes": [
         "comercial",
@@ -324,7 +354,10 @@
       "keywords": [
         "pdi ativo",
         "pdis ativos",
-        "plano de desenvolvimento"
+        "plano de desenvolvimento",
+        "meta pdi",
+        "meta de pdis",
+        "meta de pdi"
       ],
       "excludes": [],
       "label": "quantidade de PDIs ativos"
@@ -336,7 +369,11 @@
         "avaliacao de desempenho",
         "avaliação de desempenho",
         "avaliacoes rh",
-        "avaliações rh"
+        "avaliações rh",
+        "meta avaliacao de desempenho",
+        "meta avaliação de desempenho",
+        "meta avaliacoes rh",
+        "meta avaliações rh"
       ],
       "excludes": [],
       "label": "conclusão de avaliações de desempenho"
@@ -349,11 +386,17 @@
         "indicadores de rh",
         "headcount",
         "turnover rh",
-        "painel rh"
+        "painel rh",
+        "meta rh",
+        "meta para rh",
+        "meta do rh",
+        "meta de rh",
+        "meta recursos humanos"
       ],
       "excludes": [
         "pdi",
-        "avaliacao"
+        "avaliacao",
+        "avaliação"
       ],
       "label": "snapshot de RH"
     },
@@ -378,7 +421,10 @@
       "domainPrefix": "/quality/",
       "pathToken": "kaizens",
       "keywords": [
-        "kaizen"
+        "kaizen",
+        "meta kaizen",
+        "meta de ideias kaizen",
+        "meta ganhos kaizen"
       ],
       "excludes": [],
       "label": "resumo de kaizens"
@@ -389,7 +435,9 @@
       "keywords": [
         "auditoria 5s",
         "audit 5s",
-        "5s"
+        "5s",
+        "meta 5s",
+        "meta auditoria 5s"
       ],
       "excludes": [
         "nc ",
@@ -408,11 +456,20 @@
       "pathToken": "ppm/internal",
       "keywords": [
         "ppm interno",
-        "ppm interna"
+        "ppm interna",
+        "meta qualidade",
+        "meta para qualidade",
+        "meta da qualidade",
+        "meta de qualidade",
+        "meta do qualidade",
+        "meta ppm",
+        "meta ppm interno"
       ],
       "excludes": [
         "externo",
-        "externa"
+        "externa",
+        "kaizen",
+        "5s"
       ],
       "label": "PPM interno"
     },
@@ -421,7 +478,8 @@
       "pathToken": "ppm/external",
       "keywords": [
         "ppm externo",
-        "ppm externa"
+        "ppm externa",
+        "meta ppm externo"
       ],
       "excludes": [
         "interno",

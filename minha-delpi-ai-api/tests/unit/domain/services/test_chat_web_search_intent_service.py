@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+import pytest
+
 from app.domain.services.chat_web_search_intent_service import ChatWebSearchIntentService
 
 
@@ -187,6 +189,22 @@ def test_post_rag_fallback_skips_commercial_meta_question(_enabled):
     assert not ChatWebSearchIntentService.should_try_web_after_empty_rag(
         "qual a meta para comercial desse mês?"
     )
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "qual a meta para financeiro desse mês?",
+        "qual a meta para produção desse mês?",
+        "qual a meta para qualidade desse mês?",
+        "qual a meta para rh desse mês?",
+        "qual a meta para suprimentos desse mês?",
+        "qual a meta para engenharia desse mês?",
+    ],
+)
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_post_rag_fallback_skips_department_meta_questions(_enabled, message):
+    assert not ChatWebSearchIntentService.should_try_web_after_empty_rag(message)
 
 
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
