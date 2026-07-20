@@ -725,8 +725,8 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "search_tables_by_description": RouteContract("protheus_table", "paged_list"),
     "get_protheus_table": RouteContract("protheus_table", "scalar"),
     "list_protheus_table_columns": RouteContract("protheus_column", "paged_list"),
-    "get_protheus_table_indexes": RouteContract("protheus_index", "scalar"),
-    "get_protheus_table_relations": RouteContract("protheus_relation", "scalar"),
+    "get_protheus_table_indexes": RouteContract("protheus_index", "paged_list"),
+    "get_protheus_table_relations": RouteContract("protheus_relation", "paged_list"),
     "get_protheus_table_schema": RouteContract("protheus_table_schema", "composite_analysis"),
     "search_protheus_columns_in_table": RouteContract("protheus_column", "paged_list"),
     "search_protheus_columns_by_description": RouteContract(

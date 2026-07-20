@@ -3,8 +3,8 @@
   "generatedAt": "2026-07-20",
   "baselineOperationCount": 368,
   "operationCount": 368,
-  "coveredCount": 239,
-  "gapCount": 128,
+  "coveredCount": 283,
+  "gapCount": 84,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -63,8 +63,8 @@
     },
     "guias-procedimentos": {
       "total": 29,
-      "covered": 3,
-      "gap": 26,
+      "covered": 29,
+      "gap": 0,
       "exempt": 0
     },
     "health": {
@@ -153,8 +153,8 @@
     },
     "scheduling": {
       "total": 10,
-      "covered": 2,
-      "gap": 8,
+      "covered": 10,
+      "gap": 0,
       "exempt": 0
     },
     "supplies": {
@@ -165,8 +165,8 @@
     },
     "system": {
       "total": 19,
-      "covered": 9,
-      "gap": 10,
+      "covered": 19,
+      "gap": 0,
       "exempt": 0
     }
   },
@@ -673,7 +673,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "archive_guias_procedimentos_admin_attachment",
@@ -682,7 +682,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_guias_procedimentos_admin_departments",
@@ -700,7 +700,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_department",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_guias_procedimentos_admin_department",
@@ -709,7 +709,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_department",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_guias_procedimentos_admin_department",
@@ -718,7 +718,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_department",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_guias_procedimentos_admin_media",
@@ -727,7 +727,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_media",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "archive_guias_procedimentos_admin_media",
@@ -736,7 +736,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_media",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_guias_procedimentos_admin_procedures",
@@ -745,7 +745,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_guias_procedimentos_admin_procedure",
@@ -754,7 +754,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_guias_procedimentos_admin_procedure",
@@ -763,7 +763,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_guias_procedimentos_admin_procedure",
@@ -772,7 +772,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "archive_guias_procedimentos_admin_procedure",
@@ -781,7 +781,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_guias_procedimentos_admin_procedure_attachments",
@@ -790,7 +790,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_attachment",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "upload_guias_procedimentos_admin_procedure_attachment",
@@ -799,7 +799,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_attachment",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_guias_procedimentos_admin_procedure_media",
@@ -808,7 +808,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_media",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_guias_procedimentos_admin_external_video",
@@ -817,7 +817,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_media",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "upload_guias_procedimentos_admin_procedure_image",
@@ -835,7 +835,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_media",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "publish_guias_procedimentos_admin_procedure",
@@ -844,7 +844,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "restore_guias_procedimentos_admin_procedure",
@@ -853,7 +853,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "unpublish_guias_procedimentos_admin_procedure",
@@ -862,7 +862,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "download_guias_procedimentos_attachment_file",
@@ -871,7 +871,7 @@
       "module": "guias-procedimentos",
       "entity": "download_guias_procedimentos_attachment_file",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_guias_procedimentos_departments",
@@ -889,7 +889,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_department",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "download_guias_procedimentos_media_file",
@@ -898,7 +898,7 @@
       "module": "guias-procedimentos",
       "entity": "download_guias_procedimentos_media_file",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_guias_procedimentos_procedure_attachments",
@@ -907,7 +907,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_attachment",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_guias_procedimentos_procedure_media",
@@ -916,7 +916,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_media",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_guias_procedimentos_procedure",
@@ -925,7 +925,7 @@
       "module": "guias-procedimentos",
       "entity": "guias_procedimentos_procedure",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_health",
@@ -3131,7 +3131,7 @@
       "module": "scheduling",
       "entity": "scheduling_booking",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_scheduling_booking",
@@ -3149,7 +3149,7 @@
       "module": "scheduling",
       "entity": "scheduling_booking",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_pending_scheduling_bookings",
@@ -3158,7 +3158,7 @@
       "module": "scheduling",
       "entity": "scheduling_booking",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "approve_scheduling_booking",
@@ -3167,7 +3167,7 @@
       "module": "scheduling",
       "entity": "scheduling_booking",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "cancel_scheduling_booking",
@@ -3176,7 +3176,7 @@
       "module": "scheduling",
       "entity": "scheduling_booking",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "reject_scheduling_booking",
@@ -3185,7 +3185,7 @@
       "module": "scheduling",
       "entity": "scheduling_booking",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_scheduling_resources",
@@ -3203,7 +3203,7 @@
       "module": "scheduling",
       "entity": "scheduling_resource",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_scheduling_resource",
@@ -3212,7 +3212,7 @@
       "module": "scheduling",
       "entity": "scheduling_resource",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_supplies_cpv",
@@ -3329,7 +3329,7 @@
       "module": "system",
       "entity": "protheus_column",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_console_alerts",
@@ -3338,7 +3338,7 @@
       "module": "system",
       "entity": "console_alerts",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "evaluate_console_alerts",
@@ -3356,7 +3356,7 @@
       "module": "system",
       "entity": "notify_console_smoke_alerts",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_console_health",
@@ -3410,7 +3410,7 @@
       "module": "system",
       "entity": "smoke_definitions",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_sql_health",
@@ -3437,7 +3437,7 @@
       "module": "system",
       "entity": "protheus_table",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_protheus_table_columns",
@@ -3446,7 +3446,7 @@
       "module": "system",
       "entity": "protheus_column",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "search_protheus_columns_in_table",
@@ -3455,7 +3455,7 @@
       "module": "system",
       "entity": "protheus_column",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_protheus_table_indexes",
@@ -3464,7 +3464,7 @@
       "module": "system",
       "entity": "protheus_index",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_protheus_table_relations",
@@ -3473,7 +3473,7 @@
       "module": "system",
       "entity": "protheus_relation",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_protheus_table_schema",
@@ -3482,7 +3482,7 @@
       "module": "system",
       "entity": "protheus_table_schema",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     }
   ]
 }
