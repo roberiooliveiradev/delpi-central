@@ -17,6 +17,16 @@ def test_route_locale_department_idd_bilingual():
     assert entry["params"]["department_id"]["locale"]["pt-BR"]["label"] == "Departamento"
 
 
+def test_route_locale_department_indicators_bilingual():
+    entry = route_locale_for_operation("get_dashboard_department_indicators")
+    assert entry is not None
+    assert entry["category"] == "system"
+    assert "metas" in entry["locale"]["pt-BR"]["description"].lower() or "realizado" in entry["locale"]["pt-BR"]["description"].lower()
+    all_entry = route_locale_for_operation("get_dashboard_departments_indicators")
+    assert all_entry is not None
+    assert all_entry["locale"]["pt-BR"]["label"]
+
+
 def test_tv_audience_compat_from_pt_br():
     tv = tv_audience_for_operation("get_overall_equipment_effectiveness_pct")
     assert tv is not None

@@ -2,8 +2,8 @@
   "version": 1,
   "generatedAt": "2026-07-20",
   "baselineOperationCount": 368,
-  "operationCount": 368,
-  "coveredCount": 367,
+  "operationCount": 370,
+  "coveredCount": 369,
   "gapCount": 0,
   "exemptCount": 1,
   "byModule": {
@@ -32,8 +32,8 @@
       "exempt": 0
     },
     "dashboard": {
-      "total": 1,
-      "covered": 1,
+      "total": 3,
+      "covered": 3,
       "gap": 0,
       "exempt": 0
     },
@@ -376,6 +376,24 @@
       "module": "dashboard",
       "entity": "dashboard_department_idd",
       "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_department_indicators",
+      "method": "GET",
+      "path": "/dashboard/department-indicators",
+      "module": "dashboard",
+      "entity": "dashboard_department_indicators",
+      "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_dashboard_departments_indicators",
+      "method": "GET",
+      "path": "/dashboard/departments-indicators",
+      "module": "dashboard",
+      "entity": "dashboard_departments_indicators",
+      "shape": "playbook_report",
       "status": "covered"
     },
     {

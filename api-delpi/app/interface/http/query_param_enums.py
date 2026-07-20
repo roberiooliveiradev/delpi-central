@@ -29,6 +29,15 @@ STOCK_METHOD_VALUES = ("auto", "hybrid", "estimated", "official_closure")
 NONCONFORMITY_TYPE_VALUES = ("internal", "external", "all")
 NONCONFORMITY_SCOPE_VALUES = ("internal", "external")
 BRANCH_CODE_VALUES = ("01", "02")
+SI_DEPARTMENT_ID_VALUES = (
+    "commercial",
+    "engineering",
+    "financial",
+    "hr",
+    "production",
+    "quality",
+    "supplies",
+)
 SEVERITY_VALUES = ("low", "medium", "high", "critical")
 SHIFT_5S_VALUES = ("TURNO_1", "TURNO_2", "TURNO_3", "ADMINISTRATIVO")
 ACTIVE_BOOL_VALUES = ("true", "false")
@@ -269,6 +278,26 @@ def BRANCH_QUERY_OPTIONAL():
     pattern=_enum_pattern(BRANCH_CODE_VALUES),
     enum=list(BRANCH_CODE_VALUES),
 )
+def SI_DEPARTMENT_ID_QUERY_REQUIRED():
+    return Query(
+        ...,
+        description=(
+            "SI department id (commercial, hr, production, financial, "
+            "supplies, engineering, quality)."
+        ),
+        pattern=_enum_pattern(SI_DEPARTMENT_ID_VALUES),
+        enum=list(SI_DEPARTMENT_ID_VALUES),
+    )
+def SI_DEPARTMENT_ID_QUERY_OPTIONAL():
+    return Query(
+        None,
+        description=(
+            "Optional SI department id filter (commercial, hr, production, "
+            "financial, supplies, engineering, quality)."
+        ),
+        pattern=_enum_pattern(SI_DEPARTMENT_ID_VALUES),
+        enum=list(SI_DEPARTMENT_ID_VALUES),
+    )
 def SEVERITY_QUERY():
     return Query(
     None,

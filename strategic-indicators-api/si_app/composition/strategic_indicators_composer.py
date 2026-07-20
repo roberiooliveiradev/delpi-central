@@ -46,6 +46,12 @@ from si_app.application.use_cases.strategic_indicators.get_dashboard_goals_by_so
 from si_app.application.use_cases.strategic_indicators.get_dashboard_department_score_use_case import (
     GetDashboardDepartmentScoreUseCase,
 )
+from si_app.application.use_cases.strategic_indicators.get_dashboard_department_indicators_use_case import (
+    GetDashboardDepartmentIndicatorsUseCase,
+)
+from si_app.application.use_cases.strategic_indicators.get_dashboard_departments_indicators_use_case import (
+    GetDashboardDepartmentsIndicatorsUseCase,
+)
 from si_app.application.use_cases.strategic_indicators.get_departments_tree_use_case import (
     GetStrategicIndicatorsDepartmentsTreeUseCase,
 )
@@ -390,6 +396,20 @@ def build_get_dashboard_goals_by_source_keys_use_case():
 def build_get_dashboard_department_score_use_case():
     return GetDashboardDepartmentScoreUseCase(
         snapshot_service=build_strategic_indicators_snapshot_service(),
+    )
+
+
+def build_get_dashboard_department_indicators_use_case():
+    return GetDashboardDepartmentIndicatorsUseCase(
+        snapshot_service=build_strategic_indicators_snapshot_service(),
+        calculator=StrategicIndicatorsCalculator(),
+    )
+
+
+def build_get_dashboard_departments_indicators_use_case():
+    return GetDashboardDepartmentsIndicatorsUseCase(
+        snapshot_service=build_strategic_indicators_snapshot_service(),
+        calculator=StrategicIndicatorsCalculator(),
     )
 
 

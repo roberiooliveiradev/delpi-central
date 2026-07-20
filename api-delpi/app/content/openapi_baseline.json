@@ -2480,6 +2480,300 @@
       "description": "Strategic Indicators department score for dashboards."
     },
     {
+      "method": "GET",
+      "path": "/dashboard/department-indicators",
+      "operationId": "get_dashboard_department_indicators",
+      "summary": "Department IDD with indicators (goals and realized)",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "required": true,
+          "description": "SI department id.",
+          "type": "string",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ]
+        },
+        {
+          "name": "competence",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_department_indicators",
+        "shape": "playbook_report",
+        "category": "system",
+        "locale": {
+          "en": {
+            "summary": "Department IDD with indicators (goals and realized)",
+            "description": "Strategic Indicators department IDD plus each indicator with goals (metas) and realized values.",
+            "whenToUse": "Use when you need IDD plus metas and realizado per indicator for one department.",
+            "label": "Departamento — IDD, metas e realizado"
+          },
+          "pt-BR": {
+            "summary": "IDD do departamento com indicadores (metas e realizado)",
+            "description": "Nota IDD do departamento e, para cada indicador, metas e realizado no período.",
+            "whenToUse": "Usar quando precisar do IDD e da lista de indicadores com metas e realizado de um departamento.",
+            "label": "Departamento — IDD, metas e realizado"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Reference month as YYYY-MM.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "SI department id (commercial, hr, production, financial, supplies, engineering, quality).",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar quando precisar do IDD e da lista de indicadores com metas e realizado de um departamento.",
+          "description": "Nota IDD do departamento e, para cada indicador, metas e realizado no período.",
+          "label": "Departamento — IDD, metas e realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Strategic Indicators department IDD plus each indicator with goals (metas) and realized values for dashboards and chat."
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/departments-indicators",
+      "operationId": "get_dashboard_departments_indicators",
+      "summary": "All departments with IDD, goals and realized per indicator",
+      "tags": [
+        "Dashboard"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "department_id",
+          "required": false,
+          "description": "Optional SI department id filter.",
+          "type": "string",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ]
+        },
+        {
+          "name": "competence",
+          "required": false,
+          "description": "Reference month as YYYY-MM.",
+          "type": "string"
+        },
+        {
+          "name": "start_date",
+          "required": false,
+          "description": "Period start (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "end_date",
+          "required": false,
+          "description": "Period end (YYYY-MM-DD).",
+          "type": "string",
+          "format": "date"
+        },
+        {
+          "name": "branch",
+          "required": false,
+          "description": "Protheus branch code (01 or 02). Empty uses consolidated scope when allowed.",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "dashboard_departments_indicators",
+        "shape": "playbook_report",
+        "category": "system",
+        "locale": {
+          "en": {
+            "summary": "All departments with IDD, goals and realized per indicator",
+            "description": "Lists every Strategic Indicators department with IDD and nested indicators (goals and realized).",
+            "whenToUse": "Use for a full departmental IDD board with metas and realizado per indicator.",
+            "label": "Departamentos — IDD, metas e realizado"
+          },
+          "pt-BR": {
+            "summary": "Todos os departamentos com IDD, metas e realizado por indicador",
+            "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
+            "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
+            "label": "Departamentos — IDD, metas e realizado"
+          }
+        },
+        "params": {
+          "branch": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02). Empty uses consolidated scope when allowed.",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+                "label": "Filial"
+              }
+            }
+          },
+          "competence": {
+            "locale": {
+              "en": {
+                "description": "Reference month as YYYY-MM.",
+                "label": "Competence"
+              },
+              "pt-BR": {
+                "description": "Competência no formato AAAA-MM (mês de referência).",
+                "label": "Competência"
+              }
+            }
+          },
+          "department_id": {
+            "locale": {
+              "en": {
+                "description": "SI department id (commercial, hr, production, financial, supplies, engineering, quality).",
+                "label": "Department"
+              },
+              "pt-BR": {
+                "description": "Identificador do departamento no painel IDD.",
+                "label": "Departamento"
+              }
+            }
+          },
+          "end_date": {
+            "locale": {
+              "en": {
+                "description": "Period end (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "start_date": {
+            "locale": {
+              "en": {
+                "description": "Period start (YYYY-MM-DD). With Period (days), may be computed automatically.",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
+          "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
+          "label": "Departamentos — IDD, metas e realizado"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Lists every Strategic Indicators department with IDD and nested indicators (goals/metas and realized) for the requested period."
+    },
+    {
       "method": "POST",
       "path": "/data/sql",
       "operationId": "execute_readonly_sql",

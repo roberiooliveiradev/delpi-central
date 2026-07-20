@@ -144,6 +144,12 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "list_lmps_dashboard_items": RouteContract("lmp_dashboard_items", "paged_list"),
     "get_lmps_dashboard_charts": RouteContract("lmp_dashboard_charts", "scalar"),
     "get_dashboard_department_idd": RouteContract("dashboard_department_idd", "scalar"),
+    "get_dashboard_department_indicators": RouteContract(
+        "dashboard_department_indicators", "playbook_report"
+    ),
+    "get_dashboard_departments_indicators": RouteContract(
+        "dashboard_departments_indicators", "playbook_report"
+    ),
     "get_lmp_by_sale_number": RouteContract("lmp", "product_snapshot"),
     "get_lmp_history_events": RouteContract("lmp_history", "paged_list"),
     "get_lmp_history_flow": RouteContract("lmp_history_flow", "list"),

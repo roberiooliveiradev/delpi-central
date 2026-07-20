@@ -27,6 +27,10 @@ from si_app.interface.http.routes.integrations_routes import (
 from si_app.interface.http.routes.integrations_department_score_routes import (
     router as strategic_indicators_department_score_integrations_router,
 )
+from si_app.interface.http.routes.integrations_department_indicators_routes import (
+    department_indicators_router as strategic_indicators_department_indicators_router,
+    departments_indicators_router as strategic_indicators_departments_indicators_router,
+)
 from si_app.interface.http.routes.integrations_tv_dashboard_routes import (
     router as strategic_indicators_tv_dashboard_integrations_router,
 )
@@ -138,6 +142,8 @@ app.include_router(strategic_indicators_router)
 app.include_router(strategic_indicators_integrations_router)
 app.include_router(strategic_indicators_tv_dashboard_integrations_router)
 app.include_router(strategic_indicators_department_score_integrations_router)
+app.include_router(strategic_indicators_department_indicators_router)
+app.include_router(strategic_indicators_departments_indicators_router)
 
 
 _SWAGGER_ENABLED = settings.API_ENV != "production"

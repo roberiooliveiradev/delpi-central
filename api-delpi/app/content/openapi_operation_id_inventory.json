@@ -162,6 +162,20 @@
       "stable": true
     },
     {
+      "operationId": "get_dashboard_department_indicators",
+      "method": "GET",
+      "path": "/dashboard/department-indicators",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
+      "operationId": "get_dashboard_departments_indicators",
+      "method": "GET",
+      "path": "/dashboard/departments-indicators",
+      "tag": "Dashboard",
+      "stable": true
+    },
+    {
       "operationId": "execute_readonly_sql",
       "method": "POST",
       "path": "/data/sql",

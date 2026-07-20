@@ -5868,6 +5868,92 @@
         }
       },
       "category": "quality"
+    },
+    "get_dashboard_department_indicators": {
+      "category": "system",
+      "locale": {
+        "en": {
+          "summary": "Department IDD with indicators (goals and realized)",
+          "description": "Strategic Indicators department IDD plus each indicator with goals (metas) and realized values.",
+          "whenToUse": "Use when you need IDD plus metas and realizado per indicator for one department.",
+          "label": "Departamento — IDD, metas e realizado"
+        },
+        "pt-BR": {
+          "summary": "IDD do departamento com indicadores (metas e realizado)",
+          "description": "Nota IDD do departamento e, para cada indicador, metas e realizado no período.",
+          "whenToUse": "Usar quando precisar do IDD e da lista de indicadores com metas e realizado de um departamento.",
+          "label": "Departamento — IDD, metas e realizado"
+        }
+      },
+      "params": {
+        "department_id": {
+          "locale": {
+            "en": {
+              "label": "Department",
+              "description": "SI department id (commercial, hr, production, financial, supplies, engineering, quality)."
+            },
+            "pt-BR": {
+              "label": "Departamento",
+              "description": "Identificador do departamento no painel IDD."
+            }
+          }
+        },
+        "competence": {
+          "locale": {
+            "en": {
+              "label": "Competence",
+              "description": "Reference month as YYYY-MM."
+            },
+            "pt-BR": {
+              "label": "Competência",
+              "description": "Competência no formato AAAA-MM (mês de referência)."
+            }
+          }
+        }
+      }
+    },
+    "get_dashboard_departments_indicators": {
+      "category": "system",
+      "locale": {
+        "en": {
+          "summary": "All departments with IDD, goals and realized per indicator",
+          "description": "Lists every Strategic Indicators department with IDD and nested indicators (goals and realized).",
+          "whenToUse": "Use for a full departmental IDD board with metas and realizado per indicator.",
+          "label": "Departamentos — IDD, metas e realizado"
+        },
+        "pt-BR": {
+          "summary": "Todos os departamentos com IDD, metas e realizado por indicador",
+          "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
+          "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
+          "label": "Departamentos — IDD, metas e realizado"
+        }
+      },
+      "params": {
+        "department_id": {
+          "locale": {
+            "en": {
+              "label": "Department",
+              "description": "SI department id (commercial, hr, production, financial, supplies, engineering, quality)."
+            },
+            "pt-BR": {
+              "label": "Departamento",
+              "description": "Identificador do departamento no painel IDD."
+            }
+          }
+        },
+        "competence": {
+          "locale": {
+            "en": {
+              "label": "Competence",
+              "description": "Reference month as YYYY-MM."
+            },
+            "pt-BR": {
+              "label": "Competência",
+              "description": "Competência no formato AAAA-MM (mês de referência)."
+            }
+          }
+        }
+      }
     }
   }
 }

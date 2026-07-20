@@ -899,3 +899,32 @@ COMMERCIAL_PROPOSAL_HISTORY_EVENTS = agent_route(
     ),
     operation_id="get_commercial_proposal_history_events",
 )
+
+DASHBOARD_DEPARTMENT_IDD = agent_route(
+    summary="Department IDD score",
+    description=(
+        "Strategic Indicators department IDD (0–10 score) for dashboards. "
+        "Use for a single departmental IDD card — not inventory turnover (giro de estoque). "
+        "For metas and realizado per indicator, prefer department-indicators."
+    ),
+    operation_id="get_dashboard_department_idd",
+)
+
+DASHBOARD_DEPARTMENT_INDICATORS = agent_route(
+    summary="Department IDD with indicators (goals and realized)",
+    description=(
+        "Strategic Indicators department IDD plus each indicator with goals (metas) "
+        "and realized values. Use when the question asks for IDD of a department with "
+        "metas and realizado — not supplies inventory-turnover."
+    ),
+    operation_id="get_dashboard_department_indicators",
+)
+
+DASHBOARD_DEPARTMENTS_INDICATORS = agent_route(
+    summary="All departments with IDD, goals and realized per indicator",
+    description=(
+        "Lists every Strategic Indicators department with IDD and nested indicators "
+        "(goals/metas and realized). Use for a full IDD board across departments."
+    ),
+    operation_id="get_dashboard_departments_indicators",
+)

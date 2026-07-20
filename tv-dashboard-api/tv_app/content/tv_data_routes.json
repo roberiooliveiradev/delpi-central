@@ -211,14 +211,14 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "sales_conversion_rate_pct",
         "value"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_head_office_new_business_rol_target_pct",
@@ -1251,14 +1251,150 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1
-      },
       "valueFields": [
         "score",
         "value",
         "idd"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1
+      }
+    },
+    {
+      "operationId": "get_dashboard_department_indicators",
+      "httpMethod": "GET",
+      "label": "Departamento — IDD, metas e realizado",
+      "category": "system",
+      "path": "/dashboard/department-indicators",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Nota IDD do departamento e, para cada indicador, metas e realizado no período.",
+      "whenToUse": "Usar quando precisar do IDD e da lista de indicadores com metas e realizado de um departamento.",
+      "paramSchema": {
+        "department_id": {
+          "type": "string",
+          "optional": false,
+          "label": "Departamento",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "description": "Identificador do departamento no painel IDD."
+        },
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_dashboard_departments_indicators",
+      "httpMethod": "GET",
+      "label": "Departamentos — IDD, metas e realizado",
+      "category": "system",
+      "path": "/dashboard/departments-indicators",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "playbook_report",
+      "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
+      "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
+      "paramSchema": {
+        "department_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Departamento",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "description": "Identificador do departamento no painel IDD."
+        },
+        "competence": {
+          "type": "string",
+          "optional": true,
+          "label": "Competência",
+          "description": "Competência no formato AAAA-MM (mês de referência)."
+        },
+        "start_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "end_date": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente."
+        },
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "start_date",
+        "end_date"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
     },
     {
       "operationId": "list_lmps",
@@ -1655,18 +1791,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldLabels": {
-        "total_lmps": "Total de LMPs",
-        "percent_dentro_prazo": "% no prazo",
-        "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens"
-      },
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
         "total_items"
-      ]
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens"
+      }
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -4460,10 +4596,10 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "list_production_appointments",
@@ -5686,25 +5822,7 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      },
       "seriesField": "points",
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -5719,7 +5837,25 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "tvConstraints": {
+        "requiresBranchPermission": true
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -6125,6 +6261,7 @@
       "defaultParams": {
         "periodDays": 30
       },
+      "seriesField": "points",
       "fixedQueryParams": {
         "granularity": "day"
       },
@@ -6138,8 +6275,7 @@
         "date_end": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      },
-      "seriesField": "points"
+      }
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -10463,15 +10599,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "list_ppm_internal",
@@ -10660,15 +10796,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 1,
-        "requiresBranchPermission": true
-      },
       "valueFields": [
         "value",
         "ppm",
         "ppmValue"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 1,
+        "requiresBranchPermission": true
+      }
     },
     {
       "operationId": "get_produced_quantity",
@@ -12467,16 +12603,16 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tvConstraints": {
-        "maxRows": 6,
-        "requiresBranchPermission": true
-      },
-      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
         "total"
-      ]
+      ],
+      "tvConstraints": {
+        "maxRows": 6,
+        "requiresBranchPermission": true
+      },
+      "tableFields": "top_products"
     },
     {
       "operationId": "get_caller_stats",

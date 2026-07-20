@@ -99,6 +99,52 @@ class StrategicIndicatorsApiClient:
             authorization=authorization,
         )
 
+    def get_dashboard_department_indicators(
+        self,
+        *,
+        department_id: str,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        params: dict[str, str | None] = {
+            "department_id": department_id,
+            "competence": competence,
+            "start_date": start_date,
+            "end_date": end_date,
+            "branch": branch,
+        }
+        return self._get(
+            "/strategic-indicators/integrations/dashboard-department-indicators",
+            params=params,
+            authorization=authorization,
+        )
+
+    def list_dashboard_departments_indicators(
+        self,
+        *,
+        competence: str | None = None,
+        start_date: str | None = None,
+        end_date: str | None = None,
+        branch: str | None = None,
+        department_id: str | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        params: dict[str, str | None] = {
+            "competence": competence,
+            "start_date": start_date,
+            "end_date": end_date,
+            "branch": branch,
+            "department_id": department_id,
+        }
+        return self._get(
+            "/strategic-indicators/integrations/dashboard-departments-indicators",
+            params=params,
+            authorization=authorization,
+        )
+
     def _get(
         self,
         path: str,
