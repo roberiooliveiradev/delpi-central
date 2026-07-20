@@ -46,3 +46,23 @@ compose_filter_phase_services() {
 
   printf '%s\n' "${out[@]}"
 }
+
+# Preserva ordem; remove nomes repetidos (ex.: minha-delpi-chat em mfe + chat no dev).
+compose_dedupe_services() {
+  local -a src=("$@")
+  local -a out=()
+  local name
+  declare -A seen=()
+
+  for name in "${src[@]}"; do
+    [[ -n "$name" ]] || continue
+    if [[ -z "${seen[$name]:-}" ]]; then
+      seen[$name]=1
+      out+=("$name")
+    fi
+  done
+
+  if [[ ${#out[@]} -gt 0 ]]; then
+    printf '%s\n' "${out[@]}"
+  fi
+}

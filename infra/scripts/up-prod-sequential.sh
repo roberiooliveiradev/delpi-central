@@ -243,7 +243,7 @@ build_plan() {
       exit 1
       ;;
   esac
-  printf '%s\n' "${plan[@]}"
+  compose_dedupe_services "${plan[@]}"
 }
 
 if [[ "$FASE" == "list" ]]; then
