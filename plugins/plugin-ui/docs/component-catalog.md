@@ -830,7 +830,7 @@ Encaixa conteúdo arbitrário em um retângulo com escala uniforme (`min(width/r
 
 ### `FilePreviewModal`
 
-Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`.
+Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`. Por padrão **`containInHost`** (modal na área do MFE, sem cobrir a sidebar do portal); use `containInHost={false}` para fullscreen no viewport.
 
 ### `FilePreviewMetaFooter`
 

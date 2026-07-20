@@ -125,7 +125,9 @@
 /**
  * Isola o stacking do host enquanto o modal contido está aberto, para que
  * sidebar (z≈40) e hotspot do canto esquerdo (z≈45) do portal fiquem clicáveis.
+ * `position: relative` ancora o overlay absolute ao host (área do MFE).
  */
 [data-delpi-modal-host="true"] {
+  position: relative;
   z-index: 0;
 }

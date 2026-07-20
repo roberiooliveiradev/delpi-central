@@ -112,6 +112,13 @@ export const DELPI_UI_SHAPE_THEME_HOST_CLASS = "delpi-ui-shape-theme-host";
 /** Classe root de MFE federado (`dashboard-{nome}`) — escopo CSS anti-vazamento. */
 const MFE_DASHBOARD_SCOPE_RE = /^dashboard-[a-z0-9-]+$/i;
 
+function firstDashboardScopeClass(classList: DOMTokenList): string | undefined {
+  for (const className of Array.from(classList)) {
+    if (MFE_DASHBOARD_SCOPE_RE.test(className)) return className;
+  }
+  return undefined;
+}
+
 /**
  * Resolve a classe de escopo do plugin para portais no `body`.
  * Preferência: prop explícita; senão ancestral `.dashboard-*` do âncora.
@@ -127,10 +134,43 @@ export function resolveMfePortalScopeClassName(
 
   let node: HTMLElement | null = anchor;
   while (node) {
-    for (const className of Array.from(node.classList)) {
-      if (MFE_DASHBOARD_SCOPE_RE.test(className)) return className;
-    }
+    const scope = firstDashboardScopeClass(node.classList);
+    if (scope) return scope;
     node = node.parentElement;
   }
   return undefined;
+}
+
+/**
+ * Resolve o elemento host do MFE (`.dashboard-*`) para modais contidos.
+ * Preferência: prop explícita → ancestral do âncora → primeiro host visível no documento.
+ */
+export function resolveMfeHostElement(options?: {
+  anchor?: HTMLElement | null;
+  portalScopeClassName?: string;
+}): HTMLElement | null {
+  if (typeof document === "undefined") return null;
+
+  const explicit = options?.portalScopeClassName?.trim();
+  if (explicit) {
+    const first = explicit.split(/\s+/)[0];
+    if (!first || !/^[a-zA-Z0-9_-]+$/.test(first)) return null;
+    return document.querySelector<HTMLElement>(`.${first}`);
+  }
+
+  let node: HTMLElement | null = options?.anchor ?? null;
+  while (node) {
+    if (firstDashboardScopeClass(node.classList)) return node;
+    node = node.parentElement;
+  }
+
+  const candidates = Array.from(
+    document.querySelectorAll<HTMLElement>("[class*='dashboard-']"),
+  ).filter((el) => firstDashboardScopeClass(el.classList));
+
+  return (
+    candidates.find((el) => el.getClientRects().length > 0) ??
+    candidates[0] ??
+    null
+  );
 }
