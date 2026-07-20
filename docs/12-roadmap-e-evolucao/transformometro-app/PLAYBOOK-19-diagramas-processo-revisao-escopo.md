@@ -1,6 +1,6 @@
 # Playbook 19 — Diagramas de processo (macro), escopo por instância e overlays por revisão
 
-**Status:** entregue S0–S6 (jul/2026) · **próximo:** S7 — alinhar ao conceito PB23 (âncora na referência + visão vigente composta) · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)  
+**Status:** entregue S0–S7 (jul/2026) — S7 espelha PB23 (âncora + composto) · ver [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md)  
 **Decisões fechadas (S0):**  
 - **Diagrama-macro único por processo-mestre** — mapa canônico do fluxo end-to-end; nós com **ID estável**.  
 - **Instância declara escopo** — subset de nós do macro (um ou mais subprocessos-chave).  
@@ -328,11 +328,9 @@ Camadas: `routes/` fino → `application/services/` → `repositories/` (padrão
 
 **Fora de S6 (backlog):** swimlanes automáticas por unidade/departamento; import BPMN XML; layout colaborativo.
 
-### S7 — Alinhar diagrama ao conceito do Playbook 23 (planejado)
+### S7 — Alinhar diagrama ao conceito do Playbook 23 (entregue)
 
-O **mapeamento WBS** (PB23) já oferece: (1) edição ancorada na **revisão de referência**, (2) overlay **absoluto** no macro para composição, (3) **visão vigente composta** no processo. O diagrama hoje ainda é só macro ∩ escopo + overlay próprio, com diff vs referência apenas informativo.
-
-**Objetivo S7:** o usuário percebe o **mesmo modelo mental** nos dois artefatos (WBS e fluxo).
+O **mapeamento WBS** (PB23) e o **diagrama** compartilham o mesmo modelo mental: (1) edição ancorada na **revisão de referência**, (2) overlay **absoluto** no macro para composição, (3) **visão vigente composta** no processo.
 
 | Conceito PB23 (WBS) | Espelho no diagrama (S7) |
 |---------------------|---------------------------|
@@ -347,18 +345,16 @@ O **mapeamento WBS** (PB23) já oferece: (1) edição ancorada na **revisão de 
 
 **Fora de S7 (não confundir):** unificar motor WBS+diagrama num único serviço; import BPMN; edição colaborativa.
 
-**Critérios de pronto (esboço):**
+**Critérios de pronto:**
 
-| ID | Cenário | Esperado |
-|----|---------|----------|
-| **D1** | Overlay vazio + referência com overlay | Editor inicia no flowchart da referência (`seeded_from_reference`) |
-| **D2** | Salvar após editar a partir da referência | Overlay absoluto vs macro; composição `?at=` reflete o delta |
-| **D3** | Duas melhorias vigentes no mesmo nó | `conflicts[]` no GET composed; UI lista aviso |
-| **D4** | Processo → Diagrama | Visão vigente composta **acima** do diagrama macro base |
+| ID | Cenário | Esperado | Status |
+|----|---------|----------|--------|
+| **D1** | Overlay vazio + referência com overlay | Editor inicia no flowchart da referência (`seeded_from_reference`) | ✅ |
+| **D2** | Salvar após editar a partir da referência | Overlay absoluto vs macro; composição `?at=` reflete o delta | ✅ |
+| **D3** | Duas melhorias vigentes no mesmo nó | `conflicts[]` no GET composed; UI lista aviso | ✅ |
+| **D4** | Processo → Diagrama | Visão vigente composta **acima** do diagrama macro base | ✅ |
 
-**Dependência:** reutilizar padrões de `RevisaoDecomposicaoMergeService.build_revisao_view` / `DecomposicaoCompositionService` no domínio de flowchart (serviços irmãos, não acoplar WBS ao fluxo).
-
-Detalhe de produto e limites compartilhados: [PLAYBOOK-23 §6](./PLAYBOOK-23-decomposicao-composicao-macro-data.md).
+**Implementação:** `RevisaoDiagramMergeService.build_revisao_view`, `DiagramaCompositionService`, `GET …/diagrama/composed`, `ProcessoDiagramComposedSection`, âncora em `RevisaoDiagramSection`.
 
 ---
 
@@ -388,11 +384,12 @@ Detalhe de produto e limites compartilhados: [PLAYBOOK-23 §6](./PLAYBOOK-23-dec
 - `tm_app/domain/diagram/flowchart_v1.py`
 - `tm_app/application/services/diagram_mermaid_export_service.py`
 - `tm_app/application/services/revisao_diagram_merge_service.py`
+- `tm_app/application/services/diagrama_composition_service.py`
 - `tm_app/infrastructure/persistence/repositories/processo_diagram_repository.py`
 - `tm_app/infrastructure/persistence/repositories/instancia_diagram_escopo_repository.py`
 - `tm_app/infrastructure/persistence/repositories/revisao_diagram_overlay_repository.py`
 - `tm_app/interface/http/routes/diagram_routes.py`
-- `tests/test_flowchart_v1.py`, `tests/test_diagram_mermaid_export_service.py`, `tests/test_revisao_diagram_merge_service.py`
+- `tests/test_flowchart_v1.py`, `tests/test_diagram_mermaid_export_service.py`, `tests/test_revisao_diagram_merge_service.py`, `tests/test_diagrama_composition_service.py`
 
 Status detalhado: [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md).
 
@@ -403,6 +400,7 @@ Status detalhado: [playbook-19-implementation-status.md](../../../transformometr
 - `plugins/transformometro/src/components/diagram/FlowchartLaneNode.tsx` — swimlanes
 - `plugins/transformometro/src/components/diagram/DiagramMermaidPreview.tsx`
 - `plugins/transformometro/src/components/diagram/ProcessoDiagramSection.tsx`
+- `plugins/transformometro/src/components/diagram/ProcessoDiagramComposedSection.tsx`
 - `plugins/transformometro/src/components/diagram/InstanciaDiagramEscopoSection.tsx`
 - `plugins/transformometro/src/components/diagram/RevisaoDiagramSection.tsx`
 - `plugins/transformometro/src/types/diagram.ts` — tipos + templates
@@ -458,6 +456,6 @@ Status detalhado: [playbook-19-implementation-status.md](../../../transformometr
 4. **JSON estruturado é a fonte de verdade**; Mermaid é derivado para preview e integrações.  
 5. **Implementar em 3 camadas** (macro → escopo → overlay) antes de diff, PNG e chat.  
 6. **Editor S6** — swimlanes BPMN-lite, tema, auto-layout e gestão de faixas no MFE (`FlowchartEditor`).  
-7. **S7 (próximo)** — mesmo conceito do PB23 no diagrama: âncora na referência, diagrama composto por vigência, visão vigente primeiro no processo.
+7. **S7** — mesmo conceito do PB23 no diagrama: âncora na referência, diagrama composto por vigência, visão vigente primeiro no processo.
 
-**Próximo passo:** **S7** (alinhar diagrama ao PB23). Depois: integração chat/api-delpi (Mermaid da revisão/composto vigente) e swimlanes automáticas por cadastro.
+**Próximo passo:** integração chat/api-delpi (Mermaid da revisão/composto vigente) e swimlanes automáticas por cadastro.

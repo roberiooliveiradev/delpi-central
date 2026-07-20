@@ -439,7 +439,7 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
       <EditableSectionCard
         title="Diagrama da revisão"
-        description="Estado visual as-is ou to-be sobre o escopo da instância."
+        description="Parte do diagrama da revisão de referência; o delta alimenta o diagrama composto pelas vigentes."
         hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao}
         isEditing={sectionEdit.isEditing("diagrama_revisao")}
         onEdit={() => void sectionEdit.startEdit("diagrama_revisao")}

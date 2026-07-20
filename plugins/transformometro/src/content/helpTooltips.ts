@@ -158,6 +158,8 @@ export const TM_HELP_TOOLTIPS = {
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
     diagramaMacro:
       "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões.",
+    diagramaComposto:
+      "Visão do fluxo na data D: diagrama macro + overlays das revisões vigentes. Interseções no mesmo nó geram aviso.",
     arquivos:
       "Documentos de referência do processo-mestre — POP, instruções, planilhas e links úteis (independente das evidências por revisão).",
     arquivoUrl: "Endereço web externo do documento (SharePoint, drive, repositório…).",
@@ -256,7 +258,7 @@ export const TM_HELP_TOOLTIPS = {
     evidencias:
       "Anexos (PDF, imagem, planilha) ou links que comprovam a melhoria desta revisão.",
     diagramaRevisao:
-      "Estado visual as-is (baseline) ou to-be (melhoria) sobre o escopo da instância — overlay sobre o diagrama macro.",
+      "Âncora = diagrama da revisão de referência (exceto baseline). Edite o delta a partir desse fluxo; na gravação o overlay fica absoluto no macro para o diagrama composto «agora» refletir as revisões vigentes.",
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:

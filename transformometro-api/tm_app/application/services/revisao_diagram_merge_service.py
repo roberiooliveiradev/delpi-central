@@ -43,6 +43,93 @@ class RevisaoDiagramMergeService:
             "overlay": overlay_doc,
         }
 
+    @staticmethod
+    def overlay_is_empty(overlay: dict[str, Any] | None) -> bool:
+        doc = validate_overlay_v1(overlay or empty_overlay())
+        return (
+            not (doc.get("node_overrides") or {})
+            and not (doc.get("edge_overrides") or {})
+            and not (doc.get("removed_node_ids") or [])
+            and not (doc.get("removed_edge_ids") or [])
+            and not (doc.get("extra_nodes") or [])
+            and not (doc.get("extra_edges") or [])
+        )
+
+    def build_revisao_view(
+        self,
+        *,
+        macro: dict[str, Any] | None,
+        escopo: dict[str, Any] | None,
+        overlay: dict[str, Any] | None,
+        reference_overlay: dict[str, Any] | None = None,
+        reference_meta: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Visão de edição da revisão (PB19 S7 / espelho PB23).
+
+        - flowchart_base: macro ∩ escopo (persistência absoluta do overlay).
+        - flowchart_reference: merge da revisão de referência.
+        - flowchart: overlay próprio; se vazio e há referência, seed na referência.
+        """
+        own = self.merge(macro=macro, escopo=escopo, overlay=overlay)
+        flowchart_base = self._apply_scope(
+            copy.deepcopy(validate_flowchart_v1(macro or empty_flowchart())),
+            own["escopo"],
+        )
+
+        reference_flowchart = None
+        referencia = None
+        if reference_meta is not None or reference_overlay is not None:
+            ref_merged = self.merge(
+                macro=macro,
+                escopo=escopo,
+                overlay=reference_overlay,
+            )
+            reference_flowchart = ref_merged["flowchart"]
+            if reference_meta:
+                referencia = {
+                    "revisao_id": reference_meta.get("revisao_id"),
+                    "versao_revisao": reference_meta.get("versao_revisao"),
+                    "cenario_tipo": reference_meta.get("cenario_tipo"),
+                }
+
+        working = own["flowchart"]
+        seeded_from_reference = False
+        if reference_flowchart is not None and self.overlay_is_empty(overlay):
+            working = copy.deepcopy(reference_flowchart)
+            seeded_from_reference = True
+
+        reference_diff = None
+        if reference_flowchart is not None:
+            reference_diff = self.diff_highlights(
+                baseline=reference_flowchart,
+                current=working,
+            )
+
+        mermaid = self._mermaid.flowchart_to_mermaid(working)
+        return {
+            **own,
+            "flowchart": working,
+            "flowchart_base": flowchart_base,
+            "flowchart_reference": reference_flowchart,
+            "mermaid": mermaid,
+            "referencia": referencia,
+            "seeded_from_reference": seeded_from_reference,
+            "baseline_diff": reference_diff,
+            "reference_diff": reference_diff,
+        }
+
+    def apply_overlay_to_flowchart(
+        self,
+        flowchart: dict[str, Any],
+        overlay: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        """Aplica overlay sobre um flowchart já validado (composição temporal)."""
+        return self._apply_overlay(
+            copy.deepcopy(flowchart),
+            validate_overlay_v1(overlay or empty_overlay()),
+        )
+
     def diff_highlights(
         self,
         *,

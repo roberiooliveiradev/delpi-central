@@ -53,6 +53,7 @@ import { ProcessoMatrizImpactoSection } from "../processos/ProcessoMatrizImpacto
 import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
 import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
 import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
+import { ProcessoDiagramComposedSection } from "../../components/diagram/ProcessoDiagramComposedSection";
 import { ProcessoArquivosSection } from "../processo/ProcessoArquivosSection";
 import {
   masterPayloadFromProcessoForm,
@@ -478,9 +479,23 @@ export function ProcessoDetailPage({
 
         {visibleSections.has("diagrama") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
+          <div className="tm-processo-composed-card tm-processo-composed-card--first">
+            <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
+            <p className="ds-hint">
+              Macro do fluxo + deltas das revisões vigentes na data escolhida. Conflitos de
+              interseção aparecem em destaque.
+            </p>
+            <ProcessoDiagramComposedSection
+              embeddedInCard
+              processoId={processoId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          </div>
           <EditableSectionCard
-            title="Diagrama macro"
-            description="Mapa canônico do fluxo end-to-end deste processo-mestre."
+            title="Diagrama macro base"
+            description="Mapa canônico cadastrado. Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
             hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
             isEditing={sectionEdit.isEditing("diagrama_macro")}
             onEdit={() => void sectionEdit.startEdit("diagrama_macro")}
