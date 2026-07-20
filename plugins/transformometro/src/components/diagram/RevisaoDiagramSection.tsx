@@ -98,29 +98,12 @@ export function RevisaoDiagramSection({
     setSaving(true);
     onError(null);
     try {
-      const overlay = flowToOverlayDraft(flowchartBase, editable, overlayDraft);
+      const defaultHighlight =
+        cenarioTipo?.toLowerCase() === "baseline" ? ("asis" as const) : ("tobe" as const);
+      const overlay = flowToOverlayDraft(flowchartBase, editable, overlayDraft, {
+        defaultHighlight,
+      });
       overlay.modo = "partial";
-      if (cenarioTipo?.toLowerCase() === "baseline") {
-        for (const node of editable.nodes) {
-          overlay.node_overrides = {
-            ...(overlay.node_overrides ?? {}),
-            [node.id]: {
-              ...(overlay.node_overrides?.[node.id] ?? {}),
-              highlight: overlay.node_overrides?.[node.id]?.highlight ?? "asis",
-            },
-          };
-        }
-      } else {
-        for (const node of editable.nodes) {
-          overlay.node_overrides = {
-            ...(overlay.node_overrides ?? {}),
-            [node.id]: {
-              ...(overlay.node_overrides?.[node.id] ?? {}),
-              highlight: overlay.node_overrides?.[node.id]?.highlight ?? "tobe",
-            },
-          };
-        }
-      }
       await saveRevisaoDiagramOverlay(revisaoId, overlay, getAccessToken);
       await load();
       onReload?.();

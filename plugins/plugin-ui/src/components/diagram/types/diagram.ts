@@ -87,6 +87,8 @@ export type FlowchartOverlayV1 = {
   removed_edge_ids?: string[];
   extra_nodes?: FlowchartNode[];
   extra_edges?: FlowchartEdge[];
+  /** Quando presente, substitui as swimlanes do macro no merge/composição. */
+  lanes?: FlowchartLane[];
 };
 
 export function emptyFlowchart(): FlowchartV1 {
@@ -296,38 +298,111 @@ export function applyDecisionTemplate(): FlowchartV1 {
 export function flowToOverlayDraft(
   base: FlowchartV1,
   edited: FlowchartV1,
-  previous: FlowchartOverlayV1 = emptyOverlay()
+  _previous: FlowchartOverlayV1 = emptyOverlay(),
+  options?: { defaultHighlight?: "asis" | "tobe" | "changed" | "removed" }
 ): FlowchartOverlayV1 {
+  const defaultHighlight = options?.defaultHighlight ?? "tobe";
   const baseById = new Map(base.nodes.map((node) => [node.id, node]));
-  const nodeOverrides = { ...(previous.node_overrides ?? {}) };
+  const editedById = new Map(edited.nodes.map((node) => [node.id, node]));
+  const baseEdgeById = new Map((base.edges ?? []).map((edge) => [edge.id, edge]));
+  const editedEdgeById = new Map((edited.edges ?? []).map((edge) => [edge.id, edge]));
 
-  for (const node of edited.nodes) {
-    const original = baseById.get(node.id);
-    if (!original) continue;
-    const changed =
-      original.label !== node.label ||
-      original.type !== node.type ||
-      original.position.x !== node.position.x ||
-      original.position.y !== node.position.y ||
-      original.lane_id !== node.lane_id ||
-      node.highlight;
-    if (changed) {
-      nodeOverrides[node.id] = {
-        ...(nodeOverrides[node.id] ?? {}),
-        label: node.label,
-        type: node.type,
-        position: node.position,
-        lane_id: node.lane_id,
-        highlight: node.highlight,
-        meta: node.meta,
-      };
+  const node_overrides: NonNullable<FlowchartOverlayV1["node_overrides"]> = {};
+  const removed_node_ids: string[] = [];
+  const extra_nodes: FlowchartNode[] = [];
+
+  for (const [id, baseNode] of baseById) {
+    const editedNode = editedById.get(id);
+    if (!editedNode) {
+      removed_node_ids.push(id);
+      continue;
+    }
+
+    const override: NonNullable<FlowchartOverlayV1["node_overrides"]>[string] = {};
+    if ((editedNode.label ?? "").trim() !== (baseNode.label ?? "").trim()) {
+      override.label = editedNode.label;
+    }
+    if (editedNode.type !== baseNode.type) {
+      override.type = editedNode.type;
+    }
+    if (
+      editedNode.position.x !== baseNode.position.x ||
+      editedNode.position.y !== baseNode.position.y
+    ) {
+      override.position = { ...editedNode.position };
+    }
+    if ((editedNode.lane_id ?? null) !== (baseNode.lane_id ?? null)) {
+      override.lane_id = editedNode.lane_id;
+    }
+    const baseMeta = JSON.stringify(baseNode.meta ?? null);
+    const editedMeta = JSON.stringify(editedNode.meta ?? null);
+    if (editedMeta !== baseMeta) {
+      override.meta = editedNode.meta;
+    }
+
+    if (Object.keys(override).length > 0) {
+      override.highlight = editedNode.highlight ?? defaultHighlight;
+      node_overrides[id] = override;
+    } else if (editedNode.highlight && editedNode.highlight !== baseNode.highlight) {
+      node_overrides[id] = { highlight: editedNode.highlight };
     }
   }
 
+  for (const [id, editedNode] of editedById) {
+    if (baseById.has(id)) continue;
+    extra_nodes.push({
+      ...editedNode,
+      highlight: editedNode.highlight ?? defaultHighlight,
+    });
+  }
+
+  const edge_overrides: NonNullable<FlowchartOverlayV1["edge_overrides"]> = {};
+  const removed_edge_ids: string[] = [];
+  const extra_edges: FlowchartEdge[] = [];
+
+  for (const [id, baseEdge] of baseEdgeById) {
+    const editedEdge = editedEdgeById.get(id);
+    if (!editedEdge) {
+      removed_edge_ids.push(id);
+      continue;
+    }
+    const override: NonNullable<FlowchartOverlayV1["edge_overrides"]>[string] = {};
+    if ((editedEdge.label ?? null) !== (baseEdge.label ?? null)) {
+      override.label = editedEdge.label ?? null;
+    }
+    if (editedEdge.from !== baseEdge.from) {
+      override.from = editedEdge.from;
+    }
+    if (editedEdge.to !== baseEdge.to) {
+      override.to = editedEdge.to;
+    }
+    if ((editedEdge.routing ?? "smoothstep") !== (baseEdge.routing ?? "smoothstep")) {
+      override.routing = editedEdge.routing;
+    }
+    if (Object.keys(override).length > 0) {
+      edge_overrides[id] = override;
+    }
+  }
+
+  for (const [id, editedEdge] of editedEdgeById) {
+    if (baseEdgeById.has(id)) continue;
+    extra_edges.push({ ...editedEdge });
+  }
+
+  const baseLanes = JSON.stringify(base.lanes ?? []);
+  const editedLanes = JSON.stringify(edited.lanes ?? []);
+  const lanesChanged = baseLanes !== editedLanes;
+
   return {
     ...emptyOverlay(),
-    ...previous,
-    node_overrides: nodeOverrides,
+    modo: "partial",
+    node_overrides,
+    edge_overrides,
+    removed_node_ids,
+    removed_edge_ids,
+    extra_nodes,
+    extra_edges,
+    ...(lanesChanged ? { lanes: edited.lanes ? [...edited.lanes] : [] } : {}),
   };
 }
 

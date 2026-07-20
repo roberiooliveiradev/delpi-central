@@ -35,6 +35,22 @@
       "type": "array",
       "maxItems": 100,
       "items": { "$ref": "flowchart_v1.schema.json#/$defs/edge" }
+    },
+    "lanes": {
+      "description": "Quando presente, substitui as swimlanes do macro no merge/composição.",
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+          "label": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 400 },
+          "order": { "type": "integer", "minimum": 0 }
+        }
+      }
     }
   },
   "$defs": {
@@ -51,6 +67,7 @@
             "y": { "type": "number" }
           }
         },
+        "lane_id": { "type": ["string", "null"], "maxLength": 64 },
         "highlight": { "type": "string", "enum": ["asis", "tobe", "changed", "removed"] },
         "meta": { "type": "object", "additionalProperties": true }
       }
@@ -61,7 +78,8 @@
       "properties": {
         "label": { "type": ["string", "null"], "maxLength": 200 },
         "from": { "type": "string" },
-        "to": { "type": "string" }
+        "to": { "type": "string" },
+        "routing": { "type": "string", "enum": ["straight", "step", "smoothstep"] }
       }
     }
   }

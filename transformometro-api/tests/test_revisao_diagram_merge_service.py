@@ -100,3 +100,61 @@ def test_build_revisao_view_keeps_own_overlay():
     assert labels["n1"] == "Desta revisão"
     assert view["seeded_from_reference"] is False
     assert view["reference_diff"]["changed"] == ["n1"]
+
+
+def test_apply_overlay_removes_and_adds_nodes_with_lanes():
+    service = RevisaoDiagramMergeService()
+    result = service.apply_overlay_to_flowchart(
+        {
+            **_sample_macro(),
+            "lanes": [{"id": "lane_old", "label": "Antiga", "height": 168}],
+        },
+        {
+            "format": "flowchart_overlay_v1",
+            "format_version": 1,
+            "removed_node_ids": ["n2"],
+            "removed_edge_ids": ["e1"],
+            "extra_nodes": [
+                {
+                    "id": "pro_novo",
+                    "type": "process",
+                    "label": "Acessar a plataforma",
+                    "position": {"x": 100, "y": 40},
+                    "lane_id": "lane_new",
+                    "highlight": "tobe",
+                }
+            ],
+            "extra_edges": [{"id": "e_new", "from": "n1", "to": "pro_novo", "label": None}],
+            "lanes": [
+                {"id": "lane_new", "label": "Coleta", "height": 168, "order": 0},
+            ],
+            "node_overrides": {"n1": {"lane_id": "lane_new", "highlight": "tobe"}},
+        },
+    )
+    ids = {n["id"] for n in result["nodes"]}
+    assert ids == {"n1", "pro_novo"}
+    assert "n2" not in ids
+    assert result["lanes"][0]["id"] == "lane_new"
+    assert result["nodes"][0]["lane_id"] == "lane_new"
+    assert any(e["id"] == "e_new" for e in result["edges"])
+
+
+def test_overlay_accepts_extra_edge_to_macro_node_id():
+    from tm_app.domain.diagram.flowchart_v1 import validate_overlay_v1
+
+    overlay = validate_overlay_v1(
+        {
+            "format": "flowchart_overlay_v1",
+            "format_version": 1,
+            "extra_nodes": [
+                {
+                    "id": "pro_novo",
+                    "type": "process",
+                    "label": "Novo",
+                    "position": {"x": 0, "y": 0},
+                }
+            ],
+            "extra_edges": [{"id": "e_x", "from": "n1", "to": "pro_novo", "label": None}],
+        }
+    )
+    assert overlay["extra_edges"][0]["from"] == "n1"

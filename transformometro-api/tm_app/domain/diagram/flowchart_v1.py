@@ -85,7 +85,7 @@ def _validate_node(node: Any, *, index: int) -> None:
         raise FlowchartValidationError(f"nodes[{index}].position.y inválido.")
 
 
-def _validate_edge(edge: Any, *, index: int, node_ids: set[str]) -> None:
+def _validate_edge(edge: Any, *, index: int, node_ids: set[str] | None) -> None:
     if not isinstance(edge, dict):
         raise FlowchartValidationError(f"edges[{index}] deve ser um objeto.")
     edge_id = edge.get("id")
@@ -93,10 +93,15 @@ def _validate_edge(edge: Any, *, index: int, node_ids: set[str]) -> None:
         raise FlowchartValidationError(f"edges[{index}].id obrigatório.")
     from_id = edge.get("from")
     to_id = edge.get("to")
-    if not isinstance(from_id, str) or from_id not in node_ids:
+    if not isinstance(from_id, str) or not from_id.strip():
         raise FlowchartValidationError(f"edges[{index}].from inválido.")
-    if not isinstance(to_id, str) or to_id not in node_ids:
+    if not isinstance(to_id, str) or not to_id.strip():
         raise FlowchartValidationError(f"edges[{index}].to inválido.")
+    if node_ids is not None:
+        if from_id not in node_ids:
+            raise FlowchartValidationError(f"edges[{index}].from inválido.")
+        if to_id not in node_ids:
+            raise FlowchartValidationError(f"edges[{index}].to inválido.")
     label = edge.get("label")
     if label is not None and not isinstance(label, str):
         raise FlowchartValidationError(f"edges[{index}].label inválido.")
@@ -227,9 +232,23 @@ def validate_overlay_v1(doc: Any) -> dict[str, Any]:
             raise FlowchartValidationError(f"extra_nodes id duplicado: {node_id}.")
         extra_node_ids.add(node_id)
 
-    all_node_ids = extra_node_ids
+    # Endpoints podem apontar para nós do macro (validados no merge/composição).
     for index, edge in enumerate(extra_edges):
-        _validate_edge(edge, index=index, node_ids=all_node_ids)
+        _validate_edge(edge, index=index, node_ids=None)
+
+    lanes = data.get("lanes")
+    if lanes is not None:
+        if not isinstance(lanes, list):
+            raise FlowchartValidationError("lanes inválido.")
+        if len(lanes) > MAX_LANES:
+            raise FlowchartValidationError(f"Máximo de {MAX_LANES} lanes.")
+        seen_lane_ids: set[str] = set()
+        for index, lane in enumerate(lanes):
+            _validate_lane(lane, index=index)
+            lane_id = str(lane["id"])
+            if lane_id in seen_lane_ids:
+                raise FlowchartValidationError(f"lanes id duplicado: {lane_id}.")
+            seen_lane_ids.add(lane_id)
 
     return data
 

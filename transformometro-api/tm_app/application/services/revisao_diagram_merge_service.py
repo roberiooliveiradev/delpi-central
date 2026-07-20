@@ -53,6 +53,7 @@ class RevisaoDiagramMergeService:
             and not (doc.get("removed_edge_ids") or [])
             and not (doc.get("extra_nodes") or [])
             and not (doc.get("extra_edges") or [])
+            and "lanes" not in doc
         )
 
     def build_revisao_view(
@@ -217,6 +218,12 @@ class RevisaoDiagramMergeService:
                     merged_node["type"] = override["type"]
                 if isinstance(override.get("position"), dict):
                     merged_node["position"] = override["position"]
+                if "lane_id" in override:
+                    lane_id = override.get("lane_id")
+                    if lane_id is None or lane_id == "":
+                        merged_node.pop("lane_id", None)
+                    else:
+                        merged_node["lane_id"] = lane_id
                 if override.get("highlight"):
                     merged_node["highlight"] = override["highlight"]
                 if isinstance(override.get("meta"), dict):
@@ -260,7 +267,10 @@ class RevisaoDiagramMergeService:
             if from_id in node_ids and to_id in node_ids:
                 edges.append(copy.deepcopy(edge))
 
-        return {**result, "nodes": nodes, "edges": edges}
+        out = {**result, "nodes": nodes, "edges": edges}
+        if "lanes" in overlay and isinstance(overlay.get("lanes"), list):
+            out["lanes"] = copy.deepcopy(overlay["lanes"])
+        return out
 
     def _collect_warnings(
         self,
