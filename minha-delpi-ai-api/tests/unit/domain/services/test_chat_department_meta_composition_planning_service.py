@@ -55,10 +55,52 @@ def test_route_ids_engineering_compose():
     assert len(route_ids) >= 2
 
 
-def test_plan_engineering_returns_multiple_actions():
+def test_route_ids_engineering_primary():
+    route_ids = ChatDepartmentMetaCompositionPlanningService.route_ids_for_department(
+        "engineering",
+        mode="primary",
+    )
+
+    assert route_ids == ["dashboardDepartmentIndicators"]
+
+
+def test_composition_mode_primary_vs_compose():
+    assert (
+        ChatDepartmentMetaCompositionPlanningService.composition_mode(
+            "qual a meta para engenharia desse mês?"
+        )
+        == "primary"
+    )
+    assert (
+        ChatDepartmentMetaCompositionPlanningService.composition_mode(
+            "painel de indicadores da engenharia"
+        )
+        == "compose"
+    )
+    assert (
+        ChatDepartmentMetaCompositionPlanningService.composition_mode(
+            "metas e realizado do comercial"
+        )
+        == "compose"
+    )
+
+
+def test_plan_engineering_primary_returns_single_action():
     planned = ChatDepartmentMetaCompositionPlanningService.plan(
         FakeRegistrySelectionService(),
         message="qual a meta para engenharia desse mês?",
+        allowed_action_ids=["a", "b", "c"],
+        max_calls=5,
+    )
+
+    assert len(planned) == 1
+    assert planned[0]["arguments"]["actionId"] == "action-dashboardDepartmentIndicators"
+
+
+def test_plan_engineering_compose_returns_multiple_actions():
+    planned = ChatDepartmentMetaCompositionPlanningService.plan(
+        FakeRegistrySelectionService(),
+        message="painel de indicadores da engenharia desse mês",
         allowed_action_ids=["a", "b", "c"],
         max_calls=5,
     )
@@ -92,7 +134,7 @@ def test_route_ids_commercial_compose():
     assert "autoTierCHeadOfficeRolTargetPct" in route_ids
 
 
-def test_plan_commercial_returns_multiple_actions():
+def test_plan_commercial_primary_returns_single_action():
     planned = ChatDepartmentMetaCompositionPlanningService.plan(
         FakeRegistrySelectionService(),
         message="qual a meta para comercial desse mês?",
@@ -100,7 +142,7 @@ def test_plan_commercial_returns_multiple_actions():
         max_calls=5,
     )
 
-    assert len(planned) >= 2
+    assert len(planned) == 1
     assert planned[0]["arguments"]["actionId"] == "action-dashboardDepartmentIndicators"
 
 
@@ -110,6 +152,10 @@ def test_department_meta_composition_regression_cases():
             case["message"]
         )
         assert department_id == case["expected_department_id"]
+        assert (
+            ChatDepartmentMetaCompositionPlanningService.composition_mode(case["message"])
+            == case["expected_mode"]
+        )
 
         planned = ChatDepartmentMetaCompositionPlanningService.plan(
             FakeRegistrySelectionService(),

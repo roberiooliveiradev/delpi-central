@@ -25,7 +25,7 @@
       "completo"
     ]
   },
-  "defaultMode": "compose",
+  "defaultMode": "primary",
   "byDepartment": {
     "engineering": {
       "primaryRouteId": "dashboardDepartmentIndicators",

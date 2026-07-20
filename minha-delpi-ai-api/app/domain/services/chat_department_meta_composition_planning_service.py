@@ -53,15 +53,15 @@ class ChatDepartmentMetaCompositionPlanningService:
 
     @classmethod
     def composition_mode(cls, message: str | None) -> str:
-        """P2: ``primary`` vs ``compose``. Default do JSON até P2 endurecer."""
+        """``primary`` (meta curta) vs ``compose`` (painel / indicadores / visão integrada)."""
         normalized = ChatMessageNormalizationService.normalize_for_matching(message)
         default_mode = str(
-            ChatAssistantContentService.get(_BUNDLE, "defaultMode", default="compose")
-            or "compose"
+            ChatAssistantContentService.get(_BUNDLE, "defaultMode", default="primary")
+            or "primary"
         ).strip().lower()
 
         if default_mode not in {"primary", "compose"}:
-            default_mode = "compose"
+            default_mode = "primary"
 
         if not normalized:
             return default_mode

@@ -45,9 +45,9 @@ plan_actions
 
 ### P2 — Heurística primary vs compose completo
 
-- «meta para X» curta → primary (+ opcional 1ª compose)
-- Termos «painel / indicadores / visão integrada» → pacote completo
-- Declarativo em `composeModeTerms` no JSON
+- [x] «meta para X» curta → `primary` (só `primaryRouteId`)
+- [x] Termos «painel / indicadores / visão integrada / metas e realizado» → pacote `compose`
+- [x] Declarativo em `composeModeTerms` + `defaultMode: primary`
 
 ### P3 — (backlog) Agregar na api-delpi
 
@@ -62,6 +62,7 @@ plan_actions
 
 ## Aceite
 
-1. «meta para engenharia desse mês» → ≥ 2 toolCalls com `department_id=engineering` na primary
-2. Sticky comercial não impede o pacote (já coberto por conflito de departamento)
-3. Latência ≈ soma das APIs; sem round-trip LLM extra no planejamento
+1. «meta para engenharia desse mês» → 1 toolCall primary (`dashboardDepartmentIndicators`, `department_id=engineering`)
+2. «painel de indicadores da engenharia» → ≥ 2 toolCalls (indicators + IDD + Transforma)
+3. Sticky comercial não impede o pacote (já coberto por conflito de departamento)
+4. Latência ≈ soma das APIs; sem round-trip LLM extra no planejamento
