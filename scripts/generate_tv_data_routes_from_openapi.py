@@ -952,6 +952,11 @@ def main() -> int:
         write_routes(args.routes, generated)
         with_schema = sum(1 for item in generated if item.get("paramSchema"))
         with_values = sum(1 for item in generated if item.get("valueFields"))
+        if _FALLBACK_PARAM_USAGE:
+            print(
+                f"WARN — {len(_FALLBACK_PARAM_USAGE)} fallbacks PARAM_LABELS/HINTS/defaults "
+                f"(mover para OpenAPI / x-delpi.params quando possível)"
+            )
         print(
             f"Gravado {len(generated)} rotas em {args.routes} "
             f"(paramSchema={with_schema}, valueFields={with_values})"

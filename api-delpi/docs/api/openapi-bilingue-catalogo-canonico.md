@@ -81,14 +81,19 @@ Inventário versionado: [`app/content/openapi_operation_id_inventory.json`](../.
 
 | Onda | Escopo |
 |------|--------|
-| R0 | Tooling + inventário + gates |
-| R1 | Qualidade (auto-ids) |
-| R2 | system / Agendamento / satélites |
-| R3 | Locale não-GET |
-| R4 | Enums / labels / EN nativo |
-| R5 | Chat + doc |
+| R0 | Tooling + inventário + gates | feito |
+| R1 | Qualidade (auto-ids) | feito |
+| R2 | system / Agendamento / satélites | feito (300/300 estáveis) |
+| R3 | Locale não-GET | feito (300/300 com locale) |
+| R4 | Enums / labels / EN nativo | contínuo (enums fechados + PARAM_LABELS fallback) |
+| R5 | Chat prefere `locale.pt-BR` no import OpenAPI | feito |
 
-Aliases TV: [`tv_operation_id_aliases.json`](../../../tv-dashboard-api/tv_app/content/tv_operation_id_aliases.json) — playlists com id legado continuam resolvendo.
+Gate estrito (catálogo TV sem auto-id):
+
+```bash
+python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
+python api-delpi/scripts/audit_openapi_operation_ids.py --check-aliases-coverage
+```
 
 ## Overlay TV-only
 
