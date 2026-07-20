@@ -1231,6 +1231,13 @@
   margin-top:1.25rem;
   padding-top:1rem;
   border-top:1px solid var(--ds-border, rgba(0,0,0,.08));
+}.dashboard-transformometro .tm-processo-composed-card--first{
+  margin-top:0;
+  padding-top:0;
+  border-top:0;
+  margin-bottom:1.25rem;
+  padding-bottom:1rem;
+  border-bottom:1px solid var(--ds-border, rgba(0,0,0,.08));
 }.dashboard-transformometro .tm-decomposition-revisao__node-edit{
   display:flex;
   flex-wrap:wrap;

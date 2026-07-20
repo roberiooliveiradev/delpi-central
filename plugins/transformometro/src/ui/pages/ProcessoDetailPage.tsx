@@ -427,9 +427,24 @@ export function ProcessoDetailPage({
 
         {visibleSections.has("mapeamento") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
+          <div className="tm-processo-composed-card tm-processo-composed-card--first">
+            <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
+            <p className="ds-hint">
+              Base do processo + deltas das revisões vigentes na data escolhida. Conflitos de
+              interseção aparecem em destaque.
+            </p>
+            <ProcessoDecompositionComposedSection
+              embeddedInCard
+              processoId={processoId}
+              processoNome={processo.nome_processo}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          </div>
           <EditableSectionCard
-            title="Mapeamento do processo"
-            description="Árvore WBS — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento."
+            title="Mapeamento base do processo"
+            description="Árvore WBS cadastrada (fonte estrutural). Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
             hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
             isEditing={sectionEdit.isEditing("decomposicao")}
             onEdit={() => void sectionEdit.startEdit("decomposicao")}
@@ -458,21 +473,6 @@ export function ProcessoDetailPage({
               />
             }
           />
-          <div className="tm-processo-composed-card">
-            <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
-            <p className="ds-hint">
-              Base do processo + deltas das revisões vigentes na data escolhida. Conflitos de
-              interseção aparecem em destaque.
-            </p>
-            <ProcessoDecompositionComposedSection
-              embeddedInCard
-              processoId={processoId}
-              processoNome={processo.nome_processo}
-              getAccessToken={getAccessToken}
-              onError={setError}
-              resyncVersion={sectionEdit.resyncVersion}
-            />
-          </div>
           </ProcessoWorkspaceSectionPanel>
         ) : null}
 
