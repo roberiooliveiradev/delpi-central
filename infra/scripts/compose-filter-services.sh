@@ -35,6 +35,10 @@ compose_filter_phase_services() {
   done
 
   if [[ ${#out[@]} -eq 0 ]]; then
+    # Quando o chamador varre várias fases (EXTRA_SERVICES sem --fase), fase vazia é ok.
+    if [[ "${COMPOSE_FILTER_ALLOW_EMPTY:-0}" == "1" ]]; then
+      return 0
+    fi
     echo "Nenhum serviço da fase bate com: ${EXTRA_SERVICES[*]}" >&2
     echo "Dica: use aspas nos padrões glob (ex.: 'dashboard-*', '*-production')." >&2
     return 1

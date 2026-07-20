@@ -70,6 +70,9 @@ cp infra/.env.dev.example infra/.env
 ./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build minha-delpi-chat dashboard-commercial
 
+# Sem --fase: filtro por glob em todas as fases (ex.: chat API + MFE chat)
+./infra/scripts/up-dev-sequential.sh --build 'minha*'
+
 # Todos os dashboards ou só *-production (aspas evitam expansão do shell)
 ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build 'dashboard-*'
 ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build '*-production'
@@ -100,6 +103,9 @@ cp infra/.env.prod.example infra/.env
 # Atualizar só remote MF + um MFE
 ./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build minha-delpi-chat dashboard-commercial
+
+# Sem --fase: filtro por glob em todas as fases (ex.: minha-delpi-ai-api + minha-delpi-chat)
+./infra/scripts/up-prod-sequential.sh --build 'minha*'
 
 # Todos os dashboards ou só *-production (aspas evitam expansão do shell)
 ./infra/scripts/up-prod-sequential.sh --no-cache --fase mfe --build 'dashboard-*'

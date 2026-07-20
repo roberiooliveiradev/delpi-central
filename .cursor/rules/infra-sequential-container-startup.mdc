@@ -41,6 +41,7 @@ Orientar o script sequencial quando o usuário:
 # Dev — só remote + alguns MFEs
 ./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-dev-sequential.sh --fase mfe --build dashboard-commercial minha-delpi-chat
+./infra/scripts/up-dev-sequential.sh --build 'minha*'
 
 # Prod — pull + rebuild (srv-api)
 ./infra/scripts/up-prod-sequential.sh --pull --build
@@ -51,6 +52,7 @@ Orientar o script sequencial quando o usuário:
 # Prod — só plugin-ui + um MFE após fix MF
 ./infra/scripts/up-prod-sequential.sh --fase remote --build plugin-ui
 ./infra/scripts/up-prod-sequential.sh --fase mfe --build dashboard-commercial
+./infra/scripts/up-prod-sequential.sh --build 'minha*'
 ```
 
 Executar **a partir da raiz do repo** (`./infra/scripts/...`). O script prod usa `infra/.env`; o dev idem (`cp infra/.env.dev.example infra/.env`).

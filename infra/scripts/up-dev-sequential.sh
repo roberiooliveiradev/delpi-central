@@ -7,6 +7,7 @@
 #   ./infra/scripts/up-dev-sequential.sh --fase core --build
 #   ./infra/scripts/up-dev-sequential.sh --fase remote --build plugin-ui
 #   ./infra/scripts/up-dev-sequential.sh --fase mfe --build minha-delpi-chat controle-retrabalhos
+#   ./infra/scripts/up-dev-sequential.sh --build 'minha*'
 #   ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build 'dashboard-*'
 #   ./infra/scripts/up-dev-sequential.sh --no-cache --fase mfe --build '*-production'
 #   ./infra/scripts/up-dev-sequential.sh --fase chat --build
@@ -64,10 +65,10 @@ usage() {
   echo "  --cpu         No-op em dev (já usa docker-compose.minimal.yml por padrão)"
   echo "  --heavy       Inclui fase heavy (ou serviços searxng/languagetool)"
   echo "  --gpu         Indisponível em dev — use up-prod-sequential.sh para vllm"
-  echo "  --fase FASE   Limita a uma fase"
+  echo "  --fase FASE   Limita a uma fase (opcional se passar SERVICO)"
   echo "  --list        Lista ordem e sai"
   echo "  --dry-run     Só imprime comandos"
-  echo "  SERVICO ...   Restringe à lista (com --fase; glob: 'dashboard-*', '*-production')"
+  echo "  SERVICO ...   Filtra por nome/glob ('minha*', 'dashboard-*'); --fase não é obrigatório"
   echo ""
   echo "Compose: docker-compose.dev.yml + docker-compose.minimal.yml + .env"
 }
@@ -239,21 +240,41 @@ build_plan() {
       echo "Fase gpu (vllm) indisponível em dev — use up-prod-sequential.sh --gpu." >&2
       exit 1
       ;;
-    tudo)
+    tudo|auto)
       if [[ ${#EXTRA_SERVICES[@]} -gt 0 ]]; then
-        echo "Com serviços extras, use --fase (não 'tudo')." >&2
-        exit 1
-      fi
-      append_filtered_phase FASE_CORE plan
-      append_filtered_phase FASE_REMOTE plan
-      append_filtered_phase FASE_MFE plan
-      append_filtered_phase FASE_API plan
-      append_filtered_phase FASE_CHAT plan
-      if [[ "$INCLUDE_HEAVY" == true ]]; then
-        plan+=("${FASE_HEAVY[@]}")
-      fi
-      if [[ "$INCLUDE_GPU" == true ]]; then
-        echo "Flag --gpu ignorada em dev (vllm só em produção)." >&2
+        # Sem --fase (ou fase auto): busca o filtro em todas as fases (ordem canônica).
+        COMPOSE_FILTER_ALLOW_EMPTY=1
+        append_filtered_phase FASE_CORE plan
+        append_filtered_phase FASE_REMOTE plan
+        append_filtered_phase FASE_MFE plan
+        append_filtered_phase FASE_API plan
+        append_filtered_phase FASE_CHAT plan
+        if [[ "$INCLUDE_HEAVY" == true ]]; then
+          append_filtered_phase FASE_HEAVY plan
+        fi
+        unset COMPOSE_FILTER_ALLOW_EMPTY
+        if [[ ${#plan[@]} -eq 0 ]]; then
+          echo "Nenhum serviço bate com: ${EXTRA_SERVICES[*]}" >&2
+          echo "Dica: use aspas nos padrões glob (ex.: 'minha*', 'dashboard-*')." >&2
+          echo "Ou limite com --fase (core|chat|remote|mfe|api|heavy)." >&2
+          exit 1
+        fi
+      else
+        if [[ "$FASE" == "auto" ]]; then
+          echo "Fase auto exige nome ou glob de serviço (ex.: --build 'minha*')." >&2
+          exit 1
+        fi
+        append_filtered_phase FASE_CORE plan
+        append_filtered_phase FASE_REMOTE plan
+        append_filtered_phase FASE_MFE plan
+        append_filtered_phase FASE_API plan
+        append_filtered_phase FASE_CHAT plan
+        if [[ "$INCLUDE_HEAVY" == true ]]; then
+          plan+=("${FASE_HEAVY[@]}")
+        fi
+        if [[ "$INCLUDE_GPU" == true ]]; then
+          echo "Flag --gpu ignorada em dev (vllm só em produção)." >&2
+        fi
       fi
       ;;
     *)
@@ -280,6 +301,11 @@ if [[ "$FASE" == "list" ]]; then
   echo "=== Fase gpu (só produção) ==="
   printf '  %s\n' "${FASE_GPU[@]}"
   exit 0
+fi
+
+# Serviço/glob sem --fase: varre todas as fases (chat + mfe + api + …).
+if [[ ${#EXTRA_SERVICES[@]} -gt 0 && "$FASE" == "tudo" ]]; then
+  FASE="auto"
 fi
 
 if [[ ! -f .env ]]; then
