@@ -51,7 +51,7 @@ describe("EditableSectionCard", () => {
     expect(edit.className).toContain("delpi-ui-ghost-btn");
   });
 
-  it("exibe ações de salvar e cancelar em modo edição", () => {
+  it("exibe ações de salvar e cancelar em modo edição quando dirty", () => {
     render(
       <EditableSectionCard
         title="Dados"
@@ -59,6 +59,7 @@ describe("EditableSectionCard", () => {
         onEdit={vi.fn()}
         onCancel={vi.fn()}
         onSave={vi.fn()}
+        dirty
         readContent={<p>Leitura</p>}
         editContent={<p>Edição</p>}
         classNames={editableSectionCardBemClasses("kz")}
@@ -68,6 +69,26 @@ describe("EditableSectionCard", () => {
 
     expect(screen.getByText("Edição")).toBeTruthy();
     expect(screen.getByRole("button", { name: /Salvar/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Cancelar/i })).toBeTruthy();
+  });
+
+  it("oculta Salvar sem alterações no card", () => {
+    render(
+      <EditableSectionCard
+        title="Dados"
+        isEditing={true}
+        onEdit={vi.fn()}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+        dirty={false}
+        readContent={<p>Leitura</p>}
+        editContent={<p>Edição</p>}
+        classNames={editableSectionCardBemClasses("kz")}
+        labels={LABELS}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /Salvar/i })).toBeNull();
     expect(screen.getByRole("button", { name: /Cancelar/i })).toBeTruthy();
   });
 });

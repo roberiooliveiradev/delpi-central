@@ -65,6 +65,7 @@ import {
 import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
 import type { ProcessoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
 import { ProcessoWorkspaceSectionPanel } from "../processos/ProcessoWorkspaceSectionPanel";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -100,6 +101,9 @@ export function ProcessoDetailPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [processoForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
+  const [processoFormBaseline, setProcessoFormBaseline] = useState<ProcessoFormState | null>(
+    null
+  );
   const [savingProcesso, setSavingProcesso] = useState(false);
   const [timelineEntries, setTimelineEntries] = useState<ProcessoAuditLogEntry[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(true);
@@ -181,7 +185,9 @@ export function ProcessoDetailPage({
   async function handleStartEditProcesso() {
     const acquired = await sectionEdit.startEdit("processo");
     if (acquired !== false) {
-      setProcessoForm(processoFormFromEntity(processo!));
+      const next = processoFormFromEntity(processo!);
+      setProcessoForm(next);
+      setProcessoFormBaseline(next);
     }
   }
 
@@ -198,6 +204,7 @@ export function ProcessoDetailPage({
       setProcesso(updated);
       sectionEdit.stopEdit("processo");
       setProcessoForm(null);
+      setProcessoFormBaseline(null);
       await loadTimeline();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
@@ -366,11 +373,20 @@ export function ProcessoDetailPage({
             isEditing={sectionEdit.isEditing("processo")}
             onEdit={() => void handleStartEditProcesso()}
             onCancel={() => {
+              if (processoFormBaseline) {
+                setProcessoForm(processoFormBaseline);
+              }
               sectionEdit.cancelEdit("processo");
               setProcessoForm(null);
+              setProcessoFormBaseline(null);
             }}
             onSave={() => void handleSaveProcesso()}
             saving={savingProcesso}
+            dirty={
+              processoForm != null &&
+              processoFormBaseline != null &&
+              !valuesEqual(processoForm, processoFormBaseline)
+            }
             readContent={<ProcessoReadView processo={processo} activeFilialCount={options.filiais.length} />}
             editContent={
               processoForm ? (

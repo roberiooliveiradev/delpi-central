@@ -27,6 +27,7 @@ import {
   type OptionsData,
 } from "../../data/api/transformometroApi";
 import { buildFilialPath } from "../../utils/routeParser";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import { FilialFormFields } from "../filiais/FilialFormFields";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
@@ -57,6 +58,7 @@ export function FilialDetailPage({
   const [filial, setFilial] = useState<Filial | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<FilialFormState>(() => emptyFilialForm());
+  const [formBaseline, setFormBaseline] = useState<FilialFormState>(() => emptyFilialForm());
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isCreate);
   const [saving, setSaving] = useState(false);
@@ -65,7 +67,9 @@ export function FilialDetailPage({
     if (isCreate) {
       const opts = await fetchOptions(getAccessToken);
       setOptions(opts);
-      setForm(emptyFilialForm());
+      const empty = emptyFilialForm();
+      setForm(empty);
+      setFormBaseline(empty);
       setLoading(false);
       return;
     }
@@ -78,7 +82,9 @@ export function FilialDetailPage({
       ]);
       setFilial(row);
       setOptions(opts);
-      setForm(filialFormFromEntity(row));
+      const next = filialFormFromEntity(row);
+      setForm(next);
+      setFormBaseline(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar unidade");
     } finally {
@@ -108,7 +114,9 @@ export function FilialDetailPage({
 
   useEffect(() => {
     if (!filial || editingFilial) return;
-    setForm(filialFormFromEntity(filial));
+    const next = filialFormFromEntity(filial);
+    setForm(next);
+    setFormBaseline(next);
   }, [filial, editingFilial]);
 
   async function handleSave() {
@@ -130,6 +138,9 @@ export function FilialDetailPage({
       }
       const updated = await updateFilial(filialId, payload, getAccessToken);
       setFilial(updated);
+      const saved = filialFormFromEntity(updated);
+      setForm(saved);
+      setFormBaseline(saved);
       sectionEdit.stopEdit("filial");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar unidade");
@@ -162,7 +173,7 @@ export function FilialDetailPage({
       onBack();
       return;
     }
-    if (filial) setForm(filialFormFromEntity(filial));
+    setForm(formBaseline);
     sectionEdit.cancelEdit("filial");
   }
 
@@ -238,6 +249,7 @@ export function FilialDetailPage({
           onCancel={cancelEdit}
           onSave={() => void handleSave()}
           saving={saving}
+          dirty={!valuesEqual(form, formBaseline)}
           editable={!isCreate}
           readContent={filial ? <FilialReadView filial={filial} /> : null}
           editContent={

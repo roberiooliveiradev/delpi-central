@@ -14,9 +14,11 @@ import {
   DiagramMermaidPreview,
   DiagramFullscreenFrame,
   NativeCheckboxControl,
+  useEditableDraft,
   type FlowchartEscopo,
   type FlowchartV1,
 } from "@delpi/plugin-ui/index";
+import { DirtySaveActions } from "../ui/DirtySaveActions";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -40,8 +42,8 @@ export function InstanciaDiagramEscopoSection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [macro, setMacro] = useState<FlowchartV1>(emptyFlowchart());
-  const [escopo, setEscopo] = useState<FlowchartEscopo>(emptyEscopo());
   const [mermaid, setMermaid] = useState("");
+  const { value: escopo, setValue, dirty, replace } = useEditableDraft<FlowchartEscopo>(emptyEscopo());
 
   const selectedScopeIds = new Set(
     escopo.inherit_all ? macro.nodes.map((node) => node.id) : escopo.node_ids
@@ -57,7 +59,7 @@ export function InstanciaDiagramEscopoSection({
       ]);
       setMacro(macroData.conteudo ?? emptyFlowchart());
       setMermaid(macroData.mermaid ?? "");
-      setEscopo({
+      replace({
         node_ids: escopoData.node_ids ?? [],
         inherit_all: escopoData.inherit_all ?? true,
         include_boundary_edges: escopoData.include_boundary_edges ?? false,
@@ -67,7 +69,7 @@ export function InstanciaDiagramEscopoSection({
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken, instanciaId, onError, processoId]);
+  }, [getAccessToken, instanciaId, onError, processoId, replace]);
 
   useEffect(() => {
     void load();
@@ -80,7 +82,7 @@ export function InstanciaDiagramEscopoSection({
 
   function toggleScopeNode(nodeId: string) {
     if (readOnly) return;
-    setEscopo((current) => {
+    setValue((current) => {
       if (current.inherit_all) {
         const allIds = macro.nodes.map((node) => node.id);
         const nextIds = allIds.filter((id) => id !== nodeId);
@@ -137,7 +139,7 @@ export function InstanciaDiagramEscopoSection({
         checked={escopo.inherit_all}
         disabled={readOnly}
         onChange={(inherit_all) =>
-          setEscopo((current) => ({
+          setValue((current) => ({
             ...current,
             inherit_all,
             node_ids: inherit_all ? [] : macro.nodes.map((node) => node.id),
@@ -151,7 +153,7 @@ export function InstanciaDiagramEscopoSection({
         checked={Boolean(escopo.include_boundary_edges)}
         disabled={readOnly || escopo.inherit_all}
         onChange={(include_boundary_edges) =>
-          setEscopo((current) => ({ ...current, include_boundary_edges }))
+          setValue((current) => ({ ...current, include_boundary_edges }))
         }
         label="Incluir arestas na fronteira do escopo"
       />
@@ -172,11 +174,12 @@ export function InstanciaDiagramEscopoSection({
         {mermaid ? <DiagramMermaidPreview code={mermaid} /> : null}
 
         {!readOnly ? (
-          <div className="tm-diagram-section__actions">
-            <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-              {saving ? "Salvando…" : "Salvar escopo"}
-            </button>
-          </div>
+          <DirtySaveActions
+            dirty={dirty}
+            saving={saving}
+            label="Salvar escopo"
+            onSave={() => void handleSave()}
+          />
         ) : null}
       </DiagramFullscreenFrame>
     </div>

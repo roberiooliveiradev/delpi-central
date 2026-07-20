@@ -443,11 +443,19 @@ Seção estática com header (título, hint, subtítulo) — sem modo edição.
 
 Helpers: `sectionCardKaizenBemClasses`, `sectionCardPacBemClasses`, `createDashboardSectionCard({ classNames, labels })`.
 
-### `FormGrid` / `FormActions`
+### `FormGrid` / `FormActions` / `DirtySaveActions`
 
 Grade CSS grid para formulários e rodapé de botões.
 
-Helpers: `createDashboardFormGrid({ classNames })`, `createDashboardFormActions({ classNames })`.
+| Export | Uso |
+|--------|-----|
+| `FormActions` / `createDashboardFormActions` | Rodapé genérico |
+| `DirtySaveActions` / `createDashboardDirtySaveActions` | Salvar alinhado — **só renderiza com `dirty`** (ou enquanto `saving`) |
+| `useEditableDraft` / `valuesEqual` / `shouldShowDirtySave` | Detecção centralizada de alterações |
+
+`EditableSectionCard`: prop `dirty` — o botão Salvar do header só aparece quando `dirty` (ou `saving`).
+
+Helpers: `createDashboardFormGrid({ classNames })`, `createDashboardFormActions({ classNames })`, `createDashboardDirtySaveActions({ classNames, primaryButtonClassName })`.
 
 ### `NativeFormFields` (`createDashboardNativeFormFields`)
 

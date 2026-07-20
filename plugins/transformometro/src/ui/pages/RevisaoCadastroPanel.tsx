@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppProps } from "../../App";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -123,9 +124,14 @@ export function RevisaoCadastroPanel({
   const [savingMedicao, setSavingMedicao] = useState(false);
   const [rateioDiag, setRateioDiag] = useState<RateioDiagnostic | null>(null);
   const [revisaoVigencia, setRevisaoVigencia] = useState(() => buildRevisaoVigenciaFromRevisao(revisao));
+  const [revisaoVigenciaBaseline, setRevisaoVigenciaBaseline] = useState(() =>
+    buildRevisaoVigenciaFromRevisao(revisao)
+  );
 
   useEffect(() => {
-    setRevisaoVigencia(buildRevisaoVigenciaFromRevisao(revisao));
+    const next = buildRevisaoVigenciaFromRevisao(revisao);
+    setRevisaoVigencia(next);
+    setRevisaoVigenciaBaseline(next);
   }, [
     revisao.revisao_id,
     revisao.versao_revisao,
@@ -220,7 +226,7 @@ export function RevisaoCadastroPanel({
   }
 
   function cancelVigencia() {
-    setRevisaoVigencia(buildRevisaoVigenciaFromRevisao(revisao));
+    setRevisaoVigencia(revisaoVigenciaBaseline);
     sectionEdit.cancelEdit("vigencia");
   }
 
@@ -332,6 +338,7 @@ export function RevisaoCadastroPanel({
         onCancel={cancelVigencia}
         onSave={() => void saveVigencia()}
         saving={savingVigencia}
+        dirty={!valuesEqual(revisaoVigencia, revisaoVigenciaBaseline)}
         readContent={
           <RevisaoVigenciaSection
             embeddedInCard
@@ -438,6 +445,7 @@ export function RevisaoCadastroPanel({
         onCancel={cancelMedicao}
         onSave={() => void saveMedicao()}
         saving={savingMedicao}
+        dirty={!valuesEqual(medicao, medicaoSnapshot.current)}
         readContent={
           <RevisaoMedicaoSection
             embeddedInCard

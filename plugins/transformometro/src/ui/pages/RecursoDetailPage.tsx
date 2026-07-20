@@ -11,7 +11,7 @@ import { CollaborativePresenceBanner } from "../../components/collaboration/Coll
 import { PageHeader } from "../../components/PageHeader";
 import { StatusAlerts } from "../../components/StatusAlerts";
 import { TransformometroShell } from "../../components/TransformometroShell";
-import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl, valuesEqual } from "@delpi/plugin-ui/index";
 import { TableHeader } from "../../components/TableHeader";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { cenarioLabel } from "../../content/cenarioLabels";
@@ -89,6 +89,7 @@ export function RecursoDetailPage({
   const [recurso, setRecurso] = useState<RecursoCompartilhado | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<RecursoCatalogFormState>(() => emptyRecursoForm());
+  const [formBaseline, setFormBaseline] = useState<RecursoCatalogFormState>(() => emptyRecursoForm());
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isCreate);
@@ -102,7 +103,9 @@ export function RecursoDetailPage({
     if (isCreate) {
       const opts = await fetchOptions(getAccessToken);
       setOptions(opts);
-      setForm(emptyRecursoForm());
+      const empty = emptyRecursoForm();
+      setForm(empty);
+      setFormBaseline(empty);
       setLoading(false);
       return;
     }
@@ -118,7 +121,9 @@ export function RecursoDetailPage({
       setRecurso(recursoData);
       setVinculos(vinculosData.items);
       setOptions(opts);
-      setForm(recursoFormFromEntity(recursoData));
+      const next = recursoFormFromEntity(recursoData);
+      setForm(next);
+      setFormBaseline(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao carregar recurso");
     } finally {
@@ -149,7 +154,9 @@ export function RecursoDetailPage({
 
   useEffect(() => {
     if (!recurso || editingRecurso) return;
-    setForm(recursoFormFromEntity(recurso));
+    const next = recursoFormFromEntity(recurso);
+    setForm(next);
+    setFormBaseline(next);
   }, [recurso, editingRecurso]);
 
   const ativos = useMemo(() => vinculos.filter((v) => v.ativo).length, [vinculos]);
@@ -218,7 +225,7 @@ export function RecursoDetailPage({
       onBack();
       return;
     }
-    if (recurso) setForm(recursoFormFromEntity(recurso));
+    setForm(formBaseline);
     sectionEdit.cancelEdit("recurso");
   }
 
@@ -363,6 +370,7 @@ export function RecursoDetailPage({
               onCancel={cancelRecursoEdit}
               onSave={() => void handleSaveRecurso()}
               saving={saving}
+              dirty={!valuesEqual(form, formBaseline)}
               editable={!isCreate}
               readContent={
                 recurso ? <RecursoReadView recurso={recurso} vinculosAtivos={ativos} /> : null

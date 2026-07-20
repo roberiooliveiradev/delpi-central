@@ -1430,13 +1430,23 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}.dashboard-transformometro .tm-decomposition-escopo{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }.dashboard-transformometro .tm-decomposition-escopo__list{
   list-style: none;
-  margin: 12px 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
+}.dashboard-transformometro .tm-instancia-contexto{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }.dashboard-transformometro .tm-decomposition-preview{
   overflow-x: auto;
 }.dashboard-transformometro .tm-panel-stack{

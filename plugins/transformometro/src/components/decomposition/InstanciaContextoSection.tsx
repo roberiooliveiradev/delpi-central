@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel, NativeTextControl, useEditableDraft } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchInstanciaContexto,
@@ -10,6 +10,7 @@ import {
 import { emptyInstanciaContexto, type InstanciaContextoV1 } from "../../types/decomposition";
 import { InstanciaContextoReadView } from "./InstanciaContextoReadView";
 import { TmNativeTextAreaField } from "../ui/tmNativeFormFields";
+import { DirtySaveActions } from "../ui/DirtySaveActions";
 
 const C = TM_HELP_TOOLTIPS.decomposition;
 
@@ -33,20 +34,22 @@ export function InstanciaContextoSection({
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [contexto, setContexto] = useState<InstanciaContextoV1>(emptyInstanciaContexto());
+  const { value: contexto, setValue, dirty, replace } = useEditableDraft<InstanciaContextoV1>(
+    emptyInstanciaContexto()
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
     onError(null);
     try {
       const data = await fetchInstanciaContexto(instanciaId, getAccessToken);
-      setContexto(data.conteudo ?? emptyInstanciaContexto());
+      replace(data.conteudo ?? emptyInstanciaContexto());
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar contexto operacional.");
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken, instanciaId, onError]);
+  }, [getAccessToken, instanciaId, onError, replace]);
 
   useEffect(() => {
     void load();
@@ -95,7 +98,7 @@ export function InstanciaContextoSection({
           <NativeTextControl
             value={contexto.responsavel_local ?? ""}
             onChange={(responsavel_local) =>
-              setContexto({ ...contexto, responsavel_local: responsavel_local || null })
+              setValue({ ...contexto, responsavel_local: responsavel_local || null })
             }
           />
         </label>
@@ -103,7 +106,7 @@ export function InstanciaContextoSection({
           <FieldLabel className="tm-field__label" label="Contato" hint={C.contextoContato} />
           <NativeTextControl
             value={contexto.contato ?? ""}
-            onChange={(contato) => setContexto({ ...contexto, contato: contato || null })}
+            onChange={(contato) => setValue({ ...contexto, contato: contato || null })}
           />
         </label>
       </div>
@@ -116,13 +119,16 @@ export function InstanciaContextoSection({
         rows={3}
         value={contexto.observacoes_rollout ?? ""}
         onChange={(value) =>
-          setContexto({ ...contexto, observacoes_rollout: value || null })
+          setValue({ ...contexto, observacoes_rollout: value || null })
         }
       />
 
-      <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-        {saving ? "Salvando…" : "Salvar contexto"}
-      </button>
+      <DirtySaveActions
+        dirty={dirty}
+        saving={saving}
+        label="Salvar contexto"
+        onSave={() => void handleSave()}
+      />
     </div>
   );
 }
