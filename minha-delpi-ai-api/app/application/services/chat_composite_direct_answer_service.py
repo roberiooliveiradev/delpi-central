@@ -265,12 +265,14 @@ class ChatCompositeDirectAnswerService:
         from app.domain.services.chat_analysis_intent_service import (
             ChatAnalysisIntentService,
         )
-        from app.domain.services.chat_product_query_intent_service import (
-            ChatProductQueryIntentService,
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
         )
-
         from app.domain.services.chat_product_plural_phrasing_service import (
             ChatProductPluralPhrasingService,
+        )
+        from app.domain.services.chat_product_query_intent_service import (
+            ChatProductQueryIntentService,
         )
 
         codes: list[str] = []
@@ -291,10 +293,6 @@ class ChatCompositeDirectAnswerService:
 
             if code and code not in codes:
                 codes.append(code)
-
-            from app.domain.services.chat_product_operational_content_service import (
-                ChatProductOperationalContentService,
-            )
 
             for label in ChatProductPluralPhrasingService.scope_labels_from_api_path(path):
                 if label not in scope_labels:
@@ -324,6 +322,9 @@ class ChatCompositeDirectAnswerService:
         message: str,
         executions: list[ExternalActionExecutionResult],
     ) -> str | None:
+        from app.domain.services.chat_product_operational_content_service import (
+            ChatProductOperationalContentService,
+        )
         from app.domain.services.chat_product_query_intent_service import (
             ChatProductQueryIntentService,
         )
@@ -347,10 +348,6 @@ class ChatCompositeDirectAnswerService:
                     message
                 ) or ChatProductQueryIntentService.extract_product_code(path)
 
-            from app.domain.services.chat_product_operational_content_service import (
-                ChatProductOperationalContentService,
-            )
-
             for label in ChatProductOperationalContentService.composite_short_scope_labels_from_path(
                 path
             ):
@@ -359,10 +356,6 @@ class ChatCompositeDirectAnswerService:
 
         if len(scope_labels) < 2:
             return None
-
-        from app.domain.services.chat_product_operational_content_service import (
-            ChatProductOperationalContentService,
-        )
 
         code = product_code or ChatProductOperationalContentService.get(
             "composite",

@@ -85,3 +85,71 @@ def test_build_multi_product_codes_intro_for_stock_batch():
     assert "10080022" in answer
     assert "10080012" in answer
     assert "estoque" in answer.lower()
+
+
+def test_build_does_not_crash_on_department_dashboard_multi_route():
+    """Regressão: UnboundLocalError quando o compose não tem path /products/."""
+    answer = ChatCompositeDirectAnswerService.build(
+        "painel de indicadores da engenharia",
+        [
+            ExternalActionExecutionResult(
+                metadata={
+                    "ok": True,
+                    "statusCode": 200,
+                    "path": "/dashboard/department-indicators",
+                    "actionId": "dashboard-department-indicators",
+                    "operationId": "get_dashboard_department_indicators",
+                },
+                data={"items": [], "summary": {}},
+            ),
+            ExternalActionExecutionResult(
+                metadata={
+                    "ok": True,
+                    "statusCode": 200,
+                    "path": "/dashboard/department-idd",
+                    "actionId": "dashboard-department-idd",
+                    "operationId": "get_dashboard_department_idd",
+                },
+                data={"score": 7.5},
+            ),
+            ExternalActionExecutionResult(
+                metadata={
+                    "ok": True,
+                    "statusCode": 200,
+                    "path": "/engineering/transforma/summary",
+                    "actionId": "engineering-transforma-summary",
+                    "operationId": "get_engineering_transforma_summary",
+                },
+                data={"items": []},
+            ),
+        ],
+    )
+
+    # Pode montar seções ou None conforme presenter; não pode lançar UnboundLocalError.
+    assert answer is None or isinstance(answer, str)
+
+
+def test_build_multi_product_codes_intro_skips_non_product_paths():
+    intro = ChatCompositeDirectAnswerService._build_multi_product_codes_intro(
+        "painel de indicadores da engenharia",
+        [
+            ExternalActionExecutionResult(
+                metadata={
+                    "ok": True,
+                    "path": "/dashboard/department-indicators",
+                    "actionId": "dashboard-department-indicators",
+                },
+                data={},
+            ),
+            ExternalActionExecutionResult(
+                metadata={
+                    "ok": True,
+                    "path": "/dashboard/department-idd",
+                    "actionId": "dashboard-department-idd",
+                },
+                data={},
+            ),
+        ],
+    )
+
+    assert intro is None
