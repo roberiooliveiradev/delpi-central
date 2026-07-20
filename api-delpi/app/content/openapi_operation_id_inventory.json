@@ -2,11 +2,10 @@
   "version": 1,
   "baselineVersion": "3",
   "operationCount": 300,
-  "stableCount": 192,
-  "autoCount": 108,
+  "stableCount": 267,
+  "autoCount": 33,
   "recommendationCollisions": [],
   "autoByTag": {
-    "Qualidade": 75,
     "system": 19,
     "Agendamento": 6,
     "Cultura DELPI": 2,
@@ -1259,319 +1258,249 @@
       "stable": true
     },
     {
-      "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "operationId": "get_audit_5s_analytics_dashboard",
       "method": "GET",
       "path": "/quality/audit-5s/analytics/dashboard",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_audit_5s_dashboard",
-      "recommendedCanonical": "get_audit_5s_dashboard"
+      "stable": true
     },
     {
-      "operationId": "list_areas_quality_audit_5s_areas_get",
+      "operationId": "list_audit_5s_areas",
       "method": "GET",
       "path": "/quality/audit-5s/areas",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_areas",
-      "recommendedCanonical": "list_audit_5s_areas"
+      "stable": true
     },
     {
-      "operationId": "create_area_quality_audit_5s_areas_post",
+      "operationId": "create_audit_5s_area",
       "method": "POST",
       "path": "/quality/audit-5s/areas",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "create_area",
-      "recommendedCanonical": "create_audit_5s_area"
+      "stable": true
     },
     {
-      "operationId": "list_audits_quality_audit_5s_audits_get",
+      "operationId": "list_audit_5s_audits",
       "method": "GET",
       "path": "/quality/audit-5s/audits",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_audits",
-      "recommendedCanonical": "list_audit_5s_audits"
+      "stable": true
     },
     {
-      "operationId": "create_audit_quality_audit_5s_audits_post",
+      "operationId": "create_audit_5s_audit",
       "method": "POST",
       "path": "/quality/audit-5s/audits",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "create_audit",
-      "recommendedCanonical": "create_audit_5s_audit"
+      "stable": true
     },
     {
-      "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "operationId": "get_audit_5s_audit",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_audit",
-      "recommendedCanonical": "get_audit_5s_audit"
+      "stable": true
     },
     {
-      "operationId": "update_audit_quality_audit_5s_audits__audit_id__patch",
+      "operationId": "update_audit_5s_audit",
       "method": "PATCH",
       "path": "/quality/audit-5s/audits/{audit_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "update_audit",
-      "recommendedCanonical": "update_audit_5s_audit"
+      "stable": true
     },
     {
-      "operationId": "close_audit_quality_audit_5s_audits__audit_id__close_post",
+      "operationId": "close_audit_5s_audit",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/close",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "close_audit",
-      "recommendedCanonical": "close_audit_5s_audit"
+      "stable": true
     },
     {
-      "operationId": "complete_evaluation_quality_audit_5s_audits__audit_id__complete_evaluation_post",
+      "operationId": "complete_audit_5s_evaluation",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/complete-evaluation",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "complete_evaluation",
-      "recommendedCanonical": "complete_audit_5s_evaluation"
+      "stable": true
     },
     {
-      "operationId": "delete_audit_quality_audit_5s_audits__audit_id__delete_post",
+      "operationId": "delete_audit_5s_audit",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/delete",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "delete_audit",
-      "recommendedCanonical": "delete_audit_5s_audit"
+      "stable": true
     },
     {
-      "operationId": "force_delete_audit_quality_audit_5s_audits__audit_id__force_delete_post",
+      "operationId": "force_delete_audit_5s_audit",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/force-delete",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "force_delete_audit",
-      "recommendedCanonical": "force_delete_audit_5s_audit"
+      "stable": true
     },
     {
-      "operationId": "join_audit_quality_audit_5s_audits__audit_id__join_post",
+      "operationId": "join_audit_5s_audit",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/join",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "join_audit",
-      "recommendedCanonical": "join_audit_5s_audit"
+      "stable": true
     },
     {
-      "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "operationId": "list_audit_5s_audit_nc_attachments",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_audit_nc_attachments",
-      "recommendedCanonical": "list_audit_5s_audit_nc_attachments"
+      "stable": true
     },
     {
-      "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "operationId": "list_audit_5s_nc_candidates",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_nc_candidates",
-      "recommendedCanonical": "list_audit_5s_nc_candidates"
+      "stable": true
     },
     {
-      "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "operationId": "list_audit_5s_nonconformities",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_audit_nonconformities",
-      "recommendedCanonical": "list_audit_5s_audit_nonconformities"
+      "stable": true
     },
     {
-      "operationId": "create_nonconformity_quality_audit_5s_audits__audit_id__nonconformities_post",
+      "operationId": "create_audit_5s_nonconformity",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "create_nonconformity",
-      "recommendedCanonical": "create_audit_5s_nonconformity"
+      "stable": true
     },
     {
-      "operationId": "reopen_evaluation_quality_audit_5s_audits__audit_id__reopen_evaluation_post",
+      "operationId": "reopen_audit_5s_evaluation",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/reopen-evaluation",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "reopen_evaluation",
-      "recommendedCanonical": "reopen_audit_5s_evaluation"
+      "stable": true
     },
     {
-      "operationId": "upsert_response_quality_audit_5s_audits__audit_id__responses__criterion_id__put",
+      "operationId": "audit_5s_upsert_response",
       "method": "PUT",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "upsert_response",
-      "recommendedCanonical": "audit_5s_upsert_response"
+      "stable": true
     },
     {
-      "operationId": "list_response_attachments_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_get",
+      "operationId": "list_audit_5s_response_attachments",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_response_attachments",
-      "recommendedCanonical": "list_audit_5s_response_attachments"
+      "stable": true
     },
     {
-      "operationId": "upload_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_post",
+      "operationId": "upload_audit_5s_response_attachment",
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "upload_response_attachment",
-      "recommendedCanonical": "upload_audit_5s_response_attachment"
+      "stable": true
     },
     {
-      "operationId": "delete_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__delete",
+      "operationId": "delete_audit_5s_response_photo",
       "method": "DELETE",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "delete_response_attachment",
-      "recommendedCanonical": "delete_audit_5s_response_attachment"
+      "stable": true
     },
     {
-      "operationId": "download_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__file_get",
+      "operationId": "download_audit_5s_response_attachment",
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}/file",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "download_response_attachment",
-      "recommendedCanonical": "download_audit_5s_response_attachment"
+      "stable": true
     },
     {
-      "operationId": "get_catalog_quality_audit_5s_catalog_get",
+      "operationId": "get_audit_5s_catalog",
       "method": "GET",
       "path": "/quality/audit-5s/catalog",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_catalog",
-      "recommendedCanonical": "get_audit_5s_catalog"
+      "stable": true
     },
     {
-      "operationId": "list_catalog_publications_quality_audit_5s_catalog_publications_get",
+      "operationId": "list_audit_5s_catalog_publications",
       "method": "GET",
       "path": "/quality/audit-5s/catalog/publications",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_catalog_publications",
-      "recommendedCanonical": "list_audit_5s_catalog_publications"
+      "stable": true
     },
     {
-      "operationId": "publish_catalog_quality_audit_5s_catalog_publish_put",
+      "operationId": "publish_audit_5s_catalog",
       "method": "PUT",
       "path": "/quality/audit-5s/catalog/publish",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "publish_catalog",
-      "recommendedCanonical": "publish_audit_5s_catalog"
+      "stable": true
     },
     {
-      "operationId": "list_criteria_quality_audit_5s_criteria_get",
+      "operationId": "list_audit_5s_criteria",
       "method": "GET",
       "path": "/quality/audit-5s/criteria",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_criteria",
-      "recommendedCanonical": "list_audit_5s_criteria"
+      "stable": true
     },
     {
-      "operationId": "update_nonconformity_quality_audit_5s_nonconformities__nc_id__patch",
+      "operationId": "update_audit_5s_nonconformity",
       "method": "PATCH",
       "path": "/quality/audit-5s/nonconformities/{nc_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "update_nonconformity",
-      "recommendedCanonical": "update_audit_5s_nonconformity"
+      "stable": true
     },
     {
-      "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "operationId": "list_audit_5s_nc_actions",
       "method": "GET",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_nc_actions",
-      "recommendedCanonical": "list_audit_5s_nc_actions"
+      "stable": true
     },
     {
-      "operationId": "add_nc_action_quality_audit_5s_nonconformities__nc_id__actions_post",
+      "operationId": "create_audit_5s_nc_action",
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "add_nc_action",
-      "recommendedCanonical": "add_audit_5s_nc_action"
+      "stable": true
     },
     {
-      "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "operationId": "list_audit_5s_nc_attachments",
       "method": "GET",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_nc_attachments",
-      "recommendedCanonical": "list_audit_5s_nc_attachments"
+      "stable": true
     },
     {
-      "operationId": "upload_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments_post",
+      "operationId": "upload_audit_5s_nc_attachment",
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "upload_nc_attachment",
-      "recommendedCanonical": "upload_audit_5s_nc_attachment"
+      "stable": true
     },
     {
-      "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "operationId": "download_audit_5s_nc_attachment",
       "method": "GET",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "download_nc_attachment",
-      "recommendedCanonical": "download_audit_5s_nc_attachment"
+      "stable": true
     },
     {
-      "operationId": "complete_nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post",
+      "operationId": "complete_audit_5s_nc_action",
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "complete_nc_action",
-      "recommendedCanonical": "complete_audit_5s_nc_action"
+      "stable": true
     },
     {
-      "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
+      "operationId": "get_audit_5s_summary",
       "method": "GET",
       "path": "/quality/audit-5s/summary",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_audit_5s_summary",
-      "recommendedCanonical": "get_audit_5s_summary"
+      "stable": true
     },
     {
-      "operationId": "list_quality_branches_quality_branches_get",
+      "operationId": "list_quality_branches",
       "method": "GET",
       "path": "/quality/branches",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_quality_branches",
-      "recommendedCanonical": "list_quality_branches"
+      "stable": true
     },
     {
       "operationId": "list_kaizen_records",
@@ -1581,49 +1510,39 @@
       "stable": true
     },
     {
-      "operationId": "create_kaizen_record_quality_kaizens_records_post",
+      "operationId": "create_kaizen_record",
       "method": "POST",
       "path": "/quality/kaizens/records",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "create_kaizen_record",
-      "recommendedCanonical": "create_kaizen_record"
+      "stable": true
     },
     {
-      "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
+      "operationId": "export_kaizen_records",
       "method": "GET",
       "path": "/quality/kaizens/records/export",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "export_kaizen_records",
-      "recommendedCanonical": "export_kaizen_records"
+      "stable": true
     },
     {
-      "operationId": "import_kaizen_records_quality_kaizens_records_import_post",
+      "operationId": "import_kaizen_records",
       "method": "POST",
       "path": "/quality/kaizens/records/import",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "import_kaizen_records",
-      "recommendedCanonical": "import_kaizen_records"
+      "stable": true
     },
     {
-      "operationId": "get_kaizen_records_summary_quality_kaizens_records_summary_get",
+      "operationId": "get_kaizen_records_summary",
       "method": "GET",
       "path": "/quality/kaizens/records/summary",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_kaizen_records_summary",
-      "recommendedCanonical": "get_kaizen_records_summary"
+      "stable": true
     },
     {
-      "operationId": "delete_kaizen_record_quality_kaizens_records__record_id__delete",
+      "operationId": "delete_kaizen_record",
       "method": "DELETE",
       "path": "/quality/kaizens/records/{record_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "delete_kaizen_record",
-      "recommendedCanonical": "delete_kaizen_record"
+      "stable": true
     },
     {
       "operationId": "get_kaizen_record",
@@ -1633,148 +1552,116 @@
       "stable": true
     },
     {
-      "operationId": "update_kaizen_record_quality_kaizens_records__record_id__put",
+      "operationId": "update_kaizen_record",
       "method": "PUT",
       "path": "/quality/kaizens/records/{record_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "update_kaizen_record",
-      "recommendedCanonical": "update_kaizen_record"
+      "stable": true
     },
     {
-      "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
+      "operationId": "get_kaizen_at_date",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/at",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_kaizen_at_date",
-      "recommendedCanonical": "get_kaizen_at_date"
+      "stable": true
     },
     {
-      "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
+      "operationId": "list_kaizen_audit_log",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/audit-log",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_kaizen_audit_log",
-      "recommendedCanonical": "list_kaizen_audit_log"
+      "stable": true
     },
     {
-      "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
+      "operationId": "list_kaizen_evidences",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/evidences",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_kaizen_evidences",
-      "recommendedCanonical": "list_kaizen_evidences"
+      "stable": true
     },
     {
-      "operationId": "attach_kaizen_evidence_quality_kaizens_records__record_id__evidences_post",
+      "operationId": "attach_kaizen_evidence",
       "method": "POST",
       "path": "/quality/kaizens/records/{record_id}/evidences",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "attach_kaizen_evidence",
-      "recommendedCanonical": "attach_kaizen_evidence"
+      "stable": true
     },
     {
-      "operationId": "delete_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__delete",
+      "operationId": "delete_kaizen_evidence",
       "method": "DELETE",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "delete_kaizen_evidence",
-      "recommendedCanonical": "delete_kaizen_evidence"
+      "stable": true
     },
     {
-      "operationId": "update_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__patch",
+      "operationId": "update_kaizen_evidence",
       "method": "PATCH",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "update_kaizen_evidence",
-      "recommendedCanonical": "update_kaizen_evidence"
+      "stable": true
     },
     {
-      "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
+      "operationId": "download_kaizen_evidence",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "download_kaizen_evidence",
-      "recommendedCanonical": "download_kaizen_evidence"
+      "stable": true
     },
     {
-      "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
+      "operationId": "list_kaizen_history",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/history",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_kaizen_history",
-      "recommendedCanonical": "list_kaizen_history"
+      "stable": true
     },
     {
-      "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
+      "operationId": "list_kaizen_revisions",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/revisions",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_kaizen_revisions",
-      "recommendedCanonical": "list_kaizen_revisions"
+      "stable": true
     },
     {
-      "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
+      "operationId": "get_kaizen_revision",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/revisions/{revision_number}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_kaizen_revision",
-      "recommendedCanonical": "get_kaizen_revision"
+      "stable": true
     },
     {
-      "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
+      "operationId": "get_kaizen_savings_timeline",
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/savings-timeline",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_kaizen_savings_timeline",
-      "recommendedCanonical": "get_kaizen_savings_timeline"
+      "stable": true
     },
     {
-      "operationId": "create_kaizen_version_quality_kaizens_records__record_id__versions_post",
+      "operationId": "create_kaizen_version",
       "method": "POST",
       "path": "/quality/kaizens/records/{record_id}/versions",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "create_kaizen_version",
-      "recommendedCanonical": "create_kaizen_version"
+      "stable": true
     },
     {
-      "operationId": "delete_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__delete",
+      "operationId": "delete_kaizen_version",
       "method": "DELETE",
       "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "delete_kaizen_version",
-      "recommendedCanonical": "delete_kaizen_version"
+      "stable": true
     },
     {
-      "operationId": "update_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__put",
+      "operationId": "update_kaizen_version",
       "method": "PUT",
       "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "update_kaizen_version",
-      "recommendedCanonical": "update_kaizen_version"
+      "stable": true
     },
     {
-      "operationId": "implement_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__implement_post",
+      "operationId": "implement_kaizen_version",
       "method": "POST",
       "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}/implement",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "implement_kaizen_version",
-      "recommendedCanonical": "implement_kaizen_version"
+      "stable": true
     },
     {
       "operationId": "get_kaizen_summary",
@@ -1791,175 +1678,137 @@
       "stable": true
     },
     {
-      "operationId": "list_labels_quality_labels_get",
+      "operationId": "list_quality_labels",
       "method": "GET",
       "path": "/quality/labels",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_labels",
-      "recommendedCanonical": "list_labels"
+      "stable": true
     },
     {
-      "operationId": "create_label_quality_labels_post",
+      "operationId": "create_quality_label",
       "method": "POST",
       "path": "/quality/labels",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "create_label",
-      "recommendedCanonical": "create_label"
+      "stable": true
     },
     {
-      "operationId": "list_audit_events_quality_labels_audit_events_get",
+      "operationId": "list_quality_label_audit_events",
       "method": "GET",
       "path": "/quality/labels/audit-events",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_audit_events",
-      "recommendedCanonical": "list_audit_events"
+      "stable": true
     },
     {
-      "operationId": "list_checklist_template_quality_labels_checklist_template_get",
+      "operationId": "list_quality_label_checklist_template",
       "method": "GET",
       "path": "/quality/labels/checklist-template",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_checklist_template",
-      "recommendedCanonical": "list_checklist_template"
+      "stable": true
     },
     {
-      "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
+      "operationId": "get_quality_label_inspector",
       "method": "GET",
       "path": "/quality/labels/inspectors/me",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_my_inspector",
-      "recommendedCanonical": "get_my_inspector"
+      "stable": true
     },
     {
-      "operationId": "save_my_inspector_quality_labels_inspectors_me_put",
+      "operationId": "save_quality_label_inspector",
       "method": "PUT",
       "path": "/quality/labels/inspectors/me",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "save_my_inspector",
-      "recommendedCanonical": "save_my_inspector"
+      "stable": true
     },
     {
-      "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
+      "operationId": "get_my_signature",
       "method": "GET",
       "path": "/quality/labels/inspectors/me/signature",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_my_signature",
-      "recommendedCanonical": "get_my_signature"
+      "stable": true
     },
     {
-      "operationId": "upload_my_signature_quality_labels_inspectors_me_signature_post",
+      "operationId": "upload_my_signature",
       "method": "POST",
       "path": "/quality/labels/inspectors/me/signature",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "upload_my_signature",
-      "recommendedCanonical": "upload_my_signature"
+      "stable": true
     },
     {
-      "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
+      "operationId": "lookup_quality_label_op",
       "method": "GET",
       "path": "/quality/labels/lookup-op/{production_order}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "lookup_op",
-      "recommendedCanonical": "lookup_op"
+      "stable": true
     },
     {
-      "operationId": "search_ops_quality_labels_search_ops_get",
+      "operationId": "search_quality_label_ops",
       "method": "GET",
       "path": "/quality/labels/search-ops",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "search_ops",
-      "recommendedCanonical": "search_ops"
+      "stable": true
     },
     {
-      "operationId": "delete_label_quality_labels__label_id__delete",
+      "operationId": "delete_quality_label",
       "method": "DELETE",
       "path": "/quality/labels/{label_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "delete_label",
-      "recommendedCanonical": "delete_label"
+      "stable": true
     },
     {
-      "operationId": "get_label_quality_labels__label_id__get",
+      "operationId": "get_quality_label",
       "method": "GET",
       "path": "/quality/labels/{label_id}",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_label",
-      "recommendedCanonical": "get_label"
+      "stable": true
     },
     {
-      "operationId": "set_label_active_quality_labels__label_id__active_patch",
+      "operationId": "set_quality_label_active",
       "method": "PATCH",
       "path": "/quality/labels/{label_id}/active",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "set_label_active",
-      "recommendedCanonical": "set_label_active"
+      "stable": true
     },
     {
-      "operationId": "get_certificate_quality_labels__label_id__certificate_get",
+      "operationId": "get_quality_label_certificate",
       "method": "GET",
       "path": "/quality/labels/{label_id}/certificate",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_certificate",
-      "recommendedCanonical": "get_certificate"
+      "stable": true
     },
     {
-      "operationId": "save_certificate_quality_labels__label_id__certificate_put",
+      "operationId": "save_quality_label_certificate",
       "method": "PUT",
       "path": "/quality/labels/{label_id}/certificate",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "save_certificate",
-      "recommendedCanonical": "save_certificate"
+      "stable": true
     },
     {
-      "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
+      "operationId": "get_certificate_pdf",
       "method": "GET",
       "path": "/quality/labels/{label_id}/certificate/pdf",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_certificate_pdf",
-      "recommendedCanonical": "get_certificate_pdf"
+      "stable": true
     },
     {
-      "operationId": "get_label_qr_quality_labels__label_id__qr_get",
+      "operationId": "get_label_qr",
       "method": "GET",
       "path": "/quality/labels/{label_id}/qr",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_label_qr",
-      "recommendedCanonical": "get_label_qr"
+      "stable": true
     },
     {
-      "operationId": "list_nonconformity_route_quality_nonconformities_get",
+      "operationId": "list_nonconformities",
       "method": "GET",
       "path": "/quality/nonconformities",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "list_nonconformity_route",
-      "recommendedCanonical": "list_nonconformity_route"
+      "stable": true
     },
     {
-      "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
+      "operationId": "get_nonconformity_series",
       "method": "GET",
       "path": "/quality/nonconformities/series",
       "tag": "Qualidade",
-      "stable": false,
-      "functionName": "get_nonconformity_series",
-      "recommendedCanonical": "get_nonconformity_series"
+      "stable": true
     },
     {
       "operationId": "list_ppm_external",

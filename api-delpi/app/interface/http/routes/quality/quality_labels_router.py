@@ -131,7 +131,7 @@ def _current_user_name() -> str:
     return "Inspetor"
 
 
-@router.get("/search-ops")
+@router.get("/search-ops", operation_id="search_quality_label_ops")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def search_ops(
     q: str = Query(..., min_length=1),
@@ -155,7 +155,7 @@ def search_ops(
         return error_response("Erro interno ao buscar as OPs.", status_code=500)
 
 
-@router.get("/audit-events")
+@router.get("/audit-events", operation_id="list_quality_label_audit_events")
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def list_audit_events(
     search: Optional[str] = None,
@@ -181,7 +181,7 @@ def list_audit_events(
         return error_response("Erro interno ao listar a auditoria.", status_code=500)
 
 
-@router.get("/checklist-template")
+@router.get("/checklist-template", operation_id="list_quality_label_checklist_template")
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def list_checklist_template():
     try:
@@ -197,7 +197,7 @@ def list_checklist_template():
         return error_response("Erro interno ao listar o template.", status_code=500)
 
 
-@router.get("/inspectors/me")
+@router.get("/inspectors/me", operation_id="get_quality_label_inspector")
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def get_my_inspector():
     try:
@@ -221,7 +221,7 @@ def get_my_inspector():
         return error_response("Erro interno ao buscar o inspetor.", status_code=500)
 
 
-@router.put("/inspectors/me")
+@router.put("/inspectors/me", operation_id="save_quality_label_inspector")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def save_my_inspector(body: Annotated[InspectorProfileBody, Body(...)]):
     try:
@@ -279,7 +279,7 @@ def get_my_signature():
         return error_response("Erro interno ao ler a assinatura.", status_code=500)
 
 
-@router.get("/lookup-op/{production_order}")
+@router.get("/lookup-op/{production_order}", operation_id="lookup_quality_label_op")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def lookup_op(production_order: str, branch: Optional[str] = None):
     try:
@@ -299,7 +299,7 @@ def lookup_op(production_order: str, branch: Optional[str] = None):
         return error_response("Erro interno ao consultar a OP.", status_code=500)
 
 
-@router.post("")
+@router.post("", operation_id="create_quality_label")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def create_label(body: Annotated[CreateLabelBody, Body(...)]):
     try:
@@ -327,7 +327,7 @@ def create_label(body: Annotated[CreateLabelBody, Body(...)]):
         return error_response("Erro interno ao registrar a etiqueta.", status_code=500)
 
 
-@router.get("")
+@router.get("", operation_id="list_quality_labels")
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def list_labels(
     search: Optional[str] = None,
@@ -353,7 +353,7 @@ def list_labels(
         return error_response("Erro interno ao listar as etiquetas.", status_code=500)
 
 
-@router.get("/{label_id}")
+@router.get("/{label_id}", operation_id="get_quality_label")
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def get_label(label_id: str):
     try:
@@ -385,7 +385,7 @@ def get_label_qr(label_id: str):
         return error_response("Erro interno ao ler o QR.", status_code=500)
 
 
-@router.patch("/{label_id}/active")
+@router.patch("/{label_id}/active", operation_id="set_quality_label_active")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def set_label_active(label_id: str, body: Annotated[SetActiveBody, Body(...)]):
     try:
@@ -408,7 +408,7 @@ def set_label_active(label_id: str, body: Annotated[SetActiveBody, Body(...)]):
         return error_response("Erro interno ao atualizar a etiqueta.", status_code=500)
 
 
-@router.get("/{label_id}/certificate")
+@router.get("/{label_id}/certificate", operation_id="get_quality_label_certificate")
 @require_any_permission(QUALITY_LABELS_READ_PERMISSIONS)
 def get_certificate(label_id: str):
     try:
@@ -426,7 +426,7 @@ def get_certificate(label_id: str):
         return error_response("Erro interno ao buscar o certificado.", status_code=500)
 
 
-@router.put("/{label_id}/certificate")
+@router.put("/{label_id}/certificate", operation_id="save_quality_label_certificate")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def save_certificate(label_id: str, body: Annotated[CertificateBody, Body(...)]):
     try:
@@ -472,7 +472,7 @@ def get_certificate_pdf(label_id: str):
         return error_response("Erro interno ao gerar o PDF.", status_code=500)
 
 
-@router.delete("/{label_id}")
+@router.delete("/{label_id}", operation_id="delete_quality_label")
 @require_any_permission(QUALITY_LABELS_WRITE_PERMISSIONS)
 def delete_label(label_id: str):
     try:

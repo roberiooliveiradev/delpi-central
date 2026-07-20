@@ -8528,7 +8528,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/analytics/dashboard",
-      "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "operationId": "get_audit_5s_analytics_dashboard",
       "summary": "Get Audit 5S Dashboard",
       "tags": [
         "Qualidade",
@@ -8621,7 +8621,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/areas",
-      "operationId": "list_areas_quality_audit_5s_areas_get",
+      "operationId": "list_audit_5s_areas",
       "summary": "List Areas",
       "tags": [
         "Qualidade",
@@ -8666,7 +8666,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/areas",
-      "operationId": "create_area_quality_audit_5s_areas_post",
+      "operationId": "create_audit_5s_area",
       "summary": "Create Area",
       "tags": [
         "Qualidade",
@@ -8682,7 +8682,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/audits",
-      "operationId": "list_audits_quality_audit_5s_audits_get",
+      "operationId": "list_audit_5s_audits",
       "summary": "List Audits",
       "tags": [
         "Qualidade",
@@ -8726,7 +8726,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits",
-      "operationId": "create_audit_quality_audit_5s_audits_post",
+      "operationId": "create_audit_5s_audit",
       "summary": "Create Audit",
       "tags": [
         "Qualidade",
@@ -8742,7 +8742,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}",
-      "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "operationId": "get_audit_5s_audit",
       "summary": "Get Audit",
       "tags": [
         "Qualidade",
@@ -8774,7 +8774,7 @@
     {
       "method": "PATCH",
       "path": "/quality/audit-5s/audits/{audit_id}",
-      "operationId": "update_audit_quality_audit_5s_audits__audit_id__patch",
+      "operationId": "update_audit_5s_audit",
       "summary": "Update Audit",
       "tags": [
         "Qualidade",
@@ -8790,7 +8790,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/close",
-      "operationId": "close_audit_quality_audit_5s_audits__audit_id__close_post",
+      "operationId": "close_audit_5s_audit",
       "summary": "Close Audit",
       "tags": [
         "Qualidade",
@@ -8806,7 +8806,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/complete-evaluation",
-      "operationId": "complete_evaluation_quality_audit_5s_audits__audit_id__complete_evaluation_post",
+      "operationId": "complete_audit_5s_evaluation",
       "summary": "Complete Evaluation",
       "tags": [
         "Qualidade",
@@ -8822,7 +8822,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/delete",
-      "operationId": "delete_audit_quality_audit_5s_audits__audit_id__delete_post",
+      "operationId": "delete_audit_5s_audit",
       "summary": "Delete Audit",
       "tags": [
         "Qualidade",
@@ -8838,7 +8838,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/force-delete",
-      "operationId": "force_delete_audit_quality_audit_5s_audits__audit_id__force_delete_post",
+      "operationId": "force_delete_audit_5s_audit",
       "summary": "Force Delete Audit",
       "tags": [
         "Qualidade",
@@ -8854,7 +8854,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/join",
-      "operationId": "join_audit_quality_audit_5s_audits__audit_id__join_post",
+      "operationId": "join_audit_5s_audit",
       "summary": "Join Audit",
       "tags": [
         "Qualidade",
@@ -8870,7 +8870,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nc-attachments",
-      "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "operationId": "list_audit_5s_audit_nc_attachments",
       "summary": "List Audit Nc Attachments",
       "tags": [
         "Qualidade",
@@ -8902,7 +8902,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nc-candidates",
-      "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "operationId": "list_audit_5s_nc_candidates",
       "summary": "List Nc Candidates",
       "tags": [
         "Qualidade",
@@ -8934,7 +8934,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
-      "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "operationId": "list_audit_5s_nonconformities",
       "summary": "List Audit Nonconformities",
       "tags": [
         "Qualidade",
@@ -8966,7 +8966,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/nonconformities",
-      "operationId": "create_nonconformity_quality_audit_5s_audits__audit_id__nonconformities_post",
+      "operationId": "create_audit_5s_nonconformity",
       "summary": "Create Nonconformity",
       "tags": [
         "Qualidade",
@@ -8982,7 +8982,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/reopen-evaluation",
-      "operationId": "reopen_evaluation_quality_audit_5s_audits__audit_id__reopen_evaluation_post",
+      "operationId": "reopen_audit_5s_evaluation",
       "summary": "Reopen Evaluation",
       "tags": [
         "Qualidade",
@@ -8998,7 +8998,7 @@
     {
       "method": "PUT",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}",
-      "operationId": "upsert_response_quality_audit_5s_audits__audit_id__responses__criterion_id__put",
+      "operationId": "audit_5s_upsert_response",
       "summary": "Upsert Response",
       "tags": [
         "Qualidade",
@@ -9014,7 +9014,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
-      "operationId": "list_response_attachments_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_get",
+      "operationId": "list_audit_5s_response_attachments",
       "summary": "List Response Attachments",
       "tags": [
         "Qualidade",
@@ -9046,7 +9046,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments",
-      "operationId": "upload_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_post",
+      "operationId": "upload_audit_5s_response_attachment",
       "summary": "Upload Response Attachment",
       "tags": [
         "Qualidade",
@@ -9062,7 +9062,7 @@
     {
       "method": "DELETE",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}",
-      "operationId": "delete_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__delete",
+      "operationId": "delete_audit_5s_response_photo",
       "summary": "Delete Response Attachment",
       "tags": [
         "Qualidade",
@@ -9078,7 +9078,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}/file",
-      "operationId": "download_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__file_get",
+      "operationId": "download_audit_5s_response_attachment",
       "summary": "Download Response Attachment",
       "tags": [
         "Qualidade",
@@ -9110,7 +9110,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/catalog",
-      "operationId": "get_catalog_quality_audit_5s_catalog_get",
+      "operationId": "get_audit_5s_catalog",
       "summary": "Get Catalog",
       "tags": [
         "Qualidade",
@@ -9149,7 +9149,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/catalog/publications",
-      "operationId": "list_catalog_publications_quality_audit_5s_catalog_publications_get",
+      "operationId": "list_audit_5s_catalog_publications",
       "summary": "List Catalog Publications",
       "tags": [
         "Qualidade",
@@ -9188,7 +9188,7 @@
     {
       "method": "PUT",
       "path": "/quality/audit-5s/catalog/publish",
-      "operationId": "publish_catalog_quality_audit_5s_catalog_publish_put",
+      "operationId": "publish_audit_5s_catalog",
       "summary": "Publish Catalog",
       "tags": [
         "Qualidade",
@@ -9204,7 +9204,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/criteria",
-      "operationId": "list_criteria_quality_audit_5s_criteria_get",
+      "operationId": "list_audit_5s_criteria",
       "summary": "List Criteria",
       "tags": [
         "Qualidade",
@@ -9248,7 +9248,7 @@
     {
       "method": "PATCH",
       "path": "/quality/audit-5s/nonconformities/{nc_id}",
-      "operationId": "update_nonconformity_quality_audit_5s_nonconformities__nc_id__patch",
+      "operationId": "update_audit_5s_nonconformity",
       "summary": "Update Nonconformity",
       "tags": [
         "Qualidade",
@@ -9264,7 +9264,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
-      "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "operationId": "list_audit_5s_nc_actions",
       "summary": "List Nc Actions",
       "tags": [
         "Qualidade",
@@ -9296,7 +9296,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/actions",
-      "operationId": "add_nc_action_quality_audit_5s_nonconformities__nc_id__actions_post",
+      "operationId": "create_audit_5s_nc_action",
       "summary": "Add Nc Action",
       "tags": [
         "Qualidade",
@@ -9312,7 +9312,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
-      "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "operationId": "list_audit_5s_nc_attachments",
       "summary": "List Nc Attachments",
       "tags": [
         "Qualidade",
@@ -9344,7 +9344,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments",
-      "operationId": "upload_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments_post",
+      "operationId": "upload_audit_5s_nc_attachment",
       "summary": "Upload Nc Attachment",
       "tags": [
         "Qualidade",
@@ -9360,7 +9360,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/attachments/{attachment_id}/file",
-      "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "operationId": "download_audit_5s_nc_attachment",
       "summary": "Download Nc Attachment",
       "tags": [
         "Qualidade",
@@ -9392,7 +9392,7 @@
     {
       "method": "POST",
       "path": "/quality/audit-5s/nonconformities/{nc_id}/complete-action",
-      "operationId": "complete_nc_action_quality_audit_5s_nonconformities__nc_id__complete_action_post",
+      "operationId": "complete_audit_5s_nc_action",
       "summary": "Complete Nc Action",
       "tags": [
         "Qualidade",
@@ -9408,7 +9408,7 @@
     {
       "method": "GET",
       "path": "/quality/audit-5s/summary",
-      "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
+      "operationId": "get_audit_5s_summary",
       "summary": "Get Audit 5S Summary",
       "tags": [
         "Qualidade"
@@ -9456,7 +9456,7 @@
     {
       "method": "GET",
       "path": "/quality/branches",
-      "operationId": "list_quality_branches_quality_branches_get",
+      "operationId": "list_quality_branches",
       "summary": "List Quality Branches",
       "tags": [
         "Qualidade"
@@ -9576,7 +9576,7 @@
     {
       "method": "POST",
       "path": "/quality/kaizens/records",
-      "operationId": "create_kaizen_record_quality_kaizens_records_post",
+      "operationId": "create_kaizen_record",
       "summary": "Create Kaizen Record",
       "tags": [
         "Qualidade",
@@ -9592,7 +9592,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/export",
-      "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
+      "operationId": "export_kaizen_records",
       "summary": "Export Kaizen Records",
       "tags": [
         "Qualidade",
@@ -9624,7 +9624,7 @@
     {
       "method": "POST",
       "path": "/quality/kaizens/records/import",
-      "operationId": "import_kaizen_records_quality_kaizens_records_import_post",
+      "operationId": "import_kaizen_records",
       "summary": "Import Kaizen Records",
       "tags": [
         "Qualidade",
@@ -9640,7 +9640,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/summary",
-      "operationId": "get_kaizen_records_summary_quality_kaizens_records_summary_get",
+      "operationId": "get_kaizen_records_summary",
       "summary": "Get Kaizen Records Summary",
       "tags": [
         "Qualidade",
@@ -9689,7 +9689,7 @@
     {
       "method": "DELETE",
       "path": "/quality/kaizens/records/{record_id}",
-      "operationId": "delete_kaizen_record_quality_kaizens_records__record_id__delete",
+      "operationId": "delete_kaizen_record",
       "summary": "Delete Kaizen Record",
       "tags": [
         "Qualidade",
@@ -9738,7 +9738,7 @@
     {
       "method": "PUT",
       "path": "/quality/kaizens/records/{record_id}",
-      "operationId": "update_kaizen_record_quality_kaizens_records__record_id__put",
+      "operationId": "update_kaizen_record",
       "summary": "Update Kaizen Record",
       "tags": [
         "Qualidade",
@@ -9754,7 +9754,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/at",
-      "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
+      "operationId": "get_kaizen_at_date",
       "summary": "Get Kaizen At Date",
       "tags": [
         "Qualidade",
@@ -9794,7 +9794,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/audit-log",
-      "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
+      "operationId": "list_kaizen_audit_log",
       "summary": "List Kaizen Audit Log",
       "tags": [
         "Qualidade",
@@ -9826,7 +9826,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/evidences",
-      "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
+      "operationId": "list_kaizen_evidences",
       "summary": "List Kaizen Evidences",
       "tags": [
         "Qualidade",
@@ -9858,7 +9858,7 @@
     {
       "method": "POST",
       "path": "/quality/kaizens/records/{record_id}/evidences",
-      "operationId": "attach_kaizen_evidence_quality_kaizens_records__record_id__evidences_post",
+      "operationId": "attach_kaizen_evidence",
       "summary": "Attach Kaizen Evidence",
       "tags": [
         "Qualidade",
@@ -9874,7 +9874,7 @@
     {
       "method": "DELETE",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
-      "operationId": "delete_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__delete",
+      "operationId": "delete_kaizen_evidence",
       "summary": "Delete Kaizen Evidence",
       "tags": [
         "Qualidade",
@@ -9890,7 +9890,7 @@
     {
       "method": "PATCH",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}",
-      "operationId": "update_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__patch",
+      "operationId": "update_kaizen_evidence",
       "summary": "Update Kaizen Evidence",
       "tags": [
         "Qualidade",
@@ -9906,7 +9906,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/evidences/{evidence_id}/file",
-      "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
+      "operationId": "download_kaizen_evidence",
       "summary": "Download Kaizen Evidence",
       "tags": [
         "Qualidade",
@@ -9938,7 +9938,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/history",
-      "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
+      "operationId": "list_kaizen_history",
       "summary": "List Kaizen History",
       "tags": [
         "Qualidade",
@@ -9970,7 +9970,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/revisions",
-      "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
+      "operationId": "list_kaizen_revisions",
       "summary": "List Kaizen Revisions",
       "tags": [
         "Qualidade",
@@ -10002,7 +10002,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/revisions/{revision_number}",
-      "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
+      "operationId": "get_kaizen_revision",
       "summary": "Get Kaizen Revision",
       "tags": [
         "Qualidade",
@@ -10034,7 +10034,7 @@
     {
       "method": "GET",
       "path": "/quality/kaizens/records/{record_id}/savings-timeline",
-      "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
+      "operationId": "get_kaizen_savings_timeline",
       "summary": "Get Kaizen Savings Timeline",
       "tags": [
         "Qualidade",
@@ -10078,7 +10078,7 @@
     {
       "method": "POST",
       "path": "/quality/kaizens/records/{record_id}/versions",
-      "operationId": "create_kaizen_version_quality_kaizens_records__record_id__versions_post",
+      "operationId": "create_kaizen_version",
       "summary": "Create Kaizen Version",
       "tags": [
         "Qualidade",
@@ -10094,7 +10094,7 @@
     {
       "method": "DELETE",
       "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
-      "operationId": "delete_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__delete",
+      "operationId": "delete_kaizen_version",
       "summary": "Delete Kaizen Version",
       "tags": [
         "Qualidade",
@@ -10110,7 +10110,7 @@
     {
       "method": "PUT",
       "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}",
-      "operationId": "update_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__put",
+      "operationId": "update_kaizen_version",
       "summary": "Update Kaizen Version",
       "tags": [
         "Qualidade",
@@ -10126,7 +10126,7 @@
     {
       "method": "POST",
       "path": "/quality/kaizens/records/{record_id}/versions/{revision_number}/implement",
-      "operationId": "implement_kaizen_version_quality_kaizens_records__record_id__versions__revision_number__implement_post",
+      "operationId": "implement_kaizen_version",
       "summary": "Implement Kaizen Version",
       "tags": [
         "Qualidade",
@@ -10233,7 +10233,7 @@
     {
       "method": "GET",
       "path": "/quality/labels",
-      "operationId": "list_labels_quality_labels_get",
+      "operationId": "list_quality_labels",
       "summary": "List Labels",
       "tags": [
         "Qualidade",
@@ -10289,7 +10289,7 @@
     {
       "method": "POST",
       "path": "/quality/labels",
-      "operationId": "create_label_quality_labels_post",
+      "operationId": "create_quality_label",
       "summary": "Create Label",
       "tags": [
         "Qualidade",
@@ -10305,7 +10305,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/audit-events",
-      "operationId": "list_audit_events_quality_labels_audit_events_get",
+      "operationId": "list_quality_label_audit_events",
       "summary": "List Audit Events",
       "tags": [
         "Qualidade",
@@ -10361,7 +10361,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/checklist-template",
-      "operationId": "list_checklist_template_quality_labels_checklist_template_get",
+      "operationId": "list_quality_label_checklist_template",
       "summary": "List Checklist Template",
       "tags": [
         "Qualidade",
@@ -10393,7 +10393,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/inspectors/me",
-      "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
+      "operationId": "get_quality_label_inspector",
       "summary": "Get My Inspector",
       "tags": [
         "Qualidade",
@@ -10425,7 +10425,7 @@
     {
       "method": "PUT",
       "path": "/quality/labels/inspectors/me",
-      "operationId": "save_my_inspector_quality_labels_inspectors_me_put",
+      "operationId": "save_quality_label_inspector",
       "summary": "Save My Inspector",
       "tags": [
         "Qualidade",
@@ -10441,7 +10441,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/inspectors/me/signature",
-      "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
+      "operationId": "get_my_signature",
       "summary": "Get My Signature",
       "tags": [
         "Qualidade",
@@ -10473,7 +10473,7 @@
     {
       "method": "POST",
       "path": "/quality/labels/inspectors/me/signature",
-      "operationId": "upload_my_signature_quality_labels_inspectors_me_signature_post",
+      "operationId": "upload_my_signature",
       "summary": "Upload My Signature",
       "tags": [
         "Qualidade",
@@ -10489,7 +10489,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/lookup-op/{production_order}",
-      "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
+      "operationId": "lookup_quality_label_op",
       "summary": "Lookup Op",
       "tags": [
         "Qualidade",
@@ -10528,7 +10528,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/search-ops",
-      "operationId": "search_ops_quality_labels_search_ops_get",
+      "operationId": "search_quality_label_ops",
       "summary": "Search Ops",
       "tags": [
         "Qualidade",
@@ -10578,7 +10578,7 @@
     {
       "method": "DELETE",
       "path": "/quality/labels/{label_id}",
-      "operationId": "delete_label_quality_labels__label_id__delete",
+      "operationId": "delete_quality_label",
       "summary": "Delete Label",
       "tags": [
         "Qualidade",
@@ -10594,7 +10594,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/{label_id}",
-      "operationId": "get_label_quality_labels__label_id__get",
+      "operationId": "get_quality_label",
       "summary": "Get Label",
       "tags": [
         "Qualidade",
@@ -10626,7 +10626,7 @@
     {
       "method": "PATCH",
       "path": "/quality/labels/{label_id}/active",
-      "operationId": "set_label_active_quality_labels__label_id__active_patch",
+      "operationId": "set_quality_label_active",
       "summary": "Set Label Active",
       "tags": [
         "Qualidade",
@@ -10642,7 +10642,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/{label_id}/certificate",
-      "operationId": "get_certificate_quality_labels__label_id__certificate_get",
+      "operationId": "get_quality_label_certificate",
       "summary": "Get Certificate",
       "tags": [
         "Qualidade",
@@ -10674,7 +10674,7 @@
     {
       "method": "PUT",
       "path": "/quality/labels/{label_id}/certificate",
-      "operationId": "save_certificate_quality_labels__label_id__certificate_put",
+      "operationId": "save_quality_label_certificate",
       "summary": "Save Certificate",
       "tags": [
         "Qualidade",
@@ -10690,7 +10690,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/{label_id}/certificate/pdf",
-      "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
+      "operationId": "get_certificate_pdf",
       "summary": "Get Certificate Pdf",
       "tags": [
         "Qualidade",
@@ -10722,7 +10722,7 @@
     {
       "method": "GET",
       "path": "/quality/labels/{label_id}/qr",
-      "operationId": "get_label_qr_quality_labels__label_id__qr_get",
+      "operationId": "get_label_qr",
       "summary": "Get Label Qr",
       "tags": [
         "Qualidade",
@@ -10754,7 +10754,7 @@
     {
       "method": "GET",
       "path": "/quality/nonconformities",
-      "operationId": "list_nonconformity_route_quality_nonconformities_get",
+      "operationId": "list_nonconformities",
       "summary": "List Nonconformity Route",
       "tags": [
         "Qualidade"
@@ -10833,7 +10833,7 @@
     {
       "method": "GET",
       "path": "/quality/nonconformities/series",
-      "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
+      "operationId": "get_nonconformity_series",
       "summary": "Get Nonconformity Series",
       "tags": [
         "Qualidade"

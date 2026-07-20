@@ -223,34 +223,6 @@
         }
       }
     },
-    "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get": {
-      "locale": {
-        "en": {
-          "summary": "Download Kaizen Evidence",
-          "description": "Indicador numérico para «Kaizen — download de evidência»."
-        },
-        "pt-BR": {
-          "label": "Kaizen — download de evidência",
-          "summary": "Kaizen — download de evidência",
-          "description": "Indicador numérico para «Kaizen — download de evidência»."
-        }
-      },
-      "category": "quality"
-    },
-    "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get": {
-      "locale": {
-        "en": {
-          "summary": "Download Nc Attachment",
-          "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — download de anexo da NC",
-          "summary": "Auditoria 5S — download de anexo da NC",
-          "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
-        }
-      },
-      "category": "quality"
-    },
     "download_quality_action_plan_evidence": {
       "locale": {
         "en": {
@@ -261,34 +233,6 @@
           "label": "Consulta — Quality action plan evidence",
           "summary": "Consulta — Quality action plan evidence",
           "description": "Consulta operacional: «Consulta — Quality action plan evidence»."
-        }
-      },
-      "category": "quality"
-    },
-    "download_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__file_get": {
-      "locale": {
-        "en": {
-          "summary": "Download Response Attachment",
-          "description": "Indicador numérico para «Response anexo»."
-        },
-        "pt-BR": {
-          "label": "Response anexo",
-          "summary": "Response anexo",
-          "description": "Indicador numérico para «Response anexo»."
-        }
-      },
-      "category": "quality"
-    },
-    "export_kaizen_records_quality_kaizens_records_export_get": {
-      "locale": {
-        "en": {
-          "summary": "Export Kaizen Records",
-          "description": "Indicador numérico para «Kaizen Records»."
-        },
-        "pt-BR": {
-          "label": "Kaizen Records",
-          "summary": "Kaizen Records",
-          "description": "Indicador numérico para «Kaizen Records»."
         }
       },
       "category": "quality"
@@ -349,48 +293,6 @@
       },
       "category": "quality"
     },
-    "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Audit 5S Dashboard",
-          "description": "Indicador numérico para «Auditoria 5S — painel analítico»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — painel analítico",
-          "summary": "Auditoria 5S — painel analítico",
-          "description": "Indicador numérico para «Auditoria 5S — painel analítico»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_audit_5s_summary_quality_audit_5s_summary_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Audit 5S Summary",
-          "description": "Indicador numérico para «Auditoria 5S — resumo»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — resumo",
-          "summary": "Auditoria 5S — resumo",
-          "description": "Indicador numérico para «Auditoria 5S — resumo»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_audit_quality_audit_5s_audits__audit_id__get": {
-      "locale": {
-        "en": {
-          "summary": "Get Audit",
-          "description": "Indicador numérico para «Auditoria 5S — detalhe»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — detalhe",
-          "summary": "Auditoria 5S — detalhe",
-          "description": "Indicador numérico para «Auditoria 5S — detalhe»."
-        }
-      },
-      "category": "quality"
-    },
     "get_branch_new_business_rol_target_pct": {
       "locale": {
         "en": {
@@ -446,48 +348,6 @@
         }
       },
       "category": "system"
-    },
-    "get_catalog_quality_audit_5s_catalog_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Catalog",
-          "description": "Indicador numérico para «Catalog»."
-        },
-        "pt-BR": {
-          "label": "Catalog",
-          "summary": "Catalog",
-          "description": "Indicador numérico para «Catalog»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Certificate Pdf",
-          "description": "Indicador numérico para «Certificate PDF»."
-        },
-        "pt-BR": {
-          "label": "Certificate PDF",
-          "summary": "Certificate PDF",
-          "description": "Indicador numérico para «Certificate PDF»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_certificate_quality_labels__label_id__certificate_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Certificate",
-          "description": "Indicador numérico para «Etiqueta — certificado»."
-        },
-        "pt-BR": {
-          "label": "Etiqueta — certificado",
-          "summary": "Etiqueta — certificado",
-          "description": "Indicador numérico para «Etiqueta — certificado»."
-        }
-      },
-      "category": "quality"
     },
     "get_commercial_proposal": {
       "locale": {
@@ -951,20 +811,6 @@
       },
       "category": "quality"
     },
-    "get_kaizen_at_date_quality_kaizens_records__record_id__at_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Kaizen At Date",
-          "description": "Indicador numérico para «Kaizen At Date»."
-        },
-        "pt-BR": {
-          "label": "Kaizen At Date",
-          "summary": "Kaizen At Date",
-          "description": "Indicador numérico para «Kaizen At Date»."
-        }
-      },
-      "category": "quality"
-    },
     "get_kaizen_by_id": {
       "locale": {
         "en": {
@@ -993,48 +839,6 @@
       },
       "category": "quality"
     },
-    "get_kaizen_records_summary_quality_kaizens_records_summary_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Kaizen Records Summary",
-          "description": "Indicador numérico para «Kaizen Records Summary»."
-        },
-        "pt-BR": {
-          "label": "Kaizen Records Summary",
-          "summary": "Kaizen Records Summary",
-          "description": "Indicador numérico para «Kaizen Records Summary»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get": {
-      "locale": {
-        "en": {
-          "summary": "Get Kaizen Revision",
-          "description": "Indicador numérico para «Kaizen Revision»."
-        },
-        "pt-BR": {
-          "label": "Kaizen Revision",
-          "summary": "Kaizen Revision",
-          "description": "Indicador numérico para «Kaizen Revision»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Kaizen Savings Timeline",
-          "description": "Indicador numérico para «Kaizen Savings Timeline»."
-        },
-        "pt-BR": {
-          "label": "Kaizen Savings Timeline",
-          "summary": "Kaizen Savings Timeline",
-          "description": "Indicador numérico para «Kaizen Savings Timeline»."
-        }
-      },
-      "category": "quality"
-    },
     "get_kaizen_summary": {
       "locale": {
         "en": {
@@ -1045,34 +849,6 @@
           "label": "Kaizens — resumo e listagem (Google Sheets)",
           "summary": "Kaizens — resumo e listagem (Google Sheets)",
           "description": "Indicador numérico para «Kaizens — resumo e listagem (Google Sheets)»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_label_qr_quality_labels__label_id__qr_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Label Qr",
-          "description": "Indicador numérico para «Etiqueta — QR Code»."
-        },
-        "pt-BR": {
-          "label": "Etiqueta — QR Code",
-          "summary": "Etiqueta — QR Code",
-          "description": "Indicador numérico para «Etiqueta — QR Code»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_label_quality_labels__label_id__get": {
-      "locale": {
-        "en": {
-          "summary": "Get Label",
-          "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
-        },
-        "pt-BR": {
-          "label": "Etiqueta de qualidade — detalhe",
-          "summary": "Etiqueta de qualidade — detalhe",
-          "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
         }
       },
       "category": "quality"
@@ -1161,34 +937,6 @@
       },
       "category": "engineering"
     },
-    "get_my_inspector_quality_labels_inspectors_me_get": {
-      "locale": {
-        "en": {
-          "summary": "Get My Inspector",
-          "description": "Indicador numérico para «Meu perfil de inspetor»."
-        },
-        "pt-BR": {
-          "label": "Meu perfil de inspetor",
-          "summary": "Meu perfil de inspetor",
-          "description": "Indicador numérico para «Meu perfil de inspetor»."
-        }
-      },
-      "category": "quality"
-    },
-    "get_my_signature_quality_labels_inspectors_me_signature_get": {
-      "locale": {
-        "en": {
-          "summary": "Get My Signature",
-          "description": "Indicador numérico para «Minha assinatura de inspetor»."
-        },
-        "pt-BR": {
-          "label": "Minha assinatura de inspetor",
-          "summary": "Minha assinatura de inspetor",
-          "description": "Indicador numérico para «Minha assinatura de inspetor»."
-        }
-      },
-      "category": "quality"
-    },
     "get_new_business_rol_pct": {
       "locale": {
         "en": {
@@ -1230,20 +978,6 @@
         }
       },
       "category": "commercial"
-    },
-    "get_nonconformity_series_quality_nonconformities_series_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Nonconformity Series",
-          "description": "Indicador numérico para «Não conformidades — série temporal»."
-        },
-        "pt-BR": {
-          "label": "Não conformidades — série temporal",
-          "summary": "Não conformidades — série temporal",
-          "description": "Indicador numérico para «Não conformidades — série temporal»."
-        }
-      },
-      "category": "quality"
     },
     "get_observability_snapshot_system_observability_snapshot_get": {
       "locale": {
@@ -2379,76 +2113,6 @@
       },
       "category": "engineering"
     },
-    "list_areas_quality_audit_5s_areas_get": {
-      "locale": {
-        "en": {
-          "summary": "List Areas",
-          "description": "Indicador numérico para «Auditoria 5S — áreas»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — áreas",
-          "summary": "Auditoria 5S — áreas",
-          "description": "Indicador numérico para «Auditoria 5S — áreas»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_audit_events_quality_labels_audit_events_get": {
-      "locale": {
-        "en": {
-          "summary": "List Audit Events",
-          "description": "Indicador numérico para «Etiquetas — eventos de auditoria»."
-        },
-        "pt-BR": {
-          "label": "Etiquetas — eventos de auditoria",
-          "summary": "Etiquetas — eventos de auditoria",
-          "description": "Indicador numérico para «Etiquetas — eventos de auditoria»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get": {
-      "locale": {
-        "en": {
-          "summary": "List Audit Nc Attachments",
-          "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — anexos de NC da auditoria",
-          "summary": "Auditoria 5S — anexos de NC da auditoria",
-          "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get": {
-      "locale": {
-        "en": {
-          "summary": "List Audit Nonconformities",
-          "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — não conformidades",
-          "summary": "Auditoria 5S — não conformidades",
-          "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_audits_quality_audit_5s_audits_get": {
-      "locale": {
-        "en": {
-          "summary": "List Audits",
-          "description": "Indicador numérico para «Auditoria 5S — listagem»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — listagem",
-          "summary": "Auditoria 5S — listagem",
-          "description": "Indicador numérico para «Auditoria 5S — listagem»."
-        }
-      },
-      "category": "quality"
-    },
     "list_bookings_scheduling_bookings_get": {
       "locale": {
         "en": {
@@ -2463,34 +2127,6 @@
       },
       "category": "scheduling"
     },
-    "list_catalog_publications_quality_audit_5s_catalog_publications_get": {
-      "locale": {
-        "en": {
-          "summary": "List Catalog Publications",
-          "description": "Indicador numérico para «Catalog Publications»."
-        },
-        "pt-BR": {
-          "label": "Catalog Publications",
-          "summary": "Catalog Publications",
-          "description": "Indicador numérico para «Catalog Publications»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_checklist_template_quality_labels_checklist_template_get": {
-      "locale": {
-        "en": {
-          "summary": "List Checklist Template",
-          "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
-        },
-        "pt-BR": {
-          "label": "Etiquetas — modelo de checklist",
-          "summary": "Etiquetas — modelo de checklist",
-          "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
-        }
-      },
-      "category": "quality"
-    },
     "list_commercial_proposals": {
       "locale": {
         "en": {
@@ -2504,20 +2140,6 @@
         }
       },
       "category": "commercial"
-    },
-    "list_criteria_quality_audit_5s_criteria_get": {
-      "locale": {
-        "en": {
-          "summary": "List Criteria",
-          "description": "Indicador numérico para «Auditoria 5S — critérios»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — critérios",
-          "summary": "Auditoria 5S — critérios",
-          "description": "Indicador numérico para «Auditoria 5S — critérios»."
-        }
-      },
-      "category": "quality"
     },
     "list_eficiencia_fabril_appointments": {
       "locale": {
@@ -2561,48 +2183,6 @@
       },
       "category": "hr"
     },
-    "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get": {
-      "locale": {
-        "en": {
-          "summary": "List Kaizen Audit Log",
-          "description": "Indicador numérico para «Kaizen Audit Log»."
-        },
-        "pt-BR": {
-          "label": "Kaizen Audit Log",
-          "summary": "Kaizen Audit Log",
-          "description": "Indicador numérico para «Kaizen Audit Log»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get": {
-      "locale": {
-        "en": {
-          "summary": "List Kaizen Evidences",
-          "description": "Indicador numérico para «Kaizen evidências»."
-        },
-        "pt-BR": {
-          "label": "Kaizen evidências",
-          "summary": "Kaizen evidências",
-          "description": "Indicador numérico para «Kaizen evidências»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_kaizen_history_quality_kaizens_records__record_id__history_get": {
-      "locale": {
-        "en": {
-          "summary": "List Kaizen History",
-          "description": "Indicador numérico para «Kaizen History»."
-        },
-        "pt-BR": {
-          "label": "Kaizen History",
-          "summary": "Kaizen History",
-          "description": "Indicador numérico para «Kaizen History»."
-        }
-      },
-      "category": "quality"
-    },
     "list_kaizen_records": {
       "locale": {
         "en": {
@@ -2613,34 +2193,6 @@
           "label": "Cadastro operacional de kaizens (PostgreSQL)",
           "summary": "Cadastro operacional de kaizens (PostgreSQL)",
           "description": "Listagem paginada de «Cadastro operacional de kaizens (PostgreSQL)» para uso em tabela ou gráfico no TV."
-        }
-      },
-      "category": "quality"
-    },
-    "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get": {
-      "locale": {
-        "en": {
-          "summary": "List Kaizen Revisions",
-          "description": "Indicador numérico para «Kaizen Revisions»."
-        },
-        "pt-BR": {
-          "label": "Kaizen Revisions",
-          "summary": "Kaizen Revisions",
-          "description": "Indicador numérico para «Kaizen Revisions»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_labels_quality_labels_get": {
-      "locale": {
-        "en": {
-          "summary": "List Labels",
-          "description": "Indicador numérico para «Etiquetas de qualidade — listagem»."
-        },
-        "pt-BR": {
-          "label": "Etiquetas de qualidade — listagem",
-          "summary": "Etiquetas de qualidade — listagem",
-          "description": "Indicador numérico para «Etiquetas de qualidade — listagem»."
         }
       },
       "category": "quality"
@@ -2742,62 +2294,6 @@
         }
       },
       "category": "engineering"
-    },
-    "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get": {
-      "locale": {
-        "en": {
-          "summary": "List Nc Actions",
-          "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — ações da NC",
-          "summary": "Auditoria 5S — ações da NC",
-          "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get": {
-      "locale": {
-        "en": {
-          "summary": "List Nc Attachments",
-          "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — anexos da NC",
-          "summary": "Auditoria 5S — anexos da NC",
-          "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get": {
-      "locale": {
-        "en": {
-          "summary": "List Nc Candidates",
-          "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
-        },
-        "pt-BR": {
-          "label": "Auditoria 5S — candidatos a NC",
-          "summary": "Auditoria 5S — candidatos a NC",
-          "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
-        }
-      },
-      "category": "quality"
-    },
-    "list_nonconformity_route_quality_nonconformities_get": {
-      "locale": {
-        "en": {
-          "summary": "List Nonconformity Route",
-          "description": "Indicador numérico para «Não conformidades — listagem»."
-        },
-        "pt-BR": {
-          "label": "Não conformidades — listagem",
-          "summary": "Não conformidades — listagem",
-          "description": "Indicador numérico para «Não conformidades — listagem»."
-        }
-      },
-      "category": "quality"
     },
     "list_ops_abertas_pedidos_venda": {
       "locale": {
@@ -3023,20 +2519,6 @@
       },
       "category": "quality"
     },
-    "list_quality_branches_quality_branches_get": {
-      "locale": {
-        "en": {
-          "summary": "List Quality Branches",
-          "description": "Indicador numérico para «Quality Branches»."
-        },
-        "pt-BR": {
-          "label": "Quality Branches",
-          "summary": "Quality Branches",
-          "description": "Indicador numérico para «Quality Branches»."
-        }
-      },
-      "category": "quality"
-    },
     "list_quality_solution_patterns": {
       "locale": {
         "en": {
@@ -3065,20 +2547,6 @@
       },
       "category": "scheduling"
     },
-    "list_response_attachments_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_get": {
-      "locale": {
-        "en": {
-          "summary": "List Response Attachments",
-          "description": "Indicador numérico para «Response anexos»."
-        },
-        "pt-BR": {
-          "label": "Response anexos",
-          "summary": "Response anexos",
-          "description": "Indicador numérico para «Response anexos»."
-        }
-      },
-      "category": "quality"
-    },
     "list_sale_orders": {
       "locale": {
         "en": {
@@ -3106,20 +2574,6 @@
         }
       },
       "category": "engineering"
-    },
-    "lookup_op_quality_labels_lookup_op__production_order__get": {
-      "locale": {
-        "en": {
-          "summary": "Lookup Op",
-          "description": "Indicador numérico para «Lookup Op»."
-        },
-        "pt-BR": {
-          "label": "Lookup Op",
-          "summary": "Lookup Op",
-          "description": "Indicador numérico para «Lookup Op»."
-        }
-      },
-      "category": "quality"
     },
     "root_health_get": {
       "locale": {
@@ -3176,20 +2630,6 @@
         }
       },
       "category": "commercial"
-    },
-    "search_ops_quality_labels_search_ops_get": {
-      "locale": {
-        "en": {
-          "summary": "Search Ops",
-          "description": "Indicador numérico para «Buscar Ops»."
-        },
-        "pt-BR": {
-          "label": "Buscar Ops",
-          "summary": "Buscar Ops",
-          "description": "Indicador numérico para «Buscar Ops»."
-        }
-      },
-      "category": "quality"
     },
     "search_quality_action_plan_evidences": {
       "locale": {
@@ -3302,6 +2742,566 @@
         }
       },
       "category": "system"
+    },
+    "get_audit_5s_analytics_dashboard": {
+      "locale": {
+        "en": {
+          "summary": "Get Audit 5S Dashboard",
+          "description": "Indicador numérico para «Auditoria 5S — painel analítico»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — painel analítico",
+          "summary": "Auditoria 5S — painel analítico",
+          "description": "Indicador numérico para «Auditoria 5S — painel analítico»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_areas": {
+      "locale": {
+        "en": {
+          "summary": "List Areas",
+          "description": "Indicador numérico para «Auditoria 5S — áreas»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — áreas",
+          "summary": "Auditoria 5S — áreas",
+          "description": "Indicador numérico para «Auditoria 5S — áreas»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_audits": {
+      "locale": {
+        "en": {
+          "summary": "List Audits",
+          "description": "Indicador numérico para «Auditoria 5S — listagem»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — listagem",
+          "summary": "Auditoria 5S — listagem",
+          "description": "Indicador numérico para «Auditoria 5S — listagem»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_audit_5s_audit": {
+      "locale": {
+        "en": {
+          "summary": "Get Audit",
+          "description": "Indicador numérico para «Auditoria 5S — detalhe»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — detalhe",
+          "summary": "Auditoria 5S — detalhe",
+          "description": "Indicador numérico para «Auditoria 5S — detalhe»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_audit_nc_attachments": {
+      "locale": {
+        "en": {
+          "summary": "List Audit Nc Attachments",
+          "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — anexos de NC da auditoria",
+          "summary": "Auditoria 5S — anexos de NC da auditoria",
+          "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_nc_candidates": {
+      "locale": {
+        "en": {
+          "summary": "List Nc Candidates",
+          "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — candidatos a NC",
+          "summary": "Auditoria 5S — candidatos a NC",
+          "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_nonconformities": {
+      "locale": {
+        "en": {
+          "summary": "List Audit Nonconformities",
+          "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — não conformidades",
+          "summary": "Auditoria 5S — não conformidades",
+          "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_response_attachments": {
+      "locale": {
+        "en": {
+          "summary": "List Response Attachments",
+          "description": "Indicador numérico para «Response anexos»."
+        },
+        "pt-BR": {
+          "label": "Response anexos",
+          "summary": "Response anexos",
+          "description": "Indicador numérico para «Response anexos»."
+        }
+      },
+      "category": "quality"
+    },
+    "download_audit_5s_response_attachment": {
+      "locale": {
+        "en": {
+          "summary": "Download Response Attachment",
+          "description": "Indicador numérico para «Response anexo»."
+        },
+        "pt-BR": {
+          "label": "Response anexo",
+          "summary": "Response anexo",
+          "description": "Indicador numérico para «Response anexo»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_audit_5s_catalog": {
+      "locale": {
+        "en": {
+          "summary": "Get Catalog",
+          "description": "Indicador numérico para «Catalog»."
+        },
+        "pt-BR": {
+          "label": "Catalog",
+          "summary": "Catalog",
+          "description": "Indicador numérico para «Catalog»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_catalog_publications": {
+      "locale": {
+        "en": {
+          "summary": "List Catalog Publications",
+          "description": "Indicador numérico para «Catalog Publications»."
+        },
+        "pt-BR": {
+          "label": "Catalog Publications",
+          "summary": "Catalog Publications",
+          "description": "Indicador numérico para «Catalog Publications»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_criteria": {
+      "locale": {
+        "en": {
+          "summary": "List Criteria",
+          "description": "Indicador numérico para «Auditoria 5S — critérios»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — critérios",
+          "summary": "Auditoria 5S — critérios",
+          "description": "Indicador numérico para «Auditoria 5S — critérios»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_nc_actions": {
+      "locale": {
+        "en": {
+          "summary": "List Nc Actions",
+          "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — ações da NC",
+          "summary": "Auditoria 5S — ações da NC",
+          "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_audit_5s_nc_attachments": {
+      "locale": {
+        "en": {
+          "summary": "List Nc Attachments",
+          "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — anexos da NC",
+          "summary": "Auditoria 5S — anexos da NC",
+          "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
+        }
+      },
+      "category": "quality"
+    },
+    "download_audit_5s_nc_attachment": {
+      "locale": {
+        "en": {
+          "summary": "Download Nc Attachment",
+          "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — download de anexo da NC",
+          "summary": "Auditoria 5S — download de anexo da NC",
+          "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_audit_5s_summary": {
+      "locale": {
+        "en": {
+          "summary": "Get Audit 5S Summary",
+          "description": "Indicador numérico para «Auditoria 5S — resumo»."
+        },
+        "pt-BR": {
+          "label": "Auditoria 5S — resumo",
+          "summary": "Auditoria 5S — resumo",
+          "description": "Indicador numérico para «Auditoria 5S — resumo»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_quality_branches": {
+      "locale": {
+        "en": {
+          "summary": "List Quality Branches",
+          "description": "Indicador numérico para «Quality Branches»."
+        },
+        "pt-BR": {
+          "label": "Quality Branches",
+          "summary": "Quality Branches",
+          "description": "Indicador numérico para «Quality Branches»."
+        }
+      },
+      "category": "quality"
+    },
+    "export_kaizen_records": {
+      "locale": {
+        "en": {
+          "summary": "Export Kaizen Records",
+          "description": "Indicador numérico para «Kaizen Records»."
+        },
+        "pt-BR": {
+          "label": "Kaizen Records",
+          "summary": "Kaizen Records",
+          "description": "Indicador numérico para «Kaizen Records»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_kaizen_records_summary": {
+      "locale": {
+        "en": {
+          "summary": "Get Kaizen Records Summary",
+          "description": "Indicador numérico para «Kaizen Records Summary»."
+        },
+        "pt-BR": {
+          "label": "Kaizen Records Summary",
+          "summary": "Kaizen Records Summary",
+          "description": "Indicador numérico para «Kaizen Records Summary»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_kaizen_at_date": {
+      "locale": {
+        "en": {
+          "summary": "Get Kaizen At Date",
+          "description": "Indicador numérico para «Kaizen At Date»."
+        },
+        "pt-BR": {
+          "label": "Kaizen At Date",
+          "summary": "Kaizen At Date",
+          "description": "Indicador numérico para «Kaizen At Date»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_kaizen_audit_log": {
+      "locale": {
+        "en": {
+          "summary": "List Kaizen Audit Log",
+          "description": "Indicador numérico para «Kaizen Audit Log»."
+        },
+        "pt-BR": {
+          "label": "Kaizen Audit Log",
+          "summary": "Kaizen Audit Log",
+          "description": "Indicador numérico para «Kaizen Audit Log»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_kaizen_evidences": {
+      "locale": {
+        "en": {
+          "summary": "List Kaizen Evidences",
+          "description": "Indicador numérico para «Kaizen evidências»."
+        },
+        "pt-BR": {
+          "label": "Kaizen evidências",
+          "summary": "Kaizen evidências",
+          "description": "Indicador numérico para «Kaizen evidências»."
+        }
+      },
+      "category": "quality"
+    },
+    "download_kaizen_evidence": {
+      "locale": {
+        "en": {
+          "summary": "Download Kaizen Evidence",
+          "description": "Indicador numérico para «Kaizen — download de evidência»."
+        },
+        "pt-BR": {
+          "label": "Kaizen — download de evidência",
+          "summary": "Kaizen — download de evidência",
+          "description": "Indicador numérico para «Kaizen — download de evidência»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_kaizen_history": {
+      "locale": {
+        "en": {
+          "summary": "List Kaizen History",
+          "description": "Indicador numérico para «Kaizen History»."
+        },
+        "pt-BR": {
+          "label": "Kaizen History",
+          "summary": "Kaizen History",
+          "description": "Indicador numérico para «Kaizen History»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_kaizen_revisions": {
+      "locale": {
+        "en": {
+          "summary": "List Kaizen Revisions",
+          "description": "Indicador numérico para «Kaizen Revisions»."
+        },
+        "pt-BR": {
+          "label": "Kaizen Revisions",
+          "summary": "Kaizen Revisions",
+          "description": "Indicador numérico para «Kaizen Revisions»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_kaizen_revision": {
+      "locale": {
+        "en": {
+          "summary": "Get Kaizen Revision",
+          "description": "Indicador numérico para «Kaizen Revision»."
+        },
+        "pt-BR": {
+          "label": "Kaizen Revision",
+          "summary": "Kaizen Revision",
+          "description": "Indicador numérico para «Kaizen Revision»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_kaizen_savings_timeline": {
+      "locale": {
+        "en": {
+          "summary": "Get Kaizen Savings Timeline",
+          "description": "Indicador numérico para «Kaizen Savings Timeline»."
+        },
+        "pt-BR": {
+          "label": "Kaizen Savings Timeline",
+          "summary": "Kaizen Savings Timeline",
+          "description": "Indicador numérico para «Kaizen Savings Timeline»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_quality_labels": {
+      "locale": {
+        "en": {
+          "summary": "List Labels",
+          "description": "Indicador numérico para «Etiquetas de qualidade — listagem»."
+        },
+        "pt-BR": {
+          "label": "Etiquetas de qualidade — listagem",
+          "summary": "Etiquetas de qualidade — listagem",
+          "description": "Indicador numérico para «Etiquetas de qualidade — listagem»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_quality_label_audit_events": {
+      "locale": {
+        "en": {
+          "summary": "List Audit Events",
+          "description": "Indicador numérico para «Etiquetas — eventos de auditoria»."
+        },
+        "pt-BR": {
+          "label": "Etiquetas — eventos de auditoria",
+          "summary": "Etiquetas — eventos de auditoria",
+          "description": "Indicador numérico para «Etiquetas — eventos de auditoria»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_quality_label_checklist_template": {
+      "locale": {
+        "en": {
+          "summary": "List Checklist Template",
+          "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
+        },
+        "pt-BR": {
+          "label": "Etiquetas — modelo de checklist",
+          "summary": "Etiquetas — modelo de checklist",
+          "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_quality_label_inspector": {
+      "locale": {
+        "en": {
+          "summary": "Get My Inspector",
+          "description": "Indicador numérico para «Meu perfil de inspetor»."
+        },
+        "pt-BR": {
+          "label": "Meu perfil de inspetor",
+          "summary": "Meu perfil de inspetor",
+          "description": "Indicador numérico para «Meu perfil de inspetor»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_my_signature": {
+      "locale": {
+        "en": {
+          "summary": "Get My Signature",
+          "description": "Indicador numérico para «Minha assinatura de inspetor»."
+        },
+        "pt-BR": {
+          "label": "Minha assinatura de inspetor",
+          "summary": "Minha assinatura de inspetor",
+          "description": "Indicador numérico para «Minha assinatura de inspetor»."
+        }
+      },
+      "category": "quality"
+    },
+    "lookup_quality_label_op": {
+      "locale": {
+        "en": {
+          "summary": "Lookup Op",
+          "description": "Indicador numérico para «Lookup Op»."
+        },
+        "pt-BR": {
+          "label": "Lookup Op",
+          "summary": "Lookup Op",
+          "description": "Indicador numérico para «Lookup Op»."
+        }
+      },
+      "category": "quality"
+    },
+    "search_quality_label_ops": {
+      "locale": {
+        "en": {
+          "summary": "Search Ops",
+          "description": "Indicador numérico para «Buscar Ops»."
+        },
+        "pt-BR": {
+          "label": "Buscar Ops",
+          "summary": "Buscar Ops",
+          "description": "Indicador numérico para «Buscar Ops»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_quality_label": {
+      "locale": {
+        "en": {
+          "summary": "Get Label",
+          "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
+        },
+        "pt-BR": {
+          "label": "Etiqueta de qualidade — detalhe",
+          "summary": "Etiqueta de qualidade — detalhe",
+          "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_quality_label_certificate": {
+      "locale": {
+        "en": {
+          "summary": "Get Certificate",
+          "description": "Indicador numérico para «Etiqueta — certificado»."
+        },
+        "pt-BR": {
+          "label": "Etiqueta — certificado",
+          "summary": "Etiqueta — certificado",
+          "description": "Indicador numérico para «Etiqueta — certificado»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_certificate_pdf": {
+      "locale": {
+        "en": {
+          "summary": "Get Certificate Pdf",
+          "description": "Indicador numérico para «Certificate PDF»."
+        },
+        "pt-BR": {
+          "label": "Certificate PDF",
+          "summary": "Certificate PDF",
+          "description": "Indicador numérico para «Certificate PDF»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_label_qr": {
+      "locale": {
+        "en": {
+          "summary": "Get Label Qr",
+          "description": "Indicador numérico para «Etiqueta — QR Code»."
+        },
+        "pt-BR": {
+          "label": "Etiqueta — QR Code",
+          "summary": "Etiqueta — QR Code",
+          "description": "Indicador numérico para «Etiqueta — QR Code»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_nonconformities": {
+      "locale": {
+        "en": {
+          "summary": "List Nonconformity Route",
+          "description": "Indicador numérico para «Não conformidades — listagem»."
+        },
+        "pt-BR": {
+          "label": "Não conformidades — listagem",
+          "summary": "Não conformidades — listagem",
+          "description": "Indicador numérico para «Não conformidades — listagem»."
+        }
+      },
+      "category": "quality"
+    },
+    "get_nonconformity_series": {
+      "locale": {
+        "en": {
+          "summary": "Get Nonconformity Series",
+          "description": "Indicador numérico para «Não conformidades — série temporal»."
+        },
+        "pt-BR": {
+          "label": "Não conformidades — série temporal",
+          "summary": "Não conformidades — série temporal",
+          "description": "Indicador numérico para «Não conformidades — série temporal»."
+        }
+      },
+      "category": "quality"
     }
   }
 }
