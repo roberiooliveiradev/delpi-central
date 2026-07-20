@@ -140,8 +140,8 @@ export function RevisaoInvestimentosSection({
     <>
       {investimentos.length > 0 ? (
         <>
-          <div className="ds-table-wrap ds-cadastro-section__table">
-            <table className="ds-table ds-table--compact">
+          <div className={`${tableCn.wrap} ds-cadastro-section__table`}>
+            <table className={tableCn.compactTable}>
               <thead>
                 <tr>
                   <th>

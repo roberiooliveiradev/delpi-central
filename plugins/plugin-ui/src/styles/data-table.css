@@ -43,6 +43,10 @@ table.delpi-ui-table {
   border-collapse: collapse;
   font-size: var(--delpi-ui-table-font-size, 13px);
   color: var(--delpi-ui-text, var(--text, #111111));
+  --delpi-ui-table-cell-pad-y: 10px;
+  --delpi-ui-table-cell-pad-x: 16px;
+  --delpi-ui-table-numeric-pad-x: 20px;
+  --delpi-ui-table-numeric-min-width: 6.5rem;
 }
 
 table.delpi-ui-table--section {
@@ -52,7 +56,7 @@ table.delpi-ui-table--section {
 
 table.delpi-ui-table th,
 table.delpi-ui-table td {
-  padding: 10px 12px;
+  padding: var(--delpi-ui-table-cell-pad-y) var(--delpi-ui-table-cell-pad-x);
   border-bottom: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
   text-align: left;
   vertical-align: top;
@@ -74,9 +78,15 @@ table.delpi-ui-table--sortable th {
   padding: 0;
 }
 
+table.delpi-ui-table--compact {
+  --delpi-ui-table-cell-pad-y: 8px;
+  --delpi-ui-table-cell-pad-x: 14px;
+  --delpi-ui-table-numeric-pad-x: 18px;
+}
+
 table.delpi-ui-table--compact th,
 table.delpi-ui-table--compact td {
-  padding: 8px 10px;
+  padding: var(--delpi-ui-table-cell-pad-y) var(--delpi-ui-table-cell-pad-x);
 }
 
 table.delpi-ui-table:not(.delpi-ui-table--grid-preview) tbody tr:last-child td {
@@ -156,6 +166,9 @@ table.delpi-ui-table:not(.delpi-ui-table--grid-preview) tbody tr:last-child td {
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  min-width: var(--delpi-ui-table-numeric-min-width, 6.5rem);
+  padding-inline: var(--delpi-ui-table-numeric-pad-x, 20px);
+  box-sizing: border-box;
 }
 
 .delpi-ui-table__col--compact {
@@ -165,6 +178,7 @@ table.delpi-ui-table:not(.delpi-ui-table--grid-preview) tbody tr:last-child td {
 
 .delpi-ui-table__col--numeric .delpi-ui-table__sort-button {
   justify-content: flex-end;
+  padding-inline: var(--delpi-ui-table-numeric-pad-x, 20px);
 }
 
 table.delpi-ui-table th[data-align="right"],
