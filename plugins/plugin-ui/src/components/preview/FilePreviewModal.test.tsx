@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -49,6 +51,16 @@ describe("FilePreviewModal host containment", () => {
     expect(dialog.closest("[data-modal-contained='true']")).toBeTruthy();
 
     host.remove();
+  });
+
+  it("CSS de prévia respeita host-fill (sem max-height de viewport)", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/file-preview.css"), "utf8");
+    expect(css).toMatch(
+      /\.delpi-ui-file-preview-modal\.delpi-ui-modal--host-fill\s*\{[^}]*max-height:\s*none/s,
+    );
+    expect(css).toMatch(
+      /\.delpi-ui-file-preview-modal\.delpi-ui-modal--host-fill\s+\.delpi-ui-spreadsheet-preview[^\{]*\{[^}]*max-height:\s*none/s,
+    );
   });
 
   it("permite overlay fullscreen quando containInHost=false", () => {

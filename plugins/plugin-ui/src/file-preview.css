@@ -511,6 +511,82 @@ button.delpi-ui-spreadsheet-preview__tab:not(.is-active):hover {
   color: var(--delpi-ui-preview-text-muted);
 }
 
+/*
+ * Host-contained (área do MFE): não usar vh/max-height de viewport — preenche o host
+ * com margem/blur do ModalShell e deixa planilha/PDF/DOCX crescer no body.
+ */
+.delpi-ui-file-preview-modal-overlay.delpi-ui-modal-overlay--contained {
+  position: absolute;
+  inset: 0;
+  padding: 12px;
+  align-items: stretch;
+  justify-content: stretch;
+  background: color-mix(in srgb, #0f172a 42%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  border-radius: 12px;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview-modal__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-spreadsheet-preview,
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-docx-preview {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview__pdf {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview__image {
+  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview__text-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: hidden;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview__text {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview__after,
+.delpi-ui-file-preview-modal.delpi-ui-modal--host-fill .delpi-ui-file-preview__footer {
+  flex-shrink: 0;
+}
+
 .delpi-ui-docx-preview {
   --delpi-ui-docx-canvas: #d8d8d8;
   --delpi-ui-docx-page-bg: #ffffff;

@@ -21,6 +21,7 @@ export function EvidenceLocalPreviewModal({ file, open, onClose }: Props) {
       mimeType={file?.type}
       fileName={file?.name}
       enabled={mode !== "none"}
+      portalScopeClassName="dashboard-quality-action-plans"
       metaItems={file ? [formatEvidenceFileSize(file.size), file.type || "Tipo não informado"] : undefined}
     />
   );

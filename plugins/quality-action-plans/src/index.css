@@ -1792,16 +1792,8 @@
   margin: 6px 0 0;
   font-size: var(--pac-font-sm);
   line-height: 1.35;
-}.pac-modal-overlay{
-  position: fixed;
-  inset: 0;
-  z-index: 10050;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  background: color-mix(in srgb, #000 48%, transparent);
-}.pac-modal{
+}/* Chrome do modal = @delpi/plugin-ui (`.delpi-ui-modal*`). Aqui só tokens + larguras de domínio. */
+.pac-modal{
   --pac-control-radius: 12px;
   --pac-control-height: 42px;
   --pac-card-bg: var(--surface, #ffffff);
@@ -1821,45 +1813,11 @@
   --delpi-ui-control-radius: var(--pac-control-radius);
   --delpi-ui-danger: var(--pac-danger, var(--danger, #b42318));
   width: min(920px, 100%);
-  max-height: min(88vh, 900px);
-  display: flex;
-  flex-direction: column;
-  border-radius: 16px;
-  border: 1px solid var(--border, #e6e6e6);
-  background: var(--surface, #ffffff);
-  box-shadow: 0 24px 64px color-mix(in srgb, #000 28%, transparent);
-  color: var(--text, #111111);
 }:root[data-theme="dark"] .pac-modal{
   --pac-text: rgba(255, 255, 255, 0.88);
   --pac-text-muted: rgba(255, 255, 255, 0.72);
   --pac-card-bg: color-mix(in srgb, var(--surface-2, #1b2030) 82%, black);
   --pac-card-border: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.12);
-  background: color-mix(in srgb, var(--surface-2, #1b2030) 92%, #089bdb 8%);
-  color: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
-}.pac-modal__header{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 18px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border, #e6e6e6) 80%, transparent);
-}:root[data-theme="dark"] .pac-modal__header{
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}.pac-modal__title{
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}.pac-modal__body{
-  padding: 16px 18px 18px;
-  overflow: auto;
-}.pac-modal__close{
-  flex-shrink: 0;
 }.pac-modal .pac-form-actions{
   --delpi-ui-control-height: 40px;
   --delpi-ui-control-radius: 10px;
