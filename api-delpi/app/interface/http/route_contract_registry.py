@@ -732,6 +732,50 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     "search_protheus_columns_by_description": RouteContract(
         "protheus_column", "paged_list"
     ),
+    # Contratos complementares (baseline x-delpi sem entrada prévia)
+    "get_cultura_delpi_content": RouteContract("cultura_delpi_content", "scalar"),
+    "update_cultura_delpi_content": RouteContract("cultura_delpi_content", "scalar"),
+    "search_customers": RouteContract("customers", "scalar"),
+    "download_guias_procedimentos_attachment_file": RouteContract(
+        "download_guias_procedimentos_attachment_file", "scalar"
+    ),
+    "download_guias_procedimentos_media_file": RouteContract(
+        "download_guias_procedimentos_media_file", "scalar"
+    ),
+    "get_health": RouteContract("health", "scalar"),
+    "export_proposta_comercial_pdf_with_overrides": RouteContract(
+        "export_proposta_comercial_pdf_with_overrides", "scalar"
+    ),
+    "create_public_kaizen_suggestion": RouteContract(
+        "public_kaizen_suggestion", "scalar"
+    ),
+    "download_audit_5s_response_attachment": RouteContract(
+        "download_audit_5s_response_attachment", "scalar"
+    ),
+    "download_audit_5s_nc_attachment": RouteContract(
+        "download_audit_5s_nc_attachment", "scalar"
+    ),
+    "download_kaizen_evidence": RouteContract("download_kaizen_evidence", "scalar"),
+    "get_quality_label_inspector_signature": RouteContract(
+        "quality_label_inspector_signature", "scalar"
+    ),
+    "get_quality_label_certificate_pdf": RouteContract(
+        "quality_label_certificate_pdf", "scalar"
+    ),
+    "get_quality_label_qr": RouteContract("quality_label_qr", "scalar"),
+    "get_caller_stats": RouteContract("caller_stats", "scalar"),
+    "get_console_alerts": RouteContract("console_alerts", "scalar"),
+    "evaluate_console_alerts": RouteContract("evaluate_console_alerts", "scalar"),
+    "notify_console_smoke_alerts": RouteContract(
+        "notify_console_smoke_alerts", "scalar"
+    ),
+    "get_console_health": RouteContract("console_health", "scalar"),
+    "get_envelope_contracts": RouteContract("envelope_contracts", "scalar"),
+    "get_observability_snapshot": RouteContract("observability_snapshot", "scalar"),
+    "get_openapi_diff": RouteContract("openapi_diff", "scalar"),
+    "get_query_cache_stats": RouteContract("query_cache_stats", "scalar"),
+    "get_smoke_definitions": RouteContract("smoke_definitions", "scalar"),
+    "get_sql_health": RouteContract("sql_health", "scalar"),
 }
 
 

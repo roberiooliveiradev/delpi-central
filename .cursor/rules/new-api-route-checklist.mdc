@@ -28,12 +28,13 @@ Doc canônica: `api-delpi/docs/api/openapi-bilingue-catalogo-canonico.md` § **C
 | 3 | `operation_id` = OpenAPI = meta | **decorator** + envelope + registry (mesmo id) |
 | 4 | Chat-critical: `openapi_agent_metadata.agent_route()` | interface/http — **sem** `operation_id=` duplicado com `**META` |
 | 5 | Permissão em `api_delpi_permissions.py` | security |
-| 6 | Smoke: `meta.operationId` + `meta.entity` | `api-delpi/tests/` |
+| 6 | Smoke: `meta.operationId` + `meta.entity` | `api-delpi/tests/` (+ inventário `route_test_coverage.json`) |
 | 7 | **Upload multipart/binário:** volume persistente no Compose | `persistent-upload-storage.mdc` |
 | 8 | Locale EN + pt-BR (`en.summary ≠ pt-BR.summary`) | `tv_route_audience.json` |
-| 9 | Domínio fechado → `enum=` | `query_param_enums.py` (não só `pattern=`) |
+| 9 | Domínio fechado → `enum=` + `pattern=` (runtime 422) | `query_param_enums.py` |
 | 10 | Param novo → labels bilíngues | `openapi_param_locale.json` + `sync_tv_data_param_catalog.py --write` |
 | 11 | Baseline + catálogo TV | `sync_openapi_baseline.py` + `generate_tv_data_routes_from_openapi.py --check` |
+| 12 | Cobertura de rota no inventário | `python scripts/audit_route_test_coverage.py --write && --check` — ver `playbook-route-test-coverage-100.md` |
 
 Shapes: `playbook_report`, `paged_list`, `scalar`, `composite_analysis`, `hierarchy` — ver playbook-10 § 4.3.
 
