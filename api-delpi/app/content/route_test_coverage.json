@@ -3,8 +3,8 @@
   "generatedAt": "2026-07-20",
   "baselineOperationCount": 368,
   "operationCount": 368,
-  "coveredCount": 283,
-  "gapCount": 84,
+  "coveredCount": 296,
+  "gapCount": 71,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -129,8 +129,8 @@
     },
     "quality": {
       "total": 135,
-      "covered": 51,
-      "gap": 84,
+      "covered": 64,
+      "gap": 71,
       "exempt": 0
     },
     "refugos": {
@@ -1808,7 +1808,7 @@
       "module": "quality",
       "entity": "directory_user",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_action_plans_dashboard",
@@ -1844,7 +1844,7 @@
       "module": "quality",
       "entity": "quality_action_plan_export_template",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_quality_action_plan_knowledge_graph",
@@ -1853,7 +1853,7 @@
       "module": "quality",
       "entity": "quality_action_plan_knowledge_graph",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "assess_quality_action_plan_recurrence_on_opening",
@@ -1862,7 +1862,7 @@
       "module": "quality",
       "entity": "quality_action_plan_recurrence_opening_assessment",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "suggest_quality_action_plan_evidence_tags",
@@ -1889,7 +1889,7 @@
       "module": "quality",
       "entity": "quality_action_plan_action",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "dispatch_quality_action_plan_notifications",
@@ -1979,7 +1979,7 @@
       "module": "quality",
       "entity": "quality_action_plan_audit_log",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "record_quality_action_plan_effectiveness",
@@ -2177,7 +2177,7 @@
       "module": "quality",
       "entity": "quality_action_plan_similar_cases",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_quality_action_plan_status",
@@ -2195,7 +2195,7 @@
       "module": "quality",
       "entity": "audit_5s_analytics",
       "shape": "composite_analysis",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_areas",
@@ -2222,7 +2222,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "create_audit_5s_audit",
@@ -2240,7 +2240,7 @@
       "module": "quality",
       "entity": "audit_5s_audit",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "update_audit_5s_audit",
@@ -2402,7 +2402,7 @@
       "module": "quality",
       "entity": "audit_5s_catalog",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_catalog_publications",
@@ -2411,7 +2411,7 @@
       "module": "quality",
       "entity": "audit_5s_catalog_publication",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "publish_audit_5s_catalog",
@@ -2429,7 +2429,7 @@
       "module": "quality",
       "entity": "audit_5s_criterion",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_audit_5s_nonconformities_board",
