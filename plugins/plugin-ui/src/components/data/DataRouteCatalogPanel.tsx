@@ -268,7 +268,10 @@ export function DataRouteCatalogPanel({
       ? enriched.find((item) => item.id === selectedId) ?? null
       : null;
     setTestParams(next ? initialTestParamValues(next.params) : {});
-  }, [enriched, selectedId]);
+    // Só ao trocar a rota selecionada — não quando `items`/`enriched` recriam identidade
+    // (re-render do editor / refresh do palco), senão o «Resultado do teste» some sozinho.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- enriched intencional omitido
+  }, [selectedId]);
 
   const samplePreview = useMemo(() => {
     if (!selected) return null;

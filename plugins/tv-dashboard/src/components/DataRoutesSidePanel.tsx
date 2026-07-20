@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Factory, Package, ShieldCheck } from "lucide-react";
 import {
   DataRouteCatalogPanel,
@@ -110,6 +110,27 @@ export function DataRoutesSidePanel({
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  const catalogItems = useMemo(
+    () =>
+      routes.map((route) => ({
+        id: route.operationId,
+        label: route.label,
+        category: route.category,
+        description: route.description,
+        whenToUse: route.whenToUse,
+        path: route.path,
+        httpMethod: "GET" as const,
+        metaShape: route.metaShape,
+        valueFields: route.valueFields,
+        displayKinds: resolveDataRouteDisplayKinds({
+          metaShape: route.metaShape,
+          allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
+        }),
+        params: summarizeRouteParams(route.paramSchema, route.fixedQueryParams),
+      })),
+    [routes],
+  );
 
   const slideFilters = config.dataFilters ?? {};
 
@@ -369,22 +390,7 @@ export function DataRoutesSidePanel({
         <FieldLabel label="Fontes de dados" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.catalogSearch} />
       )}
       <DataRouteCatalogPanel
-        items={routes.map((route) => ({
-          id: route.operationId,
-          label: route.label,
-          category: route.category,
-          description: route.description,
-          whenToUse: route.whenToUse,
-          path: route.path,
-          httpMethod: "GET",
-          metaShape: route.metaShape,
-          valueFields: route.valueFields,
-          displayKinds: resolveDataRouteDisplayKinds({
-            metaShape: route.metaShape,
-            allowedDisplayModes: route.allowedDisplayModes ?? route.suggestedDisplayModes,
-          }),
-          params: summarizeRouteParams(route.paramSchema, route.fixedQueryParams),
-        }))}
+        items={catalogItems}
         onSelect={(item) => {
           const route = routes.find((entry) => entry.operationId === item.id);
           if (route) pickRoute(route);

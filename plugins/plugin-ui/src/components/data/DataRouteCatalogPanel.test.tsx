@@ -176,6 +176,32 @@ describe("DataRouteCatalogPanel", () => {
     expect(screen.queryByText("Exemplo de uso")).toBeNull();
   });
 
+  it("mantém resultado do teste quando a lista de itens é recriada (re-render do editor)", async () => {
+    const onTestRoute = vi.fn().mockResolvedValue({
+      kind: "kpi",
+      source: "live",
+      kpi: { label: "OEE live", value: "91,2%" },
+    });
+    const baseProps = {
+      onSelect: vi.fn(),
+      onTestRoute,
+      density: "comfortable" as const,
+      categoryLabels: { production: "Produção", products: "Produtos" },
+      categoryOrder: ["production", "products"] as const,
+    };
+
+    const { rerender } = render(<DataRouteCatalogPanel items={ITEMS} {...baseProps} />);
+
+    fireEvent.click(screen.getByText("OEE geral"));
+    fireEvent.click(screen.getByRole("button", { name: "Testar rota" }));
+    await waitFor(() => expect(screen.getByText("Resultado do teste")).toBeTruthy());
+
+    rerender(<DataRouteCatalogPanel items={[...ITEMS]} {...baseProps} />);
+
+    expect(screen.getByText("Resultado do teste")).toBeTruthy();
+    expect(screen.getByText("91,2%")).toBeTruthy();
+  });
+
   it("permite editar filtros obrigatórios antes de testar a rota", async () => {
     const onTestRoute = vi.fn().mockResolvedValue({
       kind: "kpi",

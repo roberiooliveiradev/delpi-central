@@ -458,6 +458,62 @@ def test_enrich_kpi_discovers_fields_when_catalog_value_fields_miss_payload():
     assert enriched[0]["resolved"]["kpi"]["value"] is not None
 
 
+def test_enrich_si_scalar_meta_prefers_value_not_alias_metrics():
+    """SI meta devolve value + comparable_goal + goal_value iguais — KPI deve ser um só."""
+    reset_comunicado_data_block_cache()
+    gateway = MagicMock()
+    gateway.fetch_by_operation_id.return_value = {
+        "meta": {
+            "operationId": "get_si_indicator_quality_ppm_external_meta",
+            "shape": "scalar",
+            "entity": "dashboard_si_indicator_meta",
+        },
+        "data": {
+            "indicator_id": "quality-ppm-external",
+            "name": "PPM Externo",
+            "value": 1100.0,
+            "comparable_goal": 1100.0,
+            "goal_value": 1100.0,
+            "value_decimals": 2,
+            "has_value": True,
+        },
+        "route": {
+            "label": "PPM Externo — meta",
+            "metaShape": "scalar",
+            "valueFields": ["value"],
+            "tvConstraints": {"maxRows": 1},
+        },
+    }
+    service = ComunicadoDataEnrichmentService(
+        catalog=TvDataRouteCatalogService(),
+        gateway=gateway,
+    )
+    enriched = service.enrich_blocks(
+        [
+            {
+                "id": "si-1",
+                "type": "data_source",
+                "dataBinding": {
+                    "operationId": "get_si_indicator_quality_ppm_external_meta",
+                    "displayMode": "kpi",
+                },
+            }
+        ],
+        cfg={},
+        authorization="Bearer x",
+    )
+    metrics = enriched[0]["resolved"]["kpiMetrics"]
+    assert len(metrics) == 1
+    assert metrics[0]["field"] == "value"
+    assert metrics[0]["value"] == 1100.0
+    assert enriched[0]["resolved"]["kpi"]["value"] == 1100.0
+    table_rows = enriched[0]["resolved"].get("table", {}).get("rows") or []
+    campos = {row.get("campo") for row in table_rows}
+    assert "comparable_goal" not in campos
+    assert "goal_value" not in campos
+    assert "value_decimals" not in campos
+
+
 def test_enrich_table_reads_branches_and_ranking_list_keys():
     reset_comunicado_data_block_cache()
     gateway = MagicMock()

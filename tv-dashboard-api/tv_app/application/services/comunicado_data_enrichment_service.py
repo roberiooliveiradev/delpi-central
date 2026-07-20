@@ -214,6 +214,29 @@ _KPI_META_FIELD_KEYS = frozenset(
         "iscomplete",
         "branch_filter_applied",
         "consolidated_across_branches",
+        # Formatação / metadado SI e rotas escalares — não são o número do card KPI.
+        "value_decimals",
+        "value_unit",
+        "value_prefix",
+        "value_suffix",
+        "has_value",
+        "partial_success",
+        "indicator_id",
+        "source_key",
+        "department_id",
+        "goal_label",
+        "goal_periodicity",
+        "goal_mode",
+    }
+)
+
+# Quando `value` existe, estes são espelhos/aliases (ex.: SI meta: value == comparable_goal).
+_KPI_VALUE_ALIAS_FIELDS = frozenset(
+    {
+        "comparable_goal",
+        "goal_value",
+        "score",
+        "gap",
     }
 )
 
@@ -367,6 +390,8 @@ def _extract_kpi_metrics(
         if count_metric is not None:
             metrics = [count_metric]
 
+    metrics = _prefer_primary_value_metric(metrics)
+
     selected = _binding_selected_fields(binding)
     if selected is None:
         return metrics
@@ -379,6 +404,20 @@ def _extract_kpi_metrics(
     if len(metrics) == 1 and metrics[0].get("field") == "total_records":
         return metrics
     return filtered
+
+
+def _prefer_primary_value_metric(metrics: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Com `value` presente, remove aliases SI (comparable_goal/goal_value) e formatação."""
+    if len(metrics) <= 1:
+        return metrics
+    fields = {str(metric.get("field") or "") for metric in metrics}
+    if "value" not in fields:
+        return metrics
+    return [
+        metric
+        for metric in metrics
+        if str(metric.get("field") or "") not in _KPI_VALUE_ALIAS_FIELDS
+    ]
 
 
 def _extract_scalar_value(data: Any, value_fields: list[Any]) -> Any:
@@ -545,6 +584,8 @@ def _scalar_object_as_table_rows(
         if isinstance(value, (dict, list)) or value is None or value == "":
             continue
         if _is_kpi_meta_field(key):
+            continue
+        if key in _KPI_VALUE_ALIAS_FIELDS and "value" in data:
             continue
         rows.append({"campo": key, "valor": value})
         if len(rows) >= max_rows:
