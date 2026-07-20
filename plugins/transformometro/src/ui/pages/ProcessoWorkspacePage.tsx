@@ -23,6 +23,7 @@ import { RevisaoDetailPage } from "../pages/RevisaoDetailPage";
 import { ProcessoWorkspacePanel } from "../processos/ProcessoWorkspacePanel";
 import {
   ProcessoWorkspaceShell,
+  useInstanciaWorkspaceSection,
   useProcessoWorkspaceSection,
   useRevisaoWorkspaceSection,
 } from "../processos/ProcessoWorkspaceShell";
@@ -65,6 +66,7 @@ export function ProcessoWorkspacePage({
   const confirm = useConfirm();
   const processoId = route.processoId;
   const activeSection = useProcessoWorkspaceSection();
+  const activeInstanciaSection = useInstanciaWorkspaceSection();
   const [mountedPanels, setMountedPanels] = useState<Set<string>>(() => new Set());
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
@@ -96,10 +98,21 @@ export function ProcessoWorkspacePage({
       });
     }
     if (route.view === "instancia" && route.instanciaId) {
-      return resolveActiveWorkspaceNodeId({ view: "instancia", instanciaId: route.instanciaId });
+      return resolveActiveWorkspaceNodeId({
+        view: "instancia",
+        instanciaId: route.instanciaId,
+        instanciaSection: activeInstanciaSection,
+      });
     }
     return resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
-  }, [activeRevisaoSection, activeSection, route.instanciaId, route.revisaoId, route.view]);
+  }, [
+    activeInstanciaSection,
+    activeRevisaoSection,
+    activeSection,
+    route.instanciaId,
+    route.revisaoId,
+    route.view,
+  ]);
 
   useEffect(() => {
     setMountedPanels((current) => {
@@ -228,6 +241,7 @@ export function ProcessoWorkspacePage({
         <InstanciaDetailPage
           embedded
           embeddedActive={isActive}
+          activeSection={activeInstanciaSection}
           getAccessToken={getAccessToken}
           processoId={processoId}
           instanciaId={instanciaId}

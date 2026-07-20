@@ -50,10 +50,18 @@ import {
   buildRevisaoColumns,
 } from "../../utils/processoDetailTables";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
+import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { processoEscopoFromEntity } from "../processos/processoEscopo";
-import { ProcessoWorkspaceShell } from "../processos/ProcessoWorkspaceShell";
-import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
+import {
+  ProcessoWorkspaceShell,
+  useInstanciaWorkspaceSection,
+} from "../processos/ProcessoWorkspaceShell";
+import { InstanciaWorkspaceSectionPanel } from "../processos/InstanciaWorkspaceSectionPanel";
+import {
+  resolveActiveWorkspaceNodeId,
+  type InstanciaWorkspaceSectionId,
+} from "../processos/processoWorkspaceNav";
 import { useProcessoWorkspacePanelActions } from "../processos/processoWorkspacePanelActions";
 import { InstanciaDiagramEscopoSection } from "../../components/diagram/InstanciaDiagramEscopoSection";
 import { InstanciaDecompositionEscopoSection } from "../../components/decomposition/InstanciaDecompositionEscopoSection";
@@ -69,6 +77,7 @@ type Props = Pick<AppProps, "getAccessToken"> & {
   onNavigate: (path: string) => void;
   embedded?: boolean;
   embeddedActive?: boolean;
+  activeSection?: InstanciaWorkspaceSectionId;
 };
 
 export function InstanciaDetailPage({
@@ -79,6 +88,7 @@ export function InstanciaDetailPage({
   onNavigate,
   embedded = false,
   embeddedActive = true,
+  activeSection: activeSectionProp,
 }: Props) {
   const confirm = useConfirm();
   const [processo, setProcesso] = useState<Processo | null>(null);
@@ -171,6 +181,9 @@ export function InstanciaDetailPage({
     void load();
   }, [load]);
 
+  const fallbackSection = useInstanciaWorkspaceSection();
+  const activeSection = activeSectionProp ?? fallbackSection;
+
   const openNovaRevisaoForm = useCallback(() => {
     setRevForm({
       versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
@@ -181,13 +194,26 @@ export function InstanciaDetailPage({
       data_fim_vigencia: "",
       revisao_ativa: revisoes.length > 0,
     });
+    const revisoesHref = `${buildInstanciaPath(processoId, instanciaId)}#nova-revisao`;
+    if (activeSection !== "revisoes") {
+      onNavigate(revisoesHref);
+    }
     if (showRevisaoForm) {
       scrollToRevisoes();
       return;
     }
     pendingRevisaoScroll.current = true;
     setShowRevisaoForm(true);
-  }, [defaultReferenciaId, revisoes.length, scrollToRevisoes, showRevisaoForm]);
+  }, [
+    activeSection,
+    defaultReferenciaId,
+    instanciaId,
+    onNavigate,
+    processoId,
+    revisoes.length,
+    scrollToRevisoes,
+    showRevisaoForm,
+  ]);
 
   const closeNovaRevisaoForm = useCallback(() => {
     setShowRevisaoForm(false);
@@ -204,9 +230,21 @@ export function InstanciaDetailPage({
     if (typeof window === "undefined") return;
     if (window.location.hash !== "#nova-revisao") return;
     consumedNovaRevisaoHash.current = true;
-    window.history.replaceState(null, "", window.location.pathname);
-    openNovaRevisaoForm();
-  }, [loading, instancia, openNovaRevisaoForm]);
+    const nextUrl = `${window.location.pathname}#revisoes`;
+    window.history.replaceState(null, "", nextUrl);
+    window.dispatchEvent(new Event(TRANSFORMOMETRO_WORKSPACE_HASH_EVENT));
+    pendingRevisaoScroll.current = true;
+    setShowRevisaoForm(true);
+    setRevForm({
+      versao_revisao: revisoes.length ? "2.0.0" : "1.0.0",
+      cenario_tipo: revisoes.length ? "melhoria" : "baseline",
+      revisao_referencia_id: defaultReferenciaId,
+      data_inicio_vigencia: todayDateInput(),
+      data_implantacao: "",
+      data_fim_vigencia: "",
+      revisao_ativa: revisoes.length > 0,
+    });
+  }, [defaultReferenciaId, loading, instancia, revisoes.length]);
 
   async function handleDeleteRevisao(revisao: Revisao) {
     const label = revisaoDisplayLabel(revisao);
@@ -377,243 +415,259 @@ export function InstanciaDetailPage({
 
   const instanciaMain = (
     <>
+      <InstanciaWorkspaceSectionPanel active={activeSection === "dados"} sectionId="dados">
         <EditableSectionCard
           title="Instância operacional"
-        hint={TM_HELP_TOOLTIPS.instancias.escopo}
-        isEditing={sectionEdit.isEditing("instancia")}
-        onEdit={() => void sectionEdit.startEdit("instancia")}
-        onCancel={() => sectionEdit.cancelEdit("instancia")}
-        readContent={<InstanciaReadView instancia={instancia} options={options} />}
-        editContent={
-          <ProcessoInstanciasPanel
-            hideTable
-            initialEditInstanciaId={instanciaId}
-            onCancelEdit={() => sectionEdit.cancelEdit("instancia")}
-            instancias={[instancia]}
-            selectedInstanciaId={instanciaId}
-            options={options}
-            processoEscopo={processo ? processoEscopoFromEntity(processo) : null}
-            instanciasComRevisao={revisoes.length > 0 ? [instanciaId] : []}
-            onSelect={() => undefined}
-            onCreate={async (payload) => {
-              await createProcessoInstancia(processoId, payload, getAccessToken);
-              await load();
-            }}
-            onUpdate={async (id, payload) => {
-              await updateInstancia(id, payload, getAccessToken);
-              sectionEdit.cancelEdit("instancia");
-              await load();
-            }}
-            onDelete={async () => undefined}
-            onDuplicate={async ({ origemInstanciaId, ...payload }) => {
-              await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
-              await load();
-            }}
-          />
-        }
-      />
-
-      <EditableSectionCard
-        title="Escopo no mapeamento"
-        description="Quais processos-chave deste macroprocesso esta instância trata."
-        hint={TM_HELP_TOOLTIPS.decomposition.escopoInstancia}
-        isEditing={sectionEdit.isEditing("decomposicao_escopo")}
-        onEdit={() => void sectionEdit.startEdit("decomposicao_escopo")}
-        onCancel={() => sectionEdit.cancelEdit("decomposicao_escopo")}
-        readContent={
-          <InstanciaDecompositionEscopoSection
-            embeddedInCard
-            readOnly
-            processoId={processoId}
-            instanciaId={instanciaId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-          />
-        }
-        editContent={
-          <InstanciaDecompositionEscopoSection
-            embeddedInCard
-            processoId={processoId}
-            instanciaId={instanciaId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-          />
-        }
-      />
-
-      <EditableSectionCard
-        title="Contexto operacional"
-        description="Metadados locais da instância — rollout, responsáveis e observações."
-        hint={TM_HELP_TOOLTIPS.decomposition.contextoInstancia}
-        isEditing={sectionEdit.isEditing("instancia_contexto")}
-        onEdit={() => void sectionEdit.startEdit("instancia_contexto")}
-        onCancel={() => sectionEdit.cancelEdit("instancia_contexto")}
-        readContent={
-          <InstanciaContextoSection
-            embeddedInCard
-            readOnly
-            instanciaId={instanciaId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-          />
-        }
-        editContent={
-          <InstanciaContextoSection
-            embeddedInCard
-            instanciaId={instanciaId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-            onSaved={() => sectionEdit.stopEdit("instancia_contexto")}
-          />
-        }
-      />
-
-      <EditableSectionCard
-        title="Escopo no diagrama"
-        description="Subset de nós do diagrama macro relevante para esta instância."
-        hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
-        isEditing={sectionEdit.isEditing("diagrama_escopo")}
-        onEdit={() => void sectionEdit.startEdit("diagrama_escopo")}
-        onCancel={() => sectionEdit.cancelEdit("diagrama_escopo")}
-        readContent={
-          <InstanciaDiagramEscopoSection
-            embeddedInCard
-            readOnly
-            processoId={processoId}
-            instanciaId={instanciaId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-          />
-        }
-        editContent={
-          <InstanciaDiagramEscopoSection
-            embeddedInCard
-            processoId={processoId}
-            instanciaId={instanciaId}
-            getAccessToken={getAccessToken}
-            onError={setError}
-            resyncVersion={sectionEdit.resyncVersion}
-          />
-        }
-      />
-
-      <section ref={revisoesSectionRef} id="tm-instancia-revisoes" className="tm-panel-stack">
-      {showRevisaoForm ? (
-        <section className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">Nova revisão</h2>
-          <form onSubmit={handleCreateRevisao}>
-            <div className={DS_FILTERS_ROW}>
-              <div className={DS_FILTER_BOX_PLAIN}>
-                <FieldLabel className="tm-field__label" label="Versão" hint={TM_HELP_TOOLTIPS.revisao.versao} />
-                <NativeTextControl
-                  id="tm-rev-versao"
-                  required
-                  value={revForm.versao_revisao}
-                  onChange={(versao_revisao) => setRevForm({ ...revForm, versao_revisao })}
-                />
-              </div>
-              <SelectField
-                id="tm-rev-cenario"
-                label="Cenário"
-                hint={TM_HELP_TOOLTIPS.revisao.cenario}
-                value={revForm.cenario_tipo}
-                onChange={(cenario) =>
-                  setRevForm((current) => ({
-                    ...current,
-                    cenario_tipo: cenario,
-                    revisao_referencia_id:
-                      cenario === "baseline"
-                        ? ""
-                        : current.revisao_referencia_id || defaultReferenciaId,
-                    revisao_ativa: cenario === "baseline" ? false : current.revisao_ativa,
-                  }))
-                }
-                options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
-              />
-              {revForm.cenario_tipo !== "baseline" ? (
-                <SelectField
-                  id="tm-rev-referencia"
-                  label="Compara com"
-                  hint={TM_HELP_TOOLTIPS.revisao.referenciaComparacao}
-                  required
-                  value={revForm.revisao_referencia_id || defaultReferenciaId}
-                  onChange={(revisaoReferenciaId) =>
-                    setRevForm({ ...revForm, revisao_referencia_id: revisaoReferenciaId })
-                  }
-                  options={referenciaOptions}
-                />
-              ) : null}
-              <div className={DS_FILTER_BOX_PLAIN}>
-                <FieldLabel className="tm-field__label" label="Início vigência" hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia} />
-                <NativeTextControl
-                  id="tm-rev-inicio"
-                  type="date"
-                  required
-                  value={revForm.data_inicio_vigencia}
-                  onChange={(data_inicio_vigencia) => setRevForm({ ...revForm, data_inicio_vigencia })}
-                />
-              </div>
-            </div>
-            <div className="ds-cadastro-form__actions">
-              <button type="submit" className="ds-primary-btn">Salvar revisão</button>
-              <button type="button" className={DS_GHOST_BTN} onClick={closeNovaRevisaoForm}>
-                Cancelar
-              </button>
-            </div>
-          </form>
-        </section>
-      ) : null}
-
-      {revisoes.length > 0 ? (
-        <InstanciaMatrizRevisoesSection
-          instanciaId={instanciaId}
-          instanciaLabel={instanciaLabel}
-          getAccessToken={getAccessToken}
-          onError={setError}
-          onNavigateToRevisao={(revisaoId) =>
-            onNavigate(buildProcessoPath(processoId, revisaoId, instanciaId))
+          hint={TM_HELP_TOOLTIPS.instancias.escopo}
+          isEditing={sectionEdit.isEditing("instancia")}
+          onEdit={() => void sectionEdit.startEdit("instancia")}
+          onCancel={() => sectionEdit.cancelEdit("instancia")}
+          readContent={<InstanciaReadView instancia={instancia} options={options} />}
+          editContent={
+            <ProcessoInstanciasPanel
+              hideTable
+              initialEditInstanciaId={instanciaId}
+              onCancelEdit={() => sectionEdit.cancelEdit("instancia")}
+              instancias={[instancia]}
+              selectedInstanciaId={instanciaId}
+              options={options}
+              processoEscopo={processo ? processoEscopoFromEntity(processo) : null}
+              instanciasComRevisao={revisoes.length > 0 ? [instanciaId] : []}
+              onSelect={() => undefined}
+              onCreate={async (payload) => {
+                await createProcessoInstancia(processoId, payload, getAccessToken);
+                await load();
+              }}
+              onUpdate={async (id, payload) => {
+                await updateInstancia(id, payload, getAccessToken);
+                sectionEdit.cancelEdit("instancia");
+                await load();
+              }}
+              onDelete={async () => undefined}
+              onDuplicate={async ({ origemInstanciaId, ...payload }) => {
+                await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
+                await load();
+              }}
+            />
           }
         />
-      ) : null}
+      </InstanciaWorkspaceSectionPanel>
 
-      {comparativo.length > 0 ? (
-        <RevisaoComparativoSection items={comparativo} columns={comparativoColumns} />
-      ) : null}
+      <InstanciaWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
+        <EditableSectionCard
+          title="Escopo no mapeamento"
+          description="Quais processos-chave deste macroprocesso esta instância trata."
+          hint={TM_HELP_TOOLTIPS.decomposition.escopoInstancia}
+          isEditing={sectionEdit.isEditing("decomposicao_escopo")}
+          onEdit={() => void sectionEdit.startEdit("decomposicao_escopo")}
+          onCancel={() => sectionEdit.cancelEdit("decomposicao_escopo")}
+          readContent={
+            <InstanciaDecompositionEscopoSection
+              embeddedInCard
+              readOnly
+              processoId={processoId}
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          }
+          editContent={
+            <InstanciaDecompositionEscopoSection
+              embeddedInCard
+              processoId={processoId}
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          }
+        />
+      </InstanciaWorkspaceSectionPanel>
 
-      <DataTableSection
-        columnPreferencesKey="transformometro:InstanciaDetailPage:revis-es:v1"
-        title={`Revisões (${revisoes.length})`}
-        columns={revisaoColumns}
-        rows={revisoes}
-        rowKey={(r) => r.revisao_id}
-        hideSearch
-        pageSize={10}
-        emptyMessage="Nenhuma revisão nesta instância. Cadastre baseline e melhoria para mensurar economia."
-        onRowClick={(r) => onNavigate(buildProcessoPath(processoId, r.revisao_id, instanciaId))}
-        headerActions={
-          showRevisaoForm ? (
-            <button type="button" className={DS_GHOST_BTN} onClick={closeNovaRevisaoForm}>
-              Cancelar revisão
-            </button>
-          ) : (
-            <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
-              <Plus size={16} />
-              Nova revisão
-            </button>
-          )
-        }
-        footer={
-          <p className="ds-hint">
-            Abra uma revisão para cadastrar medição, investimentos, recursos compartilhados e evidências.
-          </p>
-        }
-      />
-      </section>
+      <InstanciaWorkspaceSectionPanel active={activeSection === "contexto"} sectionId="contexto">
+        <EditableSectionCard
+          title="Contexto operacional"
+          description="Metadados locais da instância — rollout, responsáveis e observações."
+          hint={TM_HELP_TOOLTIPS.decomposition.contextoInstancia}
+          isEditing={sectionEdit.isEditing("instancia_contexto")}
+          onEdit={() => void sectionEdit.startEdit("instancia_contexto")}
+          onCancel={() => sectionEdit.cancelEdit("instancia_contexto")}
+          readContent={
+            <InstanciaContextoSection
+              embeddedInCard
+              readOnly
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          }
+          editContent={
+            <InstanciaContextoSection
+              embeddedInCard
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+              onSaved={() => sectionEdit.stopEdit("instancia_contexto")}
+            />
+          }
+        />
+      </InstanciaWorkspaceSectionPanel>
+
+      <InstanciaWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
+        <EditableSectionCard
+          title="Escopo no diagrama"
+          description="Subset de nós do diagrama macro relevante para esta instância."
+          hint={TM_HELP_TOOLTIPS.instancias.diagramaEscopo}
+          isEditing={sectionEdit.isEditing("diagrama_escopo")}
+          onEdit={() => void sectionEdit.startEdit("diagrama_escopo")}
+          onCancel={() => sectionEdit.cancelEdit("diagrama_escopo")}
+          readContent={
+            <InstanciaDiagramEscopoSection
+              embeddedInCard
+              readOnly
+              processoId={processoId}
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          }
+          editContent={
+            <InstanciaDiagramEscopoSection
+              embeddedInCard
+              processoId={processoId}
+              instanciaId={instanciaId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          }
+        />
+      </InstanciaWorkspaceSectionPanel>
+
+      <InstanciaWorkspaceSectionPanel active={activeSection === "revisoes"} sectionId="revisoes">
+        <section ref={revisoesSectionRef} id="tm-instancia-revisoes" className="tm-panel-stack">
+          {showRevisaoForm ? (
+            <section className="ds-card ds-cadastro-form">
+              <h2 className="ds-section-title">Nova revisão</h2>
+              <form onSubmit={handleCreateRevisao}>
+                <div className={DS_FILTERS_ROW}>
+                  <div className={DS_FILTER_BOX_PLAIN}>
+                    <FieldLabel className="tm-field__label" label="Versão" hint={TM_HELP_TOOLTIPS.revisao.versao} />
+                    <NativeTextControl
+                      id="tm-rev-versao"
+                      required
+                      value={revForm.versao_revisao}
+                      onChange={(versao_revisao) => setRevForm({ ...revForm, versao_revisao })}
+                    />
+                  </div>
+                  <SelectField
+                    id="tm-rev-cenario"
+                    label="Cenário"
+                    hint={TM_HELP_TOOLTIPS.revisao.cenario}
+                    value={revForm.cenario_tipo}
+                    onChange={(cenario) =>
+                      setRevForm((current) => ({
+                        ...current,
+                        cenario_tipo: cenario,
+                        revisao_referencia_id:
+                          cenario === "baseline"
+                            ? ""
+                            : current.revisao_referencia_id || defaultReferenciaId,
+                        revisao_ativa: cenario === "baseline" ? false : current.revisao_ativa,
+                      }))
+                    }
+                    options={mapSelectOptions(options.cenario_tipo, cenarioSelectLabel)}
+                  />
+                  {revForm.cenario_tipo !== "baseline" ? (
+                    <SelectField
+                      id="tm-rev-referencia"
+                      label="Compara com"
+                      hint={TM_HELP_TOOLTIPS.revisao.referenciaComparacao}
+                      required
+                      value={revForm.revisao_referencia_id || defaultReferenciaId}
+                      onChange={(revisaoReferenciaId) =>
+                        setRevForm({ ...revForm, revisao_referencia_id: revisaoReferenciaId })
+                      }
+                      options={referenciaOptions}
+                    />
+                  ) : null}
+                  <div className={DS_FILTER_BOX_PLAIN}>
+                    <FieldLabel
+                      className="tm-field__label"
+                      label="Início vigência"
+                      hint={TM_HELP_TOOLTIPS.revisao.inicioVigencia}
+                    />
+                    <NativeTextControl
+                      id="tm-rev-inicio"
+                      type="date"
+                      required
+                      value={revForm.data_inicio_vigencia}
+                      onChange={(data_inicio_vigencia) => setRevForm({ ...revForm, data_inicio_vigencia })}
+                    />
+                  </div>
+                </div>
+                <div className="ds-cadastro-form__actions">
+                  <button type="submit" className="ds-primary-btn">
+                    Salvar revisão
+                  </button>
+                  <button type="button" className={DS_GHOST_BTN} onClick={closeNovaRevisaoForm}>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </section>
+          ) : null}
+
+          {revisoes.length > 0 ? (
+            <InstanciaMatrizRevisoesSection
+              instanciaId={instanciaId}
+              instanciaLabel={instanciaLabel}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              onNavigateToRevisao={(revisaoId) =>
+                onNavigate(buildProcessoPath(processoId, revisaoId, instanciaId))
+              }
+            />
+          ) : null}
+
+          {comparativo.length > 0 ? (
+            <RevisaoComparativoSection items={comparativo} columns={comparativoColumns} />
+          ) : null}
+
+          <DataTableSection
+            columnPreferencesKey="transformometro:InstanciaDetailPage:revis-es:v1"
+            title={`Revisões (${revisoes.length})`}
+            columns={revisaoColumns}
+            rows={revisoes}
+            rowKey={(r) => r.revisao_id}
+            hideSearch
+            pageSize={10}
+            emptyMessage="Nenhuma revisão nesta instância. Cadastre baseline e melhoria para mensurar economia."
+            onRowClick={(r) => onNavigate(buildProcessoPath(processoId, r.revisao_id, instanciaId))}
+            headerActions={
+              showRevisaoForm ? (
+                <button type="button" className={DS_GHOST_BTN} onClick={closeNovaRevisaoForm}>
+                  Cancelar revisão
+                </button>
+              ) : (
+                <button type="button" className="ds-primary-btn" onClick={openNovaRevisaoForm}>
+                  <Plus size={16} />
+                  Nova revisão
+                </button>
+              )
+            }
+            footer={
+              <p className="ds-hint">
+                Abra uma revisão para cadastrar medição, investimentos, recursos compartilhados e evidências.
+              </p>
+            }
+          />
+        </section>
+      </InstanciaWorkspaceSectionPanel>
     </>
   );
 
@@ -681,7 +735,11 @@ export function InstanciaDetailPage({
       ) : (
         <ProcessoWorkspaceShell
           processoId={processoId}
-          activeNodeId={resolveActiveWorkspaceNodeId({ view: "instancia", instanciaId })}
+          activeNodeId={resolveActiveWorkspaceNodeId({
+            view: "instancia",
+            instanciaId,
+            instanciaSection: activeSection,
+          })}
           getAccessToken={getAccessToken}
           onNavigate={onNavigate}
           processo={processo}
