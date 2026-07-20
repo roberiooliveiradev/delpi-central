@@ -5,9 +5,14 @@ import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { fetchProcessoDecomposicaoComposed } from "../../data/api/transformometroDecompositionApi";
 import type { ComposedProcessoDecomposition } from "../../types/decomposition";
+import {
+  applyDiffHighlightsToRichTree,
+  stripDecompositionHighlights,
+} from "../../utils/diffHighlightDisplay";
 import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
 import { DecompositionRichTree } from "./DecompositionRichTree";
+import { DiffHighlightToggle } from "../DiffHighlightToggle";
 import { TabPanelTransition } from "../TabPanelTransition";
 import { todayDateInput } from "../../utils/dateInputs";
 import { DS_GHOST_BTN } from "../ghostChrome";
@@ -32,6 +37,7 @@ export function ProcessoDecompositionComposedSection({
   const [at, setAt] = useState(todayDateInput());
   const [composed, setComposed] = useState<ComposedProcessoDecomposition | null>(null);
   const [tab, setTab] = useState<"arvore" | "planilha">("arvore");
+  const [showDiff, setShowDiff] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -55,15 +61,23 @@ export function ProcessoDecompositionComposedSection({
     void load();
   }, [resyncVersion, load]);
 
-  const richRoot = useMemo(
-    () =>
-      composed?.tree
-        ? buildDecompositionRichTree(composed.tree, {
-            title: processoNome ? `Macro composto — ${processoNome}` : "Macro composto",
-          })
-        : null,
-    [composed, processoNome]
-  );
+  const conflictDiff = useMemo(() => {
+    if (!composed?.conflicts?.length) return null;
+    return {
+      changed: [...new Set(composed.conflicts.map((c) => c.node_id))],
+      added: [] as string[],
+      removed: [] as string[],
+    };
+  }, [composed]);
+
+  const richRoot = useMemo(() => {
+    if (!composed?.tree) return null;
+    const source = stripDecompositionHighlights(composed.tree);
+    const root = buildDecompositionRichTree(source, {
+      title: processoNome ? `Macro composto — ${processoNome}` : "Macro composto",
+    });
+    return showDiff && conflictDiff ? applyDiffHighlightsToRichTree(root, conflictDiff) : root;
+  }, [composed, processoNome, showDiff, conflictDiff]);
 
   if (loading && !composed) {
     return <p className="ds-hint">Carregando macro composto…</p>;
@@ -102,6 +116,14 @@ export function ProcessoDecompositionComposedSection({
       )}
 
       {composed?.conflicts?.length ? (
+        <DiffHighlightToggle
+          active={showDiff}
+          onChange={setShowDiff}
+          summary={`${composed.conflicts.length} conflito(s) de interseção no mesmo nó.`}
+        />
+      ) : null}
+
+      {showDiff && composed?.conflicts?.length ? (
         <div className="ds-state ds-state--warn" role="status">
           <p>
             Interseções no mesmo nó: o rótulo exibido é o da revisão com início de vigência mais

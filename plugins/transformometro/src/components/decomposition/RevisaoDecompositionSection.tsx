@@ -13,8 +13,10 @@ import {
   type MergedRevisaoDecomposition,
 } from "../../types/decomposition";
 import { decompositionTreeToOverlay } from "../../utils/decompositionOverlayDiff";
+import { formatDiffSummary } from "../../utils/diffHighlightDisplay";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
 import { DecompositionTreeEditor } from "./DecompositionTreeEditor";
+import { DiffHighlightToggle } from "../DiffHighlightToggle";
 import { TabPanelTransition } from "../TabPanelTransition";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -44,6 +46,7 @@ export function RevisaoDecompositionSection({
   );
   const [editable, setEditable] = useState<DecompositionTreeV1>(emptyDecompositionTree());
   const [tab, setTab] = useState<"arvore" | "planilha">("arvore");
+  const [showDiff, setShowDiff] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -102,6 +105,9 @@ export function RevisaoDecompositionSection({
     merged.referencia?.versao_revisao ||
     (merged.referencia?.revisao_id ? merged.referencia.revisao_id.slice(0, 8) : null);
   const diff = merged.reference_diff ?? merged.baseline_diff;
+  const hasDiff =
+    Boolean(diff) &&
+    (diff!.changed.length > 0 || diff!.added.length > 0 || diff!.removed.length > 0);
 
   return (
     <div className="tm-decomposition-revisao">
@@ -145,11 +151,12 @@ export function RevisaoDecompositionSection({
         </div>
       ) : null}
 
-      {diff ? (
-        <p className="ds-hint" role="status">
-          Diff vs {refLabel ? `referência (${refLabel})` : "referência"}: {diff.changed.length}{" "}
-          alterados, {diff.added.length} novos, {diff.removed.length} removidos.
-        </p>
+      {hasDiff ? (
+        <DiffHighlightToggle
+          active={showDiff}
+          onChange={setShowDiff}
+          summary={formatDiffSummary(diff, refLabel)}
+        />
       ) : null}
 
       <div className="tm-decomposition-section__tabs">
@@ -176,6 +183,8 @@ export function RevisaoDecompositionSection({
             readOnly={readOnly}
             title={processoNome ? `Mapeamento — ${processoNome}` : "Mapeamento da revisão"}
             allowRootProcessoChave={merged.escopo?.inherit_all !== false}
+            suppressStoredHighlights
+            diffNodeIds={showDiff && hasDiff ? diff : null}
             onChange={setEditable}
           />
         ) : null}

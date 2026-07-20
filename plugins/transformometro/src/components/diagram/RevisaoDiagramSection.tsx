@@ -22,7 +22,12 @@ import {
   type FlowchartEditorHandle,
 } from "@delpi/plugin-ui/index";
 import type { MergedRevisaoDiagram } from "../../types/diagram";
+import {
+  formatDiffSummary,
+  stripFlowchartHighlights,
+} from "../../utils/diffHighlightDisplay";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
+import { DiffHighlightToggle } from "../DiffHighlightToggle";
 import { DS_GHOST_BTN } from "../ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -50,10 +55,14 @@ export function RevisaoDiagramSection({
   const [merged, setMerged] = useState<MergedRevisaoDiagram | null>(null);
   const [editable, setEditable] = useState<FlowchartV1>(emptyFlowchart());
   const [overlayDraft, setOverlayDraft] = useState<FlowchartOverlayV1>(emptyOverlay());
-  const liveMermaid = useMemo(() => flowchartToMermaid(editable), [editable]);
-  /** Macro ∩ escopo — base absoluta do overlay (PB19 S7). */
   const [flowchartBase, setFlowchartBase] = useState<FlowchartV1>(emptyFlowchart());
+  const [showDiff, setShowDiff] = useState(false);
   const editorRef = useRef<FlowchartEditorHandle>(null);
+  const liveMermaid = useMemo(
+    () => flowchartToMermaid(stripFlowchartHighlights(editable)),
+    [editable]
+  );
+  const displayFlowchart = useMemo(() => stripFlowchartHighlights(editable), [editable]);
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) {
@@ -155,6 +164,9 @@ export function RevisaoDiagramSection({
     merged.referencia?.versao_revisao ||
     (merged.referencia?.revisao_id ? merged.referencia.revisao_id.slice(0, 8) : null);
   const diff = merged.reference_diff ?? merged.baseline_diff;
+  const hasDiff =
+    Boolean(diff) &&
+    (diff!.changed.length > 0 || diff!.added.length > 0 || diff!.removed.length > 0);
 
   return (
     <div className="tm-diagram-section">
@@ -192,13 +204,12 @@ export function RevisaoDiagramSection({
         </div>
       ) : null}
 
-      {diff ? (
-        <div className="tm-diagram-diff" role="status">
-          <p className="ds-hint">
-            Diff vs {refLabel ? `referência (${refLabel})` : "referência"}: {diff.changed.length}{" "}
-            alterados, {diff.added.length} novos, {diff.removed.length} removidos.
-          </p>
-        </div>
+      {hasDiff ? (
+        <DiffHighlightToggle
+          active={showDiff}
+          onChange={setShowDiff}
+          summary={formatDiffSummary(diff, refLabel)}
+        />
       ) : null}
 
       <DiagramFullscreenFrame
@@ -211,10 +222,10 @@ export function RevisaoDiagramSection({
       >
         <FlowchartEditor
           ref={editorRef}
-          value={editable}
+          value={displayFlowchart}
           onChange={readOnly ? undefined : setEditable}
           readOnly={readOnly}
-          diffNodeIds={diff ?? undefined}
+          diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
         />
 
         <details className="tm-diagram-section__preview" open={false}>

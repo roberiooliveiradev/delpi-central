@@ -11,6 +11,11 @@ import {
   type DecompositionNode,
   type DecompositionTreeV1,
 } from "../../types/decomposition";
+import type { DiagramDiff } from "../../types/diagram";
+import {
+  applyDiffHighlightsToRichTree,
+  stripDecompositionHighlights,
+} from "../../utils/diffHighlightDisplay";
 import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
 import {
   canAcceptDecompositionDrop,
@@ -27,6 +32,10 @@ type Props = {
   invalidNodeIds?: ReadonlySet<string>;
   /** Quando false, oculta + Processo-chave (escopo parcial da melhoria). */
   allowRootProcessoChave?: boolean;
+  /** Ignora highlight persistido (asis/tobe) na exibição. */
+  suppressStoredHighlights?: boolean;
+  /** Quando definido, pinta nós alterados/novos/removidos vs referência. */
+  diffNodeIds?: DiagramDiff | null;
   onChange: (tree: DecompositionTreeV1) => void;
 };
 
@@ -40,13 +49,16 @@ export function DecompositionTreeEditor({
   title,
   invalidNodeIds,
   allowRootProcessoChave = true,
+  suppressStoredHighlights = false,
+  diffNodeIds = null,
   onChange,
 }: Props) {
   const nodeById = useMemo(() => new Map(tree.nodes.map((node) => [node.id, node])), [tree.nodes]);
-  const richRoot = useMemo(
-    () => buildDecompositionRichTree(tree, { title }),
-    [tree, title]
-  );
+  const richRoot = useMemo(() => {
+    const source = suppressStoredHighlights ? stripDecompositionHighlights(tree) : tree;
+    const root = buildDecompositionRichTree(source, { title });
+    return diffNodeIds ? applyDiffHighlightsToRichTree(root, diffNodeIds) : root;
+  }, [tree, title, suppressStoredHighlights, diffNodeIds]);
   const draggableNodeIds = useMemo(
     () => new Set(tree.nodes.filter((node) => !node.disabled).map((node) => node.id)),
     [tree.nodes]

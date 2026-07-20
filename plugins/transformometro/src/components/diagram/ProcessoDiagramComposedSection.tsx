@@ -5,7 +5,9 @@ import { FieldLabel, NativeTextControl, DiagramMermaidPreview } from "@delpi/plu
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { fetchProcessoDiagramaComposed } from "../../data/api/transformometroDiagramApi";
 import type { ComposedProcessoDiagram } from "../../types/diagram";
+import { stripFlowchartHighlights } from "../../utils/diffHighlightDisplay";
 import { todayDateInput } from "../../utils/dateInputs";
+import { DiffHighlightToggle } from "../DiffHighlightToggle";
 import { DS_GHOST_BTN } from "../ghostChrome";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
 
@@ -26,6 +28,7 @@ export function ProcessoDiagramComposedSection({
   const [loading, setLoading] = useState(true);
   const [at, setAt] = useState(todayDateInput());
   const [composed, setComposed] = useState<ComposedProcessoDiagram | null>(null);
+  const [showDiff, setShowDiff] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -52,11 +55,16 @@ export function ProcessoDiagramComposedSection({
   const conflictNodeIds = useMemo(() => {
     if (!composed?.conflicts?.length) return undefined;
     return {
-      changed: composed.conflicts.map((c) => c.node_id),
+      changed: [...new Set(composed.conflicts.map((c) => c.node_id))],
       added: [] as string[],
       removed: [] as string[],
     };
   }, [composed]);
+
+  const displayFlowchart = useMemo(
+    () => (composed?.flowchart ? stripFlowchartHighlights(composed.flowchart) : null),
+    [composed]
+  );
 
   if (loading && !composed) {
     return <p className="ds-hint">Carregando diagrama composto…</p>;
@@ -95,6 +103,14 @@ export function ProcessoDiagramComposedSection({
       )}
 
       {composed?.conflicts?.length ? (
+        <DiffHighlightToggle
+          active={showDiff}
+          onChange={setShowDiff}
+          summary={`${composed.conflicts.length} conflito(s) de interseção no mesmo nó.`}
+        />
+      ) : null}
+
+      {showDiff && composed?.conflicts?.length ? (
         <div className="ds-state ds-state--warn" role="status">
           <p>
             Interseções no mesmo nó: o rótulo exibido é o da revisão com início de vigência mais
@@ -113,14 +129,14 @@ export function ProcessoDiagramComposedSection({
         </div>
       ) : null}
 
-      {composed?.flowchart ? (
+      {displayFlowchart ? (
         <>
           <FlowchartEditor
-            value={composed.flowchart}
+            value={displayFlowchart}
             readOnly
-            diffNodeIds={conflictNodeIds}
+            diffNodeIds={showDiff ? conflictNodeIds : undefined}
           />
-          {composed.mermaid ? (
+          {composed?.mermaid ? (
             <details className="tm-diagram-section__preview" open={false}>
               <summary>Preview Mermaid (composto)</summary>
               <DiagramMermaidPreview code={composed.mermaid} />

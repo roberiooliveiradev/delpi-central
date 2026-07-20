@@ -1220,6 +1220,14 @@
   gap:.75rem;
   align-items:flex-end;
   margin-bottom:.75rem;
+}.dashboard-transformometro .tm-diff-highlight-toggle{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:.75rem;
+  margin-bottom:.75rem;
+}.dashboard-transformometro .tm-diff-highlight-toggle__summary{
+  margin:0;
 }.dashboard-transformometro .tm-decomposition-composed__date{
   display:flex;
   flex-direction:column;
