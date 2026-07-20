@@ -14,6 +14,7 @@ Documentação de arquitetura e plano de entrega do **Transformômetro** como pr
 | [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) | Diagramas macro, escopo por instância, overlay por revisão (Playbook 19) |
 | [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) | Árvore de decomposição, export planilha, vínculo com fluxo (Playbook 20) |
 | [PLAYBOOK-21-matriz-impacto-esforco-revisao.md](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md) | Matriz impacto × esforço por revisão (Playbook 21) |
+| [PLAYBOOK-23-decomposicao-composicao-macro-data.md](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) | Macro composto por vigência, delta estrutural, âncora na referência, limites multi-melhoria |
 | [playbook-21-implementation-status.md](../../../transformometro-api/docs/playbook-21-implementation-status.md) | Status técnico Playbook 21 (S0–S4) |
 | [playbook-19-implementation-status.md](../../../transformometro-api/docs/playbook-19-implementation-status.md) | Status técnico S0–S6 (API + MFE) |
 | [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) | Status técnico Playbook 20 (S0–S6) |
