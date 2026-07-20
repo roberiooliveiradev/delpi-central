@@ -1053,7 +1053,7 @@
       }
     },
     {
-      "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
+      "operationId": "get_cultura_delpi_content",
       "httpMethod": "GET",
       "label": "Conteúdo Cultura Delpi",
       "category": "strategic",
@@ -1066,7 +1066,7 @@
       "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
     },
     {
-      "operationId": "search_customers_route_customers_search_get",
+      "operationId": "search_customers",
       "httpMethod": "GET",
       "label": "Busca de clientes",
       "category": "commercial",
@@ -1502,18 +1502,18 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFieldLabels": {
-        "total_lmps": "Total de LMPs",
-        "percent_dentro_prazo": "% no prazo",
-        "avg_lead_time": "Lead time médio",
-        "total_items": "Total de itens"
-      },
       "valueFields": [
         "total_lmps",
         "percent_dentro_prazo",
         "avg_lead_time",
         "total_items"
-      ]
+      ],
+      "valueFieldLabels": {
+        "total_lmps": "Total de LMPs",
+        "percent_dentro_prazo": "% no prazo",
+        "avg_lead_time": "Lead time médio",
+        "total_items": "Total de itens"
+      }
     },
     {
       "operationId": "get_lmp_by_sale_number",
@@ -2637,7 +2637,7 @@
       }
     },
     {
-      "operationId": "root_health_get",
+      "operationId": "get_health",
       "httpMethod": "GET",
       "label": "Saúde da API (root)",
       "category": "system",
@@ -3134,10 +3134,10 @@
         }
       },
       "paramStrategy": "direct",
+      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      },
-      "tableFields": "items"
+      }
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -5855,7 +5855,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "structure_excel_public_products__code__structure_excel_get",
+      "operationId": "get_product_structure_excel",
       "httpMethod": "GET",
       "label": "Structure Excel Public",
       "category": "products",
@@ -5986,7 +5986,7 @@
       "description": "Análise composta: «Análise consolidada — Proposta comercial interna (pdf/totvs)»."
     },
     {
-      "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
+      "operationId": "export_proposta_comercial_pdf",
       "httpMethod": "GET",
       "label": "Proposta comercial — exportar PDF",
       "category": "commercial",
@@ -5999,7 +5999,7 @@
       "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
     },
     {
-      "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
+      "operationId": "get_public_quality_label_inspection",
       "httpMethod": "GET",
       "label": "Inspeção pública (etiqueta)",
       "category": "quality",
@@ -8810,7 +8810,7 @@
       }
     },
     {
-      "operationId": "list_bookings_scheduling_bookings_get",
+      "operationId": "list_scheduling_bookings",
       "httpMethod": "GET",
       "label": "Agendamentos — reservas",
       "category": "scheduling",
@@ -8824,7 +8824,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -8851,7 +8851,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_resources_scheduling_resources_get",
+      "operationId": "list_scheduling_resources",
       "httpMethod": "GET",
       "label": "Agendamentos — recursos",
       "category": "scheduling",
@@ -8865,7 +8865,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -9205,7 +9205,7 @@
       "tableFields": "top_products"
     },
     {
-      "operationId": "get_caller_stats_system_caller_stats_get",
+      "operationId": "get_caller_stats",
       "httpMethod": "GET",
       "label": "Breakdown de requests por X-Delpi-Caller-App",
       "category": "system",
@@ -9228,7 +9228,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "search_columns_global_system_columns_search_get",
+      "operationId": "search_protheus_columns_by_description",
       "httpMethod": "GET",
       "label": "Busca colunas por descrição (SX3010 + ranking semântico)",
       "category": "system",
@@ -9264,7 +9264,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_console_alerts_system_console_alerts_get",
+      "operationId": "get_console_alerts",
       "httpMethod": "GET",
       "label": "Histórico recente de alertas do console",
       "category": "system",
@@ -9287,7 +9287,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_console_health_system_console_health_get",
+      "operationId": "get_console_health",
       "httpMethod": "GET",
       "label": "Saúde agregada do console para Admin Stats",
       "category": "system",
@@ -9300,7 +9300,7 @@
       "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
     },
     {
-      "operationId": "get_envelope_contracts_system_envelope_contracts_get",
+      "operationId": "get_envelope_contracts",
       "httpMethod": "GET",
       "label": "Golden files de contrato de envelope (smoke)",
       "category": "system",
@@ -9313,7 +9313,7 @@
       "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
     },
     {
-      "operationId": "get_observability_snapshot_system_observability_snapshot_get",
+      "operationId": "get_observability_snapshot",
       "httpMethod": "GET",
       "label": "Snapshot unificado para comparador de deploy",
       "category": "system",
@@ -9336,7 +9336,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_openapi_diff_system_openapi_diff_get",
+      "operationId": "get_openapi_diff",
       "httpMethod": "GET",
       "label": "Diff do OpenAPI atual vs baseline versionado",
       "category": "system",
@@ -9349,7 +9349,7 @@
       "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
     },
     {
-      "operationId": "get_query_cache_stats_system_query_cache_stats_get",
+      "operationId": "get_query_cache_stats",
       "httpMethod": "GET",
       "label": "Hits e misses do cache compartilhado (LMP, estoque)",
       "category": "system",
@@ -9362,7 +9362,7 @@
       "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
     },
     {
-      "operationId": "get_smoke_definitions_system_smoke_definitions_get",
+      "operationId": "get_smoke_definitions",
       "httpMethod": "GET",
       "label": "Definições das smoke suites do console",
       "category": "system",
@@ -9375,7 +9375,7 @@
       "description": "Indicador numérico para «Definições das smoke suites do console»."
     },
     {
-      "operationId": "get_sql_health_system_sql_health_get",
+      "operationId": "get_sql_health",
       "httpMethod": "GET",
       "label": "Telemetria SQL recente (ring buffer memória ou Redis)",
       "category": "system",
@@ -9404,7 +9404,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "search_tables_system_tables_search_get",
+      "operationId": "search_tables_by_description",
       "httpMethod": "GET",
       "label": "Busca tabelas por descrição (SX2)",
       "category": "system",
@@ -9440,7 +9440,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "table_system_tables__tableName__get",
+      "operationId": "get_protheus_table",
       "httpMethod": "GET",
       "label": "Consulta informações de tabela",
       "category": "system",
@@ -9453,13 +9453,13 @@
       "description": "Indicador numérico para «Consulta informações de tabela»."
     },
     {
-      "operationId": "table_columns_system_tables__tableName__columns_get",
+      "operationId": "list_protheus_table_columns",
       "httpMethod": "GET",
       "label": "Consulta colunas de tabela com paginação",
       "category": "system",
       "path": "/system/tables/{tableName}/columns",
       "allowedDisplayModes": [
-        "kpi",
+        "table",
         "auto"
       ],
       "metaShape": "scalar",
@@ -9483,7 +9483,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "search_columns_system_tables__tableName__columns_search_get",
+      "operationId": "search_protheus_columns_in_table",
       "httpMethod": "GET",
       "label": "Buscar colunas por texto",
       "category": "system",
@@ -9505,7 +9505,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "table_indexes_system_tables__tableName__indexes_get",
+      "operationId": "get_protheus_table_indexes",
       "httpMethod": "GET",
       "label": "Consulta índices (SIX010)",
       "category": "system",
@@ -9518,7 +9518,7 @@
       "description": "Indicador numérico para «Consulta índices (SIX010)»."
     },
     {
-      "operationId": "table_relations_system_tables__tableName__relations_get",
+      "operationId": "get_protheus_table_relations",
       "httpMethod": "GET",
       "label": "Consulta relacionamentos (SX9010)",
       "category": "system",
@@ -9531,7 +9531,7 @@
       "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
     },
     {
-      "operationId": "table_schema_system_tables__tableName__schema_get",
+      "operationId": "get_protheus_table_schema",
       "httpMethod": "GET",
       "label": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
       "category": "system",

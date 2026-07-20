@@ -1061,7 +1061,7 @@
     {
       "method": "GET",
       "path": "/cultura-delpi/content",
-      "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
+      "operationId": "get_cultura_delpi_content",
       "summary": "Get Cultura Delpi Content",
       "tags": [
         "Cultura DELPI",
@@ -1093,7 +1093,7 @@
     {
       "method": "PUT",
       "path": "/cultura-delpi/content",
-      "operationId": "update_cultura_delpi_content_cultura_delpi_content_put",
+      "operationId": "update_cultura_delpi_content",
       "summary": "Update Cultura Delpi Content",
       "tags": [
         "Cultura DELPI",
@@ -1109,7 +1109,7 @@
     {
       "method": "GET",
       "path": "/customers/search",
-      "operationId": "search_customers_route_customers_search_get",
+      "operationId": "search_customers",
       "summary": "Search Customers Route",
       "tags": [
         "Clientes"
@@ -2867,7 +2867,7 @@
     {
       "method": "GET",
       "path": "/health",
-      "operationId": "root_health_get",
+      "operationId": "get_health",
       "summary": "Root",
       "tags": [
         "Health"
@@ -6720,7 +6720,7 @@
     {
       "method": "GET",
       "path": "/products/{code}/structure/excel",
-      "operationId": "structure_excel_public_products__code__structure_excel_get",
+      "operationId": "get_product_structure_excel",
       "summary": "Structure Excel Public",
       "tags": [
         "products"
@@ -6956,7 +6956,7 @@
     {
       "method": "GET",
       "path": "/propostas-comerciais/{proposta_interna}/pdf",
-      "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
+      "operationId": "export_proposta_comercial_pdf",
       "summary": "Export Proposta Comercial Pdf Route",
       "tags": [
         "Propostas Comerciais"
@@ -6987,7 +6987,7 @@
     {
       "method": "POST",
       "path": "/propostas-comerciais/{proposta_interna}/pdf",
-      "operationId": "export_proposta_comercial_pdf_with_overrides_route_propostas_comerciais__proposta_interna__pdf_post",
+      "operationId": "export_proposta_comercial_pdf_with_overrides",
       "summary": "Export Proposta Comercial Pdf With Overrides Route",
       "tags": [
         "Propostas Comerciais"
@@ -7002,7 +7002,7 @@
     {
       "method": "GET",
       "path": "/public/quality-labels/inspection/{token}",
-      "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
+      "operationId": "get_public_quality_label_inspection",
       "summary": "Get Public Inspection",
       "tags": [
         "Quality Labels (público)"
@@ -11958,7 +11958,7 @@
     {
       "method": "GET",
       "path": "/scheduling/bookings",
-      "operationId": "list_bookings_scheduling_bookings_get",
+      "operationId": "list_scheduling_bookings",
       "summary": "List Bookings",
       "tags": [
         "Agendamento",
@@ -12012,7 +12012,7 @@
     {
       "method": "POST",
       "path": "/scheduling/bookings",
-      "operationId": "create_booking_scheduling_bookings_post",
+      "operationId": "create_booking",
       "summary": "Create Booking",
       "tags": [
         "Agendamento",
@@ -12028,7 +12028,7 @@
     {
       "method": "PATCH",
       "path": "/scheduling/bookings/{booking_id}/cancel",
-      "operationId": "cancel_booking_scheduling_bookings__booking_id__cancel_patch",
+      "operationId": "cancel_scheduling_booking",
       "summary": "Cancel Booking",
       "tags": [
         "Agendamento",
@@ -12052,7 +12052,7 @@
     {
       "method": "GET",
       "path": "/scheduling/resources",
-      "operationId": "list_resources_scheduling_resources_get",
+      "operationId": "list_scheduling_resources",
       "summary": "List Resources",
       "tags": [
         "Agendamento",
@@ -12097,7 +12097,7 @@
     {
       "method": "POST",
       "path": "/scheduling/resources",
-      "operationId": "create_resource_scheduling_resources_post",
+      "operationId": "create_scheduling_resource",
       "summary": "Create Resource",
       "tags": [
         "Agendamento",
@@ -12113,7 +12113,7 @@
     {
       "method": "PATCH",
       "path": "/scheduling/resources/{resource_id}",
-      "operationId": "update_resource_scheduling_resources__resource_id__patch",
+      "operationId": "update_scheduling_resource",
       "summary": "Update Resource",
       "tags": [
         "Agendamento",
@@ -12436,7 +12436,7 @@
     {
       "method": "GET",
       "path": "/system/caller-stats",
-      "operationId": "get_caller_stats_system_caller_stats_get",
+      "operationId": "get_caller_stats",
       "summary": "Breakdown de requests por X-Delpi-Caller-App",
       "tags": [
         "system"
@@ -12475,7 +12475,7 @@
     {
       "method": "GET",
       "path": "/system/columns/search",
-      "operationId": "search_columns_global_system_columns_search_get",
+      "operationId": "search_protheus_columns_by_description",
       "summary": "Busca colunas por descrição (SX3010 + ranking semântico)",
       "tags": [
         "system"
@@ -12528,7 +12528,7 @@
     {
       "method": "GET",
       "path": "/system/console-alerts",
-      "operationId": "get_console_alerts_system_console_alerts_get",
+      "operationId": "get_console_alerts",
       "summary": "Histórico recente de alertas do console",
       "tags": [
         "system"
@@ -12567,7 +12567,7 @@
     {
       "method": "POST",
       "path": "/system/console-alerts/evaluate",
-      "operationId": "post_console_alerts_evaluate_system_console_alerts_evaluate_post",
+      "operationId": "evaluate_console_alerts",
       "summary": "Avalia alertas (p95, SQL) e opcionalmente dispara webhook",
       "tags": [
         "system"
@@ -12590,7 +12590,7 @@
     {
       "method": "POST",
       "path": "/system/console-alerts/smoke",
-      "operationId": "post_console_alerts_smoke_system_console_alerts_smoke_post",
+      "operationId": "notify_console_smoke_alerts",
       "summary": "Registra resultado de smoke e dispara alertas",
       "tags": [
         "system"
@@ -12613,7 +12613,7 @@
     {
       "method": "GET",
       "path": "/system/console-health",
-      "operationId": "get_console_health_system_console_health_get",
+      "operationId": "get_console_health",
       "summary": "Saúde agregada do console para Admin Stats",
       "tags": [
         "system"
@@ -12644,7 +12644,7 @@
     {
       "method": "GET",
       "path": "/system/envelope-contracts",
-      "operationId": "get_envelope_contracts_system_envelope_contracts_get",
+      "operationId": "get_envelope_contracts",
       "summary": "Golden files de contrato de envelope (smoke)",
       "tags": [
         "system"
@@ -12675,7 +12675,7 @@
     {
       "method": "GET",
       "path": "/system/observability-snapshot",
-      "operationId": "get_observability_snapshot_system_observability_snapshot_get",
+      "operationId": "get_observability_snapshot",
       "summary": "Snapshot unificado para comparador de deploy",
       "tags": [
         "system"
@@ -12714,7 +12714,7 @@
     {
       "method": "GET",
       "path": "/system/openapi-diff",
-      "operationId": "get_openapi_diff_system_openapi_diff_get",
+      "operationId": "get_openapi_diff",
       "summary": "Diff do OpenAPI atual vs baseline versionado",
       "tags": [
         "system"
@@ -12745,7 +12745,7 @@
     {
       "method": "GET",
       "path": "/system/query-cache/stats",
-      "operationId": "get_query_cache_stats_system_query_cache_stats_get",
+      "operationId": "get_query_cache_stats",
       "summary": "Hits e misses do cache compartilhado (LMP, estoque)",
       "tags": [
         "system"
@@ -12776,7 +12776,7 @@
     {
       "method": "GET",
       "path": "/system/smoke-definitions",
-      "operationId": "get_smoke_definitions_system_smoke_definitions_get",
+      "operationId": "get_smoke_definitions",
       "summary": "Definições das smoke suites do console",
       "tags": [
         "system"
@@ -12807,7 +12807,7 @@
     {
       "method": "GET",
       "path": "/system/sql-health",
-      "operationId": "get_sql_health_system_sql_health_get",
+      "operationId": "get_sql_health",
       "summary": "Telemetria SQL recente (ring buffer memória ou Redis)",
       "tags": [
         "system"
@@ -12852,7 +12852,7 @@
     {
       "method": "GET",
       "path": "/system/tables/search",
-      "operationId": "search_tables_system_tables_search_get",
+      "operationId": "search_tables_by_description",
       "summary": "Busca tabelas por descrição (SX2)",
       "tags": [
         "system"
@@ -12905,7 +12905,7 @@
     {
       "method": "GET",
       "path": "/system/tables/{tableName}",
-      "operationId": "table_system_tables__tableName__get",
+      "operationId": "get_protheus_table",
       "summary": "Consulta informações de tabela",
       "tags": [
         "system"
@@ -12936,7 +12936,7 @@
     {
       "method": "GET",
       "path": "/system/tables/{tableName}/columns",
-      "operationId": "table_columns_system_tables__tableName__columns_get",
+      "operationId": "list_protheus_table_columns",
       "summary": "Consulta colunas de tabela com paginação",
       "tags": [
         "system"
@@ -12983,7 +12983,7 @@
     {
       "method": "GET",
       "path": "/system/tables/{tableName}/columns/search",
-      "operationId": "search_columns_system_tables__tableName__columns_search_get",
+      "operationId": "search_protheus_columns_in_table",
       "summary": "Buscar colunas por texto",
       "tags": [
         "system"
@@ -13021,7 +13021,7 @@
     {
       "method": "GET",
       "path": "/system/tables/{tableName}/indexes",
-      "operationId": "table_indexes_system_tables__tableName__indexes_get",
+      "operationId": "get_protheus_table_indexes",
       "summary": "Consulta índices (SIX010)",
       "tags": [
         "system"
@@ -13052,7 +13052,7 @@
     {
       "method": "GET",
       "path": "/system/tables/{tableName}/relations",
-      "operationId": "table_relations_system_tables__tableName__relations_get",
+      "operationId": "get_protheus_table_relations",
       "summary": "Consulta relacionamentos (SX9010)",
       "tags": [
         "system"
@@ -13083,7 +13083,7 @@
     {
       "method": "GET",
       "path": "/system/tables/{tableName}/schema",
-      "operationId": "table_schema_system_tables__tableName__schema_get",
+      "operationId": "get_protheus_table_schema",
       "summary": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
       "tags": [
         "system"

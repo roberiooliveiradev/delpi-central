@@ -237,20 +237,6 @@
       },
       "category": "quality"
     },
-    "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get": {
-      "locale": {
-        "en": {
-          "summary": "Export Proposta Comercial Pdf Route",
-          "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
-        },
-        "pt-BR": {
-          "label": "Proposta comercial — exportar PDF",
-          "summary": "Proposta comercial — exportar PDF",
-          "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
-        }
-      },
-      "category": "commercial"
-    },
     "export_quality_action_plan_pdf": {
       "locale": {
         "en": {
@@ -335,20 +321,6 @@
       },
       "category": "commercial"
     },
-    "get_caller_stats_system_caller_stats_get": {
-      "locale": {
-        "en": {
-          "summary": "Breakdown de requests por X-Delpi-Caller-App",
-          "description": "Indicador numérico para «Breakdown de requests por X-Delpi-Caller-App»."
-        },
-        "pt-BR": {
-          "label": "Breakdown de requests por X-Delpi-Caller-App",
-          "summary": "Breakdown de requests por X-Delpi-Caller-App",
-          "description": "Indicador numérico para «Breakdown de requests por X-Delpi-Caller-App»."
-        }
-      },
-      "category": "system"
-    },
     "get_commercial_proposal": {
       "locale": {
         "en": {
@@ -391,48 +363,6 @@
       },
       "category": "commercial"
     },
-    "get_console_alerts_system_console_alerts_get": {
-      "locale": {
-        "en": {
-          "summary": "Histórico recente de alertas do console",
-          "description": "Indicador numérico para «Histórico recente de alertas do console»."
-        },
-        "pt-BR": {
-          "label": "Histórico recente de alertas do console",
-          "summary": "Histórico recente de alertas do console",
-          "description": "Indicador numérico para «Histórico recente de alertas do console»."
-        }
-      },
-      "category": "system"
-    },
-    "get_console_health_system_console_health_get": {
-      "locale": {
-        "en": {
-          "summary": "Saúde agregada do console para Admin Stats",
-          "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
-        },
-        "pt-BR": {
-          "label": "Saúde agregada do console para Admin Stats",
-          "summary": "Saúde agregada do console para Admin Stats",
-          "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
-        }
-      },
-      "category": "system"
-    },
-    "get_cultura_delpi_content_cultura_delpi_content_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Cultura Delpi Content",
-          "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
-        },
-        "pt-BR": {
-          "label": "Conteúdo Cultura Delpi",
-          "summary": "Conteúdo Cultura Delpi",
-          "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
-        }
-      },
-      "category": "strategic"
-    },
     "get_depreciation_pct": {
       "locale": {
         "en": {
@@ -474,20 +404,6 @@
         }
       },
       "category": "production"
-    },
-    "get_envelope_contracts_system_envelope_contracts_get": {
-      "locale": {
-        "en": {
-          "summary": "Golden files de contrato de envelope (smoke)",
-          "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
-        },
-        "pt-BR": {
-          "label": "Golden files de contrato de envelope (smoke)",
-          "summary": "Golden files de contrato de envelope (smoke)",
-          "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
-        }
-      },
-      "category": "system"
     },
     "get_financeiro_despesas_centro_custo_filtros": {
       "locale": {
@@ -978,34 +894,6 @@
         }
       },
       "category": "commercial"
-    },
-    "get_observability_snapshot_system_observability_snapshot_get": {
-      "locale": {
-        "en": {
-          "summary": "Snapshot unificado para comparador de deploy",
-          "description": "Indicador numérico para «Snapshot unificado para comparador de deploy»."
-        },
-        "pt-BR": {
-          "label": "Snapshot unificado para comparador de deploy",
-          "summary": "Snapshot unificado para comparador de deploy",
-          "description": "Indicador numérico para «Snapshot unificado para comparador de deploy»."
-        }
-      },
-      "category": "system"
-    },
-    "get_openapi_diff_system_openapi_diff_get": {
-      "locale": {
-        "en": {
-          "summary": "Diff do OpenAPI atual vs baseline versionado",
-          "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
-        },
-        "pt-BR": {
-          "label": "Diff do OpenAPI atual vs baseline versionado",
-          "summary": "Diff do OpenAPI atual vs baseline versionado",
-          "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
-        }
-      },
-      "category": "system"
     },
     "get_ppm_external_series": {
       "locale": {
@@ -1735,20 +1623,6 @@
       },
       "category": "commercial"
     },
-    "get_public_inspection_public_quality_labels_inspection__token__get": {
-      "locale": {
-        "en": {
-          "summary": "Get Public Inspection",
-          "description": "Indicador numérico para «Inspeção pública (etiqueta)»."
-        },
-        "pt-BR": {
-          "label": "Inspeção pública (etiqueta)",
-          "summary": "Inspeção pública (etiqueta)",
-          "description": "Indicador numérico para «Inspeção pública (etiqueta)»."
-        }
-      },
-      "category": "quality"
-    },
     "get_purchases_top_products": {
       "locale": {
         "en": {
@@ -1846,20 +1720,6 @@
         }
       },
       "category": "quality"
-    },
-    "get_query_cache_stats_system_query_cache_stats_get": {
-      "locale": {
-        "en": {
-          "summary": "Hits e misses do cache compartilhado (LMP, estoque)",
-          "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
-        },
-        "pt-BR": {
-          "label": "Hits e misses do cache compartilhado (LMP, estoque)",
-          "summary": "Hits e misses do cache compartilhado (LMP, estoque)",
-          "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
-        }
-      },
-      "category": "system"
     },
     "get_retrabalhos_colaboradores": {
       "locale": {
@@ -2015,34 +1875,6 @@
       },
       "category": "commercial"
     },
-    "get_smoke_definitions_system_smoke_definitions_get": {
-      "locale": {
-        "en": {
-          "summary": "Definições das smoke suites do console",
-          "description": "Indicador numérico para «Definições das smoke suites do console»."
-        },
-        "pt-BR": {
-          "label": "Definições das smoke suites do console",
-          "summary": "Definições das smoke suites do console",
-          "description": "Indicador numérico para «Definições das smoke suites do console»."
-        }
-      },
-      "category": "system"
-    },
-    "get_sql_health_system_sql_health_get": {
-      "locale": {
-        "en": {
-          "summary": "Telemetria SQL recente (ring buffer memória ou Redis)",
-          "description": "Indicador numérico para «Telemetria SQL recente (ring buffer memória ou Redis)»."
-        },
-        "pt-BR": {
-          "label": "Telemetria SQL recente (ring buffer memória ou Redis)",
-          "summary": "Telemetria SQL recente (ring buffer memória ou Redis)",
-          "description": "Indicador numérico para «Telemetria SQL recente (ring buffer memória ou Redis)»."
-        }
-      },
-      "category": "system"
-    },
     "get_supplies_cpv": {
       "locale": {
         "en": {
@@ -2112,20 +1944,6 @@
         }
       },
       "category": "engineering"
-    },
-    "list_bookings_scheduling_bookings_get": {
-      "locale": {
-        "en": {
-          "summary": "List Bookings",
-          "description": "Indicador numérico para «Agendamentos — reservas»."
-        },
-        "pt-BR": {
-          "label": "Agendamentos — reservas",
-          "summary": "Agendamentos — reservas",
-          "description": "Indicador numérico para «Agendamentos — reservas»."
-        }
-      },
-      "category": "scheduling"
     },
     "list_commercial_proposals": {
       "locale": {
@@ -2533,20 +2351,6 @@
       },
       "category": "quality"
     },
-    "list_resources_scheduling_resources_get": {
-      "locale": {
-        "en": {
-          "summary": "List Resources",
-          "description": "Indicador numérico para «Agendamentos — recursos»."
-        },
-        "pt-BR": {
-          "label": "Agendamentos — recursos",
-          "summary": "Agendamentos — recursos",
-          "description": "Indicador numérico para «Agendamentos — recursos»."
-        }
-      },
-      "category": "scheduling"
-    },
     "list_sale_orders": {
       "locale": {
         "en": {
@@ -2575,62 +2379,6 @@
       },
       "category": "engineering"
     },
-    "root_health_get": {
-      "locale": {
-        "en": {
-          "summary": "Root",
-          "description": "Indicador numérico para «Saúde da API (root)»."
-        },
-        "pt-BR": {
-          "label": "Saúde da API (root)",
-          "summary": "Saúde da API (root)",
-          "description": "Indicador numérico para «Saúde da API (root)»."
-        }
-      },
-      "category": "system"
-    },
-    "search_columns_global_system_columns_search_get": {
-      "locale": {
-        "en": {
-          "summary": "Busca colunas por descrição (SX3010 + ranking semântico)",
-          "description": "Indicador numérico para «Busca colunas por descrição (SX3010 + ranking semântico)»."
-        },
-        "pt-BR": {
-          "label": "Busca colunas por descrição (SX3010 + ranking semântico)",
-          "summary": "Busca colunas por descrição (SX3010 + ranking semântico)",
-          "description": "Indicador numérico para «Busca colunas por descrição (SX3010 + ranking semântico)»."
-        }
-      },
-      "category": "system"
-    },
-    "search_columns_system_tables__tableName__columns_search_get": {
-      "locale": {
-        "en": {
-          "summary": "Buscar colunas por texto",
-          "description": "Indicador numérico para «Buscar colunas por texto»."
-        },
-        "pt-BR": {
-          "label": "Buscar colunas por texto",
-          "summary": "Buscar colunas por texto",
-          "description": "Indicador numérico para «Buscar colunas por texto»."
-        }
-      },
-      "category": "system"
-    },
-    "search_customers_route_customers_search_get": {
-      "locale": {
-        "en": {
-          "summary": "Search Customers Route",
-          "description": "Indicador numérico para «Busca de clientes»."
-        },
-        "pt-BR": {
-          "label": "Busca de clientes",
-          "summary": "Busca de clientes",
-          "description": "Indicador numérico para «Busca de clientes»."
-        }
-      },
-      "category": "commercial"
-    },
     "search_quality_action_plan_evidences": {
       "locale": {
         "en": {
@@ -2644,104 +2392,6 @@
         }
       },
       "category": "quality"
-    },
-    "search_tables_system_tables_search_get": {
-      "locale": {
-        "en": {
-          "summary": "Busca tabelas por descrição (SX2)",
-          "description": "Indicador numérico para «Busca tabelas por descrição (SX2)»."
-        },
-        "pt-BR": {
-          "label": "Busca tabelas por descrição (SX2)",
-          "summary": "Busca tabelas por descrição (SX2)",
-          "description": "Indicador numérico para «Busca tabelas por descrição (SX2)»."
-        }
-      },
-      "category": "system"
-    },
-    "structure_excel_public_products__code__structure_excel_get": {
-      "locale": {
-        "en": {
-          "summary": "Structure Excel Public",
-          "description": "Indicador numérico para «Structure Excel Public»."
-        },
-        "pt-BR": {
-          "label": "Structure Excel Public",
-          "summary": "Structure Excel Public",
-          "description": "Indicador numérico para «Structure Excel Public»."
-        }
-      },
-      "category": "products"
-    },
-    "table_columns_system_tables__tableName__columns_get": {
-      "locale": {
-        "en": {
-          "summary": "Consulta colunas de tabela com paginação",
-          "description": "Indicador numérico para «Consulta colunas de tabela com paginação»."
-        },
-        "pt-BR": {
-          "label": "Consulta colunas de tabela com paginação",
-          "summary": "Consulta colunas de tabela com paginação",
-          "description": "Indicador numérico para «Consulta colunas de tabela com paginação»."
-        }
-      },
-      "category": "system"
-    },
-    "table_indexes_system_tables__tableName__indexes_get": {
-      "locale": {
-        "en": {
-          "summary": "Consulta índices (SIX010)",
-          "description": "Indicador numérico para «Consulta índices (SIX010)»."
-        },
-        "pt-BR": {
-          "label": "Consulta índices (SIX010)",
-          "summary": "Consulta índices (SIX010)",
-          "description": "Indicador numérico para «Consulta índices (SIX010)»."
-        }
-      },
-      "category": "system"
-    },
-    "table_relations_system_tables__tableName__relations_get": {
-      "locale": {
-        "en": {
-          "summary": "Consulta relacionamentos (SX9010)",
-          "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
-        },
-        "pt-BR": {
-          "label": "Consulta relacionamentos (SX9010)",
-          "summary": "Consulta relacionamentos (SX9010)",
-          "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
-        }
-      },
-      "category": "system"
-    },
-    "table_schema_system_tables__tableName__schema_get": {
-      "locale": {
-        "en": {
-          "summary": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
-          "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
-        },
-        "pt-BR": {
-          "label": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
-          "summary": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
-          "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
-        }
-      },
-      "category": "system"
-    },
-    "table_system_tables__tableName__get": {
-      "locale": {
-        "en": {
-          "summary": "Consulta informações de tabela",
-          "description": "Indicador numérico para «Consulta informações de tabela»."
-        },
-        "pt-BR": {
-          "label": "Consulta informações de tabela",
-          "summary": "Consulta informações de tabela",
-          "description": "Indicador numérico para «Consulta informações de tabela»."
-        }
-      },
-      "category": "system"
     },
     "get_audit_5s_analytics_dashboard": {
       "locale": {
@@ -3302,6 +2952,356 @@
         }
       },
       "category": "quality"
+    },
+    "get_cultura_delpi_content": {
+      "locale": {
+        "en": {
+          "summary": "Get Cultura Delpi Content",
+          "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
+        },
+        "pt-BR": {
+          "label": "Conteúdo Cultura Delpi",
+          "summary": "Conteúdo Cultura Delpi",
+          "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
+        }
+      },
+      "category": "strategic"
+    },
+    "search_customers": {
+      "locale": {
+        "en": {
+          "summary": "Search Customers Route",
+          "description": "Indicador numérico para «Busca de clientes»."
+        },
+        "pt-BR": {
+          "label": "Busca de clientes",
+          "summary": "Busca de clientes",
+          "description": "Indicador numérico para «Busca de clientes»."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_health": {
+      "locale": {
+        "en": {
+          "summary": "Root",
+          "description": "Indicador numérico para «Saúde da API (root)»."
+        },
+        "pt-BR": {
+          "label": "Saúde da API (root)",
+          "summary": "Saúde da API (root)",
+          "description": "Indicador numérico para «Saúde da API (root)»."
+        }
+      },
+      "category": "system"
+    },
+    "get_product_structure_excel_public": {
+      "locale": {
+        "en": {
+          "summary": "Structure Excel Public",
+          "description": "Indicador numérico para «Structure Excel Public»."
+        },
+        "pt-BR": {
+          "label": "Structure Excel Public",
+          "summary": "Structure Excel Public",
+          "description": "Indicador numérico para «Structure Excel Public»."
+        }
+      },
+      "category": "products"
+    },
+    "export_proposta_comercial_pdf": {
+      "locale": {
+        "en": {
+          "summary": "Export Proposta Comercial Pdf Route",
+          "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
+        },
+        "pt-BR": {
+          "label": "Proposta comercial — exportar PDF",
+          "summary": "Proposta comercial — exportar PDF",
+          "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
+        }
+      },
+      "category": "commercial"
+    },
+    "get_public_quality_label_inspection": {
+      "locale": {
+        "en": {
+          "summary": "Get Public Inspection",
+          "description": "Indicador numérico para «Inspeção pública (etiqueta)»."
+        },
+        "pt-BR": {
+          "label": "Inspeção pública (etiqueta)",
+          "summary": "Inspeção pública (etiqueta)",
+          "description": "Indicador numérico para «Inspeção pública (etiqueta)»."
+        }
+      },
+      "category": "quality"
+    },
+    "list_scheduling_bookings": {
+      "locale": {
+        "en": {
+          "summary": "List Bookings",
+          "description": "Indicador numérico para «Agendamentos — reservas»."
+        },
+        "pt-BR": {
+          "label": "Agendamentos — reservas",
+          "summary": "Agendamentos — reservas",
+          "description": "Indicador numérico para «Agendamentos — reservas»."
+        }
+      },
+      "category": "scheduling"
+    },
+    "list_scheduling_resources": {
+      "locale": {
+        "en": {
+          "summary": "List Resources",
+          "description": "Indicador numérico para «Agendamentos — recursos»."
+        },
+        "pt-BR": {
+          "label": "Agendamentos — recursos",
+          "summary": "Agendamentos — recursos",
+          "description": "Indicador numérico para «Agendamentos — recursos»."
+        }
+      },
+      "category": "scheduling"
+    },
+    "get_caller_stats": {
+      "locale": {
+        "en": {
+          "summary": "Breakdown de requests por X-Delpi-Caller-App",
+          "description": "Indicador numérico para «Breakdown de requests por X-Delpi-Caller-App»."
+        },
+        "pt-BR": {
+          "label": "Breakdown de requests por X-Delpi-Caller-App",
+          "summary": "Breakdown de requests por X-Delpi-Caller-App",
+          "description": "Indicador numérico para «Breakdown de requests por X-Delpi-Caller-App»."
+        }
+      },
+      "category": "system"
+    },
+    "search_protheus_columns_by_description": {
+      "locale": {
+        "en": {
+          "summary": "Busca colunas por descrição (SX3010 + ranking semântico)",
+          "description": "Indicador numérico para «Busca colunas por descrição (SX3010 + ranking semântico)»."
+        },
+        "pt-BR": {
+          "label": "Busca colunas por descrição (SX3010 + ranking semântico)",
+          "summary": "Busca colunas por descrição (SX3010 + ranking semântico)",
+          "description": "Indicador numérico para «Busca colunas por descrição (SX3010 + ranking semântico)»."
+        }
+      },
+      "category": "system"
+    },
+    "get_console_alerts": {
+      "locale": {
+        "en": {
+          "summary": "Histórico recente de alertas do console",
+          "description": "Indicador numérico para «Histórico recente de alertas do console»."
+        },
+        "pt-BR": {
+          "label": "Histórico recente de alertas do console",
+          "summary": "Histórico recente de alertas do console",
+          "description": "Indicador numérico para «Histórico recente de alertas do console»."
+        }
+      },
+      "category": "system"
+    },
+    "get_console_health": {
+      "locale": {
+        "en": {
+          "summary": "Saúde agregada do console para Admin Stats",
+          "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
+        },
+        "pt-BR": {
+          "label": "Saúde agregada do console para Admin Stats",
+          "summary": "Saúde agregada do console para Admin Stats",
+          "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
+        }
+      },
+      "category": "system"
+    },
+    "get_envelope_contracts": {
+      "locale": {
+        "en": {
+          "summary": "Golden files de contrato de envelope (smoke)",
+          "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
+        },
+        "pt-BR": {
+          "label": "Golden files de contrato de envelope (smoke)",
+          "summary": "Golden files de contrato de envelope (smoke)",
+          "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
+        }
+      },
+      "category": "system"
+    },
+    "get_observability_snapshot": {
+      "locale": {
+        "en": {
+          "summary": "Snapshot unificado para comparador de deploy",
+          "description": "Indicador numérico para «Snapshot unificado para comparador de deploy»."
+        },
+        "pt-BR": {
+          "label": "Snapshot unificado para comparador de deploy",
+          "summary": "Snapshot unificado para comparador de deploy",
+          "description": "Indicador numérico para «Snapshot unificado para comparador de deploy»."
+        }
+      },
+      "category": "system"
+    },
+    "get_openapi_diff": {
+      "locale": {
+        "en": {
+          "summary": "Diff do OpenAPI atual vs baseline versionado",
+          "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
+        },
+        "pt-BR": {
+          "label": "Diff do OpenAPI atual vs baseline versionado",
+          "summary": "Diff do OpenAPI atual vs baseline versionado",
+          "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
+        }
+      },
+      "category": "system"
+    },
+    "get_query_cache_stats": {
+      "locale": {
+        "en": {
+          "summary": "Hits e misses do cache compartilhado (LMP, estoque)",
+          "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
+        },
+        "pt-BR": {
+          "label": "Hits e misses do cache compartilhado (LMP, estoque)",
+          "summary": "Hits e misses do cache compartilhado (LMP, estoque)",
+          "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
+        }
+      },
+      "category": "system"
+    },
+    "get_smoke_definitions": {
+      "locale": {
+        "en": {
+          "summary": "Definições das smoke suites do console",
+          "description": "Indicador numérico para «Definições das smoke suites do console»."
+        },
+        "pt-BR": {
+          "label": "Definições das smoke suites do console",
+          "summary": "Definições das smoke suites do console",
+          "description": "Indicador numérico para «Definições das smoke suites do console»."
+        }
+      },
+      "category": "system"
+    },
+    "get_sql_health": {
+      "locale": {
+        "en": {
+          "summary": "Telemetria SQL recente (ring buffer memória ou Redis)",
+          "description": "Indicador numérico para «Telemetria SQL recente (ring buffer memória ou Redis)»."
+        },
+        "pt-BR": {
+          "label": "Telemetria SQL recente (ring buffer memória ou Redis)",
+          "summary": "Telemetria SQL recente (ring buffer memória ou Redis)",
+          "description": "Indicador numérico para «Telemetria SQL recente (ring buffer memória ou Redis)»."
+        }
+      },
+      "category": "system"
+    },
+    "search_tables_by_description": {
+      "locale": {
+        "en": {
+          "summary": "Busca tabelas por descrição (SX2)",
+          "description": "Indicador numérico para «Busca tabelas por descrição (SX2)»."
+        },
+        "pt-BR": {
+          "label": "Busca tabelas por descrição (SX2)",
+          "summary": "Busca tabelas por descrição (SX2)",
+          "description": "Indicador numérico para «Busca tabelas por descrição (SX2)»."
+        }
+      },
+      "category": "system"
+    },
+    "get_protheus_table": {
+      "locale": {
+        "en": {
+          "summary": "Consulta informações de tabela",
+          "description": "Indicador numérico para «Consulta informações de tabela»."
+        },
+        "pt-BR": {
+          "label": "Consulta informações de tabela",
+          "summary": "Consulta informações de tabela",
+          "description": "Indicador numérico para «Consulta informações de tabela»."
+        }
+      },
+      "category": "system"
+    },
+    "list_protheus_table_columns": {
+      "locale": {
+        "en": {
+          "summary": "Consulta colunas de tabela com paginação",
+          "description": "Indicador numérico para «Consulta colunas de tabela com paginação»."
+        },
+        "pt-BR": {
+          "label": "Consulta colunas de tabela com paginação",
+          "summary": "Consulta colunas de tabela com paginação",
+          "description": "Indicador numérico para «Consulta colunas de tabela com paginação»."
+        }
+      },
+      "category": "system"
+    },
+    "search_protheus_columns_in_table": {
+      "locale": {
+        "en": {
+          "summary": "Buscar colunas por texto",
+          "description": "Indicador numérico para «Buscar colunas por texto»."
+        },
+        "pt-BR": {
+          "label": "Buscar colunas por texto",
+          "summary": "Buscar colunas por texto",
+          "description": "Indicador numérico para «Buscar colunas por texto»."
+        }
+      },
+      "category": "system"
+    },
+    "get_protheus_table_indexes": {
+      "locale": {
+        "en": {
+          "summary": "Consulta índices (SIX010)",
+          "description": "Indicador numérico para «Consulta índices (SIX010)»."
+        },
+        "pt-BR": {
+          "label": "Consulta índices (SIX010)",
+          "summary": "Consulta índices (SIX010)",
+          "description": "Indicador numérico para «Consulta índices (SIX010)»."
+        }
+      },
+      "category": "system"
+    },
+    "get_protheus_table_relations": {
+      "locale": {
+        "en": {
+          "summary": "Consulta relacionamentos (SX9010)",
+          "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
+        },
+        "pt-BR": {
+          "label": "Consulta relacionamentos (SX9010)",
+          "summary": "Consulta relacionamentos (SX9010)",
+          "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
+        }
+      },
+      "category": "system"
+    },
+    "get_protheus_table_schema": {
+      "locale": {
+        "en": {
+          "summary": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
+          "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
+        },
+        "pt-BR": {
+          "label": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
+          "summary": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
+          "description": "Indicador numérico para «Schema completo da tabela (SX2, SX3, SIX, SX9)»."
+        }
+      },
+      "category": "system"
     }
   }
 }

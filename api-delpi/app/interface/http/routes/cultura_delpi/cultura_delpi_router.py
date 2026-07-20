@@ -91,7 +91,7 @@ def _content_payload(repo: PostgresCulturaDelpiRepository) -> dict[str, object]:
     return repo.row_to_payload(row)
 
 
-@router.get("/content")
+@router.get("/content", operation_id="get_cultura_delpi_content")
 @require_any_permission(CULTURA_DELPI_READ_PERMISSIONS)
 def get_cultura_delpi_content():
     try:
@@ -116,7 +116,7 @@ def get_cultura_delpi_content():
         )
 
 
-@router.put("/content")
+@router.put("/content", operation_id="update_cultura_delpi_content")
 @require_any_permission(CULTURA_DELPI_WRITE_PERMISSIONS)
 def update_cultura_delpi_content(
     body: Annotated[CulturaDelpiContentBody, Body(...)],

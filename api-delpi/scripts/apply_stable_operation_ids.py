@@ -234,7 +234,11 @@ def refine_mapping_from_patched_routers(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--tag", default="Qualidade", help="Tag OpenAPI a processar")
+    parser.add_argument(
+        "--tag",
+        default="",
+        help="Tag OpenAPI a processar (vazio = todas as auto do inventário)",
+    )
     parser.add_argument("--write", action="store_true")
     parser.add_argument(
         "--routes-glob",

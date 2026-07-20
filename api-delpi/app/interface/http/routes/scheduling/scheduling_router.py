@@ -167,7 +167,7 @@ def _parse_iso_datetime(value: str) -> datetime | None:
         return None
 
 
-@router.get("/resources")
+@router.get("/resources", operation_id="list_scheduling_resources")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_resources(
     branch: str = Query(..., pattern="^(ES|SC)$"),
@@ -192,7 +192,7 @@ def list_resources(
         return error_response("Erro interno ao listar recursos.", status_code=500)
 
 
-@router.post("/resources")
+@router.post("/resources", operation_id="create_scheduling_resource")
 @require_any_permission(SCHEDULING_MANAGE_PERMISSIONS)
 def create_resource(body: CreateResourceBody):
     branch_error = _branch_access_error(body.branch_code, require_manage=True)
@@ -223,7 +223,7 @@ def create_resource(body: CreateResourceBody):
         return error_response("Erro interno ao cadastrar recurso.", status_code=500)
 
 
-@router.patch("/resources/{resource_id}")
+@router.patch("/resources/{resource_id}", operation_id="update_scheduling_resource")
 @require_any_permission(SCHEDULING_MANAGE_PERMISSIONS)
 def update_resource(resource_id: str, body: UpdateResourceBody):
     try:
@@ -258,7 +258,7 @@ def update_resource(resource_id: str, body: UpdateResourceBody):
         return error_response("Erro interno ao atualizar recurso.", status_code=500)
 
 
-@router.get("/bookings")
+@router.get("/bookings", operation_id="list_scheduling_bookings")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_bookings(
     branch: str = Query(..., pattern="^(ES|SC)$"),
@@ -292,7 +292,7 @@ def list_bookings(
         return error_response("Erro interno ao listar reservas.", status_code=500)
 
 
-@router.get("/bookings/pending")
+@router.get("/bookings/pending", operation_id="list_pending_scheduling_bookings")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_pending_bookings(
     branch: str = Query(..., pattern="^(ES|SC)$"),
@@ -319,7 +319,7 @@ def list_pending_bookings(
         return error_response("Erro interno ao listar pendências.", status_code=500)
 
 
-@router.get("/bookings/mine")
+@router.get("/bookings/mine", operation_id="list_my_scheduling_bookings")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def list_my_bookings(
     branch: str = Query(..., pattern="^(ES|SC)$"),
@@ -387,7 +387,7 @@ def create_booking(body: CreateBookingBody):
         return error_response("Erro interno ao criar reserva.", status_code=500)
 
 
-@router.post("/bookings/{booking_id}/approve")
+@router.post("/bookings/{booking_id}/approve", operation_id="approve_scheduling_booking")
 @require_any_permission(SCHEDULING_APPROVE_PERMISSIONS)
 def approve_booking(booking_id: str):
     try:
@@ -423,7 +423,7 @@ def approve_booking(booking_id: str):
         return error_response("Erro interno ao aprovar reserva.", status_code=500)
 
 
-@router.post("/bookings/{booking_id}/reject")
+@router.post("/bookings/{booking_id}/reject", operation_id="reject_scheduling_booking")
 @require_any_permission(SCHEDULING_APPROVE_PERMISSIONS)
 def reject_booking(booking_id: str, body: RejectBookingBody):
     try:
@@ -460,7 +460,7 @@ def reject_booking(booking_id: str, body: RejectBookingBody):
         return error_response("Erro interno ao rejeitar reserva.", status_code=500)
 
 
-@router.patch("/bookings/{booking_id}/cancel")
+@router.patch("/bookings/{booking_id}/cancel", operation_id="cancel_scheduling_booking")
 @require_any_permission(SCHEDULING_READ_PERMISSIONS)
 def cancel_booking(
     booking_id: str,
