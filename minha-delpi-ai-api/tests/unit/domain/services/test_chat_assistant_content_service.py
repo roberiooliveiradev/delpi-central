@@ -71,6 +71,22 @@ def test_presenter_kpi_title_from_path_matchers():
     assert "CPV" in presenter._kpi_title("/production/cpv")
 
 
+def test_presenter_kpi_title_commercial_rol_target_not_generic():
+    from app.domain.services.external_actions.external_action_result_presenter import (
+        ExternalActionResultPresenter,
+    )
+
+    presenter = ExternalActionResultPresenter()
+
+    branch_title = presenter._kpi_title("/commercial/branch_rol_target_pct")
+    head_title = presenter._kpi_title("/commercial/head_office_rol_target_pct")
+
+    assert branch_title == "Meta % ROL comercial — filial"
+    assert head_title == "Meta % ROL comercial — matriz"
+    assert "Indicador Comercial" not in branch_title
+    assert "Indicador Comercial" not in head_title
+
+
 def test_title_for_path_prefers_longest_fragment():
     title = ChatAssistantContentService.title_for_path(
         "presenter_content",

@@ -134,13 +134,15 @@ COMMERCIAL_SALES_ORDER_OTD_FIELD_LABELS: dict[str, str] = {
 }
 
 COMMERCIAL_ROL_FIELD_LABELS: dict[str, str] = {
+    "rol": "ROL realizado",
+    "target": "Meta ROL (R$)",
     "total_rol": "ROL total",
     "new_business_rol": "ROL novos negócios",
     "new_business_rol_pct": "% ROL novos negócios",
     "new_clients_rol": "ROL clientes novos",
     "new_clients_rol_pct": "% ROL clientes novos",
     "weg_rol": "ROL WEG",
-    "rol_target_pct": "% meta ROL",
+    "rol_target_pct": "Atingimento da meta ROL (%)",
     "rol_matrix": "ROL matriz",
     "rol_branch": "ROL filial",
     "total_new_clients": "Total clientes novos",

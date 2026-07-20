@@ -137,6 +137,14 @@
       "titleKey": "otd"
     },
     {
+      "fragment": "branch_rol_target_pct",
+      "titleKey": "commercial_rol_target_branch"
+    },
+    {
+      "fragment": "head_office_rol_target_pct",
+      "titleKey": "commercial_rol_target_head_office"
+    },
+    {
       "fragment": "/commercial/",
       "titleKey": "commercial"
     },
@@ -186,6 +194,8 @@
     "kaizen": "Kaizen — detalhe e economia",
     "lmp_dashboard": "Dashboard de LMPs",
     "commercial": "Indicador Comercial",
+    "commercial_rol_target_branch": "Meta % ROL comercial — filial",
+    "commercial_rol_target_head_office": "Meta % ROL comercial — matriz",
     "financial": "Indicador Financeiro",
     "production": "Indicador de Produção",
     "rh": "Indicador de RH",

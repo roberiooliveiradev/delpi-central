@@ -1,5 +1,6 @@
 from app.interface.http.kpi_field_labels import (
     COMMON_SCALAR_FIELD_LABELS,
+    COMMERCIAL_ROL_FIELD_LABELS,
     FINANCIAL_ROL_FIELD_LABELS,
     HR_FIELD_LABELS,
     SI_GOAL_FIELD_LABELS,
@@ -16,6 +17,15 @@ def test_kpi_fields_merges_common_si_and_route_bundles():
     assert fields["goal_label"] == "Meta"
     assert fields["gross_revenue"] == "Receita bruta"
     assert fields["rol"] == "ROL"
+
+
+def test_commercial_rol_target_fields_use_humanized_labels():
+    fields = kpi_fields(COMMERCIAL_ROL_FIELD_LABELS)
+
+    assert fields["rol"] == "ROL realizado"
+    assert fields["target"] == "Meta ROL (R$)"
+    assert fields["rol_target_pct"] == "Atingimento da meta ROL (%)"
+    assert fields["branch"] == "Filial"
 
 
 def test_merge_kpi_field_labels_later_bundle_overrides():
