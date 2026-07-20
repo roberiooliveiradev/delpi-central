@@ -86,7 +86,13 @@
         "rol matriz",
         "meta da matriz",
         "meta percentual de rol da matriz",
-        "meta percentual rol da matriz"
+        "meta percentual rol da matriz",
+        "meta comercial",
+        "meta para comercial",
+        "meta do comercial",
+        "meta de comercial",
+        "meta de rol comercial",
+        "meta percentual comercial"
       ],
       "excludes": [
         "filial"
@@ -102,7 +108,11 @@
         "meta percentual de rol da filial",
         "meta percentual rol da filial",
         "percentual de rol da filial",
-        "meta de rol da filial"
+        "meta de rol da filial",
+        "meta comercial da filial",
+        "meta para comercial da filial",
+        "meta do comercial da filial",
+        "meta comercial filial"
       ],
       "excludes": [
         "matriz"

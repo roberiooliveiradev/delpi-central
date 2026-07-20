@@ -24,8 +24,9 @@ class ChatFollowUpIntentService:
         r"\bmais\s+informa",
         r"\bagora\b",
         r"\bdele\b",
-        r"\bdesse\b",
-        r"\bdessa\b",
+        # «desse/dessa» sozinho casa «desse mês» (período) — só follow-up com âncora.
+        r"\bdesse\s+(?:produto|item|c[oó]digo|componente|material)\b",
+        r"\bdessa\s+(?:produto|op(?:ortunidade)?|ordem|estrutura|nota)\b",
         r"\besse\s+produto\b",
         r"\besse\s+item\b",
         r"\bisso\b",

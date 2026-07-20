@@ -121,6 +121,35 @@ def test_resolve_commercial_branch_rol_target_meta_percentual_filial():
     assert match.domain_prefix == "/commercial/"
 
 
+def test_resolve_commercial_head_office_meta_para_comercial_desse_mes():
+    from app.domain.services.chat_department_kpi_intent_service import (
+        invalidate_department_kpi_rules_cache,
+    )
+
+    invalidate_department_kpi_rules_cache()
+    match = ChatDepartmentKpiIntentService.resolve(
+        "qual a meta para comercial desse mês?"
+    )
+
+    assert match is not None
+    assert match.path_token == "head_office_rol_target"
+    assert match.domain_prefix == "/commercial/"
+
+
+def test_resolve_commercial_branch_meta_comercial_da_filial():
+    from app.domain.services.chat_department_kpi_intent_service import (
+        invalidate_department_kpi_rules_cache,
+    )
+
+    invalidate_department_kpi_rules_cache()
+    match = ChatDepartmentKpiIntentService.resolve(
+        "qual a meta comercial da filial?"
+    )
+
+    assert match is not None
+    assert match.path_token == "branch_rol_target"
+
+
 def test_branch_rol_target_question_is_not_capability_inquiry():
     from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 

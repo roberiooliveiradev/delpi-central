@@ -183,6 +183,13 @@ def test_post_rag_fallback_skips_rewrite_task(_enabled):
 
 
 @patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
+def test_post_rag_fallback_skips_commercial_meta_question(_enabled):
+    assert not ChatWebSearchIntentService.should_try_web_after_empty_rag(
+        "qual a meta para comercial desse mês?"
+    )
+
+
+@patch.object(ChatWebSearchIntentService, "is_feature_enabled", return_value=True)
 def test_extract_query_post_rag_fallback_separates_suffix(_enabled):
     query = ChatWebSearchIntentService.extract_query("qual a capital da frança?")
 

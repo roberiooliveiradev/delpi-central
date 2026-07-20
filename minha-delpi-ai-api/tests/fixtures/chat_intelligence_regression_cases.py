@@ -648,6 +648,36 @@ SELECTION_CASES = [
         "expected_action_id": "commercial-branch-rol-target",
     },
     {
+        "message": "qual a meta para comercial desse mês?",
+        "actions": [
+            {
+                "actionId": "commercial-head-office-rol-target",
+                "method": "GET",
+                "path": "/commercial/head_office_rol_target_pct",
+                "operationId": "get_head_office_rol_target_pct",
+                "summary": "Meta % ROL matriz",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "commercial-branch-rol-target",
+                "method": "GET",
+                "path": "/commercial/branch_rol_target_pct",
+                "operationId": "get_branch_rol_target_pct",
+                "summary": "Meta % ROL filial",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "capabilities",
+                "method": "GET",
+                "path": "/capabilities",
+                "operationId": "get_capabilities",
+                "summary": "Capacidades",
+                "parametersSchema": [],
+            },
+        ],
+        "expected_action_id": "commercial-head-office-rol-target",
+    },
+    {
         "message": "Qual o OTD de compras da empresa?",
         "actions": [
             {

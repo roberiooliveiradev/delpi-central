@@ -27,6 +27,15 @@ def test_follow_up_structure_exclusivity():
     assert ChatFollowUpIntentService.follow_up_type(message) == "structure_exclusivity"
 
 
+def test_desse_mes_is_not_operational_follow_up():
+    assert (
+        ChatFollowUpIntentService.is_operational_follow_up(
+            "qual a meta para comercial desse mês?"
+        )
+        is False
+    )
+
+
 def test_follow_up_structure_exclusivity_short_after_product_context():
     message = "quais são exclusivas?"
     assert ChatFollowUpIntentService.is_operational_follow_up(message) is True
