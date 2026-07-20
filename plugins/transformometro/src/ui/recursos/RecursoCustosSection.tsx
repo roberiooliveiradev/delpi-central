@@ -171,7 +171,7 @@ export function RecursoCustosSection({
             <thead>
               <tr>
                 <th><TableHeader label="Valor/mês" hint={C.valorMes} /></th>
-                <th><TableHeader label="Início" hint={C.inicio} /></th>
+                <th><TableHeader label="Início" hint={C.custoInicio} /></th>
                 <th><TableHeader label="Fim" hint={C.fim} /></th>
                 <th><TableHeader label="Obs." hint={C.observacoes} /></th>
                 {!readOnly ? (
@@ -202,7 +202,7 @@ export function RecursoCustosSection({
                             />
                           </label>
                           <label className={DS_FILTER_BOX_PLAIN}>
-                            <FieldLabel className="tm-field__label" label="Início *" hint={C.inicio} />
+                            <FieldLabel className="tm-field__label" label="Início *" hint={C.custoInicio} />
                             <NativeTextControl
                               type="date"
                               required

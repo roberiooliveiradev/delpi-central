@@ -18,8 +18,12 @@ export const TM_HELP_TOOLTIPS = {
     cenario: "Tipo de cenário: linha de base, melhoria, automação ou correção.",
     referenciaComparacao:
       "Revisão usada como referência para calcular economia e diffs desta versão.",
-    inicio: "Data de início da vigência da revisão ou período de custo.",
-    implantacao: "Data em que a melhoria entrou em operação.",
+    inicio:
+      "Início da vigência da revisão: a partir desta data ela passa a valer para medições e dashboard. Não é a data de go-live (veja a coluna Implantação).",
+    implantacao:
+      "Data em que a solução entrou em operação (go-live). Pode coincidir com o Início ou ser outra. Opcional; se vazia, alguns relatórios usam o Início como fallback. Não define a janela de cálculo — isso é o Início.",
+    custoInicio:
+      "Início da vigência deste valor mensal no histórico de custos do recurso.",
     fim: "Data de encerramento da vigência. Revisões encerradas deixam de ser ativas.",
     ativa: "Revisão marcada como vigente na instância — usada como referência operacional.",
     competencia: "Mês de referência dos dados consolidados (YYYY-MM).",
@@ -218,8 +222,10 @@ export const TM_HELP_TOOLTIPS = {
       "Classifica o tipo principal de benefício desta revisão frente à referência (automático, tempo, menos execuções, mais capacidade, qualidade ou misto). Default: Automático (não classificado). Não troca a fórmula: a economia bruta já soma ganho de custo e, se o volume subir, ganho de capacidade — esse valor entra no ROI. A categoria orienta o cadastro e a leitura; o texto sob o campo detalha a opção selecionada.",
     referenciaComparacao:
       "Revisão usada como base de comparação (economia, ROI, diffs de diagrama/WBS). Em geral a baseline ou a versão anterior ativa da mesma melhoria.",
-    inicioVigencia: "Data a partir da qual a revisão passa a valer para medições e dashboard.",
-    implantacao: "Data em que a solução foi implantada — usada em relatórios de implantação.",
+    inicioVigencia:
+      "Início da vigência: a partir desta data a revisão vale para medições e dashboard. Obrigatória. Diferente da Implantação (go-live), que é opcional e pode ser outra data.",
+    implantacao:
+      "Go-live: quando a solução entrou em operação. Pode ser igual ao Início da vigência ou posterior/anterior. Opcional; se vazia, relatórios de implantação podem usar o Início. Não substitui a vigência no cálculo.",
     fimVigencia: "Encerra a revisão. Revisões com fim não podem ser marcadas como ativas.",
     revisaoAtiva: "Indica qual revisão é a vigente na instância (exceto baseline).",
     descricao: "Resumo do que a revisão representa (ex.: automação do fechamento).",
