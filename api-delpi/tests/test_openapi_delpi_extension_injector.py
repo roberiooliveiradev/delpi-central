@@ -1,6 +1,7 @@
-"""x-delpi no OpenAPI — Playbook 22 Fase D."""
+"""x-delpi no OpenAPI — Playbook 22 Fase D + locale.en nativo (Swagger)."""
 
 from app.interface.http.openapi_delpi_extension_injector import (
+    apply_native_openapi_from_locale,
     build_x_delpi_extension,
     inject_delpi_extensions,
 )
@@ -8,23 +9,19 @@ from app.main import app
 
 
 def test_build_x_delpi_extension_from_route_contract():
-    extension = build_x_delpi_extension("get_product_stock")
+    extension = build_x_delpi_extension("get_product_stock", param_names=set())
 
-    assert extension == {
-        "entity": "product_stock",
-        "shape": "paged_list",
-        "presentation": {"strategy": "enriched"},
-    }
+    assert extension["entity"] == "product_stock"
+    assert extension["shape"] == "paged_list"
+    assert extension["presentation"]["strategy"] == "enriched"
 
 
 def test_build_x_delpi_extension_scalar_stays_as_delivered():
-    extension = build_x_delpi_extension("get_supplies_cpv")
+    extension = build_x_delpi_extension("get_supplies_cpv", param_names=set())
 
-    assert extension == {
-        "entity": "supplies_cpv",
-        "shape": "scalar",
-        "presentation": {"strategy": "as_delivered"},
-    }
+    assert extension["entity"] == "supplies_cpv"
+    assert extension["shape"] == "scalar"
+    assert extension["presentation"]["strategy"] == "as_delivered"
 
 
 def test_build_x_delpi_extension_includes_tv_audience_when_curated():
@@ -41,10 +38,59 @@ def test_build_x_delpi_extension_includes_tv_audience_when_curated():
 
 
 def test_build_x_delpi_extension_department_idd_locale():
-    extension = build_x_delpi_extension("get_dashboard_department_idd")
+    extension = build_x_delpi_extension(
+        "get_dashboard_department_idd",
+        param_names={"department_id"},
+    )
     assert extension["entity"] == "dashboard_department_idd"
     assert extension["locale"]["pt-BR"]["summary"]
     assert extension["params"]["department_id"]["locale"]["pt-BR"]["label"] == "Departamento"
+    assert "branch" not in extension.get("params", {})
+
+
+def test_inject_delpi_extensions_applies_native_en_from_locale():
+    schema = {
+        "paths": {
+            "/financial/rol": {
+                "get": {
+                    "operationId": "get_financial_rol",
+                    "summary": "ROL financeiro (receita operacional líquida)",
+                    "description": "Texto PT do agent_route",
+                    "parameters": [
+                        {"name": "branch", "in": "query", "description": "branch"},
+                        {"name": "start_date", "in": "query", "description": "start_date"},
+                    ],
+                }
+            }
+        }
+    }
+
+    stats = inject_delpi_extensions(schema)
+    assert stats["withDelpiExtension"] == 1
+    op = schema["paths"]["/financial/rol"]["get"]
+    assert op["x-delpi"]["locale"]["en"]["summary"]
+    assert op["summary"] == op["x-delpi"]["locale"]["en"]["summary"]
+    assert "financeiro" not in op["summary"].lower() or "financial" in op["summary"].lower()
+    assert op["parameters"][0]["description"] != "branch"
+    assert "branch" in op["parameters"][0]["description"].lower() or "Protheus" in op["parameters"][0]["description"]
+
+
+def test_apply_native_openapi_from_locale_keeps_rich_param_description():
+    operation = {
+        "summary": "Old",
+        "parameters": [
+            {"name": "branch", "description": "Already documented in English for Protheus branch."},
+        ],
+    }
+    extension = {
+        "locale": {"en": {"summary": "Financial ROL", "description": "Financial ROL KPI."}},
+        "params": {
+            "branch": {"locale": {"en": {"label": "Branch", "description": "Branch code."}}},
+        },
+    }
+    apply_native_openapi_from_locale(operation, extension)
+    assert operation["summary"] == "Financial ROL"
+    assert operation["parameters"][0]["description"].startswith("Already documented")
 
 
 def test_inject_delpi_extensions_on_operations_with_operation_id():
@@ -130,11 +176,6 @@ def test_all_published_openapi_operations_have_x_delpi_matching_registry():
                 continue
 
             if extension.get("entity") != contract.entity or extension.get("shape") != contract.shape:
-                mismatches.append(operation_id)
-
-            presentation = extension.get("presentation") or {}
-
-            if presentation.get("strategy") != "as_delivered":
                 mismatches.append(operation_id)
 
     assert not missing_extension, (

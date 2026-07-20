@@ -557,14 +557,16 @@
     "get_financial_rol": {
       "locale": {
         "en": {
-          "summary": "Financial rol",
-          "description": "Financial rol.",
-          "label": "Financial rol"
+          "summary": "Financial ROL (net operating revenue)",
+          "description": "Financial ROL indicator consolidated by branch and period. Use for financial ROL / net operating revenue — not commercial ROL (/commercial/rol/series).",
+          "whenToUse": "Use for financial ROL KPI by branch and period.",
+          "label": "Financial ROL"
         },
         "pt-BR": {
           "label": "ROL financeiro (receita operacional líquida)",
           "summary": "ROL financeiro (receita operacional líquida)",
-          "description": "Indicador numérico para «ROL financeiro (receita operacional líquida)»."
+          "description": "Indicador ROL financeiro consolidado por filial e período. Use para rol financeiro / receita operacional líquida — não confundir com ROL comercial.",
+          "whenToUse": "Use para o KPI de ROL financeiro por filial e período."
         }
       },
       "category": "financial"

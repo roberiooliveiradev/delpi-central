@@ -1,4 +1,4 @@
-"""Injeta extensão x-delpi no OpenAPI a partir de route_contract_registry — Playbook 22."""
+"""Injeta extensão x-delpi no OpenAPI e alinha summary/description nativos (EN) para Swagger."""
 
 from __future__ import annotations
 
@@ -47,6 +47,36 @@ def _parameter_names_from_operation(operation: dict[str, Any]) -> set[str]:
     return names
 
 
+def apply_native_openapi_from_locale(operation: dict[str, Any], extension: dict[str, Any]) -> None:
+    """Swagger lê summary/description/param.description nativos — preencher a partir de locale.en."""
+    locale = extension.get("locale") if isinstance(extension.get("locale"), dict) else {}
+    en = locale.get("en") if isinstance(locale.get("en"), dict) else {}
+    summary = str(en.get("summary") or "").strip()
+    description = str(en.get("description") or summary).strip()
+    if summary:
+        operation["summary"] = summary
+    if description:
+        operation["description"] = description
+
+    params_locale = extension.get("params") if isinstance(extension.get("params"), dict) else {}
+    for param in operation.get("parameters") or []:
+        if not isinstance(param, dict):
+            continue
+        name = str(param.get("name") or "").strip()
+        if not name:
+            continue
+        entry = params_locale.get(name) if isinstance(params_locale.get(name), dict) else {}
+        p_locale = entry.get("locale") if isinstance(entry.get("locale"), dict) else {}
+        p_en = p_locale.get("en") if isinstance(p_locale.get("en"), dict) else {}
+        desc = str(p_en.get("description") or p_en.get("label") or "").strip()
+        if not desc:
+            continue
+        current = str(param.get("description") or "").strip()
+        # Substitui vazio, eco do nome do param, ou stub sem valor.
+        if not current or current == name or current.lower() == name.lower():
+            param["description"] = desc
+
+
 def inject_delpi_extensions(openapi_schema: dict[str, Any]) -> dict[str, int]:
     paths = openapi_schema.get("paths")
 
@@ -72,10 +102,12 @@ def inject_delpi_extensions(openapi_schema: dict[str, Any]) -> dict[str, int]:
                 skipped += 1
                 continue
 
-            operation["x-delpi"] = build_x_delpi_extension(
+            extension = build_x_delpi_extension(
                 operation_id,
                 param_names=_parameter_names_from_operation(operation),
             )
+            operation["x-delpi"] = extension
+            apply_native_openapi_from_locale(operation, extension)
             with_extension += 1
 
     return {

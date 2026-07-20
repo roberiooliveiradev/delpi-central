@@ -21,10 +21,10 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para TV, chat e Swagger.
 | 2 | Sem auto-id FastAPI | Proibido depender de `*_get` / `*_post` gerados; gate `audit_openapi_operation_ids.py --check` |
 | 3 | Contratos | `route_contract_registry.py` (`entity` + `shape`) |
 | 4 | Envelope | Só `api_delpi_success` / `error_response` — ver response-contract |
-| 5 | Summary/description nativos | **Inglês** no OpenAPI (Swagger) |
+| 5 | Summary/description nativos | **Inglês** no OpenAPI/Swagger — via `locale.en` no injector (`openapi_delpi_extension_injector`) |
 | 6 | Locale bilíngue | Entrada em `tv_route_audience.json` (`locale.en` + `locale.pt-BR`, `en.summary ≠ pt-BR.summary`) |
 | 7 | Params tipados | Domínio fechado → `Query` de `query_param_enums.py` (`enum=`), **não** só `pattern=` |
-| 8 | Labels de params | Nome novo em `openapi_param_locale.json` (EN + pt-BR); depois `sync_tv_data_param_catalog.py --write` |
+| 8 | Labels de params | Nome novo em `openapi_param_locale.json` (EN + pt-BR); injector hidrata description no Swagger |
 | 9 | Chat-critical | `**agent_route(...)` / `OpenApiAgentMetadataBuilder` — **não** duplicar `operation_id=` além do `**META` |
 | 10 | RBAC | Constantes em `api_delpi_permissions.py`; filial → `branch_access_error` |
 | 11 | Sync pós-merge | Baseline + catálogo TV + reimport chat (ver doc) |

@@ -6,9 +6,9 @@ O **OpenAPI da api-delpi** é a única fonte de verdade para catálogos (TV, cha
 
 | Camada | Idioma / conteúdo |
 |--------|-------------------|
-| `summary` / `description` nativos | **Inglês** (padrão OpenAPI / Swagger / integradores) |
-| `x-delpi.locale` | **EN + pt-BR** (summary, description, whenToUse) |
-| `x-delpi.params.<name>.locale` | Labels/descrições de query params em EN + pt-BR |
+| `summary` / `description` nativos | **Inglês** — preenchidos no OpenAPI ao vivo a partir de `x-delpi.locale.en` (Swagger UI) |
+| `x-delpi.locale` | **EN + pt-BR** (summary, description, whenToUse) — chat/TV leem daqui |
+| `x-delpi.params.<name>.locale` | Labels/descrições de query params em EN + pt-BR; EN também hidrata `parameters[].description` no Swagger quando o Query não tem descrição útil |
 | `x-delpi.category` | Categoria de produto (`commercial`, `production`, …) |
 | `x-delpi.tv` | Espelho de `locale.pt-BR` para compatibilidade |
 
@@ -56,7 +56,7 @@ def handler(
 | [`openapi_param_locale.json`](../../app/content/openapi_param_locale.json) | Param **novo** compartilhado (branch, periodDays, …) |
 | Summary nativo OpenAPI | Inglês (espelhado de `locale.en` no enrich do baseline) |
 
-Loader: `route_locale_catalog_service` → só anexa locale de params cujos nomes existem em `parameters` da operação.
+Loader: `route_locale_catalog_service` → `openapi_delpi_extension_injector` (anexa `x-delpi` **e** aplica `locale.en` em summary/description nativos para o Swagger).
 
 ### 4. TV / MFE (sem inventário paralelo)
 
