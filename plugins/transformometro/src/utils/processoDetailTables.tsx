@@ -1,9 +1,9 @@
 import type { DataTableColumn } from "../components/DataTable";
 import { TableRowActions } from "../components/ui/TableRowActions";
+import { BeneficioCalculoChip } from "../components/BeneficioCalculoChip";
 import { TM_HELP_TOOLTIPS } from "../content/helpTooltips";
 import type { ProcessoComparativoItem, Revisao } from "../data/api/transformometroApi";
 import { cenarioLabel } from "../content/cenarioLabels";
-import { beneficioCalculoLabel } from "../content/beneficioCalculoLabels";
 import { toDateInputValue } from "./dateInputs";
 import { revisaoDisplayLabel } from "./revisaoLabels";
 import { DS_GHOST_BTN, dsGhostBtn } from "../components/ghostChrome";
@@ -31,7 +31,13 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
       key: "categoria",
       header: "Categoria",
       headerHint: C.beneficioCategoria,
-      render: (row) => beneficioCalculoLabel(row.beneficio_calculo_categoria),
+      render: (row) => (
+        <BeneficioCalculoChip
+          value={row.beneficio_calculo_categoria}
+          hideWhenBaseline
+          cenarioTipo={row.cenario_tipo}
+        />
+      ),
     },
     {
       key: "ativa",
@@ -60,6 +66,34 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
       render: (row) => formatProcessoNumber(row.totais.economia_bruta),
     },
     {
+      key: "tempo",
+      header: "Tempo",
+      headerHint: C.economiaTempo,
+      className: "ds-table__col--numeric",
+      render: (row) => formatProcessoNumber(row.breakdown?.economia_tempo),
+    },
+    {
+      key: "retrabalho",
+      header: "Retrabalho",
+      headerHint: C.economiaRetrabalho,
+      className: "ds-table__col--numeric",
+      render: (row) => formatProcessoNumber(row.breakdown?.economia_retrabalho),
+    },
+    {
+      key: "erros",
+      header: "Erros",
+      headerHint: C.economiaErros,
+      className: "ds-table__col--numeric",
+      render: (row) => formatProcessoNumber(row.breakdown?.economia_erros),
+    },
+    {
+      key: "outros",
+      header: "Outros",
+      headerHint: C.economiaOutros,
+      className: "ds-table__col--numeric",
+      render: (row) => formatProcessoNumber(row.breakdown?.economia_outros),
+    },
+    {
       key: "liquida",
       header: "Economia líquida",
       headerHint: C.economiaLiquida,
@@ -72,6 +106,13 @@ export function buildComparativoColumns(): DataTableColumn<ProcessoComparativoIt
       headerHint: C.ganhoCapacidade,
       className: "ds-table__col--numeric",
       render: (row) => formatProcessoNumber(row.totais.ganho_capacidade),
+    },
+    {
+      key: "reducaoVolume",
+      header: "Sinal ↓ volume",
+      headerHint: C.economiaReducaoVolume,
+      className: "ds-table__col--numeric",
+      render: (row) => formatProcessoNumber(row.totais.economia_reducao_volume),
     },
     {
       key: "deltaVolume",
@@ -137,6 +178,18 @@ export function buildRevisaoColumns({
       header: "Cenário",
       headerHint: C.cenario,
       render: (r) => cenarioLabel(r.cenario_tipo),
+    },
+    {
+      key: "categoria",
+      header: "Categoria",
+      headerHint: C.beneficioCategoria,
+      render: (r) => (
+        <BeneficioCalculoChip
+          value={r.beneficio_calculo_categoria}
+          hideWhenBaseline
+          cenarioTipo={r.cenario_tipo}
+        />
+      ),
     },
     {
       key: "referencia",

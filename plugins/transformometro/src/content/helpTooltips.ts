@@ -25,6 +25,12 @@ export const TM_HELP_TOOLTIPS = {
     competencia: "Mês de referência dos dados consolidados (YYYY-MM).",
     mesesComDados: "Quantidade de competências com medição registrada na revisão.",
     economiaBruta: "Ganho bruto estimado antes de descontar investimentos e recursos.",
+    economiaTempo: "Parcela da economia bruta atribuída à redução de tempo de execução.",
+    economiaRetrabalho: "Parcela da economia bruta ligada a menos retrabalho.",
+    economiaErros: "Parcela da economia bruta ligada a menos erros/refugos.",
+    economiaOutros: "Outros desperdícios evitados na comparação com a referência.",
+    economiaReducaoVolume:
+      "Sinal analítico quando o volume cai vs. a referência (sem double-count na bruta).",
     ganhoCapacidade:
       "Benefício de volume acima da referência (capacidade). Não entra no ROI até decisão explícita.",
     deltaVolume: "Diferença de volume mensal da revisão em relação à referência (última competência).",
@@ -242,7 +248,7 @@ export const TM_HELP_TOOLTIPS = {
     comparativoChart:
       "Compara economia bruta, líquida, ganho de capacidade (fora do ROI), investimentos, recursos e horas entre as revisões desta instância.",
     comparativoTable:
-      "Tabela com os mesmos indicadores do gráfico, incluindo categoria, Δ volume, competência e meses com dados.",
+      "Tabela com economia, breakdown (tempo/retrabalho/erros), categoria, Δ volume, capacidade e meses com dados.",
     comparativoAvisos:
       "Alertas quando o volume diverge da referência — ajuda a interpretar se a economia vem de tempo, volume ou capacidade.",
   },

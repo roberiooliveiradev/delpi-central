@@ -4,9 +4,9 @@ import { SelectField } from "../../../components/ui/SelectField";
 import { cenarioLabel, cenarioSelectLabel } from "../../../content/cenarioLabels";
 import {
   BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
-  beneficioCalculoLabel,
   beneficioCalculoSelectLabel,
 } from "../../../content/beneficioCalculoLabels";
+import { BeneficioCalculoChip } from "../../../components/BeneficioCalculoChip";
 import { mapSelectOptions, mapSelectOptionsFromItems } from "../../../components/ui/selectTypes";
 import { revisaoDisplayLabel } from "../../../utils/revisaoLabels";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
@@ -62,7 +62,9 @@ function VigenciaReadContent({
         {revisaoVigencia.cenario_tipo !== "baseline" ? (
           <div>
             <dt>Categoria de cálculo</dt>
-            <dd>{beneficioCalculoLabel(revisaoVigencia.beneficio_calculo_categoria)}</dd>
+            <dd>
+              <BeneficioCalculoChip value={revisaoVigencia.beneficio_calculo_categoria} />
+            </dd>
           </div>
         ) : null}
         {revisaoVigencia.cenario_tipo !== "baseline" ? (

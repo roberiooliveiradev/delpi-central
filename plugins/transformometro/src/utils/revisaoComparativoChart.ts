@@ -63,3 +63,16 @@ export function collectComparativoAvisos(
   }
   return out;
 }
+
+export function collectComparativoCategorias(items: ProcessoComparativoItem[]): string[] {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const item of items) {
+    if ((item.cenario_tipo ?? "").toLowerCase() === "baseline") continue;
+    const cat = (item.beneficio_calculo_categoria || "economia_tempo").trim().toLowerCase();
+    if (!cat || seen.has(cat)) continue;
+    seen.add(cat);
+    ordered.push(cat);
+  }
+  return ordered;
+}

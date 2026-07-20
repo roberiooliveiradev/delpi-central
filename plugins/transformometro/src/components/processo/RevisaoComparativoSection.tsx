@@ -16,6 +16,7 @@ import { ChartCard } from "../ChartCard";
 import { HelpTooltip } from "@delpi/plugin-ui/index";
 import { SegmentToggle } from "../SegmentToggle";
 import { CollapsiblePanel } from "../CollapsiblePanel";
+import { BeneficioCalculoChip } from "../BeneficioCalculoChip";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { ProcessoComparativoItem } from "../../data/api/transformometroApi";
 import { formatCurrency, formatHours } from "../../utils/format";
@@ -23,6 +24,7 @@ import {
   COMPARATIVO_HOURS_SERIES,
   COMPARATIVO_MONEY_SERIES,
   collectComparativoAvisos,
+  collectComparativoCategorias,
   toComparativoChartRows,
   type ComparativoChartView,
 } from "../../utils/revisaoComparativoChart";
@@ -48,6 +50,7 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
   const [view, setView] = useState<ComparativoChartView>("money");
   const chartRows = useMemo(() => toComparativoChartRows(items), [items]);
   const avisos = useMemo(() => collectComparativoAvisos(items), [items]);
+  const categorias = useMemo(() => collectComparativoCategorias(items), [items]);
   const moneySeries = useMemo(() => {
     const hasCapacidade = chartRows.some((row) => row.ganhoCapacidade > 0);
     if (hasCapacidade) return COMPARATIVO_MONEY_SERIES;
@@ -60,6 +63,17 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
 
   return (
     <section className="tm-comparativo-section">
+      {categorias.length > 0 ? (
+        <p
+          className="ds-hint"
+          style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}
+        >
+          <span>Categorias neste comparativo:</span>
+          {categorias.map((categoria) => (
+            <BeneficioCalculoChip key={categoria} value={categoria} />
+          ))}
+        </p>
+      ) : null}
       <ChartCard
         title="Comparativo de revisões"
         hint={TM_HELP_TOOLTIPS.revisao.comparativoChart}
@@ -160,7 +174,7 @@ export function RevisaoComparativoSection({ items, columns }: Props) {
         bodyClassName="tm-comparativo-table__body"
       >
         <DataTableSection
-          columnPreferencesKey="transformometro:RevisaoComparativoSection:revisaocomparativosection:v2"
+          columnPreferencesKey="transformometro:RevisaoComparativoSection:revisaocomparativosection:v3"
           title=""
           columns={columns}
           rows={items}
