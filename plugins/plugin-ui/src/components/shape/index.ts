@@ -8,7 +8,7 @@ export {
   releaseExclusiveAnchoredPanel,
   resetExclusiveAnchoredPanelForTests,
 } from "./exclusiveAnchoredPanel";
-export { resolveDelpiUiPortalTheme, resolveMfePortalScopeClassName, DELPI_UI_SHAPE_THEME_HOST_CLASS } from "./delpiUiPortalTheme";
+export { resolveDelpiUiPortalTheme, resolveMfeHostElement, resolveMfePortalScopeClassName, DELPI_UI_SHAPE_THEME_HOST_CLASS } from "./delpiUiPortalTheme";
 export { useDelpiUiPortalTheme } from "./useDelpiUiPortalTheme";
 export { ColorThemeGrid, ColorStandardRow, ColorSwatch } from "./ColorThemeGrid";
 export { ColorPickerPopover, ColorPickerPopoverTrigger, ShapeFillMenu } from "./ColorPickerPopover";

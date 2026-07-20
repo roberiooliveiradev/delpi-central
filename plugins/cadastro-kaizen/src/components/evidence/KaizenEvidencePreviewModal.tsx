@@ -73,6 +73,7 @@ export function KaizenEvidencePreviewModal({ source, onClose }: Props) {
       fileName={fileName}
       declaredType={declaredType}
       enabled={mode !== "none"}
+      portalScopeClassName="dashboard-cadastro-kaizen"
       metaItems={metaItems}
     />
   );

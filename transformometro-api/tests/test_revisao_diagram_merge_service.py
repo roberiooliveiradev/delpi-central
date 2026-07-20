@@ -51,3 +51,52 @@ def test_diff_detects_label_change():
         },
     )
     assert diff["changed"] == ["n1"]
+
+
+def test_build_revisao_view_seeds_from_reference_when_overlay_empty():
+    view = RevisaoDiagramMergeService().build_revisao_view(
+        macro=_sample_macro(),
+        escopo={"inherit_all": True},
+        overlay={
+            "format": "flowchart_overlay_v1",
+            "format_version": 1,
+            "node_overrides": {},
+            "edge_overrides": {},
+            "removed_node_ids": [],
+            "removed_edge_ids": [],
+            "extra_nodes": [],
+            "extra_edges": [],
+        },
+        reference_overlay={
+            "format": "flowchart_overlay_v1",
+            "format_version": 1,
+            "node_overrides": {"n1": {"label": "Da referência", "highlight": "tobe"}},
+        },
+        reference_meta={"revisao_id": "ref-1", "versao_revisao": "1.0.0"},
+    )
+    labels = {n["id"]: n["label"] for n in view["flowchart"]["nodes"]}
+    assert labels["n1"] == "Da referência"
+    assert view["seeded_from_reference"] is True
+    assert view["flowchart_base"]["nodes"][0]["label"] == "Entrada"
+
+
+def test_build_revisao_view_keeps_own_overlay():
+    view = RevisaoDiagramMergeService().build_revisao_view(
+        macro=_sample_macro(),
+        escopo={"inherit_all": True},
+        overlay={
+            "format": "flowchart_overlay_v1",
+            "format_version": 1,
+            "node_overrides": {"n1": {"label": "Desta revisão", "highlight": "tobe"}},
+        },
+        reference_overlay={
+            "format": "flowchart_overlay_v1",
+            "format_version": 1,
+            "node_overrides": {"n1": {"label": "Da referência", "highlight": "tobe"}},
+        },
+        reference_meta={"revisao_id": "ref-1", "versao_revisao": "1.0.0"},
+    )
+    labels = {n["id"]: n["label"] for n in view["flowchart"]["nodes"]}
+    assert labels["n1"] == "Desta revisão"
+    assert view["seeded_from_reference"] is False
+    assert view["reference_diff"]["changed"] == ["n1"]

@@ -90,19 +90,41 @@
 
 /* —— Modal contido na área do MFE (não cobre chrome do portal) —— */
 
+/*
+ * Geometria real (`position: fixed` + top/left/width/height) vem do
+ * `useContainedModalViewportStyle` (scrollport `.content`), não do root
+ * `.dashboard-*` com height:auto. Estas regras são fallback / flex.
+ */
 .delpi-ui-modal-portal--contained {
-  position: absolute;
-  inset: 0;
+  position: fixed;
   min-width: 0;
   min-height: 0;
+  box-sizing: border-box;
+  /* Acima do chrome do MFE; abaixo do hotspot da sidebar (~45) fica ok —
+   * o rect já exclui a sidebar. */
+  z-index: 50;
 }
 
 .delpi-ui-modal-overlay--contained {
   position: absolute;
   inset: 0;
-  padding: 0;
+  padding: 12px;
   align-items: stretch;
   justify-content: stretch;
+  box-sizing: border-box;
+  background: color-mix(in srgb, #0f172a 36%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+:root[data-theme="light"] .delpi-ui-modal-overlay--contained,
+[data-theme="light"] .delpi-ui-modal-overlay--contained {
+  background: color-mix(in srgb, #0f172a 26%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-modal-overlay--contained,
+[data-theme="dark"] .delpi-ui-modal-overlay--contained {
+  background: color-mix(in srgb, #020617 55%, transparent);
 }
 
 .delpi-ui-modal--host-fill {
@@ -110,8 +132,12 @@
   max-width: none;
   height: 100%;
   max-height: none;
-  border-radius: 0;
+  border-radius: 12px;
   box-sizing: border-box;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .delpi-ui-modal--host-fill .delpi-ui-modal__body,
@@ -125,7 +151,11 @@
 /**
  * Isola o stacking do host enquanto o modal contido está aberto, para que
  * sidebar (z≈40) e hotspot do canto esquerdo (z≈45) do portal fiquem clicáveis.
+ * `position: relative` ancora o overlay absolute ao host (área do MFE).
  */
 [data-delpi-modal-host="true"] {
+  position: relative;
   z-index: 0;
+  min-height: 100%;
+  isolation: isolate;
 }

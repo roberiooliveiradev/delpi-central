@@ -29,6 +29,7 @@ export {
 } from "./impactEffortMatrixClasses";
 export {
   DEFAULT_IMPACT_EFFORT_AXIS_LABELS,
+  DEFAULT_IMPACT_EFFORT_QUADRANT_DESCRIPTIONS,
   DEFAULT_IMPACT_EFFORT_QUADRANT_LABELS,
   clampImpactEffortScore,
   resolveImpactEffortQuadrant,
@@ -37,6 +38,7 @@ export {
   type ImpactEffortMatrixMode,
   type ImpactEffortPoint,
   type ImpactEffortQuadrant,
+  type ImpactEffortQuadrantDescriptions,
   type ImpactEffortQuadrantLabels,
 } from "./impactEffortTypes";
 export { ConfigurableSeriesChart, type ConfigurableSeriesChartProps } from "./ConfigurableSeriesChart";

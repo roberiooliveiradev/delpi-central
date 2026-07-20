@@ -420,12 +420,19 @@ Query `branch=01|02` exige coluna `goal_scope_branch` (V016+) e API com ordem co
 | Método | Rota | Auth |
 |--------|------|------|
 | GET | `/strategic-indicators/integrations/dashboard-goals?source_keys=...` | `API_DELPI_INTERNAL_SERVICE_TOKEN` (header interno) ou JWT |
+| GET | `/strategic-indicators/integrations/dashboard-department-score?department_id=...` | token interno ou JWT |
+| GET | `/strategic-indicators/integrations/dashboard-department-indicators?department_id=...` | token interno ou JWT |
+| GET | `/strategic-indicators/integrations/dashboard-departments-indicators` | token interno ou JWT |
 
-Parâmetros: `source_keys` (vírgula), `start_date`, `end_date`, `branch`, `competence`, `department_id`.
+**dashboard-goals** — parâmetros: `source_keys` (vírgula), `start_date`, `end_date`, `branch`, `competence`, `department_id`. Retorna metas resolvidas por `department_indicators.source_key`, com `comparable_goal` proporcional ao período.
 
-Retorna metas resolvidas por `department_indicators.source_key`, com `comparable_goal` proporcional ao período (mesma regra do cálculo do SI).
+**dashboard-department-score** — nota IDD (`score`) de um departamento.
 
-Consumidor: **api-delpi** via `strategic_indicators_client` (padrão Transformômetro).
+**dashboard-department-indicators** — IDD do departamento + lista de indicadores com `goals` (metas) e `realized` (realizado).
+
+**dashboard-departments-indicators** — todos os departamentos no mesmo formato (filtro opcional `department_id`).
+
+Consumidor: **api-delpi** via `strategic_indicators_client` (`/dashboard/department-idd`, `/dashboard/department-indicators`, `/dashboard/departments-indicators`).
 
 ## Autenticação
 

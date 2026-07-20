@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, Query
+from app.interface.http.query_param_enums import SORT_DIR_QUERY
 from fastapi.responses import FileResponse
 
 from delpi_auth.authorization import require_permission
@@ -95,7 +96,7 @@ def list_product_drawings(
         default="product_code",
         description="product_code, filename, modified_at, size_bytes, revision ou file_kind.",
     ),
-    direction: str = Query(default="asc", description="asc ou desc."),
+    direction: str = SORT_DIR_QUERY(),
 ):
     try:
         dto = ListProductDrawingsRequest(

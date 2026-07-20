@@ -68,13 +68,16 @@ def list_propostas_comerciais_route(
         )
 
 
-@router.get("/{proposta_interna}/pdf")
+@router.get("/{proposta_interna}/pdf", operation_id="export_proposta_comercial_pdf")
 @require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
 def export_proposta_comercial_pdf_route(proposta_interna: str):
     return _export_proposta_comercial_pdf(proposta_interna)
 
 
-@router.post("/{proposta_interna}/pdf")
+@router.post(
+    "/{proposta_interna}/pdf",
+    operation_id="export_proposta_comercial_pdf_with_overrides",
+)
 @require_any_permission(PROPOSTAS_COMERCIAIS_ACCESS)
 def export_proposta_comercial_pdf_with_overrides_route(
     proposta_interna: str,

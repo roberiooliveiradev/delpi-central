@@ -184,6 +184,12 @@ export {
   type EditableSectionCardProps,
 } from "./EditableSectionCard";
 export {
+  DirtySaveActions,
+  createDashboardDirtySaveActions,
+  type DashboardDirtySaveActionsProps,
+  type DirtySaveActionsProps,
+} from "./DirtySaveActions";
+export {
   DetailCard,
   createDashboardDetailCard,
   detailCardProductionBemClasses,

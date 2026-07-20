@@ -4,6 +4,7 @@ import { Pencil, Save, X, type LucideIcon } from "lucide-react";
 import { HelpTooltip } from "../help/HelpTooltip";
 import { delpiUiClass } from "../../utils/delpiUiClass";
 import { ghostBtnBemClasses } from "../../utils/ghostBtnBem";
+import { shouldShowDirtySave } from "../../utils/valuesEqual";
 import { SectionCard, sectionCardPacBemClasses, type SectionCardLabels } from "./SectionCard";
 
 export type EditableSectionCardClassNames = {
@@ -34,6 +35,11 @@ export type EditableSectionCardProps = {
   onEdit: () => void;
   onCancel: () => void;
   onSave?: () => void;
+  /**
+   * Obrigatório para exibir Salvar no header: só aparece com alterações
+   * (ou enquanto `saving`). Use `useEditableDraft` / `valuesEqual`.
+   */
+  dirty?: boolean;
   saving?: boolean;
   editable?: boolean;
   editLabel?: string;
@@ -91,6 +97,7 @@ export function EditableSectionCard({
   onEdit,
   onCancel,
   onSave,
+  dirty = false,
   saving = false,
   editable = true,
   editLabel,
@@ -102,6 +109,7 @@ export function EditableSectionCard({
   labels,
 }: EditableSectionCardProps) {
   const resolvedEditLabel = editLabel ?? labels.edit;
+  const showSave = Boolean(onSave) && shouldShowDirtySave(dirty, saving);
 
   return (
     <section className={classNames.section}>
@@ -128,12 +136,12 @@ export function EditableSectionCard({
           ) : null}
           {isEditing ? (
             <>
-              {onSave ? (
+              {showSave ? (
                 <button
                   type="button"
                   className={classNames.primaryButton}
                   onClick={onSave}
-                  disabled={saving}
+                  disabled={saving || !dirty}
                 >
                   <Save size={14} aria-hidden={true} />
                   {saving ? labels.saving : labels.save}
@@ -152,7 +160,10 @@ export function EditableSectionCard({
           ) : null}
         </div>
       </header>
-      <div className={isEditing ? classNames.editContent : classNames.readContent}>
+      <div
+        key={isEditing ? "section-edit" : "section-read"}
+        className={isEditing ? classNames.editContent : classNames.readContent}
+      >
         {isEditing ? editContent : readContent}
       </div>
     </section>
@@ -256,7 +267,10 @@ export function EditableSectionCardPac({
         </>
       }
     >
-      <div className={isEditing ? editContentClassName : readContentClassName}>
+      <div
+        key={isEditing ? "section-edit" : "section-read"}
+        className={isEditing ? editContentClassName : readContentClassName}
+      >
         {isEditing ? editContent : readContent}
       </div>
     </SectionCard>
@@ -285,7 +299,7 @@ export function createDashboardEditableSectionCardPac(config: {
       <EditableSectionCardPac
         sectionClassNames={sectionClassNames}
         sectionLabels={config.labels}
-        ghostButtonClassName={`${config.prefix}-ghost-btn`}
+        ghostButtonClassName={ghostBtnBemClasses(config.prefix)}
         readContentClassName={`${config.prefix}-section-read`}
         editContentClassName={`${config.prefix}-section-edit`}
         defaultEditLabel={config.labels.edit}

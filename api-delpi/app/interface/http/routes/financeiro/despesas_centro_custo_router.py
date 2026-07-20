@@ -57,10 +57,10 @@ router = APIRouter(
 )
 @require_any_permission(FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS)
 def get_financeiro_despesas_centro_custo_filtros_route(
-    start_date: str = PERIOD_START_QUERY,
-    end_date: str = PERIOD_END_QUERY,
-    branch: Optional[str] = BRANCH_QUERY,
-    cost_center: Optional[str] = COST_CENTER_QUERY,
+    start_date: str = PERIOD_START_QUERY(),
+    end_date: str = PERIOD_END_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY(),
+    cost_center: Optional[str] = COST_CENTER_QUERY(),
 ):
     try:
         request = build_despesas_centro_custo_query_request(
@@ -99,12 +99,12 @@ def get_financeiro_despesas_centro_custo_filtros_route(
 )
 @require_any_permission(FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS)
 def get_financeiro_despesas_centro_custo_resumo_route(
-    start_date: str = PERIOD_START_QUERY,
-    end_date: str = PERIOD_END_QUERY,
-    branch: Optional[str] = BRANCH_QUERY,
-    cost_center: Optional[str] = COST_CENTER_QUERY,
-    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY,
-    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY,
+    start_date: str = PERIOD_START_QUERY(),
+    end_date: str = PERIOD_END_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY(),
+    cost_center: Optional[str] = COST_CENTER_QUERY(),
+    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY(),
+    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
 ):
     request = build_despesas_centro_custo_query_request(
         start_date=start_date,
@@ -132,12 +132,12 @@ def get_financeiro_despesas_centro_custo_resumo_route(
 )
 @require_any_permission(FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS)
 def get_financeiro_despesas_centro_custo_serie_route(
-    start_date: str = PERIOD_START_QUERY,
-    end_date: str = PERIOD_END_QUERY,
-    branch: Optional[str] = BRANCH_QUERY,
-    cost_center: Optional[str] = COST_CENTER_QUERY,
-    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY,
-    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY,
+    start_date: str = PERIOD_START_QUERY(),
+    end_date: str = PERIOD_END_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY(),
+    cost_center: Optional[str] = COST_CENTER_QUERY(),
+    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY(),
+    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
 ):
     request = build_despesas_centro_custo_query_request(
         start_date=start_date,
@@ -165,12 +165,12 @@ def get_financeiro_despesas_centro_custo_serie_route(
 )
 @require_any_permission(FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS)
 def get_financeiro_despesas_centro_custo_ranking_centros_route(
-    start_date: str = PERIOD_START_QUERY,
-    end_date: str = PERIOD_END_QUERY,
-    branch: Optional[str] = BRANCH_QUERY,
-    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY,
-    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY,
-    limit: int = RANKING_LIMIT_QUERY,
+    start_date: str = PERIOD_START_QUERY(),
+    end_date: str = PERIOD_END_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY(),
+    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY(),
+    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
+    limit: int = RANKING_LIMIT_QUERY(),
 ):
     request = build_despesas_centro_custo_query_request(
         start_date=start_date,
@@ -198,11 +198,11 @@ def get_financeiro_despesas_centro_custo_ranking_centros_route(
 )
 @require_any_permission(FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS)
 def get_financeiro_despesas_centro_custo_ranking_fornecedores_route(
-    start_date: str = PERIOD_START_QUERY,
-    end_date: str = PERIOD_END_QUERY,
-    branch: Optional[str] = BRANCH_QUERY,
-    cost_center: Optional[str] = COST_CENTER_QUERY,
-    limit: int = RANKING_LIMIT_QUERY,
+    start_date: str = PERIOD_START_QUERY(),
+    end_date: str = PERIOD_END_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY(),
+    cost_center: Optional[str] = COST_CENTER_QUERY(),
+    limit: int = RANKING_LIMIT_QUERY(),
 ):
     """Ranking de fornecedores — aceita branch e cost_center (sem supplier_code/store)."""
     request = build_despesas_centro_custo_query_request(
@@ -230,17 +230,17 @@ def get_financeiro_despesas_centro_custo_ranking_fornecedores_route(
 )
 @require_any_permission(FINANCEIRO_CENTRO_CUSTO_READ_PERMISSIONS)
 def get_financeiro_despesas_centro_custo_lancamentos_route(
-    start_date: str = PERIOD_START_QUERY,
-    end_date: str = PERIOD_END_QUERY,
-    branch: Optional[str] = BRANCH_QUERY,
-    cost_center: Optional[str] = COST_CENTER_QUERY,
-    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY,
-    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY,
-    search: Optional[str] = SEARCH_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
-    sort_by: str = SORT_BY_QUERY,
-    sort_dir: str = SORT_DIR_QUERY,
+    start_date: str = PERIOD_START_QUERY(),
+    end_date: str = PERIOD_END_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY(),
+    cost_center: Optional[str] = COST_CENTER_QUERY(),
+    supplier_code: Optional[str] = SUPPLIER_CODE_QUERY(),
+    supplier_store: Optional[str] = SUPPLIER_STORE_QUERY(),
+    search: Optional[str] = SEARCH_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
+    sort_by: str = SORT_BY_QUERY(),
+    sort_dir: str = SORT_DIR_QUERY(),
 ):
     try:
         request = build_despesas_centro_custo_lancamentos_request(

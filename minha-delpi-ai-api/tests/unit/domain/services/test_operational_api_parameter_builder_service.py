@@ -67,6 +67,23 @@ def test_build_date_branch_empty_default_limit():
     assert parameters["limit"] == 10
 
 
+def test_build_department_idd_extracts_department_and_branch():
+    builder = OperationalApiParameterBuilderService()
+
+    parameters = builder.build_department_idd(
+        {
+            "parametersSchema": [
+                {"name": "department_id", "in": "query"},
+                {"name": "branch", "in": "query"},
+            ],
+        },
+        "idd do comercial com metas e realizado filial 02",
+    )
+
+    assert parameters["department_id"] == "commercial"
+    assert parameters["branch"] == "02"
+
+
 def test_build_supplies_stock_uses_json_literal_binding():
     parameters = OperationalApiParameterBuilderService.build_supplies_stock(
         {

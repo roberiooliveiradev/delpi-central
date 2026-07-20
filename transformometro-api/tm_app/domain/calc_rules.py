@@ -35,6 +35,8 @@ PERIOD_TOTAL_KEYS = (
     "custo_recursos_compartilhados_mes",
     "investimento_total_mes",
     "horas_economizadas_mes",
+    "ganho_capacidade",
+    "economia_reducao_volume",
 )
 
 PRORATABLE_BY_DAY_KEYS = (
@@ -42,6 +44,8 @@ PRORATABLE_BY_DAY_KEYS = (
     "custo_recorrente_mes",
     "custo_recursos_compartilhados_mes",
     "horas_economizadas_mes",
+    "ganho_capacidade",
+    "economia_reducao_volume",
 )
 
 
@@ -157,6 +161,65 @@ def competencia_day_fraction_in_range(
 
 def is_comparable_scenario(cenario_tipo: Optional[str]) -> bool:
     return (cenario_tipo or "").lower() in COMPARABLE_SCENARIOS
+
+
+def benefit_volume_signals(
+    *,
+    volume_ref: float,
+    volume_rev: float,
+) -> dict[str, Any]:
+    """Sinais de volume revisão vs. referência (Playbook 22)."""
+    delta = float(volume_rev or 0) - float(volume_ref or 0)
+    return {
+        "delta_volume": delta,
+        "volume_acima_referencia": delta > 0,
+        "volume_abaixo_referencia": delta < 0,
+    }
+
+
+def capacity_gain_month(
+    *,
+    volume_ref: float,
+    volume_rev: float,
+    tempo_medio_ref_min: float,
+    custo_hora_ref: float,
+) -> float:
+    """Ganho de capacidade em R$/mês quando vol_rev > vol_ref.
+
+    Entra na economia_bruta (e no ROI). Campo próprio permanece para breakdown.
+    Fórmula: Δvolume × (tempo_ref / 60) × custo_hora_ref
+    """
+    delta = float(volume_rev or 0) - float(volume_ref or 0)
+    if delta <= 0:
+        return 0.0
+    return delta * (float(tempo_medio_ref_min or 0) / 60.0) * float(custo_hora_ref or 0)
+
+
+def compose_economia_bruta(
+    *,
+    economia_custo: float,
+    ganho_capacidade: float = 0.0,
+) -> float:
+    """Economia bruta total = ganho de custo operacional + ganho de capacidade.
+
+    ``economia_reducao_volume`` não entra aqui: a queda de volume já está no
+    diferencial de custo (evitar double-count).
+    """
+    return float(economia_custo or 0) + float(ganho_capacidade or 0)
+
+
+def volume_reduction_signal_month(
+    *,
+    volume_ref: float,
+    volume_rev: float,
+    tempo_medio_ref_min: float,
+    custo_hora_ref: float,
+) -> float:
+    """Sinal analítico (R$) quando vol_rev < vol_ref — sem double-count na bruta."""
+    delta = float(volume_rev or 0) - float(volume_ref or 0)
+    if delta >= 0:
+        return 0.0
+    return abs(delta) * (float(tempo_medio_ref_min or 0) / 60.0) * float(custo_hora_ref or 0)
 
 
 def _is_truthy(value: Any) -> bool:
@@ -342,6 +405,8 @@ def prorate_dashboard_row_for_period(
     )
     economia_liquida_mes = economia_bruta - investimento_total_mes
     horas_economizadas_mes = float(row.get("horas_economizadas_mes") or 0) * scale
+    ganho_capacidade = float(row.get("ganho_capacidade") or 0) * scale
+    economia_reducao_volume = float(row.get("economia_reducao_volume") or 0) * scale
 
     return {
         "economia_bruta": economia_bruta,
@@ -351,6 +416,8 @@ def prorate_dashboard_row_for_period(
         "custo_recursos_compartilhados_mes": custo_recursos_compartilhados_mes,
         "investimento_total_mes": investimento_total_mes,
         "horas_economizadas_mes": horas_economizadas_mes,
+        "ganho_capacidade": ganho_capacidade,
+        "economia_reducao_volume": economia_reducao_volume,
     }
 
 

@@ -28,6 +28,7 @@ import { buildConfiguracoesSectionPath } from "../../ui/configuracoes/configurac
 import { buildSetorPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 import { DS_FILTERS_ROW } from "../../components/filterChrome";
@@ -71,6 +72,14 @@ export function SetoresPage({ getAccessToken, pathname, onNavigate, embedded = f
   useEffect(() => {
     void load();
   }, [load]);
+
+  useTransformometroCatalogWatch({
+    catalogId: "setor",
+    getAccessToken,
+    onUpdated: () => {
+      void load();
+    },
+  });
 
   const filialLabels = useMemo(() => {
     const map = new Map((options?.filiais ?? []).map((filial) => [filial.id, filial.label]));

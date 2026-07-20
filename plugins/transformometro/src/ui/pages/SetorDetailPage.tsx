@@ -27,6 +27,7 @@ import {
   type Setor,
 } from "../../data/api/transformometroApi";
 import { buildSetorPath } from "../../utils/routeParser";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import { SetorFormFields } from "../setores/SetorFormFields";
 import { DS_GHOST_BTN } from "../../components/ghostChrome";
 import {
@@ -58,6 +59,7 @@ export function SetorDetailPage({
   const [setor, setSetor] = useState<Setor | null>(null);
   const [options, setOptions] = useState<OptionsData | null>(null);
   const [form, setForm] = useState<SetorFormState>(() => emptySetorForm());
+  const [formBaseline, setFormBaseline] = useState<SetorFormState>(() => emptySetorForm());
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loading, setLoading] = useState(!isCreate);
@@ -81,7 +83,9 @@ export function SetorDetailPage({
       try {
         const opts = await fetchOptions(getAccessToken);
         setOptions(opts);
-        setForm(emptySetorForm());
+        const empty = emptySetorForm();
+        setForm(empty);
+        setFormBaseline(empty);
       } catch (err) {
         setLoadError(err instanceof Error ? err.message : "Erro ao carregar opções");
       } finally {
@@ -99,7 +103,9 @@ export function SetorDetailPage({
       ]);
       setSetor(row);
       setOptions(opts);
-      setForm(setorFormFromEntity(row));
+      const next = setorFormFromEntity(row);
+      setForm(next);
+      setFormBaseline(next);
     } catch (err) {
       setSetor(null);
       setLoadError(err instanceof Error ? err.message : "Erro ao carregar departamento");
@@ -130,7 +136,9 @@ export function SetorDetailPage({
 
   useEffect(() => {
     if (!setor || editingSetor) return;
-    setForm(setorFormFromEntity(setor));
+    const next = setorFormFromEntity(setor);
+    setForm(next);
+    setFormBaseline(next);
   }, [setor, editingSetor]);
 
   async function handleSave() {
@@ -151,6 +159,9 @@ export function SetorDetailPage({
       }
       const updated = await updateSetor(setorId, payload, getAccessToken);
       setSetor(updated);
+      const saved = setorFormFromEntity(updated);
+      setForm(saved);
+      setFormBaseline(saved);
       sectionEdit.stopEdit("setor");
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : "Erro ao salvar departamento");
@@ -183,7 +194,7 @@ export function SetorDetailPage({
       onBack();
       return;
     }
-    if (setor) setForm(setorFormFromEntity(setor));
+    setForm(formBaseline);
     sectionEdit.cancelEdit("setor");
   }
 
@@ -271,6 +282,7 @@ export function SetorDetailPage({
           onCancel={cancelEdit}
           onSave={() => void handleSave()}
           saving={saving}
+          dirty={!valuesEqual(form, formBaseline)}
           editable={!isCreate}
           readContent={
             setor ? <SetorReadView setor={setor} filialLabels={filialLabels} /> : null

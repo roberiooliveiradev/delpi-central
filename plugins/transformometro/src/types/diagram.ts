@@ -87,9 +87,46 @@ export type MergedRevisaoDiagram = {
   revisao_id: string;
   cenario_tipo?: string;
   flowchart: FlowchartV1;
+  /** Macro ∩ escopo — base absoluta para gravar o overlay. */
+  flowchart_base?: FlowchartV1;
+  flowchart_reference?: FlowchartV1 | null;
   mermaid: string;
   warnings: string[];
   escopo: FlowchartEscopo;
   overlay: FlowchartOverlayV1;
+  seeded_from_reference?: boolean;
+  referencia?: {
+    revisao_id: string;
+    versao_revisao?: string;
+    cenario_tipo?: string;
+  } | null;
   baseline_diff?: DiagramDiff | null;
+  reference_diff?: DiagramDiff | null;
+};
+
+export type ComposedProcessoDiagram = {
+  processo_id: string;
+  at: string;
+  instancia_id?: string | null;
+  flowchart: FlowchartV1;
+  mermaid: string;
+  applied_revisoes: Array<{
+    revisao_id: string;
+    instancia_id: string;
+    versao_revisao?: string;
+    cenario_tipo?: string;
+    data_inicio_vigencia?: string;
+    node_ids_tocados: string[];
+  }>;
+  conflicts: Array<{
+    node_id: string;
+    field: string;
+    winner_revisao_id: string;
+    revisoes: Array<{
+      revisao_id: string;
+      versao_revisao?: string;
+      label?: string | null;
+    }>;
+  }>;
+  base_node_count?: number;
 };

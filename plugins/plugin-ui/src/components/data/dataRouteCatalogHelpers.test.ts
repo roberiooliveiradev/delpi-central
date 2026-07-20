@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  coerceTestParamValues,
   formatParamHintLine,
   humanizeMetaShape,
+  initialTestParamValues,
+  missingRequiredTestParams,
   resolveRouteAudienceDescription,
   summarizeRouteParams,
 } from "./dataRouteCatalogHelpers";
@@ -44,5 +47,31 @@ describe("dataRouteCatalogHelpers", () => {
         metaShape: "scalar",
       }),
     ).toMatch(/KPI/);
+  });
+
+  it("propaga enum e default para o formulário de teste", () => {
+    const params = summarizeRouteParams({
+      department_id: {
+        label: "Departamento",
+        optional: false,
+        enum: ["commercial", "hr"],
+        default: "commercial",
+      },
+      periodDays: { label: "Dias", type: "integer", optional: true },
+    });
+    expect(params[0]).toMatchObject({
+      key: "department_id",
+      enum: ["commercial", "hr"],
+      default: "commercial",
+    });
+    expect(initialTestParamValues(params)).toEqual({ department_id: "commercial" });
+    expect(missingRequiredTestParams(params, {})).toHaveLength(1);
+    expect(missingRequiredTestParams(params, { department_id: "hr" })).toHaveLength(0);
+    expect(
+      coerceTestParamValues(params, { department_id: "hr", periodDays: "30" }),
+    ).toEqual({
+      department_id: "hr",
+      periodDays: 30,
+    });
   });
 });

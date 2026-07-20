@@ -24,7 +24,19 @@ export type RevisaoWorkspaceSectionId =
   | "recursos"
   | "evidencias";
 
-export type ProcessoWorkspaceNodeKind = "section" | "instancia" | "revisao" | "revisao-section";
+export type InstanciaWorkspaceSectionId =
+  | "dados"
+  | "mapeamento"
+  | "diagrama"
+  | "contexto"
+  | "revisoes";
+
+export type ProcessoWorkspaceNodeKind =
+  | "section"
+  | "instancia"
+  | "instancia-section"
+  | "revisao"
+  | "revisao-section";
 
 export type ProcessoWorkspaceNavNode = {
   id: string;
@@ -66,8 +78,20 @@ export const REVISAO_WORKSPACE_SECTIONS: Array<{
   { id: "evidencias", label: "Evidências" },
 ];
 
+export const INSTANCIA_WORKSPACE_SECTIONS: Array<{
+  id: InstanciaWorkspaceSectionId;
+  label: string;
+}> = [
+  { id: "dados", label: "Instância operacional" },
+  { id: "mapeamento", label: "Escopo no mapeamento" },
+  { id: "diagrama", label: "Escopo no diagrama" },
+  { id: "contexto", label: "Contexto operacional" },
+  { id: "revisoes", label: "Revisões" },
+];
+
 const SECTION_IDS = new Set<string>(PROCESSO_WORKSPACE_SECTIONS.map((item) => item.id));
 const REVISAO_SECTION_IDS = new Set<string>(REVISAO_WORKSPACE_SECTIONS.map((item) => item.id));
+const INSTANCIA_SECTION_IDS = new Set<string>(INSTANCIA_WORKSPACE_SECTIONS.map((item) => item.id));
 
 export function isProcessoWorkspaceSectionId(value: string): value is ProcessoWorkspaceSectionId {
   return SECTION_IDS.has(value);
@@ -75,6 +99,55 @@ export function isProcessoWorkspaceSectionId(value: string): value is ProcessoWo
 
 export function isRevisaoWorkspaceSectionId(value: string): value is RevisaoWorkspaceSectionId {
   return REVISAO_SECTION_IDS.has(value);
+}
+
+export function isInstanciaWorkspaceSectionId(value: string): value is InstanciaWorkspaceSectionId {
+  return INSTANCIA_SECTION_IDS.has(value);
+}
+
+export function defaultInstanciaSection(): InstanciaWorkspaceSectionId {
+  return "dados";
+}
+
+export function parseInstanciaSectionFromHash(hash: string): InstanciaWorkspaceSectionId {
+  const raw = (hash.startsWith("#") ? hash.slice(1) : hash).trim().toLowerCase();
+  if (raw === "nova-revisao") return "revisoes";
+  if (raw && isInstanciaWorkspaceSectionId(raw)) return raw;
+  return defaultInstanciaSection();
+}
+
+export function buildInstanciaSectionHref(
+  processoId: string,
+  instanciaId: string,
+  section: InstanciaWorkspaceSectionId
+): string {
+  const base = buildInstanciaPath(processoId, instanciaId);
+  if (section === defaultInstanciaSection()) return base;
+  return `${base}#${section}`;
+}
+
+function buildInstanciaSectionNodes(input: {
+  processoId: string;
+  instancia: ProcessoInstancia;
+  revisaoChildren?: ProcessoWorkspaceNavNode[];
+}): ProcessoWorkspaceNavNode[] {
+  const { processoId, instancia, revisaoChildren = [] } = input;
+  return INSTANCIA_WORKSPACE_SECTIONS.map((section) => {
+    const base: ProcessoWorkspaceNavNode = {
+      id: `instancia-section:${instancia.instancia_id}:${section.id}`,
+      kind: "instancia-section" as const,
+      label: section.label,
+      searchText: `${section.label} ${instanciaNavLabel(instancia)}`.toLowerCase(),
+      href: buildInstanciaSectionHref(processoId, instancia.instancia_id, section.id),
+      depth: 3,
+    };
+    if (section.id !== "revisoes") return base;
+    return {
+      ...base,
+      badge: revisaoChildren.length > 0 ? String(revisaoChildren.length) : undefined,
+      children: revisaoChildren,
+    };
+  });
 }
 
 export function revisaoSectionsForCenario(cenarioTipo?: string | null): Array<{
@@ -126,7 +199,7 @@ function buildRevisaoSectionNodes(input: {
     label: section.label,
     searchText: `${section.label} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
     href: buildRevisaoSectionHref(processoId, instanciaId, revisao.revisao_id, section.id, revisao.cenario_tipo),
-    depth: 4,
+    depth: 5,
   }));
 }
 
@@ -162,37 +235,45 @@ export function buildProcessoWorkspaceTree(input: {
   const processoId = processo.processo_id;
 
   const melhoriaChildren: ProcessoWorkspaceNavNode[] = instancias.map((instancia) => {
-    const instanciaRevisoes = revisoes.filter((row) => row.instancia_id === instancia.instancia_id);
+    const instanciaId = String(instancia.instancia_id ?? "").toLowerCase();
+    const instanciaRevisoes = revisoes.filter(
+      (row) => String(row.instancia_id ?? "").toLowerCase() === instanciaId
+    );
     const label = instanciaNavLabel(instancia);
+    const revisaoChildren = instanciaRevisoes.map((revisao) => {
+      const revLabel = revisaoDisplayLabel(revisao);
+      const matrixBadge = resolveMatrixTreeBadge({
+        cenario_tipo: revisao.cenario_tipo,
+        ponto: matrixByRevisaoId?.[revisao.revisao_id],
+      });
+      const defaultSection = defaultRevisaoSection(revisao.cenario_tipo);
+      return {
+        id: `revisao:${revisao.revisao_id}`,
+        kind: "revisao" as const,
+        label: revLabel,
+        searchText: `${revLabel} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
+        href: buildRevisaoSectionHref(processoId, instancia.instancia_id, revisao.revisao_id, defaultSection),
+        depth: 4,
+        matrixBadge,
+        children: buildRevisaoSectionNodes({
+          processoId,
+          instanciaId: instancia.instancia_id,
+          revisao,
+        }),
+      };
+    });
     return {
       id: `instancia:${instancia.instancia_id}`,
       kind: "instancia",
       label,
       searchText: `${label} ${instancia.codigo_filial ?? ""} ${instancia.codigo_setor ?? ""}`.toLowerCase(),
-      href: buildInstanciaPath(processoId, instancia.instancia_id),
+      href: buildInstanciaSectionHref(processoId, instancia.instancia_id, defaultInstanciaSection()),
       depth: 2,
       badge: instanciaRevisoes.length > 0 ? String(instanciaRevisoes.length) : undefined,
-      children: instanciaRevisoes.map((revisao) => {
-        const revLabel = revisaoDisplayLabel(revisao);
-        const matrixBadge = resolveMatrixTreeBadge({
-          cenario_tipo: revisao.cenario_tipo,
-          ponto: matrixByRevisaoId?.[revisao.revisao_id],
-        });
-        const defaultSection = defaultRevisaoSection(revisao.cenario_tipo);
-        return {
-          id: `revisao:${revisao.revisao_id}`,
-          kind: "revisao" as const,
-          label: revLabel,
-          searchText: `${revLabel} ${revisao.versao_revisao ?? ""} ${revisao.cenario_tipo ?? ""}`.toLowerCase(),
-          href: buildRevisaoSectionHref(processoId, instancia.instancia_id, revisao.revisao_id, defaultSection),
-          depth: 3,
-          matrixBadge,
-          children: buildRevisaoSectionNodes({
-            processoId,
-            instanciaId: instancia.instancia_id,
-            revisao,
-          }),
-        };
+      children: buildInstanciaSectionNodes({
+        processoId,
+        instancia,
+        revisaoChildren,
       }),
     };
   });
@@ -223,6 +304,7 @@ export function resolveActiveWorkspaceNodeId(input: {
   view: "processo" | "instancia" | "revisao";
   section?: ProcessoWorkspaceSectionId;
   instanciaId?: string;
+  instanciaSection?: InstanciaWorkspaceSectionId;
   revisaoId?: string;
   revisaoSection?: RevisaoWorkspaceSectionId;
 }): string {
@@ -233,7 +315,8 @@ export function resolveActiveWorkspaceNodeId(input: {
     return `revisao:${input.revisaoId}`;
   }
   if (input.view === "instancia" && input.instanciaId) {
-    return `instancia:${input.instanciaId}`;
+    const instanciaSection = input.instanciaSection ?? defaultInstanciaSection();
+    return `instancia-section:${input.instanciaId}:${instanciaSection}`;
   }
   const section = input.section ?? "visao-geral";
   return `section:${section}`;
@@ -294,7 +377,11 @@ export function collectExpandedNodeIds(
     walk(node, []);
   }
 
-  if (activeNodeId.startsWith("section:") || activeNodeId.startsWith("instancia:")) {
+  if (
+    activeNodeId.startsWith("section:") ||
+    activeNodeId.startsWith("instancia:") ||
+    activeNodeId.startsWith("instancia-section:")
+  ) {
     expanded.add(`section:melhorias`);
   }
 

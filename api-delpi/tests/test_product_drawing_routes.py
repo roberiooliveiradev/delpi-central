@@ -122,7 +122,24 @@ def test_list_product_drawings_returns_meta(mock_build_use_case) -> None:
     }
     mock_build_use_case.return_value = use_case
 
-    response = list_product_drawings()
+    # Chamada direta do handler: passar valores Python (defaults Query() são FieldInfo).
+    response = list_product_drawings(
+        code=None,
+        code_exact=False,
+        filename=None,
+        revision=None,
+        file_kind=None,
+        has_variant=None,
+        has_revision=None,
+        modified_from=None,
+        modified_to=None,
+        min_size_bytes=None,
+        max_size_bytes=None,
+        page=1,
+        page_size=50,
+        sort="product_code",
+        direction="asc",
+    )
     body = json.loads(response.body.decode())
 
     assert body["meta"]["operationId"] == "list_product_drawings"

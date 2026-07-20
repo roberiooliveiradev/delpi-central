@@ -119,9 +119,27 @@ describe("ModalShell", () => {
   });
 
   it("permite conter o portal na área do host", () => {
+    const content = document.createElement("div");
+    content.className = "content";
+    content.getBoundingClientRect = () =>
+      ({
+        top: 40,
+        left: 200,
+        width: 900,
+        height: 600,
+        right: 1100,
+        bottom: 640,
+        x: 200,
+        y: 40,
+        toJSON() {
+          return {};
+        },
+      }) as DOMRect;
+
     const host = document.createElement("main");
     host.className = "dashboard-tv-dashboard";
-    document.body.appendChild(host);
+    content.appendChild(host);
+    document.body.appendChild(content);
 
     const { unmount } = render(
       <ModalShell
@@ -146,19 +164,30 @@ describe("ModalShell", () => {
     expect(dialog.closest(".delpi-ui-modal-overlay--contained")).toBeTruthy();
     expect(host.getAttribute(DELPI_MODAL_HOST_ATTR)).toBe("true");
 
-    // Geometria inline — CSS `.dashboard-x .td-modal` do MFE não pode vencer.
-    expect((portal as HTMLElement).style.position).toBe("absolute");
+    // Geometria inline — fixed no scrollport visível (não absolute no host height:auto).
+    expect((portal as HTMLElement).style.position).toBe("fixed");
+    expect((portal as HTMLElement).style.width).toBe("900px");
+    expect((portal as HTMLElement).style.height).toBe("600px");
+    expect((portal as HTMLElement).style.top).toBe("40px");
+    expect((portal as HTMLElement).style.left).toBe("200px");
     const overlayEl = dialog.closest(".td-modal-overlay") as HTMLElement;
     expect(overlayEl.style.position).toBe("absolute");
-    expect(overlayEl.style.padding).toBe("0px");
+    expect(overlayEl.style.inset).toBe("0px");
     expect(dialog.style.width).toBe("100%");
     expect(dialog.style.height).toBe("100%");
     expect(dialog.style.maxWidth).toBe("none");
     expect(dialog.style.maxHeight).toBe("none");
+    // Margem + blur vêm do CSS canônico (não inline — MFE não deve anular padding).
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\s*\{[^}]*padding:\s*12px/s,
+    );
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\s*\{[^}]*backdrop-filter:\s*blur\(8px\)/s,
+    );
 
     unmount();
     expect(host.getAttribute(DELPI_MODAL_HOST_ATTR)).toBeNull();
-    host.remove();
+    content.remove();
   });
 
   it("createHostContainedModalShell resolve o root do MFE automaticamente", () => {

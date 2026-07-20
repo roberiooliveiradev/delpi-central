@@ -26,6 +26,9 @@ function TablePageSizeSelect(_props: {
 /** Dual-class completo do kit — sem overrides que removam classes canônicas. */
 const DS_TABLE_CLASS_NAMES = dataTableBemClasses("ds");
 
+/** Dual-class do header/actions da seção de tabela (uso fora do DataTableSection). */
+export const DS_TABLE_SECTION_CLASS_NAMES = dataTableSectionBemClasses("ds");
+
 const LABELS = {
   emptyMessage: "Nenhum registro encontrado.",
   loadingMessage: "Carregando…",
@@ -53,7 +56,7 @@ const kit = createDashboardDataTableKit({
   useTrackedSingleFetchProgress,
   defaultPageSize: DEFAULT_TABLE_PAGE_SIZE,
   sectionClassNames: {
-    ...dataTableSectionBemClasses("ds"),
+    ...DS_TABLE_SECTION_CLASS_NAMES,
     toolbarExtra: "ds-table-toolbar__filters",
   },
   tableClassNames: DS_TABLE_CLASS_NAMES,

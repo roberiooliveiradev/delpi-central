@@ -79,9 +79,9 @@ def get_retrabalhos_health_route():
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_filtros_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -115,12 +115,12 @@ def get_retrabalhos_filtros_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_resumo_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
-    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY,
-    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
+    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -157,12 +157,12 @@ def get_retrabalhos_resumo_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_mensal_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
-    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY,
-    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
+    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -199,14 +199,14 @@ def get_retrabalhos_mensal_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_recursos_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
-    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY,
-    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY,
-    order_by: str = ORDER_BY_RANKING_QUERY,
-    limit: int = LIMIT_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
+    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
+    order_by: str = ORDER_BY_RANKING_QUERY(),
+    limit: int = LIMIT_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -245,14 +245,14 @@ def get_retrabalhos_recursos_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_colaboradores_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
-    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY,
-    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY,
-    order_by: str = ORDER_BY_RANKING_QUERY,
-    limit: int = LIMIT_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
+    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
+    order_by: str = ORDER_BY_RANKING_QUERY(),
+    limit: int = LIMIT_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -291,16 +291,16 @@ def get_retrabalhos_colaboradores_route(
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
 def get_retrabalhos_detalhes_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
-    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY,
-    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
-    order_by: str = ORDER_BY_DETALHES_QUERY,
-    order_dir: str = ORDER_DIR_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
+    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
+    order_by: str = ORDER_BY_DETALHES_QUERY(),
+    order_dir: str = ORDER_DIR_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:

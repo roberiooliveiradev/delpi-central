@@ -11,7 +11,10 @@ from tv_app.application.services.data.m_query.m_phase7_quality_service import (
     preview_cache_key,
     set_cached_preview,
 )
-from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
+from tv_app.application.services.tv_data_route_catalog_service import (
+    TvDataRouteCatalogService,
+    normalize_data_binding_operation_id,
+)
 
 
 class TvDataPreviewService:
@@ -36,7 +39,11 @@ class TvDataPreviewService:
         preview_options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         block_type = str(block.get("type") or "")
-        binding = block.get("dataBinding")
+        binding = normalize_data_binding_operation_id(
+            block.get("dataBinding") if isinstance(block.get("dataBinding"), dict) else None
+        )
+        if binding is not None and binding is not block.get("dataBinding"):
+            block = {**block, "dataBinding": binding}
         operation_id = str(binding.get("operationId") or "").strip() if isinstance(binding, dict) else ""
         route = self._catalog.get_route(operation_id)
         validate_data_binding(binding if isinstance(binding, dict) else None, block_type=block_type, route=route)

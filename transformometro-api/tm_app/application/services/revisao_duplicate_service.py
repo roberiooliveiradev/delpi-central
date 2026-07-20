@@ -89,6 +89,10 @@ class RevisaoDuplicateService:
                     "instancia_id": instancia_id,
                     "versao_revisao": target_version,
                     "cenario_tipo": source["cenario_tipo"],
+                    "beneficio_calculo_categoria": source.get(
+                        "beneficio_calculo_categoria"
+                    )
+                    or "automatico",
                     "data_inicio_vigencia": source["data_inicio_vigencia"],
                     "data_implantacao": source.get("data_implantacao"),
                     "data_fim_vigencia": source.get("data_fim_vigencia"),

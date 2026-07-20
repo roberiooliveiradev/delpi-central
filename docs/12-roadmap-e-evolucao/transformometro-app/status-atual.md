@@ -171,5 +171,6 @@ export TOKEN="..." BASE_URL="https://www.minhadelpi.com.br"
 - [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md)
 - [PLAYBOOK-21-matriz-impacto-esforco-revisao.md](./PLAYBOOK-21-matriz-impacto-esforco-revisao.md)
 - [playbook-21-implementation-status.md](../../../transformometro-api/docs/playbook-21-implementation-status.md)
+- [PLAYBOOK-23-decomposicao-composicao-macro-data.md](./PLAYBOOK-23-decomposicao-composicao-macro-data.md)
 - [TUTORIAL-USUARIO.md](./TUTORIAL-USUARIO.md)
 - [DEPLOYMENT.md](../../../transformometro-api/docs/DEPLOYMENT.md)

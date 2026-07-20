@@ -1,21 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
+import { FieldLabel } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import {
   fetchRevisaoDecomposicaoMerged,
-  fetchRevisaoDecomposicaoOverlay,
   saveRevisaoDecomposicaoOverlay,
 } from "../../data/api/transformometroDecompositionApi";
 import {
-  emptyDecompositionOverlay,
-  type DecompositionOverlayV1,
+  emptyDecompositionTree,
   type DecompositionTreeV1,
+  type MergedRevisaoDecomposition,
 } from "../../types/decomposition";
-import { buildDecompositionRichTree } from "../../utils/decompositionRichTree";
+import { decompositionTreeToOverlay } from "../../utils/decompositionOverlayDiff";
+import { formatDiffSummary } from "../../utils/diffHighlightDisplay";
 import { DecompositionFlatPreview } from "./DecompositionFlatPreview";
-import { DecompositionRichTree } from "./DecompositionRichTree";
+import { DecompositionTreeEditor } from "./DecompositionTreeEditor";
+import { DiffHighlightToggle } from "../DiffHighlightToggle";
 import { TabPanelTransition } from "../TabPanelTransition";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -38,20 +39,25 @@ export function RevisaoDecompositionSection({
 }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [mergedTree, setMergedTree] = useState<DecompositionTreeV1 | null>(null);
-  const [overlay, setOverlay] = useState<DecompositionOverlayV1>(emptyDecompositionOverlay());
+  const [merged, setMerged] = useState<MergedRevisaoDecomposition | null>(null);
+  /** Base absoluta (macro no escopo) — usada no diff de gravação. */
+  const [treeProcessBase, setTreeProcessBase] = useState<DecompositionTreeV1>(
+    emptyDecompositionTree()
+  );
+  const [editable, setEditable] = useState<DecompositionTreeV1>(emptyDecompositionTree());
   const [tab, setTab] = useState<"arvore" | "planilha">("arvore");
+  const [showDiff, setShowDiff] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
     onError(null);
     try {
-      const [merged, overlayData] = await Promise.all([
-        fetchRevisaoDecomposicaoMerged(revisaoId, getAccessToken),
-        fetchRevisaoDecomposicaoOverlay(revisaoId, getAccessToken),
-      ]);
-      setMergedTree(merged.tree);
-      setOverlay(overlayData.conteudo ?? emptyDecompositionOverlay());
+      const mergedData = await fetchRevisaoDecomposicaoMerged(revisaoId, getAccessToken);
+      setMerged(mergedData);
+      const processBase = mergedData.tree_base ?? emptyDecompositionTree();
+      setTreeProcessBase(processBase);
+      // tree já vem da API: referência quando overlay vazio; senão macro+overlay
+      setEditable(mergedData.tree ?? emptyDecompositionTree());
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar mapeamento da revisão.");
     } finally {
@@ -68,35 +74,12 @@ export function RevisaoDecompositionSection({
     void load();
   }, [resyncVersion, load]);
 
-  const richRoot = useMemo(
-    () =>
-      mergedTree
-        ? buildDecompositionRichTree(mergedTree, {
-            title: processoNome ? `Mapeamento — ${processoNome}` : "Mapeamento da revisão",
-            overlay,
-          })
-        : null,
-    [mergedTree, overlay, processoNome]
-  );
-
-  function updateOverride(nodeId: string, label: string) {
-    setOverlay((current) => ({
-      ...current,
-      node_overrides: {
-        ...(current.node_overrides ?? {}),
-        [nodeId]: {
-          ...(current.node_overrides?.[nodeId] ?? {}),
-          label,
-          highlight: "tobe",
-        },
-      },
-    }));
-  }
-
   async function handleSave() {
     setSaving(true);
     onError(null);
     try {
+      // Overlay absoluto vs macro do processo → composição «agora» pelas vigentes.
+      const overlay = decompositionTreeToOverlay(treeProcessBase, editable);
       await saveRevisaoDecomposicaoOverlay(revisaoId, overlay, getAccessToken);
       await load();
     } catch (err) {
@@ -110,7 +93,7 @@ export function RevisaoDecompositionSection({
     return <p className="ds-hint">Carregando mapeamento da revisão…</p>;
   }
 
-  if (!mergedTree || !mergedTree.nodes.length) {
+  if (!merged || (!editable.nodes.length && !treeProcessBase.nodes.length)) {
     return (
       <p className="ds-hint">
         Nenhum mapeamento no escopo desta instância. Cadastre a árvore no processo-mestre e o escopo na instância.
@@ -118,10 +101,62 @@ export function RevisaoDecompositionSection({
     );
   }
 
+  const refLabel =
+    merged.referencia?.versao_revisao ||
+    (merged.referencia?.revisao_id ? merged.referencia.revisao_id.slice(0, 8) : null);
+  const diff = merged.reference_diff ?? merged.baseline_diff;
+  const hasDiff =
+    Boolean(diff) &&
+    (diff!.changed.length > 0 || diff!.added.length > 0 || diff!.removed.length > 0);
+
   return (
     <div className="tm-decomposition-revisao">
       {!embeddedInCard ? (
-        <FieldLabel className="tm-field__label" label="Mapeamento da revisão" hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao} />
+        <FieldLabel
+          className="tm-field__label"
+          label="Mapeamento da revisão"
+          hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao}
+        />
+      ) : null}
+
+      {!readOnly ? (
+        <p className="ds-hint tm-decomposition-revisao__edit-hint">
+          {refLabel ? (
+            <>
+              Parte do mapeamento da revisão de referência <strong>{refLabel}</strong>. Altere só o
+              delta desta revisão; o <strong>macro composto</strong> («agora») continua a refletir
+              as revisões vigentes.
+            </>
+          ) : (
+            <>
+              Edite o WBS no escopo desta melhoria. Sem revisão de referência, a âncora é o macro do
+              processo; o macro composto «agora» usa as revisões vigentes.
+            </>
+          )}
+        </p>
+      ) : null}
+
+      {merged.seeded_from_reference ? (
+        <p className="ds-hint" role="status">
+          Overlay ainda vazio — árvore iniciada a partir da referência. Ao salvar, o delta fica
+          gravado em relação ao macro do processo.
+        </p>
+      ) : null}
+
+      {merged.warnings?.length ? (
+        <div className="ds-state ds-state--warn" role="status">
+          {merged.warnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      ) : null}
+
+      {hasDiff ? (
+        <DiffHighlightToggle
+          active={showDiff}
+          onChange={setShowDiff}
+          summary={formatDiffSummary(diff, refLabel)}
+        />
       ) : null}
 
       <div className="tm-decomposition-section__tabs">
@@ -142,35 +177,20 @@ export function RevisaoDecompositionSection({
       </div>
 
       <TabPanelTransition tabKey={tab}>
-        {tab === "arvore" && richRoot ? (
-          <DecompositionRichTree
-            root={richRoot}
-            expandDepth={2}
-            renderLabel={
-              readOnly
-                ? undefined
-                : (node) =>
-                    node.id === "decomposition-root" ? (
-                      <span className="tm-rich-tree__label">{node.label}</span>
-                    ) : (
-                      <NativeTextControl
-                        className="tm-rich-tree__input"
-                        value={
-                          overlay.node_overrides?.[node.id]?.label !== undefined
-                            ? overlay.node_overrides[node.id]!.label!
-                            : node.label
-                        }
-                        placeholder={node.badge === "PK" ? "Processo-chave" : node.badge === "T" ? "Tarefa" : "Sub-tarefa"}
-                        onChange={(label) => updateOverride(node.id, label)}
-                        aria-label={`Rótulo ${node.label}`}
-                      />
-                    )
-            }
+        {tab === "arvore" ? (
+          <DecompositionTreeEditor
+            tree={editable}
+            readOnly={readOnly}
+            title={processoNome ? `Mapeamento — ${processoNome}` : "Mapeamento da revisão"}
+            allowRootProcessoChave={merged.escopo?.inherit_all !== false}
+            suppressStoredHighlights
+            diffNodeIds={showDiff && hasDiff ? diff : null}
+            onChange={setEditable}
           />
         ) : null}
 
         {tab === "planilha" ? (
-          <DecompositionFlatPreview tree={mergedTree} macroprocesso={processoNome} />
+          <DecompositionFlatPreview tree={editable} macroprocesso={processoNome} />
         ) : null}
       </TabPanelTransition>
 

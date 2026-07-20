@@ -19,6 +19,24 @@ GET /apps/strategic-indicators-api/docs
 
 A **api-delpi** (`/apps/api-delpi/`) **não** monta mais o prefixo `/strategic-indicators`.
 
+## Ponte dashboard (api-delpi → SI)
+
+Rotas envelope na api-delpi que consomem a Strategic Indicators API (S2S) e devolvem IDD / metas / realizado sem remontar o módulo SI:
+
+| Rota api-delpi | `operationId` | Conteúdo |
+|----------------|---------------|----------|
+| `GET /dashboard/department-idd` | `get_dashboard_department_idd` | Nota IDD (score) de um departamento |
+| `GET /dashboard/department-indicators` | `get_dashboard_department_indicators` | IDD + indicadores com `goals` (metas) e `realized` (realizado) |
+| `GET /dashboard/departments-indicators` | `get_dashboard_departments_indicators` | Todos os departamentos com IDD e indicadores aninhados |
+
+Query comum: `department_id` (quando aplicável), `competence` (`YYYY-MM`), `start_date` / `end_date`, `branch` (`01`/`02`).
+
+Integrações SI correspondentes (token interno):
+
+- `/strategic-indicators/integrations/dashboard-department-score`
+- `/strategic-indicators/integrations/dashboard-department-indicators`
+- `/strategic-indicators/integrations/dashboard-departments-indicators`
+
 ## Documentação completa do módulo SI
 
 **Índice:** [strategic-indicators-api/docs/README.md](../../strategic-indicators-api/docs/README.md)

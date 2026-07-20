@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Copy, Trash2 } from "lucide-react";
 
 import type { AppProps } from "../../App";
@@ -15,14 +15,17 @@ import {
   type ProcessoInstancia,
   type Revisao,
 } from "../../data/api/transformometroApi";
+import { TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT } from "../../utils/navigation";
 import { buildProcessoPath } from "../../utils/routeParser";
 import type { ParsedTransformometroRoute } from "../../utils/routeParser";
+import { useTransformometroEntityWatch } from "../../hooks/useTransformometroEntityWatch";
 import { InstanciaDetailPage } from "../pages/InstanciaDetailPage";
 import { ProcessoDetailPage } from "../pages/ProcessoDetailPage";
 import { RevisaoDetailPage } from "../pages/RevisaoDetailPage";
 import { ProcessoWorkspacePanel } from "../processos/ProcessoWorkspacePanel";
 import {
   ProcessoWorkspaceShell,
+  useInstanciaWorkspaceSection,
   useProcessoWorkspaceSection,
   useRevisaoWorkspaceSection,
 } from "../processos/ProcessoWorkspaceShell";
@@ -65,10 +68,27 @@ export function ProcessoWorkspacePage({
   const confirm = useConfirm();
   const processoId = route.processoId;
   const activeSection = useProcessoWorkspaceSection();
+  const activeInstanciaSection = useInstanciaWorkspaceSection();
   const [mountedPanels, setMountedPanels] = useState<Set<string>>(() => new Set());
   const [processo, setProcesso] = useState<Processo | null>(null);
   const [instancias, setInstancias] = useState<ProcessoInstancia[]>([]);
   const [revisoes, setRevisoes] = useState<Revisao[]>([]);
+  const missingRevisaoRefreshKey = useRef<string | null>(null);
+
+  const reloadWorkspaceTree = useCallback(async () => {
+    try {
+      const [proc, inst, revs] = await Promise.all([
+        fetchProcesso(processoId, getAccessToken),
+        fetchProcessoInstancias(processoId, getAccessToken),
+        fetchRevisoes(processoId, getAccessToken),
+      ]);
+      setProcesso(proc);
+      setInstancias(inst.items);
+      setRevisoes(revs.items);
+    } catch {
+      setProcesso(null);
+    }
+  }, [getAccessToken, processoId]);
 
   const activeRevisao = useMemo(
     () => revisoes.find((row) => row.revisao_id === route.revisaoId) ?? null,
@@ -96,10 +116,21 @@ export function ProcessoWorkspacePage({
       });
     }
     if (route.view === "instancia" && route.instanciaId) {
-      return resolveActiveWorkspaceNodeId({ view: "instancia", instanciaId: route.instanciaId });
+      return resolveActiveWorkspaceNodeId({
+        view: "instancia",
+        instanciaId: route.instanciaId,
+        instanciaSection: activeInstanciaSection,
+      });
     }
     return resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
-  }, [activeRevisaoSection, activeSection, route.instanciaId, route.revisaoId, route.view]);
+  }, [
+    activeInstanciaSection,
+    activeRevisaoSection,
+    activeSection,
+    route.instanciaId,
+    route.revisaoId,
+    route.view,
+  ]);
 
   useEffect(() => {
     setMountedPanels((current) => {
@@ -111,26 +142,40 @@ export function ProcessoWorkspacePage({
   }, [activePanelKey]);
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        const [proc, inst, revs] = await Promise.all([
-          fetchProcesso(processoId, getAccessToken),
-          fetchProcessoInstancias(processoId, getAccessToken),
-          fetchRevisoes(processoId, getAccessToken),
-        ]);
-        if (cancelled) return;
-        setProcesso(proc);
-        setInstancias(inst.items);
-        setRevisoes(revs.items);
-      } catch {
-        if (!cancelled) setProcesso(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
+    void reloadWorkspaceTree();
+  }, [reloadWorkspaceTree]);
+
+  useEffect(() => {
+    const onRefresh = () => {
+      missingRevisaoRefreshKey.current = null;
+      void reloadWorkspaceTree();
     };
-  }, [getAccessToken, processoId]);
+    window.addEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
+    return () => window.removeEventListener(TRANSFORMOMETRO_WORKSPACE_TREE_REFRESH_EVENT, onRefresh);
+  }, [reloadWorkspaceTree]);
+
+  // Tempo real: create/update/delete de melhoria/revisão (fan-out na sala do processo).
+  useTransformometroEntityWatch({
+    entities: [{ entityType: "processo", entityId: processoId }],
+    getAccessToken,
+    enabled: Boolean(processoId),
+    onEntityUpdated: () => {
+      missingRevisaoRefreshKey.current = null;
+      void reloadWorkspaceTree();
+    },
+  });
+
+  // Self-heal: revisão aberta na URL ainda não está na árvore (ex.: criada/duplicada sem refresh).
+  useEffect(() => {
+    if (route.view !== "revisao" || !route.revisaoId) return;
+    if (revisoes.some((row) => row.revisao_id === route.revisaoId)) {
+      missingRevisaoRefreshKey.current = null;
+      return;
+    }
+    if (missingRevisaoRefreshKey.current === route.revisaoId) return;
+    missingRevisaoRefreshKey.current = route.revisaoId;
+    void reloadWorkspaceTree();
+  }, [reloadWorkspaceTree, revisoes, route.revisaoId, route.view]);
 
   const visiblePanels = useMemo(() => {
     const next = new Set(mountedPanels);
@@ -160,8 +205,8 @@ export function ProcessoWorkspacePage({
     const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
     const confirmed = await confirm({
       title: "Excluir processo",
-      message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica). Você será redirecionado à lista.`,
-      confirmLabel: "Excluir",
+      message: `Excluir o processo-mestre ${label} e todo o cadastro associado (melhorias, revisões, medições)? Esta ação é uma exclusão lógica. Você será redirecionado à lista.`,
+      confirmLabel: "Excluir processo",
       variant: "danger",
     });
     if (!confirmed) return;
@@ -228,6 +273,7 @@ export function ProcessoWorkspacePage({
         <InstanciaDetailPage
           embedded
           embeddedActive={isActive}
+          activeSection={activeInstanciaSection}
           getAccessToken={getAccessToken}
           processoId={processoId}
           instanciaId={instanciaId}
@@ -270,7 +316,7 @@ export function ProcessoWorkspacePage({
         processo={processo}
         instancias={instancias}
         revisoes={revisoes}
-        processActions={processSidebarActions}
+        processActions={route.view === "processo" ? processSidebarActions : undefined}
         backActions={processBackAction}
       >
         {Array.from(visiblePanels).map((panelKey) => (

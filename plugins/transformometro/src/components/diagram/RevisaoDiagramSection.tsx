@@ -22,7 +22,12 @@ import {
   type FlowchartEditorHandle,
 } from "@delpi/plugin-ui/index";
 import type { MergedRevisaoDiagram } from "../../types/diagram";
+import {
+  formatDiffSummary,
+  stripFlowchartHighlights,
+} from "../../utils/diffHighlightDisplay";
 import { FlowchartEditor } from "./TransformometroFlowchartEditor";
+import { DiffHighlightToggle } from "../DiffHighlightToggle";
 import { DS_GHOST_BTN } from "../ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -50,9 +55,14 @@ export function RevisaoDiagramSection({
   const [merged, setMerged] = useState<MergedRevisaoDiagram | null>(null);
   const [editable, setEditable] = useState<FlowchartV1>(emptyFlowchart());
   const [overlayDraft, setOverlayDraft] = useState<FlowchartOverlayV1>(emptyOverlay());
-  const liveMermaid = useMemo(() => flowchartToMermaid(editable), [editable]);
-  const [baseMerged, setBaseMerged] = useState<FlowchartV1>(emptyFlowchart());
+  const [flowchartBase, setFlowchartBase] = useState<FlowchartV1>(emptyFlowchart());
+  const [showDiff, setShowDiff] = useState(false);
   const editorRef = useRef<FlowchartEditorHandle>(null);
+  const liveMermaid = useMemo(
+    () => flowchartToMermaid(stripFlowchartHighlights(editable)),
+    [editable]
+  );
+  const displayFlowchart = useMemo(() => stripFlowchartHighlights(editable), [editable]);
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     if (!options?.silent) {
@@ -66,7 +76,7 @@ export function RevisaoDiagramSection({
       ]);
       setMerged(mergedData);
       setEditable(mergedData.flowchart ?? emptyFlowchart());
-      setBaseMerged(mergedData.flowchart ?? emptyFlowchart());
+      setFlowchartBase(mergedData.flowchart_base ?? mergedData.flowchart ?? emptyFlowchart());
       setOverlayDraft(overlayData.conteudo ?? emptyOverlay());
     } catch (err) {
       onError(err instanceof Error ? err.message : "Erro ao carregar diagrama da revisão.");
@@ -88,7 +98,7 @@ export function RevisaoDiagramSection({
     setSaving(true);
     onError(null);
     try {
-      const overlay = flowToOverlayDraft(baseMerged, editable, overlayDraft);
+      const overlay = flowToOverlayDraft(flowchartBase, editable, overlayDraft);
       overlay.modo = "partial";
       if (cenarioTipo?.toLowerCase() === "baseline") {
         for (const node of editable.nodes) {
@@ -150,10 +160,40 @@ export function RevisaoDiagramSection({
     return <p className="ds-hint">Diagrama indisponível.</p>;
   }
 
+  const refLabel =
+    merged.referencia?.versao_revisao ||
+    (merged.referencia?.revisao_id ? merged.referencia.revisao_id.slice(0, 8) : null);
+  const diff = merged.reference_diff ?? merged.baseline_diff;
+  const hasDiff =
+    Boolean(diff) &&
+    (diff!.changed.length > 0 || diff!.added.length > 0 || diff!.removed.length > 0);
+
   return (
     <div className="tm-diagram-section">
       {!embeddedInCard ? (
         <FieldLabel className="tm-field__label" label="Diagrama da revisão" hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao} />
+      ) : null}
+
+      {!readOnly ? (
+        <p className="ds-hint tm-decomposition-revisao__edit-hint">
+          {refLabel ? (
+            <>
+              Parte do diagrama da revisão de referência <strong>{refLabel}</strong>. O{" "}
+              <strong>diagrama composto</strong> («agora») no processo reflete as revisões vigentes.
+            </>
+          ) : (
+            <>
+              Edite o fluxo no escopo desta melhoria. Sem referência, a âncora é o diagrama macro.
+            </>
+          )}
+        </p>
+      ) : null}
+
+      {merged.seeded_from_reference ? (
+        <p className="ds-hint" role="status">
+          Overlay ainda vazio — diagrama iniciado a partir da referência. Ao salvar, o delta fica
+          absoluto em relação ao macro.
+        </p>
       ) : null}
 
       {merged.warnings?.length ? (
@@ -164,25 +204,28 @@ export function RevisaoDiagramSection({
         </div>
       ) : null}
 
-      {merged.baseline_diff ? (
-        <div className="tm-diagram-diff" role="status">
-          <p className="ds-hint">
-            Diff vs baseline: {merged.baseline_diff.changed.length} alterados,{" "}
-            {merged.baseline_diff.added.length} novos, {merged.baseline_diff.removed.length} removidos.
-          </p>
-        </div>
+      {hasDiff ? (
+        <DiffHighlightToggle
+          active={showDiff}
+          onChange={setShowDiff}
+          summary={formatDiffSummary(diff, refLabel)}
+        />
       ) : null}
 
       <DiagramFullscreenFrame
         title="Diagrama da revisão"
-        subtitle="Overlay as-is / to-be sobre o mapa macro do processo."
+        subtitle={
+          refLabel
+            ? `Âncora: referência ${refLabel}. Overlay as-is / to-be no escopo da melhoria.`
+            : "Overlay as-is / to-be sobre o mapa macro do processo."
+        }
       >
         <FlowchartEditor
           ref={editorRef}
-          value={editable}
+          value={displayFlowchart}
           onChange={readOnly ? undefined : setEditable}
           readOnly={readOnly}
-          diffNodeIds={merged.baseline_diff ?? undefined}
+          diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
         />
 
         <details className="tm-diagram-section__preview" open={false}>

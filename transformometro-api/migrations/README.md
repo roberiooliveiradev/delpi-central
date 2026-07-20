@@ -40,6 +40,9 @@ Schema: **`transformometro`** no Postgres **postgres-plugins** (`PLUGINS_DB_*`).
 | V034 | `V034__melhoria_campos_e_escopo_livre.sql` | Campos rollout em `processo_instancias`; remove unique `(processo, filial)` |
 | V035 | `V035__revisao_referencia_comparacao.sql` | `revisoes.revisao_referencia_id` — referência de comparação entre revisões |
 | V038 | `V038__revisao_matriz_impacto_esforco.sql` | `revisoes.matriz_impacto_esforco` JSONB — overrides Playbook 21 |
+| V039 | `V039__beneficio_calculo_categoria.sql` | `revisoes.beneficio_calculo_categoria` + colunas de capacidade em `dashboard_calculos` (Playbook 22; só DDL) |
+| V040 | `V040__ganho_capacidade_no_roi_comment.sql` | Comentário: `ganho_capacidade` entra no ROI via `economia_bruta` |
+| V041 | `V041__beneficio_categoria_default_automatico.sql` | Default + backfill `beneficio_calculo_categoria` → `automatico` (a partir de `economia_tempo`) |
 
 ## Notas V019–V020
 

@@ -132,6 +132,7 @@ export type Revisao = {
   instancia_id?: string;
   versao_revisao: string;
   cenario_tipo: string;
+  beneficio_calculo_categoria?: string | null;
   revisao_referencia_id?: string | null;
   data_inicio_vigencia: string;
   revisao_ativa: boolean;
@@ -213,6 +214,9 @@ export type OptionsData = {
   status_setor: string[];
   status_processo: string[];
   cenario_tipo: string[];
+  beneficio_calculo_categoria?: string[];
+  beneficio_calculo_categoria_default?: string;
+  beneficio_calculo_categoria_labels?: Record<string, string>;
   recorrencias: string[];
   criterio_rateio: string[];
   base_competencia_recurso?: string[];
@@ -542,6 +546,7 @@ export function updateRevisao(
     versao_revisao: string;
     cenario_tipo: string;
     data_inicio_vigencia: string;
+    confirm_vigencia_change?: boolean;
   },
   getAccessToken?: () => string | undefined
 ) {
@@ -891,6 +896,7 @@ export type DashboardResumo = {
   economia_liquida_total: number;
   economia_bruta_total: number;
   horas_economizadas_total?: number;
+  ganho_capacidade_total?: number;
   investimento_unico_total?: number;
   custo_recorrente_total?: number;
   custo_recursos_compartilhados_total?: number;
@@ -1069,15 +1075,33 @@ export function downloadDashboardExcel(
   return downloadFile(`/dashboard/export.xls${qs}`, "dashboard-transformometro.xls", getAccessToken);
 }
 
+export type ProcessoComparativoAviso = {
+  code: string;
+  severity: string;
+  delta_volume?: number;
+  message: string;
+};
+
 export type ProcessoComparativoItem = {
   revisao_id: string;
   versao_revisao?: string | null;
   cenario_tipo?: string | null;
+  beneficio_calculo_categoria?: string | null;
   revisao_ativa?: boolean | null;
   data_inicio_vigencia?: string | null;
   data_fim_vigencia?: string | null;
   ultima_competencia?: string | null;
   meses_com_dados?: number | null;
+  volume_acima_referencia?: boolean | null;
+  volume_abaixo_referencia?: boolean | null;
+  avisos?: ProcessoComparativoAviso[];
+  breakdown?: {
+    economia_tempo?: number;
+    economia_retrabalho?: number;
+    economia_erros?: number;
+    economia_outros?: number;
+    economia_recursos_compartilhados?: number;
+  };
   totais: {
     economia_bruta: number;
     economia_liquida_mes: number;
@@ -1086,6 +1110,9 @@ export type ProcessoComparativoItem = {
     custo_recorrente_mes?: number;
     custo_recursos_compartilhados_mes?: number;
     investimento_total_mes?: number;
+    ganho_capacidade?: number;
+    economia_reducao_volume?: number;
+    delta_volume?: number;
   };
 };
 

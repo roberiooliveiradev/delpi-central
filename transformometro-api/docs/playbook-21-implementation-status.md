@@ -35,7 +35,7 @@
 
 ### API
 
-- `RevisaoImpactEffortMatrixService` — percentil por instância, quadrantes, confiança
+- `RevisaoImpactEffortMatrixService` — percentil entre peers com variância; **escala absoluta** quando há 1 revisão (ou componente empatado), para não colapsar em 50×50
 - `GET /transformometro/instancias/{instancia_id}/matriz-impacto-esforco`
 - `GET /transformometro/revisoes/{revisao_id}/matriz-impacto-esforco`
 - Testes: `tests/test_revisao_impact_effort_matrix_service.py`

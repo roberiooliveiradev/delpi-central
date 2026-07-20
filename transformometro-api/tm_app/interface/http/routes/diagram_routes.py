@@ -3,10 +3,13 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Request
+from datetime import date
+
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel, Field
 
 from tm_app.application.services.diagram_mermaid_export_service import DiagramMermaidExportService
+from tm_app.application.services.diagrama_composition_service import DiagramaCompositionService
 from tm_app.application.services.flowchart_bpmn_xml_service import FlowchartBpmnXmlService
 from tm_app.application.services.revisao_diagram_merge_service import RevisaoDiagramMergeService
 from tm_app.application.services.transformometro_realtime_notify import notify_from_audit
@@ -47,6 +50,7 @@ router = APIRouter(prefix="/transformometro", tags=["Transformômetro — diagra
 
 _mermaid = DiagramMermaidExportService()
 _merge = RevisaoDiagramMergeService(_mermaid)
+_composition = DiagramaCompositionService()
 _validator = FlowchartValidationService()
 _bpmn_xml = FlowchartBpmnXmlService()
 
@@ -146,7 +150,7 @@ def _overlay_response(row: dict[str, Any] | None, revisao_id: str) -> dict[str, 
         "revisao_id": revisao_id,
         "conteudo": conteudo,
         "mermaid": row.get("mermaid_cached"),
-        "empty": not conteudo.get("node_overrides") and not conteudo.get("extra_nodes"),
+        "empty": RevisaoDiagramMergeService.overlay_is_empty(conteudo),
         "updated_at": row.get("updated_at"),
     }
 
@@ -162,6 +166,22 @@ def get_processo_diagrama(processo_id: str):
         return fail("Processo não encontrado.", 404)
     row = ProcessoDiagramRepository().get(processo_id)
     return ok(_macro_response(row), "Diagrama macro do processo.")
+
+
+@router.get("/processos/{processo_id}/diagrama/composed")
+def get_processo_diagrama_composed(
+    processo_id: str,
+    at: date | None = Query(default=None, description="Data de composição (YYYY-MM-DD)"),
+    instancia_id: str | None = Query(default=None),
+):
+    if not ProcessoRepository().get(processo_id):
+        return fail("Processo não encontrado.", 404)
+    composed = _composition.compose_for_processo(
+        processo_id,
+        at=at,
+        instancia_id=instancia_id,
+    )
+    return ok(composed, "Diagrama composto na data informada.")
 
 
 @router.put("/processos/{processo_id}/diagrama")
@@ -282,10 +302,17 @@ def put_instancia_diagrama_escopo(instancia_id: str, body: EscopoBody, request: 
     return ok(_escopo_response(row, instancia_id), "Escopo de diagrama salvo.")
 
 
-def _load_merge_context(revisao_id: str) -> tuple[dict[str, Any] | None, dict[str, Any] | None, dict[str, Any] | None]:
+def _load_merge_context(
+    revisao_id: str,
+) -> tuple[
+    dict[str, Any] | None,
+    dict[str, Any] | None,
+    dict[str, Any] | None,
+    dict[str, Any] | None,
+]:
     revisao = RevisaoRepository().get(revisao_id)
     if not revisao:
-        return None, None, None
+        return None, None, None, None
 
     processo_id = str(revisao["processo_id"])
     instancia_id = str(revisao.get("instancia_id") or "")
@@ -314,32 +341,33 @@ def get_revisao_diagrama_merged(revisao_id: str):
     if not revisao:
         return fail("Revisão não encontrada.", 404)
 
-    merged = _merge.merge(macro=macro, escopo=escopo, overlay=overlay)
-    baseline_diff = None
+    reference_overlay = None
+    reference_meta = None
     baseline_revisao = RevisaoRepository().find_reference_for_revisao(
         revisao_id,
         revisao_row=revisao,
     )
     if baseline_revisao:
-        _, baseline_macro, baseline_escopo, baseline_overlay = _load_merge_context(
-            str(baseline_revisao["revisao_id"])
-        )
-        baseline_merged = _merge.merge(
-            macro=baseline_macro,
-            escopo=baseline_escopo,
-            overlay=baseline_overlay,
-        )
-        baseline_diff = _merge.diff_highlights(
-            baseline=baseline_merged["flowchart"],
-            current=merged["flowchart"],
-        )
+        _, _, _, reference_overlay = _load_merge_context(str(baseline_revisao["revisao_id"]))
+        reference_meta = {
+            "revisao_id": str(baseline_revisao["revisao_id"]),
+            "versao_revisao": baseline_revisao.get("versao_revisao"),
+            "cenario_tipo": baseline_revisao.get("cenario_tipo"),
+        }
+
+    view = _merge.build_revisao_view(
+        macro=macro,
+        escopo=escopo,
+        overlay=overlay,
+        reference_overlay=reference_overlay,
+        reference_meta=reference_meta,
+    )
 
     return ok(
         {
             "revisao_id": revisao_id,
             "cenario_tipo": revisao.get("cenario_tipo"),
-            **merged,
-            "baseline_diff": baseline_diff,
+            **view,
         },
         "Diagrama mesclado da revisão.",
     )

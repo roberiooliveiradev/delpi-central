@@ -70,6 +70,14 @@ from app.interface.http.openapi_agent_metadata import (
 )
 from app.interface.http.routes.shared.dashboard_goal_enrichment import enrich_dashboard_metric
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    BRANCH_QUERY_REQUIRED,
+    LMP_DASHBOARD_STATUS_QUERY,
+    LMP_DASHBOARD_STATUS_QUERY_OPTIONAL,
+    LMP_LISTING_TYPE_QUERY,
+    SORT_DIR_QUERY,
+)
 
 router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 
@@ -79,11 +87,8 @@ router = APIRouter(prefix="/engineering", tags=["Engenharia"])
 def list_lmps_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    branch: Optional[str] = None,
-    listing_type: Optional[str] = Query(
-        None,
-        description="Filtro de tipo: Todos, LMP, Amostra ou Outro.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
     page: Optional[int] = Query(None, ge=1),
     page_size: Optional[int] = Query(None, ge=1),
     include_qtd_pi: Optional[bool] = Query(
@@ -125,12 +130,9 @@ def list_lmps_route(
 def list_lmps_dashboard_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: str = Query("Todos"),
-    branch: Optional[str] = None,
-    listing_type: Optional[str] = Query(
-        None,
-        description="Filtro de tipo: Todos, LMP, Amostra ou Outro.",
-    ),
+    status: str = LMP_DASHBOARD_STATUS_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=500),
 ):
@@ -184,9 +186,9 @@ def list_lmps_dashboard_route(
 def lmps_dashboard_summary_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: str = Query("Todos"),
-    branch: Optional[str] = None,
-    listing_type: Optional[str] = Query(None),
+    status: str = LMP_DASHBOARD_STATUS_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
 ):
     try:
         dto = build_list_lmp_request(
@@ -230,9 +232,9 @@ def lmps_dashboard_summary_route(
 def lmps_dashboard_items_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: str = Query("Todos"),
-    branch: Optional[str] = None,
-    listing_type: Optional[str] = Query(None),
+    status: str = LMP_DASHBOARD_STATUS_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=500),
 ):
@@ -272,9 +274,9 @@ def lmps_dashboard_items_route(
 def lmps_dashboard_charts_route(
     date_start: Optional[str] = None,
     date_end: Optional[str] = None,
-    status: str = Query("Todos"),
-    branch: Optional[str] = None,
-    listing_type: Optional[str] = Query(None),
+    status: str = LMP_DASHBOARD_STATUS_QUERY(),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    listing_type: Optional[str] = LMP_LISTING_TYPE_QUERY(),
 ):
     try:
         dto = build_list_lmp_request(
@@ -317,10 +319,7 @@ def get_lmp_history_events_route(
         default=None,
         description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
     ),
-    branch: Optional[str] = Query(
-        default=None,
-        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     revision: Optional[str] = Query(
         default=None,
         description="Filtra eventos de uma revisão específica da OV.",
@@ -370,10 +369,7 @@ def get_lmp_history_flow_route(
         default=None,
         description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
     ),
-    branch: Optional[str] = Query(
-        default=None,
-        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     revision: Optional[str] = Query(
         default=None,
         description="Filtra transições de uma revisão específica da OV.",
@@ -423,10 +419,7 @@ def get_lmp_route(
         default=None,
         description="Fim do período (YYYYMMDD ou ISO). Alinha escopo ao dashboard.",
     ),
-    branch: Optional[str] = Query(
-        default=None,
-        description="Filial TOTVS (01/02). Recomendado quando a OV existe em mais de uma filial.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         dto = build_get_lmp_request(
@@ -467,7 +460,7 @@ def list_processes(
     name_process: str | None = Query(default=None),
     filial_id: str | None = Query(default=None),
     sector_name: str | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = LMP_DASHBOARD_STATUS_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -561,11 +554,11 @@ def get_process_summary(
 def list_mini_applicators_ferramentas_route(
     codigo: Optional[str] = Query(None),
     descricao: Optional[str] = Query(None),
-    filial: Optional[str] = Query(None),
+    filial: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(None),
-    sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
+    sort_dir: Optional[str] = SORT_DIR_QUERY(),
     incluir_bloqueados: bool = Query(False),
     codigo_peca: Optional[str] = Query(None),
     descricao_peca: Optional[str] = Query(None),
@@ -633,7 +626,7 @@ def list_mini_applicators_pecas_reposicao_route(
     page: Optional[int] = Query(1, ge=1),
     page_size: Optional[int] = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(None),
-    sort_dir: Optional[str] = Query("asc", pattern="^(asc|desc)$"),
+    sort_dir: Optional[str] = SORT_DIR_QUERY(),
 ):
     try:
         request = ListMiniApplicatorsPecasReposicaoRequest(
@@ -684,7 +677,7 @@ def list_mini_applicators_pecas_route(codigo: str):
 @require_any_permission(MINI_APPLICATORS_ACCESS)
 def get_mini_applicators_golpes_route(
     codigo: str,
-    filial: str = Query(..., min_length=2, max_length=2),
+    filial: str = BRANCH_QUERY_REQUIRED(),
     data_inicial: str = Query(...),
     data_final: str = Query(...),
 ):
@@ -713,7 +706,7 @@ def get_mini_applicators_golpes_route(
 @require_any_permission(MINI_APPLICATORS_ACCESS)
 def list_mini_applicators_componentes_route(
     codigo: str,
-    filial: str = Query(..., min_length=2, max_length=2),
+    filial: str = BRANCH_QUERY_REQUIRED(),
 ):
     try:
         use_case = build_list_mini_applicators_componentes_use_case()

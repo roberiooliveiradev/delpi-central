@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { AppProps } from "../../App";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import { EditableSectionCard } from "../../components/ui/EditableSectionCard";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { LoadingActivityCard } from "../../components/LoadingActivityCard";
@@ -28,6 +29,7 @@ import {
 import { fetchRevisaoEvidencias } from "../../data/api/transformometroEvidenceApi";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { revisaoDisplayLabel } from "../../utils/revisaoLabels";
+import { optionalTrimmedText } from "../../utils/optionalTrimmedText";
 import { TRANSFORMOMETRO_API_BASE, buildAuthHeaders } from "../../data/api/transformometroApiBase";
 import { RevisaoEvidenciasSection } from "../revisao/cadastro/RevisaoEvidenciasSection";
 import { RevisaoDiagramSection } from "../../components/diagram/RevisaoDiagramSection";
@@ -114,6 +116,7 @@ export function RevisaoCadastroPanel({
   const confirm = useConfirm();
   const medicaoSnapshot = useRef<Medicao>(emptyMedicao(revisao.revisao_id));
   const [medicao, setMedicao] = useState<Medicao>(() => emptyMedicao(revisao.revisao_id));
+  const [volumeReferencia, setVolumeReferencia] = useState<number | null>(null);
   const [investimentos, setInvestimentos] = useState<Investimento[]>([]);
   const [vinculos, setVinculos] = useState<VinculoRecurso[]>([]);
   const [recursos, setRecursos] = useState<RecursoCompartilhado[]>([]);
@@ -123,13 +126,19 @@ export function RevisaoCadastroPanel({
   const [savingMedicao, setSavingMedicao] = useState(false);
   const [rateioDiag, setRateioDiag] = useState<RateioDiagnostic | null>(null);
   const [revisaoVigencia, setRevisaoVigencia] = useState(() => buildRevisaoVigenciaFromRevisao(revisao));
+  const [revisaoVigenciaBaseline, setRevisaoVigenciaBaseline] = useState(() =>
+    buildRevisaoVigenciaFromRevisao(revisao)
+  );
 
   useEffect(() => {
-    setRevisaoVigencia(buildRevisaoVigenciaFromRevisao(revisao));
+    const next = buildRevisaoVigenciaFromRevisao(revisao);
+    setRevisaoVigencia(next);
+    setRevisaoVigenciaBaseline(next);
   }, [
     revisao.revisao_id,
     revisao.versao_revisao,
     revisao.cenario_tipo,
+    revisao.beneficio_calculo_categoria,
     revisao.revisao_referencia_id,
     revisao.data_inicio_vigencia,
     revisao.data_implantacao,
@@ -144,19 +153,28 @@ export function RevisaoCadastroPanel({
     setLoading(true);
     onError(null);
     try {
-      const [med, inv, vin, rec, ev, diag] = await Promise.all([
+      const refId = revisao.revisao_referencia_id || undefined;
+      const [med, inv, vin, rec, ev, diag, medRef] = await Promise.all([
         fetchMedicao(revisao.revisao_id, getAccessToken),
         fetchInvestimentos(revisao.revisao_id, getAccessToken),
         fetchVinculos(revisao.revisao_id, getAccessToken),
         fetchRecursos(getAccessToken),
         fetchRevisaoEvidencias(revisao.revisao_id, getAccessToken).catch(() => []),
         fetchRevisaoDiagnosticoRateio(revisao.revisao_id, getAccessToken).catch(() => null),
+        refId
+          ? fetchMedicao(refId, getAccessToken).catch(() => null)
+          : Promise.resolve(null),
       ]);
       const nextMedicao = med
         ? { ...med, revisao_id: revisao.revisao_id }
         : emptyMedicao(revisao.revisao_id);
       setMedicao(nextMedicao);
       medicaoSnapshot.current = nextMedicao;
+      setVolumeReferencia(
+        medRef && Number.isFinite(Number(medRef.volume_mensal))
+          ? Number(medRef.volume_mensal)
+          : null
+      );
       setInvestimentos(inv.items);
       setVinculos(vin.items);
       setRecursos(rec.items);
@@ -167,7 +185,7 @@ export function RevisaoCadastroPanel({
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken, onError, revisao.revisao_id]);
+  }, [getAccessToken, onError, revisao.revisao_id, revisao.revisao_referencia_id]);
 
   const sectionEdit = useCollaborativeSectionEdit({
     entityType: "revisao",
@@ -188,11 +206,31 @@ export function RevisaoCadastroPanel({
     setSavingVigencia(true);
     onError(null);
     try {
+      const datesChanged =
+        revisaoVigencia.data_inicio_vigencia !== revisaoVigenciaBaseline.data_inicio_vigencia ||
+        revisaoVigencia.data_fim_vigencia !== revisaoVigenciaBaseline.data_fim_vigencia;
+      const hasMedicao = Boolean(medicao.medicao_id);
+      let confirmVigenciaChange = false;
+      if (hasMedicao && datesChanged) {
+        const ok = await confirm({
+          title: "Alterar vigência com medição?",
+          message:
+            "Esta revisão já possui medição. Mudar início ou fim de vigência recalcula o macro composto e pode afetar o histórico. Deseja continuar?",
+          confirmLabel: "Confirmar alteração",
+          cancelLabel: "Cancelar",
+          variant: "danger",
+        });
+        if (!ok) {
+          return;
+        }
+        confirmVigenciaChange = true;
+      }
       await updateRevisao(
         revisao.revisao_id,
         {
           processo_id: revisao.processo_id,
           ...revisaoPayloadFromVigenciaForm(revisaoVigencia),
+          confirm_vigencia_change: confirmVigenciaChange,
         },
         getAccessToken
       );
@@ -209,7 +247,10 @@ export function RevisaoCadastroPanel({
     setSavingMedicao(true);
     onError(null);
     try {
-      await upsertMedicao(medicao, getAccessToken);
+      await upsertMedicao(
+        { ...medicao, observacoes: optionalTrimmedText(medicao.observacoes) },
+        getAccessToken
+      );
       sectionEdit.stopEdit("medicao");
       await load();
     } catch (err) {
@@ -220,7 +261,7 @@ export function RevisaoCadastroPanel({
   }
 
   function cancelVigencia() {
-    setRevisaoVigencia(buildRevisaoVigenciaFromRevisao(revisao));
+    setRevisaoVigencia(revisaoVigenciaBaseline);
     sectionEdit.cancelEdit("vigencia");
   }
 
@@ -243,8 +284,8 @@ export function RevisaoCadastroPanel({
     const label = revisaoDisplayLabel(revisao);
     const confirmed = await confirm({
       title: "Excluir revisão",
-      message: `Excluir a revisão ${label}?`,
-      confirmLabel: "Excluir",
+      message: `Excluir a revisão ${label}? A melhoria e o processo-mestre não serão excluídos.`,
+      confirmLabel: "Excluir revisão",
       variant: "danger",
     });
     if (!confirmed) {
@@ -310,6 +351,7 @@ export function RevisaoCadastroPanel({
         </div>
       ) : null}
 
+      <div className="tm-processo-workspace__sections">
       {revisao.cenario_tipo !== "baseline" ? (
         <RevisaoWorkspaceSectionPanel active={activeSection === "matriz"} sectionId="matriz">
           <RevisaoMatrizImpactoSection
@@ -319,6 +361,7 @@ export function RevisaoCadastroPanel({
             onError={onError}
             onNavigate={onNavigate}
             rateioExcedeGanho={rateioDiag?.rateio_excede_ganho ?? false}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         </RevisaoWorkspaceSectionPanel>
       ) : null}
@@ -326,12 +369,13 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "vigencia"} sectionId="vigencia">
       <EditableSectionCard
         title="Vigência e identificação"
-        description="Versão, cenário e período usados no dashboard."
+        description="Versão, cenário, categoria de cálculo e período usados no dashboard."
         isEditing={sectionEdit.isEditing("vigencia")}
         onEdit={() => void sectionEdit.startEdit("vigencia")}
         onCancel={cancelVigencia}
         onSave={() => void saveVigencia()}
         saving={savingVigencia}
+        dirty={!valuesEqual(revisaoVigencia, revisaoVigenciaBaseline)}
         readContent={
           <RevisaoVigenciaSection
             embeddedInCard
@@ -365,7 +409,7 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
       <EditableSectionCard
         title="Mapeamento da revisão"
-        description="Estado textual as-is ou to-be sobre o escopo WBS da instância."
+        description="Parte do mapeamento da revisão de referência; o delta desta revisão alimenta o macro composto pelas vigentes."
         hint={TM_HELP_TOOLTIPS.decomposition.mapeamentoRevisao}
         isEditing={sectionEdit.isEditing("decomposicao_revisao")}
         onEdit={() => void sectionEdit.startEdit("decomposicao_revisao")}
@@ -395,7 +439,7 @@ export function RevisaoCadastroPanel({
       <RevisaoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
       <EditableSectionCard
         title="Diagrama da revisão"
-        description="Estado visual as-is ou to-be sobre o escopo da instância."
+        description="Parte do diagrama da revisão de referência; o delta alimenta o diagrama composto pelas vigentes."
         hint={TM_HELP_TOOLTIPS.revisao.diagramaRevisao}
         isEditing={sectionEdit.isEditing("diagrama_revisao")}
         onEdit={() => void sectionEdit.startEdit("diagrama_revisao")}
@@ -438,11 +482,14 @@ export function RevisaoCadastroPanel({
         onCancel={cancelMedicao}
         onSave={() => void saveMedicao()}
         saving={savingMedicao}
+        dirty={!valuesEqual(medicao, medicaoSnapshot.current)}
         readContent={
           <RevisaoMedicaoSection
             embeddedInCard
             readOnly
             medicao={medicao}
+            beneficioCalculoCategoria={revisaoVigencia.beneficio_calculo_categoria}
+            volumeReferencia={volumeReferencia}
             onChange={setMedicao}
             onSubmit={(event) => event.preventDefault()}
           />
@@ -452,6 +499,8 @@ export function RevisaoCadastroPanel({
             embeddedInCard
             hideSubmit
             medicao={medicao}
+            beneficioCalculoCategoria={revisaoVigencia.beneficio_calculo_categoria}
+            volumeReferencia={volumeReferencia}
             onChange={setMedicao}
             onSubmit={(event) => {
               event.preventDefault();
@@ -545,6 +594,7 @@ export function RevisaoCadastroPanel({
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
         editContent={
@@ -554,10 +604,12 @@ export function RevisaoCadastroPanel({
             getAccessToken={getAccessToken}
             onError={onError}
             onReload={load}
+            resyncVersion={sectionEdit.resyncVersion}
           />
         }
       />
       </RevisaoWorkspaceSectionPanel>
+      </div>
     </div>
   );
 }

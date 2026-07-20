@@ -14,6 +14,9 @@ from app.core.responses import error_response
 from app.interface.http.openapi_agent_metadata import PURCHASES_TOP_PRODUCTS
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+)
 
 router = APIRouter(prefix="/purchases", tags=["Compras operacionais"])
 
@@ -23,7 +26,7 @@ router = APIRouter(prefix="/purchases", tags=["Compras operacionais"])
 def get_top_products(
     date_start: Optional[str] = Query(default=None),
     date_end: Optional[str] = Query(default=None),
-    branch: Optional[str] = Query(default=None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     limit: Optional[int] = Query(default=None, ge=1, le=200),
 ):
     try:

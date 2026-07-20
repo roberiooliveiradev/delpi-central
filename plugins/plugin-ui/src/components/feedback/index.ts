@@ -106,6 +106,11 @@ export {
   type ModalShellVariant,
 } from "./ModalShell";
 export {
+  measureContainedModalBox,
+  resolveContainedModalScrollPort,
+  type ContainedModalBox,
+} from "./containedModalViewport";
+export {
   DrawerShell,
   createDrawerShell,
   drawerShellBemClasses,

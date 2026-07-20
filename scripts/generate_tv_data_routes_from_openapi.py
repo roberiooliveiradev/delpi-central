@@ -2,14 +2,16 @@
 """Gera catálogo TV (tv_data_routes.json) a partir do OpenAPI baseline api-delpi.
 
 Fonte de verdade (como o registry operacional do chat):
-  api-delpi openapi → openapi_baseline.json (v2: parameters + xDelpi)
+  api-delpi openapi → openapi_baseline.json (v3: parameters + xDelpi.locale/params/category)
   → generate --write → tv_data_routes.json
   → overlays em tv_data_route_overlays.json (TV-only)
 
 Campos do OpenAPI (sempre regenerados / mergeados):
   operationId, path, httpMethod, paramSchema, paramStrategy (inferido),
   metaShape (x-delpi.shape quando houver),
-  whenToUse/label/description de audiência (x-delpi.tv quando houver)
+  whenToUse/label/description de audiência (x-delpi.locale.pt-BR ou x-delpi.tv),
+  category (x-delpi.category quando houver),
+  labels de params (x-delpi.params.*.locale.pt-BR)
 
 Overlays TV (preservados / arquivo overlays):
   valueFields, seriesField, tableFields, tvConstraints, fixedQueryParams,
@@ -58,11 +60,14 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "Auditoria 5S": "quality",
     "Clientes": "commercial",
     "Comercial": "commercial",
+    "Commercial": "commercial",
     "Compras operacionais": "supplies",
     "Cultura DELPI": "strategic",
     "Dashboard": "system",
     "Engenharia": "engineering",
+    "Engineering": "engineering",
     "Financeiro": "financial",
+    "Financial": "financial",
     "Health": "system",
     "Inspeções de Entrada": "quality",
     "Kaizen — cadastro": "quality",
@@ -71,14 +76,18 @@ TAG_TO_CATEGORY: dict[str, str] = {
     "PAC Qualidade — planos de ação": "quality",
     "Pedidos de Venda em Aberto": "commercial",
     "Produção": "production",
+    "Production": "production",
     "Produção operacional": "production",
     "Propostas Comerciais": "commercial",
     "Qualidade": "quality",
+    "Quality": "quality",
     "Qualidade — PPM": "quality",
     "Quality Labels": "quality",
     "Quality Labels (público)": "quality",
     "Recursos Humanos": "hr",
+    "Human Resources": "hr",
     "Suprimentos": "supplies",
+    "Supplies": "supplies",
     "products": "products",
     "sales": "commercial",
     "system": "system",
@@ -101,335 +110,105 @@ PATH_SEGMENT_TO_CATEGORY: dict[str, str] = {
     "dashboard": "system",
 }
 
-PARAM_LABELS_PT: dict[str, str] = {
-    "active": "Ativo",
-    "adjustment_percent": "Ajuste (%)",
-    "area_id": "Área",
-    "audit_status": "Status da auditoria",
-    "branch": "Filial",
-    "branch_code": "Código da filial",
-    "branches": "Filiais",
-    "catalog_version": "Versão do catálogo",
-    "centroCusto": "Centro de custo",
-    "code": "Código",
-    "code_exact": "Código exato",
-    "codigo": "Código",
-    "codigoOperador": "Código do operador",
-    "codigo_peca": "Código da peça",
-    "competence": "Competência",
-    "cost_center": "Centro de custo",
-    "customer": "Cliente",
-    "customer_name": "Nome do cliente",
-    "customer_reference": "Referência do cliente",
-    "customer_segment": "Segmento",
-    "dataFim": "Data fim",
-    "dataInicio": "Data início",
-    "data_final": "Data final",
-    "data_inicial": "Data inicial",
-    "date": "Data",
-    "date_end": "Data fim",
-    "date_from": "Data início",
-    "date_start": "Data início",
-    "date_to": "Data fim",
-    "department": "Departamento",
-    "department_id": "Departamento",
-    "descricao": "Descrição",
-    "descricao_peca": "Descrição da peça",
-    "description": "Descrição",
-    "details_limit": "Limite de detalhes",
-    "direction": "Direção",
-    "efficiency_bands": "Faixas de eficiência",
-    "employee": "Colaborador",
-    "eventTypes": "Tipos de evento",
-    "evidence_type": "Tipo de evidência",
-    "failure_mode": "Modo de falha",
-    "file_kind": "Tipo de arquivo",
-    "filename": "Nome do arquivo",
-    "filial": "Filial",
-    "filial_id": "ID da filial",
-    "finished_product_code": "Código do produto acabado",
-    "format": "Formato",
-    "from": "De",
-    "granularity": "Granularidade",
-    "group_by": "Agrupar por",
-    "group_code": "Código do grupo",
-    "has_revision": "Com revisão",
-    "has_variant": "Com variante",
-    "history_limit": "Limite do histórico",
-    "id": "ID",
-    "include_completed": "Incluir concluídos",
-    "include_qtd_pi": "Incluir quantidade PI",
-    "include_test_products": "Incluir produtos de teste",
-    "incluir_bloqueados": "Incluir bloqueados",
-    "inspection_id": "Inspeção",
-    "inspector": "Inspetor",
-    "invoice_number": "Número da nota",
-    "issue_date_end": "Data de emissão (fim)",
-    "issue_date_start": "Data de emissão (início)",
-    "item_code": "Código do item",
-    "legacy": "Modo legado",
-    "limit": "Limite",
-    "linked_sort_by": "Ordenar vínculos por",
-    "linked_sort_dir": "Direção da ordenação dos vínculos",
-    "listing_type": "Tipo de listagem",
-    "location": "Localização",
-    "loss_type": "Tipo de perda",
-    "lot": "Lote",
-    "max_depth": "Profundidade máxima",
-    "max_size_bytes": "Tamanho máximo (bytes)",
-    "min_plans": "Mínimo de planos",
-    "min_size_bytes": "Tamanho mínimo (bytes)",
-    "modified_from": "Modificado a partir de",
-    "modified_to": "Modificado até",
-    "months": "Meses",
-    "name": "Nome",
-    "name_process": "Nome do processo",
-    "nonconformity_scope": "Escopo de NC",
-    "offset": "Deslocamento",
-    "op": "Ordem de produção",
-    "operation_id": "Operação",
-    "operator_code": "Código do operador",
-    "orderBy": "Ordenar por",
-    "orderDir": "Direção da ordenação",
-    "overdue_only": "Somente atrasados",
-    "owner_user_id": "Responsável",
-    "page": "Página",
-    "pageSize": "Tamanho da página",
-    "page_size": "Tamanho da página",
-    "periodDays": "Período (dias)",
-    "plan_id": "Plano",
-    "price_source": "Fonte de preço",
-    "problem_category": "Categoria do problema",
-    "product": "Produto",
-    "product_code": "Código do produto",
-    "product_group": "Grupo de produto",
-    "product_prefix": "Prefixo do produto",
-    "product_type": "Tipo de produto",
-    "production_order": "Ordem de produção",
-    "q": "Busca",
-    "raw_material_code": "Código da matéria-prima",
-    "recurso": "Recurso",
-    "reference_date": "Data de referência",
-    "resource_id": "Recurso",
-    "result": "Resultado",
-    "revision": "Revisão",
-    "root_cause_category": "Categoria da causa raiz",
-    "savings_type": "Tipo de economia",
-    "search": "Busca",
-    "section": "Seção",
-    "sector_name": "Setor",
-    "senso_order": "Ordem do senso",
-    "severity": "Severidade",
-    "shift": "Turno",
-    "sort": "Ordenação",
-    "sort_by": "Ordenar por",
-    "sort_dir": "Direção da ordenação",
-    "status": "Status",
-    "status_ok_only": "Somente status OK",
-    "stock_method": "Método de estoque",
-    "store": "Loja",
-    "start_date": "Data início",
-    "end_date": "Data fim",
-    "strict_idd_period": "Período IDD estrito",
-    "summary_only": "Somente resumo",
-    "supplier": "Fornecedor",
-    "supplier_code": "Código do fornecedor",
-    "supplier_store": "Loja do fornecedor",
-    "template_key": "Chave do template",
-    "title": "Título",
-    "tm": "TM",
-    "to": "Até",
-    "top_limit": "Limite do ranking",
-    "top_n": "Top N",
-    "type": "Tipo",
-    "view": "Visão",
-    "warehouse": "Armazém",
-    "work_center": "Centro de trabalho",
-}
 
-# Explicações curtas no inspetor (DeckField hint) — complementam o OpenAPI.
-PARAM_HINTS_PT: dict[str, str] = {
-    "active": "Filtra apenas registros ativos (sim) ou inativos (não).",
-    "adjustment_percent": "Percentual de ajuste aplicado no cálculo.",
-    "area_id": "Identificador da área (ex.: auditoria 5S).",
-    "audit_status": "Status da auditoria no fluxo (aberta, concluída etc.).",
-    "branch": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-    "branch_code": "Código da filial no Protheus (ex.: 01 ou 02).",
-    "branches": "Lista de filiais (CSV). Vazio = todas as filiais permitidas.",
-    "catalog_version": "Versão do catálogo a consultar.",
-    "centroCusto": "Código do centro de custo no Protheus.",
-    "code": "Código do registro a filtrar.",
-    "code_exact": "Busca pelo código exato (sem correspondência parcial).",
-    "codigo": "Código do registro a filtrar.",
-    "codigoOperador": "Código do operador no Protheus.",
-    "codigo_peca": "Código da peça no cadastro de ferramentas.",
-    "competence": "Competência no formato AAAA-MM (mês de referência).",
-    "cost_center": "Código do centro de custo no Protheus.",
-    "customer": "Código ou identificador do cliente.",
-    "customer_name": "Nome (ou parte do nome) do cliente.",
-    "customer_reference": "Referência do cliente no pedido ou cadastro.",
-    "customer_segment": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
-    "dataFim": "Data final do período (AAAA-MM-DD).",
-    "dataInicio": "Data inicial do período (AAAA-MM-DD).",
-    "data_final": "Data final do período consultado (AAAA-MM-DD).",
-    "data_inicial": "Data inicial do período consultado (AAAA-MM-DD).",
-    "date": "Data de referência (AAAA-MM-DD).",
-    "date_end": "Data final do período consultado (AAAA-MM-DD).",
-    "date_from": "Data inicial do período consultado (AAAA-MM-DD).",
-    "date_start": "Data inicial do período consultado (AAAA-MM-DD).",
-    "date_to": "Data final do período consultado (AAAA-MM-DD).",
-    "department": "Identificador ou nome do departamento.",
-    "department_id": "Identificador do departamento no painel IDD.",
-    "descricao": "Descrição (ou parte dela) para filtrar.",
-    "descricao_peca": "Descrição da peça no cadastro.",
-    "description": "Descrição (ou parte dela) para filtrar.",
-    "details_limit": "Máximo de linhas de detalhe retornadas.",
-    "direction": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
-    "efficiency_bands": "Faixas de eficiência em CSV (ex.: ok, low, verify).",
-    "employee": "Código ou matrícula do colaborador.",
-    "eventTypes": "Tipos de evento a incluir (CSV).",
-    "evidence_type": "Tipo de evidência anexa ao registro.",
-    "failure_mode": "Modo de falha associado à NC ou PAC.",
-    "file_kind": "Tipo/categoria do arquivo.",
-    "filename": "Filtro parcial pelo nome do arquivo.",
-    "filial": "Código da filial no Protheus (ex.: 01 ou 02).",
-    "filial_id": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch.",
-    "finished_product_code": "Código do produto acabado (PA).",
-    "format": "Formato de saída ou apresentação do dado.",
-    "from": "Início do intervalo (data ou valor).",
-    "granularity": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
-    "group_by": "Como agregar o resultado (geral, filial, produto etc.).",
-    "group_code": "Código do grupo de produto/material.",
-    "has_revision": "Filtra arquivos que possuem sufixo de revisão.",
-    "has_variant": "Filtra arquivos que possuem sufixo de variante.",
-    "history_limit": "Máximo de pontos no histórico retornado.",
-    "id": "Identificador único do registro.",
-    "include_completed": "Inclui itens já concluídos no resultado.",
-    "include_qtd_pi": "Inclui quantidade de produto intermediário (PI) no resultado.",
-    "include_test_products": "Inclui produtos de teste no resultado.",
-    "incluir_bloqueados": "Inclui registros bloqueados na listagem.",
-    "inspection_id": "Identificador da inspeção.",
-    "inspector": "Código ou nome do inspetor.",
-    "invoice_number": "Número da nota fiscal.",
-    "issue_date_end": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD).",
-    "issue_date_start": "Início do filtro pela data de emissão do documento (AAAA-MM-DD).",
-    "item_code": "Código do item/material no Protheus.",
-    "legacy": "Usa comportamento legado da API (campos/alias antigos).",
-    "limit": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
-    "linked_sort_by": "Campo de ordenação dos itens vinculados.",
-    "linked_sort_dir": "Direção da ordenação dos vínculos: asc ou desc.",
-    "listing_type": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra).",
-    "location": "Localização / endereço de estoque no Protheus.",
-    "loss_type": "Tipo de perda a considerar: refugo, scrap ou ambos.",
-    "lot": "Número do lote.",
-    "max_depth": "Profundidade máxima da hierarquia/estrutura retornada.",
-    "max_size_bytes": "Tamanho máximo do arquivo em bytes.",
-    "min_plans": "Quantidade mínima de planos para incluir no resultado.",
-    "min_size_bytes": "Tamanho mínimo do arquivo em bytes.",
-    "modified_from": "Data/hora mínima de modificação (ISO).",
-    "modified_to": "Data/hora máxima de modificação (ISO).",
-    "months": "Quantidade de meses no intervalo analisado.",
-    "name": "Nome (ou parte do nome) para filtrar.",
-    "name_process": "Nome do processo Transforma Mais.",
-    "nonconformity_scope": "Escopo das não conformidades consideradas.",
-    "offset": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
-    "op": "Número da ordem de produção (OP).",
-    "operation_id": "Identificador da operação.",
-    "operator_code": "Código(s) do operador (CSV).",
-    "orderBy": "Campo usado para ordenar o ranking (ex.: horas, custo).",
-    "orderDir": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
-    "overdue_only": "Lista apenas itens atrasados.",
-    "owner_user_id": "Usuário responsável pelo registro.",
-    "page": "Número da página na listagem paginada.",
-    "pageSize": "Quantidade de linhas por página.",
-    "page_size": "Quantidade de linhas por página.",
-    "periodDays": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-    "plan_id": "Identificador do plano de ação.",
-    "price_source": "Origem do preço usado no cálculo.",
-    "problem_category": "Categoria do problema reportado.",
-    "product": "Código ou identificador do produto.",
-    "product_code": "Código do produto no Protheus (ex.: 90xxxxxx).",
-    "product_group": "Grupo de produto no Protheus.",
-    "product_prefix": "Prefixo do código de produto para filtrar famílias.",
-    "product_type": "Filtra por tipo: PA (acabado) ou PI (intermediário).",
-    "production_order": "Ordem(ns) de produção (CSV).",
-    "q": "Texto livre de busca (código, nome ou descrição).",
-    "raw_material_code": "Código da matéria-prima.",
-    "recurso": "Código do recurso de produção.",
-    "reference_date": "Data de referência usada no cálculo (AAAA-MM-DD).",
-    "resource_id": "Identificador do recurso de agendamento.",
-    "result": "Resultado da inspeção ou avaliação.",
-    "revision": "Número ou código da revisão.",
-    "root_cause_category": "Categoria da causa raiz.",
-    "savings_type": "Tipo de economia (Kaizen).",
-    "search": "Texto livre de busca.",
-    "section": "Seção ou bloco do formulário/checklist.",
-    "sector_name": "Nome do setor.",
-    "senso_order": "Ordem do senso na auditoria 5S.",
-    "severity": "Nível de severidade.",
-    "shift": "Turno de produção.",
-    "sort": "Critério de ordenação da listagem.",
-    "sort_by": "Campo usado para ordenar a listagem.",
-    "sort_dir": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
-    "status": "Status do registro no fluxo.",
-    "status_ok_only": "Retorna apenas registros com status OK.",
-    "stock_method": "Método de valorização/consulta de estoque.",
-    "store": "Código da loja do cliente.",
-    "start_date": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
-    "end_date": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
-    "strict_idd_period": "Exige período estrito no cálculo do IDD.",
-    "summary_only": "Quando ativo, retorna só o resumo sem a lista detalhada.",
-    "supplier": "Código ou nome do fornecedor.",
-    "supplier_code": "Código do fornecedor no Protheus.",
-    "supplier_store": "Loja do fornecedor.",
-    "template_key": "Chave do modelo/template usado.",
-    "title": "Título (ou parte dele) para filtrar.",
-    "tm": "Código TM (Transforma Mais).",
-    "to": "Fim do intervalo (data ou valor).",
-    "top_limit": "Quantidade máxima de itens no ranking.",
-    "top_n": "Quantidade de itens no Top N.",
-    "type": "Tipo do registro a filtrar.",
-    "view": "Modo de visualização dos dados retornados.",
-    "warehouse": "Código do armazém/estoque.",
-    "work_center": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
-}
-
-KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {
-    "granularity": ["day", "week", "month", "year"],
-    "customer_segment": ["weg", "new_business"],
-    "loss_type": ["refugo", "scrap", "both"],
-    "product_type": ["PA", "PI"],
-    "sort_dir": ["asc", "desc"],
-    "direction": ["asc", "desc"],
-    "orderDir": ["asc", "desc"],
-    "linked_sort_dir": ["asc", "desc"],
-    "stock_method": ["auto", "hybrid", "estimated", "official_closure"],
-}
-
-KNOWN_PARAM_DEFAULTS: dict[str, Any] = {
-    "granularity": "day",
-    "branch": "01",
-    "filial": "01",
-    "branch_code": "01",
-}
+# Labels/hints: api-delpi/app/content/openapi_param_locale.json (única fonte).
 
 
-def enrich_param_schema_entry(name: str, entry: dict[str, Any]) -> dict[str, Any]:
-    """Aplica label, hint, enum e default canônicos TV sobre o campo OpenAPI."""
+def _load_param_locale_catalog() -> dict[str, dict[str, str]]:
+    """name → {label, description} em pt-BR a partir do catálogo canônico."""
+    catalog_path = ROOT / "api-delpi" / "app" / "content" / "openapi_param_locale.json"
+    if not catalog_path.is_file():
+        return {}
+    payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    raw = payload.get("params") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, dict[str, str]] = {}
+    for name, value in raw.items():
+        key = str(name or "").strip()
+        if not key or not isinstance(value, dict):
+            continue
+        locale = value.get("locale") if isinstance(value.get("locale"), dict) else {}
+        pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
+        entry: dict[str, str] = {}
+        label = str(pt.get("label") or "").strip()
+        description = str(pt.get("description") or "").strip()
+        if label:
+            entry["label"] = label
+        if description:
+            entry["description"] = description
+        if entry:
+            out[key] = entry
+    return out
+
+
+_PARAM_LOCALE_PT = _load_param_locale_catalog()
+
+# Fallback temporário (Onda 2/3): preferir enum/default do OpenAPI.
+# Mantido vazio de propósito — inventário paralelo é falha de contrato.
+KNOWN_PARAM_ENUMS: dict[str, list[Any]] = {}
+
+# Defaults HTTP inventados no gerador — proibido. UX TV: tv_param_ux_defaults.json.
+KNOWN_PARAM_DEFAULTS: dict[str, Any] = {}
+
+
+def _load_tv_param_ux_defaults() -> dict[str, Any]:
+    path = ROOT / "tv-dashboard-api" / "tv_app" / "content" / "tv_param_ux_defaults.json"
+    if not path.is_file():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    raw = payload.get("defaults") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    return {str(k): v for k, v in raw.items() if str(k).strip()}
+
+
+_TV_PARAM_UX_DEFAULTS = _load_tv_param_ux_defaults()
+
+_FALLBACK_PARAM_USAGE: set[str] = set()
+
+
+def _note_param_fallback(kind: str, name: str) -> None:
+    _FALLBACK_PARAM_USAGE.add(f"{kind}:{name}")
+
+
+def enrich_param_schema_entry(
+    name: str,
+    entry: dict[str, Any],
+    *,
+    locale_label: str | None = None,
+    locale_description: str | None = None,
+) -> dict[str, Any]:
+    """Aplica label/hint/enum/default — OpenAPI + x-delpi + catálogo JSON; UX defaults TV-only."""
     enriched = dict(entry)
-    if name in PARAM_LABELS_PT:
-        enriched["label"] = PARAM_LABELS_PT[name]
-    hint = PARAM_HINTS_PT.get(name) or str(enriched.get("description") or "").strip()
-    if hint:
-        enriched["description"] = hint
+    catalog = _PARAM_LOCALE_PT.get(name) or {}
+    if locale_label:
+        enriched["label"] = locale_label
+    elif catalog.get("label") and not enriched.get("label"):
+        enriched["label"] = catalog["label"]
+    elif catalog.get("label"):
+        enriched["label"] = catalog["label"]
+
+    if locale_description:
+        enriched["description"] = locale_description
+    else:
+        hint = catalog.get("description") or str(enriched.get("description") or "").strip()
+        if hint:
+            enriched["description"] = hint
+
     if name in KNOWN_PARAM_ENUMS and not enriched.get("enum"):
         enriched["enum"] = list(KNOWN_PARAM_ENUMS[name])
+        _note_param_fallback("enum", name)
     # Período em dias: input numérico livre — nunca enum/select.
     if name == "periodDays":
         enriched.pop("enum", None)
     if name in KNOWN_PARAM_DEFAULTS and enriched.get("default") is None:
         enriched["default"] = KNOWN_PARAM_DEFAULTS[name]
-        # Com default TV, não bloquear preview se o campo vier vazio na UI.
+        enriched["optional"] = True
+        _note_param_fallback("default", name)
+    elif name in _TV_PARAM_UX_DEFAULTS and enriched.get("default") is None:
+        # Default só de UX TV — não inventa contrato HTTP.
+        enriched["default"] = _TV_PARAM_UX_DEFAULTS[name]
         enriched["optional"] = True
     return enriched
 
@@ -473,8 +252,9 @@ def format_operation_id_label(operation_id: str) -> str:
 
 
 def humanize_param_label(name: str, description: str | None = None) -> str:
-    if name in PARAM_LABELS_PT:
-        return PARAM_LABELS_PT[name]
+    catalog_label = (_PARAM_LOCALE_PT.get(name) or {}).get("label")
+    if catalog_label:
+        return catalog_label
     desc = (description or "").strip()
     if desc and len(desc) <= 48:
         return desc
@@ -482,6 +262,10 @@ def humanize_param_label(name: str, description: str | None = None) -> str:
 
 
 def resolve_category(operation: dict[str, Any]) -> str:
+    x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    category = str(x_delpi.get("category") or "").strip()
+    if category:
+        return category
     tags = operation.get("tags") or []
     if isinstance(tags, list) and tags:
         tag = str(tags[0]).strip()
@@ -490,6 +274,18 @@ def resolve_category(operation: dict[str, Any]) -> str:
     path = str(operation.get("path") or "").strip()
     segment = path.strip("/").split("/")[0].lower() if path else ""
     return PATH_SEGMENT_TO_CATEGORY.get(segment, "other")
+
+
+def extract_param_locale_pt(operation: dict[str, Any], param_name: str) -> tuple[str | None, str | None]:
+    """Retorna (label, description) de xDelpi.params.<name>.locale.pt-BR quando curados."""
+    x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    params = x_delpi.get("params") if isinstance(x_delpi.get("params"), dict) else {}
+    entry = params.get(param_name) if isinstance(params.get(param_name), dict) else {}
+    locale = entry.get("locale") if isinstance(entry.get("locale"), dict) else {}
+    pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
+    label = str(pt.get("label") or "").strip() or None
+    description = str(pt.get("description") or "").strip() or None
+    return label, description
 
 
 def infer_allowed_display_modes(operation: dict[str, Any]) -> list[str]:
@@ -550,33 +346,44 @@ def detect_openapi_date_range_keys(names: set[str]) -> tuple[str, str] | None:
 
 def build_param_schema_from_openapi(
     parameters: list[dict[str, Any]] | None,
+    operation: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any], str, tuple[str, str] | None]:
     """Converte parameters do baseline → paramSchema TV + paramStrategy + dateRangeKeys.
 
     Mantém as chaves de data canônicas no schema (UI de período relativo) e registra
     `dateRangeKeys` para o gateway emitir exatamente os nomes HTTP da api-delpi.
+    Preferência: enum/default do OpenAPI; label/description de x-delpi.params.locale.pt-BR.
     """
     params = [p for p in (parameters or []) if isinstance(p, dict) and p.get("name")]
     names = {str(p["name"]) for p in params}
     date_range_keys = detect_openapi_date_range_keys(names)
     strategy = "date_range" if date_range_keys else "direct"
     schema: dict[str, Any] = {}
+    op = operation if isinstance(operation, dict) else {}
 
     for param in params:
         name = str(param["name"])
+        locale_label, locale_description = extract_param_locale_pt(op, name)
         entry: dict[str, Any] = {
             "type": map_openapi_type(param),
             "optional": not bool(param.get("required")),
-            "label": humanize_param_label(name, param.get("description")),
+            "label": locale_label or humanize_param_label(name, param.get("description")),
         }
         if param.get("default") is not None:
             entry["default"] = param["default"]
         if isinstance(param.get("enum"), list) and param["enum"]:
             entry["enum"] = list(param["enum"])
         openapi_desc = str(param.get("description") or "").strip()
-        if openapi_desc:
+        if locale_description:
+            entry["description"] = locale_description
+        elif openapi_desc:
             entry["description"] = openapi_desc
-        schema[name] = enrich_param_schema_entry(name, entry)
+        schema[name] = enrich_param_schema_entry(
+            name,
+            entry,
+            locale_label=locale_label,
+            locale_description=locale_description,
+        )
 
     return schema, strategy, date_range_keys
 
@@ -609,17 +416,19 @@ def merge_param_schema(
 
 
 def extract_tv_audience(operation: dict[str, Any]) -> dict[str, Any]:
-    """Campos de audiência TV a partir de x-delpi.tv (baseline / OpenAPI)."""
+    """Campos de audiência TV a partir de x-delpi.locale.pt-BR (preferido) ou x-delpi.tv."""
     x_delpi = operation.get("xDelpi") if isinstance(operation.get("xDelpi"), dict) else {}
+    locale = x_delpi.get("locale") if isinstance(x_delpi.get("locale"), dict) else {}
+    pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
     tv = x_delpi.get("tv") if isinstance(x_delpi.get("tv"), dict) else {}
     audience: dict[str, Any] = {}
-    when_to_use = str(tv.get("whenToUse") or "").strip()
+    when_to_use = str(pt.get("whenToUse") or tv.get("whenToUse") or "").strip()
     if when_to_use:
         audience["whenToUse"] = when_to_use
-    label = str(tv.get("label") or "").strip()
+    label = str(pt.get("label") or pt.get("summary") or tv.get("label") or "").strip()
     if label:
         audience["label"] = label
-    description = str(tv.get("description") or "").strip()
+    description = str(pt.get("description") or tv.get("description") or "").strip()
     if description:
         audience["description"] = description
     return audience
@@ -630,7 +439,8 @@ def build_base_route(operation: dict[str, Any]) -> dict[str, Any]:
     summary = str(operation.get("summary") or "").strip()
     description = str(operation.get("description") or "").strip()
     param_schema, param_strategy, date_range_keys = build_param_schema_from_openapi(
-        operation.get("parameters")
+        operation.get("parameters"),
+        operation,
     )
     tv_audience = extract_tv_audience(operation)
     route: dict[str, Any] = {
@@ -678,12 +488,15 @@ def apply_overlay(base: dict[str, Any], overlay: dict[str, Any] | None) -> dict[
 
 
 def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -> dict[str, Any]:
-    """Preserva curadoria do catálogo atual (labels PT, valueFields manuais, etc.)."""
+    """Preserva curadoria TV-only do catálogo; OpenAPI/locale vence em label/description/whenToUse/category."""
     if not existing:
         return base
     merged = dict(base)
+    openapi_wins = frozenset({"label", "description", "whenToUse", "category"})
     for key in OVERLAY_KEYS:
         if key == "paramSchema":
+            continue
+        if key in openapi_wins and merged.get(key):
             continue
         value = existing.get(key)
         if value not in (None, "", [], {}):
@@ -693,12 +506,187 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
                 merged[key] = value
     existing_schema = existing.get("paramSchema")
     if isinstance(existing_schema, dict) and existing_schema:
-        merged["paramSchema"] = merge_param_schema(merged.get("paramSchema") or {}, existing_schema)
+        # OpenAPI enum/default vencem; overlay/existing só preenche buracos e labels extras.
+        openapi_schema = merged.get("paramSchema") if isinstance(merged.get("paramSchema"), dict) else {}
+        patched_existing: dict[str, Any] = {}
+        for key, value in existing_schema.items():
+            if not isinstance(value, dict):
+                patched_existing[key] = value
+                continue
+            entry = dict(value)
+            openapi_entry = openapi_schema.get(key) if isinstance(openapi_schema.get(key), dict) else {}
+            if openapi_entry.get("enum"):
+                entry["enum"] = list(openapi_entry["enum"])
+            if openapi_entry.get("default") is not None:
+                entry["default"] = openapi_entry["default"]
+            patched_existing[key] = entry
+        merged["paramSchema"] = merge_param_schema(openapi_schema, patched_existing)
     return merged
+
+
+_HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
+
+
+def _schema_type_and_meta(schema: dict[str, Any]) -> dict[str, Any]:
+    meta: dict[str, Any] = {}
+    candidates: list[dict[str, Any]] = [schema]
+    any_of = schema.get("anyOf") or schema.get("oneOf")
+    if isinstance(any_of, list):
+        for item in any_of:
+            if isinstance(item, dict) and item.get("type") != "null":
+                candidates.append(item)
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        type_name = str(candidate.get("type") or "").strip()
+        if type_name and type_name != "null" and "type" not in meta:
+            meta["type"] = type_name
+        if "default" in candidate and candidate.get("default") is not None and "default" not in meta:
+            meta["default"] = candidate["default"]
+        enum = candidate.get("enum")
+        if isinstance(enum, list) and enum and "enum" not in meta:
+            meta["enum"] = [str(item) for item in enum]
+        format_name = str(candidate.get("format") or "").strip()
+        if format_name and "format" not in meta:
+            meta["format"] = format_name
+    if "default" in schema and schema.get("default") is not None and "default" not in meta:
+        meta["default"] = schema["default"]
+    return meta
+
+
+def _simplify_openapi_parameter(param: dict[str, Any]) -> dict[str, Any] | None:
+    if not isinstance(param, dict):
+        return None
+    if str(param.get("in") or "").lower() != "query":
+        return None
+    name = str(param.get("name") or "").strip()
+    if not name:
+        return None
+    schema = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+    entry: dict[str, Any] = {
+        "name": name,
+        "required": bool(param.get("required")),
+    }
+    description = str(param.get("description") or schema.get("description") or "").strip()
+    if description:
+        entry["description"] = description
+    entry.update(_schema_type_and_meta(schema))
+    return entry
+
+
+def _clean_locale_map(raw: Any) -> dict[str, dict[str, str]] | None:
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, dict[str, str]] = {}
+    for lang, block in raw.items():
+        lang_key = str(lang or "").strip()
+        if not lang_key or not isinstance(block, dict):
+            continue
+        cleaned: dict[str, str] = {}
+        for field in ("summary", "description", "whenToUse", "label"):
+            value = str(block.get(field) or "").strip()
+            if value:
+                cleaned[field] = value
+        if cleaned:
+            out[lang_key] = cleaned
+    return out or None
+
+
+def _extract_x_delpi(operation: dict[str, Any]) -> dict[str, Any] | None:
+    raw = operation.get("x-delpi")
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, Any] = {}
+    entity = raw.get("entity")
+    shape = raw.get("shape")
+    if entity is not None:
+        out["entity"] = str(entity)
+    if shape is not None:
+        out["shape"] = str(shape)
+    presentation = raw.get("presentation")
+    if isinstance(presentation, dict) and presentation.get("strategy") is not None:
+        out["presentationStrategy"] = str(presentation.get("strategy"))
+    category = str(raw.get("category") or "").strip()
+    if category:
+        out["category"] = category
+    locale = _clean_locale_map(raw.get("locale"))
+    if locale:
+        out["locale"] = locale
+    params_raw = raw.get("params")
+    if isinstance(params_raw, dict) and params_raw:
+        params_out: dict[str, Any] = {}
+        for name, value in params_raw.items():
+            key = str(name or "").strip()
+            if not key or not isinstance(value, dict):
+                continue
+            param_locale = _clean_locale_map(value.get("locale"))
+            if param_locale:
+                params_out[key] = {"locale": param_locale}
+        if params_out:
+            out["params"] = params_out
+    tv = raw.get("tv")
+    if isinstance(tv, dict) and tv:
+        tv_clean: dict[str, str] = {}
+        for field in ("whenToUse", "description", "label"):
+            value = str(tv.get(field) or "").strip()
+            if value:
+                tv_clean[field] = value
+        if tv_clean:
+            out["tv"] = tv_clean
+    return out or None
+
+
+def build_baseline_payload_from_openapi(spec: dict[str, Any]) -> dict[str, Any]:
+    """Converte OpenAPI completo → baseline v3 (sem depender de app.domain api-delpi).
+
+    O OpenAPI live da api-delpi já traz `x-delpi` (locale/params) via injector.
+    """
+    operations: list[dict[str, Any]] = []
+    for path, methods in (spec.get("paths") or {}).items():
+        if not isinstance(methods, dict):
+            continue
+        for method, operation in methods.items():
+            if method not in _HTTP_METHODS or not isinstance(operation, dict):
+                continue
+            row: dict[str, Any] = {
+                "method": method.upper(),
+                "path": path,
+                "operationId": operation.get("operationId"),
+                "summary": operation.get("summary"),
+                "tags": operation.get("tags") or [],
+                "deprecated": bool(operation.get("deprecated")),
+            }
+            parameters: list[dict[str, Any]] = []
+            for raw_param in operation.get("parameters") or []:
+                simplified = _simplify_openapi_parameter(raw_param)
+                if simplified:
+                    parameters.append(simplified)
+            if parameters:
+                row["parameters"] = parameters
+            x_delpi = _extract_x_delpi(operation)
+            if x_delpi:
+                row["xDelpi"] = x_delpi
+            description = str(operation.get("description") or "").strip()
+            if description:
+                row["description"] = description
+            operations.append(row)
+    operations.sort(key=lambda row: (str(row.get("path") or ""), str(row.get("method") or "")))
+    info = spec.get("info") or {}
+    return {
+        "version": "3",
+        "api_title": info.get("title"),
+        "api_version": info.get("version"),
+        "openapi_version": spec.get("openapi"),
+        "operation_count": len(operations),
+        "operations": operations,
+    }
 
 
 def load_openapi_get_operations(baseline_path: Path) -> list[dict[str, Any]]:
     payload = load_json(baseline_path)
+    # Aceita baseline {operations:[…]} ou OpenAPI completo {paths:{…}}.
+    if isinstance(payload.get("paths"), dict) and "operations" not in payload:
+        payload = build_baseline_payload_from_openapi(payload)
     operations = payload.get("operations") or []
     if not isinstance(operations, list):
         return []
@@ -842,6 +830,18 @@ def write_routes(routes_path: Path, routes: list[dict[str, Any]]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", type=Path, default=OPENAPI_BASELINE_PATH)
+    parser.add_argument(
+        "--from-openapi",
+        type=Path,
+        default=None,
+        help="OpenAPI completo (openapi.json) — converte para baseline em memória / --baseline-out",
+    )
+    parser.add_argument(
+        "--baseline-out",
+        type=Path,
+        default=None,
+        help="Com --from-openapi: grava o baseline derivado neste path",
+    )
     parser.add_argument("--routes", type=Path, default=TV_ROUTES_PATH)
     parser.add_argument("--overlays", type=Path, default=TV_OVERLAYS_PATH)
     parser.add_argument("--write", action="store_true", help="Grava tv_data_routes.json")
@@ -853,13 +853,36 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not args.baseline.is_file():
-        print(f"OpenAPI baseline ausente: {args.baseline}", file=sys.stderr)
+    baseline_path = args.baseline
+    if args.from_openapi is not None:
+        if not args.from_openapi.is_file():
+            print(f"OpenAPI ausente: {args.from_openapi}", file=sys.stderr)
+            return 1
+        spec = load_json(args.from_openapi)
+        payload = build_baseline_payload_from_openapi(spec)
+        if args.baseline_out is not None:
+            args.baseline_out.parent.mkdir(parents=True, exist_ok=True)
+            args.baseline_out.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            baseline_path = args.baseline_out
+            print(f"Baseline derivado: {baseline_path} ({payload.get('operation_count')} ops)")
+        else:
+            import tempfile
+
+            tmp = Path(tempfile.mkstemp(prefix="tv_openapi_baseline_", suffix=".json")[1])
+            tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            baseline_path = tmp
+            print(f"Baseline temporário: {baseline_path} ({payload.get('operation_count')} ops)")
+
+    if not baseline_path.is_file():
+        print(f"OpenAPI baseline ausente: {baseline_path}", file=sys.stderr)
         return 1
 
     if args.seed_overlays:
         overlays = seed_overlays_from_catalog(
-            baseline_path=args.baseline,
+            baseline_path=baseline_path,
             routes_path=args.routes,
             overlays_path=args.overlays,
         )
@@ -868,7 +891,7 @@ def main() -> int:
             return 0
 
     generated = generate_routes(
-        baseline_path=args.baseline,
+        baseline_path=baseline_path,
         routes_path=args.routes,
         overlays_path=args.overlays,
     )
@@ -877,6 +900,12 @@ def main() -> int:
         write_routes(args.routes, generated)
         with_schema = sum(1 for item in generated if item.get("paramSchema"))
         with_values = sum(1 for item in generated if item.get("valueFields"))
+        if _FALLBACK_PARAM_USAGE:
+            print(
+                f"WARN — {len(_FALLBACK_PARAM_USAGE)} fallbacks de enum/default TV "
+                f"(declarar no OpenAPI Query quando possível): "
+                f"{', '.join(sorted(_FALLBACK_PARAM_USAGE))}"
+            )
         print(
             f"Gravado {len(generated)} rotas em {args.routes} "
             f"(paramSchema={with_schema}, valueFields={with_values})"

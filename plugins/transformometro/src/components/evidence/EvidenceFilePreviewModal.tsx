@@ -48,6 +48,7 @@ export function EvidenceFilePreviewModal({
       mimeType={mime}
       fileName={title}
       metaItems={metaItems}
+      portalScopeClassName="dashboard-transformometro"
       labels={{
         loadFailed: "Erro ao carregar pré-visualização do arquivo.",
       }}

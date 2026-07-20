@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DELPI_UI_SHAPE_THEME_HOST_CLASS,
   resolveDelpiUiPortalTheme,
+  resolveMfeHostElement,
   resolveMfePortalScopeClassName,
 } from "./delpiUiPortalTheme";
 
@@ -35,7 +36,44 @@ describe("resolveMfePortalScopeClassName", () => {
     root.remove();
   });
 
+  it("infere host minha-delpi-chat", () => {
+    const root = document.createElement("div");
+    root.className = "minha-delpi-chat";
+    const anchor = document.createElement("div");
+    root.appendChild(anchor);
+    document.body.appendChild(root);
+
+    expect(resolveMfePortalScopeClassName(anchor)).toBe("minha-delpi-chat");
+    expect(resolveMfeHostElement({ anchor })).toBe(root);
+
+    root.remove();
+  });
+
   it("retorna undefined sem âncora nem prop", () => {
     expect(resolveMfePortalScopeClassName()).toBeUndefined();
+  });
+});
+
+describe("resolveMfeHostElement", () => {
+  it("resolve host pelo escopo explícito", () => {
+    const host = document.createElement("div");
+    host.className = "dashboard-transformometro";
+    document.body.appendChild(host);
+
+    expect(resolveMfeHostElement({ portalScopeClassName: "dashboard-transformometro" })).toBe(host);
+
+    host.remove();
+  });
+
+  it("sobe o ancestral dashboard-* a partir do âncora", () => {
+    const host = document.createElement("div");
+    host.className = "dashboard-transformometro dashboard-page";
+    const anchor = document.createElement("span");
+    host.appendChild(anchor);
+    document.body.appendChild(host);
+
+    expect(resolveMfeHostElement({ anchor })).toBe(host);
+
+    host.remove();
   });
 });

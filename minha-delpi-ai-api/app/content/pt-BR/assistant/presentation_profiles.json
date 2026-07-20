@@ -525,6 +525,18 @@
   },
   "pathRules": [
     {
+      "contains": "/dashboard/departments-indicators",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/dashboard/department-indicators",
+      "profile": "playbook_report"
+    },
+    {
+      "contains": "/dashboard/department-idd",
+      "profile": "kpi_snapshot"
+    },
+    {
       "contains": "/structure/excel",
       "profile": "document_export"
     },

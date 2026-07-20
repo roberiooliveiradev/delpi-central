@@ -40,6 +40,7 @@ def empty_overlay() -> dict[str, Any]:
         "format_version": FORMAT_VERSION,
         "node_overrides": {},
         "disabled_node_ids": [],
+        "extra_nodes": [],
     }
 
 
@@ -190,12 +191,67 @@ def validate_decomposition_overlay_v1(doc: Any) -> dict[str, Any]:
         highlight = override.get("highlight")
         if highlight is not None and highlight not in HIGHLIGHTS:
             raise DecompositionValidationError(f"highlight inválido em {node_id}.")
+        if "parent_id" in override:
+            parent_id = override.get("parent_id")
+            if parent_id is not None and (
+                not isinstance(parent_id, str) or not NODE_ID_PATTERN.match(parent_id)
+            ):
+                raise DecompositionValidationError(
+                    f"node_overrides[{node_id}].parent_id inválido."
+                )
+        if "ordem" in override:
+            ordem = override.get("ordem")
+            if not isinstance(ordem, int) or ordem < 1 or ordem > 999:
+                raise DecompositionValidationError(
+                    f"node_overrides[{node_id}].ordem inválida."
+                )
 
     disabled = data.get("disabled_node_ids", [])
     if not isinstance(disabled, list) or not all(isinstance(x, str) for x in disabled):
         raise DecompositionValidationError("disabled_node_ids inválido.")
 
-    return data
+    extra_nodes = data.get("extra_nodes", [])
+    if not isinstance(extra_nodes, list):
+        raise DecompositionValidationError("extra_nodes deve ser uma lista.")
+    if len(extra_nodes) > MAX_NODES:
+        raise DecompositionValidationError(f"Máximo de {MAX_NODES} extra_nodes.")
+
+    seen_extra: set[str] = set()
+    for index, node in enumerate(extra_nodes):
+        _validate_node(node, index=index)
+        node_id = str(node["id"])
+        if node_id in seen_extra:
+            raise DecompositionValidationError(f"extra_nodes id duplicado: {node_id}.")
+        seen_extra.add(node_id)
+        highlight = node.get("highlight")
+        if highlight is not None and highlight not in HIGHLIGHTS:
+            raise DecompositionValidationError(f"extra_nodes[{node_id}].highlight inválido.")
+
+    return {
+        **data,
+        "node_overrides": node_overrides,
+        "disabled_node_ids": list(disabled),
+        "extra_nodes": list(extra_nodes),
+    }
+
+
+def normalize_sibling_ordens(nodes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Reatribui ordem 1..n por parent para evitar colisões após merge/composição."""
+    by_parent: dict[str | None, list[dict[str, Any]]] = {}
+    for node in nodes:
+        if not isinstance(node, dict) or not node.get("id"):
+            continue
+        parent_key = str(node["parent_id"]) if node.get("parent_id") else None
+        by_parent.setdefault(parent_key, []).append(node)
+
+    result: list[dict[str, Any]] = []
+    for group in by_parent.values():
+        group.sort(key=lambda n: (int(n.get("ordem") or 1), str(n.get("id") or "")))
+        for index, node in enumerate(group, start=1):
+            updated = dict(node)
+            updated["ordem"] = index
+            result.append(updated)
+    return result
 
 
 def validate_decomposition_escopo(

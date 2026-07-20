@@ -30,6 +30,7 @@ beforeAll(() => {
     configurable: true,
     value: vi.fn(() => ({
       beginPath: vi.fn(),
+      clearRect: vi.fn(),
       fillRect: vi.fn(),
       lineTo: vi.fn(),
       moveTo: vi.fn(),

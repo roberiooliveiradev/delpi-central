@@ -29,6 +29,7 @@ export function EvidencePreviewModal({ planId, evidence, open, onClose }: Props)
       fileName={evidence?.file_name}
       declaredType={evidence?.type}
       enabled={mode !== "none"}
+      portalScopeClassName="dashboard-quality-action-plans"
       afterPreview={
         evidence?.description ? (
           <p className="delpi-ui-file-preview__description">{evidence.description}</p>

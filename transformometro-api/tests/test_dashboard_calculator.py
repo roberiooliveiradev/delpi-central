@@ -38,6 +38,48 @@ def test_golden_baseline_melhoria_economia_bruta_positiva():
     assert row["codigo_filial"] == "01"
     assert row["codigo_setor"] == "engenharia"
     assert "dashboard_calculo_id" not in row
+    # Playbook 22 — volumes iguais: capacidade zero; bruta inalterada
+    assert row.get("beneficio_calculo_categoria", "automatico") == "automatico"
+    assert row["ganho_capacidade"] == 0.0
+    assert row["delta_volume"] == 0.0
+    assert row["volume_acima_referencia"] is False
+    assert row["volume_abaixo_referencia"] is False
+
+
+def test_golden_volume_increase_capacity_enters_bruta_and_roi():
+    """↑ volume gera ganho_capacidade e soma na economia_bruta (ROI)."""
+    raw = _load_fixture("golden_baseline_melhoria.json")
+    for med in raw.medicoes:
+        if med["revisao_id"] == "r-melhoria":
+            med["volume_mensal"] = 120  # +20 vs baseline 100
+    calc = DashboardCalculatorService()
+    rows = [
+        row
+        for row in calc.build_dashboard_rows(raw)
+        if row["revisao_id"] == "r-melhoria" and row["competencia"] == "2025-02"
+    ]
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["delta_volume"] == 20.0
+    assert row["volume_acima_referencia"] is True
+    # Δ20 × (60/60) × 50 = 1000
+    assert row["ganho_capacidade"] == 1000.0
+    economia_custo = (
+        row["economia_tempo"]
+        + row["economia_retrabalho"]
+        + row["economia_erros"]
+        + row["economia_outros"]
+        + row["economia_recursos_compartilhados"]
+    )
+    assert row["economia_bruta"] == economia_custo + row["ganho_capacidade"]
+    assert row["economia_liquida_mes"] == row["economia_bruta"] - row["investimento_total_mes"]
+    summary = calc.build_summary(raw, None, "2025-02-01", "2025-02-28")
+    assert summary["ganho_capacidade_total"] == row["ganho_capacidade"]
+    assert summary["economia_bruta_total"] == calc._round_final(row["economia_bruta"])
+    # ROI usa líquida (já com capacidade na bruta)
+    assert summary["roi_medio"] == calc._round_final(
+        summary["economia_liquida_total"] / summary["investimento_total"]
+    )
 
 
 def test_baseline_row_is_not_materialized():

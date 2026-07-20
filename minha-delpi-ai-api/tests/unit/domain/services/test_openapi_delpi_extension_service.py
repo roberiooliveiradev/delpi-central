@@ -56,9 +56,19 @@ def test_importer_persists_delpi_metadata_on_action():
                 "get": {
                     "operationId": "list_quality_nc",
                     "tags": ["Qualidade"],
+                    "summary": "List NCs",
+                    "description": "English native description",
                     "x-delpi": {
                         "entity": "quality_non_conformity",
                         "shape": "paged_list",
+                        "locale": {
+                            "en": {"summary": "List NCs", "description": "English"},
+                            "pt-BR": {
+                                "summary": "Listar NCs",
+                                "description": "Lista não conformidades",
+                                "whenToUse": "Quando precisar da fila de NCs",
+                            },
+                        },
                     },
                 }
             }
@@ -68,7 +78,17 @@ def test_importer_persists_delpi_metadata_on_action():
     actions = OpenApiActionImporter().import_actions("api-pac-quality", schema)
 
     assert len(actions) == 1
-    assert actions[0]["delpi_metadata"] == {
-        "entity": "quality_non_conformity",
-        "shape": "paged_list",
-    }
+    assert actions[0]["delpi_metadata"]["entity"] == "quality_non_conformity"
+    assert actions[0]["delpi_metadata"]["locale"]["pt-BR"]["summary"] == "Listar NCs"
+    assert actions[0]["summary"] == "Listar NCs"
+    assert actions[0]["description"] == "Lista não conformidades"
+    assert actions[0]["when_to_use"] == "Quando precisar da fila de NCs"
+
+
+def test_preferred_locale_texts_falls_back_to_native():
+    texts = OpenApiDelpiExtensionService.preferred_locale_texts(
+        {"summary": "Native", "description": "Native desc"},
+        lang="pt-BR",
+    )
+    assert texts["summary"] == "Native"
+    assert texts["description"] == "Native desc"

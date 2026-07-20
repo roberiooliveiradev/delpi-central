@@ -4,6 +4,7 @@ import type {
   FlowchartOverlayV1,
   FlowchartV1,
   MergedRevisaoDiagram,
+  ComposedProcessoDiagram,
   ProcessoDiagramResponse,
 } from "../../types/diagram";
 
@@ -69,6 +70,18 @@ export async function fetchProcessoDiagrama(
   getAccessToken?: () => string | undefined
 ): Promise<ProcessoDiagramResponse> {
   return request(`/processos/${processoId}/diagrama`, getAccessToken);
+}
+
+export async function fetchProcessoDiagramaComposed(
+  processoId: string,
+  getAccessToken?: () => string | undefined,
+  params?: { at?: string; instancia_id?: string }
+): Promise<ComposedProcessoDiagram> {
+  const qs = new URLSearchParams();
+  if (params?.at) qs.set("at", params.at);
+  if (params?.instancia_id) qs.set("instancia_id", params.instancia_id);
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return request(`/processos/${processoId}/diagrama/composed${suffix}`, getAccessToken);
 }
 
 export async function saveProcessoDiagrama(

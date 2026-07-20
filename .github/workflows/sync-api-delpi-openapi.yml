@@ -46,4 +46,4 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
             "${SSH_USER}@${SSH_HOST}" \
-            "cd '${REPO_PATH}' && BASE_URL='${BASE_URL}' SKIP_HEALTH_WAIT='${SKIP_HEALTH_WAIT}' ./scripts/homologacao/sync-api-delpi-openapi.sh"
+            "cd '${REPO_PATH}' && BASE_URL='${BASE_URL}' SKIP_HEALTH_WAIT='${SKIP_HEALTH_WAIT}' ./scripts/homologacao/sync-api-delpi-openapi.sh && BASE_URL='${BASE_URL}' SKIP_HEALTH_WAIT='${SKIP_HEALTH_WAIT}' ./scripts/homologacao/sync-api-delpi-openapi-tv.sh"

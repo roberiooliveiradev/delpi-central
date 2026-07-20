@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { valuesEqual } from "@delpi/plugin-ui/index";
 
 import {
   createKaizenVersion,
@@ -113,6 +115,9 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
   const [success, setSuccess] = useState<string | null>(null);
   const [changeReason, setChangeReason] = useState("");
 
+  const formEditBaselineRef = useRef<KaizenFormValues | null>(null);
+  const changeReasonEditBaselineRef = useRef("");
+
   const { isEditing, startEdit, stopEdit, stopAll } = useKaizenSectionEdit();
 
   const load = useCallback(async () => {
@@ -190,7 +195,24 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
     }
     stopAll();
     setChangeReason("");
+    formEditBaselineRef.current = null;
+    changeReasonEditBaselineRef.current = "";
   }, [record, selectedVersion, usesSnapshotView, stopAll]);
+
+  function beginSectionEdit(sectionKey: string) {
+    if (form) {
+      formEditBaselineRef.current = structuredClone(form);
+    }
+    changeReasonEditBaselineRef.current = changeReason;
+    startEdit(sectionKey);
+  }
+
+  function sectionFormDirty(includeChangeReason: boolean): boolean {
+    const baseline = formEditBaselineRef.current;
+    if (!form || !baseline) return false;
+    if (!valuesEqual(form, baseline)) return true;
+    return includeChangeReason && changeReason !== changeReasonEditBaselineRef.current;
+  }
 
   function updateField<K extends keyof KaizenFormValues>(key: K, value: KaizenFormValues[K]) {
     setForm((current) => (current ? { ...current, [key]: value } : current));
@@ -208,8 +230,12 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
   }
 
   function cancelSection(key: string) {
-    resetForm();
-    setChangeReason("");
+    if (formEditBaselineRef.current) {
+      setForm(structuredClone(formEditBaselineRef.current));
+    } else {
+      resetForm();
+    }
+    setChangeReason(changeReasonEditBaselineRef.current);
     stopEdit(key);
   }
 
@@ -389,10 +415,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         hint={KAIZEN_HELP_TOOLTIPS.sections.identification}
         description="Unidade, equipe e descrição do processo"
         isEditing={isEditing("identificacao")}
-        onEdit={() => startEdit("identificacao")}
+        onEdit={() => beginSectionEdit("identificacao")}
         onCancel={() => cancelSection("identificacao")}
         onSave={() => void saveSection("identificacao", false)}
         saving={saving}
+        dirty={sectionFormDirty(false)}
         editable={editable}
         readContent={
           <ReadOnlyGrid>
@@ -568,10 +595,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         hint={KAIZEN_HELP_TOOLTIPS.sections.stage}
         description="Status operacional da versão vigente (edição = correção, não cria versão)"
         isEditing={isEditing("estagio")}
-        onEdit={() => startEdit("estagio")}
+        onEdit={() => beginSectionEdit("estagio")}
         onCancel={() => cancelSection("estagio")}
         onSave={() => void saveSection("estagio", true)}
         saving={saving}
+        dirty={sectionFormDirty(true)}
         editable={editable}
         readContent={
           <ReadOnlyGrid>
@@ -664,10 +692,11 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
         hint={KAIZEN_HELP_TOOLTIPS.sections.savings}
         description="Parâmetros e economia calculada pela API"
         isEditing={isEditing("economia")}
-        onEdit={() => startEdit("economia")}
+        onEdit={() => beginSectionEdit("economia")}
         onCancel={() => cancelSection("economia")}
         onSave={() => void saveSection("economia", true)}
         saving={saving}
+        dirty={sectionFormDirty(true)}
         editable={editable}
         readContent={
           <ReadOnlyGrid>

@@ -42,6 +42,19 @@ describe("ImpactEffortMatrix", () => {
     expect(screen.getByText("Sem revisões")).toBeTruthy();
   });
 
+  it("mostra balão com impacto e esforço no hover do ponto", () => {
+    const { container } = render(
+      <ImpactEffortMatrix points={SAMPLE} activePointId="r1" onPointSelect={vi.fn()} />
+    );
+    const hit = container.querySelector(".delpi-ui-impact-effort-matrix__point-hit");
+    expect(hit).toBeTruthy();
+    fireEvent.mouseEnter(hit!);
+    const tooltip = screen.getByRole("tooltip");
+    expect(tooltip.textContent).toMatch(/Impacto/);
+    expect(tooltip.textContent).toMatch(/Esforço/);
+    expect(tooltip.textContent).toMatch(/Ganhos rápidos/);
+  });
+
   it("classes Transformômetro usam BEM delpi-ui no SVG (CSS canônico)", () => {
     const classNames = impactEffortMatrixTransformometroClasses();
     expect(classNames.root).toContain("delpi-ui-impact-effort-matrix");

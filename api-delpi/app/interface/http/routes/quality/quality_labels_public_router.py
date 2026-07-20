@@ -11,7 +11,7 @@ from app.utils.logger import log_error
 router = APIRouter(prefix="/public/quality-labels", tags=["Quality Labels (público)"])
 
 
-@router.get("/inspection/{token}")
+@router.get("/inspection/{token}", operation_id="get_public_quality_label_inspection")
 def get_public_inspection(token: str):
     try:
         service = build_quality_labels_service()

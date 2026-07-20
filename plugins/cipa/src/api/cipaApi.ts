@@ -163,6 +163,17 @@ export async function exportPdf(id: string) {
   return httpBlob(`${API}/minutes/${id}/export.pdf`);
 }
 
+export async function exportFilteredPdfs(
+  params: Record<string, string | number | boolean | undefined>,
+) {
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === "") return;
+    qs.set(key, String(value));
+  });
+  return httpBlob(`${API}/minutes/export-filtered.zip?${qs.toString()}`);
+}
+
 export async function getSignatureImage(
   minuteId: string,
   signatureId: string,

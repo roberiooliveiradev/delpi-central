@@ -72,9 +72,9 @@ def get_refugos_health_route():
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_filtros_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -108,14 +108,14 @@ def get_refugos_filtros_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_resumo_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    mp: Optional[str] = MP_QUERY,
-    pa: Optional[str] = PA_QUERY,
-    op: Optional[str] = OP_QUERY,
-    motivo: Optional[str] = MOTIVO_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    mp: Optional[str] = MP_QUERY(),
+    pa: Optional[str] = PA_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    motivo: Optional[str] = MOTIVO_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -154,16 +154,16 @@ def get_refugos_resumo_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_rankings_route(
-    filial: str = FILIAL_QUERY,
-    dimension: str = DIMENSION_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    mp: Optional[str] = MP_QUERY,
-    pa: Optional[str] = PA_QUERY,
-    op: Optional[str] = OP_QUERY,
-    motivo: Optional[str] = MOTIVO_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
-    limit: int = LIMIT_QUERY,
+    filial: str = FILIAL_QUERY(),
+    dimension: str = DIMENSION_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    mp: Optional[str] = MP_QUERY(),
+    pa: Optional[str] = PA_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    motivo: Optional[str] = MOTIVO_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    limit: int = LIMIT_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -204,15 +204,15 @@ def get_refugos_rankings_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_serie_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    granularity: Optional[str] = GRANULARITY_QUERY,
-    mp: Optional[str] = MP_QUERY,
-    pa: Optional[str] = PA_QUERY,
-    op: Optional[str] = OP_QUERY,
-    motivo: Optional[str] = MOTIVO_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    granularity: Optional[str] = GRANULARITY_QUERY(),
+    mp: Optional[str] = MP_QUERY(),
+    pa: Optional[str] = PA_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    motivo: Optional[str] = MOTIVO_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:
@@ -252,16 +252,16 @@ def get_refugos_serie_route(
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
 def get_refugos_registros_route(
-    filial: str = FILIAL_QUERY,
-    data_inicio: Optional[str] = DATA_INICIO_QUERY,
-    data_fim: Optional[str] = DATA_FIM_QUERY,
-    mp: Optional[str] = MP_QUERY,
-    pa: Optional[str] = PA_QUERY,
-    op: Optional[str] = OP_QUERY,
-    motivo: Optional[str] = MOTIVO_QUERY,
-    recurso: Optional[str] = RECURSO_QUERY,
-    page: int = PAGE_QUERY,
-    page_size: int = PAGE_SIZE_QUERY,
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    mp: Optional[str] = MP_QUERY(),
+    pa: Optional[str] = PA_QUERY(),
+    op: Optional[str] = OP_QUERY(),
+    motivo: Optional[str] = MOTIVO_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    page: int = PAGE_QUERY(),
+    page_size: int = PAGE_SIZE_QUERY(),
 ):
     filial_error = branch_access_error(filial)
     if filial_error:

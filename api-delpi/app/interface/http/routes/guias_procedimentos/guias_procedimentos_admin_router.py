@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 from uuid import UUID
 
+from app.interface.http.query_param_enums import GUIAS_PROCEDURE_STATUS_QUERY
 from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel, Field
 
@@ -98,7 +99,7 @@ def _handle_domain(exc: Exception):
 # --- departments ---
 
 
-@router.get("/admin/departments")
+@router.get("/admin/departments", operation_id="list_guias_procedimentos_admin_departments")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def list_admin_departments():
     try:
@@ -112,7 +113,7 @@ def list_admin_departments():
         return _handle_domain(exc)
 
 
-@router.get("/admin/departments/{department_id}")
+@router.get("/admin/departments/{department_id}", operation_id="get_guias_procedimentos_admin_department")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def get_admin_department(department_id: UUID):
     try:
@@ -126,7 +127,7 @@ def get_admin_department(department_id: UUID):
         return _handle_domain(exc)
 
 
-@router.post("/admin/departments")
+@router.post("/admin/departments", operation_id="create_guias_procedimentos_admin_department")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def create_admin_department(body: Annotated[DepartmentBody, Body(...)]):
     try:
@@ -143,7 +144,7 @@ def create_admin_department(body: Annotated[DepartmentBody, Body(...)]):
         return _handle_domain(exc)
 
 
-@router.put("/admin/departments/{department_id}")
+@router.put("/admin/departments/{department_id}", operation_id="update_guias_procedimentos_admin_department")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def update_admin_department(
     department_id: UUID,
@@ -167,11 +168,11 @@ def update_admin_department(
 # --- procedures ---
 
 
-@router.get("/admin/procedures")
+@router.get("/admin/procedures", operation_id="list_guias_procedimentos_admin_procedures")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def list_admin_procedures(
     department_id: UUID | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = GUIAS_PROCEDURE_STATUS_QUERY(),
     q: str | None = Query(default=None, max_length=200),
 ):
     try:
@@ -189,7 +190,7 @@ def list_admin_procedures(
         return _handle_domain(exc)
 
 
-@router.get("/admin/procedures/{procedure_id}")
+@router.get("/admin/procedures/{procedure_id}", operation_id="get_guias_procedimentos_admin_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def get_admin_procedure(procedure_id: UUID):
     try:
@@ -203,7 +204,7 @@ def get_admin_procedure(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@router.post("/admin/procedures")
+@router.post("/admin/procedures", operation_id="create_guias_procedimentos_admin_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def create_admin_procedure(body: Annotated[ProcedureBody, Body(...)]):
     try:
@@ -219,7 +220,7 @@ def create_admin_procedure(body: Annotated[ProcedureBody, Body(...)]):
         return _handle_domain(exc)
 
 
-@router.put("/admin/procedures/{procedure_id}")
+@router.put("/admin/procedures/{procedure_id}", operation_id="update_guias_procedimentos_admin_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def update_admin_procedure(
     procedure_id: UUID,
@@ -245,7 +246,7 @@ def update_admin_procedure(
         return _handle_domain(exc)
 
 
-@router.post("/admin/procedures/{procedure_id}/publish")
+@router.post("/admin/procedures/{procedure_id}/publish", operation_id="publish_guias_procedimentos_admin_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def publish_admin_procedure(procedure_id: UUID):
     try:
@@ -259,7 +260,7 @@ def publish_admin_procedure(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@router.post("/admin/procedures/{procedure_id}/unpublish")
+@router.post("/admin/procedures/{procedure_id}/unpublish", operation_id="unpublish_guias_procedimentos_admin_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def unpublish_admin_procedure(procedure_id: UUID):
     try:
@@ -273,7 +274,7 @@ def unpublish_admin_procedure(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@router.post("/admin/procedures/{procedure_id}/archive")
+@router.post("/admin/procedures/{procedure_id}/archive", operation_id="archive_guias_procedimentos_admin_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def archive_admin_procedure(procedure_id: UUID):
     try:
@@ -287,7 +288,7 @@ def archive_admin_procedure(procedure_id: UUID):
         return _handle_domain(exc)
 
 
-@router.post("/admin/procedures/{procedure_id}/restore")
+@router.post("/admin/procedures/{procedure_id}/restore", operation_id="restore_guias_procedimentos_admin_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_WRITE_PERMISSIONS)
 def restore_admin_procedure(procedure_id: UUID):
     try:

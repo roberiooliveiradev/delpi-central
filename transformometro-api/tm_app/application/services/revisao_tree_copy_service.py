@@ -111,6 +111,10 @@ def copy_revisao_tree(
                 "instancia_id": instancia_id,
                 "versao_revisao": revisao["versao_revisao"],
                 "cenario_tipo": revisao["cenario_tipo"],
+                "beneficio_calculo_categoria": revisao.get(
+                    "beneficio_calculo_categoria"
+                )
+                or "automatico",
                 "data_inicio_vigencia": revisao["data_inicio_vigencia"],
                 "data_implantacao": revisao.get("data_implantacao"),
                 "data_fim_vigencia": revisao.get("data_fim_vigencia"),

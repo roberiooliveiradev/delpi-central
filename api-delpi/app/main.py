@@ -13,6 +13,9 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from app.startup.run_plugins_migrations_on_startup import (
     run_plugins_migrations_on_startup,
 )
+from app.startup.schedule_openapi_consumer_notify import (
+    schedule_openapi_consumer_notify_on_startup,
+)
 
 from app.interface.socket.audit_5s_handlers import register_audit_5s_socket_handlers
 from app.interface.socket.sio_server import create_socket_app
@@ -97,6 +100,7 @@ check_credentials()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_plugins_migrations_on_startup()
+    schedule_openapi_consumer_notify_on_startup()
     yield
 
 
@@ -199,7 +203,7 @@ app.add_middleware(
 # ROUTES
 # ==========================================================
 
-@app.get("/health", tags=["Health"])
+@app.get("/health", tags=["Health"], operation_id="get_health")
 def root():
     return {"status": "online"}
 

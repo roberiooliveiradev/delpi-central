@@ -45,12 +45,15 @@ import { fetchProcessoArquivos } from "../../data/api/transformometroProcessoArq
 import type { ProcessoAuditLogEntry } from "../../utils/processoTimeline";
 import { computeProcessoSetupCompletion } from "../../utils/processoCompletion";
 import { buildInstanciaPath, buildProcessoPath } from "../../utils/routeParser";
+import { requestWorkspaceTreeRefresh } from "../../utils/navigation";
 import { ProcessoFormFields } from "../processos/ProcessoFormFields";
 import { ProcessoEscopoFields } from "../processos/ProcessoEscopoFields";
 import { ProcessoInstanciasPanel } from "../processos/ProcessoInstanciasPanel";
 import { ProcessoMatrizImpactoSection } from "../processos/ProcessoMatrizImpactoSection";
 import { ProcessoDecompositionSection } from "../../components/decomposition/ProcessoDecompositionSection";
+import { ProcessoDecompositionComposedSection } from "../../components/decomposition/ProcessoDecompositionComposedSection";
 import { ProcessoDiagramSection } from "../../components/diagram/ProcessoDiagramSection";
+import { ProcessoDiagramComposedSection } from "../../components/diagram/ProcessoDiagramComposedSection";
 import { ProcessoArquivosSection } from "../processo/ProcessoArquivosSection";
 import {
   masterPayloadFromProcessoForm,
@@ -65,6 +68,7 @@ import {
 import { resolveActiveWorkspaceNodeId } from "../processos/processoWorkspaceNav";
 import type { ProcessoWorkspaceSectionId } from "../processos/processoWorkspaceNav";
 import { ProcessoWorkspaceSectionPanel } from "../processos/ProcessoWorkspaceSectionPanel";
+import { valuesEqual } from "@delpi/plugin-ui/index";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
 type Props = Pick<AppProps, "getAccessToken"> & {
@@ -100,6 +104,9 @@ export function ProcessoDetailPage({
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [processoForm, setProcessoForm] = useState<ProcessoFormState | null>(null);
+  const [processoFormBaseline, setProcessoFormBaseline] = useState<ProcessoFormState | null>(
+    null
+  );
   const [savingProcesso, setSavingProcesso] = useState(false);
   const [timelineEntries, setTimelineEntries] = useState<ProcessoAuditLogEntry[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(true);
@@ -181,7 +188,9 @@ export function ProcessoDetailPage({
   async function handleStartEditProcesso() {
     const acquired = await sectionEdit.startEdit("processo");
     if (acquired !== false) {
-      setProcessoForm(processoFormFromEntity(processo!));
+      const next = processoFormFromEntity(processo!);
+      setProcessoForm(next);
+      setProcessoFormBaseline(next);
     }
   }
 
@@ -198,6 +207,7 @@ export function ProcessoDetailPage({
       setProcesso(updated);
       sectionEdit.stopEdit("processo");
       setProcessoForm(null);
+      setProcessoFormBaseline(null);
       await loadTimeline();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao salvar processo");
@@ -229,8 +239,8 @@ export function ProcessoDetailPage({
     const label = `${processo.codigo_processo} — ${processo.nome_processo}`;
     const confirmed = await confirm({
       title: "Excluir processo",
-      message: `Excluir o processo ${label}? Revisões e dados vinculados permanecem no banco (exclusão lógica). Você será redirecionado à lista.`,
-      confirmLabel: "Excluir",
+      message: `Excluir o processo-mestre ${label} e todo o cadastro associado (melhorias, revisões, medições)? Esta ação é uma exclusão lógica. Você será redirecionado à lista.`,
+      confirmLabel: "Excluir processo",
       variant: "danger",
     });
     if (!confirmed) {
@@ -247,7 +257,6 @@ export function ProcessoDetailPage({
 
   const activeSection = useProcessoWorkspaceSection();
   const activeNodeId = resolveActiveWorkspaceNodeId({ view: "processo", section: activeSection });
-  const showMelhoriasForm = openInstanciaForm || activeSection === "melhorias";
   const [mountedSections, setMountedSections] = useState<Set<ProcessoWorkspaceSectionId>>(
     () => new Set([activeSection])
   );
@@ -367,11 +376,20 @@ export function ProcessoDetailPage({
             isEditing={sectionEdit.isEditing("processo")}
             onEdit={() => void handleStartEditProcesso()}
             onCancel={() => {
+              if (processoFormBaseline) {
+                setProcessoForm(processoFormBaseline);
+              }
               sectionEdit.cancelEdit("processo");
               setProcessoForm(null);
+              setProcessoFormBaseline(null);
             }}
             onSave={() => void handleSaveProcesso()}
             saving={savingProcesso}
+            dirty={
+              processoForm != null &&
+              processoFormBaseline != null &&
+              !valuesEqual(processoForm, processoFormBaseline)
+            }
             readContent={<ProcessoReadView processo={processo} activeFilialCount={options.filiais.length} />}
             editContent={
               processoForm ? (
@@ -410,9 +428,24 @@ export function ProcessoDetailPage({
 
         {visibleSections.has("mapeamento") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "mapeamento"} sectionId="mapeamento">
+          <div className="tm-processo-composed-card tm-processo-composed-card--first">
+            <h3 className="ds-subsection-title">Macro composto (visão vigente)</h3>
+            <p className="ds-hint">
+              Base do processo + deltas das revisões vigentes na data escolhida. Conflitos de
+              interseção aparecem em destaque.
+            </p>
+            <ProcessoDecompositionComposedSection
+              embeddedInCard
+              processoId={processoId}
+              processoNome={processo.nome_processo}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          </div>
           <EditableSectionCard
-            title="Mapeamento do processo"
-            description="Árvore WBS — processos-chave, tarefas e sub-tarefas. Fonte da planilha de mapeamento."
+            title="Mapeamento base do processo"
+            description="Árvore WBS cadastrada (fonte estrutural). Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
             hint={TM_HELP_TOOLTIPS.decomposition.mapeamento}
             isEditing={sectionEdit.isEditing("decomposicao")}
             onEdit={() => void sectionEdit.startEdit("decomposicao")}
@@ -446,9 +479,23 @@ export function ProcessoDetailPage({
 
         {visibleSections.has("diagrama") ? (
           <ProcessoWorkspaceSectionPanel active={activeSection === "diagrama"} sectionId="diagrama">
+          <div className="tm-processo-composed-card tm-processo-composed-card--first">
+            <h3 className="ds-subsection-title">Diagrama composto (visão vigente)</h3>
+            <p className="ds-hint">
+              Macro do fluxo + deltas das revisões vigentes na data escolhida. Conflitos de
+              interseção aparecem em destaque.
+            </p>
+            <ProcessoDiagramComposedSection
+              embeddedInCard
+              processoId={processoId}
+              getAccessToken={getAccessToken}
+              onError={setError}
+              resyncVersion={sectionEdit.resyncVersion}
+            />
+          </div>
           <EditableSectionCard
-            title="Diagrama macro"
-            description="Mapa canônico do fluxo end-to-end deste processo-mestre."
+            title="Diagrama macro base"
+            description="Mapa canônico cadastrado. Edite aqui a base; as revisões vigentes aparecem acima na visão composta."
             hint={TM_HELP_TOOLTIPS.processos.diagramaMacro}
             isEditing={sectionEdit.isEditing("diagrama_macro")}
             onEdit={() => void sectionEdit.startEdit("diagrama_macro")}
@@ -519,7 +566,7 @@ export function ProcessoDetailPage({
             options={options}
             processoEscopo={processoEscopoFromEntity(processo)}
             busy={refreshing}
-            initialShowForm={showMelhoriasForm}
+            initialShowForm={openInstanciaForm}
             instanciasComRevisao={instanciasComRevisao}
             navigateOnSelect
             onSelect={(instanciaId) => onNavigate(buildInstanciaPath(processoId, instanciaId))}
@@ -527,18 +574,22 @@ export function ProcessoDetailPage({
               await createProcessoInstancia(processoId, payload, getAccessToken);
               setOpenInstanciaForm(false);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
             onUpdate={async (instanciaId, payload) => {
               await updateInstancia(instanciaId, payload, getAccessToken);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
             onDelete={async (instanciaId) => {
               await deleteInstancia(instanciaId, getAccessToken);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
             onDuplicate={async ({ origemInstanciaId, ...payload }) => {
               await duplicateInstancia(origemInstanciaId, payload, getAccessToken);
               await load();
+              requestWorkspaceTreeRefresh();
             }}
           />
           </ProcessoWorkspaceSectionPanel>

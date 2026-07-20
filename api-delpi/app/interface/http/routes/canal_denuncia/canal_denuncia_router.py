@@ -35,7 +35,7 @@ class CreateAnonymousDenunciaBody(BaseModel):
         return normalized
 
 
-@router.post("/denuncias")
+@router.post("/denuncias", operation_id="create_canal_denuncia")
 @require_any_permission(CANAL_DENUNCIA_SUBMIT_PERMISSIONS)
 def create_anonymous_denuncia(body: CreateAnonymousDenunciaBody = Body(...)):
     """Registra denúncia anônima. Autenticação necessária; identidade não é persistida."""

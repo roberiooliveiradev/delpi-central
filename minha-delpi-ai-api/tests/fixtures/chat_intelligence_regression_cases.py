@@ -361,6 +361,58 @@ SELECTION_CASES = [
         "expected_action_id": "inventory",
     },
     {
+        "message": "idd do comercial com metas e realizado",
+        "actions": [
+            {
+                "actionId": "dept-indicators",
+                "method": "GET",
+                "path": "/dashboard/department-indicators",
+                "operationId": "get_dashboard_department_indicators",
+                "summary": "IDD com metas e realizado",
+                "parametersSchema": [
+                    {"name": "department_id"},
+                    {"name": "branch"},
+                    {"name": "start_date"},
+                    {"name": "end_date"},
+                ],
+            },
+            {
+                "actionId": "inventory",
+                "method": "GET",
+                "path": "/supplies/inventory-turnover",
+                "operationId": "get_supplies_inventory_turnover",
+                "summary": "Giro de estoque",
+                "parametersSchema": [{"name": "branch"}],
+            },
+        ],
+        "expected_action_id": "dept-indicators",
+    },
+    {
+        "message": "idds dos departamentos com metas e realizado",
+        "actions": [
+            {
+                "actionId": "all-depts",
+                "method": "GET",
+                "path": "/dashboard/departments-indicators",
+                "operationId": "get_dashboard_departments_indicators",
+                "summary": "IDDs de todos os departamentos",
+                "parametersSchema": [
+                    {"name": "department_id"},
+                    {"name": "branch"},
+                ],
+            },
+            {
+                "actionId": "dept-indicators",
+                "method": "GET",
+                "path": "/dashboard/department-indicators",
+                "operationId": "get_dashboard_department_indicators",
+                "summary": "IDD de um departamento",
+                "parametersSchema": [{"name": "department_id"}],
+            },
+        ],
+        "expected_action_id": "all-depts",
+    },
+    {
         "message": "dashboard de LMPs em aberto",
         "actions": [
             {

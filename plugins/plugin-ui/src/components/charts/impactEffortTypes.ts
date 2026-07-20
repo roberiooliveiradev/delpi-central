@@ -29,6 +29,16 @@ export const DEFAULT_IMPACT_EFFORT_QUADRANT_LABELS: ImpactEffortQuadrantLabels =
   rethink: "Reavaliar",
 };
 
+/** Texto curto da legenda (alto/baixo impacto × esforço). */
+export type ImpactEffortQuadrantDescriptions = Record<ImpactEffortQuadrant, string>;
+
+export const DEFAULT_IMPACT_EFFORT_QUADRANT_DESCRIPTIONS: ImpactEffortQuadrantDescriptions = {
+  quick_win: "Alto impacto e baixo esforço — priorize primeiro.",
+  strategic: "Alto impacto e alto esforço — planeje com recursos dedicados.",
+  fill_in: "Baixo impacto e baixo esforço — faça quando houver folga.",
+  rethink: "Baixo impacto e alto esforço — reavalie escopo ou adie.",
+};
+
 export type ImpactEffortAxisLabels = {
   impacto: string;
   esforco: string;

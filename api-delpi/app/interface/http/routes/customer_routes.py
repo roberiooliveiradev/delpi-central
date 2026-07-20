@@ -14,7 +14,7 @@ from app.utils.logger import log_error
 router = APIRouter(prefix="/customers", tags=["Clientes"])
 
 
-@router.get("/search")
+@router.get("/search", operation_id="search_customers")
 @require_permission(API_DELPI_ACCESS)
 def search_customers_route(
     code: Optional[str] = Query(None, description="Código do cliente (SA1)."),

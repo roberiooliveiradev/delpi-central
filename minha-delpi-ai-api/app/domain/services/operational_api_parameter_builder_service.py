@@ -50,6 +50,13 @@ class OperationalApiParameterBuilderService:
 
             return parameters
 
+        if strategy == "department_idd":
+            return self.build_department_idd(
+                action,
+                message,
+                previous_messages=previous_messages,
+            )
+
         if strategy == "supplies_stock":
             return self.build_supplies_stock(action)
 
@@ -101,6 +108,45 @@ class OperationalApiParameterBuilderService:
 
             if isinstance(empty_default, dict):
                 parameters = dict(empty_default)
+
+        return parameters
+
+    def build_department_idd(
+        self,
+        action: dict,
+        message: str,
+        *,
+        previous_messages: list | None = None,
+    ) -> dict:
+        """Filial/datas (date_branch) + department_id do vocabulário SI."""
+        parameters = self.build_date_branch(
+            action,
+            message,
+            previous_messages=previous_messages,
+        )
+        spec = ChatOperationalApiDomainService.parameter_strategy_spec("department_idd")
+        normalized = ChatMessageNormalizationService.normalize_for_matching(message)
+        department_id = self._resolve_source_value(
+            "department_id_regex",
+            {"source": "department_id_regex", "matchAliases": ["department_id"]},
+            spec,
+            {"normalized": normalized},
+        )
+        if department_id:
+            parameters["department_id"] = department_id
+
+        # Garante binding mesmo se a action listar só department_id (sem datas).
+        if not parameters:
+            parameters = self._apply_bindings(
+                action,
+                spec,
+                {
+                    "branch": None,
+                    "branch_match": None,
+                    "date_range": None,
+                    "normalized": normalized,
+                },
+            )
 
         return parameters
 
@@ -299,6 +345,23 @@ class OperationalApiParameterBuilderService:
             match = re.search(pattern, normalized)
 
             return match.group(1) if match else None
+
+        if source == "department_id_regex":
+            aliases = spec.get("departmentIdAliases")
+            if not isinstance(aliases, dict):
+                aliases = {}
+            pattern = str(
+                patterns.get("department_id")
+                or r"\b(comercial|commercial|qualidade|quality|producao|produção|production|"
+                r"financeiro|financial|suprimentos|supplies|engenharia|engineering|"
+                r"rh|hr|recursos humanos)\b"
+            )
+            match = re.search(pattern, normalized, flags=re.IGNORECASE)
+            if not match:
+                return None
+            raw = str(match.group(1) or "").strip().lower()
+            mapped = aliases.get(raw) or aliases.get(raw.replace("ç", "c"))
+            return str(mapped).strip() if mapped else None
 
         if source == "date_range.start" and date_range:
             return date_range.start_date

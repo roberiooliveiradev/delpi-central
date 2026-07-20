@@ -1,5 +1,14 @@
 from fastapi import APIRouter, Path, Query
 
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    GRANULARITY_QUERY_REQUIRED,
+    PRODUCTION_OEE_STATUS_QUERY,
+    PRODUCTION_OTD_STATUS_QUERY,
+    PRODUCT_TYPE_QUERY,
+    SORT_DIR_QUERY,
+)
+
 from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import (
@@ -71,7 +80,7 @@ router = APIRouter(prefix="/production", tags=["Produção"])
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_direct_labor_cost_pct(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -126,7 +135,7 @@ def get_direct_labor_cost_pct(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_cost_pct(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -181,7 +190,7 @@ def get_production_cost_pct(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_depreciation_pct(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -236,10 +245,10 @@ def get_depreciation_pct(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_oee_series(
-    granularity: str = Query(..., min_length=3, max_length=10),
+    granularity: str = GRANULARITY_QUERY_REQUIRED(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    branch: str | None = Query(default=None, min_length=2, max_length=2),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         request = ProductionOeeSeriesRequest(
@@ -279,10 +288,10 @@ def get_production_oee_series(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_otd_series(
-    granularity: str = Query(..., min_length=3, max_length=10),
+    granularity: str = GRANULARITY_QUERY_REQUIRED(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    branch: str | None = Query(default=None, min_length=2, max_length=2),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         request = ProductionOtdSeriesRequest(
@@ -316,14 +325,14 @@ def get_production_otd_series(
 @router.get("/otd", **PRODUCTION_OTD)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_otd(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = PRODUCTION_OTD_STATUS_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: str | None = Query(default=None),
-    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY(),
 ):
     try:
         use_case = build_get_production_otd_use_case()
@@ -370,10 +379,10 @@ def get_production_otd(
 @router.get("/oee", **PRODUCTION_OEE)
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_oee(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
-    status: str | None = Query(default=None),
+    status: str | None = PRODUCTION_OEE_STATUS_QUERY(),
     efficiency_bands: str | None = Query(
         default=None,
         description="Faixas de eficiência (csv): ok, low, verify",
@@ -390,11 +399,11 @@ def get_production_oee(
         default=None,
         description="Código(s) do operador (csv)",
     ),
-    product_type: str | None = Query(default=None, pattern="^(PA|PI)$"),
+    product_type: str | None = PRODUCT_TYPE_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: str | None = Query(default=None),
-    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY(),
 ):
     try:
         use_case = build_get_production_oee_use_case()
@@ -447,7 +456,7 @@ def get_production_oee(
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_production_oee_appointment_by_id(
     appointment_id: int = Path(..., ge=1),
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         use_case = build_get_production_oee_appointment_by_id_use_case()
@@ -493,7 +502,7 @@ def get_production_oee_appointment_by_id(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_overall_equipment_effectiveness_pct(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -542,7 +551,7 @@ def get_overall_equipment_effectiveness_pct(
 )
 @require_any_permission(KPI_PRODUCTION_ACCESS)
 def get_on_time_delivery_pct(
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     start_date: str | None = Query(default=None),
     end_date: str | None = Query(default=None),
 ):
@@ -587,7 +596,7 @@ def get_on_time_delivery_pct(
 def get_eficiencia_fabril_dashboard(
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     op: str | None = Query(default=None),
     employee: str | None = Query(default=None),
     work_center: str | None = Query(default=None),
@@ -632,7 +641,7 @@ def get_eficiencia_fabril_dashboard(
 def get_eficiencia_fabril_appointments(
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
-    branch: str | None = Query(default=None),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     op: str | None = Query(default=None),
     employee: str | None = Query(default=None),
     work_center: str | None = Query(default=None),

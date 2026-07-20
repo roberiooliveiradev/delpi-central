@@ -6,7 +6,7 @@
 
 Este guia explica **como cadastrar corretamente**, **como usar diagramas** (macro → escopo → revisão) e **como tirar proveito das demais funcionalidades** do app.
 
-Documentação técnica complementar: [OVERVIEW.md](./OVERVIEW.md) · [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) · [PLAYBOOK-19 — diagramas](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md)
+Documentação técnica complementar: [OVERVIEW.md](./OVERVIEW.md) · [PLAYBOOK-MODELAGEM.md](./PLAYBOOK-MODELAGEM.md) · [PLAYBOOK-19 — diagramas](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) · [PLAYBOOK-20 — decomposição/mapeamento](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) · [PLAYBOOK-23 — macro composto / vigência](./PLAYBOOK-23-decomposicao-composicao-macro-data.md)
 
 ---
 
@@ -612,6 +612,7 @@ No detalhe do processo → **Linha do tempo** (audit log).
 | Instâncias / melhorias e escopo | [PLAYBOOK-18-instancias-filial-setor-escopo.md](./PLAYBOOK-18-instancias-filial-setor-escopo.md) |
 | Diagramas fluxo (técnico) | [PLAYBOOK-19-diagramas-processo-revisao-escopo.md](./PLAYBOOK-19-diagramas-processo-revisao-escopo.md) |
 | Árvore / planilha mapeamento | [PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md](./PLAYBOOK-20-decomposicao-processo-arvore-mapeamento.md) |
+| Macro composto / delta por revisão | [PLAYBOOK-23-decomposicao-composicao-macro-data.md](./PLAYBOOK-23-decomposicao-composicao-macro-data.md) |
 | Status técnico Playbook 20 | [playbook-20-implementation-status.md](../../../transformometro-api/docs/playbook-20-implementation-status.md) |
 | Fórmulas de cálculo | [regras-de-calculo.md](../../../transformometro-api/docs/regras-de-calculo.md) |
 | Status técnico e deploy | [status-atual.md](./status-atual.md) |

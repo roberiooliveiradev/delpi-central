@@ -27,13 +27,23 @@ from app.interface.http.openapi_agent_metadata import (
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.infrastructure.persistence.plugins.plugin_base_repository import PluginsRepositoryError
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    BRANCH_CODE_VALUES,
+    BRANCH_QUERY_OPTIONAL,
+    KAIZEN_EVIDENCE_STAGE_VALUES,
+    KAIZEN_ROLE_VALUES,
+    KAIZEN_SAVINGS_TYPE_QUERY,
+    KAIZEN_SAVINGS_TYPE_VALUES,
+    KAIZEN_STATUS_QUERY,
+    KAIZEN_STATUS_VALUES,
+)
 
 router = APIRouter(prefix="/kaizens/records", tags=["Kaizen — cadastro"])
 
 
 class KaizenParticipantBody(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
-    role: str = Field(default="participante", pattern="^(responsavel|participante|apoio)$")
+    role: str = Field(default="participante", pattern="^(responsavel|participante|apoio)$", json_schema_extra={"enum": list(KAIZEN_ROLE_VALUES)})
     user_id: str | None = Field(default=None, max_length=100)
 
 
@@ -41,7 +51,7 @@ _STATUS_PATTERN = "^(recebido|aprovado|implantado|descontinuado|cancelado)$"
 
 
 class KaizenRecordBody(BaseModel):
-    branch_code: str = Field(..., pattern="^(01|02)$")
+    branch_code: str = Field(..., pattern="^(01|02)$", json_schema_extra={"enum": list(BRANCH_CODE_VALUES)})
     title: str = Field(..., min_length=2, max_length=500)
     accountable: str | None = Field(default=None, max_length=200)
     sector: str | None = Field(default=None, max_length=200)
@@ -49,6 +59,7 @@ class KaizenRecordBody(BaseModel):
     savings_type: str | None = Field(
         default=None,
         pattern="^(tempo|material|financeiro|qualitativo|misto)$",
+        json_schema_extra={"enum": list(KAIZEN_SAVINGS_TYPE_VALUES)},
     )
     seconds_per_occurrence: float | None = None
     occurrences_per_day: float | None = None
@@ -60,6 +71,7 @@ class KaizenRecordBody(BaseModel):
     status: str = Field(
         default="recebido",
         pattern=_STATUS_PATTERN,
+        json_schema_extra={"enum": list(KAIZEN_STATUS_VALUES)},
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
@@ -88,7 +100,7 @@ class ImportKaizensBody(BaseModel):
 
 
 class UpdateKaizenRecordBody(BaseModel):
-    branch_code: str | None = Field(default=None, pattern="^(01|02)$")
+    branch_code: str | None = Field(default=None, pattern="^(01|02)$", json_schema_extra={"enum": list(BRANCH_CODE_VALUES)})
     title: str | None = Field(default=None, min_length=2, max_length=500)
     accountable: str | None = Field(default=None, max_length=200)
     sector: str | None = Field(default=None, max_length=200)
@@ -96,6 +108,7 @@ class UpdateKaizenRecordBody(BaseModel):
     savings_type: str | None = Field(
         default=None,
         pattern="^(tempo|material|financeiro|qualitativo|misto)$",
+        json_schema_extra={"enum": list(KAIZEN_SAVINGS_TYPE_VALUES)},
     )
     seconds_per_occurrence: float | None = None
     occurrences_per_day: float | None = None
@@ -107,6 +120,7 @@ class UpdateKaizenRecordBody(BaseModel):
     status: str | None = Field(
         default=None,
         pattern=_STATUS_PATTERN,
+        json_schema_extra={"enum": list(KAIZEN_STATUS_VALUES)},
     )
     date_implemented: str | None = None
     date_discontinued: str | None = None
@@ -125,7 +139,7 @@ class UpdateKaizenRecordBody(BaseModel):
 
 
 class UpdateKaizenEvidenceBody(BaseModel):
-    stage: str | None = Field(default=None, pattern="^(antes|depois|geral)$")
+    stage: str | None = Field(default=None, pattern="^(antes|depois|geral)$", json_schema_extra={"enum": list(KAIZEN_EVIDENCE_STAGE_VALUES)})
     description: str | None = None
 
 
@@ -158,15 +172,9 @@ def _body_to_fields(body: BaseModel) -> dict:
 @router.get("", **QUALITY_KAIZEN_RECORDS_LIST)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_records(
-    branch: str | None = Query(default=None, pattern="^(01|02)$"),
-    status: str | None = Query(
-        default=None,
-        pattern=_STATUS_PATTERN,
-    ),
-    savings_type: str | None = Query(
-        default=None,
-        pattern="^(tempo|material|financeiro|qualitativo|misto)$",
-    ),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
+    status: str | None = KAIZEN_STATUS_QUERY(),
+    savings_type: str | None = KAIZEN_SAVINGS_TYPE_QUERY(),
     title: str | None = Query(default=None),
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
@@ -198,7 +206,7 @@ def list_kaizen_records(
         return error_response("Erro interno ao listar kaizens.", status_code=500)
 
 
-@router.post("")
+@router.post("", operation_id="create_kaizen_record")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def create_kaizen_record(body: KaizenRecordBody = Body(...)):
     try:
@@ -219,7 +227,7 @@ def create_kaizen_record(body: KaizenRecordBody = Body(...)):
         return error_response("Erro interno ao cadastrar kaizen.", status_code=500)
 
 
-@router.get("/export")
+@router.get("/export", operation_id="export_kaizen_records")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def export_kaizen_records():
     try:
@@ -245,7 +253,7 @@ def export_kaizen_records():
         return error_response("Erro interno ao exportar kaizens.", status_code=500)
 
 
-@router.post("/import")
+@router.post("/import", operation_id="import_kaizen_records")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def import_kaizen_records(body: ImportKaizensBody = Body(...)):
     try:
@@ -270,10 +278,10 @@ def import_kaizen_records(body: ImportKaizensBody = Body(...)):
         return error_response("Erro interno ao importar kaizens.", status_code=500)
 
 
-@router.get("/summary")
+@router.get("/summary", operation_id="get_kaizen_records_summary")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_records_summary(
-    branch: str | None = Query(default=None, pattern="^(01|02)$"),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
     date_start: str | None = Query(default=None),
     date_end: str | None = Query(default=None),
 ):
@@ -307,7 +315,7 @@ def get_kaizen_record(record_id: str):
         return error_response("Erro interno ao buscar kaizen.", status_code=500)
 
 
-@router.put("/{record_id}")
+@router.put("/{record_id}", operation_id="update_kaizen_record")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def update_kaizen_record(record_id: str, body: UpdateKaizenRecordBody = Body(...)):
     try:
@@ -335,7 +343,7 @@ def update_kaizen_record(record_id: str, body: UpdateKaizenRecordBody = Body(...
         return error_response("Erro interno ao atualizar kaizen.", status_code=500)
 
 
-@router.delete("/{record_id}")
+@router.delete("/{record_id}", operation_id="delete_kaizen_record")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def delete_kaizen_record(record_id: str):
     try:
@@ -359,7 +367,7 @@ def delete_kaizen_record(record_id: str):
 # ---------------------------------------------------------------- revisões
 
 
-@router.get("/{record_id}/revisions")
+@router.get("/{record_id}/revisions", operation_id="list_kaizen_revisions")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_revisions(record_id: str):
     try:
@@ -377,7 +385,7 @@ def list_kaizen_revisions(record_id: str):
         return error_response("Erro interno ao listar revisões do kaizen.", status_code=500)
 
 
-@router.get("/{record_id}/revisions/{revision_number}")
+@router.get("/{record_id}/revisions/{revision_number}", operation_id="get_kaizen_revision")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_revision(record_id: str, revision_number: int):
     try:
@@ -391,7 +399,7 @@ def get_kaizen_revision(record_id: str, revision_number: int):
         return error_response("Erro interno ao buscar revisão do kaizen.", status_code=500)
 
 
-@router.get("/{record_id}/at")
+@router.get("/{record_id}/at", operation_id="get_kaizen_at_date")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data YYYY-MM-DD")):
     try:
@@ -408,7 +416,7 @@ def get_kaizen_at_date(record_id: str, date: str = Query(..., description="Data 
 # ---------------------------------------------------------------- versões (ciclo de vida)
 
 
-@router.post("/{record_id}/versions")
+@router.post("/{record_id}/versions", operation_id="create_kaizen_version")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def create_kaizen_version(record_id: str, body: KaizenRecordBody = Body(...)):
     try:
@@ -430,7 +438,7 @@ def create_kaizen_version(record_id: str, body: KaizenRecordBody = Body(...)):
         return error_response("Erro interno ao criar versão do kaizen.", status_code=500)
 
 
-@router.put("/{record_id}/versions/{revision_number}")
+@router.put("/{record_id}/versions/{revision_number}", operation_id="update_kaizen_version")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def update_kaizen_version(
     record_id: str,
@@ -462,7 +470,7 @@ def update_kaizen_version(
         return error_response("Erro interno ao atualizar versão do kaizen.", status_code=500)
 
 
-@router.delete("/{record_id}/versions/{revision_number}")
+@router.delete("/{record_id}/versions/{revision_number}", operation_id="delete_kaizen_version")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def delete_kaizen_version(record_id: str, revision_number: int):
     try:
@@ -487,7 +495,7 @@ def delete_kaizen_version(record_id: str, revision_number: int):
         return error_response("Erro interno ao excluir versão do kaizen.", status_code=500)
 
 
-@router.post("/{record_id}/versions/{revision_number}/implement")
+@router.post("/{record_id}/versions/{revision_number}/implement", operation_id="implement_kaizen_version")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def implement_kaizen_version(
     record_id: str,
@@ -517,7 +525,7 @@ def implement_kaizen_version(
 # ---------------------------------------------------------------- registro de alterações
 
 
-@router.get("/{record_id}/history")
+@router.get("/{record_id}/history", operation_id="list_kaizen_history")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_history(record_id: str):
     try:
@@ -535,7 +543,7 @@ def list_kaizen_history(record_id: str):
         return error_response("Erro interno ao listar histórico do kaizen.", status_code=500)
 
 
-@router.get("/{record_id}/audit-log")
+@router.get("/{record_id}/audit-log", operation_id="list_kaizen_audit_log")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_audit_log(record_id: str):
     try:
@@ -553,7 +561,7 @@ def list_kaizen_audit_log(record_id: str):
         return error_response("Erro interno ao listar auditoria do kaizen.", status_code=500)
 
 
-@router.get("/{record_id}/savings-timeline")
+@router.get("/{record_id}/savings-timeline", operation_id="get_kaizen_savings_timeline")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def get_kaizen_savings_timeline(
     record_id: str,
@@ -578,7 +586,7 @@ def get_kaizen_savings_timeline(
 # ---------------------------------------------------------------- evidências
 
 
-@router.get("/{record_id}/evidences")
+@router.get("/{record_id}/evidences", operation_id="list_kaizen_evidences")
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def list_kaizen_evidences(record_id: str):
     try:
@@ -594,7 +602,7 @@ def list_kaizen_evidences(record_id: str):
         return error_response("Erro interno ao listar evidências do kaizen.", status_code=500)
 
 
-@router.post("/{record_id}/evidences")
+@router.post("/{record_id}/evidences", operation_id="attach_kaizen_evidence")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 async def attach_kaizen_evidence(
     record_id: str,
@@ -654,7 +662,10 @@ async def attach_kaizen_evidence(
         return error_response("Erro interno ao anexar evidência do kaizen.", status_code=500)
 
 
-@router.get("/{record_id}/evidences/{evidence_id}/file")
+@router.get(
+    "/{record_id}/evidences/{evidence_id}/file",
+    operation_id="download_kaizen_evidence",
+)
 @require_any_permission(KAIZEN_RECORDS_READ_PERMISSIONS)
 def download_kaizen_evidence(record_id: str, evidence_id: str):
     try:
@@ -677,7 +688,7 @@ def download_kaizen_evidence(record_id: str, evidence_id: str):
         return error_response("Erro interno ao baixar evidência do kaizen.", status_code=500)
 
 
-@router.patch("/{record_id}/evidences/{evidence_id}")
+@router.patch("/{record_id}/evidences/{evidence_id}", operation_id="update_kaizen_evidence")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def update_kaizen_evidence(
     record_id: str,
@@ -695,7 +706,7 @@ def update_kaizen_evidence(
         return error_response("Erro interno ao atualizar evidência do kaizen.", status_code=500)
 
 
-@router.delete("/{record_id}/evidences/{evidence_id}")
+@router.delete("/{record_id}/evidences/{evidence_id}", operation_id="delete_kaizen_evidence")
 @require_any_permission(KAIZEN_RECORDS_WRITE_PERMISSIONS)
 def delete_kaizen_evidence(record_id: str, evidence_id: str):
     try:

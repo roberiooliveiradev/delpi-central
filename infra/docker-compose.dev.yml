@@ -1162,6 +1162,18 @@ services:
       GRAPH_MAIL_RECIPIENT: ${GRAPH_MAIL_RECIPIENT:-ouvidoria@delpi.com.br}
       GRAPH_HTTP_TIMEOUT_SECONDS: ${GRAPH_HTTP_TIMEOUT_SECONDS:-15}
 
+      # Notifica chat + TV após startup (OpenAPI consumers)
+      OPENAPI_CONSUMER_NOTIFY_ON_STARTUP: ${OPENAPI_CONSUMER_NOTIFY_ON_STARTUP:-true}
+      OPENAPI_CONSUMER_NOTIFY_ENABLED: ${OPENAPI_CONSUMER_NOTIFY_ENABLED:-true}
+      OPENAPI_CONSUMER_NOTIFY_DELAY_SECONDS: ${OPENAPI_CONSUMER_NOTIFY_DELAY_SECONDS:-15}
+      OPENAPI_CONSUMER_NOTIFY_RETRIES: ${OPENAPI_CONSUMER_NOTIFY_RETRIES:-3}
+      OPENAPI_CONSUMER_NOTIFY_RETRY_SECONDS: ${OPENAPI_CONSUMER_NOTIFY_RETRY_SECONDS:-20}
+      OPENAPI_CONSUMER_NOTIFY_TIMEOUT_SECONDS: ${OPENAPI_CONSUMER_NOTIFY_TIMEOUT_SECONDS:-120}
+      OPENAPI_CONSUMER_CHAT_SYNC_URL: ${OPENAPI_CONSUMER_CHAT_SYNC_URL:-http://delpi-minha-delpi-ai-api:8000/chat/internal/openapi/sync-api-delpi}
+      OPENAPI_CONSUMER_TV_SYNC_URL: ${OPENAPI_CONSUMER_TV_SYNC_URL:-http://delpi-tv-dashboard-api:8000/data/openapi/sync}
+      # false = atualiza schemas OpenAPI + embeddings (padrão)
+      OPENAPI_CONSUMER_CHAT_SKIP_EMBEDDINGS: ${OPENAPI_CONSUMER_CHAT_SKIP_EMBEDDINGS:-false}
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 5s
@@ -1497,6 +1509,7 @@ services:
       TZ: ${TZ}
       DELPI_API_URL: ${DELPI_API_URL:-http://delpi-api-delpi:8000}
       DELPI_API_CALLER_APP: tv-dashboard-api
+      API_DELPI_INTERNAL_SERVICE_TOKEN: ${API_DELPI_INTERNAL_SERVICE_TOKEN:-}
       STRATEGIC_INDICATORS_API_BASE_URL: ${STRATEGIC_INDICATORS_API_BASE_URL:-http://strategic-indicators-api:8000}
       PLUGINS_DB_HOST: ${PLUGINS_DB_HOST}
       PLUGINS_DB_PORT: ${PLUGINS_DB_PORT}
@@ -1507,11 +1520,17 @@ services:
       CORE_API_BASE_URL: ${CORE_API_BASE_URL:-http://core-api:8000}
       CORE_API_INTEGRATIONS_SERVICE_TOKEN: ${CORE_API_INTEGRATIONS_SERVICE_TOKEN:-}
       TV_DASHBOARD_NOTIFICATIONS_ENABLED: ${TV_DASHBOARD_NOTIFICATIONS_ENABLED:-true}
+      TV_OPENAPI_SYNC_ON_STARTUP: ${TV_OPENAPI_SYNC_ON_STARTUP:-true}
+      TV_OPENAPI_SYNC_TIMEOUT_SECONDS: ${TV_OPENAPI_SYNC_TIMEOUT_SECONDS:-45}
+      TV_DATA_ROUTES_PATH: ${TV_DATA_ROUTES_PATH:-/app/data/tv-dashboard/catalog/tv_data_routes.json}
+      TV_OPENAPI_GENERATOR_SCRIPT: ${TV_OPENAPI_GENERATOR_SCRIPT:-/app/tools/generate_tv_data_routes_from_openapi.py}
 
     volumes:
       - ../tv-dashboard-api:/app
       - ../shared:/shared
+      - ../scripts/generate_tv_data_routes_from_openapi.py:/app/tools/generate_tv_data_routes_from_openapi.py:ro
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/tv-dashboard/media:/app/data/tv-dashboard/media
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/tv-dashboard/catalog:/app/data/tv-dashboard/catalog
 
     depends_on:
       - keycloak

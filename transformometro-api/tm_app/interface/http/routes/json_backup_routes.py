@@ -10,6 +10,7 @@ from tm_app.application.services.backup_package_service import (
     TransformometroBackupPackageService,
 )
 from tm_app.application.services.json_backup_service import JsonBackupService
+from tm_app.application.services.transformometro_realtime_notify import notify_entity_updated
 from tm_app.core.auth_actor import actor_from_request
 from tm_app.core.responses import fail, ok
 from tm_app.core.serialize import json_safe
@@ -104,6 +105,13 @@ async def import_package_apply(
             "evidence_files_restored": result.get("evidence_files_restored"),
         },
     )
+    notify_entity_updated(
+        entity_type="json_backup",
+        entity_id="00000000-0000-0000-0000-000000000000",
+        action=f"import_{mode}",
+        actor_user_id=user_id,
+        payload={"mode": mode, "entities": result.get("entities")},
+    )
     return ok(result, "Importação do pacote concluída. Dashboard recalculado.")
 
 
@@ -137,5 +145,12 @@ def import_apply(body: JsonImportBody, request: Request):
             "import_format": body.import_format,
             "entities": result.get("entities"),
         },
+    )
+    notify_entity_updated(
+        entity_type="json_backup",
+        entity_id="00000000-0000-0000-0000-000000000000",
+        action=f"import_{body.mode}",
+        actor_user_id=user_id,
+        payload={"mode": body.mode, "entities": result.get("entities")},
     )
     return ok(result, "Importação concluída. Dashboard recalculado.")

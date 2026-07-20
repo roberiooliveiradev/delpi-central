@@ -9,7 +9,7 @@ alwaysApply: true
 
 **Nunca** entregar melhoria que não esteja alinhada a clean code e clean architecture deste repositório. **Sempre** avisar o usuário **antes ou durante** a implementação quando a solução proposta ou em curso estiver fugindo disso — não corrigir silenciosamente com patch local.
 
-Regras complementares (obrigatórias): `development-standards-index.mdc`, `root-cause-generalized-fix.mdc`, `centralized-rules-first.mdc`, `schema-first-presentation-delivered.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc` (rotas novas).
+Regras complementares (obrigatórias): `development-standards-index.mdc`, `root-cause-generalized-fix.mdc`, `centralized-rules-first.mdc`, `schema-first-presentation-delivered.mdc`, `chat-intelligence-base.mdc`, `clean-architecture-chat-api.mdc`, `new-api-route-checklist.mdc`, `api-delpi-openapi-route-standards.mdc` (rotas api-delpi).
 
 ## O que significa «alinhado» aqui
 

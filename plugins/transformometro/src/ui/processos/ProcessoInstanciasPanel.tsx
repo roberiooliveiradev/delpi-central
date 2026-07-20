@@ -1,16 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Plus, Trash2 } from "lucide-react";
+import { Copy, Plus, Trash2, X } from "lucide-react";
 
 import type { DataTableColumn } from "../../components/DataTable";
 import { TableRowActions } from "../../components/ui/TableRowActions";
-import { DataTableSection } from "../../components/DataTableSection";
-import { FieldLabel, HelpTooltip, NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DS_TABLE_SECTION_CLASS_NAMES } from "../../components/dataTableUi";
+import {
+  FieldLabel,
+  HelpTooltip,
+  IconButton,
+  NativeCheckboxControl,
+  NativeTextControl,
+} from "@delpi/plugin-ui/index";
 import { SelectField } from "../../components/ui/SelectField";
 import { mapSelectOptions } from "../../components/ui/selectTypes";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { OptionsData, ProcessoInstancia } from "../../data/api/transformometroApi";
 import { MelhoriaFaseBadge } from "../../components/melhoria/MelhoriaFaseBadge";
+import { MelhoriaFolderBrowser } from "./MelhoriaFolderBrowser";
 import {
   labelMelhoriaPrioridade,
   melhoriaFieldsFromInstancia,
@@ -386,8 +393,8 @@ export function ProcessoInstanciasPanel({
   async function handleDelete(row: ProcessoInstancia) {
     const confirmed = await confirm({
       title: "Excluir melhoria",
-      message: `Excluir melhoria ${row.todas_filiais_ativas ? "todas as unidades" : row.codigo_filial ?? row.filial_id}? Só é possível sem revisões cadastradas.`,
-      confirmLabel: "Excluir",
+      message: `Excluir a melhoria ${row.todas_filiais_ativas ? "«Todas as unidades»" : `«${row.codigo_filial ?? row.filial_id}»`}? Só é possível sem revisões cadastradas. O processo-mestre não será afetado.`,
+      confirmLabel: "Excluir melhoria",
       variant: "danger",
     });
     if (!confirmed) {
@@ -517,6 +524,7 @@ export function ProcessoInstanciasPanel({
         key: "setor",
         header: "Departamentos",
         headerHint: TM_HELP_TOOLTIPS.instancias.setores,
+        className: "ds-table__col--wrap",
         render: (row) => formatInstanciaSetoresDisplay(row),
       },
       {
@@ -722,44 +730,38 @@ export function ProcessoInstanciasPanel({
   return (
     <div className="tm-panel-stack">
       {hideTable ? null : (
-      <section className="ds-card">
-        <div className="ds-table-section__header">
-          <div>
-            <h2 className="ds-section-title">
-              <span className="ds-field-label">
-                Melhorias
-                <HelpTooltip
-                  content={TM_HELP_TOOLTIPS.instancias.escopo}
-                  ariaLabel="Ajuda: Melhorias"
-                />
-              </span>
-            </h2>
-            <p className="ds-hint">
-              Cada melhoria aplica o processo a unidades e departamentos — podem se repetir livremente.
-              Abra para definir escopo, baseline, cenários e medições.
-            </p>
-          </div>
-          <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
-            <Plus size={16} />
-            Nova melhoria
-          </button>
+        <div className="ds-card">
+          <MelhoriaFolderBrowser
+            items={instancias}
+            activeFilialCount={activeFilialCount}
+            selectedInstanciaId={selectedInstanciaId}
+            emptyMessage="Nenhuma melhoria cadastrada."
+            detailColumns={columns}
+            onOpen={(row) => onSelect(row.instancia_id)}
+            headerActions={
+              <button type="button" className="ds-primary-btn" disabled={busy} onClick={openCreateForm}>
+                <Plus size={16} />
+                Nova melhoria
+              </button>
+            }
+          />
         </div>
-        <DataTableSection
-          columnPreferencesKey="transformometro:ProcessoInstanciasPanel:processoinstanciaspanel:v1"
-          embedded
-          title=""
-          columns={columns}
-          rows={instancias}
-          rowKey={(row) => row.instancia_id}
-          hideSearch
-          emptyMessage="Nenhuma melhoria cadastrada."
-        />
-      </section>
       )}
 
       {showForm ? (
         <section className="ds-card ds-cadastro-form">
-          <h2 className="ds-section-title">{formTitle}</h2>
+          <div className={DS_TABLE_SECTION_CLASS_NAMES.header}>
+            <h2 className="ds-section-title">{formTitle}</h2>
+            <div className={DS_TABLE_SECTION_CLASS_NAMES.actions}>
+              <IconButton
+                aria-label="Fechar formulário"
+                disabled={saving}
+                onClick={handleCancelForm}
+              >
+                <X size={16} aria-hidden="true" />
+              </IconButton>
+            </div>
+          </div>
           {isCreate ? (
             <p className="ds-hint">
               Marque unidades e departamentos. Várias melhorias podem usar a mesma combinação — cada

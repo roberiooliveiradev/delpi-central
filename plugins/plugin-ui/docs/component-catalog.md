@@ -443,11 +443,20 @@ Seção estática com header (título, hint, subtítulo) — sem modo edição.
 
 Helpers: `sectionCardKaizenBemClasses`, `sectionCardPacBemClasses`, `createDashboardSectionCard({ classNames, labels })`.
 
-### `FormGrid` / `FormActions`
+### `FormGrid` / `FormActions` / `DirtySaveActions`
 
 Grade CSS grid para formulários e rodapé de botões.
 
-Helpers: `createDashboardFormGrid({ classNames })`, `createDashboardFormActions({ classNames })`.
+| Export | Uso |
+|--------|-----|
+| `FormActions` / `createDashboardFormActions` | Rodapé genérico |
+| `DirtySaveActions` / `createDashboardDirtySaveActions` | Salvar alinhado — **só renderiza com `dirty`** (ou enquanto `saving`) |
+| `useEditableDraft` / `valuesEqual` / `shouldShowDirtySave` | Detecção centralizada de alterações |
+
+`EditableSectionCard`: prop `dirty` — o botão Salvar do header só aparece quando `dirty` (ou `saving`).
+Ao alternar leitura/edição o conteúdo é remontado (`key`), para o **Cancelar** descartar drafts internos; formulários no pai devem restaurar o baseline no `onCancel`.
+
+Helpers: `createDashboardFormGrid({ classNames })`, `createDashboardFormActions({ classNames })`, `createDashboardDirtySaveActions({ classNames, primaryButtonClassName })`.
 
 ### `NativeFormFields` (`createDashboardNativeFormFields`)
 
@@ -821,7 +830,7 @@ Encaixa conteúdo arbitrário em um retângulo com escala uniforme (`min(width/r
 
 ### `FilePreviewModal`
 
-Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`.
+Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`. Por padrão **`containInHost`** (modal na área do MFE, sem cobrir a sidebar do portal); use `containInHost={false}` para fullscreen no viewport.
 
 ### `FilePreviewMetaFooter`
 

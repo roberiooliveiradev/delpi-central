@@ -100,3 +100,68 @@ def test_list_returns_paged_list_meta(
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "list_production_appointments"
     assert body["meta"]["shape"] == "paged_list"
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_list_production_appointment_work_centers_use_case"
+)
+def test_work_centers_returns_meta(
+    mock_builder, _mock_branch, pa_client: TestClient
+) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(return_value={"items": [], "pagination": {"total": 0}})
+    )
+    response = pa_client.get(
+        "/production/appointments/work-centers", params={"branch": "01"}
+    )
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "list_production_appointment_work_centers"
+    assert body["meta"]["shape"] == "paged_list"
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_get_production_appointments_series_use_case"
+)
+def test_series_returns_meta(mock_builder, _mock_branch, pa_client: TestClient) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(return_value={"points": [], "granularity": "day"})
+    )
+    response = pa_client.get(
+        "/production/appointments/series",
+        params={"branch": "01", "date_start": "2026-06-01", "date_end": "2026-06-30"},
+    )
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_production_appointments_series"
+    assert body["meta"]["shape"] == "playbook_report"
+    assert body["meta"]["dataVersion"] == DATA_VERSION
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_list_production_appointments_by_op_use_case"
+)
+def test_by_op_returns_meta(mock_builder, _mock_branch, pa_client: TestClient) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(return_value={"items": [], "pagination": {"total": 0}})
+    )
+    response = pa_client.get(
+        "/production/appointments/by-op",
+        params={"branch": "01", "op": "OP1"},
+    )
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "list_production_appointments_by_op"
+    assert body["meta"]["shape"] == "paged_list"

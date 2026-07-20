@@ -301,6 +301,12 @@
   cursor: not-allowed;
 }
 
+/* Portal define `svg { display: block }` — sem flex no botão o ícone empilha sobre o texto. */
+.delpi-ui-ghost-btn > svg {
+  display: block;
+  flex-shrink: 0;
+}
+
 .delpi-ui-ghost-btn--icon {
   width: 32px;
   height: 32px;

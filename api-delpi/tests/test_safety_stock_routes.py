@@ -91,6 +91,38 @@ def test_summary_returns_envelope(mock_builder, _mock_branch, safety_stock_clien
 
 
 @patch(
+    "app.interface.http.routes.supplies.safety_stock_router.list_viewable_branches",
+    return_value=["01", "02"],
+)
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.supplies.safety_stock_router.build_get_safety_stock_filters_use_case"
+)
+def test_filters_returns_envelope(
+    mock_builder, _mock_branch, _mock_branches, safety_stock_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {"groups": [], "warehouses": []}
+    mock_builder.return_value = use_case
+
+    response = safety_stock_client.get(
+        "/supplies/safety-stock/filters",
+        params={"branch": "01"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["success"] is True
+    assert body["meta"]["operationId"] == "get_supplies_safety_stock_filters"
+    assert body["meta"]["entity"] == "supplies_safety_stock_filters"
+    assert body["meta"]["shape"] == "scalar"
+    assert body["data"]["authorized_branches"] == ["01", "02"]
+
+
+@patch(
     "app.interface.http.routes.supplies.safety_stock_router.branch_access_error",
     return_value=None,
 )

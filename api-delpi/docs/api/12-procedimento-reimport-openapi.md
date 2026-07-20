@@ -2,9 +2,18 @@
 
 Execute sempre que alterar rotas, `operationId`, `summary` ou schemas em `api-delpi`.
 
+Antes de reimportar: garantir que a rota nova seguiu [openapi-bilingue-catalogo-canonico.md](./openapi-bilingue-catalogo-canonico.md) (baseline + catálogo TV sincronizados).
+
 ## 1. Deploy da api-delpi
 
 Subir o container/serviço com a versão nova da API.
+
+Com `OPENAPI_CONSUMER_NOTIFY_ON_STARTUP=true` (default) e `API_DELPI_INTERNAL_SERVICE_TOKEN` configurado, a **própria api-delpi** notifica chat + TV ~15s após o startup (`scripts/notify_openapi_consumers.py`). Por padrão **atualiza os schemas OpenAPI** (reimport de actions + embeddings no chat; catálogo no TV). Para pular só embeddings: `OPENAPI_CONSUMER_CHAT_SKIP_EMBEDDINGS=true`.
+
+```bash
+docker exec delpi-api-delpi python3 scripts/notify_openapi_consumers.py
+docker exec delpi-api-delpi python3 scripts/notify_openapi_consumers.py --dry-run
+```
 
 ## 2. Reimport no provider (minha-delpi-ai-api)
 

@@ -26,6 +26,7 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { HelpTooltip, NativeCheckboxControl } from "@delpi/plugin-ui/index";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { buildFilialPath } from "../../utils/routeParser";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
@@ -69,6 +70,14 @@ export function FiliaisPage({ getAccessToken, pathname, onNavigate, embedded = f
   useEffect(() => {
     void load();
   }, [load]);
+
+  useTransformometroCatalogWatch({
+    catalogId: "filial",
+    getAccessToken,
+    onUpdated: () => {
+      void load();
+    },
+  });
 
   async function handleDelete(filial: Filial) {
     const confirmed = await confirm({

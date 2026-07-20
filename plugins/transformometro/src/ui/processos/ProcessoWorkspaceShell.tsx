@@ -24,9 +24,12 @@ import { TRANSFORMOMETRO_WORKSPACE_HASH_EVENT } from "../../utils/navigation";
 import { ProcessoWorkspaceSidebar } from "./ProcessoWorkspaceSidebar";
 import {
   buildProcessoWorkspaceTree,
+  defaultInstanciaSection,
   defaultRevisaoSection,
+  parseInstanciaSectionFromHash,
   parseProcessoSectionFromHash,
   parseRevisaoSectionFromHash,
+  type InstanciaWorkspaceSectionId,
   type ProcessoWorkspaceSectionId,
   type RevisaoWorkspaceSectionId,
 } from "./processoWorkspaceNav";
@@ -121,7 +124,7 @@ export function ProcessoWorkspaceShell({
     return () => {
       cancelled = true;
     };
-  }, [getAccessToken, instancias]);
+  }, [getAccessToken, instancias, revisoes]);
 
   const treeNodes = useMemo(() => {
     if (!processo) return [];
@@ -205,5 +208,17 @@ export function useRevisaoWorkspaceSection(cenarioTipo?: string | null): Revisao
     subscribeWorkspaceSection,
     () => readRevisaoSectionSnapshot(cenarioTipo),
     () => defaultRevisaoSection(cenarioTipo)
+  );
+}
+
+function readInstanciaSectionSnapshot(): InstanciaWorkspaceSectionId {
+  return parseInstanciaSectionFromHash(window.location.hash);
+}
+
+export function useInstanciaWorkspaceSection(): InstanciaWorkspaceSectionId {
+  return useSyncExternalStore(
+    subscribeWorkspaceSection,
+    readInstanciaSectionSnapshot,
+    () => defaultInstanciaSection()
   );
 }

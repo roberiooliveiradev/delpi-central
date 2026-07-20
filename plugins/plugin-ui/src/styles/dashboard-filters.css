@@ -32,9 +32,14 @@
 
 .delpi-ui-filter-box--action {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 8px;
+  width: max-content;
+  max-width: 100%;
+  justify-self: end;
 }
 
 .delpi-ui-filter-box--wide {
@@ -240,11 +245,24 @@
 
 /** Bridge: fields/`filter-box` dentro de FiltersRow (PAC e afins). */
 .delpi-ui-filters-row [class$="-field"],
-.delpi-ui-filters-row .delpi-ui-filter-box {
+.delpi-ui-filters-row .delpi-ui-filter-box:not(.delpi-ui-filter-box--action) {
   display: flex;
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+}
+
+/** Trailing de ações: manter na mesma linha (a bridge acima não pode sobrescrever). */
+.delpi-ui-filters-row .delpi-ui-filter-box--action {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 8px;
+  width: max-content;
+  max-width: 100%;
+  justify-self: end;
 }
 
 .delpi-ui-filters-row [class$="-field"] label,

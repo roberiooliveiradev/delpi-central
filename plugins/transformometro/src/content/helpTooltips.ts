@@ -18,13 +18,28 @@ export const TM_HELP_TOOLTIPS = {
     cenario: "Tipo de cenário: linha de base, melhoria, automação ou correção.",
     referenciaComparacao:
       "Revisão usada como referência para calcular economia e diffs desta versão.",
-    inicio: "Data de início da vigência da revisão ou período de custo.",
-    implantacao: "Data em que a melhoria entrou em operação.",
+    inicio:
+      "Início da vigência da revisão: a partir desta data ela passa a valer para medições e dashboard. Não é a data de go-live (veja a coluna Implantação).",
+    implantacao:
+      "Data em que a solução entrou em operação (go-live). Pode coincidir com o Início ou ser outra. Opcional; se vazia, alguns relatórios usam o Início como fallback. Não define a janela de cálculo — isso é o Início.",
+    custoInicio:
+      "Início da vigência deste valor mensal no histórico de custos do recurso.",
     fim: "Data de encerramento da vigência. Revisões encerradas deixam de ser ativas.",
     ativa: "Revisão marcada como vigente na instância — usada como referência operacional.",
     competencia: "Mês de referência dos dados consolidados (YYYY-MM).",
     mesesComDados: "Quantidade de competências com medição registrada na revisão.",
     economiaBruta: "Ganho bruto estimado antes de descontar investimentos e recursos.",
+    economiaTempo: "Parcela da economia bruta atribuída à redução de tempo de execução.",
+    economiaRetrabalho: "Parcela da economia bruta ligada a menos retrabalho.",
+    economiaErros: "Parcela da economia bruta ligada a menos erros/refugos.",
+    economiaOutros: "Outros desperdícios evitados na comparação com a referência.",
+    economiaReducaoVolume:
+      "Sinal analítico quando o volume cai vs. a referência (sem double-count na bruta).",
+    ganhoCapacidade:
+      "Benefício de volume acima da referência (capacidade). Soma-se à economia bruta e entra no ROI.",
+    deltaVolume: "Diferença de volume mensal da revisão em relação à referência (última competência).",
+    beneficioCategoria:
+      "Classificação do benefício da revisão (automático por padrão, ou tempo/volume/capacidade/qualidade/misto). Orienta interpretação; a bruta/ROI já incluem capacidade quando o volume sobe.",
     economiaLiquida: "Ganho após descontar investimentos e rateio de recursos compartilhados.",
     investimentoTotal: "Soma dos investimentos apropriados no período da revisão.",
     recursosComp: "Custo mensal de recursos compartilhados rateados para a revisão.",
@@ -80,7 +95,9 @@ export const TM_HELP_TOOLTIPS = {
       economiaLiquida:
         "Economia líquida do recorte: economia bruta menos os custos (investimentos e rateio de recursos) no período. Instâncias «todas as unidades ativas» multiplicam só a economia operacional no Consolidado (não investimento nem recursos).",
       economiaBruta:
-        "Ganho bruto estimado no período, antes de descontar custos. No Consolidado, instâncias multi-unidade contam uma vez por unidade ativa cadastrada.",
+        "Ganho bruto do período (economia de custo + ganho de capacidade), antes de descontar investimentos. No Consolidado, instâncias multi-unidade contam uma vez por unidade ativa cadastrada.",
+      ganhoCapacidade:
+        "Parcela da economia bruta relativa a volume acima da referência. Entra no ROI via economia bruta/líquida.",
       solucoes:
         "Melhorias (instâncias) com revisão comparável ativa (melhoria, automação ou correção) no recorte de visão — snapshot do cadastro, independente do período filtrado.",
       horas:
@@ -141,6 +158,8 @@ export const TM_HELP_TOOLTIPS = {
     timelineFilter: "Restringe a linha do tempo por tipo de entidade alterada.",
     diagramaMacro:
       "Mapa canônico do fluxo end-to-end do processo-mestre. Nós com ID estável são reutilizados nas melhorias e revisões.",
+    diagramaComposto:
+      "Visão do fluxo na data D: diagrama macro + overlays das revisões vigentes. Interseções no mesmo nó geram aviso.",
     arquivos:
       "Documentos de referência do processo-mestre — POP, instruções, planilhas e links úteis (independente das evidências por revisão).",
     arquivoUrl: "Endereço web externo do documento (SharePoint, drive, repositório…).",
@@ -169,7 +188,9 @@ export const TM_HELP_TOOLTIPS = {
     contextoObservacoesRollout:
       "Notas sobre implantação, dependências, restrições locais ou plano de comunicação.",
     mapeamentoRevisao:
-      "Overlay textual as-is/to-be sobre o escopo WBS — rótulos e descrições da revisão.",
+      "Âncora = mapeamento da revisão de referência (exceto baseline). Você edita o delta a partir dessa árvore; na gravação o overlay fica absoluto no macro do processo para o macro composto «agora» refletir as revisões vigentes.",
+    macroComposto:
+      "Visão do macro na data D: árvore base + overlays das revisões vigentes (início–fim de vigência). Interseções no mesmo nó geram aviso; o rótulo exibido é o da vigência mais recente.",
     arvoreVazia:
       "Nenhum processo-chave cadastrado. Use + Processo-chave ou «Sugerir do fluxo» para começar.",
   },
@@ -195,22 +216,36 @@ export const TM_HELP_TOOLTIPS = {
     rotulo:
       "Título curto da melhoria, exibido na listagem, na linha do tempo e nos relatórios. Use para distinguir melhorias no mesmo par unidade × departamento (ex.: «Automação do fechamento — Q2/2026»).",
     diagramaEscopo:
-      "Selecione quais nós do diagrama macro desta instância são relevantes neste ambiente operacional.",
+      "Define quais etapas do diagrama-macro desta melhoria entram no fluxo. O «Diagrama da revisão» e o diagrama composto usam só esse recorte — não o mapa inteiro, salvo se você marcar o macro completo.",
+    diagramaEscopoMacroCompleto:
+      "Marcado: esta melhoria enxerga todo o diagrama-macro (todas as faixas e etapas). Desmarcado: clique nos nós do desenho para escolher só as etapas relevantes; o restante fica fora do escopo e das revisões desta melhoria.",
+    diagramaEscopoArestasFronteira:
+      "Só vale com escopo parcial. Marcado: mantém setas que ligam uma etapa dentro do escopo a outra fora (fronteira). Desmarcado: só setas entre etapas ambas dentro do escopo — o fluxo fica «fechado» no recorte. Com macro completo a opção não se aplica.",
+    modosVisualizacao:
+      "Alterne entre ícones grandes (só título), ícones médios (+ unidade e meta), lista (+ status) e tabela detalhada com ações.",
+    ordenacaoCampo: "Campo usado para ordenar a lista de melhorias em todos os modos de visualização.",
+    ordenacaoDirecao:
+      "Menor → maior (A–Z) ou Maior → menor (Z–A) conforme o campo selecionado.",
   },
   revisao: {
     versao: "Identificador da revisão (ex.: 1.0.0). Deve ser único dentro da instância.",
     cenario:
-      "Linha de base = as-is (sem referência). Demais cenários exigem escolher contra qual revisão comparar.",
+      "Tipo da revisão: linha de base (as-is, sem comparação) ou melhoria/automação/correção (exigem «Compara com»). Define se a revisão entra no cálculo de economia.",
+    beneficioCalculoCategoria:
+      "Classifica o tipo principal de benefício desta revisão frente à referência (automático, tempo, menos execuções, mais capacidade, qualidade ou misto). Default: Automático (não classificado). Não troca a fórmula: a economia bruta já soma ganho de custo e, se o volume subir, ganho de capacidade — esse valor entra no ROI. A categoria orienta o cadastro e a leitura; o texto sob o campo detalha a opção selecionada.",
     referenciaComparacao:
-      "Revisão anterior usada como referência para economia, payback e diffs de diagrama/WBS. A baseline não precisa deste campo.",
-    inicioVigencia: "Data a partir da qual a revisão passa a valer para medições e dashboard.",
-    implantacao: "Data em que a solução foi implantada — usada em relatórios de implantação.",
+      "Revisão usada como base de comparação (economia, ROI, diffs de diagrama/WBS). Em geral a baseline ou a versão anterior ativa da mesma melhoria.",
+    inicioVigencia:
+      "Início da vigência: a partir desta data a revisão vale para medições e dashboard. Obrigatória. Diferente da Implantação (go-live), que é opcional e pode ser outra data.",
+    implantacao:
+      "Go-live: quando a solução entrou em operação. Pode ser igual ao Início da vigência ou posterior/anterior. Opcional; se vazia, relatórios de implantação podem usar o Início. Não substitui a vigência no cálculo.",
     fimVigencia: "Encerra a revisão. Revisões com fim não podem ser marcadas como ativas.",
     revisaoAtiva: "Indica qual revisão é a vigente na instância (exceto baseline).",
     descricao: "Resumo do que a revisão representa (ex.: automação do fechamento).",
     motivo: "Motivo da criação ou alteração (ex.: nova ferramenta, mudança de escopo).",
     observacoes: "Notas complementares sobre a revisão.",
-    volumeMensal: "Volume de execuções ou transações por mês usado no cálculo de economia.",
+    volumeMensal:
+      "Volume de execuções ou transações por mês. Em «Economia de tempo», alinhe ao da referência para comparar custo 1:1; em capacidade/redução, use o volume real.",
     tempoMedio: "Tempo médio de execução por unidade, em minutos.",
     tempoRetrabalho: "Tempo médio de retrabalho por unidade, em minutos.",
     custoHoraMo: "Custo hora da mão de obra usado para converter tempo em R$.",
@@ -227,23 +262,27 @@ export const TM_HELP_TOOLTIPS = {
     evidencias:
       "Anexos (PDF, imagem, planilha) ou links que comprovam a melhoria desta revisão.",
     diagramaRevisao:
-      "Estado visual as-is (baseline) ou to-be (melhoria) sobre o escopo da instância — overlay sobre o diagrama macro.",
+      "Âncora = diagrama da revisão de referência (exceto baseline). Edite o delta a partir desse fluxo; na gravação o overlay fica absoluto no macro para o diagrama composto «agora» refletir as revisões vigentes.",
     evidenceUrl: "Endereço web externo da evidência (documento, vídeo, repositório…).",
     evidenceDescription: "Texto curto que identifica a evidência na lista.",
     comparativoChart:
-      "Compara economia bruta, líquida, investimentos, recursos compartilhados e horas entre as revisões desta instância.",
+      "Compara economia bruta (já inclui capacidade), líquida, investimentos, recursos e horas entre as revisões. O detalhe das parcelas (tempo, retrabalho, erros, outros e capacidade) fica no gráfico de composição.",
+    comparativoBreakdownChart:
+      "Barras horizontais com as parcelas da economia bruta: tempo, retrabalho, erros, outros e ganho de capacidade. Aparece quando há mais de um tipo com valor (ex.: tempo + capacidade em categoria misto).",
     comparativoTable:
-      "Tabela com os mesmos indicadores do gráfico, incluindo competência e meses com dados.",
+      "Tabela com economia, breakdown (tempo/retrabalho/erros), categoria, Δ volume, capacidade e meses com dados.",
+    comparativoAvisos:
+      "Alertas quando o volume diverge da referência — ajuda a interpretar se a economia vem de tempo, volume ou capacidade.",
   },
   matriz: {
     titulo:
-      "Posiciona a revisão em impacto (benefício) versus esforço (custo/complexidade) frente às demais revisões comparáveis da mesma melhoria.",
+      "Posiciona a revisão em impacto (benefício) versus esforço (custo/complexidade). Com várias revisões comparáveis no mesmo escopo, normaliza por percentil entre elas; com uma só (ou empate), usa escala absoluta de negócio — assim o ponto muda quando medição/investimento mudam.",
     modo:
-      "Automático usa medição, investimentos e comparativo; Híbrido combina dados com percepção qualitativa; Manual prioriza os ajustes informados.",
+      "Automático usa medição, investimentos e comparativo (e reage a mudanças nesses dados). Híbrido combina dados com percepção qualitativa; Manual prioriza os ajustes informados. Em Automático, salve medição/investimentos — os campos qualitativos só entram em Híbrido/Manual.",
     confianca:
       "Indica a robustez do score automático conforme completude de medição, referência, investimentos e recursos.",
     quadrantes:
-      "Ganho rápido = alto impacto e baixo esforço; Estratégico = alto em ambos; Complementar = baixo em ambos; Reavaliar = baixo impacto e alto esforço.",
+      "Legenda dos quatro quadrantes: Ganho rápido (alto impacto / baixo esforço), Estratégico (alto / alto), Complementar (baixo / baixo) e Reavaliar (baixo impacto / alto esforço).",
     modoLabel: "Modo de cálculo",
     confiancaLabel: "Confiança do score",
     posicaoAtual:
@@ -252,8 +291,10 @@ export const TM_HELP_TOOLTIPS = {
       "Economia líquida anualizada com base na medição, investimentos e recursos rateados.",
     rateioExcedeGanho:
       "O rateio de recursos compartilhados excede a economia bruta desta revisão.",
-    impactoScore: "Score de benefício (0–100) — quanto a revisão gera de ganho.",
-    esforcoScore: "Score de esforço (0–100) — custo/complexidade de implantação e adoção.",
+    impactoScore:
+      "Score de benefício (0–100). Com peers distintos: posição relativa; sozinho: escala absoluta (economia, horas, ROI, qualidade).",
+    esforcoScore:
+      "Score de esforço (0–100). Com peers distintos: posição relativa; sozinho: escala absoluta (investimento, recursos, HH, complexidade).",
     quadranteColuna: "Classificação na matriz impacto × esforço.",
     liquidaAnualColuna: "Economia líquida projetada para 12 meses.",
     revisaoAtivaColuna: "Revisão marcada como vigente na melhoria.",

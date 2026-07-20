@@ -102,6 +102,16 @@
       "parameterStrategy": "date_branch",
       "method": "GET"
     },
+    "department_idd": {
+      "label": "IDD estratégico (metas e realizado)",
+      "pathMarkers": [
+        "/dashboard/department-idd",
+        "/dashboard/department-indicators",
+        "/dashboard/departments-indicators"
+      ],
+      "parameterStrategy": "department_idd",
+      "method": "GET"
+    },
     "supplies_kpi": {
       "label": "KPI suprimentos",
       "pathMarkers": ["/supplies/"],
@@ -235,6 +245,63 @@
       "emptyDefault": {
         "limit": 10
       }
+    },
+    "department_idd": {
+      "description": "Departamento SI (IDD) + filial/datas para metas e realizado",
+      "patterns": {
+        "branch": "\\bfilial\\s+(\\d{2})\\b",
+        "department_id": "\\b(comercial|commercial|qualidade|quality|producao|produção|production|financeiro|financial|suprimentos|supplies|engenharia|engineering|rh|hr|recursos humanos)\\b"
+      },
+      "departmentIdAliases": {
+        "comercial": "commercial",
+        "commercial": "commercial",
+        "qualidade": "quality",
+        "quality": "quality",
+        "producao": "production",
+        "produção": "production",
+        "production": "production",
+        "financeiro": "financial",
+        "financial": "financial",
+        "suprimentos": "supplies",
+        "supplies": "supplies",
+        "engenharia": "engineering",
+        "engineering": "engineering",
+        "rh": "hr",
+        "hr": "hr",
+        "recursos humanos": "hr"
+      },
+      "bindings": [
+        {
+          "source": "branch_regex",
+          "matchAliases": ["branch", "filial", "branch_code"]
+        },
+        {
+          "source": "date_range.start",
+          "matchAliases": [
+            "start_date",
+            "startdate",
+            "data_inicio",
+            "data_inicial",
+            "date_start",
+            "datestart"
+          ]
+        },
+        {
+          "source": "date_range.end",
+          "matchAliases": [
+            "end_date",
+            "enddate",
+            "data_fim",
+            "data_final",
+            "date_end",
+            "dateend"
+          ]
+        },
+        {
+          "source": "department_id_regex",
+          "matchAliases": ["department_id", "departamento"]
+        }
+      ]
     },
     "product_search": {
       "description": "Termo ou código de busca",

@@ -366,6 +366,23 @@ class OperationalRouteActionResolverService:
 
             return parameters
 
+        if strategy == "department_idd":
+            from app.domain.services.operational_api_parameter_builder_service import (
+                OperationalApiParameterBuilderService,
+            )
+
+            parameters = OperationalApiParameterBuilderService().build_department_idd(
+                action,
+                message,
+                previous_messages=previous_messages,
+            )
+            parameters = OperationalRouteQueryDefaultsService.apply(
+                action,
+                parameters,
+                route=route,
+            )
+            return self._catalog.filter_parameters_to_schema(action, parameters)
+
         if strategy == "sale_orders":
             from app.domain.services.operational_api_parameter_builder_service import (
                 OperationalApiParameterBuilderService,

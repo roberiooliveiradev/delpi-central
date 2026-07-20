@@ -32,11 +32,14 @@ export type DecompositionOverlayV1 = {
     {
       label?: string;
       descricao?: string | null;
+      parent_id?: string | null;
+      ordem?: number;
       highlight?: "asis" | "tobe" | "changed" | "removed";
       meta?: Record<string, unknown>;
     }
   >;
   disabled_node_ids?: string[];
+  extra_nodes?: DecompositionNode[];
 };
 
 export type InstanciaContextoV1 = {
@@ -79,14 +82,56 @@ export type MergedRevisaoDecomposition = {
   revisao_id: string;
   cenario_tipo?: string;
   tree: DecompositionTreeV1;
+  /** Macro do processo no escopo — base absoluta para gravar o overlay. */
+  tree_base?: DecompositionTreeV1;
+  /** Mapeamento mesclado da revisão de referência (âncora de edição). */
+  tree_reference?: DecompositionTreeV1 | null;
   escopo: DecompositionEscopo;
   overlay: DecompositionOverlayV1;
   warnings: string[];
+  seeded_from_reference?: boolean;
+  referencia?: {
+    revisao_id: string;
+    versao_revisao?: string;
+    cenario_tipo?: string;
+  } | null;
   baseline_diff?: {
     changed: string[];
     added: string[];
     removed: string[];
   } | null;
+  reference_diff?: {
+    changed: string[];
+    added: string[];
+    removed: string[];
+  } | null;
+};
+
+export type ComposedProcessoDecomposition = {
+  processo_id: string;
+  at: string;
+  instancia_id?: string | null;
+  tree: DecompositionTreeV1;
+  applied_revisoes: Array<{
+    revisao_id: string;
+    instancia_id: string;
+    versao_revisao?: string;
+    cenario_tipo?: string;
+    data_inicio_vigencia?: string;
+    node_ids_tocados: string[];
+  }>;
+  conflicts: Array<{
+    node_id: string;
+    field: string;
+    winner_revisao_id: string;
+    revisoes: Array<{
+      revisao_id: string;
+      versao_revisao?: string;
+      label?: string | null;
+      disabled?: boolean;
+    }>;
+  }>;
+  base_node_count?: number;
 };
 
 export function emptyDecompositionTree(): DecompositionTreeV1 {
@@ -103,6 +148,7 @@ export function emptyDecompositionOverlay(): DecompositionOverlayV1 {
     format_version: 1,
     node_overrides: {},
     disabled_node_ids: [],
+    extra_nodes: [],
   };
 }
 

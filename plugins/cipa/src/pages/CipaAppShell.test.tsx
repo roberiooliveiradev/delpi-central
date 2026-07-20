@@ -15,6 +15,7 @@ const api = vi.hoisted(() => ({
   getMinute: vi.fn(),
   getAudit: vi.fn(),
   exportPdf: vi.fn(),
+  exportFilteredPdfs: vi.fn(),
 }));
 
 const navigation = vi.hoisted(() => ({
@@ -30,6 +31,7 @@ vi.mock("../api/cipaApi", () => ({
   endCipaMember: vi.fn(),
   fetchMySignatureImageBlob: vi.fn(),
   exportPdf: api.exportPdf,
+  exportFilteredPdfs: api.exportFilteredPdfs,
   finalizeMinute: vi.fn(),
   getAudit: api.getAudit,
   getMinute: api.getMinute,
@@ -75,6 +77,7 @@ beforeAll(() => {
     configurable: true,
     value: vi.fn(() => ({
       beginPath: vi.fn(),
+      clearRect: vi.fn(),
       fillRect: vi.fn(),
       lineTo: vi.fn(),
       moveTo: vi.fn(),
@@ -134,6 +137,7 @@ beforeEach(() => {
   ]);
   api.getAudit.mockResolvedValue({ items: [] });
   api.exportPdf.mockResolvedValue(new Blob(["pdf"], { type: "application/pdf" }));
+  api.exportFilteredPdfs.mockResolvedValue(new Blob(["zip"], { type: "application/zip" }));
   api.getMinute.mockResolvedValue({
     minute: {
       id: "minute-1",
@@ -169,6 +173,8 @@ describe("CipaAppShell compartilhado", () => {
     ).toBeTruthy();
     expect(screen.getByLabelText("Status")).toBeTruthy();
     expect(screen.getByLabelText("Busca")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Buscar$/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Baixar PDFs filtrados/ })).toBeTruthy();
 
     await screen.findByText("Reunião ordinária");
     const table = container.querySelector(".delpi-ui-table");
@@ -184,6 +190,36 @@ describe("CipaAppShell compartilhado", () => {
     fireEvent.keyDown(row!, { key: "Enter" });
     expect(navigation.navigateCipa).toHaveBeenCalledWith(
       "/apps/cipa/filial-01/minutes/minute-1",
+    );
+  });
+
+  it("aplica busca automaticamente sem botão Buscar", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByText("Reunião ordinária");
+    api.listMinutes.mockClear();
+
+    fireEvent.change(screen.getByLabelText("Busca"), {
+      target: { value: "ordinária" },
+    });
+
+    await waitFor(
+      () =>
+        expect(api.listMinutes).toHaveBeenCalledWith(
+          expect.objectContaining({
+            unit_code: "01",
+            q: "ordinária",
+          }),
+          expect.anything(),
+        ),
+      { timeout: 1500 },
     );
   });
 
@@ -348,6 +384,28 @@ describe("CipaAppShell compartilhado", () => {
     });
     expect(screen.getByDisplayValue("Ana")).toBeTruthy();
     expect(screen.getByText("Nenhuma assinatura cadastrada ainda.")).toBeTruthy();
+  });
+
+  it("baixa ZIP com PDFs das atas filtradas", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByText("Reunião ordinária");
+    fireEvent.click(screen.getByRole("button", { name: /Baixar PDFs filtrados/ }));
+
+    await waitFor(() =>
+      expect(api.exportFilteredPdfs).toHaveBeenCalledWith({
+        unit_code: "01",
+        status: undefined,
+        q: undefined,
+      }),
+    );
   });
 
   it("renderiza modo de leitura e baixa o PDF oficial", async () => {

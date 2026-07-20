@@ -24,10 +24,37 @@ STATUS_RECURSO = ("ativo", "inativo")
 ESCOPO_RECURSO = ("empresa", "filial", "setor")
 STATUS_APROVACAO_REVISAO = ("rascunho", "em_analise", "aprovada", "rejeitada")
 
+# Playbook 22 — categoria de cálculo de benefício (revisão vs. referência)
+BENEFICIO_CALCULO_CATEGORIA_DEFAULT = "automatico"
+BENEFICIO_CALCULO_CATEGORIA = (
+    "automatico",
+    "economia_tempo",
+    "reducao_volume",
+    "ganho_capacidade",
+    "economia_qualidade",
+    "misto",
+)
+
+BENEFICIO_CALCULO_CATEGORIA_LABELS: dict[str, str] = {
+    "automatico": "Automático",
+    "economia_tempo": "Economia de tempo",
+    "reducao_volume": "Redução de execuções",
+    "ganho_capacidade": "Ganho de capacidade",
+    "economia_qualidade": "Economia de qualidade",
+    "misto": "Misto",
+}
+
 
 def assert_in(value: str, allowed: tuple[str, ...], field: str) -> None:
     if value not in allowed:
         raise ValueError(f"{field} inválido: {value}")
+
+
+def normalize_beneficio_calculo_categoria(value: str | None) -> str:
+    raw = (value or "").strip().lower() or BENEFICIO_CALCULO_CATEGORIA_DEFAULT
+    if raw not in BENEFICIO_CALCULO_CATEGORIA:
+        raise ValueError(f"beneficio_calculo_categoria inválido: {value}")
+    return raw
 
 
 def options_payload(
@@ -57,4 +84,7 @@ def options_payload(
         "status_recurso": list(STATUS_RECURSO),
         "escopo_recurso": list(ESCOPO_RECURSO),
         "status_aprovacao_revisao": list(STATUS_APROVACAO_REVISAO),
+        "beneficio_calculo_categoria": list(BENEFICIO_CALCULO_CATEGORIA),
+        "beneficio_calculo_categoria_default": BENEFICIO_CALCULO_CATEGORIA_DEFAULT,
+        "beneficio_calculo_categoria_labels": dict(BENEFICIO_CALCULO_CATEGORIA_LABELS),
     }

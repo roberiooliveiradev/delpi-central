@@ -4,6 +4,12 @@ from typing import Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_REQUIRED as BRANCH_QUERY,
+    SAFETY_STOCK_STATUS_QUERY,
+    SORT_DIR_QUERY_ALIAS_SORT_DIRECTION,
+)
+
 from app.application.dto.supplies.safety_stock_request import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
@@ -183,57 +189,50 @@ def execute_safety_stock_route(
         )
 
 
-BRANCH_QUERY = Query(
-    ...,
-    min_length=2,
-    max_length=2,
-    pattern="^(01|02)$",
-    description='Filial Protheus ("01" ou "02").',
-)
-INCLUDE_BLOCKED_QUERY = Query(
+def INCLUDE_BLOCKED_QUERY():
+    return Query(
     False,
     alias="includeBlocked",
     description="Incluir produtos bloqueados (B1_MSBLQL).",
 )
-PRODUCT_GROUP_QUERY = Query(
+def PRODUCT_GROUP_QUERY():
+    return Query(
     None,
     alias="productGroup",
     description="Filtro por grupo de produto (B1_GRUPO).",
 )
-UNIT_QUERY = Query(None, description="Filtro por unidade de medida (B1_UM).")
-SEARCH_QUERY = Query(None, description="Busca por código ou descrição do produto.")
-STATUS_QUERY = Query(
-    None,
-    description=(
-        "Filtro por status: without_safety_stock, below_safety_stock, "
-        "at_safety_stock ou above_safety_stock."
-    ),
-)
-INCLUDE_WITHOUT_SAFETY_STOCK_QUERY = Query(
+def UNIT_QUERY():
+    return Query(None, description="Filtro por unidade de medida (B1_UM).")
+def SEARCH_QUERY():
+    return Query(None, description="Busca por código ou descrição do produto.")
+def STATUS_QUERY():
+    return SAFETY_STOCK_STATUS_QUERY()
+def INCLUDE_WITHOUT_SAFETY_STOCK_QUERY():
+    return Query(
     True,
     alias="includeWithoutSafetyStock",
     description="Incluir matérias-primas sem estoque de segurança cadastrado.",
 )
-PAGE_QUERY = Query(DEFAULT_PAGE, ge=1, description="Página da listagem.")
-PAGE_SIZE_QUERY = Query(
+def PAGE_QUERY():
+    return Query(DEFAULT_PAGE, ge=1, description="Listing page number.")
+def PAGE_SIZE_QUERY():
+    return Query(
     DEFAULT_PAGE_SIZE,
     alias="pageSize",
     ge=1,
     le=MAX_PAGE_SIZE,
     description=f"Registros por página (máximo {MAX_PAGE_SIZE}).",
 )
-SORT_BY_QUERY = Query(
+def SORT_BY_QUERY():
+    return Query(
     "product_code",
     alias="sortBy",
     description="Campo de ordenação permitido pela API.",
 )
-SORT_DIRECTION_QUERY = Query(
-    "asc",
-    alias="sortDirection",
-    pattern="^(asc|desc)$",
-    description="Direção da ordenação: asc ou desc.",
-)
-SUPPLIER_STORE_QUERY = Query(
+def SORT_DIRECTION_QUERY():
+    return SORT_DIR_QUERY_ALIAS_SORT_DIRECTION()
+def SUPPLIER_STORE_QUERY():
+    return Query(
     ...,
     alias="supplierStore",
     min_length=1,

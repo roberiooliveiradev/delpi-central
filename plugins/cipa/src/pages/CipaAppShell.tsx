@@ -21,6 +21,7 @@ import {
 
 import {
   deleteMinute,
+  exportFilteredPdfs,
   exportPdf,
   finalizeMinute,
   getAudit,
@@ -299,33 +300,79 @@ function MinuteListPage({
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MinuteListItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = () => {
-    const controller = new AbortController();
-    setLoading(true);
-    listMinutes(
-      { unit_code: unitCode, status: status || undefined, q: q || undefined },
-      controller.signal,
-    )
-      .then((data) => {
-        setItems(
-          [...data.items].sort((left, right) => {
-            const byDate = right.meeting_date.localeCompare(left.meeting_date);
-            if (byDate !== 0) return byDate;
-            return String(right.updated_at || "").localeCompare(String(left.updated_at || ""));
-          }),
-        );
-        setError(null);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : "Erro ao listar."))
-      .finally(() => setLoading(false));
-    return () => controller.abort();
-  };
+  const load = useCallback(
+    (signal?: AbortSignal) => {
+      setLoading(true);
+      return listMinutes(
+        { unit_code: unitCode, status: status || undefined, q: q || undefined },
+        signal,
+      )
+        .then((data) => {
+          if (signal?.aborted) return;
+          setItems(
+            [...data.items].sort((left, right) => {
+              const byDate = right.meeting_date.localeCompare(left.meeting_date);
+              if (byDate !== 0) return byDate;
+              return String(right.updated_at || "").localeCompare(String(left.updated_at || ""));
+            }),
+          );
+          setError(null);
+        })
+        .catch((err) => {
+          if (signal?.aborted || (err instanceof DOMException && err.name === "AbortError")) {
+            return;
+          }
+          setError(err instanceof Error ? err.message : "Erro ao listar.");
+        })
+        .finally(() => {
+          if (!signal?.aborted) setLoading(false);
+        });
+    },
+    [unitCode, status, q],
+  );
 
-  useEffect(() => load(), [unitCode, status]);
+  // Status aplica na hora; busca com debounce para não disparar a cada tecla.
+  useEffect(() => {
+    const controller = new AbortController();
+    const delayMs = q ? 300 : 0;
+    const timer = window.setTimeout(() => {
+      void load(controller.signal);
+    }, delayMs);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [load, q]);
+
+  const downloadFilteredPdfs = async () => {
+    if (items.length === 0 || exporting) return;
+    setExporting(true);
+    setError(null);
+    try {
+      const blob = await exportFilteredPdfs({
+        unit_code: unitCode,
+        status: status || undefined,
+        q: q || undefined,
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `atas-cipa-${unitCode}.zip`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao baixar PDFs filtrados.");
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
@@ -334,7 +381,7 @@ function MinuteListPage({
     try {
       await deleteMinute(deleteTarget.id);
       setDeleteTarget(null);
-      load();
+      void load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir ata.");
     } finally {
@@ -431,7 +478,7 @@ function MinuteListPage({
         subtitle="Atas de reunião da unidade"
         actions={
           <>
-            <ActionButton variant="ghost" onClick={() => load()}>
+            <ActionButton variant="ghost" onClick={() => void load()}>
               <RefreshCw size={16} /> Atualizar
             </ActionButton>
             {canSign ? (
@@ -461,7 +508,15 @@ function MinuteListPage({
       <CipaContentCard className="cipa-minute-list-card">
         <CipaFiltersRow
           as="div"
-          trailing={<ActionButton onClick={() => load()}>Buscar</ActionButton>}
+          trailing={
+            <ActionButton
+              disabled={loading || exporting || items.length === 0}
+              onClick={() => void downloadFilteredPdfs()}
+            >
+              <Download size={16} />{" "}
+              {exporting ? "Gerando ZIP…" : "Baixar PDFs filtrados"}
+            </ActionButton>
+          }
         >
           <CipaFilterSelectField
             id="cipa-filter-status"

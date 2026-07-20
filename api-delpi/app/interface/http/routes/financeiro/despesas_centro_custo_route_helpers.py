@@ -4,6 +4,11 @@ from typing import Any, Callable, Optional
 
 from fastapi import Query
 
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL as BRANCH_QUERY,
+    SORT_DIR_QUERY_DESC as SORT_DIR_QUERY,
+)
+
 from app.application.dto.financeiro_despesas_centro_custo.despesas_centro_custo_lancamentos_request import (
     DEFAULT_PAGE,
     DEFAULT_PAGE_SIZE,
@@ -102,50 +107,49 @@ def execute_despesas_centro_custo_route(
         )
 
 
-PERIOD_START_QUERY = Query(
+def PERIOD_START_QUERY():
+    return Query(
     ...,
     min_length=8,
-    description="Data inicial (YYYY-MM-DD ou YYYYMMDD).",
+    description="Start date (YYYY-MM-DD).", json_schema_extra={"format": "date"},
 )
-PERIOD_END_QUERY = Query(
+def PERIOD_END_QUERY():
+    return Query(
     ...,
     min_length=8,
-    description="Data final (YYYY-MM-DD ou YYYYMMDD).",
+    description="End date (YYYY-MM-DD).", json_schema_extra={"format": "date"},
 )
-BRANCH_QUERY = Query(
-    None,
-    min_length=2,
-    max_length=2,
-    pattern="^(01|02)$",
-    description="Filial Protheus (01 ou 02).",
-)
-COST_CENTER_QUERY = Query(None, description="Centro de custo.")
-SUPPLIER_CODE_QUERY = Query(None, description="Código do fornecedor.")
-SUPPLIER_STORE_QUERY = Query(None, description="Loja do fornecedor.")
-RANKING_LIMIT_QUERY = Query(
+def COST_CENTER_QUERY():
+    return Query(None, description="Cost center.")
+def SUPPLIER_CODE_QUERY():
+    return Query(None, description="Supplier code.")
+def SUPPLIER_STORE_QUERY():
+    return Query(None, description="Supplier store.")
+def RANKING_LIMIT_QUERY():
+    return Query(
     DEFAULT_RANKING_LIMIT,
     ge=1,
     le=MAX_RANKING_LIMIT,
-    description="Quantidade máxima de itens no ranking.",
+    description="Maximum ranking items.",
 )
-PAGE_QUERY = Query(
+def PAGE_QUERY():
+    return Query(
     DEFAULT_PAGE,
     ge=1,
-    description="Página da listagem (mínimo 1).",
+    description="Listing page number (minimum 1).",
 )
-PAGE_SIZE_QUERY = Query(
+def PAGE_SIZE_QUERY():
+    return Query(
     DEFAULT_PAGE_SIZE,
     ge=1,
     le=MAX_PAGE_SIZE,
     description="Quantidade de registros por página (máximo 200).",
 )
-SEARCH_QUERY = Query(None, description="Busca textual em documento, pedido, produto, observações e fornecedor.")
-SORT_BY_QUERY = Query(
+def SEARCH_QUERY():
+    return Query(None, description="Text search across document, order, product, notes and supplier.")
+def SORT_BY_QUERY():
+    return Query(
     DEFAULT_SORT_BY,
     description="Campo de ordenação permitido.",
 )
-SORT_DIR_QUERY = Query(
-    DEFAULT_SORT_DIR,
-    pattern="^(asc|desc)$",
-    description="Direção da ordenação: asc ou desc.",
-)
+# SORT_DIR_QUERY imported from query_param_enums

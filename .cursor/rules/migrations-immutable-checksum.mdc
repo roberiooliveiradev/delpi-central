@@ -1,0 +1,38 @@
+---
+description: Migrations SQL imutáveis após aplicadas — nunca editar arquivo já versionado/aplicado
+alwaysApply: true
+---
+
+# Migrations — imutabilidade (checksum)
+
+## Princípio
+
+Arquivo de migration **já commitado e/ou já aplicado** em qualquer ambiente é **imutável**. Alterar o SQL muda o checksum e **derruba o boot** (`Checksum divergente… A migration já aplicada foi alterada`).
+
+Incidente jul/2026: edição do `COMMENT` em `V039__beneficio_calculo_categoria.sql` após apply em prod → crash loop do `delpi-transformometro-api`.
+
+## O que NÃO fazer
+
+- Editar `V00x__*.sql` (ou equivalente) que já existe no histórico git / já rodou em prod/dev.
+- “Só mudar comentário”, whitespace, tipagem ou `COMMENT ON` em migration antiga.
+- Corrigir bug de migration aplicada **reescrevendo** o mesmo arquivo.
+- Pedir ao operador para “atualizar checksum” no banco como atalho de rotina (só exceção documentada e consciente).
+
+## O que fazer
+
+| Necessidade | Ação |
+|-------------|------|
+| Novo DDL / ajuste de schema | **Nova** migration `V0NN__….sql` (próximo número) |
+| Corrigir comentário / constraint / coluna | Nova migration com `COMMENT` / `ALTER` idempotente |
+| Migration ainda **só local**, nunca commitada nem aplicada | Pode editar antes do primeiro commit/apply |
+| Checksum divergente em ambiente | Restaurar o arquivo ao conteúdo **exato** do apply; mudanças vão em migration nova |
+
+## Checklist antes de tocar em `**/migrations/**`
+
+- [ ] O arquivo já está no remoto ou já foi aplicado? → **não editar**; criar `V0NN` novo.
+- [ ] DDL only quando a regra do pacote exigir (ex.: Transformômetro — sem `UPDATE`/backfill).
+- [ ] Após deploy: `migrations_runner status` / `up`; se API em restart, olhar logs de checksum primeiro.
+
+## Escopo
+
+Todos os pacotes com runner por checksum (ex.: `transformometro-api/migrations/`, demais `*_api/**/migrations/`). Em dúvida, tratar **qualquer** `V*__.sql` versionado como imutável.

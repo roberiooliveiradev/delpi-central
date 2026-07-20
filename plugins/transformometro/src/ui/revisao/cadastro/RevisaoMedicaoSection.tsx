@@ -1,6 +1,7 @@
 import type { Medicao } from "../../../data/api/transformometroApi";
 import { FieldLabel, NativeTextControl } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../../content/helpTooltips";
+import { medicaoCategoriaHints } from "../../../content/beneficioCalculoLabels";
 import { toMonthInputValue } from "../../../utils/dateInputs";
 import { CadastroSection } from "./CadastroSection";
 import { TmNativeTextAreaField } from "../../../components/ui/tmNativeFormFields";
@@ -10,6 +11,8 @@ const R = TM_HELP_TOOLTIPS.revisao;
 
 type Props = {
   medicao: Medicao;
+  beneficioCalculoCategoria?: string | null;
+  volumeReferencia?: number | null;
   readOnly?: boolean;
   embeddedInCard?: boolean;
   hideSubmit?: boolean;
@@ -17,9 +20,27 @@ type Props = {
   onSubmit: (e: React.FormEvent) => void;
 };
 
-function MedicaoReadContent({ medicao }: { medicao: Medicao }) {
+function MedicaoHints({ hints }: { hints: string[] }) {
+  if (!hints.length) return null;
+  return (
+    <ul className="ds-hint" style={{ margin: "0 0 0.75rem", paddingLeft: "1.25rem" }}>
+      {hints.map((hint) => (
+        <li key={hint}>{hint}</li>
+      ))}
+    </ul>
+  );
+}
+
+function MedicaoReadContent({
+  medicao,
+  hints,
+}: {
+  medicao: Medicao;
+  hints: string[];
+}) {
   return (
     <>
+      <MedicaoHints hints={hints} />
       <dl className="ds-dl-grid">
         <div><dt>Volume mensal</dt><dd>{medicao.volume_mensal}</dd></div>
         <div><dt>Tempo médio (min)</dt><dd>{medicao.tempo_medio_execucao_min}</dd></div>
@@ -42,14 +63,22 @@ function MedicaoReadContent({ medicao }: { medicao: Medicao }) {
 
 export function RevisaoMedicaoSection({
   medicao,
+  beneficioCalculoCategoria,
+  volumeReferencia,
   readOnly = false,
   embeddedInCard = false,
   hideSubmit = false,
   onChange,
   onSubmit,
 }: Props) {
+  const hints = medicaoCategoriaHints(
+    beneficioCalculoCategoria,
+    medicao.volume_mensal,
+    volumeReferencia
+  );
+
   if (readOnly) {
-    const content = <MedicaoReadContent medicao={medicao} />;
+    const content = <MedicaoReadContent medicao={medicao} hints={hints} />;
     if (embeddedInCard) return content;
     return (
       <CadastroSection embedded title="Medição operacional">
@@ -60,6 +89,7 @@ export function RevisaoMedicaoSection({
 
   const form = (
     <form onSubmit={onSubmit}>
+      <MedicaoHints hints={hints} />
       <div className={DS_FILTERS_ROW}>
         <label className={DS_FILTER_BOX_PLAIN}>
           <FieldLabel className="tm-field__label" label="Volume mensal" hint={R.volumeMensal} />
@@ -198,12 +228,7 @@ export function RevisaoMedicaoSection({
         span
         rows={2}
         value={medicao.observacoes ?? ""}
-        onChange={(value) =>
-          onChange({
-            ...medicao,
-            observacoes: value.trim() || undefined,
-          })
-        }
+        onChange={(value) => onChange({ ...medicao, observacoes: value })}
       />
       {hideSubmit ? null : (
         <button type="submit" className="ds-primary-btn">

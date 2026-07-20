@@ -55,7 +55,7 @@ from app.domain.services.sql_query_telemetry_service import get_sql_health_summa
 router = APIRouter()
 
 
-@router.get("/tables/search", summary="Busca tabelas por descrição (SX2)")
+@router.get("/tables/search", summary="Busca tabelas por descrição (SX2)", operation_id="search_tables_by_description")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def search_tables(
     description: str = Query(..., min_length=2, description="Descrição parcial ou completa da tabela"),
@@ -94,7 +94,7 @@ def search_tables(
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/tables/{tableName}", summary="Consulta informações de tabela")
+@router.get("/tables/{tableName}", summary="Consulta informações de tabela", operation_id="get_protheus_table")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def table(tableName: str):
     try:
@@ -113,7 +113,7 @@ def table(tableName: str):
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/tables/{tableName}/columns", summary="Consulta colunas de tabela com paginação")
+@router.get("/tables/{tableName}/columns", summary="Consulta colunas de tabela com paginação", operation_id="list_protheus_table_columns")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_columns(
     tableName: str,
@@ -149,7 +149,7 @@ def table_columns(
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/tables/{tableName}/indexes", summary="Consulta índices (SIX010)")
+@router.get("/tables/{tableName}/indexes", summary="Consulta índices (SIX010)", operation_id="get_protheus_table_indexes")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_indexes(tableName: str):
     try:
@@ -168,7 +168,7 @@ def table_indexes(tableName: str):
         return error_response(str(e))
 
 
-@router.get("/tables/{tableName}/relations", summary="Consulta relacionamentos (SX9010)")
+@router.get("/tables/{tableName}/relations", summary="Consulta relacionamentos (SX9010)", operation_id="get_protheus_table_relations")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_relations(tableName: str):
     try:
@@ -187,7 +187,7 @@ def table_relations(tableName: str):
         return error_response(str(e))
 
 
-@router.get("/tables/{tableName}/schema", summary="Schema completo da tabela (SX2, SX3, SIX, SX9)")
+@router.get("/tables/{tableName}/schema", summary="Schema completo da tabela (SX2, SX3, SIX, SX9)", operation_id="get_protheus_table_schema")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def table_schema(tableName: str):
     try:
@@ -206,7 +206,7 @@ def table_schema(tableName: str):
         return error_response(str(e))
 
 
-@router.get("/tables/{tableName}/columns/search", summary="Buscar colunas por texto")
+@router.get("/tables/{tableName}/columns/search", summary="Buscar colunas por texto", operation_id="search_protheus_columns_in_table")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def search_columns(tableName: str, q: str = Query(..., min_length=2)):
     try:
@@ -232,7 +232,7 @@ def search_columns(tableName: str, q: str = Query(..., min_length=2)):
 @router.get(
     "/columns/search",
     summary="Busca colunas por descrição (SX3010 + ranking semântico)"
-)
+, operation_id="search_protheus_columns_by_description")
 @require_any_permission(SYSTEM_METADATA_ACCESS)
 def search_columns_global(
     description: str = Query(
@@ -275,7 +275,7 @@ def search_columns_global(
         return error_response(f"Erro inesperado: {e}")
 
 
-@router.get("/smoke-definitions", summary="Definições das smoke suites do console")
+@router.get("/smoke-definitions", summary="Definições das smoke suites do console", operation_id="get_smoke_definitions")
 @require_any_permission(CONSOLE_SMOKE_ACCESS)
 def get_smoke_definitions():
     try:
@@ -290,7 +290,7 @@ def get_smoke_definitions():
         return error_response("Erro ao carregar definições de smoke.", status_code=500)
 
 
-@router.get("/openapi-diff", summary="Diff do OpenAPI atual vs baseline versionado")
+@router.get("/openapi-diff", summary="Diff do OpenAPI atual vs baseline versionado", operation_id="get_openapi_diff")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def get_openapi_diff():
     try:
@@ -307,7 +307,7 @@ def get_openapi_diff():
         return error_response("Erro ao calcular diff OpenAPI.", status_code=500)
 
 
-@router.get("/envelope-contracts", summary="Golden files de contrato de envelope (smoke)")
+@router.get("/envelope-contracts", summary="Golden files de contrato de envelope (smoke)", operation_id="get_envelope_contracts")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def get_envelope_contracts():
     try:
@@ -322,7 +322,7 @@ def get_envelope_contracts():
         return error_response("Erro ao carregar contratos de envelope.", status_code=500)
 
 
-@router.get("/query-cache/stats", summary="Hits e misses do cache compartilhado (LMP, estoque)")
+@router.get("/query-cache/stats", summary="Hits e misses do cache compartilhado (LMP, estoque)", operation_id="get_query_cache_stats")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def get_query_cache_stats():
     try:
@@ -343,7 +343,7 @@ def get_query_cache_stats():
         return error_response("Erro ao carregar estatísticas de cache.", status_code=500)
 
 
-@router.get("/caller-stats", summary="Breakdown de requests por X-Delpi-Caller-App")
+@router.get("/caller-stats", summary="Breakdown de requests por X-Delpi-Caller-App", operation_id="get_caller_stats")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def get_caller_stats(limit: int = Query(25, ge=1, le=100)):
     try:
@@ -358,7 +358,7 @@ def get_caller_stats(limit: int = Query(25, ge=1, le=100)):
         return error_response("Erro ao carregar estatísticas de callers.", status_code=500)
 
 
-@router.get("/observability-snapshot", summary="Snapshot unificado para comparador de deploy")
+@router.get("/observability-snapshot", summary="Snapshot unificado para comparador de deploy", operation_id="get_observability_snapshot")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def get_observability_snapshot(limit: int = Query(25, ge=1, le=100)):
     try:
@@ -373,7 +373,7 @@ def get_observability_snapshot(limit: int = Query(25, ge=1, le=100)):
         return error_response("Erro ao capturar snapshot de observabilidade.", status_code=500)
 
 
-@router.get("/console-health", summary="Saúde agregada do console para Admin Stats")
+@router.get("/console-health", summary="Saúde agregada do console para Admin Stats", operation_id="get_console_health")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def get_console_health():
     try:
@@ -388,7 +388,7 @@ def get_console_health():
         return error_response("Erro ao carregar saúde do console.", status_code=500)
 
 
-@router.get("/console-alerts", summary="Histórico recente de alertas do console")
+@router.get("/console-alerts", summary="Histórico recente de alertas do console", operation_id="get_console_alerts")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def get_console_alerts(limit: int = Query(25, ge=1, le=100)):
     try:
@@ -403,7 +403,7 @@ def get_console_alerts(limit: int = Query(25, ge=1, le=100)):
         return error_response("Erro ao carregar alertas do console.", status_code=500)
 
 
-@router.post("/console-alerts/evaluate", summary="Avalia alertas (p95, SQL) e opcionalmente dispara webhook")
+@router.post("/console-alerts/evaluate", summary="Avalia alertas (p95, SQL) e opcionalmente dispara webhook", operation_id="evaluate_console_alerts")
 @require_any_permission(OBSERVABILITY_ACCESS)
 def post_console_alerts_evaluate(notify: bool = Query(True)):
     try:
@@ -418,7 +418,7 @@ def post_console_alerts_evaluate(notify: bool = Query(True)):
         return error_response("Erro ao avaliar alertas do console.", status_code=500)
 
 
-@router.post("/console-alerts/smoke", summary="Registra resultado de smoke e dispara alertas")
+@router.post("/console-alerts/smoke", summary="Registra resultado de smoke e dispara alertas", operation_id="notify_console_smoke_alerts")
 @require_any_permission(CONSOLE_SMOKE_ACCESS)
 def post_console_alerts_smoke(
     smoke_result: dict[str, Any] = Body(...),
@@ -436,7 +436,7 @@ def post_console_alerts_smoke(
         return error_response("Erro ao processar alertas de smoke.", status_code=500)
 
 
-@router.get("/sql-health", summary="Telemetria SQL recente (ring buffer memória ou Redis)")
+@router.get("/sql-health", summary="Telemetria SQL recente (ring buffer memória ou Redis)", operation_id="get_sql_health")
 @require_any_permission(SQL_HEALTH_ACCESS)
 def get_sql_health(
     limit: int = Query(25, ge=1, le=100),

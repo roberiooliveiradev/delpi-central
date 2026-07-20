@@ -15,10 +15,12 @@ import {
   plainTextFromContentRuns,
   renderTextBlockEditorHtml,
   resolveTextBlockDisplayRuns,
+  resolveVisualBoxDisplayText,
   restoreEditableTextSelection,
   syncTextBlockFromRuns,
   toggleContentRunStyleInRange,
   toggleListTypeInRange,
+  viewHasTextProjectionConfigured,
   visualBoxBlockModifierClasses,
   type ComunicadoBlock,
   type ComunicadoListType,
@@ -408,8 +410,14 @@ export function ComunicadoEditorTextBlock({
     );
   }
 
-  const label = block.content.trim() || PLACEHOLDER[block.type];
-  const isPlaceholder = !block.content.trim();
+  // Blocos vinculados a um campo (textProjection/dataRef) exibem o valor resolvido da
+  // fonte no palco — mesmo caminho da TV (ComunicadoVisualBoxView/DefaultTextContent):
+  // substitui `content` pelo valor projetado antes de renderizar.
+  const displayBlock: TextBlock = viewHasTextProjectionConfigured(block)
+    ? ({ ...block, ...resolveVisualBoxDisplayText(block) } as TextBlock)
+    : block;
+  const label = displayBlock.content.trim() || PLACEHOLDER[block.type];
+  const isPlaceholder = !displayBlock.content.trim();
 
   return (
     <div
@@ -422,9 +430,9 @@ export function ComunicadoEditorTextBlock({
       }}
     >
       <div className="td-composer__text-block-body">
-        {hasRichTextRuns(block) ? (
+        {hasRichTextRuns(displayBlock) ? (
           <ComunicadoTextRunsView
-            block={block}
+            block={displayBlock}
             as={block.type === "heading" ? "h1" : "p"}
             baseStyle={innerStyle}
             fontScale={fontScale}

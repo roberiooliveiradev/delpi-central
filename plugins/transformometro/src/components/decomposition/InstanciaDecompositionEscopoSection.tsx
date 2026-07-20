@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { AppProps } from "../../App";
-import { FieldLabel } from "@delpi/plugin-ui/index";
+import { FieldLabel, useEditableDraft } from "@delpi/plugin-ui/index";
 import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TmNativeCheckboxControl } from "../ui/tmNativeFormFields";
+import { DirtySaveActions } from "../ui/DirtySaveActions";
 import {
   fetchInstanciaDecomposicaoEscopo,
   fetchProcessoDecomposicao,
@@ -37,7 +38,8 @@ export function InstanciaDecompositionEscopoSection({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [tree, setTree] = useState<DecompositionTreeV1>(emptyDecompositionTree());
-  const [escopo, setEscopo] = useState<DecompositionEscopo>(emptyDecompositionEscopo());
+  const draft = useEditableDraft<DecompositionEscopo>(emptyDecompositionEscopo());
+  const { value: escopo, setValue, dirty, replace } = draft;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -48,7 +50,7 @@ export function InstanciaDecompositionEscopoSection({
         fetchInstanciaDecomposicaoEscopo(instanciaId, getAccessToken),
       ]);
       setTree(treeData.conteudo ?? emptyDecompositionTree());
-      setEscopo({
+      replace({
         node_ids: escopoData.node_ids ?? [],
         inherit_all: escopoData.inherit_all ?? true,
         include_descendants: escopoData.include_descendants ?? true,
@@ -58,7 +60,7 @@ export function InstanciaDecompositionEscopoSection({
     } finally {
       setLoading(false);
     }
-  }, [getAccessToken, instanciaId, onError, processoId]);
+  }, [getAccessToken, instanciaId, onError, processoId, replace]);
 
   useEffect(() => {
     void load();
@@ -76,7 +78,7 @@ export function InstanciaDecompositionEscopoSection({
 
   function toggleNode(nodeId: string) {
     if (readOnly) return;
-    setEscopo((current) => {
+    setValue((current) => {
       if (current.inherit_all) {
         const allIds = processosChave.map((n) => n.id);
         const nextIds = allIds.filter((id) => id !== nodeId);
@@ -137,7 +139,7 @@ export function InstanciaDecompositionEscopoSection({
         checked={escopo.inherit_all}
         disabled={readOnly}
         onChange={(inherit_all) =>
-          setEscopo({
+          setValue({
             node_ids: [],
             inherit_all,
             include_descendants: escopo.include_descendants,
@@ -163,9 +165,12 @@ export function InstanciaDecompositionEscopoSection({
       ) : null}
 
       {!readOnly ? (
-        <button type="button" className="ds-primary-btn" disabled={saving} onClick={() => void handleSave()}>
-          {saving ? "Salvando…" : "Salvar escopo"}
-        </button>
+        <DirtySaveActions
+          dirty={dirty}
+          saving={saving}
+          label="Salvar escopo"
+          onSave={() => void handleSave()}
+        />
       ) : null}
     </div>
   );

@@ -2,6 +2,8 @@ from unittest.mock import patch
 
 from tm_app.application.services.revisao_impact_effort_matrix_service import (
     RevisaoImpactEffortMatrixService,
+    _absolute_unit_score,
+    _normalize_component,
     _percentile_rank,
     _resolve_quadrant,
 )
@@ -140,6 +142,20 @@ def test_percentile_rank_single_value_is_midpoint():
     assert _percentile_rank([10.0], 10.0) == 50.0
 
 
+def test_normalize_component_falls_back_to_absolute_without_spread():
+    # Sem peers com variância → escala absoluta (ref 60k → 30k = 0.5)
+    assert _normalize_component([30_000.0], 30_000.0, absolute_ref=60_000.0) == 0.5
+    assert _normalize_component([], 60_000.0, absolute_ref=60_000.0) == 1.0
+    assert _absolute_unit_score(0, 60_000.0) == 0.0
+
+
+def test_normalize_component_uses_percentile_when_peers_differ():
+    peers = [10.0, 50.0, 90.0]
+    assert _normalize_component(peers, 90.0, absolute_ref=100.0) == 1.0
+    mid = _normalize_component(peers, 50.0, absolute_ref=100.0)
+    assert 0.4 <= mid <= 0.6
+
+
 def test_resolve_quadrant_quick_win():
     assert _resolve_quadrant(72, 41) == "quick_win"
 
@@ -230,13 +246,6 @@ def test_save_for_revisao_persists_and_returns_matrix(mock_repo, mock_build):
 def test_hibrido_modo_blends_manual_scores(mock_inst, mock_rev, mock_data, _mock_filiais):
     raw = _matrix_fixture()
     revisao_quick = next(r for r in raw.revisoes if r["revisao_id"] == "r-quick")
-    revisao_quick["matriz_impacto_esforco"] = {
-        "format": "revisao_matriz_impacto_esforco_v1",
-        "format_version": 1,
-        "modo": "hibrido",
-        "inputs_manuais": {"impacto_qualitativo": 5, "esforco_qualitativo": 1},
-        "overrides": {},
-    }
 
     mock_inst.return_value.get.return_value = raw.processo_instancias[0]
     mock_rev.return_value.list_by_instancia.return_value = raw.revisoes
@@ -246,10 +255,24 @@ def test_hibrido_modo_blends_manual_scores(mock_inst, mock_rev, mock_data, _mock
     )
     mock_data.return_value.load_raw.return_value = raw
 
+    auto = RevisaoImpactEffortMatrixService().build_for_instancia("i1", competencia="2026-07")
+    auto_quick = next(p for p in auto["pontos"] if p["revisao_id"] == "r-quick")
+
+    revisao_quick["matriz_impacto_esforco"] = {
+        "format": "revisao_matriz_impacto_esforco_v1",
+        "format_version": 1,
+        "modo": "hibrido",
+        "inputs_manuais": {"impacto_qualitativo": 5, "esforco_qualitativo": 1},
+        "overrides": {},
+    }
+
     result = RevisaoImpactEffortMatrixService().build_for_instancia("i1", competencia="2026-07")
     quick = next(p for p in result["pontos"] if p["revisao_id"] == "r-quick")
     assert quick["modo"] == "hibrido"
-    assert quick["impacto"] >= 50
+    # impacto_qualitativo=5 puxa o score para cima vs automático
+    assert quick["impacto"] > auto_quick["impacto"]
+    # Blend altera o esforço automático (escala qualitativa 1–5 × 20)
+    assert quick["esforco"] != auto_quick["esforco"]
 
 
 @patch("tm_app.application.services.revisao_impact_effort_matrix_service.count_active_filiais", return_value=1)
@@ -340,3 +363,35 @@ def test_build_for_processo_aggregates_melhorias(
     assert len(result["pontos"]) >= 2
     instancia_ids = {p["instancia_id"] for p in result["pontos"] if p.get("instancia_id")}
     assert instancia_ids == {"i1", "i2"}
+
+
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.count_active_filiais", return_value=1)
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.DashboardDataRepository")
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.RevisaoRepository")
+@patch("tm_app.application.services.revisao_impact_effort_matrix_service.ProcessoInstanciaRepository")
+def test_single_comparable_revision_uses_absolute_not_midpoint(
+    mock_inst, mock_rev, mock_data, _mock_filiais
+):
+    """Com 1 melhoria no pool, percentil colapsava em 50×50; escala absoluta diferencia."""
+    raw = _matrix_fixture()
+    raw.revisoes = [r for r in raw.revisoes if r["revisao_id"] in {"r-baseline", "r-strategic"}]
+    raw.medicoes = [m for m in raw.medicoes if m["revisao_id"] in {"r-baseline", "r-strategic"}]
+    raw.investimentos = [i for i in raw.investimentos if i["revisao_id"] == "r-strategic"]
+
+    mock_inst.return_value.get.return_value = raw.processo_instancias[0]
+    mock_rev.return_value.list_by_instancia.return_value = raw.revisoes
+    mock_rev.return_value.find_reference_for_revisao.side_effect = lambda rid, **_: next(
+        (r for r in raw.revisoes if r["revisao_id"] == "r-baseline"),
+        None,
+    )
+    mock_data.return_value.load_raw.return_value = raw
+
+    result = RevisaoImpactEffortMatrixService().build_for_instancia("i1", competencia="2026-07")
+    assert result is not None
+    pontos = [p for p in result["pontos"] if p["incluir_na_matriz"]]
+    assert len(pontos) == 1
+    ponto = pontos[0]
+    assert ponto["normalizacao"] == "absoluta"
+    # Alto investimento da fixture estratégica → esforço ≠ midpoint cego 50×50
+    assert not (ponto["impacto"] == 50.0 and ponto["esforco"] == 50.0)
+    assert ponto["esforco"] > 0

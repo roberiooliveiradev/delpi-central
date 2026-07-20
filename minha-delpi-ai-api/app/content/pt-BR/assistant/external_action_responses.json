@@ -405,6 +405,40 @@
         "idd",
         "inventory-turnover"
       ],
+      "inventoryTurnoverExcludeDepartmentIddTerms": [
+        "idd do ",
+        "idd da ",
+        "idd departamental",
+        "nota idd",
+        "metas e realizado",
+        "indicadores estrategicos",
+        "indicadores estratégicos",
+        "idds dos departamentos",
+        "painel de idd"
+      ],
+      "departmentIddScoreTerms": [
+        "idd do ",
+        "idd da ",
+        "idd departamental",
+        "nota idd",
+        "nota do idd"
+      ],
+      "departmentIddIndicatorsTerms": [
+        "metas e realizado",
+        "meta e realizado",
+        "idd com metas",
+        "indicadores do idd",
+        "indicadores estrategicos do",
+        "indicadores estratégicos do"
+      ],
+      "departmentIddAllTerms": [
+        "idds dos departamentos",
+        "idd de todos os departamentos",
+        "todos os departamentos com idd",
+        "metas e realizado por departamento",
+        "painel de idds",
+        "painel de idd"
+      ],
       "suppliesStockTerms": [
         "valor total",
         "valor de estoque",
@@ -794,6 +828,9 @@
     "kpiProductionOeeDetail": "A pergunta solicita OEE de produção com resumo e listagem de apontamentos (view fabril).",
     "kpiEficienciaFabrilDashboard": "A pergunta solicita o painel de eficiência fabril (MOD, gráficos e apontamentos).",
     "kpiIdd": "A pergunta solicita giro de estoque em suprimentos.",
+    "departmentIddScore": "A pergunta solicita a nota IDD estratégica de um departamento (não giro de estoque).",
+    "departmentIddIndicators": "A pergunta solicita IDD do departamento com metas e realizado por indicador.",
+    "departmentIddAll": "A pergunta solicita IDD, metas e realizado de todos os departamentos.",
     "kpiStockValue": "A pergunta solicita indicador agregado de valor de estoque (suprimentos).",
     "safetyStockItemDetails": "A pergunta solicita detalhe de estoque de segurança do produto com cobertura por pedidos de compra em aberto.",
     "safetyStockConsumptionAnalysisItems": "A pergunta solicita a análise de consumo dos últimos 12 meses versus estoque de segurança sugerido (lead time BZ_PE).",

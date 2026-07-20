@@ -50,6 +50,9 @@ describe("resolveDataTableColumnClassName", () => {
     expect(resolveDataTableColumnClassName("pa-table__col--wide")).toBe(
       "pa-table__col--wide delpi-ui-table__col--wide",
     );
+    expect(resolveDataTableColumnClassName("ds-table__col--wrap")).toBe(
+      "ds-table__col--wrap delpi-ui-table__col--wrap",
+    );
     expect(
       resolveDataTableColumnClassName("pa-table__col--numeric delpi-ui-table__col--numeric"),
     ).toBe("pa-table__col--numeric delpi-ui-table__col--numeric");
@@ -92,6 +95,8 @@ describe("kits DataTable/Pagination — classes delpi-ui", () => {
     expect(table.sortButton).toContain("delpi-ui-table__sort-button");
     expect(table.wrapSection).toContain("delpi-ui-table-wrap--section");
     expect(table.sortableTable).toContain("delpi-ui-table--sortable");
+    expect(table.compactTable).toContain("delpi-ui-table--compact");
     expect(table.colNumeric).toContain("delpi-ui-table__col--numeric");
+    expect(table.colWide).toContain("delpi-ui-table__col--wide");
   });
 });

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "description": "Defaults de UX do inspetor TV — não alteram o contrato HTTP da api-delpi (Query None = consolidado quando permitido).",
+  "defaults": {
+    "branch": "01",
+    "filial": "01",
+    "branch_code": "01"
+  }
+}

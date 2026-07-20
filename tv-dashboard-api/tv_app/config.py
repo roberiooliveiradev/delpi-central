@@ -64,5 +64,31 @@ class Settings:
         in {"1", "true", "yes", "on"}
     )
 
+    # Sync OpenAPI api-delpi → tv_data_routes.json (startup + endpoint)
+    TV_OPENAPI_SYNC_ON_STARTUP: bool = (
+        str(_get_env("TV_OPENAPI_SYNC_ON_STARTUP", default="true") or "true").lower()
+        in {"1", "true", "yes", "on"}
+    )
+    TV_OPENAPI_SYNC_TIMEOUT_SECONDS: float = float(
+        _get_env("TV_OPENAPI_SYNC_TIMEOUT_SECONDS", default="45") or "45"
+    )
+    TV_DATA_ROUTES_PATH: str = _get_env(
+        "TV_DATA_ROUTES_PATH",
+        default="",
+    ) or ""
+    TV_OPENAPI_GENERATOR_SCRIPT: str = _get_env(
+        "TV_OPENAPI_GENERATOR_SCRIPT",
+        default="/app/tools/generate_tv_data_routes_from_openapi.py",
+    ) or ""
+
 
 settings = Settings()
+
+# Propaga path do catálogo para o serviço de allowlist (resolve_routes_path).
+if settings.TV_DATA_ROUTES_PATH:
+    os.environ.setdefault("TV_DATA_ROUTES_PATH", settings.TV_DATA_ROUTES_PATH)
+if settings.TV_OPENAPI_GENERATOR_SCRIPT:
+    os.environ.setdefault(
+        "TV_OPENAPI_GENERATOR_SCRIPT",
+        settings.TV_OPENAPI_GENERATOR_SCRIPT,
+    )

@@ -11,6 +11,22 @@ def register_auth_middleware(app):
     def authenticate_request():
         g.current_user = None
         g.access_token = None
+        g.internal_service = False
+
+        from delpi_auth.service_token import headers_have_valid_internal_service_token
+
+        if headers_have_valid_internal_service_token(dict(request.headers)):
+            g.internal_service = True
+            g.current_user = type(
+                "InternalServiceUser",
+                (),
+                {
+                    "sub": "internal-service",
+                    "email": "service@delpi.internal",
+                    "name": "Serviço Interno",
+                },
+            )()
+            return None
 
         auth_header = request.headers.get("Authorization", "")
 

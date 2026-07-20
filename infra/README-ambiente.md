@@ -494,6 +494,11 @@ Imagens e vídeos dos slides «Comunicado interno» ficam em disco no container 
 | Variável | Path no container | Host (`DELPI_DATA_HOST_DIR`) |
 |----------|-------------------|------------------------------|
 | `TV_DASHBOARD_MEDIA_UPLOAD_DIR` | `/app/data/tv-dashboard/media` | `${DELPI_DATA_HOST_DIR}/tv-dashboard/media` |
+| `TV_DATA_ROUTES_PATH` | `/app/data/tv-dashboard/catalog/tv_data_routes.json` | `${DELPI_DATA_HOST_DIR}/tv-dashboard/catalog` |
+
+O catálogo de rotas (`tv_data_routes.json`) é **regenerado no startup** do `tv-dashboard-api` a partir do OpenAPI live da api-delpi (`TV_OPENAPI_SYNC_ON_STARTUP=true`). Persistência no volume `tv-dashboard/catalog` para sobreviver a recreate.
+
+Pós-deploy manual / CI: `./scripts/homologacao/sync-api-delpi-openapi-tv.sh` (também encadeado no workflow `sync-api-delpi-openapi`).
 
 Após deploy/recreate, arquivos enviados antes devem continuar acessíveis no host.
 

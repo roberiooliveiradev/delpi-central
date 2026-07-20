@@ -55,6 +55,17 @@ from app.infrastructure.persistence.plugins.plugin_base_repository import Plugin
 from app.interface.http.routes.quality.audit_5s_branch_access import branch_access_error
 from app.shared.utils.person_name import format_person_name
 from app.utils.logger import log_error
+from app.interface.http.query_param_enums import (
+    AUDIT_5S_LIFECYCLE_STATUS_QUERY,
+    AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN,
+    AUDIT_5S_NC_SORT_QUERY,
+    AUDIT_5S_STATUS_QUERY,
+    BRANCH_QUERY_OPTIONAL,
+    BRANCH_QUERY_REQUIRED,
+    GRANULARITY_QUERY_MONTH_DWM,
+    PRIORITY_QUERY,
+    SHIFT_5S_QUERY,
+)
 
 router = APIRouter(prefix="/audit-5s", tags=["Auditoria 5S"])
 
@@ -307,10 +318,10 @@ def _notify_nc_responsible_if_needed(
         log_error(f"Falha ao notificar responsável NC 5S: {notify_exc}")
 
 
-@router.get("/areas")
+@router.get("/areas", operation_id="list_audit_5s_areas")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_areas(
-    branch: str = Query(..., pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED(),
     active: bool = Query(True),
 ):
     try:
@@ -322,7 +333,7 @@ def list_areas(
         return error_response("Erro interno ao listar áreas.", status_code=500)
 
 
-@router.post("/areas")
+@router.post("/areas", operation_id="create_audit_5s_area")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def create_area(body: CreateAreaBody = Body(...)):
     try:
@@ -340,11 +351,11 @@ def create_area(body: CreateAreaBody = Body(...)):
         return error_response("Erro interno ao cadastrar área.", status_code=500)
 
 
-@router.get("/criteria")
+@router.get("/criteria", operation_id="list_audit_5s_criteria")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_criteria(
     catalog_version: int | None = Query(None, ge=1),
-    branch: str | None = Query(None, pattern="^(01|02)$"),
+    branch: str | None = BRANCH_QUERY_OPTIONAL(),
 ):
     try:
         repo = build_audit_5s_repository()
@@ -358,9 +369,9 @@ def list_criteria(
         return error_response("Erro interno ao listar critérios.", status_code=500)
 
 
-@router.get("/catalog")
+@router.get("/catalog", operation_id="get_audit_5s_catalog")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
-def get_catalog(branch: str = Query(..., pattern="^(01|02)$")):
+def get_catalog(branch: str = BRANCH_QUERY_REQUIRED()):
     branch_error = branch_access_error(branch)
     if branch_error is not None:
         return branch_error
@@ -373,9 +384,9 @@ def get_catalog(branch: str = Query(..., pattern="^(01|02)$")):
         return error_response("Erro interno ao carregar catálogo.", status_code=500)
 
 
-@router.get("/catalog/publications")
+@router.get("/catalog/publications", operation_id="list_audit_5s_catalog_publications")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
-def list_catalog_publications(branch: str = Query(..., pattern="^(01|02)$")):
+def list_catalog_publications(branch: str = BRANCH_QUERY_REQUIRED()):
     branch_error = branch_access_error(branch)
     if branch_error is not None:
         return branch_error
@@ -388,7 +399,7 @@ def list_catalog_publications(branch: str = Query(..., pattern="^(01|02)$")):
         return error_response("Erro interno ao listar publicações.", status_code=500)
 
 
-@router.put("/catalog/publish")
+@router.put("/catalog/publish", operation_id="publish_audit_5s_catalog")
 @require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 def publish_catalog(body: PublishCatalogBody = Body(...)):
     branch_error = branch_access_error(body.branch_code, require_admin=True)
@@ -435,11 +446,11 @@ def publish_catalog(body: PublishCatalogBody = Body(...)):
         return error_response("Erro interno ao publicar catálogo.", status_code=500)
 
 
-@router.get("/audits")
+@router.get("/audits", operation_id="list_audit_5s_audits")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audits(
-    branch: str = Query(..., pattern="^(01|02)$"),
-    status: str | None = Query(None),
+    branch: str = BRANCH_QUERY_REQUIRED(),
+    status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY_PLAIN(),
 ):
     try:
         repo = build_audit_5s_repository()
@@ -450,7 +461,7 @@ def list_audits(
         return error_response("Erro interno ao listar auditorias.", status_code=500)
 
 
-@router.post("/audits")
+@router.post("/audits", operation_id="create_audit_5s_audit")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def create_audit(body: CreateAuditBody = Body(...)):
     try:
@@ -483,7 +494,7 @@ def create_audit(body: CreateAuditBody = Body(...)):
         return error_response("Erro interno ao criar auditoria.", status_code=500)
 
 
-@router.patch("/audits/{audit_id}")
+@router.patch("/audits/{audit_id}", operation_id="update_audit_5s_audit")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def update_audit(audit_id: str, body: UpdateAuditBody = Body(...)):
     audit_id = audit_id.strip()
@@ -543,7 +554,7 @@ async def update_audit(audit_id: str, body: UpdateAuditBody = Body(...)):
         return error_response("Erro interno ao atualizar auditoria.", status_code=500)
 
 
-@router.get("/audits/{audit_id}")
+@router.get("/audits/{audit_id}", operation_id="get_audit_5s_audit")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def get_audit(audit_id: str):
     try:
@@ -557,7 +568,7 @@ def get_audit(audit_id: str):
         return error_response("Erro interno ao buscar auditoria.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/delete")
+@router.post("/audits/{audit_id}/delete", operation_id="delete_audit_5s_audit")
 @require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 def delete_audit(audit_id: str):
     audit_id = audit_id.strip()
@@ -597,7 +608,7 @@ def delete_audit(audit_id: str):
         return error_response("Erro interno ao excluir auditoria.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/force-delete")
+@router.post("/audits/{audit_id}/force-delete", operation_id="force_delete_audit_5s_audit")
 @require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 def force_delete_audit(audit_id: str):
     audit_id = audit_id.strip()
@@ -631,7 +642,7 @@ def force_delete_audit(audit_id: str):
         return error_response("Erro interno ao excluir auditoria.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/join")
+@router.post("/audits/{audit_id}/join", operation_id="join_audit_5s_audit")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def join_audit(audit_id: str):
     try:
@@ -658,7 +669,7 @@ def join_audit(audit_id: str):
         return error_response("Erro interno ao registrar participação.", status_code=500)
 
 
-@router.put("/audits/{audit_id}/responses/{criterion_id}")
+@router.put("/audits/{audit_id}/responses/{criterion_id}", operation_id="upsert_audit_5s_response")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def upsert_response(
     audit_id: str,
@@ -702,7 +713,7 @@ async def upsert_response(
         return error_response("Erro interno ao salvar resposta.", status_code=500)
 
 
-@router.get("/audits/{audit_id}/responses/{criterion_id}/attachments")
+@router.get("/audits/{audit_id}/responses/{criterion_id}/attachments", operation_id="list_audit_5s_response_attachments")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_response_attachments(audit_id: str, criterion_id: str):
     try:
@@ -721,7 +732,7 @@ def list_response_attachments(audit_id: str, criterion_id: str):
         return error_response("Erro interno ao listar foto do critério.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/responses/{criterion_id}/attachments")
+@router.post("/audits/{audit_id}/responses/{criterion_id}/attachments", operation_id="attach_audit_5s_response_photo")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def upload_response_attachment(
     audit_id: str,
@@ -781,7 +792,7 @@ async def upload_response_attachment(
         return error_response("Erro interno ao anexar foto do critério.", status_code=500)
 
 
-@router.get("/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}/file")
+@router.get("/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}/file", operation_id="download_audit_5s_response_attachment")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def download_response_attachment(audit_id: str, criterion_id: str, attachment_id: str):
     try:
@@ -811,7 +822,7 @@ def download_response_attachment(audit_id: str, criterion_id: str, attachment_id
         return error_response("Erro interno ao baixar foto do critério.", status_code=500)
 
 
-@router.delete("/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}")
+@router.delete("/audits/{audit_id}/responses/{criterion_id}/attachments/{attachment_id}", operation_id="delete_audit_5s_response_photo")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def delete_response_attachment(audit_id: str, criterion_id: str, attachment_id: str):
     try:
@@ -833,7 +844,7 @@ def delete_response_attachment(audit_id: str, criterion_id: str, attachment_id: 
         return error_response("Erro interno ao remover foto do critério.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/complete-evaluation")
+@router.post("/audits/{audit_id}/complete-evaluation", operation_id="complete_audit_5s_evaluation")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def complete_evaluation(audit_id: str):
     try:
@@ -857,7 +868,7 @@ async def complete_evaluation(audit_id: str):
         return error_response("Erro interno ao concluir avaliação.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/reopen-evaluation")
+@router.post("/audits/{audit_id}/reopen-evaluation", operation_id="reopen_audit_5s_evaluation")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def reopen_evaluation(audit_id: str):
     audit_id = audit_id.strip()
@@ -897,7 +908,7 @@ async def reopen_evaluation(audit_id: str):
         return error_response("Erro interno ao reabrir avaliação.", status_code=500)
 
 
-@router.get("/audits/{audit_id}/nc-candidates")
+@router.get("/audits/{audit_id}/nc-candidates", operation_id="list_audit_5s_nc_candidates")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_nc_candidates(audit_id: str):
     try:
@@ -911,7 +922,7 @@ def list_nc_candidates(audit_id: str):
         return error_response("Erro interno ao listar NC candidatas.", status_code=500)
 
 
-@router.get("/audits/{audit_id}/nonconformities")
+@router.get("/audits/{audit_id}/nonconformities", operation_id="list_audit_5s_nonconformities")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_nonconformities(audit_id: str):
     try:
@@ -923,7 +934,7 @@ def list_audit_nonconformities(audit_id: str):
         return error_response("Erro interno ao listar NCs.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/nonconformities")
+@router.post("/audits/{audit_id}/nonconformities", operation_id="create_audit_5s_nonconformity")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Body(...)):
     try:
@@ -968,7 +979,7 @@ async def create_nonconformity(audit_id: str, body: CreateNonconformityBody = Bo
         return error_response("Erro interno ao criar NC.", status_code=500)
 
 
-@router.patch("/nonconformities/{nc_id}")
+@router.patch("/nonconformities/{nc_id}", operation_id="update_audit_5s_nonconformity")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def update_nonconformity(nc_id: str, body: UpdateNonconformityBody = Body(...)):
     try:
@@ -1017,7 +1028,7 @@ async def update_nonconformity(nc_id: str, body: UpdateNonconformityBody = Body(
         return error_response("Erro interno ao atualizar NC.", status_code=500)
 
 
-@router.get("/nonconformities/{nc_id}/actions")
+@router.get("/nonconformities/{nc_id}/actions", operation_id="list_audit_5s_nc_actions")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_nc_actions(nc_id: str):
     try:
@@ -1029,7 +1040,7 @@ def list_nc_actions(nc_id: str):
         return error_response("Erro interno ao listar ações.", status_code=500)
 
 
-@router.post("/nonconformities/{nc_id}/actions")
+@router.post("/nonconformities/{nc_id}/actions", operation_id="create_audit_5s_nc_action")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 def add_nc_action(nc_id: str, body: AddNcActionBody = Body(...)):
     try:
@@ -1059,7 +1070,7 @@ def add_nc_action(nc_id: str, body: AddNcActionBody = Body(...)):
         return error_response("Erro interno ao registrar ação.", status_code=500)
 
 
-@router.get("/audits/{audit_id}/nc-attachments")
+@router.get("/audits/{audit_id}/nc-attachments", operation_id="list_audit_5s_audit_nc_attachments")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_nc_attachments(audit_id: str):
     try:
@@ -1071,7 +1082,7 @@ def list_audit_nc_attachments(audit_id: str):
         return error_response("Erro interno ao listar evidências.", status_code=500)
 
 
-@router.get("/nonconformities/{nc_id}/attachments")
+@router.get("/nonconformities/{nc_id}/attachments", operation_id="list_audit_5s_nc_attachments")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_nc_attachments(nc_id: str):
     try:
@@ -1083,7 +1094,7 @@ def list_nc_attachments(nc_id: str):
         return error_response("Erro interno ao listar evidências.", status_code=500)
 
 
-@router.post("/nonconformities/{nc_id}/attachments")
+@router.post("/nonconformities/{nc_id}/attachments", operation_id="attach_audit_5s_evidence")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def upload_nc_attachment(
     nc_id: str,
@@ -1122,7 +1133,7 @@ async def upload_nc_attachment(
         return error_response("Erro interno ao anexar evidência.", status_code=500)
 
 
-@router.get("/nonconformities/{nc_id}/attachments/{attachment_id}/file")
+@router.get("/nonconformities/{nc_id}/attachments/{attachment_id}/file", operation_id="download_audit_5s_nc_attachment")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def download_nc_attachment(nc_id: str, attachment_id: str):
     try:
@@ -1148,7 +1159,7 @@ def download_nc_attachment(nc_id: str, attachment_id: str):
         return error_response("Erro interno ao baixar evidência.", status_code=500)
 
 
-@router.post("/nonconformities/{nc_id}/complete-action")
+@router.post("/nonconformities/{nc_id}/complete-action", operation_id="complete_audit_5s_nc_action")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def complete_nc_action(nc_id: str):
     try:
@@ -1178,7 +1189,7 @@ async def complete_nc_action(nc_id: str):
         return error_response("Erro interno ao finalizar ação.", status_code=500)
 
 
-@router.post("/nonconformities/{nc_id}/reopen-action")
+@router.post("/nonconformities/{nc_id}/reopen-action", operation_id="reopen_audit_5s_nc_action")
 @require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 async def reopen_nc_action(nc_id: str):
     """Admin: reabre ação corretiva já concluída (closed → in_progress)."""
@@ -1238,16 +1249,16 @@ async def reopen_nc_action(nc_id: str):
         return error_response("Erro interno ao reabrir ação.", status_code=500)
 
 
-@router.get("/nonconformities")
+@router.get("/nonconformities", operation_id="list_audit_5s_nonconformities_board")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def list_audit_5s_nonconformities_board(
-    branch: str = Query(..., pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED(),
     date_start: str | None = Query(None, alias="date_start"),
     date_end: str | None = Query(None, alias="date_end"),
     area_id: str | None = Query(None),
-    shift: str | None = Query(None, pattern="^(TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO)$"),
-    status: str | None = Query(None, pattern="^(open|in_progress|closed|cancelled)$"),
-    priority: str | None = Query(None, pattern="^(high|medium|low)$"),
+    shift: str | None = SHIFT_5S_QUERY(),
+    status: str | None = AUDIT_5S_STATUS_QUERY(),
+    priority: str | None = PRIORITY_QUERY(),
     responsible: str | None = Query(None),
     responsible_user_id: str | None = Query(None, alias="responsible_user_id"),
     overdue_only: bool = Query(False),
@@ -1256,10 +1267,7 @@ def list_audit_5s_nonconformities_board(
     search: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    sort: str = Query(
-        "due_date_asc",
-        pattern="^(due_date_asc|due_date_desc|created_desc|priority_desc)$",
-    ),
+    sort: str = AUDIT_5S_NC_SORT_QUERY(),
 ):
     denied = branch_access_error(branch)
     if denied is not None:
@@ -1312,21 +1320,17 @@ def list_audit_5s_nonconformities_board(
         return error_response("Erro interno ao listar não conformidades.", status_code=500)
 
 
-@router.get("/analytics/dashboard")
+@router.get("/analytics/dashboard", operation_id="get_audit_5s_analytics_dashboard")
 @require_any_permission(AUDIT_5S_READ_PERMISSIONS)
 def get_audit_5s_dashboard(
-    branch: str = Query(..., pattern="^(01|02)$"),
+    branch: str = BRANCH_QUERY_REQUIRED(),
     date_start: str = Query(..., alias="date_start"),
     date_end: str = Query(..., alias="date_end"),
     area_id: str | None = Query(None),
-    shift: str | None = Query(None, pattern="^(TURNO_1|TURNO_2|TURNO_3|ADMINISTRATIVO)$"),
-    audit_status: str | None = Query(
-        None,
-        alias="audit_status",
-        pattern="^(draft|evaluation_complete|nc_in_progress|closed)$",
-    ),
+    shift: str | None = SHIFT_5S_QUERY(),
+    audit_status: str | None = AUDIT_5S_LIFECYCLE_STATUS_QUERY(),
     senso_order: int | None = Query(None, ge=1, le=5),
-    granularity: str = Query("month", pattern="^(day|week|month)$"),
+    granularity: str = GRANULARITY_QUERY_MONTH_DWM(),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
@@ -1354,7 +1358,7 @@ def get_audit_5s_dashboard(
         return error_response("Erro interno ao carregar dashboard.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/close")
+@router.post("/audits/{audit_id}/close", operation_id="close_audit_5s_audit")
 @require_any_permission(AUDIT_5S_WRITE_PERMISSIONS)
 async def close_audit(audit_id: str):
     try:
@@ -1378,7 +1382,7 @@ async def close_audit(audit_id: str):
         return error_response("Erro interno ao encerrar auditoria.", status_code=500)
 
 
-@router.post("/audits/{audit_id}/close-without-nc-treatment")
+@router.post("/audits/{audit_id}/close-without-nc-treatment", operation_id="close_audit_5s_audit_without_nc_treatment")
 @require_any_permission(AUDIT_5S_ADMIN_PERMISSIONS)
 async def close_audit_without_nc_treatment(audit_id: str):
     """Admin: cancela NCs abertas e encerra a auditoria sem tratar ações corretivas."""

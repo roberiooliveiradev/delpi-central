@@ -1,0 +1,49 @@
+name: sync-api-delpi-openapi-tv
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Ambiente de deploy (GitHub Environment com secrets SSH)
+        required: true
+        type: choice
+        options:
+          - homolog
+          - prod
+      skip_health_wait:
+        description: Pular espera de health da api-delpi (1 = sim)
+        required: false
+        default: "0"
+
+jobs:
+  sync-openapi-tv:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target }}
+    steps:
+      - name: Sync TV remoto via SSH
+        env:
+          SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_REPO_PATH: ${{ secrets.DEPLOY_REPO_PATH }}
+          BASE_URL: ${{ vars.DEPLOY_BASE_URL }}
+          SKIP_HEALTH_WAIT: ${{ inputs.skip_health_wait }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SSH_HOST:-}" ] || [ -z "${SSH_USER:-}" ] || [ -z "${SSH_KEY:-}" ]; then
+            echo "::error::Configure DEPLOY_SSH_HOST, DEPLOY_SSH_USER e DEPLOY_SSH_KEY no Environment '${{ inputs.target }}'."
+            echo "Alternativa local: ./scripts/homologacao/sync-api-delpi-openapi-tv.sh"
+            exit 1
+          fi
+
+          REPO_PATH="${DEPLOY_REPO_PATH:-/opt/delpi-central}"
+          BASE_URL="${BASE_URL:-http://localhost}"
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
+            "${SSH_USER}@${SSH_HOST}" \
+            "cd '${REPO_PATH}' && BASE_URL='${BASE_URL}' SKIP_HEALTH_WAIT='${SKIP_HEALTH_WAIT}' ./scripts/homologacao/sync-api-delpi-openapi-tv.sh"

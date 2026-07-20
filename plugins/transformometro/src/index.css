@@ -412,6 +412,7 @@
   border-radius: 12px;
   background: transparent;
   color: var(--ds-text);
+  font: inherit;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -419,6 +420,9 @@
     background 0.15s ease,
     border-color 0.15s ease,
     transform 0.15s ease;
+}.dashboard-transformometro .tm-processo-folder--selected .tm-processo-folder__open{
+  background: color-mix(in srgb, var(--ds-accent) 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-border));
 }.dashboard-transformometro .tm-processo-folder__open:hover,
 .dashboard-transformometro .tm-processo-folder__open:focus-visible{
   background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
@@ -490,10 +494,14 @@
   border-radius: 10px;
   background: var(--ds-card-bg);
   color: var(--ds-text);
+  font: inherit;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
+}.dashboard-transformometro .tm-processo-browser__list-item--selected{
+  background: color-mix(in srgb, var(--ds-accent) 14%, var(--ds-card-bg));
+  border-color: color-mix(in srgb, var(--ds-accent) 36%, var(--ds-card-border));
 }.dashboard-transformometro .tm-processo-browser__list-item:hover,
 .dashboard-transformometro .tm-processo-browser__list-item:focus-visible{
   background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
@@ -552,32 +560,23 @@
 }.dashboard-transformometro .tm-processo-workspace__sections{
   position: relative;
   isolation: isolate;
-}.dashboard-transformometro .tm-processo-workspace-section{
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
+}
+/*
+ * Seções inativas NÃO podem ser position:absolute com visibility:hidden.
+ * Descendentes abspos entram no overflow scrollável de `.content` (portal) —
+ * a página curta (ex.: escopo no mapeamento) herdava a altura das seções
+ * ocultas (revisões, diagrama…) e gerava scroll + “espaço vazio” roxo.
+ * Só a seção ativa participa do layout.
+ */
+.dashboard-transformometro .tm-processo-workspace-section{
+  display: none;
   flex-direction: column;
   gap: 1rem;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translateY(6px);
-  transition:
-    opacity 0.22s ease,
-    visibility 0.22s ease,
-    transform 0.22s ease;
 }.dashboard-transformometro .tm-processo-workspace-section--active{
-  position: relative;
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(0);
-  z-index: 1;
-}@media (prefers-reduced-motion: reduce){.dashboard-transformometro .tm-processo-workspace-section{
-    transform: none;
-    transition: none;
+  display: flex;
+  animation: tm-view-fade-in 0.22s ease-out;
+}@media (prefers-reduced-motion: reduce){.dashboard-transformometro .tm-processo-workspace-section--active{
+    animation: none;
   }.dashboard-transformometro .tm-processo-workspace-tree__children-wrap{
     transition: none;
   }
@@ -1206,6 +1205,55 @@
   margin-bottom: 10px;
 }.dashboard-transformometro .tm-decomposition-editor__drag-hint{
   margin: 0;
+}.dashboard-transformometro .tm-decomposition-composed__toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.75rem;
+  align-items:flex-end;
+  margin-bottom:.75rem;
+}.dashboard-transformometro .tm-diff-highlight-toggle{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:.75rem;
+  margin-bottom:.75rem;
+}.dashboard-transformometro .tm-diff-highlight-toggle__summary{
+  margin:0;
+}.dashboard-transformometro .tm-decomposition-composed__date{
+  display:flex;
+  flex-direction:column;
+  gap:.25rem;
+}.dashboard-transformometro .tm-decomposition-composed__conflicts{
+  margin:.5rem 0 0;
+  padding-left:1.25rem;
+}.dashboard-transformometro .tm-processo-composed-card{
+  margin-top:1.25rem;
+  padding-top:1rem;
+  border-top:1px solid var(--ds-border, rgba(0,0,0,.08));
+}.dashboard-transformometro .tm-processo-composed-card--first{
+  margin-top:0;
+  padding-top:0;
+  border-top:0;
+  margin-bottom:1.25rem;
+  padding-bottom:1rem;
+  border-bottom:1px solid var(--ds-border, rgba(0,0,0,.08));
+}.dashboard-transformometro .tm-decomposition-revisao__node-edit{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.35rem;
+  align-items:center;
+  width:100%;
+}.dashboard-transformometro .tm-decomposition-revisao__disabled{
+  margin:.75rem 0;
+}.dashboard-transformometro .tm-decomposition-revisao__disabled ul{
+  margin:.25rem 0 0;
+  padding-left:1.25rem;
+}.dashboard-transformometro .tm-decomposition-revisao__edit-hint{
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ds-border-subtle);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ds-accent) 8%, var(--ds-card-bg));
 }/* Rich tree — mapeamento WBS (padrão dashboard commercial).
    Tokens de guia da árvore no host (sem seletor de classe do kit no MFE). */
 .dashboard-transformometro .tm-rich-tree{
@@ -1248,6 +1296,9 @@
   cursor: grab;
   border-radius: var(--ds-control-radius);
   padding: 0;
+  touch-action: none;
+  -webkit-user-drag: element;
+  user-select: none;
 }.dashboard-transformometro .tm-rich-tree__drag-handle:hover,
 .dashboard-transformometro .tm-rich-tree__drag-handle:focus-visible{
   color: var(--ds-accent);
@@ -1430,13 +1481,23 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}.dashboard-transformometro .tm-decomposition-escopo{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }.dashboard-transformometro .tm-decomposition-escopo__list{
   list-style: none;
-  margin: 12px 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
+}.dashboard-transformometro .tm-instancia-contexto{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
 }.dashboard-transformometro .tm-decomposition-preview{
   overflow-x: auto;
 }.dashboard-transformometro .tm-panel-stack{
@@ -2261,6 +2322,26 @@
   font-size: var(--ds-font-sm);
   font-weight: 600;
   color: var(--ds-title);
+}.dashboard-transformometro .tm-investimento-form__total{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: flex-end;
+  min-width: 8.5rem;
+}.dashboard-transformometro .tm-investimento-form__total-value{
+  margin: 0;
+  min-height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px;
+  font-size: var(--ds-font-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ds-title);
+  background: var(--ds-surface-inset);
+  border: 1px solid var(--ds-card-border);
+  border-radius: 8px;
 }.dashboard-transformometro .ds-resource-preview{
   margin: 0.75rem 0 1rem;
   padding: 12px 14px;
@@ -2721,6 +2802,8 @@
 }.dashboard-transformometro .tm-comparativo-chart .recharts-responsive-container{
   width: 100% !important;
   min-height: 320px;
+}.dashboard-transformometro .tm-comparativo-chart--breakdown .recharts-responsive-container{
+  min-height: 240px;
 }.dashboard-transformometro .tm-comparativo-table{
   border: 1px solid var(--ds-card-border);
   border-radius: var(--ds-radius-md);

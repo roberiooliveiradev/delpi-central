@@ -15,6 +15,7 @@ Referência: [`docs/12-roadmap-e-evolucao/transformometro-app/PLAYBOOK-19-diagra
 | **S4 — Backup + audit** | Bundles JSON + `audit_logs` (`diagram.*.updated`) | ✅ |
 | **S5 — Diff + export** | Diff baseline vs melhoria, PNG client-side, PNG → evidência V024 | ✅ |
 | **S6 — Editor BPMN-lite** | Swimlanes, tema claro/escuro, auto-layout, gestão de faixas | ✅ |
+| **S7 — Âncora + composto (PB23)** | Seed na referência; `GET …/diagrama/composed?at=`; visão vigente primeiro no processo | ✅ |
 
 ## Migrations
 
@@ -34,8 +35,9 @@ Ver [migrations/README.md](../migrations/README.md).
 |------------------|---------|
 | Validação `flowchart_v1` / overlay / escopo | `tm_app/domain/diagram/flowchart_v1.py` |
 | Export Mermaid | `tm_app/application/services/diagram_mermaid_export_service.py` |
-| Merge macro + escopo + overlay | `tm_app/application/services/revisao_diagram_merge_service.py` |
-| Rotas HTTP | `tm_app/interface/http/routes/diagram_routes.py` |
+| Merge macro + escopo + overlay (+ seed referência) | `tm_app/application/services/revisao_diagram_merge_service.py` |
+| Composição por vigência | `tm_app/application/services/diagrama_composition_service.py` |
+| Rotas HTTP | `tm_app/interface/http/routes/diagram_routes.py` (`…/diagrama/composed`) |
 | Persistência | `processo_diagram_repository.py`, `instancia_diagram_escopo_repository.py`, `revisao_diagram_overlay_repository.py` |
 | Backup JSON | `json_backup_service.py` — chaves `processo_diagramas`, `instancia_diagrama_escopos`, `revisao_diagrama_overlays` |
 
@@ -44,8 +46,9 @@ Ver [migrations/README.md](../migrations/README.md).
 | Tela | Componente |
 |------|------------|
 | Diagrama macro (processo) | `ProcessoDiagramSection.tsx` → `FlowchartEditor` (lazy) |
+| Diagrama composto (processo) | `ProcessoDiagramComposedSection.tsx` |
 | Escopo por instância | `InstanciaDiagramEscopoSection.tsx` |
-| Overlay por revisão | `RevisaoDiagramSection.tsx` |
+| Overlay por revisão (âncora + seed) | `RevisaoDiagramSection.tsx` |
 | Tipos + templates | `src/types/diagram.ts` |
 | Swimlanes / layout | `src/utils/diagramSwimlanes.ts` |
 | Preview Mermaid | `DiagramMermaidPreview.tsx` |
@@ -82,7 +85,8 @@ Diffs baseline/melhoria e overlay usam `find_reference_for_revisao()` — mesma 
 |---------|-----------|
 | `tests/test_flowchart_v1.py` | Validação JSON, swimlanes, routing |
 | `tests/test_diagram_mermaid_export_service.py` | Export Mermaid |
-| `tests/test_revisao_diagram_merge_service.py` | Merge + escopo + overlay |
+| `tests/test_revisao_diagram_merge_service.py` | Merge + escopo + overlay + seed referência |
+| `tests/test_diagrama_composition_service.py` | Composição por vigência + conflitos |
 | `tests/test_json_backup_service.py` | Round-trip bundles de diagrama |
 | `plugins/transformometro/src/utils/flowchartMermaid.test.ts` | Round-trip Mermaid ↔ `flowchart_v1` (MFE) |
 

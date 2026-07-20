@@ -230,6 +230,14 @@ Implementação: `_build_staged_batch()` em `lmp_query_repository.py`.
 - Bloqueio de DDL/DML, `EXEC`, transações e palavras-chave perigosas.
 - Validador: `app/application/services/sql_validator.py`.
 
+## Contrato OpenAPI e rotas novas
+
+Toda rota nova deve seguir o padrão canônico (operationId estável, locale EN/pt-BR, enums em `query_param_enums`, labels em JSON, sync TV):
+
+→ **[openapi-bilingue-catalogo-canonico.md](./openapi-bilingue-catalogo-canonico.md)** § *Como construir uma rota futura*
+
+Diretriz Cursor: `.cursor/rules/api-delpi-openapi-route-standards.mdc` + `new-api-route-checklist.mdc`.
+
 ## Deploy e gateway
 
 Nginx encaminha `/apps/api-delpi/` → container `api-delpi:8000/` (path strip). Socket.IO também exposto em `/apps/api-delpi/socket.io/` para eventos em tempo real, se habilitado.

@@ -114,3 +114,92 @@ def test_resumo_denies_filial_without_permission(mock_branch, retrabalho_client:
 
     assert response.status_code == 403
     assert body["success"] is False
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_health_use_case"
+)
+def test_health_returns_envelope(mock_builder, retrabalho_client: TestClient) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(return_value={"status": "ok", "viewAvailable": True})
+    )
+    response = retrabalho_client.get("/retrabalhos/health")
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_retrabalhos_health"
+    assert body["meta"]["shape"] == "scalar"
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_filtros_use_case"
+)
+def test_filtros_returns_envelope(
+    mock_builder, _mock_branch, retrabalho_client: TestClient
+) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(return_value={"recursos": [], "centrosCusto": []})
+    )
+    response = retrabalho_client.get("/retrabalhos/filtros", params={"filial": "01"})
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_retrabalhos_filtros"
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_mensal_use_case"
+)
+def test_mensal_returns_envelope(
+    mock_builder, _mock_branch, retrabalho_client: TestClient
+) -> None:
+    mock_builder.return_value = MagicMock(execute=MagicMock(return_value={"points": []}))
+    response = retrabalho_client.get("/retrabalhos/mensal", params={"filial": "01"})
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_retrabalhos_mensal"
+    assert body["meta"]["shape"] == "list"
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_recursos_use_case"
+)
+def test_recursos_returns_envelope(
+    mock_builder, _mock_branch, retrabalho_client: TestClient
+) -> None:
+    mock_builder.return_value = MagicMock(execute=MagicMock(return_value={"items": []}))
+    response = retrabalho_client.get("/retrabalhos/recursos", params={"filial": "01"})
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_retrabalhos_recursos"
+    assert body["meta"]["shape"] == "list"
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_colaboradores_use_case"
+)
+def test_colaboradores_returns_envelope(
+    mock_builder, _mock_branch, retrabalho_client: TestClient
+) -> None:
+    mock_builder.return_value = MagicMock(execute=MagicMock(return_value={"items": []}))
+    response = retrabalho_client.get(
+        "/retrabalhos/colaboradores", params={"filial": "01"}
+    )
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_retrabalhos_colaboradores"
+    assert body["meta"]["shape"] == "list"

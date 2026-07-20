@@ -11,6 +11,7 @@ from tm_app.core.business_days import (
     business_days_overlap_in_competencia,
     count_business_days,
 )
+from tm_app.core.catalogs import BENEFICIO_CALCULO_CATEGORIA_DEFAULT
 from tm_app.domain import calc_rules
 from tm_app.domain.raw_data import TransformometroRawData
 from tm_app.domain.services.recurso_custo_resolver import resolve_recurso_valor_mensal
@@ -235,6 +236,7 @@ class DashboardCalculatorService:
             "economia_liquida_total": 0.0,
             "economia_bruta_total": 0.0,
             "horas_economizadas_total": 0.0,
+            "ganho_capacidade_total": 0.0,
             "investimento_unico_total": 0.0,
             "custo_recorrente_total": 0.0,
             "custo_recursos_compartilhados_total": 0.0,
@@ -300,6 +302,7 @@ class DashboardCalculatorService:
         total_shared_resources = period_totals["custo_recursos_compartilhados_mes"]
         total_investment = period_totals["investimento_total_mes"]
         total_hours_saved = period_totals["horas_economizadas_mes"]
+        total_capacity_gain = period_totals.get("ganho_capacidade", 0.0)
 
         implemented_solutions_count = calc_rules.count_active_implemented_improvements(
             instancias=filtered_raw.processo_instancias,
@@ -322,6 +325,7 @@ class DashboardCalculatorService:
             "economia_liquida_total": self._round_final(total_net_savings),
             "economia_bruta_total": self._round_final(total_gross_savings),
             "horas_economizadas_total": self._round_final(total_hours_saved),
+            "ganho_capacidade_total": self._round_final(total_capacity_gain),
             "investimento_unico_total": self._round_final(total_unique),
             "custo_recorrente_total": self._round_final(total_recurring),
             "custo_recursos_compartilhados_total": self._round_final(total_shared_resources),
@@ -904,6 +908,29 @@ class DashboardCalculatorService:
                 "economia_bruta": 0.0,
             }
 
+        volume_ref = self._to_float(baseline_measurement.get("volume_mensal")) or 0.0
+        volume_rev = self._to_float(current_measurement.get("volume_mensal")) or 0.0
+        tempo_ref = self._to_float(baseline_measurement.get("tempo_medio_execucao_min")) or 0.0
+        custo_hora_ref = self._to_float(baseline_measurement.get("custo_hora_mao_obra")) or 0.0
+        volume_signals = calc_rules.benefit_volume_signals(
+            volume_ref=volume_ref, volume_rev=volume_rev
+        )
+        ganho_capacidade = 0.0
+        economia_reducao_volume = 0.0
+        if self._is_comparable_review(review):
+            ganho_capacidade = calc_rules.capacity_gain_month(
+                volume_ref=volume_ref,
+                volume_rev=volume_rev,
+                tempo_medio_ref_min=tempo_ref,
+                custo_hora_ref=custo_hora_ref,
+            )
+            economia_reducao_volume = calc_rules.volume_reduction_signal_month(
+                volume_ref=volume_ref,
+                volume_rev=volume_rev,
+                tempo_medio_ref_min=tempo_ref,
+                custo_hora_ref=custo_hora_ref,
+            )
+
         investimento_unico_mes = self._calculate_unique_investment_month(
             investments=context.investimentos_by_revisao.get(review_id, []),
             competencia_date=competencia_date,
@@ -937,6 +964,14 @@ class DashboardCalculatorService:
                 ):
                     savings[key] = float(savings.get(key) or 0) * bd_factor
                 horas_economizadas_mes *= bd_factor
+                ganho_capacidade *= bd_factor
+                economia_reducao_volume *= bd_factor
+
+        # Capacidade entra na bruta (e no ROI); breakdown de custo permanece nos componentes.
+        savings["economia_bruta"] = calc_rules.compose_economia_bruta(
+            economia_custo=float(savings.get("economia_bruta") or 0),
+            ganho_capacidade=ganho_capacidade,
+        )
 
         investimento_total_mes = (
             investimento_unico_mes + custo_recorrente_mes + current_shared_cost
@@ -950,6 +985,10 @@ class DashboardCalculatorService:
             process_row,
             instancias_by_id=context.instancias_by_id,
         )
+        beneficio_categoria = (
+            self._empty_to_none(review.get("beneficio_calculo_categoria"))
+            or BENEFICIO_CALCULO_CATEGORIA_DEFAULT
+        ).lower()
 
         return {
             "revisao_id": review_id,
@@ -962,12 +1001,18 @@ class DashboardCalculatorService:
             "codigo_setor": scope.get("codigo_setor"),
             "cenario_tipo": (self._empty_to_none(review.get("cenario_tipo")) or "").lower(),
             "revisao_ativa": self._is_true(review.get("revisao_ativa")),
+            "beneficio_calculo_categoria": beneficio_categoria,
             "economia_tempo": savings["economia_tempo"],
             "economia_retrabalho": savings["economia_retrabalho"],
             "economia_erros": savings["economia_erros"],
             "economia_outros": savings["economia_outros"],
             "economia_recursos_compartilhados": savings["economia_recursos_compartilhados"],
             "economia_bruta": savings["economia_bruta"],
+            "ganho_capacidade": ganho_capacidade,
+            "economia_reducao_volume": economia_reducao_volume,
+            "delta_volume": volume_signals["delta_volume"],
+            "volume_acima_referencia": volume_signals["volume_acima_referencia"],
+            "volume_abaixo_referencia": volume_signals["volume_abaixo_referencia"],
             "investimento_unico_mes": investimento_unico_mes,
             "custo_recorrente_mes": custo_recorrente_mes,
             "investimento_total_mes": investimento_total_mes,
@@ -1768,10 +1813,12 @@ class DashboardCalculatorService:
                     "custo_recursos_compartilhados_mes": 0.0,
                     "investimento_total_mes": 0.0,
                     "horas_economizadas_mes": 0.0,
+                    "ganho_capacidade": 0.0,
+                    "economia_reducao_volume": 0.0,
                 },
             )
             for key, value in prorated.items():
-                bucket[key] += value
+                bucket[key] = bucket.get(key, 0.0) + value
 
         return [
             {
@@ -1785,6 +1832,10 @@ class DashboardCalculatorService:
                 ),
                 "economia_liquida_mes": self._round_final(values["economia_liquida_mes"]),
                 "horas_economizadas_mes": self._round_final(values["horas_economizadas_mes"]),
+                "ganho_capacidade": self._round_final(values.get("ganho_capacidade", 0.0)),
+                "economia_reducao_volume": self._round_final(
+                    values.get("economia_reducao_volume", 0.0)
+                ),
             }
             for competencia, values in sorted(by_competencia.items())
         ]

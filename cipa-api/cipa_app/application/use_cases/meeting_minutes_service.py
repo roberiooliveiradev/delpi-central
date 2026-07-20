@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import io
 import secrets
+import zipfile
+from datetime import date
 from typing import Any
 
 from cipa_app.application.security import cipa_permissions as perms
@@ -553,6 +556,57 @@ class MeetingMinutesService:
             raise LookupError("Versão não encontrada.")
         raw = self._render_pdf(minute, version)
         return raw, f"ata-cipa-{minute['minute_number'].replace('/', '-')}.pdf"
+
+    def export_filtered_pdfs(self, user, filters: dict[str, Any]) -> tuple[bytes, str]:
+        """ZIP com um PDF oficial por ata que casa com os filtros da listagem."""
+        unit_code = perms.normalize_unit_code(filters.get("unit_code"))
+        if not unit_code:
+            raise ValueError("Informe a unidade para exportar as atas filtradas.")
+        self._assert(user, "export", unit_code)
+
+        listed = self.list_minutes(
+            user,
+            {
+                "unit_code": unit_code,
+                "status": filters.get("status"),
+                "meeting_type": filters.get("meeting_type"),
+                "q": filters.get("q"),
+                "date_from": filters.get("date_from"),
+                "date_to": filters.get("date_to"),
+                "limit": int(filters.get("limit") or 200),
+                "offset": int(filters.get("offset") or 0),
+            },
+        )
+        items = listed.get("items") or []
+        if not items:
+            raise LookupError("Nenhuma ata encontrada para os filtros atuais.")
+
+        buffer = io.BytesIO()
+        used_names: set[str] = set()
+        with zipfile.ZipFile(buffer, mode="w", compression=zipfile.ZIP_DEFLATED) as archive:
+            for item in items:
+                minute_id = str(item.get("id") or "")
+                if not minute_id:
+                    continue
+                raw, filename = self.export_pdf(user, minute_id)
+                archive.writestr(self._unique_zip_name(filename, used_names), raw)
+
+        stamp = date.today().isoformat()
+        return buffer.getvalue(), f"atas-cipa-{unit_code}-{stamp}.zip"
+
+    @staticmethod
+    def _unique_zip_name(filename: str, used_names: set[str]) -> str:
+        if filename not in used_names:
+            used_names.add(filename)
+            return filename
+        stem, _, suffix = filename.rpartition(".")
+        index = 2
+        while True:
+            candidate = f"{stem}-{index}.{suffix}" if suffix else f"{filename}-{index}"
+            if candidate not in used_names:
+                used_names.add(candidate)
+                return candidate
+            index += 1
 
     def _render_pdf(
         self,

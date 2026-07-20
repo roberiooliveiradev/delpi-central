@@ -81,8 +81,12 @@ export type DataTableClassNames = {
   rowClickable: string;
   /** Tabela com `--sortable` dual (prefix + delpi-ui). */
   sortableTable?: string;
+  /** Tabela com `--compact` dual (prefix + delpi-ui). */
+  compactTable?: string;
   /** Célula/coluna numérica alinhada à direita. */
   colNumeric?: string;
+  /** Coluna larga (descrição / texto). */
+  colWide?: string;
 };
 
 export type DataTableLabels = {
@@ -163,7 +167,9 @@ export function dataTableBemClasses(prefix: string): DataTableClassNames {
     ),
     table: tableDual,
     sortableTable: withBemModifier(tableDual, "sortable"),
+    compactTable: withBemModifier(tableDual, "compact"),
     colNumeric: delpiUiClass(`${table}__col--numeric`, `${ui}__col--numeric`),
+    colWide: delpiUiClass(`${table}__col--wide`, `${ui}__col--wide`),
     empty: delpiUiClass(`${table}__empty`, `${ui}__empty`),
     headerLabel: delpiUiClass(`${table}__header-label`, `${ui}__header-label`),
     headerText: delpiUiClass(`${table}__header-text`, `${ui}__header-text`),

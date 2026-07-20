@@ -26,6 +26,7 @@ import { TM_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { buildRecursoPath } from "../../utils/routeParser";
 import { TableRowActions } from "../../components/ui/TableRowActions";
 import { useConfirm } from "../../components/ui/ConfirmDialogProvider";
+import { useTransformometroCatalogWatch } from "../../hooks/useTransformometroCatalogWatch";
 import { renderTableStatus } from "../../utils/tablePresentation";
 import { DS_GHOST_BTN, dsGhostBtn } from "../../components/ghostChrome";
 
@@ -61,6 +62,14 @@ export function RecursosPage({ getAccessToken, pathname, onNavigate, embedded = 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useTransformometroCatalogWatch({
+    catalogId: "recurso",
+    getAccessToken,
+    onUpdated: () => {
+      void load();
+    },
+  });
 
   async function handleDelete(r: RecursoCompartilhado) {
     const confirmed = await confirm({

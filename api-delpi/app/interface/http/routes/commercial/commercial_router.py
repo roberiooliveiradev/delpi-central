@@ -1,4 +1,14 @@
 from fastapi import APIRouter, Query
+
+from app.interface.http.query_param_enums import (
+    BRANCH_QUERY_OPTIONAL,
+    BRANCH_QUERY_REQUIRED,
+    COMMERCIAL_OTD_STATUS_QUERY,
+    COMMERCIAL_PROPOSAL_STATUS_QUERY,
+    CUSTOMER_SEGMENT_QUERY,
+    GRANULARITY_QUERY_REQUIRED,
+    SORT_DIR_QUERY,
+)
 from typing import Optional
 
 from delpi_auth.authorization import require_any_permission
@@ -88,10 +98,7 @@ router = APIRouter(prefix="/commercial", tags=["Comercial"])
 def get_head_office_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         use_case = build_get_head_office_rol_target_pct_use_case()
@@ -142,10 +149,7 @@ def get_head_office_rol_target_pct(
 def get_branch_rol_target_pct(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         use_case = build_get_branch_rol_target_pct_use_case()
@@ -392,13 +396,10 @@ def get_branch_new_business_rol_target_pct(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_commercial_rol_series(
-    granularity: str = Query(..., min_length=3, max_length=10),
+    granularity: str = GRANULARITY_QUERY_REQUIRED(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         request = CommercialRolSeriesRequest(
@@ -434,17 +435,11 @@ def get_commercial_rol_series(
 @router.get("/proposals", **COMMERCIAL_PROPOSALS)
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def list_commercial_proposals(
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    status: Optional[str] = Query(
-        None,
-        description="Filtro: won (ganhas), open (demais) ou omitir para todas.",
-    ),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    status: Optional[str] = COMMERCIAL_PROPOSAL_STATUS_QUERY(),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     sort_by: Optional[str] = Query(
@@ -454,7 +449,7 @@ def list_commercial_proposals(
             "proposal_date, end_date, status_code, customer_code, customer_store."
         ),
     ),
-    sort_dir: str = Query("asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY(),
     search: Optional[str] = Query(
         None,
         max_length=80,
@@ -504,7 +499,7 @@ def list_commercial_proposals(
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_commercial_proposal(
     proposal_number: str,
-    branch: str = Query(..., min_length=2, max_length=2),
+    branch: str = BRANCH_QUERY_REQUIRED(),
     revision: Optional[str] = Query(None, min_length=1, max_length=2),
 ):
     try:
@@ -544,7 +539,7 @@ def get_commercial_proposal(
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_commercial_proposal_history_events(
     proposal_number: str,
-    branch: str = Query(..., min_length=2, max_length=2),
+    branch: str = BRANCH_QUERY_REQUIRED(),
     revision: Optional[str] = Query(None, min_length=1, max_length=2),
     date_start: Optional[str] = Query(None),
     date_end: Optional[str] = Query(None),
@@ -589,13 +584,10 @@ def get_commercial_proposal_history_events(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_conversion_rate(
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         use_case = build_get_sales_conversion_rate_use_case()
@@ -643,7 +635,7 @@ def get_sales_conversion_rate(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_clients_average(
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
 ):
@@ -686,14 +678,11 @@ def get_new_clients_average(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_order_otd_series(
-    granularity: str = Query(..., min_length=3, max_length=10),
+    granularity: str = GRANULARITY_QUERY_REQUIRED(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         request = SalesOrderOtdSeriesRequest(
@@ -734,21 +723,15 @@ def get_sales_order_otd_series(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_order_otd_panel(
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
-    status: Optional[str] = Query(
-        None,
-        description="Filtro de status: on_time ou late.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
+    status: Optional[str] = COMMERCIAL_OTD_STATUS_QUERY(),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=1000),
     sort_by: Optional[str] = Query(default=None),
-    sort_dir: str = Query(default="asc", pattern="^(asc|desc)$"),
+    sort_dir: str = SORT_DIR_QUERY(),
 ):
     try:
         use_case = build_get_sales_order_otd_panel_use_case()
@@ -807,10 +790,7 @@ def get_sales_order_otd_line_detail(
     line_item: str,
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         use_case = build_get_sales_order_otd_line_detail_use_case()
@@ -855,13 +835,10 @@ def get_sales_order_otd_line_detail(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_sales_order_otd(
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         use_case = build_get_sales_order_otd_use_case()
@@ -909,13 +886,10 @@ def get_sales_order_otd(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_business_rol_pct(
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    customer_segment: Optional[str] = Query(
-        None,
-        description="Segmento de cliente: weg ou new_business.",
-    ),
+    customer_segment: Optional[str] = CUSTOMER_SEGMENT_QUERY(),
 ):
     try:
         use_case = build_get_new_business_rol_pct_use_case()
@@ -963,7 +937,7 @@ def get_new_business_rol_pct(
 )
 @require_any_permission(KPI_COMMERCIAL_ACCESS)
 def get_new_clients_rol_pct(
-    branch: Optional[str] = Query(None, min_length=2, max_length=2),
+    branch: Optional[str] = BRANCH_QUERY_OPTIONAL(),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
 ):
