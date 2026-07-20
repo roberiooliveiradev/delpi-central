@@ -167,3 +167,38 @@ def test_resumo_returns_403_when_branch_denied(
 ) -> None:
     response = refugos_client.get("/refugos/resumo", params={"filial": "02"})
     assert response.status_code == 403
+
+
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_health_use_case"
+)
+def test_health_returns_envelope(mock_builder, refugos_client: TestClient) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(return_value={"status": "ok"})
+    )
+    response = refugos_client.get("/refugos/health")
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_refugos_health"
+    assert body["meta"]["shape"] == "scalar"
+    assert body["meta"]["dataVersion"] == DATA_VERSION
+
+
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_filtros_use_case"
+)
+def test_filtros_returns_envelope(
+    mock_builder, _mock_branch, refugos_client: TestClient
+) -> None:
+    mock_builder.return_value = MagicMock(
+        execute=MagicMock(return_value={"motivos": [], "recursos": []})
+    )
+    response = refugos_client.get("/refugos/filtros", params={"filial": "01"})
+    body = _body(response)
+    assert response.status_code == 200
+    assert body["meta"]["operationId"] == "get_refugos_filtros"
+    assert body["meta"]["shape"] == "scalar"

@@ -3,8 +3,8 @@
   "generatedAt": "2026-07-20",
   "baselineOperationCount": 368,
   "operationCount": 368,
-  "coveredCount": 196,
-  "gapCount": 171,
+  "coveredCount": 222,
+  "gapCount": 145,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -15,8 +15,8 @@
     },
     "commercial": {
       "total": 18,
-      "covered": 9,
-      "gap": 9,
+      "covered": 18,
+      "gap": 0,
       "exempt": 0
     },
     "cultura-delpi": {
@@ -45,8 +45,8 @@
     },
     "engineering": {
       "total": 16,
-      "covered": 12,
-      "gap": 4,
+      "covered": 16,
+      "gap": 0,
       "exempt": 0
     },
     "financeiro": {
@@ -81,8 +81,8 @@
     },
     "inspecoes-entrada": {
       "total": 7,
-      "covered": 6,
-      "gap": 1,
+      "covered": 7,
+      "gap": 0,
       "exempt": 0
     },
     "inspecoes-processo": {
@@ -99,8 +99,8 @@
     },
     "production": {
       "total": 32,
-      "covered": 20,
-      "gap": 12,
+      "covered": 23,
+      "gap": 9,
       "exempt": 0
     },
     "products": {
@@ -117,8 +117,8 @@
     },
     "public": {
       "total": 2,
-      "covered": 0,
-      "gap": 2,
+      "covered": 2,
+      "gap": 0,
       "exempt": 0
     },
     "purchases": {
@@ -135,14 +135,14 @@
     },
     "refugos": {
       "total": 6,
-      "covered": 4,
-      "gap": 2,
+      "covered": 6,
+      "gap": 0,
       "exempt": 0
     },
     "retrabalhos": {
       "total": 7,
-      "covered": 2,
-      "gap": 5,
+      "covered": 7,
+      "gap": 0,
       "exempt": 0
     },
     "sales": {
@@ -187,7 +187,7 @@
       "module": "commercial",
       "entity": "commercial_rol_new_business_target",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_branch_rol_target_pct",
@@ -196,7 +196,7 @@
       "module": "commercial",
       "entity": "commercial_rol_target",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_branch_weg_rol_target_pct",
@@ -205,7 +205,7 @@
       "module": "commercial",
       "entity": "commercial_rol_weg_target",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_sales_conversion_rate",
@@ -223,7 +223,7 @@
       "module": "commercial",
       "entity": "commercial_rol_new_business_target",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_head_office_rol_target_pct",
@@ -241,7 +241,7 @@
       "module": "commercial",
       "entity": "commercial_rol_weg_target",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_new_business_rol_pct",
@@ -259,7 +259,7 @@
       "module": "commercial",
       "entity": "new_clients_average",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_new_clients_rol_pct",
@@ -268,7 +268,7 @@
       "module": "commercial",
       "entity": "new_clients_rol_pct",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_commercial_proposals",
@@ -295,7 +295,7 @@
       "module": "commercial",
       "entity": "commercial_proposal_history",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_commercial_rol_series",
@@ -340,7 +340,7 @@
       "module": "commercial",
       "entity": "sales_order_otd_series",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_cultura_delpi_content",
@@ -475,7 +475,7 @@
       "module": "engineering",
       "entity": "mini_applicators_ferramenta",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_mini_applicators_componentes",
@@ -493,7 +493,7 @@
       "module": "engineering",
       "entity": "mini_applicators_golpes",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_mini_applicators_pecas",
@@ -502,7 +502,7 @@
       "module": "engineering",
       "entity": "mini_applicators_peca",
       "shape": "list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_mini_applicators_pecas_reposicao",
@@ -511,7 +511,7 @@
       "module": "engineering",
       "entity": "mini_applicators_peca",
       "shape": "paged_list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_transforma_mais_processes",
@@ -1025,7 +1025,7 @@
       "module": "inspecoes-entrada",
       "entity": "inspecoes_entrada_rejeitadas_produto",
       "shape": "list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_inspecoes_entrada_resumo",
@@ -1223,7 +1223,7 @@
       "module": "production",
       "entity": "depreciation_pct",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_direct_labor_cost_pct",
@@ -1232,7 +1232,7 @@
       "module": "production",
       "entity": "direct_labor_cost_pct",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "list_eficiencia_fabril_appointments",
@@ -1385,7 +1385,7 @@
       "module": "production",
       "entity": "production_cost_pct",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_production_schedule_today",
@@ -1763,7 +1763,7 @@
       "module": "public",
       "entity": "public_kaizen_suggestion",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_public_quality_label_inspection",
@@ -1772,7 +1772,7 @@
       "module": "public",
       "entity": "quality_label_public_inspection",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_purchases_top_products",
@@ -3005,7 +3005,7 @@
       "module": "refugos",
       "entity": "refugos_filtros",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_refugos_health",
@@ -3014,7 +3014,7 @@
       "module": "refugos",
       "entity": "refugos_health",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_refugos_rankings",
@@ -3059,7 +3059,7 @@
       "module": "retrabalhos",
       "entity": "retrabalho_horas_improdutivas_colaboradores",
       "shape": "list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_retrabalhos_detalhes",
@@ -3077,7 +3077,7 @@
       "module": "retrabalhos",
       "entity": "retrabalho_horas_improdutivas_filtros",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_retrabalhos_health",
@@ -3086,7 +3086,7 @@
       "module": "retrabalhos",
       "entity": "retrabalho_horas_improdutivas_health",
       "shape": "scalar",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_retrabalhos_mensal",
@@ -3095,7 +3095,7 @@
       "module": "retrabalhos",
       "entity": "retrabalho_horas_improdutivas_mensal",
       "shape": "list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_retrabalhos_recursos",
@@ -3104,7 +3104,7 @@
       "module": "retrabalhos",
       "entity": "retrabalho_horas_improdutivas_recursos",
       "shape": "list",
-      "status": "gap"
+      "status": "covered"
     },
     {
       "operationId": "get_retrabalhos_resumo",
