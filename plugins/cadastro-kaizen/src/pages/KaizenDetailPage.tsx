@@ -230,8 +230,12 @@ export function KaizenDetailPage({ recordId, onNavigate }: Props) {
   }
 
   function cancelSection(key: string) {
-    resetForm();
-    setChangeReason("");
+    if (formEditBaselineRef.current) {
+      setForm(structuredClone(formEditBaselineRef.current));
+    } else {
+      resetForm();
+    }
+    setChangeReason(changeReasonEditBaselineRef.current);
     stopEdit(key);
   }
 

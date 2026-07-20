@@ -91,4 +91,57 @@ describe("EditableSectionCard", () => {
     expect(screen.queryByRole("button", { name: /Salvar/i })).toBeNull();
     expect(screen.getByRole("button", { name: /Cancelar/i })).toBeTruthy();
   });
+
+  it("ao cancelar remonta o conteúdo e descarta estado interno do draft", async () => {
+    const { useState } = await import("react");
+    const { fireEvent } = await import("@testing-library/react");
+
+    function DraftProbe({ mode }: { mode: "read" | "edit" }) {
+      const [text, setText] = useState("original");
+      return (
+        <div>
+          <span data-testid="draft-value">{text}</span>
+          <span data-testid="draft-mode">{mode}</span>
+          {mode === "edit" ? (
+            <button type="button" onClick={() => setText("alterado")}>
+              Mudar
+            </button>
+          ) : null}
+        </div>
+      );
+    }
+
+    const onCancel = vi.fn();
+    const { rerender } = render(
+      <EditableSectionCard
+        title="Escopo"
+        isEditing={true}
+        onEdit={vi.fn()}
+        onCancel={onCancel}
+        readContent={<DraftProbe mode="read" />}
+        editContent={<DraftProbe mode="edit" />}
+        classNames={editableSectionCardBemClasses("kz")}
+        labels={LABELS}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Mudar/i }));
+    expect(screen.getByTestId("draft-value").textContent).toBe("alterado");
+
+    rerender(
+      <EditableSectionCard
+        title="Escopo"
+        isEditing={false}
+        onEdit={vi.fn()}
+        onCancel={onCancel}
+        readContent={<DraftProbe mode="read" />}
+        editContent={<DraftProbe mode="edit" />}
+        classNames={editableSectionCardBemClasses("kz")}
+        labels={LABELS}
+      />,
+    );
+
+    expect(screen.getByTestId("draft-mode").textContent).toBe("read");
+    expect(screen.getByTestId("draft-value").textContent).toBe("original");
+  });
 });

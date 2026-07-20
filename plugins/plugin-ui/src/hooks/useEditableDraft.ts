@@ -23,6 +23,10 @@ export type EditableDraft<T> = {
 
 /**
  * Draft editável com detecção centralizada de `dirty` (baseline × valor atual).
+ *
+ * Ao cancelar edição num `EditableSectionCard`, o kit remonta o conteúdo
+ * (`key` read/edit) para descartar o draft. Em formulários no pai, o `onCancel`
+ * deve chamar `reset()` / restaurar o baseline explicitamente.
  */
 export function useEditableDraft<T>(initial: T): EditableDraft<T> {
   const [baseline, setBaseline] = useState<T>(() => cloneValue(initial));

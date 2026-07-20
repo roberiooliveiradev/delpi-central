@@ -160,7 +160,10 @@ export function EditableSectionCard({
           ) : null}
         </div>
       </header>
-      <div className={isEditing ? classNames.editContent : classNames.readContent}>
+      <div
+        key={isEditing ? "section-edit" : "section-read"}
+        className={isEditing ? classNames.editContent : classNames.readContent}
+      >
         {isEditing ? editContent : readContent}
       </div>
     </section>
@@ -264,7 +267,10 @@ export function EditableSectionCardPac({
         </>
       }
     >
-      <div className={isEditing ? editContentClassName : readContentClassName}>
+      <div
+        key={isEditing ? "section-edit" : "section-read"}
+        className={isEditing ? editContentClassName : readContentClassName}
+      >
         {isEditing ? editContent : readContent}
       </div>
     </SectionCard>

@@ -454,6 +454,7 @@ Grade CSS grid para formulários e rodapé de botões.
 | `useEditableDraft` / `valuesEqual` / `shouldShowDirtySave` | Detecção centralizada de alterações |
 
 `EditableSectionCard`: prop `dirty` — o botão Salvar do header só aparece quando `dirty` (ou `saving`).
+Ao alternar leitura/edição o conteúdo é remontado (`key`), para o **Cancelar** descartar drafts internos; formulários no pai devem restaurar o baseline no `onCancel`.
 
 Helpers: `createDashboardFormGrid({ classNames })`, `createDashboardFormActions({ classNames })`, `createDashboardDirtySaveActions({ classNames, primaryButtonClassName })`.
 
