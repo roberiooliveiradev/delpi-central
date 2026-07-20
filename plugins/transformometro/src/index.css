@@ -1290,6 +1290,9 @@
   cursor: grab;
   border-radius: var(--ds-control-radius);
   padding: 0;
+  touch-action: none;
+  -webkit-user-drag: element;
+  user-select: none;
 }.dashboard-transformometro .tm-rich-tree__drag-handle:hover,
 .dashboard-transformometro .tm-rich-tree__drag-handle:focus-visible{
   color: var(--ds-accent);
