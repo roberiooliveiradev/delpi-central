@@ -1,13 +1,25 @@
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-ROUTES_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_data_routes.json"
+_PACKAGED_ROUTES = Path(__file__).resolve().parents[2] / "content" / "tv_data_routes.json"
 OVERLAYS_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_data_route_overlays.json"
 ALIASES_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_operation_id_aliases.json"
+
+
+def resolve_routes_path() -> Path:
+    """Path do catálogo: volume persistente (env) ou artefato empacotado."""
+    raw = str(os.getenv("TV_DATA_ROUTES_PATH") or "").strip()
+    if raw:
+        return Path(raw)
+    return _PACKAGED_ROUTES
+
+
+ROUTES_PATH = resolve_routes_path()
 
 DATA_BLOCK_TYPES = frozenset({"data_kpi", "data_chart", "data_table", "data_metric", "data_source"})
 DATA_VIEW_BLOCK_TYPES = frozenset({"chart_view", "table_view", "kpi_view"})
@@ -20,7 +32,13 @@ _RUNTIME_OVERLAY_KEYS = frozenset({"suggestedTransformSteps", "tvConstraints"})
 
 @lru_cache(maxsize=1)
 def _load_catalog() -> dict[str, Any]:
-    return json.loads(ROUTES_PATH.read_text(encoding="utf-8"))
+    path = resolve_routes_path()
+    if path.is_file():
+        return json.loads(path.read_text(encoding="utf-8"))
+    # Fallback: catálogo empacotado na imagem (antes do 1º sync no volume).
+    if _PACKAGED_ROUTES.is_file() and path != _PACKAGED_ROUTES:
+        return json.loads(_PACKAGED_ROUTES.read_text(encoding="utf-8"))
+    raise FileNotFoundError(f"Catálogo TV ausente: {path}")
 
 
 @lru_cache(maxsize=1)

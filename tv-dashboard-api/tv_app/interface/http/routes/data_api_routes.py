@@ -253,7 +253,7 @@ def get_data_route(request: Request, operation_id: str):
 
 @router.get("/openapi/candidates")
 def list_openapi_get_candidates(request: Request, include_catalog: bool = False):
-    """Rotas GET da api-delpi — curadoria para expandir o catálogo TV (não import automático)."""
+    """Rotas GET da api-delpi — curadoria (candidates) vs allowlist já sincronizada."""
     user = resolve_user(request)
     try:
         assert_permission(user, TV_MANAGE)
@@ -261,6 +261,25 @@ def list_openapi_get_candidates(request: Request, include_catalog: bool = False)
         return fail(str(exc), 403)
     items = _openapi.list_candidates(include_allowlisted=include_catalog)
     return ok({"items": items, "total": len(items), "httpMethod": "GET"})
+
+
+@router.post("/openapi/sync")
+def sync_openapi_catalog(request: Request):
+    """Reimporta OpenAPI live da api-delpi e regenera tv_data_routes.json."""
+    user = resolve_user(request)
+    try:
+        assert_permission(user, TV_MANAGE)
+    except PermissionError as exc:
+        return fail(str(exc), 403)
+    from tv_app.application.services.tv_openapi_catalog_sync_service import (
+        TvOpenApiCatalogSyncService,
+    )
+
+    try:
+        report = TvOpenApiCatalogSyncService().sync_from_live_api()
+    except Exception as exc:  # noqa: BLE001
+        return fail(f"Falha ao sincronizar OpenAPI: {exc}", 502)
+    return ok(report)
 
 
 @router.post("/preview-block")

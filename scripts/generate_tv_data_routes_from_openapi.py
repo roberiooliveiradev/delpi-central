@@ -524,8 +524,169 @@ def merge_with_existing(base: dict[str, Any], existing: dict[str, Any] | None) -
     return merged
 
 
+_HTTP_METHODS = frozenset({"get", "post", "put", "patch", "delete", "head", "options"})
+
+
+def _schema_type_and_meta(schema: dict[str, Any]) -> dict[str, Any]:
+    meta: dict[str, Any] = {}
+    candidates: list[dict[str, Any]] = [schema]
+    any_of = schema.get("anyOf") or schema.get("oneOf")
+    if isinstance(any_of, list):
+        for item in any_of:
+            if isinstance(item, dict) and item.get("type") != "null":
+                candidates.append(item)
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        type_name = str(candidate.get("type") or "").strip()
+        if type_name and type_name != "null" and "type" not in meta:
+            meta["type"] = type_name
+        if "default" in candidate and candidate.get("default") is not None and "default" not in meta:
+            meta["default"] = candidate["default"]
+        enum = candidate.get("enum")
+        if isinstance(enum, list) and enum and "enum" not in meta:
+            meta["enum"] = [str(item) for item in enum]
+        format_name = str(candidate.get("format") or "").strip()
+        if format_name and "format" not in meta:
+            meta["format"] = format_name
+    if "default" in schema and schema.get("default") is not None and "default" not in meta:
+        meta["default"] = schema["default"]
+    return meta
+
+
+def _simplify_openapi_parameter(param: dict[str, Any]) -> dict[str, Any] | None:
+    if not isinstance(param, dict):
+        return None
+    if str(param.get("in") or "").lower() != "query":
+        return None
+    name = str(param.get("name") or "").strip()
+    if not name:
+        return None
+    schema = param.get("schema") if isinstance(param.get("schema"), dict) else {}
+    entry: dict[str, Any] = {
+        "name": name,
+        "required": bool(param.get("required")),
+    }
+    description = str(param.get("description") or schema.get("description") or "").strip()
+    if description:
+        entry["description"] = description
+    entry.update(_schema_type_and_meta(schema))
+    return entry
+
+
+def _clean_locale_map(raw: Any) -> dict[str, dict[str, str]] | None:
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, dict[str, str]] = {}
+    for lang, block in raw.items():
+        lang_key = str(lang or "").strip()
+        if not lang_key or not isinstance(block, dict):
+            continue
+        cleaned: dict[str, str] = {}
+        for field in ("summary", "description", "whenToUse", "label"):
+            value = str(block.get(field) or "").strip()
+            if value:
+                cleaned[field] = value
+        if cleaned:
+            out[lang_key] = cleaned
+    return out or None
+
+
+def _extract_x_delpi(operation: dict[str, Any]) -> dict[str, Any] | None:
+    raw = operation.get("x-delpi")
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, Any] = {}
+    entity = raw.get("entity")
+    shape = raw.get("shape")
+    if entity is not None:
+        out["entity"] = str(entity)
+    if shape is not None:
+        out["shape"] = str(shape)
+    presentation = raw.get("presentation")
+    if isinstance(presentation, dict) and presentation.get("strategy") is not None:
+        out["presentationStrategy"] = str(presentation.get("strategy"))
+    category = str(raw.get("category") or "").strip()
+    if category:
+        out["category"] = category
+    locale = _clean_locale_map(raw.get("locale"))
+    if locale:
+        out["locale"] = locale
+    params_raw = raw.get("params")
+    if isinstance(params_raw, dict) and params_raw:
+        params_out: dict[str, Any] = {}
+        for name, value in params_raw.items():
+            key = str(name or "").strip()
+            if not key or not isinstance(value, dict):
+                continue
+            param_locale = _clean_locale_map(value.get("locale"))
+            if param_locale:
+                params_out[key] = {"locale": param_locale}
+        if params_out:
+            out["params"] = params_out
+    tv = raw.get("tv")
+    if isinstance(tv, dict) and tv:
+        tv_clean: dict[str, str] = {}
+        for field in ("whenToUse", "description", "label"):
+            value = str(tv.get(field) or "").strip()
+            if value:
+                tv_clean[field] = value
+        if tv_clean:
+            out["tv"] = tv_clean
+    return out or None
+
+
+def build_baseline_payload_from_openapi(spec: dict[str, Any]) -> dict[str, Any]:
+    """Converte OpenAPI completo → baseline v3 (sem depender de app.domain api-delpi).
+
+    O OpenAPI live da api-delpi já traz `x-delpi` (locale/params) via injector.
+    """
+    operations: list[dict[str, Any]] = []
+    for path, methods in (spec.get("paths") or {}).items():
+        if not isinstance(methods, dict):
+            continue
+        for method, operation in methods.items():
+            if method not in _HTTP_METHODS or not isinstance(operation, dict):
+                continue
+            row: dict[str, Any] = {
+                "method": method.upper(),
+                "path": path,
+                "operationId": operation.get("operationId"),
+                "summary": operation.get("summary"),
+                "tags": operation.get("tags") or [],
+                "deprecated": bool(operation.get("deprecated")),
+            }
+            parameters: list[dict[str, Any]] = []
+            for raw_param in operation.get("parameters") or []:
+                simplified = _simplify_openapi_parameter(raw_param)
+                if simplified:
+                    parameters.append(simplified)
+            if parameters:
+                row["parameters"] = parameters
+            x_delpi = _extract_x_delpi(operation)
+            if x_delpi:
+                row["xDelpi"] = x_delpi
+            description = str(operation.get("description") or "").strip()
+            if description:
+                row["description"] = description
+            operations.append(row)
+    operations.sort(key=lambda row: (str(row.get("path") or ""), str(row.get("method") or "")))
+    info = spec.get("info") or {}
+    return {
+        "version": "3",
+        "api_title": info.get("title"),
+        "api_version": info.get("version"),
+        "openapi_version": spec.get("openapi"),
+        "operation_count": len(operations),
+        "operations": operations,
+    }
+
+
 def load_openapi_get_operations(baseline_path: Path) -> list[dict[str, Any]]:
     payload = load_json(baseline_path)
+    # Aceita baseline {operations:[…]} ou OpenAPI completo {paths:{…}}.
+    if isinstance(payload.get("paths"), dict) and "operations" not in payload:
+        payload = build_baseline_payload_from_openapi(payload)
     operations = payload.get("operations") or []
     if not isinstance(operations, list):
         return []
@@ -669,6 +830,18 @@ def write_routes(routes_path: Path, routes: list[dict[str, Any]]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--baseline", type=Path, default=OPENAPI_BASELINE_PATH)
+    parser.add_argument(
+        "--from-openapi",
+        type=Path,
+        default=None,
+        help="OpenAPI completo (openapi.json) — converte para baseline em memória / --baseline-out",
+    )
+    parser.add_argument(
+        "--baseline-out",
+        type=Path,
+        default=None,
+        help="Com --from-openapi: grava o baseline derivado neste path",
+    )
     parser.add_argument("--routes", type=Path, default=TV_ROUTES_PATH)
     parser.add_argument("--overlays", type=Path, default=TV_OVERLAYS_PATH)
     parser.add_argument("--write", action="store_true", help="Grava tv_data_routes.json")
@@ -680,13 +853,36 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not args.baseline.is_file():
-        print(f"OpenAPI baseline ausente: {args.baseline}", file=sys.stderr)
+    baseline_path = args.baseline
+    if args.from_openapi is not None:
+        if not args.from_openapi.is_file():
+            print(f"OpenAPI ausente: {args.from_openapi}", file=sys.stderr)
+            return 1
+        spec = load_json(args.from_openapi)
+        payload = build_baseline_payload_from_openapi(spec)
+        if args.baseline_out is not None:
+            args.baseline_out.parent.mkdir(parents=True, exist_ok=True)
+            args.baseline_out.write_text(
+                json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            baseline_path = args.baseline_out
+            print(f"Baseline derivado: {baseline_path} ({payload.get('operation_count')} ops)")
+        else:
+            import tempfile
+
+            tmp = Path(tempfile.mkstemp(prefix="tv_openapi_baseline_", suffix=".json")[1])
+            tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            baseline_path = tmp
+            print(f"Baseline temporário: {baseline_path} ({payload.get('operation_count')} ops)")
+
+    if not baseline_path.is_file():
+        print(f"OpenAPI baseline ausente: {baseline_path}", file=sys.stderr)
         return 1
 
     if args.seed_overlays:
         overlays = seed_overlays_from_catalog(
-            baseline_path=args.baseline,
+            baseline_path=baseline_path,
             routes_path=args.routes,
             overlays_path=args.overlays,
         )
@@ -695,7 +891,7 @@ def main() -> int:
             return 0
 
     generated = generate_routes(
-        baseline_path=args.baseline,
+        baseline_path=baseline_path,
         routes_path=args.routes,
         overlays_path=args.overlays,
     )

@@ -53,6 +53,22 @@ ALLOWED_ORIGINS = build_allowed_origins()
 async def lifespan(_app: FastAPI):
     check_credentials()
     run_migrations_on_startup()
+    if settings.TV_OPENAPI_SYNC_ON_STARTUP:
+        from tv_app.application.services.tv_openapi_catalog_sync_service import (
+            TvOpenApiCatalogSyncService,
+        )
+
+        report = await asyncio.to_thread(TvOpenApiCatalogSyncService().sync_safe)
+        if report.get("ok"):
+            logging.getLogger(__name__).info(
+                "OpenAPI TV sync ok: %s rotas",
+                report.get("routesWritten"),
+            )
+        else:
+            logging.getLogger(__name__).warning(
+                "OpenAPI TV sync skip: %s",
+                report.get("error"),
+            )
     loop = asyncio.get_running_loop()
     presentation_realtime_hub.bind_loop(loop)
     worker = asyncio.create_task(presentation_realtime_hub.worker())

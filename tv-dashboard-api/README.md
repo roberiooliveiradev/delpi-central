@@ -39,7 +39,8 @@ Power Query M: a [Fase 7](../docs/12-roadmap-e-evolucao/tv-dashboard/FASE-7-STAT
 |---|---|---|---|
 | `GET` | `/data/routes` | `TV_READ` | Catálogo allowlist com `suggestedDisplayModes` |
 | `GET` | `/data/routes/{operationId}` | `TV_READ` | Detalhe de uma rota |
-| `GET` | `/data/openapi/candidates` | `TV_MANAGE` | Rotas GET da api-delpi ainda fora da allowlist (curadoria) |
+| `GET` | `/data/openapi/candidates` | `TV_MANAGE` | Rotas GET da api-delpi (curadoria / diff vs allowlist) |
+| `POST` | `/data/openapi/sync` | `TV_MANAGE` | Reimporta OpenAPI live → regenera `tv_data_routes.json` |
 | `POST` | `/data/preview-block` | `TV_READ` | Preview de bloco isolado (merge filtros + RBAC) |
 | `POST` | `/data/validate-config` | `TV_READ` | Valida `native_config` antes do save |
 | `POST` | `/data/m/compile` | `TV_READ` | Compila `m-delpi-v1` para `TransformPlan`, sem executar ou buscar dados |
@@ -129,22 +130,43 @@ python3 scripts/check_tv_openapi_catalog_parity.py --check       # enums TV = Op
 
 Baseline de 2026-07-16: **232 operationIds GET únicos**, preservados na Fase 1. O cache agora isola por fingerprint SHA-256 de identidade/credencial opaca, permissões e contexto de serviço, sem JWT bruto. O enforcement usa `tvConstraints.requiresBranchPermission` e aliases de filial; rotas ainda sem curadoria mantêm fallback compatível configurável.
 
+### Sync automático OpenAPI → catálogo TV
+
+No **startup** do container (`TV_OPENAPI_SYNC_ON_STARTUP=true`, default), a API:
+
+1. Busca `GET {DELPI_API_URL}/openapi.json`
+2. Gera o allowlist com `scripts/generate_tv_data_routes_from_openapi.py` (copiado em `/app/tools/`)
+3. Grava em `TV_DATA_ROUTES_PATH` (volume `…/tv-dashboard/catalog`) e limpa o cache em memória
+
+Além disso, a **api-delpi** (após o próprio restart) chama `POST /data/openapi/sync` com `API_DELPI_INTERNAL_SERVICE_TOKEN` (`OPENAPI_CONSUMER_NOTIFY_ON_STARTUP`).
+
+Se a api-delpi estiver indisponível, mantém o catálogo atual (empacotado ou do volume) e só registra warning.
+
+Também:
+
+```bash
+# Pós-deploy (docker exec no TV)
+./scripts/homologacao/sync-api-delpi-openapi-tv.sh
+
+# Ou HTTP (JWT com tv-dashboard.manage)
+POST /apps/tv-dashboard-api/data/openapi/sync
+```
+
+Overlays TV (`tv_data_route_overlays.json`) continuam versionados no código — o sync **não** os sobrescreve.
+
 ### Catálogo a partir do OpenAPI (como o registry do chat)
 
-Fonte de verdade: **api-delpi OpenAPI completo** → `openapi_baseline.json` (v2: `parameters` + `xDelpi`) → gerador TV.
+Fonte de verdade: **api-delpi OpenAPI completo** → baseline / gerador TV → `tv_data_routes.json`.
 
 | Artefato | Papel |
 |---|---|
-| `api-delpi/app/content/openapi_baseline.json` | Inventário GET + query params + `x-delpi.shape` |
-| `tv-dashboard-api/.../tv_data_routes.json` | Catálogo servido ao editor (`GET /data/routes`) |
-| `tv_data_route_overlays.json` | Curadoria TV (`valueFields`, `valueFieldLabels`, `tvConstraints`, labels, `whenToUse`, `paramStrategy`) |
-| `api-delpi/.../tv_route_audience.json` | Audiência TV → `x-delpi.tv` no OpenAPI (gerador lê `whenToUse`/`label`/`description`) |
+| `api-delpi/app/content/openapi_baseline.json` | Inventário versionado (CI / generate --check) |
+| `TV_DATA_ROUTES_PATH` (volume) | Catálogo runtime sincronizado no startup |
+| `tv_app/content/tv_data_routes.json` | Seed empacotado na imagem (fallback) |
+| `tv_data_route_overlays.json` | Curadoria TV (`valueFields`, `tvConstraints`, …) |
+| `api-delpi/.../tv_route_audience.json` | Audiência → `x-delpi` no OpenAPI live |
 
-### Multi-métrica (escalares)
-
-Rotas com vários `valueFields` (ex.: `get_lmps_dashboard_summary`) resolvem `resolved.kpiMetrics[]` no enrichment. O binding aceita `selectedValueFields` (lista) e `valueField` (legado, um campo). Sem seleção = todas as métricas. Views (`kpi_view` / `chart_view` / `table_view`) podem filtrar de novo no cliente sem novo fetch.
-
-Esteira pós-deploy / após mudança de rota na api-delpi:
+Esteira local / commit do artefato versionado (opcional após curadoria):
 
 ```bash
 # 1) Baseline rico (local ou via container)
@@ -153,21 +175,22 @@ docker exec delpi-api-delpi python -c \
 docker cp delpi-api-delpi:/tmp/o.json /tmp/openapi_full.json
 cd api-delpi && .venv/bin/python scripts/sync_openapi_baseline.py --from-json /tmp/openapi_full.json
 
-# 2) Catálogo TV
+# 2) Catálogo TV (repo) + sync runtime
 cd ..
 python3 scripts/generate_tv_data_routes_from_openapi.py --write
 python3 scripts/enrich_tv_data_routes_pt.py --write   # labels PT (preservados no generate)
 python3 scripts/generate_tv_data_routes_from_openapi.py --check
 python3 scripts/check_tv_data_routes.py --check
-
-# 3) (chat) registry operacional — mesmo baseline
-cd minha-delpi-ai-api && .venv/bin/python scripts/generate_operational_route_registry.py --write --check
+./scripts/homologacao/sync-api-delpi-openapi-tv.sh
 ```
 
 O gerador monta `paramSchema` / `paramStrategy` (`date_range` quando há par de datas
-OpenAPI — `date_start`+`date_end` ou `start_date`+`end_date`) e `dateRangeKeys` com os
-nomes HTTP canônicos; overlays sobrescrevem só o que é específico do TV. Seed inicial de overlays: `--seed-overlays`.
+OpenAPI) e `dateRangeKeys` com os nomes HTTP canônicos; overlays sobrescrevem só o
+que é específico do TV. Seed inicial de overlays: `--seed-overlays`.
 
+### Multi-métrica (escalares)
+
+Rotas com vários `valueFields` (ex.: `get_lmps_dashboard_summary`) resolvem `resolved.kpiMetrics[]` no enrichment. O binding aceita `selectedValueFields` (lista) e `valueField` (legado, um campo). Sem seleção = todas as métricas. Views (`kpi_view` / `chart_view` / `table_view`) podem filtrar de novo no cliente sem novo fetch.
 
 ---
 

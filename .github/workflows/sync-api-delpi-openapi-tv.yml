@@ -1,4 +1,4 @@
-name: sync-api-delpi-openapi
+name: sync-api-delpi-openapi-tv
 
 on:
   workflow_dispatch:
@@ -16,11 +16,11 @@ on:
         default: "0"
 
 jobs:
-  sync-openapi:
+  sync-openapi-tv:
     runs-on: ubuntu-latest
     environment: ${{ inputs.target }}
     steps:
-      - name: Sync remoto via SSH
+      - name: Sync TV remoto via SSH
         env:
           SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
           SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
@@ -33,7 +33,7 @@ jobs:
 
           if [ -z "${SSH_HOST:-}" ] || [ -z "${SSH_USER:-}" ] || [ -z "${SSH_KEY:-}" ]; then
             echo "::error::Configure DEPLOY_SSH_HOST, DEPLOY_SSH_USER e DEPLOY_SSH_KEY no Environment '${{ inputs.target }}'."
-            echo "Alternativa local: ./scripts/homologacao/sync-api-delpi-openapi.sh"
+            echo "Alternativa local: ./scripts/homologacao/sync-api-delpi-openapi-tv.sh"
             exit 1
           fi
 
@@ -46,4 +46,4 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new \
             "${SSH_USER}@${SSH_HOST}" \
-            "cd '${REPO_PATH}' && BASE_URL='${BASE_URL}' SKIP_HEALTH_WAIT='${SKIP_HEALTH_WAIT}' ./scripts/homologacao/sync-api-delpi-openapi.sh && BASE_URL='${BASE_URL}' SKIP_HEALTH_WAIT='${SKIP_HEALTH_WAIT}' ./scripts/homologacao/sync-api-delpi-openapi-tv.sh"
+            "cd '${REPO_PATH}' && BASE_URL='${BASE_URL}' SKIP_HEALTH_WAIT='${SKIP_HEALTH_WAIT}' ./scripts/homologacao/sync-api-delpi-openapi-tv.sh"

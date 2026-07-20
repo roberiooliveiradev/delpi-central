@@ -29,14 +29,25 @@ def apply_internal_service_headers(headers: dict[str, str]) -> None:
             headers["Authorization"] = auth
 
 
-def request_has_valid_internal_service_token(request: Request) -> bool:
+def headers_have_valid_internal_service_token(headers: dict[str, str] | None) -> bool:
+    """Valida token em mapa de headers (FastAPI, Flask ou httpx)."""
     expected = get_internal_service_token()
-    if not expected:
+    if not expected or not headers:
         return False
 
-    header_token = (request.headers.get("X-Delpi-Service-Token") or "").strip()
+    def _get(name: str) -> str:
+        for key, value in headers.items():
+            if str(key).lower() == name.lower():
+                return str(value or "").strip()
+        return ""
+
+    header_token = _get("X-Delpi-Service-Token")
     if header_token == expected:
         return True
 
-    authorization = (request.headers.get("Authorization") or "").strip()
+    authorization = _get("Authorization")
     return authorization in {expected, f"Bearer {expected}"}
+
+
+def request_has_valid_internal_service_token(request: Request) -> bool:
+    return headers_have_valid_internal_service_token(dict(request.headers))

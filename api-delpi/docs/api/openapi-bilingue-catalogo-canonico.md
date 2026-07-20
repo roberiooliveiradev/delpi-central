@@ -93,6 +93,10 @@ python3 scripts/sync_tv_data_param_catalog.py --write && --check
 
 Chat: seguir [12-procedimento-reimport-openapi.md](./12-procedimento-reimport-openapi.md) + checklist [new-api-route-checklist](../../.cursor/rules/new-api-route-checklist.mdc).
 
+**TV:** no startup do `tv-dashboard-api` (`TV_OPENAPI_SYNC_ON_STARTUP`) ou `./scripts/homologacao/sync-api-delpi-openapi-tv.sh` — ver `tv-dashboard-api/README.md` § Sync automático.
+
+**Disparo a partir da api-delpi (recomendado):** no startup do container, após delay, a api-delpi notifica chat + TV via S2S (`scripts/notify_openapi_consumers.py` / `OPENAPI_CONSUMER_NOTIFY_ON_STARTUP`). Requer `API_DELPI_INTERNAL_SERVICE_TOKEN` compartilhado.
+
 ### 6. Smoke HTTP e inventário de cobertura
 
 Toda rota nova precisa de **smoke Nível A** (`meta.operationId` / envelope) e sincronização do inventário:

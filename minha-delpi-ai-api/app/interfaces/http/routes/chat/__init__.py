@@ -7,6 +7,7 @@ from app.interfaces.http.routes.chat import (  # noqa: F401
     agent_routes,
     agent_skill_routes,
     attachment_routes,
+    internal_openapi_sync_routes,
     message_routes,
     meta_routes,
     project_routes,
