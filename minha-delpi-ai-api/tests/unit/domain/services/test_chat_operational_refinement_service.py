@@ -325,6 +325,64 @@ def test_plan_metric_follow_up_after_commercial_kpi():
     assert planned[0].branch == "02"
 
 
+def test_plan_metric_follow_up_skips_when_fresh_kpi_differs_from_sticky():
+    """«meta comercial» não herda sticky de novos negócios só porque citou filial."""
+    history = [
+        {"role": "user", "content": "meta de novos negócios"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/commercial/branch_new_business_rol_target_pct",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_metric_follow_ups(
+        "qual a meta para comercial desse mês filial 02?",
+        previous_messages=history,
+    )
+
+    assert planned == []
+
+
+def test_plan_metric_follow_up_keeps_sticky_when_scope_only_after_same_kpi():
+    history = [
+        {"role": "user", "content": "qual a meta percentual de ROL da filial?"},
+        {
+            "role": "assistant",
+            "metadata": {
+                "toolCalls": [
+                    {
+                        "name": "execute_external_action",
+                        "metadata": {
+                            "ok": True,
+                            "path": "/commercial/branch_rol_target_pct",
+                        },
+                    }
+                ]
+            },
+        },
+    ]
+
+    planned = ChatOperationalRefinementService.plan_metric_follow_ups(
+        "filial 02",
+        previous_messages=history,
+    )
+
+    assert len(planned) == 1
+    assert planned[0].kind == "metric_refinement"
+    assert planned[0].metric_path_token == "branch_rol_target_pct"
+    assert planned[0].branch == "02"
+
+
 def test_plan_product_route_follow_up_after_structure():
     """Follow-up operacional reutiliza lote recente de sub-rota produto."""
     history = [

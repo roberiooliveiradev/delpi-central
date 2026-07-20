@@ -150,6 +150,21 @@ def test_resolve_commercial_branch_meta_comercial_da_filial():
     assert match.path_token == "branch_rol_target"
 
 
+def test_resolve_commercial_branch_meta_para_comercial_com_filial_02():
+    from app.domain.services.chat_department_kpi_intent_service import (
+        invalidate_department_kpi_rules_cache,
+    )
+
+    invalidate_department_kpi_rules_cache()
+    match = ChatDepartmentKpiIntentService.resolve(
+        "qual a meta para comercial desse mês filial 02?"
+    )
+
+    assert match is not None
+    assert match.path_token == "branch_rol_target"
+    assert match.domain_prefix == "/commercial/"
+
+
 def test_branch_rol_target_question_is_not_capability_inquiry():
     from app.application.services.chat_capabilities_service import ChatCapabilitiesService
 

@@ -24,12 +24,9 @@ class OperationalApiRouteSpec:
     def from_department_kpi(cls, match) -> OperationalApiRouteSpec:
         path_token = str(getattr(match, "path_token", "") or "").lower()
         domain_prefix = str(getattr(match, "domain_prefix", "") or "").lower()
-        operation_hint = str(getattr(match, "operation_hint", "") or "").strip()
-        operation_token = (
-            operation_hint.lower()
-            if operation_hint
-            else path_token.rsplit("/", maxsplit=1)[-1].replace("-", "_")
-        )
+        # Markers de operationId devem espelhar o path token (ex.: branch_rol_target),
+        # nunca o rótulo PT da intenção — senão o catálogo nunca casa a action.
+        operation_token = path_token.rsplit("/", maxsplit=1)[-1].replace("-", "_")
 
         return cls(
             domain="department_kpi",

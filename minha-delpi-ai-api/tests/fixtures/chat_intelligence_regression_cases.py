@@ -678,6 +678,62 @@ SELECTION_CASES = [
         "expected_action_id": "commercial-head-office-rol-target",
     },
     {
+        "message": "qual a meta para comercial desse mês filial 02?",
+        "previous_messages": [
+            {"role": "user", "content": "meta de novos negócios"},
+            {
+                "role": "assistant",
+                "metadata": {
+                    "toolCalls": [
+                        {
+                            "name": "execute_external_action",
+                            "metadata": {
+                                "ok": True,
+                                "path": "/commercial/branch_new_business_rol_target_pct",
+                            },
+                        }
+                    ]
+                },
+            },
+        ],
+        "actions": [
+            {
+                "actionId": "commercial-head-office-rol-target",
+                "method": "GET",
+                "path": "/commercial/head_office_rol_target_pct",
+                "operationId": "get_head_office_rol_target_pct",
+                "summary": "Meta % ROL matriz",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "commercial-branch-rol-target",
+                "method": "GET",
+                "path": "/commercial/branch_rol_target_pct",
+                "operationId": "get_branch_rol_target_pct",
+                "summary": "Meta % ROL filial",
+                "parametersSchema": [
+                    {"name": "branch", "in": "query", "required": False},
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "commercial-branch-new-business-rol-target",
+                "method": "GET",
+                "path": "/commercial/branch_new_business_rol_target_pct",
+                "operationId": "get_branch_new_business_rol_target_pct",
+                "summary": "Meta % ROL novos negócios filial",
+                "parametersSchema": [
+                    {"name": "branch", "in": "query", "required": False},
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+        ],
+        "expected_action_id": "commercial-branch-rol-target",
+        "expected_parameters": {"branch": "02"},
+    },
+    {
         "message": "Qual o OTD de compras da empresa?",
         "actions": [
             {

@@ -414,6 +414,63 @@ def test_operational_route_selection_department_kpi_closing_rate() -> None:
     assert selected["arguments"]["actionId"] == "closing"
 
 
+def test_operational_route_selection_department_kpi_branch_not_head_office() -> None:
+    """Marker virtual não pode ser só `/commercial/` — senão head_office ganha por ordem."""
+    repository = _FakeRepository(
+        [
+            {
+                "actionId": "commercial-head-office-rol-target",
+                "method": "GET",
+                "path": "/commercial/head_office_rol_target_pct",
+                "operationId": "get_head_office_rol_target_pct",
+                "parametersSchema": [],
+            },
+            {
+                "actionId": "commercial-branch-rol-target",
+                "method": "GET",
+                "path": "/commercial/branch_rol_target_pct",
+                "operationId": "get_branch_rol_target_pct",
+                "parametersSchema": [
+                    {"name": "branch", "in": "query", "required": False},
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+            {
+                "actionId": "commercial-branch-new-business-rol-target",
+                "method": "GET",
+                "path": "/commercial/branch_new_business_rol_target_pct",
+                "operationId": "get_branch_new_business_rol_target_pct",
+                "parametersSchema": [
+                    {"name": "branch", "in": "query", "required": False},
+                    {"name": "start_date", "in": "query", "required": False},
+                    {"name": "end_date", "in": "query", "required": False},
+                ],
+            },
+        ]
+    )
+    catalog = ExternalActionProductRouteCatalogService(repository)
+    service = ExternalActionOperationalRouteSelectionService(catalog)
+
+    selected = service.select_by_department_kpi(
+        "qual a meta para comercial desse mês filial 02?",
+        allowed_action_ids=[
+            "commercial-head-office-rol-target",
+            "commercial-branch-rol-target",
+            "commercial-branch-new-business-rol-target",
+        ],
+        build_date_branch_parameters=lambda action, message, **kwargs: {
+            "branch": "02",
+            "start_date": "2026-07-01",
+            "end_date": "2026-07-31",
+        },
+    )
+
+    assert selected is not None
+    assert selected["arguments"]["actionId"] == "commercial-branch-rol-target"
+    assert selected["arguments"]["parameters"].get("branch") == "02"
+
+
 def test_operational_route_selection_picks_product_inspection() -> None:
     repository = _FakeRepository(
         [

@@ -17,6 +17,17 @@ def test_resolve_hoje_as_single_day_range():
     assert resolved.end_date == "01-06-2026"
 
 
+def test_resolve_desse_mes_as_current_month():
+    resolved = ChatDateRangeIntentService.resolve(
+        "qual a meta para comercial desse mês?",
+        today=date(2026, 7, 20),
+    )
+
+    assert resolved is not None
+    assert resolved.start_date == "01-07-2026"
+    assert resolved.end_date == "31-07-2026"
+
+
 def test_resolve_dia_atual_as_single_day_range():
     resolved = ChatDateRangeIntentService.resolve(
         "oee do dia atual",

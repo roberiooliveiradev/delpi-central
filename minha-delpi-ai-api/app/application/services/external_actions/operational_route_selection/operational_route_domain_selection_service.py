@@ -87,11 +87,15 @@ class OperationalRouteDomainSelectionService:
             if not spec.path_prefixes:
                 path_markers.append(normalized_token)
 
-        for prefix in spec.path_prefixes:
-            normalized_prefix = str(prefix or "").strip().lower()
+        # Prefixo de domínio sozinho casa qualquer rota do departamento
+        # (ex.: `/commercial/` → head_office e branch). Só usar como fallback
+        # quando não há marker específico do KPI.
+        if not path_markers:
+            for prefix in spec.path_prefixes:
+                normalized_prefix = str(prefix or "").strip().lower()
 
-            if normalized_prefix and normalized_prefix not in path_markers:
-                path_markers.append(normalized_prefix)
+                if normalized_prefix and normalized_prefix not in path_markers:
+                    path_markers.append(normalized_prefix)
 
         return {
             "presentation": {"reasonKey": "departmentKpi"},
