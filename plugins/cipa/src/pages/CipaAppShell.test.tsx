@@ -173,6 +173,8 @@ describe("CipaAppShell compartilhado", () => {
     ).toBeTruthy();
     expect(screen.getByLabelText("Status")).toBeTruthy();
     expect(screen.getByLabelText("Busca")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /^Buscar$/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Baixar PDFs filtrados/ })).toBeTruthy();
 
     await screen.findByText("Reunião ordinária");
     const table = container.querySelector(".delpi-ui-table");
@@ -188,6 +190,36 @@ describe("CipaAppShell compartilhado", () => {
     fireEvent.keyDown(row!, { key: "Enter" });
     expect(navigation.navigateCipa).toHaveBeenCalledWith(
       "/apps/cipa/filial-01/minutes/minute-1",
+    );
+  });
+
+  it("aplica busca automaticamente sem botão Buscar", async () => {
+    render(
+      <CipaAppShell
+        route={{ kind: "list", unitCode: "01" }}
+        access={access}
+        accessLoading={false}
+        accessError={null}
+      />,
+    );
+
+    await screen.findByText("Reunião ordinária");
+    api.listMinutes.mockClear();
+
+    fireEvent.change(screen.getByLabelText("Busca"), {
+      target: { value: "ordinária" },
+    });
+
+    await waitFor(
+      () =>
+        expect(api.listMinutes).toHaveBeenCalledWith(
+          expect.objectContaining({
+            unit_code: "01",
+            q: "ordinária",
+          }),
+          expect.anything(),
+        ),
+      { timeout: 1500 },
     );
   });
 

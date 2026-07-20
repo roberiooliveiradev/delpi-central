@@ -305,29 +305,49 @@ function MinuteListPage({
   const [deleteTarget, setDeleteTarget] = useState<MinuteListItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const load = () => {
-    const controller = new AbortController();
-    setLoading(true);
-    listMinutes(
-      { unit_code: unitCode, status: status || undefined, q: q || undefined },
-      controller.signal,
-    )
-      .then((data) => {
-        setItems(
-          [...data.items].sort((left, right) => {
-            const byDate = right.meeting_date.localeCompare(left.meeting_date);
-            if (byDate !== 0) return byDate;
-            return String(right.updated_at || "").localeCompare(String(left.updated_at || ""));
-          }),
-        );
-        setError(null);
-      })
-      .catch((err) => setError(err instanceof Error ? err.message : "Erro ao listar."))
-      .finally(() => setLoading(false));
-    return () => controller.abort();
-  };
+  const load = useCallback(
+    (signal?: AbortSignal) => {
+      setLoading(true);
+      return listMinutes(
+        { unit_code: unitCode, status: status || undefined, q: q || undefined },
+        signal,
+      )
+        .then((data) => {
+          if (signal?.aborted) return;
+          setItems(
+            [...data.items].sort((left, right) => {
+              const byDate = right.meeting_date.localeCompare(left.meeting_date);
+              if (byDate !== 0) return byDate;
+              return String(right.updated_at || "").localeCompare(String(left.updated_at || ""));
+            }),
+          );
+          setError(null);
+        })
+        .catch((err) => {
+          if (signal?.aborted || (err instanceof DOMException && err.name === "AbortError")) {
+            return;
+          }
+          setError(err instanceof Error ? err.message : "Erro ao listar.");
+        })
+        .finally(() => {
+          if (!signal?.aborted) setLoading(false);
+        });
+    },
+    [unitCode, status, q],
+  );
 
-  useEffect(() => load(), [unitCode, status]);
+  // Status aplica na hora; busca com debounce para não disparar a cada tecla.
+  useEffect(() => {
+    const controller = new AbortController();
+    const delayMs = q ? 300 : 0;
+    const timer = window.setTimeout(() => {
+      void load(controller.signal);
+    }, delayMs);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [load, q]);
 
   const downloadFilteredPdfs = async () => {
     if (items.length === 0 || exporting) return;
@@ -361,7 +381,7 @@ function MinuteListPage({
     try {
       await deleteMinute(deleteTarget.id);
       setDeleteTarget(null);
-      load();
+      void load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao excluir ata.");
     } finally {
@@ -458,7 +478,7 @@ function MinuteListPage({
         subtitle="Atas de reunião da unidade"
         actions={
           <>
-            <ActionButton variant="ghost" onClick={() => load()}>
+            <ActionButton variant="ghost" onClick={() => void load()}>
               <RefreshCw size={16} /> Atualizar
             </ActionButton>
             {canSign ? (
@@ -489,16 +509,13 @@ function MinuteListPage({
         <CipaFiltersRow
           as="div"
           trailing={
-            <>
-              <ActionButton
-                disabled={loading || exporting || items.length === 0}
-                onClick={() => void downloadFilteredPdfs()}
-              >
-                <Download size={16} />{" "}
-                {exporting ? "Gerando ZIP…" : "Baixar PDFs filtrados"}
-              </ActionButton>
-              <ActionButton onClick={() => load()}>Buscar</ActionButton>
-            </>
+            <ActionButton
+              disabled={loading || exporting || items.length === 0}
+              onClick={() => void downloadFilteredPdfs()}
+            >
+              <Download size={16} />{" "}
+              {exporting ? "Gerando ZIP…" : "Baixar PDFs filtrados"}
+            </ActionButton>
           }
         >
           <CipaFilterSelectField
