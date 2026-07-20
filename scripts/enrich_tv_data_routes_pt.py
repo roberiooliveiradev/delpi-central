@@ -19,7 +19,7 @@ CATALOG = ROOT / "tv-dashboard-api" / "tv_app" / "content" / "tv_data_routes.jso
 LABEL_OVERRIDES: dict[str, str] = {
     "get_cultura_delpi_content_cultura_delpi_content_get": "Conteúdo Cultura Delpi",
     "search_customers_route_customers_search_get": "Busca de clientes",
-    "get_dashboard_department_idd_dashboard_department_idd_get": "Dashboard departamental (IDD)",
+    "get_dashboard_department_idd": "Dashboard departamental (IDD)",
     "get_public_inspection_public_quality_labels_inspection__token__get": "Inspeção pública (etiqueta)",
     "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get": "Auditoria 5S — painel analítico",
     "list_areas_quality_audit_5s_areas_get": "Auditoria 5S — áreas",

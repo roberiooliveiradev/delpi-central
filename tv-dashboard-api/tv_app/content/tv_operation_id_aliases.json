@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "description": "Aliases de operationId legado (auto-FastAPI) → canônico estável no OpenAPI/catálogo TV. Resolução em TvDataRouteCatalogService.get_route.",
+  "aliases": {
+    "get_dashboard_department_idd_dashboard_department_idd_get": "get_dashboard_department_idd"
+  }
+}

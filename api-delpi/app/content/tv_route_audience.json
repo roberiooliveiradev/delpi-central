@@ -573,20 +573,6 @@
       },
       "category": "strategic"
     },
-    "get_dashboard_department_idd_dashboard_department_idd_get": {
-      "locale": {
-        "en": {
-          "summary": "Get Dashboard Department Idd",
-          "description": "Indicador numérico para «Dashboard departamental (IDD)»."
-        },
-        "pt-BR": {
-          "label": "Dashboard departamental (IDD)",
-          "summary": "Dashboard departamental (IDD)",
-          "description": "Indicador numérico para «Dashboard departamental (IDD)»."
-        }
-      },
-      "category": "system"
-    },
     "get_depreciation_pct": {
       "locale": {
         "en": {

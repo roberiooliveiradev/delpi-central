@@ -7,6 +7,7 @@ from typing import Any
 
 ROUTES_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_data_routes.json"
 OVERLAYS_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_data_route_overlays.json"
+ALIASES_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_operation_id_aliases.json"
 
 DATA_BLOCK_TYPES = frozenset({"data_kpi", "data_chart", "data_table", "data_metric", "data_source"})
 DATA_VIEW_BLOCK_TYPES = frozenset({"chart_view", "table_view", "kpi_view"})
@@ -35,6 +36,29 @@ def _load_overlays() -> dict[str, dict[str, Any]]:
         for key, value in raw.items()
         if isinstance(value, dict)
     }
+
+
+@lru_cache(maxsize=1)
+def _load_operation_id_aliases() -> dict[str, str]:
+    """Mapa legado → canônico (playlists salvas com operationId auto-FastAPI)."""
+    if not ALIASES_PATH.is_file():
+        return {}
+    payload = json.loads(ALIASES_PATH.read_text(encoding="utf-8"))
+    raw = payload.get("aliases") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(legacy).strip(): str(canonical).strip()
+        for legacy, canonical in raw.items()
+        if str(legacy).strip() and str(canonical).strip()
+    }
+
+
+def resolve_canonical_operation_id(operation_id: str) -> str:
+    op = str(operation_id or "").strip()
+    if not op:
+        return ""
+    return _load_operation_id_aliases().get(op, op)
 
 
 def _merge_runtime_overlay(route: dict[str, Any]) -> dict[str, Any]:
@@ -66,7 +90,7 @@ class TvDataRouteCatalogService:
         ]
 
     def get_route(self, operation_id: str) -> dict[str, Any] | None:
-        op = str(operation_id or "").strip()
+        op = resolve_canonical_operation_id(operation_id)
         if not op:
             return None
         for route in self.list_routes():
@@ -86,6 +110,18 @@ class TvDataRouteCatalogService:
         return str(block.get("type") or "") in DATA_VIEW_BLOCK_TYPES
 
 
+def normalize_data_binding_operation_id(binding: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Reescreve operationId legado → canônico no dataBinding (UI / persistência)."""
+    if not isinstance(binding, dict):
+        return binding
+    raw = str(binding.get("operationId") or "").strip()
+    canonical = resolve_canonical_operation_id(raw)
+    if not canonical or canonical == raw:
+        return binding
+    return {**binding, "operationId": canonical}
+
+
 def reset_tv_data_route_catalog_cache() -> None:
     _load_catalog.cache_clear()
     _load_overlays.cache_clear()
+    _load_operation_id_aliases.cache_clear()

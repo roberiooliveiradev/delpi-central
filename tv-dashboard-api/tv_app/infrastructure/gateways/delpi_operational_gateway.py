@@ -168,8 +168,9 @@ class DelpiOperationalGateway:
             raise ValueError(message("dataRouteMethodNotAllowed", "Somente rotas GET são permitidas na TV."))
 
         path = str(route.get("path") or "").strip()
+        canonical_operation_id = str(route.get("operationId") or operation_id).strip()
         if not path.startswith("/"):
-            raise ValueError(f"Path inválido para {operation_id}")
+            raise ValueError(f"Path inválido para {canonical_operation_id}")
 
         query = _build_query_params(route, params or {})
         envelope = self._client.get_path(
@@ -181,9 +182,9 @@ class DelpiOperationalGateway:
         business_data = unwrap_operational_data(envelope)
         response_fields = response_fields_from_meta(api_meta)
         return {
-            "operationId": operation_id,
+            "operationId": canonical_operation_id,
             "meta": {
-                "operationId": operation_id,
+                "operationId": canonical_operation_id,
                 "entity": api_meta.get("entity") or route.get("metaShape") or "scalar",
                 "shape": api_meta.get("shape") or route.get("metaShape") or "scalar",
                 "fields": response_fields or route.get("paramSchema") or {},

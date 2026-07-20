@@ -12,6 +12,31 @@ def test_catalog_lists_allowlist_routes():
     assert "get_production_otd_series" in ids
     assert "get_ppm_external_summary" in ids
     assert "get_supplies_stock_value" in ids
+    assert "get_dashboard_department_idd" in ids
+    assert "get_dashboard_department_idd_dashboard_department_idd_get" not in ids
+
+
+def test_catalog_resolves_legacy_department_idd_operation_id():
+    """Playlists salvas com operationId auto-FastAPI devem resolver no canônico."""
+    from tv_app.application.services.tv_data_route_catalog_service import (
+        normalize_data_binding_operation_id,
+        resolve_canonical_operation_id,
+    )
+
+    legacy = "get_dashboard_department_idd_dashboard_department_idd_get"
+    canonical = "get_dashboard_department_idd"
+    assert resolve_canonical_operation_id(legacy) == canonical
+
+    catalog = TvDataRouteCatalogService()
+    route = catalog.get_route(legacy)
+    assert route is not None
+    assert route["operationId"] == canonical
+    assert catalog.is_allowed(legacy)
+    assert route["paramSchema"]["department_id"]["enum"]
+
+    binding = normalize_data_binding_operation_id({"operationId": legacy, "params": {"department_id": "commercial"}})
+    assert binding is not None
+    assert binding["operationId"] == canonical
 
 
 def test_catalog_sales_conversion_rate_has_filters_and_value_fields():
