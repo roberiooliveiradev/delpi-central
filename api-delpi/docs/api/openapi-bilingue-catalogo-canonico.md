@@ -40,6 +40,16 @@ Arquivo: [`app/content/tv_route_audience.json`](../../app/content/tv_route_audie
 
 Loader: `app.domain.services.route_locale_catalog_service` → injector `openapi_delpi_extension_injector` e baseline v3.
 
+Params **globais** (branch, periodDays, …): [`app/content/openapi_param_locale.json`](../../app/content/openapi_param_locale.json) — mesclados em todo `x-delpi.params`; override por rota em `tv_route_audience.json` ganha.
+
+Polimento EN em lote (stubs `locale.en` + summary nativo do baseline):
+
+```bash
+cd api-delpi
+python scripts/polish_openapi_locale_en.py --write
+python scripts/sync_openapi_baseline.py --enrich-locale-only
+```
+
 ## Params tipados na origem
 
 No router FastAPI:
@@ -48,7 +58,7 @@ No router FastAPI:
 - `Query(..., enum=[...], default=…)` quando o domínio for fechado
 - `description` do Query em **inglês**
 
-O gerador TV prefere `enum`/`default` do OpenAPI e labels de `x-delpi.params`.
+O gerador TV prefere `enum`/`default` do OpenAPI e labels de `x-delpi.params` / `openapi_param_locale.json`. **Não** há inventário paralelo `PARAM_LABELS_PT` / `PARAM_HINTS_PT` no script.
 
 ## Sync (procedimento)
 
@@ -81,14 +91,19 @@ Inventário versionado: [`app/content/openapi_operation_id_inventory.json`](../.
 
 | Onda | Escopo |
 |------|--------|
-| R0 | Tooling + inventário + gates |
-| R1 | Qualidade (auto-ids) |
-| R2 | system / Agendamento / satélites |
-| R3 | Locale não-GET |
-| R4 | Enums / labels / EN nativo |
-| R5 | Chat + doc |
+| R0 | Tooling + inventário + gates | feito |
+| R1 | Qualidade (auto-ids) | feito |
+| R2 | system / Agendamento / satélites | feito (300/300 estáveis) |
+| R3 | Locale não-GET | feito (300/300 com locale) |
+| R4 | Labels em `openapi_param_locale.json` + polimento EN | feito |
+| R5 | Chat prefere `locale.pt-BR` no import OpenAPI | feito |
 
-Aliases TV: [`tv_operation_id_aliases.json`](../../../tv-dashboard-api/tv_app/content/tv_operation_id_aliases.json) — playlists com id legado continuam resolvendo.
+Gate estrito (catálogo TV sem auto-id):
+
+```bash
+python3 scripts/check_tv_openapi_catalog_parity.py --check --strict-auto-ids
+python api-delpi/scripts/audit_openapi_operation_ids.py --check-aliases-coverage
+```
 
 ## Overlay TV-only
 

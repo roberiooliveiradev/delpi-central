@@ -77,7 +77,7 @@ router.include_router(ppm_router)
 router.include_router(quality_labels_router)
 
 
-@router.get("/branches")
+@router.get("/branches", operation_id="list_quality_branches")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_quality_branches(
     date_start: Optional[str] = None,
@@ -107,7 +107,7 @@ def list_quality_branches(
         )
 
 
-@router.get("/nonconformities/series")
+@router.get("/nonconformities/series", operation_id="get_nonconformity_series")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_nonconformity_series(
     type: str = NONCONFORMITY_TYPE_QUERY,
@@ -148,7 +148,7 @@ def get_nonconformity_series(
         )
 
 
-@router.get("/nonconformities")
+@router.get("/nonconformities", operation_id="list_nonconformities")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def list_nonconformity_route(
     type: str = Query("all", pattern="^(internal|external|all)$"),
@@ -191,7 +191,7 @@ def list_nonconformity_route(
         )
 
 
-@router.get("/kaizens/summary", **QUALITY_KAIZEN_SUMMARY)
+@router.get("/kaizens/summary", **QUALITY_KAIZEN_SUMMARY, operation_id="get_kaizen_summary")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_summary(
     title: str | None = Query(default=None),
@@ -249,7 +249,7 @@ def get_kaizen_summary(
         )
 
 
-@router.get("/kaizens/{kaizen_id:path}", **QUALITY_KAIZEN_BY_ID)
+@router.get("/kaizens/{kaizen_id:path}", **QUALITY_KAIZEN_BY_ID, operation_id="get_kaizen_by_id")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_kaizen_by_id(kaizen_id: str):
     try:
@@ -273,7 +273,7 @@ def get_kaizen_by_id(kaizen_id: str):
         )
 
 
-@router.get("/audit-5s/summary")
+@router.get("/audit-5s/summary", operation_id="get_audit_5s_summary")
 @require_any_permission(KPI_QUALITY_ACCESS)
 def get_audit_5s_summary(
     start_date: str | None = Query(default=None),

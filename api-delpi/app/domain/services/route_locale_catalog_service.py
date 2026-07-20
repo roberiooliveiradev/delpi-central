@@ -1,4 +1,4 @@
-"""Catálogo de locale bilíngue (EN / pt-BR) por operationId — fonte curada em JSON."""
+"""Catálogo de locale bilíngue (EN / pt-BR) por operationId + params globais."""
 
 from __future__ import annotations
 
@@ -7,7 +7,9 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-_CONTENT_PATH = Path(__file__).resolve().parents[2] / "content" / "tv_route_audience.json"
+_CONTENT_DIR = Path(__file__).resolve().parents[2] / "content"
+_AUDIENCE_PATH = _CONTENT_DIR / "tv_route_audience.json"
+_PARAM_LOCALE_PATH = _CONTENT_DIR / "openapi_param_locale.json"
 
 _LOCALE_KEYS = ("summary", "description", "whenToUse", "label")
 
@@ -56,7 +58,6 @@ def _normalize_route_entry(value: dict[str, Any]) -> dict[str, Any]:
         if block:
             locale[lang] = block
 
-    # Compat v1: campos no root viram pt-BR.
     legacy = _clean_locale_block(value)
     if legacy:
         pt = dict(locale.get("pt-BR") or {})
@@ -76,9 +77,9 @@ def _normalize_route_entry(value: dict[str, Any]) -> dict[str, Any]:
 
 @lru_cache(maxsize=1)
 def _load_audience_routes() -> dict[str, dict[str, Any]]:
-    if not _CONTENT_PATH.is_file():
+    if not _AUDIENCE_PATH.is_file():
         return {}
-    payload = json.loads(_CONTENT_PATH.read_text(encoding="utf-8"))
+    payload = json.loads(_AUDIENCE_PATH.read_text(encoding="utf-8"))
     raw = payload.get("routes") if isinstance(payload, dict) else None
     if not isinstance(raw, dict):
         return {}
@@ -91,6 +92,15 @@ def _load_audience_routes() -> dict[str, dict[str, Any]]:
         if cleaned:
             indexed[op] = cleaned
     return indexed
+
+
+@lru_cache(maxsize=1)
+def load_global_param_locale() -> dict[str, dict[str, Any]]:
+    """Params compartilhados (branch, periodDays, …) — openapi_param_locale.json."""
+    if not _PARAM_LOCALE_PATH.is_file():
+        return {}
+    payload = json.loads(_PARAM_LOCALE_PATH.read_text(encoding="utf-8"))
+    return _clean_params(payload.get("params") if isinstance(payload, dict) else None)
 
 
 def route_locale_for_operation(operation_id: str) -> dict[str, Any] | None:
@@ -121,24 +131,48 @@ def tv_audience_for_operation(operation_id: str) -> dict[str, Any] | None:
     return cleaned or None
 
 
+def _merge_param_locale(
+    base: dict[str, dict[str, Any]] | None,
+    overlay: dict[str, dict[str, Any]] | None,
+) -> dict[str, dict[str, Any]]:
+    merged = {k: dict(v) for k, v in (base or {}).items()}
+    for name, value in (overlay or {}).items():
+        if name not in merged:
+            merged[name] = dict(value)
+            continue
+        left = merged[name]
+        right_locale = value.get("locale") if isinstance(value.get("locale"), dict) else {}
+        left_locale = left.get("locale") if isinstance(left.get("locale"), dict) else {}
+        combined: dict[str, dict[str, str]] = {**left_locale}
+        for lang, block in right_locale.items():
+            if not isinstance(block, dict):
+                continue
+            combined[lang] = {**(combined.get(lang) or {}), **block}
+        left["locale"] = combined
+        merged[name] = left
+    return merged
+
+
 def apply_route_locale_to_x_delpi(
     extension: dict[str, Any],
     operation_id: str,
 ) -> dict[str, Any]:
-    """Mescla locale/params/category curados em x-delpi; espelha tv a partir de pt-BR."""
-    entry = route_locale_for_operation(operation_id)
-    if not entry:
-        return extension
+    """Mescla locale/params/category curados + params globais; espelha tv a partir de pt-BR."""
     merged = dict(extension)
+    entry = route_locale_for_operation(operation_id) or {}
     category = str(entry.get("category") or "").strip()
     if category:
         merged["category"] = category
     locale = entry.get("locale")
     if isinstance(locale, dict) and locale:
         merged["locale"] = locale
-    params = entry.get("params")
-    if isinstance(params, dict) and params:
-        merged["params"] = params
+    route_params = entry.get("params") if isinstance(entry.get("params"), dict) else {}
+    global_params = load_global_param_locale()
+    params = _merge_param_locale(global_params, route_params)
+    if params:
+        # Preserve any params already on the extension (higher priority).
+        existing = merged.get("params") if isinstance(merged.get("params"), dict) else {}
+        merged["params"] = _merge_param_locale(params, _clean_params(existing))
     tv = tv_audience_for_operation(operation_id)
     if tv:
         merged["tv"] = tv
@@ -147,3 +181,4 @@ def apply_route_locale_to_x_delpi(
 
 def reset_route_locale_catalog_cache() -> None:
     _load_audience_routes.cache_clear()
+    load_global_param_locale.cache_clear()

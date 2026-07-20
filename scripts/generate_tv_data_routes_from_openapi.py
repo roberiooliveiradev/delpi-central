@@ -110,298 +110,39 @@ PATH_SEGMENT_TO_CATEGORY: dict[str, str] = {
     "dashboard": "system",
 }
 
-PARAM_LABELS_PT: dict[str, str] = {
-    "active": "Ativo",
-    "adjustment_percent": "Ajuste (%)",
-    "area_id": "Área",
-    "audit_status": "Status da auditoria",
-    "branch": "Filial",
-    "branch_code": "Código da filial",
-    "branches": "Filiais",
-    "catalog_version": "Versão do catálogo",
-    "centroCusto": "Centro de custo",
-    "code": "Código",
-    "code_exact": "Código exato",
-    "codigo": "Código",
-    "codigoOperador": "Código do operador",
-    "codigo_peca": "Código da peça",
-    "competence": "Competência",
-    "cost_center": "Centro de custo",
-    "customer": "Cliente",
-    "customer_name": "Nome do cliente",
-    "customer_reference": "Referência do cliente",
-    "customer_segment": "Segmento",
-    "dataFim": "Data fim",
-    "dataInicio": "Data início",
-    "data_final": "Data final",
-    "data_inicial": "Data inicial",
-    "date": "Data",
-    "date_end": "Data fim",
-    "date_from": "Data início",
-    "date_start": "Data início",
-    "date_to": "Data fim",
-    "department": "Departamento",
-    "department_id": "Departamento",
-    "descricao": "Descrição",
-    "descricao_peca": "Descrição da peça",
-    "description": "Descrição",
-    "details_limit": "Limite de detalhes",
-    "direction": "Direção",
-    "efficiency_bands": "Faixas de eficiência",
-    "employee": "Colaborador",
-    "eventTypes": "Tipos de evento",
-    "evidence_type": "Tipo de evidência",
-    "failure_mode": "Modo de falha",
-    "file_kind": "Tipo de arquivo",
-    "filename": "Nome do arquivo",
-    "filial": "Filial",
-    "filial_id": "ID da filial",
-    "finished_product_code": "Código do produto acabado",
-    "format": "Formato",
-    "from": "De",
-    "granularity": "Granularidade",
-    "group_by": "Agrupar por",
-    "group_code": "Código do grupo",
-    "has_revision": "Com revisão",
-    "has_variant": "Com variante",
-    "history_limit": "Limite do histórico",
-    "id": "ID",
-    "include_completed": "Incluir concluídos",
-    "include_qtd_pi": "Incluir quantidade PI",
-    "include_test_products": "Incluir produtos de teste",
-    "incluir_bloqueados": "Incluir bloqueados",
-    "inspection_id": "Inspeção",
-    "inspector": "Inspetor",
-    "invoice_number": "Número da nota",
-    "issue_date_end": "Data de emissão (fim)",
-    "issue_date_start": "Data de emissão (início)",
-    "item_code": "Código do item",
-    "legacy": "Modo legado",
-    "limit": "Limite",
-    "linked_sort_by": "Ordenar vínculos por",
-    "linked_sort_dir": "Direção da ordenação dos vínculos",
-    "listing_type": "Tipo de listagem",
-    "location": "Localização",
-    "loss_type": "Tipo de perda",
-    "lot": "Lote",
-    "max_depth": "Profundidade máxima",
-    "max_size_bytes": "Tamanho máximo (bytes)",
-    "min_plans": "Mínimo de planos",
-    "min_size_bytes": "Tamanho mínimo (bytes)",
-    "modified_from": "Modificado a partir de",
-    "modified_to": "Modificado até",
-    "months": "Meses",
-    "name": "Nome",
-    "name_process": "Nome do processo",
-    "nonconformity_scope": "Escopo de NC",
-    "offset": "Deslocamento",
-    "op": "Ordem de produção",
-    "operation_id": "Operação",
-    "operator_code": "Código do operador",
-    "orderBy": "Ordenar por",
-    "orderDir": "Direção da ordenação",
-    "overdue_only": "Somente atrasados",
-    "owner_user_id": "Responsável",
-    "page": "Página",
-    "pageSize": "Tamanho da página",
-    "page_size": "Tamanho da página",
-    "periodDays": "Período (dias)",
-    "plan_id": "Plano",
-    "price_source": "Fonte de preço",
-    "problem_category": "Categoria do problema",
-    "product": "Produto",
-    "product_code": "Código do produto",
-    "product_group": "Grupo de produto",
-    "product_prefix": "Prefixo do produto",
-    "product_type": "Tipo de produto",
-    "production_order": "Ordem de produção",
-    "q": "Busca",
-    "raw_material_code": "Código da matéria-prima",
-    "recurso": "Recurso",
-    "reference_date": "Data de referência",
-    "resource_id": "Recurso",
-    "result": "Resultado",
-    "revision": "Revisão",
-    "root_cause_category": "Categoria da causa raiz",
-    "savings_type": "Tipo de economia",
-    "search": "Busca",
-    "section": "Seção",
-    "sector_name": "Setor",
-    "senso_order": "Ordem do senso",
-    "severity": "Severidade",
-    "shift": "Turno",
-    "sort": "Ordenação",
-    "sort_by": "Ordenar por",
-    "sort_dir": "Direção da ordenação",
-    "status": "Status",
-    "status_ok_only": "Somente status OK",
-    "stock_method": "Método de estoque",
-    "store": "Loja",
-    "start_date": "Data início",
-    "end_date": "Data fim",
-    "strict_idd_period": "Período IDD estrito",
-    "summary_only": "Somente resumo",
-    "supplier": "Fornecedor",
-    "supplier_code": "Código do fornecedor",
-    "supplier_store": "Loja do fornecedor",
-    "template_key": "Chave do template",
-    "title": "Título",
-    "tm": "TM",
-    "to": "Até",
-    "top_limit": "Limite do ranking",
-    "top_n": "Top N",
-    "type": "Tipo",
-    "view": "Visão",
-    "warehouse": "Armazém",
-    "work_center": "Centro de trabalho",
-}
 
-# Explicações curtas no inspetor (DeckField hint) — complementam o OpenAPI.
-PARAM_HINTS_PT: dict[str, str] = {
-    "active": "Filtra apenas registros ativos (sim) ou inativos (não).",
-    "adjustment_percent": "Percentual de ajuste aplicado no cálculo.",
-    "area_id": "Identificador da área (ex.: auditoria 5S).",
-    "audit_status": "Status da auditoria no fluxo (aberta, concluída etc.).",
-    "branch": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
-    "branch_code": "Código da filial no Protheus (ex.: 01 ou 02).",
-    "branches": "Lista de filiais (CSV). Vazio = todas as filiais permitidas.",
-    "catalog_version": "Versão do catálogo a consultar.",
-    "centroCusto": "Código do centro de custo no Protheus.",
-    "code": "Código do registro a filtrar.",
-    "code_exact": "Busca pelo código exato (sem correspondência parcial).",
-    "codigo": "Código do registro a filtrar.",
-    "codigoOperador": "Código do operador no Protheus.",
-    "codigo_peca": "Código da peça no cadastro de ferramentas.",
-    "competence": "Competência no formato AAAA-MM (mês de referência).",
-    "cost_center": "Código do centro de custo no Protheus.",
-    "customer": "Código ou identificador do cliente.",
-    "customer_name": "Nome (ou parte do nome) do cliente.",
-    "customer_reference": "Referência do cliente no pedido ou cadastro.",
-    "customer_segment": "Filtra clientes: weg (WEG) ou new_business (novos negócios). Vazio = todos os segmentos.",
-    "dataFim": "Data final do período (AAAA-MM-DD).",
-    "dataInicio": "Data inicial do período (AAAA-MM-DD).",
-    "data_final": "Data final do período consultado (AAAA-MM-DD).",
-    "data_inicial": "Data inicial do período consultado (AAAA-MM-DD).",
-    "date": "Data de referência (AAAA-MM-DD).",
-    "date_end": "Data final do período consultado (AAAA-MM-DD).",
-    "date_from": "Data inicial do período consultado (AAAA-MM-DD).",
-    "date_start": "Data inicial do período consultado (AAAA-MM-DD).",
-    "date_to": "Data final do período consultado (AAAA-MM-DD).",
-    "department": "Identificador ou nome do departamento.",
-    "department_id": "Identificador do departamento no painel IDD.",
-    "descricao": "Descrição (ou parte dela) para filtrar.",
-    "descricao_peca": "Descrição da peça no cadastro.",
-    "description": "Descrição (ou parte dela) para filtrar.",
-    "details_limit": "Máximo de linhas de detalhe retornadas.",
-    "direction": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
-    "efficiency_bands": "Faixas de eficiência em CSV (ex.: ok, low, verify).",
-    "employee": "Código ou matrícula do colaborador.",
-    "eventTypes": "Tipos de evento a incluir (CSV).",
-    "evidence_type": "Tipo de evidência anexa ao registro.",
-    "failure_mode": "Modo de falha associado à NC ou PAC.",
-    "file_kind": "Tipo/categoria do arquivo.",
-    "filename": "Filtro parcial pelo nome do arquivo.",
-    "filial": "Código da filial no Protheus (ex.: 01 ou 02).",
-    "filial_id": "Identificador da filial no cadastro. Prefira o código curto (01, 02) quando a rota aceitar branch.",
-    "finished_product_code": "Código do produto acabado (PA).",
-    "format": "Formato de saída ou apresentação do dado.",
-    "from": "Início do intervalo (data ou valor).",
-    "granularity": "Como agrupar os pontos da série: day (dia), week (semana), month (mês) ou year (ano).",
-    "group_by": "Como agregar o resultado (geral, filial, produto etc.).",
-    "group_code": "Código do grupo de produto/material.",
-    "has_revision": "Filtra arquivos que possuem sufixo de revisão.",
-    "has_variant": "Filtra arquivos que possuem sufixo de variante.",
-    "history_limit": "Máximo de pontos no histórico retornado.",
-    "id": "Identificador único do registro.",
-    "include_completed": "Inclui itens já concluídos no resultado.",
-    "include_qtd_pi": "Inclui quantidade de produto intermediário (PI) no resultado.",
-    "include_test_products": "Inclui produtos de teste no resultado.",
-    "incluir_bloqueados": "Inclui registros bloqueados na listagem.",
-    "inspection_id": "Identificador da inspeção.",
-    "inspector": "Código ou nome do inspetor.",
-    "invoice_number": "Número da nota fiscal.",
-    "issue_date_end": "Fim do filtro pela data de emissão do documento (AAAA-MM-DD).",
-    "issue_date_start": "Início do filtro pela data de emissão do documento (AAAA-MM-DD).",
-    "item_code": "Código do item/material no Protheus.",
-    "legacy": "Usa comportamento legado da API (campos/alias antigos).",
-    "limit": "Máximo de registros retornados pela API (ranking ou listagem truncada).",
-    "linked_sort_by": "Campo de ordenação dos itens vinculados.",
-    "linked_sort_dir": "Direção da ordenação dos vínculos: asc ou desc.",
-    "listing_type": "Filtro de tipo da listagem (ex.: Todos, LMP, Amostra).",
-    "location": "Localização / endereço de estoque no Protheus.",
-    "loss_type": "Tipo de perda a considerar: refugo, scrap ou ambos.",
-    "lot": "Número do lote.",
-    "max_depth": "Profundidade máxima da hierarquia/estrutura retornada.",
-    "max_size_bytes": "Tamanho máximo do arquivo em bytes.",
-    "min_plans": "Quantidade mínima de planos para incluir no resultado.",
-    "min_size_bytes": "Tamanho mínimo do arquivo em bytes.",
-    "modified_from": "Data/hora mínima de modificação (ISO).",
-    "modified_to": "Data/hora máxima de modificação (ISO).",
-    "months": "Quantidade de meses no intervalo analisado.",
-    "name": "Nome (ou parte do nome) para filtrar.",
-    "name_process": "Nome do processo Transforma Mais.",
-    "nonconformity_scope": "Escopo das não conformidades consideradas.",
-    "offset": "Quantos registros pular antes de retornar a página (paginação por deslocamento).",
-    "op": "Número da ordem de produção (OP).",
-    "operation_id": "Identificador da operação.",
-    "operator_code": "Código(s) do operador (CSV).",
-    "orderBy": "Campo usado para ordenar o ranking (ex.: horas, custo).",
-    "orderDir": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
-    "overdue_only": "Lista apenas itens atrasados.",
-    "owner_user_id": "Usuário responsável pelo registro.",
-    "page": "Número da página na listagem paginada.",
-    "pageSize": "Quantidade de linhas por página.",
-    "page_size": "Quantidade de linhas por página.",
-    "periodDays": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje).",
-    "plan_id": "Identificador do plano de ação.",
-    "price_source": "Origem do preço usado no cálculo.",
-    "problem_category": "Categoria do problema reportado.",
-    "product": "Código ou identificador do produto.",
-    "product_code": "Código do produto no Protheus (ex.: 90xxxxxx).",
-    "product_group": "Grupo de produto no Protheus.",
-    "product_prefix": "Prefixo do código de produto para filtrar famílias.",
-    "product_type": "Filtra por tipo: PA (acabado) ou PI (intermediário).",
-    "production_order": "Ordem(ns) de produção (CSV).",
-    "q": "Texto livre de busca (código, nome ou descrição).",
-    "raw_material_code": "Código da matéria-prima.",
-    "recurso": "Código do recurso de produção.",
-    "reference_date": "Data de referência usada no cálculo (AAAA-MM-DD).",
-    "resource_id": "Identificador do recurso de agendamento.",
-    "result": "Resultado da inspeção ou avaliação.",
-    "revision": "Número ou código da revisão.",
-    "root_cause_category": "Categoria da causa raiz.",
-    "savings_type": "Tipo de economia (Kaizen).",
-    "search": "Texto livre de busca.",
-    "section": "Seção ou bloco do formulário/checklist.",
-    "sector_name": "Nome do setor.",
-    "senso_order": "Ordem do senso na auditoria 5S.",
-    "severity": "Nível de severidade.",
-    "shift": "Turno de produção.",
-    "sort": "Critério de ordenação da listagem.",
-    "sort_by": "Campo usado para ordenar a listagem.",
-    "sort_dir": "Direção da ordenação: asc (crescente) ou desc (decrescente).",
-    "status": "Status do registro no fluxo.",
-    "status_ok_only": "Retorna apenas registros com status OK.",
-    "stock_method": "Método de valorização/consulta de estoque.",
-    "store": "Código da loja do cliente.",
-    "start_date": "Início do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
-    "end_date": "Fim do intervalo (AAAA-MM-DD). Em rotas com Período (dias), o sistema pode calcular automaticamente.",
-    "strict_idd_period": "Exige período estrito no cálculo do IDD.",
-    "summary_only": "Quando ativo, retorna só o resumo sem a lista detalhada.",
-    "supplier": "Código ou nome do fornecedor.",
-    "supplier_code": "Código do fornecedor no Protheus.",
-    "supplier_store": "Loja do fornecedor.",
-    "template_key": "Chave do modelo/template usado.",
-    "title": "Título (ou parte dele) para filtrar.",
-    "tm": "Código TM (Transforma Mais).",
-    "to": "Fim do intervalo (data ou valor).",
-    "top_limit": "Quantidade máxima de itens no ranking.",
-    "top_n": "Quantidade de itens no Top N.",
-    "type": "Tipo do registro a filtrar.",
-    "view": "Modo de visualização dos dados retornados.",
-    "warehouse": "Código do armazém/estoque.",
-    "work_center": "Código do centro de trabalho (CT) no Protheus. Vazio = todos os centros.",
-}
+# Labels/hints: api-delpi/app/content/openapi_param_locale.json (única fonte).
+
+
+def _load_param_locale_catalog() -> dict[str, dict[str, str]]:
+    """name → {label, description} em pt-BR a partir do catálogo canônico."""
+    catalog_path = ROOT / "api-delpi" / "app" / "content" / "openapi_param_locale.json"
+    if not catalog_path.is_file():
+        return {}
+    payload = json.loads(catalog_path.read_text(encoding="utf-8"))
+    raw = payload.get("params") if isinstance(payload, dict) else None
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, dict[str, str]] = {}
+    for name, value in raw.items():
+        key = str(name or "").strip()
+        if not key or not isinstance(value, dict):
+            continue
+        locale = value.get("locale") if isinstance(value.get("locale"), dict) else {}
+        pt = locale.get("pt-BR") if isinstance(locale.get("pt-BR"), dict) else {}
+        entry: dict[str, str] = {}
+        label = str(pt.get("label") or "").strip()
+        description = str(pt.get("description") or "").strip()
+        if label:
+            entry["label"] = label
+        if description:
+            entry["description"] = description
+        if entry:
+            out[key] = entry
+    return out
+
+
+_PARAM_LOCALE_PT = _load_param_locale_catalog()
 
 # Fallback temporário (Onda 2/3): preferir enum/default do OpenAPI.
 # Mantido vazio de propósito — inventário paralelo é falha de contrato.
@@ -428,25 +169,21 @@ def enrich_param_schema_entry(
     locale_label: str | None = None,
     locale_description: str | None = None,
 ) -> dict[str, Any]:
-    """Aplica label/hint/enum/default — OpenAPI + x-delpi primeiro; dicts locais só fallback."""
+    """Aplica label/hint/enum/default — OpenAPI + x-delpi + catálogo JSON; sem dict paralelo."""
     enriched = dict(entry)
+    catalog = _PARAM_LOCALE_PT.get(name) or {}
     if locale_label:
         enriched["label"] = locale_label
-    elif name in PARAM_LABELS_PT and not enriched.get("label"):
-        enriched["label"] = PARAM_LABELS_PT[name]
-        _note_param_fallback("label", name)
-    elif name in PARAM_LABELS_PT:
-        # Mantém compat: label PT canônico se não veio do OpenAPI locale.
-        enriched["label"] = PARAM_LABELS_PT[name]
-        _note_param_fallback("label", name)
+    elif catalog.get("label") and not enriched.get("label"):
+        enriched["label"] = catalog["label"]
+    elif catalog.get("label"):
+        enriched["label"] = catalog["label"]
 
     if locale_description:
         enriched["description"] = locale_description
     else:
-        hint = PARAM_HINTS_PT.get(name) or str(enriched.get("description") or "").strip()
+        hint = catalog.get("description") or str(enriched.get("description") or "").strip()
         if hint:
-            if name in PARAM_HINTS_PT:
-                _note_param_fallback("hint", name)
             enriched["description"] = hint
 
     if name in KNOWN_PARAM_ENUMS and not enriched.get("enum"):
@@ -501,8 +238,9 @@ def format_operation_id_label(operation_id: str) -> str:
 
 
 def humanize_param_label(name: str, description: str | None = None) -> str:
-    if name in PARAM_LABELS_PT:
-        return PARAM_LABELS_PT[name]
+    catalog_label = (_PARAM_LOCALE_PT.get(name) or {}).get("label")
+    if catalog_label:
+        return catalog_label
     desc = (description or "").strip()
     if desc and len(desc) <= 48:
         return desc
@@ -952,6 +690,12 @@ def main() -> int:
         write_routes(args.routes, generated)
         with_schema = sum(1 for item in generated if item.get("paramSchema"))
         with_values = sum(1 for item in generated if item.get("valueFields"))
+        if _FALLBACK_PARAM_USAGE:
+            print(
+                f"WARN — {len(_FALLBACK_PARAM_USAGE)} fallbacks de enum/default TV "
+                f"(declarar no OpenAPI Query quando possível): "
+                f"{', '.join(sorted(_FALLBACK_PARAM_USAGE))}"
+            )
         print(
             f"Gravado {len(generated)} rotas em {args.routes} "
             f"(paramSchema={with_schema}, valueFields={with_values})"

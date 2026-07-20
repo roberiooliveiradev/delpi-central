@@ -34,7 +34,7 @@ class PublicKaizenSuggestionBody(BaseModel):
     website: str | None = Field(default=None, max_length=200)
 
 
-@router.post("/suggestions")
+@router.post("/suggestions", operation_id="create_public_kaizen_suggestion")
 def create_public_kaizen_suggestion(
     body: PublicKaizenSuggestionBody = Body(...),
 ):

@@ -24,7 +24,7 @@ from app.utils.logger import log_error
 router = APIRouter(tags=["Guias e Procedimentos"])
 
 
-@router.get("/departments")
+@router.get("/departments", operation_id="list_guias_procedimentos_departments")
 @require_any_permission(GUIAS_PROCEDIMENTOS_READ_PERMISSIONS)
 def list_guias_departments():
     try:
@@ -48,7 +48,7 @@ def list_guias_departments():
         )
 
 
-@router.get("/departments/{slug}")
+@router.get("/departments/{slug}", operation_id="get_guias_procedimentos_department")
 @require_any_permission(GUIAS_PROCEDIMENTOS_READ_PERMISSIONS)
 def get_guias_department(slug: str):
     try:
@@ -74,7 +74,7 @@ def get_guias_department(slug: str):
         )
 
 
-@router.get("/procedures/{slug}")
+@router.get("/procedures/{slug}", operation_id="get_guias_procedimentos_procedure")
 @require_any_permission(GUIAS_PROCEDIMENTOS_READ_PERMISSIONS)
 def get_guias_procedure(slug: str):
     try:

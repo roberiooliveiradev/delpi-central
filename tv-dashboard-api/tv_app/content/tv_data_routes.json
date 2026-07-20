@@ -1053,7 +1053,7 @@
       }
     },
     {
-      "operationId": "get_cultura_delpi_content_cultura_delpi_content_get",
+      "operationId": "get_cultura_delpi_content",
       "httpMethod": "GET",
       "label": "Conteúdo Cultura Delpi",
       "category": "strategic",
@@ -1066,7 +1066,7 @@
       "description": "Indicador numérico para «Conteúdo Cultura Delpi»."
     },
     {
-      "operationId": "search_customers_route_customers_search_get",
+      "operationId": "search_customers",
       "httpMethod": "GET",
       "label": "Busca de clientes",
       "category": "commercial",
@@ -2637,7 +2637,7 @@
       }
     },
     {
-      "operationId": "root_health_get",
+      "operationId": "get_health",
       "httpMethod": "GET",
       "label": "Saúde da API (root)",
       "category": "system",
@@ -3134,10 +3134,10 @@
         }
       },
       "paramStrategy": "direct",
-      "tableFields": "items",
       "valueFieldLabels": {
         "total_records": "Quantidade"
-      }
+      },
+      "tableFields": "items"
     },
     {
       "operationId": "get_production_consumption_by_item",
@@ -3915,25 +3915,14 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "tvConstraints": {
-        "requiresBranchPermission": true
-      },
-      "seriesField": "points",
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "valueFields": [
         "oee_filial_01",
         "oee_filial_02"
       ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
+      "tvConstraints": {
+        "requiresBranchPermission": true
       },
+      "seriesField": "points",
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -3948,7 +3937,18 @@
           "column": "periodo",
           "direction": "asc"
         }
-      ]
+      ],
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      }
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -5855,7 +5855,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "structure_excel_public_products__code__structure_excel_get",
+      "operationId": "get_product_structure_excel",
       "httpMethod": "GET",
       "label": "Structure Excel Public",
       "category": "products",
@@ -5986,7 +5986,7 @@
       "description": "Análise composta: «Análise consolidada — Proposta comercial interna (pdf/totvs)»."
     },
     {
-      "operationId": "export_proposta_comercial_pdf_route_propostas_comerciais__proposta_interna__pdf_get",
+      "operationId": "export_proposta_comercial_pdf",
       "httpMethod": "GET",
       "label": "Proposta comercial — exportar PDF",
       "category": "commercial",
@@ -5999,7 +5999,7 @@
       "description": "Indicador numérico para «Proposta comercial — exportar PDF»."
     },
     {
-      "operationId": "get_public_inspection_public_quality_labels_inspection__token__get",
+      "operationId": "get_public_quality_label_inspection",
       "httpMethod": "GET",
       "label": "Inspeção pública (etiqueta)",
       "category": "quality",
@@ -6725,7 +6725,7 @@
       "description": "Análise composta: «Análise consolidada — Quality action plan similar cases»."
     },
     {
-      "operationId": "get_audit_5s_dashboard_quality_audit_5s_analytics_dashboard_get",
+      "operationId": "get_audit_5s_analytics_dashboard",
       "httpMethod": "GET",
       "label": "Auditoria 5S — painel analítico",
       "category": "quality",
@@ -6739,7 +6739,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -6808,7 +6808,7 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
       "dateRangeKeys": [
         "date_start",
         "date_end"
@@ -6818,7 +6818,7 @@
       }
     },
     {
-      "operationId": "list_areas_quality_audit_5s_areas_get",
+      "operationId": "list_audit_5s_areas",
       "httpMethod": "GET",
       "label": "Auditoria 5S — áreas",
       "category": "quality",
@@ -6832,7 +6832,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -6848,7 +6848,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_audits_quality_audit_5s_audits_get",
+      "operationId": "list_audit_5s_audits",
       "httpMethod": "GET",
       "label": "Auditoria 5S — listagem",
       "category": "quality",
@@ -6862,7 +6862,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -6877,7 +6877,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_audit_quality_audit_5s_audits__audit_id__get",
+      "operationId": "get_audit_5s_audit",
       "httpMethod": "GET",
       "label": "Auditoria 5S — detalhe",
       "category": "quality",
@@ -6890,7 +6890,7 @@
       "description": "Indicador numérico para «Auditoria 5S — detalhe»."
     },
     {
-      "operationId": "list_audit_nc_attachments_quality_audit_5s_audits__audit_id__nc_attachments_get",
+      "operationId": "list_audit_5s_audit_nc_attachments",
       "httpMethod": "GET",
       "label": "Auditoria 5S — anexos de NC da auditoria",
       "category": "quality",
@@ -6903,7 +6903,7 @@
       "description": "Indicador numérico para «Auditoria 5S — anexos de NC da auditoria»."
     },
     {
-      "operationId": "list_nc_candidates_quality_audit_5s_audits__audit_id__nc_candidates_get",
+      "operationId": "list_audit_5s_nc_candidates",
       "httpMethod": "GET",
       "label": "Auditoria 5S — candidatos a NC",
       "category": "quality",
@@ -6916,7 +6916,7 @@
       "description": "Indicador numérico para «Auditoria 5S — candidatos a NC»."
     },
     {
-      "operationId": "list_audit_nonconformities_quality_audit_5s_audits__audit_id__nonconformities_get",
+      "operationId": "list_audit_5s_nonconformities",
       "httpMethod": "GET",
       "label": "Auditoria 5S — não conformidades",
       "category": "quality",
@@ -6929,7 +6929,7 @@
       "description": "Indicador numérico para «Auditoria 5S — não conformidades»."
     },
     {
-      "operationId": "list_response_attachments_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments_get",
+      "operationId": "list_audit_5s_response_attachments",
       "httpMethod": "GET",
       "label": "Response anexos",
       "category": "quality",
@@ -6942,7 +6942,7 @@
       "description": "Indicador numérico para «Response anexos»."
     },
     {
-      "operationId": "download_response_attachment_quality_audit_5s_audits__audit_id__responses__criterion_id__attachments__attachment_id__file_get",
+      "operationId": "download_audit_5s_response_attachment",
       "httpMethod": "GET",
       "label": "Response anexo",
       "category": "quality",
@@ -6955,7 +6955,7 @@
       "description": "Indicador numérico para «Response anexo»."
     },
     {
-      "operationId": "get_catalog_quality_audit_5s_catalog_get",
+      "operationId": "get_audit_5s_catalog",
       "httpMethod": "GET",
       "label": "Catalog",
       "category": "quality",
@@ -6969,7 +6969,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -6978,7 +6978,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_catalog_publications_quality_audit_5s_catalog_publications_get",
+      "operationId": "list_audit_5s_catalog_publications",
       "httpMethod": "GET",
       "label": "Catalog Publications",
       "category": "quality",
@@ -6992,7 +6992,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -7001,7 +7001,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_criteria_quality_audit_5s_criteria_get",
+      "operationId": "list_audit_5s_criteria",
       "httpMethod": "GET",
       "label": "Auditoria 5S — critérios",
       "category": "quality",
@@ -7030,7 +7030,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_nc_actions_quality_audit_5s_nonconformities__nc_id__actions_get",
+      "operationId": "list_audit_5s_nc_actions",
       "httpMethod": "GET",
       "label": "Auditoria 5S — ações da NC",
       "category": "quality",
@@ -7043,7 +7043,7 @@
       "description": "Indicador numérico para «Auditoria 5S — ações da NC»."
     },
     {
-      "operationId": "list_nc_attachments_quality_audit_5s_nonconformities__nc_id__attachments_get",
+      "operationId": "list_audit_5s_nc_attachments",
       "httpMethod": "GET",
       "label": "Auditoria 5S — anexos da NC",
       "category": "quality",
@@ -7056,7 +7056,7 @@
       "description": "Indicador numérico para «Auditoria 5S — anexos da NC»."
     },
     {
-      "operationId": "download_nc_attachment_quality_audit_5s_nonconformities__nc_id__attachments__attachment_id__file_get",
+      "operationId": "download_audit_5s_nc_attachment",
       "httpMethod": "GET",
       "label": "Auditoria 5S — download de anexo da NC",
       "category": "quality",
@@ -7069,7 +7069,7 @@
       "description": "Indicador numérico para «Auditoria 5S — download de anexo da NC»."
     },
     {
-      "operationId": "get_audit_5s_summary_quality_audit_5s_summary_get",
+      "operationId": "get_audit_5s_summary",
       "httpMethod": "GET",
       "label": "Auditoria 5S — resumo",
       "category": "quality",
@@ -7099,13 +7099,6 @@
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
-        },
-        "periodDays": {
-          "type": "integer",
-          "default": 30,
-          "label": "Período (dias)",
-          "optional": true,
-          "description": "Quantos dias para trás entram no cálculo (ex.: 30 = último mês até hoje)."
         }
       },
       "paramStrategy": "date_range",
@@ -7118,7 +7111,7 @@
       }
     },
     {
-      "operationId": "list_quality_branches_quality_branches_get",
+      "operationId": "list_quality_branches",
       "httpMethod": "GET",
       "label": "Quality Branches",
       "category": "quality",
@@ -7143,7 +7136,7 @@
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
       "dateRangeKeys": [
         "date_start",
         "date_end"
@@ -7227,7 +7220,7 @@
       }
     },
     {
-      "operationId": "export_kaizen_records_quality_kaizens_records_export_get",
+      "operationId": "export_kaizen_records",
       "httpMethod": "GET",
       "label": "Kaizen Records",
       "category": "quality",
@@ -7240,7 +7233,7 @@
       "description": "Indicador numérico para «Kaizen Records»."
     },
     {
-      "operationId": "get_kaizen_records_summary_quality_kaizens_records_summary_get",
+      "operationId": "get_kaizen_records_summary",
       "httpMethod": "GET",
       "label": "Kaizen Records Summary",
       "category": "quality",
@@ -7272,7 +7265,7 @@
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
       "dateRangeKeys": [
         "date_start",
         "date_end"
@@ -7295,7 +7288,7 @@
       "description": "Indicador numérico para «Detalhe do kaizen cadastrado (PostgreSQL)»."
     },
     {
-      "operationId": "get_kaizen_at_date_quality_kaizens_records__record_id__at_get",
+      "operationId": "get_kaizen_at_date",
       "httpMethod": "GET",
       "label": "Kaizen At Date",
       "category": "quality",
@@ -7317,7 +7310,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_kaizen_audit_log_quality_kaizens_records__record_id__audit_log_get",
+      "operationId": "list_kaizen_audit_log",
       "httpMethod": "GET",
       "label": "Kaizen Audit Log",
       "category": "quality",
@@ -7330,7 +7323,7 @@
       "description": "Indicador numérico para «Kaizen Audit Log»."
     },
     {
-      "operationId": "list_kaizen_evidences_quality_kaizens_records__record_id__evidences_get",
+      "operationId": "list_kaizen_evidences",
       "httpMethod": "GET",
       "label": "Kaizen evidências",
       "category": "quality",
@@ -7343,7 +7336,7 @@
       "description": "Indicador numérico para «Kaizen evidências»."
     },
     {
-      "operationId": "download_kaizen_evidence_quality_kaizens_records__record_id__evidences__evidence_id__file_get",
+      "operationId": "download_kaizen_evidence",
       "httpMethod": "GET",
       "label": "Kaizen — download de evidência",
       "category": "quality",
@@ -7356,7 +7349,7 @@
       "description": "Indicador numérico para «Kaizen — download de evidência»."
     },
     {
-      "operationId": "list_kaizen_history_quality_kaizens_records__record_id__history_get",
+      "operationId": "list_kaizen_history",
       "httpMethod": "GET",
       "label": "Kaizen History",
       "category": "quality",
@@ -7369,7 +7362,7 @@
       "description": "Indicador numérico para «Kaizen History»."
     },
     {
-      "operationId": "list_kaizen_revisions_quality_kaizens_records__record_id__revisions_get",
+      "operationId": "list_kaizen_revisions",
       "httpMethod": "GET",
       "label": "Kaizen Revisions",
       "category": "quality",
@@ -7382,7 +7375,7 @@
       "description": "Indicador numérico para «Kaizen Revisions»."
     },
     {
-      "operationId": "get_kaizen_revision_quality_kaizens_records__record_id__revisions__revision_number__get",
+      "operationId": "get_kaizen_revision",
       "httpMethod": "GET",
       "label": "Kaizen Revision",
       "category": "quality",
@@ -7395,7 +7388,7 @@
       "description": "Indicador numérico para «Kaizen Revision»."
     },
     {
-      "operationId": "get_kaizen_savings_timeline_quality_kaizens_records__record_id__savings_timeline_get",
+      "operationId": "get_kaizen_savings_timeline",
       "httpMethod": "GET",
       "label": "Kaizen Savings Timeline",
       "category": "quality",
@@ -7420,7 +7413,7 @@
           "description": "Data final do período consultado (AAAA-MM-DD)."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
       "dateRangeKeys": [
         "date_start",
         "date_end"
@@ -7497,7 +7490,7 @@
       "description": "Indicador numérico para «Detalhe do kaizen (Google Sheets)»."
     },
     {
-      "operationId": "list_labels_quality_labels_get",
+      "operationId": "list_quality_labels",
       "httpMethod": "GET",
       "label": "Etiquetas de qualidade — listagem",
       "category": "quality",
@@ -7539,7 +7532,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_audit_events_quality_labels_audit_events_get",
+      "operationId": "list_quality_label_audit_events",
       "httpMethod": "GET",
       "label": "Etiquetas — eventos de auditoria",
       "category": "quality",
@@ -7581,7 +7574,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_checklist_template_quality_labels_checklist_template_get",
+      "operationId": "list_quality_label_checklist_template",
       "httpMethod": "GET",
       "label": "Etiquetas — modelo de checklist",
       "category": "quality",
@@ -7594,7 +7587,7 @@
       "description": "Indicador numérico para «Etiquetas — modelo de checklist»."
     },
     {
-      "operationId": "get_my_inspector_quality_labels_inspectors_me_get",
+      "operationId": "get_quality_label_inspector",
       "httpMethod": "GET",
       "label": "Meu perfil de inspetor",
       "category": "quality",
@@ -7607,7 +7600,7 @@
       "description": "Indicador numérico para «Meu perfil de inspetor»."
     },
     {
-      "operationId": "get_my_signature_quality_labels_inspectors_me_signature_get",
+      "operationId": "get_my_signature",
       "httpMethod": "GET",
       "label": "Minha assinatura de inspetor",
       "category": "quality",
@@ -7620,7 +7613,7 @@
       "description": "Indicador numérico para «Minha assinatura de inspetor»."
     },
     {
-      "operationId": "lookup_op_quality_labels_lookup_op__production_order__get",
+      "operationId": "lookup_quality_label_op",
       "httpMethod": "GET",
       "label": "Lookup Op",
       "category": "quality",
@@ -7643,7 +7636,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "search_ops_quality_labels_search_ops_get",
+      "operationId": "search_quality_label_ops",
       "httpMethod": "GET",
       "label": "Buscar Ops",
       "category": "quality",
@@ -7678,7 +7671,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_label_quality_labels__label_id__get",
+      "operationId": "get_quality_label",
       "httpMethod": "GET",
       "label": "Etiqueta de qualidade — detalhe",
       "category": "quality",
@@ -7691,7 +7684,7 @@
       "description": "Indicador numérico para «Etiqueta de qualidade — detalhe»."
     },
     {
-      "operationId": "get_certificate_quality_labels__label_id__certificate_get",
+      "operationId": "get_quality_label_certificate",
       "httpMethod": "GET",
       "label": "Etiqueta — certificado",
       "category": "quality",
@@ -7704,7 +7697,7 @@
       "description": "Indicador numérico para «Etiqueta — certificado»."
     },
     {
-      "operationId": "get_certificate_pdf_quality_labels__label_id__certificate_pdf_get",
+      "operationId": "get_certificate_pdf",
       "httpMethod": "GET",
       "label": "Certificate PDF",
       "category": "quality",
@@ -7717,7 +7710,7 @@
       "description": "Indicador numérico para «Certificate PDF»."
     },
     {
-      "operationId": "get_label_qr_quality_labels__label_id__qr_get",
+      "operationId": "get_label_qr",
       "httpMethod": "GET",
       "label": "Etiqueta — QR Code",
       "category": "quality",
@@ -7730,7 +7723,7 @@
       "description": "Indicador numérico para «Etiqueta — QR Code»."
     },
     {
-      "operationId": "list_nonconformity_route_quality_nonconformities_get",
+      "operationId": "list_nonconformities",
       "httpMethod": "GET",
       "label": "Não conformidades — listagem",
       "category": "quality",
@@ -7799,7 +7792,7 @@
           "description": "Quantidade de linhas por página."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
       "dateRangeKeys": [
         "date_start",
         "date_end"
@@ -7809,7 +7802,7 @@
       }
     },
     {
-      "operationId": "get_nonconformity_series_quality_nonconformities_series_get",
+      "operationId": "get_nonconformity_series",
       "httpMethod": "GET",
       "label": "Não conformidades — série temporal",
       "category": "quality",
@@ -7879,7 +7872,7 @@
           "description": "Descrição (ou parte dela) para filtrar."
         }
       },
-      "paramStrategy": "direct",
+      "paramStrategy": "date_range",
       "dateRangeKeys": [
         "date_start",
         "date_end"
@@ -8817,7 +8810,7 @@
       }
     },
     {
-      "operationId": "list_bookings_scheduling_bookings_get",
+      "operationId": "list_scheduling_bookings",
       "httpMethod": "GET",
       "label": "Agendamentos — reservas",
       "category": "scheduling",
@@ -8831,7 +8824,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -8858,7 +8851,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "list_resources_scheduling_resources_get",
+      "operationId": "list_scheduling_resources",
       "httpMethod": "GET",
       "label": "Agendamentos — recursos",
       "category": "scheduling",
@@ -8872,7 +8865,7 @@
       "paramSchema": {
         "branch": {
           "type": "string",
-          "optional": false,
+          "optional": true,
           "label": "Filial",
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
@@ -9212,7 +9205,7 @@
       "tableFields": "top_products"
     },
     {
-      "operationId": "get_caller_stats_system_caller_stats_get",
+      "operationId": "get_caller_stats",
       "httpMethod": "GET",
       "label": "Breakdown de requests por X-Delpi-Caller-App",
       "category": "system",
@@ -9235,7 +9228,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "search_columns_global_system_columns_search_get",
+      "operationId": "search_protheus_columns_by_description",
       "httpMethod": "GET",
       "label": "Busca colunas por descrição (SX3010 + ranking semântico)",
       "category": "system",
@@ -9271,7 +9264,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_console_alerts_system_console_alerts_get",
+      "operationId": "get_console_alerts",
       "httpMethod": "GET",
       "label": "Histórico recente de alertas do console",
       "category": "system",
@@ -9294,7 +9287,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_console_health_system_console_health_get",
+      "operationId": "get_console_health",
       "httpMethod": "GET",
       "label": "Saúde agregada do console para Admin Stats",
       "category": "system",
@@ -9307,7 +9300,7 @@
       "description": "Indicador numérico para «Saúde agregada do console para Admin Stats»."
     },
     {
-      "operationId": "get_envelope_contracts_system_envelope_contracts_get",
+      "operationId": "get_envelope_contracts",
       "httpMethod": "GET",
       "label": "Golden files de contrato de envelope (smoke)",
       "category": "system",
@@ -9320,7 +9313,7 @@
       "description": "Indicador numérico para «Golden files de contrato de envelope (smoke)»."
     },
     {
-      "operationId": "get_observability_snapshot_system_observability_snapshot_get",
+      "operationId": "get_observability_snapshot",
       "httpMethod": "GET",
       "label": "Snapshot unificado para comparador de deploy",
       "category": "system",
@@ -9343,7 +9336,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "get_openapi_diff_system_openapi_diff_get",
+      "operationId": "get_openapi_diff",
       "httpMethod": "GET",
       "label": "Diff do OpenAPI atual vs baseline versionado",
       "category": "system",
@@ -9356,7 +9349,7 @@
       "description": "Indicador numérico para «Diff do OpenAPI atual vs baseline versionado»."
     },
     {
-      "operationId": "get_query_cache_stats_system_query_cache_stats_get",
+      "operationId": "get_query_cache_stats",
       "httpMethod": "GET",
       "label": "Hits e misses do cache compartilhado (LMP, estoque)",
       "category": "system",
@@ -9369,7 +9362,7 @@
       "description": "Indicador numérico para «Hits e misses do cache compartilhado (LMP, estoque)»."
     },
     {
-      "operationId": "get_smoke_definitions_system_smoke_definitions_get",
+      "operationId": "get_smoke_definitions",
       "httpMethod": "GET",
       "label": "Definições das smoke suites do console",
       "category": "system",
@@ -9382,7 +9375,7 @@
       "description": "Indicador numérico para «Definições das smoke suites do console»."
     },
     {
-      "operationId": "get_sql_health_system_sql_health_get",
+      "operationId": "get_sql_health",
       "httpMethod": "GET",
       "label": "Telemetria SQL recente (ring buffer memória ou Redis)",
       "category": "system",
@@ -9411,7 +9404,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "search_tables_system_tables_search_get",
+      "operationId": "search_tables_by_description",
       "httpMethod": "GET",
       "label": "Busca tabelas por descrição (SX2)",
       "category": "system",
@@ -9447,7 +9440,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "table_system_tables__tableName__get",
+      "operationId": "get_protheus_table",
       "httpMethod": "GET",
       "label": "Consulta informações de tabela",
       "category": "system",
@@ -9460,13 +9453,13 @@
       "description": "Indicador numérico para «Consulta informações de tabela»."
     },
     {
-      "operationId": "table_columns_system_tables__tableName__columns_get",
+      "operationId": "list_protheus_table_columns",
       "httpMethod": "GET",
       "label": "Consulta colunas de tabela com paginação",
       "category": "system",
       "path": "/system/tables/{tableName}/columns",
       "allowedDisplayModes": [
-        "kpi",
+        "table",
         "auto"
       ],
       "metaShape": "scalar",
@@ -9490,7 +9483,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "search_columns_system_tables__tableName__columns_search_get",
+      "operationId": "search_protheus_columns_in_table",
       "httpMethod": "GET",
       "label": "Buscar colunas por texto",
       "category": "system",
@@ -9512,7 +9505,7 @@
       "paramStrategy": "direct"
     },
     {
-      "operationId": "table_indexes_system_tables__tableName__indexes_get",
+      "operationId": "get_protheus_table_indexes",
       "httpMethod": "GET",
       "label": "Consulta índices (SIX010)",
       "category": "system",
@@ -9525,7 +9518,7 @@
       "description": "Indicador numérico para «Consulta índices (SIX010)»."
     },
     {
-      "operationId": "table_relations_system_tables__tableName__relations_get",
+      "operationId": "get_protheus_table_relations",
       "httpMethod": "GET",
       "label": "Consulta relacionamentos (SX9010)",
       "category": "system",
@@ -9538,7 +9531,7 @@
       "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
     },
     {
-      "operationId": "table_schema_system_tables__tableName__schema_get",
+      "operationId": "get_protheus_table_schema",
       "httpMethod": "GET",
       "label": "Schema completo da tabela (SX2, SX3, SIX, SX9)",
       "category": "system",
