@@ -299,7 +299,7 @@ export function createDashboardEditableSectionCardPac(config: {
       <EditableSectionCardPac
         sectionClassNames={sectionClassNames}
         sectionLabels={config.labels}
-        ghostButtonClassName={`${config.prefix}-ghost-btn`}
+        ghostButtonClassName={ghostBtnBemClasses(config.prefix)}
         readContentClassName={`${config.prefix}-section-read`}
         editContentClassName={`${config.prefix}-section-edit`}
         defaultEditLabel={config.labels.edit}

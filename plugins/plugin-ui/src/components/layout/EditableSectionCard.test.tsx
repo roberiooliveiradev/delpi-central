@@ -1,8 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import {
   EditableSectionCard,
+  createDashboardEditableSectionCardPac,
   editableSectionCardBemClasses,
 } from "./EditableSectionCard";
 
@@ -26,6 +29,43 @@ describe("editableSectionCardBemClasses", () => {
     expect(classes.header).toContain("delpi-ui-section-card__header");
     expect(classes.actions).toContain("delpi-ui-section-card__actions");
     expect(classes.ghostButton).toBe("kz-ghost-btn delpi-ui-ghost-btn");
+  });
+});
+
+describe("createDashboardEditableSectionCardPac", () => {
+  it("botão Editar/Anexar usa dual-class delpi-ui-ghost-btn (não só prefix-ghost-btn)", () => {
+    const PacCard = createDashboardEditableSectionCardPac({
+      prefix: "pac",
+      labels: {
+        ...LABELS,
+        titleHelpAriaLabel: LABELS.titleHelpAriaLabel,
+      },
+    });
+
+    render(
+      <PacCard
+        title="Status do plano"
+        isEditing={false}
+        onEdit={vi.fn()}
+        onCancelEdit={vi.fn()}
+        readContent={<p>Leitura</p>}
+        editContent={<p>Edição</p>}
+        editLabel="Anexar"
+      />,
+    );
+
+    const edit = screen.getByRole("button", { name: /Anexar/i });
+    expect(edit.className).toContain("pac-ghost-btn");
+    expect(edit.className).toContain("delpi-ui-ghost-btn");
+    expect(edit.querySelector("svg")).toBeTruthy();
+  });
+
+  it("CSS canônico do ghost garante flex row + gap (svg block do portal)", () => {
+    const css = readFileSync(resolve(process.cwd(), "src/styles/pagination.css"), "utf8");
+    expect(css).toMatch(/\.delpi-ui-ghost-btn\s*\{[^}]*display:\s*inline-flex/s);
+    expect(css).toMatch(/\.delpi-ui-ghost-btn\s*\{[^}]*flex-direction:\s*row/s);
+    expect(css).toMatch(/\.delpi-ui-ghost-btn\s*\{[^}]*gap:\s*8px/s);
+    expect(css).toMatch(/\.delpi-ui-ghost-btn\s*>\s*svg\s*\{[^}]*flex-shrink:\s*0/s);
   });
 });
 
