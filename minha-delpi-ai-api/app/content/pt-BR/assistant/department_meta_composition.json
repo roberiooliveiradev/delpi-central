@@ -33,6 +33,48 @@
         "dashboardDepartmentIdd",
         "engineeringTransformaSummary"
       ]
+    },
+    "commercial": {
+      "primaryRouteId": "dashboardDepartmentIndicators",
+      "composeRouteIds": [
+        "dashboardDepartmentIdd",
+        "autoTierCHeadOfficeRolTargetPct"
+      ]
+    },
+    "financial": {
+      "primaryRouteId": "dashboardDepartmentIndicators",
+      "composeRouteIds": [
+        "dashboardDepartmentIdd",
+        "autoTierCFinancialEbitdaPct"
+      ]
+    },
+    "production": {
+      "primaryRouteId": "dashboardDepartmentIndicators",
+      "composeRouteIds": [
+        "dashboardDepartmentIdd",
+        "productionOeeDetail"
+      ]
+    },
+    "quality": {
+      "primaryRouteId": "dashboardDepartmentIndicators",
+      "composeRouteIds": [
+        "dashboardDepartmentIdd",
+        "autoTierCPpmInternal"
+      ]
+    },
+    "hr": {
+      "primaryRouteId": "dashboardDepartmentIndicators",
+      "composeRouteIds": [
+        "dashboardDepartmentIdd",
+        "autoTierCHrSnapshot"
+      ]
+    },
+    "supplies": {
+      "primaryRouteId": "dashboardDepartmentIndicators",
+      "composeRouteIds": [
+        "dashboardDepartmentIdd",
+        "suppliesCpv"
+      ]
     }
   },
   "selectionReasons": {

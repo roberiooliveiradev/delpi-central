@@ -73,13 +73,35 @@ def test_plan_engineering_returns_multiple_actions():
 def test_plan_unknown_department_returns_empty():
     planned = ChatDepartmentMetaCompositionPlanningService.plan(
         FakeRegistrySelectionService(),
-        message="qual a meta para comercial desse mês?",
+        message="qual a meta para marketing desse mês?",
         allowed_action_ids=["a"],
         max_calls=5,
     )
 
-    # P0: commercial ainda não está no catálogo byDepartment
     assert planned == []
+
+
+def test_route_ids_commercial_compose():
+    route_ids = ChatDepartmentMetaCompositionPlanningService.route_ids_for_department(
+        "commercial",
+        mode="compose",
+    )
+
+    assert route_ids[0] == "dashboardDepartmentIndicators"
+    assert "dashboardDepartmentIdd" in route_ids
+    assert "autoTierCHeadOfficeRolTargetPct" in route_ids
+
+
+def test_plan_commercial_returns_multiple_actions():
+    planned = ChatDepartmentMetaCompositionPlanningService.plan(
+        FakeRegistrySelectionService(),
+        message="qual a meta para comercial desse mês?",
+        allowed_action_ids=["a", "b", "c"],
+        max_calls=5,
+    )
+
+    assert len(planned) >= 2
+    assert planned[0]["arguments"]["actionId"] == "action-dashboardDepartmentIndicators"
 
 
 def test_department_meta_composition_regression_cases():

@@ -2804,6 +2804,24 @@ DEPARTMENT_META_COMPOSITION_CASES = [
         "expected_min_planned": 2,
         "expected_primary_route_id": "dashboardDepartmentIndicators",
     },
+    {
+        "message": "qual a meta para comercial desse mês?",
+        "expected_department_id": "commercial",
+        "expected_min_planned": 2,
+        "expected_primary_route_id": "dashboardDepartmentIndicators",
+    },
+    {
+        "message": "qual a meta para financeiro desse mês?",
+        "expected_department_id": "financial",
+        "expected_min_planned": 2,
+        "expected_primary_route_id": "dashboardDepartmentIndicators",
+    },
+    {
+        "message": "qual a meta para produção desse mês?",
+        "expected_department_id": "production",
+        "expected_min_planned": 2,
+        "expected_primary_route_id": "dashboardDepartmentIndicators",
+    },
 ]
 
 # treinamento-agente-interacoes-jun2026.md — consultas operacionais (não capabilities).

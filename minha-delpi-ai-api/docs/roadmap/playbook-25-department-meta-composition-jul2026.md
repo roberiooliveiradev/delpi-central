@@ -33,15 +33,15 @@ plan_actions
 
 ### P0 — Engineering (mínimo viável)
 
-- Triggers coloquiais («meta para», «metas e realizado», …)
-- `engineering`: primary `dashboardDepartmentIndicators` + compose `dashboardDepartmentIdd`, `engineeringTransformaSummary`
-- Testes unit + regressão `plannedCount >= 2`
-- **Sem LLM no planner**
+- [x] Triggers coloquiais («meta para», «metas e realizado», …)
+- [x] `engineering`: primary `dashboardDepartmentIndicators` + compose `dashboardDepartmentIdd`, `engineeringTransformaSummary`
+- [x] Testes unit + regressão `plannedCount >= 2`
+- [x] **Sem LLM no planner**
 
 ### P1 — Demais departamentos
 
-- Entradas em `byDepartment` para commercial, financial, production, quality, hr, supplies
-- Primary = IDD indicators; compose = nota IDD + 1 KPI bandeira do depto (quando houver routeId estável)
+- [x] Entradas em `byDepartment` para commercial, financial, production, quality, hr, supplies
+- [x] Primary = IDD indicators; compose = nota IDD + 1 KPI bandeira do depto (quando houver routeId estável)
 
 ### P2 — Heurística primary vs compose completo
 
