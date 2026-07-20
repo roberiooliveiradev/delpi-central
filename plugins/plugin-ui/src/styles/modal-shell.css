@@ -93,8 +93,11 @@
 .delpi-ui-modal-portal--contained {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   min-width: 0;
-  min-height: 0;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .delpi-ui-modal-overlay--contained {
@@ -103,9 +106,20 @@
   padding: 12px;
   align-items: stretch;
   justify-content: stretch;
-  background: color-mix(in srgb, #0f172a 42%, transparent);
+  box-sizing: border-box;
+  background: color-mix(in srgb, #0f172a 36%, transparent);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+:root[data-theme="light"] .delpi-ui-modal-overlay--contained,
+[data-theme="light"] .delpi-ui-modal-overlay--contained {
+  background: color-mix(in srgb, #0f172a 26%, transparent);
+}
+
+:root[data-theme="dark"] .delpi-ui-modal-overlay--contained,
+[data-theme="dark"] .delpi-ui-modal-overlay--contained {
+  background: color-mix(in srgb, #020617 55%, transparent);
 }
 
 .delpi-ui-modal--host-fill {
@@ -116,6 +130,9 @@
   border-radius: 12px;
   box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .delpi-ui-modal--host-fill .delpi-ui-modal__body,
@@ -134,4 +151,6 @@
 [data-delpi-modal-host="true"] {
   position: relative;
   z-index: 0;
+  min-height: 100%;
+  isolation: isolate;
 }
