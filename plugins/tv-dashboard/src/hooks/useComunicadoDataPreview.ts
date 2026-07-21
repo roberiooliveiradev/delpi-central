@@ -77,6 +77,11 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
   const [loadingMoreSourceIds, setLoadingMoreSourceIds] = useState<string[]>([]);
   const [initialLoading, setInitialLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** Progresso determinado do fetch em curso (blocos concluídos / total). */
+  const [loadingProgress, setLoadingProgress] = useState<{
+    completed: number;
+    total: number;
+  } | null>(null);
 
   const configRef = useRef(config);
   configRef.current = config;
@@ -120,6 +125,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     setStaleSourceIds([]);
     setInitialLoading(false);
     setError(null);
+    setLoadingProgress(null);
     requestIdRef.current += 1;
     fingerprintRef.current = fp;
     syncedFingerprintRef.current = fp;
@@ -158,6 +164,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       if (blocks.length === 0) {
         setInitialLoading(false);
         setError(null);
+        setLoadingProgress(null);
         return;
       }
 
@@ -175,21 +182,34 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       setError(null);
       setRefreshingSourceIds([...targetIds]);
       setStaleSourceIds((prev) => prev.filter((id) => !targetIds.has(id)));
+      setLoadingProgress({ completed: 0, total: targets.length });
 
       const nativeConfig = serializeComunicadoConfig(configRef.current);
       const fetchFingerprint = fingerprintRef.current;
 
+      const bumpProgress = () => {
+        if (requestIdRef.current !== requestId) return;
+        setLoadingProgress((prev) => {
+          if (!prev) return prev;
+          return { ...prev, completed: Math.min(prev.total, prev.completed + 1) };
+        });
+      };
+
       try {
         const pairs = await Promise.all(
           targets.map(async (block) => {
-            const response = await previewDataBlockV2({
-              block: stripResolved(block),
-              nativeConfig,
-              playlistId: playlistIdRef.current,
-              forceRefresh: Boolean(options.force),
-            });
-            const resolved = response.block?.resolved;
-            return [block.id, resolved] as const;
+            try {
+              const response = await previewDataBlockV2({
+                block: stripResolved(block),
+                nativeConfig,
+                playlistId: playlistIdRef.current,
+                forceRefresh: Boolean(options.force),
+              });
+              const resolved = response.block?.resolved;
+              return [block.id, resolved] as const;
+            } finally {
+              bumpProgress();
+            }
           }),
         );
 
@@ -206,6 +226,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
         if (requestIdRef.current === requestId) {
           setInitialLoading(false);
           setRefreshingSourceIds([]);
+          setLoadingProgress(null);
         }
       }
     },
@@ -254,6 +275,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
       };
       loadingMoreRef.current.add(blockId);
       setLoadingMoreSourceIds((current) => [...new Set([...current, blockId])]);
+      setLoadingProgress({ completed: 0, total: 1 });
       try {
         const response = await previewDataBlockV2({
           block: stripResolved(requestBlock),
@@ -273,11 +295,13 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
           writeDataPreviewCache(playlistIdRef.current, fingerprintRef.current, next);
           return next;
         });
+        setLoadingProgress({ completed: 1, total: 1 });
       } catch (err) {
         setError(err instanceof Error ? err.message : "Falha ao carregar mais dados.");
       } finally {
         loadingMoreRef.current.delete(blockId);
         setLoadingMoreSourceIds((current) => current.filter((id) => id !== blockId));
+        setLoadingProgress(null);
       }
     },
     [readDataBlocks],
@@ -348,6 +372,14 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
 
   const isDataPreviewStale = staleSourceIds.length > 0;
 
+  const loadingProgressPercent = useMemo(() => {
+    if (!loadingProgress || loadingProgress.total <= 0) return null;
+    return Math.min(
+      100,
+      Math.round((loadingProgress.completed / loadingProgress.total) * 100),
+    );
+  }, [loadingProgress]);
+
   const clearStaleForSourceIds = useCallback((blockIds: string[]) => {
     if (blockIds.length === 0) return;
     const idSet = new Set(blockIds);
@@ -362,6 +394,8 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
     staleSourceIds,
     refreshingSourceIds,
     loadingMoreSourceIds,
+    /** Percentual real 0–100 enquanto há fetch; `null` quando ocioso. */
+    loadingProgressPercent,
     refreshDataPreview,
     loadMoreDataPreview,
     clearStaleForSourceIds,

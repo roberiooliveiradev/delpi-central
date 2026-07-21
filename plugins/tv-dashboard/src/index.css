@@ -1683,6 +1683,12 @@ body.td-composer--marqueeing *{
   width: 0;
   height: 0;
 }
+/* Slot de layout da barra — visual do progresso fica no plugin-ui. */
+.dashboard-tv-dashboard .td-stage-statusbar__loading-slot{
+  flex: 1 1 auto;
+  min-width: 140px;
+  max-width: 360px;
+}
 .dashboard-tv-dashboard .td-stage-status-badge{
   display: inline-flex;
   align-items: center;

@@ -322,6 +322,8 @@ export type ComunicadoEditorContextValue = {
   /** Fontes com fetch em andamento (spinner do filtro). */
   refreshingSourceIds: string[];
   loadingMoreSourceIds: string[];
+  /** Percentual 0–100 do fetch de dados em curso; `null` quando ocioso. */
+  dataPreviewLoadingProgress: number | null;
   refreshDataPreview: (options?: { force?: boolean; blockIds?: string[] }) => Promise<void>;
   loadMoreDataPreview: (blockId: string) => Promise<void>;
   globalRefreshSec: number;

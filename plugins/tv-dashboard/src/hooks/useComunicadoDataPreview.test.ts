@@ -272,4 +272,67 @@ describe("useComunicadoDataPreview", () => {
       dataBinding: { params: { page: 2, page_size: 30 } },
     });
   });
+
+  it("expõe loadingProgressPercent conforme blocos concluem", async () => {
+    const twoBlocks: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "metric-1",
+          type: "data_metric",
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+          dataBinding: { operationId: "get_oee", params: { periodDays: 1 }, refreshSec: 30 },
+        },
+        {
+          id: "metric-2",
+          type: "data_metric",
+          frame: { x: 20, y: 0, w: 20, h: 20 },
+          dataBinding: { operationId: "get_otd", params: { periodDays: 1 }, refreshSec: 30 },
+        },
+      ],
+    };
+
+    let resolveA!: (value: Awaited<ReturnType<typeof previewDataBlockV2>>) => void;
+    let resolveB!: (value: Awaited<ReturnType<typeof previewDataBlockV2>>) => void;
+    const promiseA = new Promise<Awaited<ReturnType<typeof previewDataBlockV2>>>((r) => {
+      resolveA = r;
+    });
+    const promiseB = new Promise<Awaited<ReturnType<typeof previewDataBlockV2>>>((r) => {
+      resolveB = r;
+    });
+
+    mockedPreview.mockImplementation((payload) => {
+      const id = (payload.block as { id?: string }).id;
+      return id === "metric-1" ? promiseA : promiseB;
+    });
+
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({ playlistId: "pl-progress", config: twoBlocks }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.loadingProgressPercent).toBe(0);
+
+    await act(async () => {
+      resolveA({
+        block: { resolved: { kpi: { value: 1, label: "A" } } },
+      } as Awaited<ReturnType<typeof previewDataBlockV2>>);
+      await Promise.resolve();
+    });
+
+    expect(result.current.loadingProgressPercent).toBe(50);
+
+    await act(async () => {
+      resolveB({
+        block: { resolved: { kpi: { value: 2, label: "B" } } },
+      } as Awaited<ReturnType<typeof previewDataBlockV2>>);
+      await Promise.resolve();
+    });
+
+    expect(result.current.loadingProgressPercent).toBeNull();
+    expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(1);
+    expect(result.current.resolvedByBlockId["metric-2"]?.kpi?.value).toBe(2);
+  });
 });

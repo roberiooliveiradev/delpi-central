@@ -13,7 +13,7 @@ O app cobre **todos** os componentes React visuais listados em `src/catalog/visu
 | actions | ActionButton, BackLink, IconButton |
 | help | HelpTooltip, KeyTip, FieldLabel, TabHintCell… |
 | layout | PageHeader, KpiCard, DelpiKpiCard, ChartCard… |
-| feedback | EmptyState, ModalShell, DrawerShell… |
+| feedback | EmptyState, ModalShell, DrawerShell, InlineLoadingProgress… |
 | forms | SelectField, DateField, MultiSelectField… |
 | **data** | **DataTable**, **DataTableSection**, CompactPagination, ConfigurablePresentationTable… |
 | export | TabularExportButtons, DocumentExportActions… |
@@ -657,6 +657,7 @@ Inclui CSS compartilhados importados em `src/styles/`:
 | `departmental-kpi.css` | `KpiCard` dept. — `.delpi-ui-kpi-*` (≠ `.delpi-kpi-*` TV) |
 | `loading-activity.css` | `LoadingActivityCard` — `.delpi-ui-loading-activity*` |
 | `loading-activity-badge.css` | `LoadingActivityBadge` — `.delpi-ui-loading-activity-badge*` |
+| `inline-loading-progress.css` | `InlineLoadingProgress` — `.delpi-ui-inline-loading-progress*` |
 | `dashboard-filters.css` | `FiltersRow` / `filter-box` / `__spacer` / `FilterBarShell` |
 | `export-actions.css` | `TabularExportButtons` — `.delpi-ui-export-actions*` (+ `--trailing` / `__label`) |
 

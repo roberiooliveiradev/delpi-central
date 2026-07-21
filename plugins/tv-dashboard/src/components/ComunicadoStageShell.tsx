@@ -6,7 +6,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { NativeRangeControl } from "@delpi/plugin-ui/index";
+import { NativeRangeControl, InlineLoadingProgress, inlineLoadingProgressBemClasses } from "@delpi/plugin-ui/index";
 import {
   useCallback,
   useEffect,
@@ -37,6 +37,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const V = TV_DASHBOARD_HELP_TOOLTIPS.view;
+const TD_INLINE_LOADING_PROGRESS_CN = inlineLoadingProgressBemClasses("td");
 
 type StageMetrics = {
   wrapW: number;
@@ -179,11 +180,15 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
     isDataPreviewStale,
     dataPreviewError,
     dataPreviewLoading,
+    dataPreviewLoadingProgress,
     refreshDataPreview,
   } = useComunicadoEditor();
 
   const zoomPercent = Math.round(stageZoom * 100);
   const hasMessages = Boolean(isDataPreviewStale || dataPreviewError);
+  const showLoadingProgress =
+    typeof dataPreviewLoadingProgress === "number" &&
+    Number.isFinite(dataPreviewLoadingProgress);
 
   return (
     <div className="td-stage-statusbar" role="toolbar" aria-label="Zoom, exibição e avisos do palco">
@@ -243,17 +248,26 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
         aria-live="polite"
         aria-label="Avisos e informações"
       >
+        {showLoadingProgress ? (
+          <div className="td-stage-statusbar__loading-slot">
+            <InlineLoadingProgress
+              percent={dataPreviewLoadingProgress!}
+              label="Carregando dados"
+              classNames={TD_INLINE_LOADING_PROGRESS_CN}
+            />
+          </div>
+        ) : null}
         {isDataPreviewStale ? (
           <button
             type="button"
             className={[
               "td-stage-status-badge",
               "td-stage-status-badge--warning",
-              dataPreviewLoading ? "td-stage-status-badge--busy" : "",
+              dataPreviewLoading || showLoadingProgress ? "td-stage-status-badge--busy" : "",
             ]
               .filter(Boolean)
               .join(" ")}
-            title={H.refreshVisual}
+            title={TV_DASHBOARD_HELP_TOOLTIPS.header.refreshVisual}
             onClick={() => void refreshDataPreview({ force: true })}
           >
             Dados desatualizados — Atualizar visual
@@ -267,7 +281,7 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
             Erro no preview de dados
           </span>
         ) : null}
-        {!hasMessages ? (
+        {!hasMessages && !showLoadingProgress ? (
           <span className="td-stage-statusbar__messages-empty" aria-hidden="true" />
         ) : null}
       </div>

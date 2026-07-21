@@ -18,6 +18,15 @@ export {
   type LoadingActivityBadgeTone,
 } from "./LoadingActivityBadge";
 export {
+  InlineLoadingProgress,
+  clampInlineLoadingPercent,
+  createDashboardInlineLoadingProgress,
+  inlineLoadingProgressBemClasses,
+  type InlineLoadingProgressClassNames,
+  type InlineLoadingProgressDensity,
+  type InlineLoadingProgressProps,
+} from "./InlineLoadingProgress";
+export {
   EmptyState,
   LoadingState,
   createDashboardEmptyState,

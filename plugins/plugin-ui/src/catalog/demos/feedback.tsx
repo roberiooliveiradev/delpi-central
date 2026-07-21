@@ -13,6 +13,8 @@ import {
   infoStateBemClasses,
   LoadingActivityCard,
   loadingActivityBemClasses,
+  InlineLoadingProgress,
+  inlineLoadingProgressBemClasses,
   LoadingState,
   loadingStatePanelBemClasses,
   ModalShell,
@@ -34,6 +36,7 @@ const modalCn = modalShellBemClasses(PUC_PREFIX);
 const confirmCn = confirmModalBemClasses(PUC_PREFIX);
 const drawerCn = drawerShellBemClasses(PUC_PREFIX);
 const loadingActivityCn = loadingActivityBemClasses(PUC_PREFIX);
+const inlineLoadingProgressCn = inlineLoadingProgressBemClasses(PUC_PREFIX);
 const stateBoxCn = stateBoxBemClasses(PUC_PREFIX);
 const infoStateCn = infoStateBemClasses(PUC_PREFIX);
 
@@ -195,6 +198,27 @@ export const feedbackCatalogEntries: CatalogEntryDraft[] = [
               progressAriaIndeterminate: "Carregando",
             }}
           />
+        ),
+      },
+    ],
+  },
+  {
+    id: "feedback.InlineLoadingProgress",
+    family: "feedback",
+    exportName: "InlineLoadingProgress",
+    title: "InlineLoadingProgress",
+    demos: [
+      {
+        id: "default",
+        label: "Status bar 67%",
+        render: () => (
+          <div style={{ width: 320, padding: 8, background: "var(--surface-muted, #1e293b)" }}>
+            <InlineLoadingProgress
+              percent={67}
+              label="Carregando dados"
+              classNames={inlineLoadingProgressCn}
+            />
+          </div>
         ),
       },
     ],

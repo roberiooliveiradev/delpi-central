@@ -1,0 +1,73 @@
+/**
+ * InlineLoadingProgress — barra determinada para status bar / toolbar.
+ * Classes: .delpi-ui-inline-loading-progress*
+ */
+
+.delpi-ui-inline-loading-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
+  max-width: 28rem;
+  box-sizing: border-box;
+  color: var(--delpi-ui-muted, var(--text-muted, #666666));
+}
+
+.delpi-ui-inline-loading-progress__label {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-inline-loading-progress__track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 64px;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #e6e6e6)) 72%,
+    transparent
+  );
+}
+
+.delpi-ui-inline-loading-progress__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--delpi-ui-accent, var(--primary, #089bdb));
+  transition: width 160ms ease-out;
+}
+
+.delpi-ui-inline-loading-progress__value {
+  flex: 0 0 auto;
+  min-width: 2.5ch;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--delpi-ui-text, var(--text, #111111));
+}
+
+.delpi-ui-inline-loading-progress--compact {
+  gap: 6px;
+}
+
+.delpi-ui-inline-loading-progress--compact .delpi-ui-inline-loading-progress__label,
+.delpi-ui-inline-loading-progress--compact .delpi-ui-inline-loading-progress__value {
+  font-size: 0.68rem;
+}
+
+.delpi-ui-inline-loading-progress--compact .delpi-ui-inline-loading-progress__track {
+  height: 5px;
+}
+
+.delpi-ui-inline-loading-progress--default .delpi-ui-inline-loading-progress__track {
+  height: 8px;
+}
