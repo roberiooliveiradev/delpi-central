@@ -1,5 +1,6 @@
 from tv_app.application.services.data.tv_view_projection_service import (
     aggregate_values,
+    apply_field_labels_to_resolved,
     apply_view_projection_to_resolved,
 )
 
@@ -56,3 +57,24 @@ def test_apply_chart_projection_builds_multi_series():
     next_resolved = apply_view_projection_to_resolved(resolved, block)
     assert next_resolved["chart"]["series"][0]["points"][0]["label"] == "Jan"
     assert next_resolved["chart"]["series"][1]["points"][1]["value"] == 95
+
+
+def test_apply_field_labels_to_resolved_preserves_row_keys():
+    resolved = {
+        "kpiMetrics": [{"field": "ITEM_CODE", "label": "ITEM_CODE", "value": 1}],
+        "table": {
+            "columns": [
+                {"key": "DETAILED_DESCRIPTION", "label": "DETAILED_DESCRIPTION"},
+                {"key": "ITEM_CODE", "label": "ITEM_CODE"},
+            ],
+            "rows": [{"DETAILED_DESCRIPTION": "x", "ITEM_CODE": "90264019"}],
+        },
+    }
+    next_resolved = apply_field_labels_to_resolved(
+        resolved,
+        {"DETAILED_DESCRIPTION": "Descrição", "ITEM_CODE": "Código"},
+    )
+    assert next_resolved["table"]["columns"][0]["label"] == "Descrição"
+    assert next_resolved["table"]["columns"][1]["key"] == "ITEM_CODE"
+    assert next_resolved["table"]["rows"][0]["ITEM_CODE"] == "90264019"
+    assert next_resolved["kpiMetrics"][0]["label"] == "Código"

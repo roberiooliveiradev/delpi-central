@@ -120,6 +120,7 @@ import {
   tableProjectionFromSelectedFields,
 } from "./viewProjection";
 import { normalizeTextProjection } from "./textViewProjection";
+import { normalizeFieldLabels } from "./fieldLabelRegistry";
 
 export {
   isDataBoundEditorBlockType,
@@ -823,6 +824,8 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
     } else if (isDataTransformV2(block.dataTransform)) {
       base.dataTransform = { ...block.dataTransform };
     }
+    const fieldLabels = normalizeFieldLabels(block.fieldLabels);
+    if (fieldLabels) base.fieldLabels = fieldLabels;
   } else if (block.type === "chart_view") {
     base.chartType = block.chartType;
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
@@ -1075,6 +1078,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
           refreshSec: binding.refreshSec,
         },
         dataTransform: normalizeDataTransform(block.dataTransform),
+        fieldLabels: normalizeFieldLabels(block.fieldLabels),
         resolved:
           block.resolved && typeof block.resolved === "object"
             ? (block.resolved as ComunicadoDataResolved)

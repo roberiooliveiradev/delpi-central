@@ -45,6 +45,107 @@ def _column_values(rows: list[dict[str, Any]], field: str) -> list[Any]:
     return [row.get(field) for row in rows if isinstance(row, dict)]
 
 
+def apply_field_labels_to_resolved(
+    resolved: dict[str, Any],
+    field_labels: Any,
+) -> dict[str, Any]:
+    """
+    Reaplica rótulos do registro da fonte (fieldLabels) em table/kpi/chart.
+    Chaves das rows e valores não mudam — só display.
+    """
+    if not isinstance(resolved, dict):
+        return resolved
+    labels = _normalize_field_labels(field_labels)
+    if not labels:
+        return resolved
+
+    next_resolved = dict(resolved)
+    changed = False
+
+    table = resolved.get("table")
+    if isinstance(table, dict):
+        columns = table.get("columns")
+        if isinstance(columns, list) and columns:
+            next_cols: list[dict[str, Any]] = []
+            cols_changed = False
+            for col in columns:
+                if not isinstance(col, dict):
+                    next_cols.append(col)
+                    continue
+                key = str(col.get("key") or "").strip()
+                override = labels.get(key)
+                if override and override != str(col.get("label") or ""):
+                    cols_changed = True
+                    next_cols.append({**col, "label": override})
+                else:
+                    next_cols.append(col)
+            if cols_changed:
+                changed = True
+                next_resolved["table"] = {**table, "columns": next_cols}
+
+    metrics = resolved.get("kpiMetrics")
+    if isinstance(metrics, list) and metrics:
+        next_metrics: list[dict[str, Any]] = []
+        metrics_changed = False
+        for metric in metrics:
+            if not isinstance(metric, dict):
+                next_metrics.append(metric)
+                continue
+            field = str(metric.get("field") or "").strip()
+            override = labels.get(field)
+            if override and override != str(metric.get("label") or ""):
+                metrics_changed = True
+                next_metrics.append({**metric, "label": override})
+            else:
+                next_metrics.append(metric)
+        if metrics_changed:
+            changed = True
+            next_resolved["kpiMetrics"] = next_metrics
+            kpi = next_resolved.get("kpi")
+            if isinstance(kpi, dict) and next_metrics:
+                primary = next_metrics[0]
+                primary_field = str(primary.get("field") or "")
+                if primary_field in labels:
+                    next_resolved["kpi"] = {**kpi, "label": labels[primary_field]}
+
+    chart = resolved.get("chart")
+    if isinstance(chart, dict):
+        series = chart.get("series")
+        if isinstance(series, list) and series:
+            next_series: list[dict[str, Any]] = []
+            series_changed = False
+            for entry in series:
+                if not isinstance(entry, dict):
+                    next_series.append(entry)
+                    continue
+                field = str(entry.get("field") or "").strip()
+                override = labels.get(field)
+                if field and override and override != str(entry.get("name") or ""):
+                    series_changed = True
+                    next_series.append({**entry, "name": override})
+                else:
+                    next_series.append(entry)
+            if series_changed:
+                changed = True
+                next_resolved["chart"] = {**chart, "series": next_series}
+
+    return next_resolved if changed else resolved
+
+
+def _normalize_field_labels(raw: Any) -> dict[str, str]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, str] = {}
+    for key, value in raw.items():
+        field = str(key or "").strip()
+        if not field or not isinstance(value, str):
+            continue
+        label = value.strip()
+        if label:
+            out[field] = label
+    return out
+
+
 def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str, Any]) -> dict[str, Any]:
     """
     Aplica kpiProjection / chartProjection / tableProjection do bloco visual.

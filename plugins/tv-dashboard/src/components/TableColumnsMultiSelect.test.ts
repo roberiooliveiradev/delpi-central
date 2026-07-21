@@ -33,4 +33,23 @@ describe("TableColumnsMultiSelect helpers", () => {
     const next = reorderTableColumns(options, undefined, ["c", "a", "b"]);
     expect(next?.columns?.map((col) => col.key)).toEqual(["c", "a", "b"]);
   });
+
+  it("toggle/reorder preserva label custom da projeção", () => {
+    const withLabel = {
+      columns: [
+        { key: "a", label: "Alfa", visible: true },
+        { key: "b", label: "Beta", visible: true },
+        { key: "c", visible: true },
+      ],
+    };
+    const hidden = patchTableColumnVisibility(options, ["a", "b", "c"], "c", false, withLabel);
+    expect(hidden?.columns?.find((col) => col.key === "a")?.label).toBe("Alfa");
+    const moved = moveTableColumn(options, withLabel, "a", 1);
+    expect(moved?.columns?.find((col) => col.key === "a")?.label).toBe("Alfa");
+  });
+
+  it("não injeta label do catálogo ao só reordenar", () => {
+    const next = reorderTableColumns(options, undefined, ["b", "a", "c"]);
+    expect(next?.columns?.every((col) => !col.label)).toBe(true);
+  });
 });

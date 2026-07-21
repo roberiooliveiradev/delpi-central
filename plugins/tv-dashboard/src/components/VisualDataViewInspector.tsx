@@ -4,8 +4,10 @@ import {
   isDataSourceBlockType,
   buildViewDataLinkPatch,
   buildViewFrameFitPatch,
+  patchFieldLabels,
   tablePresetLabel,
   type ComunicadoBlock,
+  type ComunicadoDataSourceBlock,
   type ComunicadoTableViewBlock,
   type ChartViewProjection,
   type KpiViewProjection,
@@ -47,7 +49,11 @@ function viewValueFieldOptions(
     }));
   const resolved =
     source && "resolved" in source && source.resolved ? source.resolved : undefined;
-  return discoverResolvedFieldOptions(resolved, catalog);
+  const sourceFieldLabels =
+    source && isDataSourceBlockType(source.type)
+      ? (source as ComunicadoDataSourceBlock).fieldLabels
+      : undefined;
+  return discoverResolvedFieldOptions(resolved, catalog, sourceFieldLabels);
 }
 
 export function VisualDataViewInspector({
@@ -60,6 +66,7 @@ export function VisualDataViewInspector({
     selected,
     blocks,
     updateSelected,
+    updateBlock,
     openDataCatalog,
     selectedKpiPart,
     selectedChartPart,
@@ -242,6 +249,21 @@ export function VisualDataViewInspector({
             tableProjection={tableBlock?.tableProjection}
             compact={isRibbon}
             onChange={applyTableProjection}
+            sourceFieldLabels={
+              linkedSource && isDataSourceBlockType(linkedSource.type)
+                ? (linkedSource as ComunicadoDataSourceBlock).fieldLabels
+                : undefined
+            }
+            onRenameField={
+              linkedSource && isDataSourceBlockType(linkedSource.type)
+                ? (key, label) => {
+                    const source = linkedSource as ComunicadoDataSourceBlock;
+                    updateBlock(source.id, {
+                      fieldLabels: patchFieldLabels(source.fieldLabels, key, label),
+                    } as Partial<ComunicadoBlock>);
+                  }
+                : undefined
+            }
           />
         </DeckField>
       ) : null}

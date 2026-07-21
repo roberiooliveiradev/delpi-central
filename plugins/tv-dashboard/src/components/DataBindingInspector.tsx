@@ -31,6 +31,7 @@ import {
   visibleParamSchema,
   type DataParamSchema,
 } from "./DataParamFields";
+import { FieldLabelsEditor } from "./FieldLabelsEditor";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -412,6 +413,25 @@ export function DataBindingInspector({
     </Modal>
   );
 
+  const showFieldLabels = isDataSourceBlockType(target.type);
+  const sourceResolved =
+    "resolved" in target && target.resolved ? target.resolved : undefined;
+  const catalogLabelFields = valueFieldOptions.map((item) => ({
+    field: item.field,
+    label: item.label,
+  }));
+
+  const fieldLabelsEditor = showFieldLabels ? (
+    <FieldLabelsEditor
+      resolved={sourceResolved}
+      catalogFields={catalogLabelFields}
+      fieldLabels={(target as import("@delpi/tv-dashboard-presentation").ComunicadoDataSourceBlock).fieldLabels}
+      pane={pane}
+      compact={isRibbon}
+      onChange={(next) => applyPatch({ fieldLabels: next } as Partial<ComunicadoBlock>)}
+    />
+  ) : null;
+
   if (isRibbon) {
     return (
       <>
@@ -420,6 +440,7 @@ export function DataBindingInspector({
             <div className="td-deck-ribbon__field-grid">{connectionFields}</div>
           </RibbonZone>
         ) : null}
+        {fieldLabelsEditor}
         {activeSections.includes("params") ? (
           <RibbonZone title="Parâmetros">
             {paramCount === 0 ? (
@@ -462,6 +483,7 @@ export function DataBindingInspector({
         {refreshFields}
         {paramFields}
       </DeckPropertySection>
+      {fieldLabelsEditor}
     </>
   );
 }

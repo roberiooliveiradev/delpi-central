@@ -61,6 +61,9 @@ export function TextDataBindingInspector({
       field: String(field),
       label: route?.valueFieldLabels?.[String(field)] ?? String(field),
     })),
+    linkedSource && "fieldLabels" in linkedSource
+      ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels
+      : undefined,
   );
 
   const projection = selected.textProjection ?? { field: "" };

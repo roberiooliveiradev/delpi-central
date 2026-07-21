@@ -309,6 +309,11 @@ export type ComunicadoDataSourceBlock = ComunicadoBlockBase & {
   dataBinding: ComunicadoDataBinding;
   /** Steps tipo Power Query (antes da View/*Projection). */
   dataTransform?: import("./dataTransform").DataTransform;
+  /**
+   * Rótulos de display por chave da API — não altera o payload/rows.
+   * Cascata: projeção do visual > fieldLabels > catálogo/resolved > key.
+   */
+  fieldLabels?: import("./fieldLabelRegistry").FieldLabelsMap;
   resolved?: ComunicadoDataResolved;
 };
 

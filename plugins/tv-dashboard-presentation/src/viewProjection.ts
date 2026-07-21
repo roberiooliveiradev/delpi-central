@@ -459,6 +459,7 @@ export function applyViewProjection(
 export function discoverResolvedFieldOptions(
   resolved: ComunicadoDataResolved | undefined,
   catalogFields?: Array<{ field: string; label: string }>,
+  sourceFieldLabels?: Record<string, string> | null,
 ): Array<{ field: string; label: string }> {
   const out = new Map<string, string>();
   for (const item of catalogFields ?? []) {
@@ -475,6 +476,13 @@ export function discoverResolvedFieldOptions(
   if (firstRow && typeof firstRow === "object") {
     for (const key of Object.keys(firstRow)) {
       if (!out.has(key)) out.set(key, key);
+    }
+  }
+  if (sourceFieldLabels) {
+    for (const [field, label] of Object.entries(sourceFieldLabels)) {
+      const key = field.trim();
+      const display = label?.trim();
+      if (key && display) out.set(key, display);
     }
   }
   return [...out.entries()].map(([field, label]) => ({ field, label }));

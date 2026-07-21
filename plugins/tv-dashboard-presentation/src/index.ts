@@ -824,6 +824,16 @@ export {
   type ProjectedFieldResolution,
 } from "./fieldValueProjection";
 export {
+  applyFieldLabelsToResolved,
+  normalizeFieldLabels,
+  patchFieldLabels,
+  resolveFieldDisplayLabel,
+  suggestEditableFields,
+  type EditableFieldOption,
+  type FieldLabelsMap,
+  type ResolveFieldDisplayLabelInput,
+} from "./fieldLabelRegistry";
+export {
   distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
   resizeTableProjectionColumns,

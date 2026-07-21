@@ -8,18 +8,19 @@ import {
 } from "react";
 
 import {
+  applyFieldLabelsToResolved,
   isComunicadoVisualBoxBlock,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
   isFetchableDataBlockType,
-  isTextDataBoundBlockType,
   parseComunicadoConfig,
   serializeComunicadoConfig,
   sortBlocksByZIndex,
   type ComunicadoConfig,
   type ComunicadoBlock,
   type ComunicadoDataDisplayMode,
+  type ComunicadoDataSourceBlock,
   type PresentationSelectionUpdateEvent,
   type ComunicadoTextBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -201,10 +202,25 @@ export function ComunicadoEditorProvider({
 
   const blocks = useMemo(() => {
     const sorted = sortBlocksByZIndex(config.blocks ?? []);
+    const fieldLabelsBySourceId = new Map<string, ComunicadoDataSourceBlock["fieldLabels"]>();
+    for (const block of sorted) {
+      if (isDataSourceBlockType(block.type)) {
+        fieldLabelsBySourceId.set(block.id, (block as ComunicadoDataSourceBlock).fieldLabels);
+      }
+    }
     return sorted.map((block) => {
       if (isFetchableDataBlockType(block.type) && "dataBinding" in block) {
         const preview = resolvedByBlockId[block.id];
-        if (preview) return { ...block, resolved: preview };
+        if (preview) {
+          const labeled =
+            isDataSourceBlockType(block.type)
+              ? applyFieldLabelsToResolved(
+                  preview,
+                  (block as ComunicadoDataSourceBlock).fieldLabels,
+                ) ?? preview
+              : preview;
+          return { ...block, resolved: labeled };
+        }
         return block;
       }
       if (
@@ -214,11 +230,24 @@ export function ComunicadoEditorProvider({
         block.dataSourceId
       ) {
         const preview = resolvedByBlockId[block.dataSourceId];
-        if (preview) return { ...block, resolved: preview };
+        if (preview) {
+          const labeled =
+            applyFieldLabelsToResolved(
+              preview,
+              fieldLabelsBySourceId.get(block.dataSourceId),
+            ) ?? preview;
+          return { ...block, resolved: labeled };
+        }
       }
       if (isComunicadoVisualBoxBlock(block) && block.dataSourceId?.trim()) {
-        const preview = resolvedByBlockId[block.dataSourceId.trim()];
-        if (preview) return { ...block, resolved: preview };
+        const sourceId = block.dataSourceId.trim();
+        const preview = resolvedByBlockId[sourceId];
+        if (preview) {
+          const labeled =
+            applyFieldLabelsToResolved(preview, fieldLabelsBySourceId.get(sourceId)) ??
+            preview;
+          return { ...block, resolved: labeled };
+        }
       }
       if (isDataBlockType(block.type)) {
         const preview = resolvedByBlockId[block.id];

@@ -5893,6 +5893,21 @@ body.td-composer--marqueeing *{
   gap: 0.35rem;
   justify-content: flex-start;
 }
+.dashboard-tv-dashboard .td-deck-inspector__column-row-body{
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dashboard-tv-dashboard .td-field-labels-editor{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dashboard-tv-dashboard .td-field-labels-editor__row{
+  min-width: 0;
+}
 .dashboard-tv-dashboard .td-deck-inspector__column-row--hidden{
   opacity: 0.72;
 }

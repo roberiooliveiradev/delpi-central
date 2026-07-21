@@ -1,4 +1,4 @@
-import { NativeCheckboxControl } from "@delpi/plugin-ui/index";
+import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import type { TableColumnProjection, TableViewProjection } from "@delpi/tv-dashboard-presentation";
 
 import { useProjectionDragReorder } from "../hooks/useProjectionDragReorder";
@@ -14,6 +14,13 @@ type Props = {
   /** undefined = todas visíveis na ordem do catálogo. */
   tableProjection?: TableViewProjection | null;
   onChange: (next: TableViewProjection | undefined) => void;
+  /**
+   * Renomeia no registro da fonte (preferido). Sem callback, o rótulo
+   * opcional vai para `tableProjection.columns[].label` (override do visual).
+   */
+  onRenameField?: (key: string, label: string) => void;
+  /** Rótulos atuais da fonte — valor do input quando onRenameField está definido. */
+  sourceFieldLabels?: Record<string, string> | null;
   compact?: boolean;
 };
 
@@ -35,33 +42,57 @@ export function resolveVisibleKeys(
   return ordered;
 }
 
-function buildProjection(
+function previousLabelByKey(
+  previous?: TableViewProjection | null,
+): Map<string, string | undefined> {
+  return new Map((previous?.columns ?? []).map((col) => [col.key, col.label]));
+}
+
+/**
+ * Monta projeção preservando labels custom já gravados.
+ * Não injeta label do catálogo — senão sombreia `data_source.fieldLabels`.
+ */
+export function buildProjection(
   options: TableColumnOption[],
   visibleOrdered: string[],
+  previous?: TableViewProjection | null,
 ): TableViewProjection | undefined {
   const catalog = options.map((item) => item.key);
-  if (visibleOrdered.length === catalog.length && catalog.every((key, i) => visibleOrdered[i] === key)) {
+  const prevLabels = previousLabelByKey(previous);
+  const labelFor = (key: string) => {
+    const custom = prevLabels.get(key)?.trim();
+    return custom || undefined;
+  };
+
+  const sameOrder =
+    visibleOrdered.length === catalog.length &&
+    catalog.every((key, i) => visibleOrdered[i] === key);
+  const hasCustomLabels = catalog.some((key) => Boolean(labelFor(key)));
+
+  if (sameOrder && !hasCustomLabels) {
     return undefined;
   }
-  if (visibleOrdered.length === catalog.length) {
+
+  if (sameOrder) {
     return {
       columns: visibleOrdered.map((key) => ({
         key,
-        label: options.find((opt) => opt.key === key)?.label,
+        label: labelFor(key),
         visible: true,
       })),
     };
   }
+
   const hidden = catalog.filter((key) => !visibleOrdered.includes(key));
   const columns: TableColumnProjection[] = [
     ...visibleOrdered.map((key) => ({
       key,
-      label: options.find((opt) => opt.key === key)?.label,
+      label: labelFor(key),
       visible: true,
     })),
     ...hidden.map((key) => ({
       key,
-      label: options.find((opt) => opt.key === key)?.label,
+      label: labelFor(key),
       visible: false,
     })),
   ];
@@ -73,12 +104,13 @@ export function patchTableColumnVisibility(
   currentVisible: string[],
   key: string,
   checked: boolean,
+  previous?: TableViewProjection | null,
 ): TableViewProjection | undefined {
   const next = [...currentVisible];
   const index = next.indexOf(key);
   if (checked && index < 0) next.push(key);
   if (!checked && index >= 0) next.splice(index, 1);
-  return buildProjection(options, next);
+  return buildProjection(options, next, previous);
 }
 
 export function moveTableColumn(
@@ -95,7 +127,7 @@ export function moveTableColumn(
   const nextVisible = [...visible];
   const [item] = nextVisible.splice(index, 1);
   nextVisible.splice(target, 0, item!);
-  return buildProjection(options, nextVisible);
+  return buildProjection(options, nextVisible, projection);
 }
 
 export function reorderTableColumns(
@@ -103,17 +135,40 @@ export function reorderTableColumns(
   projection: TableViewProjection | undefined,
   visibleOrdered: string[],
 ): TableViewProjection | undefined {
-  return buildProjection(options, visibleOrdered);
+  return buildProjection(options, visibleOrdered, projection);
+}
+
+export function patchTableColumnLabel(
+  options: TableColumnOption[],
+  projection: TableViewProjection | undefined,
+  key: string,
+  label: string,
+): TableViewProjection | undefined {
+  const visible = resolveVisibleKeys(options, projection);
+  const base =
+    buildProjection(options, visible, projection) ??
+    ({
+      columns: options.map((item) => ({
+        key: item.key,
+        visible: true,
+      })),
+    } satisfies TableViewProjection);
+  const columns = (base.columns ?? []).map((col) =>
+    col.key === key ? { ...col, label: label.trim() || undefined } : col,
+  );
+  return { columns };
 }
 
 /**
- * Seleção e ordem de colunas da table_view (arrastar para reordenar).
+ * Seleção e ordem de colunas da table_view (arrastar para reordenar) + rótulo.
  */
 export function TableColumnsMultiSelect({
   idPrefix,
   options,
   tableProjection,
   onChange,
+  onRenameField,
+  sourceFieldLabels,
   compact = false,
 }: Props) {
   if (options.length === 0) return null;
@@ -124,8 +179,31 @@ export function TableColumnsMultiSelect({
 
   const { canDrag, rowClassName, rowDropProps, handleDragProps } = useProjectionDragReorder(
     visible,
-    (nextVisible) => onChange(reorderTableColumns(options, tableProjection ?? undefined, nextVisible)),
+    (nextVisible) =>
+      onChange(reorderTableColumns(options, tableProjection ?? undefined, nextVisible)),
   );
+
+  function renameControl(key: string, defaultLabel: string) {
+    const customFromSource = sourceFieldLabels?.[key]?.trim() ?? "";
+    const customFromProjection =
+      tableProjection?.columns?.find((col) => col.key === key)?.label?.trim() ?? "";
+    const labelValue = onRenameField ? customFromSource : customFromProjection;
+    return (
+      <NativeTextControl
+        className={compact ? "delpi-ui-native-control--compact" : undefined}
+        aria-label={`Rótulo de ${key}`}
+        placeholder={defaultLabel}
+        value={labelValue}
+        onChange={(value) => {
+          if (onRenameField) {
+            onRenameField(key, value);
+            return;
+          }
+          onChange(patchTableColumnLabel(options, tableProjection ?? undefined, key, value));
+        }}
+      />
+    );
+  }
 
   return (
     <div
@@ -161,29 +239,54 @@ export function TableColumnsMultiSelect({
                 ⋮⋮
               </button>
             ) : null}
-            <NativeCheckboxControl
-              id={`${idPrefix}-${option.key}`}
-              className="td-deck-inspector__checkbox"
-              checked
-              label={option.label}
-              onChange={(nextChecked) => {
-                onChange(patchTableColumnVisibility(options, visible, option.key, nextChecked));
-              }}
-            />
+            <div className="td-deck-inspector__column-row-body">
+              <NativeCheckboxControl
+                id={`${idPrefix}-${option.key}`}
+                className="td-deck-inspector__checkbox"
+                checked
+                label={option.label}
+                onChange={(nextChecked) => {
+                  onChange(
+                    patchTableColumnVisibility(
+                      options,
+                      visible,
+                      option.key,
+                      nextChecked,
+                      tableProjection,
+                    ),
+                  );
+                }}
+              />
+              {renameControl(option.key, option.label)}
+            </div>
           </div>
         );
       })}
       {hidden.map((option) => (
-        <div key={option.key} className="td-deck-inspector__column-row td-deck-inspector__column-row--hidden">
-          <NativeCheckboxControl
-            id={`${idPrefix}-${option.key}`}
-            className="td-deck-inspector__checkbox"
-            checked={false}
-            label={option.label}
-            onChange={(nextChecked) => {
-              onChange(patchTableColumnVisibility(options, visible, option.key, nextChecked));
-            }}
-          />
+        <div
+          key={option.key}
+          className="td-deck-inspector__column-row td-deck-inspector__column-row--hidden"
+        >
+          <div className="td-deck-inspector__column-row-body">
+            <NativeCheckboxControl
+              id={`${idPrefix}-${option.key}`}
+              className="td-deck-inspector__checkbox"
+              checked={false}
+              label={option.label}
+              onChange={(nextChecked) => {
+                onChange(
+                  patchTableColumnVisibility(
+                    options,
+                    visible,
+                    option.key,
+                    nextChecked,
+                    tableProjection,
+                  ),
+                );
+              }}
+            />
+            {renameControl(option.key, option.label)}
+          </div>
         </div>
       ))}
     </div>

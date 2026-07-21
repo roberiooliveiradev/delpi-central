@@ -27,6 +27,7 @@ from tv_app.application.services.data.tv_data_transform_service import (
     normalize_data_transform,
 )
 from tv_app.application.services.data.tv_view_projection_service import (
+    apply_field_labels_to_resolved,
     apply_view_projection_to_resolved,
 )
 from tv_app.application.services.native_screen_cache_service import (
@@ -1066,7 +1067,12 @@ class ComunicadoDataEnrichmentService:
             if str(block.get("type") or "") == "data_source":
                 resolved = block.get("resolved")
                 if isinstance(resolved, dict):
-                    source_resolved[str(block.get("id") or "")] = resolved
+                    source_id = str(block.get("id") or "")
+                    labeled = apply_field_labels_to_resolved(
+                        resolved,
+                        block.get("fieldLabels"),
+                    )
+                    source_resolved[source_id] = labeled
         if not source_resolved:
             return blocks
         linked: list[dict[str, Any]] = []
@@ -1080,13 +1086,14 @@ class ComunicadoDataEnrichmentService:
                 linked.append(block)
                 continue
             merged = dict(block)
+            base_resolved = source_resolved[source_id]
             if block_type in DATA_VIEW_BLOCK_TYPES:
                 merged["resolved"] = apply_view_projection_to_resolved(
-                    source_resolved[source_id],
+                    base_resolved,
                     block,
                 )
             else:
-                merged["resolved"] = dict(source_resolved[source_id])
+                merged["resolved"] = dict(base_resolved)
                 merged["serverTextProjectionApplied"] = True
             linked.append(merged)
         return linked
@@ -1454,7 +1461,10 @@ class ComunicadoDataEnrichmentService:
                 )
             )
 
-        result["resolved"] = resolved
+        result["resolved"] = apply_field_labels_to_resolved(
+            resolved,
+            block.get("fieldLabels"),
+        )
         return result
 
     def _fetch_cached(
