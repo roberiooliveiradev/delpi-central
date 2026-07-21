@@ -1,16 +1,19 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   type ReactNode,
 } from "react";
 import {
   configureExportAlert,
-  useNoticeDialogController,
+  createFloatingNoticeStack,
+  useFloatingNotices,
+  type FloatingNoticeVariant,
   type NoticeDialogOptions,
 } from "@delpi/plugin-ui/index";
 
-import { ConfirmModal } from "../components/ui/ConfirmModal";
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 
 export type { NoticeDialogOptions };
 
@@ -20,41 +23,55 @@ type NoticeDialogContextValue = {
 
 const NoticeDialogContext = createContext<NoticeDialogContextValue | null>(null);
 
+const TvDashboardFloatingNotices = createFloatingNoticeStack({
+  prefix: "td",
+  portalScopeClassName: TV_DASHBOARD_ROOT_CLASS,
+  labels: {
+    stackAriaLabel: "Avisos",
+    dismissAriaLabel: "Fechar aviso",
+  },
+});
+
+function mapNoticeVariant(
+  variant: NoticeDialogOptions["variant"],
+): FloatingNoticeVariant {
+  if (variant === "error") return "error";
+  if (variant === "success") return "success";
+  return "info";
+}
+
 /**
- * Substitui window.alert / exportAlert por modal Delpi contido no host MFE
- * (`HostContainedDialog` — não cobre a sidebar do portal).
- * Ligar `configureExportAlert` no mount para `tvDashboardNotice` e exports.
+ * Avisos não bloqueantes: `FloatingNoticeStack` no topo (plugin-ui).
+ * Sucesso/info fecham sozinhos; erro permanece até o usuário fechar.
+ * Confirmações destrutivas continuam em `ConfirmModal` / `useConfirm`.
  */
 export function NoticeDialogProvider({ children }: { children: ReactNode }) {
-  const { notice, pending, dismiss } = useNoticeDialogController();
+  const { items, push, dismiss } = useFloatingNotices();
+
+  const notice = useCallback(
+    (options: NoticeDialogOptions | string) => {
+      const normalized: NoticeDialogOptions =
+        typeof options === "string" ? { message: options } : options;
+      push({
+        message: normalized.message,
+        title: normalized.title,
+        variant: mapNoticeVariant(normalized.variant),
+      });
+      return Promise.resolve();
+    },
+    [push],
+  );
 
   useEffect(() => {
     configureExportAlert((message) => {
-      void notice({ title: "Aviso", message, confirmLabel: "OK" });
+      void notice(message);
     });
   }, [notice]);
-
-  const title =
-    pending?.title ??
-    (pending?.variant === "error"
-      ? "Erro"
-      : pending?.variant === "success"
-        ? "Sucesso"
-        : "Aviso");
 
   return (
     <NoticeDialogContext.Provider value={{ notice }}>
       {children}
-      <ConfirmModal
-        open={pending !== null}
-        title={title}
-        message={pending?.message ?? ""}
-        confirmLabel={pending?.confirmLabel ?? "OK"}
-        showCancel={false}
-        variant={pending?.variant === "error" ? "danger" : "default"}
-        onConfirm={dismiss}
-        onCancel={dismiss}
-      />
+      <TvDashboardFloatingNotices items={items} onDismiss={dismiss} />
     </NoticeDialogContext.Provider>
   );
 }

@@ -29,7 +29,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
 - **Persistência do slide personalizado:** draft versionado em `localStorage` + autosave debounced; F5/WS **nunca** descartam edições locais sem merge (`applyServerPlaylistPreservingLocalEdits`). Anti-padrão documentado em `.cursor/rules/tv-dashboard-persist-local-edits.mdc`
 - **Pasteboard / paridade:** editor usa `overflow:visible` (pasteboard); apresentação/prévia clipam na moldura via `DesignViewportStage`. Frames fora de 0–100% mantêm posição (API não clampa). Ver `.cursor/rules/tv-dashboard-editor-pasteboard.mdc`
-- **Modais / avisos:** `HostContainedDialog` (confirm) e `HostContainedModal` (workbench) — overlay só na área do MFE, nunca sobre a sidebar do portal. Anti-padrão: `.cursor/rules/mfe-modal-host-contained.mdc`
+- **Avisos:** `FloatingNoticeStack` (toast no topo, auto-dismiss) via `NoticeDialogProvider` — não modal. Confirmações: `HostContainedDialog`. Workbench: `HostContainedModal`. Anti-padrão: `.cursor/rules/mfe-modal-host-contained.mdc`
 - **Fidelidade prévia/TV:** `RichComunicadoStage` canônico; abrir prévia faz flush + overlay do shell local (não payload stale). Anti-padrão: `.cursor/rules/tv-dashboard-presentation-parity.mdc`
 - **Preparar dados (M DELPI):** workbench de consultas em modal via `createHostContainedModalShell` do `@delpi/plugin-ui` — ocupa a área útil do MFE e não cobre a sidebar/chrome da Minha DELPI
 - **Preparar dados M (Fase 7):** editor multiline e ribbon das fases anteriores,

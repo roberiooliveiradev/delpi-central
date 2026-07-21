@@ -2,7 +2,8 @@ import { configureExportAlert, exportAlert } from "@delpi/plugin-ui/index";
 
 /**
  * Aviso ao usuário no MFE.
- * Em runtime o `NoticeDialogProvider` registra `configureExportAlert` → Modal Delpi.
+ * Em runtime o `NoticeDialogProvider` registra `configureExportAlert` →
+ * `FloatingNoticeStack` (toast no topo; some sozinho).
  * Fora do provider (testes), cai no fallback do plugin-ui.
  */
 export function tvDashboardNotice(message: string): void {
