@@ -822,8 +822,9 @@ export function useComunicadoEditorBlocks({
       sources,
       policy,
     );
-    selectBlocksByIds(pastedIds);
+    // Commit antes da seleção: selectBlocksByIds resolve contra configRef.
     updateBlocks(blocks);
+    selectBlocksByIds(pastedIds);
   }, [
     chooseDataSourceDuplicatePolicy,
     configRef,

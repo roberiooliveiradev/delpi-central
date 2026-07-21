@@ -72,8 +72,9 @@ export function useComunicadoEditorClipboard({
         { x: 2, y: 2 },
         policy,
       );
-      selectBlocksByIds(pastedIds);
+      // Commit antes da seleção: selectBlocksByIds resolve contra configRef.
       updateBlocks(nextBlocks);
+      selectBlocksByIds(pastedIds);
     },
     [
       chooseDataSourceDuplicatePolicy,
@@ -117,8 +118,8 @@ export function useComunicadoEditorClipboard({
         }
 
         const nextBlocks = [...existing, ...created];
-        selectBlocksByIds(created.map((block) => block.id));
         updateBlocks(nextBlocks);
+        selectBlocksByIds(created.map((block) => block.id));
       } finally {
         setPastingExternal(false);
       }
