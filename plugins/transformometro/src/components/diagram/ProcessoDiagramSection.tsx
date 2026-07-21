@@ -48,6 +48,7 @@ export function ProcessoDiagramSection({
   const [flowchart, setFlowchart] = useState<FlowchartV1>(emptyFlowchart());
   const liveMermaid = useMemo(() => flowchartToMermaid(flowchart), [flowchart]);
   const [validation, setValidation] = useState<DiagramValidationReport | null>(null);
+  const [mermaidPreviewOpen, setMermaidPreviewOpen] = useState(false);
   const editorRef = useRef<FlowchartEditorHandle>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -174,9 +175,16 @@ export function ProcessoDiagramSection({
 
         <DiagramValidationPanel report={validation} loading={validating} />
 
-        <details className="tm-diagram-section__preview" open={false}>
+        <details
+          className="tm-diagram-section__preview"
+          open={false}
+          onToggle={(event) => {
+            const el = event.currentTarget;
+            if (el.open) setMermaidPreviewOpen(true);
+          }}
+        >
           <summary>Preview Mermaid</summary>
-          <DiagramMermaidPreview code={liveMermaid} />
+          {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
         </details>
 
         {!readOnly ? (

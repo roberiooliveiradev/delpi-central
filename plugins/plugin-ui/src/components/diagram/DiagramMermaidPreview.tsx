@@ -3,6 +3,11 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useDelpiDarkMode } from "./hooks/useDelpiDarkMode";
 import { buildMermaidPreviewConfig } from "./utils/mermaidPreviewConfig";
 import { postProcessMermaidPreviewSvg } from "./utils/mermaidPreviewPostProcess";
+import {
+  cleanupMermaidRenderArtifacts,
+  isMermaidErrorSvg,
+  sanitizeMermaidRenderId,
+} from "./utils/mermaidRenderSafety";
 import { applyMermaidPreviewTheme } from "./utils/mermaidPreviewTheme";
 
 type DiagramMermaidPreviewProps = {
@@ -37,7 +42,7 @@ export function DiagramMermaidPreview({
   renderingLabel = "…",
   errorFallback = "Render error.",
 }: DiagramMermaidPreviewProps) {
-  const reactId = useId();
+  const reactId = sanitizeMermaidRenderId(useId());
   const isDarkFromHook = useDelpiDarkMode();
   const isDark = isDarkProp ?? isDarkFromHook;
   const [svg, setSvg] = useState<string>("");
@@ -63,6 +68,7 @@ export function DiagramMermaidPreview({
 
     let cancelled = false;
     setRendering(true);
+    const renderId = sanitizeMermaidRenderId(`tm-mermaid-${reactId}-${Date.now()}`);
 
     loadMermaidModule()
       .then(async (mermaid) => {
@@ -72,15 +78,24 @@ export function DiagramMermaidPreview({
         }
 
         const themedDiagram = applyMermaidPreviewTheme(diagram, isDark);
-        const renderId = `tm-mermaid-${reactId}-${Date.now()}`;
-        const result = await mermaid.render(renderId, themedDiagram);
-        if (!cancelled) {
+        try {
+          const result = await mermaid.render(renderId, themedDiagram);
+          if (cancelled) return;
+          if (isMermaidErrorSvg(result.svg)) {
+            setSvg("");
+            setError(errorFallback);
+            renderedKeyRef.current = "";
+            return;
+          }
           setSvg(postProcessMermaidPreviewSvg(result.svg, isDark));
           setError(null);
           renderedKeyRef.current = renderKey;
+        } finally {
+          cleanupMermaidRenderArtifacts(renderId);
         }
       })
       .catch((err) => {
+        cleanupMermaidRenderArtifacts(renderId);
         if (!cancelled) {
           setError(err instanceof Error ? err.message : errorFallback);
           setSvg("");
@@ -95,6 +110,7 @@ export function DiagramMermaidPreview({
 
     return () => {
       cancelled = true;
+      cleanupMermaidRenderArtifacts(renderId);
     };
   }, [code, errorFallback, isDark, reactId]);
 
@@ -106,6 +122,7 @@ export function DiagramMermaidPreview({
         className={["tm-diagram-mermaid tm-diagram-mermaid--error", themeClass, className]
           .filter(Boolean)
           .join(" ")}
+        role="alert"
       >
         {error}
       </div>

@@ -58,6 +58,7 @@ export function RevisaoDiagramSection({
   const [overlayDraft, setOverlayDraft] = useState<FlowchartOverlayV1>(emptyOverlay());
   const [flowchartBase, setFlowchartBase] = useState<FlowchartV1>(emptyFlowchart());
   const [showDiff, setShowDiff] = useState(false);
+  const [mermaidPreviewOpen, setMermaidPreviewOpen] = useState(false);
   const editorRef = useRef<FlowchartEditorHandle>(null);
   const liveMermaid = useMemo(
     () => flowchartToMermaid(stripFlowchartHighlights(editable)),
@@ -240,9 +241,16 @@ export function RevisaoDiagramSection({
           diffNodeIds={showDiff && hasDiff ? diff ?? undefined : undefined}
         />
 
-        <details className="tm-diagram-section__preview" open={false}>
+        <details
+          className="tm-diagram-section__preview"
+          open={false}
+          onToggle={(event) => {
+            const el = event.currentTarget;
+            if (el.open) setMermaidPreviewOpen(true);
+          }}
+        >
           <summary>Preview Mermaid (mesclado)</summary>
-          <DiagramMermaidPreview code={liveMermaid} />
+          {mermaidPreviewOpen ? <DiagramMermaidPreview code={liveMermaid} /> : null}
         </details>
 
         <div className="tm-diagram-section__actions">

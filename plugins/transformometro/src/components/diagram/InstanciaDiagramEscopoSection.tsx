@@ -173,6 +173,7 @@ export function InstanciaDiagramEscopoSection({
           selectedScopeIds={selectedScopeIds}
           onToggleScopeNode={readOnly ? undefined : toggleScopeNode}
           showTemplates={false}
+          showPreviewTab={false}
         />
 
         {!readOnly ? (
