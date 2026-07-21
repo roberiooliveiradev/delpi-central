@@ -21,6 +21,11 @@ describe("computeDesignViewportBleedSize", () => {
     const overhangPx = 1920 * 0.1;
     expect(bleedX).toBeGreaterThanOrEqual(overhangPx);
   });
+
+  it("KPI meio fora (−15%) cabe no bleed — apresentação não pode «puxar» para x=0", () => {
+    const { bleedX } = computeDesignViewportBleedSize(1920, 1080);
+    expect(bleedX).toBeGreaterThanOrEqual(1920 * 0.15);
+  });
 });
 
 describe("computeDesignViewportScale", () => {

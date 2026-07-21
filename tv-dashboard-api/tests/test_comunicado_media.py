@@ -69,6 +69,59 @@ def test_comunicado_enrichment_default_background_is_white():
     assert data["background"] == {"type": "color", "value": "#ffffff"}
 
 
+def test_comunicado_enrichment_preserves_frame_outside_slide():
+    """Preview/apresentação não pode clampar X/Y a 0–100 (paridade com o editor)."""
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {
+            "version": 4,
+            "blocks": [
+                {
+                    "id": "kpi-off",
+                    "type": "kpi_view",
+                    "frame": {"x": -12.5, "y": 8, "w": 28, "h": 22},
+                    "style": {},
+                },
+                {
+                    "id": "logo-off",
+                    "type": "image",
+                    "frame": {"x": 90, "y": -5, "w": 20, "h": 15},
+                    "style": {},
+                },
+            ],
+            "background": {"type": "color", "value": "#ffffff"},
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    by_id = {block["id"]: block for block in data["blocks"]}
+    assert by_id["kpi-off"]["frame"]["x"] == pytest.approx(-12.5)
+    assert by_id["kpi-off"]["frame"]["y"] == pytest.approx(8)
+    assert by_id["logo-off"]["frame"]["y"] == pytest.approx(-5)
+    assert by_id["logo-off"]["frame"]["x"] == pytest.approx(90)
+
+
+def test_comunicado_enrichment_frame_soft_bounds_reject_pathological():
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "far",
+                    "type": "text",
+                    "content": "x",
+                    "frame": {"x": -9999, "y": 9999, "w": 10, "h": 10},
+                }
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    frame = data["blocks"][0]["frame"]
+    assert frame["x"] == ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MIN
+    assert frame["y"] == ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MAX
+
+
 def test_comunicado_enrichment_resolves_media_url():
     asset_id = str(uuid4())
     playlist_id = str(uuid4())

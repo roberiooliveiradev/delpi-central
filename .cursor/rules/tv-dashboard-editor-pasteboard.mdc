@@ -25,6 +25,7 @@ Itens com frame fora de 0–100%: existem no mesmo sistema de coordenadas. Na TV
 2. Árvore do editor sem classes `delpi-ui-comunicado*` / sem `__stage`.
 3. Animações de entrada sempre ligadas na TV (deslocam blocos vs editor).
 4. Só aumentar `DESIGN_VIEWPORT_BLEED_RATIO` esperando pasteboard na TV 16:9.
+5. **Clampar X/Y a 0–100 no enrichment da API** (`ComunicadoEnrichmentService._normalize_frame`) — «reconstrói» o layout na apresentação.
 
 ## Módulos canônicos
 

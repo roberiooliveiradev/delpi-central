@@ -353,18 +353,28 @@ class ComunicadoEnrichmentService:
             public_token=public_token,
         )
 
+    # Soft bound alinhado ao MFE (`FRAME_POSITION_SOFT_*` em frameDesignPixels.ts).
+    # Posição fora de 0–100 é válida (pasteboard / overhang) — clamar a 0–100
+    # «reconstruía» o layout na apresentação e quebrava paridade com o editor.
+    _FRAME_POSITION_SOFT_MIN = -500.0
+    _FRAME_POSITION_SOFT_MAX = 500.0
+
     @staticmethod
     def _normalize_frame(frame: Any) -> dict[str, float]:
         if not isinstance(frame, dict):
             return {"x": 5, "y": 10, "w": 90, "h": 20}
+
         def _num(key: str, default: float) -> float:
             try:
                 return float(frame.get(key, default))
             except (TypeError, ValueError):
                 return default
+
+        soft_min = ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MIN
+        soft_max = ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MAX
         return {
-            "x": max(0, min(100, _num("x", 5))),
-            "y": max(0, min(100, _num("y", 10))),
-            "w": max(5, min(100, _num("w", 90))),
-            "h": max(5, min(100, _num("h", 20))),
+            "x": max(soft_min, min(soft_max, _num("x", 5))),
+            "y": max(soft_min, min(soft_max, _num("y", 10))),
+            "w": max(2.0, min(100.0, _num("w", 90))),
+            "h": max(1.0, min(100.0, _num("h", 20))),
         }
