@@ -1,30 +1,32 @@
 ---
-description: TV Dashboard — pasteboard no editor vs clip na TV
-globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*
+description: TV Dashboard — pasteboard no editor e paridade na TV
+globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*,plugins/plugin-ui/src/styles/comunicado-stage.css
 alwaysApply: false
 ---
 
-# TV Dashboard — clip do palco (anti-padrão WYSIWYG)
+# TV Dashboard — overflow da moldura (paridade editor ↔ TV)
 
 ## Princípio
 
 | Superfície | Overflow | Motivo |
 |------------|----------|--------|
 | **Editor** (`.td-composer__canvas`) | `visible` | Pasteboard — itens na borda/fora ficam **sobre** o gutter, selecionáveis |
-| **TV / prévia** (`.tdp-comunicado`, `DesignViewportStage`) | `hidden` | O que vai ao ar — clip do retângulo 1080p |
+| **TV / prévia** (`.delpi-ui-comunicado`, `.tdp-design-viewport__stage`) | `visible` | **Mesma** moldura — overhang no letterbox (igualdade edição ↔ apresentação) |
+| **Borda física** (`.tdp-stage`, container externo do `DesignViewportStage`) | `hidden` | Clip só na tela/kiosk, não no retângulo 1080p |
 
-Frames `%` são os mesmos; o que muda é só o clip. Cortar no editor «para parecer TV» **não** é fidelidade — é perda de edição.
+Frames `%` e o overflow da moldura são os mesmos. Cortar no editor «para parecer TV» **ou** clipar na moldura na TV **não** é fidelidade.
 
 ## Anti-padrão (proibido)
 
 1. **`overflow: hidden` no canvas do editor** com justificativa «WYSIWYG / posição na borda».
-2. Contrato de teste que exige editor ≡ TV no overflow.
+2. **`overflow: hidden` em `.delpi-ui-comunicado` / `.tdp-design-viewport__stage`** «porque é o ar» — quebra itens fora da tela na apresentação.
 3. Clip no zoom-sizer/gutter que impeça ver overhang no pasteboard.
 
-Incidente jul/2026: `e77b0f75e` / `0c4254cf9` cliparam o palco → logo/IDD/handles cortados; usuário não via itens «fora» da moldura.
+Incidente jul/2026: clip no palco do editor → logo/IDD/handles cortados.  
+Incidente jul/2026: clip na moldura na TV → logo/card fora da moldura sumiam na apresentação.
 
 ## O que fazer
 
 - Editor: `overflow: visible` + pasteboard (padding do `canvas-zoom-sizer`).
-- TV/prévia: manter `overflow: hidden`.
+- TV/prévia: `overflow: visible` na moldura de design; `hidden` só no viewport físico.
 - Regressão: `designStageClipContract.test.ts`.

@@ -378,8 +378,12 @@
 }
 
 .tdp-design-viewport__stage {
-  /* Inline do DesignViewportStage define absolute + scale; CSS só reforça clip. */
-  overflow: hidden;
+  /*
+   * Paridade editor ↔ TV: sem clip na moldura de design.
+   * Overhang (logo/card fora do 0×0) pinta no letterbox; `.tdp-stage` e o
+   * container externo do DesignViewportStage ainda clipam a borda física.
+   */
+  overflow: visible;
   background: inherit;
 }
 

@@ -1169,10 +1169,9 @@
   aspect-ratio: auto;
   border-radius: 0;
   /*
-   * Modo edição = pasteboard (PowerPoint-like): overflow VISÍVEL.
-   * Itens na borda/fora do 1080p ficam SOBRE o pasteboard (gutter do zoom-sizer),
-   * não cortados «dentro» do retângulo. TV/prévia clipam em `.tdp-comunicado`
-   * / DesignViewportStage — isso é o ar; o editor não imita o clip.
+   * Pasteboard (PowerPoint-like): overflow VISÍVEL — igual TV/prévia na moldura.
+   * Itens na borda/fora do 1080p ficam SOBRE o pasteboard (gutter do zoom-sizer).
+   * Clip físico só em `.tdp-stage` / container externo do DesignViewportStage.
    * Anti-padrão: overflow:hidden aqui «para WYSIWYG» (logo/IDD cortados no palco).
    */
   overflow: visible;

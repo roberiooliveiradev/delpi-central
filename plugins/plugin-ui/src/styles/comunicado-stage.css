@@ -109,12 +109,18 @@
 .tdp-native-screen.delpi-ui-comunicado {
   display: block;
   padding: 0;
+  /* Paridade editor ↔ TV: itens fora da moldura não são cortados no slide. */
+  overflow: visible;
 }
 
 .delpi-ui-comunicado {
   position: relative;
-  /* Clip do retângulo de design — editor espelha em `.td-composer__canvas`. */
-  overflow: hidden;
+  /*
+   * Paridade com `.td-composer__canvas`: overflow VISÍVEL.
+   * Blocos com frame fora do 1080p pintam no letterbox; o clip físico fica no
+   * `.tdp-stage` / viewport externo (borda da TV), não na moldura do slide.
+   */
+  overflow: visible;
   padding: 0;
   /* Tipografia de conteúdo do slide — independente do tema chrome do host. */
   --delpi-ui-text: #0f172a;

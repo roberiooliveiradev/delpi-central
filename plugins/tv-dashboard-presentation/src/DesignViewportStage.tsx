@@ -40,7 +40,8 @@ export function computeDesignViewportScale(
  * - `contain` — letterbox/pillarbox sem cortar (prévia, kiosk e editor).
  * - `cover` — preenche o container (pode cortar bordas; só sob demanda).
  *
- * O container usa `position: absolute; inset: 0` para medir a área real do palco.
+ * O container externo clipa só a borda física (`overflow: hidden`); o stage
+ * interno permanece `overflow: visible` (paridade com o pasteboard do editor).
  */
 export function DesignViewportStage({
   viewportProfile,
