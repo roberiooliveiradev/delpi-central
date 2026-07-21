@@ -114,10 +114,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Criar uma seta conectando os dois elementos selecionados (centros). Arrastar a seta solta a ligação.",
     insertIndicator: "Inserir bloco de indicador ou gráfico com dados da api-delpi.",
     insertIcon: "Ícones vetoriais prontos para o slide.",
-    iconEditor: "Trocar ícone Lucide, cor (padrão azul das formas) e espessura do traço.",
+    iconEditor:
+      "Trocar o glifo Lucide e a cor do traço. Fundo, contorno, sombra, raio e opacidade ficam em Forma (como nas formas).",
     iconPicker: "Escolha outro ícone da biblioteca Lucide.",
-    iconColor: "Cor do traço do ícone. Padrão: azul accent das formas (#089bdb).",
-    iconStrokeWidth: "Espessura do traço Lucide, em pixels (0,5–6).",
+    iconColor: "Cor do traço do ícone (glifo). Padrão: azul accent das formas (#089bdb).",
+    iconStrokeWidth:
+      "Espessura do traço Lucide do glifo, em pixels (0,5–6). Distinta do contorno da caixa.",
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",

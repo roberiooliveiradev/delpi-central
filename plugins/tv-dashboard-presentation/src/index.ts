@@ -301,6 +301,7 @@ export {
   defaultTextBlockStyle,
   defaultVerticalAlignForBlock,
   frameStyle,
+  normalizeIconBlockStyle,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
@@ -337,6 +338,7 @@ export type { StageHideReason } from "./comunicadoStageVisibility";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
 export {
   ComunicadoIconGraphic,
+  resolveComunicadoIconChromeStyle,
   resolveComunicadoIconColor,
   resolveComunicadoIconStrokeWidth,
   resolveComunicadoLucideIcon,

@@ -1,15 +1,21 @@
 import {
+  type ComunicadoBlockStyle,
   type ComunicadoIconBlock,
 } from "@delpi/tv-dashboard-presentation";
 import {
   DECK_SHAPE_DEFAULTS,
   LucideIconField,
   LucideIconPicker,
+  ShapeFillMenu,
+  ShapeOutlineMenu,
+  ShapeShadowMenu,
+  ShapeStyleMenu,
   useLucideIconField,
 } from "@delpi/plugin-ui/index";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 
+import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckField } from "../deck/DeckField";
@@ -18,6 +24,8 @@ import { DeckRibbonGroup } from "../deck/DeckRibbonGroup";
 import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { TvRibbonColorPicker } from "../deck/TvRibbonColorPicker";
 import { FormatRibbonOpacityFields } from "../formatRibbon/FormatRibbonOrganizeSection";
+import { ShapeMenuHint } from "../formatRibbon/ShapeMenuHint";
+import { ShapeCornerRadiusControl } from "../ShapeCornerRadiusControl";
 import { SelectionPaneSection } from "./SelectionPaneSection";
 import type { SelectionSectionLayout } from "./types";
 
@@ -25,13 +33,39 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 const ICON_FIELD_LABELS = { clear: "Estrela (padrão)", close: "Fechar" } as const;
 
+const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
+  id: preset.key,
+  label: preset.label,
+  value: preset.value,
+}));
+
 function isIconBlock(
   block: ReturnType<typeof useComunicadoEditor>["selected"],
 ): block is ComunicadoIconBlock {
   return block?.type === "icon";
 }
 
-/** Ícone Lucide no palco — trocar glifo, cor (padrão formas) e traço. */
+function resolveIconBoxFill(block: ComunicadoIconBlock): string {
+  return block.style?.fill ?? "transparent";
+}
+
+function resolveIconBoxStroke(block: ComunicadoIconBlock): string {
+  return block.style?.stroke ?? "transparent";
+}
+
+function resolveIconBoxStrokeWidth(block: ComunicadoIconBlock): number {
+  return block.style?.strokeWidth ?? 0;
+}
+
+function resolveIconGlyphStrokeWidth(block: ComunicadoIconBlock): number {
+  const dedicated = block.style?.iconStrokeWidth;
+  if (typeof dedicated === "number" && Number.isFinite(dedicated) && dedicated > 0) {
+    return dedicated;
+  }
+  return 2;
+}
+
+/** Ícone Lucide no palco — glifo + chrome de caixa (paridade com formas). */
 export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
   const { selected, updateSelected, updateSelectedStyle } = useComunicadoEditor();
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -40,7 +74,13 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
 
   const block = selected;
   const iconColor = block.style?.color ?? DECK_SHAPE_DEFAULTS.fill;
-  const strokeWidth = block.style?.strokeWidth ?? 2;
+  const glyphStrokeWidth = resolveIconGlyphStrokeWidth(block);
+  const fillValue = resolveIconBoxFill(block);
+  const strokeValue = resolveIconBoxStroke(block);
+  const boxStrokeWidth = resolveIconBoxStrokeWidth(block);
+  const borderRadius = block.style?.borderRadius ?? 0;
+
+  const patchStyle = (patch: Partial<ComunicadoBlockStyle>) => updateSelectedStyle(patch);
 
   const applyIconName = (name: string | null) => {
     updateSelected({ iconName: name?.trim() || "Star" } as Partial<ComunicadoIconBlock>);
@@ -62,81 +102,147 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
       variant="text"
       label="Cor do ícone"
       value={iconColor}
-      onChange={(color) => updateSelectedStyle({ color })}
+      onChange={(color) => patchStyle({ color })}
     />
   );
 
-  const strokeControl = (
+  const glyphStrokeControl = (
     <DeckRangeField
-      id="td-icon-stroke-width"
-      label="Espessura do traço"
+      id={layout === "pane" ? "td-icon-stroke-width" : "td-icon-stroke-ribbon"}
+      label={layout === "pane" ? "Espessura do traço" : "Traço"}
       hint={H.iconStrokeWidth}
       min={0.5}
       max={6}
       step={0.25}
-      value={strokeWidth}
-      onChange={(value) => updateSelectedStyle({ strokeWidth: value })}
+      density={layout === "ribbon" ? "compact" : undefined}
+      value={glyphStrokeWidth}
+      onChange={(value) => patchStyle({ iconStrokeWidth: value })}
     />
+  );
+
+  const formaMenus = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
+      <ShapeMenuHint hint={H.shapeStyles} ariaLabel="Ajuda: Estilos da caixa do ícone">
+        <ShapeStyleMenu
+          triggerLabel="Estilos"
+          onSelect={(preset) =>
+            patchStyle({
+              fill: preset.fill,
+              stroke: preset.stroke,
+              strokeWidth: preset.strokeWidth,
+              boxShadow: preset.boxShadow,
+            })
+          }
+        />
+      </ShapeMenuHint>
+      <ShapeMenuHint hint={H.boxShadow} ariaLabel="Ajuda: Sombra da caixa do ícone">
+        <ShapeShadowMenu
+          value={block.style?.boxShadow}
+          presets={SHADOW_MENU_PRESETS}
+          shadowLabel="Sombra"
+          onChange={(boxShadow) => patchStyle({ boxShadow })}
+        />
+      </ShapeMenuHint>
+      <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Fundo da caixa do ícone">
+        <ShapeFillMenu
+          value={fillValue === "transparent" ? undefined : fillValue}
+          fillLabel="Fundo"
+          onChange={(color) => patchStyle({ fill: color })}
+          onNoFill={() => patchStyle({ fill: "transparent" })}
+        />
+      </ShapeMenuHint>
+      <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno da caixa do ícone">
+        <ShapeOutlineMenu
+          color={strokeValue === "transparent" ? undefined : strokeValue}
+          strokeWidth={boxStrokeWidth}
+          minWidth={0}
+          maxWidth={20}
+          outlineLabel="Contorno"
+          onColorChange={(color) =>
+            patchStyle({
+              stroke: color,
+              strokeWidth: Math.max(1, boxStrokeWidth || 1),
+            })
+          }
+          onNoOutline={() => patchStyle({ stroke: "transparent", strokeWidth: 0 })}
+          onStrokeWidthChange={(width) => patchStyle({ strokeWidth: width })}
+        />
+      </ShapeMenuHint>
+    </div>
+  );
+
+  const formaBody = (
+    <>
+      {formaMenus}
+      <div className="td-deck-ribbon__organize-props td-forma-opacity">
+        <ShapeCornerRadiusControl
+          id="td-icon-forma-corner-radius"
+          value={borderRadius}
+          onChange={(radius) => patchStyle({ borderRadius: radius })}
+          embedded
+        />
+        <FormatRibbonOpacityFields className="td-forma-opacity__slot" />
+      </div>
+    </>
   );
 
   if (layout === "pane") {
     return (
-      <SelectionPaneSection title="Ícone" hint={H.iconEditor} defaultOpen>
-        <DeckField id="td-icon-name" label="Ícone Lucide" hint={H.iconPicker}>
-          <LucideIconField
-            value={block.iconName}
-            defaultIcon="Star"
-            nameFormat="pascal"
-            curatedOnly={false}
-            labels={ICON_FIELD_LABELS}
-            onChange={applyIconName}
-            ariaLabel="Selecionar ícone Lucide"
-          />
-        </DeckField>
-        <DeckField id="td-icon-color" label="Cor" hint={H.iconColor}>
-          {colorControl}
-        </DeckField>
-        {strokeControl}
-        <FormatRibbonOpacityFields className="td-deck-ribbon__organize-props" />
-      </SelectionPaneSection>
+      <>
+        <SelectionPaneSection title="Ícone" hint={H.iconEditor} defaultOpen>
+          <DeckField id="td-icon-name" label="Ícone Lucide" hint={H.iconPicker}>
+            <LucideIconField
+              value={block.iconName}
+              defaultIcon="Star"
+              nameFormat="pascal"
+              curatedOnly={false}
+              labels={ICON_FIELD_LABELS}
+              onChange={applyIconName}
+              ariaLabel="Selecionar ícone Lucide"
+            />
+          </DeckField>
+          <DeckField id="td-icon-color" label="Cor do ícone" hint={H.iconColor}>
+            {colorControl}
+          </DeckField>
+          {glyphStrokeControl}
+        </SelectionPaneSection>
+        <SelectionPaneSection title="Forma" hint={H.shapeForma} defaultOpen>
+          {formaBody}
+        </SelectionPaneSection>
+      </>
     );
   }
 
   return (
-    <DeckRibbonGroup label="Ícone" hint={H.iconEditor}>
-      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-        <DeckRibbonTile
-          icon={Sparkles}
-          label="Trocar"
-          hint={H.iconPicker}
-          active={pickerOpen}
-          onClick={() => setPickerOpen((open) => !open)}
-        />
-        {colorControl}
-        <DeckRangeField
-          id="td-icon-stroke-ribbon"
-          label="Traço"
-          hint={H.iconStrokeWidth}
-          min={0.5}
-          max={6}
-          step={0.25}
-          density="compact"
-          value={strokeWidth}
-          onChange={(value) => updateSelectedStyle({ strokeWidth: value })}
-        />
-      </div>
-      {pickerOpen ? (
-        <div className="td-icon-editor-picker">
-          <LucideIconPicker
-            {...iconField.pickerProps}
-            onChange={(name) => {
-              applyIconName(name);
-              setPickerOpen(false);
-            }}
-            onClose={() => setPickerOpen(false)}
+    <>
+      <DeckRibbonGroup label="Ícone" hint={H.iconEditor}>
+        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+          <DeckRibbonTile
+            icon={Sparkles}
+            label="Trocar"
+            hint={H.iconPicker}
+            active={pickerOpen}
+            onClick={() => setPickerOpen((open) => !open)}
           />
+          {colorControl}
+          {glyphStrokeControl}
         </div>
-      ) : null}
-    </DeckRibbonGroup>
+        {pickerOpen ? (
+          <div className="td-icon-editor-picker">
+            <LucideIconPicker
+              {...iconField.pickerProps}
+              onChange={(name) => {
+                applyIconName(name);
+                setPickerOpen(false);
+              }}
+              onClose={() => setPickerOpen(false)}
+            />
+          </div>
+        ) : null}
+      </DeckRibbonGroup>
+      <DeckRibbonGroup label="Forma" hint={H.shapeForma}>
+        {formaBody}
+      </DeckRibbonGroup>
+    </>
   );
 }

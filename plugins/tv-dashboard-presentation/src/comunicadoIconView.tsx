@@ -25,24 +25,91 @@ export function resolveComunicadoIconColor(block: ComunicadoIconBlock): string {
   return String(raw);
 }
 
+/** Espessura Lucide — `iconStrokeWidth` (legado: strokeWidth sem contorno de caixa). */
 export function resolveComunicadoIconStrokeWidth(block: ComunicadoIconBlock): number {
-  const width = block.style?.strokeWidth;
-  return typeof width === "number" && Number.isFinite(width) && width > 0 ? width : 2;
+  const dedicated = block.style?.iconStrokeWidth;
+  if (typeof dedicated === "number" && Number.isFinite(dedicated) && dedicated > 0) {
+    return dedicated;
+  }
+  const stroke = block.style?.stroke;
+  const hasBoxStroke =
+    typeof stroke === "string" && stroke.trim() !== "" && stroke !== "transparent";
+  const legacy = block.style?.strokeWidth;
+  if (
+    !hasBoxStroke &&
+    typeof legacy === "number" &&
+    Number.isFinite(legacy) &&
+    legacy > 0 &&
+    legacy <= 6
+  ) {
+    return legacy;
+  }
+  return 2;
+}
+
+/**
+ * Chrome da caixa atrás do glifo (paridade com formas): fill, contorno, raio, sombra.
+ */
+export function resolveComunicadoIconChromeStyle(
+  block: ComunicadoIconBlock,
+  options?: { fontScale?: number },
+): CSSProperties {
+  const fontScale = options?.fontScale ?? 1;
+  const style = block.style ?? {};
+  const css: CSSProperties = {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
+  };
+
+  const fill = style.fill;
+  if (typeof fill === "string" && fill.trim() && fill !== "transparent") {
+    css.backgroundColor = fill;
+  }
+
+  const stroke = style.stroke;
+  const strokeWidth = style.strokeWidth;
+  if (
+    typeof stroke === "string" &&
+    stroke.trim() &&
+    stroke !== "transparent" &&
+    typeof strokeWidth === "number" &&
+    strokeWidth > 0
+  ) {
+    css.border = `${Math.max(0, strokeWidth * fontScale)}px solid ${stroke}`;
+  }
+
+  if (typeof style.borderRadius === "number" && Number.isFinite(style.borderRadius)) {
+    css.borderRadius = Math.max(0, style.borderRadius * fontScale);
+  }
+
+  const shadow = typeof style.boxShadow === "string" ? style.boxShadow.trim() : "";
+  if (shadow) {
+    css.boxShadow = shadow;
+  }
+
+  return css;
 }
 
 export function ComunicadoIconGraphic({
   block,
   style,
+  fontScale = 1,
 }: {
   block: ComunicadoIconBlock;
   style?: CSSProperties;
+  fontScale?: number;
 }) {
   const Icon = resolveComunicadoLucideIcon(block.iconName);
   const color = resolveComunicadoIconColor(block);
   const strokeWidth = resolveComunicadoIconStrokeWidth(block);
+  const chrome = resolveComunicadoIconChromeStyle(block, { fontScale });
 
   return (
-    <div className="tdp-comunicado__icon-wrap" style={style}>
+    <div className="tdp-comunicado__icon-wrap" style={{ ...chrome, ...style }}>
       <Icon
         className="tdp-comunicado__icon-svg"
         color={color}

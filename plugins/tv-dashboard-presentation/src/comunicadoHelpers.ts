@@ -532,7 +532,16 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     return base;
   }
   if (type === "icon") {
-    return { zIndex: 2, color: DECK_SHAPE_DEFAULTS.fill, strokeWidth: 2, opacity: 1 };
+    return {
+      zIndex: 2,
+      color: DECK_SHAPE_DEFAULTS.fill,
+      iconStrokeWidth: 2,
+      fill: "transparent",
+      stroke: "transparent",
+      strokeWidth: 0,
+      borderRadius: 0,
+      opacity: 1,
+    };
   }
   if (isDataSourceBlockType(type)) {
     /* Sem color: o chrome da fonte usa accent no CSS; injetar TEXT_STRONG
@@ -1014,7 +1023,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         id,
         type: "icon",
         frame,
-        style: { ...defaultStyle("icon"), ...style },
+        style: normalizeIconBlockStyle({ ...defaultStyle("icon"), ...style }),
         iconName,
         groupId,
         href: links.href,
@@ -1330,6 +1339,30 @@ export function frameStyle(frame: ComunicadoFrame): CSSProperties {
   };
 }
 
+/**
+ * Ícone: `strokeWidth` legado era o traço Lucide; agora contorno de caixa usa
+ * `stroke`/`strokeWidth` e o glifo usa `iconStrokeWidth`.
+ */
+export function normalizeIconBlockStyle(style: ComunicadoBlockStyle): ComunicadoBlockStyle {
+  const next: ComunicadoBlockStyle = { ...style };
+  const hasBoxStroke =
+    typeof next.stroke === "string" &&
+    next.stroke.trim() !== "" &&
+    next.stroke !== "transparent";
+  if (next.iconStrokeWidth == null && typeof next.strokeWidth === "number") {
+    if (!hasBoxStroke) {
+      next.iconStrokeWidth = next.strokeWidth;
+      next.strokeWidth = 0;
+      if (next.stroke == null) next.stroke = "transparent";
+    } else {
+      next.iconStrokeWidth = 2;
+    }
+  }
+  if (next.fill == null) next.fill = "transparent";
+  if (next.iconStrokeWidth == null) next.iconStrokeWidth = 2;
+  return next;
+}
+
 export { comunicadoVerticalAlignToJustifyContent } from "./comunicadoVisualBox";
 
 export function defaultVerticalAlignForBlock(type: "heading" | "text"): ComunicadoVerticalAlign {
@@ -1494,6 +1527,9 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     css.display = "flex";
     css.alignItems = "center";
     css.justifyContent = "center";
+    /* Chrome (fill/contorno/raio/sombra) no `.tdp-comunicado__icon-wrap` — evita placa dupla. */
+    stripOuterChromeStyle(css);
+    delete css.boxShadow;
     if (style.color) css.color = style.color;
   }
 

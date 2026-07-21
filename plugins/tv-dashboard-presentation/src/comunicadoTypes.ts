@@ -173,6 +173,11 @@ export type ComunicadoBlockStyle = {
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
+  /**
+   * Espessura do traço Lucide (glifo) — distinta de `strokeWidth` (contorno da caixa).
+   * Blocos legados sem esta chave usavam `strokeWidth` quando não havia contorno de caixa.
+   */
+  iconStrokeWidth?: number;
   /** Raio visual do marcador (px) — só primitivo ponto. */
   markerRadius?: number;
   /**
