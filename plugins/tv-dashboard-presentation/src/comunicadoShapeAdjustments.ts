@@ -36,7 +36,7 @@ function linearFromY(localY: number, min: number, max: number): number {
  * handleAt e valueFromPointer são inversos.
  * Início em ~12% no topo (não no canto NW) para não cobrir o handle azul de resize.
  */
-function cornerSpec(index = 0): ShapeAdjustmentSpec {
+function cornerSpec(index = 0, defaultValue = 0.16): ShapeAdjustmentSpec {
   const trackStart = 12;
   const trackEnd = 50;
   const track = trackEnd - trackStart;
@@ -44,12 +44,12 @@ function cornerSpec(index = 0): ShapeAdjustmentSpec {
     index,
     id: "corner",
     label: "Cantos",
-    defaultValue: 0.16,
+    defaultValue,
     min: 0,
     max: 0.5,
     axis: "x",
     handleAt: (values) => ({
-      x: clamp(trackStart + ((values[index] ?? 0.16) / 0.5) * track, trackStart, trackEnd),
+      x: clamp(trackStart + ((values[index] ?? defaultValue) / 0.5) * track, trackStart, trackEnd),
       y: 0,
     }),
     valueFromPointer: (localX) =>
@@ -345,7 +345,8 @@ function sunCoreSpec(index = 0): ShapeAdjustmentSpec {
 }
 
 const SPECS_BY_KIND: Partial<Record<ComunicadoShapeKind, ShapeAdjustmentSpec[]>> = {
-  rectangle: [cornerSpec(0)],
+  /** Texto/título e retângulo: cantos retos por padrão (raio 0). */
+  rectangle: [cornerSpec(0, 0)],
   "rounded-rect": [cornerSpec(0)],
   "flowchart-process": [{ ...cornerSpec(0), defaultValue: 0.05 }],
   "snip-rect": [snipSpec(0)],
@@ -464,7 +465,8 @@ export function resolveShapeAdjustments(
     cornerIndex >= 0 &&
     (stored == null || stored[cornerIndex] == null) &&
     typeof style?.borderRadius === "number" &&
-    style.borderRadius > 0 &&
+    Number.isFinite(style.borderRadius) &&
+    style.borderRadius >= 0 &&
     style.borderRadius < 999
   ) {
     values[cornerIndex] = clamp(style.borderRadius / 64, specs[cornerIndex].min, specs[cornerIndex].max);

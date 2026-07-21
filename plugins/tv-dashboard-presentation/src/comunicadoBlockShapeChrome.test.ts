@@ -64,6 +64,17 @@ describe("comunicadoBlockShapeChrome", () => {
     expect(textPatch?.style?.borderRadius).toBe(8);
   });
 
+  it("texto/título com raio 0 (ou omitido) são retângulo — seleção sem arredondamento fantasma", () => {
+    const heading = createBlock("heading", "Qualidade") as ComunicadoTextBlock;
+    expect(blockSupportsShapeChromeHandles(heading)).toBe(true);
+    expect(resolveBlockShapeChromeCornerPx(heading)).toBe(0);
+    expect(resolveBlockSelectionBorderRadiusPx(heading)).toBe(0);
+    expect(resolveBlockShapeChromeCornerPx({ ...heading, style: { ...heading.style, borderRadius: 0 } })).toBe(0);
+    expect(
+      resolveBlockSelectionBorderRadiusPx({ ...heading, style: { ...heading.style, borderRadius: 0 } }),
+    ).toBe(0);
+  });
+
   it("aplica ajuste de canto no ícone (style.borderRadius)", () => {
     const block = createIconBlock("Factory");
     const patch = applyBlockShapeChromeAdjustment(block, 0, 0.25, 80);

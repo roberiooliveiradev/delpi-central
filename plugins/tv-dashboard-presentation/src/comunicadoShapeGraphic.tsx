@@ -619,7 +619,7 @@ export function ComunicadoShapeGraphic({
       borderRadius:
         kind === "ellipse"
           ? "50%"
-          : borderRadius != null && borderRadius > 0
+          : typeof borderRadius === "number" && Number.isFinite(borderRadius)
             ? borderRadius
             : `${cornerAdj * 50}%`,
       ...(style?.boxShadow?.trim() ? { boxShadow: style.boxShadow } : {}),

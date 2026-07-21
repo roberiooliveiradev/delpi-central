@@ -22,9 +22,12 @@ describe("comunicadoShapeAdjustments", () => {
   });
 
   it("resolve defaults e legado borderRadius → adj de cantos", () => {
+    expect(defaultShapeAdjustments("rectangle")[0]).toBe(0);
     expect(defaultShapeAdjustments("rounded-rect")[0]).toBeCloseTo(0.16);
     const fromLegacy = resolveShapeAdjustments("rectangle", { borderRadius: 16 });
     expect(fromLegacy[0]).toBeCloseTo(0.25);
+    expect(resolveShapeAdjustments("rectangle", { borderRadius: 0 })[0]).toBe(0);
+    expect(resolveShapeAdjustments("rectangle", {})[0]).toBe(0);
   });
 
   it("patchShapeAdjustment atualiza adjustments e borderRadius nos cantos", () => {

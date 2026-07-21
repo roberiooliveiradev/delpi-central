@@ -481,6 +481,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       strokeWidth: 0,
       borderWidth: 0,
       borderColor: "transparent",
+      borderRadius: 0,
       zIndex: 2,
     };
   }
@@ -499,6 +500,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       strokeWidth: 0,
       borderWidth: 0,
       borderColor: "transparent",
+      borderRadius: 0,
       zIndex: 2,
     };
   }
