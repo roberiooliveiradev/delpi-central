@@ -116,7 +116,7 @@ export type ComunicadoContentRun = {
 /** Referência a campo da fonte em um run ou projeção de bloco. */
 export type ComunicadoTextDataRef = {
   field: string;
-  aggregation?: import("./viewProjection").ViewAggregation;
+  aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
   label?: string;
   colorRules?: import("@delpi/plugin-ui/index").DelpiKpiColorRule[];
@@ -126,7 +126,7 @@ export type TextProjectionFormat = "number" | "percent" | "compact" | "raw" | "d
 
 export type ComunicadoTextProjection = {
   field: string;
-  aggregation?: import("./viewProjection").ViewAggregation;
+  aggregation?: import("./fieldValueProjection").ViewAggregation;
   format?: TextProjectionFormat;
   prefix?: string;
   suffix?: string;

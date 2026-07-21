@@ -6,21 +6,19 @@ import type {
   ComunicadoDataTableColumn,
 } from "./comunicadoTypes";
 import {
+  aggregateProjectionValues,
+  columnValuesFromRows,
+  parseProjectionNumber,
+  type ViewAggregation,
+} from "./fieldValueProjection";
+import {
   applyMetricSelectionToResolved,
   normalizeSelectedValueFields,
   type MetricSelection,
 } from "./resolveKpiMetrics";
 
-export type ViewAggregation = "first" | "sum" | "avg" | "min" | "max" | "count";
-
-export const VIEW_AGGREGATION_OPTIONS: Array<{ value: ViewAggregation; label: string }> = [
-  { value: "first", label: "Primeiro valor" },
-  { value: "sum", label: "Soma" },
-  { value: "avg", label: "Média" },
-  { value: "min", label: "Mínimo" },
-  { value: "max", label: "Máximo" },
-  { value: "count", label: "Contagem de linhas" },
-];
+export type { ViewAggregation } from "./fieldValueProjection";
+export { VIEW_AGGREGATION_OPTIONS, columnValuesFromRows } from "./fieldValueProjection";
 
 export type KpiMetricProjection = {
   field: string;
@@ -68,50 +66,15 @@ export type ViewProjectionSelection = MetricSelection & {
 };
 
 function asFiniteNumber(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim()) {
-    const parsed = Number(value.replace(",", "."));
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
+  return parseProjectionNumber(value);
 }
 
-/** Agrega valores numéricos de uma coluna (ou lista escalar). */
+/** Agrega valores numéricos de uma coluna (ou lista escalar). Delegado canônico: fieldValueProjection. */
 export function aggregateValues(
   values: unknown[],
   aggregation: ViewAggregation = "first",
 ): number | null {
-  if (aggregation === "count") return values.length;
-
-  const nums = values.map(asFiniteNumber).filter((item): item is number => item != null);
-  if (nums.length === 0) {
-    if (aggregation === "first" && values.length > 0) {
-      const first = asFiniteNumber(values[0]);
-      return first;
-    }
-    return null;
-  }
-
-  switch (aggregation) {
-    case "sum":
-      return nums.reduce((acc, item) => acc + item, 0);
-    case "avg":
-      return nums.reduce((acc, item) => acc + item, 0) / nums.length;
-    case "min":
-      return Math.min(...nums);
-    case "max":
-      return Math.max(...nums);
-    case "first":
-    default:
-      return nums[0] ?? null;
-  }
-}
-
-export function columnValuesFromRows(
-  rows: Array<Record<string, unknown>>,
-  field: string,
-): unknown[] {
-  return rows.map((row) => row[field]);
+  return aggregateProjectionValues(values, aggregation);
 }
 
 /** Migra selectedValueFields legado → kpiProjection.metrics. */

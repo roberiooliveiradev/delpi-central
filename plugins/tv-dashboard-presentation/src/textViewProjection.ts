@@ -1,7 +1,6 @@
 import {
   parseKpiNumericValue,
   resolveDelpiKpiTone,
-  type DelpiKpiColorRule,
 } from "@delpi/plugin-ui/index";
 
 import { formatNumber, formatPct } from "./nativeFormat";
@@ -18,11 +17,13 @@ import type {
 import { isComunicadoVisualBoxBlock } from "./comunicadoVisualBox";
 import { plainTextFromContentRuns } from "./comunicadoContentRuns";
 import {
-  aggregateValues,
-  columnValuesFromRows,
-  discoverResolvedFieldOptions,
-  type ViewAggregation,
-} from "./viewProjection";
+  FIELD_LIST_JOIN,
+  parseProjectionNumber,
+  resolveProjectedField,
+  suggestDefaultAggregationForField,
+  suggestPreferredProjectionField,
+} from "./fieldValueProjection";
+import { discoverResolvedFieldOptions } from "./viewProjection";
 
 export type TextDataBoundBlock = ComunicadoTextBlock | ComunicadoShapeBlock;
 
@@ -70,53 +71,6 @@ export function normalizeTextDataRef(raw: unknown): ComunicadoTextDataRef | unde
   return ref;
 }
 
-function extractFieldRawValue(resolved: ComunicadoDataResolved | undefined, field: string): unknown {
-  if (!resolved || !field.trim()) return undefined;
-  const trimmed = field.trim();
-  for (const metric of resolved.kpiMetrics ?? []) {
-    if (metric.field === trimmed) return metric.value;
-  }
-  if (resolved.kpi && (trimmed === "value" || trimmed === resolved.kpi.label)) {
-    return resolved.kpi.value;
-  }
-  const firstRow = resolved.table?.rows?.[0];
-  if (firstRow && typeof firstRow === "object" && trimmed in firstRow) {
-    return firstRow[trimmed];
-  }
-  return undefined;
-}
-
-function fieldMatchesKpiMetric(
-  resolved: ComunicadoDataResolved | undefined,
-  field: string,
-): boolean {
-  if (!resolved || !field.trim()) return false;
-  const trimmed = field.trim();
-  if (resolved.kpiMetrics?.some((metric) => metric.field === trimmed)) return true;
-  if (resolved.kpi && (trimmed === "value" || trimmed === resolved.kpi.label)) return true;
-  return false;
-}
-
-function extractFieldValues(resolved: ComunicadoDataResolved | undefined, field: string): unknown[] {
-  if (!resolved || !field.trim()) return [];
-  const trimmed = field.trim();
-  // KPI escalar (SI meta/realizado, etc.) anexam tabela campo/valor — não pode
-  // sombrear `value` / métricas com coluna vazia ou inexistente nas linhas.
-  if (fieldMatchesKpiMetric(resolved, trimmed)) {
-    const scalar = extractFieldRawValue(resolved, trimmed);
-    return scalar === undefined ? [] : [scalar];
-  }
-  const rows = resolved.table?.rows ?? [];
-  if (rows.length > 0) {
-    const fromRows = columnValuesFromRows(rows, trimmed).filter(
-      (value) => value != null && value !== "",
-    );
-    if (fromRows.length > 0) return fromRows;
-  }
-  const scalar = extractFieldRawValue(resolved, trimmed);
-  return scalar === undefined ? [] : [scalar];
-}
-
 export function formatTextProjectionValue(
   value: unknown,
   format: TextProjectionFormat | undefined,
@@ -132,7 +86,7 @@ export function formatTextProjectionValue(
     }
     return text;
   }
-  const numeric = parseKpiNumericValue(value);
+  const numeric = parseProjectionNumber(value);
   if (numeric == null) return String(value);
   if (format === "percent") return formatPct(numeric);
   if (format === "compact") {
@@ -146,15 +100,18 @@ export function resolveTextDataRefValue(
   ref: ComunicadoTextDataRef,
   fallback = "—",
 ): { text: string; color?: string } {
-  const values = extractFieldValues(resolved, ref.field);
-  const aggregation: ViewAggregation = ref.aggregation ?? "first";
-  const aggregated = aggregateValues(values, aggregation);
-  const raw =
-    aggregated != null
-      ? aggregated
-      : values.length > 0
-        ? values[0]
-        : extractFieldRawValue(resolved, ref.field);
+  const projected = resolveProjectedField(resolved, ref.field, ref.aggregation ?? "first");
+  if (projected.kind === "empty") {
+    return { text: fallback };
+  }
+  if (projected.kind === "list") {
+    const parts = projected.values.map((value) => formatTextProjectionValue(value, ref.format));
+    const text = parts.join(FIELD_LIST_JOIN);
+    const numeric = parseKpiNumericValue(projected.values[0]);
+    const tone = resolveDelpiKpiTone(numeric, ref.colorRules, "default");
+    return { text, color: tone.valueColor };
+  }
+  const raw = projected.scalar;
   if (raw == null || raw === "") {
     return { text: fallback };
   }
@@ -190,14 +147,13 @@ export function suggestDefaultTextProjection(
 ): ComunicadoTextProjection | undefined {
   const fields = discoverResolvedFieldOptions(resolved);
   if (fields.length === 0) return undefined;
-  // Prefere o primeiro campo com valor real (muitas rotas têm colunas iniciais
-  // vazias); só cai no primeiro campo quando nenhum tem valor no resolved.
-  const populated = fields.find((option) => {
-    const value = extractFieldRawValue(resolved, option.field);
-    return value != null && value !== "";
-  });
-  const field = (populated ?? fields[0]).field;
-  return { field, aggregation: "first", format: "number" };
+  const field = suggestPreferredProjectionField(resolved, fields);
+  if (!field) return undefined;
+  return {
+    field,
+    aggregation: suggestDefaultAggregationForField(resolved, field),
+    format: "number",
+  };
 }
 
 export function resolveTextBlockDisplayRuns(

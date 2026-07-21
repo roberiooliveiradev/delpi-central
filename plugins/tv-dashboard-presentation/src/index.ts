@@ -810,6 +810,20 @@ export {
   type ViewProjectionSelection,
 } from "./viewProjection";
 export {
+  parseProjectionNumber,
+  FIELD_LIST_JOIN,
+  TEXT_FIELD_AGGREGATION_OPTIONS,
+  aggregateProjectionValues,
+  extractProjectionFieldRawValue,
+  extractProjectionFieldValues,
+  isCampoValorDumpTable,
+  isNumericAggregation,
+  resolveProjectedField,
+  suggestDefaultAggregationForField,
+  suggestPreferredProjectionField,
+  type ProjectedFieldResolution,
+} from "./fieldValueProjection";
+export {
   distributeTableProjectionColumnWidths,
   resizeTableProjectionColumn,
   resizeTableProjectionColumns,

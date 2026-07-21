@@ -1,11 +1,10 @@
 import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
-  VIEW_AGGREGATION_OPTIONS,
+  TEXT_FIELD_AGGREGATION_OPTIONS,
   buildTextDataLinkPatch,
   dataSourceOptionsForInspector,
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
-  isDataSourceBlockType,
   type ComunicadoTextProjection,
   type TextProjectionFormat,
 } from "@delpi/tv-dashboard-presentation";
@@ -142,7 +141,7 @@ export function TextDataBindingInspector({
                   aggregation: value as ComunicadoTextProjection["aggregation"],
                 })
               }
-              options={VIEW_AGGREGATION_OPTIONS.map((item) => ({
+              options={TEXT_FIELD_AGGREGATION_OPTIONS.map((item) => ({
                 value: item.value,
                 label: item.label,
               }))}

@@ -92,4 +92,36 @@ describe("textViewProjection", () => {
       }).text,
     ).toMatch(/1[.‎]?100|1\.100|1100/);
   });
+
+  it("série OEE: média agrega todas as linhas; lista mostra cada valor", () => {
+    const series: ComunicadoDataResolved = {
+      kpi: { value: 90, label: "value" },
+      kpiMetrics: [{ field: "value", value: 90, label: "value" }],
+      table: {
+        columns: [
+          { key: "periodo", label: "Período" },
+          { key: "value", label: "OEE — série temporal" },
+        ],
+        rows: [
+          { periodo: "01/07/26", value: 70 },
+          { periodo: "02/07/26", value: 80 },
+          { periodo: "03/07/26", value: 90 },
+        ],
+      },
+    };
+    expect(
+      resolveTextDisplayValue(series, { field: "value", aggregation: "avg", format: "number" }).text,
+    ).toMatch(/80/);
+    expect(
+      resolveTextDisplayValue(series, { field: "value", aggregation: "list", format: "number" }).text,
+    ).toBe("70\n80\n90");
+    expect(
+      resolveTextDisplayValue(series, {
+        field: "periodo",
+        aggregation: "avg",
+        format: "number",
+        fallback: "—",
+      }).text,
+    ).toBe("—");
+  });
 });
