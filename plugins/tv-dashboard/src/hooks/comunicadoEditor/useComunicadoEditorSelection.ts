@@ -118,8 +118,7 @@ export function useComunicadoEditorSelection({
 
   const openLayersPanel = useCallback(() => {
     setSelectionPanelTabState("layers");
-    /* Não setRibbonTabRequest("layers"): Camadas só abre o painel lateral.
-     * Pedir a aba na top bar esconde o ribbon (parece «colapsado»). */
+    /* Só painel lateral — não pedir aba Camadas na top bar (esconde o ribbon). */
   }, []);
 
   const clearRibbonTabRequest = useCallback(() => {
