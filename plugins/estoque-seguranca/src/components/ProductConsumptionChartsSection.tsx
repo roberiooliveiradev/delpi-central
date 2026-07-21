@@ -1,15 +1,23 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type {
   AnnualComparisonData,
   MonthlyConsumptionPoint,
 } from "../types/consumptionAnalysis";
+import type {
+  SafetyStockCollectionBlock,
+  SafetyStockProjectionLedgerEntry,
+  SafetyStockProjectionSummary,
+} from "../types/safetyStock";
 import { ConsumptionAnnualComparisonChart } from "./ConsumptionAnnualComparisonChart";
 import { ConsumptionMonthlyAverageChart } from "./ConsumptionMonthlyAverageChart";
+import { StockProjectionChart } from "./StockProjectionChart";
 
-type ChartView = "monthly" | "annual";
+type ChartView = "monthly" | "annual" | "projection";
 
-const CHART_VIEW_OPTIONS: { value: ChartView; label: string }[] = [
+type ChartViewOption = { value: ChartView; label: string };
+
+const BASE_CHART_VIEW_OPTIONS: ChartViewOption[] = [
   { value: "monthly", label: "Últimos 12 meses" },
   { value: "annual", label: "Comparativo Anual" },
 ];
@@ -17,7 +25,13 @@ const CHART_VIEW_OPTIONS: { value: ChartView; label: string }[] = [
 type ProductConsumptionChartsSectionProps = {
   monthlyPoints: MonthlyConsumptionPoint[];
   periodConsumption: number;
+  periodStart?: string | null;
+  periodEnd?: string | null;
   annualComparison?: AnnualComparisonData | null;
+  stockProjection?: SafetyStockCollectionBlock<
+    SafetyStockProjectionLedgerEntry,
+    SafetyStockProjectionSummary
+  > | null;
   loading?: boolean;
   resetKey?: string | null;
 };
@@ -25,27 +39,47 @@ type ProductConsumptionChartsSectionProps = {
 export function ProductConsumptionChartsSection({
   monthlyPoints,
   periodConsumption,
+  periodStart = null,
+  periodEnd = null,
   annualComparison,
+  stockProjection = null,
   loading = false,
   resetKey = null,
 }: ProductConsumptionChartsSectionProps) {
+  const hasProjection = Boolean(stockProjection?.summary);
+  const chartViewOptions = useMemo(() => {
+    if (!hasProjection) return BASE_CHART_VIEW_OPTIONS;
+    return [
+      ...BASE_CHART_VIEW_OPTIONS,
+      { value: "projection" as const, label: "Projeção" },
+    ];
+  }, [hasProjection]);
+
   const [chartView, setChartView] = useState<ChartView>("monthly");
 
   useEffect(() => {
     setChartView("monthly");
   }, [resetKey]);
 
+  useEffect(() => {
+    if (chartView === "projection" && !hasProjection) {
+      setChartView("monthly");
+    }
+  }, [chartView, hasProjection]);
+
+  const projectionSummary = stockProjection?.summary;
+
   return (
-    <section className="ess-detail__section" aria-label="Consumo mensal">
+    <section className="ess-detail__section" aria-label="Consumo e projeção">
       <div className="ess-detail__section-header">
-        <h3>Consumo mensal</h3>
+        <h3>Consumo e projeção</h3>
       </div>
       <div
         className="ess-chart-tabs"
         role="tablist"
-        aria-label="Visão do gráfico de consumo"
+        aria-label="Visão do gráfico de consumo e projeção"
       >
-        {CHART_VIEW_OPTIONS.map((option) => {
+        {chartViewOptions.map((option) => {
           const active = chartView === option.value;
           return (
             <button
@@ -81,7 +115,8 @@ export function ProductConsumptionChartsSection({
             />
           ) : null}
         </>
-      ) : (
+      ) : null}
+      {chartView === "annual" ? (
         <>
           <p className="ess-detail__hint">
             Compara o consumo mês a mês nos últimos 3 anos para identificar picos
@@ -94,7 +129,16 @@ export function ProductConsumptionChartsSection({
             <ConsumptionAnnualComparisonChart comparison={annualComparison} />
           ) : null}
         </>
-      )}
+      ) : null}
+      {chartView === "projection" && projectionSummary ? (
+        <StockProjectionChart
+          items={stockProjection?.items ?? []}
+          summary={projectionSummary}
+          periodConsumption={periodConsumption}
+          periodStart={periodStart}
+          periodEnd={periodEnd}
+        />
+      ) : null}
     </section>
   );
 }

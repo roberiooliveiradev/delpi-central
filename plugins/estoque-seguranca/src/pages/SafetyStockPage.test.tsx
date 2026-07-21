@@ -397,14 +397,13 @@ describe("SafetyStockPage", () => {
     });
   });
 
-  it("exibe KPIs e déficit por unidade sem somar UMs", async () => {
+  it("exibe KPIs do resumo", async () => {
     mockApiSuccess();
     render(<SafetyStockPage />);
     await waitFor(() => {
       expect(screen.getByText("Total de matérias-primas")).toBeTruthy();
-      expect(screen.getByText(/2 materiais/)).toBeTruthy();
-      expect(screen.getByText(/150/)).toBeTruthy();
     });
+    expect(screen.queryByLabelText("Déficit por unidade de medida")).toBeNull();
     expect(screen.queryByText(/total.*déficit/i)).toBeNull();
     expect(screen.queryByText("Sem estoque de segurança")).toBeNull();
     expect(screen.queryByText("Com saldo no armazém principal")).toBeNull();
@@ -572,6 +571,17 @@ describe("SafetyStockPage", () => {
         document.querySelectorAll(".ess-detail__price-chart .ess-modern-line-chart").length,
       ).toBeGreaterThan(0);
     });
+
+    const closeButtons = screen.getAllByRole("button", { name: "Fechar" });
+    const priceHistoryClose = closeButtons.find((button) =>
+      button.className.includes("ess-detail__nf-card-close"),
+    );
+    expect(priceHistoryClose).toBeTruthy();
+    fireEvent.click(priceHistoryClose!);
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Oscilação de preço — ACME/)).toBeNull();
+    });
   });
 
   it("mantém detalhe quando histórico do fornecedor falha e permite retry", async () => {
@@ -627,6 +637,21 @@ describe("SafetyStockPage", () => {
         ),
       ).toBeTruthy();
     });
+  });
+
+  it("abre o detalhe ao clicar na coluna Detalhes", async () => {
+    mockApiSuccess();
+    render(<SafetyStockPage />);
+    await waitFor(() => expect(screen.getByText("10010005")).toBeTruthy());
+
+    const actionCell = document.querySelector(
+      'td[data-column-key="actions"]',
+    ) as HTMLElement | null;
+    expect(actionCell).toBeTruthy();
+    fireEvent.click(actionCell!);
+
+    await waitFor(() => expect(screen.getByRole("dialog")).toBeTruthy());
+    expect(safetyStockApi.fetchSafetyStockItemDetails).toHaveBeenCalled();
   });
 
   it("permite buscar outro produto no cabeçalho do modal", async () => {

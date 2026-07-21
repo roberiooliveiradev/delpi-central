@@ -115,6 +115,7 @@ Blocos em `data`:
 - Empenho aberto: `D_E_L_E_T_ = ''` e `D4_QUANT > 0`. Quantidade projetada = `D4_QUANT` (não `QTDEORI − QUANT`).
 - Campo original Protheus: `D4_QTDEORI` (não `D4_QTDORI`).
 - `D4_DATA` = data do empenho (não garantia de consumo fabril).
+- Produto acabado no extrato/empenhos: OP do empenho (`D4_OP`) → OP mãe `LEFT(D4_OP, 6) + '01001'` → `SC2.C2_PRODUTO` (`finished_product_code`) e `SC2.C2_OBS` (`finished_order_observation`).
 - Extrato consolidado 01+98+99; cada linha mantém armazém de origem.
 - Projeção: saldo atual + SC7 elegível − SD4 elegível, com saídas antes de entradas no mesmo dia.
 - Unidade incompatível fica listada, mas fora da projeção/cobertura.

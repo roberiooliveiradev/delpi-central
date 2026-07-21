@@ -155,6 +155,12 @@ def test_open_commitments_sql_filters_open_balance_and_uses_qtdeori() -> None:
     # SD4010 não possui D4_UM — a UM do empenho é a primária do produto (B1_UM)
     assert "D4_UM" not in sql
     assert "B1_UM" in sql
+    assert "SC2010" in sql
+    assert "finished_product_code" in sql
+    assert "finished_production_order" in sql
+    assert "finished_order_observation" in sql
+    assert "C2_OBS" in sql
+    assert "LEFT(RTRIM(SD4.D4_OP), 6) + '01001'" in sql
 
 
 def test_linked_suppliers_sql_uses_sa5_sa2_sd1_and_last_purchase_rules() -> None:

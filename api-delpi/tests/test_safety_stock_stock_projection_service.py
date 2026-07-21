@@ -8,7 +8,29 @@ from app.domain.services.supplies.safety_stock_stock_projection_service import (
     PROJECTION_TEMPORARY_SHORTAGE,
     build_stock_projection,
     enrich_open_commitments,
+    finished_production_order_from_component_op,
+    format_commitment_ledger_reference,
 )
+
+
+def test_finished_production_order_from_component_op() -> None:
+    assert finished_production_order_from_component_op("24608101003") == "24608101001"
+    assert finished_production_order_from_component_op("24607701001") == "24607701001"
+    assert finished_production_order_from_component_op("123") is None
+
+
+def test_format_commitment_ledger_reference_keeps_only_op() -> None:
+    assert (
+        format_commitment_ledger_reference(
+            production_order="24608101003",
+            finished_product_code="90261255",
+        )
+        == "24608101003"
+    )
+    assert format_commitment_ledger_reference(production_order="24608101003") == (
+        "24608101003"
+    )
+    assert format_commitment_ledger_reference(production_order="") == "Empenho"
 
 
 def test_enrich_commitments_converts_and_marks_ineligible_warehouse() -> None:
@@ -134,6 +156,37 @@ def test_projection_marks_temporary_shortage_against_safety_stock() -> None:
     assert summary["first_shortage_date"] == "2026-07-20"
     assert summary["final_projected_balance"] == 150.0
     assert summary["projected_remaining_to_buy"] == 0.0
+
+
+def test_projection_commitment_includes_finished_product_on_ledger() -> None:
+    as_of = date(2026, 7, 16)
+    result = build_stock_projection(
+        available_stock=100.0,
+        safety_stock=80.0,
+        enriched_orders=[],
+        enriched_commitments=[
+            {
+                "production_order": "24608101003",
+                "finished_production_order": "24608101001",
+                "finished_product_code": "90261255",
+                "finished_order_observation": "PED CLIENTE XYZ",
+                "warehouse": "01",
+                "commitment_date": "2026-07-20",
+                "open_quantity_primary_unit": 10.0,
+                "projection_eligible": True,
+                "unit_compatible": True,
+            }
+        ],
+        as_of_date=as_of,
+    )
+    commitment_rows = [
+        row for row in result["items"] if row["origin"] == "commitment"
+    ]
+    assert len(commitment_rows) == 1
+    assert commitment_rows[0]["reference"] == "24608101003"
+    assert commitment_rows[0]["finished_production_order"] == "24608101001"
+    assert commitment_rows[0]["finished_product_code"] == "90261255"
+    assert commitment_rows[0]["finished_order_observation"] == "PED CLIENTE XYZ"
 
 
 def test_projection_same_day_applies_outflows_before_inflows() -> None:

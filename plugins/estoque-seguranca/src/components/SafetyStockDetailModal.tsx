@@ -176,6 +176,24 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
       render: (row) => row.reference || "",
     },
     {
+      key: "finished_product_code",
+      header: "Produto acabado",
+      className: "ess-table__col--secondary",
+      render: (row) => {
+        const code = row.finished_product_code?.trim();
+        if (!code) return "—";
+        const observation = row.finished_order_observation?.trim();
+        return (
+          <span title={observation || undefined}>
+            {code}
+            {observation ? (
+              <span className="ess-detail__muted"> · {observation}</span>
+            ) : null}
+          </span>
+        );
+      },
+    },
+    {
       key: "inflow",
       header: "Entrada",
       align: "right",
@@ -384,13 +402,17 @@ export function SafetyStockDetailModal({ item, onClose, onNavigate }: SafetyStoc
               loading={priceHistoryLoading}
               error={priceHistoryError}
               onRetry={reloadPriceHistory}
+              onClose={() => setSelectedSupplier(null)}
             />
           ) : null}
 
           <ProductConsumptionChartsSection
             monthlyPoints={data?.monthly_consumption?.items ?? []}
             periodConsumption={data?.monthly_consumption?.period_consumption ?? 0}
+            periodStart={data?.monthly_consumption?.period_start ?? null}
+            periodEnd={data?.monthly_consumption?.period_end ?? null}
             annualComparison={data?.annual_comparison}
+            stockProjection={data?.stock_projection}
             loading={loading}
             resetKey={item ? `${item.branch}-${item.product_code}` : null}
           />

@@ -404,6 +404,13 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           "lot": str(row.get("lot") or "").strip(),
           "commitment_sequence": str(row.get("commitment_sequence") or "").strip(),
           "preserved_balance": float(row.get("preserved_balance") or 0),
+          "finished_production_order": str(
+              row.get("finished_production_order") or ""
+          ).strip(),
+          "finished_product_code": str(row.get("finished_product_code") or "").strip(),
+          "finished_order_observation": str(
+              row.get("finished_order_observation") or ""
+          ).strip(),
       }
 
   @classmethod

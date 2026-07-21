@@ -291,6 +291,9 @@ def open_commitments_sql(*, branch_param: str = "?", product_param: str = "?") -
 
     SD4010 não possui coluna de UM: D4_QUANT já está na unidade primária do
     produto (B1_UM); a segunda unidade fica em D4_QTSEGUM.
+
+    Produto acabado: OP do empenho com os 6 primeiros dígitos + sufixo 01001
+    (ex.: 24608101003 → 24608101001), resolvido em SC2.C2_PRODUTO.
     """
     return f"""
     SELECT
@@ -313,11 +316,23 @@ def open_commitments_sql(*, branch_param: str = "?", product_param: str = "?") -
         ) AS consumed_quantity,
         RTRIM(SD4.D4_LOTECTL) AS lot,
         RTRIM(SD4.D4_TRT) AS commitment_sequence,
-        CAST(ISNULL(SD4.D4_SLDEMP, 0) AS FLOAT) AS preserved_balance
+        CAST(ISNULL(SD4.D4_SLDEMP, 0) AS FLOAT) AS preserved_balance,
+        CASE
+            WHEN LEN(RTRIM(SD4.D4_OP)) >= 6
+            THEN LEFT(RTRIM(SD4.D4_OP), 6) + '01001'
+            ELSE NULL
+        END AS finished_production_order,
+        RTRIM(COALESCE(FP.C2_PRODUTO, '')) AS finished_product_code,
+        RTRIM(COALESCE(FP.C2_OBS, '')) AS finished_order_observation
     FROM SD4010 SD4 WITH (NOLOCK)
     LEFT JOIN SB1010 SB1 WITH (NOLOCK)
         ON SB1.B1_COD = SD4.D4_COD
        AND SB1.D_E_L_E_T_ = ''
+    LEFT JOIN SC2010 FP WITH (NOLOCK)
+        ON FP.D_E_L_E_T_ = ''
+       AND FP.C2_FILIAL = SD4.D4_FILIAL
+       AND LEN(RTRIM(SD4.D4_OP)) >= 6
+       AND RTRIM(LTRIM(FP.C2_OP)) = LEFT(RTRIM(SD4.D4_OP), 6) + '01001'
     WHERE SD4.D_E_L_E_T_ = ''
       AND SD4.D4_QUANT > 0
       AND SD4.D4_FILIAL = {branch_param}
