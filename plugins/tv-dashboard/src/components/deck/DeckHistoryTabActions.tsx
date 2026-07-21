@@ -33,14 +33,15 @@ export function DeckHistoryTabActions({ onBack }: Props) {
   return (
     <div className="td-deck-chrome__history" role="group" aria-label="Histórico">
       {onBack ? (
-        <HintAction hint={HEADER.back} ariaLabel="Voltar à lista de programações">
+        <HintAction hint={HEADER.back} ariaLabel={HEADER.back}>
           <button
             type="button"
-            className="td-deck-chrome__history-btn"
+            className="td-deck-chrome__history-btn td-deck-chrome__history-btn--back"
             onClick={onBack}
-            aria-label="Voltar à lista de programações"
+            aria-label={HEADER.back}
           >
             <ArrowLeft size={14} aria-hidden="true" />
+            <span className="td-deck-chrome__history-btn-label">{HEADER.backLabel}</span>
           </button>
         </HintAction>
       ) : null}

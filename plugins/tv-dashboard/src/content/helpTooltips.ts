@@ -205,6 +205,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   header: {
     back: "Voltar à lista de programações.",
+    backLabel: "Lista de Painéis",
     preview: "Abrir pré-visualização em tela cheia (← → slides, Espaço pausa; controles somem após inatividade).",
     refreshVisual:
       "Busca de novo na api-delpi ignorando cache. Filtros e fontes já atualizam o palco sozinhos; use para forçar refresh manual.",

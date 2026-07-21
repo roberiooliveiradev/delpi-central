@@ -9,14 +9,15 @@ describe("deck history back button contract", () => {
   const history = readFileSync(join(base, "DeckHistoryTabActions.tsx"), "utf8");
   const chrome = readFileSync(join(base, "../DeckEditorChrome.tsx"), "utf8");
 
-  it("renderiza Voltar antes dos botões de histórico", () => {
+  it("renderiza Voltar com rótulo Lista de Painéis antes do histórico", () => {
     const backIdx = history.indexOf("ArrowLeft");
     const undoIdx = history.indexOf("Undo2");
     expect(backIdx).toBeGreaterThan(-1);
     expect(undoIdx).toBeGreaterThan(-1);
     expect(backIdx).toBeLessThan(undoIdx);
     expect(history).toMatch(/onBack\?:/);
-    expect(history).toMatch(/Voltar à lista de programações/);
+    expect(history).toMatch(/HEADER\.backLabel/);
+    expect(history).toMatch(/td-deck-chrome__history-btn--back/);
   });
 
   it("chrome passa onBack da programação para o histórico", () => {
