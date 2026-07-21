@@ -36,7 +36,7 @@ describe("ribbon density contract", () => {
     const band = css.match(
       /\.td-deck-ribbon--compact\.td-deck-ribbon--band\s*\{[^}]+\}/s,
     )?.[0];
-    expect(band).toMatch(/--td-ribbon-height:\s*80px/);
+    expect(band).toMatch(/--td-ribbon-height:\s*104px/);
     expect(band).toMatch(/height:\s*var\(--td-ribbon-height\)/);
 
     const fit = css.match(
@@ -44,6 +44,29 @@ describe("ribbon density contract", () => {
     )?.[0];
     expect(fit).toMatch(/height:\s*auto/);
     expect(fit).toMatch(/max-height:\s*min\(220px,\s*34vh\)/);
+  });
+
+  it("Raio/Opacidade na ribbon usam RangeField compact (sem slider largo)", () => {
+    const opacity = readFileSync(
+      join(base, "../components/formatRibbon/FormatRibbonOrganizeSection.tsx"),
+      "utf8",
+    );
+    const corner = readFileSync(
+      join(base, "../components/ShapeCornerRadiusControl.tsx"),
+      "utf8",
+    );
+    const hostDensity = readFileSync(
+      join(base, "../../../plugin-ui/src/styles/host-density-compact.css"),
+      "utf8",
+    );
+    expect(opacity).toMatch(/id="td-block-opacity"[\s\S]*density="compact"/);
+    expect(corner).toMatch(/label="Raio \(px\)"[\s\S]*density="compact"/);
+    expect(hostDensity).toMatch(
+      /\[data-delpi-ui-density="compact"\]\s*\.delpi-ui-range-field\s*\{[^}]*width:\s*96px/s,
+    );
+    expect(hostDensity).toMatch(
+      /\[data-delpi-ui-density="compact"\]\s*\.delpi-ui-range-field--compact\s*\{[^}]*width:\s*72px/s,
+    );
   });
 
   it("tokens de densidade chrome PPT estão declarados", () => {

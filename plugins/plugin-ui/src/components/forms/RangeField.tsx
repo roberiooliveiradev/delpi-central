@@ -19,7 +19,7 @@ export type RangeFieldProps = {
   /** Valor exibido no input (quando difere do arredondamento padrão). */
   displayValue?: string;
   /**
-   * `compact` — só rótulo + input (sem slider). Usado na ribbon do deck (~80px).
+   * `compact` — só rótulo + input (sem slider). Usado na ribbon do deck (~104px).
    * `full` — slider + input (padrão painel / inspetor).
    */
   density?: "full" | "compact";

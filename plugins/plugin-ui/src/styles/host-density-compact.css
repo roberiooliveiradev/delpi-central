@@ -57,16 +57,19 @@
 
 /* --- RangeField (ribbon: largura fixa; pane sobrescreve em format-pane--compact) --- */
 [data-delpi-ui-density="compact"] .delpi-ui-range-field {
-  width: 148px;
-  min-width: 120px;
-  max-width: 200px;
+  width: 96px;
+  min-width: 88px;
+  max-width: 104px;
   flex: 0 0 auto;
   padding: 2px 0;
   box-sizing: border-box;
 }
 
+/* Compact (só input) deve vencer a largura do RangeField full no host denso. */
 [data-delpi-ui-density="compact"] .delpi-ui-range-field--compact {
-  min-width: 0;
+  width: 72px;
+  min-width: 64px;
+  max-width: 80px;
 }
 
 [data-delpi-ui-density="compact"] .delpi-ui-range-field__label {

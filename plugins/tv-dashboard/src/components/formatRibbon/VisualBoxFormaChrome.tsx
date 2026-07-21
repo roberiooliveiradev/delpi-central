@@ -293,6 +293,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
               max={48}
               step={1}
               value={block.style?.markerRadius ?? 8}
+              density="compact"
               aria-label="Raio do ponto em pixels"
               onChange={(value) =>
                 updateSelectedStyle({ markerRadius: Math.max(2, Math.min(48, value || 8)) })

@@ -30,6 +30,7 @@ export function ShapeCornerRadiusControl({
       max={max}
       step={1}
       value={value}
+      density="compact"
       aria-label="Cantos arredondados em pixels"
       onChange={(next) => onChange(Math.max(0, Math.min(max, next)))}
     />

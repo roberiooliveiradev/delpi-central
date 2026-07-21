@@ -30,7 +30,8 @@ describe("ribbon table style checks layout", () => {
     expect(css).toMatch(
       /\.td-deck-ribbon__style-checks--pane\s*\{[^}]*grid-template-columns:\s*repeat\(2/s,
     );
-    expect(css).not.toMatch(/\.delpi-ui-/);
+    /* Ribbon do MFE não redefine classes do kit (overrides de data-pq / preview ficam fora). */
+    expect(css).not.toMatch(/\.td-deck-ribbon[^{]*\{[^}]*\.delpi-ui-/s);
     expect(kitDensity).toMatch(
       /\[data-delpi-ui-density="compact"\]\s*\.delpi-ui-table-style-strip\s*\{[^}]*flex-wrap:\s*wrap/s,
     );

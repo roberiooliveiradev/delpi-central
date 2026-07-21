@@ -247,7 +247,7 @@ export function FormatRibbonOpacityFields({
         step={5}
         value={opacityPercent}
         displayValue={`${opacityPercent}%`}
-        density="full"
+        density="compact"
         aria-label="Opacidade"
         onChange={(value) => setOpacity(value / 100)}
       />
