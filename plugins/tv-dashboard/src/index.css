@@ -5616,6 +5616,52 @@ body.td-composer--marqueeing *{
   font-weight: 600;
   color: var(--td-muted);
 }
+.dashboard-tv-dashboard .td-deck-filmstrip__controls{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 4px 0 8px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--td-border) 80%, transparent);
+}
+.dashboard-tv-dashboard .td-deck-filmstrip__controls .td-ribbon-large-btn{
+  min-width: 56px;
+  min-height: 52px;
+  padding: 4px 8px;
+  font-size: 10px;
+}
+.dashboard-tv-dashboard .td-deck-filmstrip__controls .td-ribbon-large-btn svg{
+  width: 20px;
+  height: 20px;
+}
+.dashboard-tv-dashboard .td-deck-filmstrip__slide-nav{
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--td-border) 90%, transparent);
+  background: color-mix(in srgb, var(--td-text) 4%, var(--td-surface));
+}
+.dashboard-tv-dashboard .td-deck-filmstrip__slide-nav-btn{
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0;
+  border-radius: 999px;
+}
+.dashboard-tv-dashboard .td-deck-filmstrip__counter{
+  min-width: 5.5ch;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--td-muted);
+  font-variant-numeric: tabular-nums;
+}
 .dashboard-tv-dashboard .td-deck-filmstrip__collapse,
 .dashboard-tv-dashboard .td-deck-filmstrip__reopen{
   display: inline-flex;

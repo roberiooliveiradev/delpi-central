@@ -173,7 +173,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Clique seleciona o elemento (em grupo, só o filho); use «Selecionar grupo inteiro» ou Esc para voltar à seleção pai. No palco: 1º clique = grupo, 2º clique = filho; Ctrl+clique remove da seleção. Shift+clique multi-seleciona.",
   },
   ribbonTabs: {
-    home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
+    home: "Gerencie a tela atual na faixa Início (pausar, duplicar, exportar). Nova tela e navegação ficam no painel Slides, acima das prévias.",
     insert: "Insira elementos no slide personalizado: títulos, textos, imagens, vídeos e formas.",
     format: "Formate o elemento nas abas contextuais Elemento, Dados e Camadas.",
     element:

@@ -5,6 +5,7 @@ import type { PlaylistMasterConfig, PresentationPayload, Slide } from "../api/tv
 import { useDeckSidePanelLayout } from "../hooks/useDeckSidePanelLayout";
 import { SlideCardThumbnail } from "./SlideCardThumbnail";
 import { SlideFilmstripContextMenu } from "./SlideFilmstripContextMenu";
+import { SlideFilmstripControls } from "./SlideFilmstripControls";
 
 type Props = {
   slides: Slide[];
@@ -110,6 +111,12 @@ export function SlideFilmstrip({
                 <ChevronLeft size={16} aria-hidden="true" />
               </button>
             </div>
+            <SlideFilmstripControls
+              slides={slides}
+              selectedSlideId={selectedSlideId}
+              onAdd={onAdd}
+              onSelect={onSelect}
+            />
             {slides.length === 0 ? (
               <p className="td-deck-filmstrip__empty">Nenhuma tela na programação.</p>
             ) : (
