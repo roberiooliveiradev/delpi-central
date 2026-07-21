@@ -944,9 +944,8 @@ function EditorKpiViewBlock({
           onPartContentCommit,
           onPartEditCancel: cancelEditKpiPart,
           onPartMovePointerDown,
-          onPartResizePointerDown,
           onPartFrameChange,
-          onPartCornerAdjustPointerDown,
+          /* Resize/raio só no wrap do bloco — mesmo padrão de formas. */
         }
       : null;
 
@@ -1213,9 +1212,8 @@ function EditorInputBlock({
   );
 
   /**
-   * Interaction sempre ligada no editor: 1º clique no valor (hit-through) seleciona o bloco;
-   * com o grupo ativo, clique na caixa seleciona a parte; parte control ativa → edita.
-   * Kiosk/presentação passa `inputInteraction` null e edita direto.
+   * Interaction sempre ligada no editor: 1º clique seleciona/arrasta o bloco (modo comum).
+   * Parte via toolbar/duplo clique; resize só no wrap — sem handles internos distintos.
    */
   const interaction = useMemo(
     () => ({
@@ -1223,14 +1221,12 @@ function EditorInputBlock({
       onPartPointerDown,
       onPartDoubleClick,
       onPartMovePointerDown,
-      onPartResizePointerDown,
     }),
     [
       block.id,
       onPartDoubleClick,
       onPartMovePointerDown,
       onPartPointerDown,
-      onPartResizePointerDown,
       selectedId,
       selectedInputPart,
     ],

@@ -58,7 +58,7 @@ describe("deckColorCatalog", () => {
     expect(DECK_KPI_DEFAULTS.borderWidth).toBe(1);
     expect(DECK_KPI_DEFAULTS.boxShadow).toContain("rgba(15, 23, 42");
     expect(DECK_KPI_DEFAULTS.iconName).toBe("Gauge");
-    expect(DECK_KPI_DEFAULTS.frame).toEqual({ x: 8, y: 34, w: 18, h: 12 });
+    expect(DECK_KPI_DEFAULTS.frame).toEqual({ x: 8, y: 36, w: 12, h: 7 });
   });
 
   it("define chrome do filtro: fundo branco, sombra e raio alinhados a KPI/gráfico", () => {
@@ -69,7 +69,7 @@ describe("deckColorCatalog", () => {
     expect(DECK_INPUT_DEFAULTS.boxShadow).toBe(DECK_CHART_DEFAULTS.boxShadow);
     expect(DECK_INPUT_DEFAULTS.controlBorderColor).toBe(DECK_COLOR_SHAPE_STROKE);
     expect(DECK_INPUT_DEFAULTS.controlFill).toBe("#ffffff");
-    expect(DECK_INPUT_DEFAULTS.frame).toEqual({ x: 8, y: 8, w: 16, h: 8 });
+    expect(DECK_INPUT_DEFAULTS.frame).toEqual({ x: 8, y: 8, w: 12, h: 5 });
   });
 
   it("expõe CSS vars para herança no bloco de dados", () => {

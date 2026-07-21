@@ -140,20 +140,20 @@ export type KpiCardFlatOptions = {
 };
 
 /** Frame padrão do ícone (canto superior direito — caixa quadrada compacta). */
-export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 76, y: 4, w: 20, h: 20 };
+export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 76, y: 3, w: 20, h: 22 };
 
 /**
  * Frames iniciais (%). Card = fundo relativo ao bloco; demais = relativos ao card.
- * Empilhamento denso (rótulo → valor → hint) — pouco espaço morto no fundo.
+ * Empilhamento denso — valor ocupa quase toda a altura (hint sobrepõe o rodapé se visível).
  */
 export const KPI_PART_DEFAULT_FRAMES: Record<
   "card" | "title" | "value" | "hint" | "icon",
   KpiPartFrame
 > = {
   card: { x: 0, y: 0, w: 100, h: 100 },
-  title: { x: 4, y: 4, w: 68, h: 16 },
-  value: { x: 4, y: 20, w: 92, h: 58 },
-  hint: { x: 4, y: 80, w: 70, h: 16 },
+  title: { x: 3, y: 2, w: 70, h: 20 },
+  value: { x: 3, y: 22, w: 70, h: 74 },
+  hint: { x: 3, y: 78, w: 55, h: 18 },
   icon: KPI_ICON_DEFAULT_FRAME,
 };
 

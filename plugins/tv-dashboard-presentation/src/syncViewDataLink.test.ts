@@ -38,7 +38,7 @@ describe("syncViewDataLink", () => {
         oee_filial_02: "number",
         quantidade: "number",
       },
-      currentFrame: { x: 8, y: 34, w: 18, h: 12 },
+      currentFrame: { x: 8, y: 36, w: 12, h: 7 },
     });
     expect(patch.dataSourceId).toBe("src-1");
     expect(patch.kpiProjection?.metrics?.map((m) => m.field).sort()).toEqual([
@@ -46,8 +46,8 @@ describe("syncViewDataLink", () => {
       "oee_filial_02",
       "quantidade",
     ]);
-    expect(patch.frame?.w).toBeGreaterThan(18);
-    expect(patch.frame?.h).toBeGreaterThanOrEqual(12);
+    expect(patch.frame?.w).toBeGreaterThan(12);
+    expect(patch.frame?.h).toBeGreaterThanOrEqual(7);
   });
 
   it("não sobrescreve projection existente", () => {
@@ -55,7 +55,7 @@ describe("syncViewDataLink", () => {
       viewType: "kpi_view",
       dataSourceId: "src-1",
       resolved: multiResolved,
-      currentFrame: { x: 8, y: 34, w: 18, h: 12 },
+      currentFrame: { x: 8, y: 36, w: 12, h: 7 },
       existing: {
         kpiProjection: {
           metrics: [{ field: "quantidade", label: "Q", visible: true, aggregation: "first" }],
@@ -66,7 +66,7 @@ describe("syncViewDataLink", () => {
   });
 
   it("suggestViewFrameSize cresce para 7 KPIs", () => {
-    const next = suggestViewFrameSize("kpi_view", 7, { x: 8, y: 34, w: 18, h: 12 });
+    const next = suggestViewFrameSize("kpi_view", 7, { x: 8, y: 36, w: 12, h: 7 });
     expect(next.w).toBeGreaterThan(50);
     expect(next.h).toBeGreaterThan(20);
   });
@@ -75,7 +75,7 @@ describe("syncViewDataLink", () => {
     const block = {
       id: "k1",
       type: "kpi_view" as const,
-      frame: { x: 8, y: 34, w: 18, h: 12 },
+      frame: { x: 8, y: 36, w: 12, h: 7 },
       style: { zIndex: 1 },
       kpiProjection: {
         metrics: [
@@ -86,7 +86,7 @@ describe("syncViewDataLink", () => {
       },
     } as ComunicadoBlock;
     const patch = buildViewFrameFitPatch(block);
-    expect(patch?.frame?.w).toBeGreaterThan(18);
+    expect(patch?.frame?.w).toBeGreaterThan(12);
   });
 
   it("syncDataViewBlocksWithResolved preenche projection quando resolved chega", () => {
@@ -94,7 +94,7 @@ describe("syncViewDataLink", () => {
       {
         id: "k1",
         type: "kpi_view",
-        frame: { x: 8, y: 34, w: 18, h: 12 },
+        frame: { x: 8, y: 36, w: 12, h: 7 },
         style: { zIndex: 1 },
         dataSourceId: "src-1",
       } as ComunicadoBlock,

@@ -28,6 +28,7 @@ describe("resolveComplexFloatToolbarMetrics", () => {
     const m = resolveComplexFloatToolbarMetrics(80);
     expect(m.btnSize).toBe(36);
     expect(m.iconSize).toBeGreaterThanOrEqual(16);
+    expect(m.offset).toBeGreaterThanOrEqual(20);
   });
 
   it("entrada inválida cai na referência", () => {

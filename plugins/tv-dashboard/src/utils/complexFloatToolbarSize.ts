@@ -32,7 +32,8 @@ export function resolveComplexFloatToolbarMetrics(shortSidePx: number): ComplexF
   const btnSize = clamp(Math.round((safe / REF_SHORT_SIDE_PX) * REF_BTN_SIZE), MIN_BTN, MAX_BTN);
   const iconSize = clamp(Math.round(btnSize * 0.5), 16, 28);
   const gap = clamp(Math.round(btnSize * 0.14), 4, 8);
-  const offset = clamp(Math.round(btnSize * 0.22), 6, 12);
+  /* Folga além do pad/handles do chrome global — evita sobrepor o resize E. */
+  const offset = clamp(Math.round(btnSize * 0.55), 20, 32);
   const radius = clamp(Math.round(btnSize * 0.14), 4, 8);
   return { btnSize, iconSize, gap, offset, radius };
 }

@@ -18,7 +18,7 @@ describe("serialize input block", () => {
         badge: { visible: false },
       },
     };
-    expect(input.frame).toEqual({ x: 8, y: 8, w: 16, h: 8 });
+    expect(input.frame).toEqual({ x: 8, y: 8, w: 12, h: 5 });
     const serialized = serializeComunicadoConfig({ version: 5, blocks: [input] });
     const block = (serialized.blocks as Array<Record<string, unknown>>)[0];
     expect(block?.type).toBe("input");
