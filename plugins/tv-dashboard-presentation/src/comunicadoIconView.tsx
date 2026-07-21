@@ -1,9 +1,13 @@
-import { DECK_COLOR_SURFACE, DECK_SHAPE_DEFAULTS, resolveLucideIconOrFallback } from "@delpi/plugin-ui/index";
+import {
+  DECK_COLOR_SURFACE,
+  DECK_SHAPE_DEFAULTS,
+  ensureComunicadoDualClass,
+  resolveLucideIconOrFallback,
+} from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
 import type { CSSProperties } from "react";
 
 import type { ComunicadoIconBlock } from "./comunicadoTypes";
-import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 /** Cores legadas tratadas como «sem escolha explícita» → accent das formas. */
 const LEGACY_ICON_COLORS = new Set([

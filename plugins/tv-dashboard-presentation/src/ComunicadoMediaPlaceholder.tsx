@@ -1,5 +1,6 @@
-type Kind = "image" | "video";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
+
+type Kind = "image" | "video";
 type State = "empty" | "loading" | "error";
 
 type Props = {
