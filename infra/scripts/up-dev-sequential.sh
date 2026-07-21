@@ -138,6 +138,7 @@ FASE_MFE=(
   guias-procedimentos
   central-agendamento
   canal-denuncia
+  reports
   cipa
   quality-labels
   tv-dashboard

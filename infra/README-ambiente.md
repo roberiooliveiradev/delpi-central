@@ -386,12 +386,15 @@ Uploads de evidências do plugin **quality-action-plans** e anexos da **auditori
 | `QUALITY_LABELS_QR_DIR` | `/app/data/quality-labels/qr` | `${DELPI_DATA_HOST_DIR}/quality-labels/qr` |
 | `QUALITY_LABELS_SIGNATURE_DIR` | `/app/data/quality-labels/signatures` | `${DELPI_DATA_HOST_DIR}/quality-labels/signatures` |
 | `QUALITY_LABELS_CERTIFICATE_DIR` | `/app/data/quality-labels/certificates` | `${DELPI_DATA_HOST_DIR}/quality-labels/certificates` |
+| `REPORTS_RUN_ARTIFACTS_DIR` | `/app/data/reports-runs` | `${DELPI_DATA_HOST_DIR}/reports-runs` |
 
 > As etiquetas da qualidade (**quality-labels**, CRUD dentro da `api-delpi`) guardam os PNGs de QR em `QUALITY_LABELS_QR_DIR`, as assinaturas dos inspetores (PNG) em `QUALITY_LABELS_SIGNATURE_DIR` e os certificados emitidos (PDF) em `QUALITY_LABELS_CERTIFICATE_DIR`. Mesmo padrão: o Postgres mantém o registro; sem volume, os binários somem no recreate.
 
+> **Delpi Reports:** HTML de cada run fica em `REPORTS_RUN_ARTIFACTS_DIR` (`summary.artifactHtmlPath`). Sem volume, o artefato some no recreate do `api-delpi`.
+
 ```bash
 # srv-api (produção)
-sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates
+sudo mkdir -p /var/lib/delpi/pac-evidences /var/lib/delpi/kaizen-evidences /var/lib/delpi/guias-procedimentos /var/lib/delpi/audit-5s-responses /var/lib/delpi/audit-5s-nc /var/lib/delpi/quality-labels/qr /var/lib/delpi/quality-labels/signatures /var/lib/delpi/quality-labels/certificates /var/lib/delpi/reports-runs
 # em infra/.env:
 DELPI_DATA_HOST_DIR=/var/lib/delpi
 

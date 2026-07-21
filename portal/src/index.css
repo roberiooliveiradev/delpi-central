@@ -518,19 +518,55 @@ body:has(.app-shell) {
 
 /*
  * Dashboards MFE (padrão): scroll único em `.content` — altura pelo conteúdo.
- * Imersivos (deck TV, embed manutenção, settings) têm regras próprias acima.
+ * Imersivos (deck TV, embed manutenção, settings, app-shell) têm regras próprias.
  */
-.content > .app-host-federated:has(.dashboard-page:not(.dashboard-page--deck-edit):not(.dashboard-page--embed)) {
+.content > .app-host-federated:has(
+  .dashboard-page:not(.dashboard-page--deck-edit):not(.dashboard-page--embed):not(
+      .dashboard-page--app-shell
+    )
+) {
   flex: 0 0 auto;
   min-height: 0;
   height: auto;
 }
 
-.app-host-federated__mount:has(.dashboard-page:not(.dashboard-page--deck-edit):not(.dashboard-page--embed)) {
+.app-host-federated__mount:has(
+  .dashboard-page:not(.dashboard-page--deck-edit):not(.dashboard-page--embed):not(
+      .dashboard-page--app-shell
+    )
+) {
   height: auto !important;
   min-height: 0 !important;
   flex: 0 0 auto;
   overflow: visible;
+}
+
+/*
+ * App shell com sidebar interna (ex.: Delpi Reports): preencher a área do .content.
+ */
+.content > .app-host-federated:has(.dashboard-page--app-shell) {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-host-federated__mount:has(.dashboard-page--app-shell) {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app-host-federated__mount:has(.dashboard-page--app-shell) > .dashboard-page--app-shell {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  max-height: 100%;
 }
 
 /*

@@ -88,6 +88,35 @@ class SafetyStockQueryRepositoryPort(ABC):
         ...
 
     @abstractmethod
+    def fetch_open_purchase_orders_for_branch(
+        self,
+        *,
+        branch: str,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def fetch_open_commitments_for_branch(
+        self,
+        *,
+        branch: str,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
+    def fetch_materials_for_projection_batch(
+        self,
+        *,
+        branch: str,
+        include_blocked: bool,
+        product_group: str | None,
+        unit: str | None,
+        search: str | None,
+        include_without_safety_stock: bool,
+    ) -> list[dict[str, Any]]:
+        ...
+
+    @abstractmethod
     def fetch_linked_suppliers(
         self,
         *,

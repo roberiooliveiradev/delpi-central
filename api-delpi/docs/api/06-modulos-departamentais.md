@@ -555,3 +555,27 @@ Além do CRUD básico, o cadastro operacional expõe revisões temporais, ciclo 
 **Indicadores:** `recebido` fora de quantidade/ganhos; `aprovado` só quantidade; `implantado` quantidade + ganhos. Detalhe: README do plugin.
 
 **Pendente (Fase 6b/6c):** migrar `GET /quality/kaizens/summary` para Postgres com cálculo temporal por revisão — especificação: [ESPECIFICACAO-REVISOES.md](../../../docs/12-roadmap-e-volucao/cadastro-kaizen/ESPECIFICACAO-REVISOES.md).
+
+## Delpi Reports — `/reports`
+
+Cadastro de definições de relatório, histórico de runs e catálogo de providers (e-mail via Graph na Fase 3).
+
+Doc completa: [delpi-reports.md](./delpi-reports.md) · Roadmap: [delpi-reports](../../../docs/12-roadmap-e-evolucao/delpi-reports/README.md)
+
+| Método | Endpoint | operationId |
+|--------|----------|-------------|
+| GET | `/reports/definitions` | `list_report_definitions` |
+| POST | `/reports/definitions` | `create_report_definition` |
+| GET | `/reports/definitions/{id}` | `get_report_definition` |
+| PATCH | `/reports/definitions/{id}` | `update_report_definition` |
+| GET | `/reports/definitions/{id}/recipients` | `list_report_recipients` |
+| PUT | `/reports/definitions/{id}/recipients` | `replace_report_recipients` |
+| GET | `/reports/definitions/{id}/schedule` | `get_report_schedule` |
+| PUT | `/reports/definitions/{id}/schedule` | `upsert_report_schedule` |
+| DELETE | `/reports/definitions/{id}/schedule` | `delete_report_schedule` |
+| POST | `/reports/definitions/{id}/run` | `run_report_definition` |
+| GET | `/reports/runs` | `list_report_runs` |
+| GET | `/reports/runs/{id}` | `get_report_run` |
+| GET | `/reports/providers` | `list_report_providers` |
+| GET | `/reports/providers/safety_stock_shortage_30d/preview` | `preview_report_provider_safety_stock_shortage_30d` |
+| POST | `/reports/schedules/process-pending` | `process_pending_report_schedules` |

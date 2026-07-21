@@ -336,6 +336,19 @@ Permissões: `scrap-monitoring.*` ou `api-delpi.access`. Filiais SC/ES (`01`/`02
 |---|---|---|
 | GET | `/pedidos-venda-abertos/` | A ou `pedidos-venda-abertos.access` |
 
+## Delpi Reports (`/reports`)
+
+| Método | Endpoint | Perm. |
+|---|---|---|
+| GET | `/reports/definitions` | `reports.view` / manage / filial-* |
+| POST | `/reports/definitions` | `reports.manage` / filial-* |
+| GET | `/reports/definitions/{id}` | read |
+| PATCH | `/reports/definitions/{id}` | write |
+| GET | `/reports/runs` | read |
+| GET | `/reports/providers` | read |
+
+Doc: [delpi-reports.md](./delpi-reports.md)
+
 ## Indicadores Estratégicos
 
 Rotas do painel SI estão em **`/apps/strategic-indicators-api/strategic-indicators`** — ver [05-indicadores-estrategicos.md](./05-indicadores-estrategicos.md) e [strategic-indicators-api/docs/API.md](../../strategic-indicators-api/docs/API.md).

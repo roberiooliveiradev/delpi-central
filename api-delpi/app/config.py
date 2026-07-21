@@ -273,9 +273,26 @@ class Settings:
         "GRAPH_MAIL_RECIPIENT",
         default="ouvidoria@delpi.com.br",
     )
+    # ==========================
+    # Microsoft Graph — Delpi Reports (mailbox dedicada; NÃO misturar com canal-denúncia)
+    # ==========================
+    GRAPH_REPORTS_TENANT_ID: str | None = _get_env("GRAPH_REPORTS_TENANT_ID")
+    GRAPH_REPORTS_CLIENT_ID: str | None = _get_env("GRAPH_REPORTS_CLIENT_ID")
+    GRAPH_REPORTS_CLIENT_SECRET: str | None = _get_env("GRAPH_REPORTS_CLIENT_SECRET")
+    GRAPH_REPORTS_MAIL_SENDER: str = _get_env(
+        "GRAPH_REPORTS_MAIL_SENDER",
+        default="minhadelpi@delpi.com.br",
+    )
     GRAPH_HTTP_TIMEOUT_SECONDS: str = _get_env(
         "GRAPH_HTTP_TIMEOUT_SECONDS",
         default="15",
+    )
+    REPORTS_MAIL_BATCH_SIZE: int = int(
+        _get_env("REPORTS_MAIL_BATCH_SIZE", default="40") or "40"
+    )
+    REPORTS_RUN_ARTIFACTS_DIR: str = _get_env(
+        "REPORTS_RUN_ARTIFACTS_DIR",
+        default="/app/data/reports-runs",
     )
 
     OLLAMA_BASE_URL: str | None = _get_env("OLLAMA_BASE_URL", default="http://ollama:11434")

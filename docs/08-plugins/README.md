@@ -79,6 +79,7 @@ Especificação: [../05-plugin-system/plugin-vs-module.md](../05-plugin-system/p
 | `plugins/estoque-seguranca` | `estoque-seguranca` | microfrontend | plugin | `/apps/estoque-seguranca` | `delpi-estoque-seguranca` |
 | `plugins/production-appointments` | `production-appointments` | microfrontend | plugin | `/apps/production-appointments` | `delpi-production-appointments` |
 | `plugins/canal-denuncia` | `canal-denuncia` | microfrontend | plugin | `/apps/canal-denuncia` | `delpi-canal-denuncia` |
+| `plugins/reports` | `reports` | microfrontend | plugin | `/apps/reports` | `delpi-reports` |
 | `plugins/central-agendamento` | `central-agendamento` | microfrontend | plugin | `/apps/central-agendamento` | `delpi-central-agendamento` |
 | `plugins/propostas-comerciais` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
 | `plugins/cultura-delpi` | (ver manifesto) | microfrontend | plugin | (ver manifesto) | (ver compose) |
@@ -172,6 +173,7 @@ Implementado em `plugins/*/src/api/httpClient.ts`.
 | estoque-seguranca | `estoque-seguranca` |
 | production-appointments | `production-appointments` |
 | canal-denuncia | `canal-denuncia` |
+| reports | `reports` |
 
 O middleware da api-delpi repassa o valor à Core API para rastreamento agregado (consentimento `usage_tracking`). Ver [rastreamento-uso-apps.md](../04-core-api/rastreamento-uso-apps.md).
 
@@ -195,6 +197,7 @@ Declaradas no manifesto e persistidas na Core API:
 | estoque-seguranca | `estoque-seguranca.access`, `.view.filial-sc`, `.view.filial-es` |
 | production-appointments | `production-appointments.view.filial-sc`, `.view.filial-es`, `.view`, `.access` |
 | canal-denuncia | `canal-denuncia.access` |
+| reports | `reports.view`, `reports.manage`, `reports.*.filial-sc/es` |
 | cadastro-kaizen | `cadastro-kaizen.view`, `cadastro-kaizen.manage`, `cadastro-kaizen.notify-suggestions` |
 
 Lista completa: seed + manifestos em `plugins/*/`.
@@ -218,6 +221,7 @@ Lista completa: seed + manifestos em `plugins/*/`.
 | Acompanhamento de Refugos | [Plugin README](../../plugins/scrap-monitoring/README.md) · [API](../../api-delpi/docs/api/scrap-monitoring.md) |
 | Apontamento de Produção | [Plugin README](../../plugins/production-appointments/README.md) · [API](../../api-delpi/docs/api/production-appointments.md) |
 | Canal de Denúncia | [Plugin README](../../plugins/canal-denuncia/README.md) |
+| Delpi Reports | [Plugin README](../../plugins/reports/README.md) · [Roadmap](../12-roadmap-e-evolucao/delpi-reports/README.md) |
 
 ---
 

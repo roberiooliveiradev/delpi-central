@@ -951,6 +951,22 @@ services:
     networks:
       - delpi-network
 
+  reports:
+    <<: *plugin-ui-federated
+    build:
+      context: ../plugins
+      dockerfile: reports/Dockerfile
+      target: production
+
+    container_name: delpi-reports
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     <<: *plugin-ui-federated
     build:
@@ -1160,6 +1176,12 @@ services:
       GRAPH_CLIENT_SECRET: ${GRAPH_CLIENT_SECRET:-}
       GRAPH_MAIL_SENDER: ${GRAPH_MAIL_SENDER:-canal-denuncia@delpi.com.br}
       GRAPH_MAIL_RECIPIENT: ${GRAPH_MAIL_RECIPIENT:-ouvidoria@delpi.com.br}
+      GRAPH_REPORTS_TENANT_ID: ${GRAPH_REPORTS_TENANT_ID:-}
+      GRAPH_REPORTS_CLIENT_ID: ${GRAPH_REPORTS_CLIENT_ID:-}
+      GRAPH_REPORTS_CLIENT_SECRET: ${GRAPH_REPORTS_CLIENT_SECRET:-}
+      GRAPH_REPORTS_MAIL_SENDER: ${GRAPH_REPORTS_MAIL_SENDER:-minhadelpi@delpi.com.br}
+      REPORTS_MAIL_BATCH_SIZE: ${REPORTS_MAIL_BATCH_SIZE:-40}
+      REPORTS_RUN_ARTIFACTS_DIR: ${REPORTS_RUN_ARTIFACTS_DIR:-/app/data/reports-runs}
       GRAPH_HTTP_TIMEOUT_SECONDS: ${GRAPH_HTTP_TIMEOUT_SECONDS:-15}
 
       # Notifica chat + TV após startup (OpenAPI consumers)
@@ -1195,6 +1217,7 @@ services:
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/qr:/app/data/quality-labels/qr
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/signatures:/app/data/quality-labels/signatures
       - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/quality-labels/certificates:/app/data/quality-labels/certificates
+      - ${DELPI_DATA_HOST_DIR:-${HOME}/.delpi}/reports-runs:/app/data/reports-runs
 
     depends_on:
       keycloak:

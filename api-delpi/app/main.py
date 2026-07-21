@@ -48,6 +48,7 @@ from app.interface.http.routes.dashboard import dashboard_router
 from app.interface.http.routes.scheduling import scheduling_router
 from app.interface.http.routes.cultura_delpi import cultura_delpi_router
 from app.interface.http.routes.canal_denuncia import canal_denuncia_router
+from app.interface.http.routes.reports import reports_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_admin_router
 from app.interface.http.routes.guias_procedimentos import guias_procedimentos_media_router
@@ -241,6 +242,11 @@ app.include_router(
     canal_denuncia_router.router,
     prefix="/canal-denuncia",
     tags=["Canal de Denúncia"],
+)
+app.include_router(
+    reports_router.router,
+    prefix="/reports",
+    tags=["Delpi Reports"],
 )
 app.include_router(
     guias_procedimentos_router.router,

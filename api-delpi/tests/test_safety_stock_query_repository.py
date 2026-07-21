@@ -272,3 +272,82 @@ def test_fetch_consumption_analysis_rows_binds_period(
     assert "safety_stock <> 0" in sql
     assert params[:4] == ["01", "01", "01", "20250718"]
     assert "10020113" in params
+
+
+@patch.object(SafetyStockQueryRepository, "execute_query")
+def test_fetch_open_purchase_orders_for_branch_omits_product_param(
+    mock_execute_query: MagicMock,
+) -> None:
+    mock_execute_query.return_value = []
+    repo = SafetyStockQueryRepository()
+    with repo:
+        repo.fetch_open_purchase_orders_for_branch(branch="01")
+
+    sql, params = mock_execute_query.call_args.args
+    assert "SC7010" in sql
+    assert "C7_PRODUTO) =" not in sql
+    assert params == ["01"]
+
+
+@patch.object(SafetyStockQueryRepository, "execute_query")
+def test_fetch_open_commitments_for_branch_omits_product_param(
+    mock_execute_query: MagicMock,
+) -> None:
+    mock_execute_query.return_value = []
+    repo = SafetyStockQueryRepository()
+    with repo:
+        repo.fetch_open_commitments_for_branch(branch="02")
+
+    sql, params = mock_execute_query.call_args.args
+    assert "SD4010" in sql
+    assert "D4_COD =" not in sql
+    assert params == ["02"]
+
+
+@patch.object(SafetyStockQueryRepository, "execute_query")
+def test_fetch_materials_for_projection_batch_binds_branch_twice(
+    mock_execute_query: MagicMock,
+) -> None:
+    mock_execute_query.return_value = [
+        {
+            "product_code": "10020113",
+            "product_description": "MP TESTE",
+            "product_type": "MP",
+            "unit": "PC",
+            "product_group": "GRP",
+            "blocked_raw": "",
+            "safety_stock": 10,
+            "primary_stock": 5,
+            "work_in_process_stock": 0,
+            "warehouse_50_stock": 0,
+            "warehouse_98_stock": 0,
+            "warehouse_99_stock": 0,
+            "available_stock": 5,
+            "work_in_process_committed": 0,
+            "work_in_process_available": 0,
+            "deficit_quantity": 5,
+            "status": "below_safety_stock",
+            "secondary_unit": "CX",
+            "conversion_factor": 12,
+            "conversion_type": "M",
+        }
+    ]
+    repo = SafetyStockQueryRepository()
+    with repo:
+        rows = repo.fetch_materials_for_projection_batch(
+            branch="01",
+            include_blocked=False,
+            product_group=None,
+            unit=None,
+            search=None,
+            include_without_safety_stock=True,
+        )
+
+    sql, params = mock_execute_query.call_args.args
+    assert "B1_SEGUM" in sql
+    assert "OFFSET" not in sql.upper()
+    assert params == ["01", "01"]
+    assert len(rows) == 1
+    assert rows[0]["available_stock"] == 5.0
+    assert rows[0]["secondary_unit"] == "CX"
+    assert rows[0]["conversion_factor"] == 12.0

@@ -12,6 +12,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     consumption_monthly_series_sql,
     linked_suppliers_sql,
     materials_base_cte,
+    materials_for_projection_batch_sql,
     open_commitments_sql,
     open_purchase_orders_sql,
     product_detail_sql,
@@ -131,6 +132,36 @@ def test_open_purchase_orders_sql_filters_residue_and_open_balance() -> None:
     assert "C7_QUANT > SC7.C7_QUJE" in sql
     assert "SA2010" in sql
     assert "C7_QTDACLA" in sql
+    assert "C7_PRODUTO) =" in sql
+
+
+def test_open_purchase_orders_sql_branch_only_omits_product_filter() -> None:
+    sql = open_purchase_orders_sql(product_param=None)
+    assert "SC7010" in sql
+    assert "C7_FILIAL) =" in sql
+    assert "C7_PRODUTO) =" not in sql
+    assert sql.count("?") == 1
+
+
+def test_open_commitments_sql_branch_only_omits_product_filter() -> None:
+    sql = open_commitments_sql(product_param=None)
+    assert "SD4010" in sql
+    assert "D4_FILIAL =" in sql
+    assert "D4_COD =" not in sql
+    assert "product_code" in sql
+    assert sql.count("?") == 1
+
+
+def test_materials_for_projection_batch_sql_includes_conversion_and_no_pagination() -> None:
+    sql = materials_for_projection_batch_sql()
+    assert "materials_base" in sql
+    assert "available_stock" in sql
+    assert "B1_SEGUM" in sql
+    assert "B1_CONV" in sql
+    assert "B1_TIPCONV" in sql
+    assert "OFFSET" not in sql.upper()
+    assert "FETCH NEXT" not in sql.upper()
+    assert "TOP " not in sql.upper()
 
 
 def test_product_detail_sql_includes_conversion_fields() -> None:

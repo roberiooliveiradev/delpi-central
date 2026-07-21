@@ -42,6 +42,8 @@ FEDERATED_PLUGINS = {
     "quality-labels",
     "tv-dashboard",
     "public-hub",
+    "canal-denuncia",
+    "reports",
 }
 
 COMPOSE_FILES = [

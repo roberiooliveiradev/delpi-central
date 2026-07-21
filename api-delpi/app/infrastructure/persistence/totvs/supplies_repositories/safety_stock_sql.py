@@ -34,6 +34,7 @@ __all__ = [
     "materials_base_cte",
     "open_commitments_sql",
     "open_purchase_orders_sql",
+    "materials_for_projection_batch_sql",
     "product_detail_sql",
     "resolve_order_by",
     "stock_agg_cte",
@@ -231,8 +232,15 @@ def resolve_order_by(sort_by: str, sort_direction: str) -> str:
     return f"{column} {direction}, product_code ASC"
 
 
-def open_purchase_orders_sql(*, branch_param: str = "?", product_param: str = "?") -> str:
-    """Pedidos de compra em aberto (SC7) por filial + produto."""
+def open_purchase_orders_sql(
+    *,
+    branch_param: str = "?",
+    product_param: str | None = "?",
+) -> str:
+    """Pedidos de compra em aberto (SC7) por filial (+ produto opcional)."""
+    product_clause = ""
+    if product_param is not None:
+        product_clause = f"AND RTRIM(SC7.C7_PRODUTO) = {product_param}"
     return f"""
     SELECT
         RTRIM(SC7.C7_FILIAL) AS branch,
@@ -277,7 +285,7 @@ def open_purchase_orders_sql(*, branch_param: str = "?", product_param: str = "?
       AND ISNULL(SC7.C7_RESIDUO, '') <> 'S'
       AND SC7.C7_QUANT > SC7.C7_QUJE
       AND RTRIM(SC7.C7_FILIAL) = {branch_param}
-      AND RTRIM(SC7.C7_PRODUTO) = {product_param}
+      {product_clause}
     ORDER BY
         CASE WHEN RTRIM(SC7.C7_DATPRF) = '' THEN 1 ELSE 0 END,
         SC7.C7_DATPRF ASC,
@@ -286,8 +294,12 @@ def open_purchase_orders_sql(*, branch_param: str = "?", product_param: str = "?
     """
 
 
-def open_commitments_sql(*, branch_param: str = "?", product_param: str = "?") -> str:
-    """Empenhos em aberto (SD4) por filial + produto — saldo atual em D4_QUANT.
+def open_commitments_sql(
+    *,
+    branch_param: str = "?",
+    product_param: str | None = "?",
+) -> str:
+    """Empenhos em aberto (SD4) por filial (+ produto opcional) — saldo em D4_QUANT.
 
     SD4010 não possui coluna de UM: D4_QUANT já está na unidade primária do
     produto (B1_UM); a segunda unidade fica em D4_QTSEGUM.
@@ -295,6 +307,9 @@ def open_commitments_sql(*, branch_param: str = "?", product_param: str = "?") -
     Produto acabado: OP do empenho com os 6 primeiros dígitos + sufixo 01001
     (ex.: 24608101003 → 24608101001), resolvido em SC2.C2_PRODUTO.
     """
+    product_clause = ""
+    if product_param is not None:
+        product_clause = f"AND SD4.D4_COD = {product_param}"
     return f"""
     SELECT
         RTRIM(SD4.D4_FILIAL) AS branch,
@@ -336,12 +351,49 @@ def open_commitments_sql(*, branch_param: str = "?", product_param: str = "?") -
     WHERE SD4.D_E_L_E_T_ = ''
       AND SD4.D4_QUANT > 0
       AND SD4.D4_FILIAL = {branch_param}
-      AND SD4.D4_COD = {product_param}
+      {product_clause}
     ORDER BY
         CASE WHEN RTRIM(SD4.D4_DATA) = '' THEN 1 ELSE 0 END,
         SD4.D4_DATA ASC,
         SD4.D4_OP ASC,
         SD4.D4_TRT ASC
+    """
+
+
+def materials_for_projection_batch_sql(*, where_sql: str = "") -> str:
+    """Todas as MPs da filial com saldo + conversão UM (sem paginação)."""
+    where_prefix = f"WHERE {where_sql}" if where_sql else ""
+    return f"""
+    WITH
+    {stock_agg_cte()}
+    , {materials_base_cte()}
+    SELECT
+        mb.product_code,
+        mb.product_description,
+        mb.product_type,
+        mb.unit,
+        mb.product_group,
+        mb.blocked_raw,
+        mb.safety_stock,
+        mb.primary_stock,
+        mb.work_in_process_stock,
+        mb.warehouse_50_stock,
+        mb.warehouse_98_stock,
+        mb.warehouse_99_stock,
+        mb.available_stock,
+        mb.work_in_process_committed,
+        mb.work_in_process_available,
+        mb.deficit_quantity,
+        mb.status,
+        RTRIM(SB1.B1_SEGUM) AS secondary_unit,
+        CAST(ISNULL(SB1.B1_CONV, 0) AS FLOAT) AS conversion_factor,
+        RTRIM(SB1.B1_TIPCONV) AS conversion_type
+    FROM materials_base mb
+    INNER JOIN SB1010 SB1 WITH (NOLOCK)
+        ON RTRIM(SB1.B1_COD) = mb.product_code
+       AND SB1.D_E_L_E_T_ = ''
+    {where_prefix}
+    ORDER BY mb.product_code ASC
     """
 
 

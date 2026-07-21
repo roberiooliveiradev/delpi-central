@@ -19,6 +19,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     consumption_monthly_series_sql,
     linked_suppliers_sql,
     materials_base_cte,
+    materials_for_projection_batch_sql,
     open_commitments_sql,
     open_purchase_orders_sql,
     product_detail_sql,
@@ -279,6 +280,60 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
       with self as repo:
           rows = repo.execute_query(sql, [branch, code])
       return [self._map_open_commitment(row) for row in rows]
+
+  def fetch_open_purchase_orders_for_branch(
+      self,
+      *,
+      branch: str,
+  ) -> list[dict[str, Any]]:
+      sql = open_purchase_orders_sql(product_param=None)
+      with self as repo:
+          rows = repo.execute_query(sql, [branch])
+      return [self._map_open_purchase_order(row) for row in rows]
+
+  def fetch_open_commitments_for_branch(
+      self,
+      *,
+      branch: str,
+  ) -> list[dict[str, Any]]:
+      sql = open_commitments_sql(product_param=None)
+      with self as repo:
+          rows = repo.execute_query(sql, [branch])
+      return [self._map_open_commitment(row) for row in rows]
+
+  def fetch_materials_for_projection_batch(
+      self,
+      *,
+      branch: str,
+      include_blocked: bool,
+      product_group: str | None,
+      unit: str | None,
+      search: str | None,
+      include_without_safety_stock: bool,
+  ) -> list[dict[str, Any]]:
+      where_sql, params = build_where_clauses(
+          include_blocked=include_blocked,
+          product_group=product_group,
+          unit=unit,
+          search=search,
+          status=None,
+          include_without_safety_stock=include_without_safety_stock,
+          table_alias="mb",
+      )
+      sql = materials_for_projection_batch_sql(where_sql=where_sql)
+      # stock_agg + materials_base: branch, branch
+      query_params = [branch, branch] + params
+      with self as repo:
+          rows = repo.execute_query(sql, query_params)
+      result: list[dict[str, Any]] = []
+      for row in rows:
+          mapped = self._map_item_row(row, branch)
+          mapped["available_stock"] = float(row.get("available_stock") or 0)
+          mapped["secondary_unit"] = str(row.get("secondary_unit") or "").strip()
+          mapped["conversion_factor"] = float(row.get("conversion_factor") or 0) or None
+          mapped["conversion_type"] = str(row.get("conversion_type") or "").strip()
+          result.append(mapped)
+      return result
 
   def fetch_linked_suppliers(
       self,

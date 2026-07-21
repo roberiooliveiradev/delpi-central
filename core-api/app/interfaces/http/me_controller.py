@@ -482,6 +482,8 @@ def search_directory_users():
     # atribuição de responsável (ex.: NC 5S, área) onde o próprio usuário é válido.
     include_self = _truthy_query_flag(request.args.get("include_self"))
     exclude_user_id = None if include_self else str(user.id)
+    # Apps que precisam do SMTP real (ex.: Delpi Reports) pedem reveal_email=true.
+    reveal_email = _truthy_query_flag(request.args.get("reveal_email"))
 
     try:
         with SqlAlchemyUnitOfWork() as uow:
@@ -491,6 +493,7 @@ def search_directory_users():
                 app_id=app_id,
                 permission_code=permission_code,
                 exclude_user_id=exclude_user_id,
+                mask_email=not reveal_email,
             )
     except ValueError:
         return api_error("validation_error", "limit must be a number", status=400)

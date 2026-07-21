@@ -750,6 +750,24 @@ ROUTE_CONTRACTS: dict[str, RouteContract] = {
     # Contratos complementares (baseline x-delpi sem entrada prévia)
     "get_cultura_delpi_content": RouteContract("cultura_delpi_content", "scalar"),
     "update_cultura_delpi_content": RouteContract("cultura_delpi_content", "scalar"),
+    "list_report_definitions": RouteContract("report_definition", "paged_list"),
+    "create_report_definition": RouteContract("report_definition", "scalar"),
+    "get_report_definition": RouteContract("report_definition", "scalar"),
+    "update_report_definition": RouteContract("report_definition", "scalar"),
+    "list_report_runs": RouteContract("report_run", "paged_list"),
+    "list_report_providers": RouteContract("report_provider", "paged_list"),
+    "preview_report_provider_safety_stock_shortage_30d": RouteContract(
+        "report_dataset",
+        "paged_list",
+    ),
+    "list_report_recipients": RouteContract("report_recipient", "paged_list"),
+    "replace_report_recipients": RouteContract("report_recipient", "paged_list"),
+    "get_report_schedule": RouteContract("report_schedule", "scalar"),
+    "upsert_report_schedule": RouteContract("report_schedule", "scalar"),
+    "delete_report_schedule": RouteContract("report_schedule", "scalar"),
+    "run_report_definition": RouteContract("report_run", "scalar"),
+    "get_report_run": RouteContract("report_run", "scalar"),
+    "process_pending_report_schedules": RouteContract("report_schedule_batch", "scalar"),
     "search_customers": RouteContract("customers", "scalar"),
     "download_guias_procedimentos_attachment_file": RouteContract(
         "download_guias_procedimentos_attachment_file", "scalar"

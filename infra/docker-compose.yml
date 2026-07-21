@@ -962,6 +962,22 @@ services:
     networks:
       - delpi-network
 
+  reports:
+    depends_on:
+      - plugin-ui
+    build:
+      context: ../plugins
+      dockerfile: reports/Dockerfile
+
+    container_name: delpi-reports
+    restart: unless-stopped
+
+    environment:
+      TZ: ${TZ}
+
+    networks:
+      - delpi-network
+
   dashboard-supplies:
     depends_on:
       - plugin-ui
@@ -1185,6 +1201,12 @@ services:
       GRAPH_CLIENT_SECRET: ${GRAPH_CLIENT_SECRET:-}
       GRAPH_MAIL_SENDER: ${GRAPH_MAIL_SENDER:-canal-denuncia@delpi.com.br}
       GRAPH_MAIL_RECIPIENT: ${GRAPH_MAIL_RECIPIENT:-ouvidoria@delpi.com.br}
+      GRAPH_REPORTS_TENANT_ID: ${GRAPH_REPORTS_TENANT_ID:-}
+      GRAPH_REPORTS_CLIENT_ID: ${GRAPH_REPORTS_CLIENT_ID:-}
+      GRAPH_REPORTS_CLIENT_SECRET: ${GRAPH_REPORTS_CLIENT_SECRET:-}
+      GRAPH_REPORTS_MAIL_SENDER: ${GRAPH_REPORTS_MAIL_SENDER:-minhadelpi@delpi.com.br}
+      REPORTS_MAIL_BATCH_SIZE: ${REPORTS_MAIL_BATCH_SIZE:-40}
+      REPORTS_RUN_ARTIFACTS_DIR: ${REPORTS_RUN_ARTIFACTS_DIR:-/app/data/reports-runs}
       GRAPH_HTTP_TIMEOUT_SECONDS: ${GRAPH_HTTP_TIMEOUT_SECONDS:-15}
 
       # Notifica chat + TV após startup (OpenAPI consumers)
@@ -1221,6 +1243,7 @@ services:
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/quality-labels/qr:/app/data/quality-labels/qr
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/quality-labels/signatures:/app/data/quality-labels/signatures
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/quality-labels/certificates:/app/data/quality-labels/certificates
+      - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/reports-runs:/app/data/reports-runs
       # Logs de aplicação persistentes (sobrevivem a deploy/recreate)
       - ${DELPI_DATA_HOST_DIR:-/var/lib/delpi}/api-delpi-logs:/app/logs
 
@@ -1641,6 +1664,7 @@ services:
       - estoque-seguranca
       - production-appointments
       - canal-denuncia
+      - reports
       - dashboard-supplies
       - dashboard-financial
       - financeiro-centro-custo

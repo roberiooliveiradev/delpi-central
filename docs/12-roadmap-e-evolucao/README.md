@@ -100,3 +100,12 @@ Estado atual, decisões consolidadas, pendências e plano de evolução.
 |---|---|
 | [tv-dashboard/README.md](./tv-dashboard/README.md) | **Documentação da aplicação** — arquitetura, rotas, deploy, troubleshooting |
 | [tv-dashboard/PLAYBOOK-EXCELENCIA.md](./tv-dashboard/PLAYBOOK-EXCELENCIA.md) | Playbook de implementação — north star, ondas, critérios |
+
+### Delpi Reports
+
+| Arquivo | Conteúdo |
+|---|---|
+| [delpi-reports/README.md](./delpi-reports/README.md) | Visão, arquitetura, decisões e glossário |
+| [delpi-reports/ROADMAP.md](./delpi-reports/ROADMAP.md) | **Plano de implementação por fases** (0–5) |
+| [delpi-reports/ADR-001-fundacao.md](./delpi-reports/ADR-001-fundacao.md) | ADR Fase 0 — schema, provider, Graph, RBAC |
+| [delpi-reports/SCHEMA.md](./delpi-reports/SCHEMA.md) | Modelo Postgres `reports` |

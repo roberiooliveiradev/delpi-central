@@ -1,0 +1,62 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "reports",
+  "name": "Delpi Reports",
+  "description": "Cadastro, agendamento e envio de relatórios por e-mail aos colaboradores",
+  "icon": "file-text-icon",
+  "version": "0.1.0",
+  "type": "microfrontend",
+  "basePath": "/apps/reports",
+  "entry": "/apps/reports/assets/remoteEntry.js",
+  "permissions": [
+    {
+      "code": "reports.view",
+      "name": "Visualizar Delpi Reports",
+      "description": "Ver definições, histórico e preview de relatórios",
+      "module": "reports"
+    },
+    {
+      "code": "reports.manage",
+      "name": "Administrar Delpi Reports",
+      "description": "Criar/editar definições, destinatários, agendas e disparar envios",
+      "module": "reports"
+    },
+    {
+      "code": "reports.view.filial-sc",
+      "name": "Reports — visualizar SC",
+      "description": "Escopo filial SC (TOTVS 01) em relatórios operacionais",
+      "module": "reports"
+    },
+    {
+      "code": "reports.view.filial-es",
+      "name": "Reports — visualizar ES",
+      "description": "Escopo filial ES (TOTVS 02) em relatórios operacionais",
+      "module": "reports"
+    },
+    {
+      "code": "reports.manage.filial-sc",
+      "name": "Reports — administrar SC",
+      "description": "Gestão de relatórios com escopo filial SC",
+      "module": "reports"
+    },
+    {
+      "code": "reports.manage.filial-es",
+      "name": "Reports — administrar ES",
+      "description": "Gestão de relatórios com escopo filial ES",
+      "module": "reports"
+    }
+  ],
+  "routes": [
+    {
+      "path": "/apps/reports",
+      "label": "Delpi Reports",
+      "permission": "reports.view",
+      "icon": "file-text-icon",
+      "order": 40,
+      "showInMenu": true
+    }
+  ],
+  "ui": {
+    "renderMode": "federated"
+  }
+}

@@ -314,7 +314,24 @@ Consequências:
 
 ---
 
-## 18. Decisões a revisar futuramente
+## 18. Delpi Reports — fundação (jul/2026)
+
+Decisão:
+
+```text
+Relatórios agendados por e-mail vivem no plugin reports + schema api-delpi/reports,
+com providers desacoplados e Microsoft Graph (send_mail_to + GRAPH_REPORTS_MAIL_SENDER).
+```
+
+Consequências:
+
+- ADR detalhado: [delpi-reports/ADR-001-fundacao.md](./delpi-reports/ADR-001-fundacao.md);
+- schema: [delpi-reports/SCHEMA.md](./delpi-reports/SCHEMA.md);
+- canal-denúncia permanece em `send_mail()` / `GRAPH_MAIL_RECIPIENT`.
+
+---
+
+## 19. Decisões a revisar futuramente
 
 1. Cache RBAC em memória versus cache distribuído.
 2. Estratégia oficial de migrations do `postgres-plugins`.
@@ -325,10 +342,11 @@ Consequências:
 
 ---
 
-## 19. Documentos relacionados
+## 20. Documentos relacionados
 
 - [status-atual.md](./status-atual.md)
 - [pendencias-tecnicas.md](./pendencias-tecnicas.md)
 - [roadmap.md](./roadmap.md)
 - [../01-arquitetura/arquitetura-geral.md](../01-arquitetura/arquitetura-geral.md)
 - [../README.md](../README.md)
+- [delpi-reports/ADR-001-fundacao.md](./delpi-reports/ADR-001-fundacao.md)
