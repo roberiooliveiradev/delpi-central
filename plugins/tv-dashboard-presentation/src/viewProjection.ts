@@ -259,9 +259,13 @@ function resolveKpiMetricsWithProjection(
   if (projected && projected.length > 0) {
     return projected.map((metric) => {
       const base = byField.get(metric.field);
-      const fromRows =
+      const rowValues =
         rows.length > 0
-          ? aggregateValues(columnValuesFromRows(rows, metric.field), metric.aggregation ?? "first")
+          ? columnValuesFromRows(rows, metric.field).filter((value) => value != null && value !== "")
+          : [];
+      const fromRows =
+        rowValues.length > 0
+          ? aggregateValues(rowValues, metric.aggregation ?? "first")
           : null;
       const value =
         fromRows != null

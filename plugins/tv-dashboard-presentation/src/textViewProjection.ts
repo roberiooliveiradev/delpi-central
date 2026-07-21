@@ -86,12 +86,32 @@ function extractFieldRawValue(resolved: ComunicadoDataResolved | undefined, fiel
   return undefined;
 }
 
+function fieldMatchesKpiMetric(
+  resolved: ComunicadoDataResolved | undefined,
+  field: string,
+): boolean {
+  if (!resolved || !field.trim()) return false;
+  const trimmed = field.trim();
+  if (resolved.kpiMetrics?.some((metric) => metric.field === trimmed)) return true;
+  if (resolved.kpi && (trimmed === "value" || trimmed === resolved.kpi.label)) return true;
+  return false;
+}
+
 function extractFieldValues(resolved: ComunicadoDataResolved | undefined, field: string): unknown[] {
   if (!resolved || !field.trim()) return [];
   const trimmed = field.trim();
+  // KPI escalar (SI meta/realizado, etc.) anexam tabela campo/valor — não pode
+  // sombrear `value` / métricas com coluna vazia ou inexistente nas linhas.
+  if (fieldMatchesKpiMetric(resolved, trimmed)) {
+    const scalar = extractFieldRawValue(resolved, trimmed);
+    return scalar === undefined ? [] : [scalar];
+  }
   const rows = resolved.table?.rows ?? [];
   if (rows.length > 0) {
-    return columnValuesFromRows(rows, trimmed);
+    const fromRows = columnValuesFromRows(rows, trimmed).filter(
+      (value) => value != null && value !== "",
+    );
+    if (fromRows.length > 0) return fromRows;
   }
   const scalar = extractFieldRawValue(resolved, trimmed);
   return scalar === undefined ? [] : [scalar];

@@ -1474,6 +1474,17 @@
   white-space: nowrap;
 }
 
+.tdp-data-source__value {
+  font-size: 1.35em;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tdp-data-source__filters {
   list-style: none;
   margin: 0.15em 0 0;

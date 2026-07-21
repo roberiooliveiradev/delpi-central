@@ -507,11 +507,7 @@ def test_enrich_si_scalar_meta_prefers_value_not_alias_metrics():
     assert metrics[0]["field"] == "value"
     assert metrics[0]["value"] == 1100.0
     assert enriched[0]["resolved"]["kpi"]["value"] == 1100.0
-    table_rows = enriched[0]["resolved"].get("table", {}).get("rows") or []
-    campos = {row.get("campo") for row in table_rows}
-    assert "comparable_goal" not in campos
-    assert "goal_value" not in campos
-    assert "value_decimals" not in campos
+    assert "table" not in enriched[0]["resolved"] or not enriched[0]["resolved"].get("table")
 
 
 def test_enrich_table_reads_branches_and_ranking_list_keys():

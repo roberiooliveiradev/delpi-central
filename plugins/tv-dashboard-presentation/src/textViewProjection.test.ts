@@ -67,4 +67,29 @@ describe("textViewProjection", () => {
   it("formatTextProjectionValue compact", () => {
     expect(formatTextProjectionValue(12500, "compact")).toMatch(/12/);
   });
+
+  it("campo value do KPI não é sombreado por tabela campo/valor (SI escalar)", () => {
+    const siResolved: ComunicadoDataResolved = {
+      kpi: { value: 1100, label: "value" },
+      kpiMetrics: [{ field: "value", value: 1100, label: "value" }],
+      table: {
+        columns: [
+          { key: "campo", label: "Campo" },
+          { key: "valor", label: "Valor" },
+        ],
+        rows: [
+          { campo: "name", valor: "PPM Externo" },
+          { campo: "value", valor: 1100 },
+        ],
+      },
+    };
+    expect(
+      resolveTextDisplayValue(siResolved, {
+        field: "value",
+        aggregation: "first",
+        format: "number",
+        fallback: "—",
+      }).text,
+    ).toMatch(/1[.‎]?100|1\.100|1100/);
+  });
 });

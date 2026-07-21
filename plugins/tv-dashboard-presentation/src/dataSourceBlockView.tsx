@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import { sanitizeDataSourceStyle } from "./comunicadoHelpers";
 import { formatDataSourceBindingSummary } from "./formatDataSourceBindingSummary";
 import type { ComunicadoDataFilters, ComunicadoDataSourceBlock } from "./comunicadoTypes";
+import { formatNumber } from "./nativeFormat";
 import { resolveDataBlockErrorText } from "./resolveDataBlockErrorText";
 
 type Props = {
@@ -48,6 +49,13 @@ export function DataSourceBlockView({
     labelForValue: labelForParamValue,
   });
   const paintStyle = resolveDataSourcePaintStyle(block);
+  const kpiRaw = block.resolved?.kpi?.value;
+  const kpiDisplay =
+    kpiRaw != null && kpiRaw !== ""
+      ? typeof kpiRaw === "number"
+        ? formatNumber(kpiRaw)
+        : String(kpiRaw)
+      : null;
 
   const errorText = resolveDataBlockErrorText(block.resolved);
   if (errorText) {
@@ -71,7 +79,9 @@ export function DataSourceBlockView({
           <Database className="tdp-data-source__icon" aria-hidden="true" />
           <span className="tdp-data-source__label">{summary.label}</span>
         </div>
-        {summary.operationId && summary.operationId !== summary.label ? (
+        {kpiDisplay != null ? (
+          <span className="tdp-data-source__value">{kpiDisplay}</span>
+        ) : summary.operationId && summary.operationId !== summary.label ? (
           <span className="tdp-data-source__meta">{summary.operationId}</span>
         ) : null}
         {summary.filterLines.length > 0 ? (

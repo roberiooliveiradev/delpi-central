@@ -568,6 +568,11 @@ def _series_to_table_rows(
     return rows, columns
 
 
+def _is_scalar_field_value_table(columns: list[dict[str, str]]) -> bool:
+    keys = {str(col.get("key") or "").strip() for col in columns}
+    return keys == {"campo", "valor"}
+
+
 def _scalar_object_as_table_rows(
     data: Any,
     *,
@@ -1127,6 +1132,8 @@ class ComunicadoDataEnrichmentService:
             }
             # Relatório com lista: anexa tabela para preview/TV poderem cair no ranking
             # quando o summary só tem metadados ou o KPI summary não cobre o conteúdo.
+            # Não anexar dump campo/valor de escalares (SI meta/realizado) quando já há
+            # kpiMetrics — sombreava o campo `value` no texto dinâmico / tabela fantasma.
             rows, columns = _extract_table_rows(
                 data,
                 route_info.get("tableFields"),
@@ -1136,7 +1143,10 @@ class ComunicadoDataEnrichmentService:
                 branch=branch_str,
                 value_label=label,
             )
-            if rows:
+            if rows and not (
+                metrics
+                and _is_scalar_field_value_table(columns)
+            ):
                 resolved["table"] = {"rows": rows, "columns": columns}
             return resolved
 
@@ -1329,6 +1339,16 @@ class ComunicadoDataEnrichmentService:
                         label=resolved.get("label"),
                     )
                 )
+            # Merge dos 3 modos pode repor dump campo/valor depois do KPI — remove se
+            # já há métrica de negócio (ex.: SI value), senão texto dinâmico lê coluna vazia.
+            table = resolved.get("table")
+            metrics = resolved.get("kpiMetrics") or []
+            if (
+                metrics
+                and isinstance(table, dict)
+                and _is_scalar_field_value_table(table.get("columns") or [])
+            ):
+                resolved.pop("table", None)
             query_table = (
                 None
                 if isinstance(transform_result, dict) and transform_result.get("failed")
