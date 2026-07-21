@@ -5,6 +5,7 @@ import {
   DELPI_TV_BLOCKS_CLIPBOARD_PREFIX,
   blocksFromExternalHtml,
   blocksFromPlainText,
+  hasExternalClipboardPayload,
   looksLikeInternalBlocksPayload,
   parseInternalBlocksPayload,
   planExternalClipboardPaste,
@@ -121,5 +122,27 @@ describe("externalClipboardPaste", () => {
     );
     expect(plan.kind).toBe("images");
     if (plan.kind === "images") expect(plan.files).toHaveLength(1);
+  });
+
+  it("detecta payload externo mesmo quando o planner não extrai blocos (HTML Slides)", () => {
+    const html = `<html><body><div class="punch-viewer"><svg></svg></div></body></html>`;
+    const dt = mockDataTransfer({ html, plain: "" });
+    expect(planExternalClipboardPaste(dt).kind).toBe("empty");
+    expect(hasExternalClipboardPayload(dt)).toBe(true);
+  });
+
+  it("não trata payload Delpi como externo", () => {
+    const internal = serializeInternalBlocksPayload([
+      { id: "x", type: "shape", content: "Poliana", frame: { x: 0, y: 0, w: 10, h: 10 } } as never,
+    ]);
+    const dt = mockDataTransfer({ plain: internal });
+    expect(hasExternalClipboardPayload(dt)).toBe(false);
+    expect(planExternalClipboardPaste(dt).kind).toBe("internal-blocks");
+  });
+
+  it("texto externo simples conta como payload externo", () => {
+    const dt = mockDataTransfer({ plain: "PROPÓSITO da Delpi" });
+    expect(hasExternalClipboardPayload(dt)).toBe(true);
+    expect(planExternalClipboardPaste(dt).kind).toBe("blocks");
   });
 });

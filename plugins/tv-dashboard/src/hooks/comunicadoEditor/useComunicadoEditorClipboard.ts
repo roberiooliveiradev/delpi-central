@@ -12,6 +12,7 @@ import { isEditableKeyboardTarget } from "../../keyboard";
 import { cloneBlocksForClipboard, pasteClipboardBlocks } from "../../utils/comunicadoEditorClipboard";
 import {
   assignPasteStack,
+  hasExternalClipboardPayload,
   planExternalClipboardPaste,
   serializeInternalBlocksPayload,
   type ExternalPastePlan,
@@ -29,6 +30,14 @@ type Options = {
   getEditingTextId?: () => string | null;
 };
 
+type PasteOptions = {
+  /**
+   * Só usa clipboard interno da sessão quando o SO não trouxe payload externo.
+   * Default true. False no 1º passo do Ctrl+V (evita colar «Poliana» no lugar do Google).
+   */
+  allowInternalFallback?: boolean;
+};
+
 async function writeBlocksToSystemClipboard(blocks: ComunicadoBlock[]): Promise<void> {
   if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) return;
   try {
@@ -36,6 +45,24 @@ async function writeBlocksToSystemClipboard(blocks: ComunicadoBlock[]): Promise<
   } catch {
     // Sem permissão / contexto inseguro — clipboard interno em memória permanece.
   }
+}
+
+async function buildDataTransferFromClipboardItems(items: ClipboardItems): Promise<DataTransfer> {
+  const dt = new DataTransfer();
+  for (const item of items) {
+    for (const type of item.types) {
+      if (type.startsWith("image/")) {
+        const blob = await item.getType(type);
+        const ext = type.split("/")[1] || "png";
+        dt.items.add(new File([blob], `clipboard.${ext}`, { type }));
+      } else if (type === "text/plain" || type === "text/html") {
+        const blob = await item.getType(type);
+        const text = await blob.text();
+        dt.setData(type, text);
+      }
+    }
+  }
+  return dt;
 }
 
 export function useComunicadoEditorClipboard({
@@ -169,16 +196,24 @@ export function useComunicadoEditorClipboard({
   }, [insertBlocks]);
 
   /**
-   * Cola do SO (Ctrl+V / menu): payload Delpi, imagem, HTML/texto/TSV;
-   * se o SO estiver vazio, cai no clipboard interno da sessão.
+   * Cola a partir de um DataTransfer (evento paste ou montado via Clipboard API).
+   * Anti-padrão: cair no clipboard interno quando o SO trouxe HTML/imagem externos.
    */
   const pasteFromClipboardData = useCallback(
-    async (data: DataTransfer | null | undefined): Promise<boolean> => {
+    async (
+      data: DataTransfer | null | undefined,
+      options?: PasteOptions,
+    ): Promise<boolean> => {
+      const allowInternalFallback = options?.allowInternalFallback !== false;
       const plan = planExternalClipboardPaste(data);
       if (plan.kind !== "empty") {
         return applyPastePlan(plan);
       }
-      if (clipboardRef.current.length > 0) {
+      // SO trouxe algo externo que ainda não viramos bloco — nunca substituir pela última forma do plugin.
+      if (hasExternalClipboardPayload(data)) {
+        return false;
+      }
+      if (allowInternalFallback && clipboardRef.current.length > 0) {
         await pasteSelected();
         return true;
       }
@@ -187,37 +222,39 @@ export function useComunicadoEditorClipboard({
     [applyPastePlan, pasteSelected],
   );
 
-  const pasteFromSystemClipboard = useCallback(async (): Promise<boolean> => {
-    if (typeof navigator === "undefined" || !navigator.clipboard) {
-      return pasteFromClipboardData(null);
-    }
+  const readSystemClipboardDataTransfer = useCallback(async (): Promise<DataTransfer | null> => {
+    if (typeof navigator === "undefined" || !navigator.clipboard) return null;
     try {
       if (navigator.clipboard.read) {
         const items = await navigator.clipboard.read();
-        const dt = new DataTransfer();
-        for (const item of items) {
-          for (const type of item.types) {
-            if (type.startsWith("image/")) {
-              const blob = await item.getType(type);
-              const ext = type.split("/")[1] || "png";
-              dt.items.add(new File([blob], `clipboard.${ext}`, { type }));
-            } else if (type === "text/plain" || type === "text/html") {
-              const blob = await item.getType(type);
-              const text = await blob.text();
-              dt.setData(type, text);
-            }
-          }
-        }
-        return pasteFromClipboardData(dt);
+        return buildDataTransferFromClipboardItems(items);
       }
       const text = await navigator.clipboard.readText();
       const dt = new DataTransfer();
       dt.setData("text/plain", text);
-      return pasteFromClipboardData(dt);
+      return dt;
     } catch {
-      return pasteFromClipboardData(null);
+      try {
+        const text = await navigator.clipboard.readText();
+        const dt = new DataTransfer();
+        dt.setData("text/plain", text);
+        return dt;
+      } catch {
+        return null;
+      }
     }
-  }, [pasteFromClipboardData]);
+  }, []);
+
+  const pasteFromSystemClipboard = useCallback(async (): Promise<boolean> => {
+    const dt = await readSystemClipboardDataTransfer();
+    if (dt) {
+      const applied = await pasteFromClipboardData(dt, { allowInternalFallback: false });
+      if (applied) return true;
+      // Payload externo ilegível — não cola a forma antiga do plugin.
+      if (hasExternalClipboardPayload(dt)) return false;
+    }
+    return pasteFromClipboardData(null, { allowInternalFallback: true });
+  }, [pasteFromClipboardData, readSystemClipboardDataTransfer]);
 
   const cutSelected = useCallback(() => {
     copySelected();
@@ -232,15 +269,41 @@ export function useComunicadoEditorClipboard({
 
       event.preventDefault();
       pastingRef.current = true;
-      void pasteFromClipboardData(event.clipboardData)
-        .catch(() => undefined)
-        .finally(() => {
+      void (async () => {
+        try {
+          // 1) Evento paste (text/html/plain; arquivos quando o browser expõe).
+          const fromEvent = await pasteFromClipboardData(event.clipboardData, {
+            allowInternalFallback: false,
+          });
+          if (fromEvent) return;
+
+          // 2) Clipboard API — Google Slides costuma colocar PNG só aqui, não no evento.
+          const systemDt = await readSystemClipboardDataTransfer();
+          if (systemDt) {
+            const fromSystem = await pasteFromClipboardData(systemDt, {
+              allowInternalFallback: false,
+            });
+            if (fromSystem) return;
+            if (
+              hasExternalClipboardPayload(systemDt) ||
+              hasExternalClipboardPayload(event.clipboardData)
+            ) {
+              return;
+            }
+          } else if (hasExternalClipboardPayload(event.clipboardData)) {
+            return;
+          }
+
+          // 3) Só então: memória da sessão (última cópia dentro do plugin).
+          await pasteFromClipboardData(null, { allowInternalFallback: true });
+        } finally {
           pastingRef.current = false;
-        });
+        }
+      })();
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
-  }, [getEditingTextId, pasteFromClipboardData]);
+  }, [getEditingTextId, pasteFromClipboardData, readSystemClipboardDataTransfer]);
 
   const canPaste = true;
   void clipboardRevision;
@@ -252,7 +315,7 @@ export function useComunicadoEditorClipboard({
     copySelected,
     cutSelected,
     pasteSelected,
-    /** Colar: tenta SO (menu) e cai no interno. */
+    /** Colar: tenta SO (menu) e cai no interno só se o SO estiver vazio. */
     pasteFromSystemClipboard,
     pasteFromClipboardData,
     canPaste,

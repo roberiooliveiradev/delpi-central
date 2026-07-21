@@ -224,6 +224,41 @@ function collectImageFiles(data: DataTransfer): File[] {
 }
 
 /**
+ * Há conteúdo externo no DataTransfer (Google Slides, web, imagem…)?
+ * Usado para NÃO cair no clipboard interno da sessão quando o SO trouxe
+ * payload que ainda não viramos bloco (ex.: PNG só na Clipboard API).
+ */
+export function hasExternalClipboardPayload(data: DataTransfer | null | undefined): boolean {
+  if (!data) return false;
+
+  const images = collectImageFiles(data);
+  if (images.length > 0) return true;
+
+  const plain = data.getData("text/plain") ?? "";
+  if (plain.trim() && !looksLikeInternalBlocksPayload(plain)) return true;
+
+  const html = data.getData("text/html") ?? "";
+  if (html.trim()) {
+    const htmlPlain = stripHtmlToText(html);
+    if (htmlPlain && looksLikeInternalBlocksPayload(htmlPlain)) return false;
+    // HTML do Slides/Docs conta como externo mesmo sem texto extraível (recorte virá via read()).
+    return true;
+  }
+
+  if (data.items) {
+    for (const item of Array.from(data.items)) {
+      if (item.kind === "file" && item.type.startsWith("image/")) return true;
+      if (item.kind === "string" && (item.type === "text/html" || item.type === "text/plain")) {
+        // Tipos presentes sem getData preenchido (alguns browsers no paste) — tratar como externo.
+        if (item.type === "text/html") return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Prioridade: blocos internos → imagens → HTML estruturado → texto/TSV.
  * Google Slides costuma oferecer PNG da seleção + HTML; preferimos a imagem
  * quando não há payload interno (reprodução fiel do recorte).
