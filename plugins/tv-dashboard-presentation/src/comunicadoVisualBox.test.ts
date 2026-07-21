@@ -12,9 +12,21 @@ import {
   visualBoxSupportsInlineTextEditing,
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
+  VISUAL_BOX_CONTENT_INSET,
 } from "./comunicadoVisualBox";
 
 describe("comunicadoVisualBox", () => {
+  it("usa inset tipográfico canônico (editor ≡ TV)", () => {
+    const heading = createBlock("heading", "Título");
+    const shape = { ...createShapeBlock("rounded-rect"), content: "KPI" };
+    const headingLayout = resolveVisualBoxContentLayoutStyle(heading);
+    const shapeLayout = resolveVisualBoxContentLayoutStyle(shape);
+    expect(headingLayout.padding).toBe(VISUAL_BOX_CONTENT_INSET);
+    expect(shapeLayout.padding).toBe(VISUAL_BOX_CONTENT_INSET);
+    expect(headingLayout.justifyContent).toBe("center");
+    expect(shapeLayout.justifyContent).toBe("center");
+  });
+
   it("identifica caixas visuais (texto e forma)", () => {
     const heading = createBlock("heading", "Título");
     const shape = createShapeBlock("rectangle");

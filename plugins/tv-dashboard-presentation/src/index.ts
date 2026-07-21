@@ -357,6 +357,7 @@ export {
   isComunicadoVisualBoxBlock,
   resolveVisualBoxChrome,
   resolveVisualBoxContentLayoutStyle,
+  VISUAL_BOX_CONTENT_INSET,
   resolveVisualBoxProfile,
   resolveVisualBoxShapeKind,
   visualBoxBlockModifierClasses,

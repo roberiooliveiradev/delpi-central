@@ -199,6 +199,12 @@ export function defaultVerticalAlignForVisualBox(
   return "middle";
 }
 
+/**
+ * Inset tipográfico canônico da caixa visual (editor e TV).
+ * Uma fonte de verdade — o palco e a apresentação devem usar o mesmo valor.
+ */
+export const VISUAL_BOX_CONTENT_INSET = "0.4em";
+
 /** Estilos do contêiner flex da caixa visual (texto e forma com texto). */
 export function resolveVisualBoxContentLayoutStyle(
   block: ComunicadoVisualBoxBlock,
@@ -224,7 +230,7 @@ export function resolveVisualBoxContentLayoutStyle(
     if (style.textAlign) css.textAlign = style.textAlign;
     css.position = "absolute";
     css.inset = 0;
-    css.padding = "0.4em";
+    css.padding = VISUAL_BOX_CONTENT_INSET;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   } else {
     css.alignItems =
@@ -232,7 +238,7 @@ export function resolveVisualBoxContentLayoutStyle(
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     css.position = "absolute";
     css.inset = 0;
-    css.padding = "0.4em";
+    css.padding = VISUAL_BOX_CONTENT_INSET;
     if (textAlign) css.textAlign = textAlign;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   }

@@ -376,7 +376,16 @@
 .tdp-comunicado__block {
   position: absolute;
   box-sizing: border-box;
-  padding: 0.4em;
+  /* Sem padding no wrapper — inset tipográfico só via resolveVisualBoxContentLayoutStyle
+   * (editor e TV). Padding aqui encolhia o box na TV e divergia do palco (padding: 0). */
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Heading/texto: overflow no wrapper; tipografia usa overflow:visible (não cortar glifos). */
+.tdp-comunicado__block--heading,
+.tdp-comunicado__block--text {
+  padding: 0;
   overflow: hidden;
 }
 
@@ -444,14 +453,19 @@
 .tdp-comunicado__block--heading h1,
 .tdp-comunicado__block--text p,
 .tdp-comunicado__block--heading .tdp-comunicado__rich-text,
-.tdp-comunicado__block--text .tdp-comunicado__rich-text {
+.tdp-comunicado__block--text .tdp-comunicado__rich-text,
+.tdp-comunicado__visual-box-content > h1,
+.tdp-comunicado__visual-box-content > p,
+.tdp-comunicado__visual-box-content > span,
+.tdp-comunicado__visual-box-content > .tdp-comunicado__rich-text {
   margin: 0;
   line-height: inherit;
   width: 100%;
-  flex: 1;
+  /* flex:1 engolia a altura e anulava verticalAlign (texto colado no topo / corte). */
+  flex: 0 0 auto;
   text-align: inherit;
   white-space: pre-wrap;
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
 }
 
@@ -518,7 +532,8 @@
 
 .tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > h1,
 .tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > p,
-.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > span {
+.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > span,
+.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > .tdp-comunicado__rich-text {
   margin: 0;
   flex: 0 0 auto;
   width: 100%;
@@ -568,14 +583,14 @@
   overflow: visible;
 }
 
+/*
+ * Shell do texto na caixa visual.
+ * Padding / justify / align vêm de `resolveVisualBoxContentLayoutStyle` (inline) —
+ * não hardcoded aqui, senão a TV diverge do verticalAlign do editor.
+ */
 .tdp-comunicado__shape-text {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4em;
-  text-align: center;
   pointer-events: none;
 }
 

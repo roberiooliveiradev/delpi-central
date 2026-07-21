@@ -15,6 +15,7 @@ import {
   plainTextFromContentRuns,
   renderTextBlockEditorHtml,
   resolveTextBlockDisplayRuns,
+  resolveVisualBoxContentLayoutStyle,
   resolveVisualBoxDisplayText,
   restoreEditableTextSelection,
   syncTextBlockFromRuns,
@@ -92,6 +93,10 @@ export function ComunicadoEditorTextBlock({
     // Rotação fica no wrap de seleção (handles/outline alinhados ao bloco).
     transform: undefined,
   };
+  const contentLayoutStyle = resolveVisualBoxContentLayoutStyle(block, {
+    fontScale,
+    editorInteractive: true,
+  });
   const innerStyle = comunicadoTextInnerStyle(block, { fontScale });
   const linkStyle = hrefLineStyle();
 
@@ -346,7 +351,10 @@ export function ComunicadoEditorTextBlock({
     const showPlaceholder = !editorRunsForBlock(block).some((run) => run.text.trim());
     return (
       <div className={blockClass} style={style} onPointerDown={(event) => event.stopPropagation()}>
-        <div className={`td-composer__inline-text-wrap td-composer__inline-text-wrap--${block.type}`}>
+        <div
+          className={`td-composer__inline-text-wrap td-composer__inline-text-wrap--${block.type}`}
+          style={contentLayoutStyle}
+        >
           <div
             ref={editorRef}
             className={[
@@ -429,7 +437,7 @@ export function ComunicadoEditorTextBlock({
         setEditingTextId(block.id);
       }}
     >
-      <div className="td-composer__text-block-body">
+      <div className="td-composer__text-block-body" style={contentLayoutStyle}>
         {hasRichTextRuns(displayBlock) ? (
           <ComunicadoTextRunsView
             block={displayBlock}

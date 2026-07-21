@@ -1795,7 +1795,8 @@ body.td-composer--marqueeing *{
   text-align: inherit;
   line-height: inherit;
   white-space: pre-wrap;
-  overflow: hidden;
+  /* Igual native-screens: overflow:hidden no glifo cortava texto na prévia/TV. */
+  overflow: visible;
   box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-composer__inline-text-wrap{
