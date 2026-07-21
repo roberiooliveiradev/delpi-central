@@ -1824,17 +1824,19 @@
         ]
       },
       "route": {
-        "pathMarkers": [
-          "/lmps",
-          "/dashboard/summary"
+        "pathSuffix": "/lmps/dashboard/summary",
+        "operationIdMarkers": [
+          "get_lmps_dashboard_summary",
+          "lmps_dashboard_summary"
         ],
         "excludePathMarkers": [
-          "transforma"
+          "transforma",
+          "{sale_number}"
         ],
         "method": "GET"
       },
       "parameters": {
-        "strategy": "lmp"
+        "strategy": "date_branch"
       },
       "presentation": {
         "reasonKey": "lmpQuery"
@@ -1860,7 +1862,8 @@
           "/dashboard/items"
         ],
         "excludePathMarkers": [
-          "transforma"
+          "transforma",
+          "{sale_number}"
         ],
         "method": "GET"
       },

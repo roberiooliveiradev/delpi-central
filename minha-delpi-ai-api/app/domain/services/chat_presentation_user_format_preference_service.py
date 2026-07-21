@@ -81,6 +81,9 @@ class ChatPresentationUserFormatPreferenceService:
 
         chart_hints = ChatPresentationVocabularyService.format_preference_markers("chartHints")
         table_hints = ChatPresentationVocabularyService.format_preference_markers("tableHints")
+        dashboard_hints = ChatPresentationVocabularyService.format_preference_markers(
+            "dashboardHints"
+        )
         line_tokens = ChatPresentationVocabularyService.format_preference_markers("lineTokens")
         area_tokens = ChatPresentationVocabularyService.format_preference_markers("areaTokens")
         donut_tokens = ChatPresentationVocabularyService.format_preference_markers("donutTokens")
@@ -92,6 +95,10 @@ class ChatPresentationUserFormatPreferenceService:
         chart_subtype_tokens = ChatPresentationVocabularyService.format_preference_markers(
             "chartSubtypeTokens",
         )
+        lowered = str(message or "").strip().lower()
+
+        if any(hint in lowered for hint in dashboard_hints):
+            return "dashboard"
 
         for alias, mapped in _USER_FORMAT_ALIASES.items():
             if alias in ("text", "table") and f"em {alias}" in message:

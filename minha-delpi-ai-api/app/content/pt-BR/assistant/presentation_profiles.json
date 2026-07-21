@@ -35,7 +35,7 @@
     },
     "playbook_report": {
       "defaultViewPolicy": "table_when_available",
-      "chartPolicy": "skip",
+      "chartPolicy": "auto",
       "commentaryProfileKey": "generic_list"
     },
     "list": {
@@ -1178,22 +1178,24 @@
     "playbook_report": {
       "defaultViewPolicy": "table_when_available",
       "viewOrder": [
-        "text",
         "table",
-        "chart",
-        "tree",
         "kpi",
-        "dashboard"
+        "dashboard",
+        "chart",
+        "text",
+        "tree"
       ],
       "stackPlan": "table_list",
       "flags": [
-        "table"
+        "table",
+        "kpi"
       ],
-      "chartPolicy": "skip",
+      "chartPolicy": "auto",
       "stackTailPolicy": "table_primary",
       "commentaryProfileKey": "generic_list",
       "narrativePolicy": "generic_data_summary",
-      "humanizedNarrative": "enrich"
+      "humanizedNarrative": "enrich",
+      "visualBundlePolicy": "eager"
     },
     "sql": {
       "defaultViewPolicy": "generic",

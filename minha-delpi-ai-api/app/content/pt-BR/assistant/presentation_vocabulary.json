@@ -65,7 +65,11 @@
       "analise integrada",
       "análise integrada",
       "informações completas",
-      "informacoes completas"
+      "informacoes completas",
+      "painel de indicadores",
+      "painel de idd",
+      "visão em painel",
+      "visao em painel"
     ]
   },
   "exclusiveRawMaterialTruthy": ["SIM", "S", "TRUE", "1"],
@@ -133,6 +137,14 @@
   "formatPreferenceMarkers": {
     "chartHints": ["em gráfico", "em grafico", "como gráfico", "como grafico"],
     "tableHints": ["em tabela", "como tabela", "formato tabela"],
+    "dashboardHints": [
+      "painel",
+      "como painel",
+      "em painel",
+      "dashboard",
+      "visão consolidada",
+      "visao consolidada"
+    ],
     "lineTokens": ["linha", "line"],
     "areaTokens": ["área", "area"],
     "donutTokens": ["rosca", "donut"],

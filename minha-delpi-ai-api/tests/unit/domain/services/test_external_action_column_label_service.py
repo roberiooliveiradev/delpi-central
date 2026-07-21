@@ -163,6 +163,35 @@ def test_format_field_value_applies_currency_percent_and_days():
     assert service.format_field_value("pmr_days", 42) == "42 dias"
 
 
+def test_format_field_value_unwraps_consolidated_envelope():
+    service = ExternalActionColumnLabelService()
+
+    assert service.format_field_value("realized", {"consolidated": None}) == "—"
+    assert service.format_field_value("goals", {"consolidated": 95}) == "95"
+    assert (
+        ExternalActionColumnLabelService.unwrap_nested_scalar({"consolidated": 15000})
+        == 15000
+    )
+
+
+def test_flatten_row_scalars_for_department_indicators():
+    from app.domain.services.chat_presentation_operational_table_service import (
+        ChatPresentationOperationalTableService,
+    )
+
+    row = ChatPresentationOperationalTableService.flatten_row_scalars(
+        {
+            "name": "Prazo",
+            "value": None,
+            "realized": {"consolidated": None},
+            "goals": {"consolidated": 95.0},
+        }
+    )
+
+    assert row["realized"] is None
+    assert row["goals"] == 95.0
+
+
 def test_merge_meta_field_formats_reads_api_meta():
     service = ExternalActionColumnLabelService()
 

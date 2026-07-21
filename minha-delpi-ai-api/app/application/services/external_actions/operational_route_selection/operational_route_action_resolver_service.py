@@ -248,6 +248,9 @@ class OperationalRouteActionResolverService:
                 message
             ) or OperationalRouteMatcherService.extract_lmp_sale_number(conversation_context)
 
+            if "{sale_number}" in path and not sale_number:
+                return None
+
             if sale_number and "{sale_number}" in path:
                 for parameter in action.get("parametersSchema") or []:
                     name = parameter.get("name")
@@ -275,7 +278,10 @@ class OperationalRouteActionResolverService:
                     parameters[name] = "Todos"
 
             if not parameters:
-                parameters = {"page": 1, "page_size": 50}
+                if "/dashboard" in path.lower():
+                    parameters = {}
+                else:
+                    parameters = {"page": 1, "page_size": 50}
 
             if merge_date_parameters:
                 return merge_date_parameters(action, message, parameters)

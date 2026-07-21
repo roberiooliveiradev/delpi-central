@@ -62,8 +62,9 @@ class ChatPresentationOperationalTableService:
         if not dict_items:
             return None
 
+        flattened_items = [cls.flatten_row_scalars(item) for item in dict_items]
         columns = context.resolve_columns_for_items(
-            dict_items,
+            flattened_items,
             path=path,
             profile_name=profile_name,
         )
@@ -74,7 +75,7 @@ class ChatPresentationOperationalTableService:
 
         rows = []
 
-        for item in dict_items:
+        for item in flattened_items:
             row = {key: item.get(key) for key in col_keys}
 
             if isinstance(item.get("_detailMeta"), dict):
@@ -95,6 +96,23 @@ class ChatPresentationOperationalTableService:
             "rows": rows,
             "role": role,
         }
+
+    @classmethod
+    def flatten_row_scalars(cls, item: dict[str, Any]) -> dict[str, Any]:
+        from app.domain.services.external_actions.external_action_column_label_service import (
+            ExternalActionColumnLabelService,
+        )
+
+        flattened: dict[str, Any] = {}
+
+        for key, value in item.items():
+            if key.startswith("_"):
+                flattened[key] = value
+                continue
+
+            flattened[key] = ExternalActionColumnLabelService.unwrap_nested_scalar(value)
+
+        return flattened
 
     @classmethod
     def limit_items(

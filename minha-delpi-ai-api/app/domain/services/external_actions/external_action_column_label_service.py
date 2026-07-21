@@ -357,6 +357,42 @@ class ExternalActionColumnLabelService:
 
         return self._infer_field_format(normalized_key)
 
+    @classmethod
+    def unwrap_nested_scalar(cls, value: object) -> object:
+        """Extrai escalar de envelopes aninhados (ex.: realized/goals.consolidated)."""
+        if not isinstance(value, dict) or not value:
+            return value
+
+        preferred_keys = (
+            "consolidated",
+            "value",
+            "amount",
+            "total",
+            "score",
+            "realized",
+        )
+
+        for key in preferred_keys:
+            if key not in value:
+                continue
+
+            nested = value.get(key)
+
+            if isinstance(nested, dict):
+                return cls.unwrap_nested_scalar(nested)
+
+            return nested
+
+        if len(value) == 1:
+            sole = next(iter(value.values()))
+
+            if isinstance(sole, dict):
+                return cls.unwrap_nested_scalar(sole)
+
+            return sole
+
+        return value
+
     def format_field_value(
         self,
         key: str,
@@ -371,6 +407,35 @@ class ExternalActionColumnLabelService:
             return "Sim" if value else "Não"
 
         if isinstance(value, (list, dict)):
+            unwrapped = self.unwrap_nested_scalar(value)
+
+            if unwrapped is not value and not isinstance(unwrapped, (list, dict)):
+                return self.format_field_value(
+                    key,
+                    unwrapped,
+                    schema_formats=schema_formats,
+                )
+
+            if isinstance(value, dict):
+                parts: list[str] = []
+
+                for nested_key, nested_value in value.items():
+                    label = str(nested_key or "").strip() or "—"
+                    parts.append(
+                        f"{label}: {self.format_field_value(key, nested_value, schema_formats=schema_formats)}"
+                    )
+
+                return "; ".join(parts) if parts else "—"
+
+            if isinstance(value, list):
+                if not value:
+                    return "—"
+
+                return "; ".join(
+                    self.format_field_value(key, item, schema_formats=schema_formats)
+                    for item in value
+                )
+
             return str(value)
 
         field_format = self.resolve_field_format(
