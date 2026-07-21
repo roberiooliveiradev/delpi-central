@@ -118,7 +118,11 @@ export function TextDataBindingInspector({
       />
 
       {sourceId ? (
-        <DeckPropertySection title="Campo dinâmico" hint={H.textDataBinding ?? H.viewBinding} compact={pane}>
+        <DeckPropertySection
+          title="Campo dinâmico"
+          hint={H.textDataBinding ?? H.viewBinding}
+          pane={pane}
+        >
           <DeckField label="Campo">
             <FormSelectControl
               className={compactSelect}
@@ -175,14 +179,14 @@ export function TextDataBindingInspector({
               onChange={(value) => patchProjection({ fallback: value || undefined })}
             />
           </DeckField>
-          <DeckField label="Cores por valor">
-            <KpiColorRulesEditor
-              idPrefix="td-text-data"
-              compact={isRibbon}
-              rules={projection.colorRules ?? []}
-              onChange={(rules) => patchProjection({ colorRules: rules })}
-            />
-          </DeckField>
+        </DeckPropertySection>
+        <DeckPropertySection title="Cores por valor" pane={pane} defaultOpen={false}>
+          <KpiColorRulesEditor
+            idPrefix="td-text-data"
+            compact={isRibbon}
+            rules={projection.colorRules ?? []}
+            onChange={(rules) => patchProjection({ colorRules: rules })}
+          />
         </DeckPropertySection>
       ) : null}
     </>

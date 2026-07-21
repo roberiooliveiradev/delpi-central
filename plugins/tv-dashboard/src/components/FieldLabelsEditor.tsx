@@ -40,7 +40,7 @@ export function FieldLabelsEditor({
     <DeckPropertySection
       title="Rótulos dos campos"
       hint={TV_DASHBOARD_HELP_TOOLTIPS.data.fieldLabels}
-      compact={pane}
+      pane={pane}
       defaultOpen
     >
       <p className="td-deck-inspector__hint">
