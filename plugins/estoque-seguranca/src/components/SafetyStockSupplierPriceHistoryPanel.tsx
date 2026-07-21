@@ -20,6 +20,7 @@ type SafetyStockSupplierPriceHistoryPanelProps = {
   loading: boolean;
   error: SectionErrorState | null;
   onRetry?: () => void;
+  onClose?: () => void;
 };
 
 const DetailFields = createDashboardDetailFieldGrid({
@@ -67,6 +68,7 @@ export function SafetyStockSupplierPriceHistoryPanel({
   loading,
   error,
   onRetry,
+  onClose,
 }: SafetyStockSupplierPriceHistoryPanelProps) {
   const items = data?.items ?? [];
   const summary = data?.summary;
@@ -147,6 +149,15 @@ export function SafetyStockSupplierPriceHistoryPanel({
     >
       <div className="ess-detail__section-header">
         <h3>Oscilação de preço — {supplierLabel(supplier)}</h3>
+        {onClose ? (
+          <button
+            type="button"
+            className="ess-btn ess-btn--secondary ess-detail__nf-card-close"
+            onClick={onClose}
+          >
+            Fechar
+          </button>
+        ) : null}
       </div>
       <p className="ess-detail__hint">
         Compras do produto com este fornecedor nos últimos 12 meses (um ponto por NF, preço

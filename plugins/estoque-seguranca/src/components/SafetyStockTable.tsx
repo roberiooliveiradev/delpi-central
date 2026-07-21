@@ -113,7 +113,6 @@ export function SafetyStockTable({
         key: "actions",
         header: "Detalhes",
         className: "ess-table__col--action",
-        interactive: true,
         render: () => <SafetyStockDetailsActionHint />,
       },
     ],

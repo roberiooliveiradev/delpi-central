@@ -138,14 +138,6 @@ export function ConsumptionAnalysisPage() {
 
         {showContent ? (
           <>
-            <ConsumptionAnalysisFilters
-              filters={displayFilters}
-              options={filterOptions.data}
-              loading={filterOptions.loading}
-              onChange={handleFilterChange}
-              onClear={handleClearFilters}
-            />
-
             {summary.error && !summary.data ? (
               <SectionError
                 title={summary.error.title}
@@ -165,6 +157,14 @@ export function ConsumptionAnalysisPage() {
                 />
               </>
             )}
+
+            <ConsumptionAnalysisFilters
+              filters={displayFilters}
+              options={filterOptions.data}
+              loading={filterOptions.loading}
+              onChange={handleFilterChange}
+              onClear={handleClearFilters}
+            />
 
             {items.error && !items.data ? (
               <SectionError

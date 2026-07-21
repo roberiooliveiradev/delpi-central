@@ -120,6 +120,9 @@ def test_map_open_commitment_formats_date_and_uses_qtdeori_fields() -> None:
             "lot": "L1",
             "commitment_sequence": "001",
             "preserved_balance": 0.0,
+            "finished_production_order": "OP00101001",
+            "finished_product_code": "90261255",
+            "finished_order_observation": "PED CLIENTE XYZ",
         }
     )
 
@@ -128,6 +131,9 @@ def test_map_open_commitment_formats_date_and_uses_qtdeori_fields() -> None:
     assert mapped["open_quantity"] == 40.0
     assert mapped["consumed_quantity"] == 60.0
     assert mapped["production_order"] == "OP001"
+    assert mapped["finished_production_order"] == "OP00101001"
+    assert mapped["finished_product_code"] == "90261255"
+    assert mapped["finished_order_observation"] == "PED CLIENTE XYZ"
 
 
 @patch.object(SafetyStockQueryRepository, "execute_query")

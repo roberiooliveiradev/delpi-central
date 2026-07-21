@@ -138,6 +138,9 @@ export type SafetyStockOpenCommitment = {
   lot: string;
   commitment_sequence: string;
   preserved_balance: number;
+  finished_production_order?: string;
+  finished_product_code?: string;
+  finished_order_observation?: string;
   unit_compatible: boolean;
   unit_conversion_reason: string | null;
   warehouse_eligible: boolean;
@@ -180,6 +183,9 @@ export type SafetyStockProjectionLedgerEntry = {
   origin: StockProjectionOrigin;
   origin_label: string;
   reference: string;
+  finished_production_order?: string | null;
+  finished_product_code?: string | null;
+  finished_order_observation?: string | null;
   warehouse: string;
   movement: number;
   inflow: number;

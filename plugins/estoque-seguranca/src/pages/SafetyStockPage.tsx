@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
 
-import { DeficitByUnit } from "../components/DeficitByUnit";
 import { EssPageNav } from "../components/EssPageNav";
 import { LoadingActivityCard } from "../components/LoadingActivityCard";
 import { PageHeader } from "../components/PageHeader";
@@ -144,14 +143,6 @@ export function SafetyStockPage() {
 
         {showContent ? (
           <>
-            <SafetyStockFilters
-              filters={displayFilters}
-              options={filterOptions.data}
-              loading={filterOptions.loading}
-              onChange={handleFilterChange}
-              onClear={handleClearFilters}
-            />
-
             {summary.error ? (
               <SectionError
                 title={summary.error.title}
@@ -166,9 +157,13 @@ export function SafetyStockPage() {
               />
             )}
 
-            {!summary.error ? (
-              <DeficitByUnit rows={summary.data?.deficit_by_unit ?? []} />
-            ) : null}
+            <SafetyStockFilters
+              filters={displayFilters}
+              options={filterOptions.data}
+              loading={filterOptions.loading}
+              onChange={handleFilterChange}
+              onClear={handleClearFilters}
+            />
 
             {items.error ? (
               <SectionError

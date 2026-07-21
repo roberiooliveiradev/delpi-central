@@ -29,6 +29,28 @@ PROJECTION_SUFFICIENT = "sufficient"
 PROJECTION_TEMPORARY_SHORTAGE = "temporary_shortage"
 PROJECTION_DEFICIT = "projected_deficit"
 
+FINISHED_PRODUCTION_ORDER_SUFFIX = "01001"
+
+
+def finished_production_order_from_component_op(production_order: str) -> str | None:
+    """OP do produto acabado: 6 primeiros caracteres da OP do empenho + 01001."""
+    op = str(production_order or "").strip()
+    if len(op) < 6:
+        return None
+    return f"{op[:6]}{FINISHED_PRODUCTION_ORDER_SUFFIX}"
+
+
+def format_commitment_ledger_reference(
+    *,
+    production_order: str,
+    finished_product_code: str | None = None,
+) -> str:
+    """Referência do extrato: apenas a OP do empenho (PA fica em coluna própria)."""
+    del finished_product_code  # mantido na assinatura por compatibilidade de chamada
+    op = str(production_order or "").strip()
+    return op or "Empenho"
+
+
 _ORIGIN_SORT = {
     ORIGIN_INITIAL: 0,
     ORIGIN_COMMITMENT: 1,
@@ -259,6 +281,10 @@ def build_stock_projection(
             date_status = DATE_STATUS_SCHEDULED
 
         op = str(commitment.get("production_order") or "").strip()
+        finished_code = str(commitment.get("finished_product_code") or "").strip()
+        finished_op = str(commitment.get("finished_production_order") or "").strip()
+        if not finished_op:
+            finished_op = finished_production_order_from_component_op(op) or ""
         events.append(
             {
                 "event_date": iso_date,
@@ -266,7 +292,15 @@ def build_stock_projection(
                 "date_semantics": "commitment_date",
                 "origin": ORIGIN_COMMITMENT,
                 "origin_label": "Empenho",
-                "reference": op or "Empenho",
+                "reference": format_commitment_ledger_reference(
+                    production_order=op,
+                    finished_product_code=finished_code,
+                ),
+                "finished_production_order": finished_op,
+                "finished_product_code": finished_code,
+                "finished_order_observation": str(
+                    commitment.get("finished_order_observation") or ""
+                ).strip(),
                 "warehouse": str(commitment.get("warehouse") or "").strip(),
                 "movement": -qty,
                 "inflow": 0.0,
@@ -313,6 +347,18 @@ def build_stock_projection(
             "origin": event["origin"],
             "origin_label": event["origin_label"],
             "reference": event["reference"],
+            "finished_production_order": str(
+                event.get("finished_production_order") or ""
+            ).strip()
+            or None,
+            "finished_product_code": str(
+                event.get("finished_product_code") or ""
+            ).strip()
+            or None,
+            "finished_order_observation": str(
+                event.get("finished_order_observation") or ""
+            ).strip()
+            or None,
             "warehouse": event.get("warehouse") or "",
             "movement": movement,
             "inflow": float(event.get("inflow") or 0),
