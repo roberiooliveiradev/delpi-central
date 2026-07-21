@@ -190,16 +190,17 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Ferramentas da forma selecionada: alterar forma, estilos, preenchimento, contorno e tamanho.",
     data: "Mesmos controles do painel lateral Dados: fonte, parâmetros e catálogo.",
     layers: "Mesmos controles do painel lateral Camadas: ordem de construção e pilha visual.",
-    view: "Controles de exibição do palco: zoom, réguas, grade, guias centrais e encaixe ao arrastar.",
+    view: "Controles de exibição do palco: zoom, réguas, grade, guias de alinhamento e encaixe ao arrastar.",
   },
   view: {
     zoom: "Amplia ou reduz o palco no editor (10% a 200%). Ctrl + scroll do mouse também faz zoom. Não altera a exibição na TV.",
     grid: "Mostra a grade no palco para alinhar elementos. Some automaticamente abaixo de 50% de zoom.",
     gridSize:
       "Passo da grade em % do slide (1, 2, 4, 5, 10, 20, 25 ou 50). Só divisores de 100% — a malha fecha nas bordas.",
-    guides: "Exibe guias horizontais e verticais no centro do palco.",
+    guides:
+      "Guias do centro do palco e alinhamento inteligente com outros elementos (bordas e centros), como no PowerPoint. Ativo por padrão.",
     rulers: "Mostra réguas horizontais e verticais ao redor do palco. O zero está no canto inferior esquerdo da página.",
-    snap: "Encaixa posição e tamanho na grade e nas guias ao soltar o elemento.",
+    snap: "Encaixa posição e tamanho na grade e no centro do palco ao soltar o elemento.",
     pan: "Arrastar o palco (pan). Segure Ctrl e arraste, ou ative a ferramenta mão (Esc cancela).",
     showGroup: "Elementos visuais de apoio no palco do editor (não aparecem na TV).",
   },

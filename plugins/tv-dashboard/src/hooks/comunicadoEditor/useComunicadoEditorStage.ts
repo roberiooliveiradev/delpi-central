@@ -32,6 +32,7 @@ export function useComunicadoEditorStage() {
   const [stageViewReady, setStageViewReady] = useState(false);
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
   const snapEnabledRef = useRef(prefs.snapEnabled);
+  const showStageGuidesRef = useRef(prefs.showStageGuides);
   const stageGridSizePercentRef = useRef(prefs.stageGridSizePercent);
   const interactionCanvasRefSlot = useRef<RefObject<HTMLElement | null> | null>(null);
   const prefsRef = useRef(prefs);
@@ -51,6 +52,10 @@ export function useComunicadoEditorStage() {
   useEffect(() => {
     snapEnabledRef.current = prefs.snapEnabled;
   }, [prefs.snapEnabled]);
+
+  useEffect(() => {
+    showStageGuidesRef.current = prefs.showStageGuides;
+  }, [prefs.showStageGuides]);
 
   useEffect(() => {
     stageGridSizePercentRef.current = prefs.stageGridSizePercent;
@@ -296,6 +301,7 @@ export function useComunicadoEditorStage() {
       const next = typeof value === "function" ? value(prefsRef.current.showStageGuides) : value;
       patchPrefs({ showStageGuides: next });
     },
+    showStageGuidesRef,
     snapEnabled: prefs.snapEnabled,
     setSnapEnabled: (value: boolean | ((prev: boolean) => boolean)) => {
       const next = typeof value === "function" ? value(prefsRef.current.snapEnabled) : value;

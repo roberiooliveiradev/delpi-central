@@ -1,4 +1,4 @@
-import { useCallback, useRef, type MutableRefObject } from "react";
+import { useCallback, useRef, useState, type MutableRefObject } from "react";
 
 import {
   applyComplexBlockFrameWithTypography,
@@ -11,6 +11,7 @@ import {
   syncLineVerticesFromFrame,
   type ComunicadoBlock,
   type ComunicadoConfig,
+  type ComunicadoFrame,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHistoryContext";
@@ -18,6 +19,11 @@ import { useCanvasBlockInteraction } from "../../components/useCanvasBlockIntera
 import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import { applyMultiFrameDelta } from "../../utils/multiFrameTransform";
 import { snapComunicadoFrame } from "../../utils/comunicadoSnap";
+import {
+  peerFramesForSmartGuides,
+  snapFrameToPeerBlocks,
+  type SmartGuideLine,
+} from "../../utils/comunicadoSmartGuides";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
 
@@ -29,8 +35,28 @@ type Options = {
   pushPast: (snapshot: ComunicadoConfig) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
   snapEnabledRef: MutableRefObject<boolean>;
+  showStageGuidesRef: MutableRefObject<boolean>;
   stageGridSizePercentRef: MutableRefObject<number>;
 };
+
+function resolveDraggedExcludeIds(
+  multi: { startFrames: Map<string, ComunicadoFrame> } | null,
+  blockId: string,
+): Set<string> {
+  if (multi && multi.startFrames.size > 0) {
+    return new Set(multi.startFrames.keys());
+  }
+  return new Set([blockId]);
+}
+
+function resolveLiveSnapMode(
+  baseline: ComunicadoBlock | undefined,
+  frame: ComunicadoFrame,
+): "move" | "resize" {
+  if (!baseline) return "move";
+  if (frame.w !== baseline.frame.w || frame.h !== baseline.frame.h) return "resize";
+  return "move";
+}
 
 /**
  * Drag / resize / rotate no palco — handlers + `useCanvasBlockInteraction`.
@@ -43,12 +69,14 @@ export function useComunicadoEditorDrag({
   pushPast,
   deckHistory,
   snapEnabledRef,
+  showStageGuidesRef,
   stageGridSizePercentRef,
 }: Options) {
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
   const multiDragRef = useRef<{ startFrames: Map<string, ComunicadoBlock["frame"]> } | null>(null);
   /** Seleção efetiva no pointerdown (evita race do React antes do threshold do drag). */
   const multiDragSelectionOverrideRef = useRef<string[] | null>(null);
+  const [activeSmartGuides, setActiveSmartGuides] = useState<SmartGuideLine[]>([]);
 
   const armMultiDragSelection = useCallback((ids: string[]) => {
     multiDragSelectionOverrideRef.current = [...new Set(ids.filter(Boolean))];
@@ -96,11 +124,24 @@ export function useComunicadoEditorDrag({
     (blockId: string, frame: ComunicadoBlock["frame"]) => {
       const multi = multiDragRef.current;
       const baseline = resolveBaseline(blockId);
+      const excludeIds = resolveDraggedExcludeIds(multi, blockId);
+      let workingFrame = frame;
+      let guides: SmartGuideLine[] = [];
+
+      if (showStageGuidesRef.current) {
+        const peers = peerFramesForSmartGuides(configRef.current.blocks ?? [], excludeIds);
+        const mode = resolveLiveSnapMode(baseline, frame);
+        const snapped = snapFrameToPeerBlocks(workingFrame, peers, mode);
+        workingFrame = snapped.frame;
+        guides = snapped.guides;
+      }
+      setActiveSmartGuides(guides);
+
       let nextBlocks: ComunicadoBlock[];
       const draggedIds = new Set<string>();
 
       if (multi && multi.startFrames.has(blockId)) {
-        const nextFrames = applyMultiFrameDelta(multi.startFrames, blockId, frame);
+        const nextFrames = applyMultiFrameDelta(multi.startFrames, blockId, workingFrame);
         nextBlocks = (configRef.current.blocks ?? []).map((block) => {
           const nextFrame = nextFrames.get(block.id);
           if (!nextFrame) return block;
@@ -119,19 +160,20 @@ export function useComunicadoEditorDrag({
           if (block.id !== blockId) return block;
           const base = baseline ?? block;
           const isResize =
-            frame.w !== base.frame.w || frame.h !== base.frame.h;
+            workingFrame.w !== base.frame.w || workingFrame.h !== base.frame.h;
           if (isResize && isComplexViewBlock(base)) {
-            return applyComplexBlockFrameWithTypography(base, frame);
+            return applyComplexBlockFrameWithTypography(base, workingFrame);
           }
-          return { ...block, frame };
+          return { ...block, frame: workingFrame };
         });
       }
       updateBlocksSilent(reconcileConnectorsAfterDrag(nextBlocks, draggedIds));
     },
-    [configRef, resolveBaseline, updateBlocksSilent],
+    [configRef, resolveBaseline, showStageGuidesRef, updateBlocksSilent],
   );
 
   const handleInteractionStart = useCallback(() => {
+    setActiveSmartGuides([]);
     dragSnapshotRef.current = snapshotConfig(configRef.current);
     const override = multiDragSelectionOverrideRef.current;
     multiDragSelectionOverrideRef.current = null;
@@ -158,6 +200,7 @@ export function useComunicadoEditorDrag({
 
   const handleInteractionEnd = useCallback(
     (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize" | "rotate" | "adjust") => {
+      setActiveSmartGuides([]);
       const before = dragSnapshotRef.current;
       dragSnapshotRef.current = null;
       const multi = multiDragRef.current;
@@ -208,9 +251,18 @@ export function useComunicadoEditorDrag({
         const beforeBlock = before.blocks?.find((block) => block.id === id);
         const snapMode = mode === "resize" ? "resize" : "move";
         const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
-        const snappedFrame = snapEnabledRef.current
-          ? snapComunicadoFrame(current, current.frame, snapMode, snapPercents)
-          : clampFrameForBlock(current, current.frame);
+
+        let snappedFrame = current.frame;
+        /* Multi: o live já encaixou o primário; não reencaixar cada um (quebra o delta). */
+        if (showStageGuidesRef.current && idsToFinalize.length === 1) {
+          const peers = peerFramesForSmartGuides(nextBlocks, draggedIds);
+          snappedFrame = snapFrameToPeerBlocks(snappedFrame, peers, snapMode).frame;
+        }
+        if (snapEnabledRef.current) {
+          snappedFrame = snapComunicadoFrame(current, snappedFrame, snapMode, snapPercents);
+        } else {
+          snappedFrame = clampFrameForBlock(current, snappedFrame);
+        }
 
         let updated: ComunicadoBlock;
         if (mode === "resize" && beforeBlock && isComplexViewBlock(beforeBlock)) {
@@ -260,12 +312,21 @@ export function useComunicadoEditorDrag({
       }
       applyConfig(nextConfig);
     },
-    [applyConfig, configRef, deckHistory, pushPast, snapEnabledRef, stageGridSizePercentRef],
+    [
+      applyConfig,
+      configRef,
+      deckHistory,
+      pushPast,
+      showStageGuidesRef,
+      snapEnabledRef,
+      stageGridSizePercentRef,
+    ],
   );
 
   const clearDragSnapshot = useCallback(() => {
     dragSnapshotRef.current = null;
     multiDragSelectionOverrideRef.current = null;
+    setActiveSmartGuides([]);
   }, []);
 
   const { canvasRef, startDrag } = useCanvasBlockInteraction({
@@ -282,5 +343,6 @@ export function useComunicadoEditorDrag({
     startDrag,
     clearDragSnapshot,
     armMultiDragSelection,
+    activeSmartGuides,
   };
 }

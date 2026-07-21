@@ -330,6 +330,7 @@ export function ComunicadoEditorProvider({
     startDrag,
     clearDragSnapshot,
     armMultiDragSelection,
+    activeSmartGuides,
   } = useComunicadoEditorDrag({
     configRef,
     selectedIds: selection.selectedIds,
@@ -338,6 +339,7 @@ export function ComunicadoEditorProvider({
     pushPast,
     deckHistory,
     snapEnabledRef: stage.snapEnabledRef,
+    showStageGuidesRef: stage.showStageGuidesRef,
     stageGridSizePercentRef: stage.stageGridSizePercentRef,
   });
   stage.bindCanvasRef(canvasRef);
@@ -682,6 +684,7 @@ export function ComunicadoEditorProvider({
     setStageGridSizePercent: stage.setStageGridSizePercent,
     showStageGuides: stage.showStageGuides,
     setShowStageGuides: stage.setShowStageGuides,
+    activeSmartGuides,
     snapEnabled: stage.snapEnabled,
     setSnapEnabled: stage.setSnapEnabled,
     stagePanMode: stage.stagePanMode,

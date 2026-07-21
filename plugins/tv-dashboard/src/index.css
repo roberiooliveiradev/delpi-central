@@ -1536,6 +1536,26 @@ body.td-composer--marqueeing *{
   height: 1px;
   transform: translateY(-50%);
 }
+/* Smart guides — alinhamento entre componentes (estilo PowerPoint). */
+.dashboard-tv-dashboard .td-composer__smart-guide{
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+}
+.dashboard-tv-dashboard .td-composer__smart-guide--v{
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed #e11d48;
+  transform: translateX(-50%);
+}
+.dashboard-tv-dashboard .td-composer__smart-guide--h{
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px dashed #e11d48;
+  transform: translateY(-50%);
+}
 .dashboard-tv-dashboard .td-stage-shell{
   flex: 1;
   min-height: 0;

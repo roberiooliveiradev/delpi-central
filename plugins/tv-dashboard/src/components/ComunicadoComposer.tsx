@@ -123,6 +123,7 @@ export function ComunicadoComposerCanvas() {
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
+    activeSmartGuides,
     stageGridSizePercent,
     updateBlock,
     viewportProfile,
@@ -588,6 +589,20 @@ export function ComunicadoComposerCanvas() {
               <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
             </>
           ) : null}
+          {showStageGuides && activeSmartGuides.length > 0
+            ? activeSmartGuides.map((guide, index) => (
+                <div
+                  key={`smart-${guide.orientation}-${guide.position}-${index}`}
+                  className={`td-composer__smart-guide td-composer__smart-guide--${guide.orientation}`}
+                  style={
+                    guide.orientation === "v"
+                      ? { left: `${guide.position}%` }
+                      : { top: `${guide.position}%` }
+                  }
+                  aria-hidden="true"
+                />
+              ))
+            : null}
           {blocks.map((block) => {
             if (isBlockHiddenOnStage(block, blocks)) {
               return null;

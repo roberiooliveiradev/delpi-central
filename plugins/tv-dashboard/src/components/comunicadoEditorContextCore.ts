@@ -304,6 +304,8 @@ export type ComunicadoEditorContextValue = {
   setStageGridSizePercent: (sizePercent: number) => void;
   showStageGuides: boolean;
   setShowStageGuides: (show: boolean) => void;
+  /** Linhas de alinhamento entre componentes durante drag (smart guides). */
+  activeSmartGuides: ReadonlyArray<{ orientation: "v" | "h"; position: number }>;
   snapEnabled: boolean;
   setSnapEnabled: (enabled: boolean) => void;
   /** Ferramenta pan (arrastar o palco). */

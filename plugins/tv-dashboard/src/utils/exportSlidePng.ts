@@ -19,6 +19,7 @@ function downloadDataUrl(dataUrl: string, fileName: string) {
 function shouldSkipNode(node: HTMLElement): boolean {
   if (node.classList?.contains("td-composer__stage-grid")) return true;
   if (node.classList?.contains("td-composer__stage-guide")) return true;
+  if (node.classList?.contains("td-composer__smart-guide")) return true;
   if (node.classList?.contains("td-composer__marquee")) return true;
   if (node.classList?.contains("td-composer__block-handles")) return true;
   if (node.classList?.contains("td-deck-stage__rulers")) return true;
