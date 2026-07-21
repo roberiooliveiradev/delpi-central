@@ -111,12 +111,7 @@ export function SlideFilmstrip({
                 <ChevronLeft size={16} aria-hidden="true" />
               </button>
             </div>
-            <SlideFilmstripControls
-              slides={slides}
-              selectedSlideId={selectedSlideId}
-              onAdd={onAdd}
-              onSelect={onSelect}
-            />
+            <SlideFilmstripControls onAdd={onAdd} />
             {slides.length === 0 ? (
               <p className="td-deck-filmstrip__empty">Nenhuma tela na programação.</p>
             ) : (
