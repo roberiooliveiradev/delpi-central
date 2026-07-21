@@ -15,11 +15,6 @@
   transform: none !important;
 }
 
-  to {
-    opacity: 1;
-  }
-}
-
 /* 4E.2 — animações de entrada por bloco (só no slide ativo) */
 .tdp-slide--active .delpi-ui-comunicado__block--anim-fade {
   animation: tdp-block-fade-in var(--tdp-block-anim-duration, 600ms)
