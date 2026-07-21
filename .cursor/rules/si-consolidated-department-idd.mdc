@@ -14,6 +14,8 @@ Doc da regressão (jul/2026): `strategic-indicators-api/docs/ENGINEERING_IDD_REG
 
 ## O que NÃO fazer
 
+- Enviar `listing_type=lmp` minúsculo à api-delpi (enum: `LMP`).
+- Deixar falha de Transforma+ apagar medições LMP no mesmo snapshot.
 - Generalizar `_scores_zero_when_unfilled` / score 0 por filial faltante sem excluir deptos consolidados.
 - Forçar `average_of_units` no cálculo de engenharia/financeiro (mesmo se o admin disser isso).
 - “Corrigir” inventando `unit_values` 01/02 no provider de engenharia ou IDD no MFE do dashboard.

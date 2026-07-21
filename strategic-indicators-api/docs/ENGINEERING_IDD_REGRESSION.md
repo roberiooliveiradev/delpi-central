@@ -13,6 +13,14 @@ Dois caminhos distintos de “nota IDD”:
 | Cards KPI do MFE | `GET /engineering/...` + cálculo local (`goalDisplay`) | 10,00 |
 | Badge do header | `GET /dashboard/department-idd` → SI | 0.0 Crítico |
 
+### 1) Coleta de medições (causa local confirmada jul/2026)
+
+O gateway SI chamava LMP com `listing_type=lmp` (minúsculo). A api-delpi valida o query com enum **`LMP`** (case-sensitive) → **422** → snapshot de engenharia sem realizado → notas 0 no SI. O MFE envia `LMP` / omite o filtro e por isso os cards ficavam corretos.
+
+Além disso, se Transforma+ falhasse, o snapshot engolia o LMP também (falha total). Coletas devem ser **independentes**.
+
+### 2) Calculador — score 0 por filial ausente
+
 No SI, o provider de engenharia publica **só** `unit_values = { "consolidated": valor }` (`build_unit_values_for_consolidated_department`).
 
 Após **26/06/2026** (`9d519dcfb` — “penalizar indicadores sem dado com nota zero”), `_scores_zero_when_unfilled` passou a retornar `True` para **todos** os indicadores. Em caminhos que pedem filial `01`/`02` (`average_of_units` ou `_calculate_branch_scoped_indicator_score` com `branch_goals`), a ausência de chave por filial virou **nota 0** e puxou o IDD do departamento para 0 — mesmo com `measurement.value` válido e KPIs em 10.
@@ -21,10 +29,11 @@ Preparação (mai/2026): scoring por filial + medição consolidada-only em enge
 
 ## Correção canônica
 
-`StrategicIndicatorsCalculator`:
-
-1. `_uses_average_of_units_aggregation` — se `is_consolidated_aggregation_department(department_id)` (engenharia, financeiro em `branch_filter.CONSOLIDATED_AGGREGATION_DEPARTMENT_IDS`), **nunca** usa média por filial.
-2. Não aplica `_calculate_branch_scoped_indicator_score` nesses departamentos — usa `measurement.value` + meta consolidada.
+1. **Gateway** `DelpiEngineeringGateway`: `listing_type=LMP` (valor do enum OpenAPI).
+2. **Snapshot** `EngineeringMetricsSnapshotService`: LMP e Transforma+ isolados (falha de um não apaga o outro).
+3. **Calculador** `StrategicIndicatorsCalculator`:
+   - `_uses_average_of_units_aggregation` — se `is_consolidated_aggregation_department` (engenharia, financeiro), **nunca** agrega por filial.
+   - Não aplica `_calculate_branch_scoped_indicator_score` nesses departamentos.
 
 **Catálogo:** ajustar agregação/`scope_type` só pela aplicação admin SI — **não** migration de dados para “corrigir” IDD.
 
@@ -32,10 +41,12 @@ Preparação (mai/2026): scoring por filial + medição consolidada-only em enge
 
 ## Anti-padrões (proibido reintroduzir)
 
-1. Fazer `_scores_zero_when_unfilled` (ou equivalente) zerar filial `01`/`02` ausente em departamento que só publica `consolidated`.
-2. Assumir que `aggregation_mode` do banco sozinho define o cálculo — departamentos em `CONSOLIDATED_AGGREGATION_DEPARTMENT_IDS` têm medição consolidada por contrato do provider.
-3. Duplicar `01`/`02` em `unit_values` de engenharia “só para o IDD bater” — quebra rótulo/exibição consolidada; o calculador deve respeitar a chave `consolidated`.
-4. Patch só no MFE para inventar IDD global a partir dos cards.
+1. Enviar `listing_type=lmp` (minúsculo) para api-delpi — enum runtime é `LMP`/`Amostra`/`Outro`/`Todos`.
+2. Fazer falha de Transforma+ (ou LMP) zerar o snapshot inteiro de engenharia.
+3. Fazer `_scores_zero_when_unfilled` (ou equivalente) zerar filial `01`/`02` ausente em departamento que só publica `consolidated`.
+4. Assumir que `aggregation_mode` do banco sozinho define o cálculo — departamentos em `CONSOLIDATED_AGGREGATION_DEPARTMENT_IDS` têm medição consolidada por contrato do provider.
+5. Duplicar `01`/`02` em `unit_values` de engenharia “só para o IDD bater” — quebra rótulo/exibição consolidada; o calculador deve respeitar a chave `consolidated`.
+6. Patch só no MFE para inventar IDD global a partir dos cards.
 
 ## Testes de regressão (obrigatórios)
 

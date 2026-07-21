@@ -101,25 +101,32 @@ class EngineeringMetricsSnapshotService:
         query_start = effective_period.start_date
         query_end = effective_period.end_date
 
-        lmp_summary = resolve_lmp_dashboard_summary(
-            gateway=self._engineering_gateway,
-            date_start=query_start,
-            date_end=query_end,
-            branch=branch,
-        )
+        lmp_projects_on_time_pct: float | None = None
+        try:
+            lmp_summary = resolve_lmp_dashboard_summary(
+                gateway=self._engineering_gateway,
+                date_start=query_start,
+                date_end=query_end,
+                branch=branch,
+            )
+            lmp_projects_on_time_pct = self._to_float(
+                lmp_summary.get("percent_dentro_prazo")
+            )
+        except Exception:
+            lmp_projects_on_time_pct = None
 
-        lmp_projects_on_time_pct = self._to_float(
-            lmp_summary.get("percent_dentro_prazo")
-        )
-
-        transforma_summary = self._engineering_gateway.get_transforma_mais_summary(
-            filial_id=branch,
-            start_date=query_start,
-            end_date=query_end,
-        )
-        transforma_mais_financial_gain = self._extract_financial_gain_value(
-            transforma_summary
-        )
+        transforma_mais_financial_gain: float | None = None
+        try:
+            transforma_summary = self._engineering_gateway.get_transforma_mais_summary(
+                filial_id=branch,
+                start_date=query_start,
+                end_date=query_end,
+            )
+            transforma_mais_financial_gain = self._extract_financial_gain_value(
+                transforma_summary
+            )
+        except Exception:
+            transforma_mais_financial_gain = None
 
         snapshot = EngineeringMetricsSnapshot(
             start_date=start_date,
