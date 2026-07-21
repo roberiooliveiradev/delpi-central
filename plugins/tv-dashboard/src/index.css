@@ -498,12 +498,6 @@
   font-size: 0.8rem;
   color: var(--td-muted);
 }
-.dashboard-tv-dashboard .td-home__card-actions{
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 14px 14px;
-}
 .dashboard-tv-dashboard .td-table-actions{
   display: inline-flex;
   flex-wrap: wrap;
