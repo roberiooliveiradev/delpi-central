@@ -164,6 +164,7 @@ export function ComunicadoEditorProvider({
   const lastRemoteRevisionRef = useRef(remoteRevision);
 
   const removeSelectedRef = useRef<() => void>(() => {});
+  const editingTextIdRef = useRef<string | null>(null);
   const updateBlockTextFieldsRef = useRef<
     (blockId: string, fields: Pick<ComunicadoTextBlock, "content" | "contentRuns">) => void
   >(() => {});
@@ -486,14 +487,19 @@ export function ComunicadoEditorProvider({
     [],
   );
 
-  const { copySelected, cutSelected, pasteSelected, canPaste } = useComunicadoEditorClipboard({
-    getSources: getClipboardSources,
-    getExistingBlocks: getExistingBlocksForClipboard,
-    selectBlocksByIds: selection.selectBlocksByIds,
-    updateBlocks: updateBlocksForClipboard,
-    removeSelected: () => removeSelectedRef.current(),
-    chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
-  });
+  editingTextIdRef.current = selection.editingTextId;
+
+  const { copySelected, cutSelected, pasteSelected, pasteFromSystemClipboard, canPaste } =
+    useComunicadoEditorClipboard({
+      playlistId,
+      getSources: getClipboardSources,
+      getExistingBlocks: getExistingBlocksForClipboard,
+      selectBlocksByIds: selection.selectBlocksByIds,
+      updateBlocks: updateBlocksForClipboard,
+      removeSelected: () => removeSelectedRef.current(),
+      chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
+      getEditingTextId: () => editingTextIdRef.current,
+    });
 
   const media = useComunicadoEditorMedia({
     playlistId,
@@ -624,6 +630,7 @@ export function ComunicadoEditorProvider({
     cutSelected,
     copySelected,
     pasteSelected,
+    pasteFromSystemClipboard,
     canPaste,
     bringToFront: blockActions.bringToFront,
     sendToBack: blockActions.sendToBack,

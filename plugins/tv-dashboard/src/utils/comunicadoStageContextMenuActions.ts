@@ -69,7 +69,8 @@ export function isContextMenuActionEnabled(
     case "editText":
       return state.canEditText;
     case "paste":
-      return state.canPaste;
+      // Sempre habilitado: tenta SO (imagem/HTML/texto) e cai no clipboard interno.
+      return true;
     case "insertHeading":
     case "insertText":
     case "insertShape":

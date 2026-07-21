@@ -118,76 +118,78 @@ export function TextDataBindingInspector({
       />
 
       {sourceId ? (
-        <DeckPropertySection
-          title="Campo dinâmico"
-          hint={H.textDataBinding ?? H.viewBinding}
-          pane={pane}
-        >
-          <DeckField label="Campo">
-            <FormSelectControl
-              className={compactSelect}
-              value={projection.field ?? ""}
-              onChange={(value) => patchProjection({ field: value })}
-              options={[
-                { value: "", label: "Selecione…" },
-                ...fieldOptions.map((item) => ({ value: item.field, label: item.label })),
-              ]}
+        <>
+          <DeckPropertySection
+            title="Campo dinâmico"
+            hint={H.textDataBinding ?? H.viewBinding}
+            pane={pane}
+          >
+            <DeckField label="Campo">
+              <FormSelectControl
+                className={compactSelect}
+                value={projection.field ?? ""}
+                onChange={(value) => patchProjection({ field: value })}
+                options={[
+                  { value: "", label: "Selecione…" },
+                  ...fieldOptions.map((item) => ({ value: item.field, label: item.label })),
+                ]}
+              />
+            </DeckField>
+            <DeckField label="Agregação">
+              <FormSelectControl
+                className={compactSelect}
+                value={projection.aggregation ?? "first"}
+                onChange={(value) =>
+                  patchProjection({
+                    aggregation: value as ComunicadoTextProjection["aggregation"],
+                  })
+                }
+                options={TEXT_FIELD_AGGREGATION_OPTIONS.map((item) => ({
+                  value: item.value,
+                  label: item.label,
+                }))}
+              />
+            </DeckField>
+            <DeckField label="Formato">
+              <FormSelectControl
+                className={compactSelect}
+                value={projection.format ?? "number"}
+                onChange={(value) => patchProjection({ format: value as TextProjectionFormat })}
+                options={FORMAT_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
+              />
+            </DeckField>
+            <DeckField label="Prefixo">
+              <NativeTextControl
+                className={compactNative}
+                value={projection.prefix ?? ""}
+                onChange={(value) => patchProjection({ prefix: value || undefined })}
+              />
+            </DeckField>
+            <DeckField label="Sufixo">
+              <NativeTextControl
+                className={compactNative}
+                value={projection.suffix ?? ""}
+                onChange={(value) => patchProjection({ suffix: value || undefined })}
+              />
+            </DeckField>
+            <DeckField label="Se vazio">
+              <NativeTextControl
+                className={compactNative}
+                value={projection.fallback ?? ""}
+                placeholder="—"
+                onChange={(value) => patchProjection({ fallback: value || undefined })}
+              />
+            </DeckField>
+          </DeckPropertySection>
+          <DeckPropertySection title="Cores por valor" pane={pane} defaultOpen={false}>
+            <KpiColorRulesEditor
+              idPrefix="td-text-data"
+              compact={isRibbon}
+              rules={projection.colorRules ?? []}
+              onChange={(rules) => patchProjection({ colorRules: rules })}
             />
-          </DeckField>
-          <DeckField label="Agregação">
-            <FormSelectControl
-              className={compactSelect}
-              value={projection.aggregation ?? "first"}
-              onChange={(value) =>
-                patchProjection({
-                  aggregation: value as ComunicadoTextProjection["aggregation"],
-                })
-              }
-              options={TEXT_FIELD_AGGREGATION_OPTIONS.map((item) => ({
-                value: item.value,
-                label: item.label,
-              }))}
-            />
-          </DeckField>
-          <DeckField label="Formato">
-            <FormSelectControl
-              className={compactSelect}
-              value={projection.format ?? "number"}
-              onChange={(value) => patchProjection({ format: value as TextProjectionFormat })}
-              options={FORMAT_OPTIONS.map((item) => ({ value: item.value, label: item.label }))}
-            />
-          </DeckField>
-          <DeckField label="Prefixo">
-            <NativeTextControl
-              className={compactNative}
-              value={projection.prefix ?? ""}
-              onChange={(value) => patchProjection({ prefix: value || undefined })}
-            />
-          </DeckField>
-          <DeckField label="Sufixo">
-            <NativeTextControl
-              className={compactNative}
-              value={projection.suffix ?? ""}
-              onChange={(value) => patchProjection({ suffix: value || undefined })}
-            />
-          </DeckField>
-          <DeckField label="Se vazio">
-            <NativeTextControl
-              className={compactNative}
-              value={projection.fallback ?? ""}
-              placeholder="—"
-              onChange={(value) => patchProjection({ fallback: value || undefined })}
-            />
-          </DeckField>
-        </DeckPropertySection>
-        <DeckPropertySection title="Cores por valor" pane={pane} defaultOpen={false}>
-          <KpiColorRulesEditor
-            idPrefix="td-text-data"
-            compact={isRibbon}
-            rules={projection.colorRules ?? []}
-            onChange={(rules) => patchProjection({ colorRules: rules })}
-          />
-        </DeckPropertySection>
+          </DeckPropertySection>
+        </>
       ) : null}
     </>
   );

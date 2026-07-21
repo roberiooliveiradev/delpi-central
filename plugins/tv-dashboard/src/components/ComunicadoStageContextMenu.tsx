@@ -56,7 +56,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     canPaste,
     cutSelected,
     copySelected,
-    pasteSelected,
+    pasteFromSystemClipboard,
     setEditingTextId,
     bringToFront,
     sendToBack,
@@ -169,7 +169,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
         icon={ClipboardPaste}
         shortcut="Ctrl+V"
         disabled={!isContextMenuActionEnabled("paste", actionState)}
-        onSelect={() => run(pasteSelected)}
+        onSelect={() => run(() => void pasteFromSystemClipboard())}
       />
 
       {!actionState.hasSelection ? (

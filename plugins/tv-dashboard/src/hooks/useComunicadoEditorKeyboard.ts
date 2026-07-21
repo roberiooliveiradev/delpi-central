@@ -58,9 +58,10 @@ export function useComunicadoEditorKeyboard({
         return { handled: true };
       }
 
-      if (mod && key === "v" && canPaste) {
-        pasteSelected();
-        return { handled: true };
+      if (mod && key === "v") {
+        // Colar é tratado pelo listener `paste` (SO + clipboard interno).
+        // Não preventDefault no keydown — senão o evento paste não dispara.
+        return;
       }
 
       if (mod && key === "d") {

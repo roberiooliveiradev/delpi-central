@@ -404,6 +404,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     cut: "Recortar",
     copy: "Copiar",
     paste: "Colar",
+    pasteHint:
+      "Cola elementos internos ou conteúdo externo (imagem, texto, HTML, tabela TSV do Excel/Sheets).",
     editText: "Editar texto",
     bringToFront: "Trazer para frente",
     sendToBack: "Enviar para trás",

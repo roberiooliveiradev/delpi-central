@@ -245,7 +245,9 @@ export type ComunicadoEditorContextValue = {
   duplicateSelected: () => void;
   cutSelected: () => void;
   copySelected: () => void;
-  pasteSelected: () => void;
+  pasteSelected: () => void | Promise<void>;
+  /** Cola do SO (imagem/HTML/texto) ou do clipboard interno. */
+  pasteFromSystemClipboard: () => Promise<boolean>;
   canPaste: boolean;
   bringToFront: () => void;
   sendToBack: () => void;
