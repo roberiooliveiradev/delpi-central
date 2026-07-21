@@ -25,11 +25,13 @@ import {
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { buildRouteDefaultParams } from "../utils/buildRouteDefaultParams";
 import { previewTvDataRoute } from "../utils/previewTvDataRoute";
-import type { DataCatalogMode } from "./comunicadoEditorContextCore";
+import type { DataCatalogMode, DataInsertPreferredView } from "./comunicadoEditorContextCore";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataParamFields, type DataParamSchema, visibleParamSchema } from "./DataParamFields";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
+
+type WizardView = DataInsertPreferredView | "source_only";
 
 const CATEGORY_ORDER = [
   "production",
@@ -100,7 +102,7 @@ export function DataRoutesSidePanel({
   const [refreshSec, setRefreshSec] = useState<string>("");
   const [params, setParams] = useState<ComunicadoDataBinding["params"]>({});
   const [step, setStep] = useState<"config" | "wizard">("config");
-  const [wizardView, setWizardView] = useState<"kpi" | "table" | "series" | "source_only">("table");
+  const [wizardView, setWizardView] = useState<WizardView>("table");
 
   useEffect(() => {
     setLoading(true);
@@ -216,7 +218,7 @@ export function DataRoutesSidePanel({
       metaShape: pickedRoute.metaShape,
       allowedDisplayModes: pickedRoute.allowedDisplayModes ?? pickedRoute.suggestedDisplayModes,
     });
-    const options: Array<{ value: typeof wizardView; label: string; hint: string }> = [
+    const options: Array<{ value: WizardView; label: string; hint: string }> = [
       {
         value: "kpi",
         label: "KPI (cards / contagem)",
@@ -239,9 +241,19 @@ export function DataRoutesSidePanel({
           : "Disponível — qualquer payload vira tabela",
       },
       {
+        value: "text",
+        label: "Texto",
+        hint: "Caixa de texto ligada à fonte — projete um campo ou valor dinâmico",
+      },
+      {
+        value: "shape",
+        label: "Forma",
+        hint: "Forma com texto dinâmico da fonte (rótulo, KPI ou campo)",
+      },
+      {
         value: "source_only",
         label: "Só a fonte (sem visual)",
-        hint: "Insere o chip de dados; você liga KPI/gráfico/tabela depois",
+        hint: "Insere o chip de dados; você liga KPI/gráfico/tabela/texto depois",
       },
     ];
     return (
@@ -257,7 +269,8 @@ export function DataRoutesSidePanel({
         <DeckPropertySection pane title="Como apresentar?" hint={TV_DASHBOARD_HELP_TOOLTIPS.data.insertWizard}>
           <p className="td-deck-inspector__meta">{pickedRoute.label}</p>
           <p className="td-subtitle">
-            Esta fonte pode alimentar KPI, gráfico e tabela. Escolha o visual inicial (pode mudar depois).
+            Esta fonte pode alimentar KPI, gráfico, tabela, texto e forma. Escolha o visual inicial (pode mudar
+            depois).
           </p>
           <div className="td-data-routes-panel__wizard" role="radiogroup" aria-label="Visual inicial">
             {options.map((option) => (

@@ -73,6 +73,7 @@ import {
 import type {
   ComunicadoRibbonTabRequest,
   DataCatalogMode,
+  DataInsertPreferredView,
   DataPanelIntent,
   OpenDataCatalogOptions,
 } from "../../components/comunicadoEditorContextCore";
@@ -313,7 +314,7 @@ export function useComunicadoEditorBlocks({
   }, [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks]);
 
   const addDataSourceBlock = useCallback(
-    (block: ComunicadoBlock, options?: { preferredView?: "kpi" | "table" | "series" }) => {
+    (block: ComunicadoBlock, options?: { preferredView?: DataInsertPreferredView }) => {
       const selectedBlock = configRef.current.blocks?.find((item) => item.id === selectedId);
       let nextBlocks = [...(configRef.current.blocks ?? [])];
       const withZ = {
@@ -348,6 +349,10 @@ export function useComunicadoEditorBlocks({
           viewBlock = createChartViewBlock("line");
         } else if (options.preferredView === "table") {
           viewBlock = createTableViewBlock(6, 5, "grid");
+        } else if (options.preferredView === "text") {
+          viewBlock = createBlock("text", "Texto");
+        } else if (options.preferredView === "shape") {
+          viewBlock = createShapeBlock("rectangle");
         } else {
           viewBlock = createKpiViewBlock();
         }

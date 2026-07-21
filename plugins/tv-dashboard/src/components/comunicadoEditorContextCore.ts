@@ -48,6 +48,9 @@ export type TextEditorBridge = {
   insertDataRefAtSelection?: (dataRef: import("@delpi/tv-dashboard-presentation").ComunicadoTextDataRef) => void;
 };
 
+/** Visual criado junto com a fonte no wizard «Como apresentar?». */
+export type DataInsertPreferredView = "kpi" | "table" | "series" | "text" | "shape";
+
 export type ComunicadoRibbonTabRequest =
   | "insert"
   | "format"
@@ -161,7 +164,7 @@ export type ComunicadoEditorContextValue = {
   addDataBlock: (block: ComunicadoBlock) => void;
   addDataSourceBlock: (
     block: ComunicadoBlock,
-    options?: { preferredView?: "kpi" | "table" | "series" },
+    options?: { preferredView?: DataInsertPreferredView },
   ) => void;
   addChartViewBlock: (chartType: ComunicadoChartType) => void;
   addCanvasTableBlock: (rows?: number, cols?: number) => void;
