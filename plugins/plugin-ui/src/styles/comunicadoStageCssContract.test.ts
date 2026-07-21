@@ -12,11 +12,13 @@ describe("comunicado-stage.css contract (plugin-ui)", () => {
     "utf8",
   );
 
-  it("clipa o retângulo de design e não herda grid KPI", () => {
+  it("moldura de design com overflow visible + tipografia de design (WYSIWYG)", () => {
     expect(css).toMatch(/\.tdp-native-screen\.delpi-ui-comunicado\s*\{[^}]*display:\s*block/s);
     const root = css.match(/(?:^|[\s,}])\.delpi-ui-comunicado\s*\{([\s\S]*?)\}/m);
-    expect(root?.[1] ?? "").toMatch(/overflow:\s*hidden/);
+    expect(root?.[1] ?? "").toMatch(/overflow:\s*visible/);
+    expect(root?.[1] ?? "").toMatch(/font-size:\s*16px/);
     expect(css).toMatch(/\.delpi-ui-comunicado__stage\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0/s);
+    expect(css).toMatch(/\.tdp-stage--animate-entrances/);
   });
 
   it("tipografia da caixa visual sem padding no wrapper nem flex:1", () => {

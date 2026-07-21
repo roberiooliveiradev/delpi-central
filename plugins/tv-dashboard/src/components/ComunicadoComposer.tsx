@@ -1,4 +1,8 @@
 import {
+  ensureComunicadoDualClass,
+  comunicadoStageBemClasses,
+} from "@delpi/plugin-ui/index";
+import {
   buildViewDataLinkPatch,
   buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
@@ -17,6 +21,8 @@ import {
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+
+const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
@@ -85,7 +91,9 @@ function MasterLogoOverlay() {
       url={logoBlobUrl ?? masterLogo?.url}
       frame={masterLogo?.frame}
       opacity={masterLogo?.opacity ?? 1}
-      className="td-composer__master-logo"
+      className={ensureComunicadoDualClass(
+        `td-composer__master-logo ${COMPOSER_STAGE_BEM.masterLogo}`,
+      )}
     />
   );
 }
@@ -538,12 +546,15 @@ export function ComunicadoComposerCanvas() {
       >
         <div
           ref={canvasRef}
-          className={[
-            "td-composer__canvas",
-            marquee ? "td-composer__canvas--marqueeing" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          className={ensureComunicadoDualClass(
+            [
+              "td-composer__canvas",
+              COMPOSER_STAGE_BEM.root,
+              marquee ? "td-composer__canvas--marqueeing" : "",
+            ]
+              .filter(Boolean)
+              .join(" "),
+          )}
           data-viewport={viewportProfile || "1080p"}
           style={{
             ...canvasStyle,
@@ -556,6 +567,11 @@ export function ComunicadoComposerCanvas() {
           onPointerDown={handleCanvasPointerDown}
           onContextMenu={handleCanvasContextMenu}
         >
+          {/*
+           * Mesma árvore da TV (`ComunicadoStageFrame`): root + __stage.
+           * Blocos/logo posicionam no stage — paridade de containing block.
+           */}
+          <div className={ensureComunicadoDualClass(`td-composer__stage ${COMPOSER_STAGE_BEM.stage}`)}>
           <MasterLogoOverlay />
           {shouldRenderStageGrid(showStageGrid, stageZoom) ? (
             <div
@@ -779,6 +795,7 @@ export function ComunicadoComposerCanvas() {
               aria-hidden="true"
             />
           ) : null}
+          </div>
         </div>
       </div>
       <ComunicadoStageContextMenu

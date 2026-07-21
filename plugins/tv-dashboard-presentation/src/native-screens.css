@@ -386,6 +386,9 @@
   /* Retângulo 1080p — overflow visible; pasteboard está no __stage (bleed). */
   overflow: visible;
   background: inherit;
+  /* Raiz tipográfica de design — isola do `font-size: clamp(...vw)` do `.tdp-stage`. */
+  font-size: 16px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .tdp-stage--preview-shell:fullscreen {

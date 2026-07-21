@@ -1,29 +1,33 @@
 ---
-description: TV Dashboard — pasteboard no editor e paridade na TV
-globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*,plugins/plugin-ui/src/styles/comunicado-stage.css
+description: TV Dashboard — WYSIWYG editor ↔ TV (tamanhos e posições)
+globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*,plugins/plugin-ui/src/styles/comunicado-stage.css,plugins/plugin-ui/src/styles/kpi-card.css
 alwaysApply: false
 ---
 
-# TV Dashboard — overflow / pasteboard (paridade editor ↔ TV)
+# TV Dashboard — WYSIWYG editor ↔ apresentação
 
 ## Princípio
 
-| Superfície | Comportamento | Motivo |
-|------------|---------------|--------|
-| **Editor** (`.td-composer__canvas` + zoom-sizer) | `overflow: visible` + gutter | Itens fora do 1080p ficam sobre o pasteboard |
-| **TV / prévia** (`DesignViewportStage`) | Bleed (`DESIGN_VIEWPORT_BLEED_RATIO`) dentro do layer com `transform: scale` | Mesmo overhang no letterbox |
-| **Borda física** (`.tdp-stage`, `.pub-kiosk-root`, container do viewport) | `overflow: hidden` | Clip só na tela/kiosk |
+**Editor e TV devem pintar o mesmo slide nos mesmos tamanhos e posições** (frames `%` + tipografia de design).
 
-**Causa raiz (jul/2026):** ancestral `overflow: hidden` + `transform: scale` clipa filhos ao border-box do elemento transformado. Só `overflow: visible` no CSS da moldura **não** basta — o stage precisa de pasteboard (bleed) *dentro* do layer escalado.
+| Camada | Comportamento |
+|--------|----------------|
+| **Moldura 1080p** | Mesmo CSS (`.delpi-ui-comunicado`), `font-size: 16px`, font stack de design |
+| **Editor** | Dual-class no canvas + `__stage` (como `ComunicadoStageFrame`); pasteboard só no gutter |
+| **TV** | `DesignViewportStage` escala o design com `contain`; clip físico no kiosk |
+| **Animações de entrada** | Off por padrão; só com `.tdp-stage--animate-entrances` |
 
-## Anti-padrão (proibido)
+Itens com frame fora de 0–100%: existem no mesmo sistema de coordenadas. Na TV 16:9 a abertura = moldura → overhang sai da tela física (igual PowerPoint). O pasteboard do editor é chrome de edição, não «outra geometria».
 
-1. **`overflow: hidden` no canvas do editor** «para WYSIWYG».
-2. Remover o bleed do `DesignViewportStage` ou voltar a escalar só o retângulo 1080p sem pasteboard.
-3. Clip no zoom-sizer/gutter do editor que impeça ver overhang.
+## Anti-padrões
 
-## O que fazer
+1. Tipografia de conteúdo em `rem` / `vw` do host (portal ≠ public-hub).
+2. Árvore do editor sem classes `delpi-ui-comunicado*` / sem `__stage`.
+3. Animações de entrada sempre ligadas na TV (deslocam blocos vs editor).
+4. Só aumentar `DESIGN_VIEWPORT_BLEED_RATIO` esperando pasteboard na TV 16:9.
 
-- Editor: `overflow: visible` + padding do `canvas-zoom-sizer`.
-- TV/prévia: `computeDesignViewportBleedSize` + `__design` com `overflow: visible`.
-- Regressão: `DesignViewportStage.test.ts` (bleed) + `designStageClipContract.test.ts`.
+## Módulos canônicos
+
+- Palco: `RichComunicadoStage` / `ComunicadoStageFrame`
+- Tipografia KPI: `kpi-card.css` em **px**
+- Contrato: `comunicadoStageCssContract.test.ts`, `designStageClipContract.test.ts`

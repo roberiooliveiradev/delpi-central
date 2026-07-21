@@ -48,5 +48,8 @@ describe("design stage clip contract (editor ↔ TV parity)", () => {
     expect(viewportSrc).toMatch(/DESIGN_VIEWPORT_BLEED_RATIO/);
     expect(viewportSrc).toMatch(/computeDesignViewportBleedSize/);
     expect(viewportSrc).toMatch(/tdp-design-viewport__design/);
+
+    expect(comunicadoBody).toMatch(/font-size:\s*16px/);
+    expect(comunicadoCss).toMatch(/\.tdp-stage--animate-entrances/);
   });
 });

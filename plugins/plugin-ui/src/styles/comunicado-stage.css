@@ -15,32 +15,35 @@
   transform: none !important;
 }
 
-/* 4E.2 — animações de entrada por bloco (só no slide ativo) */
-.tdp-slide--active .delpi-ui-comunicado__block--anim-fade {
+/*
+ * Animações de entrada: só com `.tdp-stage--animate-entrances`.
+ * Padrão = off (paridade com o editor, que não anima no palco).
+ */
+.tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-fade {
   animation: tdp-block-fade-in var(--tdp-block-anim-duration, 600ms)
     var(--tdp-block-anim-easing, ease-out) var(--tdp-block-anim-delay, 0ms) both;
 }
 
-.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in {
+.tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in {
   animation-duration: var(--tdp-block-anim-duration, 600ms);
   animation-timing-function: var(--tdp-block-anim-easing, ease-out);
   animation-delay: var(--tdp-block-anim-delay, 0ms);
   animation-fill-mode: both;
 }
 
-.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-up {
+.tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-up {
   animation-name: tdp-block-slide-in-up;
 }
 
-.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-down {
+.tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-down {
   animation-name: tdp-block-slide-in-down;
 }
 
-.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-left {
+.tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-left {
   animation-name: tdp-block-slide-in-left;
 }
 
-.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-right {
+.tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-right {
   animation-name: tdp-block-slide-in-right;
 }
 
@@ -97,8 +100,8 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .tdp-slide--active .delpi-ui-comunicado__block--anim-fade,
-  .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in {
+  .tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-fade,
+  .tdp-stage--animate-entrances .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in {
     animation: none;
     opacity: 1;
     transform: none;
@@ -116,12 +119,15 @@
 .delpi-ui-comunicado {
   position: relative;
   /*
-   * Paridade com `.td-composer__canvas`: overflow VISÍVEL.
-   * Blocos com frame fora do 1080p pintam no letterbox; o clip físico fica no
-   * `.tdp-stage` / viewport externo (borda da TV), não na moldura do slide.
+   * Paridade editor ↔ TV: overflow VISÍVEL na moldura; clip físico no kiosk.
+   * Tipografia de DESIGN (px + font-size 16px) — nunca rem/vw do host
+   * (portal vs public-hub mudavam métricas e «desalinhavam» o mesmo frame %).
    */
   overflow: visible;
   padding: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   /* Tipografia de conteúdo do slide — independente do tema chrome do host. */
   --delpi-ui-text: #0f172a;
   --delpi-ui-muted: #64748b;
