@@ -378,11 +378,12 @@
 }
 
 .tdp-design-viewport__stage {
-  /*
-   * Paridade editor ↔ TV: sem clip na moldura de design.
-   * Overhang (logo/card fora do 0×0) pinta no letterbox; `.tdp-stage` e o
-   * container externo do DesignViewportStage ainda clipam a borda física.
-   */
+  /* Bleed wrapper (transform); clip só além do pasteboard. */
+  background: transparent;
+}
+
+.tdp-design-viewport__design {
+  /* Retângulo 1080p — overflow visible; pasteboard está no __stage (bleed). */
   overflow: visible;
   background: inherit;
 }

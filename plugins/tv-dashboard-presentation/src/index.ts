@@ -22,10 +22,15 @@ export type {
 } from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
-export { DesignViewportStage, computeDesignViewportScale } from "./DesignViewportStage";
+export {
+  DesignViewportStage,
+  computeDesignViewportScale,
+  computeDesignViewportBleedSize,
+  DESIGN_VIEWPORT_BLEED_RATIO,
+} from "./DesignViewportStage";
 export { RichComunicadoStage } from "./RichComunicadoStage";
 export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
-export type { DesignViewportFitMode } from "./DesignViewportStage";
+export type { DesignViewportFitMode, DesignViewportBleedSize } from "./DesignViewportStage";
 export {
   resolveViewportPixelSize,
   type ViewportPixelSize,

@@ -10,17 +10,15 @@ function ruleBody(css: string, selector: string): string {
 }
 
 /**
- * Contrato de paridade editor ↔ TV no overflow da moldura de design:
+ * Contrato de paridade editor ↔ TV:
  * - Editor (`.td-composer__canvas`): overflow visible — pasteboard.
- * - TV/prévia (`.delpi-ui-comunicado`, `.tdp-design-viewport__stage`): overflow
- *   visible — mesmos itens fora da moldura aparecem no letterbox.
- * - Clip físico: só `.tdp-stage` / container externo do DesignViewportStage.
+ * - Comunicado / `__design`: overflow visible na moldura.
+ * - Pasteboard na TV: bleed em `DesignViewportStage` (não só CSS overflow).
  *
- * Anti-padrão: overflow:hidden no canvas do editor «para WYSIWYG», ou clip na
- * moldura de design na TV (quebra igualdade edição ↔ apresentação).
+ * Anti-padrão: overflow:hidden no canvas do editor «para WYSIWYG».
  */
 describe("design stage clip contract (editor ↔ TV parity)", () => {
-  it("canvas, comunicado e design-viewport stage NÃO clipam a moldura", () => {
+  it("canvas, comunicado e design-viewport__design NÃO clipam a moldura", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const editorCss = readFileSync(join(here, "index.css"), "utf8");
     const presentationCss = readFileSync(
@@ -29,6 +27,10 @@ describe("design stage clip contract (editor ↔ TV parity)", () => {
     );
     const comunicadoCss = readFileSync(
       join(here, "../../plugin-ui/src/styles/comunicado-stage.css"),
+      "utf8",
+    );
+    const viewportSrc = readFileSync(
+      join(here, "../../tv-dashboard-presentation/src/DesignViewportStage.tsx"),
       "utf8",
     );
 
@@ -40,8 +42,11 @@ describe("design stage clip contract (editor ↔ TV parity)", () => {
     expect(comunicadoBody).toMatch(/^\s*overflow:\s*visible\s*;/m);
     expect(comunicadoBody).not.toMatch(/^\s*overflow:\s*hidden\s*;/m);
 
-    const stageBody = ruleBody(presentationCss, ".tdp-design-viewport__stage");
-    expect(stageBody).toMatch(/^\s*overflow:\s*visible\s*;/m);
-    expect(stageBody).not.toMatch(/^\s*overflow:\s*hidden\s*;/m);
+    const designBody = ruleBody(presentationCss, ".tdp-design-viewport__design");
+    expect(designBody).toMatch(/^\s*overflow:\s*visible\s*;/m);
+
+    expect(viewportSrc).toMatch(/DESIGN_VIEWPORT_BLEED_RATIO/);
+    expect(viewportSrc).toMatch(/computeDesignViewportBleedSize/);
+    expect(viewportSrc).toMatch(/tdp-design-viewport__design/);
   });
 });

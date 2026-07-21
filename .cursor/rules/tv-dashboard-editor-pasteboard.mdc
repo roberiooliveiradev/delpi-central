@@ -4,29 +4,26 @@ globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*,plugins/
 alwaysApply: false
 ---
 
-# TV Dashboard — overflow da moldura (paridade editor ↔ TV)
+# TV Dashboard — overflow / pasteboard (paridade editor ↔ TV)
 
 ## Princípio
 
-| Superfície | Overflow | Motivo |
-|------------|----------|--------|
-| **Editor** (`.td-composer__canvas`) | `visible` | Pasteboard — itens na borda/fora ficam **sobre** o gutter, selecionáveis |
-| **TV / prévia** (`.delpi-ui-comunicado`, `.tdp-design-viewport__stage`) | `visible` | **Mesma** moldura — overhang no letterbox (igualdade edição ↔ apresentação) |
-| **Borda física** (`.tdp-stage`, container externo do `DesignViewportStage`) | `hidden` | Clip só na tela/kiosk, não no retângulo 1080p |
+| Superfície | Comportamento | Motivo |
+|------------|---------------|--------|
+| **Editor** (`.td-composer__canvas` + zoom-sizer) | `overflow: visible` + gutter | Itens fora do 1080p ficam sobre o pasteboard |
+| **TV / prévia** (`DesignViewportStage`) | Bleed (`DESIGN_VIEWPORT_BLEED_RATIO`) dentro do layer com `transform: scale` | Mesmo overhang no letterbox |
+| **Borda física** (`.tdp-stage`, `.pub-kiosk-root`, container do viewport) | `overflow: hidden` | Clip só na tela/kiosk |
 
-Frames `%` e o overflow da moldura são os mesmos. Cortar no editor «para parecer TV» **ou** clipar na moldura na TV **não** é fidelidade.
+**Causa raiz (jul/2026):** ancestral `overflow: hidden` + `transform: scale` clipa filhos ao border-box do elemento transformado. Só `overflow: visible` no CSS da moldura **não** basta — o stage precisa de pasteboard (bleed) *dentro* do layer escalado.
 
 ## Anti-padrão (proibido)
 
-1. **`overflow: hidden` no canvas do editor** com justificativa «WYSIWYG / posição na borda».
-2. **`overflow: hidden` em `.delpi-ui-comunicado` / `.tdp-design-viewport__stage`** «porque é o ar» — quebra itens fora da tela na apresentação.
-3. Clip no zoom-sizer/gutter que impeça ver overhang no pasteboard.
-
-Incidente jul/2026: clip no palco do editor → logo/IDD/handles cortados.  
-Incidente jul/2026: clip na moldura na TV → logo/card fora da moldura sumiam na apresentação.
+1. **`overflow: hidden` no canvas do editor** «para WYSIWYG».
+2. Remover o bleed do `DesignViewportStage` ou voltar a escalar só o retângulo 1080p sem pasteboard.
+3. Clip no zoom-sizer/gutter do editor que impeça ver overhang.
 
 ## O que fazer
 
-- Editor: `overflow: visible` + pasteboard (padding do `canvas-zoom-sizer`).
-- TV/prévia: `overflow: visible` na moldura de design; `hidden` só no viewport físico.
-- Regressão: `designStageClipContract.test.ts`.
+- Editor: `overflow: visible` + padding do `canvas-zoom-sizer`.
+- TV/prévia: `computeDesignViewportBleedSize` + `__design` com `overflow: visible`.
+- Regressão: `DesignViewportStage.test.ts` (bleed) + `designStageClipContract.test.ts`.
