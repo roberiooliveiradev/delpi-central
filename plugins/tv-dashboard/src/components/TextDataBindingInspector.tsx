@@ -118,7 +118,7 @@ export function TextDataBindingInspector({
       />
 
       {sourceId ? (
-        <>
+        <div className="td-text-data-binding-sections">
           <DeckPropertySection
             title="Campo dinâmico"
             hint={H.textDataBinding ?? H.viewBinding}
@@ -189,7 +189,7 @@ export function TextDataBindingInspector({
               onChange={(rules) => patchProjection({ colorRules: rules })}
             />
           </DeckPropertySection>
-        </>
+        </div>
       ) : null}
     </>
   );
