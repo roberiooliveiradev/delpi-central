@@ -941,7 +941,8 @@ export function useComunicadoEditorBlocks({
     const refreshSourceIds = resolveRemovedInputRefreshSourceIds(removedInputs, currentBlocks);
     const filtered = currentBlocks.filter((block) => !removeSet.has(block.id));
     const nextBlocks = pruneOrphanConnectors(filtered);
-    selectBlocksByIds(nextBlocks[0]?.id ? [nextBlocks[0].id] : []);
+    // Excluir não auto-seleciona outro bloco — deixa o palco sem seleção.
+    selectBlocksByIds([]);
 
     if (removedInputs.length > 0) {
       const synced = syncAllConnectors(nextBlocks);

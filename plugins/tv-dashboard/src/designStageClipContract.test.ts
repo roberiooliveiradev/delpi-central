@@ -10,12 +10,11 @@ function ruleBody(css: string, selector: string): string {
 }
 
 /**
- * Contrato WYSIWYG: o retângulo de design do editor e da TV/prévia usam o mesmo clip.
- * Sem isso, sombra/conteúdo na borda parece ok no palco e cortado na apresentação
- * (mesma frame % — percepção de «posição errada»).
+ * Editor ≠ TV no clip: o palco permite pasteboard (itens fora do retângulo de design);
+ * a apresentação continua clipando para o viewport real da TV.
  */
-describe("design stage clip contract (editor ≡ TV)", () => {
-  it("canvas do editor e comunicado/TV clipam overflow", () => {
+describe("design stage clip contract (editor pasteboard / TV clip)", () => {
+  it("editor permite overflow; TV/comunicado clipam", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const editorCss = readFileSync(join(here, "index.css"), "utf8");
     const presentationCss = readFileSync(
@@ -24,8 +23,8 @@ describe("design stage clip contract (editor ≡ TV)", () => {
     );
 
     const canvasBody = ruleBody(editorCss, ".dashboard-tv-dashboard .td-composer__canvas");
-    expect(canvasBody).toMatch(/^\s*overflow:\s*hidden\s*;/m);
-    expect(canvasBody).not.toMatch(/^\s*overflow:\s*visible\s*;/m);
+    expect(canvasBody).toMatch(/^\s*overflow:\s*visible\s*;/m);
+    expect(canvasBody).not.toMatch(/^\s*overflow:\s*hidden\s*;/m);
 
     const comunicadoBody = ruleBody(presentationCss, ".tdp-comunicado");
     expect(comunicadoBody).toMatch(/^\s*overflow:\s*hidden\s*;/m);

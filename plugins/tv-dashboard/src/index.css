@@ -1156,11 +1156,11 @@
   aspect-ratio: auto;
   border-radius: 0;
   /*
-   * Clip WYSIWYG = TV/prévia (`DesignViewportStage` + `.tdp-comunicado`).
-   * overflow:visible fazia sombra/conteúdo na borda parecer “ok” no palco e
-   * cortado na apresentação — mesma frame %, percepção de posição errada.
+   * Modo edição: overflow visível — pasteboard ao redor do retângulo de design.
+   * A TV/prévia continua com overflow:hidden (`.tdp-comunicado` / DesignViewportStage).
+   * Assim dá para posicionar itens fora da área de visualização sem cortá-los no palco.
    */
-  overflow: hidden;
+  overflow: visible;
   /* Evita arraste acidental marcar texto; editing contentEditable sobrescreve. */
   user-select: none;
   /*
