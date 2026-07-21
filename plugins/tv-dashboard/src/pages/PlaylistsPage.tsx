@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Copy, MonitorPlay, Plus } from "lucide-react";
+import { Copy, MonitorPlay, Plus, Search } from "lucide-react";
 
 import {
   duplicatePlaylist,
   listPlaylists,
   type Playlist,
 } from "../api/tvDashboardApi";
-import { DataTable, type DataTableColumn } from "../components/dataTableUi";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -17,18 +16,51 @@ function formatLastPresented(value?: string | null) {
   return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
+function greetingPt(now = new Date()): string {
+  const hour = now.getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+export type PlaylistHomeFilter = "recent" | "active" | "inactive";
+
 type Props = {
   onOpen: (id: string) => void;
   onCreate: () => void;
 };
+
+export function filterPlaylists(
+  items: Playlist[],
+  filter: PlaylistHomeFilter,
+  query: string,
+): Playlist[] {
+  const q = query.trim().toLowerCase();
+  let next = items;
+  if (filter === "active") next = next.filter((item) => item.isActive);
+  if (filter === "inactive") next = next.filter((item) => !item.isActive);
+  if (q) next = next.filter((item) => item.name.toLowerCase().includes(q));
+
+  if (filter === "recent") {
+    return [...next].sort((a, b) => {
+      const ta = a.lastPresentedAt ? Date.parse(a.lastPresentedAt) : 0;
+      const tb = b.lastPresentedAt ? Date.parse(b.lastPresentedAt) : 0;
+      if (tb !== ta) return tb - ta;
+      return a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" });
+    });
+  }
+  return [...next].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }),
+  );
+}
 
 export function PlaylistsPage({ onOpen, onCreate }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<string | null>("name");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [filter, setFilter] = useState<PlaylistHomeFilter>("recent");
+  const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,116 +96,137 @@ export function PlaylistsPage({ onOpen, onCreate }: Props) {
     [confirm, onOpen],
   );
 
-  const columns = useMemo<DataTableColumn<Playlist>[]>(
-    () => [
-      {
-        key: "name",
-        header: "Nome",
-        render: (row) => row.name,
-        sortable: true,
-        sortValue: (row) => row.name,
-      },
-      {
-        key: "status",
-        header: "Status",
-        render: (row) => (
-          <span className={`td-badge ${row.isActive ? "td-badge--active" : "td-badge--inactive"}`}>
-            {row.isActive ? "Ativa" : "Inativa"}
-          </span>
-        ),
-        sortable: true,
-        sortValue: (row) => (row.isActive ? 1 : 0),
-      },
-      {
-        key: "viewCount",
-        header: "Visualizações",
-        align: "right",
-        render: (row) => row.viewCount ?? 0,
-        sortable: true,
-        sortValue: (row) => row.viewCount ?? 0,
-      },
-      {
-        key: "lastPresentedAt",
-        header: "Última exibição",
-        render: (row) => formatLastPresented(row.lastPresentedAt),
-        sortable: true,
-        sortValue: (row) => row.lastPresentedAt ?? "",
-      },
-      {
-        key: "actions",
-        header: "Ações",
-        interactive: true,
-        render: (row) => (
-          <div className="td-table-actions">
-            <button type="button" className="td-btn" onClick={() => onOpen(row.id)}>
-              <MonitorPlay size={16} aria-hidden="true" />
-              Gerenciar
-            </button>
-            <button type="button" className="td-btn" onClick={() => void handleDuplicate(row)}>
-              <Copy size={16} aria-hidden="true" />
-              Duplicar
-            </button>
-          </div>
-        ),
-      },
-    ],
-    [handleDuplicate, onOpen],
+  const visible = useMemo(
+    () => filterPlaylists(items, filter, query),
+    [filter, items, query],
   );
 
-  const sortedItems = useMemo(() => {
-    if (!sortKey) return items;
-    const column = columns.find((item) => item.key === sortKey);
-    if (!column?.sortValue) return items;
-    const direction = sortDirection === "asc" ? 1 : -1;
-    return [...items].sort((left, right) => {
-      const a = column.sortValue?.(left);
-      const b = column.sortValue?.(right);
-      if (a == null && b == null) return 0;
-      if (a == null) return 1;
-      if (b == null) return -1;
-      if (typeof a === "number" && typeof b === "number") return (a - b) * direction;
-      return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" }) * direction;
-    });
-  }, [columns, items, sortDirection, sortKey]);
-
-  function handleSortChange(columnKey: string) {
-    if (sortKey === columnKey) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
-      return;
-    }
-    setSortKey(columnKey);
-    setSortDirection("asc");
-  }
+  const greeting = useMemo(() => greetingPt(), []);
 
   return (
-    <div className="td-card">
-      <div className="td-toolbar">
-        <div>
-          <h2 style={{ margin: 0 }}>Programações</h2>
-          <p className="td-subtitle" style={{ marginTop: 4 }}>
-            Monte playlists de telas e gere links públicos para TVs.
-          </p>
+    <div className="td-home">
+      <section className="td-home__greeting" aria-label="Início">
+        <h2 className="td-home__hello">{greeting}</h2>
+        <div className="td-home__create-row">
+          <button
+            type="button"
+            className="td-home__create-card"
+            onClick={onCreate}
+          >
+            <span className="td-home__create-icon" aria-hidden="true">
+              <Plus size={28} strokeWidth={2} />
+            </span>
+            <span className="td-home__create-title">Nova programação</span>
+            <span className="td-home__create-hint">
+              Monte playlists de telas e gere um link público para TVs.
+            </span>
+          </button>
         </div>
-        <button type="button" className="td-btn td-btn--primary" onClick={onCreate}>
-          <Plus size={16} aria-hidden="true" />
-          Nova programação
-        </button>
-      </div>
+      </section>
 
-      {error ? <div className="td-state">{error}</div> : null}
+      <section className="td-home__library" aria-label="Programações">
+        <div className="td-home__library-bar">
+          <div className="td-home__filters" role="tablist" aria-label="Filtrar programações">
+            {(
+              [
+                ["recent", "Recentes"],
+                ["active", "Ativas"],
+                ["inactive", "Inativas"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={filter === id}
+                className={[
+                  "td-home__filter",
+                  filter === id ? "td-home__filter--active" : null,
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => setFilter(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <label className="td-home__search">
+            <Search size={16} aria-hidden="true" />
+            <span className="td-sr-only">Buscar programação</span>
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Buscar programação"
+              autoComplete="off"
+            />
+          </label>
+        </div>
 
-      {!error ? (
-        <DataTable
-          columns={columns}
-          rows={sortedItems}
-          rowKey={(row) => row.id}
-          loading={loading}
-          layout="embedded"
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onSortChange={handleSortChange}
-        />
-      ) : null}
+        {error ? <div className="td-state">{error}</div> : null}
+
+        {loading ? <div className="td-state">Carregando programações…</div> : null}
+
+        {!loading && !error && visible.length === 0 ? (
+          <div className="td-home__empty">
+            <p>Nenhuma programação neste filtro.</p>
+            <button type="button" className="td-btn td-btn--primary" onClick={onCreate}>
+              <Plus size={16} aria-hidden="true" />
+              Nova programação
+            </button>
+          </div>
+        ) : null}
+
+        {!loading && !error && visible.length > 0 ? (
+          <ul className="td-home__grid">
+            {visible.map((item) => (
+              <li key={item.id} className="td-home__card">
+                <button
+                  type="button"
+                  className="td-home__card-main"
+                  onClick={() => onOpen(item.id)}
+                  aria-label={`Abrir ${item.name}`}
+                >
+                  <span className="td-home__card-thumb" aria-hidden="true">
+                    <MonitorPlay size={28} strokeWidth={1.6} />
+                  </span>
+                  <span className="td-home__card-body">
+                    <span className="td-home__card-name">{item.name}</span>
+                    <span className="td-home__card-meta">
+                      <span
+                        className={`td-badge ${item.isActive ? "td-badge--active" : "td-badge--inactive"}`}
+                      >
+                        {item.isActive ? "Ativa" : "Inativa"}
+                      </span>
+                      <span>{item.viewCount ?? 0} visualizações</span>
+                      <span>Última: {formatLastPresented(item.lastPresentedAt)}</span>
+                    </span>
+                  </span>
+                </button>
+                <div className="td-home__card-actions">
+                  <button
+                    type="button"
+                    className="td-btn td-btn--sm"
+                    onClick={() => onOpen(item.id)}
+                  >
+                    <MonitorPlay size={14} aria-hidden="true" />
+                    Abrir
+                  </button>
+                  <button
+                    type="button"
+                    className="td-btn td-btn--sm"
+                    onClick={() => void handleDuplicate(item)}
+                  >
+                    <Copy size={14} aria-hidden="true" />
+                    Duplicar
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
     </div>
   );
 }

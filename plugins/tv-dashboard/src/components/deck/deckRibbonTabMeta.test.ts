@@ -70,7 +70,7 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     expect(elementIdx).toBeGreaterThan(playlistIdx);
     expect(layersIdx).toBe(ids.length - 1);
     expect(isContextualDeckRibbonTab(tabs[layersIdx]!)).toBe(true);
-    expect(isContextualDeckRibbonTab(tabs.find((t) => t.id === "home")!)).toBe(false);
+    expect(isContextualDeckRibbonTab(tabs.find((t) => t.id === "insert")!)).toBe(false);
   });
 
   it("chrome embutido inclui Inserir, Exibir, Camadas e contextuais", () => {
@@ -103,13 +103,14 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     ]);
   });
 
-  it("sempre inclui Programação, Página Inicial e Camadas em slide custom", () => {
+  it("sempre inclui Programação, Inserir e Camadas em slide custom", () => {
     const tabs = resolveDeckRibbonTabs(true);
     expect(tabs.map((tab) => tab.id)).toEqual(
-      expect.arrayContaining(["home", "playlist", "slide", "insert", "layers"]),
+      expect.arrayContaining(["playlist", "slide", "insert", "layers"]),
     );
     expect(tabs.find((tab) => tab.id === "playlist")?.label).toBe("Programação");
     expect(tabs.some((tab) => tab.id === "element")).toBe(false);
+    expect(tabs.some((tab) => tab.id === "home")).toBe(false);
   });
 
   it("painel lateral: só Camadas sem seleção; Elemento+Camadas com seleção", () => {

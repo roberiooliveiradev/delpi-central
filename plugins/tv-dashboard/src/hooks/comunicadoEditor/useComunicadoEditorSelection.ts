@@ -69,7 +69,7 @@ export function useComunicadoEditorSelection({
   updateBlockTextFieldsRef,
   updateBlocksRef,
 }: Options) {
-  /** Sem auto-seleção: Gerenciar / F5 abrem na Página Inicial, não em Elemento. */
+  /** Sem auto-seleção: Gerenciar / F5 abrem no palco sem forçar Elemento. */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);

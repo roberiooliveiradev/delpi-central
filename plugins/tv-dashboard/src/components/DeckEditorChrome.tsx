@@ -15,10 +15,11 @@ import { DeckKeyTip } from "./DeckKeyTip";
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
 import { ComunicadoRibbonContent } from "./ComunicadoRibbonContent";
 import { DeckSettingsPanel } from "./DeckSettingsPanel";
-import { SlideDeckRibbon } from "./SlideDeckRibbon";
+import { SlideCurrentRibbon } from "./SlideCurrentRibbon";
 import {
   ComunicadoSlideBackgroundRibbon,
   DeckHistoryTabActions,
+  DeckHomePlaylistChrome,
   DeckPlaylistIdentity,
   DeckRibbonShell,
   isContextualDeckRibbonTab,
@@ -68,7 +69,6 @@ type Props = {
 function isRibbonContentTab(
   tab: DeckRibbonTabId,
 ): tab is
-  | "home"
   | "insert"
   | "element"
   | "tableDesign"
@@ -78,7 +78,6 @@ function isRibbonContentTab(
   | "slide"
   | "playlist" {
   return (
-    tab === "home" ||
     tab === "insert" ||
     tab === "element" ||
     tab === "tableDesign" ||
@@ -90,14 +89,14 @@ function isRibbonContentTab(
   );
 }
 
-/** Preferência sem seleção / aba contextual sumiu: Inserir (custom) ou Página Inicial. */
+/** Preferência sem seleção / aba contextual sumiu: Inserir (custom) ou Programação. */
 function resolveDefaultRibbonTab(
   tabs: { id: DeckRibbonTabId }[],
   isCustomSlide: boolean,
 ): DeckRibbonTabId {
   if (isCustomSlide && tabs.some((tab) => tab.id === "insert")) return "insert";
-  if (tabs.some((tab) => tab.id === "home")) return "home";
-  return tabs[0]?.id ?? "home";
+  if (tabs.some((tab) => tab.id === "playlist")) return "playlist";
+  return tabs[0]?.id ?? "playlist";
 }
 
 /** Faixa contextual: altura estável (`band`) para não reflowar o palco ao selecionar. */
@@ -132,7 +131,7 @@ export function DeckEditorChrome({
     showDataTab,
   });
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>(() =>
-    isCustomSlide ? "insert" : "home",
+    isCustomSlide ? "insert" : "playlist",
   );
 
   useEffect(() => {
@@ -297,7 +296,6 @@ export function DeckEditorChrome({
                     : "Controles de slide"
               }
             >
-              {activeTab === "home" ? <SlideDeckRibbon {...slideDeck} /> : null}
               {isCustomSlide &&
               (activeTab === "insert" ||
                 activeTab === "element" ||
@@ -309,6 +307,21 @@ export function DeckEditorChrome({
               ) : null}
               {activeTab === "slide" || activeTab === "playlist" ? (
                 <div className="td-deck-ribbon__groups">
+                  {activeTab === "playlist" && playlistChrome ? (
+                    <DeckHomePlaylistChrome {...playlistChrome} />
+                  ) : null}
+                  {activeTab === "slide" ? (
+                    <SlideCurrentRibbon
+                      selectedSlide={slideDeck.selectedSlide}
+                      onDuplicate={slideDeck.onDuplicate}
+                      onToggleActive={slideDeck.onToggleActive}
+                      onRemove={slideDeck.onRemove}
+                      onExportPng={slideDeck.onExportPng}
+                      onExportPdf={slideDeck.onExportPdf}
+                      onExportPptx={slideDeck.onExportPptx}
+                      exportBusy={slideDeck.exportBusy}
+                    />
+                  ) : null}
                   {activeTab === "slide" && isCustomSlide ? (
                     <ComunicadoSlideBackgroundRibbon labels={adminLabels} />
                   ) : null}

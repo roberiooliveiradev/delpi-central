@@ -58,7 +58,7 @@ export function DeckPlaylistIdentity({
 }
 
 /**
- * Controles da programação/TV na aba Página Inicial (tiles na ribbon).
+ * Controles da programação/TV na aba Programação (tiles na ribbon).
  * Identidade (nome/status) fica em `DeckPlaylistIdentity` na barra superior.
  */
 export function DeckHomePlaylistChrome({

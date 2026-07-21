@@ -6,13 +6,13 @@ export type DeckKeyTipMode = "idle" | "tabs" | "actions";
 
 /**
  * Teclas de função das abas (escopo `tabs`), na ordem canônica de `DECK_RIBBON_TABS`.
- * F1 = Página Inicial, F2 = Inserir, …
+ * F1 = Inserir (slide custom), …
  */
 export const DECK_TAB_KEYTIPS: Record<DeckRibbonTabId, string> = Object.fromEntries(
   DECK_RIBBON_TABS.map((tab, index) => [tab.id, `F${index + 1}`]),
 ) as Record<DeckRibbonTabId, string>;
 
-/** Ações da Página Inicial (Escopo `actions`). */
+/** Ações da tela atual (Escopo `actions` na aba Tela). */
 export const DECK_HOME_ACTION_KEYTIPS = {
   newSlide: "N",
   prevSlide: "A",

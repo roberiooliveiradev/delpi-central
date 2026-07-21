@@ -19,10 +19,10 @@ describe("deckKeyTips", () => {
   it("atalhos de aba são F1… únicos na ordem das abas", () => {
     const tips = Object.values(DECK_TAB_KEYTIPS);
     expect(new Set(tips).size).toBe(tips.length);
-    expect(DECK_TAB_KEYTIPS.home).toBe("F1");
-    expect(DECK_TAB_KEYTIPS.insert).toBe("F2");
-    expect(DECK_TAB_KEYTIPS.view).toBe("F3");
+    expect(DECK_TAB_KEYTIPS.insert).toBe("F1");
+    expect(DECK_TAB_KEYTIPS.view).toBe("F2");
     expect(tips.every((tip) => /^F\d+$/.test(tip))).toBe(true);
+    expect(DECK_TAB_KEYTIPS).not.toHaveProperty("home");
   });
 
   it("reconhece tecla de função e tecla de ação", () => {

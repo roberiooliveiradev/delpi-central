@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { resolveDeckRibbonTabs } from "./deck/deckRibbonTabMeta";
 
 describe("Deck editor entry ribbon", () => {
-  it("sem seleção só exposa Page Home — Elemento fica oculto", () => {
+  it("sem seleção: Inserir/Programação visíveis; sem Elemento nem home", () => {
     const tabs = resolveDeckRibbonTabs(true, { hasSelection: false });
-    expect(tabs.some((tab) => tab.id === "home")).toBe(true);
+    expect(tabs.some((tab) => tab.id === "insert")).toBe(true);
+    expect(tabs.some((tab) => tab.id === "playlist")).toBe(true);
+    expect(tabs.some((tab) => tab.id === "home")).toBe(false);
     expect(tabs.some((tab) => tab.id === "element")).toBe(false);
   });
 

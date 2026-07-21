@@ -1,6 +1,5 @@
 import {
   Database,
-  Home,
   Eye,
   LayoutTemplate,
   Layers,
@@ -15,7 +14,6 @@ import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import type { SelectionPanelTab } from "../comunicadoEditorContextCore";
 
 export type DeckRibbonTabId =
-  | "home"
   | "insert"
   | "element"
   | "tableDesign"
@@ -30,7 +28,7 @@ export type DeckRibbonTabMeta = {
   id: DeckRibbonTabId;
   label: string;
   hint: string;
-  icon: typeof Home;
+  icon: typeof Plus;
   customOnly?: boolean;
   /** Elemento / Dados / Design·Layout — só com seleção. Camadas não usa isto. */
   selectionOnly?: boolean;
@@ -64,7 +62,6 @@ const CONTEXTUAL_TAB_IDS = new Set<DeckRibbonTabId>([
  * Camadas: sempre visível em slide custom (sem seleção).
  */
 export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
-  { id: "home", label: "Página Inicial", hint: T.home, icon: Home },
   { id: "insert", label: "Inserir", hint: T.insert, icon: Plus, customOnly: true },
   { id: "view", label: "Exibir", hint: T.view, icon: Eye, customOnly: true },
   {
@@ -182,9 +179,8 @@ export type SelectionPanelTabMeta = {
   id: SelectionPanelTab;
   label: string;
   hint: string;
-  icon: typeof Home;
+  icon: typeof Plus;
 };
-
 /**
  * Abas do painel lateral — mesma fonte de labels/hints/ícones da ribbon.
  * Sem seleção: só Camadas.

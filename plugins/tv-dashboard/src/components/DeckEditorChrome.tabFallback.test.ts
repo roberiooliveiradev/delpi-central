@@ -5,10 +5,15 @@ import { fileURLToPath } from "node:url";
 
 /**
  * Top bar do deck: sem minimizar; sem seleção → aba Inserir (não Camadas).
+ * Sem aba Página Inicial — hub fica na lista /apps/tv-dashboard.
  */
 describe("deck chrome tab fallback contract", () => {
   const chrome = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), "DeckEditorChrome.tsx"),
+    "utf8",
+  );
+  const tabsMeta = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "deck/deckRibbonTabMeta.ts"),
     "utf8",
   );
 
@@ -29,7 +34,14 @@ describe("deck chrome tab fallback contract", () => {
     );
   });
 
-  it("abre slide custom na aba Inserir", () => {
-    expect(chrome).toMatch(/isCustomSlide \? "insert" : "home"/);
+  it("abre slide custom na aba Inserir; sem home no chrome", () => {
+    expect(chrome).toMatch(/isCustomSlide \? "insert" : "playlist"/);
+    expect(chrome).not.toMatch(/activeTab === "home"/);
+    expect(tabsMeta).not.toMatch(/id: "home"/);
+  });
+
+  it("Programação e Tela recebem chrome da antiga Página Inicial", () => {
+    expect(chrome).toMatch(/DeckHomePlaylistChrome/);
+    expect(chrome).toMatch(/SlideCurrentRibbon/);
   });
 });

@@ -308,6 +308,202 @@
   justify-content: space-between;
   margin-bottom: 16px;
 }
+
+/* Home Power BI — lista de programações */
+.dashboard-tv-dashboard .td-sr-only{
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.dashboard-tv-dashboard .td-home{
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+.dashboard-tv-dashboard .td-home__hello{
+  margin: 0 0 14px;
+  font-size: 1.35rem;
+  font-weight: 650;
+  color: var(--td-text);
+}
+.dashboard-tv-dashboard .td-home__create-row{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.dashboard-tv-dashboard .td-home__create-card{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: min(280px, 100%);
+  min-height: 140px;
+  padding: 18px 16px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--td-accent) 35%, var(--td-border));
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--td-accent) 16%, var(--td-surface)),
+      var(--td-surface)
+    );
+  color: var(--td-text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.dashboard-tv-dashboard .td-home__create-card:hover{
+  border-color: var(--td-accent);
+  transform: translateY(-1px);
+}
+.dashboard-tv-dashboard .td-home__create-icon{
+  display: inline-flex;
+  color: var(--td-accent);
+}
+.dashboard-tv-dashboard .td-home__create-title{
+  font-size: 1rem;
+  font-weight: 700;
+}
+.dashboard-tv-dashboard .td-home__create-hint{
+  font-size: 0.85rem;
+  color: var(--td-muted);
+  line-height: 1.35;
+}
+.dashboard-tv-dashboard .td-home__library{
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dashboard-tv-dashboard .td-home__library-bar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dashboard-tv-dashboard .td-home__filters{
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--td-text) 5%, var(--td-surface));
+  border: 1px solid var(--td-border);
+}
+.dashboard-tv-dashboard .td-home__filter{
+  border: none;
+  background: transparent;
+  color: var(--td-muted);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.dashboard-tv-dashboard .td-home__filter--active{
+  background: color-mix(in srgb, var(--td-accent) 18%, var(--td-surface));
+  color: var(--td-accent);
+}
+.dashboard-tv-dashboard .td-home__search{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: min(280px, 100%);
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--td-border);
+  background: var(--td-surface);
+  color: var(--td-muted);
+}
+.dashboard-tv-dashboard .td-home__search input{
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--td-text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+.dashboard-tv-dashboard .td-home__empty{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 28px 8px;
+  color: var(--td-muted);
+}
+.dashboard-tv-dashboard .td-home__grid{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.dashboard-tv-dashboard .td-home__card{
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  border: 1px solid var(--td-border);
+  background: var(--td-surface);
+  overflow: hidden;
+  box-shadow: 0 6px 18px color-mix(in srgb, #000 6%, transparent);
+}
+.dashboard-tv-dashboard .td-home__card-main{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.dashboard-tv-dashboard .td-home__card-main:hover .td-home__card-name{
+  color: var(--td-accent);
+}
+.dashboard-tv-dashboard .td-home__card-thumb{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--td-accent) 10%, var(--td-surface));
+  color: var(--td-accent);
+}
+.dashboard-tv-dashboard .td-home__card-body{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dashboard-tv-dashboard .td-home__card-name{
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+.dashboard-tv-dashboard .td-home__card-meta{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  font-size: 0.8rem;
+  color: var(--td-muted);
+}
+.dashboard-tv-dashboard .td-home__card-actions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 14px 14px;
+}
 .dashboard-tv-dashboard .td-table-actions{
   display: inline-flex;
   flex-wrap: wrap;
