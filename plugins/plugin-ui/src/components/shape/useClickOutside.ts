@@ -10,6 +10,7 @@ import { useEffect, useRef, type RefObject } from "react";
 const NESTED_OVERLAY_SELECTOR = [
   '[aria-modal="true"]',
   ".delpi-ui-color-picker",
+  ".delpi-ui-color-more-popover",
   ".delpi-ui-select__panel",
   ".delpi-ui-shape-dialog",
   ".delpi-ui-help-tooltip",

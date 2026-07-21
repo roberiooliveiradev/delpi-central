@@ -3,9 +3,10 @@ import { useRef, useState } from "react";
 
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import { DELPI_STANDARD_COLORS, DELPI_THEME_COLOR_GRID } from "./colorPalettes";
-import { ColorDialog } from "./ColorDialog";
+import { ColorMorePanel } from "./ColorMorePanel";
 import { ColorStandardRow, ColorThemeGrid } from "./ColorThemeGrid";
 import { cssToColorValue, resolveAutomaticTextColor, AUTOMATIC_TEXT_COLOR } from "./colorUtils";
+import { isEyedropperSupported, pickColorWithEyedropper } from "./pickColorWithEyedropper";
 import { mergeShapeColorLabels } from "./shapeLabels";
 import type { ShapeColorLabels } from "./types";
 
@@ -30,6 +31,9 @@ export type ColorPickerPopoverProps = {
    * - text → Automático
    */
   variant?: ColorPickerVariant;
+  /**
+   * Override do conta-gotas. Sem callback, usa EyeDropper nativo quando disponível.
+   */
   onEyedropper?: () => void;
   labels?: ShapeColorLabels;
   themeRows?: readonly (readonly string[])[];
@@ -74,10 +78,14 @@ export function ColorPickerPopover({
   className,
 }: ColorPickerPopoverProps) {
   const L = mergeShapeColorLabels(labels);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [eyedropperBusy, setEyedropperBusy] = useState(false);
+  const moreBtnRef = useRef<HTMLButtonElement>(null);
+  const morePanelRef = useRef<HTMLDivElement>(null);
 
   const noFillEnabled = resolveNoFillEnabled(variant, showNoFill);
   const automaticEnabled = resolveAutomaticEnabled(variant, showAutomatic);
+  const eyedropperEnabled = Boolean(onEyedropper) || isEyedropperSupported();
   const recent =
     recentColors?.filter(
       (color) => typeof color === "string" && color.trim() && color !== "transparent" && color !== "auto",
@@ -104,6 +112,21 @@ export function ColorPickerPopover({
 
   const handleSelect = (color: string) => {
     onChange(color);
+  };
+
+  const handleEyedropper = async () => {
+    if (onEyedropper) {
+      onEyedropper();
+      return;
+    }
+    if (eyedropperBusy || !isEyedropperSupported()) return;
+    setEyedropperBusy(true);
+    try {
+      const color = await pickColorWithEyedropper();
+      if (color) handleSelect(color);
+    } finally {
+      setEyedropperBusy(false);
+    }
   };
 
   return (
@@ -170,14 +193,28 @@ export function ColorPickerPopover({
 
       <ul className="delpi-ui-color-picker__actions">
         <li>
-          <button type="button" className="delpi-ui-color-picker__action" onClick={() => setDialogOpen(true)}>
+          <button
+            ref={moreBtnRef}
+            type="button"
+            className="delpi-ui-color-picker__action"
+            aria-expanded={moreOpen}
+            aria-haspopup="dialog"
+            onClick={() => setMoreOpen((open) => !open)}
+          >
             <Palette size={16} aria-hidden="true" />
             {L.moreColors}
           </button>
         </li>
-        {onEyedropper ? (
+        {eyedropperEnabled ? (
           <li>
-            <button type="button" className="delpi-ui-color-picker__action" onClick={onEyedropper}>
+            <button
+              type="button"
+              className="delpi-ui-color-picker__action"
+              disabled={eyedropperBusy}
+              onClick={() => {
+                void handleEyedropper();
+              }}
+            >
               <Pipette size={16} aria-hidden="true" />
               {L.eyedropper}
             </button>
@@ -185,13 +222,30 @@ export function ColorPickerPopover({
         ) : null}
       </ul>
 
-      <ColorDialog
-        open={dialogOpen}
-        value={value}
-        onClose={() => setDialogOpen(false)}
-        onConfirm={handleSelect}
-        labels={labels}
-      />
+      {moreOpen ? (
+        <AnchoredPanelPortal
+          open={moreOpen}
+          anchorRef={moreBtnRef}
+          panelRef={morePanelRef}
+          variant="bare"
+          exclusive={false}
+          preferredPlacement="right"
+          className="delpi-ui-color-more-popover"
+          role="dialog"
+          aria-label={L.colorDialogTitle}
+          onDismiss={() => setMoreOpen(false)}
+        >
+          <ColorMorePanel
+            value={value}
+            labels={labels}
+            onConfirm={(color) => {
+              handleSelect(color);
+              setMoreOpen(false);
+            }}
+            onCancel={() => setMoreOpen(false)}
+          />
+        </AnchoredPanelPortal>
+      ) : null}
     </div>
   );
 }

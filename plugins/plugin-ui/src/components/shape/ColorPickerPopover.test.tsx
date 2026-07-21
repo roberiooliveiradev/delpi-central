@@ -1,11 +1,12 @@
-import { describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 
 import { ColorPickerPopover } from "./ColorPickerPopover";
+import * as eyedropper from "./pickColorWithEyedropper";
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 describe("ColorPickerPopover", () => {
@@ -46,5 +47,29 @@ describe("ColorPickerPopover", () => {
     expect(view.getByRole("button", { name: "Sem contorno" })).toBeTruthy();
     expect(view.queryByRole("button", { name: "Sem fundo" })).toBeNull();
     expect(view.queryByRole("button", { name: "Automático" })).toBeNull();
+  });
+
+  it("Mais cores abre popover (não modal) e confirma a cor", () => {
+    const onChange = vi.fn();
+    render(<ColorPickerPopover variant="fill" value="#089bdb" onChange={onChange} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mais cores…" }));
+    expect(document.querySelector(".delpi-ui-color-more-popover")).toBeTruthy();
+    expect(document.querySelector(".delpi-ui-shape-dialog-overlay")).toBeNull();
+    expect(screen.getByRole("dialog", { name: "Cores" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "OK" }));
+    expect(onChange).toHaveBeenCalled();
+    expect(document.querySelector(".delpi-ui-color-more-popover")).toBeNull();
+  });
+
+  it("Conta-gotas usa EyeDropper quando disponível", async () => {
+    vi.spyOn(eyedropper, "isEyedropperSupported").mockReturnValue(true);
+    vi.spyOn(eyedropper, "pickColorWithEyedropper").mockResolvedValue("#aabbcc");
+    const onChange = vi.fn();
+    render(<ColorPickerPopover variant="fill" value="#089bdb" onChange={onChange} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Conta-gotas" }));
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith("#aabbcc"));
   });
 });
