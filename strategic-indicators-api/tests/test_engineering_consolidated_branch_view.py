@@ -100,3 +100,166 @@ def test_engineering_branch_view_uses_full_consolidated_realized() -> None:
     )
 
     assert departments[0].score == consolidated[0].score
+
+
+def test_engineering_idd_not_zero_when_catalog_still_average_of_units() -> None:
+    """
+    Regressão: badge IDD 0.0 Crítico com notas dos KPIs em 10.
+
+    Provider só publica unit_values.consolidated; average_of_units no catálogo
+    (seed V009) zerava filiais 01/02. Calculador deve forçar consolidado.
+    """
+    calculator = StrategicIndicatorsCalculator()
+    catalog = [
+        StrategicIndicatorCatalogItem(
+            indicator_id="engineering-projects-on-time",
+            department_id="engineering",
+            indicator_name="% LMP no prazo",
+            weight_pct=60,
+            goal_label="95%",
+            goal_value=95.0,
+            goal_periodicity="monthly",
+            scope_type="per_unit",
+            performance_direction="higher_is_better",
+            has_resolved_goal=True,
+            resolved_goal_scope_branch="",
+        ),
+        StrategicIndicatorCatalogItem(
+            indicator_id="engineering-transforma-plus",
+            department_id="engineering",
+            indicator_name="Ganhos TRANSFORMA+",
+            weight_pct=40,
+            goal_label="R$ 15.000/mês",
+            goal_value=15_000.0,
+            goal_periodicity="monthly",
+            scope_type="per_unit",
+            performance_direction="higher_is_better",
+            has_resolved_goal=True,
+            resolved_goal_scope_branch="",
+        ),
+    ]
+    measurements = [
+        StrategicIndicatorMeasuredValue(
+            indicator_id="engineering-projects-on-time",
+            department_id="engineering",
+            value=100.0,
+            source="lmp",
+            unit_values=build_unit_values_for_consolidated_department(
+                consolidated_value=100.0,
+            ),
+        ),
+        StrategicIndicatorMeasuredValue(
+            indicator_id="engineering-transforma-plus",
+            department_id="engineering",
+            value=16_817.57,
+            source="transforma_mais",
+            unit_values=build_unit_values_for_consolidated_department(
+                consolidated_value=16_817.57,
+            ),
+        ),
+    ]
+
+    indicators = calculator.calculate_indicators(
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-07",
+        start_date="01-07-2026",
+        end_date="21-07-2026",
+    )
+    departments = calculator.calculate_departments(
+        departments_catalog=[
+            StrategicDepartmentCatalogItem(
+                department_id="engineering",
+                department_name="Engenharia",
+                short_name="ENG",
+                weight_pct=10,
+                strategic_summary="",
+                aggregation_mode="average_of_units",
+            )
+        ],
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-07",
+        start_date="01-07-2026",
+        end_date="21-07-2026",
+        precalculated_indicators=indicators,
+    )
+
+    assert [item.score for item in indicators] == [10.0, 10.0]
+    assert departments[0].score == 10.0
+    assert departments[0].classification == "Excelência Integrada"
+
+
+def test_engineering_ignores_orphan_branch_goals_with_consolidated_measurement() -> None:
+    """Metas 01/02 sem realizado por filial não devem zerar nota em eng. consolidada."""
+    calculator = StrategicIndicatorsCalculator()
+    branch_goals = {
+        "01": {
+            "goal_value": 95.0,
+            "goal_periodicity": "monthly",
+            "goal_mode": "standard",
+            "monthly_targets": [],
+        },
+        "02": {
+            "goal_value": 95.0,
+            "goal_periodicity": "monthly",
+            "goal_mode": "standard",
+            "monthly_targets": [],
+        },
+    }
+    catalog = [
+        StrategicIndicatorCatalogItem(
+            indicator_id="engineering-projects-on-time",
+            department_id="engineering",
+            indicator_name="% LMP no prazo",
+            weight_pct=100,
+            goal_label="95%",
+            goal_value=95.0,
+            goal_periodicity="monthly",
+            scope_type="per_unit",
+            performance_direction="higher_is_better",
+            has_resolved_goal=True,
+            resolved_goal_scope_branch="",
+            branch_goals=branch_goals,
+        ),
+    ]
+    measurements = [
+        StrategicIndicatorMeasuredValue(
+            indicator_id="engineering-projects-on-time",
+            department_id="engineering",
+            value=100.0,
+            source="lmp",
+            unit_values=build_unit_values_for_consolidated_department(
+                consolidated_value=100.0,
+            ),
+        ),
+    ]
+
+    indicators = calculator.calculate_indicators(
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-07",
+        start_date="01-07-2026",
+        end_date="21-07-2026",
+    )
+    departments = calculator.calculate_departments(
+        departments_catalog=[
+            StrategicDepartmentCatalogItem(
+                department_id="engineering",
+                department_name="Engenharia",
+                short_name="ENG",
+                weight_pct=10,
+                strategic_summary="",
+                aggregation_mode="average_of_units",
+            )
+        ],
+        indicators_catalog=catalog,
+        measurements=measurements,
+        competence="2026-07",
+        start_date="01-07-2026",
+        end_date="21-07-2026",
+        precalculated_indicators=indicators,
+    )
+
+    assert indicators[0].score == 10.0
+    assert departments[0].score == 10.0

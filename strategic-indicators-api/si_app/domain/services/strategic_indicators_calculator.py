@@ -265,14 +265,16 @@ class StrategicIndicatorsCalculator:
                     )
                     continue
 
-            branch_scoped_score = self._calculate_branch_scoped_indicator_score(
-                indicator=indicator,
-                measurement=measurement,
-                performance_direction=performance_direction,
-                start_date=start_date,
-                end_date=end_date,
-                competence=competence,
-            )
+            branch_scoped_score = None
+            if not is_consolidated_aggregation_department(indicator.department_id):
+                branch_scoped_score = self._calculate_branch_scoped_indicator_score(
+                    indicator=indicator,
+                    measurement=measurement,
+                    performance_direction=performance_direction,
+                    start_date=start_date,
+                    end_date=end_date,
+                    competence=competence,
+                )
             if branch_scoped_score is not None:
                 score, gap, realized_value = branch_scoped_score
             else:
@@ -419,7 +421,7 @@ class StrategicIndicatorsCalculator:
                 [],
             )
 
-            if (department.aggregation_mode or "").strip() == "average_of_units":
+            if self._uses_average_of_units_aggregation(department):
                 department_score = self._calculate_department_score_average_of_units(
                     indicators_catalog=department_catalog,
                     measurements_by_indicator=measurements_by_indicator,
@@ -899,9 +901,11 @@ class StrategicIndicatorsCalculator:
         competence: str | None = None,
         scope_branch: str | None = None,
     ) -> StrategicDepartmentCalculatedValue:
-        aggregation_mode = (department.aggregation_mode or "").strip()
-
-        if aggregation_mode == "average_of_units" and indicators_catalog and measurements_by_indicator:
+        if (
+            self._uses_average_of_units_aggregation(department)
+            and indicators_catalog
+            and measurements_by_indicator
+        ):
             department_catalog = [
                 item
                 for item in indicators_catalog
@@ -1354,6 +1358,19 @@ class StrategicIndicatorsCalculator:
             value_suffix=indicator.value_suffix,
             value_decimals=indicator.value_decimals,
         )
+
+    def _uses_average_of_units_aggregation(
+        self,
+        department: StrategicDepartmentCatalogItem | StrategicDepartmentCalculatedValue,
+    ) -> bool:
+        """
+        Departamentos com medição só em `consolidated` (engenharia, financeiro)
+        nunca agregam por filial 01/02 — mesmo se o catálogo ainda tiver
+        `average_of_units` (seed V009 / override admin).
+        """
+        if is_consolidated_aggregation_department(department.department_id):
+            return False
+        return (department.aggregation_mode or "").strip() == "average_of_units"
 
     def _scores_zero_when_unfilled(self, indicator_id: str) -> bool:
         return True
