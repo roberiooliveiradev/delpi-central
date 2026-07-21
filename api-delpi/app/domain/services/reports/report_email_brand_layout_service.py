@@ -49,9 +49,15 @@ class ReportEmailBrandLayoutService:
         headers: list[str],
         rows: list[list[str]],
         column_styles: list[str] | None = None,
+        raw_html_columns: frozenset[int] | None = None,
     ) -> str:
-        """Tabela de dados com cabeçalho azul e zebra leve."""
+        """Tabela de dados com cabeçalho azul e zebra leve.
+
+        ``raw_html_columns``: índices de coluna cujo conteúdo já é HTML seguro
+        (não aplicar ``html.escape`` de novo).
+        """
         styles = column_styles or []
+        raw_indexes = raw_html_columns or frozenset()
 
         def _col_style(index: int) -> str:
             if index < len(styles) and styles[index]:
@@ -70,8 +76,8 @@ class ReportEmailBrandLayoutService:
             tds = "".join(
                 f'<td style="padding:7px 10px;font-size:12px;color:{GRAY_900};'
                 f'border:1px solid {GRAY_200};background:{bg};{_col_style(i)}">'
-                f"{html.escape(cell)}</td>"
-                for i, cell in enumerate(cells)
+                f"{cells[i] if i in raw_indexes else html.escape(cells[i])}</td>"
+                for i in range(len(cells))
             )
             body_rows.append(f"<tr>{tds}</tr>")
 

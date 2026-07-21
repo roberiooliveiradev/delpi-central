@@ -13,7 +13,14 @@ from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     DEFAULT_HORIZON_DAYS,
     VALID_BRANCHES,
     balance_at_first_shortage,
-    observation_from_summary,
+    build_next_purchase_text,
+    build_sample_observation,
+    build_third_party_observation,
+    compose_observation_parts,
+    finished_product_code_at_first_shortage,
+    has_open_projection_commitment,
+    is_sample_finished_product,
+    should_annotate_third_party_observation,
     shortage_date_in_horizon,
 )
 from app.domain.services.supplies.safety_stock_purchase_coverage_service import (
@@ -75,6 +82,22 @@ class SafetyStockShortage30dAggregationService:
             self._repository.fetch_open_commitments_for_branch(branch=branch_code)
         )
 
+        third_party_codes = [
+            str(material.get("product_code") or "").strip()
+            for material in materials
+            if should_annotate_third_party_observation(
+                branch=branch_code,
+                material_type=material.get("material_type"),
+            )
+            and str(material.get("product_code") or "").strip()
+        ]
+        third_party_names: dict[str, str] = {}
+        if third_party_codes:
+            third_party_names = self._repository.fetch_last_inbound_party_names(
+                branch=branch_code,
+                product_codes=third_party_codes,
+            )
+
         rows: list[dict[str, Any]] = []
         for material in materials:
             code = str(material.get("product_code") or "").strip()
@@ -95,6 +118,9 @@ class SafetyStockShortage30dAggregationService:
                 commitments=commitments_by_code.get(code, []),
                 **unit_kwargs,
             )
+            # Sem empenho elegível: saldo negativo residual não é ruptura operacional.
+            if not has_open_projection_commitment(enriched_commitments):
+                continue
             projection = build_stock_projection(
                 available_stock=float(material.get("available_stock") or 0),
                 safety_stock=float(material.get("safety_stock") or 0),
@@ -112,6 +138,21 @@ class SafetyStockShortage30dAggregationService:
             ):
                 continue
 
+            product_unit = str(material.get("unit") or "").strip()
+            observation_parts: list[str] = []
+            if should_annotate_third_party_observation(
+                branch=branch_code,
+                material_type=material.get("material_type"),
+            ):
+                observation_parts.append(
+                    build_third_party_observation(third_party_names.get(code))
+                )
+            finished_at_shortage = finished_product_code_at_first_shortage(projection)
+            if is_sample_finished_product(finished_at_shortage):
+                observation_parts.append(
+                    build_sample_observation(finished_at_shortage)
+                )
+            observation = compose_observation_parts(*observation_parts)
             rows.append(
                 {
                     "product_code": code,
@@ -119,10 +160,16 @@ class SafetyStockShortage30dAggregationService:
                         material.get("product_description") or ""
                     ).strip(),
                     "branch": branch_code,
+                    "unit": product_unit,
                     "available_stock": float(material.get("available_stock") or 0),
                     "first_shortage_date": first_shortage,
                     "shortage_balance": balance_at_first_shortage(projection),
-                    "observation": observation_from_summary(summary),
+                    "next_purchase": build_next_purchase_text(
+                        enriched_orders=enriched_orders,
+                        product_unit=product_unit,
+                        summary=summary,
+                    ),
+                    "observation": observation,
                 }
             )
 
