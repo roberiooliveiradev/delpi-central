@@ -518,7 +518,8 @@
 }
 
 .delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--control .delpi-ui-comunicado__input-block-control,
-.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--control .delpi-ui-comunicado__input-block-value {
+.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--control .delpi-ui-comunicado__input-block-value,
+.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--control .delpi-ui-native-control {
   flex: 1 1 auto;
   width: 100%;
   height: 100%;
@@ -645,24 +646,10 @@
   letter-spacing: 0.01em;
 }
 
-.delpi-ui-comunicado__input-block-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.12em 0.45em;
-  border-radius: 999px;
-  font-size: 0.78em;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--tdp-input-muted, #0369a1);
-  background: color-mix(in srgb, var(--tdp-accent, #089bdb) 16%, var(--tdp-input-surface, #ffffff));
-  border: 1px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 28%, transparent);
+.delpi-ui-comunicado__input-block-badge,
+.delpi-ui-comunicado__input-block .delpi-ui-status-badge {
+  /* Densidade do badge no filtro — StatusBadge do kit. */
   white-space: nowrap;
-}
-
-.delpi-ui-comunicado__input-block--scope-sources .delpi-ui-comunicado__input-block-badge {
-  color: var(--tdp-input-muted, #475569);
-  background: color-mix(in srgb, var(--tdp-input-border, #94a3b8) 18%, var(--tdp-input-surface, #ffffff));
-  border-color: color-mix(in srgb, var(--tdp-input-border, #94a3b8) 35%, transparent);
 }
 
 .delpi-ui-comunicado__input-block-spinner {
@@ -680,19 +667,23 @@
   }
 }
 
-.delpi-ui-comunicado__input-block-control {
+.delpi-ui-comunicado__input-block-control,
+.delpi-ui-comunicado__input-block .delpi-ui-native-control {
   width: 100%;
   max-width: 100%;
   /* Sem isso o min-width intrínseco do <input> estoura o host framed. */
   min-width: 0;
   min-height: 1.75em;
   box-sizing: border-box;
-  padding: 0.2em 0.4em;
-  border: var(--tdp-input-control-border-width, 1px) solid
-    var(--tdp-input-control-border, #000000);
-  border-radius: var(--tdp-input-control-radius, 6px);
-  background: var(--tdp-input-control-surface, #ffffff);
-  color: var(--tdp-input-fg, #0f172a);
+  /* Pintura da parte control → tokens do Native*Control. */
+  --delpi-ui-control-bg: var(--tdp-input-control-surface, #ffffff);
+  --delpi-ui-control-border: var(--tdp-input-control-border, #000000);
+  --delpi-ui-control-radius: var(--tdp-input-control-radius, 6px);
+  --delpi-ui-control-pad-y: 0.2em;
+  --delpi-ui-control-pad-x: 0.4em;
+  --delpi-ui-control-min-height: 1.75em;
+  --delpi-ui-control-font-size: inherit;
+  border-width: var(--tdp-input-control-border-width, 1px);
   font: inherit;
 }
 

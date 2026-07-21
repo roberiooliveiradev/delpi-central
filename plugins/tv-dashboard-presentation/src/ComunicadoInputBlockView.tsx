@@ -1,4 +1,13 @@
-import type { CSSProperties, ChangeEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from "react";
+
+import {
+  NativeSelectControl,
+  NativeTextControl,
+  NATIVE_CONTROL_COMPACT_CLASS,
+  StatusBadge,
+  ensureComunicadoDualClass,
+  statusBadgeBemClasses,
+} from "@delpi/plugin-ui/index";
 
 import { resolveComunicadoLucideIcon } from "./comunicadoIconView";
 import { resolveInputTargetScope } from "./comunicadoInputFilters";
@@ -24,7 +33,6 @@ import {
   type ComunicadoInputPartResizeHandle,
 } from "./comunicadoInputParts";
 import type { ComunicadoInputBlock } from "./comunicadoTypes";
-import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 export type InputResolvedField = {
   type?: string;
@@ -177,8 +185,7 @@ export function ComunicadoInputBlockView({
     ...(frameLayout.boxShadow ? { boxShadow: frameLayout.boxShadow } : {}),
   };
 
-  const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-    const next = event.target.value;
+  const handleSelectValue = (next: string) => {
     if (effectiveField?.type === "boolean") {
       onChange?.(next === "true");
       return;
@@ -186,8 +193,7 @@ export function ComunicadoInputBlockView({
     onChange?.(next === "" ? null : next);
   };
 
-  const handleText = (event: ChangeEvent<HTMLInputElement>) => {
-    const next = event.target.value;
+  const handleTextValue = (next: string) => {
     if (effectiveField?.type === "integer" || effectiveField?.type === "number") {
       if (next === "") {
         onChange?.(null);
@@ -208,11 +214,13 @@ export function ComunicadoInputBlockView({
     [
       "tdp-comunicado__input-block-control",
       `tdp-comunicado__input-block-control--${controlKind}`,
+      NATIVE_CONTROL_COMPACT_CLASS,
       controlValueInteractive ? null : "tdp-comunicado__input-block-control--hit-through",
     ]
       .filter(Boolean)
       .join(" "),
   );
+  const scopeBadgeClasses = statusBadgeBemClasses("tdp-comunicado-input");
 
   let controlNode: ReactNode = null;
   if (unavailable) {
@@ -227,35 +235,29 @@ export function ComunicadoInputBlockView({
       : { pointerEvents: "none" };
     if (controlKind === "select" || controlKind === "boolean") {
       controlNode = (
-        <select
+        <NativeSelectControl
           className={controlClass}
           style={controlPointerStyle}
           value={current === null || current === undefined ? "" : String(current)}
-          onChange={handleSelect}
+          onChange={handleSelectValue}
           onPointerDown={(event) => {
-            // Isolar do drag do bloco / da parte — o clique deve abrir o seletor.
             event.stopPropagation();
           }}
           aria-label={label}
           disabled={dataLoading}
           tabIndex={controlValueInteractive ? undefined : -1}
-        >
-          <option value="">—</option>
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          placeholderOption="—"
+          options={options}
+        />
       );
     } else {
       controlNode = (
-        <input
+        <NativeTextControl
           className={controlClass}
           style={controlPointerStyle}
           type={controlKind === "number" ? "number" : controlKind === "date" ? "date" : "text"}
           value={current === null || current === undefined ? "" : String(current)}
-          onChange={handleText}
+          onChange={handleTextValue}
           onPointerDown={(event) => {
             event.stopPropagation();
           }}
@@ -386,15 +388,10 @@ export function ComunicadoInputBlockView({
           ) : null}
           {showBadge ? (
             <span
-              className={ensureComunicadoDualClass(
-                [
-                  partClass(
-                    "badge",
-                    isInputPartRefEqual(selected, { kind: "badge" }),
-                    Boolean(resolveInputPartFrame(badgeState)),
-                  ),
-                  "tdp-comunicado__input-block-badge",
-                ].join(" "),
+              className={partClass(
+                "badge",
+                isInputPartRefEqual(selected, { kind: "badge" }),
+                Boolean(resolveInputPartFrame(badgeState)),
               )}
               style={{
                 ...resolveInputPartLayoutStyle(badgeState, {
@@ -407,7 +404,11 @@ export function ComunicadoInputBlockView({
               {...{ [INPUT_PART_DATA_ATTR]: "badge" }}
               {...badgeBind}
             >
-              {scopeBadge}
+              <StatusBadge
+                label={scopeBadge}
+                variant={scope === "slide" ? "info" : "neutral"}
+                classNames={scopeBadgeClasses}
+              />
               {renderPartChrome({ kind: "badge" })}
             </span>
           ) : null}

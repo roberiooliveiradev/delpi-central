@@ -53,6 +53,9 @@ describe("inputFilterParts paint vs fundo do bloco", () => {
     expect(vars["--tdp-input-control-border" as keyof typeof vars]).toBe("#b45309");
     expect(vars["--tdp-input-control-border-width" as keyof typeof vars]).toBe("2px");
     expect(vars["--tdp-input-control-radius" as keyof typeof vars]).toBe("8px");
+    expect(vars["--delpi-ui-control-bg" as keyof typeof vars]).toBe("#fef3c7");
+    expect(vars["--delpi-ui-control-border" as keyof typeof vars]).toBe("#b45309");
+    expect(vars["--delpi-ui-control-radius" as keyof typeof vars]).toBe("8px");
   });
 
   it("layout da parte control não pinta fill/stroke no host (só vars no nativo)", () => {

@@ -173,8 +173,8 @@ function EditorChartViewBlock({
   } = useComunicadoEditor();
 
   /**
-   * Clique simples: com bloco já selecionado, parte de conteúdo → seleciona a parte (Excel-like).
-   * Moldura/fundo → arraste do bloco. Mesma parte móvel → move a parte.
+   * Clique simples: arrasta/seleciona o bloco (mesmo modo de formas).
+   * Parte móvel já selecionada (toolbar / duplo clique) → move a parte.
    */
   const onPartPointerDown = useCallback(
     (ref: ComunicadoChartPartRef, event?: ReactPointerEvent) => {

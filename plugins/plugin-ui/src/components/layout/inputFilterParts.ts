@@ -635,6 +635,10 @@ export function resolveInputControlPaintCssVars(
     ["--tdp-input-control-border" as string]: borderColor,
     ["--tdp-input-control-border-width" as string]: `${strokeWidth}px`,
     ["--tdp-input-control-radius" as string]: `${borderRadius}px`,
+    /* Bridge → NativeSelect/TextControl (.delpi-ui-native-control). */
+    ["--delpi-ui-control-bg" as string]: surface,
+    ["--delpi-ui-control-border" as string]: borderColor,
+    ["--delpi-ui-control-radius" as string]: `${borderRadius}px`,
   };
 }
 

@@ -1781,9 +1781,12 @@ body.td-composer--marqueeing *{
   overflow: visible;
   isolation: isolate;
 }
-/* Parte individual (fundo/card, valor, etc.): chrome da parte manda — sem outline global. */
+/* Parte individual: chrome interno no host; wrap mantém outline global (modo comum). */
 .dashboard-tv-dashboard .td-composer__block-wrap--selected.td-composer__block-wrap--part-chrome{
-  outline: none;
+  /* Legado: classe pode existir em snapshots; chrome de palco permanece no bloco. */
+  outline: var(--td-selection-outline-width, 2.5px) dashed
+    var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff));
+  outline-offset: var(--td-global-selection-pad, 6px);
 }
 /* Membros na seleção pai do grupo: sem outline individual (chrome unificado). */
 .dashboard-tv-dashboard .td-composer__block-wrap--group-member{

@@ -1,61 +1,62 @@
 /**
  * Política de clique em partes de widgets compostos (KPI / chart / table / input).
  *
- * Excel-like: com o bloco já selecionado, clique em parte de conteúdo (série, métrica…)
- * seleciona a parte sem arrastar o bloco. Arraste do bloco fica no chrome/moldura.
+ * Palco = mesmo modo de formas/textos: clique seleciona e arrasta o **bloco**.
+ * Parte interna entra via toolbar / duplo clique; só então arrasta a parte se móvel.
+ * Chrome de outline/handles no wrap permanece no bloco (não some ao focar uma parte).
  */
 
 export type CompositePartPointerAction = "drag-block" | "part-move" | "select-part";
 
 /**
- * - Bloco ainda não selecionado → arrastar o bloco (1º clique).
- * - Conteúdo + bloco selecionado → selecionar a parte (sem drag).
- * - Mesma parte já selecionada e móvel → arrastar a parte.
- * - Moldura / fundo → arrastar o bloco.
+ * - Parte já selecionada e móvel → arrastar a parte.
+ * - Demais cliques no palco → arrastar/selecionar o bloco (como componente comum).
  */
 export function resolveCompositePartPointerAction(params: {
   blockSelected: boolean;
   samePartSelected: boolean;
   partAllowsMove: boolean;
-  /** Parte de conteúdo (série, marcador, título, métrica…) vs moldura/fundo. */
+  /** Mantido por compatibilidade — não força mais select-part no clique simples. */
   contentPart?: boolean;
 }): CompositePartPointerAction {
   if (params.blockSelected && params.samePartSelected && params.partAllowsMove) {
     return "part-move";
   }
-  if (params.blockSelected && params.contentPart) {
-    return "select-part";
-  }
   return "drag-block";
 }
 
 /**
- * Moldura (= fundo do widget) não pinta chrome próprio — outline/handles ficam no wrap.
- * KPI `card` mantém chrome no host (já alinhavel ao shell); filtro/gráfico/tabela usam wrap.
+ * Moldura (= fundo do widget) — clique trata como o bloco.
+ * Inclui KPI `card` (paridade com filtro/gráfico/tabela).
  */
 export function isMolduraPartSelection(
   blockType: string | undefined,
   part: { kind: string } | null | undefined,
 ): boolean {
   if (!part || !blockType) return false;
+  if (blockType === "kpi_view" && part.kind === "card") return true;
   if (blockType === "input" && part.kind === "frame") return true;
   if (blockType === "chart_view" && part.kind === "chartArea") return true;
   if (blockType === "table_view" && part.kind === "frame") return true;
   return false;
 }
 
-/** Parte de conteúdo (não moldura) → chrome da parte no lugar do wrap. */
+/**
+ * Chrome de palco: sempre no wrap do bloco (como formas).
+ * A parte selecionada continua com outline/handles próprios no host interno;
+ * o wrap não cede o outline global nem esconde os handles de resize do bloco.
+ */
 export function shouldUsePartChromeInsteadOfBlock(
-  blockType: string | undefined,
-  part: { kind: string } | null | undefined,
+  _blockType: string | undefined,
+  _part: { kind: string } | null | undefined,
 ): boolean {
-  return Boolean(part) && !isMolduraPartSelection(blockType, part);
+  return false;
 }
 
-/** Clique deve selecionar a parte sem iniciar drag do bloco. */
+/** Parte de conteúdo (não moldura) — ribbon / duplo clique / float toolbar. */
 export function isCompositeContentPart(
   blockType: string | undefined,
   part: { kind: string } | null | undefined,
 ): boolean {
-  return shouldUsePartChromeInsteadOfBlock(blockType, part);
+  return Boolean(part) && !isMolduraPartSelection(blockType, part);
 }

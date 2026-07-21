@@ -1,4 +1,11 @@
-import { forwardRef, type ChangeEvent, type InputHTMLAttributes, type KeyboardEvent } from "react";
+import {
+  forwardRef,
+  type ChangeEvent,
+  type CSSProperties,
+  type InputHTMLAttributes,
+  type KeyboardEvent,
+  type PointerEventHandler,
+} from "react";
 
 import { mergeClassNames, NATIVE_CONTROL_CLASS } from "./nativeControlClasses";
 
@@ -16,6 +23,8 @@ export type NativeTextControlProps = {
   step?: number | string;
   maxLength?: number;
   className?: string;
+  style?: CSSProperties;
+  tabIndex?: number;
   "aria-label"?: string;
   "aria-invalid"?: boolean;
   autoComplete?: InputHTMLAttributes<HTMLInputElement>["autoComplete"];
@@ -25,6 +34,7 @@ export type NativeTextControlProps = {
   onFocus?: () => void;
   onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
   onKeyUp?: (event: KeyboardEvent<HTMLInputElement>) => void;
+  onPointerDown?: PointerEventHandler<HTMLInputElement>;
   autoFocus?: boolean;
   list?: string;
 };
@@ -48,6 +58,8 @@ export const NativeTextControl = forwardRef<HTMLInputElement, NativeTextControlP
       step,
       maxLength,
       className,
+      style,
+      tabIndex,
       "aria-label": ariaLabel,
       "aria-invalid": ariaInvalid,
       autoComplete,
@@ -57,6 +69,7 @@ export const NativeTextControl = forwardRef<HTMLInputElement, NativeTextControlP
       onFocus,
       onKeyDown,
       onKeyUp,
+      onPointerDown,
       autoFocus,
       list,
     },
@@ -67,6 +80,8 @@ export const NativeTextControl = forwardRef<HTMLInputElement, NativeTextControlP
         ref={ref}
         id={id}
         className={mergeClassNames(NATIVE_CONTROL_CLASS, className)}
+        style={style}
+        tabIndex={tabIndex}
         type={type}
         value={value}
         placeholder={placeholder}
@@ -88,6 +103,7 @@ export const NativeTextControl = forwardRef<HTMLInputElement, NativeTextControlP
         onFocus={onFocus}
         onKeyDown={onKeyDown}
         onKeyUp={onKeyUp}
+        onPointerDown={onPointerDown}
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
       />
     );

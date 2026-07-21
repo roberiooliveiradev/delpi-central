@@ -489,8 +489,8 @@ export function ComunicadoComposerCanvas() {
       return false;
     }
     const block = blocks.find((item) => item.id === blockId);
-    // Handles do wrap só no nível global — partes de conteúdo usam chrome próprio
-    // no primary; moldura (card/chartArea/frame) continua com handles do bloco.
+    // Handles do wrap sempre no nível global (como formas) — partes usam chrome próprio
+    // no host interno sem esconder outline/handles do bloco.
     if (blockId === primarySelected) {
       if (
         block?.type === "chart_view" &&

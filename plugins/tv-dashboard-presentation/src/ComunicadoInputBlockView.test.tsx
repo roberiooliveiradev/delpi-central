@@ -54,6 +54,7 @@ describe("ComunicadoInputBlockView", () => {
     expect(container.querySelector('[data-input-part="label"]')).toBeTruthy();
     expect(container.querySelector('[data-input-part="badge"]')).toBeTruthy();
     expect(container.querySelector('[data-input-part="control"]')).toBeTruthy();
+    expect(container.querySelector("select.delpi-ui-native-control")).toBeTruthy();
     expect(container.querySelector("select.tdp-comunicado__input-block-control--select")).toBeTruthy();
     expect(container.querySelector('[data-scope="sources"]')).toBeTruthy();
   });
@@ -73,7 +74,7 @@ describe("ComunicadoInputBlockView", () => {
 
     expect(screen.getByText("Filtro do slide")).toBeTruthy();
     expect(
-      container.querySelector("input.tdp-comunicado__input-block-control--date[type='date']"),
+      container.querySelector("input.delpi-ui-native-control.tdp-comunicado__input-block-control--date[type='date']"),
     ).toBeTruthy();
   });
 
@@ -100,7 +101,7 @@ describe("ComunicadoInputBlockView", () => {
     );
     expect(screen.queryByText("Selecione o parâmetro no inspetor")).toBeNull();
     expect(screen.getAllByText("Filial").length).toBeGreaterThan(0);
-    expect(container.querySelector("input.tdp-comunicado__input-block-control")).toBeTruthy();
+    expect(container.querySelector("input.delpi-ui-native-control.tdp-comunicado__input-block-control")).toBeTruthy();
     expect(screen.getByText("Valor livre")).toBeTruthy();
   });
 
@@ -122,7 +123,7 @@ describe("ComunicadoInputBlockView", () => {
         }}
       />,
     );
-    const input = container.querySelector("input.tdp-comunicado__input-block-control");
+    const input = container.querySelector("input.delpi-ui-native-control.tdp-comunicado__input-block-control");
     expect(input?.classList.contains("tdp-comunicado__input-block-control--hit-through")).toBe(
       true,
     );

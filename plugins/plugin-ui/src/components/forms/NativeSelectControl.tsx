@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, CSSProperties, PointerEventHandler } from "react";
 
 import {
   mergeClassNames,
@@ -20,7 +20,10 @@ export type NativeSelectControlProps = {
   disabled?: boolean;
   required?: boolean;
   className?: string;
+  style?: CSSProperties;
+  tabIndex?: number;
   "aria-label"?: string;
+  onPointerDown?: PointerEventHandler<HTMLSelectElement>;
 };
 
 /**
@@ -35,16 +38,22 @@ export function NativeSelectControl({
   disabled,
   required,
   className,
+  style,
+  tabIndex,
   "aria-label": ariaLabel,
+  onPointerDown,
 }: NativeSelectControlProps) {
   return (
     <select
       id={id}
       className={mergeClassNames(NATIVE_CONTROL_CLASS, NATIVE_CONTROL_SELECT_CLASS, className)}
+      style={style}
+      tabIndex={tabIndex}
       value={value}
       disabled={disabled}
       required={required}
       aria-label={ariaLabel}
+      onPointerDown={onPointerDown}
       onChange={(event: ChangeEvent<HTMLSelectElement>) => onChange(event.target.value)}
     >
       {placeholderOption !== undefined ? <option value="">{placeholderOption}</option> : null}
