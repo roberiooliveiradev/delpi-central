@@ -825,6 +825,8 @@ export {
 } from "./fieldValueProjection";
 export {
   applyFieldLabelsToResolved,
+  isAutoBakedFieldLabel,
+  lookupFieldLabel,
   normalizeFieldLabels,
   patchFieldLabels,
   resolveFieldDisplayLabel,

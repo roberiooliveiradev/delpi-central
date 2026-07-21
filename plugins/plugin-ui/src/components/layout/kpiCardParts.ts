@@ -121,7 +121,7 @@ const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities
   value: { movable: true, editable: false, deletable: false, resizable: true },
   hint: { movable: true, editable: true, deletable: true, resizable: true },
   icon: { movable: true, editable: false, deletable: true, resizable: true },
-  metricCard: { movable: false, editable: false, deletable: false, resizable: false },
+  metricCard: { movable: false, editable: true, deletable: false, resizable: false },
 };
 
 /** Options flat do card (legado / inspetor) — espelho de SeriesChartOptions. */

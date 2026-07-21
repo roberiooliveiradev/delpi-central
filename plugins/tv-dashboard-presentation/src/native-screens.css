@@ -1151,6 +1151,21 @@
   outline-color: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 75%, transparent);
 }
 
+.tdp-kpi-view__label-edit {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--tdp-data-accent, #089bdb);
+  border-radius: 4px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
 .tdp-kpi-placeholder {
   display: grid;
   gap: 0.35rem;
@@ -1283,6 +1298,28 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 0.85em;
+}
+
+.tdp-configurable-table__header-edit {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.1em 0.25em;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 2px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  outline: none;
+}
+
+.tdp-configurable-table__header-edit:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
 }
 
 .tdp-configurable-table--header-normal-case .tdp-table-header-cell,

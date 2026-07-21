@@ -3,12 +3,15 @@ import { describe, expect, it } from "vitest";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
 import {
   applyFieldLabelsToResolved,
+  isAutoBakedFieldLabel,
+  lookupFieldLabel,
   normalizeFieldLabels,
   patchFieldLabels,
   resolveFieldDisplayLabel,
   suggestEditableFields,
 } from "./fieldLabelRegistry";
 import { parseComunicadoConfig, serializeComunicadoConfig } from "./comunicadoHelpers";
+import { applyViewProjection } from "./viewProjection";
 
 const resolved: ComunicadoDataResolved = {
   kpi: { value: 1, label: "DETAILED_DESCRIPTION" },
@@ -50,8 +53,46 @@ describe("fieldLabelRegistry", () => {
     expect(resolveFieldDisplayLabel({ field: "ITEM_CODE" })).toBe("ITEM_CODE");
   });
 
+  it("ignora projeção assada com a chave (case-insensitive)", () => {
+    expect(
+      resolveFieldDisplayLabel({
+        field: "DETAILED_DESCRIPTION",
+        projectionLabel: "DETAILED_DESCRIPTION",
+        sourceFieldLabels: { DETAILED_DESCRIPTION: "Descrição detalhada" },
+      }),
+    ).toBe("Descrição detalhada");
+    expect(
+      resolveFieldDisplayLabel({
+        field: "DETAILED_DESCRIPTION",
+        projectionLabel: "detailed_description",
+        sourceFieldLabels: { detailed_description: "Descrição detalhada" },
+      }),
+    ).toBe("Descrição detalhada");
+    expect(isAutoBakedFieldLabel("ITEM_CODE", "item_code")).toBe(true);
+  });
+
+  it("lookup e apply são case-insensitive", () => {
+    expect(lookupFieldLabel({ detailed_description: "Descrição" }, "DETAILED_DESCRIPTION")).toBe(
+      "Descrição",
+    );
+    const next = applyFieldLabelsToResolved(resolved, {
+      detailed_description: "Descrição",
+      item_code: "Código",
+    });
+    expect(next?.table?.columns).toEqual([
+      { key: "DETAILED_DESCRIPTION", label: "Descrição" },
+      { key: "ITEM_CODE", label: "Código" },
+    ]);
+  });
+
+  it("normalize e patch preservam espaço no final", () => {
+    expect(normalizeFieldLabels({ a: "A " })).toEqual({ a: "A " });
+    expect(patchFieldLabels(undefined, "a", "Label ")).toEqual({ a: "Label " });
+    expect(patchFieldLabels({ a: "A " }, "a", "  ")).toBeUndefined();
+  });
+
   it("normalizeFieldLabels remove vazios", () => {
-    expect(normalizeFieldLabels({ a: " A ", b: "  ", c: 1 })).toEqual({ a: "A" });
+    expect(normalizeFieldLabels({ a: " A ", b: "  ", c: 1 })).toEqual({ a: " A " });
     expect(normalizeFieldLabels(null)).toBeUndefined();
   });
 
@@ -73,13 +114,32 @@ describe("fieldLabelRegistry", () => {
     expect(patchFieldLabels({ a: "A" }, "b", "B")).toEqual({ a: "A", b: "B" });
   });
 
-  it("suggestEditableFields lista colunas e aplica registro", () => {
-    const fields = suggestEditableFields(resolved, undefined, {
-      ITEM_CODE: "Código do item",
-    });
+  it("suggestEditableFields dedupa case-insensitive preferindo chave da API", () => {
+    const fields = suggestEditableFields(
+      resolved,
+      [{ field: "detailed_description", label: "desc catálogo" }],
+      { ITEM_CODE: "Código do item" },
+    );
+    expect(fields.some((item) => item.field === "DETAILED_DESCRIPTION")).toBe(true);
+    expect(fields.some((item) => item.field === "detailed_description")).toBe(false);
     expect(fields.some((item) => item.field === "ITEM_CODE" && item.label === "Código do item")).toBe(
       true,
     );
+  });
+
+  it("applyViewProjection não sobrescreve fieldLabels com label assado", () => {
+    const labeled = applyFieldLabelsToResolved(resolved, {
+      DETAILED_DESCRIPTION: "Descrição detalhada",
+    });
+    const projected = applyViewProjection(labeled, {
+      tableProjection: {
+        columns: [
+          { key: "DETAILED_DESCRIPTION", label: "DETAILED_DESCRIPTION", visible: true },
+          { key: "ITEM_CODE", label: "ITEM_CODE", visible: true },
+        ],
+      },
+    });
+    expect(projected?.table?.columns?.[0]?.label).toBe("Descrição detalhada");
   });
 
   it("serialize/load preserva fieldLabels na fonte", () => {
@@ -90,14 +150,14 @@ describe("fieldLabelRegistry", () => {
           type: "data_source",
           frame: { x: 0, y: 0, w: 10, h: 10 },
           dataBinding: { operationId: "get_x", displayMode: "auto", params: {} },
-          fieldLabels: { DETAILED_DESCRIPTION: "Descrição detalhada" },
+          fieldLabels: { DETAILED_DESCRIPTION: "Descrição detalhada " },
         },
       ],
     });
     const parsed = parseComunicadoConfig(serialized);
     const source = parsed.blocks?.find((block) => block.id === "src-1");
     expect(source && "fieldLabels" in source ? source.fieldLabels : undefined).toEqual({
-      DETAILED_DESCRIPTION: "Descrição detalhada",
+      DETAILED_DESCRIPTION: "Descrição detalhada ",
     });
   });
 });

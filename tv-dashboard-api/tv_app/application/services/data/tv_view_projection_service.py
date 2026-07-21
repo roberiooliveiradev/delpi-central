@@ -45,6 +45,47 @@ def _column_values(rows: list[dict[str, Any]], field: str) -> list[Any]:
     return [row.get(field) for row in rows if isinstance(row, dict)]
 
 
+def _is_auto_baked_field_label(label: str, field: str) -> bool:
+    key = (field or "").strip()
+    text = (label or "").strip()
+    if not key:
+        return not text
+    return text.lower() == key.lower()
+
+
+def _lookup_field_label(labels: dict[str, str], field: str) -> str | None:
+    key = (field or "").strip()
+    if not key:
+        return None
+    if key in labels:
+        return labels[key]
+    lower = key.lower()
+    for entry_key, value in labels.items():
+        if entry_key.lower() == lower:
+            return value
+    return None
+
+
+def _normalize_field_labels(raw: Any) -> dict[str, str]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, str] = {}
+    canonical_by_lower: dict[str, str] = {}
+    for key, value in raw.items():
+        field = str(key or "").strip()
+        if not field or not isinstance(value, str):
+            continue
+        if not value.strip():
+            continue
+        lower = field.lower()
+        previous = canonical_by_lower.get(lower)
+        if previous and previous != field:
+            out.pop(previous, None)
+        canonical_by_lower[lower] = field
+        out[field] = value
+    return out
+
+
 def apply_field_labels_to_resolved(
     resolved: dict[str, Any],
     field_labels: Any,
@@ -73,7 +114,7 @@ def apply_field_labels_to_resolved(
                     next_cols.append(col)
                     continue
                 key = str(col.get("key") or "").strip()
-                override = labels.get(key)
+                override = _lookup_field_label(labels, key)
                 if override and override != str(col.get("label") or ""):
                     cols_changed = True
                     next_cols.append({**col, "label": override})
@@ -92,7 +133,7 @@ def apply_field_labels_to_resolved(
                 next_metrics.append(metric)
                 continue
             field = str(metric.get("field") or "").strip()
-            override = labels.get(field)
+            override = _lookup_field_label(labels, field)
             if override and override != str(metric.get("label") or ""):
                 metrics_changed = True
                 next_metrics.append({**metric, "label": override})
@@ -105,8 +146,9 @@ def apply_field_labels_to_resolved(
             if isinstance(kpi, dict) and next_metrics:
                 primary = next_metrics[0]
                 primary_field = str(primary.get("field") or "")
-                if primary_field in labels:
-                    next_resolved["kpi"] = {**kpi, "label": labels[primary_field]}
+                primary_override = _lookup_field_label(labels, primary_field)
+                if primary_override:
+                    next_resolved["kpi"] = {**kpi, "label": primary_override}
 
     chart = resolved.get("chart")
     if isinstance(chart, dict):
@@ -119,7 +161,7 @@ def apply_field_labels_to_resolved(
                     next_series.append(entry)
                     continue
                 field = str(entry.get("field") or "").strip()
-                override = labels.get(field)
+                override = _lookup_field_label(labels, field) if field else None
                 if field and override and override != str(entry.get("name") or ""):
                     series_changed = True
                     next_series.append({**entry, "name": override})
@@ -130,20 +172,6 @@ def apply_field_labels_to_resolved(
                 next_resolved["chart"] = {**chart, "series": next_series}
 
     return next_resolved if changed else resolved
-
-
-def _normalize_field_labels(raw: Any) -> dict[str, str]:
-    if not isinstance(raw, dict):
-        return {}
-    out: dict[str, str] = {}
-    for key, value in raw.items():
-        field = str(key or "").strip()
-        if not field or not isinstance(value, str):
-            continue
-        label = value.strip()
-        if label:
-            out[field] = label
-    return out
 
 
 def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str, Any]) -> dict[str, Any]:
@@ -184,7 +212,14 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                     value = aggregate_values(_column_values(rows, field), agg)
                 elif rows and value is None:
                     value = aggregate_values(_column_values(rows, field), "first")
-                label = str(item.get("label") or base.get("label") or field).strip()
+                proj_label = str(item.get("label") or "")
+                base_label = str(base.get("label") or "")
+                if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field):
+                    label = proj_label
+                elif base_label.strip():
+                    label = base_label
+                else:
+                    label = field
                 out_metrics.append({"field": field, "label": label, "value": value})
             if out_metrics:
                 next_resolved["kpiMetrics"] = out_metrics
@@ -200,15 +235,25 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
             visible = [c for c in columns_cfg if isinstance(c, dict) and c.get("visible") is not False]
             if visible:
                 keys = [str(c.get("key") or "").strip() for c in visible if str(c.get("key") or "").strip()]
-                label_by = {
+                old_label_by = {
                     str(c.get("key") or ""): str(c.get("label") or c.get("key") or "")
-                    for c in visible
+                    for c in (table.get("columns") if isinstance(table.get("columns"), list) else [])
+                    if isinstance(c, dict) and c.get("key")
                 }
-                old_cols = table.get("columns") if isinstance(table.get("columns"), list) else []
-                for col in old_cols:
-                    if isinstance(col, dict) and col.get("key") and col["key"] not in label_by:
-                        label_by[str(col["key"])] = str(col.get("label") or col["key"])
-                next_cols = [{"key": k, "label": label_by.get(k) or k} for k in keys]
+                next_cols = []
+                for col in visible:
+                    key = str(col.get("key") or "").strip()
+                    if not key:
+                        continue
+                    proj_label = str(col.get("label") or "")
+                    base_label = old_label_by.get(key) or ""
+                    if proj_label.strip() and not _is_auto_baked_field_label(proj_label, key):
+                        label = proj_label
+                    elif base_label.strip():
+                        label = base_label
+                    else:
+                        label = key
+                    next_cols.append({"key": key, "label": label})
                 next_rows = []
                 for row in rows:
                     next_rows.append({k: row.get(k) for k in keys if k in row})
@@ -240,9 +285,15 @@ def apply_view_projection_to_resolved(resolved: dict[str, Any], block: dict[str,
                         }
                         for idx, row in enumerate(rows)
                     ]
+                    proj_label = str(item.get("label") or "")
+                    name = (
+                        proj_label
+                        if proj_label.strip() and not _is_auto_baked_field_label(proj_label, field)
+                        else field
+                    )
                     series_out.append(
                         {
-                            "name": str(item.get("label") or field),
+                            "name": name,
                             "field": field,
                             "color": item.get("color"),
                             "points": points,

@@ -7,6 +7,7 @@ import {
 import type { ComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
+import { isAutoBakedFieldLabel } from "./fieldLabelRegistry";
 import type { KpiMetricProjection } from "./viewProjection";
 
 export type KpiViewPresentation = {
@@ -22,7 +23,7 @@ export type KpiViewPresentation = {
 
 export type KpiMetricPresentationOverrides = Pick<
   KpiMetricProjection,
-  "format" | "colorRules" | "label"
+  "format" | "colorRules" | "label" | "field"
 >;
 
 export function resolveKpiViewPresentation(
@@ -37,8 +38,18 @@ export function resolveKpiViewPresentation(
   const toneResult = resolveDelpiKpiTone(numeric, colorRules, options.tone ?? "default");
   const valueFormat = metricOverrides?.format ?? options.valueFormat;
 
+  const fieldKey =
+    metricOverrides?.field?.trim() ||
+    resolved?.kpiMetrics?.[0]?.field?.trim() ||
+    "";
+  const projectionLabel = metricOverrides?.label;
+  const meaningfulProjection =
+    typeof projectionLabel === "string" &&
+    projectionLabel.trim() &&
+    (!fieldKey || !isAutoBakedFieldLabel(projectionLabel, fieldKey));
+
   const label =
-    metricOverrides?.label?.trim() ||
+    (meaningfulProjection ? projectionLabel : undefined) ||
     options.title?.trim() ||
     resolved?.kpi?.label ||
     resolved?.label ||

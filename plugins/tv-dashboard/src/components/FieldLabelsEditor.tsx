@@ -1,5 +1,6 @@
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
+  lookupFieldLabel,
   patchFieldLabels,
   suggestEditableFields,
   type ComunicadoDataResolved,
@@ -48,7 +49,7 @@ export function FieldLabelsEditor({
       </p>
       <div className="td-field-labels-editor">
         {fields.map((item) => {
-          const custom = fieldLabels?.[item.field]?.trim() ?? "";
+          const custom = lookupFieldLabel(fieldLabels, item.field) ?? "";
           return (
             <div key={item.field} className="td-field-labels-editor__row">
               <DeckField label={item.field}>

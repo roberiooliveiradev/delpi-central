@@ -137,11 +137,16 @@ export function KpiViewBlockView({
       kpiInteraction?.selectedPart?.kind === "metricCard"
         ? kpiInteraction.selectedPart.field
         : null;
+    const editingMetricField =
+      kpiInteraction?.editingPart?.kind === "metricCard"
+        ? kpiInteraction.editingPart.field
+        : null;
     return (
       <div className="tdp-data-block tdp-data-block--kpi tdp-kpi-view tdp-kpi-view--multi">
         {metrics.map((metric) => {
           const metricRef = { kind: "metricCard" as const, field: metric.field };
           const selected = selectedMetricField === metric.field;
+          const editing = editingMetricField === metric.field;
           return (
             <div
               key={metric.field}
@@ -153,24 +158,47 @@ export function KpiViewBlockView({
               data-kpi-part={`metricCard:${metric.field}`}
               aria-selected={selected || undefined}
               onPointerDown={(event) => {
-                if (!kpiInteraction?.onPartPointerDown) return;
+                if (editing || !kpiInteraction?.onPartPointerDown) return;
                 event.stopPropagation();
                 kpiInteraction.onPartPointerDown(metricRef, event);
               }}
               onDoubleClick={(event) => {
-                if (!kpiInteraction?.onPartDoubleClick) return;
+                if (editing || !kpiInteraction?.onPartDoubleClick) return;
                 event.stopPropagation();
                 event.preventDefault();
                 kpiInteraction.onPartDoubleClick(metricRef, event);
               }}
             >
-              {renderCard(
-                {
-                  ...resolved,
-                  kpi: { value: metric.value, label: metric.label },
-                  label: metric.label,
-                },
-                metric.field,
+              {editing ? (
+                <input
+                  className="tdp-kpi-view__label-edit"
+                  defaultValue={metric.label}
+                  autoFocus
+                  aria-label={`Rótulo de ${metric.field}`}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onBlur={(event) =>
+                    kpiInteraction?.onPartContentCommit?.(metricRef, event.target.value)
+                  }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      (event.target as HTMLInputElement).blur();
+                    }
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      kpiInteraction?.onPartEditCancel?.();
+                    }
+                  }}
+                />
+              ) : (
+                renderCard(
+                  {
+                    ...resolved,
+                    kpi: { value: metric.value, label: metric.label },
+                    label: metric.label,
+                  },
+                  metric.field,
+                )
               )}
             </div>
           );

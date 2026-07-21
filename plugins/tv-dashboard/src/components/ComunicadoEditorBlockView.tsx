@@ -49,6 +49,7 @@ import {
   resolveComunicadoDataPageState,
   resizeTableProjectionColumns,
   selectedTableProjectionColumnKeys,
+  tablePartAllowsEdit,
   resizeInputPartFrame,
   scaleInputPartTypographyOnResize,
   upsertInputPartState,
@@ -76,6 +77,7 @@ import { ENUM_OPTION_LABELS, resolveParamFieldLabel } from "../content/dataParam
 import { DATE_RANGE_PRESET_OPTIONS } from "../utils/dateRangePresets";
 
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
+import { renameTableColumnFieldLabel } from "../utils/renameTableColumnFieldLabel";
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -458,11 +460,15 @@ function EditorTableViewBlock({
     isBlockSelected,
     selectedTablePart,
     selectedTableParts,
+    editingTablePart,
     selectBlock,
     selectBlocksByIds,
     selectTablePart,
+    beginEditTablePart,
+    cancelEditTablePart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     loadMoreDataPreview,
     loadingMoreSourceIds,
     startDrag,
@@ -532,10 +538,46 @@ function EditorTableViewBlock({
 
   const onPartDoubleClick = useCallback(
     (ref: ComunicadoTablePartRef) => {
+      const same =
+        selectedId === block.id &&
+        selectedTablePart &&
+        isTablePartRefEqual(selectedTablePart, ref);
       selectTablePart(block.id, ref);
       requestRibbonTab(ref.kind === "frame" ? "shape" : "table");
+      if (same && tablePartAllowsEdit(ref)) {
+        beginEditTablePart(block.id, ref);
+      }
     },
-    [block.id, requestRibbonTab, selectTablePart],
+    [
+      beginEditTablePart,
+      block.id,
+      requestRibbonTab,
+      selectTablePart,
+      selectedId,
+      selectedTablePart,
+    ],
+  );
+
+  const onPartContentCommit = useCallback(
+    (ref: ComunicadoTablePartRef, content: string) => {
+      cancelEditTablePart();
+      if (ref.kind !== "headerCell") return;
+      const columnKey = selectedTableProjectionColumnKeys(block, [ref])[0];
+      if (!columnKey) return;
+      const { sourcePatch, tableProjection } = renameTableColumnFieldLabel({
+        blocks,
+        tableBlock: block,
+        columnKey,
+        label: content,
+      });
+      if (sourcePatch) {
+        updateBlock(sourcePatch.id, { fieldLabels: sourcePatch.fieldLabels } as Partial<ComunicadoBlock>);
+      }
+      if (tableProjection) {
+        updateBlock(block.id, { tableProjection });
+      }
+    },
+    [block, blocks, cancelEditTablePart, updateBlock],
   );
 
   const onColumnResize = useCallback(
@@ -558,8 +600,11 @@ function EditorTableViewBlock({
       ? {
           selectedPart: selectedTablePart,
           selectedParts: selectedTableParts,
+          editingPart: editingTablePart,
           onPartPointerDown,
           onPartDoubleClick,
+          onPartContentCommit,
+          onPartEditCancel: cancelEditTablePart,
           onColumnResize,
           hasMoreRows: Boolean(sourceId && pageState?.hasMore),
           loadingMoreRows,

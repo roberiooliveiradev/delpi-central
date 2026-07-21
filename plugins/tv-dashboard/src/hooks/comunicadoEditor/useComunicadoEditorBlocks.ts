@@ -79,6 +79,7 @@ import type {
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
 import { applyComunicadoBlockStylePatch } from "../../utils/applyComunicadoBlockStylePatch";
 import { DATE_RANGE_PRESET_PARAM, PERIOD_DAYS_PARAM } from "../../utils/dateRangePresets";
+import { renameKpiMetricFieldLabel } from "../../utils/renameKpiMetricFieldLabel";
 import {
   bringForward,
   bringToFront,
@@ -561,6 +562,48 @@ export function useComunicadoEditorBlocks({
       if (!part || !blockId) return;
       const block = configRef.current.blocks?.find((item) => item.id === blockId);
       if (!block || block.type !== "kpi_view") return;
+
+      const metricField =
+        part.kind === "metricCard"
+          ? part.field
+          : part.kind === "title"
+            ? block.kpiProjection?.metrics?.[0]?.field ??
+              block.resolved?.kpiMetrics?.[0]?.field
+            : undefined;
+      const renameViaSource =
+        Boolean(metricField) &&
+        Boolean(block.dataSourceId?.trim()) &&
+        (part.kind === "metricCard" ||
+          (part.kind === "title" && !block.kpiOptions?.title?.trim()));
+
+      if (renameViaSource && metricField) {
+        const { sourcePatch, kpiProjection } = renameKpiMetricFieldLabel({
+          blocks: configRef.current.blocks ?? [],
+          kpiBlock: block,
+          field: metricField,
+          label: content,
+        });
+        if (sourcePatch) {
+          updateBlock(sourcePatch.id, {
+            fieldLabels: sourcePatch.fieldLabels,
+          } as Partial<ComunicadoBlock>);
+        }
+        const viewPatch: Partial<ComunicadoBlock> = {};
+        if (kpiProjection) {
+          (viewPatch as ComunicadoBlock & { kpiProjection?: typeof kpiProjection }).kpiProjection =
+            kpiProjection;
+        }
+        if (part.kind === "title") {
+          viewPatch.kpiOptions = mergeComunicadoKpiOptions({
+            ...block.kpiOptions,
+            title: undefined,
+          });
+        }
+        if (Object.keys(viewPatch).length > 0) {
+          updateBlock(blockId, viewPatch);
+        }
+        return;
+      }
 
       const nextParts = upsertKpiPartState(block.kpiParts, part, {
         content,

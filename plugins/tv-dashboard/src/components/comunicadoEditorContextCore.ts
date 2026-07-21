@@ -119,6 +119,10 @@ export type ComunicadoEditorContextValue = {
     options?: { additive?: boolean; range?: boolean },
   ) => void;
   clearTablePartSelection: () => void;
+  /** Edição inline do rótulo do cabeçalho (headerCell) → fieldLabels da fonte. */
+  editingTablePart: ComunicadoTablePartRef | null;
+  beginEditTablePart: (blockId: string, part: ComunicadoTablePartRef) => void;
+  cancelEditTablePart: () => void;
   /** KPI — subseleção de parte do card (título, valor, ícone…). */
   selectedKpiPart: ComunicadoKpiPartRef | null;
   selectKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;

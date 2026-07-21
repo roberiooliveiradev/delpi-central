@@ -78,3 +78,34 @@ def test_apply_field_labels_to_resolved_preserves_row_keys():
     assert next_resolved["table"]["columns"][1]["key"] == "ITEM_CODE"
     assert next_resolved["table"]["rows"][0]["ITEM_CODE"] == "90264019"
     assert next_resolved["kpiMetrics"][0]["label"] == "Código"
+
+
+def test_apply_field_labels_case_insensitive_and_trailing_space():
+    resolved = {
+        "table": {
+            "columns": [{"key": "DETAILED_DESCRIPTION", "label": "DETAILED_DESCRIPTION"}],
+            "rows": [{"DETAILED_DESCRIPTION": "x"}],
+        },
+    }
+    next_resolved = apply_field_labels_to_resolved(
+        resolved,
+        {"detailed_description": "Descrição detalhada "},
+    )
+    assert next_resolved["table"]["columns"][0]["label"] == "Descrição detalhada "
+
+
+def test_table_projection_keeps_field_labels_over_auto_baked():
+    resolved = {
+        "table": {
+            "columns": [{"key": "ITEM_CODE", "label": "Código"}],
+            "rows": [{"ITEM_CODE": "1"}, {"ITEM_CODE": "2"}],
+        },
+    }
+    block = {
+        "type": "table_view",
+        "tableProjection": {
+            "columns": [{"key": "ITEM_CODE", "label": "ITEM_CODE", "visible": True}],
+        },
+    }
+    next_resolved = apply_view_projection_to_resolved(resolved, block)
+    assert next_resolved["table"]["columns"][0]["label"] == "Código"

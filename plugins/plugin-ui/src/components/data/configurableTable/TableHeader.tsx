@@ -31,7 +31,7 @@ export function TableHeaderCell({
 }: TableHeaderCellProps) {
   const cn = useConfigurableTableClasses();
   const ref = { kind: "headerCell" as const, colIndex };
-  const { selected, onPointerDown, onDoubleClick, editing: _e, ...dom } = bindTablePartPointer(
+  const { selected, onPointerDown, onDoubleClick, editing, ...dom } = bindTablePartPointer(
     ref,
     interaction,
   );
@@ -45,6 +45,7 @@ export function TableHeaderCell({
         }
       : undefined;
   const resizable = selected && Boolean(interaction?.onColumnResize);
+  const displayLabel = typeof children === "string" ? children : String(children ?? "");
 
   const startColumnResize = (event: ReactPointerEvent<HTMLSpanElement>) => {
     event.preventDefault();
@@ -124,11 +125,32 @@ export function TableHeaderCell({
       className={[cn.headerCell, selected ? `${cn.root}__part--selected` : ""].filter(Boolean).join(" ")}
       style={style}
       {...dom}
-      onPointerDown={onPointerDown}
-      onDoubleClick={onDoubleClick}
+      onPointerDown={editing ? undefined : onPointerDown}
+      onDoubleClick={editing ? undefined : onDoubleClick}
     >
-      {children}
-      {resizable ? (
+      {editing ? (
+        <input
+          className={`${cn.root}__header-edit`}
+          defaultValue={displayLabel}
+          autoFocus
+          aria-label={`Rótulo da coluna ${columnKey}`}
+          onPointerDown={(event) => event.stopPropagation()}
+          onBlur={(event) => interaction?.onPartContentCommit?.(ref, event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              (event.target as HTMLInputElement).blur();
+            }
+            if (event.key === "Escape") {
+              event.preventDefault();
+              interaction?.onPartEditCancel?.();
+            }
+          }}
+        />
+      ) : (
+        children
+      )}
+      {resizable && !editing ? (
         <>
           <span
             className={`${cn.columnResizeHandle} ${cn.columnResizeHandle}--top`}
