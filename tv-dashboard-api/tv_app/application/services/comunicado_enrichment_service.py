@@ -226,9 +226,10 @@ class ComunicadoEnrichmentService:
         public_token: str | None,
     ) -> dict[str, Any]:
         block_type = str(block.get("type") or "text")
-        # Fonte + views + input + canvas_table: preservar config do editor.
-        # Strip aqui quebrava prévia/apresentação (sem gráfico; filtro sem paramKey →
-        # «Parâmetro indisponível»).
+        # Fonte + views + texto/forma (visual box) + input + canvas_table: preservar
+        # config do editor. Strip aqui quebrava prévia/apresentação (sem gráfico;
+        # filtro sem paramKey → «Parâmetro indisponível»; texto/forma sem
+        # dataSourceId/textProjection → placeholder estático em vez do valor vivo).
         if block_type in {
             "data_source",
             "chart_view",
@@ -236,6 +237,9 @@ class ComunicadoEnrichmentService:
             "kpi_view",
             "input",
             "canvas_table",
+            "heading",
+            "text",
+            "shape",
         }:
             enriched = dict(block)
             enriched["id"] = str(block.get("id") or "")
@@ -254,23 +258,7 @@ class ComunicadoEnrichmentService:
         animations = block.get("animations")
         if isinstance(animations, dict):
             enriched["animations"] = animations
-        if block_type in {"heading", "text"}:
-            enriched["content"] = str(block.get("content") or "")
-            href = block.get("href")
-            if isinstance(href, str) and href.strip():
-                enriched["href"] = href.strip()
-            link_target = block.get("linkTarget")
-            if link_target in {"_blank", "_self"}:
-                enriched["linkTarget"] = link_target
-            content_runs = block.get("contentRuns")
-            if isinstance(content_runs, list):
-                enriched["contentRuns"] = content_runs
-        elif block_type == "shape":
-            enriched["shape"] = str(block.get("shape") or "rectangle")
-            content = block.get("content")
-            if isinstance(content, str) and content.strip():
-                enriched["content"] = content
-        elif block_type in {"image", "video"}:
+        if block_type in {"image", "video"}:
             asset_id = block.get("assetId")
             if isinstance(asset_id, str) and asset_id.strip():
                 url = self._resolve_asset_url(

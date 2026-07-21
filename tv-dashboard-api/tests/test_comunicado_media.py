@@ -183,6 +183,61 @@ def test_enrich_preserves_data_source_and_chart_view_for_preview():
     assert data_enrichment.enrich_blocks.call_args.kwargs.get("authorization") is None
 
 
+def test_enrich_preserves_text_and_shape_data_binding_for_preview():
+    """Prévia/apresentação: não stripar dataSourceId/textProjection (senão placeholder)."""
+    data_enrichment = MagicMock()
+    data_enrichment.enrich_blocks.side_effect = lambda blocks, **_kw: blocks
+    service = ComunicadoEnrichmentService(
+        media_repo=MagicMock(),
+        data_enrichment=data_enrichment,
+    )
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "src-1",
+                    "type": "data_source",
+                    "frame": {"x": 0, "y": 0, "w": 10, "h": 10},
+                    "dataBinding": {
+                        "operationId": "get_idd_components",
+                        "displayMode": "auto",
+                        "params": {},
+                    },
+                },
+                {
+                    "id": "txt-1",
+                    "type": "text",
+                    "content": "Text1",
+                    "dataSourceId": "src-1",
+                    "textProjection": {"field": "idd", "format": "number"},
+                    "frame": {"x": 5, "y": 5, "w": 40, "h": 20},
+                },
+                {
+                    "id": "shape-1",
+                    "type": "shape",
+                    "shape": "rounded-rect",
+                    "content": "Text1",
+                    "dataSourceId": "src-1",
+                    "textProjection": {"field": "idd", "format": "number"},
+                    "frame": {"x": 50, "y": 5, "w": 40, "h": 20},
+                },
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+        public_token="share-token",
+    )
+    passed = data_enrichment.enrich_blocks.call_args.args[0]
+    text = next(block for block in passed if block["id"] == "txt-1")
+    shape = next(block for block in passed if block["id"] == "shape-1")
+    assert text["dataSourceId"] == "src-1"
+    assert text["textProjection"]["field"] == "idd"
+    assert shape["dataSourceId"] == "src-1"
+    assert shape["textProjection"]["field"] == "idd"
+    assert shape["shape"] == "rounded-rect"
+    assert data["blocks"][1]["dataSourceId"] == "src-1"
+
+
 def test_enrich_preserves_input_param_key_for_preview():
     """Prévia/apresentação: não stripar input.paramKey (senão «Parâmetro indisponível»)."""
     data_enrichment = MagicMock()
