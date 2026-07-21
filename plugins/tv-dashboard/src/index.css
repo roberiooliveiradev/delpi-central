@@ -1606,7 +1606,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-composer__remote-selection{
   position: absolute;
-  inset: calc(-1 * var(--td-global-selection-pad, 12px));
+  inset: calc(-1 * var(--td-global-selection-pad, 6px));
   z-index: 19;
   pointer-events: none;
   border: max(2px, var(--td-selection-outline-width, 2px)) solid var(--td-remote-selection);
@@ -1633,7 +1633,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__block-handles{
   position: absolute;
   /* Expande a área dos handles pelo mesmo pad da seleção global. */
-  inset: calc(-1 * var(--td-global-selection-pad, 12px));
+  inset: calc(-1 * var(--td-global-selection-pad, 6px));
   z-index: 20;
   pointer-events: none;
 }
@@ -1682,7 +1682,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__selection-move-edge--s{
   left: 0;
   right: 0;
-  height: var(--td-global-selection-pad, 12px);
+  height: var(--td-global-selection-pad, 6px);
 }
 .dashboard-tv-dashboard .td-composer__selection-move-edge--n{
   top: 0;
@@ -1694,7 +1694,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__selection-move-edge--w{
   top: 0;
   bottom: 0;
-  width: var(--td-global-selection-pad, 12px);
+  width: var(--td-global-selection-pad, 6px);
 }
 .dashboard-tv-dashboard .td-composer__selection-move-edge--e{
   right: 0;
