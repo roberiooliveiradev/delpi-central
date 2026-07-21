@@ -48,4 +48,28 @@ describe("duplicateBlocksWithDataPolicy", () => {
     expect(copy && "dataSourceId" in copy ? copy.dataSourceId : null).not.toBe("src-1");
     expect(copy && "dataSourceId" in copy ? copy.dataSourceId : null).toBe(sources[1]?.id);
   });
+
+  it("duplica grupo com novo groupId (não entra no grupo da origem)", () => {
+    const a = {
+      id: "a",
+      type: "text" as const,
+      content: "A",
+      frame: { x: 10, y: 10, w: 20, h: 10 },
+      groupId: "grp_orig",
+    };
+    const b = {
+      id: "b",
+      type: "text" as const,
+      content: "B",
+      frame: { x: 40, y: 10, w: 20, h: 10 },
+      groupId: "grp_orig",
+    };
+    const result = duplicateBlocksWithDataPolicy([a, b], [a, b], "share_source");
+    const pasted = result.blocks.filter((block) => result.pastedIds.includes(block.id));
+    expect(pasted).toHaveLength(2);
+    expect(pasted[0]?.groupId).toBeTruthy();
+    expect(pasted[0]?.groupId).not.toBe("grp_orig");
+    expect(pasted[1]?.groupId).toBe(pasted[0]?.groupId);
+    expect(result.blocks.find((block) => block.id === "a")?.groupId).toBe("grp_orig");
+  });
 });

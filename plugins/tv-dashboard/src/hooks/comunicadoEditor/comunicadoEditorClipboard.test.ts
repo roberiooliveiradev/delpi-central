@@ -3,15 +3,17 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import {
   cloneBlocksForClipboard,
+  detachClipboardGroupIds,
   pasteClipboardBlocks,
 } from "../../utils/comunicadoEditorClipboard";
 
-function fakeBlock(id: string): ComunicadoBlock {
+function fakeBlock(id: string, groupId?: string): ComunicadoBlock {
   return {
     id,
     type: "text",
     content: `block-${id}`,
     frame: { x: 10, y: 10, w: 20, h: 10 },
+    ...(groupId ? { groupId } : {}),
   };
 }
 
@@ -29,5 +31,21 @@ describe("comunicadoEditorClipboard", () => {
     expect(result.blocks.length).toBe(2);
     expect(result.pastedIds).toHaveLength(1);
     expect(result.pastedIds[0]).not.toBe("a");
+  });
+
+  it("cola grupo desagrupado (sem groupId nas cópias)", () => {
+    const payload = cloneBlocksForClipboard([
+      fakeBlock("a", "grp_src"),
+      fakeBlock("b", "grp_src"),
+    ]);
+    expect(payload.every((block) => block.groupId === "grp_src")).toBe(true);
+    expect(detachClipboardGroupIds(payload).every((block) => !block.groupId)).toBe(true);
+
+    const existing = [fakeBlock("existing", "grp_src")];
+    const result = pasteClipboardBlocks(existing, payload, { x: 2, y: 2 });
+    const pasted = result.blocks.filter((block) => result.pastedIds.includes(block.id));
+    expect(pasted).toHaveLength(2);
+    expect(pasted.every((block) => !block.groupId)).toBe(true);
+    expect(existing[0].groupId).toBe("grp_src");
   });
 });

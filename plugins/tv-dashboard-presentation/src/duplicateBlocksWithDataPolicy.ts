@@ -103,6 +103,19 @@ export function duplicateBlocksWithDataPolicy(
     return copy;
   });
 
+  /* Duplicar: novos groupIds — cópias não entram no grupo da origem. */
+  const groupIdMap = new Map<string, string>();
+  for (const copy of copies) {
+    const previous = copy.groupId?.trim();
+    if (!previous) continue;
+    let mapped = groupIdMap.get(previous);
+    if (!mapped) {
+      mapped = `grp_${newBlockId()}`;
+      groupIdMap.set(previous, mapped);
+    }
+    copy.groupId = mapped;
+  }
+
   const extraSources: ComunicadoDataSourceBlock[] = [];
   const sourceIdMap = new Map<string, string>();
 
