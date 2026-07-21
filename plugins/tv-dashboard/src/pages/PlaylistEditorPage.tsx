@@ -71,6 +71,12 @@ import {
   writeComunicadoSlideDraft,
 } from "../utils/comunicadoSlideDraftPreferences";
 import {
+  bumpComunicadoAutosaveVersion,
+  resolveNativeConfigAfterAutosave,
+  shouldClearComunicadoDraftAfterSave,
+  shouldClearComunicadoPendingAfterSave,
+} from "../utils/comunicadoSlideAutosave";
+import {
   getEditorPresenceClientId,
   resolveEditorDisplayName,
 } from "../utils/editorPresence";
@@ -123,7 +129,9 @@ export function PlaylistEditorPage({
   const pendingComunicadoSaveRef = useRef<{
     slide: Slide;
     nativeConfig: Record<string, unknown>;
+    version: number;
   } | null>(null);
+  const comunicadoAutosaveVersionRef = useRef<Map<string, number>>(new Map());
   const slideClipboardRef = useRef<SlideClipboardPayload | null>(null);
   const [slideClipboardRevision, setSlideClipboardRevision] = useState(0);
   const [exportBusy, setExportBusy] = useState(false);
@@ -136,6 +144,7 @@ export function PlaylistEditorPage({
   const playlistRef = useRef<Playlist | null>(null);
   const selectedSlideIdRef = useRef<string | null>(null);
   const liveComunicadoConfigRef = useRef<Record<string, unknown> | null>(null);
+  const flushPendingComunicadoSaveRef = useRef<(() => Promise<void>) | null>(null);
 
   playlistRef.current = playlist;
   selectedSlideIdRef.current = selectedSlideId;
@@ -144,9 +153,13 @@ export function PlaylistEditorPage({
     if (playlist) writePlaylistShell(playlist);
   }, [playlist]);
 
-  /** Troca de slide: alinha o ref live ao nativeConfig do alvo (evita merge WS/thumb do slide anterior). */
+  /** Troca de slide: flush autosave do slide anterior e alinha ref live ao alvo. */
   const selectSlide = useCallback(
     (slideId: string, slideHint?: Slide | null) => {
+      const pending = pendingComunicadoSaveRef.current;
+      if (pending && pending.slide.id !== slideId) {
+        void flushPendingComunicadoSaveRef.current?.();
+      }
       setSelectedSlideId(slideId);
       writeSelectedSlideId(playlistId, slideId);
       const slide =
@@ -695,21 +708,71 @@ export function PlaylistEditorPage({
       externalUrl?: string | null;
       transitionStyle?: string | null;
     },
-    options?: { recordHistory?: boolean },
+    options?: { recordHistory?: boolean; autosaveVersion?: number },
   ) {
     if (!playlist) return;
     if (options?.recordHistory) deckHistory.recordBeforeChange();
     try {
       const updated = await updateSlide(playlist.id, slide.id, payload);
+      const latestVersion = comunicadoAutosaveVersionRef.current.get(slide.id) ?? 0;
+      const completedVersion = options?.autosaveVersion;
+
       if (payload.nativeConfig) {
-        clearComunicadoSlideDraft(playlist.id, slide.id);
-        if (pendingComunicadoSaveRef.current?.slide.id === slide.id) {
+        if (
+          shouldClearComunicadoDraftAfterSave({
+            completedVersion,
+            latestVersion,
+          })
+        ) {
+          clearComunicadoSlideDraft(playlist.id, slide.id);
+        }
+        if (
+          shouldClearComunicadoPendingAfterSave({
+            pending: pendingComunicadoSaveRef.current
+              ? {
+                  slideId: pendingComunicadoSaveRef.current.slide.id,
+                  nativeConfig: pendingComunicadoSaveRef.current.nativeConfig,
+                  version: pendingComunicadoSaveRef.current.version,
+                }
+              : null,
+            slideId: slide.id,
+            completedVersion,
+          })
+        ) {
           pendingComunicadoSaveRef.current = null;
         }
       }
-      setPlaylist({
-        ...playlist,
-        slides: (playlist.slides ?? []).map((item) => (item.id === slide.id ? updated : item)),
+
+      setPlaylist((current) => {
+        if (!current) return current;
+        const resolvedNative = payload.nativeConfig
+          ? resolveNativeConfigAfterAutosave({
+              slideId: slide.id,
+              serverNativeConfig: updated.nativeConfig,
+              completedVersion,
+              latestVersion,
+              pending: pendingComunicadoSaveRef.current
+                ? {
+                    slideId: pendingComunicadoSaveRef.current.slide.id,
+                    nativeConfig: pendingComunicadoSaveRef.current.nativeConfig,
+                    version: pendingComunicadoSaveRef.current.version,
+                  }
+                : null,
+              liveConfig: liveComunicadoConfigRef.current,
+              selectedSlideId: selectedSlideIdRef.current,
+            })
+          : updated.nativeConfig;
+        return {
+          ...current,
+          slides: (current.slides ?? []).map((item) =>
+            item.id === slide.id
+              ? {
+                  ...updated,
+                  nativeConfig: resolvedNative ?? updated.nativeConfig,
+                }
+              : item,
+          ),
+        };
       });
       await deckHistory.confirmChange();
     } catch (caught) {
@@ -718,34 +781,100 @@ export function PlaylistEditorPage({
     }
   }
 
+  const persistComunicadoPending = useCallback(
+    async (captured: {
+      slide: Slide;
+      nativeConfig: Record<string, unknown>;
+      version: number;
+    }) => {
+      const pl = playlistRef.current;
+      if (!pl) return;
+      try {
+        const updated = await updateSlide(pl.id, captured.slide.id, {
+          title: captured.slide.title,
+          durationSec: captured.slide.durationSec ?? pl.defaultDurationSec ?? 30,
+          nativeConfig: captured.nativeConfig,
+        });
+        const latestVersion = comunicadoAutosaveVersionRef.current.get(captured.slide.id) ?? 0;
+        if (
+          shouldClearComunicadoDraftAfterSave({
+            completedVersion: captured.version,
+            latestVersion,
+          })
+        ) {
+          clearComunicadoSlideDraft(pl.id, captured.slide.id);
+        }
+        setPlaylist((current) => {
+          if (!current) return current;
+          const resolvedNative = resolveNativeConfigAfterAutosave({
+            slideId: captured.slide.id,
+            serverNativeConfig: updated.nativeConfig,
+            completedVersion: captured.version,
+            latestVersion,
+            pending: pendingComunicadoSaveRef.current
+              ? {
+                  slideId: pendingComunicadoSaveRef.current.slide.id,
+                  nativeConfig: pendingComunicadoSaveRef.current.nativeConfig,
+                  version: pendingComunicadoSaveRef.current.version,
+                }
+              : null,
+            liveConfig: liveComunicadoConfigRef.current,
+            selectedSlideId: selectedSlideIdRef.current,
+          });
+          return {
+            ...current,
+            slides: (current.slides ?? []).map((item) =>
+              item.id === captured.slide.id
+                ? { ...updated, nativeConfig: resolvedNative ?? updated.nativeConfig }
+                : item,
+            ),
+          };
+        });
+        await deckHistory.confirmChange();
+      } catch {
+        // Draft permanece no localStorage. Reenfileira só se não houver pending mais novo.
+        const currentPending = pendingComunicadoSaveRef.current;
+        if (
+          !currentPending ||
+          (currentPending.slide.id === captured.slide.id &&
+            currentPending.version < captured.version)
+        ) {
+          pendingComunicadoSaveRef.current = captured;
+        }
+        deckHistory.cancelChange();
+      }
+    },
+    [deckHistory.cancelChange, deckHistory.confirmChange],
+  );
+
   const flushPendingComunicadoSave = useCallback(async () => {
     const pending = pendingComunicadoSaveRef.current;
-    const pl = playlistRef.current;
-    if (!pending || !pl) return;
+    if (!pending) return;
     if (saveComunicadoTimerRef.current) {
       window.clearTimeout(saveComunicadoTimerRef.current);
       saveComunicadoTimerRef.current = null;
     }
     pendingComunicadoSaveRef.current = null;
-    try {
-      await updateSlide(pl.id, pending.slide.id, {
-        title: pending.slide.title,
-        durationSec: pending.slide.durationSec ?? pl.defaultDurationSec ?? 30,
-        nativeConfig: pending.nativeConfig,
-      });
-      clearComunicadoSlideDraft(pl.id, pending.slide.id);
-      await deckHistory.confirmChange();
-    } catch {
-      // Draft permanece no localStorage para o próximo load.
-      pendingComunicadoSaveRef.current = pending;
-      deckHistory.cancelChange();
-    }
-  }, [deckHistory.cancelChange, deckHistory.confirmChange]);
+    await persistComunicadoPending(pending);
+  }, [persistComunicadoPending]);
+
+  flushPendingComunicadoSaveRef.current = flushPendingComunicadoSave;
 
   function scheduleCustomSlideSave(slide: Slide, nativeConfig: Record<string, unknown>) {
+    const previous = pendingComunicadoSaveRef.current;
+    if (previous && previous.slide.id !== slide.id) {
+      if (saveComunicadoTimerRef.current) {
+        window.clearTimeout(saveComunicadoTimerRef.current);
+        saveComunicadoTimerRef.current = null;
+      }
+      pendingComunicadoSaveRef.current = null;
+      void persistComunicadoPending(previous);
+    }
+
     liveComunicadoConfigRef.current = nativeConfig;
     writeComunicadoSlideDraft(playlistId, slide.id, nativeConfig);
-    pendingComunicadoSaveRef.current = { slide, nativeConfig };
+    const version = bumpComunicadoAutosaveVersion(comunicadoAutosaveVersionRef.current, slide.id);
+    pendingComunicadoSaveRef.current = { slide, nativeConfig, version };
     // Otimista: atualiza nativeConfig no estado já — o save API continua debounced.
     // Sem isso, re-renders (WS/thumbnails) reaplicam o config antigo no editor mid-drag.
     setPlaylist((current) => {
@@ -759,11 +888,15 @@ export function PlaylistEditorPage({
     });
     if (saveComunicadoTimerRef.current) window.clearTimeout(saveComunicadoTimerRef.current);
     saveComunicadoTimerRef.current = window.setTimeout(() => {
-      void handleSaveSlide(slide, {
-        title: slide.title,
-        durationSec: slide.durationSec ?? playlist?.defaultDurationSec ?? 30,
-        nativeConfig,
-      });
+      void handleSaveSlide(
+        slide,
+        {
+          title: slide.title,
+          durationSec: slide.durationSec ?? playlistRef.current?.defaultDurationSec ?? 30,
+          nativeConfig,
+        },
+        { autosaveVersion: version },
+      );
     }, 700);
 
     if (wsDraftTimerRef.current) window.clearTimeout(wsDraftTimerRef.current);

@@ -5,6 +5,7 @@ import {
   expandSelectionWithGroups,
   groupBlocks,
   isIsolatedGroupChildSelection,
+  partitionSelectionIntoLayoutUnits,
   resolveClosedGroupSelection,
   selectedHasGroup,
   ungroupBlocks,
@@ -54,5 +55,37 @@ describe("comunicadoGrouping", () => {
         { x: 15, y: 25, w: 20, h: 10 },
       ]),
     ).toEqual({ x: 10, y: 10, w: 25, h: 25 });
+  });
+
+  it("particiona dois grupos fechados em duas unidades de layout", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    const c = createBlock("text", "C");
+    const d = createBlock("text", "D");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    c.groupId = "g2";
+    d.groupId = "g2";
+    a.frame = { x: 0, y: 0, w: 10, h: 10 };
+    b.frame = { x: 10, y: 10, w: 10, h: 10 };
+    c.frame = { x: 40, y: 0, w: 10, h: 10 };
+    d.frame = { x: 50, y: 10, w: 10, h: 10 };
+    const units = partitionSelectionIntoLayoutUnits(
+      [a, b, c, d],
+      [a.id, b.id, c.id, d.id],
+    );
+    expect(units).toHaveLength(2);
+    expect(units.map((unit) => unit.key).sort()).toEqual(["g1", "g2"]);
+    expect(units.find((unit) => unit.key === "g1")?.frame).toEqual({ x: 0, y: 0, w: 20, h: 20 });
+  });
+
+  it("filho isolado permanece unidade própria", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    const units = partitionSelectionIntoLayoutUnits([a, b], [a.id]);
+    expect(units).toHaveLength(1);
+    expect(units[0]?.key).toBe(a.id);
   });
 });

@@ -108,3 +108,53 @@ export function ungroupBlocks(blocks: ComunicadoBlock[], selectedIds: string[]):
 export function selectedHasGroup(blocks: ComunicadoBlock[], selectedIds: string[]): boolean {
   return selectedIds.some((id) => blocks.find((block) => block.id === id)?.groupId);
 }
+
+/** Unidade de layout: grupo fechado (todos os membros) ou bloco solto / filho isolado. */
+export type ComunicadoLayoutUnit = {
+  key: string;
+  memberIds: string[];
+  frame: ComunicadoFrame;
+};
+
+/**
+ * Particiona a seleção em unidades para align/distribute/move em lote.
+ * Grupo com todos os membros selecionados → 1 unidade (bounding box).
+ * Filho isolado ou bloco sem grupo → 1 unidade cada.
+ */
+export function partitionSelectionIntoLayoutUnits(
+  blocks: ComunicadoBlock[],
+  selectedIds: string[],
+): ComunicadoLayoutUnit[] {
+  const idSet = new Set(selectedIds);
+  const selected = blocks.filter((block) => idSet.has(block.id));
+  if (selected.length === 0) return [];
+
+  const consumed = new Set<string>();
+  const units: ComunicadoLayoutUnit[] = [];
+
+  const groupIds = new Set(
+    selected.map((block) => block.groupId).filter((id): id is string => Boolean(id)),
+  );
+  for (const groupId of groupIds) {
+    const members = membersOfGroup(blocks, groupId);
+    if (members.length < 2) continue;
+    if (!members.every((member) => idSet.has(member.id))) continue;
+    units.push({
+      key: groupId,
+      memberIds: members.map((member) => member.id),
+      frame: unionFramePercent(members.map((member) => member.frame)),
+    });
+    for (const member of members) consumed.add(member.id);
+  }
+
+  for (const block of selected) {
+    if (consumed.has(block.id)) continue;
+    units.push({
+      key: block.id,
+      memberIds: [block.id],
+      frame: { ...block.frame },
+    });
+  }
+
+  return units;
+}
