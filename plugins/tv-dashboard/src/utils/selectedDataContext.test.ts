@@ -38,4 +38,17 @@ describe("resolveSelectedDataContext", () => {
     expect(ctx.kind).toBe("homogeneous");
     expect(ctx.bindingTarget?.id).toBe("src-1");
   });
+
+  it("inclui texto sem vínculo como bloco de dados (mesmo fluxo do KPI)", () => {
+    const textUnbound: ComunicadoBlock = {
+      id: "txt-u",
+      type: "text",
+      content: "—",
+      frame: { x: 0, y: 0, w: 20, h: 10 },
+    };
+    const ctx = resolveSelectedDataContext([source, textUnbound], ["txt-u"]);
+    expect(ctx.kind).toBe("single");
+    expect(ctx.primary?.id).toBe("txt-u");
+    expect(ctx.bindingTarget).toBeNull();
+  });
 });

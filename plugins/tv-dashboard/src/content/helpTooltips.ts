@@ -269,7 +269,9 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertFieldAtCursor:
       "Insere um trecho dinâmico na posição do cursor — útil para misturar texto fixo e dados (ex.: «OEE: 42%»).",
     viewBinding:
-      "Conecte o gráfico, tabela ou KPI a qualquer fonte do palco. A forma sugerida no catálogo não restringe o vínculo.",
+      "Conecte o gráfico, tabela, KPI ou texto/forma a qualquer fonte do palco. A forma sugerida no catálogo não restringe o vínculo.",
+    projectSources:
+      "Fontes já inseridas neste slide. Use uma existente em vez de criar outra rota no catálogo.",
     valueFields:
       "Marque quais métricas escalares da rota entram no KPI, gráfico ou tabela. Vazio (todas marcadas) = exibir todas.",
     viewValueFields:

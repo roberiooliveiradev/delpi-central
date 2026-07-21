@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  buildTextDataLinkPatch,
+  buildViewDataLinkPatch,
+  isDataSourceBlockType,
   isDataViewBlockType,
+  isTextDataBoundBlockType,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -13,6 +17,11 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DataBindingInspector } from "./DataBindingInspector";
 import { DataPreparePanel } from "./DataPreparePanel";
 import { DataRoutesSidePanel } from "./DataRoutesSidePanel";
+import {
+  canLinkBlockToProjectDataSource,
+  ProjectDataSourcesCatalogSection,
+} from "./DataSourceLinkSection";
+import { TextDataBindingInspector, canShowTextDataBindingInspector } from "./TextDataBindingInspector";
 import { VisualDataViewInspector } from "./VisualDataViewInspector";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
 import { resolveSelectedDataContext } from "../utils/selectedDataContext";
@@ -32,8 +41,8 @@ type Props = {
 /**
  * Conteúdo da aba Dados (side bar e ribbon):
  * - ribbon: só ações curtas (nunca inspector/onboarding — vazava sobre o filmstrip)
- * - pane: configuração da fonte / vínculo
- * - sem seleção de dados ou intent catálogo → listagem para inserir
+ * - pane: configuração da fonte / vínculo (texto, visual e data_source no mesmo fluxo)
+ * - intent catalog → listagem; com fontes no slide, lista «Fontes neste slide» no topo
  */
 export function SelectedDataSidePanel({
   branchScope = null,
@@ -49,18 +58,21 @@ export function SelectedDataSidePanel({
     openDataCatalog,
     openDataPanel,
     setDataPanelIntent,
+    updateSelected,
   } = useComunicadoEditor();
   const context = useMemo(
     () => resolveSelectedDataContext(blocks, selectedIds),
     [blocks, selectedIds],
   );
-  const showCatalog =
-    dataPanelIntent === "catalog" || context.kind === "none";
+  const showCatalog = dataPanelIntent === "catalog" || context.kind === "none";
   const isRibbon = layout === "ribbon";
   const openCatalog = onOpenCatalog ?? openDataCatalog;
 
   const [routes, setRoutes] = useState<TvDataRouteCatalogItem[]>([]);
   const bindingTarget = context.bindingTarget;
+  const primary = context.primary;
+  const isView = primary ? isDataViewBlockType(primary.type) : false;
+  const isTextBound = primary ? canShowTextDataBindingInspector(primary) : false;
 
   useEffect(() => {
     if (isRibbon || showCatalog || !bindingTarget || !("dataBinding" in bindingTarget)) return;
@@ -74,17 +86,51 @@ export function SelectedDataSidePanel({
     return routes.find((route) => route.operationId === bindingTarget.dataBinding.operationId) ?? null;
   }, [bindingTarget, routes]);
 
+  function linkPrimaryToSource(sourceId: string) {
+    if (!primary) return;
+    const source = blocks.find(
+      (block) => block.id === sourceId && isDataSourceBlockType(block.type),
+    );
+    if (!source) return;
+    const resolved = "resolved" in source ? source.resolved : undefined;
+    if (isDataViewBlockType(primary.type)) {
+      const patch = buildViewDataLinkPatch({
+        viewType: primary.type,
+        dataSourceId: sourceId,
+        resolved,
+        fieldTypes: null,
+        currentFrame: primary.frame,
+        existing: {
+          kpiProjection: "kpiProjection" in primary ? primary.kpiProjection : undefined,
+          chartProjection: "chartProjection" in primary ? primary.chartProjection : undefined,
+          tableProjection: "tableProjection" in primary ? primary.tableProjection : undefined,
+        },
+      });
+      updateSelected(patch as Partial<ComunicadoBlock>);
+      setDataPanelIntent("binding");
+      return;
+    }
+    if (isTextDataBoundBlockType(primary.type)) {
+      const patch = buildTextDataLinkPatch({
+        dataSourceId: sourceId,
+        resolved,
+        existing: "textProjection" in primary ? primary.textProjection : undefined,
+      });
+      updateSelected(patch as Partial<ComunicadoBlock>);
+      setDataPanelIntent("binding");
+    }
+  }
+
   /** Faixa superior: toolbar horizontal — inspector completo só no painel lateral. */
   if (isRibbon) {
-    const primary = context.primary;
-    const isView = primary ? isDataViewBlockType(primary.type) : false;
     const unboundView = isView && !bindingTarget;
+    const unboundText = isTextBound && !bindingTarget;
     const hint = showCatalog
-      ? "Escolha uma fonte no catálogo para inserir no palco."
+      ? "Escolha uma fonte do slide ou uma rota nova no catálogo."
       : context.kind === "mixed"
         ? context.message
-        : unboundView
-          ? "KPI/gráfico sem fonte — conecte no painel ao lado ou abra o catálogo."
+        : unboundView || unboundText
+          ? "Sem fonte — conecte no painel ao lado (fontes do slide ou catálogo)."
           : bindingTarget
             ? "Fonte ligada — edite parâmetros e conexão no painel Dados."
             : "Configure os dados no painel ao lado.";
@@ -106,7 +152,7 @@ export function SelectedDataSidePanel({
               className="td-btn td-btn--sm td-btn--ghost"
               onClick={() => openDataPanel()}
             >
-              {unboundView ? "Conectar no painel" : "Abrir painel Dados"}
+              {unboundView || unboundText ? "Conectar no painel" : "Abrir painel Dados"}
             </button>
           ) : null}
           {showCatalog && context.kind !== "none" ? (
@@ -124,6 +170,9 @@ export function SelectedDataSidePanel({
   }
 
   if (showCatalog) {
+    const canLink = canLinkBlockToProjectDataSource(selected);
+    const activeSourceId =
+      selected && "dataSourceId" in selected ? selected.dataSourceId?.trim() : undefined;
     return (
       <div>
         {context.kind !== "none" ? (
@@ -136,6 +185,13 @@ export function SelectedDataSidePanel({
               Voltar à fonte atual
             </button>
           </div>
+        ) : null}
+        {canLink ? (
+          <ProjectDataSourcesCatalogSection
+            blocks={blocks}
+            activeSourceId={activeSourceId}
+            onPickSource={linkPrimaryToSource}
+          />
         ) : null}
         <DataRoutesSidePanel
           layout={layout}
@@ -161,9 +217,6 @@ export function SelectedDataSidePanel({
     );
   }
 
-  const primary = context.primary;
-  const isView = primary ? isDataViewBlockType(primary.type) : false;
-
   return (
     <>
       {context.kind === "homogeneous" && context.dataBlocks.length > 1 ? (
@@ -181,6 +234,14 @@ export function SelectedDataSidePanel({
         />
       ) : null}
 
+      {isTextBound && !isView ? (
+        <TextDataBindingInspector
+          pane
+          route={selectedRoute}
+          onOpenDataSources={() => openCatalog("insert")}
+        />
+      ) : null}
+
       {bindingTarget && "dataBinding" in bindingTarget ? (
         <DataBindingInspector
           route={selectedRoute}
@@ -188,18 +249,11 @@ export function SelectedDataSidePanel({
           branchScope={branchScope}
           block={selected?.id !== bindingTarget.id ? bindingTarget : null}
         />
-      ) : isView ? (
+      ) : isView || isTextBound ? (
         <DeckPropertySection pane title="Parâmetros da fonte" defaultOpen>
           <p className="td-deck-inspector__hint">
             Conecte uma fonte acima para editar parâmetros da rota api-delpi.
           </p>
-          <button
-            type="button"
-            className="td-btn td-btn--sm td-btn--ghost"
-            onClick={(event) => openCatalog("insert", { anchor: event.currentTarget })}
-          >
-            Abrir catálogo de fontes
-          </button>
         </DeckPropertySection>
       ) : null}
 
@@ -207,7 +261,7 @@ export function SelectedDataSidePanel({
         <DataPreparePanel pane block={bindingTarget} />
       ) : null}
 
-      {!isView && !bindingTarget ? (
+      {!isView && !isTextBound && !bindingTarget ? (
         <DeckPropertySection pane title="Dados" defaultOpen>
           <p className="td-deck-inspector__hint">Nenhuma configuração de dados disponível.</p>
         </DeckPropertySection>

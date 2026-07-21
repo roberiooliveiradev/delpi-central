@@ -1,7 +1,5 @@
-import { FormSelectControl } from "@delpi/plugin-ui/index";
 import {
   chartTypeLabel,
-  dataSourceOptionsForInspector,
   discoverResolvedFieldOptions,
   isDataSourceBlockType,
   buildViewDataLinkPatch,
@@ -17,6 +15,7 @@ import {
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DataSourceLinkSection } from "./DataSourceLinkSection";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
@@ -61,7 +60,7 @@ export function VisualDataViewInspector({
     selected,
     blocks,
     updateSelected,
-    openDataPanel,
+    openDataCatalog,
     selectedKpiPart,
     selectedChartPart,
     selectChartPart,
@@ -78,9 +77,8 @@ export function VisualDataViewInspector({
     return null;
   }
 
-  const sourceOptions = dataSourceOptionsForInspector(blocks, selected.id);
   const hasSource = Boolean(selected.dataSourceId?.trim());
-  const openSources = onOpenDataSources ?? openDataPanel;
+  const openSources = onOpenDataSources ?? (() => openDataCatalog("insert"));
   const tableBlock = selected.type === "table_view" ? (selected as ComunicadoTableViewBlock) : null;
   const linkedSource =
     hasSource
@@ -143,26 +141,19 @@ export function VisualDataViewInspector({
       {!hasSource && !isRibbon ? (
         <div className="td-deck-inspector__onboarding">
           <p className="td-deck-inspector__hint">{TV_DASHBOARD_HELP_TOOLTIPS.data.connectFlow}</p>
-          <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={() => openSources()}>
-            Abrir fontes de dados
-          </button>
         </div>
       ) : null}
       {!hasSource && isRibbon ? (
-        <>
-          <p className="td-deck-inspector__hint">{TV_DASHBOARD_HELP_TOOLTIPS.data.connectFlowRibbon}</p>
-          <button type="button" className="td-btn td-btn--sm td-btn--ghost" onClick={() => openSources()}>
-            Abrir fontes de dados
-          </button>
-        </>
+        <p className="td-deck-inspector__hint">{TV_DASHBOARD_HELP_TOOLTIPS.data.connectFlowRibbon}</p>
       ) : null}
-      <DeckField id="td-view-data-source" label="Fonte de dados">
-        <FormSelectControl
-          id="td-view-data-source"
-          className={compactSelect}
-          ariaLabel="Fonte de dados"
-          value={selected.dataSourceId ?? ""}
-          onChange={(value) => {
+      <DataSourceLinkSection
+        embedded
+        blocks={blocks}
+        selectedId={selected.id}
+        sourceId={selected.dataSourceId ?? ""}
+        compactSelect={compactSelect}
+        pane={!isRibbon}
+        onChangeSourceId={(value) => {
             const sourceId = value || undefined;
             if (!sourceId) {
               updateSelected({ dataSourceId: undefined } as Partial<ComunicadoBlock>);
@@ -189,15 +180,14 @@ export function VisualDataViewInspector({
             });
             updateSelected(patch as Partial<ComunicadoBlock>);
           }}
-          options={[
-            {
-              value: "",
-              label: sourceOptions.length === 0 ? "Insira uma fonte (aba Dados)" : "Selecione…",
-            },
-            ...sourceOptions,
-          ]}
-        />
-      </DeckField>
+        onOpenCatalog={openSources}
+        catalogLabel="Inserir nova fonte…"
+        emptyHint={
+          hasSource
+            ? undefined
+            : "Escolha uma fonte deste slide ou insira uma nova no catálogo."
+        }
+      />
       {hasSource && selected.type === "chart_view" && valueFieldOptions.length > 0 ? (
         <DeckField
           id="td-view-chart-axes"

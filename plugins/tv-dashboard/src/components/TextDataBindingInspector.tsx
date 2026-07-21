@@ -2,7 +2,6 @@ import { FormSelectControl, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   TEXT_FIELD_AGGREGATION_OPTIONS,
   buildTextDataLinkPatch,
-  dataSourceOptionsForInspector,
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
   type ComunicadoTextProjection,
@@ -11,6 +10,7 @@ import {
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
+import { DataSourceLinkSection } from "./DataSourceLinkSection";
 import { KpiColorRulesEditor } from "./KpiColorRulesEditor";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import type { PanelLayout } from "./SelectedDataSidePanel";
@@ -39,14 +39,13 @@ export function TextDataBindingInspector({
   route = null,
   onOpenDataSources,
 }: Props) {
-  const { selected, blocks, updateSelected, openDataPanel } = useComunicadoEditor();
+  const { selected, blocks, updateSelected, openDataCatalog } = useComunicadoEditor();
   const isRibbon = layout === "ribbon";
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
 
   if (!selected || !isComunicadoVisualBoxBlock(selected)) return null;
 
-  const sourceOptions = dataSourceOptionsForInspector(blocks, selected.id);
   const sourceId = selected.dataSourceId?.trim() ?? "";
   const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
   const resolved =
@@ -95,29 +94,25 @@ export function TextDataBindingInspector({
     updateSelected(patch as Partial<typeof selected>);
   }
 
-  const body = (
+  const openCatalog = onOpenDataSources ?? (() => openDataCatalog("insert"));
+
+  return (
     <>
-      <DeckPropertySection title="Fonte de dados" hint={H.viewBinding} compact={pane}>
-        <DeckField label="Fonte">
-          <FormSelectControl
-            className={compactSelect}
-            value={sourceId}
-            onChange={(value) => linkSource(value)}
-            options={[
-              { value: "", label: "Nenhuma" },
-              ...sourceOptions.map((item) => ({ value: item.value, label: item.label })),
-            ]}
-          />
-        </DeckField>
-        {sourceOptions.length === 0 ? (
-          <p className="td-deck-inspector__hint">
-            Insira uma fonte de dados no slide para vincular este bloco.
-            <button type="button" className="td-link-btn" onClick={() => (onOpenDataSources ?? openDataPanel)()}>
-              Abrir catálogo
-            </button>
-          </p>
-        ) : null}
-      </DeckPropertySection>
+      <DataSourceLinkSection
+        blocks={blocks}
+        selectedId={selected.id}
+        sourceId={sourceId}
+        compactSelect={compactSelect}
+        pane={pane}
+        onChangeSourceId={linkSource}
+        onOpenCatalog={openCatalog}
+        catalogLabel="Inserir nova fonte…"
+        emptyHint={
+          sourceId
+            ? undefined
+            : "Escolha uma fonte deste slide ou insira uma nova no catálogo."
+        }
+      />
 
       {sourceId ? (
         <DeckPropertySection title="Campo dinâmico" hint={H.textDataBinding ?? H.viewBinding} compact={pane}>
@@ -189,8 +184,6 @@ export function TextDataBindingInspector({
       ) : null}
     </>
   );
-
-  return body;
 }
 
 export function canShowTextDataBindingInspector(selected: { type: string } | null | undefined): boolean {

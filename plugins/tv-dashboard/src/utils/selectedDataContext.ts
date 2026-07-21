@@ -3,7 +3,6 @@ import {
   isDataViewBlockType,
   isFetchableDataBlockType,
   isTextDataBoundBlockType,
-  textBlockHasDataBinding,
   type ComunicadoBlock,
   type ComunicadoDataSourceBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -32,7 +31,7 @@ function dataFingerprint(block: ComunicadoBlock): string {
     const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
     return sourceId ? `source:${sourceId}` : `unbound:${block.id}`;
   }
-  if (isTextDataBoundBlockType(block.type) && textBlockHasDataBinding(block)) {
+  if (isTextDataBoundBlockType(block.type)) {
     const sourceId = "dataSourceId" in block ? block.dataSourceId?.trim() : undefined;
     return sourceId ? `source:${sourceId}` : `text-unbound:${block.id}`;
   }
@@ -54,7 +53,7 @@ function resolveBindingTarget(
     if (!sourceId) return null;
     return blocks.find((block) => block.id === sourceId) ?? null;
   }
-  if (isTextDataBoundBlockType(primary.type) && textBlockHasDataBinding(primary)) {
+  if (isTextDataBoundBlockType(primary.type)) {
     const sourceId = "dataSourceId" in primary ? primary.dataSourceId?.trim() : undefined;
     if (!sourceId) return null;
     return blocks.find((block) => block.id === sourceId) ?? null;
@@ -68,7 +67,8 @@ function resolveBindingTarget(
 function isSelectedDataBlock(block: ComunicadoBlock): boolean {
   if (isDataViewBlockType(block.type)) return true;
   if (isFetchableDataBlockType(block.type)) return true;
-  if (isTextDataBoundBlockType(block.type) && textBlockHasDataBinding(block)) return true;
+  // Texto/forma/título podem vincular fonte mesmo sem binding ainda (mesmo fluxo do KPI).
+  if (isTextDataBoundBlockType(block.type)) return true;
   return false;
 }
 
