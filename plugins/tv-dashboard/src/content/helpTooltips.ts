@@ -170,7 +170,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Aplica animação em cascata: cada elemento entra com atraso crescente (aparecer um a um).",
     buildSameInstant: "Todos os elementos entram juntos, sem atraso entre eles.",
     buildClear: "Remove as animações de entrada de todos os elementos do slide.",
-    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Clique seleciona o elemento (em grupo, só o filho); use «Selecionar grupo inteiro» ou Esc para voltar à seleção pai. No palco: 1º clique = grupo, 2º clique ou Ctrl+clique = filho. Shift+clique multi-seleciona.",
+    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Clique seleciona o elemento (em grupo, só o filho); use «Selecionar grupo inteiro» ou Esc para voltar à seleção pai. No palco: 1º clique = grupo, 2º clique = filho; Ctrl+clique remove da seleção. Shift+clique multi-seleciona.",
   },
   ribbonTabs: {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
@@ -432,7 +432,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   element: {
     panel:
-      "Clique em um elemento no palco ou arraste para reposicionar. Shift+clique alterna na multi-seleção; arraste no fundo vazio para a caixa de seleção (Shift+arraste une à seleção). Nas alças, Shift mantém a proporção largura/altura.",
+      "Clique em um elemento no palco ou arraste para reposicionar. Shift+clique alterna na multi-seleção; Ctrl+clique remove da seleção. Arraste no fundo: esquerda→direita seleciona (azul), direita→esquerda remove (vermelho); Shift+L→R une à seleção. Nas alças, Shift mantém a proporção largura/altura.",
     content: "Texto exibido no elemento. Títulos usam fonte maior na TV.",
     link: "URL aberta ao toque/clique na TV, quando o player suportar interação.",
     shapeText: "Texto opcional renderizado dentro da forma.",
