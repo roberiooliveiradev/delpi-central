@@ -170,7 +170,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Aplica animação em cascata: cada elemento entra com atraso crescente (aparecer um a um).",
     buildSameInstant: "Todos os elementos entram juntos, sem atraso entre eles.",
     buildClear: "Remove as animações de entrada de todos os elementos do slide.",
-    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Clique seleciona o elemento (em grupo, só o filho); use «Selecionar grupo inteiro» ou Esc para voltar à seleção pai. Shift+clique multi-seleciona.",
+    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Clique seleciona o elemento (em grupo, só o filho); use «Selecionar grupo inteiro» ou Esc para voltar à seleção pai. No palco: 1º clique = grupo, 2º clique ou Ctrl+clique = filho. Shift+clique multi-seleciona.",
   },
   ribbonTabs: {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",

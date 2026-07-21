@@ -2,7 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import type { BlockDragMode } from "../components/useCanvasBlockInteraction";
-import { expandSelectionWithGroups } from "./comunicadoGrouping";
+import { expandSelectionWithGroups, resolveClosedGroupSelection } from "./comunicadoGrouping";
 
 type BeginBlockStageDragArgs = {
   event: ReactPointerEvent;
@@ -19,9 +19,10 @@ type BeginBlockStageDragArgs = {
 
 /**
  * Seleção + arm de multi + startDrag move.
- * Shift = só toggle. Clique em já selecionado preserva a multi.
- * Grupo: dragIds inclui todos os membros (seleção pai).
- * @returns false se o gesto foi só seleção (Shift).
+ * - Shift = toggle multi sem expandir grupo.
+ * - Ctrl/Cmd = isola filho do grupo (igual Camadas).
+ * - 2º clique com seleção pai fechada = isola o membro clicado e arrasta só ele.
+ * - Clique normal em membro = seleciona o grupo inteiro e arrasta juntos.
  */
 export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean {
   const {
@@ -40,6 +41,24 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
   if (event.shiftKey) {
     selectBlock(block.id, { additive: true, expandGroup: false });
     return false;
+  }
+
+  if (event.ctrlKey || event.metaKey) {
+    selectBlock(block.id, { expandGroup: false });
+    return false;
+  }
+
+  const closed = resolveClosedGroupSelection(blocks, selectedIds);
+  if (
+    closed &&
+    block.groupId === closed.groupId &&
+    isBlockSelected(block.id)
+  ) {
+    /* Seleção pai → isola o filho clicado (gesto no palco = Camadas). */
+    selectBlock(block.id, { expandGroup: false });
+    armMultiDragSelection([block.id]);
+    startDrag(event, block, "move");
+    return true;
   }
 
   let dragIds: string[];

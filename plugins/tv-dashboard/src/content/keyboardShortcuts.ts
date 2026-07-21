@@ -90,6 +90,14 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     showAltTip: false,
   },
   {
+    id: "isolate-group-child",
+    group: "selecao",
+    label: "Selecionar filho do grupo",
+    keys: "Ctrl+Clique",
+    description: "No palco: isola o item; 2º clique no grupo também isola. Esc volta ao grupo",
+    showAltTip: false,
+  },
+  {
     id: "multi-select-marquee",
     group: "selecao",
     label: "Caixa de seleção",

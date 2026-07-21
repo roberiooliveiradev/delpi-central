@@ -16,7 +16,7 @@ import {
 } from "./comunicadoVisualBox";
 
 describe("comunicadoVisualBox", () => {
-  it("usa inset tipográfico canônico (editor ≡ TV)", () => {
+  it("usa inset tipográfico canônico em px (editor ≡ TV)", () => {
     const heading = createBlock("heading", "Título");
     const shape = { ...createShapeBlock("rounded-rect"), content: "KPI" };
     const headingLayout = resolveVisualBoxContentLayoutStyle(heading);
@@ -25,6 +25,12 @@ describe("comunicadoVisualBox", () => {
     expect(shapeLayout.padding).toBe(VISUAL_BOX_CONTENT_INSET);
     expect(headingLayout.justifyContent).toBe("center");
     expect(shapeLayout.justifyContent).toBe("center");
+  });
+
+  it("edição inline zera inset para não cortar tipografia em frames baixos", () => {
+    const heading = createBlock("heading", "PPM interno");
+    const editing = resolveVisualBoxContentLayoutStyle(heading, { editorInteractive: true });
+    expect(editing.padding).toBe(0);
   });
 
   it("texto preserva fill escolhido (default transparente só na inserção)", () => {

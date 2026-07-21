@@ -1920,7 +1920,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-composer__inline-text{
   width: 100%;
-  max-height: 100%;
+  flex: 0 0 auto;
   margin: 0;
   padding: 0;
   resize: none;
@@ -1938,7 +1938,8 @@ body.td-composer--marqueeing *{
   box-sizing: border-box;
   pointer-events: auto;
   outline: none;
-  overflow: hidden;
+  /* Igual tipografia TV/readonly — max-height+hidden cortava glifos no edit. */
+  overflow: visible;
   white-space: pre-wrap;
   caret-color: currentColor;
   field-sizing: content;
