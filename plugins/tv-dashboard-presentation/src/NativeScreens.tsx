@@ -441,27 +441,27 @@ function RichComunicadoScreen({
 
   return (
     <div className="tdp-native-screen tdp-comunicado" style={bgStyle}>
-      {logo?.url ? (
-        <div
-          className="tdp-comunicado__master-logo"
-          aria-hidden
-          style={{
-            position: "absolute",
-            left: `${logoFrame?.x ?? 2}%`,
-            top: `${logoFrame?.y ?? 2}%`,
-            width: `${logoFrame?.w ?? 12}%`,
-            height: `${logoFrame?.h ?? 10}%`,
-            opacity: logo.opacity ?? 1,
-            zIndex: 0,
-            pointerEvents: "none",
-            backgroundImage: `url(${logo.url})`,
-            backgroundSize: "contain",
-            backgroundRepeat: "no-repeat",
-            backgroundPosition: "center",
-          }}
-        />
-      ) : null}
       <div className="tdp-comunicado__stage">
+        {logo?.url ? (
+          <div
+            className="tdp-comunicado__master-logo"
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: `${logoFrame?.x ?? 2}%`,
+              top: `${logoFrame?.y ?? 2}%`,
+              width: `${logoFrame?.w ?? 12}%`,
+              height: `${logoFrame?.h ?? 10}%`,
+              opacity: logo.opacity ?? 1,
+              zIndex: 0,
+              pointerEvents: "none",
+              backgroundImage: `url(${logo.url})`,
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center",
+            }}
+          />
+        ) : null}
         {blocks.map((block) => (
           <ComunicadoBlockView
             key={block.id}

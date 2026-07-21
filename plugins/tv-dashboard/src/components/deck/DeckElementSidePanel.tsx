@@ -7,7 +7,7 @@ import {
   Table2,
 } from "lucide-react";
 import { FormatPaneShell } from "@delpi/plugin-ui/index";
-import { useEffect, useMemo, useRef, type CSSProperties } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, type CSSProperties } from "react";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import type { BranchScope } from "../../api/tvDashboardApi";
@@ -53,6 +53,18 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
     useDeckSidePanelLayout("inspector", { growDirection: "west" });
   const open = !collapsed;
   const prevSelectionCount = useRef(selectedIds.length);
+  const asideRef = useRef<HTMLElement>(null);
+
+  /** Expõe a largura no stack pai — overlay usa a mesma var sem reflow do palco. */
+  useLayoutEffect(() => {
+    const stack = asideRef.current?.parentElement;
+    if (!(stack instanceof HTMLElement)) return;
+    if (open) {
+      stack.style.setProperty("--td-side-panel-width", `${width}px`);
+    } else {
+      stack.style.removeProperty("--td-side-panel-width");
+    }
+  }, [open, width]);
 
   const dataContext = useMemo(
     () => resolveSelectedDataContext(blocks, selectedIds),
@@ -76,10 +88,8 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   );
 
   useEffect(() => {
-    if (selectedIds.length > 0) setCollapsed(false);
-  }, [selectedIds, setCollapsed]);
-
-  useEffect(() => {
+    // Não auto-expandir na seleção: abre o inspetor só sob ação do usuário
+    // (trilho / Dados). Evita reflow do palco e “piscar” do viewport.
     if (dataPanelOpen) {
       setCollapsed(false);
       setSelectionPanelTab("data");
@@ -164,6 +174,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
 
   return (
     <aside
+      ref={asideRef}
       className={[
         "td-deck-side-panel",
         embedded ? "td-deck-side-panel--stage" : null,

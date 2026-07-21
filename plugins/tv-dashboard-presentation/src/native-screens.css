@@ -371,7 +371,8 @@
 .tdp-comunicado__stage {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  /* Mesmo stacking do editor: logo + blocos no mesmo contexto (z-index do bloco vale). */
+  z-index: 0;
 }
 
 .tdp-comunicado__block {

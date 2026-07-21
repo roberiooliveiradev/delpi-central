@@ -68,6 +68,7 @@
   min-height: 0;
   flex-shrink: 0;
   max-width: 100%;
+  height: 100%;
 }
 /* Painel recolhido: só o trilho de ícones — notas não podem forçar largura. */
 .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--collapsed){
@@ -75,6 +76,39 @@
 }
 .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--collapsed) .td-deck-speaker-notes{
   display: none;
+}
+/*
+ * Inspetor aberto: coluna flutuante sobre o palco (slot in-flow fica em 36px).
+ * Assim abrir/selecionar não encolhe o viewport do desenho.
+ */
+.dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open){
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--td-side-panel-width, 320px);
+  min-width: 260px;
+  max-width: min(560px, 48vw);
+  z-index: 28;
+  background: var(--td-surface);
+  border-left: 1px solid var(--td-border);
+  box-shadow: -12px 0 28px color-mix(in srgb, #000 16%, transparent);
+  animation: td-deck-aside-reveal 0.18s ease;
+}
+@keyframes td-deck-aside-reveal{
+  from{
+    opacity: 0.88;
+    transform: translateX(10px);
+  }
+  to{
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open){
+    animation: none;
+  }
 }
 /* ── Atalhos: clusters locais + catálogo (balão visual = KeyTip em plugin-ui) ── */
 .dashboard-tv-dashboard .td-shortcut-tip__cluster{
@@ -1135,11 +1169,13 @@
   aspect-ratio: auto;
   border-radius: 0;
   /*
-   * Modo edição: overflow visível — pasteboard ao redor do retângulo de design.
-   * A TV/prévia continua com overflow:hidden (`.tdp-comunicado` / DesignViewportStage).
-   * Assim dá para posicionar itens fora da área de visualização sem cortá-los no palco.
+   * Clip WYSIWYG = TV/prévia (`.tdp-comunicado` / DesignViewportStage).
+   * overflow:visible faz sombra/conteúdo na borda parecer “ok” no palco e
+   * cortado na apresentação — mesma frame %, percepção de posição errada
+   * (cantos, logo, pills no topo).
+   * Pasteboard (pan/gutter) continua fora deste retângulo no zoom-sizer.
    */
-  overflow: visible;
+  overflow: hidden;
   /* Evita arraste acidental marcar texto; editing contentEditable sobrescreve. */
   user-select: none;
   /*
@@ -4653,10 +4689,13 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--open{
   position: relative;
-  width: var(--td-side-panel-width, 320px);
-  min-width: 260px;
-  max-width: min(560px, 48vw);
-  border-left: 1px solid var(--td-border);
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  border-left: none;
 }
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--collapsed{
   width: 36px;
@@ -5702,8 +5741,19 @@ body.td-composer--marqueeing *{
   flex: 1;
   min-height: 0;
   align-items: stretch;
+  position: relative;
   /* Garante que o painel lateral herde a altura do palco, não a do conteúdo. */
   overflow: hidden;
+}
+/* Reserva fixa do trilho (36px) — inspetor aberto sobe em overlay sem reflow do palco. */
+.dashboard-tv-dashboard .td-deck-stage__aside-slot{
+  position: relative;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  z-index: 28;
 }
 .dashboard-tv-dashboard .td-deck-stage__main{
   flex: 1;
@@ -6295,6 +6345,24 @@ body.td-composer--marqueeing *{
     max-height: 280px;
     border-left: none;
     border-top: 1px solid var(--td-border);
+  }
+
+  .dashboard-tv-dashboard .td-deck-stage__aside-slot {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+  }
+
+  .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open) {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-shadow: none;
+    animation: none;
+    border-left: none;
   }
 
   .dashboard-tv-dashboard .td-deck-stage__inner {

@@ -76,7 +76,9 @@ export function DeckWorkspace({
       <main className="td-deck-stage" aria-label="Palco da tela selecionada">
         <div className="td-deck-stage__inner">
           <div className="td-deck-stage__main">{stage}</div>
-          {rightPanel}
+          {rightPanel ? (
+            <div className="td-deck-stage__aside-slot">{rightPanel}</div>
+          ) : null}
         </div>
       </main>
     </div>
