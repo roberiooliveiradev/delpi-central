@@ -78,6 +78,12 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
           <PlaylistsPage
             onOpen={(id) => navigate(playlistPath(id))}
             onCreate={() => navigate(newPlaylistPath())}
+            onPreview={(id) => {
+              void preparePreviewNavigation(id).then(() => {
+                navigate(playlistPreviewPath(id));
+              });
+            }}
+            onShare={(id) => navigate(playlistSharePath(id))}
           />
         );
       case "new":

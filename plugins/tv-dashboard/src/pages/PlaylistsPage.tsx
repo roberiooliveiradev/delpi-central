@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FixedPanelPoint } from "@delpi/plugin-ui/index";
 import { Copy, MonitorPlay, Plus, Search } from "lucide-react";
 
 import {
+  activatePlaylist,
+  deactivatePlaylist,
+  deletePlaylist,
+  downloadQrPng,
   duplicatePlaylist,
   listPlaylists,
+  regeneratePlaylistToken,
   type Playlist,
 } from "../api/tvDashboardApi";
+import { PlaylistHomeContextMenu } from "../components/PlaylistHomeContextMenu";
 import { useConfirm } from "../context/ConfirmDialogProvider";
 import { tvDashboardNotice } from "../utils/tvDashboardNotice";
 
@@ -28,6 +35,8 @@ export type PlaylistHomeFilter = "recent" | "active" | "inactive";
 type Props = {
   onOpen: (id: string) => void;
   onCreate: () => void;
+  onPreview: (id: string) => void;
+  onShare: (id: string) => void;
 };
 
 export function filterPlaylists(
@@ -54,13 +63,17 @@ export function filterPlaylists(
   );
 }
 
-export function PlaylistsPage({ onOpen, onCreate }: Props) {
+export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
   const confirm = useConfirm();
   const [items, setItems] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<PlaylistHomeFilter>("recent");
   const [query, setQuery] = useState("");
+  const [contextMenu, setContextMenu] = useState<{
+    playlist: Playlist;
+    position: FixedPanelPoint;
+  } | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,6 +91,10 @@ export function PlaylistsPage({ onOpen, onCreate }: Props) {
     void load();
   }, [load]);
 
+  const patchItem = useCallback((updated: Playlist) => {
+    setItems((prev) => prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)));
+  }, []);
+
   const handleDuplicate = useCallback(
     async (item: Playlist) => {
       const confirmed = await confirm({
@@ -94,6 +111,85 @@ export function PlaylistsPage({ onOpen, onCreate }: Props) {
       }
     },
     [confirm, onOpen],
+  );
+
+  const handleCopyLink = useCallback(async (item: Playlist) => {
+    const url = item.publicUrl;
+    if (!url) {
+      tvDashboardNotice("Link público indisponível para esta programação.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      tvDashboardNotice("Link copiado.");
+    } catch {
+      tvDashboardNotice("Não foi possível copiar o link.");
+    }
+  }, []);
+
+  const handleQr = useCallback((item: Playlist) => {
+    void downloadQrPng(item.id)
+      .then((blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank", "noopener,noreferrer");
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      })
+      .catch((err) => {
+        tvDashboardNotice(err instanceof Error ? err.message : "Erro ao gerar QR.");
+      });
+  }, []);
+
+  const handleToggleLink = useCallback(async (item: Playlist) => {
+    try {
+      const updated = item.isActive
+        ? await deactivatePlaylist(item.id)
+        : await activatePlaylist(item.id);
+      patchItem(updated);
+      tvDashboardNotice(updated.isActive ? "TV ativada." : "TV desativada.");
+    } catch (err) {
+      tvDashboardNotice(err instanceof Error ? err.message : "Erro ao alterar status da TV.");
+    }
+  }, [patchItem]);
+
+  const handleRegenerateToken = useCallback(
+    async (item: Playlist) => {
+      const confirmed = await confirm({
+        title: "Gerar novo link",
+        message:
+          "Gerar novo link? TVs com o link atual deixarão de funcionar até usar o novo endereço.",
+        confirmLabel: "Gerar novo link",
+        variant: "danger",
+      });
+      if (!confirmed) return;
+      try {
+        const updated = await regeneratePlaylistToken(item.id);
+        patchItem(updated);
+        tvDashboardNotice("Novo link gerado.");
+      } catch (err) {
+        tvDashboardNotice(err instanceof Error ? err.message : "Erro ao gerar novo link.");
+      }
+    },
+    [confirm, patchItem],
+  );
+
+  const handleDelete = useCallback(
+    async (item: Playlist) => {
+      const confirmed = await confirm({
+        title: "Excluir programação",
+        message: `Excluir «${item.name}» permanentemente?`,
+        confirmLabel: "Excluir",
+        variant: "danger",
+      });
+      if (!confirmed) return;
+      try {
+        await deletePlaylist(item.id);
+        setItems((prev) => prev.filter((row) => row.id !== item.id));
+        tvDashboardNotice("Programação excluída.");
+      } catch (err) {
+        tvDashboardNotice(err instanceof Error ? err.message : "Erro ao excluir programação.");
+      }
+    },
+    [confirm],
   );
 
   const visible = useMemo(
@@ -181,7 +277,17 @@ export function PlaylistsPage({ onOpen, onCreate }: Props) {
         {!loading && !error && visible.length > 0 ? (
           <ul className="td-home__grid">
             {visible.map((item) => (
-              <li key={item.id} className="td-home__card">
+              <li
+                key={item.id}
+                className="td-home__card"
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  setContextMenu({
+                    playlist: item,
+                    position: { x: event.clientX, y: event.clientY },
+                  });
+                }}
+              >
                 <button
                   type="button"
                   className="td-home__card-main"
@@ -227,6 +333,25 @@ export function PlaylistsPage({ onOpen, onCreate }: Props) {
           </ul>
         ) : null}
       </section>
+
+      {contextMenu ? (
+        <PlaylistHomeContextMenu
+          open
+          position={contextMenu.position}
+          playlistName={contextMenu.playlist.name}
+          linkActive={contextMenu.playlist.isActive}
+          onClose={() => setContextMenu(null)}
+          onOpen={() => onOpen(contextMenu.playlist.id)}
+          onDuplicate={() => void handleDuplicate(contextMenu.playlist)}
+          onPreview={() => onPreview(contextMenu.playlist.id)}
+          onShare={() => onShare(contextMenu.playlist.id)}
+          onCopyLink={() => void handleCopyLink(contextMenu.playlist)}
+          onQr={() => handleQr(contextMenu.playlist)}
+          onRegenerateToken={() => void handleRegenerateToken(contextMenu.playlist)}
+          onToggleLink={() => void handleToggleLink(contextMenu.playlist)}
+          onDelete={() => void handleDelete(contextMenu.playlist)}
+        />
+      ) : null}
     </div>
   );
 }

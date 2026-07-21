@@ -430,6 +430,19 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     show: "Exibir tela",
     delete: "Excluir tela",
   },
+  homeContextMenu: {
+    menu: "Menu da programação",
+    open: "Abrir",
+    duplicate: "Duplicar",
+    preview: "Prévia",
+    share: "Editores",
+    copyLink: "Link TV",
+    qr: "QR",
+    regenerateToken: "Novo link",
+    tvOn: "TV on",
+    tvOff: "TV off",
+    delete: "Excluir",
+  },
   element: {
     panel:
       "Clique em um elemento no palco ou arraste para reposicionar. Shift+clique alterna na multi-seleção; Ctrl+clique remove da seleção. Arraste no fundo: esquerda→direita seleciona (azul), direita→esquerda remove (vermelho); Shift+L→R une à seleção. Nas alças, Shift mantém a proporção largura/altura.",

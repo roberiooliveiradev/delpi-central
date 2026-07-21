@@ -230,7 +230,7 @@ export function DeckEditorChrome({
     >
       <div className="td-deck-chrome__head">
         <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
-          <DeckHistoryTabActions />
+          <DeckHistoryTabActions onBack={playlistChrome?.onBack} />
           {tabs.map((tab, index) => {
             const contextual = isContextualDeckRibbonTab(tab);
             const firstContextual =
