@@ -12,6 +12,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { comunicadoBlockSummary, comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DeckPropertySection } from "./DeckPropertySection";
@@ -132,26 +133,42 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
           {layers.map((block) => {
             const active = selectedIds.includes(block.id);
             const hiddenOnStage = isBlockHiddenOnStage(block, blocks);
+            const inGroup = Boolean(block.groupId);
             return (
               <li key={block.id}>
                 <button
                   type="button"
-                  className={`td-layers-list__item${active ? " td-layers-list__item--active" : ""}`}
+                  className={[
+                    "td-layers-list__item",
+                    active ? "td-layers-list__item--active" : "",
+                    inGroup ? "td-layers-list__item--grouped" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   draggable
                   onDragStart={() => setDragId(block.id)}
                   onDragOver={(event) => event.preventDefault()}
                   onDrop={() => onDrop(block.id)}
-                  onClick={(event) => selectBlock(block.id, { additive: event.shiftKey })}
+                  onClick={(event) =>
+                    selectBlock(block.id, {
+                      additive: event.shiftKey,
+                      expandGroup: false,
+                    })
+                  }
                   title={
                     hiddenOnStage
                       ? "Oculta no palco (fonte vinculada) — seleção vai para o visual ligado"
-                      : undefined
+                      : inGroup
+                        ? "Membro de grupo — clique seleciona só este elemento"
+                        : undefined
                   }
                 >
                   <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
                   <span className="td-layers-list__meta">
                     <span className="td-layers-list__type">
+                      {inGroup ? "↳ " : ""}
                       {comunicadoBlockTypeLabel(block.type)}
+                      {inGroup ? " · grupo" : ""}
                       {hiddenOnStage ? " · oculto" : ""}
                     </span>
                     <span className="td-layers-list__summary">{comunicadoBlockSummary(block)}</span>
@@ -162,6 +179,19 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
           })}
         </ul>
       )}
+      {selectedIds.length === 1 && blocks.find((block) => block.id === selectedIds[0])?.groupId ? (
+        <button
+          type="button"
+          className="td-btn td-btn--sm"
+          onClick={() => {
+            const id = selectedIds[0];
+            if (!id) return;
+            selectBlocksByIds(expandSelectionWithGroups(blocks, [id]));
+          }}
+        >
+          Selecionar grupo inteiro
+        </button>
+      ) : null}
       {selectedIds.length > 1 ? (
         <button type="button" className="td-btn td-btn--sm" onClick={() => selectBlocksByIds([selectedIds[0]!])}>
           Focar primeiro selecionado

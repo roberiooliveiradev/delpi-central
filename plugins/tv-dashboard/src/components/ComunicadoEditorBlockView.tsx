@@ -164,6 +164,7 @@ function EditorChartViewBlock({
     cancelEditChartPart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -206,6 +207,7 @@ function EditorChartViewBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,
@@ -512,6 +514,7 @@ function EditorTableViewBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,
@@ -659,6 +662,7 @@ function EditorKpiViewBlock({
     cancelEditKpiPart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -690,6 +694,7 @@ function EditorKpiViewBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,
@@ -986,6 +991,7 @@ function EditorInputBlock({
     selectInputPart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -1066,6 +1072,7 @@ function EditorInputBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,

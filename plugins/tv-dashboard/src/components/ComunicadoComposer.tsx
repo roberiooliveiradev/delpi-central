@@ -25,6 +25,10 @@ import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
 import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
+import {
+  resolveClosedGroupSelection,
+  unionFramePercent,
+} from "../utils/comunicadoGrouping";
 import { shouldUsePartChromeInsteadOfBlock } from "../utils/compositePartSelection";
 import {
   resolveStagePanGutterPx,
@@ -44,6 +48,7 @@ import { shouldRenderStageGrid } from "../utils/stageViewport";
 import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
+import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import {
@@ -471,7 +476,26 @@ export function ComunicadoComposerCanvas() {
   );
 
   const primarySelected = selectedId;
+  const closedGroup = useMemo(
+    () => resolveClosedGroupSelection(blocks, selectedIds),
+    [blocks, selectedIds],
+  );
+  const groupUnionFrame = useMemo(() => {
+    if (!closedGroup) return null;
+    return unionFramePercent(closedGroup.members.map((member) => member.frame));
+  }, [closedGroup]);
+  const groupAnchorBlock = useMemo(() => {
+    if (!closedGroup) return null;
+    return (
+      closedGroup.members.find((member) => member.id === primarySelected) ??
+      closedGroup.members[closedGroup.members.length - 1] ??
+      null
+    );
+  }, [closedGroup, primarySelected]);
+
   const showResizeHandles = (blockId: string) => {
+    // Seleção pai do grupo: handles só no chrome unificado.
+    if (closedGroup) return false;
     // Todos os itens selecionados mostram quadrados de edição (move/resize em grupo).
     if (!isBlockSelected(blockId) || editingTextId === blockId) {
       return false;
@@ -571,6 +595,7 @@ export function ComunicadoComposerCanvas() {
               return null;
             }
             const isSelected = isBlockSelected(block.id);
+            const inClosedGroup = Boolean(closedGroup && isSelected);
             const remoteEditors = remoteSelections.filter((selection) =>
               selection.selectedIds.includes(block.id),
             );
@@ -596,8 +621,11 @@ export function ComunicadoComposerCanvas() {
                 data-block-id={block.id}
                 className={[
                   "td-composer__block-wrap",
-                  isSelected ? "td-composer__block-wrap--selected" : "",
-                  isSelected && !isPrimary ? "td-composer__block-wrap--multi" : "",
+                  isSelected && !inClosedGroup ? "td-composer__block-wrap--selected" : "",
+                  isSelected && !isPrimary && !inClosedGroup
+                    ? "td-composer__block-wrap--multi"
+                    : "",
+                  inClosedGroup ? "td-composer__block-wrap--group-member" : "",
                   hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
                   block.type === "text" || block.type === "heading"
                     ? "td-composer__block-wrap--text"
@@ -680,6 +708,7 @@ export function ComunicadoComposerCanvas() {
                   beginBlockStageMoveDrag({
                     event,
                     block,
+                    blocks,
                     isBlockSelected,
                     selectedIds,
                     selectedId,
@@ -693,7 +722,7 @@ export function ComunicadoComposerCanvas() {
                 <ComunicadoEditorBlockView
                   block={block}
                   fontScale={1}
-                  isSelected={isSelected}
+                  isSelected={isSelected && !inClosedGroup}
                   isEditingText={editingTextId === block.id}
                   className={[
                     isSelected ? "td-composer__block--selected" : "",
@@ -778,6 +807,13 @@ export function ComunicadoComposerCanvas() {
               </div>
             );
           })}
+          {groupUnionFrame && groupAnchorBlock ? (
+            <GroupSelectionChrome
+              frame={groupUnionFrame}
+              anchorBlock={groupAnchorBlock}
+              onPointerDown={startDragRespectingPan}
+            />
+          ) : null}
           {marqueeStyle ? (
             <div className="td-composer__marquee" style={marqueeStyle} aria-hidden="true" />
           ) : null}

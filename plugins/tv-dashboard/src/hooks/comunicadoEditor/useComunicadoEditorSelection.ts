@@ -207,7 +207,7 @@ export function useComunicadoEditorSelection({
   );
 
   const selectBlock = useCallback(
-    (blockId: string, options?: { additive?: boolean }) => {
+    (blockId: string, options?: { additive?: boolean; expandGroup?: boolean }) => {
       flushActiveTextEdit();
       const blocksNow = configRef.current.blocks ?? [];
       const targetId = resolveStageSelectionTargetId(blockId, blocksNow);
@@ -230,7 +230,8 @@ export function useComunicadoEditorSelection({
       } else {
         const block = blocksNow.find((item) => item.id === targetId);
         selectedBlockType = block?.type;
-        if (block?.groupId) {
+        const expandGroup = options?.expandGroup !== false;
+        if (expandGroup && block?.groupId) {
           const memberIds = blocksNow
             .filter((item) => item.groupId === block.groupId)
             .map((item) => item.id);

@@ -80,6 +80,7 @@ type ProviderProps = {
 function ComunicadoEditorKeyboardBridge() {
   const deckHistory = useDeckEditorHistoryContext();
   const {
+    blocks,
     selectedIds,
     editingTextId,
     selectedChartPart,
@@ -90,6 +91,7 @@ function ComunicadoEditorKeyboardBridge() {
     clearKpiPartSelection,
     clearTablePartSelection,
     clearInputPartSelection,
+    selectBlocksByIds,
     undo,
     redo,
     canUndo,
@@ -105,6 +107,8 @@ function ComunicadoEditorKeyboardBridge() {
   useComunicadoEditorKeyboard({
     selectedIds,
     editingTextId,
+    blocks,
+    selectBlocksByIds,
     hasPartSelection: Boolean(
       selectedChartPart || selectedKpiPart || selectedTablePart || selectedInputPart,
     ),

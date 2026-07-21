@@ -1574,6 +1574,26 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__block-wrap--selected.td-composer__block-wrap--part-chrome{
   outline: none;
 }
+/* Membros na seleção pai do grupo: sem outline individual (chrome unificado). */
+.dashboard-tv-dashboard .td-composer__block-wrap--group-member{
+  outline: none;
+}
+.dashboard-tv-dashboard .td-composer__group-chrome{
+  position: absolute;
+  z-index: 40;
+  box-sizing: border-box;
+  pointer-events: none;
+  outline: var(--td-selection-outline-width, 2.5px) dashed
+    var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff));
+  outline-offset: var(--td-global-selection-pad, 14px);
+  overflow: visible;
+}
+.dashboard-tv-dashboard .td-composer__group-chrome .td-composer__block-handles{
+  pointer-events: auto;
+}
+.dashboard-tv-dashboard .td-layers-list__item--grouped .td-layers-list__type{
+  color: var(--td-accent, #3b82f6);
+}
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > .tdp-comunicado__block,
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > .td-composer__block,
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > [class*="tdp-comunicado__block"]{

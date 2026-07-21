@@ -99,7 +99,7 @@ export type ComunicadoEditorContextValue = {
   /** Seleções de outros editores no slide atual (chrome remoto, somente leitura). */
   remoteSelections: PresentationSelectionUpdateEvent[];
   isBlockSelected: (blockId: string) => boolean;
-  selectBlock: (blockId: string, options?: { additive?: boolean }) => void;
+  selectBlock: (blockId: string, options?: { additive?: boolean; expandGroup?: boolean }) => void;
   selectBlocksByIds: (blockIds: string[]) => void;
   clearSelection: () => void;
   setSelectedId: (id: string | null) => void;
