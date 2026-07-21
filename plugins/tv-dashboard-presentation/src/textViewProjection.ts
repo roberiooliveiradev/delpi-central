@@ -144,10 +144,11 @@ export function resolveTextDisplayValue(
 
 export function suggestDefaultTextProjection(
   resolved: ComunicadoDataResolved | undefined,
+  catalogFields?: Array<{ field: string; label: string }>,
 ): ComunicadoTextProjection | undefined {
-  const fields = discoverResolvedFieldOptions(resolved);
+  const fields = discoverResolvedFieldOptions(resolved, catalogFields);
   if (fields.length === 0) return undefined;
-  const field = suggestPreferredProjectionField(resolved, fields);
+  const field = suggestPreferredProjectionField(resolved, fields) ?? fields[0]?.field;
   if (!field) return undefined;
   return {
     field,
@@ -224,15 +225,17 @@ export type BuildTextDataLinkPatchInput = {
   dataSourceId: string;
   resolved?: ComunicadoDataResolved;
   existing?: ComunicadoTextProjection;
+  /** Campos do catálogo da rota — fallback quando o resolved ainda não listou fields. */
+  catalogFields?: Array<{ field: string; label: string }>;
 };
 
 export function buildTextDataLinkPatch(
   input: BuildTextDataLinkPatchInput,
 ): Partial<TextDataBoundBlock> {
-  const { dataSourceId, resolved, existing } = input;
+  const { dataSourceId, resolved, existing, catalogFields } = input;
   const patch: Partial<TextDataBoundBlock> = { dataSourceId };
   if (!textProjectionHasField(existing)) {
-    const suggested = suggestDefaultTextProjection(resolved);
+    const suggested = suggestDefaultTextProjection(resolved, catalogFields);
     if (suggested) patch.textProjection = suggested;
   }
   return patch;

@@ -117,6 +117,13 @@ describe("applyViewProjection", () => {
     expect(fields.some((item) => item.field === "a")).toBe(true);
   });
 
+  it("descobre value a partir do KPI escalar sem kpiMetrics", () => {
+    const fields = discoverResolvedFieldOptions({
+      kpi: { value: 5.43, label: "PPM" },
+    });
+    expect(fields.some((item) => item.field === "value")).toBe(true);
+  });
+
   it("sugere projeções default ao conectar fonte", () => {
     const suggested = suggestDefaultProjections(sampleResolved);
     expect(suggested.kpiProjection?.metrics?.some((m) => m.field === "oee")).toBe(true);

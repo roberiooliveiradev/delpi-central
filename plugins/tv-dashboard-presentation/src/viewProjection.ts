@@ -485,6 +485,16 @@ export function discoverResolvedFieldOptions(
     const field = item.field.trim();
     if (field) out.set(field, item.label.trim() || field);
   }
+  // KPI escalar → campo canônico "value" (mesmo sem kpiMetrics).
+  if (resolved?.kpi != null && (resolved.kpi.value != null || resolved.kpi.label)) {
+    if (![...out.keys()].some((key) => key.toLowerCase() === "value")) {
+      const label =
+        typeof resolved.kpi.label === "string" && resolved.kpi.label.trim()
+          ? resolved.kpi.label.trim()
+          : "value";
+      out.set("value", label);
+    }
+  }
   for (const metric of resolved?.kpiMetrics ?? []) {
     if (metric.field) out.set(metric.field, metric.label || metric.field);
   }

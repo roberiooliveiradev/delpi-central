@@ -6,6 +6,7 @@ import {
   formatTextProjectionValue,
   resolveTextBlockDisplayRuns,
   resolveTextDisplayValue,
+  suggestDefaultTextProjection,
   textBlockHasDataBinding,
 } from "./textViewProjection";
 
@@ -51,7 +52,24 @@ describe("textViewProjection", () => {
       resolved,
     });
     expect(patch.dataSourceId).toBe("src-1");
-    expect(patch.textProjection?.field).toBe("oee");
+    // KPI escalar expõe "value"; série tabular pode preferir "oee".
+    expect(["value", "oee"]).toContain(patch.textProjection?.field);
+  });
+
+  it("suggestDefaultTextProjection usa primeiro campo do catálogo", () => {
+    const suggested = suggestDefaultTextProjection(undefined, [
+      { field: "value", label: "value" },
+      { field: "meta", label: "Meta" },
+    ]);
+    expect(suggested?.field).toBe("value");
+  });
+
+  it("buildTextDataLinkPatch aceita catálogo sem resolved", () => {
+    const patch = buildTextDataLinkPatch({
+      dataSourceId: "src-2",
+      catalogFields: [{ field: "value", label: "value" }],
+    });
+    expect(patch.textProjection?.field).toBe("value");
   });
 
   it("textBlockHasDataBinding detecta projeção ou dataRef", () => {

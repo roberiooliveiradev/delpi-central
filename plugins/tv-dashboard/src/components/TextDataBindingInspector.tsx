@@ -4,9 +4,11 @@ import {
   buildTextDataLinkPatch,
   discoverResolvedFieldOptions,
   isComunicadoVisualBoxBlock,
+  suggestDefaultTextProjection,
   type ComunicadoTextProjection,
   type TextProjectionFormat,
 } from "@delpi/tv-dashboard-presentation";
+import { useEffect, useMemo, useRef } from "react";
 
 import type { TvDataRouteCatalogItem } from "../api/tvDashboardApi";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
@@ -44,29 +46,71 @@ export function TextDataBindingInspector({
   const compactSelect = isRibbon ? "delpi-ui-select--compact" : undefined;
   const compactNative = isRibbon ? "delpi-ui-native-control--compact" : undefined;
 
-  if (!selected || !isComunicadoVisualBoxBlock(selected)) return null;
+  const catalogFields = useMemo(
+    () =>
+      (route?.valueFields ?? []).map((field) => ({
+        field: String(field),
+        label: route?.valueFieldLabels?.[String(field)] ?? String(field),
+      })),
+    [route?.valueFieldLabels, route?.valueFields],
+  );
 
-  const sourceId = selected.dataSourceId?.trim() ?? "";
+  const visualBox = selected && isComunicadoVisualBoxBlock(selected) ? selected : null;
+  const sourceId = visualBox?.dataSourceId?.trim() ?? "";
   const linkedSource = sourceId ? blocks.find((block) => block.id === sourceId) ?? null : null;
   const resolved =
     linkedSource && "resolved" in linkedSource && linkedSource.resolved
       ? linkedSource.resolved
-      : "resolved" in selected && selected.resolved
-        ? selected.resolved
+      : visualBox && "resolved" in visualBox && visualBox.resolved
+        ? visualBox.resolved
         : undefined;
 
-  const fieldOptions = discoverResolvedFieldOptions(
-    resolved,
-    (route?.valueFields ?? []).map((field) => ({
-      field: String(field),
-      label: route?.valueFieldLabels?.[String(field)] ?? String(field),
-    })),
-    linkedSource && "fieldLabels" in linkedSource
-      ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels
-      : undefined,
+  const fieldOptions = useMemo(
+    () =>
+      discoverResolvedFieldOptions(
+        resolved,
+        catalogFields,
+        linkedSource && "fieldLabels" in linkedSource
+          ? (linkedSource as { fieldLabels?: Record<string, string> }).fieldLabels
+          : undefined,
+      ),
+    [catalogFields, linkedSource, resolved],
   );
 
-  const projection = selected.textProjection ?? { field: "" };
+  const projection = visualBox?.textProjection ?? { field: "" };
+  const projectionField = projection.field?.trim() ?? "";
+  const firstFieldOption = fieldOptions[0]?.field ?? "";
+  const selectedBlockId = visualBox?.id ?? "";
+  const projectionRef = useRef(projection);
+  projectionRef.current = projection;
+
+  // Fonte ligada sem campo: materializa o 1º disponível (catálogo ou resolved).
+  useEffect(() => {
+    if (!selectedBlockId || !sourceId) return;
+    if (projectionField) return;
+    if (!firstFieldOption) return;
+    const suggested = suggestDefaultTextProjection(resolved, catalogFields);
+    const field = suggested?.field?.trim() || firstFieldOption;
+    const current = projectionRef.current;
+    updateSelected({
+      textProjection: {
+        ...current,
+        field,
+        aggregation: current.aggregation ?? suggested?.aggregation ?? "first",
+        format: current.format ?? suggested?.format ?? "number",
+      },
+    });
+  }, [
+    catalogFields,
+    firstFieldOption,
+    projectionField,
+    resolved,
+    selectedBlockId,
+    sourceId,
+    updateSelected,
+  ]);
+
+  if (!visualBox) return null;
 
   function patchProjection(patch: Partial<ComunicadoTextProjection>) {
     const next: ComunicadoTextProjection = {
@@ -74,7 +118,7 @@ export function TextDataBindingInspector({
       ...projection,
       ...patch,
     };
-    updateSelected({ textProjection: next.field.trim() ? next : undefined } as Partial<typeof selected>);
+    updateSelected({ textProjection: next.field.trim() ? next : undefined } as Partial<typeof visualBox>);
   }
 
   function linkSource(nextSourceId: string) {
@@ -83,7 +127,7 @@ export function TextDataBindingInspector({
         dataSourceId: undefined,
         textProjection: undefined,
         resolved: undefined,
-      } as Partial<typeof selected>);
+      } as Partial<typeof visualBox>);
       return;
     }
     const source = blocks.find((block) => block.id === nextSourceId);
@@ -92,9 +136,10 @@ export function TextDataBindingInspector({
     const patch = buildTextDataLinkPatch({
       dataSourceId: nextSourceId,
       resolved: sourceResolved,
-      existing: selected.textProjection,
+      existing: visualBox.textProjection,
+      catalogFields,
     });
-    updateSelected(patch as Partial<typeof selected>);
+    updateSelected(patch as Partial<typeof visualBox>);
   }
 
   const openCatalog = onOpenDataSources ?? (() => openDataCatalog("insert"));
@@ -103,7 +148,7 @@ export function TextDataBindingInspector({
     <>
       <DataSourceLinkSection
         blocks={blocks}
-        selectedId={selected.id}
+        selectedId={visualBox.id}
         sourceId={sourceId}
         compactSelect={compactSelect}
         pane={pane}
