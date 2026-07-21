@@ -142,7 +142,7 @@ export function DeckEditorChrome({
     const normalized = normalizeSelectionRibbonTab(tab);
     if (normalized === "layers") {
       editor?.openLayersPanel();
-      setActiveTab("layers");
+      /* Mantém a faixa atual (Inserir etc.) — Camadas não tem corpo de ribbon. */
       return;
     }
     if (normalized === "insert" || normalized === "data" || normalized === "view") {
@@ -160,7 +160,7 @@ export function DeckEditorChrome({
 
   useEffect(() => {
     /* Aba sumiu (ex.: limpou seleção) → Inserir, não Camadas (sem corpo de ribbon). */
-    if (!tabs.some((tab) => tab.id === activeTab)) {
+    if (!tabs.some((tab) => tab.id === activeTab) || activeTab === "layers") {
       setActiveTab(resolveDefaultRibbonTab(tabs, isCustomSlide));
     }
   }, [activeTab, tabs, isCustomSlide]);
@@ -176,12 +176,12 @@ export function DeckEditorChrome({
     }
   }, [isTableSelection, hasSelection, isCustomSlide, activeTab]);
 
-  /** Sync bidirecional: painel lateral espelha na faixa (incluindo Elemento / Design·Layout). */
+  /** Sync bidirecional: painel lateral espelha na faixa (exceto Camadas). */
   useEffect(() => {
     const panelTab = editor?.selectionPanelTab;
     if (!isCustomSlide || !panelTab) return;
     if (panelTab === "layers") {
-      setActiveTab("layers");
+      /* Painel Camadas ≠ aba da top bar — não esconder o ribbon. */
       return;
     }
     if (panelTab === "data") {
@@ -206,7 +206,10 @@ export function DeckEditorChrome({
   function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {
       editor?.openLayersPanel();
-      setActiveTab("layers");
+      /* Top bar permanece na aba com ribbon (Inserir por padrão). */
+      if (!isRibbonContentTab(activeTab)) {
+        setActiveTab(resolveDefaultRibbonTab(tabs, isCustomSlide));
+      }
       return;
     }
     setActiveTab(tab);

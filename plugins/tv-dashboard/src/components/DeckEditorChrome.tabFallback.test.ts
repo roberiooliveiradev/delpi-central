@@ -8,12 +8,11 @@ import { fileURLToPath } from "node:url";
  * Sem aba Página Inicial — hub fica na lista /apps/tv-dashboard.
  */
 describe("deck chrome tab fallback contract", () => {
-  const chrome = readFileSync(
-    join(dirname(fileURLToPath(import.meta.url)), "DeckEditorChrome.tsx"),
-    "utf8",
-  );
-  const tabsMeta = readFileSync(
-    join(dirname(fileURLToPath(import.meta.url)), "deck/deckRibbonTabMeta.ts"),
+  const here = dirname(fileURLToPath(import.meta.url));
+  const chrome = readFileSync(join(here, "DeckEditorChrome.tsx"), "utf8");
+  const tabsMeta = readFileSync(join(here, "deck/deckRibbonTabMeta.ts"), "utf8");
+  const selectionSrc = readFileSync(
+    join(here, "../hooks/comunicadoEditor/useComunicadoEditorSelection.ts"),
     "utf8",
   );
 
@@ -24,13 +23,13 @@ describe("deck chrome tab fallback contract", () => {
     expect(chrome).not.toMatch(/ChevronUp/);
   });
 
-  it("fallback sem aba válida / sem seleção usa Inserir", () => {
+  it("fallback sem aba válida / Camadas usa Inserir", () => {
     expect(chrome).toMatch(/resolveDefaultRibbonTab/);
     expect(chrome).toMatch(
       /Aba sumiu \(ex\.: limpou seleção\) → Inserir/,
     );
     expect(chrome).toMatch(
-      /if \(!tabs\.some\(\(tab\) => tab\.id === activeTab\)\) \{\s*setActiveTab\(resolveDefaultRibbonTab/,
+      /!tabs\.some\(\(tab\) => tab\.id === activeTab\) \|\| activeTab === "layers"/,
     );
   });
 
@@ -43,5 +42,11 @@ describe("deck chrome tab fallback contract", () => {
   it("Programação e Tela recebem chrome da antiga Página Inicial", () => {
     expect(chrome).toMatch(/DeckHomePlaylistChrome/);
     expect(chrome).toMatch(/SlideCurrentRibbon/);
+  });
+
+  it("Camadas não força aba da top bar (não colapsa o ribbon)", () => {
+    expect(chrome).toMatch(/Painel Camadas ≠ aba da top bar/);
+    expect(chrome).toMatch(/activeTab === "layers"/);
+    expect(selectionSrc).not.toMatch(/setRibbonTabRequest\("layers"\)/);
   });
 });

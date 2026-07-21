@@ -65,7 +65,6 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
     const normalized = normalizeSelectionRibbonTab(tab);
     if (normalized === "layers") {
       editor.openLayersPanel();
-      setActiveTab("layers");
       return;
     }
     if (normalized === "insert" || normalized === "data" || normalized === "view") {
@@ -82,7 +81,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   });
 
   useEffect(() => {
-    if (!tabs.some((tab) => tab.id === activeTab)) {
+    if (!tabs.some((tab) => tab.id === activeTab) || activeTab === "layers") {
       setActiveTab(tabs.some((t) => t.id === "insert") ? "insert" : tabs[0]?.id ?? "insert");
     }
   }, [activeTab, tabs]);
@@ -100,7 +99,6 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
 
   useEffect(() => {
     if (editor.selectionPanelTab === "layers") {
-      setActiveTab("layers");
       return;
     }
     if (editor.selectionPanelTab === "data") {
@@ -122,7 +120,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   function selectTab(tab: DeckRibbonTabId) {
     if (tab === "layers") {
       editor.openLayersPanel();
-      setActiveTab("layers");
+      if (activeTab === "layers") setActiveTab("insert");
       return;
     }
     if (
