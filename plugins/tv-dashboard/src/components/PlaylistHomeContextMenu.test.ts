@@ -30,9 +30,10 @@ describe("playlist home context menu contract", () => {
     }
   });
 
-  it("home abre o menu no botão direito do card", () => {
+  it("home abre o menu no botão direito do card (sem Abrir/Duplicar no rodapé)", () => {
     expect(page).toMatch(/onContextMenu/);
     expect(page).toContain("PlaylistHomeContextMenu");
+    expect(page).not.toContain("td-home__card-actions");
   });
 
   it("App liga prévia e editores a partir da home", () => {

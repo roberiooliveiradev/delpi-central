@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FixedPanelPoint } from "@delpi/plugin-ui/index";
-import { Copy, MonitorPlay, Plus, Search } from "lucide-react";
+import { MonitorPlay, Plus, Search } from "lucide-react";
 
 import {
   activatePlaylist,
@@ -310,24 +310,6 @@ export function PlaylistsPage({ onOpen, onCreate, onPreview, onShare }: Props) {
                     </span>
                   </span>
                 </button>
-                <div className="td-home__card-actions">
-                  <button
-                    type="button"
-                    className="td-btn td-btn--sm"
-                    onClick={() => onOpen(item.id)}
-                  >
-                    <MonitorPlay size={14} aria-hidden="true" />
-                    Abrir
-                  </button>
-                  <button
-                    type="button"
-                    className="td-btn td-btn--sm"
-                    onClick={() => void handleDuplicate(item)}
-                  >
-                    <Copy size={14} aria-hidden="true" />
-                    Duplicar
-                  </button>
-                </div>
               </li>
             ))}
           </ul>
