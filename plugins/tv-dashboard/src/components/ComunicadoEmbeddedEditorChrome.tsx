@@ -83,7 +83,7 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
 
   useEffect(() => {
     if (!tabs.some((tab) => tab.id === activeTab)) {
-      setActiveTab(tabs.some((t) => t.id === "layers") ? "layers" : "insert");
+      setActiveTab(tabs.some((t) => t.id === "insert") ? "insert" : tabs[0]?.id ?? "insert");
     }
   }, [activeTab, tabs]);
 

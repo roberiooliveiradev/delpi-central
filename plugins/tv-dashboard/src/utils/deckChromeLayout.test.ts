@@ -1,20 +1,15 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { readDeckChromeCollapsed, writeDeckChromeCollapsed } from "./deckChromeLayout";
+import { clearLegacyDeckChromeCollapsed } from "./deckChromeLayout";
+
+afterEach(() => {
+  window.localStorage.clear();
+});
 
 describe("deckChromeLayout", () => {
-  afterEach(() => {
-    window.localStorage.removeItem("td-deck-chrome-collapsed");
-  });
-
-  it("default expandido", () => {
-    expect(readDeckChromeCollapsed()).toBe(false);
-  });
-
-  it("persiste colapsado", () => {
-    writeDeckChromeCollapsed(true);
-    expect(readDeckChromeCollapsed()).toBe(true);
-    writeDeckChromeCollapsed(false);
-    expect(readDeckChromeCollapsed()).toBe(false);
+  it("limpa preferência legada de chrome recolhido", () => {
+    window.localStorage.setItem("td-deck-chrome-collapsed", "1");
+    clearLegacyDeckChromeCollapsed();
+    expect(window.localStorage.getItem("td-deck-chrome-collapsed")).toBeNull();
   });
 });

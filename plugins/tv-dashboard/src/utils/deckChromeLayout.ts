@@ -1,4 +1,8 @@
-/** Preferência persistente: top bar (abas + ribbon) recolhida. */
+/**
+ * Preferência de top bar recolhida — removida (jul/2026).
+ * A barra não minimiza mais; sem seleção o chrome volta para a aba Inserir.
+ * Mantido só para limpar localStorage legado.
+ */
 
 const STORAGE_COLLAPSED_KEY = "td-deck-chrome-collapsed";
 
@@ -6,20 +10,12 @@ function canUseStorage(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-export function readDeckChromeCollapsed(): boolean {
-  if (!canUseStorage()) return false;
-  try {
-    return window.localStorage.getItem(STORAGE_COLLAPSED_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-export function writeDeckChromeCollapsed(collapsed: boolean): void {
+/** Remove flag legado de chrome recolhido (no-op se já limpo). */
+export function clearLegacyDeckChromeCollapsed(): void {
   if (!canUseStorage()) return;
   try {
-    window.localStorage.setItem(STORAGE_COLLAPSED_KEY, collapsed ? "1" : "0");
+    window.localStorage.removeItem(STORAGE_COLLAPSED_KEY);
   } catch {
-    /* ignore quota / private mode */
+    /* ignore */
   }
 }
