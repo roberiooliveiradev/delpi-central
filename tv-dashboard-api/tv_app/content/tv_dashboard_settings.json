@@ -53,9 +53,6 @@
     "previewDeadlineMaxMs": 3000
   },
   "tableIncrementalPageSize": 30,
-  "comunicadoDataBlocks": {
-    "maxPerSlide": 6
-  },
   "presentationHeartbeat": {
     "intervalSec": 60
   },

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any
 
 from tv_app.application.services.comunicado_native_config_sanitize import (
-    max_data_blocks_per_slide,
     sanitize_comunicado_config,
 )
 from tv_app.application.services.data.tv_data_config_validation_service import TvDataConfigValidationService
@@ -21,7 +20,6 @@ def validate_comunicado_native_config(
 
 
 __all__ = [
-    "max_data_blocks_per_slide",
     "sanitize_comunicado_config",
     "validate_comunicado_native_config",
 ]

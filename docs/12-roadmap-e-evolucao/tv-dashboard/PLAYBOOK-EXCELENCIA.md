@@ -1361,7 +1361,7 @@ Exemplo no `native_config` (v4):
 - [x] Tipos de gráfico avançados (pizza, área, combo, empilhado, histograma, dispersão, bolhas, radar, cascata, funil) — paint SVG nativo com `chartParts` (4H.7 + v1.5).
 - [x] Séries temporais nas telas nativas OEE/OTD/PPM — `seriesPoints` + `ConfigurableSeriesChart` (SVG; playbook antigo citava Recharts).
 - [x] `native_config` sanitizado no save — sem `resolved` nem URLs de mídia runtime.
-- [x] Limite de blocos `data_*` por slide (settings `comunicadoDataBlocks.maxPerSlide`).
+- ~~Limite de blocos `data_*` por slide (`comunicadoDataBlocks.maxPerSlide`)~~ — **removido** (jul/2026): sem teto artificial por slide.
 
 ### 18.7 UI do editor (MFE)
 
