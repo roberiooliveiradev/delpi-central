@@ -203,7 +203,7 @@ export function ComunicadoBlockView({
   }
 
   if (block.type === "icon") {
-    const iconNode = <ComunicadoIconGraphic block={block} />;
+    const iconNode = <ComunicadoIconGraphic block={block} fontScale={fontScale} />;
     return mountBlockRoot(
       blockClass("tdp-comunicado__block--icon"),
       style,
