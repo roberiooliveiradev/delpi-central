@@ -14,28 +14,13 @@ export function cloneBlocksForClipboard(blocks: ComunicadoBlock[]): ComunicadoBl
   });
 }
 
-/**
- * Cola no palco: cópias nascem desagrupadas (sem `groupId`).
- * Agrupar de novo é ação explícita do usuário — não herdar o grupo da origem.
- */
-export function detachClipboardGroupIds(blocks: ComunicadoBlock[]): ComunicadoBlock[] {
-  return blocks.map((block) => {
-    if (!block.groupId) return block;
-    const { groupId: _omit, ...rest } = block;
-    return rest as ComunicadoBlock;
-  });
-}
-
 export function pasteClipboardBlocks(
   existingBlocks: ComunicadoBlock[],
   clipboardBlocks: ComunicadoBlock[],
   offset = { x: 2, y: 2 },
   policy: DataSourceDuplicatePolicy = "share_source",
 ): { blocks: ComunicadoBlock[]; pastedIds: string[] } {
-  return duplicateBlocksWithDataPolicy(
-    existingBlocks,
-    detachClipboardGroupIds(clipboardBlocks),
-    policy,
-    offset,
-  );
+  /* groupId é remapeado em duplicateBlocksWithDataPolicy — cópia fica agrupada,
+   * sem entrar no grupo da origem. */
+  return duplicateBlocksWithDataPolicy(existingBlocks, clipboardBlocks, policy, offset);
 }
