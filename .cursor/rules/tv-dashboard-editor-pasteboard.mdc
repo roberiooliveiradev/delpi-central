@@ -1,0 +1,30 @@
+---
+description: TV Dashboard — pasteboard no editor vs clip na TV
+globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*
+alwaysApply: false
+---
+
+# TV Dashboard — clip do palco (anti-padrão WYSIWYG)
+
+## Princípio
+
+| Superfície | Overflow | Motivo |
+|------------|----------|--------|
+| **Editor** (`.td-composer__canvas`) | `visible` | Pasteboard — itens na borda/fora ficam **sobre** o gutter, selecionáveis |
+| **TV / prévia** (`.tdp-comunicado`, `DesignViewportStage`) | `hidden` | O que vai ao ar — clip do retângulo 1080p |
+
+Frames `%` são os mesmos; o que muda é só o clip. Cortar no editor «para parecer TV» **não** é fidelidade — é perda de edição.
+
+## Anti-padrão (proibido)
+
+1. **`overflow: hidden` no canvas do editor** com justificativa «WYSIWYG / posição na borda».
+2. Contrato de teste que exige editor ≡ TV no overflow.
+3. Clip no zoom-sizer/gutter que impeça ver overhang no pasteboard.
+
+Incidente jul/2026: `e77b0f75e` / `0c4254cf9` cliparam o palco → logo/IDD/handles cortados; usuário não via itens «fora» da moldura.
+
+## O que fazer
+
+- Editor: `overflow: visible` + pasteboard (padding do `canvas-zoom-sizer`).
+- TV/prévia: manter `overflow: hidden`.
+- Regressão: `designStageClipContract.test.ts`.

@@ -1169,13 +1169,13 @@
   aspect-ratio: auto;
   border-radius: 0;
   /*
-   * Clip WYSIWYG = TV/prévia (`.tdp-comunicado` / DesignViewportStage).
-   * overflow:visible faz sombra/conteúdo na borda parecer “ok” no palco e
-   * cortado na apresentação — mesma frame %, percepção de posição errada
-   * (cantos, logo, pills no topo).
-   * Pasteboard (pan/gutter) continua fora deste retângulo no zoom-sizer.
+   * Modo edição = pasteboard (PowerPoint-like): overflow VISÍVEL.
+   * Itens na borda/fora do 1080p ficam SOBRE o pasteboard (gutter do zoom-sizer),
+   * não cortados «dentro» do retângulo. TV/prévia clipam em `.tdp-comunicado`
+   * / DesignViewportStage — isso é o ar; o editor não imita o clip.
+   * Anti-padrão: overflow:hidden aqui «para WYSIWYG» (logo/IDD cortados no palco).
    */
-  overflow: hidden;
+  overflow: visible;
   /* Evita arraste acidental marcar texto; editing contentEditable sobrescreve. */
   user-select: none;
   /*
