@@ -75,6 +75,23 @@ export function uniformFrameScale(before: FrameSize, after: FrameSize): number {
   return s;
 }
 
+/**
+ * Escala pela área (média geométrica dos eixos).
+ * Alongar só altura/largura ainda cresce tipografia/ícone — preenche o espaço interno
+ * (min(w,h) sozinho deixava o conteúdo «preso» no topo).
+ */
+export function contentFillFrameScale(before: FrameSize, after: FrameSize): number {
+  const w1 = Number(before.w);
+  const h1 = Number(before.h);
+  const w2 = Number(after.w);
+  const h2 = Number(after.h);
+  if (!(w1 > 0 && h1 > 0 && w2 > 0 && h2 > 0)) return 1;
+  const s = Math.sqrt((w2 / w1) * (h2 / h1));
+  if (!Number.isFinite(s) || s <= 0) return 1;
+  if (Math.abs(s - 1) < SCALE_EPSILON) return 1;
+  return s;
+}
+
 export function scaleFontPx(px: number, scale: number): number {
   if (!(scale > 0) || !Number.isFinite(scale) || Math.abs(scale - 1) < SCALE_EPSILON) {
     return Math.round(px);
@@ -192,7 +209,10 @@ function scaleKpiPartStyle(
   scale: number,
 ): ComunicadoKpiPartStyle {
   const next: ComunicadoKpiPartStyle = { ...(style ?? {}) };
-  if (isKpiTextPartKind(ref.kind)) {
+  // Valor: FitText preenche o host — limpa fontSize persistido no resize.
+  if (ref.kind === "value") {
+    next.fontSize = undefined;
+  } else if (isKpiTextPartKind(ref.kind)) {
     const base = resolveKpiPartFontSize(ref.kind, style);
     next.fontSize = scaleFontPx(base, scale);
   } else if (style?.fontSize != null && style.fontSize > 0) {
@@ -220,6 +240,8 @@ function ensureKpiTextDefaults(parts: ComunicadoKpiPartsMap): ComunicadoKpiParts
   for (const kind of Object.keys(KPI_PART_FONT_SIZE_DEFAULTS) as Array<
     keyof typeof KPI_PART_FONT_SIZE_DEFAULTS
   >) {
+    // Valor fica sem fontSize → auto-fit no container.
+    if (kind === "value") continue;
     const ref: ComunicadoKpiPartRef = { kind };
     const key = serializeKpiPartRef(ref);
     if (!next[key]?.style?.fontSize) {
@@ -380,7 +402,12 @@ export function scaleComplexBlockOnResize(
   afterFrame: FrameSize,
 ): ComunicadoBlock {
   if (!isComplexViewBlockType(block.type)) return block;
-  const scale = uniformFrameScale(beforeFrame, afterFrame);
+  // KPI/filtro: média geométrica — aproveita espaço ao alongar um eixo.
+  // Gráfico/tabela: min (evita tipografia estourar o plot).
+  const scale =
+    block.type === "kpi_view" || block.type === "input"
+      ? contentFillFrameScale(beforeFrame, afterFrame)
+      : uniformFrameScale(beforeFrame, afterFrame);
   if (Math.abs(scale - 1) < SCALE_EPSILON) return block;
 
   if (block.type === "kpi_view") {

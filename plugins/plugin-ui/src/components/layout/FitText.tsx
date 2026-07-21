@@ -18,7 +18,7 @@ type Props = {
  * Ajusta `font-size` para o texto preencher o container pai (largura e altura),
  * ou aplica `fixedPx` quando a tipografia foi configurada explicitamente.
  */
-export function FitText({ children, className, minPx = 14, maxPx = 240, fixedPx }: Props) {
+export function FitText({ children, className, minPx = 14, maxPx = 320, fixedPx }: Props) {
   const measureRef = useRef<HTMLSpanElement>(null);
   const [fontSize, setFontSize] = useState(minPx);
   const useFixed =
@@ -37,7 +37,7 @@ export function FitText({ children, className, minPx = 14, maxPx = 240, fixedPx 
       if (maxW <= 0 || maxH <= 0) return;
 
       let lo = minPx;
-      let hi = Math.min(maxPx, Math.max(minPx, Math.floor(Math.min(maxW, maxH) * 1.2)));
+      let hi = Math.min(maxPx, Math.max(minPx, Math.floor(Math.min(maxW, maxH) * 1.15)));
       let best = minPx;
 
       while (lo <= hi) {
@@ -69,8 +69,13 @@ export function FitText({ children, className, minPx = 14, maxPx = 240, fixedPx 
         fontSize: useFixed ?? fontSize,
         lineHeight: 1.05,
         whiteSpace: "nowrap",
-        display: "inline-block",
+        display: "flex",
+        alignItems: "center",
+        boxSizing: "border-box",
+        width: "100%",
+        height: "100%",
         maxWidth: "100%",
+        maxHeight: "100%",
       }}
     >
       {children}

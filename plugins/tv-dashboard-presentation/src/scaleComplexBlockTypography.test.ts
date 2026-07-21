@@ -8,6 +8,7 @@ import type {
 } from "./comunicadoTypes";
 import {
   applyComplexBlockFrameWithTypography,
+  contentFillFrameScale,
   scaleChartPartTypographyOnResize,
   scaleComplexBlockOnResize,
   scaleFontPx,
@@ -31,6 +32,18 @@ describe("uniformFrameScale", () => {
   });
 });
 
+describe("contentFillFrameScale", () => {
+  it("cresce ao alongar só a altura (média geométrica)", () => {
+    expect(contentFillFrameScale({ w: 10, h: 10 }, { w: 10, h: 40 })).toBe(2);
+    expect(contentFillFrameScale({ w: 12, h: 7 }, { w: 12, h: 28 })).toBe(2);
+  });
+
+  it("uniform e fill coincidem em escala isótropa", () => {
+    expect(contentFillFrameScale({ w: 10, h: 10 }, { w: 20, h: 20 })).toBe(2);
+    expect(uniformFrameScale({ w: 10, h: 10 }, { w: 20, h: 20 })).toBe(2);
+  });
+});
+
 describe("scaleFontPx", () => {
   it("aplica fator e só piso mínimo", () => {
     expect(scaleFontPx(32, 2)).toBe(64);
@@ -40,11 +53,24 @@ describe("scaleFontPx", () => {
 });
 
 describe("scaleComplexBlockOnResize", () => {
-  it("escala tipografia do KPI (value default canônico)", () => {
+  it("escala tipografia do KPI (título/ícone; valor fica auto-fit)", () => {
     const block = createKpiViewBlock() as ComunicadoKpiViewBlock;
     const next = scaleComplexBlockOnResize(block, { w: 20, h: 20 }, { w: 40, h: 40 }) as ComunicadoKpiViewBlock;
-    expect(next.kpiParts?.value?.style?.fontSize).toBe(80);
+    expect(next.kpiParts?.value?.style?.fontSize).toBeUndefined();
     expect(next.kpiParts?.title?.style?.fontSize).toBe(36);
+    expect(next.kpiParts?.icon?.style?.iconSize).toBe(72);
+  });
+
+  it("KPI alongado só na altura ainda escala título/ícone", () => {
+    const block = createKpiViewBlock() as ComunicadoKpiViewBlock;
+    const next = scaleComplexBlockOnResize(
+      block,
+      { w: 12, h: 7 },
+      { w: 12, h: 28 },
+    ) as ComunicadoKpiViewBlock;
+    expect(next.kpiParts?.title?.style?.fontSize).toBe(36);
+    expect(next.kpiParts?.icon?.style?.iconSize).toBe(72);
+    expect(next.kpiParts?.value?.style?.fontSize).toBeUndefined();
   });
 
   it("escala tipografia do gráfico", () => {
@@ -92,7 +118,7 @@ describe("scalePartTypographyOnResize", () => {
     expect(next.legend?.style?.fontSize).toBe(10);
   });
 
-  it("escala tipografia da parte KPI", () => {
+  it("escala tipografia da parte KPI (valor limpa fontSize para auto-fit)", () => {
     const parts = upsertKpiPartState({}, { kind: "value" }, { style: { fontSize: 32 } });
     const next = scaleKpiPartTypographyOnResize(
       parts,
@@ -100,7 +126,7 @@ describe("scalePartTypographyOnResize", () => {
       { w: 50, h: 40 },
       { w: 25, h: 20 },
     );
-    expect(next.value?.style?.fontSize).toBe(16);
+    expect(next.value?.style?.fontSize).toBeUndefined();
   });
 });
 
@@ -120,13 +146,16 @@ describe("applyComplexBlockFrameWithTypography (live a partir do baseline)", () 
     }) as ComunicadoKpiViewBlock;
     const endFrame = { ...kpi.frame, w: kpi.frame.w * 2, h: kpi.frame.h * 2 };
     const end = applyComplexBlockFrameWithTypography(kpi, endFrame) as ComunicadoKpiViewBlock;
-    expect(mid.kpiParts?.value?.style?.fontSize).toBe(60);
-    expect(end.kpiParts?.value?.style?.fontSize).toBe(80);
-    /* Bug antigo: tipografia já escalada + fator origin→final → 80*2=160. */
+    expect(mid.kpiParts?.value?.style?.fontSize).toBeUndefined();
+    expect(mid.kpiParts?.title?.style?.fontSize).toBe(27);
+    expect(end.kpiParts?.value?.style?.fontSize).toBeUndefined();
+    expect(end.kpiParts?.title?.style?.fontSize).toBe(36);
+    /* Bug antigo: tipografia já escalada + fator origin→final → dobra de novo. */
     const doubled = scaleComplexBlockOnResize(end, kpi.frame, endFrame) as ComunicadoKpiViewBlock;
-    expect(doubled.kpiParts?.value?.style?.fontSize).toBe(160);
+    expect(doubled.kpiParts?.title?.style?.fontSize).toBe(72);
     const finalizeOk = applyComplexBlockFrameWithTypography(kpi, endFrame) as ComunicadoKpiViewBlock;
-    expect(finalizeOk.kpiParts?.value?.style?.fontSize).toBe(80);
+    expect(finalizeOk.kpiParts?.title?.style?.fontSize).toBe(36);
+    expect(finalizeOk.kpiParts?.value?.style?.fontSize).toBeUndefined();
 
     const chart = createChartViewBlock("bar") as ComunicadoChartViewBlock;
     const chartEnd = applyComplexBlockFrameWithTypography(chart, {

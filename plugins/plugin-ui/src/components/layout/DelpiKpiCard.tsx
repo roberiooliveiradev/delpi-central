@@ -555,7 +555,7 @@ export function DelpiKpiCard({
                 <FitText
                   fixedPx={valueAutoFit ? null : valueFontSizePx}
                   minPx={16}
-                  maxPx={280}
+                  maxPx={320}
                 >
                   {value}
                 </FitText>

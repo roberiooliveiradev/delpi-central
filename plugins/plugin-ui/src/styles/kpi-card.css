@@ -48,14 +48,14 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: stretch;
   gap: 2px;
   min-width: 0;
   min-height: 0;
 }
 
 .delpi-kpi-card__label {
-  margin: 0 0 8px;
+  margin: 0;
   /* px de design — rem do host quebrava paridade editor ↔ TV. */
   font-size: 14px;
   font-weight: 600;
@@ -67,15 +67,18 @@
   align-items: stretch;
   justify-content: flex-start;
   gap: 4px;
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  max-height: 28%;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .delpi-kpi-card__value {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 1 1 auto;
   min-height: 0;
   margin: 0;
   /* Fallback alinhado a KPI_PART_FONT_SIZE_DEFAULTS.value (FitText/fixedPx manda). */
@@ -92,12 +95,15 @@
 }
 
 .delpi-kpi-card__hint {
-  margin: 10px 0 0;
+  margin: 0;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
   color: var(--delpi-kpi-hint-color, #64748b);
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  max-height: 22%;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -112,7 +118,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  align-self: flex-start;
+  align-self: center;
   box-sizing: border-box;
   /* `--delpi-kpi-icon-fg` vem do inline style quando o usuário escolhe cor. */
   background: color-mix(

@@ -51,6 +51,7 @@ export {
 export {
   TABLE_VIEW_DEFAULT_FONT_SIZE_PX,
   applyComplexBlockFrameWithTypography,
+  contentFillFrameScale,
   scaleChartPartTypographyOnResize,
   scaleChartPartsTypography,
   scaleComplexBlockOnResize,
