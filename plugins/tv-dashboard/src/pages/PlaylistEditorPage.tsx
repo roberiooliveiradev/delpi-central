@@ -60,6 +60,8 @@ import {
 import { exportSlideElementToPdf, exportSlideElementToPng, resolveSlideExportTarget } from "../utils/exportSlidePng";
 import { exportSlidePptx } from "../utils/exportSlidePptx";
 import { readPlaylistShell, writePlaylistShell } from "../utils/editorSessionCache";
+import { registerPreviewHandoff } from "../utils/previewHandoff";
+import { clearPreviewPayloadCache } from "../utils/previewPayloadCache";
 import {
   resolveSelectedSlideId,
   writeSelectedSlideId,
@@ -738,6 +740,7 @@ export function PlaylistEditorPage({
       const completedVersion = options?.autosaveVersion;
 
       if (payload.nativeConfig) {
+        clearPreviewPayloadCache(playlist.id);
         if (
           shouldClearComunicadoDraftAfterSave({
             completedVersion,
@@ -904,6 +907,13 @@ export function PlaylistEditorPage({
   );
 
   flushPendingComunicadoSaveRef.current = () => flushPendingComunicadoSave();
+
+  useEffect(() => {
+    registerPreviewHandoff({
+      flush: () => flushPendingComunicadoSave(),
+    });
+    return () => registerPreviewHandoff(null);
+  }, [flushPendingComunicadoSave]);
 
   function scheduleCustomSlideSave(slide: Slide, nativeConfig: Record<string, unknown>) {
     const previous = pendingComunicadoSaveRef.current;

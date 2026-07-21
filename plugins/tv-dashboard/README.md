@@ -30,6 +30,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Persistência do slide personalizado:** draft versionado em `localStorage` + autosave debounced; F5/WS **nunca** descartam edições locais sem merge (`applyServerPlaylistPreservingLocalEdits`). Anti-padrão documentado em `.cursor/rules/tv-dashboard-persist-local-edits.mdc`
 - **Pasteboard no editor:** `.td-composer__canvas` usa `overflow:visible` — itens na borda/fora da moldura 1080p não são cortados no palco (TV/prévia clipam). Anti-padrão: `.cursor/rules/tv-dashboard-editor-pasteboard.mdc`
 - **Modais / avisos:** `HostContainedDialog` (confirm) e `HostContainedModal` (workbench) — overlay só na área do MFE, nunca sobre a sidebar do portal. Anti-padrão: `.cursor/rules/mfe-modal-host-contained.mdc`
+- **Fidelidade prévia/TV:** `RichComunicadoStage` canônico; abrir prévia faz flush + overlay do shell local (não payload stale). Anti-padrão: `.cursor/rules/tv-dashboard-presentation-parity.mdc`
 - **Preparar dados (M DELPI):** workbench de consultas em modal via `createHostContainedModalShell` do `@delpi/plugin-ui` — ocupa a área útil do MFE e não cobre a sidebar/chrome da Minha DELPI
 - **Preparar dados M (Fase 7):** editor multiline e ribbon das fases anteriores,
   profiling opt-in, qualidade/distribuição amostradas, explain e tempo por etapa;

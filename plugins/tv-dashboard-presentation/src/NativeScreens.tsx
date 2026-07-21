@@ -1,20 +1,8 @@
-import type { CSSProperties } from "react";
-import { useMemo } from "react";
-
-import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
-import { ComunicadoBlockView } from "./comunicadoBlockView";
 import { ConfigurableSeriesChart } from "./ConfigurableSeriesChart";
-import { useComunicadoGoogleFonts } from "./comunicadoGoogleFonts";
-import { useComunicadoCustomFonts } from "./comunicadoCustomFonts";
-import {
-  hasRichComunicado,
-  parseComunicadoConfig,
-  sortBlocksByZIndex,
-  type ComunicadoScreenDataLike,
-} from "./comunicadoHelpers";
-import { filterBlocksVisibleOnStage } from "./comunicadoStageVisibility";
-import type { ComunicadoBackground } from "./comunicadoTypes";
+import { hasRichComunicado, type ComunicadoScreenDataLike } from "./comunicadoHelpers";
 import { formatNumber, formatPct } from "./nativeFormat";
+import { RichComunicadoStage } from "./RichComunicadoStage";
+import type { ComunicadoBackground } from "./comunicadoTypes";
 import "./native-screens.css";
 
 export type KpiScreenData = {
@@ -407,77 +395,14 @@ function RichComunicadoScreen({
   inputRuntimeValues?: Record<string, string | number | boolean | null>;
   onInputValueChange?: (blockId: string, value: string | number | boolean | null) => void;
 }) {
-  const normalized = useMemo(
-    () =>
-      parseComunicadoConfig({
-        version: (data as { version?: number }).version,
-        headline: data.headline,
-        subtitle: data.subtitle,
-        background: data.background,
-        blocks: data.blocks,
-        customFonts: data.customFonts,
-        dataFilters: (data as { dataFilters?: unknown }).dataFilters,
-        speakerNotes: (data as { speakerNotes?: string }).speakerNotes,
-      } as Record<string, unknown>),
-    [data],
-  );
-
-  useComunicadoGoogleFonts({ blocks: normalized.blocks });
-  useComunicadoCustomFonts(normalized.customFonts ?? data.customFonts);
-
-  const master = data.master?.enabled ? data.master : null;
-  const slideBackground = normalized.background ?? data.background;
-  const background =
-    slideBackground ??
-    master?.background ??
-    ({ type: "color", value: "#ffffff" } as ComunicadoBackground);
-  const imageUrl =
-    background.type === "image" ? background.url ?? background.value : undefined;
-  const bgStyle: CSSProperties = comunicadoBackgroundCssProperties(background, imageUrl);
-
-  const blocks = filterBlocksVisibleOnStage(sortBlocksByZIndex(normalized.blocks ?? []));
-  const logo = master?.logo;
-  const logoFrame = logo?.frame;
-
   return (
-    <div className="tdp-native-screen tdp-comunicado" style={bgStyle}>
-      <div className="tdp-comunicado__stage">
-        {logo?.url ? (
-          <div
-            className="tdp-comunicado__master-logo"
-            aria-hidden
-            style={{
-              position: "absolute",
-              left: `${logoFrame?.x ?? 2}%`,
-              top: `${logoFrame?.y ?? 2}%`,
-              width: `${logoFrame?.w ?? 12}%`,
-              height: `${logoFrame?.h ?? 10}%`,
-              opacity: logo.opacity ?? 1,
-              zIndex: 0,
-              pointerEvents: "none",
-              backgroundImage: `url(${logo.url})`,
-              backgroundSize: "contain",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center",
-            }}
-          />
-        ) : null}
-        {blocks.map((block) => (
-          <ComunicadoBlockView
-            key={block.id}
-            block={block}
-            fontScale={fontScale}
-            inputsInteractive={inputsInteractive}
-            inputRuntimeValue={
-              inputRuntimeValues && block.id in inputRuntimeValues
-                ? inputRuntimeValues[block.id]
-                : undefined
-            }
-            onInputValueChange={onInputValueChange}
-          />
-        ))}
-      </div>
-    </div>
+    <RichComunicadoStage
+      data={data}
+      fontScale={fontScale}
+      inputsInteractive={inputsInteractive}
+      inputRuntimeValues={inputRuntimeValues}
+      onInputValueChange={onInputValueChange}
+    />
   );
 }
 

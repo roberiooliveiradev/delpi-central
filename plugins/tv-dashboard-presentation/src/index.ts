@@ -23,6 +23,8 @@ export type {
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
 export { DesignViewportStage, computeDesignViewportScale } from "./DesignViewportStage";
+export { RichComunicadoStage } from "./RichComunicadoStage";
+export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
 export type { DesignViewportFitMode } from "./DesignViewportStage";
 export {
   resolveViewportPixelSize,
