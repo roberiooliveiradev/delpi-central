@@ -11,6 +11,7 @@ import {
   resolveBlockShapeChromeStyle,
 } from "./comunicadoBlockShapeChrome";
 import {
+  createBlock,
   createChartViewBlock,
   createIconBlock,
   createInputBlock,
@@ -27,11 +28,14 @@ import type {
   ComunicadoInputBlock,
   ComunicadoKpiViewBlock,
   ComunicadoTableViewBlock,
+  ComunicadoTextBlock,
 } from "./comunicadoTypes";
 
 describe("comunicadoBlockShapeChrome", () => {
-  it("herda handles de cantos em KPI, tabela, chart e ícone (além da forma)", () => {
+  it("herda handles de cantos em KPI, tabela, chart, ícone e caixa visual (texto/título)", () => {
     expect(blockSupportsShapeChromeHandles(createShapeBlock("rectangle"))).toBe(true);
+    expect(blockSupportsShapeChromeHandles(createBlock("heading", "Título"))).toBe(true);
+    expect(blockSupportsShapeChromeHandles(createBlock("text", "Corpo"))).toBe(true);
     expect(blockSupportsShapeChromeHandles(createKpiViewBlock())).toBe(true);
     expect(blockSupportsShapeChromeHandles(createTableViewBlock(3, 3))).toBe(true);
     expect(blockSupportsShapeChromeHandles(createChartViewBlock("line"))).toBe(true);
@@ -39,9 +43,25 @@ describe("comunicadoBlockShapeChrome", () => {
     expect(blockShapeChromeAdjustmentSpecs(createKpiViewBlock()).some((s) => s.id === "corner")).toBe(
       true,
     );
+    expect(blockShapeChromeAdjustmentSpecs(createBlock("heading", "T")).some((s) => s.id === "corner")).toBe(
+      true,
+    );
     expect(blockShapeChromeAdjustmentSpecs(createIconBlock("Factory")).some((s) => s.id === "corner")).toBe(
       true,
     );
+  });
+
+  it("aplica ajuste de canto no texto/título (style.borderRadius da caixa visual)", () => {
+    const heading = createBlock("heading", "Qualidade") as ComunicadoTextBlock;
+    const patch = applyBlockShapeChromeAdjustment(heading, 0, 0.25, 80);
+    expect(patch?.style?.borderRadius).toBe(20);
+    const next = { ...heading, ...patch } as ComunicadoTextBlock;
+    expect(resolveBlockShapeChromeCornerPx(next)).toBe(20);
+    expect(resolveBlockSelectionBorderRadiusPx(next)).toBe(20);
+
+    const text = createBlock("text", "Corpo") as ComunicadoTextBlock;
+    const textPatch = applyBlockShapeChromeAdjustment(text, 0, 0.125, 64);
+    expect(textPatch?.style?.borderRadius).toBe(8);
   });
 
   it("aplica ajuste de canto no ícone (style.borderRadius)", () => {

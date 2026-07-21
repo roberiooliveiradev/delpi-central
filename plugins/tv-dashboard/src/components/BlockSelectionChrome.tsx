@@ -38,7 +38,7 @@ type Props = {
 };
 
 /**
- * Chrome de seleção único do palco (ícone, forma, texto, views…):
+ * Chrome de seleção único do palco (caixa visual texto/forma, ícone, views…):
  * anel de move, resize, giro e losango de ajuste quando suportado.
  */
 export function BlockSelectionChrome({

@@ -31,18 +31,24 @@ import {
 } from "./comunicadoTableParts";
 import type { ComunicadoBlock } from "./comunicadoTypes";
 import { isAreaShapeKind, resolveShapePrimitive } from "./comunicadoVisualPrimitive";
+import {
+  isComunicadoVisualBoxBlock,
+  resolveVisualBoxShapeKind,
+} from "./comunicadoVisualBox";
 import { DECK_INPUT_DEFAULTS } from "@delpi/plugin-ui/index";
 
 /**
- * Chrome de forma compartilhado (cantos / contorno) — formas area, KPI card, tabela, chartArea e filtro.
+ * Chrome de forma compartilhado (cantos / contorno) — caixa visual (texto/título/forma),
+ * KPI card, tabela, chartArea, ícone e filtro.
  * Handles amarelos e ribbon usam este módulo; não duplicar por tipo de bloco.
  */
 
 const CHROME_CORNER_KIND = "rounded-rect" as const;
 
 export function blockSupportsShapeChromeHandles(block: ComunicadoBlock): boolean {
-  if (block.type === "shape") {
-    return isAreaShapeKind(block.shape) || shapeAdjustmentSpecs(block.shape).length > 0;
+  if (isComunicadoVisualBoxBlock(block)) {
+    const kind = resolveVisualBoxShapeKind(block);
+    return isAreaShapeKind(kind) || shapeAdjustmentSpecs(kind).length > 0;
   }
   return (
     block.type === "icon" ||
@@ -55,8 +61,8 @@ export function blockSupportsShapeChromeHandles(block: ComunicadoBlock): boolean
 
 /** Specs de ajuste para handles no palco (forma completa ou só cantos do chrome). */
 export function blockShapeChromeAdjustmentSpecs(block: ComunicadoBlock): ShapeAdjustmentSpec[] {
-  if (block.type === "shape") {
-    return shapeAdjustmentSpecs(block.shape);
+  if (isComunicadoVisualBoxBlock(block)) {
+    return shapeAdjustmentSpecs(resolveVisualBoxShapeKind(block));
   }
   if (blockSupportsShapeChromeHandles(block)) {
     return shapeAdjustmentSpecs(CHROME_CORNER_KIND);
@@ -65,8 +71,9 @@ export function blockShapeChromeAdjustmentSpecs(block: ComunicadoBlock): ShapeAd
 }
 
 export function resolveBlockShapeChromeCornerPx(block: ComunicadoBlock): number {
-  if (block.type === "shape") {
-    const values = resolveShapeAdjustments(block.shape, block.style);
+  if (isComunicadoVisualBoxBlock(block)) {
+    const kind = resolveVisualBoxShapeKind(block);
+    const values = resolveShapeAdjustments(kind, block.style);
     if (typeof block.style?.borderRadius === "number") return block.style.borderRadius;
     const corner = values[0];
     return typeof corner === "number" ? Math.round(corner * 64) : 0;
@@ -102,8 +109,8 @@ export function resolveBlockShapeChromeAdjustmentValues(
   block: ComunicadoBlock,
   shortSidePx = 64,
 ): number[] {
-  if (block.type === "shape") {
-    return resolveShapeAdjustments(block.shape, block.style);
+  if (isComunicadoVisualBoxBlock(block)) {
+    return resolveShapeAdjustments(resolveVisualBoxShapeKind(block), block.style);
   }
   const px = resolveBlockShapeChromeCornerPx(block);
   const specs = shapeAdjustmentSpecs(CHROME_CORNER_KIND);
@@ -113,7 +120,7 @@ export function resolveBlockShapeChromeAdjustmentValues(
 
 /**
  * Aplica ajuste de chrome (handle amarelo) → patch de bloco.
- * KPI atualiza `kpiParts.card`; chart atualiza `chartArea`; tabela atualiza `tableParts.frame`.
+ * Caixa visual grava em `style`; KPI atualiza `kpiParts.card`; chart atualiza `chartArea`; tabela atualiza `tableParts.frame`.
  */
 export function applyBlockShapeChromeAdjustment(
   block: ComunicadoBlock,
@@ -125,8 +132,9 @@ export function applyBlockShapeChromeAdjustment(
   const spec = specs.find((item) => item.index === adjIndex) ?? specs[adjIndex];
   if (!spec) return null;
 
-  if (block.type === "shape") {
-    const stylePatch = patchShapeAdjustment(block.shape, block.style, spec.index, value, shortSidePx);
+  if (isComunicadoVisualBoxBlock(block)) {
+    const kind = resolveVisualBoxShapeKind(block);
+    const stylePatch = patchShapeAdjustment(kind, block.style, spec.index, value, shortSidePx);
     return { style: { ...block.style, ...stylePatch } };
   }
 
@@ -188,8 +196,11 @@ export function applyBlockShapeChromeAdjustment(
 /** Raio para alinhar outline de seleção do wrap ao chrome interno. */
 export function resolveBlockSelectionBorderRadiusPx(block: ComunicadoBlock): number | undefined {
   if (!blockSupportsShapeChromeHandles(block)) return undefined;
-  if (block.type === "shape" && resolveShapePrimitive(block.shape) !== "area") {
-    return undefined;
+  if (isComunicadoVisualBoxBlock(block)) {
+    if (resolveShapePrimitive(resolveVisualBoxShapeKind(block)) !== "area") {
+      return undefined;
+    }
+    return resolveBlockShapeChromeCornerPx(block);
   }
   return resolveBlockShapeChromeCornerPx(block);
 }
