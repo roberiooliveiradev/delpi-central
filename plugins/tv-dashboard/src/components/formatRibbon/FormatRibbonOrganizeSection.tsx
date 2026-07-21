@@ -160,8 +160,8 @@ export function FormatRibbonOrganizeActions(props: SectionProps) {
 }
 
 /**
- * Campos de opacidade (+ ajuste de mídia) — usados dentro do popover Exibição
- * (posição/tamanho/raio) ou sozinhos quando não há geometria editável.
+ * Campos de opacidade (+ ajuste de mídia) — seção Exibição / Forma.
+ * Não misturar com o popover Posição (só geometria).
  */
 export function FormatRibbonOpacityFields({
   className = "td-deck-ribbon__organize-props",
@@ -263,15 +263,15 @@ export function FormatRibbonOpacityFields({
             id="td-block-object-fit"
             className="td-deck-ribbon__select td-deck-ribbon__select--compact"
             aria-label="Ajuste"
-            value={selected.style?.objectFit ?? "cover"}
+            value={selected.style?.objectFit ?? "contain"}
             onChange={(value) =>
               updateSelectedStyle({
                 objectFit: value as "cover" | "contain",
               })
             }
             options={[
-              { value: "cover", label: "Preencher" },
               { value: "contain", label: "Conter" },
+              { value: "cover", label: "Preencher" },
             ]}
           />
         </>

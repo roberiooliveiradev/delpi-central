@@ -201,12 +201,15 @@ export { patchComunicadoFrame };
 export function FormatRibbonFrameSection({
   density = "full",
   embed = false,
-  includeOpacity = true,
+  includeOpacity = false,
 }: {
   density?: FrameFieldDensity;
   /** Painel: omite caption do ribbon (accordion já titulou). */
   embed?: boolean;
-  /** Inclui opacidade (+ ajuste de mídia) no mesmo grupo Exibição. */
+  /**
+   * @deprecated Opacidade/ajuste ficam em `AppearanceSection` (Exibição).
+   * Mantido só para hosts legados — preferir sempre false.
+   */
   includeOpacity?: boolean;
 } = {}) {
   const captionPlacement = embed ? ("none" as const) : ("below" as const);

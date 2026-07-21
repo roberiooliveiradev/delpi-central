@@ -52,7 +52,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     actions:
       "Ações do elemento: duplicar, remover e, em mídia, biblioteca/recorte/upload.",
     display:
-      "Posição, tamanho e rotação do elemento. Opacidade e raio ficam na seção Forma quando houver chrome de forma.",
+      "Posição, tamanho e rotação do elemento. Opacidade fica em Exibição (mídia) ou Forma; não neste painel.",
     sizePosition:
       "Posição (X/Y), tamanho (largura/altura) e rotação em pixels de design da página, com origem no canto inferior esquerdo.",
     undo: "Desfazer a última alteração na programação ou no slide (Ctrl+Z).",

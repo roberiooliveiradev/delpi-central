@@ -17,6 +17,7 @@ import {
   serializeInternalBlocksPayload,
   type ExternalPastePlan,
 } from "../../utils/externalClipboardPaste";
+import { frameForImageNaturalSize, readImageNaturalSize } from "../../utils/imagePasteFrame";
 
 type Options = {
   playlistId: string;
@@ -141,17 +142,25 @@ export function useComunicadoEditorClipboard({
           const block = createBlock("image");
           const col = index % 2;
           const row = Math.floor(index / 2);
+          const natural = await readImageNaturalSize(file);
+          const baseFrame = frameForImageNaturalSize(
+            natural?.width ?? 0,
+            natural?.height ?? 0,
+          );
           created.push({
             ...block,
             assetId: asset.id,
             url,
             frame: {
-              x: Math.min(55, 10 + col * 40),
-              y: Math.min(50, 15 + row * 35),
-              w: 36,
-              h: 32,
+              ...baseFrame,
+              x: Math.min(55, baseFrame.x + col * 40),
+              y: Math.min(50, baseFrame.y + row * 35),
             },
-            style: { ...block.style, zIndex: z + 1 + index },
+            style: {
+              ...block.style,
+              objectFit: "contain",
+              zIndex: z + 1 + index,
+            },
           } as ComunicadoBlock);
         }
 

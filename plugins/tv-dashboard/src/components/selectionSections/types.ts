@@ -18,6 +18,7 @@ export type SelectionSectionId =
   | "iconEditor"
   | "shapeGallery"
   | "media"
+  | "appearance"
   | "imageCrop"
   | "canvasTable"
   | "inputBinding"

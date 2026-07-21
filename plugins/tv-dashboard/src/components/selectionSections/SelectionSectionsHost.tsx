@@ -20,6 +20,7 @@ import { IconSection } from "./IconSection";
 import { ImageCropSection } from "./ImageCropSection";
 import { InputBindingSection } from "./InputBindingSection";
 import { KpiAppearanceSection } from "./KpiAppearanceSection";
+import { AppearanceSection } from "./AppearanceSection";
 import { MediaSection } from "./MediaSection";
 import { PartFormatSection } from "./PartFormatSection";
 import { ShapeChromeSection } from "./ShapeChromeSection";
@@ -108,6 +109,8 @@ function renderSection(
       return <KpiAppearanceSection key={id} layout={layout} />;
     case "media":
       return <MediaSection key={id} layout={layout} labels={labels} />;
+    case "appearance":
+      return <AppearanceSection key={id} layout={layout} />;
     case "imageCrop":
       return <ImageCropSection key={id} layout={layout} />;
     case "canvasTable":
