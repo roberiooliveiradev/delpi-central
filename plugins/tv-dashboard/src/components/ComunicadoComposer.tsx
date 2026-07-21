@@ -434,26 +434,40 @@ export function ComunicadoComposerCanvas() {
     [clientToCanvasPercent, editingTextId, finishMarquee, stagePanMode],
   );
 
-  const handleCanvasContextMenu = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleStageContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, blockId?: string) => {
       event.preventDefault();
       if (editingTextId) return;
+      if (blockId) {
+        event.stopPropagation();
+        if (!isBlockSelected(blockId)) {
+          selectBlock(blockId);
+        }
+      } else {
+        const target = event.target as HTMLElement | null;
+        const onBlock = target?.closest?.("[data-block-id]");
+        // Fundo do palco / wrap (ex.: modo pan): menu de inserção/colar sem seleção.
+        if (!onBlock) {
+          clearSelection();
+        }
+      }
       setContextMenu({ x: event.clientX, y: event.clientY });
     },
-    [editingTextId],
+    [clearSelection, editingTextId, isBlockSelected, selectBlock],
+  );
+
+  const handleCanvasContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      handleStageContextMenu(event);
+    },
+    [handleStageContextMenu],
   );
 
   const handleBlockContextMenu = useCallback(
     (event: React.MouseEvent<HTMLDivElement>, blockId: string) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (editingTextId) return;
-      if (!isBlockSelected(blockId)) {
-        selectBlock(blockId);
-      }
-      setContextMenu({ x: event.clientX, y: event.clientY });
+      handleStageContextMenu(event, blockId);
     },
-    [editingTextId, isBlockSelected, selectBlock],
+    [handleStageContextMenu],
   );
 
   const primarySelected = selectedId;
@@ -506,7 +520,7 @@ export function ComunicadoComposerCanvas() {
   }, [marquee]);
 
   return (
-    <ComunicadoStageShell>
+    <ComunicadoStageShell onStageContextMenu={handleStageContextMenu}>
       <div
         className="td-composer__canvas-zoom-sizer"
         style={{
@@ -514,6 +528,7 @@ export function ComunicadoComposerCanvas() {
           height: designSize.height * stageZoom,
           padding: `${panGutter.y}px ${panGutter.x}px`,
         }}
+        onContextMenu={handleCanvasContextMenu}
       >
         <div
           ref={canvasRef}

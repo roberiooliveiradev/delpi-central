@@ -397,7 +397,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     selectAllColumns: "Manter só esta coluna",
   },
   contextMenu: {
-    menu: "Menu de contexto do elemento no palco.",
+    menu: "Menu de contexto do palco.",
     quickFormat: "Atalhos rápidos de preenchimento e contorno.",
     fill: "Cor de preenchimento",
     outline: "Cor do contorno",
@@ -411,6 +411,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     sendBackward: "Recuar",
     delete: "Excluir",
     format: "Formatar…",
+    insertHeading: "Inserir título",
+    insertText: "Inserir texto",
+    insertShape: "Inserir forma",
+    insertDataSource: "Inserir fonte de dados",
   },
   filmstripContextMenu: {
     menu: "Menu de contexto da tela",

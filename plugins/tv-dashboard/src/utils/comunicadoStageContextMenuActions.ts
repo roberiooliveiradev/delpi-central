@@ -15,7 +15,11 @@ export type ComunicadoContextMenuActionId =
   | "bringForward"
   | "sendBackward"
   | "delete"
-  | "format";
+  | "format"
+  | "insertHeading"
+  | "insertText"
+  | "insertShape"
+  | "insertDataSource";
 
 export type ComunicadoContextMenuActionState = {
   hasSelection: boolean;
@@ -66,6 +70,11 @@ export function isContextMenuActionEnabled(
       return state.canEditText;
     case "paste":
       return state.canPaste;
+    case "insertHeading":
+    case "insertText":
+    case "insertShape":
+    case "insertDataSource":
+      return !state.hasSelection;
     default:
       return false;
   }

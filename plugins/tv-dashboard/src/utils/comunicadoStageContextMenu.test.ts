@@ -70,6 +70,17 @@ describe("comunicadoStageContextMenuActions", () => {
     expect(isContextMenuActionEnabled("copy", state)).toBe(false);
   });
 
+  it("habilita inserir no palco vazio e desabilita com seleção", () => {
+    const empty = resolveContextMenuActionState({ selected: null, canPaste: false });
+    expect(isContextMenuActionEnabled("insertText", empty)).toBe(true);
+    expect(isContextMenuActionEnabled("insertShape", empty)).toBe(true);
+    expect(isContextMenuActionEnabled("insertDataSource", empty)).toBe(true);
+
+    const selected = createBlock("text", "Selecionado");
+    const withSelection = resolveContextMenuActionState({ selected, canPaste: false });
+    expect(isContextMenuActionEnabled("insertText", withSelection)).toBe(false);
+  });
+
   it("habilita editar texto em blocos suportados", () => {
     const selected = createBlock("text", "Editável");
     const state = resolveContextMenuActionState({ selected, canPaste: false });
