@@ -1,8 +1,14 @@
 # Metas por escopo (consolidado / filial)
 
-**Última atualização:** 2026-05-27
+**Última atualização:** 2026-07-21
 
 **Migrations:** `V016` (coluna e índice), `V017` (supports_branch_goals), `V018`/`V019` (seeds RH/Qualidade), `V020` (agregação consolidada), `V021` (metas por filial em `per_unit`)
+
+## Regressão — Engenharia IDD 0 com KPIs em 10 (jul/2026)
+
+Ver **[ENGINEERING_IDD_REGRESSION.md](./ENGINEERING_IDD_REGRESSION.md)**.
+
+Resumo: provider de engenharia só emite `unit_values.consolidated`. Penalizar “filial sem dado” com nota 0 (commit `9d519dcfb`, jun/2026) zerava o IDD do departamento no badge, enquanto o MFE calculava 10 nos cards. Calculador deve forçar caminho consolidado via `CONSOLIDATED_AGGREGATION_DEPARTMENT_IDS` — não reintroduzir score 0 por `01`/`02` ausentes nesses departamentos.
 
 ## Regra global
 

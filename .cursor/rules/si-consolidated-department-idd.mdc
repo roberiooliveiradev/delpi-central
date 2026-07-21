@@ -1,0 +1,26 @@
+---
+description: IDD de departamentos consolidados (engenharia/financeiro) — não zerar por filial 01/02 ausente
+globs: strategic-indicators-api/**/*.{py,md}
+alwaysApply: false
+---
+
+# SI — IDD consolidado (engenharia / financeiro)
+
+## Princípio
+
+Departamentos em `CONSOLIDATED_AGGREGATION_DEPARTMENT_IDS` (`branch_filter.py`) publicam medição **só** em `unit_values.consolidated`. O IDD do departamento usa valor consolidado — **nunca** tratar ausência de `01`/`02` como nota 0.
+
+Doc da regressão (jul/2026): `strategic-indicators-api/docs/ENGINEERING_IDD_REGRESSION.md`.
+
+## O que NÃO fazer
+
+- Generalizar `_scores_zero_when_unfilled` / score 0 por filial faltante sem excluir deptos consolidados.
+- Forçar `average_of_units` no cálculo de engenharia/financeiro (mesmo se o admin disser isso).
+- “Corrigir” inventando `unit_values` 01/02 no provider de engenharia ou IDD no MFE do dashboard.
+- Migration SQL para alterar agregação/catálogo — usar admin SI.
+
+## O que fazer
+
+- Usar `_uses_average_of_units_aggregation` / `is_consolidated_aggregation_department` no calculador.
+- Novo depto só-consolidado → constante + `build_unit_values_for_consolidated_department`.
+- Teste: `tests/test_engineering_consolidated_branch_view.py` (cenários IDD ≠ 0 com `consolidated` only).

@@ -221,6 +221,14 @@ Verificar manifesto e roles do usuário (`strategic-indicators.view`, etc.).
 
 Resposta deve passar por `to_json_safe` em `si_read_route_support`. Se reaparecer, verificar rota que não usa `json_read_response`.
 
+### Dashboard Engenharia — IDD 0.0 com KPIs em 10
+
+**Sintoma:** badge `IDD 0.0 Crítico` no header; cards LMP/TRANSFORMA+ com Nota IDD 10.
+
+**Causa:** calculador SI tratando medição só-`consolidated` como se faltasse filial `01`/`02` (nota 0). Não é falha das rotas `/engineering/*` nem do cadastro admin se agregação já está Consolidado.
+
+**Ação:** ver [ENGINEERING_IDD_REGRESSION.md](./ENGINEERING_IDD_REGRESSION.md); validar testes `test_engineering_consolidated_branch_view.py`; não “corrigir” no MFE.
+
 ## Metas em modo Curva e migration V025
 
 Após deploy com metas `monthly_curve` que ainda tinham `goal_value` preenchido (legado):

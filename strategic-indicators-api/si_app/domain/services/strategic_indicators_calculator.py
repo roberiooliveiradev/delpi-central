@@ -1367,6 +1367,8 @@ class StrategicIndicatorsCalculator:
         Departamentos com medição só em `consolidated` (engenharia, financeiro)
         nunca agregam por filial 01/02 — mesmo se o catálogo ainda tiver
         `average_of_units` (seed V009 / override admin).
+
+        Regressão jul/2026 (IDD 0 com KPIs em 10): docs/ENGINEERING_IDD_REGRESSION.md
         """
         if is_consolidated_aggregation_department(department.department_id):
             return False

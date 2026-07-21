@@ -100,6 +100,7 @@ Deploy / subir stack / rebuild Docker → infra-sequential-container-startup →
 OOM ou build MF em prod → infra-sequential-container-startup → fase remote antes de mfe
 Patch MF / federationReactProxyFix → mf-federation-patch-safety → teste + plugin-ui vite build (nunca ReDoS)
 Migration SQL nova/ajuste         → migrations-immutable-checksum → sempre V0NN novo (nunca editar aplicada)
+IDD engenharia 0 com KPIs em 10   → si-consolidated-department-idd + docs/ENGINEERING_IDD_REGRESSION.md (não MFE)
 ```
 
 ## Ordem de prioridade em conflito
