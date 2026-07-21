@@ -1,7 +1,4 @@
 import {
-  adjustmentHandleCssPosition,
-  blockShapeChromeAdjustmentSpecs,
-  blockSupportsShapeChromeHandles,
   buildViewDataLinkPatch,
   buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
@@ -11,7 +8,6 @@ import {
   isFetchableDataBlockType,
   isBlockHiddenOnStage,
   resolveBlockSelectionBorderRadiusPx,
-  resolveBlockShapeChromeAdjustmentValues,
   resolveViewportPixelSize,
   isLineShapeKind,
   resolveBlockPlacementStyle,
@@ -55,6 +51,7 @@ import { shouldRenderStageGrid } from "../utils/stageViewport";
 import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
+import { BlockSelectionChrome } from "./BlockSelectionChrome";
 import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
@@ -62,26 +59,10 @@ import {
   ComplexViewFloatToolbar,
   shouldShowComplexViewFloatToolbar,
 } from "./ComplexViewFloatToolbar";
-import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 import { RemoteSelectionFrame } from "./RemoteSelectionFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const MARQUEE_THRESHOLD_PX = 4;
-
-const BLOCK_RESIZE_HANDLES: Array<{
-  mode: Exclude<BlockDragMode, "move" | `adjust-${number}`>;
-  position: string;
-  label: string;
-}> = [
-  { mode: "resize-nw", position: "nw", label: "Redimensionar canto superior esquerdo" },
-  { mode: "resize-n", position: "n", label: "Redimensionar borda superior" },
-  { mode: "resize-ne", position: "ne", label: "Redimensionar canto superior direito" },
-  { mode: "resize-w", position: "w", label: "Redimensionar borda esquerda" },
-  { mode: "resize-e", position: "e", label: "Redimensionar borda direita" },
-  { mode: "resize-sw", position: "sw", label: "Redimensionar canto inferior esquerdo" },
-  { mode: "resize-s", position: "s", label: "Redimensionar borda inferior" },
-  { mode: "resize-se", position: "se", label: "Redimensionar canto inferior direito" },
-];
 
 function useCanvasBackgroundStyle() {
   const { background } = useComunicadoEditor();
@@ -767,55 +748,15 @@ export function ComunicadoComposerCanvas() {
                   />
                 ) : null}
                 {showResizeHandles(block.id) ? (
-                  <div className="td-composer__block-handles">
-                    {/* Outline CSS não é hit-target — anel de arraste na linha pontilhada. */}
-                    <SelectionMoveHitFrame
-                      block={block}
-                      onMovePointerDown={startDragRespectingPan}
-                    />
-                    <button
-                      type="button"
-                      className="td-composer__rotate"
-                      aria-label="Girar elemento"
-                      onPointerDown={(event) => startDragRespectingPan(event, block, "rotate")}
-                    />
-                    {BLOCK_RESIZE_HANDLES.map(({ mode, position, label }) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        className={`td-composer__resize td-composer__resize--${position}`}
-                        aria-label={label}
-                        onPointerDown={(event) => startDragRespectingPan(event, block, mode)}
-                      />
-                    ))}
-                    {/* KPI: raio do fundo só com parte `card` (ribbon), não diamante global. */}
-                    {blockSupportsShapeChromeHandles(block) && block.type !== "kpi_view"
-                      ? blockShapeChromeAdjustmentSpecs(block).map((spec) => {
-                          const shortSidePx = Math.min(
-                            (block.frame.w / 100) * designSize.width,
-                            (block.frame.h / 100) * designSize.height,
-                          );
-                          const values = resolveBlockShapeChromeAdjustmentValues(
-                            block,
-                            shortSidePx,
-                          );
-                          const pos = adjustmentHandleCssPosition(spec, values);
-                          return (
-                            <button
-                              key={`adj-${spec.index}`}
-                              type="button"
-                              className="td-composer__adjust"
-                              style={{ left: pos.left, top: pos.top }}
-                              aria-label={`Ajustar ${spec.label}`}
-                              title={spec.label}
-                              onPointerDown={(event) =>
-                                startDragRespectingPan(event, block, `adjust-${spec.index}`)
-                              }
-                            />
-                          );
-                        })
-                      : null}
-                  </div>
+                  <BlockSelectionChrome
+                    block={block}
+                    designShortSidePx={Math.min(
+                      (block.frame.w / 100) * designSize.width,
+                      (block.frame.h / 100) * designSize.height,
+                    )}
+                    allowResize={block.type === "shape" ? shapeBlockAllowsResize(block) : true}
+                    onPointerDown={startDragRespectingPan}
+                  />
                 ) : null}
                 {shouldShowComplexViewFloatToolbar({
                   block,

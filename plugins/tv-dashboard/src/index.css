@@ -38,7 +38,7 @@
   --td-selection-rotate-size: 16px;
   --td-selection-outline-width: 2.5px;
   --td-remote-selection: var(--danger, #ef4444);
-  --td-global-selection-pad: 14px;
+  --td-global-selection-pad: 6px;
   --td-selection-rotate-stem: 26px;
   --td-selection-rotate-offset: 34px;
   --td-float-popover-bg: color-mix(in srgb, var(--td-text) 92%, var(--td-surface));
@@ -1570,7 +1570,7 @@ body.td-composer--marqueeing *{
    */
   outline: var(--td-selection-outline-width, 2.5px) dashed
     var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff));
-  outline-offset: var(--td-global-selection-pad, 14px);
+  outline-offset: var(--td-global-selection-pad, 6px);
   overflow: visible;
   isolation: isolate;
 }
@@ -1589,7 +1589,7 @@ body.td-composer--marqueeing *{
   pointer-events: none;
   outline: var(--td-selection-outline-width, 2.5px) dashed
     var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff));
-  outline-offset: var(--td-global-selection-pad, 14px);
+  outline-offset: var(--td-global-selection-pad, 6px);
   overflow: visible;
 }
 .dashboard-tv-dashboard .td-composer__group-chrome .td-composer__block-handles{

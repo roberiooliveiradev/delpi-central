@@ -604,8 +604,9 @@
 }
 
 .tdp-comunicado__icon-svg {
-  width: 72%;
-  height: 72%;
+  /* Preenche o frame como o SVG das formas — evita “ar” extra vs. outline de seleção. */
+  width: 92%;
+  height: 92%;
 }
 
 .tdp-comunicado__link {

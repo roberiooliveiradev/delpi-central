@@ -12,6 +12,7 @@ import {
 } from "./comunicadoBlockShapeChrome";
 import {
   createChartViewBlock,
+  createIconBlock,
   createInputBlock,
   createKpiViewBlock,
   createShapeBlock,
@@ -29,14 +30,27 @@ import type {
 } from "./comunicadoTypes";
 
 describe("comunicadoBlockShapeChrome", () => {
-  it("herda handles de cantos em KPI, tabela e chart (além da forma)", () => {
+  it("herda handles de cantos em KPI, tabela, chart e ícone (além da forma)", () => {
     expect(blockSupportsShapeChromeHandles(createShapeBlock("rectangle"))).toBe(true);
     expect(blockSupportsShapeChromeHandles(createKpiViewBlock())).toBe(true);
     expect(blockSupportsShapeChromeHandles(createTableViewBlock(3, 3))).toBe(true);
     expect(blockSupportsShapeChromeHandles(createChartViewBlock("line"))).toBe(true);
+    expect(blockSupportsShapeChromeHandles(createIconBlock("Factory"))).toBe(true);
     expect(blockShapeChromeAdjustmentSpecs(createKpiViewBlock()).some((s) => s.id === "corner")).toBe(
       true,
     );
+    expect(blockShapeChromeAdjustmentSpecs(createIconBlock("Factory")).some((s) => s.id === "corner")).toBe(
+      true,
+    );
+  });
+
+  it("aplica ajuste de canto no ícone (style.borderRadius)", () => {
+    const block = createIconBlock("Factory");
+    const patch = applyBlockShapeChromeAdjustment(block, 0, 0.25, 80);
+    expect(patch?.style?.borderRadius).toBe(20);
+    const next = { ...block, ...patch };
+    expect(resolveBlockShapeChromeCornerPx(next)).toBe(20);
+    expect(resolveBlockSelectionBorderRadiusPx(next)).toBe(20);
   });
 
   it("aplica ajuste de canto no card do KPI", () => {

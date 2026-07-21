@@ -20,13 +20,13 @@ export type SelectionChromeMetrics = {
   rotateStem: number;
 };
 
-/** Alvo visual na tela @ zoom 100% (maior que o fixo antigo de 12/1). */
+/** Alvo visual na tela @ zoom 100% — pad enxuto (ícone/forma na mesma moldura). */
 const SCREEN_AT_100 = {
   handle: 16,
   adjust: 16,
   rotate: 16,
   outline: 2.5,
-  pad: 14,
+  pad: 6,
 } as const;
 
 /**
