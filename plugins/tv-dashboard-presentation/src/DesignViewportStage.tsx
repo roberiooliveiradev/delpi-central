@@ -11,19 +11,18 @@ type Props = {
   contentClassName?: string;
   style?: CSSProperties;
   /**
-   * `contain` (padrão) — letterbox/pillarbox sem cortar.
+   * `contain` (padrão) — letterbox/pillarbox sem cortar o slide.
    * `cover` — preenche o container (pode cortar bordas do slide).
    */
   fit?: DesignViewportFitMode;
 };
 
 /**
- * Pasteboard dentro do layer com `transform: scale`.
- * Ancestral com `overflow: hidden` + transform clipa filhos ao border-box do
- * elemento transformado — sem bleed, logo/card com frame negativo some na
- * borda da moldura (quebra paridade com o editor).
+ * Bleed zero na apresentação/prévia: o stage escala só a moldura de design.
+ * Conteúdo com frame fora de 0–100% é clipado em `__design` (`overflow: hidden`).
+ * Pasteboard (itens visíveis fora da moldura) existe só no editor.
  */
-export const DESIGN_VIEWPORT_BLEED_RATIO = 0.5;
+export const DESIGN_VIEWPORT_BLEED_RATIO = 0;
 
 export type DesignViewportBleedSize = {
   bleedX: number;
@@ -65,14 +64,11 @@ export function computeDesignViewportScale(
 
 /**
  * Renderiza o slide no tamanho de design do `viewportProfile` e aplica escala
- * uniforme para encaixar no container.
+ * uniforme para encaixar no container (prévia admin, TV pública, filmstrip).
  *
- * - `contain` — letterbox/pillarbox sem cortar (prévia, kiosk e editor).
- * - `cover` — preenche o container (pode cortar bordas; só sob demanda).
- *
- * O stage transformado inclui pasteboard (bleed) ao redor do retângulo de
- * design — itens fora da moldura pintam no letterbox, como no editor.
- * Clip físico permanece no container / `.tdp-stage` / kiosk.
+ * - Posições/tamanhos: frames `%` intactos (sem reconstruir layout).
+ * - Clip: o que está fora da moldura 1080p não pinta no letterbox.
+ * - Editor: pasteboard em `.td-composer__canvas` — não usa este stage.
  */
 export function DesignViewportStage({
   viewportProfile,
@@ -148,7 +144,7 @@ export function DesignViewportStage({
             top: bleedY,
             width,
             height,
-            overflow: "visible",
+            overflow: "hidden",
           }}
         >
           {children}

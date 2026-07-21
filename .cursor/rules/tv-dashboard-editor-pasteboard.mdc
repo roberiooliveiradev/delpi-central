@@ -13,18 +13,18 @@ alwaysApply: false
 | Camada | Comportamento |
 |--------|----------------|
 | **Moldura 1080p** | Mesmo CSS (`.delpi-ui-comunicado`), `font-size: 16px`, font stack de design |
-| **Editor** | Dual-class no canvas + `__stage` (como `ComunicadoStageFrame`); pasteboard só no gutter |
-| **TV** | `DesignViewportStage` escala o design com `contain`; clip físico no kiosk |
+| **Editor** | Dual-class no canvas + `__stage`; pasteboard (`overflow: visible`) no gutter |
+| **TV / prévia** | `DesignViewportStage` escala com `contain` e **clipa** na moldura (`overflow: hidden`) |
 | **Animações de entrada** | Off por padrão; só com `.tdp-stage--animate-entrances` |
 
-Itens com frame fora de 0–100%: existem no mesmo sistema de coordenadas. Na TV 16:9 a abertura = moldura → overhang sai da tela física (igual PowerPoint). O pasteboard do editor é chrome de edição, não «outra geometria».
+Itens com frame fora de 0–100%: mesmas coordenadas no editor e na TV. No editor aparecem no pasteboard; na apresentação/prévia são cortados na borda do slide (como PowerPoint no modo apresentação).
 
 ## Anti-padrões
 
 1. Tipografia de conteúdo em `rem` / `vw` do host (portal ≠ public-hub).
 2. Árvore do editor sem classes `delpi-ui-comunicado*` / sem `__stage`.
 3. Animações de entrada sempre ligadas na TV (deslocam blocos vs editor).
-4. Só aumentar `DESIGN_VIEWPORT_BLEED_RATIO` esperando pasteboard na TV 16:9.
+4. Bleed/`overflow:visible` na TV «para ver pasteboard» — apresentação deve clipar; pasteboard é só do editor.
 5. **Clampar X/Y a 0–100 no enrichment da API** (`ComunicadoEnrichmentService._normalize_frame`) — «reconstrói» o layout na apresentação.
 
 ## Módulos canônicos

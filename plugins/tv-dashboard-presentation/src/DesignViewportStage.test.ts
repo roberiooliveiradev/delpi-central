@@ -7,24 +7,19 @@ import {
 } from "./DesignViewportStage";
 
 describe("computeDesignViewportBleedSize", () => {
-  it("expande o stage além do design para pasteboard (paridade editor)", () => {
+  it("apresentação/prévia: bleed zero — stage = moldura de design", () => {
     const { bleedX, bleedY, outerW, outerH } = computeDesignViewportBleedSize(1920, 1080);
-    expect(DESIGN_VIEWPORT_BLEED_RATIO).toBeGreaterThan(0);
-    expect(bleedX).toBe(1920 * DESIGN_VIEWPORT_BLEED_RATIO);
-    expect(bleedY).toBe(1080 * DESIGN_VIEWPORT_BLEED_RATIO);
-    expect(outerW).toBe(1920 + 2 * bleedX);
-    expect(outerH).toBe(1080 + 2 * bleedY);
+    expect(DESIGN_VIEWPORT_BLEED_RATIO).toBe(0);
+    expect(bleedX).toBe(0);
+    expect(bleedY).toBe(0);
+    expect(outerW).toBe(1920);
+    expect(outerH).toBe(1080);
   });
 
-  it("frame negativo típico (−10%) ainda cabe no bleed padrão", () => {
-    const { bleedX } = computeDesignViewportBleedSize(1920, 1080);
-    const overhangPx = 1920 * 0.1;
-    expect(bleedX).toBeGreaterThanOrEqual(overhangPx);
-  });
-
-  it("KPI meio fora (−15%) cabe no bleed — apresentação não pode «puxar» para x=0", () => {
-    const { bleedX } = computeDesignViewportBleedSize(1920, 1080);
-    expect(bleedX).toBeGreaterThanOrEqual(1920 * 0.15);
+  it("aceita bleed explícito só sob demanda (não é o default da TV)", () => {
+    const { bleedX, outerW } = computeDesignViewportBleedSize(1920, 1080, 0.5);
+    expect(bleedX).toBe(960);
+    expect(outerW).toBe(1920 + 2 * 960);
   });
 });
 

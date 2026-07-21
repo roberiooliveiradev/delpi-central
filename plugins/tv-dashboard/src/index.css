@@ -1169,7 +1169,8 @@
   aspect-ratio: auto;
   border-radius: 0;
   /*
-   * Pasteboard (PowerPoint-like): overflow VISÍVEL — igual TV na moldura.
+   * Pasteboard (PowerPoint-like): overflow VISÍVEL só no editor.
+   * Apresentação/prévia clipam em DesignViewportStage (`overflow: hidden`).
    * Também usa classes `delpi-ui-comunicado` (tipografia 16px / font stack de design).
    * Anti-padrão: overflow:hidden aqui «para WYSIWYG» (logo/IDD cortados no palco).
    */

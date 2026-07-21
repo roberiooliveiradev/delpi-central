@@ -10,15 +10,15 @@ function ruleBody(css: string, selector: string): string {
 }
 
 /**
- * Contrato de paridade editor ↔ TV:
+ * Contrato editor ↔ TV:
  * - Editor (`.td-composer__canvas`): overflow visible — pasteboard.
- * - Comunicado / `__design`: overflow visible na moldura.
- * - Pasteboard na TV: bleed em `DesignViewportStage` (não só CSS overflow).
+ * - Comunicado CSS: overflow visible (clip fica no DesignViewportStage na TV).
+ * - Apresentação/prévia (`__design`): overflow hidden — corta overhang.
  *
  * Anti-padrão: overflow:hidden no canvas do editor «para WYSIWYG».
  */
-describe("design stage clip contract (editor ↔ TV parity)", () => {
-  it("canvas, comunicado e design-viewport__design NÃO clipam a moldura", () => {
+describe("design stage clip contract (editor ↔ TV)", () => {
+  it("editor pasteboard visível; apresentação clipa a moldura", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const editorCss = readFileSync(join(here, "index.css"), "utf8");
     const presentationCss = readFileSync(
@@ -43,10 +43,11 @@ describe("design stage clip contract (editor ↔ TV parity)", () => {
     expect(comunicadoBody).not.toMatch(/^\s*overflow:\s*hidden\s*;/m);
 
     const designBody = ruleBody(presentationCss, ".tdp-design-viewport__design");
-    expect(designBody).toMatch(/^\s*overflow:\s*visible\s*;/m);
+    expect(designBody).toMatch(/^\s*overflow:\s*hidden\s*;/m);
+    expect(designBody).not.toMatch(/^\s*overflow:\s*visible\s*;/m);
 
-    expect(viewportSrc).toMatch(/DESIGN_VIEWPORT_BLEED_RATIO/);
-    expect(viewportSrc).toMatch(/computeDesignViewportBleedSize/);
+    expect(viewportSrc).toMatch(/DESIGN_VIEWPORT_BLEED_RATIO\s*=\s*0/);
+    expect(viewportSrc).toMatch(/overflow:\s*"hidden"/);
     expect(viewportSrc).toMatch(/tdp-design-viewport__design/);
 
     expect(comunicadoBody).toMatch(/font-size:\s*16px/);

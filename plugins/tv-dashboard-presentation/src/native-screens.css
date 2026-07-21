@@ -378,13 +378,13 @@
 }
 
 .tdp-design-viewport__stage {
-  /* Bleed wrapper (transform); clip só além do pasteboard. */
+  /* Wrapper do transform; tamanho = moldura de design (sem bleed). */
   background: transparent;
 }
 
 .tdp-design-viewport__design {
-  /* Retângulo 1080p — overflow visible; pasteboard está no __stage (bleed). */
-  overflow: visible;
+  /* Apresentação/prévia: corta o que sai da moldura 1080p (pasteboard só no editor). */
+  overflow: hidden;
   background: inherit;
   /* Raiz tipográfica de design — isola do `font-size: clamp(...vw)` do `.tdp-stage`. */
   font-size: 16px;
