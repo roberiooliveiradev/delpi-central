@@ -136,7 +136,7 @@ export type KpiCardFlatOptions = {
   tone?: MetricKpiCardTone;
   valueColor?: string;
   backgroundColor?: string;
-  valueFormat?: "number" | "percent" | "compact" | "raw";
+  valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
 };
 
 /** Frame padrão do ícone (canto superior direito). */

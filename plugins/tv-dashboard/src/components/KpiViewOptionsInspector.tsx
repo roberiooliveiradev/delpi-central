@@ -141,6 +141,7 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
                   { value: "raw", label: "Como veio da fonte" },
                   { value: "number", label: "Número" },
                   { value: "percent", label: "Percentual" },
+                  { value: "currency", label: "Moeda" },
                   { value: "compact", label: "Compacto" },
                 ]}
               />

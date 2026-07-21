@@ -179,6 +179,7 @@ export function KpiMetricsProjectionEditor({
                     { value: "raw", label: "Como veio" },
                     { value: "number", label: "Número" },
                     { value: "percent", label: "Percentual" },
+                    { value: "currency", label: "Moeda" },
                     { value: "compact", label: "Compacto" },
                   ]}
                 />

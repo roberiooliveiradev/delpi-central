@@ -118,8 +118,9 @@ describe("textViewProjection", () => {
     expect(textBlockHasDataBinding({ content: "estático" })).toBe(false);
   });
 
-  it("formatTextProjectionValue compact", () => {
-    expect(formatTextProjectionValue(12500, "compact")).toMatch(/12/);
+  it("formatTextProjectionValue percent usa vírgula; currency formata BRL", () => {
+    expect(formatTextProjectionValue(80, "percent")).toBe("80,0%");
+    expect(formatTextProjectionValue(4005.33, "currency")).toMatch(/R\$\s*4\.005,33/);
   });
 
   it("campo value do KPI não é sombreado por tabela campo/valor (SI escalar)", () => {

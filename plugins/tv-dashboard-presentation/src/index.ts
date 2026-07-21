@@ -74,7 +74,7 @@ export {
   patchComunicadoFramePageBottomLeftPx,
   patchHostRelativeFramePageBottomLeftPx,
 } from "./framePageCoordinates";
-export { formatPct, formatNumber } from "./nativeFormat";
+export { formatPct, formatNumber, formatCurrency } from "./nativeFormat";
 export type {
   PresentationMeta,
   PresentationPayloadLike,

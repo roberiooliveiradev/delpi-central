@@ -122,7 +122,7 @@ export type ComunicadoTextDataRef = {
   colorRules?: import("@delpi/plugin-ui/index").DelpiKpiColorRule[];
 };
 
-export type TextProjectionFormat = "number" | "percent" | "compact" | "raw" | "date";
+export type TextProjectionFormat = "number" | "percent" | "compact" | "raw" | "date" | "currency";
 
 export type ComunicadoTextProjection = {
   field: string;

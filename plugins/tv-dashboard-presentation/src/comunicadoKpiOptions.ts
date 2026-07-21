@@ -15,7 +15,7 @@ export type ComunicadoKpiOptions = {
   tone?: DelpiKpiCardTone;
   valueColor?: string;
   backgroundColor?: string;
-  valueFormat?: "number" | "percent" | "compact" | "raw";
+  valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
   colorRules?: DelpiKpiColorRule[];
 };
 

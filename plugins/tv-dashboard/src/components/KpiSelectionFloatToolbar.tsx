@@ -76,11 +76,13 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
   const formatLabel =
     options.valueFormat === "percent"
       ? "Percentual"
-      : options.valueFormat === "number"
-        ? "Número"
-        : options.valueFormat === "compact"
-          ? "Compacto"
-          : "Como veio";
+      : options.valueFormat === "currency"
+        ? "Moeda"
+        : options.valueFormat === "number"
+          ? "Número"
+          : options.valueFormat === "compact"
+            ? "Compacto"
+            : "Como veio";
 
   return (
     <ComplexSelectionFloatToolbar
@@ -125,12 +127,14 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
               patchOptions({
                 valueFormat:
                   options.valueFormat === "percent"
-                    ? "number"
-                    : options.valueFormat === "number"
-                      ? "compact"
-                      : options.valueFormat === "compact"
-                        ? "raw"
-                        : "percent",
+                    ? "currency"
+                    : options.valueFormat === "currency"
+                      ? "number"
+                      : options.valueFormat === "number"
+                        ? "compact"
+                        : options.valueFormat === "compact"
+                          ? "raw"
+                          : "percent",
               });
             }}
           />

@@ -3,7 +3,7 @@ import {
   resolveDelpiKpiTone,
 } from "@delpi/plugin-ui/index";
 
-import { formatNumber, formatPct } from "./nativeFormat";
+import { formatCurrency, formatNumber, formatPct } from "./nativeFormat";
 import type {
   ComunicadoBlock,
   ComunicadoContentRun,
@@ -89,6 +89,7 @@ export function formatTextProjectionValue(
   const numeric = parseProjectionNumber(value);
   if (numeric == null) return String(value);
   if (format === "percent") return formatPct(numeric);
+  if (format === "currency") return formatCurrency(numeric);
   if (format === "compact") {
     return numeric.toLocaleString("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
   }

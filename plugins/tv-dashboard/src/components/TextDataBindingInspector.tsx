@@ -23,6 +23,7 @@ const H = TV_DASHBOARD_HELP_TOOLTIPS.data;
 const FORMAT_OPTIONS: Array<{ value: TextProjectionFormat; label: string }> = [
   { value: "number", label: "Número" },
   { value: "percent", label: "Percentual" },
+  { value: "currency", label: "Moeda" },
   { value: "compact", label: "Compacto" },
   { value: "raw", label: "Texto bruto" },
   { value: "date", label: "Data" },

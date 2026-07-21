@@ -25,7 +25,7 @@ export type KpiMetricProjection = {
   field: string;
   aggregation?: ViewAggregation;
   label?: string;
-  format?: "number" | "percent" | "compact" | "raw";
+  format?: "number" | "percent" | "compact" | "raw" | "currency";
   colorRules?: DelpiKpiColorRule[];
   visible?: boolean;
 };
