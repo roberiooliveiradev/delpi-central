@@ -589,7 +589,7 @@ export function ComunicadoComposerCanvas() {
               <div className="td-composer__stage-guide td-composer__stage-guide--h" aria-hidden="true" />
             </>
           ) : null}
-          {showStageGuides && activeSmartGuides.length > 0
+          {activeSmartGuides.length > 0
             ? activeSmartGuides.map((guide, index) => (
                 <div
                   key={`smart-${guide.orientation}-${guide.position}-${index}`}

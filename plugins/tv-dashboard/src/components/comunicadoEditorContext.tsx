@@ -340,7 +340,6 @@ export function ComunicadoEditorProvider({
     pushPast,
     deckHistory,
     snapEnabledRef: stage.snapEnabledRef,
-    showStageGuidesRef: stage.showStageGuidesRef,
     stageGridSizePercentRef: stage.stageGridSizePercentRef,
   });
   stage.bindCanvasRef(canvasRef);

@@ -35,7 +35,6 @@ type Options = {
   pushPast: (snapshot: ComunicadoConfig) => void;
   deckHistory: DeckEditorHistoryContextValue | null;
   snapEnabledRef: MutableRefObject<boolean>;
-  showStageGuidesRef: MutableRefObject<boolean>;
   stageGridSizePercentRef: MutableRefObject<number>;
 };
 
@@ -69,7 +68,6 @@ export function useComunicadoEditorDrag({
   pushPast,
   deckHistory,
   snapEnabledRef,
-  showStageGuidesRef,
   stageGridSizePercentRef,
 }: Options) {
   const dragSnapshotRef = useRef<ComunicadoConfig | null>(null);
@@ -128,7 +126,7 @@ export function useComunicadoEditorDrag({
       let workingFrame = frame;
       let guides: SmartGuideLine[] = [];
 
-      if (showStageGuidesRef.current) {
+      if (snapEnabledRef.current) {
         const peers = peerFramesForSmartGuides(configRef.current.blocks ?? [], excludeIds);
         const mode = resolveLiveSnapMode(baseline, frame);
         const snapped = snapFrameToPeerBlocks(workingFrame, peers, mode);
@@ -169,7 +167,7 @@ export function useComunicadoEditorDrag({
       }
       updateBlocksSilent(reconcileConnectorsAfterDrag(nextBlocks, draggedIds));
     },
-    [configRef, resolveBaseline, showStageGuidesRef, updateBlocksSilent],
+    [configRef, resolveBaseline, snapEnabledRef, updateBlocksSilent],
   );
 
   const handleInteractionStart = useCallback(() => {
@@ -253,12 +251,12 @@ export function useComunicadoEditorDrag({
         const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
 
         let snappedFrame = current.frame;
-        /* Multi: o live já encaixou o primário; não reencaixar cada um (quebra o delta). */
-        if (showStageGuidesRef.current && idsToFinalize.length === 1) {
-          const peers = peerFramesForSmartGuides(nextBlocks, draggedIds);
-          snappedFrame = snapFrameToPeerBlocks(snappedFrame, peers, snapMode).frame;
-        }
         if (snapEnabledRef.current) {
+          /* Multi: o live já encaixou o primário; não reencaixar cada um (quebra o delta). */
+          if (idsToFinalize.length === 1) {
+            const peers = peerFramesForSmartGuides(nextBlocks, draggedIds);
+            snappedFrame = snapFrameToPeerBlocks(snappedFrame, peers, snapMode).frame;
+          }
           snappedFrame = snapComunicadoFrame(current, snappedFrame, snapMode, snapPercents);
         } else {
           snappedFrame = clampFrameForBlock(current, snappedFrame);
@@ -317,7 +315,6 @@ export function useComunicadoEditorDrag({
       configRef,
       deckHistory,
       pushPast,
-      showStageGuidesRef,
       snapEnabledRef,
       stageGridSizePercentRef,
     ],
