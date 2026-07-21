@@ -32,6 +32,21 @@ describe("comunicadoEditorClipboard", () => {
     expect(result.pastedIds[0]).not.toBe("a");
   });
 
+  it("cola grupo com novo groupId (cópia agrupada, fora do grupo da origem)", () => {
+    const payload = cloneBlocksForClipboard([
+      fakeBlock("a", "grp_src"),
+      fakeBlock("b", "grp_src"),
+    ]);
+    const existing = [fakeBlock("existing", "grp_src")];
+    const result = pasteClipboardBlocks(existing, payload, { x: 2, y: 2 });
+    const pasted = result.blocks.filter((block) => result.pastedIds.includes(block.id));
+    expect(pasted).toHaveLength(2);
+    expect(pasted[0]?.groupId).toBeTruthy();
+    expect(pasted[0]?.groupId).not.toBe("grp_src");
+    expect(pasted[1]?.groupId).toBe(pasted[0]?.groupId);
+    expect(existing[0].groupId).toBe("grp_src");
+  });
+
   it("cloneBlocksForClipboard inclui fonte ligada do slide", () => {
     const src = {
       id: "src-1",
