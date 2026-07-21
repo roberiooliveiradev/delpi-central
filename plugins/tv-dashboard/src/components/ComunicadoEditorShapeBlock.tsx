@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, type CSSProperties } f
 import {
   blockCssStyle,
   ComunicadoBlockView,
+  patchTextProjectionFromEditedDisplay,
+  resolveVisualBoxDisplayText,
   visualBoxBlockModifierClasses,
   type ComunicadoShapeBlock,
 } from "@delpi/tv-dashboard-presentation";
@@ -18,6 +20,13 @@ type Props = {
 
 const PLACEHOLDER = "Texto na forma";
 
+function shapeDisplayText(block: ComunicadoShapeBlock): string {
+  return (
+    resolveVisualBoxDisplayText(block, "resolved" in block ? block.resolved : undefined).content ??
+    ""
+  );
+}
+
 export function ComunicadoEditorShapeBlock({
   block,
   fontScale = 1,
@@ -27,13 +36,16 @@ export function ComunicadoEditorShapeBlock({
 }: Props) {
   const {
     updateBlockContent,
+    updateBlock,
     setEditingTextId,
     selectBlock,
     registerTextEditorBridge,
     requestRibbonTab,
   } = useComunicadoEditor();
   const editorRef = useRef<HTMLDivElement>(null);
-  const draftRef = useRef(block.content ?? "");
+  const blockRef = useRef(block);
+  blockRef.current = block;
+  const draftRef = useRef(shapeDisplayText(block));
 
   const style: CSSProperties = {
     ...blockCssStyle(block, { fontScale }),
@@ -61,8 +73,19 @@ export function ComunicadoEditorShapeBlock({
   const commitDraft = useCallback(() => {
     const fromEditor = editorRef.current?.textContent ?? draftRef.current;
     draftRef.current = fromEditor;
-    updateBlockContent(block.id, fromEditor);
-  }, [block.id, updateBlockContent]);
+    const blockNow = blockRef.current;
+    const projection = blockNow.textProjection;
+    if (projection?.field?.trim()) {
+      const nextProjection = patchTextProjectionFromEditedDisplay(
+        projection,
+        fromEditor,
+        "resolved" in blockNow ? blockNow.resolved : undefined,
+      );
+      updateBlock(blockNow.id, { textProjection: nextProjection });
+      return;
+    }
+    updateBlockContent(blockNow.id, fromEditor);
+  }, [updateBlock, updateBlockContent]);
 
   function exitEditing() {
     commitDraft();
@@ -71,10 +94,11 @@ export function ComunicadoEditorShapeBlock({
 
   useLayoutEffect(() => {
     if (!isEditing) return;
-    draftRef.current = block.content ?? "";
+    const display = shapeDisplayText(block);
+    draftRef.current = display;
     const editor = editorRef.current;
     if (!editor) return;
-    editor.textContent = block.content ?? "";
+    editor.textContent = display;
     editor.focus();
     const range = document.createRange();
     range.selectNodeContents(editor);
@@ -82,7 +106,7 @@ export function ComunicadoEditorShapeBlock({
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
-  }, [isEditing, block.id]);
+  }, [isEditing, block.id, block.content, block.textProjection, block.resolved]);
 
   useEffect(() => {
     if (!isEditing) return;

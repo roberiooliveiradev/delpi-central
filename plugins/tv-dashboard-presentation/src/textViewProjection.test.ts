@@ -4,8 +4,10 @@ import type { ComunicadoDataResolved } from "./comunicadoTypes";
 import {
   buildTextDataLinkPatch,
   formatTextProjectionValue,
+  patchTextProjectionFromEditedDisplay,
   resolveTextBlockDisplayRuns,
   resolveTextDisplayValue,
+  splitEditedDisplayAroundCoreValue,
   suggestDefaultTextProjection,
   textBlockHasDataBinding,
 } from "./textViewProjection";
@@ -29,6 +31,40 @@ describe("textViewProjection", () => {
         suffix: " hoje",
       }).text,
     ).toMatch(/Meta: 42[,.]5% hoje/);
+  });
+
+  it("patchTextProjectionFromEditedDisplay atualiza prefixo/sufixo sem perder o campo", () => {
+    const projection = { field: "oee", format: "number" as const, prefix: "Meta R$ " };
+    const core = resolveTextDisplayValue(resolved, { field: "oee", format: "number" }).text;
+    const next = patchTextProjectionFromEditedDisplay(
+      projection,
+      `Alvo ${core} un`,
+      resolved,
+    );
+    expect(next.field).toBe("oee");
+    expect(next.prefix).toBe("Alvo ");
+    expect(next.suffix).toBe(" un");
+  });
+
+  it("splitEditedDisplayAroundCoreValue separa affixes pelo valor âncora", () => {
+    expect(splitEditedDisplayAroundCoreValue("Meta R$ 9.000 un", "9.000")).toEqual({
+      prefix: "Meta R$ ",
+      suffix: " un",
+    });
+    expect(splitEditedDisplayAroundCoreValue("só prefixo", "9.000")).toEqual({
+      prefix: "só prefixo",
+      suffix: undefined,
+    });
+  });
+
+  it("resolveTextBlockDisplayRuns usa resolved do bloco quando o 2º arg omite", () => {
+    const runs = resolveTextBlockDisplayRuns({
+      content: "",
+      textProjection: { field: "oee", format: "number", prefix: "Meta: " },
+      resolved,
+    });
+    expect(runs[0]?.text).toMatch(/^Meta: /);
+    expect(runs[0]?.text).toContain("42");
   });
 
   it("resolveTextBlockDisplayRuns com dataRef dinâmico", () => {

@@ -10,6 +10,7 @@ import {
   insertLineBreakAtOffset,
   applyNamedStyleInRange,
   partitionTextBlockRunsAndHref,
+  patchTextProjectionFromEditedDisplay,
   plainTextFromContentRuns,
   renderTextBlockEditorHtml,
   resolveTextBlockDisplayRuns,
@@ -42,7 +43,10 @@ const PLACEHOLDER: Record<TextBlock["type"], string> = {
 };
 
 function editorRunsForBlock(block: TextBlock) {
-  return appendHrefLineToRuns(resolveTextBlockDisplayRuns(block), block.href);
+  return appendHrefLineToRuns(
+    resolveTextBlockDisplayRuns(block, block.resolved),
+    block.href,
+  );
 }
 
 export function externalTextBlockEditorKey(block: TextBlock, fontScale: number) {
@@ -50,6 +54,10 @@ export function externalTextBlockEditorKey(block: TextBlock, fontScale: number) 
     content: block.content,
     contentRuns: block.contentRuns,
     href: block.href,
+    textProjection: block.textProjection,
+    resolvedFingerprint: block.resolved
+      ? JSON.stringify(block.resolved.kpi ?? block.resolved.kpiMetrics ?? null)
+      : null,
     fontScale,
   });
 }
@@ -73,7 +81,9 @@ export function ComunicadoEditorTextBlock({
   const editorRef = useRef<HTMLDivElement>(null);
   const blockRef = useRef(block);
   blockRef.current = block;
-  const draftRef = useRef(syncTextBlockFromRuns(resolveTextBlockDisplayRuns(block)));
+  const draftRef = useRef(
+    syncTextBlockFromRuns(resolveTextBlockDisplayRuns(block, block.resolved)),
+  );
   const renderedSignatureRef = useRef("");
   const editingInitBlockIdRef = useRef<string | null>(null);
   const lastSyncedExternalKeyRef = useRef("");
@@ -142,10 +152,23 @@ export function ComunicadoEditorTextBlock({
         const { runs: contentRuns, href } = partitionTextBlockRunsAndHref(fromEditor);
         draftRef.current = syncTextBlockFromRuns(contentRuns);
         const hasDataRuns = contentRuns.some((run) => run.dataRef?.field?.trim());
+        const blockNow = blockRef.current;
+        const projection = blockNow.textProjection;
         if (hasDataRuns) {
           updateBlock(block.id, {
             ...draftRef.current,
             textProjection: undefined,
+          } as Partial<ComunicadoBlock>);
+        } else if (projection?.field?.trim()) {
+          // Prefixo/sufixo vivem em textProjection — não assar o valor dinâmico em content.
+          const editedPlain = plainTextFromContentRuns(contentRuns);
+          const nextProjection = patchTextProjectionFromEditedDisplay(
+            projection,
+            editedPlain,
+            blockNow.resolved,
+          );
+          updateBlock(block.id, {
+            textProjection: nextProjection,
           } as Partial<ComunicadoBlock>);
         } else {
           updateBlockTextFields(block.id, draftRef.current);

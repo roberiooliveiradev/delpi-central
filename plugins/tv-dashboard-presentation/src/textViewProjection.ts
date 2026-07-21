@@ -142,6 +142,60 @@ export function resolveTextDisplayValue(
   return { text: `${prefix}${text}${suffix}`, color };
 }
 
+/**
+ * Separa o texto editado no palco (prefixo + valor dinâmico + sufixo) em affixes.
+ * O valor core formatado é âncora — não deve ser gravado em `content`.
+ */
+export function splitEditedDisplayAroundCoreValue(
+  editedDisplay: string,
+  coreValue: string,
+): { prefix?: string; suffix?: string } {
+  const edited = editedDisplay;
+  if (!coreValue) {
+    return { prefix: edited || undefined, suffix: undefined };
+  }
+  const idx = edited.indexOf(coreValue);
+  if (idx < 0) {
+    // Valor dinâmico sumiu da edição — guarda o texto como prefixo.
+    return { prefix: edited || undefined, suffix: undefined };
+  }
+  const prefix = edited.slice(0, idx);
+  const suffix = edited.slice(idx + coreValue.length);
+  return {
+    prefix: prefix || undefined,
+    suffix: suffix || undefined,
+  };
+}
+
+/**
+ * Atualiza prefixo/sufixo da projeção a partir do texto composto editado no palco.
+ * Sidebar e edição inline compartilham a mesma fonte (`textProjection`).
+ */
+export function patchTextProjectionFromEditedDisplay(
+  projection: ComunicadoTextProjection,
+  editedDisplay: string,
+  resolved?: ComunicadoDataResolved,
+): ComunicadoTextProjection {
+  const fallback = projection.fallback?.trim() || "—";
+  const core = resolveTextDataRefValue(
+    resolved,
+    {
+      field: projection.field,
+      aggregation: projection.aggregation,
+      format: projection.format,
+      colorRules: projection.colorRules,
+    },
+    fallback,
+  );
+  const { prefix, suffix } = splitEditedDisplayAroundCoreValue(editedDisplay, core.text);
+  const next: ComunicadoTextProjection = { ...projection };
+  if (prefix) next.prefix = prefix;
+  else delete next.prefix;
+  if (suffix) next.suffix = suffix;
+  else delete next.suffix;
+  return next;
+}
+
 export function suggestDefaultTextProjection(
   resolved: ComunicadoDataResolved | undefined,
   catalogFields?: Array<{ field: string; label: string }>,
@@ -158,14 +212,17 @@ export function suggestDefaultTextProjection(
 }
 
 export function resolveTextBlockDisplayRuns(
-  block: Pick<ComunicadoTextBlock, "content" | "contentRuns" | "textProjection">,
+  block: Pick<ComunicadoTextBlock, "content" | "contentRuns" | "textProjection"> & {
+    resolved?: ComunicadoDataResolved;
+  },
   resolved?: ComunicadoDataResolved,
 ): ComunicadoContentRun[] {
+  const data = resolved ?? block.resolved;
   const hasDataRuns = block.contentRuns?.some((run) => run.dataRef?.field?.trim());
   if (hasDataRuns && block.contentRuns) {
     return block.contentRuns.map((run) => {
       if (!run.dataRef?.field?.trim()) return run;
-      const { text, color } = resolveTextDataRefValue(resolved, run.dataRef, run.text || "—");
+      const { text, color } = resolveTextDataRefValue(data, run.dataRef, run.text || "—");
       const style = color
         ? { ...(run.style ?? {}), color }
         : run.style;
@@ -173,7 +230,7 @@ export function resolveTextBlockDisplayRuns(
     });
   }
   if (block.textProjection?.field?.trim()) {
-    const { text, color } = resolveTextDisplayValue(resolved, block.textProjection);
+    const { text, color } = resolveTextDisplayValue(data, block.textProjection);
     const baseStyle = color ? { color } : undefined;
     return [{ text, style: baseStyle }];
   }
