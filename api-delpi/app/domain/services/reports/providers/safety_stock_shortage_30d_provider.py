@@ -22,6 +22,7 @@ from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     PROVIDER_KEY,
     format_branch_label,
     format_date_br,
+    format_quantity_with_unit,
 )
 
 _TITLE = "Rupturas de estoque nos próximos {horizon} dias"
@@ -149,7 +150,7 @@ class SafetyStockShortage30dProvider:
                 EMAIL_COLUMN_STYLES.get(col, "") for col in EMAIL_COLUMNS
             ]
             table_rows = [
-                [_format_cell(col, row.get(col)) for col in EMAIL_COLUMNS]
+                [_format_cell(col, row.get(col), row=row) for col in EMAIL_COLUMNS]
                 for row in dataset.rows
             ]
             intro = (
@@ -164,10 +165,12 @@ class SafetyStockShortage30dProvider:
                 )
             else:
                 intro += "<div style=\"height:8px;\"></div>"
+            next_purchase_idx = EMAIL_COLUMNS.index("next_purchase")
             body = intro + brand.data_table_html(
                 headers=headers,
                 rows=table_rows,
                 column_styles=column_styles,
+                raw_html_columns=frozenset({next_purchase_idx}),
             )
 
         subtitle_parts: list[str] = []
@@ -199,13 +202,78 @@ def _optional_str(value: Any) -> str | None:
     return text or None
 
 
-def _format_cell(column: str, value: Any) -> str:
+def _format_cell(
+    column: str,
+    value: Any,
+    *,
+    row: Mapping[str, Any] | None = None,
+) -> str:
+    unit = (row or {}).get("unit")
     if column == "first_shortage_date":
         return format_date_br(value)
+    if column in {"available_stock", "shortage_balance"}:
+        return format_quantity_with_unit(value, unit)
+    if column == "next_purchase":
+        return _format_next_purchase_html(value)
+    if column == "observation":
+        return str(value or "").strip()
     if value is None:
         return ""
     if isinstance(value, float):
-        if value == int(value):
-            return str(int(value))
-        return f"{value:.4g}"
+        return format_quantity_with_unit(value, None)
     return str(value)
+
+
+def _format_next_purchase_html(value: Any) -> str:
+    """Pedido — fornecedor — entrega — qtd em bloco tipográfico (Outlook-safe)."""
+    text = str(value or "").strip()
+    if not text:
+        return (
+            f'<span style="color:{_OBS_MUTED};font-size:11px;">'
+            f"{html.escape('—')}</span>"
+        )
+
+    primary, _, warning_tail = text.partition(" | ")
+    parts = [part.strip() for part in primary.split(" — ") if part.strip()]
+    if not parts:
+        parts = [primary]
+
+    blocks: list[str] = [
+        f'<div style="font-weight:700;color:{_OBS_TITLE};line-height:1.35;'
+        f'text-align:center;">{html.escape(parts[0])}</div>'
+    ]
+    if len(parts) > 1:
+        blocks.append(
+            f'<div style="color:{_OBS_MUTED};font-size:11px;line-height:1.35;'
+            f'margin-top:2px;text-align:center;">{html.escape(parts[1])}</div>'
+        )
+    if len(parts) > 2:
+        blocks.append(
+            f'<div style="color:{_OBS_ACCENT};font-size:11px;line-height:1.35;'
+            f'margin-top:2px;white-space:nowrap;text-align:center;">'
+            f"{html.escape(parts[2])}</div>"
+        )
+    if len(parts) > 3:
+        blocks.append(
+            f'<div style="color:{_OBS_TITLE};font-size:11px;font-weight:600;'
+            f'line-height:1.35;margin-top:2px;white-space:nowrap;text-align:center;">'
+            f"{html.escape(parts[3])}</div>"
+        )
+    for extra in parts[4:]:
+        blocks.append(
+            f'<div style="color:{_OBS_MUTED};font-size:11px;line-height:1.35;'
+            f'margin-top:2px;text-align:center;">{html.escape(extra)}</div>'
+        )
+    if warning_tail.strip():
+        blocks.append(
+            f'<div style="color:{_OBS_WARN};font-size:10px;line-height:1.35;'
+            f'margin-top:4px;text-align:center;">'
+            f"{html.escape(warning_tail.strip())}</div>"
+        )
+    return "".join(blocks)
+
+
+_OBS_TITLE = "#013866"
+_OBS_MUTED = "#64748B"
+_OBS_ACCENT = "#015488"
+_OBS_WARN = "#B45309"

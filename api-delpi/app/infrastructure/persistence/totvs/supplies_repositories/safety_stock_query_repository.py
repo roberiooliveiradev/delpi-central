@@ -18,6 +18,7 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
     consumption_last_date_sql,
     consumption_monthly_series_sql,
     linked_suppliers_sql,
+    last_inbound_party_names_sql,
     materials_base_cte,
     materials_for_projection_batch_sql,
     open_commitments_sql,
@@ -332,8 +333,39 @@ class SafetyStockQueryRepository(BaseRepository, SafetyStockQueryRepositoryPort)
           mapped["secondary_unit"] = str(row.get("secondary_unit") or "").strip()
           mapped["conversion_factor"] = float(row.get("conversion_factor") or 0) or None
           mapped["conversion_type"] = str(row.get("conversion_type") or "").strip()
+          mapped["material_type"] = str(row.get("material_type") or "").strip()
           result.append(mapped)
       return result
+
+  def fetch_last_inbound_party_names(
+      self,
+      *,
+      branch: str,
+      product_codes: list[str],
+  ) -> dict[str, str]:
+      """Último cliente (SA1) da NF de entrada por produto — material de terceiro."""
+      cleaned = [
+          str(code).strip()
+          for code in product_codes
+          if str(code or "").strip()
+      ]
+      if not cleaned:
+          return {}
+      # Evita IN enorme: processa em lotes.
+      names: dict[str, str] = {}
+      chunk_size = 200
+      with self as repo:
+          for start in range(0, len(cleaned), chunk_size):
+              chunk = cleaned[start : start + chunk_size]
+              placeholders = ", ".join("?" for _ in chunk)
+              sql = last_inbound_party_names_sql(placeholders=placeholders)
+              rows = repo.execute_query(sql, [branch, *chunk])
+              for row in rows:
+                  code = str(row.get("product_code") or "").strip()
+                  party = str(row.get("party_name") or "").strip()
+                  if code and party:
+                      names[code] = party
+      return names
 
   def fetch_linked_suppliers(
       self,

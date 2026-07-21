@@ -35,6 +35,7 @@ __all__ = [
     "open_commitments_sql",
     "open_purchase_orders_sql",
     "materials_for_projection_batch_sql",
+    "last_inbound_party_names_sql",
     "product_detail_sql",
     "resolve_order_by",
     "stock_agg_cte",
@@ -387,13 +388,56 @@ def materials_for_projection_batch_sql(*, where_sql: str = "") -> str:
         mb.status,
         RTRIM(SB1.B1_SEGUM) AS secondary_unit,
         CAST(ISNULL(SB1.B1_CONV, 0) AS FLOAT) AS conversion_factor,
-        RTRIM(SB1.B1_TIPCONV) AS conversion_type
+        RTRIM(SB1.B1_TIPCONV) AS conversion_type,
+        RTRIM(SB1.B1_TPMAT) AS material_type
     FROM materials_base mb
     INNER JOIN SB1010 SB1 WITH (NOLOCK)
         ON RTRIM(SB1.B1_COD) = mb.product_code
        AND SB1.D_E_L_E_T_ = ''
     {where_prefix}
     ORDER BY mb.product_code ASC
+    """
+
+
+def last_inbound_party_names_sql(*, placeholders: str) -> str:
+    """Última NF de entrada (beneficiamento) por produto → cliente (SA1).
+
+    Material de terceiro (B1_TPMAT = 2): no Protheus a entrada do cliente fica em
+    ``SD1`` com ``D1_TIPO = 'B'``; ``D1_FORNECE``/``D1_LOJA`` apontam para ``SA1010``.
+    Placeholders: ``D1_FILIAL``, depois ``D1_COD IN (...)``.
+    """
+    return f"""
+    WITH ultima AS (
+        SELECT
+            RTRIM(SD1.D1_COD) AS product_code,
+            RTRIM(
+                COALESCE(
+                    NULLIF(RTRIM(SA1.A1_NREDUZ), ''),
+                    NULLIF(RTRIM(SA1.A1_NOME), ''),
+                    RTRIM(SD1.D1_FORNECE)
+                )
+            ) AS party_name,
+            ROW_NUMBER() OVER (
+                PARTITION BY SD1.D1_COD
+                ORDER BY
+                    SD1.D1_EMISSAO DESC,
+                    SD1.D1_DTDIGIT DESC,
+                    SD1.D1_DOC DESC
+            ) AS rn
+        FROM SD1010 SD1 WITH (NOLOCK)
+        LEFT JOIN SA1010 SA1 WITH (NOLOCK)
+            ON SA1.A1_COD = SD1.D1_FORNECE
+           AND SA1.A1_LOJA = SD1.D1_LOJA
+           AND SA1.D_E_L_E_T_ = ''
+        WHERE SD1.D_E_L_E_T_ = ''
+          AND SD1.D1_TIPO = 'B'
+          AND SD1.D1_QUANT > 0
+          AND SD1.D1_FILIAL = ?
+          AND SD1.D1_COD IN ({placeholders})
+    )
+    SELECT product_code, party_name
+    FROM ultima
+    WHERE rn = 1
     """
 
 

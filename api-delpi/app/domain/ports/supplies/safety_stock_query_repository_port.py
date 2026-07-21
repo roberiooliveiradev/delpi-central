@@ -117,6 +117,15 @@ class SafetyStockQueryRepositoryPort(ABC):
         ...
 
     @abstractmethod
+    def fetch_last_inbound_party_names(
+        self,
+        *,
+        branch: str,
+        product_codes: list[str],
+    ) -> dict[str, str]:
+        ...
+
+    @abstractmethod
     def fetch_linked_suppliers(
         self,
         *,
