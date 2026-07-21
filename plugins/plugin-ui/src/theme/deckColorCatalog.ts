@@ -118,9 +118,9 @@ export const DECK_KPI_DEFAULTS = {
     "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
   /**
    * Frame inicial do bloco no palco (% do slide).
-   * Compacto o suficiente para título + valor + ícone sem área morta.
+   * Compacto — tipografia auto-fit + frames densos das partes preenchem o fundo.
    */
-  frame: { x: 8, y: 32, w: 20, h: 15 },
+  frame: { x: 8, y: 34, w: 18, h: 12 },
 } as const;
 
 /**
@@ -139,6 +139,11 @@ export const DECK_INPUT_DEFAULTS = {
   controlBorderColor: DECK_COLOR_SHAPE_STROKE,
   controlBorderWidth: 1,
   controlBorderRadius: 6,
+  /**
+   * Frame inicial do bloco no palco (% do slide).
+   * Compacto — rótulo + badge + campo cabem sem faixa vazia à direita.
+   */
+  frame: { x: 8, y: 8, w: 16, h: 8 },
 } as const;
 
 /** Defaults de tabela — células (grade) vs moldura (chrome alinhado a KPI/gráfico). */

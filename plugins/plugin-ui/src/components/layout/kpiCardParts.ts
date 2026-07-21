@@ -139,21 +139,21 @@ export type KpiCardFlatOptions = {
   valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
 };
 
-/** Frame padrão do ícone (canto superior direito). */
-export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 78, y: 8, w: 18, h: 30 };
+/** Frame padrão do ícone (canto superior direito — caixa quadrada compacta). */
+export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 76, y: 4, w: 20, h: 20 };
 
 /**
  * Frames iniciais (%). Card = fundo relativo ao bloco; demais = relativos ao card.
- * Empilhamento balanceado (rótulo → valor → hint) com ícone no canto — usar sempre em lote.
+ * Empilhamento denso (rótulo → valor → hint) — pouco espaço morto no fundo.
  */
 export const KPI_PART_DEFAULT_FRAMES: Record<
   "card" | "title" | "value" | "hint" | "icon",
   KpiPartFrame
 > = {
   card: { x: 0, y: 0, w: 100, h: 100 },
-  title: { x: 5, y: 8, w: 70, h: 16 },
-  value: { x: 5, y: 26, w: 90, h: 48 },
-  hint: { x: 5, y: 78, w: 72, h: 14 },
+  title: { x: 4, y: 4, w: 68, h: 16 },
+  value: { x: 4, y: 20, w: 92, h: 58 },
+  hint: { x: 4, y: 80, w: 70, h: 16 },
   icon: KPI_ICON_DEFAULT_FRAME,
 };
 
@@ -232,6 +232,19 @@ export function resolveKpiPartFontSize(
     return Math.round(explicit);
   }
   return KPI_PART_FONT_SIZE_DEFAULTS[kind];
+}
+
+/**
+ * Tipografia «solta» (sem tamanho explícito do usuário / seed legado = default):
+ * FitText preenche o container — o fundo do card acompanha o layout sem valor miúdo.
+ */
+export function kpiPartUsesAutoFitFont(
+  kind: KpiTextPartKind,
+  style?: KpiPartStyle | null,
+): boolean {
+  const explicit = style?.fontSize;
+  if (explicit == null || !Number.isFinite(explicit) || explicit <= 0) return true;
+  return Math.round(explicit) === KPI_PART_FONT_SIZE_DEFAULTS[kind];
 }
 
 export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
@@ -790,7 +803,6 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
       visible: options?.showTitle !== false,
       content: options?.title,
       style: {
-        fontSize: KPI_PART_FONT_SIZE_DEFAULTS.title,
         fontWeight: 600,
         color: AUTOMATIC_TEXT_COLOR,
       },
@@ -799,7 +811,6 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
       visible: true,
       style: {
         color: options?.valueColor ?? AUTOMATIC_TEXT_COLOR,
-        fontSize: KPI_PART_FONT_SIZE_DEFAULTS.value,
         fontWeight: 700,
       },
     },
@@ -807,7 +818,6 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
       visible: Boolean(options?.subtitle?.trim()),
       content: options?.subtitle,
       style: {
-        fontSize: KPI_PART_FONT_SIZE_DEFAULTS.hint,
         fontWeight: 500,
         color: AUTOMATIC_TEXT_COLOR,
       },

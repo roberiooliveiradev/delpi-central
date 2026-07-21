@@ -27,7 +27,7 @@ export type DataViewBlockType = "kpi_view" | "chart_view" | "table_view";
 export type ViewFieldTypes = Record<string, "number" | "string" | "date"> | null | undefined;
 
 /** Espelha DECK_KPI_DEFAULTS.frame — evita acoplar theme no módulo de sync. */
-const KPI_DEFAULT_FRAME = { w: 20, h: 15 } as const;
+const KPI_DEFAULT_FRAME = { w: 18, h: 12 } as const;
 const KPI_CELL = { w: 18, h: 14 };
 const KPI_GAP = 1;
 const KPI_MAX_COLS = 4;

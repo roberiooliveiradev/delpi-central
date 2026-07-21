@@ -19,6 +19,7 @@ import {
   resizeKpiPartFrame,
   resolveKpiIconBoxStyle,
   resolveKpiPartFontSize,
+  kpiPartUsesAutoFitFont,
   resolveKpiPartLayoutStyle,
   seedKpiPartsFreeLayoutFrames,
   upsertKpiPartState,
@@ -60,10 +61,10 @@ describe("kpiCardParts adapters", () => {
     expect(parts.card?.style?.borderRadius).toBe(DECK_KPI_DEFAULTS.borderRadius);
     expect(parts.card?.style?.boxShadow).toBe(DECK_KPI_DEFAULTS.boxShadow);
     expect(parts.card?.style?.stroke).toBe(DECK_KPI_DEFAULTS.borderColor);
-    expect(parts.title?.style?.fontSize).toBe(18);
+    expect(parts.title?.style?.fontSize).toBeUndefined();
     expect(parts.title?.style?.color).toBe("auto");
-    expect(parts.value?.style?.fontSize).toBe(40);
-    expect(parts.hint?.style?.fontSize).toBe(14);
+    expect(parts.value?.style?.fontSize).toBeUndefined();
+    expect(parts.hint?.style?.fontSize).toBeUndefined();
     const back = partsToKpiOptions(parts);
     expect(back.title).toBe("OEE");
     expect(back.subtitle).toBe("meta");
@@ -252,6 +253,15 @@ describe("kpi icon layout", () => {
     expect(resolveKpiPartFontSize("value")).toBe(40);
     expect(resolveKpiPartFontSize("hint")).toBe(14);
     expect(resolveKpiPartFontSize("value", { fontSize: 72 })).toBe(72);
+  });
+
+  it("kpiPartUsesAutoFitFont: sem size ou seed = default → auto; override explícito → fixo", () => {
+    expect(kpiPartUsesAutoFitFont("value")).toBe(true);
+    expect(kpiPartUsesAutoFitFont("value", {})).toBe(true);
+    expect(kpiPartUsesAutoFitFont("value", { fontSize: 40 })).toBe(true);
+    expect(kpiPartUsesAutoFitFont("value", { fontSize: 72 })).toBe(false);
+    expect(kpiPartUsesAutoFitFont("title", { fontSize: 18 })).toBe(true);
+    expect(kpiPartUsesAutoFitFont("title", { fontSize: 22 })).toBe(false);
   });
 
   it("upsertKpiPartState faz merge de frame e limpa com null", () => {

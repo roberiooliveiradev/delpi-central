@@ -219,12 +219,27 @@ describe("DelpiKpiCard chrome", () => {
     expect(icon.style.height).toBe("96px");
   });
 
-  it("valor usa tipografia padrão 40px (KPI_PART_FONT_SIZE_DEFAULTS), sem auto-fit", () => {
+  it("valor usa auto-fit no container (padrão), sem fontSize fixo 40px", () => {
     const { container } = render(
-      <DelpiKpiCard label="Consumo" value="10" />,
+      <DelpiKpiCard label="Consumo" value="10" fill />,
     );
     const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
-    expect(fit?.style.fontSize).toBe("40px");
+    expect(fit).toBeTruthy();
+    // Sem fixedPx: FitText começa em minPx e ajusta ao host — não grava 40px.
+    expect(fit.style.fontSize).not.toBe("40px");
+  });
+
+  it("valor com fontSize explícito (≠ default) usa tamanho fixo", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="10"
+        fill
+        kpiParts={{ value: { style: { fontSize: 72 } } }}
+      />,
+    );
+    const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
+    expect(fit?.style.fontSize).toBe("72px");
   });
 
   it("não reexibe ícone oculto só porque o ReactNode icon foi passado", () => {

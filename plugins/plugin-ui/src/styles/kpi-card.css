@@ -366,7 +366,8 @@
   border-style: solid;
   border-color: var(--delpi-kpi-card-border-color, transparent);
   border-radius: var(--delpi-kpi-card-radius, 0px);
-  padding: 0.55em 0.75em;
+  /* Padding mínimo — partes em % / FitText ocupam o card sem área morta. */
+  padding: 0.28em 0.4em;
   color: var(--delpi-kpi-fg, #0f172a);
   box-shadow: none;
 }

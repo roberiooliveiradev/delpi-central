@@ -86,6 +86,7 @@ export {
   resolveKpiPartFrameRoot,
   resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
+  kpiPartUsesAutoFitFont,
   serializeKpiPartRef,
   setKpiElementEnabled,
   upsertKpiPartState,

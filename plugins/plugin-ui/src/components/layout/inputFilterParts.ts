@@ -86,13 +86,13 @@ const INPUT_PART_KIND_CAPABILITIES: Record<InputPartRef["kind"], InputPartCapabi
   control: { movable: true, editable: false, deletable: false, resizable: true },
 };
 
-/** Fallback % só se o DOM não puder materializar — fila horizontal (rótulo|badge|campo). */
+/** Fallback % só se o DOM não puder materializar — fila horizontal densa (rótulo|badge|campo). */
 export const INPUT_PART_DEFAULT_FRAMES: Record<InputPartRef["kind"], InputPartFrame> = {
   frame: { x: 0, y: 0, w: 100, h: 100 },
-  icon: { x: 2, y: 20, w: 10, h: 60 },
-  label: { x: 14, y: 22, w: 22, h: 56 },
-  badge: { x: 38, y: 26, w: 18, h: 48 },
-  control: { x: 58, y: 18, w: 40, h: 64 },
+  icon: { x: 2, y: 18, w: 10, h: 64 },
+  label: { x: 13, y: 18, w: 20, h: 64 },
+  badge: { x: 34, y: 22, w: 16, h: 56 },
+  control: { x: 52, y: 14, w: 46, h: 72 },
 };
 
 /**

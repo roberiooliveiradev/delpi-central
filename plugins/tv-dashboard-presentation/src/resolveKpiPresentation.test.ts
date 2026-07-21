@@ -51,7 +51,7 @@ describe("kpi_view", () => {
     expect(block.kpiOptions?.showIcon).toBe(true);
     expect(block.kpiOptions?.iconName).toBe("Gauge");
     expect(block.kpiParts?.icon?.visible).not.toBe(false);
-    expect(block.frame).toEqual({ x: 8, y: 32, w: 20, h: 15 });
+    expect(block.frame).toEqual({ x: 8, y: 34, w: 18, h: 12 });
   });
 
   it("resolve apresentação com regras de cor", () => {

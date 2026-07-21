@@ -26,6 +26,7 @@ import {
   resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
   kpiPartHasBoxPaint,
+  kpiPartUsesAutoFitFont,
   type KpiCardFlatOptions,
   type KpiCardInteraction,
   type KpiPartsMap,
@@ -99,6 +100,7 @@ export {
   resolveKpiPartFrameRoot,
   resolveKpiPartLayoutStyle,
   resolveKpiPartTypographyStyle,
+  kpiPartUsesAutoFitFont,
   serializeKpiPartRef,
   upsertKpiPartState,
   applyKpiPartStyleToSiblingParts,
@@ -328,6 +330,9 @@ export function DelpiKpiCard({
   const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState, { partKind: "hint" });
   const cardLayoutStyle = resolveKpiPartLayoutStyle(cardState, { partKind: "card" });
 
+  const valueAutoFit = kpiPartUsesAutoFitFont("value", parts.value?.style);
+  const valueFontSizePx = resolveKpiPartFontSize("value", parts.value?.style);
+
   const titleTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
       {
@@ -343,7 +348,8 @@ export function DelpiKpiCard({
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.value?.style,
-        fontSize: resolveKpiPartFontSize("value", parts.value?.style),
+        // Auto-fit: FitText define o tamanho; não fixar fontSize no host.
+        ...(valueAutoFit ? { fontSize: undefined } : { fontSize: valueFontSizePx }),
         ...(valueColorForStyle ? { color: valueColorForStyle } : { color: undefined }),
       },
       { flexPart: true },
@@ -446,8 +452,6 @@ export function DelpiKpiCard({
     .filter(Boolean)
     .join(" ");
 
-  const valueFontSizePx = resolveKpiPartFontSize("value", parts.value?.style);
-
   return (
     <div
       className={["delpi-kpi-card-shell", fill ? "delpi-kpi-card-shell--fill" : ""]
@@ -548,7 +552,13 @@ export function DelpiKpiCard({
                 onPointerDown={valuePtr.onPointerDown}
                 onDoubleClick={valuePtr.onDoubleClick}
               >
-                <FitText fixedPx={valueFontSizePx}>{value}</FitText>
+                <FitText
+                  fixedPx={valueAutoFit ? null : valueFontSizePx}
+                  minPx={16}
+                  maxPx={280}
+                >
+                  {value}
+                </FitText>
                 <KpiPartResizeHandles
                   visible={valueShowResize}
                   onResizePointerDown={(handle, event) =>

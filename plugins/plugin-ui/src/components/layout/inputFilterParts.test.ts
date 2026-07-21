@@ -4,6 +4,7 @@ import {
   clearInputPartsFreeLayoutFrames,
   bindInputPartPointer,
   findInputContentPartNearPoint,
+  INPUT_PART_DEFAULT_FRAMES,
   resolveInputBlockPaintCssVars,
   resolveInputContrastBackground,
   resolveInputControlPaintCssVars,
@@ -114,9 +115,11 @@ describe("inputFilterParts free-layout", () => {
       badge: { visible: true },
       control: { visible: true },
     });
-    expect(resolveInputPartFrame(seeded.label)).not.toBeNull();
-    expect(resolveInputPartFrame(seeded.badge)).not.toBeNull();
-    expect(resolveInputPartFrame(seeded.control)).not.toBeNull();
+    expect(resolveInputPartFrame(seeded.label)).toEqual(INPUT_PART_DEFAULT_FRAMES.label);
+    expect(resolveInputPartFrame(seeded.badge)).toEqual(INPUT_PART_DEFAULT_FRAMES.badge);
+    expect(resolveInputPartFrame(seeded.control)).toEqual(INPUT_PART_DEFAULT_FRAMES.control);
+    /* Campo ocupa a maior fatia — pouco espaço morto à direita. */
+    expect((INPUT_PART_DEFAULT_FRAMES.control.w ?? 0) + (INPUT_PART_DEFAULT_FRAMES.control.x ?? 0)).toBeGreaterThanOrEqual(96);
   });
 
   it("clear remove frames e preserva visibilidade", () => {

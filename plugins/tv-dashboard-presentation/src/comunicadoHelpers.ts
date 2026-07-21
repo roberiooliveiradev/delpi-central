@@ -437,7 +437,7 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "chart_view") return { x: 10, y: 28, w: 80, h: 45 };
   if (type === "table_view") return { x: 5, y: 55, w: 90, h: 35 };
   if (type === "canvas_table") return { x: 20, y: 30, w: 60, h: 30 };
-  if (type === "input") return { x: 8, y: 8, w: 28, h: 12 };
+  if (type === "input") return { ...DECK_INPUT_DEFAULTS.frame };
   if (type === "kpi_view") return { ...DECK_KPI_DEFAULTS.frame };
   if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
   if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
