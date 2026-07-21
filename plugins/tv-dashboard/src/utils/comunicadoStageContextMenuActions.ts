@@ -69,7 +69,7 @@ export function isContextMenuActionEnabled(
     case "editText":
       return state.canEditText;
     case "paste":
-      // Sempre habilitado: tenta SO (imagem/HTML/texto) e cai no clipboard interno.
+      // Sempre habilitado: tenta SO; interno só se o SO estiver vazio (nunca no lugar do Google).
       return true;
     case "insertHeading":
     case "insertText":
