@@ -21,8 +21,12 @@ describe("deck chrome tab fallback contract", () => {
 
   it("fallback sem aba válida / sem seleção usa Inserir", () => {
     expect(chrome).toMatch(/resolveDefaultRibbonTab/);
-    expect(chrome).toMatch(/\/\* Aba sumiu[\s\S]*resolveDefaultRibbonTab\(tabs, isCustomSlide\)/);
-    expect(chrome).not.toMatch(/Aba sumiu[\s\S]*setActiveTab\("layers"\)/);
+    expect(chrome).toMatch(
+      /Aba sumiu \(ex\.: limpou seleção\) → Inserir/,
+    );
+    expect(chrome).toMatch(
+      /if \(!tabs\.some\(\(tab\) => tab\.id === activeTab\)\) \{\s*setActiveTab\(resolveDefaultRibbonTab/,
+    );
   });
 
   it("abre slide custom na aba Inserir", () => {
