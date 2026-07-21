@@ -70,7 +70,7 @@ export function ShapeAdjustmentsControl({
         min={min}
         max={max}
         step={step}
-        density={variant === "ribbon" ? "compact" : "full"}
+        density="full"
         aria-label={spec.label}
         onChange={(num) => {
           if (isCorner) {

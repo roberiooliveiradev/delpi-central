@@ -20,7 +20,7 @@
   /* Densidade chrome PPT (accent Delpi). */
   --td-chrome-tab-height: 36px;
   --td-chrome-radius: 2px;
-  --td-ribbon-height: 104px;
+  --td-ribbon-height: 112px;
   --td-ribbon-tile-radius: 4px;
   --td-ribbon-caption-size: 10px;
   --td-ribbon-gallery-thumb: 44px;
@@ -3760,7 +3760,7 @@ body.td-composer--marqueeing *{
 }
 /* Inserir / Home / Exibir / Elemento: faixa fixa mais alta — cabe tipografia + Forma sem clip. */
 .dashboard-tv-dashboard .td-deck-ribbon--compact.td-deck-ribbon--band{
-  --td-ribbon-height: 104px;
+  --td-ribbon-height: 112px;
   height: var(--td-ribbon-height);
   max-height: var(--td-ribbon-height);
   overflow: hidden;

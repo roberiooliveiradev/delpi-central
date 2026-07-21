@@ -207,7 +207,7 @@ export function ChartRibbonShapeChrome({
               max={12}
               step={0.5}
               value={partState?.style?.markerRadius ?? 2.5}
-              density="compact"
+              density="full"
               onChange={(value) => patchPartStyle({ markerRadius: value || 2.5 })}
             />
             <DeckRibbonTile

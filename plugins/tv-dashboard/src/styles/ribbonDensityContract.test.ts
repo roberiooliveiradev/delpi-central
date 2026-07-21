@@ -36,7 +36,7 @@ describe("ribbon density contract", () => {
     const band = css.match(
       /\.td-deck-ribbon--compact\.td-deck-ribbon--band\s*\{[^}]+\}/s,
     )?.[0];
-    expect(band).toMatch(/--td-ribbon-height:\s*104px/);
+    expect(band).toMatch(/--td-ribbon-height:\s*112px/);
     expect(band).toMatch(/height:\s*var\(--td-ribbon-height\)/);
 
     const fit = css.match(
@@ -46,7 +46,7 @@ describe("ribbon density contract", () => {
     expect(fit).toMatch(/max-height:\s*min\(220px,\s*34vh\)/);
   });
 
-  it("Raio/Opacidade na ribbon usam RangeField compact (sem slider largo)", () => {
+  it("Raio/Opacidade na ribbon mantêm slider (full) com largura estreita no host", () => {
     const opacity = readFileSync(
       join(base, "../components/formatRibbon/FormatRibbonOrganizeSection.tsx"),
       "utf8",
@@ -59,13 +59,10 @@ describe("ribbon density contract", () => {
       join(base, "../../../plugin-ui/src/styles/host-density-compact.css"),
       "utf8",
     );
-    expect(opacity).toMatch(/id="td-block-opacity"[\s\S]*density="compact"/);
-    expect(corner).toMatch(/label="Raio \(px\)"[\s\S]*density="compact"/);
+    expect(opacity).toMatch(/id="td-block-opacity"[\s\S]*density="full"/);
+    expect(corner).toMatch(/label="Raio \(px\)"[\s\S]*density="full"/);
     expect(hostDensity).toMatch(
       /\[data-delpi-ui-density="compact"\]\s*\.delpi-ui-range-field\s*\{[^}]*width:\s*96px/s,
-    );
-    expect(hostDensity).toMatch(
-      /\[data-delpi-ui-density="compact"\]\s*\.delpi-ui-range-field--compact\s*\{[^}]*width:\s*72px/s,
     );
   });
 
