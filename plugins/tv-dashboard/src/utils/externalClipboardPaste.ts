@@ -4,14 +4,27 @@ import {
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 
-/** Prefixo do payload interno no `text/plain` do SO (colar entre abas). */
-export const DELPI_TV_BLOCKS_CLIPBOARD_PREFIX = "__DELPI_TV_BLOCKS_V1__\n";
+/**
+ * Marcador do payload interno no `text/plain` do SO (colar entre abas/sessões).
+ * O Windows costuma normalizar `\n` → `\r\n` no clipboard — nunca exigir newline exato.
+ */
+export const DELPI_TV_BLOCKS_CLIPBOARD_MARKER = "__DELPI_TV_BLOCKS_V1__";
+export const DELPI_TV_BLOCKS_CLIPBOARD_PREFIX = `${DELPI_TV_BLOCKS_CLIPBOARD_MARKER}\n`;
 
 export type ExternalPastePlan =
   | { kind: "internal-blocks"; blocks: ComunicadoBlock[] }
   | { kind: "images"; files: File[] }
   | { kind: "blocks"; blocks: ComunicadoBlock[] }
   | { kind: "empty" };
+
+/** Normaliza BOM + CRLF (clipboard Windows) antes de detectar/parsear payload Delpi. */
+export function normalizeClipboardText(text: string): string {
+  return text.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
+}
+
+export function looksLikeInternalBlocksPayload(text: string): boolean {
+  return normalizeClipboardText(text).startsWith(DELPI_TV_BLOCKS_CLIPBOARD_MARKER);
+}
 
 function stripHtmlToText(html: string): string {
   const doc = new DOMParser().parseFromString(html, "text/html");
@@ -66,6 +79,13 @@ export function tryParseTabularText(text: string): ComunicadoBlock | null {
  */
 export function blocksFromExternalHtml(html: string): ComunicadoBlock[] {
   if (!html.trim()) return [];
+
+  // Payload Delpi embutido em text/html (alguns browsers) — nunca virar tipografia.
+  const stripped = stripHtmlToText(html);
+  if (looksLikeInternalBlocksPayload(stripped)) {
+    return parseInternalBlocksPayload(stripped) ?? [];
+  }
+
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc.querySelectorAll("script,style,noscript").forEach((node) => node.remove());
 
@@ -80,6 +100,7 @@ export function blocksFromExternalHtml(html: string): ComunicadoBlock[] {
     if (!(el instanceof HTMLElement)) continue;
     const text = (el.innerText ?? el.textContent ?? "").replace(/\u00a0/g, " ").trim();
     if (!text || text.length > 400) continue;
+    if (looksLikeInternalBlocksPayload(text)) continue;
     const key = text.toLowerCase();
     if (seen.has(key)) continue;
 
@@ -136,8 +157,9 @@ export function blocksFromExternalHtml(html: string): ComunicadoBlock[] {
   }
 
   if (blocks.length === 0) {
-    const plain = stripHtmlToText(html);
+    const plain = stripped;
     if (plain) {
+      if (looksLikeInternalBlocksPayload(plain)) return [];
       const tabular = tryParseTabularText(plain);
       if (tabular) return [tabular];
       const block = createBlock(plain.length > 80 ? "text" : "heading", plain.slice(0, 2000));
@@ -149,9 +171,10 @@ export function blocksFromExternalHtml(html: string): ComunicadoBlock[] {
 }
 
 export function blocksFromPlainText(text: string): ComunicadoBlock[] {
-  const trimmed = text.replace(/\u00a0/g, " ").trim();
+  const trimmed = normalizeClipboardText(text.replace(/\u00a0/g, " "));
   if (!trimmed) return [];
-  if (trimmed.startsWith(DELPI_TV_BLOCKS_CLIPBOARD_PREFIX)) return [];
+  // Nunca materializar o payload interno como tipografia no palco.
+  if (looksLikeInternalBlocksPayload(trimmed)) return [];
 
   const tabular = tryParseTabularText(trimmed);
   if (tabular) return [tabular];
@@ -161,15 +184,18 @@ export function blocksFromPlainText(text: string): ComunicadoBlock[] {
 }
 
 export function parseInternalBlocksPayload(text: string): ComunicadoBlock[] | null {
-  if (!text.startsWith(DELPI_TV_BLOCKS_CLIPBOARD_PREFIX)) return null;
-  const raw = text.slice(DELPI_TV_BLOCKS_CLIPBOARD_PREFIX.length);
+  const normalized = normalizeClipboardText(text);
+  if (!normalized.startsWith(DELPI_TV_BLOCKS_CLIPBOARD_MARKER)) return null;
+  const raw = normalized.slice(DELPI_TV_BLOCKS_CLIPBOARD_MARKER.length).replace(/^\n+/, "");
+  if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed) || parsed.length === 0) return null;
-    return parsed.filter(
+    const blocks = parsed.filter(
       (item): item is ComunicadoBlock =>
         Boolean(item) && typeof item === "object" && typeof (item as ComunicadoBlock).type === "string",
     );
+    return blocks.length > 0 ? blocks : null;
   } catch {
     return null;
   }
@@ -206,9 +232,24 @@ export function planExternalClipboardPaste(data: DataTransfer | null | undefined
   if (!data) return { kind: "empty" };
 
   const plain = data.getData("text/plain") ?? "";
-  const internal = parseInternalBlocksPayload(plain);
-  if (internal && internal.length > 0) {
-    return { kind: "internal-blocks", blocks: internal };
+  const html = data.getData("text/html") ?? "";
+
+  const internalFromPlain = parseInternalBlocksPayload(plain);
+  if (internalFromPlain && internalFromPlain.length > 0) {
+    return { kind: "internal-blocks", blocks: internalFromPlain };
+  }
+  // Marcador Delpi presente (ex.: CRLF) mas parse falhou — não virar texto; caller usa memória.
+  if (looksLikeInternalBlocksPayload(plain)) {
+    return { kind: "empty" };
+  }
+
+  const htmlPlain = html.trim() ? stripHtmlToText(html) : "";
+  const internalFromHtml = htmlPlain ? parseInternalBlocksPayload(htmlPlain) : null;
+  if (internalFromHtml && internalFromHtml.length > 0) {
+    return { kind: "internal-blocks", blocks: internalFromHtml };
+  }
+  if (htmlPlain && looksLikeInternalBlocksPayload(htmlPlain)) {
+    return { kind: "empty" };
   }
 
   const images = collectImageFiles(data);
@@ -216,7 +257,6 @@ export function planExternalClipboardPaste(data: DataTransfer | null | undefined
     return { kind: "images", files: images };
   }
 
-  const html = data.getData("text/html") ?? "";
   if (html.trim()) {
     const fromHtml = blocksFromExternalHtml(html);
     if (fromHtml.length > 0) return { kind: "blocks", blocks: fromHtml };

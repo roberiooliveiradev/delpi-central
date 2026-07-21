@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DELPI_TV_BLOCKS_CLIPBOARD_MARKER,
   DELPI_TV_BLOCKS_CLIPBOARD_PREFIX,
   blocksFromExternalHtml,
   blocksFromPlainText,
+  looksLikeInternalBlocksPayload,
   parseInternalBlocksPayload,
   planExternalClipboardPaste,
   serializeInternalBlocksPayload,
@@ -36,6 +38,37 @@ describe("externalClipboardPaste", () => {
     const blocks = parseInternalBlocksPayload(payload);
     expect(blocks).toHaveLength(1);
     expect(blocks?.[0].type).toBe("text");
+  });
+
+  it("reconhece payload interno com CRLF do clipboard Windows", () => {
+    const lf = serializeInternalBlocksPayload([
+      { id: "g1", type: "shape", content: "Poliana", frame: { x: 1, y: 2, w: 3, h: 4 } } as never,
+      { id: "g2", type: "text", content: "Meta", frame: { x: 5, y: 6, w: 7, h: 8 } } as never,
+    ]);
+    const crlf = lf.replace(/\n/g, "\r\n");
+    expect(crlf.includes("\r\n")).toBe(true);
+    expect(looksLikeInternalBlocksPayload(crlf)).toBe(true);
+    const blocks = parseInternalBlocksPayload(crlf);
+    expect(blocks).toHaveLength(2);
+    expect(blocks?.map((block) => block.type)).toEqual(["shape", "text"]);
+    expect(blocksFromPlainText(crlf)).toEqual([]);
+    const plan = planExternalClipboardPaste(mockDataTransfer({ plain: crlf }));
+    expect(plan.kind).toBe("internal-blocks");
+    if (plan.kind === "internal-blocks") expect(plan.blocks).toHaveLength(2);
+  });
+
+  it("não materializa marcador Delpi como tipografia (HTML fallback)", () => {
+    const payload = serializeInternalBlocksPayload([
+      { id: "x", type: "text", content: "interno", frame: { x: 0, y: 0, w: 10, h: 10 } } as never,
+    ]);
+    const html = `<html><body><pre>${payload.replace(/\n/g, "\r\n")}</pre></body></html>`;
+    const fromHtml = blocksFromExternalHtml(html);
+    expect(fromHtml).toHaveLength(1);
+    expect(fromHtml[0].type).toBe("text");
+    expect(fromHtml[0].content).toBe("interno");
+    expect(String((fromHtml[0] as { content?: string }).content ?? "")).not.toContain(
+      DELPI_TV_BLOCKS_CLIPBOARD_MARKER,
+    );
   });
 
   it("detecta TSV do Excel/Sheets como tabela", () => {
