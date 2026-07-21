@@ -34,7 +34,8 @@ export const DECK_VIEW_ACTION_KEYTIPS = {
   rulers: "R",
   grid: "Q",
   guides: "Y",
-  snap: "W",
+  snapToGrid: "W",
+  snapToObjects: "E",
   shortcuts: "K",
 } as const;
 

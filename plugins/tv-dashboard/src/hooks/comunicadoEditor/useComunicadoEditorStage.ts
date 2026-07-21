@@ -31,7 +31,8 @@ export function useComunicadoEditorStage() {
   /** false durante bootstrap — Composer não deve compensar gutter sobre o restore. */
   const [stageViewReady, setStageViewReady] = useState(false);
   const canvasWrapRef = useRef<HTMLDivElement | null>(null);
-  const snapEnabledRef = useRef(prefs.snapEnabled);
+  const snapToGridRef = useRef(prefs.snapToGrid);
+  const snapToObjectsRef = useRef(prefs.snapToObjects);
   const showStageGuidesRef = useRef(prefs.showStageGuides);
   const stageGridSizePercentRef = useRef(prefs.stageGridSizePercent);
   const interactionCanvasRefSlot = useRef<RefObject<HTMLElement | null> | null>(null);
@@ -50,8 +51,12 @@ export function useComunicadoEditorStage() {
   const pendingFitCenterRef = useRef(false);
 
   useEffect(() => {
-    snapEnabledRef.current = prefs.snapEnabled;
-  }, [prefs.snapEnabled]);
+    snapToGridRef.current = prefs.snapToGrid;
+  }, [prefs.snapToGrid]);
+
+  useEffect(() => {
+    snapToObjectsRef.current = prefs.snapToObjects;
+  }, [prefs.snapToObjects]);
 
   useEffect(() => {
     showStageGuidesRef.current = prefs.showStageGuides;
@@ -302,12 +307,18 @@ export function useComunicadoEditorStage() {
       patchPrefs({ showStageGuides: next });
     },
     showStageGuidesRef,
-    snapEnabled: prefs.snapEnabled,
-    setSnapEnabled: (value: boolean | ((prev: boolean) => boolean)) => {
-      const next = typeof value === "function" ? value(prefsRef.current.snapEnabled) : value;
-      patchPrefs({ snapEnabled: next });
+    snapToGrid: prefs.snapToGrid,
+    setSnapToGrid: (value: boolean | ((prev: boolean) => boolean)) => {
+      const next = typeof value === "function" ? value(prefsRef.current.snapToGrid) : value;
+      patchPrefs({ snapToGrid: next });
     },
-    snapEnabledRef,
+    snapToGridRef,
+    snapToObjects: prefs.snapToObjects,
+    setSnapToObjects: (value: boolean | ((prev: boolean) => boolean)) => {
+      const next = typeof value === "function" ? value(prefsRef.current.snapToObjects) : value;
+      patchPrefs({ snapToObjects: next });
+    },
+    snapToObjectsRef,
     stageViewAnchorSaved: prefs.stageViewAnchorSaved,
     stageViewReady,
     canvasWrapRef,

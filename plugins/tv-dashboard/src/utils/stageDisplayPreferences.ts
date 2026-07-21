@@ -17,7 +17,10 @@ export type StageDisplayPreferences = {
   /** Tamanho da célula da grade em % do slide (divisor de 100). */
   stageGridSizePercent: number;
   showStageGuides: boolean;
-  snapEnabled: boolean;
+  /** Encaixe na grade e no centro do palco. */
+  snapToGrid: boolean;
+  /** Encaixe em bordas/centros de outros componentes (smart guides). */
+  snapToObjects: boolean;
   /**
    * Ponto do slide sob o centro da viewport (coords de scroll − gutter).
    * Só restaura no load quando `stageViewAnchorSaved` é true.
@@ -36,7 +39,8 @@ export const DEFAULT_STAGE_DISPLAY_PREFERENCES: StageDisplayPreferences = {
   showStageGrid: false,
   stageGridSizePercent: STAGE_GRID_SIZE_DEFAULT_PERCENT,
   showStageGuides: true,
-  snapEnabled: true,
+  snapToGrid: true,
+  snapToObjects: true,
   stageViewAnchorX: 0,
   stageViewAnchorY: 0,
   stageScrollLeft: 0,
@@ -52,12 +56,31 @@ function readFiniteNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+function readBoolean(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
 function resolveGridSizePercent(raw: Record<string, unknown>): number {
   const percent = readFiniteNumber(raw.stageGridSizePercent);
   if (percent != null) return clampStageGridSizePercent(percent);
   const legacyPx = readFiniteNumber(raw.stageGridSizePx);
   if (legacyPx != null) return migrateStageGridSizePxToPercent(legacyPx, PREFS_MIGRATE_DESIGN);
   return DEFAULT_STAGE_DISPLAY_PREFERENCES.stageGridSizePercent;
+}
+
+/**
+ * Resolve encaixes separados; prefs antigas com `snapEnabled` aplicam o valor aos dois.
+ */
+export function resolveSnapPreferences(raw: Record<string, unknown>): {
+  snapToGrid: boolean;
+  snapToObjects: boolean;
+} {
+  const legacy = readBoolean(raw.snapEnabled);
+  const snapToGrid =
+    readBoolean(raw.snapToGrid) ?? legacy ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.snapToGrid;
+  const snapToObjects =
+    readBoolean(raw.snapToObjects) ?? legacy ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.snapToObjects;
+  return { snapToGrid, snapToObjects };
 }
 
 export function normalizeStageDisplayPreferences(
@@ -75,6 +98,8 @@ export function normalizeStageDisplayPreferences(
       : anchorSavedFlag === false
         ? false
         : anchorX != null && anchorY != null;
+
+  const { snapToGrid, snapToObjects } = resolveSnapPreferences(raw);
 
   return {
     stageZoom:
@@ -94,10 +119,8 @@ export function normalizeStageDisplayPreferences(
       typeof raw.showStageGuides === "boolean"
         ? raw.showStageGuides
         : DEFAULT_STAGE_DISPLAY_PREFERENCES.showStageGuides,
-    snapEnabled:
-      typeof raw.snapEnabled === "boolean"
-        ? raw.snapEnabled
-        : DEFAULT_STAGE_DISPLAY_PREFERENCES.snapEnabled,
+    snapToGrid,
+    snapToObjects,
     stageViewAnchorX: anchorX ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageViewAnchorX,
     stageViewAnchorY: anchorY ?? DEFAULT_STAGE_DISPLAY_PREFERENCES.stageViewAnchorY,
     stageScrollLeft:

@@ -339,7 +339,8 @@ export function ComunicadoEditorProvider({
     applyConfig,
     pushPast,
     deckHistory,
-    snapEnabledRef: stage.snapEnabledRef,
+    snapToGridRef: stage.snapToGridRef,
+    snapToObjectsRef: stage.snapToObjectsRef,
     stageGridSizePercentRef: stage.stageGridSizePercentRef,
   });
   stage.bindCanvasRef(canvasRef);
@@ -685,8 +686,10 @@ export function ComunicadoEditorProvider({
     showStageGuides: stage.showStageGuides,
     setShowStageGuides: stage.setShowStageGuides,
     activeSmartGuides,
-    snapEnabled: stage.snapEnabled,
-    setSnapEnabled: stage.setSnapEnabled,
+    snapToGrid: stage.snapToGrid,
+    setSnapToGrid: stage.setSnapToGrid,
+    snapToObjects: stage.snapToObjects,
+    setSnapToObjects: stage.setSnapToObjects,
     stagePanMode: stage.stagePanMode,
     setStagePanMode: stage.setStagePanMode,
     fileInputRef: media.fileInputRef,

@@ -4,6 +4,7 @@ import {
   DEFAULT_STAGE_DISPLAY_PREFERENCES,
   normalizeStageDisplayPreferences,
   readStageDisplayPreferences,
+  resolveSnapPreferences,
   stageViewNeedsInitialFit,
   writeStageDisplayPreferences,
 } from "./stageDisplayPreferences";
@@ -42,7 +43,8 @@ describe("stageDisplayPreferences", () => {
       showStageGrid: true,
       stageGridSizePercent: 10,
       showStageGuides: false,
-      snapEnabled: false,
+      snapToGrid: false,
+      snapToObjects: true,
       stageViewAnchorX: 120.5,
       stageViewAnchorY: -40,
       stageScrollLeft: 340,
@@ -56,7 +58,8 @@ describe("stageDisplayPreferences", () => {
       showStageGrid: true,
       stageGridSizePercent: 10,
       showStageGuides: false,
-      snapEnabled: false,
+      snapToGrid: false,
+      snapToObjects: true,
       stageViewAnchorX: 120.5,
       stageViewAnchorY: -40,
       stageScrollLeft: 340,
@@ -72,8 +75,26 @@ describe("stageDisplayPreferences", () => {
         showStageRulers: true,
         showStageGrid: false,
         showStageGuides: true,
-        snapEnabled: true,
+        snapToGrid: true,
+        snapToObjects: true,
       }).stageViewAnchorSaved,
+    ).toBe(false);
+  });
+
+  it("migra snapEnabled legado para os dois encaixes", () => {
+    expect(resolveSnapPreferences({ snapEnabled: false })).toEqual({
+      snapToGrid: false,
+      snapToObjects: false,
+    });
+    expect(resolveSnapPreferences({ snapEnabled: true, snapToObjects: false })).toEqual({
+      snapToGrid: true,
+      snapToObjects: false,
+    });
+    expect(
+      normalizeStageDisplayPreferences({ snapEnabled: false }).snapToGrid,
+    ).toBe(false);
+    expect(
+      normalizeStageDisplayPreferences({ snapEnabled: false }).snapToObjects,
     ).toBe(false);
   });
 

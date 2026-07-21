@@ -306,8 +306,10 @@ export type ComunicadoEditorContextValue = {
   setShowStageGuides: (show: boolean) => void;
   /** Linhas de alinhamento entre componentes durante drag (smart guides). */
   activeSmartGuides: ReadonlyArray<{ orientation: "v" | "h"; position: number }>;
-  snapEnabled: boolean;
-  setSnapEnabled: (enabled: boolean) => void;
+  snapToGrid: boolean;
+  setSnapToGrid: (enabled: boolean) => void;
+  snapToObjects: boolean;
+  setSnapToObjects: (enabled: boolean) => void;
   /** Ferramenta pan (arrastar o palco). */
   stagePanMode: boolean;
   setStagePanMode: (enabled: boolean) => void;

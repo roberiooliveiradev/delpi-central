@@ -1,5 +1,6 @@
 import { HintAction, ComboboxNumberControl } from "@delpi/plugin-ui/index";
 import {
+  AlignHorizontalSpaceAround,
   Crosshair,
   Focus,
   Grid3x3,
@@ -44,8 +45,10 @@ export function ComunicadoViewRibbon() {
     setStageGridSizePercent,
     showStageGuides,
     setShowStageGuides,
-    snapEnabled,
-    setSnapEnabled,
+    snapToGrid,
+    setSnapToGrid,
+    snapToObjects,
+    setSnapToObjects,
   } = useComunicadoEditor();
   const { openCatalog } = useKeyboardShortcutsTips();
 
@@ -144,11 +147,19 @@ export function ComunicadoViewRibbon() {
           />
           <DeckRibbonTile
             icon={Magnet}
-            label="Encaixe"
-            hint={V.snap}
-            active={snapEnabled}
-            keyTip={K.snap}
-            onClick={() => setSnapEnabled(!snapEnabled)}
+            label="Na grade"
+            hint={V.snapToGrid}
+            active={snapToGrid}
+            keyTip={K.snapToGrid}
+            onClick={() => setSnapToGrid(!snapToGrid)}
+          />
+          <DeckRibbonTile
+            icon={AlignHorizontalSpaceAround}
+            label="Objetos"
+            hint={V.snapToObjects}
+            active={snapToObjects}
+            keyTip={K.snapToObjects}
+            onClick={() => setSnapToObjects(!snapToObjects)}
           />
           <DeckRibbonTile
             icon={Keyboard}
