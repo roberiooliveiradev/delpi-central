@@ -652,9 +652,14 @@ export async function updateSlide(
     isActive: boolean;
     transitionStyle: string | null;
   }>,
+  options?: { keepalive?: boolean },
 ) {
   return unwrap(
-    httpPatch<ApiEnvelope<Slide>>(`${API_BASE}/playlists/${playlistId}/slides/${slideId}`, body),
+    httpPatch<ApiEnvelope<Slide>>(
+      `${API_BASE}/playlists/${playlistId}/slides/${slideId}`,
+      body,
+      { keepalive: options?.keepalive },
+    ),
   );
 }
 

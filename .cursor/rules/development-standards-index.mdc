@@ -76,6 +76,7 @@ Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roa
 | `plugins-frontend-build.mdc` | Build MFE, checklist CSS antes de commit |
 | `mf-federation-patch-safety.mdc` | Patch React MF — sem ReDoS; validar build `plugin-ui` |
 | `plugins-documentation.mdc` | **README + doc API + inventário** — todo plugin documentado |
+| `tv-dashboard-persist-local-edits.mdc` | **TV Dashboard** — draft versionado; F5/WS nunca sobrescrevem edições locais sem merge |
 | [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) | **Scaffold MF** — vite, bootstrap, Docker, compose |
 
 ## Fluxo por tipo de tarefa
@@ -101,6 +102,7 @@ OOM ou build MF em prod → infra-sequential-container-startup → fase remote a
 Patch MF / federationReactProxyFix → mf-federation-patch-safety → teste + plugin-ui vite build (nunca ReDoS)
 Migration SQL nova/ajuste         → migrations-immutable-checksum → sempre V0NN novo (nunca editar aplicada)
 IDD engenharia 0 com KPIs em 10   → si-consolidated-department-idd + docs/ENGINEERING_IDD_REGRESSION.md (não MFE)
+TV Dashboard F5/WS perde fontes   → tv-dashboard-persist-local-edits → applyServerPlaylistPreservingLocalEdits + clearIfCoveredBySave
 ```
 
 ## Ordem de prioridade em conflito

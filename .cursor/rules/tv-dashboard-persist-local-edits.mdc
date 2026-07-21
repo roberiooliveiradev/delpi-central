@@ -1,0 +1,39 @@
+---
+description: Persistência TV Dashboard — nunca sobrescrever edições locais
+globs: plugins/tv-dashboard/**/*
+alwaysApply: false
+---
+
+# TV Dashboard — persistência de edições locais (anti-padrão)
+
+## Princípio
+
+O dropdown **Fonte** e o restante do slide personalizado vêm de `nativeConfig.blocks` no slide. Se o estado remoto (API/WS) sobrescrever o local sem merge, **fontes e bindings novos somem no F5** — falha gravíssima.
+
+## Contrato canônico
+
+```
+edição → writeComunicadoSlideDraft(version) + pending
+       → debounce → updateSlide(version)
+load/WS → applyServerPlaylistPreservingLocalEdits(remote + drafts + pending + live)
+clear draft → só clearComunicadoSlideDraftIfCoveredBySave(completedVersion)
+```
+
+Módulos: `comunicadoSlideDraftPreferences.ts`, `comunicadoSlideAutosave.ts`, `PlaylistEditorPage.tsx`.
+
+## Anti-padrões (proibido)
+
+1. **`setPlaylist` com slides da API/WS sem** `applyServerPlaylistPreservingLocalEdits` / merge de draft+pending+live.
+2. **`clearComunicadoSlideDraft` sem comparar versão** com o draft atual (ex.: `.then(() => clearDraft)` no reenvio do load).
+3. **`setRemoteConfigRevision` / forceAccept remoto** enquanto houver dirty local (`hasLocalComunicadoEdits`).
+4. **Flush no `pagehide`/`beforeunload` sem `keepalive`** — o browser pode matar o PATCH.
+5. **Autosave sem feedback** em falha 422/rede — o usuário acha que salvou; F5 regride.
+
+## O que fazer
+
+- Toda escrita local: draft **com `version`** do `bumpComunicadoAutosaveVersion`.
+- Todo GET/WS que atualiza slides: helper de preservação local.
+- Unload: `updateSlide(..., { keepalive: true })`.
+- Teste de regressão: save v1 não apaga draft v2; reload WS preserva pending.
+
+Incidente: jul/2026 — inserção de fontes sumia no refresh por clear de draft sem guarda + reload WS sem merge.
