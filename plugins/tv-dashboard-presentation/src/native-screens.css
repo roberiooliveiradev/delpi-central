@@ -352,6 +352,7 @@
 
 .tdp-comunicado {
   position: relative;
+  /* Clip do retângulo de design — editor espelha em `.td-composer__canvas`. */
   overflow: hidden;
   padding: 0;
   /* Tipografia de conteúdo do slide — independente do tema chrome do host. */

@@ -1155,8 +1155,12 @@
   height: auto;
   aspect-ratio: auto;
   border-radius: 0;
-  /* Objetos podem ficar fora da área da apresentação; a TV corta via DesignViewportStage. */
-  overflow: visible;
+  /*
+   * Clip WYSIWYG = TV/prévia (`DesignViewportStage` + `.tdp-comunicado`).
+   * overflow:visible fazia sombra/conteúdo na borda parecer “ok” no palco e
+   * cortado na apresentação — mesma frame %, percepção de posição errada.
+   */
+  overflow: hidden;
   /* Evita arraste acidental marcar texto; editing contentEditable sobrescreve. */
   user-select: none;
   /*
