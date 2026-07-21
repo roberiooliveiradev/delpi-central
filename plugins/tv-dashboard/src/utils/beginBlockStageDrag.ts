@@ -11,7 +11,7 @@ type BeginBlockStageDragArgs = {
   isBlockSelected: (id: string) => boolean;
   selectedIds: string[];
   selectedId: string | null;
-  selectBlock: (id: string, options?: { additive?: boolean; expandGroup?: boolean }) => void;
+  selectBlock: (id: string, options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean }) => void;
   selectBlocksByIds: (ids: string[]) => void;
   armMultiDragSelection: (ids: string[]) => void;
   startDrag: (event: ReactPointerEvent, block: ComunicadoBlock, mode: BlockDragMode) => void;
@@ -20,7 +20,7 @@ type BeginBlockStageDragArgs = {
 /**
  * Seleção + arm de multi + startDrag move.
  * - Shift = toggle multi sem expandir grupo.
- * - Ctrl/Cmd = isola filho do grupo (igual Camadas).
+ * - Ctrl/Cmd = remove o alvo da seleção (sem pan / sem isolar).
  * - 2º clique com seleção pai fechada = isola o membro clicado e arrasta só ele.
  * - Clique normal em membro = seleciona o grupo inteiro e arrasta juntos.
  */
@@ -44,7 +44,7 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
   }
 
   if (event.ctrlKey || event.metaKey) {
-    selectBlock(block.id, { expandGroup: false });
+    selectBlock(block.id, { subtract: true, expandGroup: false });
     return false;
   }
 

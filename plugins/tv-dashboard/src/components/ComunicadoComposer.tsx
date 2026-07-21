@@ -24,7 +24,14 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
-import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
+import {
+  blocksInMarquee,
+  mergeMarqueeSelection,
+  normalizeMarqueeRect,
+  resolveMarqueeIntent,
+  subtractMarqueeSelection,
+  type MarqueeRect,
+} from "../utils/comunicadoMarquee";
 import {
   resolveClosedGroupSelection,
   unionFramePercent,
@@ -330,22 +337,26 @@ export function ComunicadoComposerCanvas() {
 
       if (!rect) return;
 
+      const intent = resolveMarqueeIntent(rect);
       const normalized = normalizeMarqueeRect(rect);
       const tiny =
         Math.abs(normalized.x2 - normalized.x1) < 0.5 && Math.abs(normalized.y2 - normalized.y1) < 0.5;
       if (tiny) {
-        if (!additive) clearSelection();
+        if (intent === "add" && !additive) clearSelection();
         return;
       }
 
       const ids = blocksInMarquee(blocks, normalized);
+      if (intent === "subtract") {
+        selectBlocksByIds(subtractMarqueeSelection(selectedIds, ids));
+        return;
+      }
       if (ids.length === 0) {
         if (!additive) clearSelection();
         return;
       }
       if (additive) {
-        const merged = new Set([...selectedIds, ...ids]);
-        selectBlocksByIds([...merged]);
+        selectBlocksByIds(mergeMarqueeSelection(selectedIds, ids));
       } else {
         selectBlocksByIds(ids);
       }
@@ -543,6 +554,8 @@ export function ComunicadoComposerCanvas() {
     };
   }, [marquee]);
 
+  const marqueeIntent = marquee ? resolveMarqueeIntent(marquee) : "add";
+
   return (
     <ComunicadoStageShell onStageContextMenu={handleStageContextMenu}>
       <div
@@ -649,19 +662,18 @@ export function ComunicadoComposerCanvas() {
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
-                  /* Ctrl/Cmd+clique em membro: isola o filho (Camadas). Não confundir com pan. */
+                  /* Ctrl/Cmd+clique: remove da seleção (não pan; isolação = 2º clique no grupo). */
                   if (
                     (event.ctrlKey || event.metaKey) &&
                     !event.shiftKey &&
-                    !stagePanMode &&
-                    block.groupId
+                    !stagePanMode
                   ) {
                     event.stopPropagation();
                     event.preventDefault();
-                    selectBlock(block.id, { expandGroup: false });
+                    selectBlock(block.id, { subtract: true, expandGroup: false });
                     return;
                   }
-                  // Pan (mão/Ctrl): não engolir o evento — o wrap do palco arrasta o scroll.
+                  // Pan (mão): não engolir o evento — o wrap do palco arrasta o scroll.
                   if (shouldDeferToStagePan(event, stagePanMode)) return;
                   event.stopPropagation();
                   if (
@@ -827,7 +839,16 @@ export function ComunicadoComposerCanvas() {
             />
           ) : null}
           {marqueeStyle ? (
-            <div className="td-composer__marquee" style={marqueeStyle} aria-hidden="true" />
+            <div
+              className={[
+                "td-composer__marquee",
+                marqueeIntent === "subtract"
+                  ? "td-composer__marquee--subtract"
+                  : "td-composer__marquee--add",
+              ].join(" ")}
+              style={marqueeStyle}
+              aria-hidden="true"
+            />
           ) : null}
         </div>
       </div>

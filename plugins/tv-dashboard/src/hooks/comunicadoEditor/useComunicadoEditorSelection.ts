@@ -207,12 +207,15 @@ export function useComunicadoEditorSelection({
   );
 
   const selectBlock = useCallback(
-    (blockId: string, options?: { additive?: boolean; expandGroup?: boolean }) => {
+    (
+      blockId: string,
+      options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean },
+    ) => {
       flushActiveTextEdit();
       const blocksNow = configRef.current.blocks ?? [];
       const targetId = resolveStageSelectionTargetId(blockId, blocksNow);
       if (!targetId) {
-        if (!options?.additive) {
+        if (!options?.additive && !options?.subtract) {
           setSelectedIds([]);
           setEditingTextId(null);
           clearPartSelections();
@@ -220,6 +223,27 @@ export function useComunicadoEditorSelection({
         return;
       }
       let selectedBlockType: string | undefined;
+      if (options?.subtract) {
+        setSelectedIds((current) => {
+          const remove = new Set<string>([targetId]);
+          const block = blocksNow.find((item) => item.id === targetId);
+          if (block?.groupId) {
+            const memberIds = blocksNow
+              .filter((item) => item.groupId === block.groupId)
+              .map((item) => item.id);
+            if (memberIds.length > 1 && memberIds.every((id) => current.includes(id))) {
+              for (const id of memberIds) remove.add(id);
+            }
+          }
+          return filterStageSelectableIds(
+            current.filter((id) => !remove.has(id)),
+            blocksNow,
+          );
+        });
+        setEditingTextId(null);
+        clearPartSelections();
+        return;
+      }
       if (options?.additive) {
         setSelectedIds((current) => {
           const set = new Set(current);

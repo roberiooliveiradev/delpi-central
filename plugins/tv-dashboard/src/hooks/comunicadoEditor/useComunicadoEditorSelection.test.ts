@@ -72,6 +72,26 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedIds).toEqual(["b"]);
   });
 
+  it("subtract (Ctrl) remove da seleção sem alternar para incluir", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.selectBlock("a");
+    });
+    act(() => {
+      result.current.selectBlock("b", { additive: true });
+    });
+    act(() => {
+      result.current.selectBlock("a", { subtract: true });
+    });
+    expect(result.current.selectedIds).toEqual(["b"]);
+
+    act(() => {
+      result.current.selectBlock("a", { subtract: true });
+    });
+    expect(result.current.selectedIds).toEqual(["b"]);
+  });
+
   it("selectBlocksByIds substitui a seleção (marquee)", () => {
     const { result } = renderSelectionHook();
 

@@ -24,7 +24,7 @@ function fakeEvent(partial: Partial<ReactPointerEvent> = {}): ReactPointerEvent 
 }
 
 describe("beginBlockStageMoveDrag", () => {
-  it("Ctrl+clique isola filho do grupo sem iniciar drag", () => {
+  it("Ctrl+clique remove da seleção sem iniciar drag", () => {
     const a = fakeBlock("a", "grp");
     const b = fakeBlock("b", "grp");
     const selectBlock = vi.fn();
@@ -33,16 +33,16 @@ describe("beginBlockStageMoveDrag", () => {
       event: fakeEvent({ ctrlKey: true }),
       block: a,
       blocks: [a, b],
-      isBlockSelected: () => false,
-      selectedIds: [],
-      selectedId: null,
+      isBlockSelected: () => true,
+      selectedIds: ["a", "b"],
+      selectedId: "a",
       selectBlock,
       selectBlocksByIds: vi.fn(),
       armMultiDragSelection: vi.fn(),
       startDrag,
     });
     expect(result).toBe(false);
-    expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
+    expect(selectBlock).toHaveBeenCalledWith("a", { subtract: true, expandGroup: false });
     expect(startDrag).not.toHaveBeenCalled();
   });
 
