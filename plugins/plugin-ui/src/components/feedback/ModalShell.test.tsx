@@ -214,4 +214,36 @@ describe("ModalShell", () => {
     unmount();
     host.remove();
   });
+
+  it("createHostContainedModalShell com layout dialog centraliza o card sem host-fill", () => {
+    const host = document.createElement("main");
+    host.className = "dashboard-tv-dashboard";
+    document.body.appendChild(host);
+
+    const HostDialog = createHostContainedModalShell({
+      prefix: "td",
+      portalScopeClassName: "dashboard-tv-dashboard",
+      containedLayout: "dialog",
+    });
+
+    const { unmount } = render(
+      <HostDialog open title="Aviso" onClose={vi.fn()}>
+        <p>Link copiado.</p>
+      </HostDialog>,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "Aviso" });
+    expect(host.contains(dialog)).toBe(true);
+    expect(host.getAttribute(DELPI_MODAL_HOST_ATTR)).toBe("true");
+    expect(dialog.classList.contains("delpi-ui-modal--host-fill")).toBe(false);
+    expect(dialog.style.width).toBe("");
+    expect(dialog.style.height).toBe("");
+    expect(dialog.closest(".delpi-ui-modal-overlay--contained-dialog")).toBeTruthy();
+    expect(modalShellCss).toMatch(
+      /\.delpi-ui-modal-overlay--contained\.delpi-ui-modal-overlay--contained-dialog\s*\{[^}]*align-items:\s*center/s,
+    );
+
+    unmount();
+    host.remove();
+  });
 });

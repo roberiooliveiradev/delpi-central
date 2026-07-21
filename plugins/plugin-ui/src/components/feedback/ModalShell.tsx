@@ -46,6 +46,12 @@ export type ModalShellProps = {
   portalTarget?: Element | null;
   /** Faz overlay e wrapper ocuparem o portalTarget, não o viewport inteiro. */
   containedInPortalTarget?: boolean;
+  /**
+   * Com `containedInPortalTarget`:
+   * - `fill` (default) — workbench / página (dialog estica no host)
+   * - `dialog` — aviso/confirm: overlay no host, card centralizado (não cobre sidebar do portal)
+   */
+  containedLayout?: "fill" | "dialog";
 };
 
 export function modalShellBemClasses(prefix: string): ModalShellClassNames {
@@ -90,6 +96,7 @@ export function ModalShell({
   portalScopeClassName,
   portalTarget,
   containedInPortalTarget = false,
+  containedLayout = "fill",
 }: ModalShellProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -102,6 +109,8 @@ export function ModalShell({
   const containedHost =
     containedInPortalTarget && portalTarget instanceof HTMLElement ? portalTarget : null;
   const containedViewportStyle = useContainedModalViewportStyle(open && Boolean(containedHost), containedHost);
+  const hostFill = Boolean(containedHost) && containedLayout !== "dialog";
+  const hostDialog = Boolean(containedHost) && containedLayout === "dialog";
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -188,7 +197,7 @@ export function ModalShell({
 
   const dialogClass = [
     classNames.dialog,
-    containedInPortalTarget ? "delpi-ui-modal--host-fill" : null,
+    hostFill ? "delpi-ui-modal--host-fill" : null,
     className,
   ]
     .filter(Boolean)
@@ -196,14 +205,15 @@ export function ModalShell({
   const overlayClass = [
     overlayClassName,
     classNames.overlay,
-    containedInPortalTarget ? "delpi-ui-modal-overlay--contained" : null,
+    containedHost ? "delpi-ui-modal-overlay--contained" : null,
+    hostDialog ? "delpi-ui-modal-overlay--contained-dialog" : null,
   ]
     .filter(Boolean)
     .join(" ");
   const scopeClass = [
     portalScopeClassName,
     portalTheme.hostClassName,
-    containedInPortalTarget ? "delpi-ui-modal-portal--contained" : null,
+    containedHost ? "delpi-ui-modal-portal--contained" : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -227,11 +237,12 @@ export function ModalShell({
    * O wrapper usa `position: fixed` no scrollport visível (não `absolute` no
    * root do MFE — esse root tem height:auto e faria o modal > ou << viewport).
    * Margem e blur ficam no CSS (`.delpi-ui-modal-overlay--contained`).
+   * Layout `dialog`: overlay no host, card centralizado (avisos/confirm).
    */
-  const containedOverlayStyle = containedInPortalTarget
+  const containedOverlayStyle = containedHost
     ? ({ position: "absolute", inset: 0 } as const)
     : undefined;
-  const containedDialogStyle = containedInPortalTarget
+  const containedDialogStyle = hostFill
     ? ({
         width: "100%",
         height: "100%",
@@ -323,6 +334,11 @@ export type CreateModalShellConfig = {
   /** Variante visual canônica (`wide` / `page` = modal quase fullscreen). */
   variant?: ModalShellVariant;
   classNames?: Partial<ModalShellClassNames>;
+  /**
+   * Só para `createHostContainedModalShell`:
+   * `fill` = workbench; `dialog` = aviso/confirm centralizado no host.
+   */
+  containedLayout?: "fill" | "dialog";
 };
 
 export function createModalShell(config: CreateModalShellConfig) {
@@ -355,12 +371,16 @@ export function createModalShell(config: CreateModalShellConfig) {
 /**
  * Modal que preenche a área do MFE (portal no root do plugin), sem cobrir
  * sidebar/chrome do host Minha DELPI.
+ *
+ * Anti-padrão: `createModalShell` + portal no `document.body` com overlay
+ * `position:fixed; inset:0` — escurece e bloqueia a sidebar do portal.
  */
 export function createHostContainedModalShell(
   config: CreateModalShellConfig & { portalScopeClassName: string },
 ) {
   const Modal = createModalShell(config);
   const hostSelector = `.${config.portalScopeClassName.trim().split(/\s+/)[0]}`;
+  const containedLayout = config.containedLayout ?? "fill";
 
   return function HostContainedModalShell(props: DashboardModalShellProps) {
     const portalTarget =
@@ -372,6 +392,7 @@ export function createHostContainedModalShell(
         {...props}
         portalTarget={portalTarget}
         containedInPortalTarget={Boolean(portalTarget)}
+        containedLayout={props.containedLayout ?? containedLayout}
       />
     );
   };

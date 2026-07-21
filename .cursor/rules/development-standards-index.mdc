@@ -78,6 +78,7 @@ Cobertura HTTP 100%: [playbook-route-test-coverage-100.md](../api-delpi/docs/roa
 | `plugins-documentation.mdc` | **README + doc API + inventário** — todo plugin documentado |
 | `tv-dashboard-persist-local-edits.mdc` | **TV Dashboard** — draft versionado; F5/WS nunca sobrescrevem edições locais sem merge |
 | `tv-dashboard-editor-pasteboard.mdc` | **TV Dashboard** — editor `overflow:visible` (pasteboard); TV/prévia clipam |
+| `mfe-modal-host-contained.mdc` | **Modais MFE** — nunca cobrir sidebar do portal; `HostContainedDialog` / `fill` |
 | [novo-plugin-mfe-checklist.md](../docs/05-plugin-system/novo-plugin-mfe-checklist.md) | **Scaffold MF** — vite, bootstrap, Docker, compose |
 
 ## Fluxo por tipo de tarefa
@@ -105,6 +106,7 @@ Migration SQL nova/ajuste         → migrations-immutable-checksum → sempre V
 IDD engenharia 0 com KPIs em 10   → si-consolidated-department-idd + docs/ENGINEERING_IDD_REGRESSION.md (não MFE)
 TV Dashboard F5/WS perde fontes   → tv-dashboard-persist-local-edits → applyServerPlaylistPreservingLocalEdits + clearIfCoveredBySave
 TV Dashboard corta logo/borda no editor → tv-dashboard-editor-pasteboard → overflow:visible no canvas (não «WYSIWYG clip»)
+Modal MFE cobre sidebar do portal → mfe-modal-host-contained → HostContainedDialog / createHostContainedModalShell
 ```
 
 ## Ordem de prioridade em conflito

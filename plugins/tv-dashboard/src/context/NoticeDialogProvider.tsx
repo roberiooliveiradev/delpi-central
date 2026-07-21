@@ -21,7 +21,8 @@ type NoticeDialogContextValue = {
 const NoticeDialogContext = createContext<NoticeDialogContextValue | null>(null);
 
 /**
- * Substitui window.alert / exportAlert por modal Delpi (plugin-ui).
+ * Substitui window.alert / exportAlert por modal Delpi contido no host MFE
+ * (`HostContainedDialog` — não cobre a sidebar do portal).
  * Ligar `configureExportAlert` no mount para `tvDashboardNotice` e exports.
  */
 export function NoticeDialogProvider({ children }: { children: ReactNode }) {
