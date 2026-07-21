@@ -1,5 +1,8 @@
+import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
+
 import type { ComunicadoEditorKeyboardActions } from "../components/comunicadoEditorTypes";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
+import { expandSelectionWithGroups } from "../utils/comunicadoGrouping";
 
 /** Atalhos do editor — recebe ações do provider (sem importar o contexto, evita ciclo ESM). */
 export function useComunicadoEditorKeyboard({
@@ -7,6 +10,8 @@ export function useComunicadoEditorKeyboard({
   editingTextId,
   hasPartSelection = false,
   clearPartSelection,
+  blocks = [],
+  selectBlocksByIds,
   undo,
   redo,
   canUndo,
@@ -15,11 +20,15 @@ export function useComunicadoEditorKeyboard({
   removeSelected,
   cutSelected,
   copySelected,
-  pasteSelected,
-  canPaste,
+  pasteSelected: _pasteSelected,
+  canPaste: _canPaste,
   nudgeSelected,
   enableHistoryShortcuts = true,
-}: ComunicadoEditorKeyboardActions & { enableHistoryShortcuts?: boolean }) {
+}: ComunicadoEditorKeyboardActions & {
+  enableHistoryShortcuts?: boolean;
+  blocks?: ComunicadoBlock[];
+  selectBlocksByIds?: (ids: string[]) => void;
+}) {
   const hasSelection = selectedIds.length > 0;
 
   useEditorShortcut(
@@ -34,6 +43,15 @@ export function useComunicadoEditorKeyboard({
       if (event.key === "Escape" && hasPartSelection) {
         clearPartSelection?.();
         return { handled: true };
+      }
+
+      // Filho isolado do grupo (Camadas) → Esc volta à seleção pai.
+      if (event.key === "Escape" && selectBlocksByIds && selectedIds.length === 1) {
+        const alone = blocks.find((block) => block.id === selectedIds[0]);
+        if (alone?.groupId) {
+          selectBlocksByIds(expandSelectionWithGroups(blocks, [alone.id]));
+          return { handled: true };
+        }
       }
 
       if (mod && key === "z" && !event.shiftKey) {
@@ -58,9 +76,9 @@ export function useComunicadoEditorKeyboard({
         return { handled: true };
       }
 
-      if (mod && key === "v" && canPaste) {
-        pasteSelected();
-        return { handled: true };
+      if (mod && key === "v") {
+        // Colar é tratado pelo listener `paste` (SO + clipboard interno).
+        return;
       }
 
       if (mod && key === "d") {

@@ -1,0 +1,34 @@
+---
+description: TV Dashboard — um palco canônico editor ≡ apresentação
+globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*,plugins/public-hub/**/tv-dashboard/**
+alwaysApply: false
+---
+
+# TV Dashboard — fidelidade editor ↔ apresentação
+
+## Princípio
+
+**Um slide personalizado = um componente de palco.** Editor e TV/prévia não reimplementam fundo/logo/blocos.
+
+| Camada | Módulo canônico |
+|--------|-----------------|
+| Moldura CSS / dual-class | `ComunicadoStageFrame` + `comunicado-stage.css` em `@delpi/plugin-ui` |
+| Palco (fundo + logo + blocos) | `RichComunicadoStage` / `RichComunicadoMasterLogo` em `tv-dashboard-presentation` |
+| Interação (seleção, handles) | `ComunicadoEditorBlockView` (só editor) |
+| Prévia admin / TV pública | `NativeSlideView` → `RichComunicadoStage` |
+| Dados ao abrir prévia | `preparePreviewNavigation` (flush) + `overlayLiveCustomMessageSlidesOnPreviewPayload` |
+
+## Anti-padrões (proibido)
+
+1. Segundo markup de logo master só no composer ou só em `NativeScreens`.
+2. Abrir prévia **sem** `flush` do autosave / sem limpar `previewPayloadCache`.
+3. Confiar só no `preview-payload` do servidor durante edição (stale) — filmstrip e prévia devem overlay do shell local.
+4. Duplicar `PresentationPreview` vs public-hub com lógica de slide diferente (unificar no pacote presentation).
+
+Incidente jul/2026: prévia com cards vazios/duplicados e layout ≠ editor por payload stale + logo duplicado.
+
+## O que fazer
+
+- Mudança visual do comunicado → `RichComunicadoStage` (ou `ComunicadoBlockView`).
+- Antes de prévia → `preparePreviewNavigation(playlistId)`.
+- Teste: `RichComunicadoStage.test.tsx`, `overlayLivePreviewPayload.test.ts`.

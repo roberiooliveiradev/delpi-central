@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useRef, useState, type ReactNod
 
 import type { DataSourceDuplicatePolicy } from "@delpi/tv-dashboard-presentation";
 
-import { Modal } from "../components/ui/Modal";
+import { HostContainedDialog } from "../components/ui/Modal";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 type ChoiceResult = DataSourceDuplicatePolicy | null;
@@ -36,7 +36,7 @@ export function DataSourceDuplicateChoiceProvider({ children }: { children: Reac
   return (
     <DataSourceDuplicateChoiceContext.Provider value={{ chooseDataSourceDuplicatePolicy }}>
       {children}
-      <Modal open={open} title={H.title} onClose={() => finish(null)} className="td-modal--confirm">
+      <HostContainedDialog open={open} title={H.title} onClose={() => finish(null)} className="td-modal--confirm">
         <p className="td-deck-inspector__meta">{H.message}</p>
         <div className="td-modal-actions td-modal-actions--stack">
           <button type="button" className="td-btn td-btn--primary" onClick={() => finish("share_source")}>
@@ -49,7 +49,7 @@ export function DataSourceDuplicateChoiceProvider({ children }: { children: Reac
             {H.cancelLabel}
           </button>
         </div>
-      </Modal>
+      </HostContainedDialog>
     </DataSourceDuplicateChoiceContext.Provider>
   );
 }

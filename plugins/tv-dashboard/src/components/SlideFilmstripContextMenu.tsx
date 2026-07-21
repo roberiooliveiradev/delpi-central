@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 
 const C = TV_DASHBOARD_HELP_TOOLTIPS.filmstripContextMenu;
@@ -58,6 +59,7 @@ export function SlideFilmstripContextMenu({
       position={position}
       onClose={onClose}
       aria-label={`${C.menu}: ${slideTitle}`}
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
     >
       <ContextMenuItem
         label={C.copy}

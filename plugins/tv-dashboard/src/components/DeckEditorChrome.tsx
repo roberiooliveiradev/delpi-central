@@ -94,14 +94,9 @@ function isRibbonContentTab(
   );
 }
 
-function ribbonDensityFor(tab: DeckRibbonTabId): "band" | "fit" {
-  return tab === "element" ||
-    tab === "tableDesign" ||
-    tab === "tableLayout" ||
-    tab === "slide" ||
-    tab === "playlist"
-    ? "fit"
-    : "band";
+/** Faixa contextual: altura estável (`band`) para não reflowar o palco ao selecionar. */
+function ribbonDensityFor(_tab: DeckRibbonTabId): "band" | "fit" {
+  return "band";
 }
 
 /** Chrome do editor: abas + faixa contextual + painel de configuração. */

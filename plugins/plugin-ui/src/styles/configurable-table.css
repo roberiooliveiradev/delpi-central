@@ -97,6 +97,27 @@
   font-size: 0.85em;
 }
 
+.delpi-ui-config-table__header-edit {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.1em 0.25em;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 2px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-transform: none;
+  outline: none;
+}
+
+.delpi-ui-config-table__header-edit:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
 .delpi-ui-config-table--header-normal-case .delpi-ui-config-table__header-cell {
   text-transform: none;
 }

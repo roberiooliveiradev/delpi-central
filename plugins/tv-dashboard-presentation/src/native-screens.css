@@ -48,16 +48,6 @@
   opacity: 1;
 }
 
-.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-fade,
-.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in,
-.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-up,
-.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-down,
-.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-left,
-.tdp-stage--boot .tdp-slide--active .tdp-comunicado__block--anim-slide-in-right {
-  animation: none !important;
-  opacity: 1 !important;
-  transform: none !important;
-}
 
 @keyframes tdp-fade-in {
   from {
@@ -68,96 +58,6 @@
   }
 }
 
-/* 4E.2 — animações de entrada por bloco (só no slide ativo) */
-.tdp-slide--active .tdp-comunicado__block--anim-fade {
-  animation: tdp-block-fade-in var(--tdp-block-anim-duration, 600ms)
-    var(--tdp-block-anim-easing, ease-out) var(--tdp-block-anim-delay, 0ms) both;
-}
-
-.tdp-slide--active .tdp-comunicado__block--anim-slide-in {
-  animation-duration: var(--tdp-block-anim-duration, 600ms);
-  animation-timing-function: var(--tdp-block-anim-easing, ease-out);
-  animation-delay: var(--tdp-block-anim-delay, 0ms);
-  animation-fill-mode: both;
-}
-
-.tdp-slide--active .tdp-comunicado__block--anim-slide-in-up {
-  animation-name: tdp-block-slide-in-up;
-}
-
-.tdp-slide--active .tdp-comunicado__block--anim-slide-in-down {
-  animation-name: tdp-block-slide-in-down;
-}
-
-.tdp-slide--active .tdp-comunicado__block--anim-slide-in-left {
-  animation-name: tdp-block-slide-in-left;
-}
-
-.tdp-slide--active .tdp-comunicado__block--anim-slide-in-right {
-  animation-name: tdp-block-slide-in-right;
-}
-
-@keyframes tdp-block-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes tdp-block-slide-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(14%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes tdp-block-slide-in-down {
-  from {
-    opacity: 0;
-    transform: translateY(-14%);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes tdp-block-slide-in-left {
-  from {
-    opacity: 0;
-    transform: translateX(14%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes tdp-block-slide-in-right {
-  from {
-    opacity: 0;
-    transform: translateX(-14%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tdp-slide--active .tdp-comunicado__block--anim-fade,
-  .tdp-slide--active .tdp-comunicado__block--anim-slide-in {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-}
 
 .tdp-external-frame {
   width: 100%;
@@ -343,312 +243,7 @@
   color: #b8c5d6;
 }
 
-/* Comunicado é full-bleed com frames em % — não herda o grid auto/1fr/auto das telas KPI
-   (senão o stage colapsa e a prévia/filmstrip ficam só no fundo branco). */
-.tdp-native-screen.tdp-comunicado {
-  display: block;
-  padding: 0;
-}
-
-.tdp-comunicado {
-  position: relative;
-  overflow: hidden;
-  padding: 0;
-  /* Tipografia de conteúdo do slide — independente do tema chrome do host. */
-  --delpi-ui-text: #0f172a;
-  --delpi-ui-muted: #64748b;
-  --delpi-ui-surface: #ffffff;
-  --tdp-data-text: #1e293b;
-  --tdp-data-text-strong: #0f172a;
-  --tdp-data-muted: #64748b;
-  --tdp-data-surface: #ffffff;
-  --tdp-data-bg: #ffffff;
-  /* Herança de `color` (ex.: color: inherit) não deve seguir o chrome escuro. */
-  color: #0f172a;
-}
-
-.tdp-comunicado__stage {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.tdp-comunicado__block {
-  position: absolute;
-  box-sizing: border-box;
-  padding: 0.4em;
-  overflow: hidden;
-}
-
-/* KPI/chart/tabela/filtro: moldura no card/chartArea/frame — sem padding/overflow no wrapper. */
-.tdp-comunicado__block--kpi_view,
-.tdp-comunicado__block--chart_view,
-.tdp-comunicado__block--table_view,
-.tdp-comunicado__block--kpi-view,
-.tdp-comunicado__block--chart-view,
-.tdp-comunicado__block--table-view,
-.tdp-comunicado__block--input {
-  padding: 0;
-  overflow: visible;
-  background: transparent;
-}
-
-/* Forma: sombra no fill (com border-radius); overflow no wrapper cortaria a sombra. */
-.tdp-comunicado__block.tdp-comunicado__visual-box--shape {
-  overflow: visible;
-}
-
-.tdp-comunicado__block--canvas_table,
-.tdp-comunicado__block--canvas-table {
-  padding: 0;
-  overflow: hidden;
-}
-
-.td-canvas-table {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.td-canvas-table table {
-  width: 100%;
-  height: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  color: inherit;
-  font: inherit;
-  text-align: inherit;
-}
-
-.td-canvas-table th,
-.td-canvas-table td {
-  min-width: 0;
-  padding: 0.3em 0.45em;
-  border: 1px solid var(--tdp-canvas-table-border, #94a3b8);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle;
-  white-space: pre-wrap;
-}
-
-.td-canvas-table th {
-  background: var(--tdp-canvas-table-header-bg, #e2e8f0);
-  font-weight: 700;
-}
-
-.td-canvas-table [contenteditable="true"]:focus {
-  outline: 2px solid var(--primary, #089bdb);
-  outline-offset: -2px;
-}
-
-.tdp-comunicado__block--heading h1,
-.tdp-comunicado__block--text p,
-.tdp-comunicado__block--heading .tdp-comunicado__rich-text,
-.tdp-comunicado__block--text .tdp-comunicado__rich-text {
-  margin: 0;
-  line-height: inherit;
-  width: 100%;
-  flex: 1;
-  text-align: inherit;
-  white-space: pre-wrap;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.tdp-comunicado__rich-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35em;
-}
-
-.tdp-comunicado__text-segment {
-  display: block;
-  white-space: pre-wrap;
-}
-
-.tdp-comunicado__list {
-  margin: 0;
-  padding: 0 0 0 1.35em;
-  list-style-position: outside;
-}
-
-.tdp-comunicado__list--bullet {
-  list-style-type: disc;
-}
-
-.tdp-comunicado__list--ordered {
-  list-style-type: decimal;
-}
-
-.tdp-comunicado__list-item {
-  margin: 0;
-  padding: 0;
-  white-space: pre-wrap;
-}
-
-.tdp-comunicado__styled-line + .tdp-comunicado__styled-line {
-  margin-top: 0.15em;
-}
-
-.tdp-comunicado__block--heading h1 {
-  font-size: inherit;
-  font-weight: inherit;
-}
-
-.tdp-comunicado__block--text p {
-  font-size: inherit;
-}
-
-.tdp-comunicado__block--media img,
-.tdp-comunicado__block--media video {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.tdp-comunicado__visual-box--text {
-  /* Caixa de texto: sem preenchimento/contorno de forma — só tipografia. */
-}
-
-.tdp-comunicado__visual-box-content {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-}
-
-.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > h1,
-.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > p,
-.tdp-comunicado__visual-box--text > .tdp-comunicado__visual-box-content > span {
-  margin: 0;
-  flex: 0 0 auto;
-  width: 100%;
-}
-
-.tdp-comunicado__block--shape,
-.tdp-comunicado__visual-box--shape {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-/* Linha/seta: ponta pode sair um pouco do box fino — não cortar. */
-.tdp-comunicado__block.tdp-comunicado__visual-box--primitive-line {
-  overflow: visible;
-}
-
-/* Ponto: marcador em px pode ser maior que o hit-box % — não cortar. */
-.tdp-comunicado__block.tdp-comunicado__visual-box--primitive-point {
-  overflow: visible;
-}
-
-.tdp-comunicado__shape-svg--point {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  flex-shrink: 0;
-}
-
-.tdp-comunicado__shape-svg,
-.tdp-comunicado__shape-fill,
-.tdp-comunicado__shape-line {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* Sombra acompanha o raio do fill (não o wrapper retangular). */
-.tdp-comunicado__shape-fill {
-  box-shadow: var(--tdp-block-box-shadow, none);
-  box-sizing: border-box;
-}
-
-.tdp-comunicado__shape-svg--line {
-  overflow: visible;
-}
-
-.tdp-comunicado__shape-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.4em;
-  text-align: center;
-  pointer-events: none;
-}
-
-.tdp-comunicado__icon-wrap {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tdp-comunicado__icon-svg {
-  width: 72%;
-  height: 72%;
-}
-
-.tdp-comunicado__link {
-  color: inherit;
-  text-decoration: inherit;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: inherit;
-}
-
-.tdp-comunicado__placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35em;
-  width: 100%;
-  height: 100%;
-  padding: 0.4em;
-  color: #94a3b8;
-  font-size: 12px;
-  text-align: center;
-  box-sizing: border-box;
-}
-
-.tdp-comunicado__placeholder-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: clamp(28px, 22%, 64px);
-  height: clamp(28px, 22%, 64px);
-  color: #cbd5e1;
-}
-
-.tdp-comunicado__placeholder-icon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.tdp-comunicado__placeholder-label {
-  line-height: 1.2;
-  max-width: 100%;
-}
-
-.tdp-comunicado__placeholder--loading .tdp-comunicado__placeholder-icon {
-  animation: tdp-placeholder-spin 0.9s linear infinite;
-}
-
-.tdp-comunicado__placeholder--error .tdp-comunicado__placeholder-icon {
-  color: #f87171;
-}
-
-@keyframes tdp-placeholder-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* Palco comunicado: plugin-ui/src/styles/comunicado-stage.css */
 
 .tdp-empty {
   width: 100%;
@@ -783,9 +378,17 @@
 }
 
 .tdp-design-viewport__stage {
-  /* Inline do DesignViewportStage define absolute + scale; CSS só reforça clip. */
-  overflow: hidden;
+  /* Bleed wrapper (transform); clip só além do pasteboard. */
+  background: transparent;
+}
+
+.tdp-design-viewport__design {
+  /* Retângulo 1080p — overflow visible; pasteboard está no __stage (bleed). */
+  overflow: visible;
   background: inherit;
+  /* Raiz tipográfica de design — isola do `font-size: clamp(...vw)` do `.tdp-stage`. */
+  font-size: 16px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 .tdp-stage--preview-shell:fullscreen {
@@ -956,10 +559,6 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #9fb0c5;
-}
-
-.tdp-comunicado__block--data {
-  overflow: hidden;
 }
 
 .tdp-data-block {
@@ -1151,6 +750,21 @@
   outline-color: color-mix(in srgb, var(--tdp-data-accent, #089bdb) 75%, transparent);
 }
 
+.tdp-kpi-view__label-edit {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--tdp-data-accent, #089bdb);
+  border-radius: 4px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
 .tdp-kpi-placeholder {
   display: grid;
   gap: 0.35rem;
@@ -1283,6 +897,28 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   font-size: 0.85em;
+}
+
+.tdp-configurable-table__header-edit {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.1em 0.25em;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 2px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+  outline: none;
+}
+
+.tdp-configurable-table__header-edit:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px #2563eb;
 }
 
 .tdp-configurable-table--header-normal-case .tdp-table-header-cell,
@@ -1528,283 +1164,4 @@
 
 /* Paint do gráfico de séries: plugin-ui/src/styles/series-chart.css (prefixo delpi-ui-series-chart). */
 
-.tdp-comunicado__input-block {
-  box-sizing: border-box;
-  position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45em;
-  padding: 0.45em 0.6em;
-  /* Fundo branco + sombra na moldura; contorno vem do frame (inline) — sem borda CSS extra. */
-  background: var(--tdp-input-surface, #ffffff);
-  border: none;
-  /* Raio sincronizado com frame / seleção (--tdp-input-radius). */
-  border-radius: var(--tdp-input-radius, 16px);
-  box-shadow: var(--tdp-block-box-shadow, var(--tdp-input-shadow, none));
-  color: var(--tdp-input-fg, #0f172a);
-  /* Subitens (absolute/%) não pintam fora da moldura — handles usam overlay próprio. */
-  overflow: hidden;
-}
-
-.tdp-comunicado__input-block--free-layout {
-  display: block;
-  overflow: hidden;
-}
-
-/* Heading deixa de ser caixa flex — filhos framed posicionam no host do filtro. */
-.tdp-comunicado__input-block--free-layout .tdp-comunicado__input-block-heading {
-  display: contents;
-}
-
-.tdp-comunicado__input-block-part {
-  position: relative;
-  box-sizing: border-box;
-  min-width: 0;
-}
-
-.tdp-comunicado__input-block-part--selected {
-  outline: var(--td-selection-outline-width, 2px) solid
-    var(
-      --td-selection-outline,
-      color-mix(in srgb, var(--tdp-accent, #089bdb) 80%, transparent)
-    );
-  outline-offset: 1px;
-}
-
-/* Aro clicável sob o outline — evita que o clique na “borda” caia na moldura. */
-.tdp-comunicado__input-block-part--control.tdp-comunicado__input-block-part--selected {
-  padding: 3px;
-  margin: -3px;
-  box-sizing: border-box;
-}
-
-/* Free-layout: host framed = bbox clipada à moldura (nunca ultrapassa o fundo global). */
-.tdp-comunicado__input-block-part--framed {
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  min-width: 0;
-  min-height: 0;
-  max-width: 100%;
-  max-height: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--selected {
-  /* Clip estável: não liberar overflow no host (badge não cruza a moldura). */
-  overflow: hidden;
-}
-
-.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--control .tdp-comunicado__input-block-control,
-.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--control .tdp-comunicado__input-block-value {
-  flex: 1 1 auto;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  max-width: 100%;
-  max-height: 100%;
-  align-self: stretch;
-  box-sizing: border-box;
-}
-
-.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--label {
-  align-items: center;
-}
-
-.tdp-comunicado__input-block-part--framed.tdp-comunicado__input-block-part--badge {
-  align-items: center;
-  justify-content: center;
-}
-
-.tdp-comunicado__input-part-handles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 6;
-  /* Overlay de handles — não força overflow:visible no host do filtro. */
-  overflow: visible;
-}
-
-.tdp-comunicado__input-part-handle {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  margin: -4px;
-  border: 1px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 80%, #fff);
-  background: var(--tdp-accent, #089bdb);
-  border-radius: 1px;
-  pointer-events: auto;
-  padding: 0;
-  cursor: nwse-resize;
-}
-
-.tdp-comunicado__input-part-handle--n,
-.tdp-comunicado__input-part-handle--s {
-  left: 50%;
-  cursor: ns-resize;
-}
-
-.tdp-comunicado__input-part-handle--e,
-.tdp-comunicado__input-part-handle--w {
-  top: 50%;
-  cursor: ew-resize;
-}
-
-.tdp-comunicado__input-part-handle--n,
-.tdp-comunicado__input-part-handle--ne,
-.tdp-comunicado__input-part-handle--nw {
-  top: 0;
-}
-
-.tdp-comunicado__input-part-handle--s,
-.tdp-comunicado__input-part-handle--se,
-.tdp-comunicado__input-part-handle--sw {
-  bottom: 0;
-  top: auto;
-}
-
-.tdp-comunicado__input-part-handle--e,
-.tdp-comunicado__input-part-handle--ne,
-.tdp-comunicado__input-part-handle--se {
-  right: 0;
-  left: auto;
-}
-
-.tdp-comunicado__input-part-handle--w,
-.tdp-comunicado__input-part-handle--nw,
-.tdp-comunicado__input-part-handle--sw {
-  left: 0;
-}
-
-.tdp-comunicado__input-block--loading {
-  opacity: 0.92;
-}
-
-.tdp-comunicado__input-block-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  color: var(--tdp-accent, #089bdb);
-  opacity: 0.95;
-}
-
-.tdp-comunicado__input-block-label {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.3em;
-  width: 100%;
-  min-width: 0;
-  font-size: clamp(11px, 1.1vw, 14px);
-  color: var(--tdp-input-fg, #0f172a);
-}
-
-.tdp-comunicado__input-block-heading {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.35em 0.5em;
-  min-width: 0;
-}
-
-.tdp-comunicado__input-block-label-text {
-  font-weight: 650;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-}
-
-.tdp-comunicado__input-block-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.12em 0.45em;
-  border-radius: 999px;
-  font-size: 0.78em;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--tdp-input-muted, #0369a1);
-  background: color-mix(in srgb, var(--tdp-accent, #089bdb) 16%, var(--tdp-input-surface, #ffffff));
-  border: 1px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 28%, transparent);
-  white-space: nowrap;
-}
-
-.tdp-comunicado__input-block--scope-sources .tdp-comunicado__input-block-badge {
-  color: var(--tdp-input-muted, #475569);
-  background: color-mix(in srgb, var(--tdp-input-border, #94a3b8) 18%, var(--tdp-input-surface, #ffffff));
-  border-color: color-mix(in srgb, var(--tdp-input-border, #94a3b8) 35%, transparent);
-}
-
-.tdp-comunicado__input-block-spinner {
-  width: 0.85em;
-  height: 0.85em;
-  border-radius: 50%;
-  border: 2px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 30%, transparent);
-  border-top-color: var(--tdp-accent, #089bdb);
-  animation: tdp-input-spin 0.7s linear infinite;
-}
-
-@keyframes tdp-input-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.tdp-comunicado__input-block-control {
-  width: 100%;
-  max-width: 100%;
-  /* Sem isso o min-width intrínseco do <input> estoura o host framed. */
-  min-width: 0;
-  min-height: 2em;
-  box-sizing: border-box;
-  padding: 0.28em 0.5em;
-  border: var(--tdp-input-control-border-width, 1px) solid
-    var(--tdp-input-control-border, #000000);
-  border-radius: var(--tdp-input-control-radius, 6px);
-  background: var(--tdp-input-control-surface, #ffffff);
-  color: var(--tdp-input-fg, #0f172a);
-  font: inherit;
-}
-
-.tdp-comunicado__input-block-control:disabled {
-  opacity: 0.7;
-  cursor: wait;
-}
-
-/* Editor: caixa control não selecionada — clique atravessa para selecionar o subitem. */
-.tdp-comunicado__input-block-control--hit-through {
-  pointer-events: none;
-  cursor: default;
-}
-
-.tdp-comunicado__input-block-control--select,
-.tdp-comunicado__input-block-control--boolean {
-  cursor: pointer;
-}
-
-.tdp-comunicado__input-block-value {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.9;
-}
-
-.tdp-comunicado__input-block-unavailable {
-  font-size: 0.9em;
-  color: #b45309;
-}
-
-.tdp-comunicado__input-block-schema-hint {
-  position: absolute;
-  right: 0.35em;
-  bottom: 0.15em;
-  font-size: 0.65em;
-  font-weight: 600;
-  line-height: 1;
-  color: #b45309;
-  pointer-events: none;
-  opacity: 0.85;
-}
-
+/* Input block do comunicado: plugin-ui/src/styles/comunicado-stage.css */

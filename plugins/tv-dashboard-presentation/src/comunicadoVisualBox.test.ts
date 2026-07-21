@@ -12,9 +12,39 @@ import {
   visualBoxSupportsInlineTextEditing,
   visualBoxSupportsShapeFormatting,
   visualBoxSupportsTextFormatting,
+  VISUAL_BOX_CONTENT_INSET,
 } from "./comunicadoVisualBox";
 
 describe("comunicadoVisualBox", () => {
+  it("usa inset tipográfico canônico em px (editor ≡ TV)", () => {
+    const heading = createBlock("heading", "Título");
+    const shape = { ...createShapeBlock("rounded-rect"), content: "KPI" };
+    const headingLayout = resolveVisualBoxContentLayoutStyle(heading);
+    const shapeLayout = resolveVisualBoxContentLayoutStyle(shape);
+    expect(headingLayout.padding).toBe(VISUAL_BOX_CONTENT_INSET);
+    expect(shapeLayout.padding).toBe(VISUAL_BOX_CONTENT_INSET);
+    expect(headingLayout.justifyContent).toBe("center");
+    expect(shapeLayout.justifyContent).toBe("center");
+  });
+
+  it("edição inline zera inset para não cortar tipografia em frames baixos", () => {
+    const heading = createBlock("heading", "PPM interno");
+    const editing = resolveVisualBoxContentLayoutStyle(heading, { editorInteractive: true });
+    expect(editing.padding).toBe(0);
+  });
+
+  it("texto preserva fill escolhido (default transparente só na inserção)", () => {
+    const heading = createBlock("heading", "Título");
+    expect(resolveVisualBoxChrome(heading).fill).toBe("transparent");
+    const painted = {
+      ...heading,
+      style: { ...heading.style, fill: "#089bdb", backgroundColor: "#089bdb" },
+    };
+    const chrome = resolveVisualBoxChrome(painted);
+    expect(chrome.fill).toBe("#089bdb");
+    expect(chrome.showShapeGraphic).toBe(true);
+  });
+
   it("identifica caixas visuais (texto e forma)", () => {
     const heading = createBlock("heading", "Título");
     const shape = createShapeBlock("rectangle");

@@ -39,6 +39,7 @@ const SHADOW_MENU_PRESETS = COMUNICADO_BOX_SHADOW_PRESETS.map((preset) => ({
   value: preset.value,
 }));
 
+/** Fallbacks de leitura quando a chave está ausente — não são regras de remoção. */
 const TEXT_BOX_CHROME_DEFAULTS = {
   fill: "transparent",
   stroke: "transparent",
@@ -183,9 +184,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
       {showFill ? (
         <ShapeMenuHint hint={H.shapeFill} ariaLabel="Ajuda: Preenchimento da forma">
           <ShapeFillMenu
-            value={
-              fillValue === "transparent" && isTextMode ? undefined : fillValue
-            }
+            value={fillValue === "transparent" ? undefined : fillValue}
             fillLabel={primitive === "point" ? "Cor" : "Preench."}
             onChange={(color) => patchStyle({ fill: color })}
             onNoFill={() => patchStyle({ fill: "transparent" })}
@@ -195,9 +194,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
       {showStroke ? (
         <ShapeMenuHint hint={H.shapeOutline} ariaLabel="Ajuda: Contorno da forma">
           <ShapeOutlineMenu
-            color={
-              strokeValue === "transparent" && isTextMode ? undefined : strokeValue
-            }
+            color={strokeValue === "transparent" ? undefined : strokeValue}
             strokeWidth={strokeWidth}
             minWidth={0}
             maxWidth={primitive === "point" ? 8 : 20}

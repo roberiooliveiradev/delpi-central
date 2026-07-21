@@ -74,6 +74,7 @@ export function useComunicadoEditorSelection({
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const [selectedChartPart, setSelectedChartPart] = useState<ComunicadoChartPartRef | null>(null);
   const [editingChartPart, setEditingChartPart] = useState<ComunicadoChartPartRef | null>(null);
+  const [editingTablePart, setEditingTablePart] = useState<ComunicadoTablePartRef | null>(null);
   /** Multi-seleção de partes da tabela (colunas) — o último item é a parte primária. */
   const [selectedTableParts, setSelectedTableParts] = useState<ComunicadoTablePartRef[]>([]);
   const selectedTablePart = selectedTableParts[selectedTableParts.length - 1] ?? null;
@@ -138,10 +139,11 @@ export function useComunicadoEditorSelection({
     setSelectedChartPart(null);
     setEditingChartPart(null);
     setSelectedTablePart(null);
+    setEditingTablePart(null);
     setSelectedKpiPart(null);
     setEditingKpiPart(null);
     setSelectedInputPart(null);
-  }, []);
+  }, [setSelectedTablePart]);
 
   const clearTextEditUi = useCallback(() => {
     setTextEditSelection(null);
@@ -205,12 +207,15 @@ export function useComunicadoEditorSelection({
   );
 
   const selectBlock = useCallback(
-    (blockId: string, options?: { additive?: boolean }) => {
+    (
+      blockId: string,
+      options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean },
+    ) => {
       flushActiveTextEdit();
       const blocksNow = configRef.current.blocks ?? [];
       const targetId = resolveStageSelectionTargetId(blockId, blocksNow);
       if (!targetId) {
-        if (!options?.additive) {
+        if (!options?.additive && !options?.subtract) {
           setSelectedIds([]);
           setEditingTextId(null);
           clearPartSelections();
@@ -218,6 +223,27 @@ export function useComunicadoEditorSelection({
         return;
       }
       let selectedBlockType: string | undefined;
+      if (options?.subtract) {
+        setSelectedIds((current) => {
+          const remove = new Set<string>([targetId]);
+          const block = blocksNow.find((item) => item.id === targetId);
+          if (block?.groupId) {
+            const memberIds = blocksNow
+              .filter((item) => item.groupId === block.groupId)
+              .map((item) => item.id);
+            if (memberIds.length > 1 && memberIds.every((id) => current.includes(id))) {
+              for (const id of memberIds) remove.add(id);
+            }
+          }
+          return filterStageSelectableIds(
+            current.filter((id) => !remove.has(id)),
+            blocksNow,
+          );
+        });
+        setEditingTextId(null);
+        clearPartSelections();
+        return;
+      }
       if (options?.additive) {
         setSelectedIds((current) => {
           const set = new Set(current);
@@ -228,7 +254,8 @@ export function useComunicadoEditorSelection({
       } else {
         const block = blocksNow.find((item) => item.id === targetId);
         selectedBlockType = block?.type;
-        if (block?.groupId) {
+        const expandGroup = options?.expandGroup !== false;
+        if (expandGroup && block?.groupId) {
           const memberIds = blocksNow
             .filter((item) => item.groupId === block.groupId)
             .map((item) => item.id);
@@ -306,6 +333,8 @@ export function useComunicadoEditorSelection({
       setEditingTextId(null);
       setSelectedChartPart(null);
       setEditingChartPart(null);
+      setSelectedTablePart(null);
+      setEditingTablePart(null);
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
       setSelectedInputPart(null);
@@ -341,6 +370,7 @@ export function useComunicadoEditorSelection({
 
   const clearTablePartSelection = useCallback(() => {
     setSelectedTableParts([]);
+    setEditingTablePart(null);
   }, []);
 
   const selectKpiPart = useCallback(
@@ -391,14 +421,35 @@ export function useComunicadoEditorSelection({
       setEditingTextId(null);
       setSelectedChartPart(part);
       setEditingChartPart(part);
+      setSelectedTablePart(null);
+      setEditingTablePart(null);
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
     },
-    [flushActiveTextEdit],
+    [flushActiveTextEdit, setSelectedTablePart],
   );
 
   const cancelEditChartPart = useCallback(() => {
     setEditingChartPart(null);
+  }, []);
+
+  const beginEditTablePart = useCallback(
+    (blockId: string, part: ComunicadoTablePartRef) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
+      setSelectedTableParts([part]);
+      setEditingTablePart(part);
+    },
+    [flushActiveTextEdit],
+  );
+
+  const cancelEditTablePart = useCallback(() => {
+    setEditingTablePart(null);
   }, []);
 
   const beginEditKpiPart = useCallback(
@@ -409,10 +460,11 @@ export function useComunicadoEditorSelection({
       setSelectedChartPart(null);
       setEditingChartPart(null);
       setSelectedTablePart(null);
+      setEditingTablePart(null);
       setSelectedKpiPart(part);
       setEditingKpiPart(part);
     },
-    [flushActiveTextEdit],
+    [flushActiveTextEdit, setSelectedTablePart],
   );
 
   const cancelEditKpiPart = useCallback(() => {
@@ -625,6 +677,9 @@ export function useComunicadoEditorSelection({
     setSelectedTablePart,
     selectTablePart,
     clearTablePartSelection,
+    editingTablePart,
+    beginEditTablePart,
+    cancelEditTablePart,
     selectedKpiPart,
     setSelectedKpiPart,
     selectKpiPart,

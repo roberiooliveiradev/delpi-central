@@ -52,7 +52,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     actions:
       "Ações do elemento: duplicar, remover e, em mídia, biblioteca/recorte/upload.",
     display:
-      "Posição, tamanho e rotação do elemento. Opacidade e raio ficam na seção Forma quando houver chrome de forma.",
+      "Posição, tamanho e rotação do elemento. Opacidade fica em Exibição (mídia) ou Forma; não neste painel.",
     sizePosition:
       "Posição (X/Y), tamanho (largura/altura) e rotação em pixels de design da página, com origem no canto inferior esquerdo.",
     undo: "Desfazer a última alteração na programação ou no slide (Ctrl+Z).",
@@ -114,10 +114,12 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Criar uma seta conectando os dois elementos selecionados (centros). Arrastar a seta solta a ligação.",
     insertIndicator: "Inserir bloco de indicador ou gráfico com dados da api-delpi.",
     insertIcon: "Ícones vetoriais prontos para o slide.",
-    iconEditor: "Trocar ícone Lucide, cor (padrão azul das formas) e espessura do traço.",
+    iconEditor:
+      "Trocar o glifo Lucide e a cor do traço. Fundo, contorno, sombra, raio e opacidade ficam em Forma (como nas formas).",
     iconPicker: "Escolha outro ícone da biblioteca Lucide.",
-    iconColor: "Cor do traço do ícone. Padrão: azul accent das formas (#089bdb).",
-    iconStrokeWidth: "Espessura do traço Lucide, em pixels (0,5–6).",
+    iconColor: "Cor do traço do ícone (glifo). Padrão: azul accent das formas (#089bdb).",
+    iconStrokeWidth:
+      "Espessura do traço Lucide do glifo, em pixels (0,5–6). Distinta do contorno da caixa.",
     insertTextGroup: "Caixas de título e texto livre no slide.",
     insertMediaGroup: "Imagens e vídeos da biblioteca da playlist ou upload.",
     insertIllustrationsGroup: "Biblioteca visual de formas editáveis e ícones.",
@@ -168,7 +170,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Aplica animação em cascata: cada elemento entra com atraso crescente (aparecer um a um).",
     buildSameInstant: "Todos os elementos entram juntos, sem atraso entre eles.",
     buildClear: "Remove as animações de entrada de todos os elementos do slide.",
-    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar; clique para selecionar; Shift+clique para multi-seleção.",
+    list: "Pilha visual do slide (o de cima fica na frente). Arraste para reordenar. Clique seleciona o elemento (em grupo, só o filho); use «Selecionar grupo inteiro» ou Esc para voltar à seleção pai. No palco: 1º clique = grupo, 2º clique = filho; Ctrl+clique remove da seleção. Shift+clique multi-seleciona.",
   },
   ribbonTabs: {
     home: "Gerencie slides da apresentação: adicionar telas, navegar e pausar ou duplicar a tela atual.",
@@ -243,7 +245,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     catalogSearch:
       "Busque rotas GET da api-delpi. Os chips KPI / Série / Tabela só filtram o catálogo — qualquer fonte pode ligar a KPI, gráfico ou tabela.",
     insertWizard:
-      "Escolha o visual inicial criado junto com a fonte. A mesma fonte continua disponível para outros formatos no palco.",
+      "Escolha o visual inicial (KPI, gráfico, tabela, texto ou forma) criado junto com a fonte. A mesma fonte continua disponível para outros formatos no palco.",
     sourceConfig:
       "Parâmetros da consulta e intervalo de atualização na TV. Use «Testar rota» para validar a resposta com os filtros atuais; alterações aqui atualizam o palco automaticamente.",
     prepareData:
@@ -397,13 +399,15 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     selectAllColumns: "Manter só esta coluna",
   },
   contextMenu: {
-    menu: "Menu de contexto do elemento no palco.",
+    menu: "Menu de contexto do palco.",
     quickFormat: "Atalhos rápidos de preenchimento e contorno.",
     fill: "Cor de preenchimento",
     outline: "Cor do contorno",
     cut: "Recortar",
     copy: "Copiar",
     paste: "Colar",
+    pasteHint:
+      "Cola elementos internos ou conteúdo externo (imagem, texto, HTML, tabela TSV do Excel/Sheets).",
     editText: "Editar texto",
     bringToFront: "Trazer para frente",
     sendToBack: "Enviar para trás",
@@ -411,6 +415,10 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     sendBackward: "Recuar",
     delete: "Excluir",
     format: "Formatar…",
+    insertHeading: "Inserir título",
+    insertText: "Inserir texto",
+    insertShape: "Inserir forma",
+    insertDataSource: "Inserir fonte de dados",
   },
   filmstripContextMenu: {
     menu: "Menu de contexto da tela",
@@ -424,7 +432,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
   },
   element: {
     panel:
-      "Clique em um elemento no palco ou arraste para reposicionar. Shift+clique alterna na multi-seleção; arraste no fundo vazio para a caixa de seleção (Shift+arraste une à seleção). Nas alças, Shift mantém a proporção largura/altura.",
+      "Clique em um elemento no palco ou arraste para reposicionar. Shift+clique alterna na multi-seleção; Ctrl+clique remove da seleção. Arraste no fundo: esquerda→direita seleciona (azul), direita→esquerda remove (vermelho); Shift+L→R une à seleção. Nas alças, Shift mantém a proporção largura/altura.",
     content: "Texto exibido no elemento. Títulos usam fonte maior na TV.",
     link: "URL aberta ao toque/clique na TV, quando o player suportar interação.",
     shapeText: "Texto opcional renderizado dentro da forma.",

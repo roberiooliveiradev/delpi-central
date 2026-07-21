@@ -4,38 +4,40 @@ import { ArrowLeft } from "lucide-react";
 import { getPreviewPayload, type PresentationPayload } from "../api/tvDashboardApi";
 import { PresentationPreview } from "../presentation/PresentationPreview";
 import { playlistPath } from "../routing";
+import { readPlaylistShell } from "../utils/editorSessionCache";
+import { overlayLiveCustomMessageSlidesOnPreviewPayload } from "../utils/overlayLivePreviewPayload";
+import {
+  clearPreviewPayloadCache,
+  peekPreviewPayloadCache,
+  rememberPreviewPayloadCache,
+} from "../utils/previewPayloadCache";
 
 type Props = {
   playlistId: string;
   onBack: () => void;
 };
 
-/** Cache de sessão: reabrir prévia não mostra tela vazia «Carregando…». */
-const previewPayloadCache = new Map<string, PresentationPayload>();
+export {
+  clearPreviewPayloadCache,
+  peekPreviewPayloadCache,
+  rememberPreviewPayloadCache,
+} from "../utils/previewPayloadCache";
 
-export function peekPreviewPayloadCache(playlistId: string): PresentationPayload | null {
-  return previewPayloadCache.get(playlistId) ?? null;
-}
-
-export function rememberPreviewPayloadCache(playlistId: string, payload: PresentationPayload): void {
-  previewPayloadCache.set(playlistId, payload);
-}
-
-export function clearPreviewPayloadCache(playlistId?: string): void {
-  if (playlistId) previewPayloadCache.delete(playlistId);
-  else previewPayloadCache.clear();
+function withLiveOverlay(playlistId: string, payload: PresentationPayload): PresentationPayload {
+  return overlayLiveCustomMessageSlidesOnPreviewPayload(payload, readPlaylistShell(playlistId));
 }
 
 export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
-  const [payload, setPayload] = useState<PresentationPayload | null>(
-    () => peekPreviewPayloadCache(playlistId),
-  );
+  const [payload, setPayload] = useState<PresentationPayload | null>(() => {
+    const cached = peekPreviewPayloadCache(playlistId);
+    return cached ? withLiveOverlay(playlistId, cached) : null;
+  });
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const next = await getPreviewPayload(playlistId);
+      const next = withLiveOverlay(playlistId, await getPreviewPayload(playlistId));
       rememberPreviewPayloadCache(playlistId, next);
       setPayload(next);
     } catch (err) {
@@ -44,8 +46,8 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
   }, [playlistId]);
 
   useEffect(() => {
-    // Troca de playlist: usa cache da nova id (sem apagar a tela se já houver).
-    setPayload(peekPreviewPayloadCache(playlistId));
+    const cached = peekPreviewPayloadCache(playlistId);
+    setPayload(cached ? withLiveOverlay(playlistId, cached) : null);
     setError(null);
     void load();
   }, [playlistId, load]);
@@ -74,7 +76,9 @@ export function PlaylistPreviewPage({ playlistId, onBack }: Props) {
           key={playlistId}
           payload={payload}
           playlistId={playlistId}
-          onRefresh={(filters) => getPreviewPayload(playlistId, filters)}
+          onRefresh={async (filters) =>
+            withLiveOverlay(playlistId, await getPreviewPayload(playlistId, filters))
+          }
         />
       ) : null}
     </div>

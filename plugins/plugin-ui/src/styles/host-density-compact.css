@@ -82,9 +82,21 @@
 }
 
 /* --- Shape / color menus --- */
-[data-delpi-ui-density="compact"] .delpi-ui-shape-menu__panel,
-[data-delpi-ui-density="compact"] .delpi-ui-color-picker-trigger__panel {
+[data-delpi-ui-density="compact"] .delpi-ui-shape-menu__panel:not(.delpi-ui-shape-menu__panel--portal),
+[data-delpi-ui-density="compact"] .delpi-ui-color-picker-trigger__panel:not(
+    .delpi-ui-color-picker-trigger__panel--portal
+  ) {
   z-index: 50;
+}
+
+/* Portais no body: não rebaixar — ficam acima do chrome e abaixo de modais TV (10400). */
+[data-delpi-ui-density="compact"] .delpi-ui-shape-menu__panel--portal,
+[data-delpi-ui-density="compact"] .delpi-ui-color-picker-trigger__panel--portal {
+  z-index: 10200;
+}
+
+[data-delpi-ui-density="compact"] .delpi-ui-color-more-popover {
+  z-index: 10250;
 }
 
 [data-delpi-ui-density="compact"] .delpi-ui-shape-menu__trigger,

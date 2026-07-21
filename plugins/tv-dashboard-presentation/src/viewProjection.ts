@@ -11,6 +11,7 @@ import {
   parseProjectionNumber,
   type ViewAggregation,
 } from "./fieldValueProjection";
+import { resolveFieldDisplayLabel } from "./fieldLabelRegistry";
 import {
   applyMetricSelectionToResolved,
   normalizeSelectedValueFields,
@@ -24,7 +25,7 @@ export type KpiMetricProjection = {
   field: string;
   aggregation?: ViewAggregation;
   label?: string;
-  format?: "number" | "percent" | "compact" | "raw";
+  format?: "number" | "percent" | "compact" | "raw" | "currency";
   colorRules?: DelpiKpiColorRule[];
   visible?: boolean;
 };
@@ -238,7 +239,11 @@ function resolveKpiMetricsWithProjection(
             : base?.value;
       return {
         field: metric.field,
-        label: metric.label?.trim() || base?.label || metric.field,
+        label: resolveFieldDisplayLabel({
+          field: metric.field,
+          projectionLabel: metric.label,
+          resolvedLabel: base?.label,
+        }),
         value: value ?? base?.value,
       };
     });
@@ -271,7 +276,11 @@ function applyTableProjection(
   );
   const nextColumns: ComunicadoDataTableColumn[] = visible.map((col) => ({
     key: col.key,
-    label: col.label?.trim() || labelByKey.get(col.key) || col.key,
+    label: resolveFieldDisplayLabel({
+      field: col.key,
+      projectionLabel: col.label,
+      resolvedLabel: labelByKey.get(col.key),
+    }),
   }));
   const keys = new Set(nextColumns.map((col) => col.key));
   const nextRows = rows.map((row) => {
@@ -313,7 +322,10 @@ function buildSeriesFromTable(
       series: def
         ? [
             {
-              name: def.label?.trim() || def.field,
+              name: resolveFieldDisplayLabel({
+                field: def.field,
+                projectionLabel: def.label,
+              }),
               field: def.field,
               points,
               color: def.color,
@@ -325,7 +337,10 @@ function buildSeriesFromTable(
   }
 
   const series = seriesDefs.map((def) => ({
-    name: def.label?.trim() || def.field,
+    name: resolveFieldDisplayLabel({
+      field: def.field,
+      projectionLabel: def.label,
+    }),
     field: def.field,
     color: def.color,
     plotOn: def.plotOn,
@@ -362,7 +377,11 @@ function applyChartProjection(
         const metric = byField.get(def.field);
         if (!metric) return null;
         return {
-          name: def.label?.trim() || metric.label || def.field,
+          name: resolveFieldDisplayLabel({
+            field: def.field,
+            projectionLabel: def.label,
+            resolvedLabel: metric.label,
+          }),
           field: def.field,
           color: def.color,
           plotOn: def.plotOn,
@@ -466,6 +485,16 @@ export function discoverResolvedFieldOptions(
     const field = item.field.trim();
     if (field) out.set(field, item.label.trim() || field);
   }
+  // KPI escalar → campo canônico "value" (mesmo sem kpiMetrics).
+  if (resolved?.kpi != null && (resolved.kpi.value != null || resolved.kpi.label)) {
+    if (![...out.keys()].some((key) => key.toLowerCase() === "value")) {
+      const label =
+        typeof resolved.kpi.label === "string" && resolved.kpi.label.trim()
+          ? resolved.kpi.label.trim()
+          : "value";
+      out.set("value", label);
+    }
+  }
   for (const metric of resolved?.kpiMetrics ?? []) {
     if (metric.field) out.set(metric.field, metric.label || metric.field);
   }
@@ -481,8 +510,13 @@ export function discoverResolvedFieldOptions(
   if (sourceFieldLabels) {
     for (const [field, label] of Object.entries(sourceFieldLabels)) {
       const key = field.trim();
-      const display = label?.trim();
-      if (key && display) out.set(key, display);
+      if (!key || typeof label !== "string" || !label.trim()) continue;
+      const existing = [...out.keys()].find((item) => item.toLowerCase() === key.toLowerCase());
+      if (existing) {
+        out.set(existing, label);
+      } else {
+        out.set(key, label);
+      }
     }
   }
   return [...out.entries()].map(([field, label]) => ({ field, label }));

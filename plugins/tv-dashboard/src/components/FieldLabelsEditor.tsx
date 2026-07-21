@@ -1,5 +1,6 @@
 import { NativeTextControl } from "@delpi/plugin-ui/index";
 import {
+  lookupFieldLabel,
   patchFieldLabels,
   suggestEditableFields,
   type ComunicadoDataResolved,
@@ -39,7 +40,7 @@ export function FieldLabelsEditor({
     <DeckPropertySection
       title="Rótulos dos campos"
       hint={TV_DASHBOARD_HELP_TOOLTIPS.data.fieldLabels}
-      compact={pane}
+      pane={pane}
       defaultOpen
     >
       <p className="td-deck-inspector__hint">
@@ -48,7 +49,7 @@ export function FieldLabelsEditor({
       </p>
       <div className="td-field-labels-editor">
         {fields.map((item) => {
-          const custom = fieldLabels?.[item.field]?.trim() ?? "";
+          const custom = lookupFieldLabel(fieldLabels, item.field) ?? "";
           return (
             <div key={item.field} className="td-field-labels-editor__row">
               <DeckField label={item.field}>

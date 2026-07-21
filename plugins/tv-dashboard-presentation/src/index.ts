@@ -22,8 +22,15 @@ export type {
 } from "./usePresentationRealtime";
 export { useFullscreenStage } from "./useFullscreenStage";
 export { NativeSlideView } from "./NativeScreens";
-export { DesignViewportStage, computeDesignViewportScale } from "./DesignViewportStage";
-export type { DesignViewportFitMode } from "./DesignViewportStage";
+export {
+  DesignViewportStage,
+  computeDesignViewportScale,
+  computeDesignViewportBleedSize,
+  DESIGN_VIEWPORT_BLEED_RATIO,
+} from "./DesignViewportStage";
+export { RichComunicadoStage } from "./RichComunicadoStage";
+export { RichComunicadoMasterLogo } from "./RichComunicadoMasterLogo";
+export type { DesignViewportFitMode, DesignViewportBleedSize } from "./DesignViewportStage";
 export {
   resolveViewportPixelSize,
   type ViewportPixelSize,
@@ -72,7 +79,7 @@ export {
   patchComunicadoFramePageBottomLeftPx,
   patchHostRelativeFramePageBottomLeftPx,
 } from "./framePageCoordinates";
-export { formatPct, formatNumber } from "./nativeFormat";
+export { formatPct, formatNumber, formatCurrency } from "./nativeFormat";
 export type {
   PresentationMeta,
   PresentationPayloadLike,
@@ -301,6 +308,7 @@ export {
   defaultTextBlockStyle,
   defaultVerticalAlignForBlock,
   frameStyle,
+  normalizeIconBlockStyle,
   isDataBlockType,
   isDataSourceBlockType,
   isDataViewBlockType,
@@ -337,6 +345,7 @@ export type { StageHideReason } from "./comunicadoStageVisibility";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
 export {
   ComunicadoIconGraphic,
+  resolveComunicadoIconChromeStyle,
   resolveComunicadoIconColor,
   resolveComunicadoIconStrokeWidth,
   resolveComunicadoLucideIcon,
@@ -357,6 +366,7 @@ export {
   isComunicadoVisualBoxBlock,
   resolveVisualBoxChrome,
   resolveVisualBoxContentLayoutStyle,
+  VISUAL_BOX_CONTENT_INSET,
   resolveVisualBoxProfile,
   resolveVisualBoxShapeKind,
   visualBoxBlockModifierClasses,
@@ -825,6 +835,8 @@ export {
 } from "./fieldValueProjection";
 export {
   applyFieldLabelsToResolved,
+  isAutoBakedFieldLabel,
+  lookupFieldLabel,
   normalizeFieldLabels,
   patchFieldLabels,
   resolveFieldDisplayLabel,
@@ -847,9 +859,14 @@ export {
 } from "./dataPagination";
 export {
   duplicateBlocksWithDataPolicy,
+  enrichClipboardWithLinkedDataSources,
   isLegacyFetchableDataBlock,
+  mustCloneDataSourcesForTarget,
   needsDataSourceDuplicateChoice,
+  referencedDataSourceIds,
+  resolveBlockPasteDataPolicy,
   type DataSourceDuplicatePolicy,
+  type ResolveBlockPasteDataPolicyResult,
 } from "./duplicateBlocksWithDataPolicy";
 export {
   buildViewDataLinkPatch,
@@ -870,10 +887,12 @@ export {
   isTextDataBoundBlock,
   normalizeTextDataRef,
   normalizeTextProjection,
+  patchTextProjectionFromEditedDisplay,
   resolveTextBlockDisplayRuns,
   resolveTextDataRefValue,
   resolveTextDisplayValue,
   resolveVisualBoxDisplayText,
+  splitEditedDisplayAroundCoreValue,
   suggestDefaultTextProjection,
   syncTextBlocksWithResolved,
   textBlockHasDataBinding,

@@ -22,6 +22,7 @@ import {
   isDeckEditorSurfaceActive,
   shouldKeepEditorUnderPreview,
 } from "./utils/editorSurface";
+import { preparePreviewNavigation } from "./utils/previewHandoff";
 
 export type AppProps = {
   getAccessToken?: () => string | undefined;
@@ -118,7 +119,11 @@ export default function App({ getAccessToken, pathname: pathnameFromHost }: AppP
                   playlistId={playlistId}
                   editorActive={isDeckEditorSurfaceActive(route.view)}
                   onBack={() => navigate("/apps/tv-dashboard")}
-                  onPreview={() => navigate(playlistPreviewPath(playlistId))}
+                  onPreview={() => {
+                    void preparePreviewNavigation(playlistId).then(() => {
+                      navigate(playlistPreviewPath(playlistId));
+                    });
+                  }}
                   onShare={() => navigate(playlistSharePath(playlistId))}
                 />
               </div>

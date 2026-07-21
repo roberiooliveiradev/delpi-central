@@ -1,11 +1,11 @@
-from unittest.mock import MagicMock
-
 import pytest
 
 from tv_app.application.services.comunicado_config_validation_service import (
-    max_data_blocks_per_slide,
     sanitize_comunicado_config,
     validate_comunicado_native_config,
+)
+from tv_app.application.services.data.tv_data_config_validation_service import (
+    TvDataConfigValidationService,
 )
 from tv_app.application.services.tv_data_route_catalog_service import TvDataRouteCatalogService
 
@@ -51,20 +51,24 @@ def test_validate_rejects_disallowed_operation():
         validate_comunicado_native_config(cfg)
 
 
-def test_validate_enforces_max_data_blocks(monkeypatch):
-    monkeypatch.setattr(
-        "tv_app.application.services.data.tv_data_config_validation_service.max_data_blocks_per_slide",
-        lambda: 1,
-    )
+def test_validate_allows_many_data_blocks():
+    """Sem teto artificial de blocos de dados por slide."""
+    catalog = TvDataRouteCatalogService()
     cfg = {
         "blocks": [
-            {"id": "1", "type": "data_kpi", "dataBinding": {"operationId": "get_overall_equipment_effectiveness_pct"}},
-            {"id": "2", "type": "data_chart", "dataBinding": {"operationId": "get_production_oee_series"}},
+            {
+                "id": str(index),
+                "type": "data_kpi",
+                "dataBinding": {"operationId": "get_overall_equipment_effectiveness_pct"},
+            }
+            for index in range(12)
         ]
     }
-    with pytest.raises(ValueError):
-        validate_comunicado_native_config(cfg, catalog=TvDataRouteCatalogService())
-
-
-def test_max_data_blocks_default():
-    assert max_data_blocks_per_slide() >= 1
+    result = TvDataConfigValidationService(catalog=catalog).validate(cfg)
+    assert not any(
+        "Limite de blocos" in str(issue.get("message") or "") for issue in result["issues"]
+    )
+    assert not any(
+        issue.get("field") == "blocks" and "Limite" in str(issue.get("message") or "")
+        for issue in result["issues"]
+    )

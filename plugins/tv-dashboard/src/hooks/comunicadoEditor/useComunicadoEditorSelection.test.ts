@@ -72,6 +72,26 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedIds).toEqual(["b"]);
   });
 
+  it("subtract (Ctrl) remove da seleção sem alternar para incluir", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.selectBlock("a");
+    });
+    act(() => {
+      result.current.selectBlock("b", { additive: true });
+    });
+    act(() => {
+      result.current.selectBlock("a", { subtract: true });
+    });
+    expect(result.current.selectedIds).toEqual(["b"]);
+
+    act(() => {
+      result.current.selectBlock("a", { subtract: true });
+    });
+    expect(result.current.selectedIds).toEqual(["b"]);
+  });
+
   it("selectBlocksByIds substitui a seleção (marquee)", () => {
     const { result } = renderSelectionHook();
 
@@ -82,6 +102,48 @@ describe("useComunicadoEditorSelection", () => {
       result.current.selectBlocksByIds(["a", "b"]);
     });
     expect(result.current.selectedIds).toEqual(["a", "b"]);
+  });
+
+  it("selectBlocksByIds ignora ids ainda ausentes no configRef", () => {
+    const { result } = renderSelectionHook();
+
+    act(() => {
+      result.current.selectBlocksByIds(["novo"]);
+    });
+    expect(result.current.selectedIds).toEqual([]);
+  });
+
+  it("selectBlocksByIds aceita ids após configRef ser atualizado (paste/duplicate)", () => {
+    const configRef = { current: { version: 2 as const, blocks: [...blocks] } };
+    const { result } = renderHook(() => {
+      const updateBlockTextFieldsRef = useRef(() => {});
+      const updateBlocksRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks: configRef.current.blocks,
+        updateBlockTextFieldsRef,
+        updateBlocksRef,
+      });
+    });
+
+    const novo: ComunicadoBlock = {
+      id: "novo",
+      type: "text",
+      content: "N",
+      frame: { x: 0, y: 0, w: 10, h: 10 },
+    };
+
+    act(() => {
+      result.current.selectBlocksByIds(["novo"]);
+    });
+    expect(result.current.selectedIds).toEqual([]);
+
+    configRef.current = { version: 2, blocks: [...blocks, novo] };
+
+    act(() => {
+      result.current.selectBlocksByIds(["novo"]);
+    });
+    expect(result.current.selectedIds).toEqual(["novo"]);
   });
 
   it("multi-seleção de colunas: additive alterna e range estende o intervalo", () => {

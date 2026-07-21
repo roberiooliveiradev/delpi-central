@@ -1,0 +1,32 @@
+---
+description: Modais MFE nunca cobrem a sidebar do portal Minha DELPI
+globs: plugins/**/*Modal*.{ts,tsx},plugins/**/NoticeDialog*.tsx,plugins/**/ConfirmDialog*.tsx,plugins/plugin-ui/src/components/feedback/ModalShell*
+alwaysApply: false
+---
+
+# Modais MFE — não cobrir sidebar do portal
+
+## Princípio
+
+Overlay de modal do plugin **nunca** escurece nem bloqueia a sidebar/chrome da Minha DELPI. O portal continua navegável.
+
+| Uso | API canônica | Layout |
+|-----|--------------|--------|
+| Workbench / tela cheia no MFE | `createHostContainedModalShell({ containedLayout: "fill" })` | Overlay + dialog preenchem a área do plugin |
+| Aviso / confirm («Link copiado.») | `createHostContainedModalShell({ containedLayout: "dialog" })` | Overlay no host, **card centralizado** |
+| TV Dashboard | `HostContainedModal` / `HostContainedDialog` em `components/ui/Modal.tsx` | Idem |
+
+## Anti-padrão (proibido)
+
+1. **`createModalShell` / `Modal` com portal no `document.body`** e overlay `position: fixed; inset: 0` para avisos/confirm — cobre a sidebar.
+2. **`window.alert` / `confirm` nativos** no MFE.
+3. Modal «custom» com z-index alto no root do documento fora do host `.dashboard-*`.
+
+Incidente jul/2026: aviso «Link copiado.» via `ConfirmModal` + `Modal` body-fixed → sidebar inacessível.
+
+## O que fazer
+
+- Avisos: `HostContainedDialog` + `ConfirmModalPanel` (ou `useNoticeDialogController`).
+- Workbench: `HostContainedModal` (`fill`).
+- Teste: dialog dentro do host + `data-modal-contained` + **sem** cobrir `#portal-sidebar`.
+- Regressão: `ModalShell.test.tsx` (layout dialog), `NoticeDialogProvider.test.tsx`.

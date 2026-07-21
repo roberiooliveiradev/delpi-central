@@ -21,14 +21,19 @@ import {
   BringToFront,
   Clipboard,
   ClipboardPaste,
+  Database,
+  Heading,
   Layers,
   Scissors,
   SendToBack,
+  Square,
   SquarePen,
+  Text,
   Trash2,
 } from "lucide-react";
 import { useMemo } from "react";
 
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import {
   isContextMenuActionEnabled,
@@ -51,7 +56,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     canPaste,
     cutSelected,
     copySelected,
-    pasteSelected,
+    pasteFromSystemClipboard,
     setEditingTextId,
     bringToFront,
     sendToBack,
@@ -60,6 +65,9 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     removeSelected,
     requestRibbonTab,
     updateSelectedStyle,
+    addBlock,
+    addShape,
+    openDataCatalog,
   } = useComunicadoEditor();
 
   const actionState = useMemo(
@@ -90,7 +98,13 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
   }
 
   return (
-    <ContextMenu open={open} position={position} onClose={onClose} aria-label={C.menu}>
+    <ContextMenu
+      open={open}
+      position={position}
+      onClose={onClose}
+      aria-label={C.menu}
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+    >
       {actionState.showStyleToolbar && selected ? (
         <>
           <ContextMenuToolbar aria-label={C.quickFormat}>
@@ -155,8 +169,34 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
         icon={ClipboardPaste}
         shortcut="Ctrl+V"
         disabled={!isContextMenuActionEnabled("paste", actionState)}
-        onSelect={() => run(pasteSelected)}
+        onSelect={() => run(() => void pasteFromSystemClipboard())}
       />
+
+      {!actionState.hasSelection ? (
+        <>
+          <ContextMenuDivider />
+          <ContextMenuItem
+            label={C.insertHeading}
+            icon={Heading}
+            onSelect={() => run(() => addBlock("heading"))}
+          />
+          <ContextMenuItem
+            label={C.insertText}
+            icon={Text}
+            onSelect={() => run(() => addBlock("text"))}
+          />
+          <ContextMenuItem
+            label={C.insertShape}
+            icon={Square}
+            onSelect={() => run(() => addShape("rectangle"))}
+          />
+          <ContextMenuItem
+            label={C.insertDataSource}
+            icon={Database}
+            onSelect={() => run(() => openDataCatalog("insert"))}
+          />
+        </>
+      ) : null}
 
       {actionState.canEditText ? (
         <>

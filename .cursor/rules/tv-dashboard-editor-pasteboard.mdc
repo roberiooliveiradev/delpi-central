@@ -1,0 +1,34 @@
+---
+description: TV Dashboard — WYSIWYG editor ↔ TV (tamanhos e posições)
+globs: plugins/tv-dashboard/**/*,plugins/tv-dashboard-presentation/**/*,plugins/plugin-ui/src/styles/comunicado-stage.css,plugins/plugin-ui/src/styles/kpi-card.css
+alwaysApply: false
+---
+
+# TV Dashboard — WYSIWYG editor ↔ apresentação
+
+## Princípio
+
+**Editor e TV devem pintar o mesmo slide nos mesmos tamanhos e posições** (frames `%` + tipografia de design).
+
+| Camada | Comportamento |
+|--------|----------------|
+| **Moldura 1080p** | Mesmo CSS (`.delpi-ui-comunicado`), `font-size: 16px`, font stack de design |
+| **Editor** | Dual-class no canvas + `__stage` (como `ComunicadoStageFrame`); pasteboard só no gutter |
+| **TV** | `DesignViewportStage` escala o design com `contain`; clip físico no kiosk |
+| **Animações de entrada** | Off por padrão; só com `.tdp-stage--animate-entrances` |
+
+Itens com frame fora de 0–100%: existem no mesmo sistema de coordenadas. Na TV 16:9 a abertura = moldura → overhang sai da tela física (igual PowerPoint). O pasteboard do editor é chrome de edição, não «outra geometria».
+
+## Anti-padrões
+
+1. Tipografia de conteúdo em `rem` / `vw` do host (portal ≠ public-hub).
+2. Árvore do editor sem classes `delpi-ui-comunicado*` / sem `__stage`.
+3. Animações de entrada sempre ligadas na TV (deslocam blocos vs editor).
+4. Só aumentar `DESIGN_VIEWPORT_BLEED_RATIO` esperando pasteboard na TV 16:9.
+5. **Clampar X/Y a 0–100 no enrichment da API** (`ComunicadoEnrichmentService._normalize_frame`) — «reconstrói» o layout na apresentação.
+
+## Módulos canônicos
+
+- Palco: `RichComunicadoStage` / `ComunicadoStageFrame`
+- Tipografia KPI: `kpi-card.css` em **px**
+- Contrato: `comunicadoStageCssContract.test.ts`, `designStageClipContract.test.ts`

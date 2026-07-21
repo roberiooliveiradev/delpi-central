@@ -15,6 +15,7 @@ import {
   resolveTextBlockDisplayRuns as resolveDynamicTextRuns,
   textBlockHasDataBinding,
 } from "./textViewProjection";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 type Props = {
   block: Pick<
@@ -118,14 +119,16 @@ export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, cl
   if (!hasLists && hasNamedStyles) {
     return (
       <WrapperTag
-        className={[className, "tdp-comunicado__rich-text"].filter(Boolean).join(" ")}
+        className={ensureComunicadoDualClass(
+          [className, "tdp-comunicado__rich-text"].filter(Boolean).join(" "),
+        )}
         style={baseStyle}
       >
         <RenderStyledLines
           runs={runs}
           baseStyle={baseStyle}
           fontScale={fontScale}
-          lineClassName="tdp-comunicado__styled-line"
+          lineClassName={ensureComunicadoDualClass("tdp-comunicado__styled-line")}
         />
       </WrapperTag>
     );
@@ -133,7 +136,12 @@ export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, cl
 
   if (!hasLists && !hasNamedStyles && hasMultipleLines) {
     return (
-      <Tag className={[className, "tdp-comunicado__rich-text"].filter(Boolean).join(" ")} style={baseStyle}>
+      <Tag
+        className={ensureComunicadoDualClass(
+          [className, "tdp-comunicado__rich-text"].filter(Boolean).join(" "),
+        )}
+        style={baseStyle}
+      >
         <RenderStyledLines runs={runs} baseStyle={baseStyle} fontScale={fontScale} />
       </Tag>
     );
@@ -148,20 +156,25 @@ export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, cl
   }
 
   return (
-    <WrapperTag className={[className, "tdp-comunicado__rich-text"].filter(Boolean).join(" ")} style={baseStyle}>
+    <WrapperTag
+      className={ensureComunicadoDualClass(
+        [className, "tdp-comunicado__rich-text"].filter(Boolean).join(" "),
+      )}
+      style={baseStyle}
+    >
       {segments.map((segment, index) => {
         if (segment.kind === "text") {
           const text = segment.runs.map((run) => run.text).join("");
           if (!text) return null;
           if (hasNamedStyleContentRuns(segment.runs)) {
             return (
-              <span key={`text-${index}`} className="tdp-comunicado__text-segment">
+              <span key={`text-${index}`} className={ensureComunicadoDualClass("tdp-comunicado__text-segment")}>
                 <RenderStyledLines runs={segment.runs} baseStyle={baseStyle} fontScale={fontScale} />
               </span>
             );
           }
           return (
-            <span key={`text-${index}`} className="tdp-comunicado__text-segment">
+            <span key={`text-${index}`} className={ensureComunicadoDualClass("tdp-comunicado__text-segment")}>
               <RenderRuns runs={segment.runs} baseStyle={baseStyle} fontScale={fontScale} />
             </span>
           );
@@ -171,10 +184,10 @@ export function ComunicadoTextRunsView({ block, as, baseStyle, fontScale = 1, cl
         return (
           <ListTag
             key={`list-${index}-${segment.listType}`}
-            className={`tdp-comunicado__list tdp-comunicado__list--${segment.listType}`}
+            className={ensureComunicadoDualClass(`tdp-comunicado__list tdp-comunicado__list--${segment.listType}`)}
           >
             {segment.items.map((itemRuns, itemIndex) => (
-              <li key={`item-${index}-${itemIndex}`} className="tdp-comunicado__list-item">
+              <li key={`item-${index}-${itemIndex}`} className={ensureComunicadoDualClass("tdp-comunicado__list-item")}>
                 <RenderRuns runs={itemRuns} baseStyle={baseStyle} fontScale={fontScale} />
               </li>
             ))}

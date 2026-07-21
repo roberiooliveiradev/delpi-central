@@ -124,7 +124,7 @@ Reexport local (barrel do plugin): `export { goalDisplayFormat } from "@delpi/pl
 | Componente | Pacote | Notas |
 |------------|--------|-------|
 | `ConfirmModalPanel` | ✅ F5 | Headless; `ModalShell` local (PAC, transformometro) |
-| `ModalShell` | ✅ F5.5 | Portal + escape; `createHostContainedModalShell` preenche a área do MFE sem cobrir o chrome do host (`portalTarget` / `data-delpi-modal-host`) |
+| `ModalShell` | ✅ F5.5 | Portal + escape; `createHostContainedModalShell` — `fill` (workbench) ou `dialog` (aviso/confirm); nunca cobrir sidebar do portal (`mfe-modal-host-contained`) |
 
 **Não** mover sem consolidar — ver [contributing.md](./contributing.md).
 
@@ -340,7 +340,7 @@ Documento canônico do plugin: [cadastro-kaizen/docs/UI-PLUGIN-UI.md](../../cada
 | Plugin | Onda | CSS kit zerado | TSX cópia/inline resolvido | Dual-class ok | Notas |
 |--------|------|----------------|----------------------------|---------------|-------|
 | `tv-dashboard` | 7.1 | ✅ | — | ✅ | density `data-delpi-ui-density` + format-pane--compact |
-| `tv-dashboard-presentation` | 7.1 | ✅ | — | ✅ | fill modifiers no kit (`--fill`) |
+| `tv-dashboard-presentation` | 7.1 | ✅ | — | ✅ | fill modifiers no kit (`--fill`); palco comunicado → `comunicado-stage.css` + `ComunicadoStageFrame` |
 | `quality-action-plans` | 7.2 | ✅ | headers dual `PAC_SECTION` | ✅ | ghost/state/section/table → kit; domain leftovers OK |
 | `controle-retrabalhos` | 7.2 | ✅ | — | ✅ | stack-safe margin no kit; sem `.cr-card:not` / state-box mirror |
 | `minha-delpi-chat` | 7.3 | ✅ | ✅ Admin* domínio (`mdc-admin-*` KPI/table; `mdc-audit-*` paginação) — **path B** (não kit shell) | ✅ checkboxes/switch/toolbar via kit + tokens; `delpi-ui-native-switch--compact` no kit |

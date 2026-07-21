@@ -8,10 +8,11 @@ import {
 } from "./selectionChromeMetrics";
 
 describe("resolveSelectionChromeMetrics", () => {
-  it("em 100% usa base maior que o chrome antigo (12/1)", () => {
+  it("em 100% usa handles 16px e pad enxuto (6)", () => {
     const m = resolveSelectionChromeMetrics(1);
     expect(m.handleSize).toBeGreaterThanOrEqual(16);
     expect(m.outlineWidth).toBeGreaterThanOrEqual(2);
+    expect(m.selectionPad).toBe(6);
     expect(m.adjustSize).toBe(m.handleSize);
   });
 

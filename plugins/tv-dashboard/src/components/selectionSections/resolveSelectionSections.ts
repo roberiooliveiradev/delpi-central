@@ -32,7 +32,8 @@ export function resolveSelectionSections(
     if (chartPartAllowsFrame(ctx.selectedChartPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "display", "organize", "actions"];
+    /* Sem frame: Exibição (opacidade), sem Posição vazia. */
+    return [...head, "appearance", "organize", "actions"];
   }
 
   if (selected.type === "kpi_view" && ctx.selectedKpiPart) {
@@ -43,7 +44,7 @@ export function resolveSelectionSections(
     if (kpiPartAllowsFrame(ctx.selectedKpiPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "display", "organize", "actions"];
+    return [...head, "appearance", "organize", "actions"];
   }
 
   if (selected.type === "table_view" && ctx.selectedTablePart) {
@@ -55,7 +56,7 @@ export function resolveSelectionSections(
     if (inputPartAllowsFrame(ctx.selectedInputPart)) {
       return withCommonTail(head, "light");
     }
-    return [...head, "display", "organize", "actions"];
+    return [...head, "appearance", "organize", "actions"];
   }
 
   switch (selected.type) {
@@ -67,15 +68,16 @@ export function resolveSelectionSections(
     case "icon":
       return withCommonTail(["iconEditor"]);
     case "image":
-      return withCommonTail(["media", "imageCrop"]);
+      return withCommonTail(["media", "imageCrop", "appearance"]);
     case "video":
-      return withCommonTail(["media"]);
+      return withCommonTail(["media", "appearance"]);
     case "canvas_table":
       return withCommonTail(["canvasTable"]);
     case "input":
       return withCommonTail(["shapeChrome", "inputBinding"]);
     case "kpi_view":
-      return withCommonTail(["kpiAppearance"]);
+      /* Opacidade do bloco (sem parte) em Exibição — não em Posição. */
+      return withCommonTail(["kpiAppearance", "appearance"]);
     case "chart_view":
       return withCommonTail([
         "typography",
@@ -85,6 +87,7 @@ export function resolveSelectionSections(
         "chartLabels",
         "chartAxes",
         "chartSeries",
+        "appearance",
       ]);
     case "table_view":
       return withCommonTail([
@@ -133,6 +136,7 @@ export const SHARED_HOST_SECTIONS = new Set<SelectionSectionId>([
   "chartSeries",
   "kpiAppearance",
   "media",
+  "appearance",
   "imageCrop",
   "canvasTable",
   "partFormat",

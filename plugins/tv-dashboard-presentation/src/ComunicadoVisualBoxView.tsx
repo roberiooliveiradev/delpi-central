@@ -11,6 +11,7 @@ import {
   resolveVisualBoxProfile,
 } from "./comunicadoVisualBox";
 import { resolveVisualBoxDisplayText, textBlockHasDataBinding } from "./textViewProjection";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 type Props = {
   block: ComunicadoVisualBoxBlock;
@@ -140,7 +141,7 @@ export function ComunicadoVisualBoxView({
       ) : null}
       {textNode ? (
         <div
-          className="tdp-comunicado__shape-text tdp-comunicado__visual-box-content"
+          className={ensureComunicadoDualClass("tdp-comunicado__shape-text tdp-comunicado__visual-box-content")}
           style={contentLayoutStyle}
         >
           {textNode}

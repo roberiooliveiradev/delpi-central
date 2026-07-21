@@ -1,11 +1,8 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import {
-  LucideIconByName,
-  LucideIconPicker,
-  type LucideIconPickerLabels,
-  type LucideIconPickerProps,
-} from "./LucideIconPicker";
+import { LucideIconByName } from "./LucideIconPicker";
+import type { LucideIconPickerLabels, LucideIconPickerProps } from "./LucideIconPicker";
+import { LucideIconPickerPopover } from "./LucideIconPickerPopover";
 import { lucideIconPtLabel } from "./lucideIconResolver";
 
 export type UseLucideIconFieldOptions = {
@@ -18,6 +15,8 @@ export type UseLucideIconFieldOptions = {
   maxResults?: number;
   closeOnSelect?: boolean;
   defaultOpen?: boolean;
+  showClear?: boolean;
+  title?: string;
 };
 
 export type LucideIconFieldTriggerState = {
@@ -38,38 +37,21 @@ export type LucideIconFieldProps = UseLucideIconFieldOptions & {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   renderTrigger?: (state: LucideIconFieldTriggerState) => ReactNode;
+  portalScopeClassName?: string;
 };
 
-function buildPickerProps(
+function buildPickerChange(
   options: UseLucideIconFieldOptions,
-  resolvedValue: string,
   onClose: () => void,
-): LucideIconPickerProps {
-  const {
-    onChange,
-    nameFormat = "pascal",
-    curatedOnly = false,
-    labels,
-    maxResults,
-    closeOnSelect = true,
-  } = options;
-
-  return {
-    embedded: true,
-    curatedOnly,
-    nameFormat,
-    value: resolvedValue,
-    maxResults,
-    labels,
-    onChange: (name) => {
-      onChange(name);
-      if (closeOnSelect) onClose();
-    },
-    onClose,
+): LucideIconPickerProps["onChange"] {
+  const { onChange, closeOnSelect = true } = options;
+  return (name) => {
+    onChange(name);
+    if (closeOnSelect) onClose();
   };
 }
 
-/** Estado + props do picker — use com trigger customizado (ex.: ribbon TV). */
+/** Estado do campo — use com trigger customizado (ex.: ribbon TV) + LucideIconPickerPopover. */
 export function useLucideIconField(options: UseLucideIconFieldOptions) {
   const { value, defaultIcon = "Star", defaultOpen = false } = options;
   const [open, setOpen] = useState(defaultOpen);
@@ -83,11 +65,40 @@ export function useLucideIconField(options: UseLucideIconFieldOptions) {
     toggle: () => setOpen((current) => !current),
     close,
     resolvedValue,
-    pickerProps: buildPickerProps(options, resolvedValue, close),
+    /** Props do conteúdo do picker (sem shell de portal). */
+    pickerContentProps: {
+      value: resolvedValue,
+      curatedOnly: options.curatedOnly ?? false,
+      nameFormat: options.nameFormat ?? "pascal",
+      maxResults: options.maxResults,
+      labels: options.labels,
+      showClear: options.showClear,
+      title: options.title,
+      onChange: buildPickerChange(options, close),
+      onClose: close,
+    } satisfies Partial<LucideIconPickerProps> & {
+      onChange: LucideIconPickerProps["onChange"];
+      onClose: () => void;
+    },
+    /**
+     * @deprecated Prefira `pickerContentProps` + `LucideIconPickerPopover`.
+     * Mantido para hosts que ainda montam `LucideIconPicker` embutido.
+     */
+    pickerProps: {
+      embedded: true,
+      curatedOnly: options.curatedOnly ?? false,
+      nameFormat: options.nameFormat ?? "pascal",
+      value: resolvedValue,
+      maxResults: options.maxResults,
+      labels: options.labels,
+      showClear: options.showClear,
+      onChange: buildPickerChange(options, close),
+      onClose: close,
+    } satisfies LucideIconPickerProps,
   };
 }
 
-/** Campo padrão: trigger + picker embutido (biblioteca Lucide canônica). */
+/** Campo padrão: trigger + popover com biblioteca Lucide completa. */
 export function LucideIconField({
   className,
   pickerClassName,
@@ -99,8 +110,10 @@ export function LucideIconField({
   open,
   onOpenChange,
   renderTrigger,
+  portalScopeClassName,
   ...options
 }: LucideIconFieldProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const uncontrolled = useLucideIconField({ ...options, defaultOpen });
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : uncontrolled.open;
@@ -111,7 +124,6 @@ export function LucideIconField({
   };
 
   const resolvedValue = uncontrolled.resolvedValue;
-  const pickerProps = buildPickerProps(options, resolvedValue, () => setOpen(false));
 
   const triggerState: LucideIconFieldTriggerState = {
     open: isOpen,
@@ -123,7 +135,7 @@ export function LucideIconField({
   const rootClass = ["delpi-ui-lucide-icon-field", className].filter(Boolean).join(" ");
 
   return (
-    <div className={rootClass} style={style}>
+    <div className={rootClass} style={style} ref={rootRef}>
       {renderTrigger ? (
         renderTrigger(triggerState)
       ) : (
@@ -150,11 +162,22 @@ export function LucideIconField({
           </span>
         </button>
       )}
-      {isOpen ? (
-        <div className={["delpi-ui-lucide-icon-field__picker", pickerClassName].filter(Boolean).join(" ")}>
-          <LucideIconPicker {...pickerProps} />
-        </div>
-      ) : null}
+      <LucideIconPickerPopover
+        open={isOpen}
+        onOpenChange={setOpen}
+        anchorRef={rootRef}
+        value={resolvedValue}
+        onChange={buildPickerChange(options, () => setOpen(false))}
+        curatedOnly={options.curatedOnly}
+        nameFormat={options.nameFormat}
+        maxResults={options.maxResults}
+        labels={options.labels}
+        showClear={options.showClear}
+        title={options.title}
+        pickerClassName={pickerClassName}
+        portalScopeClassName={portalScopeClassName}
+        ariaLabel={ariaLabel}
+      />
     </div>
   );
 }

@@ -7,6 +7,7 @@
 @import "./styles/series-chart.css";
 @import "./styles/configurable-table.css";
 @import "./styles/centered-scaled-preview.css";
+@import "./styles/comunicado-stage.css";
 @import "./styles/data-route-catalog.css";
 @import "./styles/format-pane.css";
 @import "./styles/host-density-compact.css";
@@ -252,6 +253,17 @@
 }
 
 /* --- LucideIconPicker --- */
+.delpi-ui-lucide-icon-picker-popover {
+  width: min(420px, calc(100vw - 16px));
+  max-height: min(72vh, 36rem);
+  z-index: 1200;
+}
+
+.delpi-ui-lucide-icon-picker-popover .delpi-ui-lucide-icon-picker {
+  max-height: min(72vh, 36rem);
+  width: 100%;
+}
+
 .delpi-ui-lucide-icon-picker {
   --lucide-picker-surface: var(--delpi-ui-surface, var(--surface, #ffffff));
   --lucide-picker-text: var(--delpi-ui-text, var(--text, #0f172a));

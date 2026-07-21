@@ -45,6 +45,7 @@ export function blockSupportsShapeChromeHandles(block: ComunicadoBlock): boolean
     return isAreaShapeKind(block.shape) || shapeAdjustmentSpecs(block.shape).length > 0;
   }
   return (
+    block.type === "icon" ||
     block.type === "kpi_view" ||
     block.type === "table_view" ||
     block.type === "chart_view" ||
@@ -69,6 +70,9 @@ export function resolveBlockShapeChromeCornerPx(block: ComunicadoBlock): number 
     if (typeof block.style?.borderRadius === "number") return block.style.borderRadius;
     const corner = values[0];
     return typeof corner === "number" ? Math.round(corner * 64) : 0;
+  }
+  if (block.type === "icon") {
+    return typeof block.style?.borderRadius === "number" ? block.style.borderRadius : 0;
   }
   if (block.type === "kpi_view") {
     const card = getKpiPartState(block.kpiParts, { kind: "card" });
@@ -131,6 +135,10 @@ export function applyBlockShapeChromeAdjustment(
   }
 
   const px = cornerAdjustmentToBorderRadiusPx(value, shortSidePx > 0 ? shortSidePx : 64);
+
+  if (block.type === "icon") {
+    return { style: { ...block.style, borderRadius: px } };
+  }
 
   if (block.type === "kpi_view") {
     const nextParts = upsertKpiPartState(block.kpiParts, { kind: "card" }, {

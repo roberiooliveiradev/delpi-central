@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { ConfirmModalPanel, confirmModalBemClasses } from "@delpi/plugin-ui/index";
 
-import { Modal } from "./Modal";
+import { HostContainedDialog } from "./Modal";
 
 export type ConfirmModalProps = {
   open: boolean;
@@ -33,7 +33,7 @@ export function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   return (
-    <Modal open={open} title={title} onClose={onCancel} className="td-modal--confirm">
+    <HostContainedDialog open={open} title={title} onClose={onCancel} className="td-modal--confirm">
       <ConfirmModalPanel
         message={message}
         confirmLabel={confirmLabel}
@@ -45,6 +45,6 @@ export function ConfirmModal({
         onCancel={onCancel}
         classNames={confirmModalTvClasses()}
       />
-    </Modal>
+    </HostContainedDialog>
   );
 }

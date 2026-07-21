@@ -46,6 +46,7 @@ export type ComunicadoVisualBoxChrome = {
   shapeKind?: ComunicadoShapeKind;
 };
 
+/** Fallbacks de leitura se a chave estiver ausente — default de inserção em `defaultStyle`. */
 const TEXT_BOX_CHROME_DEFAULTS = {
   fill: "transparent",
   stroke: "transparent",
@@ -199,6 +200,12 @@ export function defaultVerticalAlignForVisualBox(
   return "middle";
 }
 
+/**
+ * Inset tipográfico canônico da caixa visual (editor e TV).
+ * Em px (não em) — `em` acompanhava fontSize e comia a altura em frames baixos.
+ */
+export const VISUAL_BOX_CONTENT_INSET = "6px";
+
 /** Estilos do contêiner flex da caixa visual (texto e forma com texto). */
 export function resolveVisualBoxContentLayoutStyle(
   block: ComunicadoVisualBoxBlock,
@@ -218,13 +225,15 @@ export function resolveVisualBoxContentLayoutStyle(
   /* Texto na forma: layout absoluto sobre o gráfico — mesmo path para text e shape. */
   const textAlign = style.textAlign ?? (profile.mode === "text" ? undefined : "center");
   const verticalAlign = style.verticalAlign ?? defaultVerticalAlignForVisualBox(block);
+  /* Edição inline: sem inset — o padding em px ainda comia frames baixos no contentEditable. */
+  const contentPadding = options?.editorInteractive ? 0 : VISUAL_BOX_CONTENT_INSET;
   if (profile.mode === "text") {
     css.alignItems = "stretch";
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     if (style.textAlign) css.textAlign = style.textAlign;
     css.position = "absolute";
     css.inset = 0;
-    css.padding = "0.4em";
+    css.padding = contentPadding;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   } else {
     css.alignItems =
@@ -232,7 +241,7 @@ export function resolveVisualBoxContentLayoutStyle(
     css.justifyContent = comunicadoVerticalAlignToJustifyContent(verticalAlign);
     css.position = "absolute";
     css.inset = 0;
-    css.padding = "0.4em";
+    css.padding = contentPadding;
     if (textAlign) css.textAlign = textAlign;
     css.pointerEvents = options?.editorInteractive ? "auto" : "none";
   }

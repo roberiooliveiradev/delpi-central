@@ -6,8 +6,12 @@ type Props = {
   title: string;
   hint?: string;
   icon?: LucideIcon;
+  /** Densidade no estilo legado `td-deck-inspector__section` (só quando `pane` é false). */
   compact?: boolean;
-  /** Painel lateral — seções recolhíveis. */
+  /**
+   * Painel lateral — seções recolhíveis (`FormatPaneSection`).
+   * Obrigatório no side panel; não use `compact={pane}` no lugar disto.
+   */
   pane?: boolean;
   defaultOpen?: boolean;
   children: ReactNode;

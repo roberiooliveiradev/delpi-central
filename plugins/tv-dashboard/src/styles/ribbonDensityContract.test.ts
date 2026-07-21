@@ -5,8 +5,8 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Contrato de densidade do ribbon:
- * - band = altura fixa (Inserir/Home)
- * - fit = altura pelo conteúdo (Elemento/Dados) sem cortar
+ * - band = altura fixa (todas as abas contextuais — evita reflow do palco)
+ * - fit = altura pelo conteúdo (legado CSS; chrome atual usa band)
  * - grupos sem space-between (sem vazio até a caption)
  */
 describe("ribbon density contract", () => {
@@ -17,11 +17,19 @@ describe("ribbon density contract", () => {
     join(base, "../components/deck/DeckRibbonShell.tsx"),
     "utf8",
   );
+  const deckChrome = readFileSync(
+    join(base, "../components/DeckEditorChrome.tsx"),
+    "utf8",
+  );
 
   it("shell expõe densidades band e fit", () => {
     expect(shellSource).toMatch(/density\?: "band" \| "fit"/);
     expect(css).toMatch(/\.td-deck-ribbon--band/);
     expect(css).toMatch(/\.td-deck-ribbon--fit/);
+  });
+
+  it("chrome contextual usa band para não alterar altura do palco", () => {
+    expect(deckChrome).toMatch(/function ribbonDensityFor[\s\S]*return "band"/);
   });
 
   it("band tem altura fixa; fit cresce até o teto sem clip rígido de 88px", () => {

@@ -1,6 +1,32 @@
 import { describe, expect, it } from "vitest";
 
-import { computeDesignViewportScale } from "./DesignViewportStage";
+import {
+  computeDesignViewportBleedSize,
+  computeDesignViewportScale,
+  DESIGN_VIEWPORT_BLEED_RATIO,
+} from "./DesignViewportStage";
+
+describe("computeDesignViewportBleedSize", () => {
+  it("expande o stage além do design para pasteboard (paridade editor)", () => {
+    const { bleedX, bleedY, outerW, outerH } = computeDesignViewportBleedSize(1920, 1080);
+    expect(DESIGN_VIEWPORT_BLEED_RATIO).toBeGreaterThan(0);
+    expect(bleedX).toBe(1920 * DESIGN_VIEWPORT_BLEED_RATIO);
+    expect(bleedY).toBe(1080 * DESIGN_VIEWPORT_BLEED_RATIO);
+    expect(outerW).toBe(1920 + 2 * bleedX);
+    expect(outerH).toBe(1080 + 2 * bleedY);
+  });
+
+  it("frame negativo típico (−10%) ainda cabe no bleed padrão", () => {
+    const { bleedX } = computeDesignViewportBleedSize(1920, 1080);
+    const overhangPx = 1920 * 0.1;
+    expect(bleedX).toBeGreaterThanOrEqual(overhangPx);
+  });
+
+  it("KPI meio fora (−15%) cabe no bleed — apresentação não pode «puxar» para x=0", () => {
+    const { bleedX } = computeDesignViewportBleedSize(1920, 1080);
+    expect(bleedX).toBeGreaterThanOrEqual(1920 * 0.15);
+  });
+});
 
 describe("computeDesignViewportScale", () => {
   it("contain preenche a dimensão limitante (pillarbox em viewport mais larga)", () => {

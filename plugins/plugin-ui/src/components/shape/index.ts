@@ -17,6 +17,12 @@ export { RibbonColorPicker } from "./RibbonColorPicker";
 export type { RibbonColorPickerProps } from "./RibbonColorPicker";
 export { ColorDialog } from "./ColorDialog";
 export type { ColorDialogProps } from "./ColorDialog";
+export { ColorMorePanel } from "./ColorMorePanel";
+export type { ColorMorePanelProps } from "./ColorMorePanel";
+export {
+  isEyedropperSupported,
+  pickColorWithEyedropper,
+} from "./pickColorWithEyedropper";
 export { ShapeOutlineMenu } from "./ShapeOutlineMenu";
 export type { ShapeOutlineMenuProps } from "./ShapeOutlineMenu";
 export { ShapeEffectsMenu } from "./ShapeEffectsMenu";

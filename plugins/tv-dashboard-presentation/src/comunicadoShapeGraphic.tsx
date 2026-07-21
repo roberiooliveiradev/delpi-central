@@ -32,6 +32,7 @@ import {
   trianglePoints,
   wavePath,
 } from "./comunicadoShapePaths";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 export type ShapeGraphicColors = {
   fill: string;
@@ -152,7 +153,7 @@ function renderPointMarker(
   return (
     <svg
       viewBox={`0 0 ${size} ${size}`}
-      className="tdp-comunicado__shape-svg tdp-comunicado__shape-svg--point"
+      className={ensureComunicadoDualClass("tdp-comunicado__shape-svg tdp-comunicado__shape-svg--point")}
       aria-hidden="true"
       style={{ width: size, height: size, overflow: "visible" }}
     >
@@ -541,7 +542,7 @@ export function ComunicadoShapePreview({
 }) {
   const adjustments = resolveShapeAdjustments(kind, null);
   return (
-    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+    <svg viewBox="0 0 100 100" className={ensureComunicadoDualClass(className)} aria-hidden="true">
       {renderSvgShape(kind, PREVIEW_COLORS, adjustments)}
     </svg>
   );
@@ -579,7 +580,7 @@ export function ComunicadoShapeGraphic({
     return (
       <svg
         viewBox="0 0 100 100"
-        className="tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line"
+        className={ensureComunicadoDualClass("tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line")}
         aria-hidden="true"
         preserveAspectRatio="none"
         style={{ overflow: "visible" }}
@@ -593,7 +594,7 @@ export function ComunicadoShapeGraphic({
     return (
       <svg
         viewBox="0 0 100 100"
-        className="tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line"
+        className={ensureComunicadoDualClass("tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line")}
         aria-hidden="true"
         preserveAspectRatio="none"
         style={{ overflow: "visible" }}
@@ -623,7 +624,7 @@ export function ComunicadoShapeGraphic({
             : `${cornerAdj * 50}%`,
       ...(style?.boxShadow?.trim() ? { boxShadow: style.boxShadow } : {}),
     };
-    return <div className="tdp-comunicado__shape-fill" style={shapeStyle} />;
+    return <div className={ensureComunicadoDualClass("tdp-comunicado__shape-fill")} style={shapeStyle} />;
   }
 
   if (kind === "flowchart-terminator") {
@@ -635,7 +636,7 @@ export function ComunicadoShapeGraphic({
       borderRadius: 9999,
       ...(style?.boxShadow?.trim() ? { boxShadow: style.boxShadow } : {}),
     };
-    return <div className="tdp-comunicado__shape-fill" style={shapeStyle} />;
+    return <div className={ensureComunicadoDualClass("tdp-comunicado__shape-fill")} style={shapeStyle} />;
   }
 
   const svgShadow = style?.boxShadow?.trim()
@@ -645,7 +646,7 @@ export function ComunicadoShapeGraphic({
   return (
     <svg
       viewBox="0 0 100 100"
-      className="tdp-comunicado__shape-svg"
+      className={ensureComunicadoDualClass("tdp-comunicado__shape-svg")}
       preserveAspectRatio="none"
       aria-hidden="true"
       style={svgShadow}

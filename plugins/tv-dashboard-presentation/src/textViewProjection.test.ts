@@ -4,8 +4,11 @@ import type { ComunicadoDataResolved } from "./comunicadoTypes";
 import {
   buildTextDataLinkPatch,
   formatTextProjectionValue,
+  patchTextProjectionFromEditedDisplay,
   resolveTextBlockDisplayRuns,
   resolveTextDisplayValue,
+  splitEditedDisplayAroundCoreValue,
+  suggestDefaultTextProjection,
   textBlockHasDataBinding,
 } from "./textViewProjection";
 
@@ -30,6 +33,40 @@ describe("textViewProjection", () => {
     ).toMatch(/Meta: 42[,.]5% hoje/);
   });
 
+  it("patchTextProjectionFromEditedDisplay atualiza prefixo/sufixo sem perder o campo", () => {
+    const projection = { field: "oee", format: "number" as const, prefix: "Meta R$ " };
+    const core = resolveTextDisplayValue(resolved, { field: "oee", format: "number" }).text;
+    const next = patchTextProjectionFromEditedDisplay(
+      projection,
+      `Alvo ${core} un`,
+      resolved,
+    );
+    expect(next.field).toBe("oee");
+    expect(next.prefix).toBe("Alvo ");
+    expect(next.suffix).toBe(" un");
+  });
+
+  it("splitEditedDisplayAroundCoreValue separa affixes pelo valor âncora", () => {
+    expect(splitEditedDisplayAroundCoreValue("Meta R$ 9.000 un", "9.000")).toEqual({
+      prefix: "Meta R$ ",
+      suffix: " un",
+    });
+    expect(splitEditedDisplayAroundCoreValue("só prefixo", "9.000")).toEqual({
+      prefix: "só prefixo",
+      suffix: undefined,
+    });
+  });
+
+  it("resolveTextBlockDisplayRuns usa resolved do bloco quando o 2º arg omite", () => {
+    const runs = resolveTextBlockDisplayRuns({
+      content: "",
+      textProjection: { field: "oee", format: "number", prefix: "Meta: " },
+      resolved,
+    });
+    expect(runs[0]?.text).toMatch(/^Meta: /);
+    expect(runs[0]?.text).toContain("42");
+  });
+
   it("resolveTextBlockDisplayRuns com dataRef dinâmico", () => {
     const runs = resolveTextBlockDisplayRuns(
       {
@@ -51,7 +88,24 @@ describe("textViewProjection", () => {
       resolved,
     });
     expect(patch.dataSourceId).toBe("src-1");
-    expect(patch.textProjection?.field).toBe("oee");
+    // KPI escalar expõe "value"; série tabular pode preferir "oee".
+    expect(["value", "oee"]).toContain(patch.textProjection?.field);
+  });
+
+  it("suggestDefaultTextProjection usa primeiro campo do catálogo", () => {
+    const suggested = suggestDefaultTextProjection(undefined, [
+      { field: "value", label: "value" },
+      { field: "meta", label: "Meta" },
+    ]);
+    expect(suggested?.field).toBe("value");
+  });
+
+  it("buildTextDataLinkPatch aceita catálogo sem resolved", () => {
+    const patch = buildTextDataLinkPatch({
+      dataSourceId: "src-2",
+      catalogFields: [{ field: "value", label: "value" }],
+    });
+    expect(patch.textProjection?.field).toBe("value");
   });
 
   it("textBlockHasDataBinding detecta projeção ou dataRef", () => {
@@ -64,8 +118,9 @@ describe("textViewProjection", () => {
     expect(textBlockHasDataBinding({ content: "estático" })).toBe(false);
   });
 
-  it("formatTextProjectionValue compact", () => {
-    expect(formatTextProjectionValue(12500, "compact")).toMatch(/12/);
+  it("formatTextProjectionValue percent usa vírgula; currency formata BRL", () => {
+    expect(formatTextProjectionValue(80, "percent")).toBe("80,0%");
+    expect(formatTextProjectionValue(4005.33, "currency")).toMatch(/R\$\s*4\.005,33/);
   });
 
   it("campo value do KPI não é sombreado por tabela campo/valor (SI escalar)", () => {

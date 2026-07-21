@@ -1,7 +1,8 @@
 import {
-  adjustmentHandleCssPosition,
-  blockShapeChromeAdjustmentSpecs,
-  blockSupportsShapeChromeHandles,
+  ensureComunicadoDualClass,
+  comunicadoStageBemClasses,
+} from "@delpi/plugin-ui/index";
+import {
   buildViewDataLinkPatch,
   buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
@@ -11,20 +12,33 @@ import {
   isFetchableDataBlockType,
   isBlockHiddenOnStage,
   resolveBlockSelectionBorderRadiusPx,
-  resolveBlockShapeChromeAdjustmentValues,
   resolveViewportPixelSize,
   isLineShapeKind,
   resolveBlockPlacementStyle,
+  RichComunicadoMasterLogo,
   shapeBlockAllowsResize,
   useComunicadoGoogleFonts,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
+const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
+
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
-import { blocksInMarquee, normalizeMarqueeRect, type MarqueeRect } from "../utils/comunicadoMarquee";
+import {
+  blocksInMarquee,
+  mergeMarqueeSelection,
+  normalizeMarqueeRect,
+  resolveMarqueeIntent,
+  subtractMarqueeSelection,
+  type MarqueeRect,
+} from "../utils/comunicadoMarquee";
+import {
+  resolveClosedGroupSelection,
+  unionFramePercent,
+} from "../utils/comunicadoGrouping";
 import { shouldUsePartChromeInsteadOfBlock } from "../utils/compositePartSelection";
 import {
   resolveStagePanGutterPx,
@@ -44,32 +58,18 @@ import { shouldRenderStageGrid } from "../utils/stageViewport";
 import { clampStageGridSizePercent, stageGridSizePercentToDesignPx } from "../utils/stageGridSize";
 import { ComunicadoStageContextMenu } from "./ComunicadoStageContextMenu";
 import { ComunicadoStageShell } from "./ComunicadoStageShell";
+import { BlockSelectionChrome } from "./BlockSelectionChrome";
+import { GroupSelectionChrome } from "./GroupSelectionChrome";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorBlockView } from "./ComunicadoEditorBlockView";
 import {
   ComplexViewFloatToolbar,
   shouldShowComplexViewFloatToolbar,
 } from "./ComplexViewFloatToolbar";
-import { SelectionMoveHitFrame } from "./SelectionMoveHitFrame";
 import { RemoteSelectionFrame } from "./RemoteSelectionFrame";
 import type { BlockDragMode } from "./useCanvasBlockInteraction";
 
 const MARQUEE_THRESHOLD_PX = 4;
-
-const BLOCK_RESIZE_HANDLES: Array<{
-  mode: Exclude<BlockDragMode, "move" | `adjust-${number}`>;
-  position: string;
-  label: string;
-}> = [
-  { mode: "resize-nw", position: "nw", label: "Redimensionar canto superior esquerdo" },
-  { mode: "resize-n", position: "n", label: "Redimensionar borda superior" },
-  { mode: "resize-ne", position: "ne", label: "Redimensionar canto superior direito" },
-  { mode: "resize-w", position: "w", label: "Redimensionar borda esquerda" },
-  { mode: "resize-e", position: "e", label: "Redimensionar borda direita" },
-  { mode: "resize-sw", position: "sw", label: "Redimensionar canto inferior esquerdo" },
-  { mode: "resize-s", position: "s", label: "Redimensionar borda inferior" },
-  { mode: "resize-se", position: "se", label: "Redimensionar canto inferior direito" },
-];
 
 function useCanvasBackgroundStyle() {
   const { background } = useComunicadoEditor();
@@ -86,25 +86,14 @@ function MasterLogoOverlay() {
   const { masterLogo } = useComunicadoEditor();
   const { src: logoBlobUrl } = useAuthenticatedBlobUrl(masterLogo?.url);
   if (!masterLogo?.url && !logoBlobUrl) return null;
-  const frame = masterLogo?.frame;
   return (
-    <div
-      className="td-composer__master-logo"
-      aria-hidden
-      style={{
-        position: "absolute",
-        left: `${frame?.x ?? 2}%`,
-        top: `${frame?.y ?? 2}%`,
-        width: `${frame?.w ?? 12}%`,
-        height: `${frame?.h ?? 10}%`,
-        opacity: masterLogo?.opacity ?? 1,
-        zIndex: 0,
-        pointerEvents: "none",
-        backgroundImage: `url(${logoBlobUrl ?? masterLogo?.url})`,
-        backgroundSize: "contain",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "center",
-      }}
+    <RichComunicadoMasterLogo
+      url={logoBlobUrl ?? masterLogo?.url}
+      frame={masterLogo?.frame}
+      opacity={masterLogo?.opacity ?? 1}
+      className={ensureComunicadoDualClass(
+        `td-composer__master-logo ${COMPOSER_STAGE_BEM.masterLogo}`,
+      )}
     />
   );
 }
@@ -325,22 +314,26 @@ export function ComunicadoComposerCanvas() {
 
       if (!rect) return;
 
+      const intent = resolveMarqueeIntent(rect);
       const normalized = normalizeMarqueeRect(rect);
       const tiny =
         Math.abs(normalized.x2 - normalized.x1) < 0.5 && Math.abs(normalized.y2 - normalized.y1) < 0.5;
       if (tiny) {
-        if (!additive) clearSelection();
+        if (intent === "add" && !additive) clearSelection();
         return;
       }
 
       const ids = blocksInMarquee(blocks, normalized);
+      if (intent === "subtract") {
+        selectBlocksByIds(subtractMarqueeSelection(selectedIds, ids));
+        return;
+      }
       if (ids.length === 0) {
         if (!additive) clearSelection();
         return;
       }
       if (additive) {
-        const merged = new Set([...selectedIds, ...ids]);
-        selectBlocksByIds([...merged]);
+        selectBlocksByIds(mergeMarqueeSelection(selectedIds, ids));
       } else {
         selectBlocksByIds(ids);
       }
@@ -434,30 +427,63 @@ export function ComunicadoComposerCanvas() {
     [clientToCanvasPercent, editingTextId, finishMarquee, stagePanMode],
   );
 
-  const handleCanvasContextMenu = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleStageContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, blockId?: string) => {
       event.preventDefault();
       if (editingTextId) return;
+      if (blockId) {
+        event.stopPropagation();
+        if (!isBlockSelected(blockId)) {
+          selectBlock(blockId);
+        }
+      } else {
+        const target = event.target as HTMLElement | null;
+        const onBlock = target?.closest?.("[data-block-id]");
+        // Fundo do palco / wrap (ex.: modo pan): menu de inserção/colar sem seleção.
+        if (!onBlock) {
+          clearSelection();
+        }
+      }
       setContextMenu({ x: event.clientX, y: event.clientY });
     },
-    [editingTextId],
+    [clearSelection, editingTextId, isBlockSelected, selectBlock],
+  );
+
+  const handleCanvasContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      handleStageContextMenu(event);
+    },
+    [handleStageContextMenu],
   );
 
   const handleBlockContextMenu = useCallback(
     (event: React.MouseEvent<HTMLDivElement>, blockId: string) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (editingTextId) return;
-      if (!isBlockSelected(blockId)) {
-        selectBlock(blockId);
-      }
-      setContextMenu({ x: event.clientX, y: event.clientY });
+      handleStageContextMenu(event, blockId);
     },
-    [editingTextId, isBlockSelected, selectBlock],
+    [handleStageContextMenu],
   );
 
   const primarySelected = selectedId;
+  const closedGroup = useMemo(
+    () => resolveClosedGroupSelection(blocks, selectedIds),
+    [blocks, selectedIds],
+  );
+  const groupUnionFrame = useMemo(() => {
+    if (!closedGroup) return null;
+    return unionFramePercent(closedGroup.members.map((member) => member.frame));
+  }, [closedGroup]);
+  const groupAnchorBlock = useMemo(() => {
+    if (!closedGroup) return null;
+    return (
+      closedGroup.members.find((member) => member.id === primarySelected) ??
+      closedGroup.members[closedGroup.members.length - 1] ??
+      null
+    );
+  }, [closedGroup, primarySelected]);
+
   const showResizeHandles = (blockId: string) => {
+    // Seleção pai do grupo: handles só no chrome unificado.
+    if (closedGroup) return false;
     // Todos os itens selecionados mostram quadrados de edição (move/resize em grupo).
     if (!isBlockSelected(blockId) || editingTextId === blockId) {
       return false;
@@ -505,8 +531,10 @@ export function ComunicadoComposerCanvas() {
     };
   }, [marquee]);
 
+  const marqueeIntent = marquee ? resolveMarqueeIntent(marquee) : "add";
+
   return (
-    <ComunicadoStageShell>
+    <ComunicadoStageShell onStageContextMenu={handleStageContextMenu}>
       <div
         className="td-composer__canvas-zoom-sizer"
         style={{
@@ -514,15 +542,19 @@ export function ComunicadoComposerCanvas() {
           height: designSize.height * stageZoom,
           padding: `${panGutter.y}px ${panGutter.x}px`,
         }}
+        onContextMenu={handleCanvasContextMenu}
       >
         <div
           ref={canvasRef}
-          className={[
-            "td-composer__canvas",
-            marquee ? "td-composer__canvas--marqueeing" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          className={ensureComunicadoDualClass(
+            [
+              "td-composer__canvas",
+              COMPOSER_STAGE_BEM.root,
+              marquee ? "td-composer__canvas--marqueeing" : "",
+            ]
+              .filter(Boolean)
+              .join(" "),
+          )}
           data-viewport={viewportProfile || "1080p"}
           style={{
             ...canvasStyle,
@@ -535,6 +567,11 @@ export function ComunicadoComposerCanvas() {
           onPointerDown={handleCanvasPointerDown}
           onContextMenu={handleCanvasContextMenu}
         >
+          {/*
+           * Mesma árvore da TV (`ComunicadoStageFrame`): root + __stage.
+           * Blocos/logo posicionam no stage — paridade de containing block.
+           */}
+          <div className={ensureComunicadoDualClass(`td-composer__stage ${COMPOSER_STAGE_BEM.stage}`)}>
           <MasterLogoOverlay />
           {shouldRenderStageGrid(showStageGrid, stageZoom) ? (
             <div
@@ -556,6 +593,7 @@ export function ComunicadoComposerCanvas() {
               return null;
             }
             const isSelected = isBlockSelected(block.id);
+            const inClosedGroup = Boolean(closedGroup && isSelected);
             const remoteEditors = remoteSelections.filter((selection) =>
               selection.selectedIds.includes(block.id),
             );
@@ -581,8 +619,11 @@ export function ComunicadoComposerCanvas() {
                 data-block-id={block.id}
                 className={[
                   "td-composer__block-wrap",
-                  isSelected ? "td-composer__block-wrap--selected" : "",
-                  isSelected && !isPrimary ? "td-composer__block-wrap--multi" : "",
+                  isSelected && !inClosedGroup ? "td-composer__block-wrap--selected" : "",
+                  isSelected && !isPrimary && !inClosedGroup
+                    ? "td-composer__block-wrap--multi"
+                    : "",
+                  inClosedGroup ? "td-composer__block-wrap--group-member" : "",
                   hasPartChrome ? "td-composer__block-wrap--part-chrome" : "",
                   block.type === "text" || block.type === "heading"
                     ? "td-composer__block-wrap--text"
@@ -606,7 +647,18 @@ export function ComunicadoComposerCanvas() {
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
-                  // Pan (mão/Ctrl): não engolir o evento — o wrap do palco arrasta o scroll.
+                  /* Ctrl/Cmd+clique: remove da seleção (não pan; isolação = 2º clique no grupo). */
+                  if (
+                    (event.ctrlKey || event.metaKey) &&
+                    !event.shiftKey &&
+                    !stagePanMode
+                  ) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    selectBlock(block.id, { subtract: true, expandGroup: false });
+                    return;
+                  }
+                  // Pan (mão): não engolir o evento — o wrap do palco arrasta o scroll.
                   if (shouldDeferToStagePan(event, stagePanMode)) return;
                   event.stopPropagation();
                   if (
@@ -665,6 +717,7 @@ export function ComunicadoComposerCanvas() {
                   beginBlockStageMoveDrag({
                     event,
                     block,
+                    blocks,
                     isBlockSelected,
                     selectedIds,
                     selectedId,
@@ -678,7 +731,7 @@ export function ComunicadoComposerCanvas() {
                 <ComunicadoEditorBlockView
                   block={block}
                   fontScale={1}
-                  isSelected={isSelected}
+                  isSelected={isSelected && !inClosedGroup}
                   isEditingText={editingTextId === block.id}
                   className={[
                     isSelected ? "td-composer__block--selected" : "",
@@ -699,55 +752,15 @@ export function ComunicadoComposerCanvas() {
                   />
                 ) : null}
                 {showResizeHandles(block.id) ? (
-                  <div className="td-composer__block-handles">
-                    {/* Outline CSS não é hit-target — anel de arraste na linha pontilhada. */}
-                    <SelectionMoveHitFrame
-                      block={block}
-                      onMovePointerDown={startDragRespectingPan}
-                    />
-                    <button
-                      type="button"
-                      className="td-composer__rotate"
-                      aria-label="Girar elemento"
-                      onPointerDown={(event) => startDragRespectingPan(event, block, "rotate")}
-                    />
-                    {BLOCK_RESIZE_HANDLES.map(({ mode, position, label }) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        className={`td-composer__resize td-composer__resize--${position}`}
-                        aria-label={label}
-                        onPointerDown={(event) => startDragRespectingPan(event, block, mode)}
-                      />
-                    ))}
-                    {/* KPI: raio do fundo só com parte `card` (ribbon), não diamante global. */}
-                    {blockSupportsShapeChromeHandles(block) && block.type !== "kpi_view"
-                      ? blockShapeChromeAdjustmentSpecs(block).map((spec) => {
-                          const shortSidePx = Math.min(
-                            (block.frame.w / 100) * designSize.width,
-                            (block.frame.h / 100) * designSize.height,
-                          );
-                          const values = resolveBlockShapeChromeAdjustmentValues(
-                            block,
-                            shortSidePx,
-                          );
-                          const pos = adjustmentHandleCssPosition(spec, values);
-                          return (
-                            <button
-                              key={`adj-${spec.index}`}
-                              type="button"
-                              className="td-composer__adjust"
-                              style={{ left: pos.left, top: pos.top }}
-                              aria-label={`Ajustar ${spec.label}`}
-                              title={spec.label}
-                              onPointerDown={(event) =>
-                                startDragRespectingPan(event, block, `adjust-${spec.index}`)
-                              }
-                            />
-                          );
-                        })
-                      : null}
-                  </div>
+                  <BlockSelectionChrome
+                    block={block}
+                    designShortSidePx={Math.min(
+                      (block.frame.w / 100) * designSize.width,
+                      (block.frame.h / 100) * designSize.height,
+                    )}
+                    allowResize={block.type === "shape" ? shapeBlockAllowsResize(block) : true}
+                    onPointerDown={startDragRespectingPan}
+                  />
                 ) : null}
                 {shouldShowComplexViewFloatToolbar({
                   block,
@@ -763,9 +776,26 @@ export function ComunicadoComposerCanvas() {
               </div>
             );
           })}
-          {marqueeStyle ? (
-            <div className="td-composer__marquee" style={marqueeStyle} aria-hidden="true" />
+          {groupUnionFrame && groupAnchorBlock ? (
+            <GroupSelectionChrome
+              frame={groupUnionFrame}
+              anchorBlock={groupAnchorBlock}
+              onPointerDown={startDragRespectingPan}
+            />
           ) : null}
+          {marqueeStyle ? (
+            <div
+              className={[
+                "td-composer__marquee",
+                marqueeIntent === "subtract"
+                  ? "td-composer__marquee--subtract"
+                  : "td-composer__marquee--add",
+              ].join(" ")}
+              style={marqueeStyle}
+              aria-hidden="true"
+            />
+          ) : null}
+          </div>
         </div>
       </div>
       <ComunicadoStageContextMenu

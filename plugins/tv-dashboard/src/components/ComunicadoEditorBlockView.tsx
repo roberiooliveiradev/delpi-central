@@ -49,6 +49,7 @@ import {
   resolveComunicadoDataPageState,
   resizeTableProjectionColumns,
   selectedTableProjectionColumnKeys,
+  tablePartAllowsEdit,
   resizeInputPartFrame,
   scaleInputPartTypographyOnResize,
   upsertInputPartState,
@@ -76,6 +77,7 @@ import { ENUM_OPTION_LABELS, resolveParamFieldLabel } from "../content/dataParam
 import { DATE_RANGE_PRESET_OPTIONS } from "../utils/dateRangePresets";
 
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
+import { renameTableColumnFieldLabel } from "../utils/renameTableColumnFieldLabel";
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
@@ -83,6 +85,7 @@ import { resolveCompositePartPointerAction, isCompositeContentPart } from "../ut
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 type Props = {
   block: ComunicadoBlock;
@@ -105,15 +108,17 @@ function EditorImageBlock({
 }) {
   const { src, loading, error } = useAuthenticatedBlobUrl(block.url);
 
-  const blockClass = [
-    "tdp-comunicado__block",
-    "tdp-comunicado__block--image",
-    "tdp-comunicado__block--media",
-    "td-composer__media-block",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const blockClass = ensureComunicadoDualClass(
+    [
+      "tdp-comunicado__block",
+      "tdp-comunicado__block--image",
+      "tdp-comunicado__block--media",
+      "td-composer__media-block",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
 
   const fit = block.style?.objectFit ?? "contain";
 
@@ -162,6 +167,7 @@ function EditorChartViewBlock({
     cancelEditChartPart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -204,6 +210,7 @@ function EditorChartViewBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,
@@ -426,9 +433,9 @@ function EditorChartViewBlock({
 
   return (
     <div
-      className={["tdp-comunicado__block", "tdp-comunicado__block--chart-view", "td-composer__chart-view", className]
+      className={ensureComunicadoDualClass(["tdp-comunicado__block", "tdp-comunicado__block--chart-view", "td-composer__chart-view", className]
         .filter(Boolean)
-        .join(" ")}
+        .join(" "))}
       style={style}
     >
       <ChartViewBlockView
@@ -458,11 +465,15 @@ function EditorTableViewBlock({
     isBlockSelected,
     selectedTablePart,
     selectedTableParts,
+    editingTablePart,
     selectBlock,
     selectBlocksByIds,
     selectTablePart,
+    beginEditTablePart,
+    cancelEditTablePart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     loadMoreDataPreview,
     loadingMoreSourceIds,
     startDrag,
@@ -506,6 +517,7 @@ function EditorTableViewBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,
@@ -532,10 +544,46 @@ function EditorTableViewBlock({
 
   const onPartDoubleClick = useCallback(
     (ref: ComunicadoTablePartRef) => {
+      const same =
+        selectedId === block.id &&
+        selectedTablePart &&
+        isTablePartRefEqual(selectedTablePart, ref);
       selectTablePart(block.id, ref);
       requestRibbonTab(ref.kind === "frame" ? "shape" : "table");
+      if (same && tablePartAllowsEdit(ref)) {
+        beginEditTablePart(block.id, ref);
+      }
     },
-    [block.id, requestRibbonTab, selectTablePart],
+    [
+      beginEditTablePart,
+      block.id,
+      requestRibbonTab,
+      selectTablePart,
+      selectedId,
+      selectedTablePart,
+    ],
+  );
+
+  const onPartContentCommit = useCallback(
+    (ref: ComunicadoTablePartRef, content: string) => {
+      cancelEditTablePart();
+      if (ref.kind !== "headerCell") return;
+      const columnKey = selectedTableProjectionColumnKeys(block, [ref])[0];
+      if (!columnKey) return;
+      const { sourcePatch, tableProjection } = renameTableColumnFieldLabel({
+        blocks,
+        tableBlock: block,
+        columnKey,
+        label: content,
+      });
+      if (sourcePatch) {
+        updateBlock(sourcePatch.id, { fieldLabels: sourcePatch.fieldLabels } as Partial<ComunicadoBlock>);
+      }
+      if (tableProjection) {
+        updateBlock(block.id, { tableProjection });
+      }
+    },
+    [block, blocks, cancelEditTablePart, updateBlock],
   );
 
   const onColumnResize = useCallback(
@@ -558,8 +606,11 @@ function EditorTableViewBlock({
       ? {
           selectedPart: selectedTablePart,
           selectedParts: selectedTableParts,
+          editingPart: editingTablePart,
           onPartPointerDown,
           onPartDoubleClick,
+          onPartContentCommit,
+          onPartEditCancel: cancelEditTablePart,
           onColumnResize,
           hasMoreRows: Boolean(sourceId && pageState?.hasMore),
           loadingMoreRows,
@@ -574,9 +625,9 @@ function EditorTableViewBlock({
 
   return (
     <div
-      className={["tdp-comunicado__block", "tdp-comunicado__block--table-view", className]
+      className={ensureComunicadoDualClass(["tdp-comunicado__block", "tdp-comunicado__block--table-view", className]
         .filter(Boolean)
-        .join(" ")}
+        .join(" "))}
       style={style}
     >
       <TableViewBlockView
@@ -614,6 +665,7 @@ function EditorKpiViewBlock({
     cancelEditKpiPart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -645,6 +697,7 @@ function EditorKpiViewBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,
@@ -899,9 +952,9 @@ function EditorKpiViewBlock({
 
   return (
     <div
-      className={["tdp-comunicado__block", "tdp-comunicado__block--kpi-view", className]
+      className={ensureComunicadoDualClass(["tdp-comunicado__block", "tdp-comunicado__block--kpi-view", className]
         .filter(Boolean)
-        .join(" ")}
+        .join(" "))}
       style={style}
     >
       <KpiViewBlockView
@@ -941,6 +994,7 @@ function EditorInputBlock({
     selectInputPart,
     requestRibbonTab,
     updateBlock,
+    blocks,
     startDrag,
     armMultiDragSelection,
   } = useComunicadoEditor();
@@ -1021,6 +1075,7 @@ function EditorInputBlock({
       beginBlockStageMoveDrag({
         event,
         block,
+        blocks,
         isBlockSelected,
         selectedIds,
         selectedId,

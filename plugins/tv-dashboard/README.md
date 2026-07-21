@@ -27,6 +27,10 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 - **Editor visual v1.5+** (slide Personalizado): undo/redo, multi-seleção, camadas, templates, biblioteca de mídia, crop, ícones Lucide
 - **Histórico de revisões:** a Timeline canônica de `@delpi/plugin-ui` mostra autor (nome/e-mail), campos e telas adicionadas, removidas, editadas ou reordenadas; snapshots antigos mantêm o resumo por motivo/prévia. Undo/redo e restauração manual usam snapshots atômicos do backend com controle otimista de revisão.
 - **Dados live api-delpi (4F):** painel Dados, `data_source` + `chart_view` / `table_view` / `kpi_view`, catálogo de rotas GET, gráficos/tabelas/KPI com **partes selecionáveis** no palco
+- **Persistência do slide personalizado:** draft versionado em `localStorage` + autosave debounced; F5/WS **nunca** descartam edições locais sem merge (`applyServerPlaylistPreservingLocalEdits`). Anti-padrão documentado em `.cursor/rules/tv-dashboard-persist-local-edits.mdc`
+- **Pasteboard / paridade:** editor e TV usam `overflow:visible` na moldura — itens fora do 1080p aparecem no letterbox; clip só na borda física. Ver `.cursor/rules/tv-dashboard-editor-pasteboard.mdc`
+- **Modais / avisos:** `HostContainedDialog` (confirm) e `HostContainedModal` (workbench) — overlay só na área do MFE, nunca sobre a sidebar do portal. Anti-padrão: `.cursor/rules/mfe-modal-host-contained.mdc`
+- **Fidelidade prévia/TV:** `RichComunicadoStage` canônico; abrir prévia faz flush + overlay do shell local (não payload stale). Anti-padrão: `.cursor/rules/tv-dashboard-presentation-parity.mdc`
 - **Preparar dados (M DELPI):** workbench de consultas em modal via `createHostContainedModalShell` do `@delpi/plugin-ui` — ocupa a área útil do MFE e não cobre a sidebar/chrome da Minha DELPI
 - **Preparar dados M (Fase 7):** editor multiline e ribbon das fases anteriores,
   profiling opt-in, qualidade/distribuição amostradas, explain e tempo por etapa;

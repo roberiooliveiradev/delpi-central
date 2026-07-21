@@ -10,8 +10,19 @@ export const Modal = createModalShell({
   portalScopeClassName: TV_DASHBOARD_ROOT_CLASS,
 });
 
-/** Modal que ocupa somente a área do MFE, preservando sidebar/chrome do host Minha DELPI. */
+/** Workbench / página — preenche a área do MFE (não cobre sidebar do portal). */
 export const HostContainedModal = createHostContainedModalShell({
   prefix: "td",
   portalScopeClassName: TV_DASHBOARD_ROOT_CLASS,
+  containedLayout: "fill",
+});
+
+/**
+ * Aviso / confirm — overlay só na área do MFE, card centralizado.
+ * Anti-padrão: `Modal` (body + fixed inset:0) sobre a sidebar do portal.
+ */
+export const HostContainedDialog = createHostContainedModalShell({
+  prefix: "td",
+  portalScopeClassName: TV_DASHBOARD_ROOT_CLASS,
+  containedLayout: "dialog",
 });

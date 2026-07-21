@@ -56,7 +56,8 @@
 
 .delpi-kpi-card__label {
   margin: 0 0 8px;
-  font-size: 0.875rem;
+  /* px de design — rem do host quebrava paridade editor ↔ TV. */
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.35;
@@ -92,7 +93,7 @@
 
 .delpi-kpi-card__hint {
   margin: 10px 0 0;
-  font-size: 0.8125rem;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1.35;
   color: var(--delpi-kpi-hint-color, #64748b);

@@ -5,7 +5,7 @@ import {
   clearPreviewPayloadCache,
   peekPreviewPayloadCache,
   rememberPreviewPayloadCache,
-} from "./PlaylistPreviewPage";
+} from "../utils/previewPayloadCache";
 
 describe("previewPayloadCache", () => {
   it("guarda e limpa payload por playlist", () => {

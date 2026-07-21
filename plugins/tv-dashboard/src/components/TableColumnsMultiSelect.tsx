@@ -1,5 +1,10 @@
 import { NativeCheckboxControl, NativeTextControl } from "@delpi/plugin-ui/index";
-import type { TableColumnProjection, TableViewProjection } from "@delpi/tv-dashboard-presentation";
+import {
+  isAutoBakedFieldLabel,
+  lookupFieldLabel,
+  type TableColumnProjection,
+  type TableViewProjection,
+} from "@delpi/tv-dashboard-presentation";
 
 import { useProjectionDragReorder } from "../hooks/useProjectionDragReorder";
 
@@ -184,10 +189,14 @@ export function TableColumnsMultiSelect({
   );
 
   function renameControl(key: string, defaultLabel: string) {
-    const customFromSource = sourceFieldLabels?.[key]?.trim() ?? "";
+    const customFromSource = lookupFieldLabel(sourceFieldLabels, key) ?? "";
     const customFromProjection =
-      tableProjection?.columns?.find((col) => col.key === key)?.label?.trim() ?? "";
-    const labelValue = onRenameField ? customFromSource : customFromProjection;
+      tableProjection?.columns?.find((col) => col.key === key)?.label ?? "";
+    const labelValue = onRenameField
+      ? customFromSource
+      : isAutoBakedFieldLabel(customFromProjection, key)
+        ? ""
+        : customFromProjection;
     return (
       <NativeTextControl
         className={compact ? "delpi-ui-native-control--compact" : undefined}

@@ -1,3 +1,5 @@
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
+
 type Kind = "image" | "video";
 type State = "empty" | "loading" | "error";
 
@@ -69,18 +71,20 @@ export function ComunicadoMediaPlaceholder({ kind, state = "empty", label }: Pro
 
   return (
     <div
-      className={[
-        "tdp-comunicado__placeholder",
-        state === "loading" ? "tdp-comunicado__placeholder--loading" : null,
-        state === "error" ? "tdp-comunicado__placeholder--error" : null,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={ensureComunicadoDualClass(
+        [
+          "tdp-comunicado__placeholder",
+          state === "loading" ? "tdp-comunicado__placeholder--loading" : null,
+          state === "error" ? "tdp-comunicado__placeholder--error" : null,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      )}
     >
-      <span className="tdp-comunicado__placeholder-icon">
+      <span className={ensureComunicadoDualClass("tdp-comunicado__placeholder-icon")}>
         <PlaceholderGraphic kind={kind} state={state} />
       </span>
-      <span className="tdp-comunicado__placeholder-label">{text}</span>
+      <span className={ensureComunicadoDualClass("tdp-comunicado__placeholder-label")}>{text}</span>
     </div>
   );
 }

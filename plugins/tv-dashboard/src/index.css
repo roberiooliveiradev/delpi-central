@@ -38,7 +38,7 @@
   --td-selection-rotate-size: 16px;
   --td-selection-outline-width: 2.5px;
   --td-remote-selection: var(--danger, #ef4444);
-  --td-global-selection-pad: 14px;
+  --td-global-selection-pad: 6px;
   --td-selection-rotate-stem: 26px;
   --td-selection-rotate-offset: 34px;
   --td-float-popover-bg: color-mix(in srgb, var(--td-text) 92%, var(--td-surface));
@@ -68,6 +68,7 @@
   min-height: 0;
   flex-shrink: 0;
   max-width: 100%;
+  height: 100%;
 }
 /* Painel recolhido: só o trilho de ícones — notas não podem forçar largura. */
 .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--collapsed){
@@ -75,6 +76,39 @@
 }
 .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--collapsed) .td-deck-speaker-notes{
   display: none;
+}
+/*
+ * Inspetor aberto: coluna flutuante sobre o palco (slot in-flow fica em 36px).
+ * Assim abrir/selecionar não encolhe o viewport do desenho.
+ */
+.dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open){
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--td-side-panel-width, 320px);
+  min-width: 260px;
+  max-width: min(560px, 48vw);
+  z-index: 28;
+  background: var(--td-surface);
+  border-left: 1px solid var(--td-border);
+  box-shadow: -12px 0 28px color-mix(in srgb, #000 16%, transparent);
+  animation: td-deck-aside-reveal 0.18s ease;
+}
+@keyframes td-deck-aside-reveal{
+  from{
+    opacity: 0.88;
+    transform: translateX(10px);
+  }
+  to{
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open){
+    animation: none;
+  }
 }
 /* ── Atalhos: clusters locais + catálogo (balão visual = KeyTip em plugin-ui) ── */
 .dashboard-tv-dashboard .td-shortcut-tip__cluster{
@@ -1096,27 +1130,6 @@
   height: 34px;
   color: var(--delpi-ui-text, var(--td-text));
 }
-.dashboard-tv-dashboard .td-icon-library-portal{
-  width: min(300px, calc(100vw - 16px));
-  max-height: min(50vh, 360px);
-  overflow: auto;
-  padding: 8px 10px 10px;
-  border-radius: 12px;
-  border: 1px solid var(--delpi-ui-border, var(--td-border));
-  background: var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)));
-  box-shadow: 0 12px 32px color-mix(in srgb, #000 16%, transparent);
-  scrollbar-width: thin;
-}
-.dashboard-tv-dashboard .td-icon-editor-picker{
-  width: min(320px, 100%);
-  max-height: min(52vh, 380px);
-  overflow: auto;
-  margin-top: 6px;
-  padding: 8px;
-  border-radius: 10px;
-  border: 1px solid var(--td-border);
-  background: var(--td-surface);
-}
 .dashboard-tv-dashboard .td-shape-library__label{
   display: none;
 }
@@ -1155,8 +1168,15 @@
   height: auto;
   aspect-ratio: auto;
   border-radius: 0;
-  /* Objetos podem ficar fora da área da apresentação; a TV corta via DesignViewportStage. */
+  /*
+   * Pasteboard (PowerPoint-like): overflow VISÍVEL — igual TV na moldura.
+   * Também usa classes `delpi-ui-comunicado` (tipografia 16px / font stack de design).
+   * Anti-padrão: overflow:hidden aqui «para WYSIWYG» (logo/IDD cortados no palco).
+   */
   overflow: visible;
+  /* Espelha `.delpi-ui-comunicado` se o CSS do kit atrasar no MF. */
+  font-size: 16px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   /* Evita arraste acidental marcar texto; editing contentEditable sobrescreve. */
   user-select: none;
   /*
@@ -1566,13 +1586,33 @@ body.td-composer--marqueeing *{
    */
   outline: var(--td-selection-outline-width, 2.5px) dashed
     var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff));
-  outline-offset: var(--td-global-selection-pad, 14px);
+  outline-offset: var(--td-global-selection-pad, 6px);
   overflow: visible;
   isolation: isolate;
 }
 /* Parte individual (fundo/card, valor, etc.): chrome da parte manda — sem outline global. */
 .dashboard-tv-dashboard .td-composer__block-wrap--selected.td-composer__block-wrap--part-chrome{
   outline: none;
+}
+/* Membros na seleção pai do grupo: sem outline individual (chrome unificado). */
+.dashboard-tv-dashboard .td-composer__block-wrap--group-member{
+  outline: none;
+}
+.dashboard-tv-dashboard .td-composer__group-chrome{
+  position: absolute;
+  z-index: 40;
+  box-sizing: border-box;
+  pointer-events: none;
+  outline: var(--td-selection-outline-width, 2.5px) dashed
+    var(--td-selection-outline, color-mix(in srgb, var(--td-accent) 70%, #fff));
+  outline-offset: var(--td-global-selection-pad, 6px);
+  overflow: visible;
+}
+.dashboard-tv-dashboard .td-composer__group-chrome .td-composer__block-handles{
+  pointer-events: auto;
+}
+.dashboard-tv-dashboard .td-layers-list__item--grouped .td-layers-list__type{
+  color: var(--td-accent, #3b82f6);
 }
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > .tdp-comunicado__block,
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > .td-composer__block,
@@ -1582,7 +1622,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-composer__remote-selection{
   position: absolute;
-  inset: calc(-1 * var(--td-global-selection-pad, 12px));
+  inset: calc(-1 * var(--td-global-selection-pad, 6px));
   z-index: 19;
   pointer-events: none;
   border: max(2px, var(--td-selection-outline-width, 2px)) solid var(--td-remote-selection);
@@ -1609,7 +1649,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__block-handles{
   position: absolute;
   /* Expande a área dos handles pelo mesmo pad da seleção global. */
-  inset: calc(-1 * var(--td-global-selection-pad, 12px));
+  inset: calc(-1 * var(--td-global-selection-pad, 6px));
   z-index: 20;
   pointer-events: none;
 }
@@ -1658,7 +1698,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__selection-move-edge--s{
   left: 0;
   right: 0;
-  height: var(--td-global-selection-pad, 12px);
+  height: var(--td-global-selection-pad, 6px);
 }
 .dashboard-tv-dashboard .td-composer__selection-move-edge--n{
   top: 0;
@@ -1670,7 +1710,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__selection-move-edge--w{
   top: 0;
   bottom: 0;
-  width: var(--td-global-selection-pad, 12px);
+  width: var(--td-global-selection-pad, 6px);
 }
 .dashboard-tv-dashboard .td-composer__selection-move-edge--e{
   right: 0;
@@ -1717,6 +1757,14 @@ body.td-composer--marqueeing *{
   pointer-events: none;
   z-index: 50;
   box-sizing: border-box;
+}
+.dashboard-tv-dashboard .td-composer__marquee--add{
+  --td-selection-marquee-border: var(--td-accent, #089bdb);
+  --td-selection-marquee-fill: var(--td-accent, #089bdb);
+}
+.dashboard-tv-dashboard .td-composer__marquee--subtract{
+  --td-selection-marquee-border: #dc2626;
+  --td-selection-marquee-fill: #dc2626;
 }
 .dashboard-tv-dashboard .td-composer__text-block-body{
   width: 100%;
@@ -1775,7 +1823,8 @@ body.td-composer--marqueeing *{
   text-align: inherit;
   line-height: inherit;
   white-space: pre-wrap;
-  overflow: hidden;
+  /* Igual native-screens: overflow:hidden no glifo cortava texto na prévia/TV. */
+  overflow: visible;
   box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-composer__inline-text-wrap{
@@ -1895,7 +1944,7 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-composer__inline-text{
   width: 100%;
-  max-height: 100%;
+  flex: 0 0 auto;
   margin: 0;
   padding: 0;
   resize: none;
@@ -1913,7 +1962,8 @@ body.td-composer--marqueeing *{
   box-sizing: border-box;
   pointer-events: auto;
   outline: none;
-  overflow: hidden;
+  /* Igual tipografia TV/readonly — max-height+hidden cortava glifos no edit. */
+  overflow: visible;
   white-space: pre-wrap;
   caret-color: currentColor;
   field-sizing: content;
@@ -2081,7 +2131,7 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-composer__media-preview{
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  /* object-fit só via inline (style.objectFit) — CSS fixo quebrava Preencher/Conter. */
   display: block;
   pointer-events: none;
 }
@@ -4640,10 +4690,13 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--open{
   position: relative;
-  width: var(--td-side-panel-width, 320px);
-  min-width: 260px;
-  max-width: min(560px, 48vw);
-  border-left: 1px solid var(--td-border);
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  border-left: none;
 }
 .dashboard-tv-dashboard .td-deck-side-panel--stage.td-deck-side-panel--collapsed{
   width: 36px;
@@ -5689,8 +5742,19 @@ body.td-composer--marqueeing *{
   flex: 1;
   min-height: 0;
   align-items: stretch;
+  position: relative;
   /* Garante que o painel lateral herde a altura do palco, não a do conteúdo. */
   overflow: hidden;
+}
+/* Reserva fixa do trilho (36px) — inspetor aberto sobe em overlay sem reflow do palco. */
+.dashboard-tv-dashboard .td-deck-stage__aside-slot{
+  position: relative;
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  z-index: 28;
 }
 .dashboard-tv-dashboard .td-deck-stage__main{
   flex: 1;
@@ -6282,6 +6346,24 @@ body.td-composer--marqueeing *{
     max-height: 280px;
     border-left: none;
     border-top: 1px solid var(--td-border);
+  }
+
+  .dashboard-tv-dashboard .td-deck-stage__aside-slot {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+  }
+
+  .dashboard-tv-dashboard .td-deck-right-stack:has(.td-deck-side-panel--open) {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    box-shadow: none;
+    animation: none;
+    border-left: none;
   }
 
   .dashboard-tv-dashboard .td-deck-stage__inner {

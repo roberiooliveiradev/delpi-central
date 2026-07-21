@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
-import { blocksInMarquee, normalizeMarqueeRect } from "./comunicadoMarquee";
+import {
+  blocksInMarquee,
+  mergeMarqueeSelection,
+  normalizeMarqueeRect,
+  resolveMarqueeIntent,
+  subtractMarqueeSelection,
+} from "./comunicadoMarquee";
 
 describe("comunicadoMarquee", () => {
   it("normaliza retângulo independente da direção do arraste", () => {
@@ -11,6 +17,17 @@ describe("comunicadoMarquee", () => {
       x2: 40,
       y2: 30,
     });
+  });
+
+  it("L→R seleciona; R→L remove", () => {
+    expect(resolveMarqueeIntent({ x1: 10, y1: 10, x2: 40, y2: 20 })).toBe("add");
+    expect(resolveMarqueeIntent({ x1: 40, y1: 10, x2: 10, y2: 20 })).toBe("subtract");
+    expect(resolveMarqueeIntent({ x1: 10, y1: 40, x2: 10, y2: 10 })).toBe("add");
+  });
+
+  it("merge e subtract de seleção", () => {
+    expect(mergeMarqueeSelection(["a"], ["b", "a"])).toEqual(["a", "b"]);
+    expect(subtractMarqueeSelection(["a", "b", "c"], ["b"])).toEqual(["a", "c"]);
   });
 
   it("lista blocos cuja moldura intersecta a caixa", () => {

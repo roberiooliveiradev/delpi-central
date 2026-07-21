@@ -5,11 +5,6 @@ from typing import Any
 from tv_app.application.services.data.data_transform_contract import (
     sanitize_data_transform_for_persistence,
 )
-from tv_app.application.services.tv_dashboard_content_service import tv_dashboard_setting_int
-
-
-def max_data_blocks_per_slide() -> int:
-    return tv_dashboard_setting_int("comunicadoDataBlocksMaxPerSlide", 6)
 
 
 def _strip_runtime_fields(block: dict[str, Any]) -> dict[str, Any]:

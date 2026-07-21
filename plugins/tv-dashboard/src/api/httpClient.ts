@@ -1,4 +1,4 @@
-type RequestOptions = { signal?: AbortSignal };
+type RequestOptions = { signal?: AbortSignal; keepalive?: boolean };
 
 const API_BASE = "/apps/tv-dashboard-api";
 const DELPI_CALLER_APP = "tv-dashboard";
@@ -59,6 +59,7 @@ export async function httpPost<T>(url: string, body: unknown, options: RequestOp
     headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(body),
     signal: options.signal,
+    keepalive: options.keepalive,
   });
   return parseJson<T>(response);
 }
@@ -69,6 +70,7 @@ export async function httpPatch<T>(url: string, body: unknown, options: RequestO
     headers: { ...authHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify(body),
     signal: options.signal,
+    keepalive: options.keepalive,
   });
   return parseJson<T>(response);
 }

@@ -90,11 +90,28 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     showAltTip: false,
   },
   {
+    id: "isolate-group-child",
+    group: "selecao",
+    label: "Selecionar filho do grupo",
+    keys: "2º clique",
+    description: "Com o grupo selecionado, clique de novo no item para isolá-lo. Esc volta ao grupo",
+    showAltTip: false,
+  },
+  {
+    id: "deselect-ctrl",
+    group: "selecao",
+    label: "Remover da seleção",
+    keys: "Ctrl+Clique",
+    description: "Tira o item (ou o grupo fechado) da seleção atual",
+    showAltTip: false,
+  },
+  {
     id: "multi-select-marquee",
     group: "selecao",
     label: "Caixa de seleção",
     keys: "Arraste",
-    description: "No fundo vazio; Shift+arraste une à seleção",
+    description:
+      "Esquerda→direita seleciona (azul); direita→esquerda remove (vermelho). Shift+L→R une à seleção",
     showAltTip: false,
   },
   {
@@ -125,7 +142,7 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     group: "palco",
     label: "Pan (arrastar palco)",
     keys: "Ctrl",
-    description: "Segure Ctrl e arraste; Esc cancela a ferramenta mão",
+    description: "Segure Ctrl e arraste no fundo vazio; Esc cancela a ferramenta mão",
     showAltTip: true,
   },
   {

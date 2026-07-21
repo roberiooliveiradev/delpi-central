@@ -78,7 +78,61 @@ describe("DataRoutesSidePanel", () => {
     fireEvent.click(screen.getByText("Continuar"));
     expect(screen.getByText("Como apresentar?")).toBeTruthy();
     expect(screen.getByText(/KPI \(cards/)).toBeTruthy();
+    expect(screen.getByText("Texto")).toBeTruthy();
+    expect(screen.getByText("Forma")).toBeTruthy();
     expect(screen.getByText("Inserir no palco")).toBeTruthy();
+  });
+
+  it("inserir como texto cria bloco text ligado à fonte", async () => {
+    const onChange = vi.fn();
+    render(
+      <ComunicadoEditorProvider playlistId="pl-1" value={{ blocks: [] }} onChange={onChange}>
+        <DataRoutesSidePanel />
+      </ComunicadoEditorProvider>,
+    );
+    await waitFor(() => expect(screen.getByText("Fontes de dados")).toBeTruthy());
+    clickCatalogCard("OEE geral");
+    fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
+    fireEvent.click(screen.getByText("Continuar"));
+    fireEvent.click(screen.getByText("Texto"));
+    fireEvent.click(screen.getByText("Inserir no palco"));
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const lastCall = onChange.mock.calls.at(-1)?.[0] as {
+      blocks?: Array<{ id: string; type: string; dataSourceId?: string }>;
+    };
+    const blocks = lastCall?.blocks ?? [];
+    const types = blocks.map((block) => block.type);
+    expect(types).toContain("data_source");
+    expect(types).toContain("text");
+    const text = blocks.find((block) => block.type === "text");
+    const source = blocks.find((block) => block.type === "data_source");
+    expect(text?.dataSourceId).toBe(source?.id);
+  });
+
+  it("inserir como forma cria bloco shape ligado à fonte", async () => {
+    const onChange = vi.fn();
+    render(
+      <ComunicadoEditorProvider playlistId="pl-1" value={{ blocks: [] }} onChange={onChange}>
+        <DataRoutesSidePanel />
+      </ComunicadoEditorProvider>,
+    );
+    await waitFor(() => expect(screen.getByText("Fontes de dados")).toBeTruthy());
+    clickCatalogCard("OEE geral");
+    fireEvent.click(screen.getByRole("button", { name: "Usar esta fonte" }));
+    fireEvent.click(screen.getByText("Continuar"));
+    fireEvent.click(screen.getByText("Forma"));
+    fireEvent.click(screen.getByText("Inserir no palco"));
+    await waitFor(() => expect(onChange).toHaveBeenCalled());
+    const lastCall = onChange.mock.calls.at(-1)?.[0] as {
+      blocks?: Array<{ id: string; type: string; dataSourceId?: string }>;
+    };
+    const blocks = lastCall?.blocks ?? [];
+    expect(blocks.map((block) => block.type)).toEqual(
+      expect.arrayContaining(["data_source", "shape"]),
+    );
+    const shape = blocks.find((block) => block.type === "shape");
+    const source = blocks.find((block) => block.type === "data_source");
+    expect(shape?.dataSourceId).toBe(source?.id);
   });
 
   it("testar rota chama preview-block e mostra resultado", async () => {

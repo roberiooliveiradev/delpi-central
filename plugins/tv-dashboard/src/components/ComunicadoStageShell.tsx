@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
@@ -325,6 +326,11 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
 
 type Props = {
   children: ReactNode;
+  /**
+   * Menu de contexto do palco (inclui wrap em modo pan, onde os filhos
+   * têm `pointer-events: none` e o canvas não recebe o evento).
+   */
+  onStageContextMenu?: (event: ReactMouseEvent<HTMLDivElement>) => void;
 };
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -334,7 +340,7 @@ function isEditableTarget(target: EventTarget | null): boolean {
   return target.isContentEditable;
 }
 
-export function ComunicadoStageShell({ children }: Props) {
+export function ComunicadoStageShell({ children, onStageContextMenu }: Props) {
   const {
     stageZoom,
     setStageZoom,
@@ -549,6 +555,7 @@ export function ComunicadoStageShell({ children }: Props) {
           onPointerMove={handlePanPointerMove}
           onPointerUp={endPanDrag}
           onPointerCancel={endPanDrag}
+          onContextMenu={onStageContextMenu}
         >
           {children}
         </div>

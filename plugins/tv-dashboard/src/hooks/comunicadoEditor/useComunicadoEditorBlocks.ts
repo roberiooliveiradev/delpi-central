@@ -47,8 +47,9 @@ import {
   buildViewDataLinkPatch,
   buildTextDataLinkPatch,
   duplicateBlocksWithDataPolicy,
+  enrichClipboardWithLinkedDataSources,
   isComunicadoVisualBoxBlock,
-  needsDataSourceDuplicateChoice,
+  resolveBlockPasteDataPolicy,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -73,12 +74,14 @@ import {
 import type {
   ComunicadoRibbonTabRequest,
   DataCatalogMode,
+  DataInsertPreferredView,
   DataPanelIntent,
   OpenDataCatalogOptions,
 } from "../../components/comunicadoEditorContextCore";
 import { alignComunicadoBlocks, type LayoutAlignCommand } from "../../utils/comunicadoLayoutAlign";
 import { applyComunicadoBlockStylePatch } from "../../utils/applyComunicadoBlockStylePatch";
 import { DATE_RANGE_PRESET_PARAM, PERIOD_DAYS_PARAM } from "../../utils/dateRangePresets";
+import { renameKpiMetricFieldLabel } from "../../utils/renameKpiMetricFieldLabel";
 import {
   bringForward,
   bringToFront,
@@ -312,7 +315,7 @@ export function useComunicadoEditorBlocks({
   }, [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks]);
 
   const addDataSourceBlock = useCallback(
-    (block: ComunicadoBlock, options?: { preferredView?: "kpi" | "table" | "series" }) => {
+    (block: ComunicadoBlock, options?: { preferredView?: DataInsertPreferredView }) => {
       const selectedBlock = configRef.current.blocks?.find((item) => item.id === selectedId);
       let nextBlocks = [...(configRef.current.blocks ?? [])];
       const withZ = {
@@ -347,6 +350,10 @@ export function useComunicadoEditorBlocks({
           viewBlock = createChartViewBlock("line");
         } else if (options.preferredView === "table") {
           viewBlock = createTableViewBlock(6, 5, "grid");
+        } else if (options.preferredView === "text") {
+          viewBlock = createBlock("text", "Texto");
+        } else if (options.preferredView === "shape") {
+          viewBlock = createShapeBlock("rectangle");
         } else {
           viewBlock = createKpiViewBlock();
         }
@@ -562,6 +569,48 @@ export function useComunicadoEditorBlocks({
       const block = configRef.current.blocks?.find((item) => item.id === blockId);
       if (!block || block.type !== "kpi_view") return;
 
+      const metricField =
+        part.kind === "metricCard"
+          ? part.field
+          : part.kind === "title"
+            ? block.kpiProjection?.metrics?.[0]?.field ??
+              block.resolved?.kpiMetrics?.[0]?.field
+            : undefined;
+      const renameViaSource =
+        Boolean(metricField) &&
+        Boolean(block.dataSourceId?.trim()) &&
+        (part.kind === "metricCard" ||
+          (part.kind === "title" && !block.kpiOptions?.title?.trim()));
+
+      if (renameViaSource && metricField) {
+        const { sourcePatch, kpiProjection } = renameKpiMetricFieldLabel({
+          blocks: configRef.current.blocks ?? [],
+          kpiBlock: block,
+          field: metricField,
+          label: content,
+        });
+        if (sourcePatch) {
+          updateBlock(sourcePatch.id, {
+            fieldLabels: sourcePatch.fieldLabels,
+          } as Partial<ComunicadoBlock>);
+        }
+        const viewPatch: Partial<ComunicadoBlock> = {};
+        if (kpiProjection) {
+          (viewPatch as ComunicadoBlock & { kpiProjection?: typeof kpiProjection }).kpiProjection =
+            kpiProjection;
+        }
+        if (part.kind === "title") {
+          viewPatch.kpiOptions = mergeComunicadoKpiOptions({
+            ...block.kpiOptions,
+            title: undefined,
+          });
+        }
+        if (Object.keys(viewPatch).length > 0) {
+          updateBlock(blockId, viewPatch);
+        }
+        return;
+      }
+
       const nextParts = upsertKpiPartState(block.kpiParts, part, {
         content,
         visible: true,
@@ -762,20 +811,34 @@ export function useComunicadoEditorBlocks({
     const sources = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
     if (sources.length === 0) return;
 
-    let policy: DataSourceDuplicatePolicy = "share_source";
-    if (needsDataSourceDuplicateChoice(sources) && chooseDataSourceDuplicatePolicy) {
-      const choice = await chooseDataSourceDuplicatePolicy();
-      if (!choice) return;
-      policy = choice;
+    const existing = configRef.current.blocks ?? [];
+    const enriched = enrichClipboardWithLinkedDataSources(sources, existing);
+    let plan = resolveBlockPasteDataPolicy({
+      incoming: enriched,
+      targetBlocks: existing,
+    });
+    if (plan.requiresUserChoice) {
+      if (!chooseDataSourceDuplicatePolicy) {
+        plan = { policy: "clone_source", requiresUserChoice: false };
+      } else {
+        const choice = await chooseDataSourceDuplicatePolicy();
+        if (!choice) return;
+        plan = resolveBlockPasteDataPolicy({
+          incoming: enriched,
+          targetBlocks: existing,
+          userPolicy: choice,
+        });
+      }
     }
 
     const { blocks, pastedIds } = duplicateBlocksWithDataPolicy(
-      configRef.current.blocks ?? [],
-      sources,
-      policy,
+      existing,
+      enriched,
+      plan.policy,
     );
-    selectBlocksByIds(pastedIds);
+    // Commit antes da seleção: selectBlocksByIds resolve contra configRef.
     updateBlocks(blocks);
+    selectBlocksByIds(pastedIds);
   }, [
     chooseDataSourceDuplicatePolicy,
     configRef,
@@ -892,7 +955,8 @@ export function useComunicadoEditorBlocks({
     const refreshSourceIds = resolveRemovedInputRefreshSourceIds(removedInputs, currentBlocks);
     const filtered = currentBlocks.filter((block) => !removeSet.has(block.id));
     const nextBlocks = pruneOrphanConnectors(filtered);
-    selectBlocksByIds(nextBlocks[0]?.id ? [nextBlocks[0].id] : []);
+    // Excluir não auto-seleciona outro bloco — deixa o palco sem seleção.
+    selectBlocksByIds([]);
 
     if (removedInputs.length > 0) {
       const synced = syncAllConnectors(nextBlocks);

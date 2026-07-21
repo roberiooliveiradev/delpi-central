@@ -3,13 +3,12 @@ import { BarChart3, Braces, Database, Filter, Gauge, Grid3X3, Heading, Image as 
 import {
   AnchoredPanelPortal,
   ChartTypeCatalogPanel,
-  LucideIconGridPanel,
+  LucideIconPickerPopover,
   TableInsertCatalogPanel,
   type DelpiChartType,
   type DelpiTableInsertSelection,
 } from "@delpi/plugin-ui/index";
 import {
-  COMUNICADO_ICON_OPTIONS,
   createChartViewBlock,
   createTableViewBlock,
   type ComunicadoChartType,
@@ -51,7 +50,6 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   const iconAnchorRef = useRef<HTMLDivElement>(null);
   const chartAnchorRef = useRef<HTMLDivElement>(null);
   const tableAnchorRef = useRef<HTMLDivElement>(null);
-  const iconPanelRef = useRef<HTMLDivElement>(null);
   const chartPanelRef = useRef<HTMLDivElement>(null);
   const tablePanelRef = useRef<HTMLDivElement>(null);
   const [iconMenuOpen, setIconMenuOpen] = useState(false);
@@ -160,32 +158,25 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
                 setIconMenuOpen((open) => !open);
               }}
             />
-            {iconMenuOpen ? (
-              <AnchoredPanelPortal
-                open={iconMenuOpen}
-                anchorRef={iconAnchorRef}
-                panelRef={iconPanelRef}
-                variant="bare"
-                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-                className="td-icon-library-portal"
-                role="menu"
-                aria-label="Biblioteca de ícones"
-                onDismiss={closeInsertMenus}
-              >
-                <LucideIconGridPanel
-                  title="Ícones"
-                  items={COMUNICADO_ICON_OPTIONS.map((item) => ({
-                    name: item.name,
-                    label: item.label,
-                    hint: `${H.insertIcon} — ${item.label}`,
-                  }))}
-                  onSelect={(name) => {
-                    addIconBlock(name);
-                    setIconMenuOpen(false);
-                  }}
-                />
-              </AnchoredPanelPortal>
-            ) : null}
+            <LucideIconPickerPopover
+              open={iconMenuOpen}
+              onOpenChange={(open) => {
+                if (!open) closeInsertMenus();
+                else setIconMenuOpen(true);
+              }}
+              anchorRef={iconAnchorRef}
+              nameFormat="pascal"
+              curatedOnly={false}
+              title="Ícones"
+              showClear={false}
+              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+              ariaLabel="Biblioteca de ícones"
+              onChange={(name) => {
+                if (!name?.trim()) return;
+                addIconBlock(name.trim());
+                closeInsertMenus();
+              }}
+            />
           </div>
           <DeckRibbonTile
             icon={Grid3X3}

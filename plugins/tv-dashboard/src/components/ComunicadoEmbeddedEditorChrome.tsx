@@ -35,8 +35,9 @@ type Props = {
   labels?: Labels;
 };
 
-function ribbonDensityFor(tab: RibbonEmbeddedTab): "band" | "fit" {
-  return tab === "element" || tab === "tableDesign" || tab === "tableLayout" ? "fit" : "band";
+/** Faixa contextual: altura estável (`band`) — evita salto do palco ao selecionar. */
+function ribbonDensityFor(_tab: RibbonEmbeddedTab): "band" | "fit" {
+  return "band";
 }
 
 function hasRibbonBody(tab: RibbonEmbeddedTab): boolean {

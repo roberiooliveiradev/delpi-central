@@ -69,6 +69,59 @@ def test_comunicado_enrichment_default_background_is_white():
     assert data["background"] == {"type": "color", "value": "#ffffff"}
 
 
+def test_comunicado_enrichment_preserves_frame_outside_slide():
+    """Preview/apresentação não pode clampar X/Y a 0–100 (paridade com o editor)."""
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {
+            "version": 4,
+            "blocks": [
+                {
+                    "id": "kpi-off",
+                    "type": "kpi_view",
+                    "frame": {"x": -12.5, "y": 8, "w": 28, "h": 22},
+                    "style": {},
+                },
+                {
+                    "id": "logo-off",
+                    "type": "image",
+                    "frame": {"x": 90, "y": -5, "w": 20, "h": 15},
+                    "style": {},
+                },
+            ],
+            "background": {"type": "color", "value": "#ffffff"},
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    by_id = {block["id"]: block for block in data["blocks"]}
+    assert by_id["kpi-off"]["frame"]["x"] == pytest.approx(-12.5)
+    assert by_id["kpi-off"]["frame"]["y"] == pytest.approx(8)
+    assert by_id["logo-off"]["frame"]["y"] == pytest.approx(-5)
+    assert by_id["logo-off"]["frame"]["x"] == pytest.approx(90)
+
+
+def test_comunicado_enrichment_frame_soft_bounds_reject_pathological():
+    service = ComunicadoEnrichmentService(media_repo=MagicMock())
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "far",
+                    "type": "text",
+                    "content": "x",
+                    "frame": {"x": -9999, "y": 9999, "w": 10, "h": 10},
+                }
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+    )
+    frame = data["blocks"][0]["frame"]
+    assert frame["x"] == ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MIN
+    assert frame["y"] == ComunicadoEnrichmentService._FRAME_POSITION_SOFT_MAX
+
+
 def test_comunicado_enrichment_resolves_media_url():
     asset_id = str(uuid4())
     playlist_id = str(uuid4())
@@ -181,6 +234,61 @@ def test_enrich_preserves_data_source_and_chart_view_for_preview():
     assert passed[1]["animations"]["entrance"] == "fade"
     data_enrichment.enrich_blocks.assert_called_once()
     assert data_enrichment.enrich_blocks.call_args.kwargs.get("authorization") is None
+
+
+def test_enrich_preserves_text_and_shape_data_binding_for_preview():
+    """Prévia/apresentação: não stripar dataSourceId/textProjection (senão placeholder)."""
+    data_enrichment = MagicMock()
+    data_enrichment.enrich_blocks.side_effect = lambda blocks, **_kw: blocks
+    service = ComunicadoEnrichmentService(
+        media_repo=MagicMock(),
+        data_enrichment=data_enrichment,
+    )
+    data = service.enrich(
+        {
+            "blocks": [
+                {
+                    "id": "src-1",
+                    "type": "data_source",
+                    "frame": {"x": 0, "y": 0, "w": 10, "h": 10},
+                    "dataBinding": {
+                        "operationId": "get_idd_components",
+                        "displayMode": "auto",
+                        "params": {},
+                    },
+                },
+                {
+                    "id": "txt-1",
+                    "type": "text",
+                    "content": "Text1",
+                    "dataSourceId": "src-1",
+                    "textProjection": {"field": "idd", "format": "number"},
+                    "frame": {"x": 5, "y": 5, "w": 40, "h": 20},
+                },
+                {
+                    "id": "shape-1",
+                    "type": "shape",
+                    "shape": "rounded-rect",
+                    "content": "Text1",
+                    "dataSourceId": "src-1",
+                    "textProjection": {"field": "idd", "format": "number"},
+                    "frame": {"x": 50, "y": 5, "w": 40, "h": 20},
+                },
+            ]
+        },
+        api_root_path="/apps/tv-dashboard-api",
+        playlist_id=str(uuid4()),
+        public_token="share-token",
+    )
+    passed = data_enrichment.enrich_blocks.call_args.args[0]
+    text = next(block for block in passed if block["id"] == "txt-1")
+    shape = next(block for block in passed if block["id"] == "shape-1")
+    assert text["dataSourceId"] == "src-1"
+    assert text["textProjection"]["field"] == "idd"
+    assert shape["dataSourceId"] == "src-1"
+    assert shape["textProjection"]["field"] == "idd"
+    assert shape["shape"] == "rounded-rect"
+    assert data["blocks"][1]["dataSourceId"] == "src-1"
 
 
 def test_enrich_preserves_input_param_key_for_preview():

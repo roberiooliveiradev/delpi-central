@@ -7,6 +7,8 @@ import {
 import type { ComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import { mergeComunicadoKpiOptions } from "./comunicadoKpiOptions";
 import type { ComunicadoDataResolved } from "./comunicadoTypes";
+import { isAutoBakedFieldLabel } from "./fieldLabelRegistry";
+import { formatCurrency, formatNumber, formatPct } from "./nativeFormat";
 import type { KpiMetricProjection } from "./viewProjection";
 
 export type KpiViewPresentation = {
@@ -22,7 +24,7 @@ export type KpiViewPresentation = {
 
 export type KpiMetricPresentationOverrides = Pick<
   KpiMetricProjection,
-  "format" | "colorRules" | "label"
+  "format" | "colorRules" | "label" | "field"
 >;
 
 export function resolveKpiViewPresentation(
@@ -37,8 +39,18 @@ export function resolveKpiViewPresentation(
   const toneResult = resolveDelpiKpiTone(numeric, colorRules, options.tone ?? "default");
   const valueFormat = metricOverrides?.format ?? options.valueFormat;
 
+  const fieldKey =
+    metricOverrides?.field?.trim() ||
+    resolved?.kpiMetrics?.[0]?.field?.trim() ||
+    "";
+  const projectionLabel = metricOverrides?.label;
+  const meaningfulProjection =
+    typeof projectionLabel === "string" &&
+    projectionLabel.trim() &&
+    (!fieldKey || !isAutoBakedFieldLabel(projectionLabel, fieldKey));
+
   const label =
-    metricOverrides?.label?.trim() ||
+    (meaningfulProjection ? projectionLabel : undefined) ||
     options.title?.trim() ||
     resolved?.kpi?.label ||
     resolved?.label ||
@@ -79,8 +91,13 @@ function formatKpiValue(
   }
 
   if (format === "percent") {
-    const text = `${numeric.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+    const text = formatPct(numeric);
     return unit && unit !== "%" ? `${text} ${unit}` : text;
+  }
+
+  if (format === "currency") {
+    const text = formatCurrency(numeric);
+    return unit && !text.includes(unit) ? `${text} ${unit}` : text;
   }
 
   if (format === "compact") {
@@ -91,6 +108,6 @@ function formatKpiValue(
     return unit ? `${text} ${unit}` : text;
   }
 
-  const text = numeric.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+  const text = formatNumber(numeric);
   return unit ? `${text} ${unit}` : text;
 }

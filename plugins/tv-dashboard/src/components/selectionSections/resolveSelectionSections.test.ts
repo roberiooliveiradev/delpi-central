@@ -64,7 +64,9 @@ describe("resolveSelectionSections", () => {
           } as SelectionSectionContext["selected"],
         }),
       ),
-    ).toEqual(expect.arrayContaining(["media", "imageCrop", "display", "organize", "actions"]));
+    ).toEqual(
+      expect.arrayContaining(["media", "imageCrop", "appearance", "display", "organize", "actions"]),
+    );
   });
 
   it("fonte de dados aponta para hint + display", () => {
@@ -221,6 +223,7 @@ describe("resolveSelectionSections", () => {
       "chartSeries",
       "kpiAppearance",
       "media",
+      "appearance",
       "imageCrop",
       "canvasTable",
       "partFormat",

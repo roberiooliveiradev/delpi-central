@@ -7,7 +7,6 @@ from tv_app.application.services.branch_policy_service import (
     validate_native_branch,
 )
 from tv_app.application.services.comunicado_native_config_sanitize import (
-    max_data_blocks_per_slide,
     sanitize_comunicado_config,
 )
 from tv_app.application.services.data.data_transform_contract import (
@@ -112,25 +111,11 @@ class TvDataConfigValidationService:
             except ValueError as exc:
                 issues.append({"field": f"{prefix}.params", "message": str(exc)})
 
-        data_block_count = sum(
-            1
-            for block in blocks
-            if isinstance(block, dict) and str(block.get("type") or "") in DATA_BLOCK_TYPES
-        )
-
         try:
             if isinstance(data_filters, dict) and data_filters and routes_for_filters:
                 validate_data_filters(data_filters, routes=routes_for_filters)
         except ValueError as exc:
             issues.append({"field": "dataFilters", "message": str(exc)})
-
-        if data_block_count > max_data_blocks_per_slide():
-            issues.append(
-                {
-                    "field": "blocks",
-                    "message": message("dataBlocksLimitExceeded", "Limite de blocos de dados por slide excedido."),
-                }
-            )
 
         graph = MQueryDependencyService().resolve(
             block for block in blocks if isinstance(block, dict)

@@ -90,7 +90,7 @@ export function DataSourceLinkSection({
   if (embedded) return body;
 
   return (
-    <DeckPropertySection title={sectionTitle} hint={H.viewBinding} compact={pane}>
+    <DeckPropertySection title={sectionTitle} hint={H.viewBinding} pane={pane}>
       {body}
     </DeckPropertySection>
   );
@@ -117,7 +117,7 @@ export function ProjectDataSourcesCatalogSection({
   if (sources.length === 0) return null;
 
   return (
-    <DeckPropertySection title="Fontes neste slide" hint={H.projectSources} compact>
+    <DeckPropertySection title="Fontes neste slide" hint={H.projectSources} pane>
       <ul className="td-project-sources-list">
         {sources.map((source) => {
           const active = source.id === activeSourceId;

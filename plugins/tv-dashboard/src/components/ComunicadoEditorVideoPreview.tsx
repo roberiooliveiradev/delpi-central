@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import type { ComunicadoMediaBlock } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoMediaPlaceholder } from "@delpi/tv-dashboard-presentation";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 type VideoBlock = ComunicadoMediaBlock;
 
@@ -78,16 +79,18 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
     setPlaying(false);
   }
 
-  const blockClass = [
-    "tdp-comunicado__block",
-    "tdp-comunicado__block--video",
-    "tdp-comunicado__block--media",
-    "td-composer__media-block",
-    "td-composer__media-block--video",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const blockClass = ensureComunicadoDualClass(
+    [
+      "tdp-comunicado__block",
+      "tdp-comunicado__block--video",
+      "tdp-comunicado__block--media",
+      "td-composer__media-block",
+      "td-composer__media-block--video",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
 
   let body: ReactNode;
   if (!block.url) {

@@ -11,7 +11,6 @@
     "dataIndicatorUnavailable": "Dados indisponíveis.",
     "dataSourceUnavailable": "Fonte de dados indisponível.",
     "dataTransformV2WriteDisabled": "A escrita de dataTransform v2 ainda não está habilitada.",
-    "dataBlocksLimitExceeded": "Limite de blocos de dados por slide excedido.",
     "dataParamRequired": "Parâmetro obrigatório.",
     "dataParamUnknown": "Parâmetro não permitido.",
     "dataRouteMethodNotAllowed": "Somente rotas GET são permitidas na TV.",

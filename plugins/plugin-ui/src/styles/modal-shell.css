@@ -117,6 +117,12 @@
   -webkit-backdrop-filter: blur(8px);
 }
 
+/* Aviso/confirm: mesmo overlay no host, card centralizado (não host-fill). */
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog {
+  align-items: center;
+  justify-content: center;
+}
+
 :root[data-theme="light"] .delpi-ui-modal-overlay--contained,
 [data-theme="light"] .delpi-ui-modal-overlay--contained {
   background: color-mix(in srgb, #0f172a 26%, transparent);

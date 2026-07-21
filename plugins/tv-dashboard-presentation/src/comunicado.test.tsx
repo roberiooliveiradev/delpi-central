@@ -77,6 +77,23 @@ describe("comunicadoHelpers", () => {
     expect(serialized.headline).toBe("Titulo");
   });
 
+  it("preserva frame fora do slide (não reconstrói para 0–100)", () => {
+    const parsed = parseComunicadoConfig({
+      version: 4,
+      blocks: [
+        {
+          id: "off",
+          type: "kpi_view",
+          frame: { x: -12.5, y: 8, w: 28, h: 22 },
+        },
+      ],
+    });
+    expect(parsed.blocks?.[0]?.frame).toEqual({ x: -12.5, y: 8, w: 28, h: 22 });
+    const serialized = serializeComunicadoConfig(parsed);
+    const roundtrip = parseComunicadoConfig(serialized);
+    expect(roundtrip.blocks?.[0]?.frame.x).toBe(-12.5);
+  });
+
   it("persiste animações de entrada por bloco", () => {
     const parsed = parseComunicadoConfig({
       version: 3,

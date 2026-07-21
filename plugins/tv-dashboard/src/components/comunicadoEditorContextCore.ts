@@ -48,6 +48,9 @@ export type TextEditorBridge = {
   insertDataRefAtSelection?: (dataRef: import("@delpi/tv-dashboard-presentation").ComunicadoTextDataRef) => void;
 };
 
+/** Visual criado junto com a fonte no wizard «Como apresentar?». */
+export type DataInsertPreferredView = "kpi" | "table" | "series" | "text" | "shape";
+
 export type ComunicadoRibbonTabRequest =
   | "insert"
   | "format"
@@ -96,7 +99,7 @@ export type ComunicadoEditorContextValue = {
   /** Seleções de outros editores no slide atual (chrome remoto, somente leitura). */
   remoteSelections: PresentationSelectionUpdateEvent[];
   isBlockSelected: (blockId: string) => boolean;
-  selectBlock: (blockId: string, options?: { additive?: boolean }) => void;
+  selectBlock: (blockId: string, options?: { additive?: boolean; subtract?: boolean; expandGroup?: boolean }) => void;
   selectBlocksByIds: (blockIds: string[]) => void;
   clearSelection: () => void;
   setSelectedId: (id: string | null) => void;
@@ -119,6 +122,10 @@ export type ComunicadoEditorContextValue = {
     options?: { additive?: boolean; range?: boolean },
   ) => void;
   clearTablePartSelection: () => void;
+  /** Edição inline do rótulo do cabeçalho (headerCell) → fieldLabels da fonte. */
+  editingTablePart: ComunicadoTablePartRef | null;
+  beginEditTablePart: (blockId: string, part: ComunicadoTablePartRef) => void;
+  cancelEditTablePart: () => void;
   /** KPI — subseleção de parte do card (título, valor, ícone…). */
   selectedKpiPart: ComunicadoKpiPartRef | null;
   selectKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;
@@ -157,7 +164,7 @@ export type ComunicadoEditorContextValue = {
   addDataBlock: (block: ComunicadoBlock) => void;
   addDataSourceBlock: (
     block: ComunicadoBlock,
-    options?: { preferredView?: "kpi" | "table" | "series" },
+    options?: { preferredView?: DataInsertPreferredView },
   ) => void;
   addChartViewBlock: (chartType: ComunicadoChartType) => void;
   addCanvasTableBlock: (rows?: number, cols?: number) => void;
@@ -238,7 +245,9 @@ export type ComunicadoEditorContextValue = {
   duplicateSelected: () => void;
   cutSelected: () => void;
   copySelected: () => void;
-  pasteSelected: () => void;
+  pasteSelected: () => void | Promise<void>;
+  /** Cola do SO (imagem/HTML/texto) ou do clipboard interno. */
+  pasteFromSystemClipboard: () => Promise<boolean>;
   canPaste: boolean;
   bringToFront: () => void;
   sendToBack: () => void;

@@ -707,12 +707,37 @@ import { LucideIconByName, resolveLucideIconOrFallback } from "@delpi/plugin-ui"
 
 Prop `fallback` opcional — usa `resolveLucideIconOrFallback` quando informada.
 
-### `LucideIconField` / `useLucideIconField`
+### `LucideIconPickerPopover`
 
-Campo padrão (trigger + picker embutido) e hook para layout customizado (ribbon TV).
+Popover ancorado (`AnchoredPanelPortal`) com a **biblioteca Lucide completa** — use em Inserir e Trocar.
 
 ```tsx
-import { LucideIconField, useLucideIconField } from "@delpi/plugin-ui";
+import { LucideIconPickerPopover } from "@delpi/plugin-ui";
+
+<LucideIconPickerPopover
+  open={open}
+  onOpenChange={setOpen}
+  anchorRef={anchorRef}
+  value={iconName}
+  nameFormat="pascal"
+  title="Ícones"
+  onChange={setIconName}
+/>
+```
+
+| Prop | Tipo | Default | Descrição |
+|------|------|---------|-----------|
+| `open` / `onOpenChange` | controlado | — | Visibilidade |
+| `anchorRef` | `RefObject` | — | Gatilho do portal |
+| `showClear` | `boolean` | `true` | Rodapé «Remover» |
+| `portalScopeClassName` | `string` | — | Classe root do MFE (tema no body) |
+
+### `LucideIconField` / `useLucideIconField`
+
+Campo padrão (trigger + **popover** com catálogo completo) e hook para layout customizado (ribbon TV).
+
+```tsx
+import { LucideIconField, LucideIconPickerPopover, useLucideIconField } from "@delpi/plugin-ui";
 
 <LucideIconField
   value={iconName}
@@ -723,10 +748,15 @@ import { LucideIconField, useLucideIconField } from "@delpi/plugin-ui";
 
 // Ribbon com trigger próprio:
 const iconField = useLucideIconField({ value, onChange, defaultIcon: "Star" });
-{iconField.open ? <LucideIconPicker {...iconField.pickerProps} /> : null}
+<LucideIconPickerPopover
+  open={iconField.open}
+  onOpenChange={iconField.setOpen}
+  anchorRef={anchorRef}
+  {...iconField.pickerContentProps}
+/>
 ```
 
-Catálogo rápido TV: `DECK_QUICK_LUCIDE_ICON_NAMES` + `buildLucideIconOptions`.
+Catálogo rápido (atalhos/destaques): `DECK_QUICK_LUCIDE_ICON_NAMES` + `buildLucideIconOptions`.
 
 ```ts
 import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";
@@ -828,6 +858,14 @@ Encaixa conteúdo arbitrário em um retângulo com escala uniforme (`min(width/r
 </CenteredScaledPreview>
 ```
 
+### `ComunicadoStageFrame`
+
+Moldura presentacional do slide personalizado. Classes dual `tdp-comunicado*` + `delpi-ui-comunicado*`; CSS canônico em `styles/comunicado-stage.css`. O domínio dos blocos permanece em `tv-dashboard-presentation` (`RichComunicadoStage`).
+
+```tsx
+import { ComunicadoStageFrame, comunicadoStageBemClasses } from "@delpi/plugin-ui";
+```
+
 ### `FilePreviewModal`
 
 Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`. Por padrão **`containInHost`** (modal na área do MFE, sem cobrir a sidebar do portal); use `containInHost={false}` para fullscreen no viewport.
@@ -862,8 +900,8 @@ Paleta estilo PowerPoint: grade tema 10×6, cores padrão, diálogo RGB/hex/tran
 |--------|-----------|
 | `ColorThemeGrid` | Grade configurável de cores do tema |
 | `ColorStandardRow` | Linha de cores padrão |
-| `ColorPickerPopover` | Popover com paleta + «Sem preenchimento» + «Mais cores» |
-| `ColorDialog` | Modal com abas Padrão / Personalizar |
+| `ColorPickerPopover` | Popover com paleta + «Mais cores» (popover aninhado) + conta-gotas |
+| `ColorDialog` | Modal legado (catálogo); editor usa popover «Mais cores» |
 | `ShapeFillMenu` | Dropdown de preenchimento |
 | `ShapeOutlineMenu` | Dropdown de contorno + espessura |
 | `ShapeEffectsMenu` | Efeitos com submenus (shell + callbacks) |
