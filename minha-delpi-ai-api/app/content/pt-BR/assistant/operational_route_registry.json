@@ -1732,8 +1732,13 @@
       },
       "route": {
         "pathMarkers": [
-          "transforma-mais",
-          "/summary"
+          "/transforma-mais/processes/summary"
+        ],
+        "operationIdMarkers": [
+          "get_transforma_mais_summary"
+        ],
+        "excludePathMarkers": [
+          "/lmps"
         ],
         "method": "GET"
       },
@@ -1757,7 +1762,8 @@
           "/processes"
         ],
         "excludePathMarkers": [
-          "/summary"
+          "/summary",
+          "/lmps"
         ],
         "method": "GET"
       },

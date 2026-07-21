@@ -12,7 +12,8 @@
     "indicadores estrategicos",
     "indicadores estratégicos",
     "idd com metas",
-    "painel de idd"
+    "painel de idd",
+    "painel de indicadores"
   ],
   "composeModeTerms": {
     "full": [
@@ -31,6 +32,7 @@
       "primaryRouteId": "dashboardDepartmentIndicators",
       "composeRouteIds": [
         "dashboardDepartmentIdd",
+        "engineeringLmpDashboardSummary",
         "engineeringTransformaSummary"
       ]
     },

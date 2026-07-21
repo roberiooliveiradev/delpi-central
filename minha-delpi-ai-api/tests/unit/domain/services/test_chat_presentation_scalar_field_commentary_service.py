@@ -96,3 +96,88 @@ def test_insight_pipeline_does_not_classify_scalar_as_empty_list():
     assert not any(
         isinstance(item, dict) and item.get("type") == "empty_list" for item in anomalies
     )
+
+
+def test_matches_scalar_wrapped_in_item_envelope():
+    metadata = {
+        "path": "/dashboard/department-idd",
+        "apiDelpiResponseMeta": {
+            "entity": "dashboard_department_idd",
+            "shape": "scalar",
+            "fields": {"score": "Nota", "contribution": "Contribuição"},
+        },
+    }
+    data = {
+        "item": {
+            "department_id": "engineering",
+            "department_name": "Engenharia",
+            "score": 0.0,
+            "classification": "Crítico",
+            "contribution": 0.0,
+            "partial_success": True,
+        }
+    }
+
+    assert ChatPresentationScalarFieldCommentaryService.matches(metadata, data)
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert "retornou registros" not in str(
+        (data_answer.get("summary") or {}).get("answer") or ""
+    ).lower()
+    anomalies = data_answer.get("anomalies") or []
+    assert not any(
+        isinstance(item, dict) and item.get("type") == "empty_list" for item in anomalies
+    )
+
+
+def test_insight_department_indicators_not_empty_list():
+    metadata = {
+        "path": "/dashboard/department-indicators",
+        "apiDelpiResponseMeta": {
+            "entity": "dashboard_department_indicators",
+            "shape": "playbook_report",
+            "fields": {"name": "Nome", "goal_value": "Meta", "value": "Realizado"},
+        },
+    }
+    data = {
+        "item": {
+            "department_id": "engineering",
+            "department_name": "Engenharia",
+            "idd": 0.0,
+            "score": 0.0,
+            "classification": "Crítico",
+            "indicators": [
+                {
+                    "indicator_id": "engineering-projects-on-time",
+                    "name": "% de Projetos Concluídos no Prazo",
+                    "goal_value": 95.0,
+                    "value": None,
+                    "has_value": False,
+                },
+                {
+                    "indicator_id": "engineering-transforma-plus",
+                    "name": "Ganhos Financeiros do TRANSFORMA+ DELPI",
+                    "goal_value": 15000.0,
+                    "value": None,
+                    "has_value": False,
+                },
+            ],
+        }
+    }
+
+    data_answer = ChatDataInsightService.build(metadata, data)
+
+    assert isinstance(data_answer, dict)
+    assert "retornou registros" not in str(
+        (data_answer.get("summary") or {}).get("answer") or ""
+    ).lower()
+    anomalies = data_answer.get("anomalies") or []
+    assert not any(
+        isinstance(item, dict) and item.get("type") == "empty_list" for item in anomalies
+    )
+    derived = data_answer.get("derivedMetrics") or []
+    assert any(
+        isinstance(item, dict) and str(item.get("value")) == "2" for item in derived
+    )

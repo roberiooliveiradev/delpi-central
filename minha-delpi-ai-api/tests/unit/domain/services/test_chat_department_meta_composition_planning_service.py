@@ -51,8 +51,9 @@ def test_route_ids_engineering_compose():
 
     assert route_ids[0] == "dashboardDepartmentIndicators"
     assert "dashboardDepartmentIdd" in route_ids
+    assert "engineeringLmpDashboardSummary" in route_ids
     assert "engineeringTransformaSummary" in route_ids
-    assert len(route_ids) >= 2
+    assert len(route_ids) >= 3
 
 
 def test_route_ids_engineering_primary():

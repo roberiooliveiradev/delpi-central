@@ -24,7 +24,18 @@ _CHART_VIEW_TOKENS = frozenset(
     }
 )
 
-_TABULAR_LIST_KEYS = ("items", "results", "series", "periods", "history", "rows", "entries", "points")
+_TABULAR_LIST_KEYS = (
+    "items",
+    "results",
+    "series",
+    "periods",
+    "history",
+    "rows",
+    "entries",
+    "points",
+    "indicators",
+)
+_PAYLOAD_ENVELOPE_KEYS = ("data", "item", "result")
 _TREE_CHILD_KEYS = ("children", "components", "items", "nodes")
 
 
@@ -1173,22 +1184,24 @@ class ChatSchemaDrivenPresentationService:
         if not isinstance(root, dict):
             return []
 
-        for key in _TABULAR_LIST_KEYS:
+        for key in cls._tabular_list_keys():
             candidate = root.get(key)
 
             if isinstance(candidate, list) and candidate and isinstance(candidate[0], dict):
                 return [row for row in candidate if isinstance(row, dict)]
 
-        nested_data = root.get("data")
+        for envelope_key in cls._payload_envelope_keys():
+            nested = root.get(envelope_key)
 
-        if isinstance(nested_data, dict):
-            nested_rows = cls.extract_tabular_rows(nested_data)
+            if not isinstance(nested, dict) or not nested:
+                if isinstance(nested, list):
+                    return [row for row in nested if isinstance(row, dict)]
+                continue
+
+            nested_rows = cls.extract_tabular_rows(nested)
 
             if nested_rows:
                 return nested_rows
-
-        if isinstance(nested_data, list):
-            return [row for row in nested_data if isinstance(row, dict)]
 
         for key in cls._single_record_object_keys():
             candidate = root.get(key)
@@ -1197,6 +1210,35 @@ class ChatSchemaDrivenPresentationService:
                 return [candidate]
 
         return []
+
+    @classmethod
+    def _tabular_list_keys(cls) -> tuple[str, ...]:
+        raw = ChatAssistantContentService.list(
+            "presenter_content",
+            "schemaDriven",
+            "tabularListKeys",
+        )
+
+        if not raw:
+            return _TABULAR_LIST_KEYS
+
+        return tuple(str(item).strip() for item in raw if str(item).strip()) or _TABULAR_LIST_KEYS
+
+    @classmethod
+    def _payload_envelope_keys(cls) -> tuple[str, ...]:
+        raw = ChatAssistantContentService.list(
+            "presenter_content",
+            "schemaDriven",
+            "payloadEnvelopeKeys",
+        )
+
+        if not raw:
+            return _PAYLOAD_ENVELOPE_KEYS
+
+        return (
+            tuple(str(item).strip() for item in raw if str(item).strip())
+            or _PAYLOAD_ENVELOPE_KEYS
+        )
 
     @classmethod
     def _single_record_object_keys(cls) -> tuple[str, ...]:

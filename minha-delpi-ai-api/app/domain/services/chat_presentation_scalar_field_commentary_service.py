@@ -279,12 +279,43 @@ class ChatPresentationScalarFieldCommentaryService:
 
     @classmethod
     def _unwrap_payload(cls, data: dict[str, Any]) -> dict[str, Any]:
-        nested = data.get("data")
+        current = data
 
-        if isinstance(nested, dict):
-            return nested
+        for _ in range(3):
+            if not isinstance(current, dict):
+                break
 
-        return data
+            unwrapped = None
+
+            for key in cls._payload_envelope_keys():
+                candidate = current.get(key)
+
+                if isinstance(candidate, dict) and candidate:
+                    unwrapped = candidate
+                    break
+
+            if unwrapped is None or unwrapped is current:
+                break
+
+            current = unwrapped
+
+        return current if isinstance(current, dict) else data
+
+    @classmethod
+    def _payload_envelope_keys(cls) -> tuple[str, ...]:
+        raw = ChatHumanizedDataResponseContentService.list(
+            "scalarFieldProfile",
+            "payloadEnvelopeKeys",
+        )
+
+        if not raw:
+            return ("data", "item", "result")
+
+        return tuple(str(item).strip() for item in raw if str(item).strip()) or (
+            "data",
+            "item",
+            "result",
+        )
 
     @classmethod
     def _api_response_meta(cls, metadata: dict[str, Any]) -> dict[str, Any]:

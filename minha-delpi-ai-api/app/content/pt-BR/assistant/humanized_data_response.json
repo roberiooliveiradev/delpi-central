@@ -230,6 +230,11 @@
     "commentaryProfileKeys": [
       "generic_kpi_series"
     ],
+    "payloadEnvelopeKeys": [
+      "data",
+      "item",
+      "result"
+    ],
     "visualHint": "field_value_profile",
     "maxHighlights": 8,
     "highlightLineTemplate": "**{label}:** {value}",

@@ -326,6 +326,22 @@
     "rawPayloadEmpty": "{title}: a consulta não retornou conteúdo.",
     "singleRecordObjectKeys": [
       "last_purchase"
+    ],
+    "tabularListKeys": [
+      "items",
+      "results",
+      "series",
+      "periods",
+      "history",
+      "rows",
+      "entries",
+      "points",
+      "indicators"
+    ],
+    "payloadEnvelopeKeys": [
+      "data",
+      "item",
+      "result"
     ]
   },
   "compositeAnalysis": {

@@ -95,6 +95,24 @@ def test_extract_tabular_rows_from_series_and_items():
     assert items_rows[0]["branch"] == "01"
 
 
+def test_extract_tabular_rows_from_department_indicators_item_envelope():
+    rows = ChatSchemaDrivenPresentationService.extract_tabular_rows(
+        {
+            "item": {
+                "department_id": "engineering",
+                "idd": 0.0,
+                "indicators": [
+                    {"indicator_id": "a", "name": "Prazo", "goal_value": 95.0},
+                    {"indicator_id": "b", "name": "Transforma", "goal_value": 15000.0},
+                ],
+            }
+        }
+    )
+
+    assert len(rows) == 2
+    assert rows[0]["indicator_id"] == "a"
+
+
 def test_build_kpi_from_scalar_metrics():
     presenter = ExternalActionResultPresenter()
     root = {
