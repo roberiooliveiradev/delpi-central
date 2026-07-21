@@ -649,6 +649,18 @@ export function ComunicadoComposerCanvas() {
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
                 onPointerDown={(event) => {
+                  /* Ctrl/Cmd+clique em membro: isola o filho (Camadas). Não confundir com pan. */
+                  if (
+                    (event.ctrlKey || event.metaKey) &&
+                    !event.shiftKey &&
+                    !stagePanMode &&
+                    block.groupId
+                  ) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    selectBlock(block.id, { expandGroup: false });
+                    return;
+                  }
                   // Pan (mão/Ctrl): não engolir o evento — o wrap do palco arrasta o scroll.
                   if (shouldDeferToStagePan(event, stagePanMode)) return;
                   event.stopPropagation();
