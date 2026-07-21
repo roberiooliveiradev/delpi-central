@@ -139,6 +139,7 @@ export function blockEntranceAnimationClass(
 ): string {
   const anim = resolveEntranceAnimation(animations);
   if (!anim) return "";
+  // Dual-class aplicado em `ComunicadoBlockView` via ensureComunicadoDualClass.
   if (anim.kind === "fade") return "tdp-comunicado__block--anim-fade";
   const direction = anim.direction ?? "up";
   return `tdp-comunicado__block--anim-slide-in tdp-comunicado__block--anim-slide-in-${direction}`;

@@ -1,5 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useMemo } from "react";
+import {
+  ComunicadoStageFrame,
+  comunicadoStageBemClasses,
+  ensureComunicadoDualClass,
+} from "@delpi/plugin-ui/index";
 
 import { comunicadoBackgroundCssProperties } from "./comunicadoBackgroundStyle";
 import { ComunicadoBlockView } from "./comunicadoBlockView";
@@ -49,8 +54,11 @@ export type RichComunicadoStageProps = {
   masterLogoClassName?: string;
 };
 
+const DEFAULT_BEM = comunicadoStageBemClasses("tdp");
+
 /**
  * Palco canônico do slide personalizado (fundo + logo master + blocos).
+ * Moldura visual: `ComunicadoStageFrame` (@delpi/plugin-ui).
  * Editor e TV/prévia consomem este componente — sem segunda árvore de markup.
  */
 export function RichComunicadoStage({
@@ -60,9 +68,9 @@ export function RichComunicadoStage({
   inputRuntimeValues,
   onInputValueChange,
   renderBlock,
-  className = "tdp-native-screen tdp-comunicado",
-  stageClassName = "tdp-comunicado__stage",
-  masterLogoClassName = "tdp-comunicado__master-logo",
+  className = DEFAULT_BEM.root,
+  stageClassName = DEFAULT_BEM.stage,
+  masterLogoClassName = DEFAULT_BEM.masterLogo,
 }: RichComunicadoStageProps) {
   const normalized = useMemo(
     () =>
@@ -96,33 +104,35 @@ export function RichComunicadoStage({
   const logo = master?.logo;
 
   return (
-    <div className={className} style={bgStyle}>
-      <div className={stageClassName}>
-        <RichComunicadoMasterLogo
-          url={logo?.url}
-          frame={logo?.frame}
-          opacity={logo?.opacity ?? 1}
-          className={masterLogoClassName}
-        />
-        {blocks.map((block) =>
-          renderBlock ? (
-            <div key={block.id}>{renderBlock(block)}</div>
-          ) : (
-            <ComunicadoBlockView
-              key={block.id}
-              block={block}
-              fontScale={fontScale}
-              inputsInteractive={inputsInteractive}
-              inputRuntimeValue={
-                inputRuntimeValues && block.id in inputRuntimeValues
-                  ? inputRuntimeValues[block.id]
-                  : undefined
-              }
-              onInputValueChange={onInputValueChange}
-            />
-          ),
-        )}
-      </div>
-    </div>
+    <ComunicadoStageFrame
+      className={className}
+      stageClassName={stageClassName}
+      style={bgStyle}
+    >
+      <RichComunicadoMasterLogo
+        url={logo?.url}
+        frame={logo?.frame}
+        opacity={logo?.opacity ?? 1}
+        className={ensureComunicadoDualClass(masterLogoClassName)}
+      />
+      {blocks.map((block) =>
+        renderBlock ? (
+          <div key={block.id}>{renderBlock(block)}</div>
+        ) : (
+          <ComunicadoBlockView
+            key={block.id}
+            block={block}
+            fontScale={fontScale}
+            inputsInteractive={inputsInteractive}
+            inputRuntimeValue={
+              inputRuntimeValues && block.id in inputRuntimeValues
+                ? inputRuntimeValues[block.id]
+                : undefined
+            }
+            onInputValueChange={onInputValueChange}
+          />
+        ),
+      )}
+    </ComunicadoStageFrame>
   );
 }

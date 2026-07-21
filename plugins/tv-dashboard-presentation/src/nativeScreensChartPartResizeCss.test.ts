@@ -37,7 +37,19 @@ describe("series chart part resize CSS (plugin-ui)", () => {
   });
 
   it("comunicado não herda grid KPI (prévia/filmstrip em branco)", () => {
-    expect(nativeCss).toMatch(/\.tdp-native-screen\.tdp-comunicado\s*\{[^}]*display:\s*block/);
-    expect(nativeCss).toMatch(/\.tdp-comunicado__stage\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0/s);
+    const comunicadoCss = readFileSync(
+      join(
+        dirname(fileURLToPath(import.meta.url)),
+        "../../plugin-ui/src/styles/comunicado-stage.css",
+      ),
+      "utf8",
+    );
+    expect(comunicadoCss).toMatch(
+      /\.tdp-native-screen\.delpi-ui-comunicado\s*\{[^}]*display:\s*block/,
+    );
+    expect(comunicadoCss).toMatch(
+      /\.delpi-ui-comunicado__stage\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0/s,
+    );
+    expect(nativeCss).not.toMatch(/\.tdp-comunicado__stage\s*\{/);
   });
 });

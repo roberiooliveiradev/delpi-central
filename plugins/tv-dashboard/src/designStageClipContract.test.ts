@@ -25,12 +25,16 @@ describe("design stage clip contract (editor pasteboard ≠ TV clip)", () => {
       join(here, "../../tv-dashboard-presentation/src/native-screens.css"),
       "utf8",
     );
+    const comunicadoCss = readFileSync(
+      join(here, "../../plugin-ui/src/styles/comunicado-stage.css"),
+      "utf8",
+    );
 
     const canvasBody = ruleBody(editorCss, ".dashboard-tv-dashboard .td-composer__canvas");
     expect(canvasBody).toMatch(/^\s*overflow:\s*visible\s*;/m);
     expect(canvasBody).not.toMatch(/^\s*overflow:\s*hidden\s*;/m);
 
-    const comunicadoBody = ruleBody(presentationCss, ".tdp-comunicado");
+    const comunicadoBody = ruleBody(comunicadoCss, ".delpi-ui-comunicado");
     expect(comunicadoBody).toMatch(/^\s*overflow:\s*hidden\s*;/m);
 
     const stageBody = ruleBody(presentationCss, ".tdp-design-viewport__stage");

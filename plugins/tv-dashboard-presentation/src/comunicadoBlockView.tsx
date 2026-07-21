@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 import { ComunicadoVisualBoxView } from "./ComunicadoVisualBoxView";
 import { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
@@ -88,7 +89,7 @@ function wrapWithLink(node: ReactNode, block: ComunicadoBlock) {
       href={href}
       target={target}
       rel={target === "_blank" ? "noopener noreferrer" : undefined}
-      className="tdp-comunicado__link"
+      className={ensureComunicadoDualClass("tdp-comunicado__link")}
     >
       {node}
     </a>
@@ -136,14 +137,16 @@ export function ComunicadoBlockView({
   const animClass = blockEntranceAnimationClass(block.animations);
   const style: CSSProperties = { ...baseStyle, ...blockEntranceAnimationStyle(block.animations) };
   const blockClass = (extra = "") =>
-    [
-      `tdp-comunicado__block tdp-comunicado__block--${block.type}`,
-      animClass,
-      className,
-      extra,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    ensureComunicadoDualClass(
+      [
+        `tdp-comunicado__block tdp-comunicado__block--${block.type}`,
+        animClass,
+        className,
+        extra,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
 
   if (isComunicadoVisualBoxBlock(block)) {
     const modifiers = visualBoxBlockModifierClasses(block);

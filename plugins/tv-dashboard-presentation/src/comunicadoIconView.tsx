@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { CSSProperties } from "react";
 
 import type { ComunicadoIconBlock } from "./comunicadoTypes";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 /** Cores legadas tratadas como «sem escolha explícita» → accent das formas. */
 const LEGACY_ICON_COLORS = new Set([
@@ -109,9 +110,9 @@ export function ComunicadoIconGraphic({
   const chrome = resolveComunicadoIconChromeStyle(block, { fontScale });
 
   return (
-    <div className="tdp-comunicado__icon-wrap" style={{ ...chrome, ...style }}>
+    <div className={ensureComunicadoDualClass("tdp-comunicado__icon-wrap")} style={{ ...chrome, ...style }}>
       <Icon
-        className="tdp-comunicado__icon-svg"
+        className={ensureComunicadoDualClass("tdp-comunicado__icon-svg")}
         color={color}
         strokeWidth={strokeWidth}
         aria-hidden="true"

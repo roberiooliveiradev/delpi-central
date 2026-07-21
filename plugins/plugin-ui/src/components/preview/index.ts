@@ -8,6 +8,10 @@ export {
   CenteredScaledPreview,
   type CenteredScaledPreviewProps,
 } from "./CenteredScaledPreview";
+export {
+  ComunicadoStageFrame,
+  type ComunicadoStageFrameProps,
+} from "./ComunicadoStageFrame";
 export { useFilePreviewLoader, type UseFilePreviewLoaderOptions } from "./useFilePreviewLoader";
 export {
   resolveFilePreviewKind,

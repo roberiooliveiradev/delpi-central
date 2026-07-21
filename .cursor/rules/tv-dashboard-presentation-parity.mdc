@@ -12,6 +12,7 @@ alwaysApply: false
 
 | Camada | Módulo canônico |
 |--------|-----------------|
+| Moldura CSS / dual-class | `ComunicadoStageFrame` + `comunicado-stage.css` em `@delpi/plugin-ui` |
 | Palco (fundo + logo + blocos) | `RichComunicadoStage` / `RichComunicadoMasterLogo` em `tv-dashboard-presentation` |
 | Interação (seleção, handles) | `ComunicadoEditorBlockView` (só editor) |
 | Prévia admin / TV pública | `NativeSlideView` → `RichComunicadoStage` |

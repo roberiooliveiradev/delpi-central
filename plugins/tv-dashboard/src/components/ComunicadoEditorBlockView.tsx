@@ -85,6 +85,7 @@ import { resolveCompositePartPointerAction, isCompositeContentPart } from "../ut
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 type Props = {
   block: ComunicadoBlock;
@@ -107,15 +108,17 @@ function EditorImageBlock({
 }) {
   const { src, loading, error } = useAuthenticatedBlobUrl(block.url);
 
-  const blockClass = [
-    "tdp-comunicado__block",
-    "tdp-comunicado__block--image",
-    "tdp-comunicado__block--media",
-    "td-composer__media-block",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const blockClass = ensureComunicadoDualClass(
+    [
+      "tdp-comunicado__block",
+      "tdp-comunicado__block--image",
+      "tdp-comunicado__block--media",
+      "td-composer__media-block",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
 
   const fit = block.style?.objectFit ?? "contain";
 
@@ -430,9 +433,9 @@ function EditorChartViewBlock({
 
   return (
     <div
-      className={["tdp-comunicado__block", "tdp-comunicado__block--chart-view", "td-composer__chart-view", className]
+      className={ensureComunicadoDualClass(["tdp-comunicado__block", "tdp-comunicado__block--chart-view", "td-composer__chart-view", className]
         .filter(Boolean)
-        .join(" ")}
+        .join(" "))}
       style={style}
     >
       <ChartViewBlockView
@@ -622,9 +625,9 @@ function EditorTableViewBlock({
 
   return (
     <div
-      className={["tdp-comunicado__block", "tdp-comunicado__block--table-view", className]
+      className={ensureComunicadoDualClass(["tdp-comunicado__block", "tdp-comunicado__block--table-view", className]
         .filter(Boolean)
-        .join(" ")}
+        .join(" "))}
       style={style}
     >
       <TableViewBlockView
@@ -949,9 +952,9 @@ function EditorKpiViewBlock({
 
   return (
     <div
-      className={["tdp-comunicado__block", "tdp-comunicado__block--kpi-view", className]
+      className={ensureComunicadoDualClass(["tdp-comunicado__block", "tdp-comunicado__block--kpi-view", className]
         .filter(Boolean)
-        .join(" ")}
+        .join(" "))}
       style={style}
     >
       <KpiViewBlockView

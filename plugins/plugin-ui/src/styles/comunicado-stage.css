@@ -1,0 +1,720 @@
+/**
+ * Palco do slide personalizado (comunicado) — CSS canônico @delpi/plugin-ui.
+ * Classes `.delpi-ui-comunicado*`. Dual-class no DOM: `tdp-comunicado*` + `delpi-ui-comunicado*`.
+ * Anti-padrão: espelho em tv-dashboard-presentation/native-screens.css.
+ */
+
+.tdp-stage--boot .tdp-slide--active .delpi-ui-comunicado__block--anim-fade,
+.tdp-stage--boot .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in,
+.tdp-stage--boot .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-up,
+.tdp-stage--boot .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-down,
+.tdp-stage--boot .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-left,
+.tdp-stage--boot .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-right {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* 4E.2 — animações de entrada por bloco (só no slide ativo) */
+.tdp-slide--active .delpi-ui-comunicado__block--anim-fade {
+  animation: tdp-block-fade-in var(--tdp-block-anim-duration, 600ms)
+    var(--tdp-block-anim-easing, ease-out) var(--tdp-block-anim-delay, 0ms) both;
+}
+
+.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in {
+  animation-duration: var(--tdp-block-anim-duration, 600ms);
+  animation-timing-function: var(--tdp-block-anim-easing, ease-out);
+  animation-delay: var(--tdp-block-anim-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-up {
+  animation-name: tdp-block-slide-in-up;
+}
+
+.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-down {
+  animation-name: tdp-block-slide-in-down;
+}
+
+.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-left {
+  animation-name: tdp-block-slide-in-left;
+}
+
+.tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in-right {
+  animation-name: tdp-block-slide-in-right;
+}
+
+@keyframes tdp-block-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tdp-block-slide-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tdp-block-slide-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tdp-block-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tdp-block-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(-14%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tdp-slide--active .delpi-ui-comunicado__block--anim-fade,
+  .tdp-slide--active .delpi-ui-comunicado__block--anim-slide-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Comunicado é full-bleed com frames em % — não herda o grid auto/1fr/auto das telas KPI
+   (senão o stage colapsa e a prévia/filmstrip ficam só no fundo branco). */
+.tdp-native-screen.delpi-ui-comunicado {
+  display: block;
+  padding: 0;
+}
+
+.delpi-ui-comunicado {
+  position: relative;
+  /* Clip do retângulo de design — editor espelha em `.td-composer__canvas`. */
+  overflow: hidden;
+  padding: 0;
+  /* Tipografia de conteúdo do slide — independente do tema chrome do host. */
+  --delpi-ui-text: #0f172a;
+  --delpi-ui-muted: #64748b;
+  --delpi-ui-surface: #ffffff;
+  --tdp-data-text: #1e293b;
+  --tdp-data-text-strong: #0f172a;
+  --tdp-data-muted: #64748b;
+  --tdp-data-surface: #ffffff;
+  --tdp-data-bg: #ffffff;
+  /* Herança de `color` (ex.: color: inherit) não deve seguir o chrome escuro. */
+  color: #0f172a;
+}
+
+.delpi-ui-comunicado__stage {
+  position: absolute;
+  inset: 0;
+  /* Mesmo stacking do editor: logo + blocos no mesmo contexto (z-index do bloco vale). */
+  z-index: 0;
+}
+
+.delpi-ui-comunicado__block {
+  position: absolute;
+  box-sizing: border-box;
+  /* Sem padding no wrapper — inset tipográfico só via resolveVisualBoxContentLayoutStyle
+   * (editor e TV). Padding aqui encolhia o box na TV e divergia do palco (padding: 0). */
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Heading/texto: overflow no wrapper; tipografia usa overflow:visible (não cortar glifos). */
+.delpi-ui-comunicado__block--heading,
+.delpi-ui-comunicado__block--text {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* KPI/chart/tabela/filtro: moldura no card/chartArea/frame — sem padding/overflow no wrapper. */
+.delpi-ui-comunicado__block--kpi_view,
+.delpi-ui-comunicado__block--chart_view,
+.delpi-ui-comunicado__block--table_view,
+.delpi-ui-comunicado__block--kpi-view,
+.delpi-ui-comunicado__block--chart-view,
+.delpi-ui-comunicado__block--table-view,
+.delpi-ui-comunicado__block--input {
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+/* Forma: sombra no fill (com border-radius); overflow no wrapper cortaria a sombra. */
+.delpi-ui-comunicado__block.delpi-ui-comunicado__visual-box--shape {
+  overflow: visible;
+}
+
+.delpi-ui-comunicado__block--canvas_table,
+.delpi-ui-comunicado__block--canvas-table {
+  padding: 0;
+  overflow: hidden;
+}
+
+.delpi-ui-comunicado__block--data {
+  overflow: hidden;
+}
+
+.td-canvas-table {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.td-canvas-table table {
+  width: 100%;
+  height: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+}
+
+.td-canvas-table th,
+.td-canvas-table td {
+  min-width: 0;
+  padding: 0.3em 0.45em;
+  border: 1px solid var(--tdp-canvas-table-border, #94a3b8);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: pre-wrap;
+}
+
+.td-canvas-table th {
+  background: var(--tdp-canvas-table-header-bg, #e2e8f0);
+  font-weight: 700;
+}
+
+.td-canvas-table [contenteditable="true"]:focus {
+  outline: 2px solid var(--primary, #089bdb);
+  outline-offset: -2px;
+}
+
+.delpi-ui-comunicado__block--heading h1,
+.delpi-ui-comunicado__block--text p,
+.delpi-ui-comunicado__block--heading .delpi-ui-comunicado__rich-text,
+.delpi-ui-comunicado__block--text .delpi-ui-comunicado__rich-text,
+.delpi-ui-comunicado__visual-box-content > h1,
+.delpi-ui-comunicado__visual-box-content > p,
+.delpi-ui-comunicado__visual-box-content > span,
+.delpi-ui-comunicado__visual-box-content > .delpi-ui-comunicado__rich-text {
+  margin: 0;
+  line-height: inherit;
+  width: 100%;
+  /* flex:1 engolia a altura e anulava verticalAlign (texto colado no topo / corte). */
+  flex: 0 0 auto;
+  text-align: inherit;
+  white-space: pre-wrap;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.delpi-ui-comunicado__rich-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35em;
+}
+
+.delpi-ui-comunicado__text-segment {
+  display: block;
+  white-space: pre-wrap;
+}
+
+.delpi-ui-comunicado__list {
+  margin: 0;
+  padding: 0 0 0 1.35em;
+  list-style-position: outside;
+}
+
+.delpi-ui-comunicado__list--bullet {
+  list-style-type: disc;
+}
+
+.delpi-ui-comunicado__list--ordered {
+  list-style-type: decimal;
+}
+
+.delpi-ui-comunicado__list-item {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+}
+
+.delpi-ui-comunicado__styled-line + .delpi-ui-comunicado__styled-line {
+  margin-top: 0.15em;
+}
+
+.delpi-ui-comunicado__block--heading h1 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.delpi-ui-comunicado__block--text p {
+  font-size: inherit;
+}
+
+.delpi-ui-comunicado__block--media img,
+.delpi-ui-comunicado__block--media video {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.delpi-ui-comunicado__visual-box--text {
+  /* Caixa de texto: sem preenchimento/contorno de forma — só tipografia. */
+}
+
+.delpi-ui-comunicado__visual-box-content {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.delpi-ui-comunicado__visual-box--text > .delpi-ui-comunicado__visual-box-content > h1,
+.delpi-ui-comunicado__visual-box--text > .delpi-ui-comunicado__visual-box-content > p,
+.delpi-ui-comunicado__visual-box--text > .delpi-ui-comunicado__visual-box-content > span,
+.delpi-ui-comunicado__visual-box--text > .delpi-ui-comunicado__visual-box-content > .delpi-ui-comunicado__rich-text {
+  margin: 0;
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.delpi-ui-comunicado__block--shape,
+.delpi-ui-comunicado__visual-box--shape {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Linha/seta: ponta pode sair um pouco do box fino — não cortar. */
+.delpi-ui-comunicado__block.delpi-ui-comunicado__visual-box--primitive-line {
+  overflow: visible;
+}
+
+/* Ponto: marcador em px pode ser maior que o hit-box % — não cortar. */
+.delpi-ui-comunicado__block.delpi-ui-comunicado__visual-box--primitive-point {
+  overflow: visible;
+}
+
+.delpi-ui-comunicado__shape-svg--point {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  flex-shrink: 0;
+}
+
+.delpi-ui-comunicado__shape-svg,
+.delpi-ui-comunicado__shape-fill,
+.delpi-ui-comunicado__shape-line {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Sombra acompanha o raio do fill (não o wrapper retangular). */
+.delpi-ui-comunicado__shape-fill {
+  box-shadow: var(--tdp-block-box-shadow, none);
+  box-sizing: border-box;
+}
+
+.delpi-ui-comunicado__shape-svg--line {
+  overflow: visible;
+}
+
+/*
+ * Shell do texto na caixa visual.
+ * Padding / justify / align vêm de `resolveVisualBoxContentLayoutStyle` (inline) —
+ * não hardcoded aqui, senão a TV diverge do verticalAlign do editor.
+ */
+.delpi-ui-comunicado__shape-text {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.delpi-ui-comunicado__icon-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delpi-ui-comunicado__icon-svg {
+  /* Preenche o frame como o SVG das formas — evita “ar” extra vs. outline de seleção. */
+  width: 92%;
+  height: 92%;
+}
+
+.delpi-ui-comunicado__link {
+  color: inherit;
+  text-decoration: inherit;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: inherit;
+}
+
+.delpi-ui-comunicado__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35em;
+  width: 100%;
+  height: 100%;
+  padding: 0.4em;
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.delpi-ui-comunicado__placeholder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(28px, 22%, 64px);
+  height: clamp(28px, 22%, 64px);
+  color: #cbd5e1;
+}
+
+.delpi-ui-comunicado__placeholder-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.delpi-ui-comunicado__placeholder-label {
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+.delpi-ui-comunicado__placeholder--loading .delpi-ui-comunicado__placeholder-icon {
+  animation: tdp-placeholder-spin 0.9s linear infinite;
+}
+
+.delpi-ui-comunicado__placeholder--error .delpi-ui-comunicado__placeholder-icon {
+  color: #f87171;
+}
+
+@keyframes tdp-placeholder-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.delpi-ui-comunicado__input-block {
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.45em 0.6em;
+  /* Fundo branco + sombra na moldura; contorno vem do frame (inline) — sem borda CSS extra. */
+  background: var(--tdp-input-surface, #ffffff);
+  border: none;
+  /* Raio sincronizado com frame / seleção (--tdp-input-radius). */
+  border-radius: var(--tdp-input-radius, 16px);
+  box-shadow: var(--tdp-block-box-shadow, var(--tdp-input-shadow, none));
+  color: var(--tdp-input-fg, #0f172a);
+  /* Subitens (absolute/%) não pintam fora da moldura — handles usam overlay próprio. */
+  overflow: hidden;
+}
+
+.delpi-ui-comunicado__input-block--free-layout {
+  display: block;
+  overflow: hidden;
+}
+
+/* Heading deixa de ser caixa flex — filhos framed posicionam no host do filtro. */
+.delpi-ui-comunicado__input-block--free-layout .delpi-ui-comunicado__input-block-heading {
+  display: contents;
+}
+
+.delpi-ui-comunicado__input-block-part {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.delpi-ui-comunicado__input-block-part--selected {
+  outline: var(--td-selection-outline-width, 2px) solid
+    var(
+      --td-selection-outline,
+      color-mix(in srgb, var(--tdp-accent, #089bdb) 80%, transparent)
+    );
+  outline-offset: 1px;
+}
+
+/* Aro clicável sob o outline — evita que o clique na “borda” caia na moldura. */
+.delpi-ui-comunicado__input-block-part--control.delpi-ui-comunicado__input-block-part--selected {
+  padding: 3px;
+  margin: -3px;
+  box-sizing: border-box;
+}
+
+/* Free-layout: host framed = bbox clipada à moldura (nunca ultrapassa o fundo global). */
+.delpi-ui-comunicado__input-block-part--framed {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--selected {
+  /* Clip estável: não liberar overflow no host (badge não cruza a moldura). */
+  overflow: hidden;
+}
+
+.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--control .delpi-ui-comunicado__input-block-control,
+.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--control .delpi-ui-comunicado__input-block-value {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+  align-self: stretch;
+  box-sizing: border-box;
+}
+
+.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--label {
+  align-items: center;
+}
+
+.delpi-ui-comunicado__input-block-part--framed.delpi-ui-comunicado__input-block-part--badge {
+  align-items: center;
+  justify-content: center;
+}
+
+.delpi-ui-comunicado__input-part-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  /* Overlay de handles — não força overflow:visible no host do filtro. */
+  overflow: visible;
+}
+
+.delpi-ui-comunicado__input-part-handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  border: 1px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 80%, #fff);
+  background: var(--tdp-accent, #089bdb);
+  border-radius: 1px;
+  pointer-events: auto;
+  padding: 0;
+  cursor: nwse-resize;
+}
+
+.delpi-ui-comunicado__input-part-handle--n,
+.delpi-ui-comunicado__input-part-handle--s {
+  left: 50%;
+  cursor: ns-resize;
+}
+
+.delpi-ui-comunicado__input-part-handle--e,
+.delpi-ui-comunicado__input-part-handle--w {
+  top: 50%;
+  cursor: ew-resize;
+}
+
+.delpi-ui-comunicado__input-part-handle--n,
+.delpi-ui-comunicado__input-part-handle--ne,
+.delpi-ui-comunicado__input-part-handle--nw {
+  top: 0;
+}
+
+.delpi-ui-comunicado__input-part-handle--s,
+.delpi-ui-comunicado__input-part-handle--se,
+.delpi-ui-comunicado__input-part-handle--sw {
+  bottom: 0;
+  top: auto;
+}
+
+.delpi-ui-comunicado__input-part-handle--e,
+.delpi-ui-comunicado__input-part-handle--ne,
+.delpi-ui-comunicado__input-part-handle--se {
+  right: 0;
+  left: auto;
+}
+
+.delpi-ui-comunicado__input-part-handle--w,
+.delpi-ui-comunicado__input-part-handle--nw,
+.delpi-ui-comunicado__input-part-handle--sw {
+  left: 0;
+}
+
+.delpi-ui-comunicado__input-block--loading {
+  opacity: 0.92;
+}
+
+.delpi-ui-comunicado__input-block-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: var(--tdp-accent, #089bdb);
+  opacity: 0.95;
+}
+
+.delpi-ui-comunicado__input-block-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3em;
+  width: 100%;
+  min-width: 0;
+  font-size: clamp(11px, 1.1vw, 14px);
+  color: var(--tdp-input-fg, #0f172a);
+}
+
+.delpi-ui-comunicado__input-block-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35em 0.5em;
+  min-width: 0;
+}
+
+.delpi-ui-comunicado__input-block-label-text {
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+.delpi-ui-comunicado__input-block-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12em 0.45em;
+  border-radius: 999px;
+  font-size: 0.78em;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--tdp-input-muted, #0369a1);
+  background: color-mix(in srgb, var(--tdp-accent, #089bdb) 16%, var(--tdp-input-surface, #ffffff));
+  border: 1px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 28%, transparent);
+  white-space: nowrap;
+}
+
+.delpi-ui-comunicado__input-block--scope-sources .delpi-ui-comunicado__input-block-badge {
+  color: var(--tdp-input-muted, #475569);
+  background: color-mix(in srgb, var(--tdp-input-border, #94a3b8) 18%, var(--tdp-input-surface, #ffffff));
+  border-color: color-mix(in srgb, var(--tdp-input-border, #94a3b8) 35%, transparent);
+}
+
+.delpi-ui-comunicado__input-block-spinner {
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--tdp-accent, #089bdb) 30%, transparent);
+  border-top-color: var(--tdp-accent, #089bdb);
+  animation: tdp-input-spin 0.7s linear infinite;
+}
+
+@keyframes tdp-input-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.delpi-ui-comunicado__input-block-control {
+  width: 100%;
+  max-width: 100%;
+  /* Sem isso o min-width intrínseco do <input> estoura o host framed. */
+  min-width: 0;
+  min-height: 2em;
+  box-sizing: border-box;
+  padding: 0.28em 0.5em;
+  border: var(--tdp-input-control-border-width, 1px) solid
+    var(--tdp-input-control-border, #000000);
+  border-radius: var(--tdp-input-control-radius, 6px);
+  background: var(--tdp-input-control-surface, #ffffff);
+  color: var(--tdp-input-fg, #0f172a);
+  font: inherit;
+}
+
+.delpi-ui-comunicado__input-block-control:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* Editor: caixa control não selecionada — clique atravessa para selecionar o subitem. */
+.delpi-ui-comunicado__input-block-control--hit-through {
+  pointer-events: none;
+  cursor: default;
+}
+
+.delpi-ui-comunicado__input-block-control--select,
+.delpi-ui-comunicado__input-block-control--boolean {
+  cursor: pointer;
+}
+
+.delpi-ui-comunicado__input-block-value {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+.delpi-ui-comunicado__input-block-unavailable {
+  font-size: 0.9em;
+  color: #b45309;
+}
+
+.delpi-ui-comunicado__input-block-schema-hint {
+  position: absolute;
+  right: 0.35em;
+  bottom: 0.15em;
+  font-size: 0.65em;
+  font-weight: 600;
+  line-height: 1;
+  color: #b45309;
+  pointer-events: none;
+  opacity: 0.85;
+}
+

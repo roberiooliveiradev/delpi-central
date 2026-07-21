@@ -16,7 +16,7 @@ export function RichComunicadoMasterLogo({
   url,
   frame,
   opacity = 1,
-  className = "tdp-comunicado__master-logo",
+  className = "tdp-comunicado__master-logo delpi-ui-comunicado__master-logo",
 }: RichComunicadoMasterLogoProps) {
   if (!url) return null;
   const style: CSSProperties = {

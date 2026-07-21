@@ -24,6 +24,7 @@ import {
   type ComunicadoInputPartResizeHandle,
 } from "./comunicadoInputParts";
 import type { ComunicadoInputBlock } from "./comunicadoTypes";
+import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 export type InputResolvedField = {
   type?: string;
@@ -92,14 +93,16 @@ function partClass(
   selected: boolean,
   hasFrame: boolean,
 ): string {
-  return [
-    `tdp-comunicado__input-block-part`,
-    `tdp-comunicado__input-block-part--${kind}`,
-    selected ? "tdp-comunicado__input-block-part--selected" : null,
-    hasFrame ? "tdp-comunicado__input-block-part--framed" : null,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  return ensureComunicadoDualClass(
+    [
+      `tdp-comunicado__input-block-part`,
+      `tdp-comunicado__input-block-part--${kind}`,
+      selected ? "tdp-comunicado__input-block-part--selected" : null,
+      hasFrame ? "tdp-comunicado__input-block-part--framed" : null,
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
 }
 
 /** Controle de filtro no palco / kiosk — opções só do paramSchema da rota. */
@@ -201,18 +204,20 @@ export function ComunicadoInputBlockView({
   /** Editor com interaction: valor só clica quando a parte control está selecionada. */
   const controlValueInteractive =
     !interaction || isInputPartRefEqual(selected, { kind: "control" });
-  const controlClass = [
-    "tdp-comunicado__input-block-control",
-    `tdp-comunicado__input-block-control--${controlKind}`,
-    controlValueInteractive ? null : "tdp-comunicado__input-block-control--hit-through",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const controlClass = ensureComunicadoDualClass(
+    [
+      "tdp-comunicado__input-block-control",
+      `tdp-comunicado__input-block-control--${controlKind}`,
+      controlValueInteractive ? null : "tdp-comunicado__input-block-control--hit-through",
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
 
   let controlNode: ReactNode = null;
   if (unavailable) {
     controlNode = (
-      <span className="tdp-comunicado__input-block-unavailable">
+      <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-unavailable")}>
         Selecione o parâmetro no inspetor
       </span>
     );
@@ -264,7 +269,7 @@ export function ComunicadoInputBlockView({
     }
   } else {
     controlNode = (
-      <span className="tdp-comunicado__input-block-value">
+      <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-value")}>
         {current === null || current === undefined || current === "" ? "—" : String(current)}
       </span>
     );
@@ -279,12 +284,14 @@ export function ComunicadoInputBlockView({
       return null;
     }
     return (
-      <span className="tdp-comunicado__input-part-handles" aria-hidden>
+      <span className={ensureComunicadoDualClass("tdp-comunicado__input-part-handles")} aria-hidden>
         {INPUT_PART_RESIZE_HANDLES.map((handle) => (
           <button
             key={handle}
             type="button"
-            className={`tdp-comunicado__input-part-handle tdp-comunicado__input-part-handle--${handle}`}
+            className={ensureComunicadoDualClass(
+              `tdp-comunicado__input-part-handle tdp-comunicado__input-part-handle--${handle}`,
+            )}
             onPointerDown={(event: ReactPointerEvent) => {
               event.stopPropagation();
               interaction.onPartResizePointerDown?.(
@@ -320,15 +327,17 @@ export function ComunicadoInputBlockView({
 
   return (
     <div
-      className={[
-        "tdp-comunicado__input-block",
-        `tdp-comunicado__input-block--scope-${scope}`,
-        dataLoading ? "tdp-comunicado__input-block--loading" : null,
-        hasAnyPartFrame ? "tdp-comunicado__input-block--free-layout" : null,
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={ensureComunicadoDualClass(
+        [
+          "tdp-comunicado__input-block",
+          `tdp-comunicado__input-block--scope-${scope}`,
+          dataLoading ? "tdp-comunicado__input-block--loading" : null,
+          hasAnyPartFrame ? "tdp-comunicado__input-block--free-layout" : null,
+          className,
+        ]
+          .filter(Boolean)
+          .join(" "),
+      )}
       style={rootStyle}
       data-param-key={paramKey || undefined}
       data-scope={scope}
@@ -353,7 +362,7 @@ export function ComunicadoInputBlockView({
       ) : null}
 
       {showLabel || showBadge ? (
-        <span className="tdp-comunicado__input-block-heading">
+        <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-heading")}>
           {showLabel ? (
             <span
               className={partClass(
@@ -371,20 +380,22 @@ export function ComunicadoInputBlockView({
               {...{ [INPUT_PART_DATA_ATTR]: "label" }}
               {...labelBind}
             >
-              <span className="tdp-comunicado__input-block-label-text">{label}</span>
+              <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-label-text")}>{label}</span>
               {renderPartChrome({ kind: "label" })}
             </span>
           ) : null}
           {showBadge ? (
             <span
-              className={[
-                partClass(
-                  "badge",
-                  isInputPartRefEqual(selected, { kind: "badge" }),
-                  Boolean(resolveInputPartFrame(badgeState)),
-                ),
-                "tdp-comunicado__input-block-badge",
-              ].join(" ")}
+              className={ensureComunicadoDualClass(
+                [
+                  partClass(
+                    "badge",
+                    isInputPartRefEqual(selected, { kind: "badge" }),
+                    Boolean(resolveInputPartFrame(badgeState)),
+                  ),
+                  "tdp-comunicado__input-block-badge",
+                ].join(" "),
+              )}
               style={{
                 ...resolveInputPartLayoutStyle(badgeState, {
                   partKind: "badge",
@@ -401,7 +412,7 @@ export function ComunicadoInputBlockView({
             </span>
           ) : null}
           {dataLoading ? (
-            <span className="tdp-comunicado__input-block-spinner" aria-label="Atualizando dados" />
+            <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-spinner")} aria-label="Atualizando dados" />
           ) : null}
         </span>
       ) : null}
@@ -426,7 +437,10 @@ export function ComunicadoInputBlockView({
         >
           {controlNode}
           {schemaMissing ? (
-            <span className="tdp-comunicado__input-block-schema-hint" title="Schema da rota ausente no enrich — valor livre">
+            <span
+              className={ensureComunicadoDualClass("tdp-comunicado__input-block-schema-hint")}
+              title="Schema da rota ausente no enrich — valor livre"
+            >
               Valor livre
             </span>
           ) : null}

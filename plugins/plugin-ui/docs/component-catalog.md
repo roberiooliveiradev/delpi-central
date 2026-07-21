@@ -858,6 +858,14 @@ Encaixa conteúdo arbitrário em um retângulo com escala uniforme (`min(width/r
 </CenteredScaledPreview>
 ```
 
+### `ComunicadoStageFrame`
+
+Moldura presentacional do slide personalizado. Classes dual `tdp-comunicado*` + `delpi-ui-comunicado*`; CSS canônico em `styles/comunicado-stage.css`. O domínio dos blocos permanece em `tv-dashboard-presentation` (`RichComunicadoStage`).
+
+```tsx
+import { ComunicadoStageFrame, comunicadoStageBemClasses } from "@delpi/plugin-ui";
+```
+
 ### `FilePreviewModal`
 
 Modal canônico (`ModalShell` + loader + view + CSS `delpi-ui-file-preview-modal*`). Props principais: `open`, `title`, `onClose`, `source`, `mimeType`, `fileName`, `metaItems`, `afterPreview`, `headerActions`, `previewState`, `labels`. Por padrão **`containInHost`** (modal na área do MFE, sem cobrir a sidebar do portal); use `containInHost={false}` para fullscreen no viewport.
