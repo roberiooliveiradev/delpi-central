@@ -46,6 +46,7 @@ export type ComunicadoVisualBoxChrome = {
   shapeKind?: ComunicadoShapeKind;
 };
 
+/** Fallbacks de leitura se a chave estiver ausente — default de inserção em `defaultStyle`. */
 const TEXT_BOX_CHROME_DEFAULTS = {
   fill: "transparent",
   stroke: "transparent",

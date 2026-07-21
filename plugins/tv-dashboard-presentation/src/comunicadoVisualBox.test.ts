@@ -27,6 +27,18 @@ describe("comunicadoVisualBox", () => {
     expect(shapeLayout.justifyContent).toBe("center");
   });
 
+  it("texto preserva fill escolhido (default transparente só na inserção)", () => {
+    const heading = createBlock("heading", "Título");
+    expect(resolveVisualBoxChrome(heading).fill).toBe("transparent");
+    const painted = {
+      ...heading,
+      style: { ...heading.style, fill: "#089bdb", backgroundColor: "#089bdb" },
+    };
+    const chrome = resolveVisualBoxChrome(painted);
+    expect(chrome.fill).toBe("#089bdb");
+    expect(chrome.showShapeGraphic).toBe(true);
+  });
+
   it("identifica caixas visuais (texto e forma)", () => {
     const heading = createBlock("heading", "Título");
     const shape = createShapeBlock("rectangle");
