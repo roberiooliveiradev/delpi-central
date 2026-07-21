@@ -707,12 +707,37 @@ import { LucideIconByName, resolveLucideIconOrFallback } from "@delpi/plugin-ui"
 
 Prop `fallback` opcional — usa `resolveLucideIconOrFallback` quando informada.
 
-### `LucideIconField` / `useLucideIconField`
+### `LucideIconPickerPopover`
 
-Campo padrão (trigger + picker embutido) e hook para layout customizado (ribbon TV).
+Popover ancorado (`AnchoredPanelPortal`) com a **biblioteca Lucide completa** — use em Inserir e Trocar.
 
 ```tsx
-import { LucideIconField, useLucideIconField } from "@delpi/plugin-ui";
+import { LucideIconPickerPopover } from "@delpi/plugin-ui";
+
+<LucideIconPickerPopover
+  open={open}
+  onOpenChange={setOpen}
+  anchorRef={anchorRef}
+  value={iconName}
+  nameFormat="pascal"
+  title="Ícones"
+  onChange={setIconName}
+/>
+```
+
+| Prop | Tipo | Default | Descrição |
+|------|------|---------|-----------|
+| `open` / `onOpenChange` | controlado | — | Visibilidade |
+| `anchorRef` | `RefObject` | — | Gatilho do portal |
+| `showClear` | `boolean` | `true` | Rodapé «Remover» |
+| `portalScopeClassName` | `string` | — | Classe root do MFE (tema no body) |
+
+### `LucideIconField` / `useLucideIconField`
+
+Campo padrão (trigger + **popover** com catálogo completo) e hook para layout customizado (ribbon TV).
+
+```tsx
+import { LucideIconField, LucideIconPickerPopover, useLucideIconField } from "@delpi/plugin-ui";
 
 <LucideIconField
   value={iconName}
@@ -723,10 +748,15 @@ import { LucideIconField, useLucideIconField } from "@delpi/plugin-ui";
 
 // Ribbon com trigger próprio:
 const iconField = useLucideIconField({ value, onChange, defaultIcon: "Star" });
-{iconField.open ? <LucideIconPicker {...iconField.pickerProps} /> : null}
+<LucideIconPickerPopover
+  open={iconField.open}
+  onOpenChange={iconField.setOpen}
+  anchorRef={anchorRef}
+  {...iconField.pickerContentProps}
+/>
 ```
 
-Catálogo rápido TV: `DECK_QUICK_LUCIDE_ICON_NAMES` + `buildLucideIconOptions`.
+Catálogo rápido (atalhos/destaques): `DECK_QUICK_LUCIDE_ICON_NAMES` + `buildLucideIconOptions`.
 
 ```ts
 import { LucideIconPicker, LucideIconByName } from "@delpi/plugin-ui";

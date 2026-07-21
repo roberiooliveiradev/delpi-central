@@ -5,18 +5,18 @@ import {
 import {
   DECK_SHAPE_DEFAULTS,
   LucideIconField,
-  LucideIconPicker,
+  LucideIconPickerPopover,
   ShapeFillMenu,
   ShapeOutlineMenu,
   ShapeShadowMenu,
   ShapeStyleMenu,
-  useLucideIconField,
 } from "@delpi/plugin-ui/index";
 import { Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { COMUNICADO_BOX_SHADOW_PRESETS } from "../../content/comunicadoVisualPresets";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
+import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { DeckField } from "../deck/DeckField";
 import { DeckRangeField } from "../deck/DeckRangeField";
@@ -69,6 +69,7 @@ function resolveIconGlyphStrokeWidth(block: ComunicadoIconBlock): number {
 export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
   const { selected, updateSelected, updateSelectedStyle } = useComunicadoEditor();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const trocarAnchorRef = useRef<HTMLDivElement>(null);
 
   if (!isIconBlock(selected)) return null;
 
@@ -79,21 +80,13 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
   const strokeValue = resolveIconBoxStroke(block);
   const boxStrokeWidth = resolveIconBoxStrokeWidth(block);
   const borderRadius = block.style?.borderRadius ?? 0;
+  const resolvedIconName = block.iconName?.trim() || "Star";
 
   const patchStyle = (patch: Partial<ComunicadoBlockStyle>) => updateSelectedStyle(patch);
 
   const applyIconName = (name: string | null) => {
     updateSelected({ iconName: name?.trim() || "Star" } as Partial<ComunicadoIconBlock>);
   };
-
-  const iconField = useLucideIconField({
-    value: block.iconName,
-    defaultIcon: "Star",
-    nameFormat: "pascal",
-    curatedOnly: false,
-    labels: ICON_FIELD_LABELS,
-    onChange: applyIconName,
-  });
 
   const colorControl = (
     <TvRibbonColorPicker
@@ -199,6 +192,7 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
               labels={ICON_FIELD_LABELS}
               onChange={applyIconName}
               ariaLabel="Selecionar ícone Lucide"
+              portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
             />
           </DeckField>
           <DeckField id="td-icon-color" label="Cor do ícone" hint={H.iconColor}>
@@ -217,28 +211,34 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
     <>
       <DeckRibbonGroup label="Ícone" hint={H.iconEditor}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile
-            icon={Sparkles}
-            label="Trocar"
-            hint={H.iconPicker}
-            active={pickerOpen}
-            onClick={() => setPickerOpen((open) => !open)}
-          />
+          <div ref={trocarAnchorRef} className="td-composer__dropdown">
+            <DeckRibbonTile
+              icon={Sparkles}
+              label="Trocar"
+              hint={H.iconPicker}
+              active={pickerOpen}
+              onClick={() => setPickerOpen((open) => !open)}
+            />
+          </div>
           {colorControl}
           {glyphStrokeControl}
         </div>
-        {pickerOpen ? (
-          <div className="td-icon-editor-picker">
-            <LucideIconPicker
-              {...iconField.pickerProps}
-              onChange={(name) => {
-                applyIconName(name);
-                setPickerOpen(false);
-              }}
-              onClose={() => setPickerOpen(false)}
-            />
-          </div>
-        ) : null}
+        <LucideIconPickerPopover
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          anchorRef={trocarAnchorRef}
+          value={resolvedIconName}
+          nameFormat="pascal"
+          curatedOnly={false}
+          title="Ícones"
+          labels={ICON_FIELD_LABELS}
+          portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+          ariaLabel="Biblioteca de ícones"
+          onChange={(name) => {
+            applyIconName(name);
+            setPickerOpen(false);
+          }}
+        />
       </DeckRibbonGroup>
       <DeckRibbonGroup label="Forma" hint={H.shapeForma}>
         {formaBody}

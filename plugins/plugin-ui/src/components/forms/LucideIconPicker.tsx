@@ -44,6 +44,8 @@ export type LucideIconPickerProps = {
   style?: CSSProperties;
   /** Painel embutido no inspetor (sem cabeçalho de diálogo). */
   embedded?: boolean;
+  /** Exibe botão de limpar no rodapé (padrão true). */
+  showClear?: boolean;
 };
 
 type IconCardProps = {
@@ -103,6 +105,7 @@ export function LucideIconPicker({
   className,
   style,
   embedded = false,
+  showClear = true,
 }: LucideIconPickerProps) {
   const [query, setQuery] = useState("");
   const L = { ...DEFAULT_LABELS, ...labels };
@@ -236,27 +239,33 @@ export function LucideIconPicker({
         ) : null}
       </div>
 
-      <footer className="delpi-ui-lucide-icon-picker__footer">
-        <button
-          type="button"
-          className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--ghost"
-          onClick={() => {
-            onChange(null);
-            onClose?.();
-          }}
-        >
-          {L.clear}
-        </button>
-        {onClose && !embedded ? (
-          <button
-            type="button"
-            className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--primary"
-            onClick={onClose}
-          >
-            {L.close}
-          </button>
-        ) : null}
-      </footer>
+      {showClear || (onClose && !embedded) ? (
+        <footer className="delpi-ui-lucide-icon-picker__footer">
+          {showClear ? (
+            <button
+              type="button"
+              className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--ghost"
+              onClick={() => {
+                onChange(null);
+                onClose?.();
+              }}
+            >
+              {L.clear}
+            </button>
+          ) : (
+            <span />
+          )}
+          {onClose && !embedded ? (
+            <button
+              type="button"
+              className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--primary"
+              onClick={onClose}
+            >
+              {L.close}
+            </button>
+          ) : null}
+        </footer>
+      ) : null}
     </div>
   );
 }

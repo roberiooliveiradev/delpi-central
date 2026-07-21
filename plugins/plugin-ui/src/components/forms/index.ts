@@ -223,6 +223,11 @@ export {
 } from "./LucideIconPicker";
 
 export {
+  LucideIconPickerPopover,
+  type LucideIconPickerPopoverProps,
+} from "./LucideIconPickerPopover";
+
+export {
   CURATED_LUCIDE_ICON_NAMES,
   DECK_QUICK_LUCIDE_ICON_NAMES,
   LUCIDE_ICON_SECTIONS,

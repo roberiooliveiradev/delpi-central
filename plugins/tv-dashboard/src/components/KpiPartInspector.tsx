@@ -1,4 +1,4 @@
-import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, LucideIconPicker, NativeTextControl } from "@delpi/plugin-ui/index";
+import { DECK_COLOR_BORDER, DECK_KPI_DEFAULTS, LucideIconField, NativeTextControl } from "@delpi/plugin-ui/index";
 import {
   KPI_ICON_DEFAULT_RADIUS_PX,
   KPI_ICON_DEFAULT_SIZE_PX,
@@ -27,6 +27,8 @@ import {
   type ComunicadoKpiViewBlock,
   type KpiFramePartKind,
 } from "@delpi/tv-dashboard-presentation";
+
+import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { ActiveCompositePartSelect } from "./ActiveCompositePartSelect";
@@ -297,11 +299,13 @@ export function KpiPartInspector({ pane = false, block }: Props) {
 
       {selectedKpiPart.kind === "icon" ? (
         <DeckField id="td-kpi-part-icon" label="Ícone Lucide">
-          <LucideIconPicker
-            embedded
-            curatedOnly={false}
-            nameFormat="pascal"
+          <LucideIconField
             value={options.iconName ?? "Gauge"}
+            defaultIcon="Gauge"
+            nameFormat="pascal"
+            curatedOnly={false}
+            labels={{ clear: "Usar ícone padrão" }}
+            portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
             onChange={(name) => {
               const nextOptions = mergeComunicadoKpiOptions({
                 ...options,
@@ -312,9 +316,6 @@ export function KpiPartInspector({ pane = false, block }: Props) {
                 kpiOptions: nextOptions,
                 kpiParts: mergeKpiPartsWithOptions(block.kpiParts, nextOptions),
               } as Partial<typeof block>);
-            }}
-            labels={{
-              clear: "Usar ícone padrão",
             }}
           />
         </DeckField>
