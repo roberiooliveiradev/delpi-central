@@ -852,9 +852,14 @@ export {
 } from "./dataPagination";
 export {
   duplicateBlocksWithDataPolicy,
+  enrichClipboardWithLinkedDataSources,
   isLegacyFetchableDataBlock,
+  mustCloneDataSourcesForTarget,
   needsDataSourceDuplicateChoice,
+  referencedDataSourceIds,
+  resolveBlockPasteDataPolicy,
   type DataSourceDuplicatePolicy,
+  type ResolveBlockPasteDataPolicyResult,
 } from "./duplicateBlocksWithDataPolicy";
 export {
   buildViewDataLinkPatch,

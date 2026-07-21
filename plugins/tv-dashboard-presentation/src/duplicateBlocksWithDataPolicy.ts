@@ -1,4 +1,9 @@
-import { isDataSourceBlockType, isDataViewBlockType, isFetchableDataBlockType, isTextDataBoundBlockType } from "./comunicadoDataArchitecture";
+import {
+  isDataSourceBlockType,
+  isDataViewBlockType,
+  isFetchableDataBlockType,
+  isTextDataBoundBlockType,
+} from "./comunicadoDataArchitecture";
 import { isComunicadoInputBlock } from "./comunicadoInputFilters";
 import { newBlockId, nextZIndex } from "./comunicadoHelpers";
 import type {
@@ -37,7 +42,8 @@ function remapShapeConnector(
   };
 }
 
-function referencedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
+/** Fontes referenciadas por views, texto ligado ou inputs de escopo sources. */
+export function referencedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
   const ids = new Set<string>();
   for (const block of blocks) {
     if (isDataViewBlockType(block.type) && block.dataSourceId?.trim()) {
@@ -54,6 +60,28 @@ function referencedDataSourceIds(blocks: ComunicadoBlock[]): Set<string> {
     }
   }
   return ids;
+}
+
+/**
+ * Inclui no payload de cópia as `data_source` ligadas que ainda não estavam selecionadas.
+ * Necessário para colar em outro slide (cada slide tem suas próprias fontes).
+ */
+export function enrichClipboardWithLinkedDataSources(
+  selected: ComunicadoBlock[],
+  slideBlocks: ComunicadoBlock[],
+): ComunicadoBlock[] {
+  if (selected.length === 0) return [];
+  const selectedIds = new Set(selected.map((block) => block.id));
+  const byId = new Map(slideBlocks.map((block) => [block.id, block]));
+  const extras: ComunicadoBlock[] = [];
+  for (const sourceId of referencedDataSourceIds(selected)) {
+    if (selectedIds.has(sourceId)) continue;
+    const source = byId.get(sourceId);
+    if (!source || !isDataSourceBlockType(source.type)) continue;
+    extras.push(source);
+    selectedIds.add(sourceId);
+  }
+  return [...extras, ...selected];
 }
 
 /** Exibe prompt quando a duplicação envolve vínculo ou bloco de dados. */
@@ -74,6 +102,69 @@ export function needsDataSourceDuplicateChoice(sources: ComunicadoBlock[]): bool
   return false;
 }
 
+/**
+ * Slides não compartilham fontes: se alguma referência/fonte do payload
+ * não existe no slide alvo, é obrigatório clonar (criar fonte no slide novo).
+ */
+export function mustCloneDataSourcesForTarget(
+  incoming: ComunicadoBlock[],
+  targetBlocks: ComunicadoBlock[],
+): boolean {
+  const targetIds = new Set(targetBlocks.map((block) => block.id));
+  for (const block of incoming) {
+    if (isDataSourceBlockType(block.type) && !targetIds.has(block.id)) {
+      return true;
+    }
+  }
+  for (const refId of referencedDataSourceIds(incoming)) {
+    if (!targetIds.has(refId)) return true;
+  }
+  return false;
+}
+
+export type ResolveBlockPasteDataPolicyResult = {
+  policy: DataSourceDuplicatePolicy;
+  /** true = perguntar share vs clone (somente mesmo slide). */
+  requiresUserChoice: boolean;
+};
+
+/**
+ * Política canônica de cola/duplicação de blocos com dados.
+ * Cross-slide → sempre `clone_source` (sem modal).
+ */
+export function resolveBlockPasteDataPolicy(input: {
+  incoming: ComunicadoBlock[];
+  targetBlocks: ComunicadoBlock[];
+  /** Preferência já escolhida pelo usuário (mesmo slide). */
+  userPolicy?: DataSourceDuplicatePolicy | null;
+}): ResolveBlockPasteDataPolicyResult {
+  const { incoming, targetBlocks, userPolicy } = input;
+  if (!needsDataSourceDuplicateChoice(incoming)) {
+    return { policy: "share_source", requiresUserChoice: false };
+  }
+  if (mustCloneDataSourcesForTarget(incoming, targetBlocks)) {
+    return { policy: "clone_source", requiresUserChoice: false };
+  }
+  if (userPolicy === "share_source" || userPolicy === "clone_source") {
+    return { policy: userPolicy, requiresUserChoice: false };
+  }
+  return { policy: "share_source", requiresUserChoice: true };
+}
+
+function findDataSourceBlock(
+  refId: string,
+  pools: ComunicadoBlock[][],
+): ComunicadoDataSourceBlock | undefined {
+  for (const pool of pools) {
+    const found = pool.find(
+      (block): block is ComunicadoDataSourceBlock =>
+        block.id === refId && isDataSourceBlockType(block.type),
+    );
+    if (found) return found;
+  }
+  return undefined;
+}
+
 export function duplicateBlocksWithDataPolicy(
   existingBlocks: ComunicadoBlock[],
   sources: ComunicadoBlock[],
@@ -84,13 +175,26 @@ export function duplicateBlocksWithDataPolicy(
     return { blocks: existingBlocks, pastedIds: [] };
   }
 
+  /* share: fontes já no slide ficam só como vínculo — não colar cópia órfã. */
+  const existingIds = new Set(existingBlocks.map((block) => block.id));
+  const effectiveSources =
+    policy === "share_source"
+      ? sources.filter(
+          (block) => !(isDataSourceBlockType(block.type) && existingIds.has(block.id)),
+        )
+      : sources;
+
+  if (effectiveSources.length === 0) {
+    return { blocks: existingBlocks, pastedIds: [] };
+  }
+
   let nextZ = nextZIndex(existingBlocks);
   const idMap = new Map<string, string>();
-  for (const source of sources) {
+  for (const source of effectiveSources) {
     idMap.set(source.id, newBlockId());
   }
 
-  const copies = sources.map((source) => {
+  const copies = effectiveSources.map((source) => {
     const copy = stripRuntimeFields(source);
     copy.id = idMap.get(source.id)!;
     copy.frame = {
@@ -122,16 +226,13 @@ export function duplicateBlocksWithDataPolicy(
   if (policy === "clone_source") {
     for (const [index, copy] of copies.entries()) {
       if (copy.type === "data_source") {
-        sourceIdMap.set(sources[index]!.id, copy.id);
+        sourceIdMap.set(effectiveSources[index]!.id, copy.id);
       }
     }
 
     for (const refId of referencedDataSourceIds(copies)) {
       if (sourceIdMap.has(refId)) continue;
-      const original = existingBlocks.find(
-        (block): block is ComunicadoDataSourceBlock =>
-          block.id === refId && isDataSourceBlockType(block.type),
-      );
+      const original = findDataSourceBlock(refId, [effectiveSources, sources, existingBlocks]);
       if (!original) continue;
       const newId = newBlockId();
       extraSources.push(cloneDataSourceBlock(original, newId));

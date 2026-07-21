@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   createBlock,
-  needsDataSourceDuplicateChoice,
+  resolveBlockPasteDataPolicy,
   type ComunicadoBlock,
   type DataSourceDuplicatePolicy,
 } from "@delpi/tv-dashboard-presentation";
@@ -57,20 +57,31 @@ export function useComunicadoEditorClipboard({
     async (incoming: ComunicadoBlock[]) => {
       if (incoming.length === 0) return;
 
-      let policy: DataSourceDuplicatePolicy = "share_source";
-      if (needsDataSourceDuplicateChoice(incoming) && chooseDataSourceDuplicatePolicy) {
-        const choice = await chooseDataSourceDuplicatePolicy();
-        if (!choice) return;
-        policy = choice;
+      const existing = getExistingBlocks();
+      let plan = resolveBlockPasteDataPolicy({
+        incoming,
+        targetBlocks: existing,
+      });
+      if (plan.requiresUserChoice) {
+        if (!chooseDataSourceDuplicatePolicy) {
+          plan = { policy: "clone_source", requiresUserChoice: false };
+        } else {
+          const choice = await chooseDataSourceDuplicatePolicy();
+          if (!choice) return;
+          plan = resolveBlockPasteDataPolicy({
+            incoming,
+            targetBlocks: existing,
+            userPolicy: choice,
+          });
+        }
       }
 
-      const existing = getExistingBlocks();
       const stacked = assignPasteStack(incoming, existing);
       const { blocks: nextBlocks, pastedIds } = pasteClipboardBlocks(
         existing,
         stacked,
         { x: 2, y: 2 },
-        policy,
+        plan.policy,
       );
       // Commit antes da seleção: selectBlocksByIds resolve contra configRef.
       updateBlocks(nextBlocks);
@@ -146,11 +157,11 @@ export function useComunicadoEditorClipboard({
   const copySelected = useCallback(() => {
     const sources = getSources();
     if (sources.length === 0) return;
-    const cloned = cloneBlocksForClipboard(sources);
+    const cloned = cloneBlocksForClipboard(sources, getExistingBlocks());
     clipboardRef.current = cloned;
     setClipboardRevision((tick) => tick + 1);
     void writeBlocksToSystemClipboard(cloned);
-  }, [getSources]);
+  }, [getExistingBlocks, getSources]);
 
   const pasteSelected = useCallback(async () => {
     if (clipboardRef.current.length === 0) return;

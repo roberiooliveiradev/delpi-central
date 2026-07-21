@@ -47,8 +47,9 @@ import {
   buildViewDataLinkPatch,
   buildTextDataLinkPatch,
   duplicateBlocksWithDataPolicy,
+  enrichClipboardWithLinkedDataSources,
   isComunicadoVisualBoxBlock,
-  needsDataSourceDuplicateChoice,
+  resolveBlockPasteDataPolicy,
   type ComunicadoBlock,
   type ComunicadoChartPartRef,
   type ComunicadoChartType,
@@ -810,17 +811,30 @@ export function useComunicadoEditorBlocks({
     const sources = selectedBlocks.length > 0 ? selectedBlocks : selected ? [selected] : [];
     if (sources.length === 0) return;
 
-    let policy: DataSourceDuplicatePolicy = "share_source";
-    if (needsDataSourceDuplicateChoice(sources) && chooseDataSourceDuplicatePolicy) {
-      const choice = await chooseDataSourceDuplicatePolicy();
-      if (!choice) return;
-      policy = choice;
+    const existing = configRef.current.blocks ?? [];
+    const enriched = enrichClipboardWithLinkedDataSources(sources, existing);
+    let plan = resolveBlockPasteDataPolicy({
+      incoming: enriched,
+      targetBlocks: existing,
+    });
+    if (plan.requiresUserChoice) {
+      if (!chooseDataSourceDuplicatePolicy) {
+        plan = { policy: "clone_source", requiresUserChoice: false };
+      } else {
+        const choice = await chooseDataSourceDuplicatePolicy();
+        if (!choice) return;
+        plan = resolveBlockPasteDataPolicy({
+          incoming: enriched,
+          targetBlocks: existing,
+          userPolicy: choice,
+        });
+      }
     }
 
     const { blocks, pastedIds } = duplicateBlocksWithDataPolicy(
-      configRef.current.blocks ?? [],
-      sources,
-      policy,
+      existing,
+      enriched,
+      plan.policy,
     );
     // Commit antes da seleção: selectBlocksByIds resolve contra configRef.
     updateBlocks(blocks);
