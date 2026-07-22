@@ -24,15 +24,16 @@ describe("ConfirmModalPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Excluir registro?").className).toBe(classNames.message);
+    expect(screen.getByText("Excluir registro?").className).toContain("pac-confirm-modal__message");
     expect(screen.getByRole("button", { name: "Excluir" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Voltar" })).toBeTruthy();
+    expect(document.querySelector(".pac-confirm-modal__icon")).toBeTruthy();
   });
 
-  it("aplica classe danger no botão de confirmar", () => {
+  it("aplica classe danger no botão de confirmar e no ícone", () => {
     const classNames = confirmModalPacClasses();
 
-    render(
+    const { container } = render(
       <ConfirmModalPanel
         message="Ação irreversível"
         variant="danger"
@@ -42,8 +43,8 @@ describe("ConfirmModalPanel", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: "Confirmar" }).className).toBe(
-      classNames.confirmButtonDanger,
-    );
+    expect(screen.getByRole("button", { name: "Confirmar" }).className).toContain("pac-danger-btn");
+    expect(container.querySelector(".pac-confirm-modal--danger")).toBeTruthy();
+    expect(container.querySelector(".pac-confirm-modal__icon--danger")).toBeTruthy();
   });
 });

@@ -781,9 +781,6 @@
   overflow: auto;
   color: var(--td-text);
 }
-.dashboard-tv-dashboard .td-modal--confirm{
-  width: min(440px, 100%);
-}
 .dashboard-tv-dashboard .td-modal__header{
   display: flex;
   align-items: center;
@@ -809,15 +806,121 @@
   padding-top: 12px;
   border-top: 1px solid var(--td-border);
 }
+.dashboard-tv-dashboard .td-modal--confirm{
+  width: min(420px, 100%);
+  border-radius: 20px;
+  padding: 0;
+  border-color: color-mix(in srgb, var(--td-border) 75%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 5%, transparent),
+    0 28px 72px color-mix(in srgb, #000 38%, transparent);
+  overflow: hidden;
+}
+.dashboard-tv-dashboard .td-modal--confirm .td-modal__header{
+  margin-bottom: 0;
+  padding: 18px 20px 10px;
+  border-bottom: none;
+  background: transparent;
+  align-items: flex-start;
+}
+.dashboard-tv-dashboard .td-modal--confirm .td-modal__title{
+  font-size: 1.125rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.dashboard-tv-dashboard .td-modal--confirm .td-modal__body{
+  padding: 0 20px 18px;
+  gap: 0;
+}
+.dashboard-tv-dashboard .td-modal--confirm .td-modal__close{
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--td-border) 70%, transparent);
+  background: color-mix(in srgb, var(--td-text) 5%, transparent);
+}
+.dashboard-tv-dashboard .td-modal-overlay--contained.td-modal-overlay--contained-dialog,
+.dashboard-tv-dashboard .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog{
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: color-mix(in srgb, #020617 55%, transparent);
+}
+.dashboard-tv-dashboard .td-confirm-modal{
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon message"
+    "actions actions";
+  gap: 14px 16px;
+  align-items: start;
+}
+.dashboard-tv-dashboard .td-confirm-modal__icon{
+  grid-area: icon;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: color-mix(in srgb, var(--td-accent) 90%, #fff);
+  background: color-mix(in srgb, var(--td-accent) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--td-accent) 28%, transparent);
+}
+.dashboard-tv-dashboard .td-confirm-modal__icon--danger{
+  color: #fca5a5;
+  background: color-mix(in srgb, #ef4444 18%, transparent);
+  border-color: color-mix(in srgb, #ef4444 32%, transparent);
+}
 .dashboard-tv-dashboard .td-confirm-modal__message{
+  grid-area: message;
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--td-text);
+  padding-top: 2px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--td-text) 90%, var(--td-muted));
+}
+.dashboard-tv-dashboard .td-confirm-modal .td-modal-actions,
+.dashboard-tv-dashboard .td-confirm-modal .td-form-actions{
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+  width: 100%;
 }
 .dashboard-tv-dashboard .td-modal-actions--end{
   justify-content: flex-end;
   width: 100%;
+}
+.dashboard-tv-dashboard .td-modal--confirm .td-ghost-btn,
+.dashboard-tv-dashboard .td-modal--confirm .td-primary-btn,
+.dashboard-tv-dashboard .td-modal--confirm .td-danger-btn{
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.dashboard-tv-dashboard .td-modal--confirm .td-ghost-btn{
+  background: color-mix(in srgb, var(--td-text) 4%, var(--td-surface));
+  border-color: color-mix(in srgb, var(--td-border) 85%, transparent);
+}
+.dashboard-tv-dashboard .td-modal--confirm .td-danger-btn{
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #dc2626 88%, #fff) 0%,
+    color-mix(in srgb, #b91c1c 92%, #000) 100%
+  );
+  border-color: color-mix(in srgb, #991b1b 70%, var(--td-border));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 14%, transparent) inset,
+    0 8px 20px color-mix(in srgb, #7f1d1d 28%, transparent);
+}
+.dashboard-tv-dashboard .td-modal--confirm-danger .td-modal__title{
+  color: color-mix(in srgb, #fecaca 55%, var(--td-text));
 }
 .dashboard-tv-dashboard .td-ghost-btn,
 .dashboard-tv-dashboard .td-primary-btn,

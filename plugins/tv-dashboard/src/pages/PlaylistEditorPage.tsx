@@ -657,7 +657,7 @@ export function PlaylistEditorPage({
     if (!playlist) return;
     const confirmed = await confirm({
       title: "Remover tela",
-      message: `Remover a tela «${slide.title}»?`,
+      message: `Remover a tela «${slide.title}»? Esta ação não pode ser desfeita.`,
       confirmLabel: "Remover",
       variant: "danger",
     });

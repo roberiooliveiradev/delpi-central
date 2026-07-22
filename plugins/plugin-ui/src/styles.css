@@ -35,9 +35,9 @@
 @import "./styles/detail-card.css";
 @import "./styles/drawer.css";
 @import "./styles/modal.css";
+@import "./styles/modal-shell.css";
+@import "./styles/confirm-modal.css";
 @import "./styles/series-chart.css";
-@import "./styles/configurable-table.css";
-@import "./styles/tree-guides.css";
 @import "./styles/timeline.css";
 @import "./styles/rich-text-editor.css";
 @import "./styles/cipa-shared.css";
@@ -48,7 +48,6 @@
 @import "./styles/content-card.css";
 @import "./styles/state-banner.css";
 @import "./styles/floating-notice.css";
-@import "./styles/modal-shell.css";
 @import "./styles/document-reader.css";
 
 .delpi-ui-help-tooltip {

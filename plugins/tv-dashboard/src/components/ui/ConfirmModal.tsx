@@ -32,8 +32,15 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const shellClass = [
+    "td-modal--confirm",
+    variant === "danger" ? "td-modal--confirm-danger" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <HostContainedDialog open={open} title={title} onClose={onCancel} className="td-modal--confirm">
+    <HostContainedDialog open={open} title={title} onClose={onCancel} className={shellClass}>
       <ConfirmModalPanel
         message={message}
         confirmLabel={confirmLabel}

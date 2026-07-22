@@ -1,0 +1,133 @@
+/**
+ * Confirm / choice modal — visual moderno (elevação, ícone de contexto, ações claras).
+ * Classes canônicas `.delpi-ui-confirm-modal*`; MFEs usam dual-class via confirmModalBemClasses.
+ */
+
+.delpi-ui-confirm-modal {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon message"
+    "actions actions";
+  gap: 14px 16px;
+  align-items: start;
+}
+
+.delpi-ui-confirm-modal__icon {
+  grid-area: icon;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 88%, #0f172a);
+  background: color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-accent, #2563eb) 22%, transparent);
+  flex-shrink: 0;
+}
+
+.delpi-ui-confirm-modal__icon--danger {
+  color: #f87171;
+  background: color-mix(in srgb, #ef4444 16%, transparent);
+  border-color: color-mix(in srgb, #ef4444 28%, transparent);
+}
+
+.delpi-ui-confirm-modal__message {
+  grid-area: message;
+  margin: 0;
+  padding-top: 2px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--delpi-ui-text, #e2e8f0) 92%, transparent);
+}
+
+.delpi-ui-confirm-modal__actions {
+  grid-area: actions;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 4px;
+}
+
+.delpi-ui-confirm-modal__actions--end {
+  justify-content: flex-end;
+}
+
+.delpi-ui-confirm-modal__actions--start {
+  justify-content: flex-start;
+}
+
+/* Shell compacto para confirmações */
+.delpi-ui-modal.delpi-ui-modal--confirm,
+.delpi-ui-modal[class*="-modal--confirm"] {
+  width: min(420px, calc(100vw - 32px));
+  border-radius: 20px;
+  border-color: color-mix(in srgb, var(--delpi-ui-border, #334155) 70%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 4%, transparent),
+    0 24px 64px color-mix(in srgb, #000 42%, transparent);
+  overflow: hidden;
+}
+
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__header,
+.delpi-ui-modal[class*="-modal--confirm"] [class$="-modal__header"] {
+  padding: 18px 20px 12px;
+  border-bottom: none;
+  background: transparent;
+  align-items: flex-start;
+}
+
+.delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__title,
+.delpi-ui-modal[class*="-modal--confirm"] [class$="-modal__title"] {
+  font-size: 1.125rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__body,
+.delpi-ui-modal[class*="-modal--confirm"] [class$="-modal__body"] {
+  padding: 0 20px 8px;
+  gap: 0;
+}
+
+.delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__close,
+.delpi-ui-modal[class*="-modal--confirm"] [class$="-modal__close"] {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #475569) 55%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-text, #fff) 4%, transparent);
+}
+
+.delpi-ui-danger-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 12%, transparent) inset;
+}
+
+.delpi-ui-ghost-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-weight: 550;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
