@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { countLucideIconPtLabels } from "./lucideIconPtLabels";
 import {
   buildLucideIconOptions,
   countLucideCatalogSize,
@@ -7,6 +8,7 @@ import {
   isLucideIconName,
   isPascalCaseLucideExport,
   listLucideIconNames,
+  lucideIconPtLabel,
   resolveLucideIcon,
   resolveLucideIconOrFallback,
   toKebabCase,
@@ -41,7 +43,20 @@ describe("lucideIconResolver", () => {
     const options = buildLucideIconOptions(DECK_QUICK_LUCIDE_ICON_NAMES);
     expect(options.length).toBe(DECK_QUICK_LUCIDE_ICON_NAMES.length);
     expect(options[0]?.name).toBe("Star");
-    expect(options[0]?.label).toBeTruthy();
+    expect(options[0]?.label).toBe("Estrela");
+  });
+
+  it("catálogo pt-BR cobre todos os kebabs do Lucide", () => {
+    const kebabs = new Set(listLucideIconNames().map(toKebabCase));
+    expect(countLucideIconPtLabels()).toBe(kebabs.size);
+    expect(lucideIconPtLabel("Eye")).toBe("Olho");
+    expect(lucideIconPtLabel("trending-up")).toBe("Tendência");
+    expect(lucideIconPtLabel("FolderOpen")).not.toBe("folder-open");
+    for (const kebab of kebabs) {
+      const label = lucideIconPtLabel(kebab);
+      expect(label.length).toBeGreaterThan(0);
+      expect(label).not.toBe(kebab);
+    }
   });
 
   it("exclui aliases *Icon da lista canônica", () => {
