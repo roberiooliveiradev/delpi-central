@@ -1,0 +1,35 @@
+/**
+ * Chrome canônico de popovers flutuantes (AnchoredPanelPortal, ribbon, select, Lucide).
+ * Sem backdrop-filter — superfície opaca + sombra + raio únicos.
+ */
+
+:root {
+  --delpi-ui-popover-radius: 12px;
+  --delpi-ui-popover-shadow:
+    0 16px 40px color-mix(in srgb, #000 28%, transparent),
+    0 0 0 1px color-mix(in srgb, #fff 5%, transparent);
+  --delpi-ui-popover-border-color: var(--delpi-ui-border, var(--border, #d8e1e9));
+  --delpi-ui-popover-bg: var(--delpi-ui-surface, var(--surface, #ffffff));
+}
+
+/**
+ * Classe utilitária + seletores do kit que devem compartilhar o mesmo chrome.
+ * MFEs: adicionem `.delpi-ui-popover-surface` em popovers bare (ex.: biblioteca de formas).
+ */
+.delpi-ui-popover-surface,
+.delpi-ui-shape-menu__panel,
+.delpi-ui-color-picker-trigger__panel,
+.delpi-ui-color-more-popover,
+.delpi-ui-ribbon-group__popover,
+.delpi-ui-lucide-icon-picker-popover,
+.delpi-ui-select__panel,
+[class$="-select__panel"],
+[class*="-select__panel--portal"] {
+  border-radius: var(--delpi-ui-popover-radius);
+  border: 1px solid var(--delpi-ui-popover-border-color);
+  background: var(--delpi-ui-popover-bg);
+  box-shadow: var(--delpi-ui-popover-shadow);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}

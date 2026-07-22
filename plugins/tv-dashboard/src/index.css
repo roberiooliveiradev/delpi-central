@@ -1065,12 +1065,13 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--td-border, #334155) 80%, transparent);
-  background: var(--td-surface-elevated, var(--td-surface, #0f172a));
-  box-shadow:
-    0 16px 40px color-mix(in srgb, #000 45%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--td-accent, #089bdb) 18%, transparent);
+  border-radius: var(--delpi-ui-popover-radius, 12px);
+  border: 1px solid var(--delpi-ui-popover-border-color, color-mix(in srgb, var(--td-border, #334155) 80%, transparent));
+  background: var(--delpi-ui-popover-bg, var(--td-surface-elevated, var(--td-surface, #0f172a)));
+  box-shadow: var(
+    --delpi-ui-popover-shadow,
+    0 16px 40px color-mix(in srgb, #000 45%, transparent)
+  );
 }
 .dashboard-tv-dashboard .td-data-catalog-popover__chrome{
   display: flex;
@@ -1331,10 +1332,10 @@
   z-index: 200;
   min-width: 180px;
   padding: 6px;
-  border-radius: 10px;
-  border: 1px solid var(--td-border);
-  background: var(--td-surface, #111827);
-  box-shadow: 0 8px 24px color-mix(in srgb, #000 35%, transparent);
+  border-radius: var(--delpi-ui-popover-radius, 12px);
+  border: 1px solid var(--delpi-ui-popover-border-color, var(--td-border));
+  background: var(--delpi-ui-popover-bg, var(--td-surface, #111827));
+  box-shadow: var(--delpi-ui-popover-shadow, 0 16px 40px color-mix(in srgb, #000 28%, transparent));
 }
 .dashboard-tv-dashboard .td-composer__dropdown-item{
   display: block;
@@ -1359,11 +1360,7 @@
   max-height: min(70vh, 520px);
   overflow: auto;
   padding: 6px 8px 10px;
-  border-radius: 2px;
-  border: 1px solid var(--delpi-ui-border, var(--td-border));
-  background: var(--delpi-ui-surface, var(--td-surface));
-  color: var(--delpi-ui-text, var(--td-text));
-  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+  /* chrome (raio/sombra/borda) via .delpi-ui-popover-surface */
   scrollbar-width: thin;
 }
 .dashboard-tv-dashboard .td-shape-library__section + .td-shape-library__section{
@@ -2990,10 +2987,10 @@ body.td-composer--marqueeing *{
   overflow: visible;
   min-width: 200px;
   padding: 6px 0;
-  border: 1px solid var(--td-border);
-  border-radius: var(--td-chrome-radius);
-  background: var(--td-surface);
-  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+  border: 1px solid var(--delpi-ui-popover-border-color, var(--td-border));
+  border-radius: var(--delpi-ui-popover-radius, var(--td-chrome-radius, 12px));
+  background: var(--delpi-ui-popover-bg, var(--td-surface));
+  box-shadow: var(--delpi-ui-popover-shadow, 0 16px 40px color-mix(in srgb, #000 28%, transparent));
   color: var(--td-text);
 }
 .dashboard-tv-dashboard .td-chart-float__popover--actions .td-deck-ribbon__cascade-item{
@@ -3443,10 +3440,10 @@ body.td-composer--marqueeing *{
   min-width: 260px;
   max-width: 320px;
   padding: 10px 12px;
-  border: 1px solid var(--td-border);
-  border-radius: var(--td-chrome-radius);
-  background: var(--td-surface);
-  box-shadow: 0 8px 24px color-mix(in srgb, #000 18%, transparent);
+  border: 1px solid var(--delpi-ui-popover-border-color, var(--td-border));
+  border-radius: var(--delpi-ui-popover-radius, var(--td-chrome-radius, 12px));
+  background: var(--delpi-ui-popover-bg, var(--td-surface));
+  box-shadow: var(--delpi-ui-popover-shadow, 0 16px 40px color-mix(in srgb, #000 28%, transparent));
   color: var(--td-text);
   box-sizing: border-box;
 }

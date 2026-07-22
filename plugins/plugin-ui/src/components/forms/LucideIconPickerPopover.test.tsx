@@ -38,6 +38,7 @@ describe("LucideIconPickerPopover", () => {
     expect(screen.getByRole("dialog", { name: "Ícones" })).toBeTruthy();
     expect(screen.getByPlaceholderText(/buscar/i)).toBeTruthy();
     expect(screen.getByText(/ícones Lucide/i)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Fechar" })).toBeNull();
   });
 
   it("seleciona ícone e fecha", () => {

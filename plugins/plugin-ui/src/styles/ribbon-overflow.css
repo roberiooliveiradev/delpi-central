@@ -154,12 +154,7 @@
   min-width: 12rem;
   max-width: min(92vw, 36rem);
   padding: 10px 12px 8px;
-  border: 1px solid var(--delpi-ui-border, var(--border, #e6e6e6));
-  border-radius: 8px;
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
   box-sizing: border-box;
-  color: var(--delpi-ui-text, var(--text, #111111));
 }
 
 .delpi-ui-ribbon-group__popover-body {

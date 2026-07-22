@@ -8,12 +8,6 @@
   max-height: min(74vh, 38rem);
   z-index: 1200;
   padding: 0;
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #334155) 65%, transparent);
-  background: var(--delpi-ui-surface, var(--surface, #ffffff));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #fff 5%, transparent),
-    0 28px 72px color-mix(in srgb, #000 40%, transparent);
   overflow: hidden;
 }
 
@@ -41,14 +35,12 @@
   max-height: var(--delpi-ui-lucide-picker-max-height, min(88vh, 42rem));
   width: 100%;
   border: 1px solid var(--lucide-picker-border);
-  border-radius: 20px;
+  border-radius: var(--delpi-ui-popover-radius, 12px);
   background: var(--lucide-picker-surface);
   color: var(--lucide-picker-text);
   color-scheme: light dark;
   overflow: hidden;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #fff 4%, transparent),
-    0 22px 56px color-mix(in srgb, #000 28%, transparent);
+  box-shadow: none;
 }
 
 .delpi-ui-lucide-icon-picker--embedded {
@@ -60,8 +52,7 @@
 
 .delpi-ui-lucide-icon-picker__header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
   padding: 1rem 1.1rem 0.65rem;
   border-bottom: none;
@@ -75,30 +66,6 @@
   letter-spacing: -0.02em;
   line-height: 1.25;
   color: var(--lucide-picker-text);
-}
-
-.delpi-ui-lucide-icon-picker__close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--lucide-picker-border) 70%, transparent);
-  background: color-mix(in srgb, var(--lucide-picker-text) 5%, transparent);
-  color: var(--lucide-picker-muted);
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    background 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.delpi-ui-lucide-icon-picker__close:hover {
-  color: var(--lucide-picker-text);
-  border-color: color-mix(in srgb, var(--lucide-picker-accent) 40%, var(--lucide-picker-border));
-  background: color-mix(in srgb, var(--lucide-picker-accent) 12%, transparent);
 }
 
 .delpi-ui-lucide-icon-picker__body {

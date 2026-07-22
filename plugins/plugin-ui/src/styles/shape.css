@@ -223,10 +223,6 @@
   left: 0;
   z-index: 40;
   padding: 10px;
-  border: 1px solid var(--delpi-ui-border, #e5e7eb);
-  border-radius: 10px;
-  background: var(--delpi-ui-surface, #fff);
-  box-shadow: 0 12px 32px color-mix(in srgb, #000 18%, transparent);
 }
 
 .delpi-ui-shape-menu__panel--portal,
@@ -250,11 +246,6 @@
   max-height: min(80vh, 560px);
   overflow: auto;
   padding: 12px;
-  border: 1px solid var(--delpi-ui-border, #e5e7eb);
-  border-radius: 12px;
-  background: var(--delpi-ui-surface, #fff);
-  color: var(--delpi-ui-text, #111);
-  box-shadow: 0 16px 40px color-mix(in srgb, #000 22%, transparent);
 }
 
 .delpi-ui-shape-menu {

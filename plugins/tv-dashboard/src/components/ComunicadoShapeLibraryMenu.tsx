@@ -36,7 +36,7 @@ export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismis
       panelRef={panelRef}
       variant="bare"
       portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-      className="td-shape-library td-shape-library--portal"
+      className="delpi-ui-popover-surface td-shape-library td-shape-library--portal"
       role="menu"
       aria-label="Biblioteca de formas"
       density="compact"

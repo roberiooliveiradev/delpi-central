@@ -152,16 +152,6 @@ export function LucideIconPicker({
       {!embedded ? (
         <header className="delpi-ui-lucide-icon-picker__header">
           <h2>{title ?? L.title}</h2>
-          {onClose ? (
-            <button
-              type="button"
-              className="delpi-ui-lucide-icon-picker__close"
-              onClick={onClose}
-              aria-label={L.close}
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          ) : null}
         </header>
       ) : null}
 
@@ -239,31 +229,18 @@ export function LucideIconPicker({
         ) : null}
       </div>
 
-      {showClear || (onClose && !embedded) ? (
+      {showClear ? (
         <footer className="delpi-ui-lucide-icon-picker__footer">
-          {showClear ? (
-            <button
-              type="button"
-              className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--ghost"
-              onClick={() => {
-                onChange(null);
-                onClose?.();
-              }}
-            >
-              {L.clear}
-            </button>
-          ) : (
-            <span />
-          )}
-          {onClose && !embedded ? (
-            <button
-              type="button"
-              className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--primary"
-              onClick={onClose}
-            >
-              {L.close}
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className="delpi-ui-lucide-icon-picker__btn delpi-ui-lucide-icon-picker__btn--ghost"
+            onClick={() => {
+              onChange(null);
+              onClose?.();
+            }}
+          >
+            {L.clear}
+          </button>
         </footer>
       ) : null}
     </div>
