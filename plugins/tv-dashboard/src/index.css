@@ -5488,26 +5488,42 @@ body.td-composer--marqueeing *{
   font-size: 9px;
 }
 .dashboard-tv-dashboard .td-deck-chrome__tabs{
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 0;
+  display: block;
+  position: relative;
+  flex: 1;
+  min-width: 0;
   padding: 0 8px;
   border-bottom: none;
   background: transparent;
   border-radius: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  flex: 1;
-  min-width: 0;
+  overflow: hidden;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-measure{
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  display: flex;
+  flex-wrap: nowrap;
   align-items: stretch;
-  scrollbar-width: thin;
+  pointer-events: none;
+  visibility: hidden;
+  white-space: nowrap;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-visible{
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 .dashboard-tv-dashboard .td-deck-chrome__history{
   display: inline-flex;
   align-items: center;
   gap: 2px;
   padding: 0 8px 0 4px;
-  margin-right: 2px;
+  margin-right: 0;
   border-right: 1px solid color-mix(in srgb, var(--td-border) 85%, transparent);
   align-self: stretch;
   flex-shrink: 0;
@@ -5609,6 +5625,54 @@ body.td-composer--marqueeing *{
   background: color-mix(in srgb, var(--td-accent) 8%, var(--td-surface));
 }
 .dashboard-tv-dashboard .td-deck-chrome__tab:disabled{
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tab--more{
+  gap: 4px;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tab--more-open{
+  color: var(--td-text);
+  background: color-mix(in srgb, var(--td-accent) 8%, transparent);
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-more-portal{
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--td-border);
+  border-radius: 8px;
+  background: var(--td-surface);
+  box-shadow: 0 8px 24px color-mix(in srgb, #000 28%, transparent);
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-more-list{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-more-item{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--td-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-more-item:hover:not(:disabled){
+  background: color-mix(in srgb, var(--td-accent) 10%, transparent);
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-more-item--active{
+  color: var(--td-accent);
+  background: color-mix(in srgb, var(--td-accent) 8%, transparent);
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-more-item:disabled{
   opacity: 0.45;
   cursor: not-allowed;
 }

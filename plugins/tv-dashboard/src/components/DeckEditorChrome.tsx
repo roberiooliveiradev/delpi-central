@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { TabHintCell, TabPanelTransition } from "@delpi/plugin-ui/index";
+import { TabPanelTransition } from "@delpi/plugin-ui/index";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
@@ -19,11 +19,11 @@ import { DeckSettingsPanel } from "./DeckSettingsPanel";
 import { SlideCurrentRibbon } from "./SlideCurrentRibbon";
 import {
   ComunicadoSlideBackgroundRibbon,
+  DeckChromeTabsRow,
   DeckHistoryTabActions,
   DeckHomePlaylistChrome,
   DeckPlaylistIdentity,
   DeckRibbonShell,
-  isContextualDeckRibbonTab,
   type DeckRibbonTabId,
   resolveDeckRibbonTabs,
 } from "./deck";
@@ -230,52 +230,18 @@ export function DeckEditorChrome({
       data-delpi-ui-density="compact"
     >
       <div className="td-deck-chrome__head">
-        <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
-          <DeckHistoryTabActions onBack={playlistChrome?.onBack} />
-          {tabs.map((tab, index) => {
-            const contextual = isContextualDeckRibbonTab(tab);
-            const firstContextual =
-              contextual &&
-              tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
-            const tabActive = activeTab === tab.id;
-            return (
-              <DeckKeyTip
-                key={tab.id}
-                letter={DECK_TAB_KEYTIPS[tab.id]}
-                scope="tabs"
-                placement="bottom"
-              >
-                <TabHintCell
-                  label={tab.label}
-                  hint={tab.hint}
-                  icon={tab.icon}
-                  active={tabActive}
-                  disabled={tab.disabledWhenNoSlide ? !slide : false}
-                  onSelect={() => selectTab(tab.id)}
-                  cellClassName={[
-                    "td-deck-chrome__tab-cell",
-                    contextual ? "td-deck-chrome__tab-cell--contextual" : "",
-                    firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  tabClassName={[
-                    "td-deck-chrome__tab",
-                    contextual ? "td-deck-chrome__tab--contextual" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  tabActiveClassName={[
-                    "td-deck-chrome__tab--active",
-                    contextual ? "td-deck-chrome__tab--contextual-active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                />
-              </DeckKeyTip>
-            );
-          })}
-        </div>
+        <DeckHistoryTabActions onBack={playlistChrome?.onBack} />
+        <DeckChromeTabsRow
+          tabs={tabs}
+          activeTab={activeTab}
+          onSelect={selectTab}
+          isTabDisabled={(tab) => (tab.disabledWhenNoSlide ? !slide : false)}
+          wrapTab={(tab, cell) => (
+            <DeckKeyTip letter={DECK_TAB_KEYTIPS[tab.id]} scope="tabs" placement="bottom">
+              {cell}
+            </DeckKeyTip>
+          )}
+        />
         {playlistChrome ? (
           <div className="td-deck-chrome__head-trail">
             <DeckPlaylistIdentity

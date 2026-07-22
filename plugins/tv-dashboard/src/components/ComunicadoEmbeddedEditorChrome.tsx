@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { TabHintCell, TabPanelTransition } from "@delpi/plugin-ui/index";
+import { TabPanelTransition } from "@delpi/plugin-ui/index";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
@@ -14,8 +14,8 @@ import {
 } from "./ComunicadoRibbonContent";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import {
+  DeckChromeTabsRow,
   DeckRibbonShell,
-  isContextualDeckRibbonTab,
   resolveEmbeddedComunicadoRibbonTabs,
   type DeckRibbonTabId,
 } from "./deck";
@@ -143,43 +143,11 @@ export function ComunicadoEmbeddedEditorChrome({ labels = {} }: Props) {
   return (
     <section className="td-deck-chrome td-deck-chrome--embedded" aria-label="Editor do comunicado" data-delpi-ui-density="compact">
       <div className="td-deck-chrome__head">
-        <div className="td-deck-chrome__tabs" role="tablist" aria-label="Faixas do editor">
-          {tabs.map((tab, index) => {
-            const contextual = isContextualDeckRibbonTab(tab);
-            const firstContextual =
-              contextual && tabs.slice(0, index).every((prev) => !isContextualDeckRibbonTab(prev));
-            const tabActive = activeTab === tab.id;
-            return (
-              <TabHintCell
-                key={tab.id}
-                label={tab.label}
-                hint={tab.hint}
-                icon={tab.icon}
-                active={tabActive}
-                onSelect={() => selectTab(tab.id)}
-                cellClassName={[
-                  "td-deck-chrome__tab-cell",
-                  contextual ? "td-deck-chrome__tab-cell--contextual" : "",
-                  firstContextual ? "td-deck-chrome__tab-cell--contextual-start" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                tabClassName={[
-                  "td-deck-chrome__tab",
-                  contextual ? "td-deck-chrome__tab--contextual" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                tabActiveClassName={[
-                  "td-deck-chrome__tab--active",
-                  contextual ? "td-deck-chrome__tab--contextual-active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-              />
-            );
-          })}
-        </div>
+        <DeckChromeTabsRow
+          tabs={tabs}
+          activeTab={activeTab}
+          onSelect={selectTab}
+        />
       </div>
 
       {hasRibbonBody(activeTab) && activeTab !== "layers" ? (

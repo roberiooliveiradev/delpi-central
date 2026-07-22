@@ -4,6 +4,11 @@ export {
   type RibbonGroupSize,
 } from "./resolveCollapsedRibbonGroupIds";
 export {
+  resolveOverflowRibbonTabIds,
+  type RibbonTabSize,
+  type ResolveOverflowRibbonTabIdsOptions,
+} from "./resolveOverflowRibbonTabIds";
+export {
   RibbonGroupsRow,
   ribbonGroupsRowBemClasses,
   useRibbonOverflowContext,

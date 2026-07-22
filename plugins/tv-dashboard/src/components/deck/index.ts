@@ -14,6 +14,8 @@ export { DeckInspectorLayout } from "./DeckInspectorLayout";
 export { DeckPropertySection } from "./DeckPropertySection";
 export { DeckRangeField } from "./DeckRangeField";
 export { DeckHistoryTabActions } from "./DeckHistoryTabActions";
+export { DeckChromeTabsRow, deckChromeTabClassNames } from "./DeckChromeTabsRow";
+export type { DeckChromeTabsRowProps } from "./DeckChromeTabsRow";
 export { DeckRibbonLargeButton } from "./DeckRibbonLargeButton";
 export { DeckRibbonShell } from "./DeckRibbonShell";
 export { DeckRibbonGroups } from "./DeckRibbonGroups";
