@@ -16,6 +16,7 @@ export function PartSelectionNav({
 }) {
   return (
     <DeckRibbonGroup
+      groupId="part-nav"
       label={`Parte · ${chrome.partLabel}`}
       hint={`Controles desta parte do ${chrome.parentLabel.toLowerCase()} — não do bloco inteiro.`}
     >

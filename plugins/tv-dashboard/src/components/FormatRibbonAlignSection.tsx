@@ -40,7 +40,7 @@ export function FormatRibbonAlignSection({
   connectSelected,
 }: Props) {
   return (
-    <DeckRibbonGroup label="Alinhar" hint={H.alignSelection}>
+    <DeckRibbonGroup groupId="align-selection" label="Alinhar" hint={H.alignSelection}>
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
         {(
           [

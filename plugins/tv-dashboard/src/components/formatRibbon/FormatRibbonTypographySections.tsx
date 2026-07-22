@@ -70,12 +70,14 @@ function TypographyPaneOrGroup({
   embed,
   title,
   hint,
+  groupId,
   defaultOpen = true,
   children,
 }: {
   embed: boolean;
   title: string;
   hint?: string;
+  groupId?: string;
   defaultOpen?: boolean;
   children: ReactNode;
 }) {
@@ -87,7 +89,7 @@ function TypographyPaneOrGroup({
     );
   }
   return (
-    <DeckRibbonGroup label={title} hint={hint}>
+    <DeckRibbonGroup groupId={groupId} label={title} hint={hint}>
       {children}
     </DeckRibbonGroup>
   );
@@ -404,7 +406,7 @@ export function FormatRibbonTypographySections({
 
   return (
     <>
-      <TypographyPaneOrGroup embed={embed} title={fontTitle} hint={H.font}>
+      <TypographyPaneOrGroup embed={embed} groupId="typo-font" title={fontTitle} hint={H.font}>
         <div className="td-deck-ribbon__toolbar td-deck-ribbon__toolbar--text-stack td-deck-ribbon__toolbar--font">
           <div className="td-deck-ribbon__toolbar-row td-deck-ribbon__toolbar-row--inputs">
             <HintAction hint={H.fontFamily} ariaLabel="Ajuda: Família da fonte">
@@ -661,7 +663,13 @@ export function FormatRibbonTypographySections({
         </div>
       </TypographyPaneOrGroup>
 
-      <TypographyPaneOrGroup embed={embed} title="Efeitos de texto" hint={H.textEffects} defaultOpen={false}>
+      <TypographyPaneOrGroup
+        embed={embed}
+        groupId="typo-effects"
+        title="Efeitos de texto"
+        hint={H.textEffects}
+        defaultOpen={false}
+      >
         <TextEffectsMenu
           formatStyle={formatStyle}
           onUpdate={updateSelectedTextFormatStyle}
@@ -670,7 +678,13 @@ export function FormatRibbonTypographySections({
       </TypographyPaneOrGroup>
 
       {showParagraphAlign ? (
-        <TypographyPaneOrGroup embed={embed} title="Parágrafo" hint={H.paragraph} defaultOpen={false}>
+        <TypographyPaneOrGroup
+          embed={embed}
+          groupId="typo-paragraph"
+          title="Parágrafo"
+          hint={H.paragraph}
+          defaultOpen={false}
+        >
           {paragraphAlignBody}
         </TypographyPaneOrGroup>
       ) : null}
@@ -678,6 +692,7 @@ export function FormatRibbonTypographySections({
       {embed && spacingMenu ? (
         <TypographyPaneOrGroup
           embed
+          groupId="typo-style"
           title="Estilo"
           hint={H.paragraphSpacing}
           defaultOpen={false}

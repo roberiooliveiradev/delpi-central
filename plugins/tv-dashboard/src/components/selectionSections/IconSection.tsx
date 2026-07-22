@@ -209,7 +209,7 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
 
   return (
     <>
-      <DeckRibbonGroup label="Ícone" hint={H.iconEditor}>
+      <DeckRibbonGroup groupId="shape-icon" label="Ícone" hint={H.iconEditor}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <div ref={trocarAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile
@@ -240,7 +240,7 @@ export function IconSection({ layout }: { layout: SelectionSectionLayout }) {
           }}
         />
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Forma" hint={H.shapeForma}>
+      <DeckRibbonGroup groupId="shape-forma" label="Forma" hint={H.shapeForma}>
         {formaBody}
       </DeckRibbonGroup>
     </>

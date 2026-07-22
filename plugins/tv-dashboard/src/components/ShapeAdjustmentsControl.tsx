@@ -89,7 +89,11 @@ export function ShapeAdjustmentsControl({
   }
 
   return (
-    <DeckRibbonGroup label="Ajustes da forma" hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.shapeAdjustment}>
+    <DeckRibbonGroup
+      groupId="shape-adjustments"
+      label="Ajustes da forma"
+      hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.shapeAdjustment}
+    >
       {fields}
     </DeckRibbonGroup>
   );

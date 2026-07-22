@@ -66,7 +66,7 @@ export function ChartSeriesSection({ layout }: { layout: SelectionSectionLayout 
   }
 
   return (
-    <DeckRibbonGroup label="Série" hint={H.chartSeriesColor}>
+    <DeckRibbonGroup groupId="chart-series" label="Série" hint={H.chartSeriesColor}>
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
         {picker}
       </div>

@@ -172,6 +172,7 @@ function wrapPane(
   layout: SelectionSectionLayout,
   body: ReactNode,
   wide?: boolean,
+  groupId?: string,
 ) {
   if (layout === "pane") {
     return (
@@ -181,12 +182,7 @@ function wrapPane(
     );
   }
   return (
-    <DeckRibbonGroup
-      groupId={`table-${title.toLowerCase().replace(/\s+/g, "-")}`}
-      label={title}
-      hint={hint}
-      wide={wide}
-    >
+    <DeckRibbonGroup groupId={groupId} label={title} hint={hint} wide={wide}>
       {body}
     </DeckRibbonGroup>
   );
@@ -251,11 +247,11 @@ export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionL
   );
 
   if (layout === "pane") {
-    return wrapPane("Opções de estilo", H.tableStyleOptions, layout, checks);
+    return wrapPane("Opções de estilo", H.tableStyleOptions, layout, checks, false, "table-style-options");
   }
 
   return (
-    <DeckRibbonGroup label="Opções de estilo" hint={H.tableStyleOptions}>
+    <DeckRibbonGroup groupId="table-style-options" label="Opções de estilo" hint={H.tableStyleOptions}>
       <div className="td-table-style-options-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
         <HintAction hint={H.tableStyleOptions} ariaLabel="Ajuda: Opções de estilo">
           <button
@@ -358,10 +354,14 @@ export function TableStylesSection({ layout }: { layout: SelectionSectionLayout 
 
   return (
     <>
-      <DeckRibbonGroup label="Estilos de tabela" hint={H.tableStyles} wide>
+      <DeckRibbonGroup groupId="table-styles" label="Estilos de tabela" hint={H.tableStyles} wide>
         {gallery}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Sombreamento" hint="Cor de fundo do cabeçalho ou das células.">
+      <DeckRibbonGroup
+        groupId="table-shading"
+        label="Sombreamento"
+        hint="Cor de fundo do cabeçalho ou das células."
+      >
         {shade}
       </DeckRibbonGroup>
     </>
@@ -472,13 +472,13 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
 
   return (
     <>
-      <DeckRibbonGroup label="Bordas" hint={H.tableBorders}>
+      <DeckRibbonGroup groupId="table-borders" label="Bordas" hint={H.tableBorders}>
         {borders}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Efeitos" hint={H.tableFrameShadow}>
+      <DeckRibbonGroup groupId="table-effects" label="Efeitos" hint={H.tableFrameShadow}>
         {effects}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Forma" hint={H.tableFrameChrome}>
+      <DeckRibbonGroup groupId="table-forma" label="Forma" hint={H.tableFrameChrome}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={Shapes}
@@ -488,7 +488,7 @@ export function TableBordersSection({ layout }: { layout: SelectionSectionLayout
           />
         </div>
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Dados" hint={H.tableData ?? H.chartData}>
+      <DeckRibbonGroup groupId="table-data" label="Dados" hint={H.tableData ?? H.chartData}>
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={Database}

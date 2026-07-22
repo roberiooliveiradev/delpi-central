@@ -102,7 +102,7 @@ export function ShapeGallerySection({ layout }: { layout: SelectionSectionLayout
   }
 
   return (
-    <DeckRibbonGroup label="Formas" hint={H.shapeChange}>
+    <DeckRibbonGroup groupId="shape-forms-gallery" label="Formas" hint={H.shapeChange}>
       {body}
     </DeckRibbonGroup>
   );

@@ -123,6 +123,7 @@ export function ChartRibbonShapeChrome({
   return (
     <>
       <DeckRibbonGroup
+        groupId="shape-forma"
         label="Forma"
         hint={H.shapeForma}
         captionPlacement={embed ? "none" : "below"}
@@ -194,6 +195,7 @@ export function ChartRibbonShapeChrome({
 
       {effectiveChartPart.kind === "marker" ? (
         <DeckRibbonGroup
+          groupId="shape-marker"
           label="Marcador"
           hint={H.markerRadius}
           captionPlacement={embed ? "none" : "below"}

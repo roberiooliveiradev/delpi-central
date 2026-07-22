@@ -28,5 +28,5 @@ export function DataSourceHintSection({ layout }: { layout: SelectionSectionLayo
     );
   }
 
-  return <DeckRibbonGroup label="Fonte de dados">{body}</DeckRibbonGroup>;
+  return <DeckRibbonGroup groupId="data-source-hint" label="Fonte de dados">{body}</DeckRibbonGroup>;
 }

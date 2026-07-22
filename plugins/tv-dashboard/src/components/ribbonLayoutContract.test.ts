@@ -76,4 +76,15 @@ describe("ribbon table style checks layout", () => {
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain(".td-deck-chrome__ribbon-panel {\n    animation: none;");
   });
+
+  it("colapso da ribbon resolve ícone pelo mapa de groupId", () => {
+    const group = readFileSync(resolve(__dirname, "./deck/DeckRibbonGroup.tsx"), "utf8");
+    const icons = readFileSync(resolve(__dirname, "./deck/deckRibbonCollapseIcons.ts"), "utf8");
+    expect(group).toContain("resolveDeckRibbonCollapseIcon");
+    expect(icons).toContain('"typo-font"');
+    expect(icons).toContain('"organize-layers"');
+    expect(icons).toContain('"slide-current"');
+    expect(icons).toContain("Monitor");
+    expect(icons).toContain("Clapperboard");
+  });
 });

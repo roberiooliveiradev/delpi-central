@@ -68,7 +68,7 @@ export function CanvasTableSection({ layout }: { layout: SelectionSectionLayout 
   }
 
   return (
-    <DeckRibbonGroup label="Tabela (canvas)" hint={H.canvasTable}>
+    <DeckRibbonGroup groupId="canvas-table" label="Tabela (canvas)" hint={H.canvasTable}>
       {body}
     </DeckRibbonGroup>
   );

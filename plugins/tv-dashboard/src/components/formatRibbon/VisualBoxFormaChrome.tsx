@@ -284,7 +284,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
           />
         ) : null}
         {showMarker ? (
-          <DeckRibbonGroup label="Marcador" hint={H.markerRadius}>
+          <DeckRibbonGroup groupId="shape-marker" label="Marcador" hint={H.markerRadius}>
             <DeckRangeField
               id="td-shape-marker-radius"
               label="Raio px"
@@ -332,7 +332,7 @@ export function VisualBoxFormaChrome({ layout, bare = false }: VisualBoxFormaChr
 
   return (
     <>
-      <DeckRibbonGroup label="Forma" hint={FORMA_HINT}>
+      <DeckRibbonGroup groupId="shape-forma" label="Forma" hint={FORMA_HINT}>
         {formaBody}
       </DeckRibbonGroup>
       {extrasRibbon}

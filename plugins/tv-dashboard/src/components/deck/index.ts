@@ -18,6 +18,10 @@ export { DeckRibbonLargeButton } from "./DeckRibbonLargeButton";
 export { DeckRibbonShell } from "./DeckRibbonShell";
 export { DeckRibbonGroups } from "./DeckRibbonGroups";
 export { DeckRibbonGroup } from "./DeckRibbonGroup";
+export {
+  DECK_RIBBON_COLLAPSE_ICONS,
+  resolveDeckRibbonCollapseIcon,
+} from "./deckRibbonCollapseIcons";
 export { DeckRibbonTile } from "./DeckRibbonTile";
 export type { DeckRibbonTabId } from "./deckRibbonTabMeta";
 export {

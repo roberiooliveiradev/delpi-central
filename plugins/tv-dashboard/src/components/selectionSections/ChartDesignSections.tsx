@@ -54,6 +54,7 @@ function wrapPane(
   layout: SelectionSectionLayout,
   body: ReactNode,
   wide?: boolean,
+  groupId?: string,
 ) {
   if (layout === "pane") {
     return (
@@ -63,12 +64,7 @@ function wrapPane(
     );
   }
   return (
-    <DeckRibbonGroup
-      groupId={`chart-${title.toLowerCase().replace(/\s+/g, "-")}`}
-      label={title}
-      hint={hint}
-      wide={wide}
-    >
+    <DeckRibbonGroup groupId={groupId} label={title} hint={hint} wide={wide}>
       {body}
     </DeckRibbonGroup>
   );
@@ -272,7 +268,7 @@ export function ChartLayoutSection({ layout }: { layout: SelectionSectionLayout 
     </div>
   );
 
-  return wrapPane("Layout do gráfico", H.chartLabels, layout, body, true);
+  return wrapPane("Layout do gráfico", H.chartLabels, layout, body, true, "chart-layout");
 }
 
 export function ChartStylesSection({ layout }: { layout: SelectionSectionLayout }) {
@@ -347,10 +343,14 @@ export function ChartStylesSection({ layout }: { layout: SelectionSectionLayout 
 
   return (
     <>
-      <DeckRibbonGroup label="Estilos" hint="Cores da série e presets de tema/grade.">
+      <DeckRibbonGroup
+        groupId="chart-styles"
+        label="Estilos"
+        hint="Cores da série e presets de tema/grade."
+      >
         {styles}
       </DeckRibbonGroup>
-      <DeckRibbonGroup label="Dados" hint={H.chartData}>
+      <DeckRibbonGroup groupId="chart-data" label="Dados" hint={H.chartData}>
         {data}
       </DeckRibbonGroup>
     </>
@@ -378,7 +378,7 @@ export function ChartTypeSection({ layout }: { layout: SelectionSectionLayout })
     </>
   );
 
-  return wrapPane("Tipo", H.chartType, layout, body);
+  return wrapPane("Tipo", H.chartType, layout, body, false, "chart-type");
 }
 
 export function ChartLabelsSection({ layout }: { layout: SelectionSectionLayout }) {
@@ -421,7 +421,7 @@ export function ChartLabelsSection({ layout }: { layout: SelectionSectionLayout 
     </div>
   );
 
-  return wrapPane("Rótulos", H.chartLabels, layout, body);
+  return wrapPane("Rótulos", H.chartLabels, layout, body, false, "chart-labels");
 }
 
 export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout }) {
@@ -473,5 +473,5 @@ export function ChartAxesSection({ layout }: { layout: SelectionSectionLayout })
     </div>
   );
 
-  return wrapPane("Eixos", H.chartAxes, layout, body);
+  return wrapPane("Eixos", H.chartAxes, layout, body, false, "chart-axes");
 }

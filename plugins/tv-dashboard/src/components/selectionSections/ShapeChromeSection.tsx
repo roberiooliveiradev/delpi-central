@@ -266,7 +266,7 @@ function KpiShapeChrome({
   return (
     <>
       {nav}
-      <DeckRibbonGroup label="Forma" hint={hint}>
+      <DeckRibbonGroup groupId="shape-forma" label="Forma" hint={hint}>
         {formaBody}
       </DeckRibbonGroup>
     </>
@@ -395,7 +395,7 @@ function InputShapeChrome({
   return (
     <>
       {nav}
-      <DeckRibbonGroup label="Forma" hint={FORMA_HINT}>
+      <DeckRibbonGroup groupId="shape-forma" label="Forma" hint={FORMA_HINT}>
         {formaBody}
       </DeckRibbonGroup>
     </>

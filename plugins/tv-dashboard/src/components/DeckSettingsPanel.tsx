@@ -309,7 +309,7 @@ export function DeckSettingsPanel({
           </div>
         </DeckRibbonGroup>
         {isCustomSlide || catalogItem ? (
-          <DeckRibbonGroup label="Tipo" hint={F.customSlideType}>
+          <DeckRibbonGroup groupId="slide-type" label="Tipo" hint={F.customSlideType}>
             <span className="td-deck-settings-chip" title={isCustomSlide ? F.customSlideType : `Tipo: ${catalogItem?.label}`}>
               <LayoutTemplate size={13} aria-hidden="true" />
               {isCustomSlide ? "Tela livre" : catalogItem?.label}
@@ -317,7 +317,7 @@ export function DeckSettingsPanel({
           </DeckRibbonGroup>
         ) : null}
         {slideTabExtra ? (
-          <DeckRibbonGroup label="Ferramentas">
+          <DeckRibbonGroup groupId="slide-tools" label="Ferramentas">
             <div className="td-deck-settings-strip__tools">{slideTabExtra}</div>
           </DeckRibbonGroup>
         ) : null}
@@ -328,7 +328,7 @@ export function DeckSettingsPanel({
   if (activeTab === "playlist") {
     return (
       <>
-        <DeckRibbonGroup label="Rotação" hint={F.viewport}>
+        <DeckRibbonGroup groupId="playlist-rotation" label="Rotação" hint={F.viewport}>
           <div className="td-deck-tabs__grid td-deck-tabs__grid--playlist-rotation">
             <TdNativeSelectField
               id="td-viewport"
@@ -368,7 +368,7 @@ export function DeckSettingsPanel({
           </div>
         </DeckRibbonGroup>
 
-        <DeckRibbonGroup label="Link público" hint={F.publicUrl} wide>
+        <DeckRibbonGroup groupId="playlist-link" label="Link público" hint={F.publicUrl} wide>
           <div className="td-deck-playlist-link">
             <TdNativeTextField
               id="td-public-url"
@@ -397,6 +397,7 @@ export function DeckSettingsPanel({
         </DeckRibbonGroup>
 
         <DeckRibbonGroup
+          groupId="playlist-master"
           label="Master slide"
           hint="Fundo e logo compartilhados quando o slide não define o próprio fundo (4E.3)."
           wide

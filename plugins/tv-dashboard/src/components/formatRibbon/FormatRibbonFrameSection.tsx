@@ -116,14 +116,24 @@ function FrameSizeGroup({
 
   if (embed || emptyAction) {
     return (
-      <DeckRibbonGroup label="Tamanho e posição" hint={hint} captionPlacement={captionPlacement}>
+      <DeckRibbonGroup
+        groupId="frame-size"
+        label="Tamanho e posição"
+        hint={hint}
+        captionPlacement={captionPlacement}
+      >
         {body}
       </DeckRibbonGroup>
     );
   }
 
   return (
-    <DeckRibbonGroup label="Tamanho e posição" hint={hint} captionPlacement={captionPlacement}>
+    <DeckRibbonGroup
+      groupId="frame-size"
+      label="Tamanho e posição"
+      hint={hint}
+      captionPlacement={captionPlacement}
+    >
       <div
         ref={rootRef}
         className="td-frame-size-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus"

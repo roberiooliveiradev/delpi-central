@@ -89,7 +89,7 @@ export function TableLayoutDataSection({ layout }: { layout: SelectionSectionLay
   }
 
   return (
-    <DeckRibbonGroup label="Tabela" hint={H.tableData ?? H.chartData}>
+    <DeckRibbonGroup groupId="table-layout-data" label="Tabela" hint={H.tableData ?? H.chartData}>
       {tiles}
     </DeckRibbonGroup>
   );
@@ -147,6 +147,7 @@ export function TableLayoutAlignSection({ layout }: { layout: SelectionSectionLa
 
   return (
     <DeckRibbonGroup
+      groupId="table-layout-align"
       label="Alinhamento"
       hint="Alinhamento horizontal e quebra automática do texto nas células."
     >
@@ -309,7 +310,7 @@ export function TableLayoutSizeSection({ layout }: { layout: SelectionSectionLay
   }
 
   return (
-    <DeckRibbonGroup label="Tamanho" hint={hint}>
+    <DeckRibbonGroup groupId="table-layout-size" label="Tamanho" hint={hint}>
       {fields}
       {distributeTiles}
     </DeckRibbonGroup>

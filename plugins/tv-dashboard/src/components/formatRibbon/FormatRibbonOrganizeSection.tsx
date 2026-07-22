@@ -60,6 +60,7 @@ export function FormatRibbonOrganizeLayers({ embed = false }: Omit<SectionProps,
 
   return (
     <DeckRibbonGroup
+      groupId="organize-layers"
       label="Organizar"
       hint={H.organize}
       captionPlacement={embed ? "none" : "below"}
@@ -97,6 +98,7 @@ export function FormatRibbonElementActions({ labels = {}, embed = false }: Secti
 
   return (
     <DeckRibbonGroup
+      groupId="element-actions"
       label="Ações"
       hint={H.actions ?? H.duplicateBlock}
       captionPlacement={embed ? "none" : "below"}
@@ -284,6 +286,7 @@ export function FormatRibbonOpacityFields({
 export function FormatRibbonOrganizeDisplay({ embed = false }: Omit<SectionProps, "labels">) {
   return (
     <DeckRibbonGroup
+      groupId="frame-size"
       label="Tamanho e posição"
       hint={H.sizePosition ?? H.display}
       captionPlacement={embed ? "none" : "below"}

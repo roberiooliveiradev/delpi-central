@@ -29,7 +29,12 @@ export function AppearanceSection({ layout }: { layout: SelectionSectionLayout }
   }
 
   return (
-    <DeckRibbonGroup label="Exibição" hint={APPEARANCE_HINT} captionPlacement="below">
+    <DeckRibbonGroup
+      groupId="appearance-display"
+      label="Exibição"
+      hint={APPEARANCE_HINT}
+      captionPlacement="below"
+    >
       <FormatRibbonOpacityFields className="td-deck-ribbon__organize-props td-deck-ribbon__appearance-props" />
     </DeckRibbonGroup>
   );

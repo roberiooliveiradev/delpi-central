@@ -2,6 +2,8 @@ import { RibbonGroup, delpiUiClass } from "@delpi/plugin-ui/index";
 import type { LucideIcon } from "lucide-react";
 import { useRef, type ReactNode } from "react";
 
+import { resolveDeckRibbonCollapseIcon } from "./deckRibbonCollapseIcons";
+
 /** Dual-class: BEM legado da TV + canônico do kit (overflow / popover). */
 export function deckRibbonGroupClassNames() {
   const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
@@ -84,6 +86,10 @@ export function DeckRibbonGroup({
   children,
 }: Props) {
   const resolvedId = useResolvedGroupId(groupId);
+  const resolvedIcon = resolveDeckRibbonCollapseIcon(
+    groupId ? resolvedId : undefined,
+    collapseIcon,
+  );
   return (
     <RibbonGroup
       groupId={resolvedId}
@@ -92,7 +98,7 @@ export function DeckRibbonGroup({
       wide={wide}
       captionPlacement={captionPlacement}
       order={order}
-      collapseIcon={collapseIcon}
+      collapseIcon={resolvedIcon}
       classNames={DECK_GROUP_CN}
     >
       {children}

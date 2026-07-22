@@ -70,6 +70,7 @@ export function TableRibbonShapeChrome({
 
   return (
     <DeckRibbonGroup
+      groupId="shape-forma"
       label="Forma"
       hint={H.shapeForma}
       captionPlacement={embed ? "none" : "below"}

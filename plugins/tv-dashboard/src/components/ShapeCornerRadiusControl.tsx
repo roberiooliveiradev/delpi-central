@@ -39,7 +39,7 @@ export function ShapeCornerRadiusControl({
   if (embedded) return control;
 
   return (
-    <DeckRibbonGroup label={label} hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.borderRadius}>
+    <DeckRibbonGroup groupId="shape-corner" label={label} hint={TV_DASHBOARD_HELP_TOOLTIPS.fields.borderRadius}>
       {control}
     </DeckRibbonGroup>
   );

@@ -52,7 +52,7 @@ export function MediaSection({
   }
 
   return (
-    <DeckRibbonGroup label="Mídia" hint={E.uploadMedia}>
+    <DeckRibbonGroup groupId="media-section" label="Mídia" hint={E.uploadMedia}>
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
         <DeckRibbonTile
           icon={FolderOpen}
