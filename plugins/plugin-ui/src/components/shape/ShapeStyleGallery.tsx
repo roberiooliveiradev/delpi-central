@@ -157,21 +157,7 @@ export function ShapeStyleMenu({ triggerLabel = "Estilos", ...props }: ShapeStyl
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const inline = useRibbonSectionPopoverSurface();
-
-  const gallery = (
-    <ShapeStyleGallery
-      {...props}
-      onSelect={(preset) => {
-        props.onSelect(preset);
-        setOpen(false);
-      }}
-    />
-  );
-
-  if (inline) {
-    return <div className="delpi-ui-shape-menu delpi-ui-shape-menu--inline">{gallery}</div>;
-  }
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -194,9 +180,16 @@ export function ShapeStyleMenu({ triggerLabel = "Estilos", ...props }: ShapeStyl
           anchorRef={rootRef}
           panelRef={panelRef}
           role="menu"
+          exclusive={!inSectionPopover}
           onDismiss={() => setOpen(false)}
         >
-          {gallery}
+          <ShapeStyleGallery
+            {...props}
+            onSelect={(preset) => {
+              props.onSelect(preset);
+              setOpen(false);
+            }}
+          />
         </AnchoredPanelPortal>
       ) : null}
     </div>

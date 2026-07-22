@@ -45,7 +45,7 @@ export function ShapeOutlineMenu({
   const [submenu, setSubmenu] = useState<"thickness" | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const inline = useRibbonSectionPopoverSurface();
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
   const dismiss = () => {
     setOpen(false);
@@ -53,90 +53,6 @@ export function ShapeOutlineMenu({
   };
 
   const previewColor = color && cssToColorValue(color).alpha > 0 ? color : "transparent";
-  const thicknessOpen = inline || submenu === "thickness";
-
-  const panel = (
-    <>
-      <ColorPickerPopover
-        variant="outline"
-        value={color}
-        onChange={onColorChange}
-        onNoFill={
-          onNoOutline ??
-          (() => {
-            onColorChange("transparent");
-          })
-        }
-        noFillLabel={L.noOutline}
-        labels={labels}
-      />
-      <ul className="delpi-ui-shape-menu__submenus">
-        {onStrokeWidthChange ? (
-          <SubmenuItem
-            label={L.thickness}
-            open={thicknessOpen}
-            onToggle={() => setSubmenu((prev) => (prev === "thickness" ? null : "thickness"))}
-          >
-            <div className="delpi-ui-shape-outline__width-grid">
-              {WIDTH_PRESETS.filter((w) => w >= minWidth && w <= maxWidth).map((width) => (
-                <button
-                  key={width}
-                  type="button"
-                  className={
-                    strokeWidth === width
-                      ? "delpi-ui-shape-outline__width delpi-ui-shape-outline__width--active"
-                      : "delpi-ui-shape-outline__width"
-                  }
-                  onClick={() => onStrokeWidthChange(width)}
-                >
-                  {width} pt
-                </button>
-              ))}
-              <label className="delpi-ui-shape-outline__width-custom">
-                <input
-                  type="number"
-                  min={minWidth}
-                  max={maxWidth}
-                  value={strokeWidth}
-                  aria-label={L.thickness}
-                  onChange={(event) => onStrokeWidthChange(Number(event.target.value) || minWidth)}
-                />
-              </label>
-            </div>
-          </SubmenuItem>
-        ) : null}
-        {onDashed ? (
-          <li>
-            <button type="button" className="delpi-ui-shape-menu__submenu-action" onClick={onDashed}>
-              {L.dashed}
-            </button>
-          </li>
-        ) : null}
-        {onLineStyle ? (
-          <li>
-            <button type="button" className="delpi-ui-shape-menu__submenu-action" onClick={onLineStyle}>
-              {L.lineStyle}
-            </button>
-          </li>
-        ) : null}
-        {onArrows ? (
-          <li>
-            <button type="button" className="delpi-ui-shape-menu__submenu-action" onClick={onArrows}>
-              {L.arrows}
-            </button>
-          </li>
-        ) : null}
-      </ul>
-    </>
-  );
-
-  if (inline) {
-    return (
-      <div className="delpi-ui-shape-menu delpi-ui-shape-menu--inline" aria-label={outlineLabel ?? L.outline}>
-        {panel}
-      </div>
-    );
-  }
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -163,9 +79,79 @@ export function ShapeOutlineMenu({
           anchorRef={rootRef}
           panelRef={panelRef}
           role="menu"
+          exclusive={!inSectionPopover}
           onDismiss={dismiss}
         >
-          {panel}
+          <ColorPickerPopover
+            variant="outline"
+            value={color}
+            onChange={onColorChange}
+            onNoFill={
+              onNoOutline ??
+              (() => {
+                onColorChange("transparent");
+              })
+            }
+            noFillLabel={L.noOutline}
+            labels={labels}
+          />
+          <ul className="delpi-ui-shape-menu__submenus">
+            {onStrokeWidthChange ? (
+              <SubmenuItem
+                label={L.thickness}
+                open={submenu === "thickness"}
+                onToggle={() => setSubmenu((prev) => (prev === "thickness" ? null : "thickness"))}
+              >
+                <div className="delpi-ui-shape-outline__width-grid">
+                  {WIDTH_PRESETS.filter((w) => w >= minWidth && w <= maxWidth).map((width) => (
+                    <button
+                      key={width}
+                      type="button"
+                      className={
+                        strokeWidth === width
+                          ? "delpi-ui-shape-outline__width delpi-ui-shape-outline__width--active"
+                          : "delpi-ui-shape-outline__width"
+                      }
+                      onClick={() => onStrokeWidthChange(width)}
+                    >
+                      {width} pt
+                    </button>
+                  ))}
+                  <label className="delpi-ui-shape-outline__width-custom">
+                    <input
+                      type="number"
+                      min={minWidth}
+                      max={maxWidth}
+                      value={strokeWidth}
+                      aria-label={L.thickness}
+                      onChange={(event) => onStrokeWidthChange(Number(event.target.value) || minWidth)}
+                    />
+                  </label>
+                </div>
+              </SubmenuItem>
+            ) : null}
+            {onDashed ? (
+              <li>
+                <button type="button" className="delpi-ui-shape-menu__submenu-action" onClick={onDashed}>
+                  {L.dashed}
+                </button>
+              </li>
+            ) : null}
+            {onLineStyle ? (
+              <li>
+                <button type="button" className="delpi-ui-shape-menu__submenu-action" onClick={onLineStyle}>
+                  {L.lineStyle}
+                </button>
+              </li>
+            ) : null}
+            {onArrows ? (
+              <li>
+                <button type="button" className="delpi-ui-shape-menu__submenu-action" onClick={onArrows}>
+                  {L.arrows}
+                </button>
+              </li>
+            ) : null}
+          </ul>
         </AnchoredPanelPortal>
       ) : null}
     </div>

@@ -62,15 +62,7 @@ function InsertCatalogPortal({
   onDismiss: () => void;
   children: React.ReactNode;
 }) {
-  const flattenNested = useRibbonSectionPopoverSurface();
-  if (!open) return null;
-  if (flattenNested) {
-    return (
-      <div className={`${className} ${className}--inline`} role="menu" aria-label={ariaLabel}>
-        {children}
-      </div>
-    );
-  }
+  const inSectionPopover = useRibbonSectionPopoverSurface();
   return (
     <AnchoredPanelPortal
       open={open}
@@ -81,6 +73,7 @@ function InsertCatalogPortal({
       className={className}
       role="menu"
       aria-label={ariaLabel}
+      exclusive={!inSectionPopover}
       onDismiss={onDismiss}
     >
       {children}

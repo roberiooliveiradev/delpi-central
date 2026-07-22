@@ -201,7 +201,7 @@ function ChartLayoutBandOrInline({
 }: {
   ctrl: NonNullable<ReturnType<typeof useChartDesignControls>>;
 }) {
-  const flattenNested = useRibbonSectionPopoverSurface();
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
   const addElementMenu = (
     <ChartAddElementMenu
@@ -232,15 +232,6 @@ function ChartLayoutBandOrInline({
     </div>
   );
 
-  if (flattenNested) {
-    return (
-      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--stack">
-        <div className="td-chart-add-element-portal td-chart-add-element-portal--inline">{addElementMenu}</div>
-        <div className="td-chart-quick-layout-portal td-chart-quick-layout-portal--inline">{quickLayout}</div>
-      </div>
-    );
-  }
-
   return (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
       <div ref={ctrl.addElementAnchorRef} className="td-composer__dropdown">
@@ -264,6 +255,7 @@ function ChartLayoutBandOrInline({
             className="td-chart-add-element-portal"
             role="menu"
             aria-label="Adicionar elemento de gráfico"
+            exclusive={!inSectionPopover}
             onDismiss={() => ctrl.setAddElementOpen(false)}
           >
             <div>{addElementMenu}</div>
@@ -292,6 +284,7 @@ function ChartLayoutBandOrInline({
             className="td-chart-quick-layout-portal"
             role="menu"
             aria-label="Layout rápido"
+            exclusive={!inSectionPopover}
             onDismiss={() => ctrl.setLayoutOpen(false)}
           >
             {quickLayout}
@@ -355,7 +348,7 @@ function ChartStylesBandOrInline({
 }: {
   ctrl: NonNullable<ReturnType<typeof useChartDesignControls>>;
 }) {
-  const flattenNested = useRibbonSectionPopoverSurface();
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
   const colorsMenu = (
     <div className="td-chart-float__popover td-chart-float__popover--style">
@@ -368,10 +361,6 @@ function ChartStylesBandOrInline({
       />
     </div>
   );
-
-  if (flattenNested) {
-    return <div className="td-chart-colors-portal td-chart-colors-portal--inline">{colorsMenu}</div>;
-  }
 
   return (
     <div ref={ctrl.colorsAnchorRef} className="td-composer__dropdown">
@@ -395,6 +384,7 @@ function ChartStylesBandOrInline({
           className="td-chart-colors-portal"
           role="menu"
           aria-label="Alterar cores e estilos"
+          exclusive={!inSectionPopover}
           onDismiss={() => ctrl.setColorsOpen(false)}
         >
           {colorsMenu}

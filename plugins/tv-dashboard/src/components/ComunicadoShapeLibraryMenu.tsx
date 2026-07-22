@@ -24,10 +24,25 @@ type Props = {
   onDismiss: () => void;
 };
 
-function ShapeLibraryBody({ onSelect }: { onSelect: (kind: ComunicadoShapeKind) => void }) {
+export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismiss }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const inSectionPopover = useRibbonSectionPopoverSurface();
   const recent = readRecentComunicadoShapes();
+
   return (
-    <>
+    <AnchoredPanelPortal
+      open={open}
+      anchorRef={anchorRef}
+      panelRef={panelRef}
+      variant="bare"
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+      className="td-shape-library td-shape-library--portal"
+      role="menu"
+      aria-label="Biblioteca de formas"
+      density="compact"
+      exclusive={!inSectionPopover}
+      onDismiss={onDismiss}
+    >
       {recent.length ? (
         <section className="td-shape-library__section">
           <h4 className="td-shape-library__title">Usadas recentemente</h4>
@@ -49,38 +64,6 @@ function ShapeLibraryBody({ onSelect }: { onSelect: (kind: ComunicadoShapeKind) 
           </div>
         </section>
       ))}
-    </>
-  );
-}
-
-export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismiss }: Props) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const flattenNested = useRibbonSectionPopoverSurface();
-
-  if (!open) return null;
-
-  if (flattenNested) {
-    return (
-      <div className="td-shape-library td-shape-library--inline" role="menu" aria-label="Biblioteca de formas">
-        <ShapeLibraryBody onSelect={onSelect} />
-      </div>
-    );
-  }
-
-  return (
-    <AnchoredPanelPortal
-      open={open}
-      anchorRef={anchorRef}
-      panelRef={panelRef}
-      variant="bare"
-      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-      className="td-shape-library td-shape-library--portal"
-      role="menu"
-      aria-label="Biblioteca de formas"
-      density="compact"
-      onDismiss={onDismiss}
-    >
-      <ShapeLibraryBody onSelect={onSelect} />
     </AnchoredPanelPortal>
   );
 }

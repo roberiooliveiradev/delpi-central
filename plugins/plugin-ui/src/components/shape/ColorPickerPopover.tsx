@@ -284,30 +284,6 @@ export function ColorPickerPopoverTrigger({
 
   const previewColor = value && cssToColorValue(value).alpha > 0 ? value : "transparent";
 
-  const popover = (
-    <ColorPickerPopover
-      {...popoverProps}
-      className={className}
-      value={value}
-      onChange={(color) => {
-        onChange(color);
-      }}
-    />
-  );
-
-  if (inSectionPopover) {
-    return (
-      <div
-        className={["delpi-ui-color-picker-trigger", "delpi-ui-color-picker-trigger--inline", triggerClassName]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <span className="delpi-ui-color-picker-trigger__label">{triggerLabel}</span>
-        {popover}
-      </div>
-    );
-  }
-
   return (
     <div
       className={["delpi-ui-color-picker-trigger", triggerClassName].filter(Boolean).join(" ")}
@@ -336,9 +312,17 @@ export function ColorPickerPopoverTrigger({
           className="delpi-ui-color-picker-trigger__panel--portal"
           role="dialog"
           aria-label={triggerLabel}
+          exclusive={!inSectionPopover}
           onDismiss={dismiss}
         >
-          {popover}
+          <ColorPickerPopover
+            {...popoverProps}
+            className={className}
+            value={value}
+            onChange={(color) => {
+              onChange(color);
+            }}
+          />
         </AnchoredPanelPortal>
       ) : null}
     </div>
@@ -372,61 +356,9 @@ export function ShapeFillMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const inline = useRibbonSectionPopoverSurface();
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
   const previewColor = value && cssToColorValue(value).alpha > 0 ? value : "transparent";
-
-  const panel = (
-    <>
-      <ColorPickerPopover
-        variant="fill"
-        value={value}
-        onChange={(color) => {
-          onChange(color);
-        }}
-        onNoFill={
-          onNoFill ??
-          (() => {
-            onChange("transparent");
-          })
-        }
-        onEyedropper={onEyedropper}
-        labels={labels}
-      />
-      <ul className="delpi-ui-shape-menu__extras">
-        {onImage ? (
-          <li>
-            <button type="button" className="delpi-ui-shape-menu__extra" onClick={onImage}>
-              <Image size={16} aria-hidden="true" />
-              {L.image}
-            </button>
-          </li>
-        ) : null}
-        {onGradient ? (
-          <li>
-            <button type="button" className="delpi-ui-shape-menu__extra" onClick={onGradient}>
-              {L.gradient}
-            </button>
-          </li>
-        ) : null}
-        {onTexture ? (
-          <li>
-            <button type="button" className="delpi-ui-shape-menu__extra" onClick={onTexture}>
-              {L.texture}
-            </button>
-          </li>
-        ) : null}
-      </ul>
-    </>
-  );
-
-  if (inline) {
-    return (
-      <div className="delpi-ui-shape-menu delpi-ui-shape-menu--inline" aria-label={fillLabel ?? L.fill}>
-        {panel}
-      </div>
-    );
-  }
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -453,9 +385,48 @@ export function ShapeFillMenu({
           anchorRef={rootRef}
           panelRef={panelRef}
           role="menu"
+          exclusive={!inSectionPopover}
           onDismiss={() => setOpen(false)}
         >
-          {panel}
+          <ColorPickerPopover
+            variant="fill"
+            value={value}
+            onChange={(color) => {
+              onChange(color);
+            }}
+            onNoFill={
+              onNoFill ??
+              (() => {
+                onChange("transparent");
+              })
+            }
+            onEyedropper={onEyedropper}
+            labels={labels}
+          />
+          <ul className="delpi-ui-shape-menu__extras">
+            {onImage ? (
+              <li>
+                <button type="button" className="delpi-ui-shape-menu__extra" onClick={onImage}>
+                  <Image size={16} aria-hidden="true" />
+                  {L.image}
+                </button>
+              </li>
+            ) : null}
+            {onGradient ? (
+              <li>
+                <button type="button" className="delpi-ui-shape-menu__extra" onClick={onGradient}>
+                  {L.gradient}
+                </button>
+              </li>
+            ) : null}
+            {onTexture ? (
+              <li>
+                <button type="button" className="delpi-ui-shape-menu__extra" onClick={onTexture}>
+                  {L.texture}
+                </button>
+              </li>
+            ) : null}
+          </ul>
         </AnchoredPanelPortal>
       ) : null}
     </div>

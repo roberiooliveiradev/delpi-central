@@ -56,7 +56,7 @@ export function ShapeShadowMenu({
   const [layerIndex, setLayerIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const inline = useRibbonSectionPopoverSurface();
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
   const dismiss = () => {
     setOpen(false);
@@ -125,7 +125,7 @@ export function ShapeShadowMenu({
     },
   ];
 
-  const showColorPanel = inline || colorOpen;
+  const showColorPanel = colorOpen;
 
   const panel = (
     <>
@@ -314,17 +314,6 @@ export function ShapeShadowMenu({
     </>
   );
 
-  if (inline) {
-    return (
-      <div
-        className="delpi-ui-shape-menu delpi-ui-shape-menu--inline delpi-ui-shape-menu__panel--shadow"
-        aria-label={shadowLabel ?? L.shadow}
-      >
-        {panel}
-      </div>
-    );
-  }
-
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
       <button
@@ -347,6 +336,7 @@ export function ShapeShadowMenu({
           panelRef={panelRef}
           className="delpi-ui-shape-menu__panel--shadow"
           role="menu"
+          exclusive={!inSectionPopover}
           onDismiss={dismiss}
         >
           {panel}

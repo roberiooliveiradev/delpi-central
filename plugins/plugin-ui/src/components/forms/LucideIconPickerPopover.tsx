@@ -58,7 +58,7 @@ export function LucideIconPickerPopover({
   ariaLabel,
 }: LucideIconPickerPopoverProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const flattenNested = useRibbonSectionPopoverSurface();
+  const inSectionPopover = useRibbonSectionPopoverSurface();
 
   if (!open) return null;
 
@@ -76,26 +76,8 @@ export function LucideIconPickerPopover({
     showClear,
     className: pickerClassName,
     style,
-    embedded: flattenNested,
+    embedded: false,
   };
-
-  if (flattenNested) {
-    return (
-      <div
-        className={[
-          "delpi-ui-lucide-icon-picker-popover",
-          "delpi-ui-lucide-icon-picker-popover--inline",
-          className,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        role="dialog"
-        aria-label={ariaLabel ?? title ?? "Ícones"}
-      >
-        <LucideIconPicker {...pickerProps} />
-      </div>
-    );
-  }
 
   return (
     <AnchoredPanelPortal
@@ -107,6 +89,7 @@ export function LucideIconPickerPopover({
       preferredPlacement={preferredPlacement}
       portalScopeClassName={portalScopeClassName}
       className={["delpi-ui-lucide-icon-picker-popover", className].filter(Boolean).join(" ")}
+      exclusive={!inSectionPopover}
       onDismiss={dismiss}
     >
       <LucideIconPicker {...pickerProps} />

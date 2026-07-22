@@ -1,6 +1,7 @@
 import { ChevronRight, Sparkles } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 
+import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceContext";
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 
 import { mergeShapeColorLabels } from "./shapeLabels";
@@ -35,6 +36,7 @@ function defaultEffectItems(L: ReturnType<typeof mergeShapeColorLabels>): ShapeE
 export function ShapeEffectsMenu({ items, onSelect, labels }: ShapeEffectsMenuProps) {
   const L = mergeShapeColorLabels(labels);
   const resolvedItems = items ?? defaultEffectItems(L);
+  const inSectionPopover = useRibbonSectionPopoverSurface();
   const [open, setOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -67,6 +69,7 @@ export function ShapeEffectsMenu({ items, onSelect, labels }: ShapeEffectsMenuPr
           panelRef={panelRef}
           className="delpi-ui-shape-menu__panel--narrow"
           role="menu"
+          exclusive={!inSectionPopover}
           onDismiss={dismiss}
         >
           <ul className="delpi-ui-shape-effects__list">
