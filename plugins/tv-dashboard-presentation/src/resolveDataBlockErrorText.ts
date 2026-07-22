@@ -7,16 +7,27 @@ const GENERIC_UNAVAILABLE =
   /dados indispon[ií]veis|fonte de dados indispon[ií]vel|indicador indispon[ií]vel/i;
 
 export type DataResolvedErrorFields = {
-  error?: string | null;
-  detail?: string | null;
+  error?: unknown;
+  detail?: unknown;
   statusCode?: number | null;
 };
+
+function asTrimmedText(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (value == null) return "";
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (typeof value === "object" && "message" in value) {
+    const message = (value as { message: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message.trim();
+  }
+  return "";
+}
 
 export function resolveDataBlockErrorText(
   resolved?: DataResolvedErrorFields | null,
 ): string | null {
-  const error = typeof resolved?.error === "string" ? resolved.error.trim() : "";
-  const detail = typeof resolved?.detail === "string" ? resolved.detail.trim() : "";
+  const error = asTrimmedText(resolved?.error);
+  const detail = asTrimmedText(resolved?.detail);
 
   if (error && detail && error !== detail && GENERIC_UNAVAILABLE.test(error)) {
     return `${error} ${detail}`;

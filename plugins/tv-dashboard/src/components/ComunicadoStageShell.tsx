@@ -277,8 +277,9 @@ function ComunicadoStageStatusBar({ panActive }: { panActive: boolean }) {
           <span
             className="td-stage-status-badge td-stage-status-badge--error"
             title={dataPreviewError}
+            role="alert"
           >
-            Erro no preview de dados
+            {dataPreviewError}
           </span>
         ) : null}
         {!hasMessages && !showLoadingProgress ? (

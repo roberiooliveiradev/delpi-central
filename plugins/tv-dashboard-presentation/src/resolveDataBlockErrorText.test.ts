@@ -25,4 +25,10 @@ describe("resolveDataBlockErrorText", () => {
   it("retorna null sem campos", () => {
     expect(resolveDataBlockErrorText({})).toBeNull();
   });
+
+  it("aceita error como objeto com message", () => {
+    expect(resolveDataBlockErrorText({ error: { message: "Falha na filial" } })).toBe(
+      "Falha na filial",
+    );
+  });
 });

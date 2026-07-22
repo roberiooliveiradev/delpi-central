@@ -1718,6 +1718,10 @@ body.td-composer--marqueeing *{
   color: #b91c1c;
   background: color-mix(in srgb, #ef4444 12%, var(--td-surface, #fff));
   border-color: color-mix(in srgb, #ef4444 40%, transparent);
+  max-width: min(520px, 48vw);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .dashboard-tv-dashboard .td-stage-status-badge--busy{
   opacity: 0.75;

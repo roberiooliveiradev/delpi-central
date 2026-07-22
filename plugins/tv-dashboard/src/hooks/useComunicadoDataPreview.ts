@@ -5,6 +5,7 @@ import {
   isFetchableDataBlockType,
   mergeComunicadoDataPages,
   resolveComunicadoDataPageState,
+  resolveDataBlockErrorText,
   resolveInputRefreshSourceIds,
   resolvePreviewRefreshSourceIds,
   serializeComunicadoConfig,
@@ -62,6 +63,24 @@ function hasAnyResolved(
   blocks: FetchableBlock[],
 ): boolean {
   return blocks.some((block) => map[block.id] !== undefined);
+}
+
+/** Agrega mensagens de erro soft/hard dos resolved para a barra do palco. */
+export function collectPreviewErrorMessages(
+  pairs: ReadonlyArray<readonly [string, unknown]>,
+): string | null {
+  const messages: string[] = [];
+  const seen = new Set<string>();
+  for (const [, resolved] of pairs) {
+    if (!resolved || typeof resolved !== "object") continue;
+    const text = resolveDataBlockErrorText(resolved as ComunicadoDataResolved);
+    if (!text || seen.has(text)) continue;
+    seen.add(text);
+    messages.push(text);
+  }
+  if (messages.length === 0) return null;
+  if (messages.length === 1) return messages[0]!;
+  return `${messages[0]} (+${messages.length - 1})`;
 }
 
 /**
@@ -206,7 +225,17 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
                 forceRefresh: Boolean(options.force),
               });
               const resolved = response.block?.resolved;
-              return [block.id, resolved] as const;
+              if (resolved && typeof resolved === "object") {
+                return [block.id, resolved] as const;
+              }
+              return [
+                block.id,
+                { error: "Resposta de preview sem dados resolvidos." },
+              ] as const;
+            } catch (err) {
+              const message =
+                err instanceof Error ? err.message : "Falha ao carregar dados.";
+              return [block.id, { error: message }] as const;
             } finally {
               bumpProgress();
             }
@@ -218,6 +247,7 @@ export function useComunicadoDataPreview({ playlistId, config }: Options) {
         mergeResolved(pairs);
         syncedFingerprintRef.current = fetchFingerprint;
         setStaleSourceIds((prev) => prev.filter((id) => !targetIds.has(id)));
+        setError(collectPreviewErrorMessages(pairs));
       } catch (err) {
         if (requestIdRef.current !== requestId) return;
         setError(err instanceof Error ? err.message : "Falha ao carregar dados.");

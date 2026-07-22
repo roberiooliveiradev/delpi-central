@@ -335,4 +335,75 @@ describe("useComunicadoDataPreview", () => {
     expect(result.current.resolvedByBlockId["metric-1"]?.kpi?.value).toBe(1);
     expect(result.current.resolvedByBlockId["metric-2"]?.kpi?.value).toBe(2);
   });
+
+  it("propaga erro soft do resolved para error do hook e mantém o card", async () => {
+    mockedPreview.mockResolvedValue({
+      block: {
+        resolved: {
+          error: "[403] Filial não autorizada.",
+          detail: "Filial não autorizada.",
+          kpi: { value: 0, label: "PPM" },
+        },
+      },
+    } as Awaited<ReturnType<typeof previewDataBlockV2>>);
+
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({
+        playlistId: "pl-soft-err",
+        config: configWithDataBlock,
+      }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.error).toBe("[403] Filial não autorizada.");
+    expect(result.current.resolvedByBlockId["metric-1"]?.error).toBe(
+      "[403] Filial não autorizada.",
+    );
+  });
+
+  it("falha HTTP por bloco grava resolved.error sem derrubar os demais", async () => {
+    const twoBlocks: ComunicadoConfig = {
+      blocks: [
+        {
+          id: "metric-1",
+          type: "data_metric",
+          frame: { x: 0, y: 0, w: 20, h: 20 },
+          dataBinding: { operationId: "get_oee", params: { periodDays: 1 }, refreshSec: 30 },
+        },
+        {
+          id: "metric-2",
+          type: "data_metric",
+          frame: { x: 20, y: 0, w: 20, h: 20 },
+          dataBinding: { operationId: "get_otd", params: { periodDays: 1 }, refreshSec: 30 },
+        },
+      ],
+    };
+
+    mockedPreview.mockImplementation(async (payload) => {
+      const id = (payload.block as { id?: string }).id;
+      if (id === "metric-1") {
+        throw new Error("Unauthorized");
+      }
+      return {
+        block: { resolved: { kpi: { value: 88, label: "OK" } } },
+      } as Awaited<ReturnType<typeof previewDataBlockV2>>;
+    });
+
+    const { result } = renderHook(() =>
+      useComunicadoDataPreview({ playlistId: "pl-partial", config: twoBlocks }),
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.resolvedByBlockId["metric-1"]?.error).toBe("Unauthorized");
+    expect(result.current.resolvedByBlockId["metric-2"]?.kpi?.value).toBe(88);
+    expect(result.current.error).toBe("Unauthorized");
+  });
 });

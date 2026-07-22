@@ -32,14 +32,37 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
+/** Extrai mensagem legível de envelope TV (`message`) ou FastAPI (`detail`). */
+export function resolveHttpErrorMessage(body: unknown, status: number): string {
+  const fallback = `Erro HTTP ${status}`;
+  if (!body || typeof body !== "object") return fallback;
+  const record = body as Record<string, unknown>;
+  const message = record.message;
+  if (typeof message === "string" && message.trim()) return message.trim();
+  const detail = record.detail;
+  if (typeof detail === "string" && detail.trim()) return detail.trim();
+  if (Array.isArray(detail) && detail.length > 0) {
+    const parts = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "msg" in item) {
+          return String((item as { msg: unknown }).msg);
+        }
+        return "";
+      })
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length) return parts.join("; ");
+  }
+  return fallback;
+}
+
 async function parseJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let message = `Erro HTTP ${response.status}`;
     try {
       const body = await response.json();
-      if (body && typeof body === "object" && "message" in body) {
-        message = String((body as { message: string }).message);
-      }
+      message = resolveHttpErrorMessage(body, response.status);
     } catch {
       // noop
     }
