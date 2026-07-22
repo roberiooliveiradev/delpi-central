@@ -1,5 +1,59 @@
-import { SectionHintLabel } from "@delpi/plugin-ui/index";
-import type { ReactNode } from "react";
+import { RibbonGroup, delpiUiClass } from "@delpi/plugin-ui/index";
+import type { LucideIcon } from "lucide-react";
+import { useRef, type ReactNode } from "react";
+
+/** Dual-class: BEM legado da TV + canônico do kit (overflow / popover). */
+export function deckRibbonGroupClassNames() {
+  const pair = (local: string, canonical: string) => delpiUiClass(local, canonical);
+  return {
+    root: pair("td-deck-ribbon__group", "delpi-ui-ribbon-group"),
+    rootWide: pair("td-deck-ribbon__group--wide", "delpi-ui-ribbon-group--wide"),
+    rootCollapsed: pair("td-deck-ribbon__group--collapsed", "delpi-ui-ribbon-group--collapsed"),
+    rootNoCaption: pair("td-deck-ribbon__group--no-caption", "delpi-ui-ribbon-group--no-caption"),
+    rootCaptionAbove: pair(
+      "td-deck-ribbon__group--caption-above",
+      "delpi-ui-ribbon-group--caption-above",
+    ),
+    body: pair("td-deck-ribbon__body", "delpi-ui-ribbon-group__body"),
+    caption: pair("td-deck-ribbon__caption", "delpi-ui-ribbon-group__caption"),
+    captionAbove: pair("td-deck-ribbon__caption--above", "delpi-ui-ribbon-group__caption--above"),
+    captionText: pair("td-deck-ribbon__caption-text", "delpi-ui-ribbon-group__caption-text"),
+    collapseTrigger: pair(
+      "td-deck-ribbon__collapse-trigger",
+      "delpi-ui-ribbon-group__collapse-trigger",
+    ),
+    collapseIcon: pair("td-deck-ribbon__collapse-icon", "delpi-ui-ribbon-group__collapse-icon"),
+    collapseLabel: pair("td-deck-ribbon__collapse-label", "delpi-ui-ribbon-group__collapse-label"),
+    collapseChevron: pair(
+      "td-deck-ribbon__collapse-chevron",
+      "delpi-ui-ribbon-group__collapse-chevron",
+    ),
+    popover: pair("td-deck-ribbon__group-popover", "delpi-ui-ribbon-group__popover"),
+    popoverBody: pair("td-deck-ribbon__group-popover-body", "delpi-ui-ribbon-group__popover-body"),
+    popoverCaption: pair(
+      "td-deck-ribbon__group-popover-caption",
+      "delpi-ui-ribbon-group__popover-caption",
+    ),
+    measure: pair("td-deck-ribbon__collapse-measure", "delpi-ui-ribbon-group__measure"),
+  };
+}
+
+const DECK_GROUP_CN = deckRibbonGroupClassNames();
+
+let autoGroupSeq = 0;
+
+function useResolvedGroupId(explicit?: string): string {
+  const ref = useRef<string | null>(null);
+  if (explicit) {
+    ref.current = explicit;
+    return explicit;
+  }
+  if (ref.current == null) {
+    autoGroupSeq += 1;
+    ref.current = `deck-group-${autoGroupSeq}`;
+  }
+  return ref.current;
+}
 
 type Props = {
   label: string;
@@ -11,49 +65,37 @@ type Props = {
    * `none` — sem caption (accordion já titulou a seção).
    */
   captionPlacement?: "below" | "above" | "none";
+  /** Id estável para overflow responsivo (senão gera id único na montagem). */
+  groupId?: string;
+  order?: number;
+  collapseIcon?: LucideIcon;
   children: ReactNode;
 };
 
-/** Grupo da faixa: controles em cima, legenda embaixo. */
+/** Grupo da faixa: controles em cima, legenda embaixo — colapsa em popover via kit. */
 export function DeckRibbonGroup({
   label,
   hint,
   wide,
   captionPlacement = "below",
+  groupId,
+  order,
+  collapseIcon,
   children,
 }: Props) {
-  const caption =
-    captionPlacement === "none" ? null : (
-      <div
-        className={[
-          "td-deck-ribbon__caption",
-          captionPlacement === "above" ? "td-deck-ribbon__caption--above" : null,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        {hint ? (
-          <SectionHintLabel label={label} hint={hint} className="td-deck-ribbon__caption-text" />
-        ) : (
-          <span className="td-deck-ribbon__caption-text">{label}</span>
-        )}
-      </div>
-    );
-
+  const resolvedId = useResolvedGroupId(groupId);
   return (
-    <div
-      className={[
-        "td-deck-ribbon__group",
-        wide ? "td-deck-ribbon__group--wide" : null,
-        captionPlacement === "none" ? "td-deck-ribbon__group--no-caption" : null,
-        captionPlacement === "above" ? "td-deck-ribbon__group--caption-above" : null,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+    <RibbonGroup
+      groupId={resolvedId}
+      label={label}
+      hint={hint}
+      wide={wide}
+      captionPlacement={captionPlacement}
+      order={order}
+      collapseIcon={collapseIcon}
+      classNames={DECK_GROUP_CN}
     >
-      {captionPlacement === "above" ? caption : null}
-      <div className="td-deck-ribbon__body">{children}</div>
-      {captionPlacement === "below" ? caption : null}
-    </div>
+      {children}
+    </RibbonGroup>
   );
 }

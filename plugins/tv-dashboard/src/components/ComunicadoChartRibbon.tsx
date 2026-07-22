@@ -3,6 +3,7 @@ import {
   resolveSelectionChromeMode,
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import {
   SelectionSectionsHost,
   SelectionTypedWithTailHost,
@@ -20,24 +21,24 @@ export function ComunicadoChartRibbon() {
   });
   if (isPartSelectionChrome(selectionChrome)) {
     return (
-      <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
+      <DeckRibbonGroups className="td-deck-ribbon__groups--part">
         <SelectionSectionsHost layout="ribbon" full />
-      </div>
+      </DeckRibbonGroups>
     );
   }
 
   if (!selected || selected.type !== "chart_view") {
     return (
-      <div className="td-deck-ribbon__groups">
+      <DeckRibbonGroups>
         <p className="td-subtitle td-deck-ribbon__hint">
           Selecione um gráfico no palco para editar tipo, rótulos, eixos e tipografia.
         </p>
-      </div>
+      </DeckRibbonGroups>
     );
   }
 
   return (
-    <div className="td-deck-ribbon__groups">
+    <DeckRibbonGroups>
       <SelectionTypedWithTailHost
         layout="ribbon"
         typed={[
@@ -50,6 +51,6 @@ export function ComunicadoChartRibbon() {
           "chartSeries",
         ]}
       />
-    </div>
+    </DeckRibbonGroups>
   );
 }

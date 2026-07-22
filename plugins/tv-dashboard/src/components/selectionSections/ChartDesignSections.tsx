@@ -63,7 +63,12 @@ function wrapPane(
     );
   }
   return (
-    <DeckRibbonGroup label={title} hint={hint} wide={wide}>
+    <DeckRibbonGroup
+      groupId={`chart-${title.toLowerCase().replace(/\s+/g, "-")}`}
+      label={title}
+      hint={hint}
+      wide={wide}
+    >
       {body}
     </DeckRibbonGroup>
   );

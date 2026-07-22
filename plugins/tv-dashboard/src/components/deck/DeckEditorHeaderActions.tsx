@@ -78,7 +78,7 @@ export function DeckHomePlaylistChrome({
   const { openCatalog } = useKeyboardShortcutsTips();
 
   return (
-    <DeckRibbonGroup label="Programação" hint={R.playlistChrome}>
+    <DeckRibbonGroup groupId="playlist-chrome" label="Programação" hint={R.playlistChrome} collapseIcon={Eye}>
       <div className="td-deck-ribbon__playlist-chrome">
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--playlist">
           <DeckRibbonTile icon={ArrowLeft} label="Voltar" hint={H.back} onClick={onBack} />

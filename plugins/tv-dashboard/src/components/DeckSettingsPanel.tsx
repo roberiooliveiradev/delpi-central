@@ -207,7 +207,7 @@ export function DeckSettingsPanel({
   if (activeTab === "slide" && slide) {
     return (
       <>
-        <DeckRibbonGroup label="Propriedades" hint={F.slideTitle}>
+        <DeckRibbonGroup groupId="slide-properties" label="Propriedades" hint={F.slideTitle}>
           <div className="td-deck-ribbon__prop-cols">
             <DeckIconField id="td-slide-title" icon={Type} label="Título" hint={F.slideTitle}>
               <TdNativeTextField

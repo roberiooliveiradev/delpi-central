@@ -16,6 +16,8 @@ export { DeckRangeField } from "./DeckRangeField";
 export { DeckHistoryTabActions } from "./DeckHistoryTabActions";
 export { DeckRibbonLargeButton } from "./DeckRibbonLargeButton";
 export { DeckRibbonShell } from "./DeckRibbonShell";
+export { DeckRibbonGroups } from "./DeckRibbonGroups";
+export { DeckRibbonGroup } from "./DeckRibbonGroup";
 export { DeckRibbonTile } from "./DeckRibbonTile";
 export type { DeckRibbonTabId } from "./deckRibbonTabMeta";
 export {

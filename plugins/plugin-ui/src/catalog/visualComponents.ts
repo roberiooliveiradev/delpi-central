@@ -251,6 +251,17 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("shape", "ColorThemeGrid"),
   vc("shape", "ColorStandardRow"),
   vc("shape", "ColorSwatch"),
+  // ribbon (overflow responsivo)
+  vc("layout", "RibbonGroupsRow", {
+    addedAt: "2026-07-22",
+    description:
+      "Faixa de grupos com ResizeObserver; colapsa seções da direita para a esquerda em botões+popover.",
+  }),
+  vc("layout", "RibbonGroup", {
+    addedAt: "2026-07-22",
+    description:
+      "Grupo expandido (controles + caption) ou colapsado (trigger + AnchoredPanelPortal).",
+  }),
   // menu
   vc("menu", "FixedPanelPortal", {
     addedAt: "2026-07-17",

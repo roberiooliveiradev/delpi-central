@@ -4,6 +4,7 @@ import {
   resolveSelectionChromeMode,
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { ComunicadoChartRibbon } from "./ComunicadoChartRibbon";
 import { ComunicadoShapeRibbon } from "./ComunicadoShapeRibbon";
 import { ComunicadoTableDesignRibbon } from "./ComunicadoTableDesignRibbon";
@@ -36,9 +37,9 @@ export function ComunicadoElementRibbon() {
     selectionChrome.source !== "input"
   ) {
     return (
-      <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
+      <DeckRibbonGroups className="td-deck-ribbon__groups--part">
         <SelectionSectionsHost layout="ribbon" full />
-      </div>
+      </DeckRibbonGroups>
     );
   }
 

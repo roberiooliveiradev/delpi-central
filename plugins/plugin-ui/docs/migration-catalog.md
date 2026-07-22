@@ -235,6 +235,7 @@ Regressão pós-Onda 3 (PA, scrap, CR…): filtros em 1 coluna, KPI/chart/tabela
 | `inspecoes-processo` KpiCard | ✅ `createDashboardKpiCard({ prefix: "ip" })` + shell `.delpi-ui-kpi-card` |
 | SI `LoadingActivityBadge` | ✅ kit plugin-ui + `loading-activity-badge.css`; `index_dep.css` legado removido |
 | TV status bar loading % | ✅ `InlineLoadingProgress` + `inline-loading-progress.css` (progresso determinado) |
+| TV ribbon overflow | ✅ `RibbonGroupsRow` / `RibbonGroup` + `DeckRibbonGroups` (seções → popover) |
 
 ### Onda 1 — CSS estrutural DataTable / Detail / Pagination (jul/2026)
 

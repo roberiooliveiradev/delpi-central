@@ -56,8 +56,14 @@ describe("ribbon table style checks layout", () => {
       /\.td-deck-ribbon--compact \.td-deck-ribbon__groups\s*\{[^}]*flex-wrap:\s*nowrap/s,
     );
     expect(css).toMatch(
+      /\.td-deck-ribbon--compact \.td-deck-ribbon__groups\s*\{[^}]*width:\s*100%/s,
+    );
+    expect(css).toMatch(
       /\.td-deck-ribbon__group-cluster\s*\{[^}]*flex-wrap:\s*nowrap/s,
     );
+    const shell = readFileSync(resolve(__dirname, "./deck/DeckRibbonGroups.tsx"), "utf8");
+    expect(shell).toContain("RibbonGroupsRow");
+    expect(shell).toContain("delpi-ui-ribbon-groups");
   });
 
   it("abas e tiles da ribbon têm transição suave (e respeitam reduced-motion)", () => {

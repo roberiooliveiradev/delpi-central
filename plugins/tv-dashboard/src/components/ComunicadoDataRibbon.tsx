@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { SelectedDataSidePanel } from "./SelectedDataSidePanel";
 
 /**
@@ -25,7 +26,7 @@ export function ComunicadoDataRibbon() {
   }, [selected, setDataPanelIntent, setDataPanelOpen, setSelectionPanelTab]);
 
   return (
-    <div className="td-deck-ribbon__groups td-deck-ribbon__groups--inspector">
+    <DeckRibbonGroups className="td-deck-ribbon__groups--inspector" overflowEnabled={false}>
       <SelectedDataSidePanel
         layout="ribbon"
         onInserted={() => {
@@ -34,6 +35,6 @@ export function ComunicadoDataRibbon() {
         }}
         onOpenCatalog={openDataCatalog}
       />
-    </div>
+    </DeckRibbonGroups>
   );
 }

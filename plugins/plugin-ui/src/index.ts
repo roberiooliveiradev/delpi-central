@@ -17,6 +17,7 @@ export * from "./components/shape";
 export * from "./components/menu";
 export * from "./components/signature";
 export * from "./components/rich-text";
+export * from "./components/ribbon";
 export * from "./components/directory";
 export * from "./components/document";
 export * from "./theme";

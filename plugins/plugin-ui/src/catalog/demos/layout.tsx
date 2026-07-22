@@ -1,8 +1,14 @@
-import { Activity } from "lucide-react";
+import { Activity, Eye, Maximize2, Type } from "lucide-react";
 import { useState } from "react";
 
 import { PUC_DASHBOARD_ROOT, PUC_PREFIX } from "../../app/bemPrefix";
 import { ActionButton, BackLink, IconButton } from "../../components/actions";
+import {
+  RibbonGroup,
+  ribbonGroupBemClasses,
+  RibbonGroupsRow,
+  ribbonGroupsRowBemClasses,
+} from "../../components/ribbon";
 import {
   ChartCard,
   chartCardBemClasses,
@@ -42,6 +48,8 @@ import {
 } from "../../components/layout";
 import type { CatalogEntryDraft } from "../types";
 
+const ribbonGroupsCn = ribbonGroupsRowBemClasses(PUC_PREFIX);
+const ribbonGroupCn = ribbonGroupBemClasses(PUC_PREFIX);
 const pageHeaderCn = pageHeaderBrandBemClasses(PUC_PREFIX);
 const navCardCn = navigationCardBemClasses(PUC_PREFIX);
 const panelCn = panelCardBemClasses(PUC_PREFIX);
@@ -59,6 +67,86 @@ const formActionsCn = formActionsBemClasses(PUC_PREFIX);
 const sectionBlockCn = sectionBlockBemClasses(PUC_PREFIX);
 
 export const layoutCatalogEntries: CatalogEntryDraft[] = [
+  {
+    id: "layout.RibbonGroupsRow",
+    family: "layout",
+    exportName: "RibbonGroupsRow",
+    title: "RibbonGroupsRow",
+    description: "Faixa responsiva: ao faltar espaço, grupos da direita viram botão + popover.",
+    propsSummary: ["gap", "overflowEnabled", "portalScopeClassName", "children"],
+    demos: [
+      {
+        id: "default",
+        label: "Overflow (estreite a janela)",
+        render: () => (
+          <div style={{ width: "100%", maxWidth: 420, border: "1px dashed var(--border, #ccc)" }}>
+            <RibbonGroupsRow
+              classNames={ribbonGroupsCn}
+              portalScopeClassName={PUC_DASHBOARD_ROOT}
+              gap={8}
+            >
+              <RibbonGroup
+                groupId="demo-zoom"
+                label="Zoom"
+                order={0}
+                collapseIcon={Maximize2}
+                classNames={ribbonGroupCn}
+              >
+                <button type="button">−</button>
+                <span>60%</span>
+                <button type="button">+</button>
+                <button type="button">Ajustar</button>
+              </RibbonGroup>
+              <RibbonGroup
+                groupId="demo-show"
+                label="Mostrar"
+                order={1}
+                collapseIcon={Eye}
+                classNames={ribbonGroupCn}
+              >
+                <button type="button">Réguas</button>
+                <button type="button">Grade</button>
+                <button type="button">Guias</button>
+                <button type="button">Na grade</button>
+                <button type="button">Objetos</button>
+              </RibbonGroup>
+              <RibbonGroup
+                groupId="demo-text"
+                label="Texto"
+                order={2}
+                collapseIcon={Type}
+                classNames={ribbonGroupCn}
+              >
+                <button type="button">Título</button>
+                <button type="button">Corpo</button>
+              </RibbonGroup>
+            </RibbonGroupsRow>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: "layout.RibbonGroup",
+    family: "layout",
+    exportName: "RibbonGroup",
+    title: "RibbonGroup",
+    description: "Grupo de ribbon com caption; colapsa via RibbonGroupsRow.",
+    propsSummary: ["groupId", "label", "collapseIcon", "order", "children"],
+    demos: [
+      {
+        id: "default",
+        label: "Expandido",
+        render: () => (
+          <RibbonGroupsRow classNames={ribbonGroupsCn} overflowEnabled={false}>
+            <RibbonGroup groupId="solo" label="Zoom" classNames={ribbonGroupCn}>
+              <button type="button">Ajustar</button>
+            </RibbonGroup>
+          </RibbonGroupsRow>
+        ),
+      },
+    ],
+  },
   {
     id: "layout.ActionButton",
     family: "layout",

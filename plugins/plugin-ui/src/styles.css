@@ -26,6 +26,7 @@
 @import "./styles/loading-activity.css";
 @import "./styles/loading-activity-badge.css";
 @import "./styles/inline-loading-progress.css";
+@import "./styles/ribbon-overflow.css";
 @import "./styles/state-box.css";
 @import "./styles/dashboard-filters.css";
 @import "./styles/export-actions.css";

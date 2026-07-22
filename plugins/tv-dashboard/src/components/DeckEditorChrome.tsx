@@ -10,6 +10,7 @@ import {
 } from "../utils/normalizeSelectionRibbonTab";
 import { DECK_TAB_KEYTIPS } from "../utils/deckKeyTips";
 import { useOptionalComunicadoEditor } from "./comunicadoEditorContext";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { DeckKeyTip } from "./DeckKeyTip";
 
 import type { BranchScope, NativeScreenCatalogItem, Playlist, Slide } from "../api/tvDashboardApi";
@@ -309,7 +310,7 @@ export function DeckEditorChrome({
                 <ComunicadoRibbonContent activeTab={activeTab} labels={adminLabels} />
               ) : null}
               {activeTab === "slide" || activeTab === "playlist" ? (
-                <div className="td-deck-ribbon__groups">
+                <DeckRibbonGroups>
                   {activeTab === "playlist" && playlistChrome ? (
                     <DeckHomePlaylistChrome {...playlistChrome} />
                   ) : null}
@@ -338,7 +339,7 @@ export function DeckEditorChrome({
                     onSavePlaylistSettings={onSavePlaylistSettings}
                     onSaveSlide={onSaveSlide}
                   />
-                </div>
+                </DeckRibbonGroups>
               ) : null}
             </DeckRibbonShell>
           </TabPanelTransition>

@@ -1,5 +1,20 @@
 import { useRef, useState } from "react";
-import { BarChart3, Braces, Database, Filter, Gauge, Grid3X3, Heading, Image as ImageIcon, Shapes, Sparkles, Table2, Text, Video } from "lucide-react";
+import {
+  BarChart3,
+  Braces,
+  Database,
+  Filter,
+  Gauge,
+  Grid3X3,
+  Heading,
+  Image as ImageIcon,
+  Shapes,
+  Sparkles,
+  Table2,
+  Text,
+  Type,
+  Video,
+} from "lucide-react";
 import {
   AnchoredPanelPortal,
   ChartTypeCatalogPanel,
@@ -22,6 +37,7 @@ import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import { DECK_INSERT_ACTION_KEYTIPS } from "../utils/deckKeyTips";
 import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
@@ -80,8 +96,14 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
   }
 
   return (
-    <div className="td-deck-ribbon__groups">
-      <DeckRibbonGroup label="Texto" hint={H.insertTextGroup ?? H.insert}>
+    <DeckRibbonGroups>
+      <DeckRibbonGroup
+        groupId="insert-text"
+        label="Texto"
+        hint={H.insertTextGroup ?? H.insert}
+        order={0}
+        collapseIcon={Type}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={Heading}
@@ -100,7 +122,13 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Mídia" hint={H.insertMediaGroup ?? H.insert}>
+      <DeckRibbonGroup
+        groupId="insert-media"
+        label="Mídia"
+        hint={H.insertMediaGroup ?? H.insert}
+        order={1}
+        collapseIcon={ImageIcon}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={ImageIcon}
@@ -119,7 +147,13 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Ilustrações" hint={H.insertIllustrationsGroup ?? H.insertShape}>
+      <DeckRibbonGroup
+        groupId="insert-illustrations"
+        label="Ilustrações"
+        hint={H.insertIllustrationsGroup ?? H.insertShape}
+        order={2}
+        collapseIcon={Shapes}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <div ref={shapeAnchorRef} className="td-composer__dropdown">
             <DeckRibbonTile
@@ -188,7 +222,13 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Dados" hint={H.insertDataGroup ?? H.insertIndicator}>
+      <DeckRibbonGroup
+        groupId="insert-data"
+        label="Dados"
+        hint={H.insertDataGroup ?? H.insertIndicator}
+        order={3}
+        collapseIcon={Database}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={Database}
@@ -278,6 +318,6 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
           </div>
         </div>
       </DeckRibbonGroup>
-    </div>
+    </DeckRibbonGroups>
   );
 }

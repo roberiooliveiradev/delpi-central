@@ -34,7 +34,7 @@ export function SlideCurrentRibbon({
   if (!selectedSlide) return null;
 
   return (
-    <DeckRibbonGroup label="Tela atual" hint={H.currentSlide}>
+    <DeckRibbonGroup groupId="slide-current" label="Tela atual" hint={H.currentSlide} collapseIcon={Eye}>
       <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
         <DeckRibbonTile
           icon={selectedSlide.isActive ? Eye : EyeOff}

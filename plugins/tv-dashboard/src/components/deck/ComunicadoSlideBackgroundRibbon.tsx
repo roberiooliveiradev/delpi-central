@@ -27,7 +27,11 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
 
   return (
     <>
-      <DeckRibbonGroup label={labels.comunicadoBackground ?? "Fundo"} hint={E.backgroundColor}>
+      <DeckRibbonGroup
+        groupId="slide-background"
+        label={labels.comunicadoBackground ?? "Fundo"}
+        hint={E.backgroundColor}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--color-pickers">
           <TvRibbonColorPicker
             hint={E.backgroundColor}
@@ -64,7 +68,11 @@ export function ComunicadoSlideBackgroundRibbon({ labels = {} }: { labels?: Labe
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Presets" hint="Gradientes prontos para o fundo do slide.">
+      <DeckRibbonGroup
+        groupId="slide-presets"
+        label="Presets"
+        hint="Gradientes prontos para o fundo do slide."
+      >
         <div className="td-deck-ribbon__controls td-deck-ribbon__controls--presets">
           {COMUNICADO_BACKGROUND_GRADIENT_PRESETS.map((preset) => (
             <button

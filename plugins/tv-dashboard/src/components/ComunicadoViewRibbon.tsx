@@ -2,6 +2,7 @@ import { HintAction, ComboboxNumberControl } from "@delpi/plugin-ui/index";
 import {
   AlignHorizontalSpaceAround,
   Crosshair,
+  Eye,
   Focus,
   Grid3x3,
   Keyboard,
@@ -24,6 +25,7 @@ import {
 import { DECK_VIEW_ACTION_KEYTIPS } from "../utils/deckKeyTips";
 import { clampStageZoom, STAGE_ZOOM_MAX, STAGE_ZOOM_MIN } from "../utils/stageViewport";
 import { DeckRibbonGroup } from "./deck/DeckRibbonGroup";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { ShortcutTip } from "./ShortcutTip";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
@@ -56,8 +58,14 @@ export function ComunicadoViewRibbon() {
   const gridSizeValue = clampStageGridSizePercent(stageGridSizePercent);
 
   return (
-    <div className="td-deck-ribbon__groups">
-      <DeckRibbonGroup label="Zoom" hint={V.zoom}>
+    <DeckRibbonGroups>
+      <DeckRibbonGroup
+        groupId="view-zoom"
+        label="Zoom"
+        hint={V.zoom}
+        order={0}
+        collapseIcon={Maximize2}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <ShortcutTip shortcutId="zoom-wheel" placement="bottom">
             <span className="td-shortcut-tip__cluster">
@@ -98,7 +106,13 @@ export function ComunicadoViewRibbon() {
         </div>
       </DeckRibbonGroup>
 
-      <DeckRibbonGroup label="Mostrar" hint={V.showGroup}>
+      <DeckRibbonGroup
+        groupId="view-show"
+        label="Mostrar"
+        hint={V.showGroup}
+        order={1}
+        collapseIcon={Eye}
+      >
         <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
           <DeckRibbonTile
             icon={Ruler}
@@ -170,6 +184,6 @@ export function ComunicadoViewRibbon() {
           />
         </div>
       </DeckRibbonGroup>
-    </div>
+    </DeckRibbonGroups>
   );
 }

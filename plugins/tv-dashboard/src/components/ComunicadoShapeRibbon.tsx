@@ -1,5 +1,6 @@
 import { resolveSelectedTextFormatTarget } from "../utils/selectedTextFormatTarget";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import { SelectionSectionsHost } from "./selectionSections";
 
 /**
@@ -18,17 +19,17 @@ export function ComunicadoShapeRibbon() {
 
   if (!multiSelected && !selected && textFormatTarget == null) {
     return (
-      <div className="td-deck-ribbon__groups">
+      <DeckRibbonGroups>
         <p className="td-subtitle td-deck-ribbon__hint">
           Selecione um elemento no palco para formatar texto, preenchimento, contorno e organização.
         </p>
-      </div>
+      </DeckRibbonGroups>
     );
   }
 
   return (
-    <div className="td-deck-ribbon__groups">
+    <DeckRibbonGroups>
       <SelectionSectionsHost layout="ribbon" full />
-    </div>
+    </DeckRibbonGroups>
   );
 }

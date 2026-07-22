@@ -3,6 +3,7 @@ import {
   resolveSelectionChromeMode,
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
 import {
   SelectionSectionsHost,
   SelectionTypedWithTailHost,
@@ -20,28 +21,28 @@ export function ComunicadoTableDesignRibbon() {
   });
   if (isPartSelectionChrome(selectionChrome)) {
     return (
-      <div className="td-deck-ribbon__groups td-deck-ribbon__groups--part">
+      <DeckRibbonGroups className="td-deck-ribbon__groups--part">
         <SelectionSectionsHost layout="ribbon" full />
-      </div>
+      </DeckRibbonGroups>
     );
   }
 
   if (!selected || selected.type !== "table_view") {
     return (
-      <div className="td-deck-ribbon__groups">
+      <DeckRibbonGroups>
         <p className="td-subtitle td-deck-ribbon__hint">
           Selecione uma tabela no palco para editar o design.
         </p>
-      </div>
+      </DeckRibbonGroups>
     );
   }
 
   return (
-    <div className="td-deck-ribbon__groups">
+    <DeckRibbonGroups>
       <SelectionTypedWithTailHost
         layout="ribbon"
         typed={["tableStyleOptions", "tableStyles", "tableBorders"]}
       />
-    </div>
+    </DeckRibbonGroups>
   );
 }

@@ -3802,13 +3802,14 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-deck-ribbon--compact .td-deck-ribbon__groups{
   flex-wrap: nowrap;
-  overflow-x: visible;
-  overflow-y: visible;
+  /* Overflow responsivo (plugin-ui): medir a largura do host, não crescer com o conteúdo. */
+  overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
   align-items: stretch;
-  width: max-content;
-  max-width: none;
-  min-width: 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   flex: 1 1 auto;
   height: 100%;
   min-height: 0;
