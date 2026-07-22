@@ -374,6 +374,11 @@ export function AppointmentsTables({
           defaultSortDirection={ctSortDir}
           headerActions={exportAction}
           onRowClick={(row) => onOpenCt(row.work_center)}
+          searchPlaceholder="Buscar CT ou nome…"
+          searchHint={PA_HELP_TOOLTIPS.tables.byWorkCenterSearch}
+          getSearchText={(row) =>
+            `${row.work_center} ${row.work_center_name || ""}`.toLowerCase()
+          }
           serverSort={{
             sortKey: ctSortKey,
             sortDirection: ctSortDir,

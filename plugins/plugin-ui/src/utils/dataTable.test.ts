@@ -12,6 +12,23 @@ describe("buildDataTableSearchText", () => {
     ]);
     expect(text).toBe("alpha 42");
   });
+
+  it("usa sortValue quando render devolve nó React (ex.: badge)", () => {
+    const text = buildDataTableSearchText(
+      { work_center: "CT-70", work_center_name: "INSPEÇÃO FINAL" },
+      [
+        {
+          render: () => ({ $$typeof: Symbol.for("react.element") }),
+          sortValue: (row) => row.work_center,
+        },
+        {
+          render: (row) => row.work_center_name,
+        },
+      ],
+    );
+    expect(text).toContain("ct-70");
+    expect(text).toContain("inspeção final");
+  });
 });
 
 describe("useClientPagination", () => {

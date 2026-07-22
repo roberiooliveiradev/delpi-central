@@ -54,6 +54,8 @@ export const PA_HELP_TOOLTIPS = {
       "Alterne entre resumo por centro de trabalho, lista de apontamentos e agregação por OP na mesma tabela.",
     byWorkCenter:
       "Totais agregados por centro de trabalho no período. Clique na linha para abrir o detalhe do CT. O selo “Inspeção final” marca o CT usado como referência de inspeção.",
+    byWorkCenterSearch:
+      "Filtra localmente pelo código do CT ou pelo nome do centro de trabalho.",
     appointments:
       "Lista paginada dos apontamentos individuais. Clique na linha para abrir o detalhe da OP.",
     appointmentsSearch:
