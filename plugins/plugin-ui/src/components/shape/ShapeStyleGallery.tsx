@@ -1,6 +1,7 @@
 import { Shapes } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceContext";
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 
 import { mergeShapeColorLabels } from "./shapeLabels";
@@ -156,6 +157,21 @@ export function ShapeStyleMenu({ triggerLabel = "Estilos", ...props }: ShapeStyl
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const inline = useRibbonSectionPopoverSurface();
+
+  const gallery = (
+    <ShapeStyleGallery
+      {...props}
+      onSelect={(preset) => {
+        props.onSelect(preset);
+        setOpen(false);
+      }}
+    />
+  );
+
+  if (inline) {
+    return <div className="delpi-ui-shape-menu delpi-ui-shape-menu--inline">{gallery}</div>;
+  }
 
   return (
     <div className="delpi-ui-shape-menu" ref={rootRef}>
@@ -180,13 +196,7 @@ export function ShapeStyleMenu({ triggerLabel = "Estilos", ...props }: ShapeStyl
           role="menu"
           onDismiss={() => setOpen(false)}
         >
-          <ShapeStyleGallery
-            {...props}
-            onSelect={(preset) => {
-              props.onSelect(preset);
-              setOpen(false);
-            }}
-          />
+          {gallery}
         </AnchoredPanelPortal>
       ) : null}
     </div>

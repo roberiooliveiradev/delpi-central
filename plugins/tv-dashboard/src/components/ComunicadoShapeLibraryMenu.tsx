@@ -1,5 +1,9 @@
 import { useRef } from "react";
-import { AnchoredPanelPortal, HintAction } from "@delpi/plugin-ui/index";
+import {
+  AnchoredPanelPortal,
+  HintAction,
+  useRibbonSectionPopoverSurface,
+} from "@delpi/plugin-ui/index";
 import {
   COMUNICADO_SHAPE_CATALOG_CATEGORIES,
   ComunicadoShapePreview,
@@ -20,23 +24,10 @@ type Props = {
   onDismiss: () => void;
 };
 
-export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismiss }: Props) {
-  const panelRef = useRef<HTMLDivElement>(null);
+function ShapeLibraryBody({ onSelect }: { onSelect: (kind: ComunicadoShapeKind) => void }) {
   const recent = readRecentComunicadoShapes();
-
   return (
-    <AnchoredPanelPortal
-      open={open}
-      anchorRef={anchorRef}
-      panelRef={panelRef}
-      variant="bare"
-      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
-      className="td-shape-library td-shape-library--portal"
-      role="menu"
-      aria-label="Biblioteca de formas"
-      density="compact"
-      onDismiss={onDismiss}
-    >
+    <>
       {recent.length ? (
         <section className="td-shape-library__section">
           <h4 className="td-shape-library__title">Usadas recentemente</h4>
@@ -58,6 +49,38 @@ export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismis
           </div>
         </section>
       ))}
+    </>
+  );
+}
+
+export function ComunicadoShapeLibraryMenu({ open, anchorRef, onSelect, onDismiss }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const flattenNested = useRibbonSectionPopoverSurface();
+
+  if (!open) return null;
+
+  if (flattenNested) {
+    return (
+      <div className="td-shape-library td-shape-library--inline" role="menu" aria-label="Biblioteca de formas">
+        <ShapeLibraryBody onSelect={onSelect} />
+      </div>
+    );
+  }
+
+  return (
+    <AnchoredPanelPortal
+      open={open}
+      anchorRef={anchorRef}
+      panelRef={panelRef}
+      variant="bare"
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+      className="td-shape-library td-shape-library--portal"
+      role="menu"
+      aria-label="Biblioteca de formas"
+      density="compact"
+      onDismiss={onDismiss}
+    >
+      <ShapeLibraryBody onSelect={onSelect} />
     </AnchoredPanelPortal>
   );
 }

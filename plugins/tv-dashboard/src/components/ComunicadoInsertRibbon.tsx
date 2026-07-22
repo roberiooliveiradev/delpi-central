@@ -20,6 +20,7 @@ import {
   ChartTypeCatalogPanel,
   LucideIconPickerPopover,
   TableInsertCatalogPanel,
+  useRibbonSectionPopoverSurface,
   type DelpiChartType,
   type DelpiTableInsertSelection,
 } from "@delpi/plugin-ui/index";
@@ -42,6 +43,50 @@ import { DeckRibbonTile } from "./deck/DeckRibbonTile";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Labels = Record<string, string>;
+
+/** Catálogo Inserir: portal na faixa; inline no popover da seção colapsada. */
+function InsertCatalogPortal({
+  open,
+  anchorRef,
+  panelRef,
+  className,
+  ariaLabel,
+  onDismiss,
+  children,
+}: {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLDivElement | null>;
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  className: string;
+  ariaLabel: string;
+  onDismiss: () => void;
+  children: React.ReactNode;
+}) {
+  const flattenNested = useRibbonSectionPopoverSurface();
+  if (!open) return null;
+  if (flattenNested) {
+    return (
+      <div className={`${className} ${className}--inline`} role="menu" aria-label={ariaLabel}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <AnchoredPanelPortal
+      open={open}
+      anchorRef={anchorRef}
+      panelRef={panelRef}
+      variant="bare"
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+      className={className}
+      role="menu"
+      aria-label={ariaLabel}
+      onDismiss={onDismiss}
+    >
+      {children}
+    </AnchoredPanelPortal>
+  );
+}
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const K = DECK_INSERT_ACTION_KEYTIPS;
@@ -271,19 +316,16 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               }}
             />
             {chartMenuOpen ? (
-              <AnchoredPanelPortal
+              <InsertCatalogPortal
                 open={chartMenuOpen}
                 anchorRef={chartAnchorRef}
                 panelRef={chartPanelRef}
-                variant="bare"
-                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
                 className="td-chart-catalog-portal"
-                role="menu"
-                aria-label="Catálogo de gráficos"
+                ariaLabel="Catálogo de gráficos"
                 onDismiss={closeInsertMenus}
               >
                 <ChartTypeCatalogPanel onSelect={insertChart} />
-              </AnchoredPanelPortal>
+              </InsertCatalogPortal>
             ) : null}
           </div>
           <div ref={tableAnchorRef} className="td-composer__dropdown">
@@ -301,19 +343,16 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
               }}
             />
             {tableMenuOpen ? (
-              <AnchoredPanelPortal
+              <InsertCatalogPortal
                 open={tableMenuOpen}
                 anchorRef={tableAnchorRef}
                 panelRef={tablePanelRef}
-                variant="bare"
-                portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
                 className="td-table-catalog-portal"
-                role="menu"
-                aria-label="Catálogo de tabelas"
+                ariaLabel="Catálogo de tabelas"
                 onDismiss={closeInsertMenus}
               >
                 <TableInsertCatalogPanel onSelect={insertTable} />
-              </AnchoredPanelPortal>
+              </InsertCatalogPortal>
             ) : null}
           </div>
         </div>

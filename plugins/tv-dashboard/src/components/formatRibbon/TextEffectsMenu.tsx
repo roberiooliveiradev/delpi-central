@@ -4,7 +4,7 @@ import {
   COMUNICADO_TEXT_SHADOW_PRESETS,
   resolveTextShadowPresetId,
 } from "@delpi/tv-dashboard-presentation";
-import { AnchoredPanelPortal, FieldLabel, HintAction } from "@delpi/plugin-ui/index";
+import { AnchoredPanelPortal, FieldLabel, HintAction, useRibbonSectionPopoverSurface } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
@@ -153,6 +153,7 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "popover" }: 
   const reactId = useId().replace(/:/g, "");
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const flattenNested = useRibbonSectionPopoverSurface();
   const hasEffects = Boolean(
     formatStyle?.textStrokeColor ||
       (formatStyle?.textStrokeWidth ?? 0) > 0 ||
@@ -160,7 +161,7 @@ export function TextEffectsMenu({ formatStyle, onUpdate, variant = "popover" }: 
       formatStyle?.textReflection,
   );
 
-  if (variant === "inline") {
+  if (variant === "inline" || flattenNested) {
     return (
       <TextEffectsPanel
         formatStyle={formatStyle}

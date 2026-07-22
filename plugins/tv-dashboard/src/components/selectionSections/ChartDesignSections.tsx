@@ -10,6 +10,7 @@ import {
 import {
   AnchoredPanelPortal,
   type DelpiChartType,
+  useRibbonSectionPopoverSurface,
 } from "@delpi/plugin-ui/index";
 import {
   applyChartAddElementChoiceWithParts,
@@ -185,7 +186,62 @@ export function ChartLayoutSection({ layout }: { layout: SelectionSectionLayout 
   const ctrl = useChartDesignControls();
   if (!ctrl) return null;
 
-  const body = (
+  return wrapPane(
+    "Layout do gráfico",
+    H.chartLabels,
+    layout,
+    <ChartLayoutBandOrInline ctrl={ctrl} />,
+    true,
+    "chart-layout",
+  );
+}
+
+function ChartLayoutBandOrInline({
+  ctrl,
+}: {
+  ctrl: NonNullable<ReturnType<typeof useChartDesignControls>>;
+}) {
+  const flattenNested = useRibbonSectionPopoverSurface();
+
+  const addElementMenu = (
+    <ChartAddElementMenu
+      options={ctrl.options}
+      chartKind={ctrl.chartKind}
+      onApplyChoice={ctrl.applyAddElementChoice}
+      onMoreOptions={ctrl.openAddElementMoreOptions}
+    />
+  );
+
+  const quickLayout = (
+    <div className="td-chart-quick-layout">
+      {CHART_QUICK_LAYOUTS.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          className="td-chart-quick-layout__item"
+          title={item.hint}
+          onClick={() => ctrl.applyLayout(item.id)}
+        >
+          <span
+            className={`td-chart-quick-layout__wire td-chart-quick-layout__wire--${item.id}`}
+            aria-hidden="true"
+          />
+          <span className="td-chart-quick-layout__label">{item.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+
+  if (flattenNested) {
+    return (
+      <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--stack">
+        <div className="td-chart-add-element-portal td-chart-add-element-portal--inline">{addElementMenu}</div>
+        <div className="td-chart-quick-layout-portal td-chart-quick-layout-portal--inline">{quickLayout}</div>
+      </div>
+    );
+  }
+
+  return (
     <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
       <div ref={ctrl.addElementAnchorRef} className="td-composer__dropdown">
         <DeckRibbonLargeButton
@@ -210,14 +266,7 @@ export function ChartLayoutSection({ layout }: { layout: SelectionSectionLayout 
             aria-label="Adicionar elemento de gráfico"
             onDismiss={() => ctrl.setAddElementOpen(false)}
           >
-            <div>
-              <ChartAddElementMenu
-                options={ctrl.options}
-                chartKind={ctrl.chartKind}
-                onApplyChoice={ctrl.applyAddElementChoice}
-                onMoreOptions={ctrl.openAddElementMoreOptions}
-              />
-            </div>
+            <div>{addElementMenu}</div>
           </AnchoredPanelPortal>
         ) : null}
       </div>
@@ -245,37 +294,86 @@ export function ChartLayoutSection({ layout }: { layout: SelectionSectionLayout 
             aria-label="Layout rápido"
             onDismiss={() => ctrl.setLayoutOpen(false)}
           >
-            <div className="td-chart-quick-layout">
-              {CHART_QUICK_LAYOUTS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  className="td-chart-quick-layout__item"
-                  title={item.hint}
-                  onClick={() => ctrl.applyLayout(item.id)}
-                >
-                  <span
-                    className={`td-chart-quick-layout__wire td-chart-quick-layout__wire--${item.id}`}
-                    aria-hidden="true"
-                  />
-                  <span className="td-chart-quick-layout__label">{item.label}</span>
-                </button>
-              ))}
-            </div>
+            {quickLayout}
           </AnchoredPanelPortal>
         ) : null}
       </div>
     </div>
   );
-
-  return wrapPane("Layout do gráfico", H.chartLabels, layout, body, true, "chart-layout");
 }
 
 export function ChartStylesSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useChartDesignControls();
   if (!ctrl) return null;
 
-  const styles = (
+  const data = (
+    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
+      <DeckRibbonTile
+        icon={Database}
+        label="Selecionar dados"
+        hint={H.openDataPanel}
+        onClick={() => ctrl.openDataPanel()}
+      />
+    </div>
+  );
+
+  if (layout === "pane") {
+    return (
+      <>
+        <SelectionPaneSection
+          title="Estilos"
+          hint="Cores da série e presets de tema/grade."
+          defaultOpen={false}
+        >
+          <ChartStylesBandOrInline ctrl={ctrl} />
+        </SelectionPaneSection>
+        <SelectionPaneSection title="Dados" hint={H.chartData} defaultOpen={false}>
+          {data}
+        </SelectionPaneSection>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <DeckRibbonGroup
+        groupId="chart-styles"
+        label="Estilos"
+        hint="Cores da série e presets de tema/grade."
+      >
+        <ChartStylesBandOrInline ctrl={ctrl} />
+      </DeckRibbonGroup>
+      <DeckRibbonGroup groupId="chart-data" label="Dados" hint={H.chartData}>
+        {data}
+      </DeckRibbonGroup>
+    </>
+  );
+}
+
+function ChartStylesBandOrInline({
+  ctrl,
+}: {
+  ctrl: NonNullable<ReturnType<typeof useChartDesignControls>>;
+}) {
+  const flattenNested = useRibbonSectionPopoverSurface();
+
+  const colorsMenu = (
+    <div className="td-chart-float__popover td-chart-float__popover--style">
+      <ChartColorsStylesMenu
+        options={ctrl.options}
+        onApplyOptions={(next) => {
+          ctrl.persistOptions(next);
+          ctrl.setColorsOpen(false);
+        }}
+      />
+    </div>
+  );
+
+  if (flattenNested) {
+    return <div className="td-chart-colors-portal td-chart-colors-portal--inline">{colorsMenu}</div>;
+  }
+
+  return (
     <div ref={ctrl.colorsAnchorRef} className="td-composer__dropdown">
       <DeckRibbonLargeButton
         icon={Palette}
@@ -299,61 +397,10 @@ export function ChartStylesSection({ layout }: { layout: SelectionSectionLayout 
           aria-label="Alterar cores e estilos"
           onDismiss={() => ctrl.setColorsOpen(false)}
         >
-          <div className="td-chart-float__popover td-chart-float__popover--style">
-            <ChartColorsStylesMenu
-              options={ctrl.options}
-              onApplyOptions={(next) => {
-                ctrl.persistOptions(next);
-                ctrl.setColorsOpen(false);
-              }}
-            />
-          </div>
+          {colorsMenu}
         </AnchoredPanelPortal>
       ) : null}
     </div>
-  );
-
-  const data = (
-    <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-      <DeckRibbonTile
-        icon={Database}
-        label="Selecionar dados"
-        hint={H.openDataPanel}
-        onClick={() => ctrl.openDataPanel()}
-      />
-    </div>
-  );
-
-  if (layout === "pane") {
-    return (
-      <>
-        <SelectionPaneSection
-          title="Estilos"
-          hint="Cores da série e presets de tema/grade."
-          defaultOpen={false}
-        >
-          {styles}
-        </SelectionPaneSection>
-        <SelectionPaneSection title="Dados" hint={H.chartData} defaultOpen={false}>
-          {data}
-        </SelectionPaneSection>
-      </>
-    );
-  }
-
-  return (
-    <>
-      <DeckRibbonGroup
-        groupId="chart-styles"
-        label="Estilos"
-        hint="Cores da série e presets de tema/grade."
-      >
-        {styles}
-      </DeckRibbonGroup>
-      <DeckRibbonGroup groupId="chart-data" label="Dados" hint={H.chartData}>
-        {data}
-      </DeckRibbonGroup>
-    </>
   );
 }
 

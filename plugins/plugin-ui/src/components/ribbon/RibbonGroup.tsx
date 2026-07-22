@@ -14,6 +14,7 @@ import {
   measureElementWidth,
   useRibbonOverflowContext,
 } from "./RibbonGroupsRow";
+import { RibbonGroupSurfaceProvider } from "./RibbonGroupSurfaceContext";
 
 export type RibbonGroupClassNames = {
   root: string;
@@ -222,7 +223,9 @@ export function RibbonGroup({
           onDismiss={() => setPopoverOpen(false)}
         >
           <div ref={panelRef} className={classNames.popover} data-delpi-ui-density="compact">
-            <div className={classNames.popoverBody}>{children}</div>
+            <div className={classNames.popoverBody}>
+              <RibbonGroupSurfaceProvider value="section-popover">{children}</RibbonGroupSurfaceProvider>
+            </div>
             <div className={classNames.popoverCaption}>{label}</div>
           </div>
         </AnchoredPanelPortal>

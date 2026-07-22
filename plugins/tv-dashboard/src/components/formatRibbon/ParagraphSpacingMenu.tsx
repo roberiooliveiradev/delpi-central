@@ -5,7 +5,7 @@ import {
   COMUNICADO_NAMED_TEXT_STYLE_OPTIONS,
   type ComunicadoNamedTextStyle,
 } from "@delpi/tv-dashboard-presentation";
-import { AnchoredPanelPortal, FieldLabel, HintAction, NativeTextControl } from "@delpi/plugin-ui/index";
+import { AnchoredPanelPortal, FieldLabel, HintAction, NativeTextControl, useRibbonSectionPopoverSurface } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
@@ -132,6 +132,7 @@ export function ParagraphSpacingMenu({
   const reactId = useId().replace(/:/g, "");
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const flattenNested = useRibbonSectionPopoverSurface();
 
   const panelProps: PanelProps = {
     namedStyleValue,
@@ -141,10 +142,10 @@ export function ParagraphSpacingMenu({
     onLineHeight,
     onLetterSpacing,
     showNamedStyle,
-    idPrefix: variant === "inline" ? `td-pane-ps-${reactId}` : `td-pop-ps-${reactId}`,
+    idPrefix: variant === "inline" || flattenNested ? `td-pane-ps-${reactId}` : `td-pop-ps-${reactId}`,
   };
 
-  if (variant === "inline") {
+  if (variant === "inline" || flattenNested) {
     return <ParagraphSpacingPanel {...panelProps} />;
   }
 

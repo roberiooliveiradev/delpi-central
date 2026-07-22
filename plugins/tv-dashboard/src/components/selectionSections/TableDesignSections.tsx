@@ -10,6 +10,7 @@ import {
   ShapeShadowMenu,
   TableStyleRibbonStrip,
   ToolbarSelectField,
+  useRibbonSectionPopoverSurface,
   type TableStylePreset,
 } from "@delpi/plugin-ui/index";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
@@ -232,9 +233,6 @@ function TableStyleOptionsChecks({
  */
 export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionLayout }) {
   const ctrl = useTableDesignControls();
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
 
   if (!ctrl) return null;
 
@@ -252,6 +250,22 @@ export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionL
 
   return (
     <DeckRibbonGroup groupId="table-style-options" label="Opções de estilo" hint={H.tableStyleOptions}>
+      <TableStyleOptionsBandOrInline checks={checks} />
+    </DeckRibbonGroup>
+  );
+}
+
+function TableStyleOptionsBandOrInline({ checks }: { checks: ReactNode }) {
+  const flattenNested = useRibbonSectionPopoverSurface();
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  if (flattenNested) {
+    return <>{checks}</>;
+  }
+
+  return (
       <div className="td-table-style-options-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus">
         <HintAction hint={H.tableStyleOptions} ariaLabel="Ajuda: Opções de estilo">
           <button
@@ -293,7 +307,6 @@ export function TableStyleOptionsSection({ layout }: { layout: SelectionSectionL
           </AnchoredPanelPortal>
         ) : null}
       </div>
-    </DeckRibbonGroup>
   );
 }
 

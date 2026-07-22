@@ -43,7 +43,7 @@ import {
   type KpiFramePartKind,
   type ViewportPixelSize,
 } from "@delpi/tv-dashboard-presentation";
-import { AnchoredPanelPortal, HintAction } from "@delpi/plugin-ui/index";
+import { AnchoredPanelPortal, HintAction, useRibbonSectionPopoverSurface } from "@delpi/plugin-ui/index";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { TV_DASHBOARD_ROOT_CLASS } from "../../constants/pluginRootClass";
@@ -93,11 +93,6 @@ function FrameSizeGroup({
   includeOpacity = false,
   children,
 }: FrameSizeGroupProps) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-
   const opacityFields = includeOpacity ? (
     <FormatRibbonOpacityFields className="td-deck-ribbon__organize-props td-frame-size-popover__opacity" />
   ) : null;
@@ -134,6 +129,24 @@ function FrameSizeGroup({
       hint={hint}
       captionPlacement={captionPlacement}
     >
+      <FrameSizeBandOrInline hint={hint} body={body} />
+    </DeckRibbonGroup>
+  );
+}
+
+/** Filho do grupo: lê surface do popover colapsado e achata o tile «Posição». */
+function FrameSizeBandOrInline({ hint, body }: { hint: string; body: ReactNode }) {
+  const flattenNested = useRibbonSectionPopoverSurface();
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  if (flattenNested) {
+    return <>{body}</>;
+  }
+
+  return (
       <div
         ref={rootRef}
         className="td-frame-size-entry delpi-ui-shape-menu td-deck-ribbon__tiles td-deck-ribbon__tiles--compact td-deck-ribbon__tiles--shape-menus"
@@ -178,7 +191,6 @@ function FrameSizeGroup({
           </AnchoredPanelPortal>
         ) : null}
       </div>
-    </DeckRibbonGroup>
   );
 }
 

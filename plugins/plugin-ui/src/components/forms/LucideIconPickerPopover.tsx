@@ -1,5 +1,6 @@
 import { useRef, type CSSProperties, type RefObject } from "react";
 
+import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceContext";
 import { AnchoredPanelPortal } from "../shape/AnchoredPanelPortal";
 import type { AnchoredPanelPlacement } from "../shape/anchoredPanelCoords";
 
@@ -57,6 +58,7 @@ export function LucideIconPickerPopover({
   ariaLabel,
 }: LucideIconPickerPopoverProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const flattenNested = useRibbonSectionPopoverSurface();
 
   if (!open) return null;
 
@@ -74,8 +76,26 @@ export function LucideIconPickerPopover({
     showClear,
     className: pickerClassName,
     style,
-    embedded: false,
+    embedded: flattenNested,
   };
+
+  if (flattenNested) {
+    return (
+      <div
+        className={[
+          "delpi-ui-lucide-icon-picker-popover",
+          "delpi-ui-lucide-icon-picker-popover--inline",
+          className,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        role="dialog"
+        aria-label={ariaLabel ?? title ?? "Ícones"}
+      >
+        <LucideIconPicker {...pickerProps} />
+      </div>
+    );
+  }
 
   return (
     <AnchoredPanelPortal

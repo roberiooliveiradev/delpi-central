@@ -1,6 +1,7 @@
 import { Cloud } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 
+import { useRibbonSectionPopoverSurface } from "../ribbon/RibbonGroupSurfaceContext";
 import { AnchoredPanelPortal } from "./AnchoredPanelPortal";
 import {
   MAX_BOX_SHADOW_LAYERS,
@@ -55,6 +56,7 @@ export function ShapeShadowMenu({
   const [layerIndex, setLayerIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const inline = useRibbonSectionPopoverSurface();
 
   const dismiss = () => {
     setOpen(false);
@@ -123,30 +125,10 @@ export function ShapeShadowMenu({
     },
   ];
 
-  return (
-    <div className="delpi-ui-shape-menu" ref={rootRef}>
-      <button
-        type="button"
-        className="delpi-ui-shape-menu__trigger"
-        aria-label={shadowLabel ?? L.shadow}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
-          <Cloud size={18} strokeWidth={hasShadow ? 2.25 : 1.75} />
-        </span>
-        <span className="delpi-ui-shape-menu__trigger-label">{shadowLabel ?? L.shadow}</span>
-      </button>
-      {open ? (
-        <AnchoredPanelPortal
-          open={open}
-          anchorRef={rootRef}
-          panelRef={panelRef}
-          className="delpi-ui-shape-menu__panel--shadow"
-          role="menu"
-          onDismiss={dismiss}
-        >
+  const showColorPanel = inline || colorOpen;
+
+  const panel = (
+    <>
           <ul className="delpi-ui-shape-effects__list delpi-ui-shape-shadow__presets">
             {presets.map((preset) => {
               const selected = preset.id === activePresetId;
@@ -303,7 +285,7 @@ export function ShapeShadowMenu({
             <button
               type="button"
               className="delpi-ui-shape-menu__submenu-toggle"
-              aria-expanded={colorOpen}
+              aria-expanded={showColorPanel}
               onClick={() => {
                 if (!hasShadow) {
                   applyStack(formatBoxShadowStack(resolveBoxShadowStack(undefined)));
@@ -320,7 +302,7 @@ export function ShapeShadowMenu({
                 {L.shadowColor}
               </span>
             </button>
-            {colorOpen ? (
+            {showColorPanel ? (
               <ColorPickerPopover
                 value={model.colorHex}
                 onChange={handleColorChange}
@@ -329,6 +311,45 @@ export function ShapeShadowMenu({
               />
             ) : null}
           </div>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <div
+        className="delpi-ui-shape-menu delpi-ui-shape-menu--inline delpi-ui-shape-menu__panel--shadow"
+        aria-label={shadowLabel ?? L.shadow}
+      >
+        {panel}
+      </div>
+    );
+  }
+
+  return (
+    <div className="delpi-ui-shape-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="delpi-ui-shape-menu__trigger"
+        aria-label={shadowLabel ?? L.shadow}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className="delpi-ui-shape-menu__trigger-icon" aria-hidden="true">
+          <Cloud size={18} strokeWidth={hasShadow ? 2.25 : 1.75} />
+        </span>
+        <span className="delpi-ui-shape-menu__trigger-label">{shadowLabel ?? L.shadow}</span>
+      </button>
+      {open ? (
+        <AnchoredPanelPortal
+          open={open}
+          anchorRef={rootRef}
+          panelRef={panelRef}
+          className="delpi-ui-shape-menu__panel--shadow"
+          role="menu"
+          onDismiss={dismiss}
+        >
+          {panel}
         </AnchoredPanelPortal>
       ) : null}
     </div>

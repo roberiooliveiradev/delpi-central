@@ -17,3 +17,9 @@ export {
   type RibbonGroupClassNames,
   type RibbonGroupProps,
 } from "./RibbonGroup";
+export {
+  RibbonGroupSurfaceProvider,
+  useRibbonGroupSurface,
+  useRibbonSectionPopoverSurface,
+  type RibbonGroupSurface,
+} from "./RibbonGroupSurfaceContext";
