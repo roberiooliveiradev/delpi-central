@@ -5383,7 +5383,8 @@ body.td-composer--marqueeing *{
   border-bottom: 1px solid var(--td-border);
   background: color-mix(in srgb, var(--td-text) 3%, var(--td-surface));
   border-radius: var(--td-chrome-radius) var(--td-chrome-radius) 0 0;
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 .dashboard-tv-dashboard .td-deck-chrome__head-trail{
   display: inline-flex;
@@ -5490,23 +5491,31 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-deck-chrome__tabs{
   display: block;
   position: relative;
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
+  max-width: 100%;
   padding: 0 8px;
   border-bottom: none;
   background: transparent;
   border-radius: 0;
   overflow: hidden;
 }
+/* Strip de medida em fixed — não infla scrollWidth do head (evita scrollbar fantasma). */
 .dashboard-tv-dashboard .td-deck-chrome__tabs-measure{
-  position: absolute;
-  left: -9999px;
+  position: fixed;
+  left: 0;
   top: 0;
+  z-index: -1;
+  opacity: 0;
+  pointer-events: none;
+  display: block;
+  overflow: visible;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-measure-inner{
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
-  pointer-events: none;
-  visibility: hidden;
+  width: max-content;
   white-space: nowrap;
 }
 .dashboard-tv-dashboard .td-deck-chrome__tabs-visible{
@@ -5517,6 +5526,10 @@ body.td-composer--marqueeing *{
   min-width: 0;
   width: 100%;
   overflow: hidden;
+}
+.dashboard-tv-dashboard .td-deck-chrome__tabs-visible-item{
+  flex: 0 0 auto;
+  min-width: 0;
 }
 .dashboard-tv-dashboard .td-deck-chrome__history{
   display: inline-flex;

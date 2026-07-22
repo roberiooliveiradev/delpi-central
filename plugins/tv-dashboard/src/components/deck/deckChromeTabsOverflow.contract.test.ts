@@ -25,6 +25,11 @@ describe("deck chrome tabs overflow contract", () => {
     expect(css).not.toMatch(
       /\.td-deck-chrome__tabs\s*\{[^}]*overflow-x:\s*auto/s,
     );
+    expect(css).not.toContain("left: -9999px");
+    expect(css).toMatch(
+      /\.td-deck-chrome__tabs-measure\s*\{[^}]*position:\s*fixed/s,
+    );
+    expect(css).toContain("td-deck-chrome__tabs-measure-inner");
     expect(css).toContain("td-deck-chrome__tabs-more-portal");
     expect(chrome).toMatch(
       /DeckHistoryTabActions[\s\S]*DeckChromeTabsRow/s,

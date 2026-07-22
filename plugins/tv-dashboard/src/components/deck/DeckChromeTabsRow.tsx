@@ -67,8 +67,11 @@ export function deckChromeTabClassNames(
   };
 }
 
+type TabWidthEntry = { id: string; width: number; order: number };
+
 /**
  * Faixa de abas do chrome com overflow «Mais…» (direita → esquerda; ativa sempre visível).
+ * Medição em strip clipado (width:0) — nunca left:-9999px (gera scrollbar no ancestral).
  */
 export function DeckChromeTabsRow({
   tabs,
@@ -86,7 +89,8 @@ export function DeckChromeTabsRow({
   const moreAnchorRef = useRef<HTMLDivElement>(null);
   const morePanelRef = useRef<HTMLDivElement>(null);
   const [availableWidth, setAvailableWidth] = useState(0);
-  const [widthsVersion, setWidthsVersion] = useState(0);
+  const [tabWidths, setTabWidths] = useState<TabWidthEntry[]>([]);
+  const [overflowControlWidth, setOverflowControlWidth] = useState(40);
   const [moreOpen, setMoreOpen] = useState(false);
 
   useLayoutEffect(() => {
@@ -100,26 +104,57 @@ export function DeckChromeTabsRow({
   }, []);
 
   useLayoutEffect(() => {
-    setWidthsVersion((v) => v + 1);
+    const readWidths = () => {
+      const next: TabWidthEntry[] = tabs.map((tab, order) => {
+        const node = measureRefs.current.get(tab.id) ?? null;
+        const width = Math.max(
+          measureElementWidth(node),
+          node ? Math.ceil(node.offsetWidth) : 0,
+          node ? Math.ceil(node.scrollWidth) : 0,
+        );
+        return { id: tab.id, width, order };
+      });
+      setTabWidths((prev) => {
+        if (
+          prev.length === next.length &&
+          prev.every((item, i) => item.id === next[i]?.id && item.width === next[i]?.width)
+        ) {
+          return prev;
+        }
+        return next;
+      });
+      const moreNode = moreMeasureRef.current;
+      const moreW = Math.max(
+        40,
+        measureElementWidth(moreNode),
+        moreNode ? Math.ceil(moreNode.offsetWidth) : 0,
+      );
+      setOverflowControlWidth((prev) => (prev === moreW ? prev : moreW));
+    };
+
+    readWidths();
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observers: ResizeObserver[] = [];
+    const observe = (node: HTMLElement | null) => {
+      if (!node) return;
+      const observer = new ResizeObserver(readWidths);
+      observer.observe(node);
+      observers.push(observer);
+    };
+    for (const tab of tabs) {
+      observe(measureRefs.current.get(tab.id) ?? null);
+    }
+    observe(moreMeasureRef.current);
+    return () => {
+      for (const observer of observers) observer.disconnect();
+    };
   }, [tabs, availableWidth]);
-
-  const tabWidths = useMemo(() => {
-    return tabs.map((tab, order) => ({
-      id: tab.id,
-      width: measureElementWidth(measureRefs.current.get(tab.id) ?? null),
-      order,
-    }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- widthsVersion após layout das medidas
-  }, [tabs, availableWidth, widthsVersion]);
-
-  const overflowControlWidth = Math.max(
-    40,
-    measureElementWidth(moreMeasureRef.current),
-  );
 
   const overflowIdsPrev = useRef<Set<string>>(new Set());
   const overflowIds = useMemo(() => {
-    if (!overflowEnabled || availableWidth <= 0) {
+    const measured = tabWidths.some((t) => t.width > 0);
+    if (!overflowEnabled || availableWidth <= 0 || !measured) {
       if (overflowIdsPrev.current.size === 0) return overflowIdsPrev.current;
       overflowIdsPrev.current = new Set();
       return overflowIdsPrev.current;
@@ -172,41 +207,53 @@ export function DeckChromeTabsRow({
       data-tabs-overflow={overflowEnabled ? "on" : "off"}
     >
       <div className="td-deck-chrome__tabs-measure" aria-hidden="true">
-        {tabs.map((tab, index) => {
-          const classes = deckChromeTabClassNames(tab, tabs, index);
-          return (
-            <div
-              key={`m-${tab.id}`}
-              ref={(node) => {
-                if (node) measureRefs.current.set(tab.id, node);
-                else measureRefs.current.delete(tab.id);
-              }}
-              className={classes.cellClassName}
-            >
-              <span className={classes.tabClassName}>
-                {tab.icon ? <tab.icon size={15} aria-hidden="true" /> : null}
-                {tab.label}
-              </span>
-            </div>
-          );
-        })}
-        <div ref={moreMeasureRef} className="td-deck-chrome__tab-cell td-deck-chrome__tab-cell--more">
-          <span className="td-deck-chrome__tab td-deck-chrome__tab--more">
-            <MoreHorizontal size={15} aria-hidden="true" />
-            Mais
-            <ChevronDown size={12} aria-hidden="true" />
-          </span>
+        <div className="td-deck-chrome__tabs-measure-inner">
+          {tabs.map((tab, index) => {
+            const classes = deckChromeTabClassNames(tab, tabs, index);
+            return (
+              <div
+                key={`m-${tab.id}`}
+                ref={(node) => {
+                  if (node) measureRefs.current.set(tab.id, node);
+                  else measureRefs.current.delete(tab.id);
+                }}
+                className={classes.cellClassName}
+              >
+                <span className={classes.tabClassName}>
+                  {tab.icon ? <tab.icon size={15} aria-hidden="true" /> : null}
+                  {tab.label}
+                </span>
+              </div>
+            );
+          })}
+          <div
+            ref={moreMeasureRef}
+            className="td-deck-chrome__tab-cell td-deck-chrome__tab-cell--more"
+          >
+            <span className="td-deck-chrome__tab td-deck-chrome__tab--more">
+              <MoreHorizontal size={15} aria-hidden="true" />
+              Mais
+              <ChevronDown size={12} aria-hidden="true" />
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="td-deck-chrome__tabs-visible">
         {visibleTabs.map((tab) => {
           const index = tabs.findIndex((t) => t.id === tab.id);
-          return <div key={tab.id}>{renderTabCell(tab, index)}</div>;
+          return (
+            <div key={tab.id} className="td-deck-chrome__tabs-visible-item">
+              {renderTabCell(tab, index)}
+            </div>
+          );
         })}
 
         {overflowTabs.length > 0 ? (
-          <div ref={moreAnchorRef} className="td-deck-chrome__tab-cell td-deck-chrome__tab-cell--more">
+          <div
+            ref={moreAnchorRef}
+            className="td-deck-chrome__tab-cell td-deck-chrome__tab-cell--more td-deck-chrome__tabs-visible-item"
+          >
             <button
               type="button"
               className={[
