@@ -17,14 +17,20 @@
   border: 0;
   border-radius: 0;
   box-shadow: none;
+  /* Um único fundo: o chrome `.delpi-ui-popover-surface` / `--delpi-ui-popover-bg`. */
+  background: transparent;
+  --lucide-picker-surface: var(--delpi-ui-popover-bg, var(--delpi-ui-surface, var(--td-surface, #ffffff)));
 }
 
 .delpi-ui-lucide-icon-picker {
-  --lucide-picker-surface: var(--delpi-ui-surface, var(--surface, #ffffff));
-  --lucide-picker-text: var(--delpi-ui-text, var(--text, #0f172a));
-  --lucide-picker-muted: var(--delpi-ui-muted, var(--text-muted, #64748b));
-  --lucide-picker-border: var(--delpi-ui-border, var(--border, #d8e1e9));
-  --lucide-picker-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+  --lucide-picker-surface: var(
+    --delpi-ui-popover-bg,
+    var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)))
+  );
+  --lucide-picker-text: var(--delpi-ui-text, var(--td-text, var(--text, #0f172a)));
+  --lucide-picker-muted: var(--delpi-ui-muted, var(--td-muted, var(--text-muted, #64748b)));
+  --lucide-picker-border: var(--delpi-ui-border, var(--td-border, var(--border, #d8e1e9)));
+  --lucide-picker-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
   --lucide-picker-input-bg: color-mix(in srgb, var(--lucide-picker-surface) 88%, var(--lucide-picker-text) 8%);
   --lucide-picker-card-bg: color-mix(in srgb, var(--lucide-picker-surface) 94%, var(--lucide-picker-text) 5%);
   --lucide-picker-icon-bg: color-mix(in srgb, var(--lucide-picker-accent) 14%, var(--lucide-picker-surface));
@@ -301,11 +307,14 @@
 
 /* Grade compacta (ribbon / popover curto) */
 .delpi-ui-lucide-icon-grid {
-  --lucide-picker-surface: var(--delpi-ui-surface, var(--surface, #ffffff));
-  --lucide-picker-text: var(--delpi-ui-text, var(--text, #0f172a));
-  --lucide-picker-muted: var(--delpi-ui-muted, var(--text-muted, #64748b));
-  --lucide-picker-border: var(--delpi-ui-border, var(--border, #d8e1e9));
-  --lucide-picker-accent: var(--delpi-ui-accent, var(--primary, #089bdb));
+  --lucide-picker-surface: var(
+    --delpi-ui-popover-bg,
+    var(--delpi-ui-surface, var(--td-surface, var(--surface, #ffffff)))
+  );
+  --lucide-picker-text: var(--delpi-ui-text, var(--td-text, var(--text, #0f172a)));
+  --lucide-picker-muted: var(--delpi-ui-muted, var(--td-muted, var(--text-muted, #64748b)));
+  --lucide-picker-border: var(--delpi-ui-border, var(--td-border, var(--border, #d8e1e9)));
+  --lucide-picker-accent: var(--delpi-ui-accent, var(--td-accent, var(--primary, #089bdb)));
   color: var(--lucide-picker-text);
 }
 

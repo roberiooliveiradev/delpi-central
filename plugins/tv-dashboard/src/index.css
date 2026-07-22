@@ -44,6 +44,7 @@
   --td-float-popover-bg: color-mix(in srgb, var(--td-text) 92%, var(--td-surface));
   --delpi-ui-accent: var(--td-accent);
   --delpi-ui-surface: var(--td-surface);
+  --delpi-ui-popover-bg: var(--td-surface);
   --delpi-ui-text: var(--td-text);
   --delpi-ui-border: var(--td-border);
   --delpi-ui-muted: var(--td-muted);
@@ -233,6 +234,7 @@
   --td-stage-chrome: color-mix(in srgb, var(--td-text) 10%, var(--td-surface));
   --td-stage-preview: color-mix(in srgb, var(--td-text) 88%, var(--td-surface));
   --delpi-ui-surface: var(--td-surface);
+  --delpi-ui-popover-bg: var(--td-surface);
   --delpi-ui-text: var(--td-text);
   --delpi-ui-border: var(--td-border);
   --delpi-ui-muted: var(--td-muted);

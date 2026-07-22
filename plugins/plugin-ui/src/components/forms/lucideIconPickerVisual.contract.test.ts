@@ -15,8 +15,11 @@ describe("lucide icon picker visual contract", () => {
   it("usa chrome canônico de popover (sem blur) e mantém cards", () => {
     expect(popoverCss).toContain("--delpi-ui-popover-radius");
     expect(popoverCss).toContain("--delpi-ui-popover-shadow");
+    expect(popoverCss).toContain("--delpi-ui-popover-bg");
     expect(popoverCss).toContain(".delpi-ui-lucide-icon-picker-popover");
     expect(popoverCss).not.toMatch(/backdrop-filter:\s*blur/);
+    expect(css).toContain("background: transparent");
+    expect(css).toContain("--delpi-ui-popover-bg");
     expect(css).toContain(".delpi-ui-lucide-icon-picker__selected");
     expect(css).toMatch(/min-height:\s*40px/);
     expect(css).not.toContain("delpi-ui-lucide-icon-picker__close");

@@ -17,6 +17,22 @@ describe("resolveDelpiUiPortalTheme", () => {
     expect(theme).toHaveProperty("style");
     expect(typeof theme.style).toBe("object");
   });
+
+  it("propaga --delpi-ui-popover-bg a partir da superfície do host", () => {
+    const host = document.createElement("div");
+    host.className = "dashboard-tv-dashboard";
+    host.style.setProperty("--td-surface", "#1b2030");
+    host.style.setProperty("--delpi-ui-surface", "#1b2030");
+    const anchor = document.createElement("button");
+    host.appendChild(anchor);
+    document.body.appendChild(host);
+
+    const theme = resolveDelpiUiPortalTheme(anchor);
+    expect(theme.style["--delpi-ui-surface"]).toBe("#1b2030");
+    expect(theme.style["--delpi-ui-popover-bg"]).toBe("#1b2030");
+
+    host.remove();
+  });
 });
 
 describe("resolveMfePortalScopeClassName", () => {

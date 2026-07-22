@@ -10,9 +10,11 @@ describe("popover surface visual contract", () => {
     expect(stylesEntry).toContain('import "./styles/popover-surface.css"');
     expect(css).toContain("--delpi-ui-popover-radius: 12px");
     expect(css).toContain("--delpi-ui-popover-shadow");
+    expect(css).toContain("--delpi-ui-popover-bg");
     expect(css).toContain(".delpi-ui-popover-surface");
     expect(css).toContain(".delpi-ui-shape-menu__panel");
     expect(css).toContain(".delpi-ui-ribbon-group__popover");
+    expect(css).toContain(".delpi-ui-lucide-icon-picker-popover");
     expect(css).toContain("backdrop-filter: none");
   });
 });

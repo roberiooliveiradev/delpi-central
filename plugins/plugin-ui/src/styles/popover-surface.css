@@ -8,8 +8,15 @@
   --delpi-ui-popover-shadow:
     0 16px 40px color-mix(in srgb, #000 28%, transparent),
     0 0 0 1px color-mix(in srgb, #fff 5%, transparent);
-  --delpi-ui-popover-border-color: var(--delpi-ui-border, var(--border, #d8e1e9));
-  --delpi-ui-popover-bg: var(--delpi-ui-surface, var(--surface, #ffffff));
+  --delpi-ui-popover-border-color: var(
+    --delpi-ui-border,
+    var(--td-border, var(--border, #d8e1e9))
+  );
+  /* Mesma superfície do host — não misturar fallbacks claros em tema escuro. */
+  --delpi-ui-popover-bg: var(
+    --delpi-ui-surface,
+    var(--td-surface, var(--surface, #ffffff))
+  );
 }
 
 /**
