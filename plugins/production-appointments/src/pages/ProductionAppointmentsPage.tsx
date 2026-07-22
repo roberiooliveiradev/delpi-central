@@ -71,9 +71,13 @@ function ProductionAppointmentsContent({
   const [byOpPage, setByOpPage] = useState(1);
   const [listPageSize, setListPageSize] = useState(20);
   const [byOpPageSize, setByOpPageSize] = useState(20);
+  const [listSearch, setListSearch] = useState("");
+  const [byOpSearch, setByOpSearch] = useState("");
 
   const debouncedOp = useDebouncedValue(draftFilters.op, 350);
   const debouncedProduct = useDebouncedValue(draftFilters.product, 350);
+  const debouncedListSearch = useDebouncedValue(listSearch, 350);
+  const debouncedByOpSearch = useDebouncedValue(byOpSearch, 350);
 
   const autoFilters = useMemo(
     () => ({
@@ -106,6 +110,14 @@ function ProductionAppointmentsContent({
     totvsBranch,
   ]);
 
+  useEffect(() => {
+    setListPage(1);
+  }, [debouncedListSearch]);
+
+  useEffect(() => {
+    setByOpPage(1);
+  }, [debouncedByOpSearch]);
+
   const dashboard = useAppointmentsDashboard(isActive ? appliedFilters : null);
   const tables = useAppointmentsTables(
     isActive ? appliedFilters : null,
@@ -113,6 +125,8 @@ function ProductionAppointmentsContent({
     byOpPage,
     listPageSize,
     byOpPageSize,
+    debouncedListSearch,
+    debouncedByOpSearch,
   );
 
   const handleFiltersChange = (patch: Partial<FilterFormState>) => {
@@ -248,12 +262,16 @@ function ProductionAppointmentsContent({
             byOpPage={byOpPage}
             listPageSize={listPageSize}
             byOpPageSize={byOpPageSize}
+            listSearch={listSearch}
+            byOpSearch={byOpSearch}
             loading={tables.loading}
             workCentersLoading={dashboard.loading}
             onListPageChange={setListPage}
             onByOpPageChange={setByOpPage}
             onListPageSizeChange={setListPageSize}
             onByOpPageSizeChange={setByOpPageSize}
+            onListSearchChange={setListSearch}
+            onByOpSearchChange={setByOpSearch}
             onOpenOp={handleOpenOp}
             onOpenCt={handleOpenCt}
           />

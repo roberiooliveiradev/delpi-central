@@ -30,6 +30,7 @@ def build_query_request(
     work_center: Optional[str] = None,
     op: Optional[str] = None,
     product: Optional[str] = None,
+    search: Optional[str] = None,
     group_by: Optional[str] = None,
     page: Optional[int] = None,
     page_size: Optional[int] = None,
@@ -41,6 +42,7 @@ def build_query_request(
         work_center=work_center,
         op=op,
         product=product,
+        search=search,
         group_by=group_by,
         page=page,
         page_size=page_size,
@@ -92,6 +94,14 @@ def OP_QUERY():
     return Query(None, description="Production order filter.")
 def PRODUCT_QUERY():
     return Query(None, description="Product code filter.")
+def SEARCH_QUERY():
+    return Query(
+        None,
+        description=(
+            "Optional free-text search across visible table columns "
+            "(operator, OP, product, work center, resource, etc.)."
+        ),
+    )
 def GROUP_BY_QUERY():
     return PRODUCTION_APPOINTMENTS_GROUP_BY_QUERY()
 def PAGE_QUERY():

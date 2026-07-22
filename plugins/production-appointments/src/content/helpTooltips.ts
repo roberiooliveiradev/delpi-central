@@ -56,8 +56,12 @@ export const PA_HELP_TOOLTIPS = {
       "Totais agregados por centro de trabalho no período. Clique na linha para abrir o detalhe do CT. O selo “Inspeção final” marca o CT usado como referência de inspeção.",
     appointments:
       "Lista paginada dos apontamentos individuais. Clique na linha para abrir o detalhe da OP.",
+    appointmentsSearch:
+      "Busca no servidor por operador, OP, produto, CT, recurso, operação ou data (parcial). Reduz o total paginado.",
     byOp:
       "Resumo por ordem de produção. Clique na linha para abrir o detalhe da OP com apontamentos, KPIs e exportação.",
+    byOpSearch:
+      "Busca no servidor por OP ou código/descrição de produto. Reduz o total paginado da agregação.",
     ctDetailAppointments:
       "Apontamentos deste centro de trabalho no período. Clique na linha para abrir o detalhe da OP.",
   },

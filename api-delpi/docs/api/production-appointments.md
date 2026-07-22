@@ -36,8 +36,9 @@ Gate: `branch_access_error(branch)` em toda rota com `branch`.
 | `branch` | sim | `01` (SC) ou `02` (ES) |
 | `date_start`, `date_end` | não | `YYYY-MM-DD`; default = mês corrente (closed-open em `H6_DTAPONT`) |
 | `work_center` | não | Ex.: `CT-70` |
-| `op` | não | Ordem de produção |
-| `product` | não | Código produto |
+| `op` | não | Ordem de produção (match exato) |
+| `product` | não | Código produto (match exato) |
+| `search` | não | Texto livre nas listagens (`/appointments` e `/by-op`): operador, OP, produto, CT, recurso, etc. |
 | `group_by` | séries | `day` (padrão) ou `day_work_center` |
 | `page`, `page_size` | listas | Paginação (`page_size` máx. 200) |
 

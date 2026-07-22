@@ -41,6 +41,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> list[dict]:
         query, params = build_appointments_list_query(
             date_start=date_start,
@@ -51,6 +52,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
             work_center=work_center,
             op=op,
             product=product,
+            search=search,
         )
         with self:
             return self.execute_query(query, params)
@@ -64,6 +66,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> int:
         query, params = build_appointments_count_query(
             date_start=date_start,
@@ -72,6 +75,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
             work_center=work_center,
             op=op,
             product=product,
+            search=search,
         )
         with self:
             rows = self.execute_query(query, params)
@@ -156,6 +160,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> list[dict]:
         query, params = build_by_op_query(
             date_start=date_start,
@@ -166,6 +171,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
             work_center=work_center,
             op=op,
             product=product,
+            search=search,
         )
         with self:
             return self.execute_query(query, params)
@@ -179,6 +185,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> int:
         query, params = build_by_op_count_query(
             date_start=date_start,
@@ -187,6 +194,7 @@ class ProductionAppointmentsRepository(BaseRepository, ProductionAppointmentsRep
             work_center=work_center,
             op=op,
             product=product,
+            search=search,
         )
         with self:
             rows = self.execute_query(query, params)

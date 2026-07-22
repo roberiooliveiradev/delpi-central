@@ -32,6 +32,22 @@ function baseQuery(filters: AppointmentsQueryFilters) {
   };
 }
 
+type ListRequestOptions = RequestOptions & { search?: string };
+
+function listQuery(
+  filters: AppointmentsQueryFilters,
+  page: number,
+  pageSize: number,
+  search?: string,
+) {
+  return {
+    ...baseQuery(filters),
+    page,
+    page_size: pageSize,
+    search: search?.trim() || undefined,
+  };
+}
+
 export async function fetchWorkCenters(
   branch: string,
   options: RequestOptions = {},
@@ -61,10 +77,10 @@ export async function fetchAppointmentsList(
   filters: AppointmentsQueryFilters,
   page: number,
   pageSize: number,
-  options: RequestOptions = {},
+  options: ListRequestOptions = {},
 ): Promise<AppointmentsListData> {
   return getEnvelope(
-    `${queryString({ ...baseQuery(filters), page, page_size: pageSize })}`,
+    `${queryString(listQuery(filters, page, pageSize, options.search))}`,
     options,
   );
 }
@@ -73,10 +89,10 @@ export async function fetchAppointmentsByOp(
   filters: AppointmentsQueryFilters,
   page: number,
   pageSize: number,
-  options: RequestOptions = {},
+  options: ListRequestOptions = {},
 ): Promise<AppointmentsByOpData> {
   return getEnvelope(
-    `/by-op${queryString({ ...baseQuery(filters), page, page_size: pageSize })}`,
+    `/by-op${queryString(listQuery(filters, page, pageSize, options.search))}`,
     options,
   );
 }
@@ -100,20 +116,28 @@ async function fetchAllPages<T>(
 
 export async function fetchAllAppointments(
   filters: AppointmentsQueryFilters,
-  options: RequestOptions = {},
+  options: ListRequestOptions = {},
 ): Promise<AppointmentRow[]> {
   return fetchAllPages(
-    (page, pageSize) => fetchAppointmentsList(filters, page, pageSize, options),
+    (page, pageSize) =>
+      fetchAppointmentsList(filters, page, pageSize, {
+        ...options,
+        search: options.search,
+      }),
     options,
   );
 }
 
 export async function fetchAllAppointmentsByOp(
   filters: AppointmentsQueryFilters,
-  options: RequestOptions = {},
+  options: ListRequestOptions = {},
 ): Promise<ByOpRow[]> {
   return fetchAllPages(
-    (page, pageSize) => fetchAppointmentsByOp(filters, page, pageSize, options),
+    (page, pageSize) =>
+      fetchAppointmentsByOp(filters, page, pageSize, {
+        ...options,
+        search: options.search,
+      }),
     options,
   );
 }

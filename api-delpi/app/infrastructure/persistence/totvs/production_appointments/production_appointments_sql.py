@@ -13,6 +13,9 @@ from __future__ import annotations
 from app.domain.production.production_appointments.production_appointments_scope import (
     CT_INSPECAO_NOME_SQL_LIKE,
 )
+from app.domain.services.production.production_appointments_list_search_service import (
+    ProductionAppointmentsListSearchService,
+)
 from app.domain.services.production.production_operational_quantity_service import (
     ProductionOperationalQuantityService,
 )
@@ -32,6 +35,11 @@ _PRODUCT_JOIN = """
 LEFT JOIN SB1010 SB1 WITH (NOLOCK)
     ON SB1.B1_COD = SH6.H6_PRODUTO
    AND SB1.D_E_L_E_T_ = ' '
+"""
+
+_OPERATOR_JOIN = """
+LEFT JOIN SYS_USR U WITH (NOLOCK)
+    ON LTRIM(RTRIM(U.USR_ID)) = LTRIM(RTRIM(SH6.H6_OPERADO))
 """
 
 _IS_FINAL_INSPECTION_EXPR = (
@@ -68,6 +76,8 @@ def build_appointments_where(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    search: str | None = None,
+    search_scope: str = "appointment",
 ) -> tuple[str, list]:
     clauses = [
         "SH6.D_E_L_E_T_ = ' '",
@@ -90,7 +100,25 @@ def build_appointments_where(
         clauses.append("LTRIM(RTRIM(SH6.H6_PRODUTO)) = ?")
         params.append(product.strip())
 
+    if search_scope == "by_op":
+        search_clause, search_params = (
+            ProductionAppointmentsListSearchService.clause_for_by_op_row(search)
+        )
+    else:
+        search_clause, search_params = (
+            ProductionAppointmentsListSearchService.clause_for_appointment_row(search)
+        )
+    if search_clause:
+        clauses.append(search_clause)
+        params.extend(search_params)
+
     return " AND ".join(clauses), params
+
+
+def _operator_join_for_search(search: str | None) -> str:
+    if ProductionAppointmentsListSearchService.normalize_term(search):
+        return _OPERATOR_JOIN
+    return ""
 
 
 def build_work_centers_catalog_query(*, branch: str) -> tuple[str, tuple]:
@@ -118,6 +146,7 @@ def build_appointments_list_query(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    search: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -126,6 +155,8 @@ def build_appointments_list_query(
         work_center=work_center,
         op=op,
         product=product,
+        search=search,
+        search_scope="appointment",
     )
     sql = f"""
     SELECT
@@ -152,8 +183,7 @@ def build_appointments_list_query(
         LTRIM(RTRIM(SH6.H6_DTAPONT)) AS appointment_date,
         SH6.R_E_C_N_O_ AS appointment_id
     {_BASE_FROM}
-    LEFT JOIN SYS_USR U WITH (NOLOCK)
-        ON LTRIM(RTRIM(U.USR_ID)) = LTRIM(RTRIM(SH6.H6_OPERADO))
+    {_OPERATOR_JOIN}
     WHERE {where}
     ORDER BY SH6.H6_DTAPONT DESC, SH6.H6_HORAINI DESC, SH6.R_E_C_N_O_ DESC
     OFFSET {int(offset)} ROWS FETCH NEXT {int(page_size)} ROWS ONLY
@@ -169,6 +199,7 @@ def build_appointments_count_query(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    search: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -177,10 +208,14 @@ def build_appointments_count_query(
         work_center=work_center,
         op=op,
         product=product,
+        search=search,
+        search_scope="appointment",
     )
+    operator_join = _operator_join_for_search(search)
     sql = f"""
     SELECT COUNT(*) AS total
     {_BASE_FROM}
+    {operator_join}
     WHERE {where}
     """
     return sql, tuple(params)
@@ -314,6 +349,7 @@ def build_by_op_query(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    search: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -322,6 +358,8 @@ def build_by_op_query(
         work_center=work_center,
         op=op,
         product=product,
+        search=search,
+        search_scope="by_op",
     )
     sql = f"""
     SELECT
@@ -353,6 +391,7 @@ def build_by_op_count_query(
     work_center: str | None = None,
     op: str | None = None,
     product: str | None = None,
+    search: str | None = None,
 ) -> tuple[str, tuple]:
     where, params = build_appointments_where(
         date_start=date_start,
@@ -361,6 +400,8 @@ def build_by_op_count_query(
         work_center=work_center,
         op=op,
         product=product,
+        search=search,
+        search_scope="by_op",
     )
     sql = f"""
     SELECT COUNT(*) AS total

@@ -67,6 +67,7 @@ class ListProductionAppointmentsUseCase:
             "work_center": request.work_center,
             "op": request.op,
             "product": request.product,
+            "search": request.search,
         }
         items = _normalize_appointment_items(
             self._repository.list_appointments(
@@ -84,6 +85,7 @@ class ListProductionAppointmentsUseCase:
                 "work_center": request.work_center,
                 "op": request.op,
                 "product": request.product,
+                "search": request.search,
             },
             "items": items,
             "summary": build_period_summary(
@@ -199,6 +201,7 @@ class ListProductionAppointmentsByOpUseCase:
             "work_center": request.work_center,
             "op": request.op,
             "product": request.product,
+            "search": request.search,
         }
         items = _normalize_appointment_items(
             self._repository.list_by_op(
@@ -216,6 +219,7 @@ class ListProductionAppointmentsByOpUseCase:
                 "work_center": request.work_center,
                 "op": request.op,
                 "product": request.product,
+                "search": request.search,
             },
             "items": items,
             "summary": build_period_summary(

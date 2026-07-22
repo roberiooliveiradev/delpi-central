@@ -33,6 +33,35 @@ def test_appointments_where_closed_open_and_filters() -> None:
     ]
 
 
+def test_appointments_where_applies_free_text_search() -> None:
+    where, params = build_appointments_where(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        search="lind",
+    )
+
+    assert "U.USR_NOME" in where
+    assert "SH6.H6_OP" in where
+    assert params[0] == "01"
+    assert params[-1] == "%lind%"
+    assert params.count("%lind%") == 12
+
+
+def test_by_op_where_applies_free_text_search() -> None:
+    where, params = build_appointments_where(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        search="2465",
+        search_scope="by_op",
+    )
+
+    assert "SH6.H6_OP" in where
+    assert "U.USR_NOME" not in where
+    assert params.count("%2465%") == 4
+
+
 def test_work_centers_catalog_marks_final_inspection() -> None:
     query, params = build_work_centers_catalog_query(branch="01")
     assert "SHB010 HB WITH (NOLOCK)" in query
@@ -109,3 +138,29 @@ def test_appointments_list_exposes_datetime_operator_and_resource() -> None:
     assert "AS start_time" in query
     assert "AS end_time" in query
     assert "ORDER BY SH6.H6_DTAPONT DESC, SH6.H6_HORAINI DESC" in query
+
+
+def test_appointments_list_and_count_include_search_join() -> None:
+    from app.infrastructure.persistence.totvs.production_appointments.production_appointments_sql import (
+        build_appointments_count_query,
+    )
+
+    list_query, list_params = build_appointments_list_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        offset=0,
+        page_size=20,
+        search="lind",
+    )
+    count_query, count_params = build_appointments_count_query(
+        date_start="20260615",
+        date_end_exclusive="20260716",
+        branch="01",
+        search="lind",
+    )
+
+    assert "USR_NOME" in list_query
+    assert "SYS_USR" in count_query
+    assert "%lind%" in list_params
+    assert "%lind%" in count_params

@@ -22,14 +22,14 @@ Base: `/apps/api-delpi` (gateway). Header: `X-Delpi-Caller-App: production-appoi
 | `GET /production/appointments/work-centers` | Catálogo de CTs |
 | `GET /production/appointments/summary` | KPIs + ranking por CT |
 | `GET /production/appointments/series` | Série diária |
-| `GET /production/appointments` | Lista paginada |
-| `GET /production/appointments/by-op` | Agregado por OP |
+| `GET /production/appointments` | Lista paginada (`search` opcional) |
+| `GET /production/appointments/by-op` | Agregado por OP (`search` opcional) |
 
 Doc: [api-delpi/docs/api/production-appointments.md](../../api-delpi/docs/api/production-appointments.md) · Spec: [docs/12-roadmap-e-evolucao/production-appointments/](../../docs/12-roadmap-e-evolucao/production-appointments/).
 
 ## Estado desta entrega
 
-MFE com filtros (período, CT, OP, produto), KPIs, série temporal e uma tabela com modos de visualização (por CT, apontamentos, por OP).
+MFE com filtros (período, CT, OP, produto), KPIs, série temporal e uma tabela com modos de visualização (por CT, apontamentos, por OP). A busca das abas **Apontamentos** e **Por OP** é server-side (`search` na api-delpi).
 
 ## UI (`@delpi/plugin-ui`)
 

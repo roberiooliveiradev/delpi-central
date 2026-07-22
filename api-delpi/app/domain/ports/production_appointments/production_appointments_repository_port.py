@@ -17,6 +17,7 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> list[dict]: ...
 
     def count_appointments(
@@ -28,6 +29,7 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> int: ...
 
     def get_summary_by_ct(
@@ -75,6 +77,7 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> list[dict]: ...
 
     def count_by_op(
@@ -86,4 +89,5 @@ class ProductionAppointmentsRepositoryPort(Protocol):
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
     ) -> int: ...

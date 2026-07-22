@@ -61,12 +61,16 @@ type AppointmentsTablesProps = {
   byOpPage: number;
   listPageSize: number;
   byOpPageSize: number;
+  listSearch: string;
+  byOpSearch: string;
   loading?: boolean;
   workCentersLoading?: boolean;
   onListPageChange: (page: number) => void;
   onByOpPageChange: (page: number) => void;
   onListPageSizeChange: (pageSize: number) => void;
   onByOpPageSizeChange: (pageSize: number) => void;
+  onListSearchChange: (value: string) => void;
+  onByOpSearchChange: (value: string) => void;
   onOpenOp: (productionOrder: string) => void;
   onOpenCt: (workCenter: string) => void;
 };
@@ -122,12 +126,16 @@ export function AppointmentsTables({
   byOpPage,
   listPageSize,
   byOpPageSize,
+  listSearch,
+  byOpSearch,
   loading = false,
   workCentersLoading = false,
   onListPageChange,
   onByOpPageChange,
   onListPageSizeChange,
   onByOpPageSizeChange,
+  onListSearchChange,
+  onByOpSearchChange,
   onOpenOp,
   onOpenCt,
 }: AppointmentsTablesProps) {
@@ -299,11 +307,11 @@ export function AppointmentsTables({
         return;
       }
       if (viewMode === "by_op") {
-        const items = await fetchAllAppointmentsByOp(filters);
+        const items = await fetchAllAppointmentsByOp(filters, { search: byOpSearch });
         await exportByOpExcel(items, filters);
         return;
       }
-      const items = await fetchAllAppointments(filters);
+      const items = await fetchAllAppointments(filters, { search: listSearch });
       await exportAppointmentsExcel(items, filters);
     } finally {
       setExporting(false);
@@ -389,6 +397,12 @@ export function AppointmentsTables({
           loading={loading}
           onRowClick={(row) => onOpenOp(row.production_order)}
           headerActions={exportAction}
+          searchPlaceholder="Buscar operador, OP, produto, CT…"
+          searchHint={PA_HELP_TOOLTIPS.tables.appointmentsSearch}
+          serverSearch={{
+            value: listSearch,
+            onChange: onListSearchChange,
+          }}
           serverSort={{
             sortKey: listSortKey,
             sortDirection: listSortDir,
@@ -422,6 +436,12 @@ export function AppointmentsTables({
           loading={loading}
           onRowClick={(row) => onOpenOp(row.production_order)}
           headerActions={exportAction}
+          searchPlaceholder="Buscar OP ou produto…"
+          searchHint={PA_HELP_TOOLTIPS.tables.byOpSearch}
+          serverSearch={{
+            value: byOpSearch,
+            onChange: onByOpSearchChange,
+          }}
           serverSort={{
             sortKey: byOpSortKey,
             sortDirection: byOpSortDir,

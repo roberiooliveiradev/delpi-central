@@ -13,6 +13,8 @@ export function useAppointmentsTables(
   byOpPage: number,
   listPageSize: number,
   byOpPageSize: number,
+  listSearch = "",
+  byOpSearch = "",
 ) {
   const [list, setList] = useState<AppointmentsListData | null>(null);
   const [byOp, setByOp] = useState<AppointmentsByOpData | null>(null);
@@ -39,9 +41,11 @@ export function useAppointmentsTables(
         const [listData, byOpData] = await Promise.all([
           fetchAppointmentsList(filters, listPage, listPageSize, {
             signal: controller.signal,
+            search: listSearch,
           }),
           fetchAppointmentsByOp(filters, byOpPage, byOpPageSize, {
             signal: controller.signal,
+            search: byOpSearch,
           }),
         ]);
         setList(listData);
@@ -56,7 +60,16 @@ export function useAppointmentsTables(
 
     void run();
     return () => controller.abort();
-  }, [appliedFilters, listPage, byOpPage, listPageSize, byOpPageSize, reloadKey]);
+  }, [
+    appliedFilters,
+    listPage,
+    byOpPage,
+    listPageSize,
+    byOpPageSize,
+    listSearch,
+    byOpSearch,
+    reloadKey,
+  ]);
 
   return { list, byOp, loading, error, reload };
 }

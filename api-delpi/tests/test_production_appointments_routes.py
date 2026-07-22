@@ -165,3 +165,51 @@ def test_by_op_returns_meta(mock_builder, _mock_branch, pa_client: TestClient) -
     assert response.status_code == 200
     assert body["meta"]["operationId"] == "list_production_appointments_by_op"
     assert body["meta"]["shape"] == "paged_list"
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_list_production_appointments_use_case"
+)
+def test_list_forwards_optional_search(
+    mock_builder, _mock_branch, pa_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {"items": [], "pagination": {"total": 0}}
+    mock_builder.return_value = use_case
+
+    response = pa_client.get(
+        "/production/appointments",
+        params={"branch": "01", "search": "lind"},
+    )
+
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.search == "lind"
+
+
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.production_appointments.production_appointments_router.build_list_production_appointments_by_op_use_case"
+)
+def test_by_op_forwards_optional_search(
+    mock_builder, _mock_branch, pa_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {"items": [], "pagination": {"total": 0}}
+    mock_builder.return_value = use_case
+
+    response = pa_client.get(
+        "/production/appointments/by-op",
+        params={"branch": "01", "search": "2465"},
+    )
+
+    assert response.status_code == 200
+    request = use_case.execute.call_args.args[0]
+    assert request.search == "2465"

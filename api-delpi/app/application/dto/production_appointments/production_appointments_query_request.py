@@ -9,6 +9,9 @@ from app.domain.production.production_appointments.production_appointments_scope
     SERIES_GROUP_BY_OPTIONS,
     VALID_BRANCHES,
 )
+from app.domain.services.production.production_appointments_list_search_service import (
+    ProductionAppointmentsListSearchService,
+)
 from app.domain.services.production.protheus_date_range_service import (
     ProtheusDateRangeService,
 )
@@ -22,6 +25,7 @@ class ProductionAppointmentsQueryRequest:
     work_center: str | None = None
     op: str | None = None
     product: str | None = None
+    search: str | None = None
     group_by: str = "day"
     page: int = DEFAULT_PAGE
     page_size: int = DEFAULT_PAGE_SIZE
@@ -36,6 +40,7 @@ class ProductionAppointmentsQueryRequest:
         work_center: str | None = None,
         op: str | None = None,
         product: str | None = None,
+        search: str | None = None,
         group_by: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
@@ -62,6 +67,7 @@ class ProductionAppointmentsQueryRequest:
             work_center=work_center.strip() if work_center else None,
             op=op.strip() if op else None,
             product=product.strip() if product else None,
+            search=ProductionAppointmentsListSearchService.normalize_term(search),
             group_by=resolved_group,
             page=resolved_page,
             page_size=resolved_size,
