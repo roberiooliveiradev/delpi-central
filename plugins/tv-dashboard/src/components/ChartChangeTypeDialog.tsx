@@ -21,7 +21,7 @@ import {
   type DelpiChartType,
 } from "@delpi/plugin-ui/index";
 
-import { Modal } from "./ui/Modal";
+import { HostContainedDialog } from "./ui/Modal";
 
 const CHART_ICON_MAP: Record<string, LucideIcon> = {
   LineChart,
@@ -75,7 +75,7 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
   const DraftIcon = draftEntry ? (CHART_ICON_MAP[draftEntry.icon] ?? BarChart3) : BarChart3;
 
   return (
-    <Modal
+    <HostContainedDialog
       open={open}
       title="Alterar tipo de gráfico"
       onClose={onClose}
@@ -148,6 +148,6 @@ export function ChartChangeTypeDialog({ open, currentType, onClose, onConfirm }:
           </div>
         </div>
       </div>
-    </Modal>
+    </HostContainedDialog>
   );
 }

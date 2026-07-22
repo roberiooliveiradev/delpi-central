@@ -10,7 +10,7 @@ import {
 } from "../api/tvDashboardApi";
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import type { MediaLibraryTarget } from "./comunicadoEditorTypes";
-import { Modal } from "./ui/Modal";
+import { HostContainedDialog } from "./ui/Modal";
 
 type Props = {
   open: boolean;
@@ -141,7 +141,7 @@ export function MediaLibraryModal({
   }
 
   return (
-    <Modal open={open} title={targetTitle(target)} onClose={onClose} className="td-modal--wide">
+    <HostContainedDialog open={open} title={targetTitle(target)} onClose={onClose} className="td-modal--wide">
       <div className="td-media-library__toolbar">
         <NativeTextControl
           type="text"
@@ -211,6 +211,6 @@ export function MediaLibraryModal({
           </li>
         ))}
       </ul>
-    </Modal>
+    </HostContainedDialog>
   );
 }

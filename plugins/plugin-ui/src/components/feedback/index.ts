@@ -60,6 +60,11 @@ export {
   type ConfirmModalPanelProps,
 } from "./ConfirmModalPanel";
 export {
+  ModalFrame,
+  modalFrameClassName,
+  type ModalFrameProps,
+} from "./ModalFrame";
+export {
   StateBoxPanel,
   createStateBoxPanel,
   stateBoxBemClasses,

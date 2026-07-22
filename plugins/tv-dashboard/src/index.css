@@ -772,26 +772,23 @@
 }
 .dashboard-tv-dashboard .td-modal{
   width: min(520px, 100%);
-  background: var(--td-surface);
-  border: 1px solid var(--td-border);
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 20px 60px color-mix(in srgb, #000 18%, transparent);
+  /* chrome (raio/sombra/padding) via .delpi-ui-modal-frame */
   max-height: min(92vh, 960px);
   overflow: auto;
   color: var(--td-text);
+  background: var(--td-surface);
+  border: 1px solid var(--td-border);
 }
 .dashboard-tv-dashboard .td-modal__header{
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
 }
 .dashboard-tv-dashboard .td-modal__title{
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 650;
   color: var(--td-text);
 }
 .dashboard-tv-dashboard .td-modal__body{
@@ -808,37 +805,10 @@
 }
 .dashboard-tv-dashboard .td-modal--confirm{
   width: min(420px, 100%);
-  border-radius: 20px;
-  padding: 0;
-  border-color: color-mix(in srgb, var(--td-border) 75%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #fff 5%, transparent),
-    0 28px 72px color-mix(in srgb, #000 38%, transparent);
-  overflow: hidden;
-}
-.dashboard-tv-dashboard .td-modal--confirm .td-modal__header{
-  margin-bottom: 0;
-  padding: 18px 20px 10px;
-  border-bottom: none;
-  background: transparent;
-  align-items: flex-start;
-}
-.dashboard-tv-dashboard .td-modal--confirm .td-modal__title{
-  font-size: 1.125rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
 }
 .dashboard-tv-dashboard .td-modal--confirm .td-modal__body{
   padding: 0 20px 18px;
   gap: 0;
-}
-.dashboard-tv-dashboard .td-modal--confirm .td-modal__close{
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--td-border) 70%, transparent);
-  background: color-mix(in srgb, var(--td-text) 5%, transparent);
 }
 .dashboard-tv-dashboard .td-modal-overlay--contained.td-modal-overlay--contained-dialog,
 .dashboard-tv-dashboard .delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog{

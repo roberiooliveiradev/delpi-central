@@ -88,6 +88,7 @@ describe("ModalShell", () => {
     expect(dialog.closest(".dashboard-tv-dashboard")).toBeTruthy();
     expect(dialog.closest(".td-modal-overlay")).toBeTruthy();
     expect(dialog.className).toContain("delpi-ui-modal");
+    expect(dialog.className).toContain("delpi-ui-modal-frame");
   });
 
   it("createModalShell aplica variante page com dual-class", () => {

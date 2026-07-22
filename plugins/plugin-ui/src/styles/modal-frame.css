@@ -1,0 +1,79 @@
+/**
+ * Chrome canônico do card de modal (mesmo visual do confirm «Remover…»).
+ * Tokens + `.delpi-ui-modal-frame` — aplicados por ModalShell / ModalFrame.
+ * Sem blur no card; blur fica só no overlay contido.
+ */
+
+:root {
+  --delpi-ui-modal-radius: 20px;
+  --delpi-ui-modal-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 5%, transparent),
+    0 28px 72px color-mix(in srgb, #000 38%, transparent);
+  --delpi-ui-modal-border-color: color-mix(
+    in srgb,
+    var(--delpi-ui-border, var(--border, #334155)) 75%,
+    transparent
+  );
+  --delpi-ui-modal-header-pad: 18px 20px 12px;
+  --delpi-ui-modal-body-pad: 0 20px 18px;
+  --delpi-ui-modal-close-size: 32px;
+}
+
+.delpi-ui-modal-frame,
+.delpi-ui-modal.delpi-ui-modal-frame {
+  padding: 0;
+  border-radius: var(--delpi-ui-modal-radius);
+  border-color: var(--delpi-ui-modal-border-color);
+  box-shadow: var(--delpi-ui-modal-shadow);
+  overflow: hidden;
+  background: var(--delpi-ui-surface, var(--surface, #ffffff));
+  color: var(--delpi-ui-text, var(--text, #0f172a));
+}
+
+.delpi-ui-modal-frame .delpi-ui-modal__header,
+.delpi-ui-modal-frame [class$="-modal__header"] {
+  margin-bottom: 0;
+  padding: var(--delpi-ui-modal-header-pad);
+  border-bottom: none;
+  background: transparent;
+  align-items: flex-start;
+}
+
+.delpi-ui-modal-frame .delpi-ui-modal__title,
+.delpi-ui-modal-frame [class$="-modal__title"] {
+  font-size: 1.125rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.delpi-ui-modal-frame .delpi-ui-modal__body,
+.delpi-ui-modal-frame [class$="-modal__body"] {
+  padding: var(--delpi-ui-modal-body-pad);
+  gap: 12px;
+}
+
+.delpi-ui-modal-frame .delpi-ui-modal__close,
+.delpi-ui-modal-frame [class$="-modal__close"] {
+  width: var(--delpi-ui-modal-close-size);
+  height: var(--delpi-ui-modal-close-size);
+  min-width: var(--delpi-ui-modal-close-size);
+  min-height: var(--delpi-ui-modal-close-size);
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #475569) 55%, transparent);
+  background: color-mix(in srgb, var(--delpi-ui-text, #fff) 5%, transparent);
+  font-size: 1.1rem;
+}
+
+.delpi-ui-modal-frame .delpi-ui-modal__footer,
+.delpi-ui-modal-frame [class$="-modal__footer"] {
+  padding: 12px 20px 18px;
+  border-top: 1px solid color-mix(in srgb, var(--delpi-ui-border, #334155) 55%, transparent);
+  background: transparent;
+}
+
+/* Host-fill (workbench): raio menor, sem sombra de diálogo flutuante. */
+.delpi-ui-modal-frame.delpi-ui-modal--host-fill {
+  border-radius: 12px;
+  box-shadow: none;
+}

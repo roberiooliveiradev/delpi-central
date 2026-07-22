@@ -35,7 +35,7 @@ import { FieldLabelsEditor } from "./FieldLabelsEditor";
 import type { PanelLayout } from "./SelectedDataSidePanel";
 import { DeckField } from "./deck/DeckField";
 import { DeckPropertySection } from "./deck/DeckPropertySection";
-import { Modal } from "./ui/Modal";
+import { HostContainedDialog } from "./ui/Modal";
 import type { ValueFieldOption } from "./ValueFieldsMultiSelect";
 
 const REFRESH_PRESET_VALUES = new Set(["60", "120", "300", "600"]);
@@ -395,7 +395,7 @@ export function DataBindingInspector({
   );
 
   const paramsModal = (
-    <Modal
+    <HostContainedDialog
       open={paramsModalOpen}
       title="Parâmetros da fonte"
       onClose={() => setParamsModalOpen(false)}
@@ -410,7 +410,7 @@ export function DataBindingInspector({
         idPrefix="td-data-param-modal"
         onChange={updateParam}
       />
-    </Modal>
+    </HostContainedDialog>
   );
 
   const showFieldLabels = isDataSourceBlockType(target.type);

@@ -129,6 +129,7 @@ export const VISUAL_COMPONENTS: VisualComponentSpec[] = [
   vc("feedback", "InfoStatePanel"),
   vc("feedback", "StatusBadge"),
   vc("feedback", "ModalShell"),
+  vc("feedback", "ModalFrame"),
   vc("feedback", "DrawerShell"),
   vc("feedback", "ConfirmModalPanel"),
   // data

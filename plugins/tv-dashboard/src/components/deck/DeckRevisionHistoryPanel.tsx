@@ -14,7 +14,7 @@ import {
   playlistHistoryPreview,
   summarizePlaylistHistoryChange,
 } from "../../utils/playlistHistoryTimeline";
-import { Modal } from "../ui/Modal";
+import { HostContainedDialog } from "../ui/Modal";
 
 type Props = {
   open: boolean;
@@ -116,7 +116,7 @@ export function DeckRevisionHistoryPanel({ open, playlistId, onClose }: Props) {
   });
 
   return (
-    <Modal open={open} title="Histórico de revisões" onClose={onClose} className="td-modal--history">
+    <HostContainedDialog open={open} title="Histórico de revisões" onClose={onClose} className="td-modal--history">
       {history.error ? (
         <div className="td-history__error" role="alert">
           {history.error}
@@ -170,6 +170,6 @@ export function DeckRevisionHistoryPanel({ open, playlistId, onClose }: Props) {
           </button>
         </div>
       ) : null}
-    </Modal>
+    </HostContainedDialog>
   );
 }

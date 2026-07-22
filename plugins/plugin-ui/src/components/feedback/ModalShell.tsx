@@ -197,6 +197,7 @@ export function ModalShell({
 
   const dialogClass = [
     classNames.dialog,
+    "delpi-ui-modal-frame",
     hostFill ? "delpi-ui-modal--host-fill" : null,
     className,
   ]

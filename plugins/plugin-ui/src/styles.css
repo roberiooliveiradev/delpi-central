@@ -36,6 +36,7 @@
 @import "./styles/drawer.css";
 @import "./styles/modal.css";
 @import "./styles/modal-shell.css";
+@import "./styles/modal-frame.css";
 @import "./styles/confirm-modal.css";
 @import "./styles/popover-surface.css";
 @import "./styles/lucide-icon-picker.css";

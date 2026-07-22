@@ -1,6 +1,6 @@
 import { listKeyboardShortcutsByGroup, formatShortcutKeys } from "../content/keyboardShortcuts";
 import { useKeyboardShortcutsTips } from "../context/KeyboardShortcutsTipsProvider";
-import { Modal } from "./ui/Modal";
+import { HostContainedDialog } from "./ui/Modal";
 
 /** Modal com o catálogo completo de atalhos do editor. */
 export function KeyboardShortcutsCatalogModal() {
@@ -8,7 +8,7 @@ export function KeyboardShortcutsCatalogModal() {
   const groups = listKeyboardShortcutsByGroup();
 
   return (
-    <Modal
+    <HostContainedDialog
       open={catalogOpen}
       title="Atalhos do teclado"
       onClose={closeCatalog}
@@ -44,6 +44,6 @@ export function KeyboardShortcutsCatalogModal() {
           </section>
         ))}
       </div>
-    </Modal>
+    </HostContainedDialog>
   );
 }

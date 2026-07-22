@@ -8,7 +8,7 @@ import { useMemo } from "react";
 
 import { ChartAxesProjectionEditor, type ChartAxisFieldOption } from "./ChartAxesProjectionEditor";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
-import { Modal } from "./ui/Modal";
+import { HostContainedDialog } from "./ui/Modal";
 
 type Props = {
   open: boolean;
@@ -50,7 +50,7 @@ export function ChartSelectDataModal({ open, onClose, block }: Props) {
   };
 
   return (
-    <Modal open={open} title="Selecionar dados" onClose={onClose}>
+    <HostContainedDialog open={open} title="Selecionar dados" onClose={onClose}>
       <p className="td-deck-inspector__hint">
         Escolha a categoria (eixo X) e as séries (eixo Y). Os campos refletem a tabela após Preparar
         dados, quando houver steps na fonte.
@@ -80,6 +80,6 @@ export function ChartSelectDataModal({ open, onClose, block }: Props) {
           Concluir
         </button>
       </div>
-    </Modal>
+    </HostContainedDialog>
   );
 }

@@ -1,5 +1,6 @@
 /**
- * Confirm / choice modal — visual moderno (elevação, ícone de contexto, ações claras).
+ * Confirm / choice modal — layout interno (ícone + mensagem + ações).
+ * Chrome do card (raio/sombra/header) vive em `modal-frame.css` via ModalShell.
  * Classes canônicas `.delpi-ui-confirm-modal*`; MFEs usam dual-class via confirmModalBemClasses.
  */
 
@@ -61,37 +62,10 @@
   justify-content: flex-start;
 }
 
-/* Shell compacto para confirmações */
+/* Largura compacta só para confirmações */
 .delpi-ui-modal.delpi-ui-modal--confirm,
 .delpi-ui-modal[class*="-modal--confirm"] {
   width: min(420px, calc(100vw - 32px));
-  border-radius: 20px;
-  border-color: color-mix(in srgb, var(--delpi-ui-border, #334155) 70%, transparent);
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, #fff 4%, transparent),
-    0 24px 64px color-mix(in srgb, #000 42%, transparent);
-  overflow: hidden;
-}
-
-.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__header,
-.delpi-ui-modal[class*="-modal--confirm"] [class$="-modal__header"] {
-  padding: 18px 20px 12px;
-  border-bottom: none;
-  background: transparent;
-  align-items: flex-start;
-}
-
-.delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__title,
-.delpi-ui-modal[class*="-modal--confirm"] [class$="-modal__title"] {
-  font-size: 1.125rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
 }
 
 .delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__body,
@@ -100,13 +74,9 @@
   gap: 0;
 }
 
-.delpi-ui-modal[class*="-modal--confirm"] .delpi-ui-modal__close,
-.delpi-ui-modal[class*="-modal--confirm"] [class$="-modal__close"] {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--delpi-ui-border, #475569) 55%, transparent);
-  background: color-mix(in srgb, var(--delpi-ui-text, #fff) 4%, transparent);
+.delpi-ui-modal-overlay--contained.delpi-ui-modal-overlay--contained-dialog {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .delpi-ui-danger-btn {
