@@ -23,4 +23,13 @@ describe("deck history back button contract", () => {
   it("chrome passa onBack da programação para o histórico", () => {
     expect(chrome).toMatch(/DeckHistoryTabActions onBack=\{playlistChrome\?\.onBack\}/);
   });
+
+  it("substitui histórico de revisões por Atualizar dados quando há blocos de dados", () => {
+    expect(history).not.toContain("DeckRevisionHistoryPanel");
+    expect(history).not.toContain("Abrir histórico de revisões");
+    expect(history).toContain("Atualizar dados");
+    expect(history).toContain("RefreshCw");
+    expect(history).toContain("isFetchableDataBlockType");
+    expect(history).toContain("refreshDataPreview");
+  });
 });

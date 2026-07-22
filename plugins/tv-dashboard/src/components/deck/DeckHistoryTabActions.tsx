@@ -1,12 +1,12 @@
 import { HintAction } from "@delpi/plugin-ui/index";
-import { ArrowLeft, History, Redo2, Undo2 } from "lucide-react";
-import { useState } from "react";
+import { isFetchableDataBlockType } from "@delpi/tv-dashboard-presentation";
+import { ArrowLeft, Redo2, RefreshCw, Undo2 } from "lucide-react";
 
 import { getKeyboardShortcut, formatShortcutKeys } from "../../content/keyboardShortcuts";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { useDeckEditorHistoryContext } from "../../context/deckEditorHistoryContext";
+import { useOptionalComunicadoEditor } from "../comunicadoEditorContext";
 import { ShortcutTip } from "../ShortcutTip";
-import { DeckRevisionHistoryPanel } from "./DeckRevisionHistoryPanel";
 
 const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const HEADER = TV_DASHBOARD_HELP_TOOLTIPS.header;
@@ -24,14 +24,21 @@ type Props = {
   onBack?: () => void;
 };
 
-/** Voltar + Desfazer/refazer global — ícones compactos na faixa de abas. */
+/** Voltar + Desfazer/refazer + Atualizar dados (quando a tela tem blocos de dados). */
 export function DeckHistoryTabActions({ onBack }: Props) {
   const history = useDeckEditorHistoryContext();
-  const [panelOpen, setPanelOpen] = useState(false);
-  if (!history && !onBack) return null;
+  const editor = useOptionalComunicadoEditor();
+  const hasDataBlocks = Boolean(
+    editor?.config?.blocks?.some((block) => isFetchableDataBlockType(block.type)),
+  );
+  const refreshing = Boolean(
+    editor?.dataPreviewLoading || (editor?.refreshingSourceIds?.length ?? 0) > 0,
+  );
+
+  if (!history && !onBack && !hasDataBlocks) return null;
 
   return (
-    <div className="td-deck-chrome__history" role="group" aria-label="Histórico">
+    <div className="td-deck-chrome__history" role="group" aria-label="Ações do editor">
       {onBack ? (
         <HintAction hint={HEADER.back} ariaLabel={HEADER.back}>
           <button
@@ -77,22 +84,26 @@ export function DeckHistoryTabActions({ onBack }: Props) {
               </HintAction>
             </span>
           </ShortcutTip>
-          <HintAction hint="Abrir histórico de revisões" ariaLabel="Abrir histórico de revisões">
-            <button
-              type="button"
-              className="td-deck-chrome__history-btn"
-              onClick={() => setPanelOpen(true)}
-              aria-label="Abrir histórico de revisões"
-            >
-              <History size={14} aria-hidden="true" />
-            </button>
-          </HintAction>
-          <DeckRevisionHistoryPanel
-            open={panelOpen}
-            playlistId={history.playlistId}
-            onClose={() => setPanelOpen(false)}
-          />
         </>
+      ) : null}
+      {hasDataBlocks && editor ? (
+        <HintAction hint={HEADER.refreshVisual} ariaLabel="Atualizar dados">
+          <button
+            type="button"
+            className={[
+              "td-deck-chrome__history-btn",
+              refreshing ? "td-deck-chrome__history-btn--busy" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            disabled={refreshing}
+            onClick={() => void editor.refreshDataPreview({ force: true })}
+            aria-label="Atualizar dados"
+            aria-busy={refreshing}
+          >
+            <RefreshCw size={14} aria-hidden="true" />
+          </button>
+        </HintAction>
       ) : null}
     </div>
   );
