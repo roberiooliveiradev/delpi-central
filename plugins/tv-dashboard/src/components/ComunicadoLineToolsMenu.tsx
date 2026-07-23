@@ -11,9 +11,6 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
-import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
-
-const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 
 type Props = {
   open: boolean;
@@ -62,7 +59,7 @@ export function ComunicadoLineToolsMenu({
         {COMUNICADO_LINE_TOOLS.map((tool) => {
           const Icon = TOOL_ICONS[tool.id];
           const hint = tool.ready
-            ? `${H.insertLineTool ?? H.insertLineShape} — ${tool.label}`
+            ? tool.label
             : `${tool.label}: disponível em breve (desenho no palco)`;
           return (
             <li key={tool.id}>

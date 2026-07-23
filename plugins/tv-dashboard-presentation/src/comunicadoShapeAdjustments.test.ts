@@ -23,6 +23,11 @@ describe("comunicadoShapeAdjustments", () => {
     expect(shapeHasAdjustments("rounded-rect")).toBe(true);
     expect(shapeHasAdjustments("hexagon")).toBe(true);
     expect(shapeHasAdjustments("arrow-right")).toBe(true);
+    expect(shapeHasAdjustments("smiley")).toBe(true);
+    expect(shapeHasAdjustments("lightning")).toBe(true);
+    expect(shapeHasAdjustments("pie")).toBe(true);
+    expect(shapeHasAdjustments("callout-cloud")).toBe(true);
+    expect(shapeHasAdjustments("bent-arrow")).toBe(true);
     expect(shapeHasAdjustments("diamond")).toBe(false);
     expect(shapeHasAdjustments("point")).toBe(false);
   });

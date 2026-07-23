@@ -145,21 +145,18 @@ export function crossPath(values: number[]): string {
   return `M${a0} 8 H${a1} V${a0} H92 V${a1} H${a1} V92 H${a0} V${a1} H8 V${a0} H${a0} Z`;
 }
 
-/** Chevron (faixa em V) — profundidade controla o avanço da ponta. */
+/**
+ * Chevron sólido (estilo PowerPoint) — profundidade = entalhe traseiro.
+ * Evita faixa oca em V (traço interno “torto” no preview outline).
+ */
 export function chevronRightPath(values: number[]): string {
-  const depth = a(values, 0, 0.45) * 100;
-  const band = Math.min(28, Math.max(12, depth * 0.35));
-  const tip = Math.min(96, 8 + depth);
-  const inner = Math.max(8, tip - band);
-  return `M8 12 L${tip} 50 L8 88 H${8 + band} L${inner} 50 L${8 + band} 12 Z`;
+  const notch = a(values, 0, 0.45) * 36;
+  return `M8 12 H${92 - notch} L96 50 L${92 - notch} 88 H8 L${8 + notch} 50 Z`;
 }
 
 export function chevronLeftPath(values: number[]): string {
-  const depth = a(values, 0, 0.45) * 100;
-  const band = Math.min(28, Math.max(12, depth * 0.35));
-  const tip = Math.max(4, 92 - depth);
-  const inner = Math.min(92, tip + band);
-  return `M92 12 L${tip} 50 L92 88 H${92 - band} L${inner} 50 L${92 - band} 12 Z`;
+  const notch = a(values, 0, 0.45) * 36;
+  return `M92 12 H${8 + notch} L4 50 L${8 + notch} 88 H92 L${92 - notch} 50 Z`;
 }
 
 /** Seta com entalhe na base (PowerPoint notched right arrow). */
@@ -205,14 +202,58 @@ export function calloutBubble(
   rx: number,
 ): { rect: { x: number; y: number; w: number; h: number; rx: number }; tip: string } {
   const px = a(values, 0, 0.5) * 100;
-  const py = Math.min(98, a(values, 1, 0.9) * 100);
+  const py = Math.min(98, Math.max(72, a(values, 1, 0.9) * 100));
   const corner = a(values, 2, rx / 50);
   const bodyH = 58;
-  const tipBase = bodyH + 8;
+  const tipBase = 8 + bodyH;
   return {
     rect: { x: 8, y: 8, w: 84, h: bodyH, rx: corner * 50 },
     tip: `${px - 8},${tipBase} ${px},${py} ${px + 8},${tipBase}`,
   };
+}
+
+/** Nuvem + ponteiro contínuo (evita triângulo solto abaixo da nuvem). */
+export function calloutCloudPath(values: number[]): string {
+  const px = a(values, 0, 0.5) * 100;
+  const py = Math.min(98, Math.max(70, a(values, 1, 0.9) * 100));
+  const left = Math.max(12, px - 10);
+  const right = Math.min(88, px + 10);
+  return [
+    "M28 56",
+    "C12 56 10 38 24 32",
+    "C18 16 40 6 52 16",
+    "C60 4 84 10 82 28",
+    "C96 30 96 52 80 54",
+    `L${right} 56`,
+    `L${px} ${py}`,
+    `L${left} 56`,
+    "C40 58 32 58 28 56",
+    "Z",
+  ].join(" ");
+}
+
+/** Raio preenchendo o viewBox quadrado; adj[0] = largura do zig-zag. */
+export function lightningPath(values: number[]): string {
+  const w = 0.35 + a(values, 0, 0.45) * 0.35;
+  const mid = 22 + w * 28;
+  const tip = 10 + w * 18;
+  return [
+    `M${52 + tip * 0.15} 6`,
+    `L${28} ${48}`,
+    `H${28 + mid * 0.35}`,
+    `L${18} 94`,
+    `L${72} 42`,
+    `H${72 - mid * 0.3}`,
+    `L${82 - tip * 0.2} 6`,
+    "Z",
+  ].join(" ");
+}
+
+/** Boca da carinha: 0 = triste, 1 = sorriso. */
+export function smileyMouthPath(values: number[]): string {
+  const smile = a(values, 0, 0.7);
+  const qy = 50 + smile * 36;
+  return `M32 62 Q50 ${qy} 68 62`;
 }
 
 export function moonPath(values: number[]): string {
@@ -275,13 +316,14 @@ export function donutPath(values: number[]): string {
   return `M50 8 A42 42 0 1 1 49.9 8 Z M50 ${50 - inner} A${inner} ${inner} 0 1 0 50.1 ${50 - inner} Z`;
 }
 
+/** Fatia de pizza; adj[0] = varredura (0.2–0.95 do círculo). */
 export function piePath(values: number[]): string {
-  const sweep = 0.35 + a(values, 0, 0.45) * 0.5;
+  const sweep = Math.min(0.95, Math.max(0.2, a(values, 0, 0.72)));
   const angle = -Math.PI / 2 + sweep * Math.PI * 2;
   const x = 50 + 42 * Math.cos(angle);
   const y = 50 + 42 * Math.sin(angle);
   const large = sweep > 0.5 ? 1 : 0;
-  return `M50 50 L50 8 A42 42 0 ${large} 1 ${x} ${y} Z`;
+  return `M50 50 L50 8 A42 42 0 ${large} 1 ${x.toFixed(2)} ${y.toFixed(2)} Z`;
 }
 
 export function cubePath(): string {
@@ -295,42 +337,130 @@ export function foldedCornerPath(values: number[]): string {
 }
 
 export function bentArrowPath(values: number[]): string {
-  const head = a(values, 0, 0.28);
-  const shaft = a(values, 1, 0.22);
-  const half = shaft * 40;
-  const neck = 100 - head * 70;
-  return `M12 ${50 - half} H55 V28 H${neck} V12 L92 40 L${neck} 68 V52 H${55 + half} V${50 + half} H12 Z`;
+  const head = a(values, 0, 0.32);
+  const shaft = a(values, 1, 0.24);
+  const half = Math.max(8, shaft * 36);
+  const neck = Math.min(88, 100 - head * 55);
+  const elbow = 52;
+  return [
+    `M12 ${50 - half}`,
+    `H${elbow}`,
+    `V${28}`,
+    `H${neck}`,
+    `V12`,
+    `L92 40`,
+    `L${neck} 68`,
+    `V${52}`,
+    `H${elbow + half}`,
+    `V${50 + half}`,
+    `H12`,
+    "Z",
+  ].join(" ");
 }
 
 export function uTurnArrowPath(values: number[]): string {
-  const shaft = a(values, 0, 0.22) * 36;
-  return `M28 88 V40 C28 18 48 10 68 10 C88 10 92 28 92 40 V58 H${92 - shaft} V40 C${92 - shaft} 30 80 ${18 + shaft * 0.2} 68 ${18 + shaft * 0.2} C56 ${18 + shaft * 0.2} ${28 + shaft} 28 ${28 + shaft} 40 V72 H44 L28 96 L12 72 H${28} Z`;
+  const shaft = Math.max(10, a(values, 0, 0.24) * 32);
+  const inner = 28 + shaft;
+  return [
+    `M30 90`,
+    `V42`,
+    `C30 18 50 10 70 10`,
+    `C90 10 94 28 94 42`,
+    `V56`,
+    `H${94 - shaft}`,
+    `V42`,
+    `C${94 - shaft} 32 84 22 70 22`,
+    `C56 22 ${inner} 30 ${inner} 42`,
+    `V70`,
+    `H46`,
+    `L30 96`,
+    `L14 70`,
+    `H30`,
+    "Z",
+  ].join(" ");
 }
 
 export function quadArrowPath(values: number[]): string {
-  const shaft = a(values, 0, 0.22) * 28;
+  const shaft = Math.max(8, a(values, 0, 0.22) * 22);
   const s0 = 50 - shaft;
   const s1 = 50 + shaft;
-  return `M50 6 L70 28 H${s1} V${s0} H72 L94 50 L72 72 H${s1} V${s1} H70 L50 94 L30 72 H${s0} V${s1} H28 L6 50 L28 28 H${s0} V${s0} H30 Z`;
+  const head = 22;
+  return [
+    `M50 6`,
+    `L${50 + head} 28`,
+    `H${s1}`,
+    `V${s0}`,
+    `H${72}`,
+    `L94 50`,
+    `L72 ${50 + head}`,
+    `H${s1}`,
+    `V${s1}`,
+    `H${50 + head}`,
+    `L50 94`,
+    `L${50 - head} 72`,
+    `H${s0}`,
+    `V${s1}`,
+    `H28`,
+    `L6 50`,
+    `L28 ${50 - head}`,
+    `H${s0}`,
+    `V${s0}`,
+    `H${50 - head}`,
+    "Z",
+  ].join(" ");
 }
 
 export function curvedRightArrowPath(values: number[]): string {
-  const thick = 10 + a(values, 0, 0.25) * 14;
-  return `M18 78 C18 40 40 18 72 18 H78 L68 4 L96 22 L68 40 L78 28 H72 C48 28 34 44 34 ${78 - thick} H18 Z`;
+  const thick = 12 + a(values, 0, 0.28) * 12;
+  return [
+    `M20 82`,
+    `C20 42 42 18 74 18`,
+    `H80`,
+    `L68 6`,
+    `L96 24`,
+    `L68 42`,
+    `L80 30`,
+    `H74`,
+    `C50 30 36 46 36 ${82 - thick}`,
+    `H20`,
+    "Z",
+  ].join(" ");
 }
 
 export function stripedRightArrowPath(values: number[]): string {
   const head = a(values, 0, 0.32);
+  const shaft = a(values, 1, 0.28);
   const neckX = 100 - head * 100;
-  return `M4 28 H${neckX} V12 L96 50 L${neckX} 88 V72 H4 Z`;
+  const half = shaft * 50;
+  const y1 = 50 - half;
+  const y2 = 50 + half;
+  return `M4 ${y1} H${neckX} V12 L96 50 L${neckX} 88 V${y2} H4 Z`;
 }
 
 export function burstPoints(points = 16, outer = 46, inner = 28): string {
   return starPoints(points, outer, inner);
 }
 
-export function scrollPath(): string {
-  return "M22 16 H78 C88 16 92 24 92 32 V68 C92 78 84 84 74 84 H26 C16 84 8 76 8 66 V34 C8 22 14 16 22 16 Z M22 16 C14 16 14 28 22 28 H78 M22 84 C14 84 14 72 22 72 H74";
+export function scrollPath(values: number[] = []): string {
+  const curl = 8 + a(values, 0, 0.22) * 14;
+  return [
+    `M${14 + curl} 16`,
+    `H${86 - curl}`,
+    `C${92} 16 94 26 94 34`,
+    `V66`,
+    `C94 78 86 84 ${86 - curl} 84`,
+    `H${14 + curl}`,
+    `C8 84 6 74 6 66`,
+    `V34`,
+    `C6 22 10 16 ${14 + curl} 16`,
+    "Z",
+    `M${14 + curl} 16`,
+    `C${14 + curl - 8} 16 ${14 + curl - 8} 30 ${14 + curl} 30`,
+    `H${86 - curl}`,
+    `M${14 + curl} 84`,
+    `C${14 + curl - 8} 84 ${14 + curl - 8} 70 ${14 + curl} 70`,
+    `H${86 - curl}`,
+  ].join(" ");
 }
 
 export function calloutLineParts(values: number[]): {

@@ -555,6 +555,7 @@ export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoSh
       textAlign: "center" as const,
       verticalAlign: "middle" as const,
       fontWeight: "normal" as const,
+      ...(primitive === "area" ? { boxShadow: DECK_SHAPE_DEFAULTS.boxShadow } : {}),
     };
     if (shape && isPointShapeKind(shape)) {
       return { ...base, markerRadius: COMUNICADO_MARKER_RADIUS_DEFAULT };

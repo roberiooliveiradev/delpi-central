@@ -8,10 +8,14 @@ import {
   arrowUpDownPath,
   arrowUpPath,
   bentArrowPath,
+  calloutCloudPath,
   chevronLeftPath,
   chevronRightPath,
+  lightningPath,
   notchedArrowPath,
+  piePath,
   regularPolygonPoints,
+  smileyMouthPath,
   teardropPath,
 } from "./comunicadoShapePaths";
 import { COMUNICADO_SHAPE_KIND_VALUES, isComunicadoShapeKind } from "./comunicadoShapeCatalog";
@@ -45,11 +49,13 @@ describe("comunicadoShapePaths — setas Office-like", () => {
     expect(arrowUpDownPath([0.35, 0.28])).toContain("L50 96");
   });
 
-  it("chevron é faixa em V (não losango de 4 pontos)", () => {
+  it("chevron é sólido estilo PowerPoint (não faixa oca em V)", () => {
     const right = chevronRightPath([0.45]);
     const left = chevronLeftPath([0.45]);
-    expect((right.match(/L/g) ?? []).length).toBeGreaterThanOrEqual(3);
-    expect((left.match(/L/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    expect(right).toContain("L96 50");
+    expect(left).toContain("L4 50");
+    expect((right.match(/L/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect((left.match(/L/g) ?? []).length).toBeGreaterThanOrEqual(2);
     expect(chevronRightPath([0.2])).not.toBe(chevronRightPath([0.7]));
   });
 
@@ -74,5 +80,14 @@ describe("comunicadoShapePaths — setas Office-like", () => {
         expect(resolveShapePrimitive(block.shape)).toBe("area");
       }
     }
+  });
+
+  it("raio, pizza, carinha e balão-nuvem têm path contínuo e responsivo ao ajuste", () => {
+    expect(lightningPath([0.2])).not.toBe(lightningPath([0.8]));
+    expect(piePath([0.3])).not.toBe(piePath([0.85]));
+    expect(smileyMouthPath([0.2])).not.toBe(smileyMouthPath([0.9]));
+    const cloud = calloutCloudPath([0.5, 0.9]);
+    expect(cloud).toContain("Z");
+    expect(cloud.match(/L/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
   });
 });

@@ -214,6 +214,13 @@ describe("comunicadoHelpers", () => {
     expect(css["--tdp-block-box-shadow"]).toBe(shadow);
   });
 
+  it("forma de área nasce com sombra padrão do catálogo", () => {
+    const shape = createShapeBlock("ellipse");
+    expect(shape.style?.boxShadow).toBeTruthy();
+    const css = blockCssStyle(shape) as CSSProperties & Record<string, string>;
+    expect(css["--tdp-block-box-shadow"]).toBe(shape.style?.boxShadow);
+  });
+
   it("promove sombra inset e multi-camada para --tdp-block-box-shadow", () => {
     const cases = [
       "inset 0 2px 8px rgba(0, 0, 0, 0.28)",

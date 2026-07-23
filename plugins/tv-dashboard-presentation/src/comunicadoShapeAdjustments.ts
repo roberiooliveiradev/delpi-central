@@ -352,6 +352,104 @@ function sunCoreSpec(index = 0): ShapeAdjustmentSpec {
   };
 }
 
+function smileyMouthSpec(index = 0): ShapeAdjustmentSpec {
+  return {
+    index,
+    id: "mouth",
+    label: "Boca",
+    defaultValue: 0.7,
+    min: 0.15,
+    max: 0.95,
+    axis: "y",
+    handleAt: (values) => ({ x: 50, y: 50 + (values[index] ?? 0.7) * 36 }),
+    valueFromPointer: (_x, localY) => clamp((localY - 50) / 36, 0.15, 0.95),
+  };
+}
+
+function lightningWidthSpec(index = 0): ShapeAdjustmentSpec {
+  return {
+    index,
+    id: "width",
+    label: "Largura",
+    defaultValue: 0.45,
+    min: 0.15,
+    max: 0.85,
+    axis: "x",
+    handleAt: (values) => ({ x: 40 + (values[index] ?? 0.45) * 30, y: 48 }),
+    valueFromPointer: (localX) => clamp((localX - 40) / 30, 0.15, 0.85),
+  };
+}
+
+function pieSweepSpec(index = 0): ShapeAdjustmentSpec {
+  return {
+    index,
+    id: "sweep",
+    label: "Fatia",
+    defaultValue: 0.72,
+    min: 0.2,
+    max: 0.95,
+    axis: "xy",
+    handleAt: (values) => {
+      const sweep = values[index] ?? 0.72;
+      const angle = -Math.PI / 2 + sweep * Math.PI * 2;
+      return { x: 50 + 42 * Math.cos(angle), y: 50 + 42 * Math.sin(angle) };
+    },
+    valueFromPointer: (localX, localY) => {
+      const angle = Math.atan2(localY - 50, localX - 50);
+      let sweep = (angle + Math.PI / 2) / (Math.PI * 2);
+      if (sweep < 0) sweep += 1;
+      return clamp(sweep, 0.2, 0.95);
+    },
+  };
+}
+
+function donutInnerSpec(index = 0): ShapeAdjustmentSpec {
+  return {
+    index,
+    id: "inner",
+    label: "Furo",
+    defaultValue: 0.35,
+    min: 0.1,
+    max: 0.7,
+    axis: "xy",
+    handleAt: (values) => ({ x: 50, y: 50 - (12 + (values[index] ?? 0.35) * 18) }),
+    valueFromPointer: (localX, localY) =>
+      clamp((Math.hypot(localX - 50, localY - 50) - 12) / 18, 0.1, 0.7),
+  };
+}
+
+function frameThicknessSpec(index = 0): ShapeAdjustmentSpec {
+  return {
+    index,
+    id: "thickness",
+    label: "Espessura",
+    defaultValue: 0.2,
+    min: 0.08,
+    max: 0.45,
+    axis: "xy",
+    handleAt: (values) => {
+      const t = 8 + (values[index] ?? 0.2) * 16;
+      return { x: 8 + t, y: 8 + t };
+    },
+    valueFromPointer: (localX, localY) =>
+      clamp((Math.min(localX, localY) - 8) / 16, 0.08, 0.45),
+  };
+}
+
+function scrollFoldSpec(index = 0): ShapeAdjustmentSpec {
+  return {
+    index,
+    id: "fold",
+    label: "Enrolado",
+    defaultValue: 0.22,
+    min: 0.08,
+    max: 0.4,
+    axis: "x",
+    handleAt: (values) => ({ x: 16 + (values[index] ?? 0.22) * 40, y: 20 }),
+    valueFromPointer: (localX) => clamp((localX - 16) / 40, 0.08, 0.4),
+  };
+}
+
 const SPECS_BY_KIND: Partial<Record<ComunicadoShapeKind, ShapeAdjustmentSpec[]>> = {
   /**
    * Retângulo/elipse puros: sem losango (paridade PowerPoint).
@@ -425,18 +523,62 @@ const SPECS_BY_KIND: Partial<Record<ComunicadoShapeKind, ShapeAdjustmentSpec[]>>
     },
   ],
   "notched-arrow-right": [arrowHeadSpec(0), arrowShaftSpec(1)],
+  "bent-arrow": [arrowHeadSpec(0), arrowShaftSpec(1)],
+  "u-turn-arrow": [
+    {
+      ...arrowShaftSpec(0),
+      defaultValue: 0.24,
+      handleAt: (values) => ({ x: 70, y: 40 - (values[0] ?? 0.24) * 40 }),
+      valueFromPointer: (_x, localY) => clamp(Math.abs(40 - localY) / 40, 0.12, 0.45),
+    },
+  ],
+  "quad-arrow": [
+    {
+      ...arrowShaftSpec(0),
+      defaultValue: 0.22,
+      handleAt: (values) => ({ x: 50 - (values[0] ?? 0.22) * 50, y: 50 }),
+      valueFromPointer: (localX) => clamp(Math.abs(50 - localX) / 50, 0.12, 0.45),
+    },
+  ],
+  "curved-right-arrow": [
+    {
+      ...arrowShaftSpec(0),
+      defaultValue: 0.28,
+      handleAt: (values) => ({ x: 28, y: 70 - (values[0] ?? 0.28) * 40 }),
+      valueFromPointer: (_x, localY) => clamp(Math.abs(70 - localY) / 40, 0.12, 0.45),
+    },
+  ],
+  "striped-right-arrow": [arrowHeadSpec(0), arrowShaftSpec(1)],
   star: [starInnerSpec(0)],
   "star-4": [starInnerSpec(0)],
   "star-6": [starInnerSpec(0)],
+  "star-7": [starInnerSpec(0)],
   "star-8": [starInnerSpec(0)],
+  "star-10": [starInnerSpec(0)],
+  "star-12": [starInnerSpec(0)],
+  "star-16": [starInnerSpec(0)],
+  "star-24": [starInnerSpec(0)],
+  "burst-16": [starInnerSpec(0)],
   banner: [bannerSpec(0)],
   wave: [waveSpec(0)],
+  scroll: [scrollFoldSpec(0)],
   "flowchart-document": [documentWaveSpec(0)],
   "callout-rect": [calloutPointerX(0), calloutPointerY(1)],
   "callout-rounded": [calloutPointerX(0), calloutPointerY(1), { ...cornerSpec(2), defaultValue: 0.2 }],
+  "callout-oval": [calloutPointerX(0), calloutPointerY(1)],
   "callout-cloud": [calloutPointerX(0), calloutPointerY(1)],
+  "callout-line": [calloutPointerX(0), calloutPointerY(1)],
   moon: [moonSpec(0)],
   sun: [sunCoreSpec(0)],
+  smiley: [smileyMouthSpec(0)],
+  lightning: [lightningWidthSpec(0)],
+  pie: [pieSweepSpec(0)],
+  donut: [donutInnerSpec(0)],
+  frame: [frameThicknessSpec(0)],
+  "round-1-rect": [roundSameSideSpec(0)],
+  "snip-diag-rect": [snipSpec(0)],
+  "folded-corner": [snipSpec(0)],
+  corner: [armSpec(0)],
 };
 
 export function shapeAdjustmentSpecs(kind: ComunicadoShapeKind): ShapeAdjustmentSpec[] {

@@ -25,6 +25,7 @@ import {
   bentArrowPath,
   burstPoints,
   calloutBubble,
+  calloutCloudPath,
   calloutLineParts,
   chevronLeftPath,
   chevronRightPath,
@@ -39,6 +40,7 @@ import {
   foldedCornerPath,
   framePath,
   hexagonPoints,
+  lightningPath,
   moonPath,
   notchedArrowPath,
   octagonPoints,
@@ -50,6 +52,7 @@ import {
   roundOneRectPath,
   roundSameSidePath,
   scrollPath,
+  smileyMouthPath,
   snipDiagonalRectPoints,
   snipRectPoints,
   starPoints,
@@ -497,7 +500,7 @@ function renderSvgShape(
           <circle cx="36" cy="42" r="5" fill={stroke} />
           <circle cx="64" cy="42" r="5" fill={stroke} />
           <path
-            d="M32 62 Q50 78 68 62"
+            d={smileyMouthPath(adj)}
             fill="none"
             stroke={stroke}
             strokeWidth={Math.max(2, sw)}
@@ -549,30 +552,8 @@ function renderSvgShape(
         />
       );
     case "lightning":
-      return (
-        <polygon
-          points={polygonPoints([58, 6, 34, 46, 50, 46, 30, 94, 70, 48, 52, 48])}
-          fill={fill}
-          stroke={stroke}
-          strokeWidth={sw}
-        />
-      );
+      return <path d={lightningPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "cloud":
-    case "callout-cloud": {
-      if (kind === "callout-cloud") {
-        const bubble = calloutBubble(adj, 10);
-        return (
-          <>
-            <path
-              d="M28 58 C12 58 10 38 24 32 C18 16 40 6 52 16 C60 4 84 10 82 28 C96 30 96 54 80 56 Z"
-              fill={fill}
-              stroke={stroke}
-              strokeWidth={sw}
-            />
-            <polygon points={bubble.tip} fill={fill} stroke={stroke} strokeWidth={sw} />
-          </>
-        );
-      }
       return (
         <path
           d="M28 70 C12 70 10 50 24 44 C18 28 40 18 52 28 C60 16 84 22 82 40 C96 42 96 66 80 68 Z"
@@ -581,7 +562,8 @@ function renderSvgShape(
           strokeWidth={sw}
         />
       );
-    }
+    case "callout-cloud":
+      return <path d={calloutCloudPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "moon":
       return <path d={moonPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "sun": {
@@ -859,7 +841,7 @@ function renderSvgShape(
       return <path d={bannerPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
     case "scroll":
       return (
-        <path d={scrollPath()} fill={fill} stroke={stroke} strokeWidth={sw} fillRule="evenodd" />
+        <path d={scrollPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} fillRule="evenodd" />
       );
     case "wave":
       return <path d={wavePath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;

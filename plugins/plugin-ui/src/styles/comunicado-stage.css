@@ -431,11 +431,13 @@
  * Formas SVG (cruz, estrela, seta…): contorno em px de tela — mesma espessura
  * do `border` CSS do retângulo/elipse. Sem isto, strokeWidth no viewBox 0–100
  * engrossa com o tamanho do bloco (preserveAspectRatio=none).
+ * Sombra via token do bloco (paridade com `.shape-fill`).
  */
 .delpi-ui-comunicado__shape-svg:not(.delpi-ui-comunicado__shape-svg--line):not(
     .delpi-ui-comunicado__shape-svg--point
   ) {
   overflow: visible;
+  box-shadow: var(--tdp-block-box-shadow, none);
 }
 .delpi-ui-comunicado__shape-svg:not(.delpi-ui-comunicado__shape-svg--line):not(
     .delpi-ui-comunicado__shape-svg--point

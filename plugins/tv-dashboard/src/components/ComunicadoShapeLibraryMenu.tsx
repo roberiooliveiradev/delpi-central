@@ -13,10 +13,8 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
-import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { readRecentComunicadoShapes } from "../utils/comunicadoRecentShapes";
 
-const H = TV_DASHBOARD_HELP_TOOLTIPS.ribbon;
 const RECENT_CATEGORY_ID = "__recent__";
 
 type Props = {
@@ -140,7 +138,7 @@ function ShapeLibraryButton({
   const label = comunicadoShapeLabel(kind);
 
   return (
-    <HintAction hint={`${H.insertShape} — ${label}`} ariaLabel={`Inserir ${label}`} placement="top">
+    <HintAction hint={label} ariaLabel={`Inserir ${label}`} placement="top">
       <button
         type="button"
         role="menuitem"
