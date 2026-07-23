@@ -500,10 +500,8 @@ export function resolveKpiPartLayoutStyle(
     css.zIndex = 2;
     css.boxSizing = "border-box";
     css.margin = 0;
-    // Moldura `card` recebe overflow via CSS do host; conteúdo framed clipa no card.
-    if (options?.partKind !== "card") {
-      css.overflow = "hidden";
-    }
+    // Overflow fica no CSS (`.delpi-kpi-part--framed` / `--resizable`).
+    // Inline `overflow:hidden` vencia a abertura na seleção e cortava os handles.
   } else if (kpiPartHasBoxPaint(style) && options?.partKind !== "card") {
     // Evita que fill do valor (flex:1) pinte o card inteiro.
     css.flex = "0 0 auto";

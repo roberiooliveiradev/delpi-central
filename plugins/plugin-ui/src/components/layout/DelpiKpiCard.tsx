@@ -865,7 +865,7 @@ export function DelpiKpiCard({
               ref={iconHostRef}
               className={[
                 DELPI_KPI_CLASS_NAMES.icon,
-                iconFramed ? "delpi-kpi-icon--framed" : "",
+                iconFramed ? "delpi-kpi-icon--framed delpi-kpi-part--framed" : "",
                 iconShowResize ? "delpi-kpi-part--resizable" : "",
                 iconPtr.selected ? "delpi-kpi-part--selected" : "",
               ]

@@ -170,6 +170,14 @@ describe("kpi icon layout", () => {
     expect(css.background).toBe("#111");
   });
 
+  it("resolveKpiPartLayoutStyle com frame não grava overflow inline (chrome de seleção)", () => {
+    const css = resolveKpiPartLayoutStyle(
+      { frame: { x: 3, y: 22, w: 70, h: 54 } },
+      { partKind: "value" },
+    );
+    expect(css.overflow).toBeUndefined();
+  });
+
   it("resolveKpiPartLayoutStyle com fill sem frame abraça o conteúdo", () => {
     const css = resolveKpiPartLayoutStyle(
       { style: { fill: "#fef3c7" } },

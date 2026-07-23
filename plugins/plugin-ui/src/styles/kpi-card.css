@@ -224,7 +224,8 @@
   border: 0 solid transparent;
 }
 
-.delpi-kpi-part--framed {
+.delpi-kpi-part--framed,
+.delpi-kpi-icon--framed {
   z-index: 2;
   box-sizing: border-box;
   max-width: 100%;
@@ -234,25 +235,55 @@
   overflow: hidden;
 }
 
-.delpi-kpi-part--framed.delpi-kpi-part--selected {
-  overflow: visible;
+/*
+ * Handles de parte (valor/título/ícone) ficam fora do box (inset negativo).
+ * `!important`: dual-class `.delpi-ui-kpi-value { overflow:hidden }` em
+ * departmental-kpi.css (importado depois) e qualquer frame/inline não podem
+ * clipar o chrome — sintoma: só a ponta do adjust laranja no valor.
+ */
+.delpi-kpi-part--framed.delpi-kpi-part--selected,
+.delpi-kpi-icon--framed.delpi-kpi-part--selected,
+.delpi-kpi-part--resizable,
+.delpi-kpi-card__value.delpi-kpi-part--selected,
+.delpi-kpi-card__value.delpi-kpi-part--resizable,
+.delpi-ui-kpi-value.delpi-kpi-part--selected,
+.delpi-ui-kpi-value.delpi-kpi-part--resizable {
+  overflow: visible !important;
+  text-overflow: clip;
 }
 
 .delpi-kpi-part--resizable {
   position: relative;
-  overflow: visible;
 }
 
 .delpi-kpi-card:has(.delpi-kpi-part--resizable),
 .delpi-kpi-card:has(.delpi-kpi-part--selected),
-.delpi-kpi-card--part-selected {
-  overflow: visible;
+.delpi-kpi-card--part-selected,
+.delpi-ui-card.delpi-ui-kpi-card:has(.delpi-kpi-part--resizable),
+.delpi-ui-card.delpi-ui-kpi-card:has(.delpi-kpi-part--selected),
+.delpi-ui-kpi-card:has(.delpi-kpi-part--resizable),
+.delpi-ui-kpi-card:has(.delpi-kpi-part--selected) {
+  overflow: visible !important;
 }
 
 .delpi-kpi-card-shell:has(.delpi-kpi-card--part-selected),
 .delpi-kpi-card-shell:has(.delpi-kpi-part--selected),
 .delpi-kpi-card-shell:has(.delpi-kpi-part--resizable) {
+  overflow: visible !important;
+}
+
+/* Chrome de parte — paridade com `.td-composer__block-handles` (kit autônomo). */
+.delpi-kpi-part-handles {
+  position: absolute;
+  inset: calc(-1 * var(--td-global-selection-pad, 6px));
+  z-index: 20;
+  pointer-events: none;
   overflow: visible;
+}
+
+.delpi-kpi-part-handles > .delpi-kpi-part-resize,
+.delpi-kpi-part-handles > .delpi-kpi-part-adjust {
+  pointer-events: auto;
 }
 
 .delpi-kpi-card__label.delpi-kpi-part--framed,
