@@ -222,7 +222,6 @@ export function DashboardQualityPage({ pathname }: DashboardQualityPageProps) {
       ) : null}
 
       <section className="dq-kpi-section" aria-busy={isBusy}>
-        <h2 className="dq-section-title">PPM geral</h2>
         <div className="dq-kpi-grid">
           <KpiCard
             title="PPM interno"
