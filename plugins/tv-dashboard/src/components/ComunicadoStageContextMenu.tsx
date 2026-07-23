@@ -6,6 +6,7 @@ import {
   shapeSupportsStroke,
   visualBoxSupportsShapeFormatting,
   type ComunicadoBlock,
+  type ComunicadoIconBlock,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 import {
@@ -16,6 +17,7 @@ import {
   ContextMenuToolbar,
   DECK_COLOR_SURFACE,
   DECK_SHAPE_DEFAULTS,
+  LucideIconPickerPopover,
   type FixedPanelPoint,
 } from "@delpi/plugin-ui/index";
 import {
@@ -37,11 +39,13 @@ import {
   Group,
   Heading,
   Layers,
+  RefreshCw,
   Replace,
   RotateCcw,
   RotateCw,
   Scissors,
   SendToBack,
+  Sparkles,
   Square,
   SquarePen,
   Text,
@@ -116,6 +120,7 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
   const pickerAnchorRef = useRef<HTMLDivElement>(null);
   const [pickerAnchorPoint, setPickerAnchorPoint] = useState<FixedPanelPoint | null>(null);
   const [shapeLibraryOpen, setShapeLibraryOpen] = useState(false);
+  const [iconPickerOpen, setIconPickerOpen] = useState(false);
 
   const actionState = useMemo(
     () =>
@@ -155,10 +160,21 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     run(() => alignSelected(command));
   }
 
-  function openShapeLibraryFromMenu() {
+  function capturePickerAnchorAndClose() {
     if (position) setPickerAnchorPoint(position);
     onClose();
+  }
+
+  function openShapeLibraryFromMenu() {
+    capturePickerAnchorAndClose();
+    setIconPickerOpen(false);
     setShapeLibraryOpen(true);
+  }
+
+  function openIconPickerFromMenu() {
+    capturePickerAnchorAndClose();
+    setShapeLibraryOpen(false);
+    setIconPickerOpen(true);
   }
 
   function applyShapeKind(kind: ComunicadoShapeKind) {
@@ -169,6 +185,15 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     rememberComunicadoShape(kind);
     setShapeLibraryOpen(false);
   }
+
+  function applyIconName(name: string | null) {
+    const next = name?.trim() || "Star";
+    updateSelected({ iconName: next } as Partial<ComunicadoIconBlock>);
+    setIconPickerOpen(false);
+  }
+
+  const selectedIconName =
+    selected?.type === "icon" ? selected.iconName?.trim() || "Star" : "Star";
 
   const enabled = (action: Parameters<typeof isContextMenuActionEnabled>[0]) =>
     isContextMenuActionEnabled(action, actionState);
@@ -193,6 +218,19 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
       anchorRef={pickerAnchorRef}
       onSelect={applyShapeKind}
       onDismiss={() => setShapeLibraryOpen(false)}
+    />
+    <LucideIconPickerPopover
+      open={iconPickerOpen}
+      onOpenChange={setIconPickerOpen}
+      anchorRef={pickerAnchorRef}
+      value={selectedIconName}
+      nameFormat="pascal"
+      curatedOnly={false}
+      title="Ícones"
+      showClear={false}
+      portalScopeClassName={TV_DASHBOARD_ROOT_CLASS}
+      ariaLabel="Biblioteca de ícones"
+      onChange={applyIconName}
     />
     <ContextMenu
       open={open}
@@ -328,6 +366,20 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
             disabled={!enabled("changeShape")}
             onSelect={openShapeLibraryFromMenu}
           />
+        </>
+      ) : null}
+
+      {actionState.canChangeIcon ? (
+        <>
+          <ContextMenuDivider />
+          <ContextMenuSub label={C.changeIcon} icon={RefreshCw}>
+            <ContextMenuItem
+              label={C.changeIconFromLibrary}
+              icon={Sparkles}
+              disabled={!enabled("changeIcon")}
+              onSelect={openIconPickerFromMenu}
+            />
+          </ContextMenuSub>
         </>
       ) : null}
 
