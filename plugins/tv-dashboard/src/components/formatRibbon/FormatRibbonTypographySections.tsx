@@ -234,7 +234,12 @@ export function FormatRibbonTypographySections({
       partEditBridgeActive,
   );
   const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {
-    if (partialTextSelectionActive) {
+    /*
+     * Em edição, tenta o trecho via bridge (Range vivo) antes do state React —
+     * senão o 1º clique na ribbon aplica no bloco inteiro até o botão direito
+     * popular lastPartial.
+     */
+    if (editingTextId && visualBoxBlock && editingTextId === visualBoxBlock.id) {
       const runPatch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch = {};
       if (patch.fontFamily !== undefined) runPatch.fontFamily = patch.fontFamily;
       if (patch.fontSize !== undefined) runPatch.fontSize = patch.fontSize;
@@ -250,8 +255,26 @@ export function FormatRibbonTypographySections({
         runPatch.textDecoration =
           patch.textDecoration as import("@delpi/tv-dashboard-presentation").ComunicadoTextDecoration;
       }
-      applyEditingTextRunStylePatch(runPatch);
-      return;
+      if (Object.keys(runPatch).length > 0 && applyEditingTextRunStylePatch(runPatch)) {
+        return;
+      }
+    } else if (partialTextSelectionActive) {
+      const runPatch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch = {};
+      if (patch.fontFamily !== undefined) runPatch.fontFamily = patch.fontFamily;
+      if (patch.fontSize !== undefined) runPatch.fontSize = patch.fontSize;
+      if (patch.color !== undefined) runPatch.color = patch.color;
+      if (patch.textHighlight !== undefined) runPatch.textHighlight = patch.textHighlight;
+      if (patch.fontWeight === "bold" || patch.fontWeight === "normal") {
+        runPatch.fontWeight = patch.fontWeight;
+      }
+      if (patch.fontStyle === "italic" || patch.fontStyle === "normal") {
+        runPatch.fontStyle = patch.fontStyle;
+      }
+      if (patch.textDecoration !== undefined) {
+        runPatch.textDecoration =
+          patch.textDecoration as import("@delpi/tv-dashboard-presentation").ComunicadoTextDecoration;
+      }
+      if (applyEditingTextRunStylePatch(runPatch)) return;
     }
     updateSelectedTextFormatStyle(patch);
   };
@@ -582,8 +605,15 @@ export function FormatRibbonTypographySections({
               ariaLabel="Negrito"
               active={Boolean(fontWeightActive)}
               onClick={() => {
-                if (partialTextSelectionActive) {
-                  toggleEditingTextRunStyle("fontWeight");
+                if (
+                  editingTextId &&
+                  visualBoxBlock &&
+                  editingTextId === visualBoxBlock.id &&
+                  toggleEditingTextRunStyle("fontWeight")
+                ) {
+                  return;
+                }
+                if (partialTextSelectionActive && toggleEditingTextRunStyle("fontWeight")) {
                   return;
                 }
                 updateSelectedTextFormatStyle({
@@ -598,8 +628,15 @@ export function FormatRibbonTypographySections({
               ariaLabel="Itálico"
               active={Boolean(fontStyleActive)}
               onClick={() => {
-                if (partialTextSelectionActive) {
-                  toggleEditingTextRunStyle("fontStyle");
+                if (
+                  editingTextId &&
+                  visualBoxBlock &&
+                  editingTextId === visualBoxBlock.id &&
+                  toggleEditingTextRunStyle("fontStyle")
+                ) {
+                  return;
+                }
+                if (partialTextSelectionActive && toggleEditingTextRunStyle("fontStyle")) {
                   return;
                 }
                 updateSelectedTextFormatStyle({
@@ -614,8 +651,15 @@ export function FormatRibbonTypographySections({
               ariaLabel="Sublinhado"
               active={Boolean(underlineActive)}
               onClick={() => {
-                if (partialTextSelectionActive) {
-                  toggleEditingTextRunStyle("underline");
+                if (
+                  editingTextId &&
+                  visualBoxBlock &&
+                  editingTextId === visualBoxBlock.id &&
+                  toggleEditingTextRunStyle("underline")
+                ) {
+                  return;
+                }
+                if (partialTextSelectionActive && toggleEditingTextRunStyle("underline")) {
                   return;
                 }
                 updateSelectedTextFormatStyle({
@@ -633,8 +677,15 @@ export function FormatRibbonTypographySections({
               ariaLabel="Tachado"
               active={Boolean(strikethroughActive)}
               onClick={() => {
-                if (partialTextSelectionActive) {
-                  toggleEditingTextRunStyle("strikethrough");
+                if (
+                  editingTextId &&
+                  visualBoxBlock &&
+                  editingTextId === visualBoxBlock.id &&
+                  toggleEditingTextRunStyle("strikethrough")
+                ) {
+                  return;
+                }
+                if (partialTextSelectionActive && toggleEditingTextRunStyle("strikethrough")) {
                   return;
                 }
                 updateSelectedTextFormatStyle({

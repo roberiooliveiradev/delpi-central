@@ -38,11 +38,12 @@ export type TextEditSelection = {
 };
 
 export type TextEditorBridge = {
-  applyPartialStyleToggle: (toggleKey: ContentRunStyleToggleKey) => void;
+  /** `true` se aplicou no trecho (Range vivo ou lastPartial). */
+  applyPartialStyleToggle: (toggleKey: ContentRunStyleToggleKey) => boolean;
   /** Tipografia de caractere no trecho (fonte, tamanho, cor, realce…). */
   applyPartialStylePatch?: (
     patch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch,
-  ) => void;
+  ) => boolean;
   applyListToggle: (listType: ComunicadoListType) => void;
   applyNamedStyleToggle: (namedStyle: ComunicadoNamedTextStyle) => void;
   refreshSelectionState: () => void;
@@ -202,11 +203,15 @@ export type ComunicadoEditorContextValue = {
     selection: TextEditSelection | null,
     runs?: ComunicadoContentRun[],
   ) => void;
-  toggleEditingTextRunStyle: (toggleKey: ContentRunStyleToggleKey) => void;
+  /**
+   * Tipografia no trecho em edição. `true` se o bridge aplicou no Range
+   * (seleção viva ou lastPartial — não depende só do state React).
+   */
+  toggleEditingTextRunStyle: (toggleKey: ContentRunStyleToggleKey) => boolean;
   /** Aplica tipografia de caractere no trecho em edição (fonte/tamanho/cor/realce). */
   applyEditingTextRunStylePatch: (
     patch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch,
-  ) => void;
+  ) => boolean;
   toggleSelectedTextListType: (listType: ComunicadoListType) => void;
   applySelectedNamedTextStyle: (namedStyle: ComunicadoNamedTextStyle) => void;
   uploading: boolean;

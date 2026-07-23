@@ -37,7 +37,47 @@ export {
 type CharToken = {
   text: string;
   style?: ComunicadoContentRunStyle;
+  /** Preserva vínculo dinâmico ao formatar trecho (não virar texto estático). */
+  dataRef?: ComunicadoTextDataRef;
 };
+
+function dataRefsEqual(
+  left?: ComunicadoTextDataRef,
+  right?: ComunicadoTextDataRef,
+): boolean {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
+
+function runPlainLength(run: ComunicadoContentRun): number {
+  if (run.dataRef?.field?.trim()) return (run.text || "…").length;
+  return run.text.length;
+}
+
+/**
+ * Campo dinâmico é atômico: se a seleção toca o run, a formatação cobre o run inteiro.
+ */
+export function expandRangeToDataRefAtoms(
+  runs: ComunicadoContentRun[],
+  start: number,
+  end: number,
+): { start: number; end: number } {
+  const range = clampSelectionRange(runs, start, end);
+  if (range.start >= range.end) return range;
+  let pos = 0;
+  let nextStart = range.start;
+  let nextEnd = range.end;
+  for (const run of runs) {
+    const len = runPlainLength(run);
+    const runStart = pos;
+    const runEnd = pos + len;
+    if (run.dataRef?.field?.trim() && runStart < range.end && runEnd > range.start) {
+      nextStart = Math.min(nextStart, runStart);
+      nextEnd = Math.max(nextEnd, runEnd);
+    }
+    pos = runEnd;
+  }
+  return { start: nextStart, end: nextEnd };
+}
 
 export type ContentRunStyleToggleKey = "fontWeight" | "fontStyle" | "underline" | "strikethrough";
 
@@ -176,8 +216,13 @@ function flattenRunsToChars(runs: ComunicadoContentRun[]): CharToken[] {
   const chars: CharToken[] = [];
   for (const run of runs) {
     if (run.dataRef?.field?.trim()) {
+      const style = pruneRunStyle(run.style ?? {});
       for (const char of run.text || "…") {
-        chars.push({ text: char });
+        chars.push({
+          text: char,
+          dataRef: run.dataRef,
+          ...(style ? { style } : {}),
+        });
       }
       continue;
     }
@@ -260,11 +305,18 @@ function charsToRuns(chars: CharToken[]): ComunicadoContentRun[] {
   const runs: ComunicadoContentRun[] = [];
   for (const token of chars) {
     const previous = runs[runs.length - 1];
-    if (previous && runStylesEqual(previous.style, token.style)) {
+    if (
+      previous &&
+      runStylesEqual(previous.style, token.style) &&
+      dataRefsEqual(previous.dataRef, token.dataRef)
+    ) {
       previous.text += token.text;
       continue;
     }
-    runs.push(token.style ? { text: token.text, style: token.style } : { text: token.text });
+    const next: ComunicadoContentRun = { text: token.text };
+    if (token.style) next.style = token.style;
+    if (token.dataRef) next.dataRef = token.dataRef;
+    runs.push(next);
   }
   return compactContentRuns(runs);
 }
@@ -400,16 +452,18 @@ export function applyContentRunStyleInRange(
   end: number,
   patch: ContentRunStylePatch,
 ): ComunicadoContentRun[] {
-  const range = clampSelectionRange(runs, start, end);
+  const range = expandRangeToDataRefAtoms(runs, start, end);
   if (range.start >= range.end) return compactContentRuns(runs);
   if (Object.keys(patch).length === 0) return compactContentRuns(runs);
 
   const chars = flattenRunsToChars(runs);
   for (let index = range.start; index < range.end; index += 1) {
     const nextStyle = applyStylePatchToRunStyle(chars[index].style, patch);
-    chars[index] = nextStyle
-      ? { text: chars[index].text, style: nextStyle }
-      : { text: chars[index].text };
+    chars[index] = {
+      text: chars[index].text,
+      ...(chars[index].dataRef ? { dataRef: chars[index].dataRef } : {}),
+      ...(nextStyle ? { style: nextStyle } : {}),
+    };
   }
   return charsToRuns(chars);
 }
@@ -420,7 +474,7 @@ export function toggleContentRunStyleInRange(
   end: number,
   toggleKey: ContentRunStyleToggleKey,
 ): ComunicadoContentRun[] {
-  const range = clampSelectionRange(runs, start, end);
+  const range = expandRangeToDataRefAtoms(runs, start, end);
   if (range.start >= range.end) return compactContentRuns(runs);
 
   const spec = TOGGLE_SPECS[toggleKey];
@@ -431,9 +485,11 @@ export function toggleContentRunStyleInRange(
   for (let index = range.start; index < range.end; index += 1) {
     const currentStyle = chars[index].style ?? {};
     const nextStyle = shouldActivate ? spec.activate(currentStyle) : spec.deactivate(currentStyle);
-    chars[index] = nextStyle
-      ? { text: chars[index].text, style: nextStyle }
-      : { text: chars[index].text };
+    chars[index] = {
+      text: chars[index].text,
+      ...(chars[index].dataRef ? { dataRef: chars[index].dataRef } : {}),
+      ...(nextStyle ? { style: nextStyle } : {}),
+    };
   }
 
   return charsToRuns(chars);

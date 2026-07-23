@@ -46,4 +46,14 @@ describe("partial text format (ribbon → contentRuns)", () => {
     expect(typography).toContain("lastPartialTextEditSelection");
     expect(typography).toContain("effectivePartialSelection");
   });
+
+  it("ribbon tenta bridge (Range vivo) antes de tipografia do bloco inteiro", () => {
+    expect(typography).toMatch(
+      /toggleEditingTextRunStyle\("fontWeight"\)/,
+    );
+    expect(typography).toContain("applyEditingTextRunStylePatch(runPatch)");
+    expect(typography).toMatch(
+      /editingTextId === visualBoxBlock\.id &&\s*toggleEditingTextRunStyle/,
+    );
+  });
 });

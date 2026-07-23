@@ -734,19 +734,27 @@ export function useComunicadoEditorSelection({
     return null;
   }, [editingChartPart, editingKpiPart, editingTextId, selectedIds]);
 
-  const toggleEditingTextRunStyle = useCallback((toggleKey: ContentRunStyleToggleKey) => {
-    const bridgeId = resolveActiveTextBridgeId();
-    if (!bridgeId) return;
-    const bridge = textEditorBridgesRef.current.get(bridgeId);
-    bridge?.applyPartialStyleToggle(toggleKey);
-  }, [resolveActiveTextBridgeId]);
+  const toggleEditingTextRunStyle = useCallback(
+    (toggleKey: ContentRunStyleToggleKey): boolean => {
+      const bridgeId = resolveActiveTextBridgeId();
+      if (!bridgeId) return false;
+      const bridge = textEditorBridgesRef.current.get(bridgeId);
+      if (!bridge) return false;
+      /* Garante lastPartial a partir do DOM antes do clique na ribbon. */
+      bridge.refreshSelectionState?.();
+      return Boolean(bridge.applyPartialStyleToggle(toggleKey));
+    },
+    [resolveActiveTextBridgeId],
+  );
 
   const applyEditingTextRunStylePatch = useCallback(
-    (patch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch) => {
+    (patch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch): boolean => {
       const bridgeId = resolveActiveTextBridgeId();
-      if (!bridgeId) return;
+      if (!bridgeId) return false;
       const bridge = textEditorBridgesRef.current.get(bridgeId);
-      bridge?.applyPartialStylePatch?.(patch);
+      if (!bridge?.applyPartialStylePatch) return false;
+      bridge.refreshSelectionState?.();
+      return Boolean(bridge.applyPartialStylePatch(patch));
     },
     [resolveActiveTextBridgeId],
   );

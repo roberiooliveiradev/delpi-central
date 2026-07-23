@@ -18,6 +18,8 @@ describe("partial range fallback (ribbon → contentRuns)", () => {
     expect(bridge).toContain("lastPartialRangeRef");
     expect(bridge).toContain("resolvePartialRange");
     expect(bridge).toMatch(/live\.end > live\.start/);
+    expect(bridge).toContain("selectionchange");
+    expect(bridge).toContain("selectionSyncEnabled");
   });
 
   it("botão da ribbon faz preventDefault no mousedown", () => {

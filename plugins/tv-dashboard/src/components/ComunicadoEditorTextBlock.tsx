@@ -221,6 +221,7 @@ export function ComunicadoEditorTextBlock({
     reportTextEditSelection,
     normalizeEditorRuns,
     onDataRefInserted,
+    selectionSyncEnabled: isEditing,
   });
 
   function exitEditing() {

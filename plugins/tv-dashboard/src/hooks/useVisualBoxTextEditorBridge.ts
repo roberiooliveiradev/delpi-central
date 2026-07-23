@@ -1,4 +1,10 @@
-import { useCallback, useRef, type MutableRefObject, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type MutableRefObject,
+  type RefObject,
+} from "react";
 import {
   applyContentRunStyleInRange,
   applyNamedStyleInRange,
@@ -42,6 +48,8 @@ type Options = {
    * Sem callback, a inserção só atualiza draft/editor local.
    */
   onDataRefInserted?: (runs: ComunicadoContentRun[]) => void;
+  /** Liga listener `selectionchange` só enquanto o contentEditable está montado. */
+  selectionSyncEnabled?: boolean;
 };
 
 /**
@@ -58,6 +66,7 @@ export function useVisualBoxTextEditorBridge({
   reportTextEditSelection,
   normalizeEditorRuns,
   onDataRefInserted,
+  selectionSyncEnabled = false,
 }: Options) {
   /** Última seleção parcial — fallback se o clique na ribbon perder o Range do DOM. */
   const lastPartialRangeRef = useRef<TextRange | null>(null);
@@ -83,11 +92,11 @@ export function useVisualBoxTextEditorBridge({
   }, [editorRef, normalizeEditorRuns]);
 
   const applyPartialStyleToggle = useCallback(
-    (toggleKey: ContentRunStyleToggleKey) => {
+    (toggleKey: ContentRunStyleToggleKey): boolean => {
       const editor = editorRef.current;
-      if (!editor) return;
+      if (!editor) return false;
       const selection = resolvePartialRange();
-      if (!selection) return;
+      if (!selection) return false;
       const runs = contentRunsFromEditableRoot(editor);
       const nextRuns = toggleContentRunStyleInRange(
         runs,
@@ -104,6 +113,7 @@ export function useVisualBoxTextEditorBridge({
         { blockId, start: selection.start, end: selection.end },
         nextRuns,
       );
+      return true;
     },
     [
       blockId,
@@ -119,11 +129,11 @@ export function useVisualBoxTextEditorBridge({
   );
 
   const applyPartialStylePatch = useCallback(
-    (patch: ContentRunStylePatch) => {
+    (patch: ContentRunStylePatch): boolean => {
       const editor = editorRef.current;
-      if (!editor) return;
+      if (!editor) return false;
       const selection = resolvePartialRange();
-      if (!selection) return;
+      if (!selection) return false;
       const runs = contentRunsFromEditableRoot(editor);
       const nextRuns = applyContentRunStyleInRange(
         runs,
@@ -140,6 +150,7 @@ export function useVisualBoxTextEditorBridge({
         { blockId, start: selection.start, end: selection.end },
         nextRuns,
       );
+      return true;
     },
     [
       blockId,
@@ -287,6 +298,26 @@ export function useVisualBoxTextEditorBridge({
     const runs = contentRunsFromEditableRoot(editor);
     reportTextEditSelection({ blockId, ...offsets }, runs);
   }, [blockId, editorRef, reportTextEditSelection]);
+
+  /*
+   * mouseup sozinho falha ao selecionar chip dataRef (ou duplo-clique):
+   * selectionchange espelha o Range no React/lastPartial sem precisar do botão direito.
+   */
+  useEffect(() => {
+    if (!selectionSyncEnabled) return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    const doc = editor.ownerDocument;
+    const onSelectionChange = () => {
+      const selection = doc.getSelection();
+      if (!selection || selection.rangeCount === 0) return;
+      const node = selection.anchorNode;
+      if (!node || !editor.contains(node)) return;
+      reportSelectionFromEditor();
+    };
+    doc.addEventListener("selectionchange", onSelectionChange);
+    return () => doc.removeEventListener("selectionchange", onSelectionChange);
+  }, [editorRef, reportSelectionFromEditor, selectionSyncEnabled]);
 
   const clearPartialRangeFallback = useCallback(() => {
     lastPartialRangeRef.current = null;

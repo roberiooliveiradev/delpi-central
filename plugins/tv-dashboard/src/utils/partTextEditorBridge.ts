@@ -95,9 +95,9 @@ export function createPartTextEditorBridge(params: {
     return lastPartial && lastPartial.end > lastPartial.start ? lastPartial : null;
   };
 
-  const applyToggle = (toggleKey: ContentRunStyleToggleKey) => {
+  const applyToggle = (toggleKey: ContentRunStyleToggleKey): boolean => {
     const selection = resolvePartial();
-    if (!selection) return;
+    if (!selection) return false;
     const runs = contentRunsFromEditableRoot(editor);
     const nextRuns = toggleContentRunStyleInRange(
       runs,
@@ -112,11 +112,12 @@ export function createPartTextEditorBridge(params: {
       { blockId, start: selection.start, end: selection.end },
       nextRuns,
     );
+    return true;
   };
 
-  const applyPatch = (patch: ContentRunStylePatch) => {
+  const applyPatch = (patch: ContentRunStylePatch): boolean => {
     const selection = resolvePartial();
-    if (!selection) return;
+    if (!selection) return false;
     const runs = contentRunsFromEditableRoot(editor);
     const nextRuns = applyContentRunStyleInRange(
       runs,
@@ -131,6 +132,7 @@ export function createPartTextEditorBridge(params: {
       { blockId, start: selection.start, end: selection.end },
       nextRuns,
     );
+    return true;
   };
 
   return {

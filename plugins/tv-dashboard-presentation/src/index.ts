@@ -494,6 +494,7 @@ export {
   compactContentRuns,
   contentRunInlineStyleProperties,
   contentRunsFromEditableRoot,
+  expandRangeToDataRefAtoms,
   getEditableTextSelectionOffsets,
   hasPersistableContentRuns,
   insertLineBreakAtOffset,

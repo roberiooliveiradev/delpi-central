@@ -168,6 +168,7 @@ export function ComunicadoEditorShapeBlock({
     syncEditorHtml,
     commitDraft,
     reportTextEditSelection,
+    selectionSyncEnabled: isEditing,
   });
 
   function exitEditing() {
