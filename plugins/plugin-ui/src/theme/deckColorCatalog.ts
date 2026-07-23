@@ -118,9 +118,9 @@ export const DECK_KPI_DEFAULTS = {
     "0 1px 2px rgba(15, 23, 42, 0.06), 0 12px 28px rgba(15, 23, 42, 0.10)",
   /**
    * Frame inicial do bloco no palco (% do slide).
-   * Título + valor + ícone — sem faixa morta (Full HD ≈ 230×76 px).
+   * Título (18) + valor (40) + padding cabem sem clip (Full HD ≈ 230×108 px).
    */
-  frame: { x: 8, y: 36, w: 12, h: 7 },
+  frame: { x: 8, y: 34, w: 12, h: 10 },
 } as const;
 
 /**

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { KPI_PART_FONT_SIZE_DEFAULTS } from "../components/layout/kpiCardParts";
 import {
   DECK_CHART_DEFAULTS,
   DECK_COLOR_ACCENT,
@@ -58,7 +59,17 @@ describe("deckColorCatalog", () => {
     expect(DECK_KPI_DEFAULTS.borderWidth).toBe(1);
     expect(DECK_KPI_DEFAULTS.boxShadow).toContain("rgba(15, 23, 42");
     expect(DECK_KPI_DEFAULTS.iconName).toBe("Gauge");
-    expect(DECK_KPI_DEFAULTS.frame).toEqual({ x: 8, y: 36, w: 12, h: 7 });
+    expect(DECK_KPI_DEFAULTS.frame).toEqual({ x: 8, y: 34, w: 12, h: 10 });
+  });
+
+  it("frame inicial Full HD cabe título + valor sem clip vertical", () => {
+    const slideH = 1080;
+    const cardH = (DECK_KPI_DEFAULTS.frame.h / 100) * slideH;
+    const padY = 10;
+    const gap = 2;
+    const titleH = KPI_PART_FONT_SIZE_DEFAULTS.title * 1.35;
+    const valueH = KPI_PART_FONT_SIZE_DEFAULTS.value * 1.05;
+    expect(cardH).toBeGreaterThanOrEqual(padY + titleH + gap + valueH);
   });
 
   it("define chrome do filtro: fundo branco, sombra e raio alinhados a KPI/gráfico", () => {
