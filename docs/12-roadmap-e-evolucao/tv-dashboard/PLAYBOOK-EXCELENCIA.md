@@ -2014,12 +2014,14 @@ Paridade **PowerPoint** (não FigJam): linha reta + âncoras N/S/E/W/centro; elb
 |---|---------|------|
 | 19.23.1 | Upload de fonte (`media_kind=font`) + `@font-face` + ribbon Fonte | API V006 + `comunicadoCustomFonts` + MFE |
 | 19.23.2 | Reflexo tipográfico (`textReflection` / `-webkit-box-reflect`) | `textEffectStyle` + ribbon Efeitos |
-| 19.23.3 | Grade canvas `canvas_table` (células estáticas; ≠ `table_view`) | presentation + Insert «Grade» |
+| 19.23.3 | Grade canvas `canvas_table` (células tipadas text/number/sparkline; tipografia no resize; aba Grade; ≠ `table_view` live) | presentation + Insert «Grade» + ribbon/inspetor |
 | 19.23.4 | `speakerNotes` + preview `?presenter=1` | config + `PresentationPreview` |
 | 19.23.5 | Export PPTX (`pptxgenjs`) mapeando blocos básicos | `exportSlidePptx.ts` + ribbon |
 | 19.23.6 | Presença de editores (`presence_*` no WS da programação) | hub + chip «Também editando» |
 
-**Anti-padrões:** misturar `canvas_table` com `table_view` live; tratar presença como merge automático de `native_config`; import PPTX sem contrato de fidelidade.
+**Grade (`canvas_table`) — paridade editor (jul/2026):** tipografia efetiva + escala no resize (`scaleCanvasTableBlockTypography`); aba Elemento → ribbon Grade (estrutura/estilo/célula); células tipadas (`text` | `number` | `sparkline`) com migrate de string legado; chrome de célula + inspetor; paste TSV infere número/sparkline; PPTX exporta matriz de texto (sparkline → valor âncora). **Não** há `dataSourceId` / projeção — isso permanece em `table_view` / `kpi_view` / `chart_view`.
+
+**Anti-padrões:** misturar `canvas_table` com `table_view` live; embutir blocos KPI/chart reais em células; tratar presença como merge automático de `native_config`; import PPTX sem contrato de fidelidade.
 
 ### 19.24 Dados em texto e formas — projeção dinâmica (Onda 4P)
 

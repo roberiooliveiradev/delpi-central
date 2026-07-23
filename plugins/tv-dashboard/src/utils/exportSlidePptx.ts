@@ -1,7 +1,8 @@
-import type {
-  ComunicadoBlock,
-  ComunicadoConfig,
-  ComunicadoFrame,
+import {
+  canvasTableCellsToStringMatrix,
+  type ComunicadoBlock,
+  type ComunicadoConfig,
+  type ComunicadoFrame,
 } from "@delpi/tv-dashboard-presentation";
 
 const SLIDE_WIDTH = 13.333;
@@ -36,7 +37,8 @@ export function mapComunicadoBlocksToPptxElements(
     if (block.type === "canvas_table") {
       return [{
         kind: "table",
-        rows: block.cells,
+        /* Sparkline: fallback do valor âncora / texto (sem SVG no PPTX). */
+        rows: canvasTableCellsToStringMatrix(block.cells),
         headerRow: block.headerRow ?? false,
         frame: block.frame,
         block,

@@ -57,6 +57,7 @@ export type ComunicadoRibbonTabRequest =
   | "chart"
   | "table"
   | "kpi"
+  | "canvasTable"
   | "shape"
   | "element"
   | "tableDesign"
@@ -64,6 +65,13 @@ export type ComunicadoRibbonTabRequest =
   | "data"
   | "layers"
   | "view";
+
+/** Célula selecionada na Grade (`canvas_table`) — espelho de parte KPI. */
+export type ComunicadoCanvasTableCellSelection = {
+  blockId: string;
+  row: number;
+  col: number;
+};
 
 /** Abas espelhadas entre top bar contextual e painel lateral. */
 export type SelectionPanelTab =
@@ -155,6 +163,13 @@ export type ComunicadoEditorContextValue = {
     options?: { additive?: boolean },
   ) => void;
   clearInputPartSelection: () => void;
+  /** Grade — célula selecionada (chrome + inspetor). */
+  selectedCanvasTableCell: ComunicadoCanvasTableCellSelection | null;
+  selectCanvasTableCell: (
+    blockId: string,
+    cell: { row: number; col: number } | null,
+  ) => void;
+  clearCanvasTableCellSelection: () => void;
   editingTextId: string | null;
   setEditingTextId: (id: string | null) => void;
   /** Isola o bloco e entra em edição inline (texto/título/shape). */

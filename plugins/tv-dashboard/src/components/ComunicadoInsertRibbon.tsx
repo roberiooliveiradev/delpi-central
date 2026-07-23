@@ -253,7 +253,7 @@ export function ComunicadoInsertRibbon({ labels = {} }: { labels?: Labels }) {
           <DeckRibbonTile
             icon={Grid3X3}
             label="Grade"
-            hint="Inserir Tabela (canvas), estática e editável."
+            hint="Inserir Grade estática e editável (≠ tabela de dados live)."
             keyTip={K.canvasTable}
             onClick={() => addCanvasTableBlock()}
           />

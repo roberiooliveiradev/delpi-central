@@ -9,7 +9,7 @@ import type { ComunicadoRibbonTabRequest } from "../components/comunicadoEditorC
 
 /**
  * Resolve a aba contextual correta após remoção de «Formatar».
- * Tipografia e chrome ficam na aba do objeto (Forma / Gráfico / Tabela).
+ * Tipografia e chrome ficam na aba do objeto (Forma / Gráfico / Tabela / Grade / KPI).
  */
 export function resolveObjectRibbonTab(params: {
   selected: ComunicadoBlock | null;
@@ -36,6 +36,7 @@ export function resolveObjectRibbonTab(params: {
 
   if (selected.type === "table_view") return "table";
   if (selected.type === "kpi_view") return "kpi";
+  if (selected.type === "canvas_table") return "canvasTable";
   if (
     selected.type === "shape" ||
     selected.type === "icon" ||
@@ -43,7 +44,6 @@ export function resolveObjectRibbonTab(params: {
     selected.type === "text" ||
     selected.type === "image" ||
     selected.type === "video" ||
-    selected.type === "canvas_table" ||
     selected.type === "input"
   ) {
     return "shape";

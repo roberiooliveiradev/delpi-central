@@ -40,6 +40,7 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import type {
+  ComunicadoCanvasTableCellSelection,
   ComunicadoEditorContextValue,
   ComunicadoRibbonTabRequest,
   SelectionPanelTab,
@@ -109,6 +110,9 @@ export function useComunicadoEditorSelection({
     },
     [],
   );
+  /** Grade — célula selecionada (chrome + inspetor). */
+  const [selectedCanvasTableCell, setSelectedCanvasTableCell] =
+    useState<ComunicadoCanvasTableCellSelection | null>(null);
   const [editingKpiPart, setEditingKpiPart] = useState<ComunicadoKpiPartRef | null>(null);
   /** Multi-seleção de partes do filtro — último = primária. */
   const [selectedInputParts, setSelectedInputParts] = useState<ComunicadoInputPartRef[]>([]);
@@ -175,6 +179,7 @@ export function useComunicadoEditorSelection({
     setSelectedKpiPart(null);
     setEditingKpiPart(null);
     setSelectedInputPart(null);
+    setSelectedCanvasTableCell(null);
   }, [setSelectedInputPart, setSelectedKpiPart, setSelectedTablePart]);
 
   const clearTextEditUi = useCallback(() => {
@@ -336,6 +341,7 @@ export function useComunicadoEditorSelection({
         selectedBlockType === "image" ||
         selectedBlockType === "video" ||
         selectedBlockType === "kpi_view" ||
+        selectedBlockType === "canvas_table" ||
         selectedBlockType === "input"
       ) {
         requestRibbonTab("element");
@@ -366,6 +372,7 @@ export function useComunicadoEditorSelection({
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
       setSelectedInputPart(null);
+      setSelectedCanvasTableCell(null);
       setSelectedChartPart(part);
       setEditingChartPart(null);
       requestRibbonTab("element");
@@ -397,6 +404,7 @@ export function useComunicadoEditorSelection({
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
       setSelectedInputPart(null);
+      setSelectedCanvasTableCell(null);
       setSelectedTableParts((current) => {
         /* Multi-seleção só entre colunas (headerCell) — Excel-like. */
         if (part.kind === "headerCell" && (options?.additive || options?.range)) {
@@ -442,6 +450,7 @@ export function useComunicadoEditorSelection({
       setSelectedTablePart(null);
       setSelectedInputPart(null);
       setEditingKpiPart(null);
+      setSelectedCanvasTableCell(null);
       setSelectedKpiParts((current) =>
         toggleCompositePartSelection({
           blockType: "kpi_view",
@@ -471,6 +480,7 @@ export function useComunicadoEditorSelection({
       setSelectedTablePart(null);
       setSelectedKpiPart(null);
       setEditingKpiPart(null);
+      setSelectedCanvasTableCell(null);
       setSelectedInputParts((current) =>
         toggleCompositePartSelection({
           blockType: "input",
@@ -488,6 +498,30 @@ export function useComunicadoEditorSelection({
   const clearInputPartSelection = useCallback(() => {
     setSelectedInputPart(null);
   }, [setSelectedInputPart]);
+
+  const selectCanvasTableCell = useCallback(
+    (blockId: string, cell: { row: number; col: number } | null) => {
+      flushActiveTextEdit();
+      setSelectedIds([blockId]);
+      setEditingTextId(null);
+      setSelectedChartPart(null);
+      setEditingChartPart(null);
+      setSelectedTablePart(null);
+      setEditingTablePart(null);
+      setSelectedKpiPart(null);
+      setEditingKpiPart(null);
+      setSelectedInputPart(null);
+      setSelectedCanvasTableCell(
+        cell ? { blockId, row: cell.row, col: cell.col } : null,
+      );
+      requestRibbonTab("canvasTable");
+    },
+    [flushActiveTextEdit, requestRibbonTab, setSelectedInputPart, setSelectedKpiPart, setSelectedTablePart],
+  );
+
+  const clearCanvasTableCellSelection = useCallback(() => {
+    setSelectedCanvasTableCell(null);
+  }, []);
 
   const beginEditChartPart = useCallback(
     (blockId: string, part: ComunicadoChartPartRef) => {
@@ -799,6 +833,9 @@ export function useComunicadoEditorSelection({
     setSelectedInputPart,
     selectInputPart,
     clearInputPartSelection,
+    selectedCanvasTableCell,
+    selectCanvasTableCell,
+    clearCanvasTableCellSelection,
     editingTextId,
     setEditingTextId: setEditingTextIdWithSelection,
     enterTextEdit,

@@ -42,8 +42,10 @@ import {
   type ComunicadoKpiPartsMap,
   type ComunicadoKpiPartStyle,
 } from "./comunicadoKpiParts";
+import { scaleCanvasTableBlockTypography } from "./comunicadoCanvasTable";
 import type {
   ComunicadoBlock,
+  ComunicadoCanvasTableBlock,
   ComunicadoChartViewBlock,
   ComunicadoFrame,
   ComunicadoInputBlock,
@@ -443,6 +445,14 @@ export function scaleComplexBlockOnResize(
         ensureDefaults: true,
       }),
     };
+  }
+
+  if (block.type === "canvas_table") {
+    return scaleCanvasTableBlockTypography(
+      block as ComunicadoCanvasTableBlock,
+      scale,
+      scaleFontPx,
+    );
   }
 
   const table = block as ComunicadoTableViewBlock;

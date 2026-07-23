@@ -12,6 +12,7 @@ export function normalizeSelectionRibbonTab(
     tab === "chart" ||
     tab === "table" ||
     tab === "kpi" ||
+    tab === "canvasTable" ||
     tab === "format" ||
     tab === "element"
   ) {

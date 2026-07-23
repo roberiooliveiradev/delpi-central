@@ -361,10 +361,30 @@ export {
   serializeComunicadoConfig,
   sortBlocksByZIndex,
   normalizeCanvasTableCells,
+  normalizeCanvasTableCell,
+  canvasTableCellsToStringMatrix,
+  canvasTableCellPlainText,
+  inferCanvasTableCellFromText,
+  mergeCanvasTableOptions,
+  canvasTablePresetOptions,
+  resolveCanvasTableFontSize,
+  resolveCanvasTableHostStyle,
+  parseCanvasTableOptions,
+  formatCanvasTableNumber,
+  buildCanvasTableSparklinePath,
+  resolveColumnSparklineAxis,
   CANVAS_TABLE_MIN_ROWS,
   CANVAS_TABLE_MAX_ROWS,
   CANVAS_TABLE_MIN_COLS,
   CANVAS_TABLE_MAX_COLS,
+} from "./comunicadoHelpers";
+export type {
+  CanvasTableCell,
+  CanvasTableCellKind,
+  CanvasTableCellRef,
+  CanvasTableOptions,
+  CanvasTableStylePresetId,
+  CanvasTableNumberFormat,
 } from "./comunicadoHelpers";
 export type { StageHideReason } from "./comunicadoStageVisibility";
 export { ComunicadoBlockView } from "./comunicadoBlockView";
@@ -376,6 +396,7 @@ export {
   resolveComunicadoLucideIcon,
 } from "./comunicadoIconView";
 export { ComunicadoCanvasTableView } from "./ComunicadoCanvasTableView";
+export type { ComunicadoCanvasTableInteraction } from "./ComunicadoCanvasTableView";
 export {
   ComunicadoInputBlockView,
   resolveInputControlKind,

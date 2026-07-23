@@ -360,12 +360,50 @@ export type ComunicadoTableViewBlock = ComunicadoBlockBase & {
 };
 
 /** Grade estática editável, independente de fontes de dados. */
+/** Célula tipada da Grade canvas — ver `comunicadoCanvasTable.ts`. */
+export type ComunicadoCanvasTableCellKind = "text" | "number" | "sparkline";
+
+export type ComunicadoCanvasTableNumberFormat =
+  | "plain"
+  | "integer"
+  | "decimal"
+  | "percent"
+  | "currency";
+
+export type ComunicadoCanvasTableCellStyle = {
+  fontSize?: number;
+  fontWeight?: number;
+  color?: string;
+  backgroundColor?: string;
+  textAlign?: "left" | "center" | "right";
+};
+
+export type ComunicadoCanvasTableCell = {
+  kind: ComunicadoCanvasTableCellKind;
+  text?: string;
+  value?: number | null;
+  format?: ComunicadoCanvasTableNumberFormat;
+  series?: number[];
+  style?: ComunicadoCanvasTableCellStyle;
+};
+
+export type ComunicadoCanvasTableOptions = {
+  fontSize?: number;
+  bandedRows?: boolean;
+  bandedColumns?: boolean;
+  headerStyle?: "subtle" | "accent" | "none";
+  borderStyle?: "all" | "horizontal" | "none";
+  columnWidths?: number[];
+};
+
 export type ComunicadoCanvasTableBlock = ComunicadoBlockBase & {
   type: "canvas_table";
   rows: number;
   cols: number;
-  cells: string[][];
+  /** Células tipadas (string legado é migrado no parse). */
+  cells: ComunicadoCanvasTableCell[][];
   headerRow?: boolean;
+  canvasTableOptions?: ComunicadoCanvasTableOptions;
 };
 
 /** Escopo do filtro no palco: slide inteiro ou fontes específicas. */

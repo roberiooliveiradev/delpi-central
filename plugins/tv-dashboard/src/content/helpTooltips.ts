@@ -169,7 +169,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     chartAxes: "Eixos e linhas de grade.",
     chartFormat: "Estilo, preenchimento, contorno e raio da área do gráfico na aba Elemento.",
     chartSeriesColor: "Cor principal da série de dados do gráfico.",
-    canvasTable: "Linhas, colunas e opção de cabeçalho da tabela editável no palco.",
+    canvasTable:
+      "Grade estática no palco: linhas, colunas, cabeçalho, presets (Grade/Minimalista/Faixas), bordas e tipografia. Clique na célula para editar tipo, número ou sparkline.",
+    canvasTableCell:
+      "Célula selecionada: tipo (texto, número, sparkline), formato pt-BR, série e estilo local.",
+    canvasTablePreset: "Aplica um preset visual da Grade (estrutura e bordas) sem alterar o conteúdo.",
   },
   tabs: {
     element:
@@ -207,6 +211,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Ferramentas do gráfico selecionado: tipo, rótulos, eixos, grade e formato da parte.",
     table:
       "Ferramentas da tabela selecionada: estilos, opções de estilo (cabeçalho, totais, listras) e formato.",
+    canvasTable:
+      "Ferramentas da Grade selecionada: estrutura, estilo de tabela, tipografia e célula (número/sparkline).",
     tableDesign:
       "Estilos de tabela, opções de cabeçalho/listras, sombreamento, bordas e forma da moldura.",
     tableLayout:

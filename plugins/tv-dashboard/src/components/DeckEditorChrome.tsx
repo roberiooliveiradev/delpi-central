@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { TabPanelTransition } from "@delpi/plugin-ui/index";
 import { isDataBoundEditorBlockType } from "@delpi/tv-dashboard-presentation";
 
+import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { useComunicadoRibbonTabSync } from "../hooks/useComunicadoRibbonTabSync";
 import { clearLegacyDeckChromeCollapsed } from "../utils/deckChromeLayout";
 import {
@@ -125,12 +126,23 @@ export function DeckEditorChrome({
     editor?.selected && isDataBoundEditorBlockType(editor.selected.type),
   );
   const showDataTab = Boolean(editor?.dataPanelOpen) || hasDataBoundSelection;
+  const isCanvasTableSelection = editor?.selected?.type === "canvas_table";
   const tabs = resolveDeckRibbonTabs(isCustomSlide, {
     hasSelection,
     isTableSelection,
     hasDataBoundSelection,
     showDataTab,
-  });
+  }).map((tab) =>
+    tab.id === "element" && isCanvasTableSelection
+      ? {
+          ...tab,
+          label: "Grade",
+          hint:
+            TV_DASHBOARD_HELP_TOOLTIPS.ribbonTabs.canvasTable ??
+            "Ferramentas da Grade: estrutura, estilo e célula.",
+        }
+      : tab,
+  );
   const [activeTab, setActiveTab] = useState<DeckRibbonTabId>(() =>
     isCustomSlide ? "insert" : "playlist",
   );

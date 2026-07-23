@@ -5,6 +5,7 @@ import {
 } from "../utils/resolveSelectionChromeMode";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { DeckRibbonGroups } from "./deck/DeckRibbonGroups";
+import { ComunicadoCanvasTableRibbon } from "./ComunicadoCanvasTableRibbon";
 import { ComunicadoChartRibbon } from "./ComunicadoChartRibbon";
 import { ComunicadoKpiRibbon } from "./ComunicadoKpiRibbon";
 import { ComunicadoShapeRibbon } from "./ComunicadoShapeRibbon";
@@ -14,6 +15,7 @@ import { SelectionSectionsHost } from "./selectionSections";
 /**
  * Aba Elemento (top bar) — tipografia, chrome e organização conforme o tipo.
  * Com parte chart/tabela: host full (partFormat). KPI parte → ComunicadoKpiRibbon.
+ * Grade → ComunicadoCanvasTableRibbon.
  */
 export function ComunicadoElementRibbon() {
   const {
@@ -53,5 +55,6 @@ export function ComunicadoElementRibbon() {
   if (kind === "chart") return <ComunicadoChartRibbon />;
   if (kind === "kpi") return <ComunicadoKpiRibbon />;
   if (kind === "table") return <ComunicadoTableDesignRibbon />;
+  if (kind === "canvasTable") return <ComunicadoCanvasTableRibbon />;
   return <ComunicadoShapeRibbon />;
 }

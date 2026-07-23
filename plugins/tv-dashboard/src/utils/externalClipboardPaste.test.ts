@@ -74,13 +74,16 @@ describe("externalClipboardPaste", () => {
     );
   });
 
-  it("detecta TSV do Excel/Sheets como tabela", () => {
+  it("detecta TSV do Excel/Sheets como tabela tipada", () => {
     const block = tryParseTabularText("A\tB\n1\t2\n3\t4");
     expect(block?.type).toBe("canvas_table");
     if (block?.type === "canvas_table") {
       expect(block.rows).toBe(3);
       expect(block.cols).toBe(2);
-      expect(block.cells[0]).toEqual(["A", "B"]);
+      expect(block.cells[0]?.[0]).toMatchObject({ kind: "text", text: "A" });
+      expect(block.cells[0]?.[1]).toMatchObject({ kind: "text", text: "B" });
+      expect(block.cells[1]?.[0]).toMatchObject({ kind: "number", value: 1 });
+      expect(block.cells[1]?.[1]).toMatchObject({ kind: "number", value: 2 });
     }
   });
 

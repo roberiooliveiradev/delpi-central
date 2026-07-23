@@ -50,6 +50,7 @@ type Props = {
   /** Palco do editor: texto interativo dentro de formas. */
   visualBoxEditorInteractive?: boolean;
   onCanvasTableCellChange?: (row: number, col: number, value: string) => void;
+  canvasTableInteraction?: import("./ComunicadoCanvasTableView").ComunicadoCanvasTableInteraction | null;
 };
 
 function blockLinkHref(block: ComunicadoBlock): string | undefined {
@@ -123,6 +124,7 @@ export function ComunicadoBlockView({
   visualBoxInnerStyle,
   visualBoxEditorInteractive = false,
   onCanvasTableCellChange,
+  canvasTableInteraction = null,
 }: Props) {
   const baseStyle = embedded
     ? {
@@ -267,6 +269,7 @@ export function ComunicadoBlockView({
         block={block}
         editable={interactive}
         onCellChange={onCanvasTableCellChange}
+        interaction={canvasTableInteraction}
       />,
     );
   }

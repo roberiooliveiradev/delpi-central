@@ -146,6 +146,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
       return "Definir Forma";
     }
     if (selected?.type === "kpi_view") return "Formatar KPI";
+    if (selected?.type === "canvas_table") return "Grade";
     return "Definir elemento";
   }, [tab, dataPanelIntent, dataContext.kind, selected?.type, selectedTablePart]);
 

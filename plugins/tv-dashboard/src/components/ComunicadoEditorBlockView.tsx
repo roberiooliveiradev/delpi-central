@@ -53,7 +53,10 @@ import {
   resizeInputPartFrame,
   scaleInputPartTypographyOnResize,
   upsertInputPartState,
+  normalizeCanvasTableCell,
+  type CanvasTableCell,
   type ComunicadoBlock,
+  type ComunicadoCanvasTableBlock,
   type ComunicadoChartPartFrame,
   type ComunicadoChartPartRef,
   type ComunicadoChartPartResizeHandle,
@@ -1362,6 +1365,44 @@ function resolveEditorDataParamValueLabel(key: string, value: string): string {
   return value;
 }
 
+/** Grade — seleção de célula + commit tipado (sem iniciar move do bloco). */
+function EditorCanvasTableBlock({
+  block,
+  fontScale,
+  className,
+}: {
+  block: ComunicadoCanvasTableBlock;
+  fontScale?: number;
+  className?: string;
+}) {
+  const { updateBlock, selectedCanvasTableCell, selectCanvasTableCell } = useComunicadoEditor();
+  const selectedCell =
+    selectedCanvasTableCell?.blockId === block.id
+      ? { row: selectedCanvasTableCell.row, col: selectedCanvasTableCell.col }
+      : null;
+
+  return (
+    <ComunicadoBlockView
+      block={block}
+      fontScale={fontScale}
+      interactive
+      embedded
+      className={className}
+      canvasTableInteraction={{
+        selectedCell,
+        onSelectCell: (cell) => selectCanvasTableCell(block.id, cell),
+        onCellCommit: (row, col, cell: CanvasTableCell) => {
+          const cells = block.cells.map((currentRow) =>
+            currentRow.map((item) => normalizeCanvasTableCell(item)),
+          );
+          cells[row]![col] = normalizeCanvasTableCell(cell);
+          updateBlock(block.id, { cells });
+        },
+      }}
+    />
+  );
+}
+
 /** Renderização de blocos no editor — mídia autenticada e controles de vídeo. */
 export function ComunicadoEditorBlockView({
   block,
@@ -1446,18 +1487,7 @@ export function ComunicadoEditorBlockView({
 
   if (block.type === "canvas_table") {
     return (
-      <ComunicadoBlockView
-        block={block}
-        fontScale={fontScale}
-        interactive
-        embedded
-        className={className}
-        onCanvasTableCellChange={(row, col, value) => {
-          const cells = block.cells.map((currentRow) => [...currentRow]);
-          cells[row]![col] = value;
-          updateBlock(block.id, { cells });
-        }}
-      />
+      <EditorCanvasTableBlock block={block} fontScale={fontScale} className={className} />
     );
   }
 

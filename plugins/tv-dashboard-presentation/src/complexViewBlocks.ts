@@ -13,6 +13,7 @@ export const COMPLEX_VIEW_BLOCK_TYPES = [
   "chart_view",
   "table_view",
   "input",
+  "canvas_table",
 ] as const;
 
 export type ComplexViewBlockType = (typeof COMPLEX_VIEW_BLOCK_TYPES)[number];

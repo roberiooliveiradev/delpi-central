@@ -11,6 +11,7 @@ describe("normalizeSelectionRibbonTab", () => {
     expect(normalizeSelectionRibbonTab("chart")).toBe("element");
     expect(normalizeSelectionRibbonTab("table")).toBe("element");
     expect(normalizeSelectionRibbonTab("kpi")).toBe("element");
+    expect(normalizeSelectionRibbonTab("canvasTable")).toBe("element");
     expect(normalizeSelectionRibbonTab("format")).toBe("element");
     expect(normalizeSelectionRibbonTab("element")).toBe("element");
   });

@@ -10,7 +10,7 @@ const TYPE_LABELS: Record<string, string> = {
   data_source: "Fonte de dados",
   chart_view: "Gráfico",
   table_view: "Tabela",
-  canvas_table: "Tabela (canvas)",
+  canvas_table: "Grade",
   input: "Campo / Filtro",
   kpi_view: "KPI",
   data_kpi: "Dados — KPI",

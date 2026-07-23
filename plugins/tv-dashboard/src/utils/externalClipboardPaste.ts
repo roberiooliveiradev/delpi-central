@@ -1,8 +1,10 @@
 import {
   createBlock,
   createCanvasTableBlock,
+  inferCanvasTableCellFromText,
   type ComunicadoBlock,
 } from "@delpi/tv-dashboard-presentation";
+
 
 /**
  * Marcador do payload interno no `text/plain` do SO (colar entre abas/sessões).
@@ -67,7 +69,7 @@ export function tryParseTabularText(text: string): ComunicadoBlock | null {
   table.cells = rows.map((row) => {
     const padded = [...row];
     while (padded.length < cols) padded.push("");
-    return padded.slice(0, cols);
+    return padded.slice(0, cols).map((cell) => inferCanvasTableCellFromText(cell));
   });
   table.headerRow = true;
   return table;

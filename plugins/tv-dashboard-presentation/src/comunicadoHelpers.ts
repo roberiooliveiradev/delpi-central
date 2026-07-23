@@ -72,6 +72,45 @@ import {
   normalizeTableViewLimit,
 } from "./tableViewLimits";
 import {
+  CANVAS_TABLE_MAX_COLS,
+  CANVAS_TABLE_MAX_ROWS,
+  CANVAS_TABLE_MIN_COLS,
+  CANVAS_TABLE_MIN_ROWS,
+  clampCanvasTableDimension,
+  mergeCanvasTableOptions,
+  normalizeCanvasTableCells,
+  parseCanvasTableOptions,
+} from "./comunicadoCanvasTable";
+
+export {
+  CANVAS_TABLE_MIN_ROWS,
+  CANVAS_TABLE_MAX_ROWS,
+  CANVAS_TABLE_MIN_COLS,
+  CANVAS_TABLE_MAX_COLS,
+  clampCanvasTableDimension,
+  normalizeCanvasTableCells,
+  normalizeCanvasTableCell,
+  canvasTableCellsToStringMatrix,
+  canvasTableCellPlainText,
+  inferCanvasTableCellFromText,
+  mergeCanvasTableOptions,
+  canvasTablePresetOptions,
+  resolveCanvasTableFontSize,
+  resolveCanvasTableHostStyle,
+  parseCanvasTableOptions,
+  formatCanvasTableNumber,
+  buildCanvasTableSparklinePath,
+  resolveColumnSparklineAxis,
+} from "./comunicadoCanvasTable";
+export type {
+  CanvasTableCell,
+  CanvasTableCellKind,
+  CanvasTableCellRef,
+  CanvasTableOptions,
+  CanvasTableStylePresetId,
+  CanvasTableNumberFormat,
+} from "./comunicadoCanvasTable";
+import {
   comunicadoVerticalAlignToJustifyContent,
   defaultVerticalAlignForVisualBox,
   isComunicadoVisualBoxBlock,
@@ -288,32 +327,6 @@ export function createTableViewBlock(
   };
 }
 
-export const CANVAS_TABLE_MIN_ROWS = 1;
-export const CANVAS_TABLE_MAX_ROWS = 20;
-export const CANVAS_TABLE_MIN_COLS = 1;
-export const CANVAS_TABLE_MAX_COLS = 12;
-
-function clampCanvasTableDimension(value: unknown, min: number, max: number, fallback: number): number {
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) return fallback;
-  return Math.max(min, Math.min(max, Math.round(parsed)));
-}
-
-export function normalizeCanvasTableCells(
-  value: unknown,
-  rows: number,
-  cols: number,
-): string[][] {
-  const source = Array.isArray(value) ? value : [];
-  return Array.from({ length: rows }, (_, rowIndex) => {
-    const row = Array.isArray(source[rowIndex]) ? source[rowIndex] : [];
-    return Array.from({ length: cols }, (_, colIndex) => {
-      const cell = row[colIndex];
-      return cell == null ? "" : String(cell);
-    });
-  });
-}
-
 export function createInputBlock(options?: {
   paramKey?: string;
   label?: string;
@@ -371,6 +384,7 @@ export function createCanvasTableBlock(rows = 3, cols = 3): ComunicadoCanvasTabl
     cols: safeCols,
     cells: normalizeCanvasTableCells([], safeRows, safeCols),
     headerRow: true,
+    canvasTableOptions: mergeCanvasTableOptions(null),
     frame: { x: 50 - width / 2, y: 50 - height / 2, w: width, h: height },
     style: defaultStyle("canvas_table"),
   };
@@ -864,8 +878,9 @@ function serializeBlock(block: ComunicadoBlock): Record<string, unknown> {
   } else if (block.type === "canvas_table") {
     base.rows = block.rows;
     base.cols = block.cols;
-    base.cells = block.cells.map((row) => [...row]);
+    base.cells = block.cells.map((row) => row.map((cell) => ({ ...cell, style: cell.style ? { ...cell.style } : undefined })));
     if (block.headerRow != null) base.headerRow = block.headerRow;
+    if (block.canvasTableOptions) base.canvasTableOptions = { ...block.canvasTableOptions };
   } else if (block.type === "kpi_view") {
     if (block.dataSourceId) base.dataSourceId = block.dataSourceId;
     if (block.kpiProjection) base.kpiProjection = block.kpiProjection;
@@ -1197,6 +1212,9 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
       CANVAS_TABLE_MAX_COLS,
       3,
     );
+    const canvasTableOptions = parseCanvasTableOptions(
+      (block as { canvasTableOptions?: unknown }).canvasTableOptions,
+    );
     return attachBlockAnimations(
       {
         id,
@@ -1208,6 +1226,7 @@ function normalizeBlock(value: unknown): ComunicadoBlock {
         cols,
         cells: normalizeCanvasTableCells(block.cells, rows, cols),
         headerRow: block.headerRow !== false,
+        ...(canvasTableOptions ? { canvasTableOptions } : {}),
       },
       block,
     );
