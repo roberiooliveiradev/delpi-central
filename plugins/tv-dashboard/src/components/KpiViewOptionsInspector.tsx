@@ -93,7 +93,12 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
             hint={TV_DASHBOARD_HELP_TOOLTIPS.data.kpiElements}
             defaultOpen
           >
-            <div className="td-chart-elements" role="group" aria-label="Elementos do KPI">
+            <div
+              id="td-kpi-pane-elements"
+              className="td-chart-elements"
+              role="group"
+              aria-label="Elementos do KPI"
+            >
               {KPI_ELEMENT_CATALOG.map((element) => {
                 const enabled = isKpiElementEnabled(element.id, options, block.kpiParts);
                 const focused = isKpiElementOpenForPart(element.id, selectedKpiPart);
@@ -174,10 +179,71 @@ export function KpiViewOptionsInspector({ pane = false }: Props) {
 
           <DeckPropertySection
             pane={pane}
+            title="Meta e comparação"
+            hint="Meta numérica, direção do delta e comparação vs período."
+            defaultOpen={Boolean(options.target != null || options.showComparison)}
+          >
+            <div id="td-view-kpi-target" />
+            <DeckField id="td-kpi-target" label="Meta">
+              <NativeTextControl
+                id="td-kpi-target"
+                value={options.target != null ? String(options.target) : ""}
+                placeholder="Ex.: 100"
+                onChange={(value) => {
+                  const trimmed = value.trim().replace(",", ".");
+                  if (!trimmed) {
+                    patchOptions({ target: undefined });
+                    return;
+                  }
+                  const numeric = Number(trimmed);
+                  patchOptions({
+                    target: Number.isFinite(numeric) ? numeric : options.target,
+                  });
+                }}
+              />
+            </DeckField>
+            <DeckField id="td-kpi-comparison-mode" label="Comparação">
+              <FormSelectControl
+                id="td-kpi-comparison-mode"
+                ariaLabel="Modo de comparação"
+                value={options.comparisonMode ?? "none"}
+                onChange={(value) => {
+                  const mode = value as NonNullable<ComunicadoKpiOptions["comparisonMode"]>;
+                  patchOptions({
+                    comparisonMode: mode,
+                    showComparison: mode !== "none",
+                  });
+                }}
+                options={[
+                  { value: "none", label: "Nenhuma" },
+                  { value: "target", label: "Vs meta" },
+                  { value: "previous", label: "Vs período anterior" },
+                ]}
+              />
+            </DeckField>
+            <DeckField id="td-kpi-higher-is-better" label="Direção">
+              <FormSelectControl
+                id="td-kpi-higher-is-better"
+                ariaLabel="Direção do indicador"
+                value={options.higherIsBetter === false ? "lower" : "higher"}
+                onChange={(value) =>
+                  patchOptions({ higherIsBetter: value !== "lower" })
+                }
+                options={[
+                  { value: "higher", label: "Maior é melhor" },
+                  { value: "lower", label: "Menor é melhor" },
+                ]}
+              />
+            </DeckField>
+          </DeckPropertySection>
+
+          <DeckPropertySection
+            pane={pane}
             title="Cores condicionais"
             hint={TV_DASHBOARD_HELP_TOOLTIPS.data.kpiColorRules}
             defaultOpen={rules.length > 0}
           >
+            <div id="td-view-kpi-color-rules" />
             <KpiColorRulesEditor
               idPrefix="td-kpi-global-rules"
               rules={rules}

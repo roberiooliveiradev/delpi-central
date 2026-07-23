@@ -71,6 +71,12 @@ export function kpiPartSelectionLabel(part: ComunicadoKpiPartRef): string {
       return "Subtítulo";
     case "icon":
       return "Ícone";
+    case "comparison":
+      return "Comparação";
+    case "progress":
+      return "Progresso";
+    case "sparkline":
+      return "Sparkline";
     case "metricCard":
       return `Métrica · ${part.field}`;
     default:

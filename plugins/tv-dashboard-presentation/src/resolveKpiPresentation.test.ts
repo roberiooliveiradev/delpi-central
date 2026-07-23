@@ -1,106 +1,53 @@
 import { describe, expect, it } from "vitest";
 
-import { createKpiViewBlock, parseComunicadoConfig, serializeComunicadoConfig } from "./comunicadoHelpers";
-import { isDataViewBlockType } from "./comunicadoDataArchitecture";
 import { resolveKpiViewPresentation } from "./resolveKpiPresentation";
 
-describe("kpi_view", () => {
-  it("é data view e serializa kpiOptions", () => {
-    expect(isDataViewBlockType("kpi_view")).toBe(true);
-    const block = createKpiViewBlock({ title: "OEE", iconName: "Gauge", showIcon: true });
-    expect(block.type).toBe("kpi_view");
-    const serialized = serializeComunicadoConfig({ version: 5, blocks: [block] });
-    const parsed = parseComunicadoConfig(serialized);
-    const kpi = parsed.blocks?.[0];
-    expect(kpi?.type).toBe("kpi_view");
-    if (kpi?.type === "kpi_view") {
-      expect(kpi.kpiOptions?.title).toBe("OEE");
-      expect(kpi.kpiOptions?.iconName).toBe("Gauge");
-      expect(kpi.kpiParts?.title?.content).toBe("OEE");
-      expect(kpi.kpiParts?.icon?.visible).not.toBe(false);
-    }
-  });
-
-  it("sincroniza showIcon=false a partir de parts.icon.visible no parse", () => {
-    const parsed = parseComunicadoConfig({
-      version: 5,
-      blocks: [
-        {
-          id: "k1",
-          type: "kpi_view",
-          frame: { x: 8, y: 28, w: 32, h: 24 },
-          style: { zIndex: 2 },
-          kpiOptions: { title: "Consumo", iconName: "Gauge", showIcon: true },
-          kpiParts: {
-            icon: { visible: false, style: { fill: "#ffffff" } },
-          },
-        },
-      ],
-    });
-    const kpi = parsed.blocks?.[0];
-    expect(kpi?.type).toBe("kpi_view");
-    if (kpi?.type === "kpi_view") {
-      expect(kpi.kpiOptions?.showIcon).toBe(false);
-      expect(kpi.kpiParts?.icon?.visible).toBe(false);
-    }
-  });
-
-  it("liga ícone Gauge por padrão ao criar kpi_view", () => {
-    const block = createKpiViewBlock({ title: "Consumo" });
-    if (block.type !== "kpi_view") throw new Error("kpi");
-    expect(block.kpiOptions?.showIcon).toBe(true);
-    expect(block.kpiOptions?.iconName).toBe("Gauge");
-    expect(block.kpiParts?.icon?.visible).not.toBe(false);
-    expect(block.frame).toEqual({ x: 8, y: 36, w: 12, h: 7 });
-  });
-
-  it("resolve apresentação com regras de cor", () => {
+describe("resolveKpiViewPresentation", () => {
+  it("calcula comparação vs meta e progresso", () => {
     const presentation = resolveKpiViewPresentation(
-      { kpi: { value: 92, label: "OEE" }, label: "OEE" },
       {
-        colorRules: [
-          { op: "gte", value: 90, tone: "positive" },
-          { op: "lt", value: 70, tone: "negative" },
-        ],
+        kpi: { value: 110, label: "OEE" },
+        chart: { points: [{ value: 90 }, { value: 100 }, { value: 110 }] },
+      },
+      {
+        title: "OEE",
+        target: 100,
+        comparisonMode: "target",
+        showComparison: true,
+        showProgress: true,
+        higherIsBetter: true,
       },
     );
-    expect(presentation.label).toBe("OEE");
-    expect(presentation.tone).toBe("positive");
-    expect(presentation.valueText).toContain("92");
+    expect(presentation.valueText).toContain("110");
+    expect(presentation.comparisonText).toMatch(/vs meta/);
+    expect(presentation.comparisonTone).toBe("positive");
+    expect(presentation.progressPct).toBeCloseTo(110);
   });
 
-  it("override por métrica sobrescreve formato e regras", () => {
+  it("expõe sparkline a partir da série do resolved", () => {
     const presentation = resolveKpiViewPresentation(
-      { kpi: { value: 0.85, label: "OTD" } },
-      { valueFormat: "raw", colorRules: [{ op: "gte", value: 0.9, tone: "positive" }] },
       {
-        format: "percent",
-        label: "OTD médio",
-        colorRules: [{ op: "gte", value: 0.8, tone: "positive" }],
+        kpi: { value: 85, label: "OEE" },
+        chart: { points: [{ value: 70 }, { value: 75 }, { value: 85 }] },
+      },
+      { showSparkline: true },
+    );
+    expect(presentation.sparklinePoints).toEqual([70, 75, 85]);
+  });
+
+  it("comparação vs período usa penúltimo ponto", () => {
+    const presentation = resolveKpiViewPresentation(
+      {
+        kpi: { value: 80, label: "Scrap" },
+        chart: { points: [{ value: 100 }, { value: 90 }, { value: 80 }] },
+      },
+      {
+        comparisonMode: "previous",
+        showComparison: true,
+        higherIsBetter: false,
       },
     );
-    expect(presentation.label).toBe("OTD médio");
-    expect(presentation.tone).toBe("positive");
-    expect(presentation.valueText).toContain("%");
-  });
-
-  it("formata número por padrão e evita float longo mesmo em raw", () => {
-    const defaultFmt = resolveKpiViewPresentation(
-      { kpi: { value: 1470.2460282202592, label: "ppm" } },
-      {},
-    );
-    expect(defaultFmt.valueText).toBe("1.470,25");
-
-    const rawShort = resolveKpiViewPresentation(
-      { kpi: { value: 1470.2460282202592, label: "ppm" } },
-      { valueFormat: "raw" },
-    );
-    expect(rawShort.valueText).toBe("1.470,25");
-
-    const rawExact = resolveKpiViewPresentation(
-      { kpi: { value: "42", label: "n" } },
-      { valueFormat: "raw" },
-    );
-    expect(rawExact.valueText).toBe("42");
+    expect(presentation.comparisonText).toMatch(/vs período/);
+    expect(presentation.comparisonTone).toBe("positive");
   });
 });

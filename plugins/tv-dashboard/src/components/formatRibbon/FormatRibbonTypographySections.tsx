@@ -206,13 +206,16 @@ export function FormatRibbonTypographySections({
           ? KPI_PART_FONT_SIZE_DEFAULTS.value
           : kpiPartKind === "title"
             ? KPI_PART_FONT_SIZE_DEFAULTS.title
-            : kpiPartKind === "hint"
-              ? KPI_PART_FONT_SIZE_DEFAULTS.hint
+            : kpiPartKind === "hint" || kpiPartKind === "comparison"
+              ? KPI_PART_FONT_SIZE_DEFAULTS[
+                  kpiPartKind === "comparison" ? "comparison" : "hint"
+                ]
               : chartPartKind && chartPartKind in CHART_PART_FONT_SIZE_DEFAULTS
                 ? CHART_PART_FONT_SIZE_DEFAULTS[
                     chartPartKind as keyof typeof CHART_PART_FONT_SIZE_DEFAULTS
                   ]
                 : 9;
+  const fontSizeAuto = Boolean(formatStyle?.fontSizeAuto);
   const currentFontSize = formatStyle?.fontSize ?? fontSizeDefault;
   const currentFontFamily = formatStyle?.fontFamily ?? COMUNICADO_FONT_FAMILIES[0];
   const textAlignActive =
@@ -448,6 +451,7 @@ export function FormatRibbonTypographySections({
                 onClick={() =>
                   updateSelectedTextFormatStyle({
                     fontSize: clampFontSize(currentFontSize - COMUNICADO_FONT_SIZE_STEP),
+                    fontSizeAuto: false,
                   })
                 }
               >
@@ -458,14 +462,17 @@ export function FormatRibbonTypographySections({
                   className="td-deck-ribbon__font-size-combobox"
                   compact
                   square
-                  aria-label="Tamanho da fonte"
+                  aria-label={fontSizeAuto ? "Tamanho da fonte (Automático)" : "Tamanho da fonte"}
                   value={currentFontSize}
                   options={COMUNICADO_FONT_SIZE_PRESETS}
                   min={COMUNICADO_FONT_SIZE_MIN}
                   clamp={clampFontSize}
                   portalScopeClassName="dashboard-tv-dashboard"
                   onChange={(next) =>
-                    updateSelectedTextFormatStyle({ fontSize: clampFontSize(next) })
+                    updateSelectedTextFormatStyle({
+                      fontSize: clampFontSize(next),
+                      fontSizeAuto: false,
+                    })
                   }
                 />
               </HintAction>
@@ -475,11 +482,29 @@ export function FormatRibbonTypographySections({
                 onClick={() =>
                   updateSelectedTextFormatStyle({
                     fontSize: clampFontSize(currentFontSize + COMUNICADO_FONT_SIZE_STEP),
+                    fontSizeAuto: false,
                   })
                 }
               >
                 <Plus size={16} aria-hidden="true" />
               </TdRibbonIconButton>
+              {textFormatTarget.mode === "part" && textFormatTarget.source === "kpi" ? (
+                <TdRibbonIconButton
+                  hint="Ajusta o texto ao quadro da parte (automático)."
+                  ariaLabel={fontSizeAuto ? "Fonte automática ativa" : "Usar fonte automática"}
+                  active={fontSizeAuto}
+                  onClick={() =>
+                    updateSelectedTextFormatStyle({
+                      fontSizeAuto: !fontSizeAuto,
+                      ...(fontSizeAuto
+                        ? { fontSize: clampFontSize(currentFontSize) }
+                        : {}),
+                    })
+                  }
+                >
+                  Auto
+                </TdRibbonIconButton>
+              ) : null}
             </div>
           </div>
           <div className="td-deck-ribbon__toolbar-row">

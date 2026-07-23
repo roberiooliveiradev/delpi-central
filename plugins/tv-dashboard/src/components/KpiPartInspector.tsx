@@ -245,7 +245,14 @@ export function KpiPartInspector({ pane = false, block }: Props) {
           style={partState?.style}
           contrastBackground={textContrastBg}
           colorLabel={colorLabel}
-          onPatch={(patch) => persistPart({ style: patch })}
+          onPatch={(patch) =>
+            persistPart({
+              style: {
+                ...patch,
+                ...(patch.fontSize != null ? { typographyMode: "fixed" as const } : null),
+              },
+            })
+          }
         />
       ) : null}
 

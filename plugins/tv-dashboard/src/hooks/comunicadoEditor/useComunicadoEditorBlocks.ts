@@ -786,11 +786,24 @@ export function useComunicadoEditorBlocks({
 
       if (selected.type === "kpi_view" && isKpiTextFormatPart(selectedKpiPart) && selectedKpiPart) {
         const prev = getKpiPartState(selected.kpiParts, selectedKpiPart)?.style;
+        const nextFontSize =
+          patch.fontSizeAuto === true
+            ? undefined
+            : patch.fontSize != null
+              ? patch.fontSize
+              : prev?.fontSize;
+        const nextTypographyMode =
+          patch.fontSizeAuto === true
+            ? ("auto" as const)
+            : patch.fontSize != null
+              ? ("fixed" as const)
+              : prev?.typographyMode;
         const nextParts = upsertKpiPartState(selected.kpiParts, selectedKpiPart, {
           style: {
             ...prev,
             fontFamily: patch.fontFamily ?? prev?.fontFamily,
-            fontSize: patch.fontSize ?? prev?.fontSize,
+            fontSize: nextFontSize,
+            typographyMode: nextTypographyMode,
             fontWeight: patch.fontWeight ?? prev?.fontWeight,
             fontStyle: patch.fontStyle ?? prev?.fontStyle,
             color: patch.color ?? prev?.color,

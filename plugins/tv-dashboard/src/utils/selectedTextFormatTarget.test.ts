@@ -73,6 +73,22 @@ describe("selectedTextFormatTarget", () => {
     expect(target?.mode).toBe("part");
     if (target?.mode === "part") {
       expect(target.style.fontSize).toBe(40);
+      expect(target.style.fontSizeAuto).toBe(true);
+    }
+  });
+
+  it("valor do KPI com fontSize 40 persistido fica fixo (não auto)", () => {
+    const target = resolveSelectedTextFormatTarget({
+      selected: {
+        ...kpiBlock,
+        kpiParts: { value: { style: { fontSize: 40 } } },
+      } as ComunicadoBlock,
+      selectedKpiPart: { kind: "value" },
+    });
+    expect(target?.mode).toBe("part");
+    if (target?.mode === "part") {
+      expect(target.style.fontSize).toBe(40);
+      expect(target.style.fontSizeAuto).toBe(false);
     }
   });
 

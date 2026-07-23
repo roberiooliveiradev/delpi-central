@@ -17,6 +17,16 @@ export type ComunicadoKpiOptions = {
   backgroundColor?: string;
   valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
   colorRules?: DelpiKpiColorRule[];
+  /** Meta numérica para comparação / barra de progresso. */
+  target?: number;
+  /** Comparação: meta, período anterior (série) ou desligada. */
+  comparisonMode?: "none" | "target" | "previous";
+  /** Direção semântica do delta (↑ bom vs ↓ bom). Default: true. */
+  higherIsBetter?: boolean;
+  showComparison?: boolean;
+  showProgress?: boolean;
+  showSparkline?: boolean;
+  comparisonLabel?: string;
 };
 
 /** Herda o tema claro do gráfico (catálogo DECK_*).
@@ -30,6 +40,11 @@ export const DEFAULT_COMUNICADO_KPI_OPTIONS: ComunicadoKpiOptions = {
   valueFormat: "number",
   backgroundColor: DECK_KPI_DEFAULTS.backgroundColor,
   valueColor: "auto",
+  comparisonMode: "none",
+  higherIsBetter: true,
+  showComparison: false,
+  showProgress: false,
+  showSparkline: false,
 };
 
 export function mergeComunicadoKpiOptions(

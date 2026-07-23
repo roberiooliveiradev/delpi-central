@@ -709,7 +709,7 @@ function EditorKpiViewBlock({
       if (event.shiftKey) {
         selectKpiPart(block.id, part, { additive: true });
         if (part.kind === "metricCard") requestRibbonTab("data");
-        else requestRibbonTab("shape");
+        else requestRibbonTab("kpi");
         return;
       }
       const samePartSelected =
@@ -726,7 +726,7 @@ function EditorKpiViewBlock({
       if (action === "select-part") {
         selectKpiPart(block.id, part);
         if (part.kind === "metricCard") requestRibbonTab("data");
-        else requestRibbonTab("shape");
+        else requestRibbonTab("kpi");
         return;
       }
       beginBlockStageMoveDrag({
@@ -768,7 +768,7 @@ function EditorKpiViewBlock({
         requestRibbonTab("data");
         return;
       }
-      requestRibbonTab("shape");
+      requestRibbonTab("kpi");
       if (same && kpiPartAllowsEdit(part)) {
         beginEditKpiPart(block.id, part);
       }

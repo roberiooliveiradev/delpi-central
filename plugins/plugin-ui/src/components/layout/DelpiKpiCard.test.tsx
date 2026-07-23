@@ -233,7 +233,20 @@ describe("DelpiKpiCard chrome", () => {
     expect(fit.style.fontSize).not.toBe("40px");
   });
 
-  it("valor com fontSize explícito (≠ default) usa tamanho fixo", () => {
+  it("valor com fontSize 40 persistido usa tamanho fixo (não auto-fit)", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="1.400"
+        fill
+        kpiParts={{ value: { style: { fontSize: 40 } } }}
+      />,
+    );
+    const fit = container.querySelector(".delpi-kpi-card__value .delpi-ui-fit-text") as HTMLElement;
+    expect(fit?.style.fontSize).toBe("40px");
+  });
+
+  it("valor com fontSize explícito usa tamanho fixo", () => {
     const { container } = render(
       <DelpiKpiCard
         label="Consumo"
@@ -244,6 +257,26 @@ describe("DelpiKpiCard chrome", () => {
     );
     const fit = container.querySelector(".delpi-kpi-card__value .delpi-ui-fit-text") as HTMLElement;
     expect(fit?.style.fontSize).toBe("72px");
+  });
+
+  it("renderiza comparação e sparkline quando habilitados", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="OEE"
+        value="85%"
+        fill
+        comparisonText="▲ +3,2% vs período"
+        comparisonTone="positive"
+        sparklinePoints={[70, 75, 80, 85]}
+        kpiOptions={{ showComparison: true, showSparkline: true }}
+        kpiParts={{
+          comparison: { visible: true },
+          sparkline: { visible: true },
+        }}
+      />,
+    );
+    expect(container.querySelector(".delpi-kpi-card__comparison")?.textContent).toContain("+3,2%");
+    expect(container.querySelector(".delpi-kpi-sparkline__svg")).toBeTruthy();
   });
 
   it("não reexibe ícone oculto só porque o ReactNode icon foi passado", () => {

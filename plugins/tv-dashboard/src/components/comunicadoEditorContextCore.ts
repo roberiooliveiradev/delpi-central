@@ -56,6 +56,7 @@ export type ComunicadoRibbonTabRequest =
   | "format"
   | "chart"
   | "table"
+  | "kpi"
   | "shape"
   | "element"
   | "tableDesign"

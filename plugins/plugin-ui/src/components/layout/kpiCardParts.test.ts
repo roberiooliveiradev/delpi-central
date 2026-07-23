@@ -255,13 +255,16 @@ describe("kpi icon layout", () => {
     expect(resolveKpiPartFontSize("value", { fontSize: 72 })).toBe(72);
   });
 
-  it("kpiPartUsesAutoFitFont: sem size ou seed = default → auto; override explícito → fixo", () => {
+  it("kpiPartUsesAutoFitFont: sem size → auto; qualquer fontSize persistido → fixo", () => {
     expect(kpiPartUsesAutoFitFont("value")).toBe(true);
     expect(kpiPartUsesAutoFitFont("value", {})).toBe(true);
-    expect(kpiPartUsesAutoFitFont("value", { fontSize: 40 })).toBe(true);
+    expect(kpiPartUsesAutoFitFont("value", { fontSize: 40 })).toBe(false);
     expect(kpiPartUsesAutoFitFont("value", { fontSize: 72 })).toBe(false);
-    expect(kpiPartUsesAutoFitFont("title", { fontSize: 18 })).toBe(true);
+    expect(kpiPartUsesAutoFitFont("title", { fontSize: 18 })).toBe(false);
     expect(kpiPartUsesAutoFitFont("title", { fontSize: 22 })).toBe(false);
+    expect(kpiPartUsesAutoFitFont("value", { typographyMode: "auto" })).toBe(true);
+    expect(kpiPartUsesAutoFitFont("value", { fontSize: 40, typographyMode: "auto" })).toBe(true);
+    expect(kpiPartUsesAutoFitFont("value", { typographyMode: "fixed" })).toBe(false);
   });
 
   it("upsertKpiPartState faz merge de frame e limpa com null", () => {

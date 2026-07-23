@@ -1,7 +1,5 @@
 import {
-  KPI_ELEMENT_CATALOG,
-  applyKpiElementVisibility,
-  isKpiElementEnabled,
+  applyKpiAddElementChoiceWithParts,
   kpiElementPrimaryPartRef,
   mergeComunicadoKpiOptions,
   mergeKpiPartsWithOptions,
@@ -9,26 +7,21 @@ import {
   type ComunicadoBlock,
   type ComunicadoKpiOptions,
   type ComunicadoKpiViewBlock,
+  type KpiAddElementChoiceId,
   type KpiElementId,
 } from "@delpi/tv-dashboard-presentation";
 
 import { ComplexSelectionFloatToolbar } from "./ComplexSelectionFloatToolbar";
-import { FloatChecklist, FloatChecklistItem } from "./FloatChecklist";
+import { KpiAddElementMenu } from "./KpiAddElementMenu";
+import { KpiColorsStylesMenu } from "./KpiColorsStylesMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type Props = {
   block: ComunicadoKpiViewBlock;
 };
 
-const TONE_OPTIONS: Array<{ value: NonNullable<ComunicadoKpiOptions["tone"]>; label: string }> = [
-  { value: "default", label: "Tom padrão" },
-  { value: "positive", label: "Tom positivo" },
-  { value: "negative", label: "Tom negativo" },
-  { value: "warning", label: "Tom atenção" },
-];
-
 /**
- * Float do KPI — + elementos (parts), pincel aparência, funil dados/métricas.
+ * Float do KPI — + elementos (flyouts), pincel aparência, funil dados/métricas.
  */
 export function KpiSelectionFloatToolbar({ block }: Props) {
   const { updateSelected, openDataPanel, selectKpiPart, setSelectionPanelTab } =
@@ -46,21 +39,18 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
     } as Partial<ComunicadoBlock>);
   };
 
-  const patchOptions = (patch: Partial<ComunicadoKpiOptions>) => {
-    persistOptions(mergeComunicadoKpiOptions({ ...options, ...patch }));
-  };
-
-  const toggleElement = (elementId: KpiElementId, enabled: boolean) => {
-    if ((elementId === "kpiValue" || elementId === "kpiCard") && !enabled) {
-      selectKpiPart(block.id, kpiElementPrimaryPartRef(elementId));
-      return;
-    }
-    const result = applyKpiElementVisibility(elementId, enabled, options, block.kpiParts);
+  const applyAddElementChoice = (choiceId: KpiAddElementChoiceId) => {
+    const result = applyKpiAddElementChoiceWithParts(choiceId, options, block.kpiParts);
     updateSelected({
       kpiOptions: mergeComunicadoKpiOptions(result.options),
       kpiParts: result.parts,
     } as Partial<ComunicadoBlock>);
-    if (enabled) selectKpiPart(block.id, kpiElementPrimaryPartRef(elementId));
+  };
+
+  const openAddElementMoreOptions = (elementId: KpiElementId) => {
+    selectKpiPart(block.id, kpiElementPrimaryPartRef(elementId));
+    setSelectionPanelTab("element");
+    document.getElementById("td-kpi-pane-elements")?.scrollIntoView({ block: "nearest" });
   };
 
   const openDataFocus = (anchorId?: string) => {
@@ -73,17 +63,6 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
     }
   };
 
-  const formatLabel =
-    options.valueFormat === "percent"
-      ? "Percentual"
-      : options.valueFormat === "currency"
-        ? "Moeda"
-        : options.valueFormat === "number"
-          ? "Número"
-          : options.valueFormat === "compact"
-            ? "Compacto"
-            : "Como veio";
-
   return (
     <ComplexSelectionFloatToolbar
       blockId={block.id}
@@ -93,52 +72,40 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
         style: "Aparência do KPI",
         data: "Dados do KPI",
       }}
-      renderElements={() => (
-        <FloatChecklist aria-label="Elementos do KPI">
-          {KPI_ELEMENT_CATALOG.map((element) => {
-            const enabled = isKpiElementEnabled(element.id, options, block.kpiParts);
-            return (
-              <FloatChecklistItem
-                key={element.id}
-                label={element.label}
-                active={enabled}
-                onClick={() => toggleElement(element.id, !enabled)}
-              />
-            );
-          })}
-        </FloatChecklist>
+      renderElements={(close) => (
+        <KpiAddElementMenu
+          options={options}
+          parts={block.kpiParts}
+          onApplyChoice={(choiceId) => {
+            applyAddElementChoice(choiceId);
+            close();
+          }}
+          onMoreOptions={(elementId) => {
+            openAddElementMoreOptions(elementId);
+            close();
+          }}
+        />
       )}
       renderStyle={(close) => (
-        <FloatChecklist aria-label="Aparência do KPI">
-          {TONE_OPTIONS.map((tone) => (
-            <FloatChecklistItem
-              key={tone.value}
-              label={tone.label}
-              active={(options.tone ?? "default") === tone.value}
+        <KpiColorsStylesMenu
+          options={options}
+          onApplyOptions={(next) => {
+            persistOptions(mergeComunicadoKpiOptions(next));
+            close();
+          }}
+          footer={
+            <button
+              type="button"
+              className="td-deck-ribbon__cascade-item"
               onClick={() => {
-                patchOptions({ tone: tone.value });
+                openDataFocus("td-view-kpi-color-rules");
                 close();
               }}
-            />
-          ))}
-          <FloatChecklistItem
-            label={`Formato: ${formatLabel}`}
-            onClick={() => {
-              patchOptions({
-                valueFormat:
-                  options.valueFormat === "percent"
-                    ? "currency"
-                    : options.valueFormat === "currency"
-                      ? "number"
-                      : options.valueFormat === "number"
-                        ? "compact"
-                        : options.valueFormat === "compact"
-                          ? "raw"
-                          : "percent",
-              });
-            }}
-          />
-        </FloatChecklist>
+            >
+              Formato e regras de cor…
+            </button>
+          }
+        />
       )}
       renderData={(close) => (
         <>
@@ -161,6 +128,26 @@ export function KpiSelectionFloatToolbar({ block }: Props) {
             }}
           >
             Métricas e cálculo…
+          </button>
+          <button
+            type="button"
+            className="td-deck-ribbon__cascade-item"
+            onClick={() => {
+              openDataFocus("td-view-kpi-color-rules");
+              close();
+            }}
+          >
+            Formato e regras…
+          </button>
+          <button
+            type="button"
+            className="td-deck-ribbon__cascade-item"
+            onClick={() => {
+              openDataFocus("td-view-kpi-target");
+              close();
+            }}
+          >
+            Meta e comparação…
           </button>
         </>
       )}

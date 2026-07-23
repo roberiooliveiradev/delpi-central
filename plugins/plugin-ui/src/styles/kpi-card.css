@@ -110,17 +110,82 @@
 }
 
 .delpi-kpi-card--fill .delpi-kpi-card__value.delpi-kpi-part--framed {
-  /* Frame absoluto já define w/h % — FitText mede esse bbox. */
+  /* Frame absoluto já define w/h % — FitText mede esse bbox (não colapsar em minPx). */
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
   box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.delpi-kpi-card--fill .delpi-kpi-card__value.delpi-kpi-part--framed .delpi-ui-fit-text {
+  width: 100%;
+  max-width: 100%;
 }
 
 .delpi-kpi-card--value-dominant .delpi-kpi-card__value {
   flex: 1 1 auto;
   width: 100%;
+}
+
+.delpi-kpi-card__comparison {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--delpi-kpi-hint-color, #64748b);
+}
+
+.delpi-kpi-card__comparison--positive {
+  color: var(--delpi-ui-success, #16a34a);
+}
+
+.delpi-kpi-card__comparison--negative {
+  color: var(--delpi-ui-danger, #dc2626);
+}
+
+.delpi-kpi-card__comparison--neutral {
+  color: var(--delpi-kpi-hint-color, #64748b);
+}
+
+.delpi-kpi-sparkline {
+  display: flex;
+  align-items: stretch;
+  min-height: 20px;
+  color: var(--delpi-ui-accent, #089bdb);
+}
+
+.delpi-kpi-sparkline__svg {
+  width: 100%;
+  height: 100%;
+  min-height: 20px;
+  display: block;
+}
+
+.delpi-kpi-progress {
+  display: flex;
+  align-items: center;
+  min-height: 8px;
+  width: 100%;
+}
+
+.delpi-kpi-progress__track {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--delpi-kpi-fg, #0f172a) 12%, transparent);
+  overflow: hidden;
+}
+
+.delpi-kpi-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--delpi-ui-accent, #089bdb);
 }
 
 .delpi-kpi-card__hint {
@@ -200,7 +265,8 @@
 
 .delpi-kpi-card__value.delpi-kpi-part--framed {
   flex: 0 0 auto;
-  width: auto;
+  width: 100%;
+  height: 100%;
   flex-direction: column;
 }
 

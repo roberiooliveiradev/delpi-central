@@ -28,6 +28,10 @@ export type KpiMetricProjection = {
   format?: "number" | "percent" | "compact" | "raw" | "currency";
   colorRules?: DelpiKpiColorRule[];
   visible?: boolean;
+  /** Meta por métrica (multi-KPI). */
+  target?: number;
+  comparisonMode?: "none" | "target" | "previous";
+  higherIsBetter?: boolean;
 };
 
 export type KpiViewProjection = {

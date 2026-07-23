@@ -35,7 +35,7 @@ export function resolveObjectRibbonTab(params: {
   }
 
   if (selected.type === "table_view") return "table";
-  if (selected.type === "kpi_view") return "shape";
+  if (selected.type === "kpi_view") return "kpi";
   if (
     selected.type === "shape" ||
     selected.type === "icon" ||

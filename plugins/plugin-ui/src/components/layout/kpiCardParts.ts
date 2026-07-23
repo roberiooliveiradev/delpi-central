@@ -22,14 +22,29 @@ export type KpiPartRef =
   | { kind: "value" }
   | { kind: "hint" }
   | { kind: "icon" }
+  /** Delta vs meta/período (BAN). */
+  | { kind: "comparison" }
+  /** Barra/anel de progresso até a meta. */
+  | { kind: "progress" }
+  /** Mini-série temporal. */
+  | { kind: "sparkline" }
   /** Card individual em KPI multi-métrica (seleção no palco). */
   | { kind: "metricCard"; field: string };
+
+export type KpiPartTypographyMode = "auto" | "fixed";
 
 export type KpiPartStyle = {
   fill?: string;
   color?: string;
   fontFamily?: string;
   fontSize?: number;
+  /**
+   * Modo tipográfico explícito.
+   * - `auto`: FitText preenche o container (mesmo com fontSize de referência).
+   * - `fixed`: usa `fontSize` em px (inclui 40 / defaults canônicos).
+   * Ausente: `fontSize` persistido ⇒ fixed; sem `fontSize` ⇒ auto.
+   */
+  typographyMode?: KpiPartTypographyMode;
   fontWeight?: string | number;
   fontStyle?: string;
   textDecoration?: string;
@@ -123,6 +138,9 @@ const KPI_PART_KIND_CAPABILITIES: Record<KpiPartRef["kind"], KpiPartCapabilities
   value: { movable: true, editable: false, deletable: false, resizable: true },
   hint: { movable: true, editable: true, deletable: true, resizable: true },
   icon: { movable: true, editable: false, deletable: true, resizable: true },
+  comparison: { movable: true, editable: false, deletable: true, resizable: true },
+  progress: { movable: true, editable: false, deletable: true, resizable: true },
+  sparkline: { movable: true, editable: false, deletable: true, resizable: true },
   metricCard: { movable: false, editable: true, deletable: false, resizable: false },
 };
 
@@ -139,6 +157,16 @@ export type KpiCardFlatOptions = {
   valueColor?: string;
   backgroundColor?: string;
   valueFormat?: "number" | "percent" | "compact" | "raw" | "currency";
+  /** Meta numérica para comparação / progresso. */
+  target?: number;
+  /** Comparação: meta, período anterior (série) ou desligada. */
+  comparisonMode?: "none" | "target" | "previous";
+  /** Direção semântica do delta (↑ bom vs ↓ bom). */
+  higherIsBetter?: boolean;
+  showComparison?: boolean;
+  showProgress?: boolean;
+  showSparkline?: boolean;
+  comparisonLabel?: string;
 };
 
 /** Frame padrão do ícone (canto superior direito — caixa quadrada compacta). */
@@ -149,18 +177,29 @@ export const KPI_ICON_DEFAULT_FRAME: KpiPartFrame = { x: 76, y: 3, w: 20, h: 22 
  * Empilhamento denso — valor ocupa quase toda a altura (hint sobrepõe o rodapé se visível).
  */
 export const KPI_PART_DEFAULT_FRAMES: Record<
-  "card" | "title" | "value" | "hint" | "icon",
+  "card" | "title" | "value" | "hint" | "icon" | "comparison" | "progress" | "sparkline",
   KpiPartFrame
 > = {
   card: { x: 0, y: 0, w: 100, h: 100 },
   title: { x: 3, y: 2, w: 70, h: 20 },
-  value: { x: 3, y: 22, w: 70, h: 74 },
-  hint: { x: 3, y: 78, w: 55, h: 18 },
+  value: { x: 3, y: 22, w: 70, h: 54 },
+  hint: { x: 3, y: 78, w: 55, h: 14 },
   icon: KPI_ICON_DEFAULT_FRAME,
+  comparison: { x: 3, y: 72, w: 52, h: 14 },
+  progress: { x: 3, y: 90, w: 94, h: 6 },
+  sparkline: { x: 58, y: 68, w: 38, h: 24 },
 };
 
 /** Partes do layout livre (sem o fundo `card`). */
-export const KPI_FREE_LAYOUT_PART_KINDS = ["title", "value", "hint", "icon"] as const;
+export const KPI_FREE_LAYOUT_PART_KINDS = [
+  "title",
+  "value",
+  "hint",
+  "icon",
+  "comparison",
+  "progress",
+  "sparkline",
+] as const;
 
 export type KpiFreeLayoutPartKind = (typeof KPI_FREE_LAYOUT_PART_KINDS)[number];
 
@@ -220,6 +259,7 @@ export const KPI_PART_FONT_SIZE_DEFAULTS = {
   /** Valor do card — legível no deck TV sem depender de FitText agressivo. */
   value: 40,
   hint: 14,
+  comparison: 14,
 } as const;
 
 export type KpiTextPartKind = keyof typeof KPI_PART_FONT_SIZE_DEFAULTS;
@@ -237,16 +277,40 @@ export function resolveKpiPartFontSize(
 }
 
 /**
- * Tipografia «solta» (sem tamanho explícito do usuário / seed legado = default):
- * FitText preenche o container — o fundo do card acompanha o layout sem valor miúdo.
+ * Tipografia automática (FitText preenche o container).
+ * Qualquer `fontSize` persistido (incluindo defaults 40/18/14) é tamanho fixo —
+ * alinhado à ribbon. Use `typographyMode: "auto"` para forçar auto-fit explícito.
  */
 export function kpiPartUsesAutoFitFont(
-  kind: KpiTextPartKind,
+  _kind: KpiTextPartKind,
   style?: KpiPartStyle | null,
 ): boolean {
+  if (style?.typographyMode === "auto") return true;
+  if (style?.typographyMode === "fixed") return false;
   const explicit = style?.fontSize;
   if (explicit == null || !Number.isFinite(explicit) || explicit <= 0) return true;
-  return Math.round(explicit) === KPI_PART_FONT_SIZE_DEFAULTS[kind];
+  return false;
+}
+
+/** Ao gravar tamanho na ribbon/inspetor: sai do auto e persiste px. */
+export function kpiPartStyleWithFixedFontSize(
+  style: KpiPartStyle | null | undefined,
+  fontSize: number,
+): KpiPartStyle {
+  return {
+    ...(style ?? {}),
+    fontSize: Math.round(fontSize),
+    typographyMode: "fixed",
+  };
+}
+
+/** Volta ao auto-fit (remove tamanho persistido). */
+export function kpiPartStyleWithAutoFont(
+  style: KpiPartStyle | null | undefined,
+): KpiPartStyle {
+  const next: KpiPartStyle = { ...(style ?? {}), typographyMode: "auto" };
+  delete next.fontSize;
+  return next;
 }
 
 export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
@@ -255,7 +319,10 @@ export function kpiPartAllowsFrame(ref: KpiPartRef): boolean {
     ref.kind === "title" ||
     ref.kind === "value" ||
     ref.kind === "hint" ||
-    ref.kind === "icon"
+    ref.kind === "icon" ||
+    ref.kind === "comparison" ||
+    ref.kind === "progress" ||
+    ref.kind === "sparkline"
   );
 }
 
@@ -486,9 +553,15 @@ export function kpiPartBoxChromeLabels(kind: KpiPartRef["kind"]): {
   };
 }
 
-/** Tipografia (fonte / efeitos de texto / parágrafo) — title, value, hint. */
+/** Tipografia (fonte / efeitos de texto / parágrafo) — title, value, hint, comparison. */
 export function kpiPartSupportsTypography(ref: KpiPartRef | null | undefined): boolean {
-  return Boolean(ref && (ref.kind === "title" || ref.kind === "value" || ref.kind === "hint"));
+  return Boolean(
+    ref &&
+      (ref.kind === "title" ||
+        ref.kind === "value" ||
+        ref.kind === "hint" ||
+        ref.kind === "comparison"),
+  );
 }
 
 /** Estilo do box do ícone a partir de `kpiParts.icon` (cores, raio, frame/% ou size px). */
@@ -526,7 +599,16 @@ export function serializeKpiPartRef(ref: KpiPartRef): string {
 
 export function parseKpiPartRef(raw: string | null | undefined): KpiPartRef | null {
   const value = (raw ?? "").trim();
-  if (value === "card" || value === "title" || value === "value" || value === "hint" || value === "icon") {
+  if (
+    value === "card" ||
+    value === "title" ||
+    value === "value" ||
+    value === "hint" ||
+    value === "icon" ||
+    value === "comparison" ||
+    value === "progress" ||
+    value === "sparkline"
+  ) {
     return { kind: value };
   }
   if (value.startsWith("metricCard:")) {
@@ -670,7 +752,7 @@ export function materializeMissingKpiPartFramesFromRoot(
 }
 
 /** Partes tipográficas irmãs (Excel: Apply to All em texto do KPI). */
-export const KPI_TEXT_PART_KINDS = ["title", "value", "hint"] as const;
+export const KPI_TEXT_PART_KINDS = ["title", "value", "hint", "comparison"] as const;
 
 export function isKpiTextPartKind(kind: KpiPartRef["kind"]): kind is KpiTextPartKind {
   return (KPI_TEXT_PART_KINDS as readonly string[]).includes(kind);
@@ -850,6 +932,20 @@ export function kpiOptionsToParts(options?: KpiCardFlatOptions | null): KpiParts
         iconSize: KPI_ICON_DEFAULT_SIZE_PX,
       },
     },
+    comparison: {
+      visible: options?.showComparison === true,
+      content: options?.comparisonLabel,
+      style: {
+        fontWeight: 600,
+        color: AUTOMATIC_TEXT_COLOR,
+      },
+    },
+    progress: {
+      visible: options?.showProgress === true,
+    },
+    sparkline: {
+      visible: options?.showSparkline === true,
+    },
   };
 }
 
@@ -861,6 +957,9 @@ export function partsToKpiOptions(parts?: KpiPartsMap | null): Partial<KpiCardFl
   const icon = parts.icon;
   const card = parts.card;
   const value = parts.value;
+  const comparison = parts.comparison;
+  const progress = parts.progress;
+  const sparkline = parts.sparkline;
   if (title?.content != null) patch.title = title.content;
   if (title?.visible != null) patch.showTitle = title.visible !== false;
   if (hint?.content != null) patch.subtitle = hint.content;
@@ -868,6 +967,10 @@ export function partsToKpiOptions(parts?: KpiPartsMap | null): Partial<KpiCardFl
   if (icon?.visible != null) patch.showIcon = icon.visible !== false;
   if (card?.style?.fill !== undefined) patch.backgroundColor = card.style.fill;
   if (value?.style?.color !== undefined) patch.valueColor = value.style.color;
+  if (comparison?.visible != null) patch.showComparison = comparison.visible === true;
+  if (comparison?.content != null) patch.comparisonLabel = comparison.content;
+  if (progress?.visible != null) patch.showProgress = progress.visible === true;
+  if (sparkline?.visible != null) patch.showSparkline = sparkline.visible === true;
   return patch;
 }
 

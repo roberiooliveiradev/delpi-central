@@ -127,6 +127,10 @@ export function KpiViewBlockView({
         kpiOptions={block.kpiOptions}
         kpiParts={block.kpiParts}
         interaction={hasMulti ? null : kpiInteraction}
+        comparisonText={presentation.comparisonText}
+        comparisonTone={presentation.comparisonTone}
+        progressPct={presentation.progressPct}
+        sparklinePoints={presentation.sparklinePoints}
         fill
       />
     );

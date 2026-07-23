@@ -3,6 +3,7 @@ import {
   getChartPartState,
   getKpiPartState,
   isChartTextPartKind,
+  kpiPartUsesAutoFitFont,
   resolveChartPartFontSize,
   resolveKpiPartFontSize,
   defaultStyle,
@@ -20,6 +21,8 @@ import {
 export type TextFormatStyleSnapshot = {
   fontFamily?: string;
   fontSize?: number;
+  /** KPI: tipografia automática (FitText) — UI mostra «Auto». */
+  fontSizeAuto?: boolean;
   fontWeight?: string;
   fontStyle?: string;
   color?: string;
@@ -52,7 +55,7 @@ export type SelectedTextFormatTarget =
       verticalAlign?: string;
     };
 
-const KPI_TEXT_FORMAT_KINDS = new Set(["title", "hint", "value"]);
+const KPI_TEXT_FORMAT_KINDS = new Set(["title", "hint", "value", "comparison"]);
 const CHART_TEXT_FORMAT_KINDS = new Set([
   "title",
   "legend",
@@ -147,7 +150,8 @@ export function resolveSelectedTextFormatTarget(params: {
 
   if (selected.type === "kpi_view" && isKpiTextFormatPart(selectedKpiPart) && selectedKpiPart) {
     const partStyle = getKpiPartState(selected.kpiParts, selectedKpiPart)?.style;
-    const kind = selectedKpiPart.kind as "title" | "value" | "hint";
+    const kind = selectedKpiPart.kind as "title" | "value" | "hint" | "comparison";
+    const fontSizeAuto = kpiPartUsesAutoFitFont(kind, partStyle);
     return {
       mode: "part",
       source: "kpi",
@@ -156,6 +160,7 @@ export function resolveSelectedTextFormatTarget(params: {
       style: {
         fontFamily: partStyle?.fontFamily,
         fontSize: resolveKpiPartFontSize(kind, partStyle),
+        fontSizeAuto,
         fontWeight:
           partStyle?.fontWeight != null ? String(partStyle.fontWeight) : undefined,
         fontStyle: partStyle?.fontStyle,

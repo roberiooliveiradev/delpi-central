@@ -114,15 +114,27 @@ export {
 } from "./kpiCardParts";
 export {
   KPI_ELEMENT_CATALOG,
+  KPI_LAYOUT_PRESET_FRAMES,
+  applyKpiAddElementChoice,
+  applyKpiAddElementChoiceWithParts,
   applyKpiElementVisibility,
+  applyKpiLayoutPreset,
+  isKpiAddElementChoiceActive,
   isKpiElementEnabled,
   isKpiElementOpenForPart,
+  kpiElementIdForAddChoice,
   kpiElementIdForPartRef,
   kpiElementPrimaryPartRef,
   setKpiElementEnabled,
+  type KpiAddElementChoiceId,
   type KpiElementDefinition,
   type KpiElementId,
 } from "./kpiElementCatalog";
+export {
+  kpiPartStyleWithAutoFont,
+  kpiPartStyleWithFixedFontSize,
+  type KpiPartTypographyMode,
+} from "./kpiCardParts";
 
 export type DelpiKpiColorRuleOp = "gt" | "gte" | "lt" | "lte" | "eq" | "between";
 
@@ -232,6 +244,8 @@ export function parseKpiNumericValue(value: unknown): number | null {
 
 const DELPI_KPI_CLASS_NAMES = metricKpiCardBemClasses("delpi");
 
+export type DelpiKpiComparisonTone = "positive" | "negative" | "neutral";
+
 export type DelpiKpiCardProps = {
   label: string;
   value: string;
@@ -250,12 +264,40 @@ export type DelpiKpiCardProps = {
   kpiOptions?: KpiCardFlatOptions | null;
   /** Hit-test / seleção no editor. */
   interaction?: KpiCardInteraction | null;
+  /** Texto do delta (ex.: «▲ +3,2% vs meta»). */
+  comparisonText?: string;
+  comparisonTone?: DelpiKpiComparisonTone;
+  /** Progresso 0–100 até a meta. */
+  progressPct?: number | null;
+  /** Pontos da sparkline (ordem temporal). */
+  sparklinePoints?: number[] | null;
 };
 
 /**
  * Card KPI canônico Delpi composto por primitivos (`card`/`title`/`value`/`hint`/`icon`)
  * com `data-kpi-part` — mesmo padrão de ConfigurableSeriesChart.
  */
+function KpiSparklineSvg({ points }: { points: number[] }) {
+  if (points.length < 2) return null;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = max - min || 1;
+  const w = 100;
+  const h = 36;
+  const d = points
+    .map((point, index) => {
+      const x = (index / (points.length - 1)) * w;
+      const y = h - ((point - min) / span) * (h - 4) - 2;
+      return `${index === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+  return (
+    <svg className="delpi-kpi-sparkline__svg" viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" aria-hidden>
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function DelpiKpiCard({
   label,
   value,
@@ -270,12 +312,19 @@ export function DelpiKpiCard({
   kpiParts,
   kpiOptions,
   interaction = null,
+  comparisonText,
+  comparisonTone = "neutral",
+  progressPct = null,
+  sparklinePoints = null,
 }: DelpiKpiCardProps) {
   const titleHostRef = useRef<HTMLParagraphElement>(null);
   const valueHostRef = useRef<HTMLElement>(null);
   const hintHostRef = useRef<HTMLParagraphElement>(null);
   const iconHostRef = useRef<HTMLDivElement>(null);
   const cardHostRef = useRef<HTMLElement>(null);
+  const comparisonHostRef = useRef<HTMLParagraphElement>(null);
+  const progressHostRef = useRef<HTMLDivElement>(null);
+  const sparklineHostRef = useRef<HTMLDivElement>(null);
 
   // Options/parts mandam; `icon` só entra como fallback quando a visibilidade
   // ainda não foi declarada (evita reaparecer ícone oculto no modo apresentação).
@@ -294,9 +343,27 @@ export function DelpiKpiCard({
   const showValue = isKpiPartVisible(parts, { kind: "value" }, true);
   const showHint = isKpiPartVisible(parts, { kind: "hint" }, Boolean(hint?.trim()));
   const showIcon = isKpiPartVisible(parts, { kind: "icon" }, Boolean(icon));
+  const comparisonFallback = Boolean(comparisonText?.trim());
+  const showComparison = isKpiPartVisible(
+    parts,
+    { kind: "comparison" },
+    comparisonFallback || kpiOptions?.showComparison === true,
+  );
+  const showProgress = isKpiPartVisible(
+    parts,
+    { kind: "progress" },
+    kpiOptions?.showProgress === true && progressPct != null,
+  );
+  const sparkPoints = (sparklinePoints ?? []).filter((n) => Number.isFinite(n));
+  const showSparkline = isKpiPartVisible(
+    parts,
+    { kind: "sparkline" },
+    kpiOptions?.showSparkline === true && sparkPoints.length >= 2,
+  );
 
   const titleContent = parts.title?.content?.trim() || label;
   const hintContent = parts.hint?.content?.trim() || hint;
+  const comparisonContent = parts.comparison?.content?.trim() || comparisonText?.trim() || "";
   const cardBg = parts.card?.style?.fill ?? backgroundColor ?? DECK_KPI_DEFAULTS.backgroundColor;
   const autoFg = resolveAutomaticTextColor(cardBg);
   const resolvedTitleColor = resolveKpiPartForeground(parts.title?.style?.color, cardBg, "label");
@@ -320,15 +387,23 @@ export function DelpiKpiCard({
   const valueState = getKpiPartState(parts, { kind: "value" }) ?? parts.value;
   const hintState = getKpiPartState(parts, { kind: "hint" }) ?? parts.hint;
   const iconState = getKpiPartState(parts, { kind: "icon" }) ?? parts.icon;
+  const comparisonState = getKpiPartState(parts, { kind: "comparison" }) ?? parts.comparison;
+  const progressState = getKpiPartState(parts, { kind: "progress" }) ?? parts.progress;
+  const sparklineState = getKpiPartState(parts, { kind: "sparkline" }) ?? parts.sparkline;
   const cardState = getKpiPartState(parts, { kind: "card" }) ?? parts.card;
   const titleFramed = Boolean(resolveKpiPartFrame(titleState));
   const valueFramed = Boolean(resolveKpiPartFrame(valueState));
   const hintFramed = Boolean(resolveKpiPartFrame(hintState));
   const iconFramed = Boolean(resolveKpiPartFrame(iconState));
-  const cardFramed = Boolean(resolveKpiPartFrame(cardState));
+  const comparisonFramed = Boolean(resolveKpiPartFrame(comparisonState));
+  const progressFramed = Boolean(resolveKpiPartFrame(progressState));
+  const sparklineFramed = Boolean(resolveKpiPartFrame(sparklineState));
   const titleLayoutStyle = resolveKpiPartLayoutStyle(titleState, { partKind: "title" });
   const valueLayoutStyle = resolveKpiPartLayoutStyle(valueState, { partKind: "value" });
   const hintLayoutStyle = resolveKpiPartLayoutStyle(hintState, { partKind: "hint" });
+  const comparisonLayoutStyle = resolveKpiPartLayoutStyle(comparisonState, { partKind: "comparison" });
+  const progressLayoutStyle = resolveKpiPartLayoutStyle(progressState, { partKind: "progress" });
+  const sparklineLayoutStyle = resolveKpiPartLayoutStyle(sparklineState, { partKind: "sparkline" });
   const cardLayoutStyle = resolveKpiPartLayoutStyle(cardState, { partKind: "card" });
 
   const valueAutoFit = kpiPartUsesAutoFitFont("value", parts.value?.style);
@@ -384,12 +459,26 @@ export function DelpiKpiCard({
     ),
     ...hintLayoutStyle,
   };
+  const comparisonTextStyle: CSSProperties = {
+    ...resolveKpiPartTypographyStyle(
+      {
+        ...parts.comparison?.style,
+        fontSize: resolveKpiPartFontSize("comparison", parts.comparison?.style),
+        color: parts.comparison?.style?.color ?? resolvedHintColor,
+      },
+      { flexPart: false, fillHost: comparisonFramed },
+    ),
+    ...comparisonLayoutStyle,
+  };
 
   const cardPtr = bindKpiPartPointer({ kind: "card" }, interaction);
   const titlePtr = bindKpiPartPointer({ kind: "title" }, interaction);
   const valuePtr = bindKpiPartPointer({ kind: "value" }, interaction);
   const hintPtr = bindKpiPartPointer({ kind: "hint" }, interaction);
   const iconPtr = bindKpiPartPointer({ kind: "icon" }, interaction);
+  const comparisonPtr = bindKpiPartPointer({ kind: "comparison" }, interaction);
+  const progressPtr = bindKpiPartPointer({ kind: "progress" }, interaction);
+  const sparklinePtr = bindKpiPartPointer({ kind: "sparkline" }, interaction);
 
   const titleShowResize =
     titlePtr.selected && !titlePtr.editing && kpiPartAllowsResize({ kind: "title" }) &&
@@ -403,7 +492,26 @@ export function DelpiKpiCard({
   const iconShowResize =
     iconPtr.selected && !iconPtr.editing && kpiPartAllowsResize({ kind: "icon" }) &&
     Boolean(interaction?.onPartResizePointerDown);
+  const comparisonShowResize =
+    comparisonPtr.selected &&
+    !comparisonPtr.editing &&
+    kpiPartAllowsResize({ kind: "comparison" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
+  const progressShowResize =
+    progressPtr.selected &&
+    !progressPtr.editing &&
+    kpiPartAllowsResize({ kind: "progress" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
+  const sparklineShowResize =
+    sparklinePtr.selected &&
+    !sparklinePtr.editing &&
+    kpiPartAllowsResize({ kind: "sparkline" }) &&
+    Boolean(interaction?.onPartResizePointerDown);
   const cardShowChrome = false; /* moldura = chrome do wrap (pai); evita handles duplicados */
+  const clampedProgress =
+    progressPct != null && Number.isFinite(progressPct)
+      ? Math.max(0, Math.min(100, progressPct))
+      : null;
 
   const partCornerStyle = (host: HTMLElement | null, radiusPx: number) => {
     const shortSide = Math.min(
@@ -603,6 +711,100 @@ export function DelpiKpiCard({
                   }
                 />
               </strong>
+            ) : null}
+            {showComparison && comparisonContent ? (
+              <p
+                ref={comparisonHostRef}
+                className={[
+                  "delpi-kpi-card__comparison",
+                  `delpi-kpi-card__comparison--${comparisonTone}`,
+                  comparisonFramed ? "delpi-kpi-part--framed" : "",
+                  comparisonShowResize ? "delpi-kpi-part--resizable" : "",
+                  comparisonPtr.selected ? "delpi-kpi-part--selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                style={comparisonTextStyle}
+                {...{
+                  [KPI_PART_DATA_ATTR]: comparisonPtr[KPI_PART_DATA_ATTR],
+                  "aria-selected": comparisonPtr["aria-selected"],
+                }}
+                onPointerDown={comparisonPtr.onPointerDown}
+                onDoubleClick={comparisonPtr.onDoubleClick}
+              >
+                {comparisonContent}
+                <KpiPartResizeHandles
+                  visible={comparisonShowResize}
+                  onResizePointerDown={(handle, event) =>
+                    interaction?.onPartResizePointerDown?.({ kind: "comparison" }, event, handle)
+                  }
+                />
+              </p>
+            ) : null}
+            {showSparkline && sparkPoints.length >= 2 ? (
+              <div
+                ref={sparklineHostRef}
+                className={[
+                  "delpi-kpi-sparkline",
+                  sparklineFramed ? "delpi-kpi-part--framed" : "",
+                  sparklineShowResize ? "delpi-kpi-part--resizable" : "",
+                  sparklinePtr.selected ? "delpi-kpi-part--selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                style={sparklineLayoutStyle}
+                {...{
+                  [KPI_PART_DATA_ATTR]: sparklinePtr[KPI_PART_DATA_ATTR],
+                  "aria-selected": sparklinePtr["aria-selected"],
+                }}
+                onPointerDown={sparklinePtr.onPointerDown}
+                onDoubleClick={sparklinePtr.onDoubleClick}
+              >
+                <KpiSparklineSvg points={sparkPoints} />
+                <KpiPartResizeHandles
+                  visible={sparklineShowResize}
+                  onResizePointerDown={(handle, event) =>
+                    interaction?.onPartResizePointerDown?.({ kind: "sparkline" }, event, handle)
+                  }
+                />
+              </div>
+            ) : null}
+            {showProgress && clampedProgress != null ? (
+              <div
+                ref={progressHostRef}
+                className={[
+                  "delpi-kpi-progress",
+                  progressFramed ? "delpi-kpi-part--framed" : "",
+                  progressShowResize ? "delpi-kpi-part--resizable" : "",
+                  progressPtr.selected ? "delpi-kpi-part--selected" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                style={progressLayoutStyle}
+                role="progressbar"
+                aria-valuenow={Math.round(clampedProgress)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                {...{
+                  [KPI_PART_DATA_ATTR]: progressPtr[KPI_PART_DATA_ATTR],
+                  "aria-selected": progressPtr["aria-selected"],
+                }}
+                onPointerDown={progressPtr.onPointerDown}
+                onDoubleClick={progressPtr.onDoubleClick}
+              >
+                <div className="delpi-kpi-progress__track">
+                  <div
+                    className="delpi-kpi-progress__fill"
+                    style={{ width: `${clampedProgress}%` }}
+                  />
+                </div>
+                <KpiPartResizeHandles
+                  visible={progressShowResize}
+                  onResizePointerDown={(handle, event) =>
+                    interaction?.onPartResizePointerDown?.({ kind: "progress" }, event, handle)
+                  }
+                />
+              </div>
             ) : null}
             {showHint && hintContent && DELPI_KPI_CLASS_NAMES.hint ? (
               <p

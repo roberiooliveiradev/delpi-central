@@ -2,6 +2,7 @@ import {
   parseKpiNumericValue,
   resolveDelpiKpiTone,
   type DelpiKpiCardTone,
+  type DelpiKpiComparisonTone,
 } from "@delpi/plugin-ui/index";
 
 import type { ComunicadoKpiOptions } from "./comunicadoKpiOptions";
@@ -20,12 +21,92 @@ export type KpiViewPresentation = {
   backgroundColor?: string;
   iconName?: string;
   showIcon: boolean;
+  comparisonText?: string;
+  comparisonTone?: DelpiKpiComparisonTone;
+  progressPct?: number | null;
+  sparklinePoints?: number[];
 };
 
 export type KpiMetricPresentationOverrides = Pick<
   KpiMetricProjection,
-  "format" | "colorRules" | "label" | "field"
+  | "format"
+  | "colorRules"
+  | "label"
+  | "field"
+  | "target"
+  | "comparisonMode"
+  | "higherIsBetter"
 >;
+
+function sparklinePointsFromResolved(resolved: ComunicadoDataResolved | undefined): number[] {
+  const series = resolved?.chart?.series?.[0]?.points ?? resolved?.chart?.points ?? [];
+  return series
+    .map((point) => parseKpiNumericValue(point?.value))
+    .filter((n): n is number => n != null && Number.isFinite(n));
+}
+
+function formatSignedPct(pct: number): string {
+  const abs = Math.abs(pct);
+  const text = abs.toLocaleString("pt-BR", {
+    maximumFractionDigits: abs >= 10 ? 1 : 2,
+    minimumFractionDigits: 0,
+  });
+  if (pct > 0) return `+${text}%`;
+  if (pct < 0) return `−${text}%`;
+  return `${text}%`;
+}
+
+function resolveComparisonPresentation(params: {
+  numeric: number | null;
+  options: ComunicadoKpiOptions;
+  metricOverrides?: KpiMetricPresentationOverrides | null;
+  sparklinePoints: number[];
+}): {
+  comparisonText?: string;
+  comparisonTone?: DelpiKpiComparisonTone;
+  progressPct?: number | null;
+} {
+  const mode =
+    params.metricOverrides?.comparisonMode ?? params.options.comparisonMode ?? "none";
+  const target = params.metricOverrides?.target ?? params.options.target;
+  const higherIsBetter =
+    params.metricOverrides?.higherIsBetter ?? params.options.higherIsBetter ?? true;
+  const showComparison = params.options.showComparison === true;
+  const showProgress = params.options.showProgress === true;
+
+  let baseline: number | null = null;
+  let vsLabel = "vs período";
+  if (mode === "target" && target != null && Number.isFinite(target)) {
+    baseline = target;
+    vsLabel = "vs meta";
+  } else if (mode === "previous" && params.sparklinePoints.length >= 2) {
+    baseline = params.sparklinePoints[params.sparklinePoints.length - 2] ?? null;
+    vsLabel = "vs período";
+  }
+
+  let comparisonText: string | undefined;
+  let comparisonTone: DelpiKpiComparisonTone | undefined;
+  if (showComparison && params.numeric != null && baseline != null && baseline !== 0) {
+    const deltaPct = ((params.numeric - baseline) / Math.abs(baseline)) * 100;
+    const favorable = higherIsBetter ? deltaPct >= 0 : deltaPct <= 0;
+    const arrow = deltaPct > 0 ? "▲" : deltaPct < 0 ? "▼" : "●";
+    comparisonText =
+      params.options.comparisonLabel?.trim() ||
+      `${arrow} ${formatSignedPct(deltaPct)} ${vsLabel}`;
+    comparisonTone =
+      Math.abs(deltaPct) < 0.05 ? "neutral" : favorable ? "positive" : "negative";
+  } else if (showComparison && params.options.comparisonLabel?.trim()) {
+    comparisonText = params.options.comparisonLabel.trim();
+    comparisonTone = "neutral";
+  }
+
+  let progressPct: number | null = null;
+  if (showProgress && params.numeric != null && target != null && Number.isFinite(target) && target !== 0) {
+    progressPct = (params.numeric / target) * 100;
+  }
+
+  return { comparisonText, comparisonTone, progressPct };
+}
 
 export function resolveKpiViewPresentation(
   resolved: ComunicadoDataResolved | undefined,
@@ -58,6 +139,13 @@ export function resolveKpiViewPresentation(
 
   const valueText = formatKpiValue(rawValue, valueFormat, options.unit);
   const hint = options.subtitle?.trim() || undefined;
+  const sparklinePoints = sparklinePointsFromResolved(resolved);
+  const comparison = resolveComparisonPresentation({
+    numeric,
+    options,
+    metricOverrides,
+    sparklinePoints,
+  });
 
   return {
     label,
@@ -70,6 +158,10 @@ export function resolveKpiViewPresentation(
       options.iconName?.trim() ||
       (options.showIcon !== false ? "Gauge" : undefined),
     showIcon: options.showIcon !== false,
+    comparisonText: comparison.comparisonText,
+    comparisonTone: comparison.comparisonTone,
+    progressPct: comparison.progressPct,
+    sparklinePoints: options.showSparkline ? sparklinePoints : undefined,
   };
 }
 
