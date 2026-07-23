@@ -305,6 +305,9 @@ def open_commitments_sql(
     SD4010 não possui coluna de UM: D4_QUANT já está na unidade primária do
     produto (B1_UM); a segunda unidade fica em D4_QTSEGUM.
 
+    Data de projeção: ``C2_DATPRI`` da OP do próprio empenho (``D4_OP`` → SC2),
+    não ``D4_DATA`` nem a data da OP do produto acabado.
+
     Produto acabado: OP do empenho com os 6 primeiros dígitos + sufixo 01001
     (ex.: 24608101003 → 24608101001), resolvido em SC2.C2_PRODUTO.
     """
@@ -319,7 +322,8 @@ def open_commitments_sql(
         RTRIM(SD4.D4_LOCAL) AS warehouse,
         RTRIM(SD4.D4_OP) AS production_order,
         RTRIM(SD4.D4_OPORIG) AS origin_production_order,
-        RTRIM(SD4.D4_DATA) AS commitment_date,
+        RTRIM(COALESCE(EMP.C2_DATPRI, '')) AS commitment_date,
+        RTRIM(SD4.D4_DATA) AS empenho_recorded_date,
         RTRIM(COALESCE(SB1.B1_UM, '')) AS unit,
         CAST(ISNULL(SD4.D4_QTDEORI, 0) AS FLOAT) AS original_quantity,
         CAST(ISNULL(SD4.D4_QUANT, 0) AS FLOAT) AS open_quantity,
@@ -344,6 +348,10 @@ def open_commitments_sql(
     LEFT JOIN SB1010 SB1 WITH (NOLOCK)
         ON SB1.B1_COD = SD4.D4_COD
        AND SB1.D_E_L_E_T_ = ''
+    LEFT JOIN SC2010 EMP WITH (NOLOCK)
+        ON EMP.D_E_L_E_T_ = ''
+       AND EMP.C2_FILIAL = SD4.D4_FILIAL
+       AND RTRIM(LTRIM(EMP.C2_OP)) = RTRIM(LTRIM(SD4.D4_OP))
     LEFT JOIN SC2010 FP WITH (NOLOCK)
         ON FP.D_E_L_E_T_ = ''
        AND FP.C2_FILIAL = SD4.D4_FILIAL
@@ -354,8 +362,8 @@ def open_commitments_sql(
       AND SD4.D4_FILIAL = {branch_param}
       {product_clause}
     ORDER BY
-        CASE WHEN RTRIM(SD4.D4_DATA) = '' THEN 1 ELSE 0 END,
-        SD4.D4_DATA ASC,
+        CASE WHEN RTRIM(COALESCE(EMP.C2_DATPRI, '')) = '' THEN 1 ELSE 0 END,
+        EMP.C2_DATPRI ASC,
         SD4.D4_OP ASC,
         SD4.D4_TRT ASC
     """

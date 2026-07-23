@@ -70,7 +70,7 @@ Base: **`/apps/api-delpi/supplies/safety-stock`**
 ### Semântica do detalhe (monitoramento)
 
 - Déficit físico: só saldo 01+98+99 × ESTSEG
-- Empenho: `D4_QUANT` (saldo atual aberto); `D4_DATA` = data do empenho
+- Empenho: `D4_QUANT` (saldo atual aberto); data no extrato = `C2_DATPRI` da OP do empenho (`D4_OP`)
 - Extrato: saldo inicial hoje → saídas SD4 → entradas SC7, acumulado por data
 - Fornecedores: amarração SA5; última compra por `D1_DTDIGIT`
 

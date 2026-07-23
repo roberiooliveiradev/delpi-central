@@ -106,9 +106,9 @@ Base canônica: **extrato projetado** do estoque de segurança (mesma lógica do
 |----------|--------|
 | Saldo inicial | SB2 armazéns **01 + 98 + 99** |
 | Entradas | Pedidos SC7 elegíveis (data prevista) |
-| Saídas | Empenhos SD4 elegíveis (data do empenho) |
+| Saídas | Empenhos SD4 elegíveis (data = início previsto da OP do empenho, `SC2.C2_DATPRI`) |
 | Ruptura | Primeiro evento com `running_balance < 0` → `first_shortage_date` |
-| Janela | `as_of_date` … `as_of_date + 30 dias` |
+| Janela | rupturas atrasadas (`first_shortage_date` &lt; `as_of`) **e** futuras até `as_of + 30 dias` |
 | Não é | Déficit vs ESTSEG (`deficit_quantity`) — outro conceito |
 
 Código de referência:

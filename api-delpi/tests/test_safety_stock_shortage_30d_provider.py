@@ -18,6 +18,8 @@ from app.domain.services.reports.safety_stock_shortage_30d_rules import (
     build_third_party_observation,
     compose_observation_parts,
     finished_product_code_at_first_shortage,
+    format_number,
+    format_quantity_with_unit,
     is_sample_finished_product,
     next_eligible_purchase_order,
     should_annotate_third_party_observation,
@@ -32,12 +34,21 @@ from app.infrastructure.persistence.totvs.supplies_repositories.safety_stock_sql
 )
 
 
+def test_format_number_avoids_scientific_notation() -> None:
+    assert format_number(12611.71) == "12611.71"
+    assert format_number(50.0) == "50"
+    assert format_number(12.5) == "12.5"
+    assert format_number(-5.25) == "-5.25"
+    assert format_quantity_with_unit(12611.71, "MT") == "12611.71 MT"
+
+
 def test_shortage_date_in_horizon_includes_boundaries() -> None:
     as_of = date(2026, 7, 16)
     assert shortage_date_in_horizon("2026-07-16", as_of=as_of, horizon_days=30) is True
     assert shortage_date_in_horizon("2026-08-15", as_of=as_of, horizon_days=30) is True
     assert shortage_date_in_horizon("2026-08-16", as_of=as_of, horizon_days=30) is False
-    assert shortage_date_in_horizon("2026-07-15", as_of=as_of, horizon_days=30) is False
+    # Empenho atrasado: data anterior a as_of entra na janela (mantém a data).
+    assert shortage_date_in_horizon("2026-07-15", as_of=as_of, horizon_days=30) is True
     assert shortage_date_in_horizon(None, as_of=as_of, horizon_days=30) is False
 
 
@@ -154,6 +165,47 @@ def test_aggregation_includes_in_window_excludes_outside() -> None:
     repo.fetch_materials_for_projection_batch.assert_called_once()
     repo.fetch_open_purchase_orders_for_branch.assert_called_once_with(branch="01")
     repo.fetch_open_commitments_for_branch.assert_called_once_with(branch="01")
+
+
+def test_aggregation_includes_overdue_commitment_shortage_keeps_date() -> None:
+    """Saldo 5 + OP início ontem com empenho 10: entra com first_shortage_date = C2_DATPRI."""
+    as_of = date(2026, 7, 23)
+    repo = MagicMock()
+    repo.fetch_materials_for_projection_batch.return_value = [
+        {
+            "product_code": "OVERDUE",
+            "product_description": "Empenho atrasado",
+            "unit": "MT",
+            "secondary_unit": "",
+            "conversion_factor": None,
+            "conversion_type": "",
+            "available_stock": 5.0,
+            "safety_stock": 0.0,
+        },
+    ]
+    repo.fetch_open_purchase_orders_for_branch.return_value = []
+    repo.fetch_open_commitments_for_branch.return_value = [
+        {
+            "product_code": "OVERDUE",
+            "warehouse": "01",
+            "unit": "MT",
+            "open_quantity": 10.0,
+            "commitment_date": "20260722",
+            "production_order": "OP1",
+        },
+    ]
+
+    rows, meta = SafetyStockShortage30dAggregationService(repo).collect_rows(
+        branch="01",
+        horizon_days=30,
+        as_of_date=as_of,
+    )
+
+    assert meta["shortageCount"] == 1
+    assert len(rows) == 1
+    assert rows[0]["product_code"] == "OVERDUE"
+    assert rows[0]["first_shortage_date"] == "2026-07-22"
+    assert rows[0]["shortage_balance"] == -5.0
 
 
 def test_aggregation_excludes_negative_stock_without_open_commitment() -> None:

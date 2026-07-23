@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, timedelta
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Mapping
 
 from app.domain.services.supplies.safety_stock_classification_service import TOLERANCE
@@ -84,17 +85,24 @@ def format_date_br(value: Any) -> str:
 
 
 def format_number(value: Any) -> str:
-    """Número compacto sem zeros desnecessários (ex.: 50, 12.5)."""
+    """Número legível sem notação científica (ex.: 50, 12.5, 12611.71)."""
     if value is None:
         return ""
     try:
-        number = float(value)
-    except (TypeError, ValueError):
+        if isinstance(value, bool):
+            return str(value).strip()
+        number = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
         return str(value).strip()
-    if number == int(number):
-        return str(int(number))
-    text = f"{number:.4g}"
-    return text
+    if not number.is_finite():
+        return str(value).strip()
+    quantized = number.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+    if quantized == quantized.to_integral_value():
+        return format(quantized.to_integral_value(), "f")
+    text = format(quantized.normalize(), "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
 
 
 def format_quantity_with_unit(value: Any, unit: Any) -> str:
@@ -114,7 +122,12 @@ def shortage_date_in_horizon(
     as_of: date,
     horizon_days: int,
 ) -> bool:
-    """Inclui só se ``first_shortage_date`` ∈ ``[as_of, as_of + horizon_days]``."""
+    """Inclui rupturas atrasadas e futuras até o horizonte.
+
+    Critério: ``first_shortage_date`` ≤ ``as_of + horizon_days``.
+    Datas anteriores a ``as_of`` (empenho vencido) entram e mantêm a data
+    original da projeção — não são remapeadas para o dia corrente.
+    """
     if not first_shortage_date:
         return False
     try:
@@ -122,7 +135,7 @@ def shortage_date_in_horizon(
     except ValueError:
         return False
     end = as_of + timedelta(days=max(int(horizon_days), 0))
-    return as_of <= shortage <= end
+    return shortage <= end
 
 
 def balance_at_first_shortage(projection: Mapping[str, Any]) -> float | None:

@@ -191,7 +191,14 @@ def test_open_commitments_sql_filters_open_balance_and_uses_qtdeori() -> None:
     assert "finished_production_order" in sql
     assert "finished_order_observation" in sql
     assert "C2_OBS" in sql
+    assert "C2_DATPRI" in sql
+    assert "C2_DATINI" not in sql
+    assert "empenho_recorded_date" in sql
+    assert "RTRIM(LTRIM(EMP.C2_OP)) = RTRIM(LTRIM(SD4.D4_OP))" in sql
     assert "LEFT(RTRIM(SD4.D4_OP), 6) + '01001'" in sql
+    # Data de projeção = início previsto da OP do empenho, não D4_DATA.
+    assert "AS commitment_date" in sql
+    assert "RTRIM(SD4.D4_DATA) AS commitment_date" not in sql
 
 
 def test_linked_suppliers_sql_uses_sa5_sa2_sd1_and_last_purchase_rules() -> None:

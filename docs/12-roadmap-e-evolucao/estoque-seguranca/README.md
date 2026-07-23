@@ -8,7 +8,7 @@
 
 ## Limitações conhecidas
 
-- `D4_DATA` é data do empenho, não previsão fabril confiável
+- Data da projeção do empenho: `SC2.C2_DATPRI` da OP do empenho (`D4_OP`), não `D4_DATA` nem a OP do PA
 - Empresa 05 / sufixo dinâmico de tabelas fora do escopo desta entrega
 - Extrato consolidado (não abas por armazém); ESTSEG permanece no resumo consolidado
 
