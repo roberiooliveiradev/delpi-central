@@ -411,15 +411,16 @@ export function DelpiKpiCard({
   const valueFontSizePx = resolveKpiPartFontSize("value", parts.value?.style);
   const titleAutoFit = kpiPartUsesAutoFitFont("title", parts.title?.style);
   const titleFontSizePx = resolveKpiPartFontSize("title", parts.title?.style);
+  // Paridade título: FitText só com frame (layout livre). Sem frame = px escalado no resize do bloco.
+  const valueUsesFitText = valueAutoFit && valueFramed;
+  const titleUsesFitText = titleAutoFit && titleFramed;
 
   const titleTextStyle: CSSProperties = {
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.title?.style,
         // Sem frame: px no host (escala no resize do bloco). Com frame + auto-fit: FitText.
-        ...(titleAutoFit && titleFramed
-          ? { fontSize: undefined }
-          : { fontSize: titleFontSizePx }),
+        ...(titleUsesFitText ? { fontSize: undefined } : { fontSize: titleFontSizePx }),
         color: resolvedTitleColor,
       },
       { flexPart: false, fillHost: titleFramed },
@@ -430,16 +431,14 @@ export function DelpiKpiCard({
     ...resolveKpiPartTypographyStyle(
       {
         ...parts.value?.style,
-        // Auto-fit: FitText define o tamanho; não fixar fontSize no host.
-        ...(valueAutoFit ? { fontSize: undefined } : { fontSize: valueFontSizePx }),
+        ...(valueUsesFitText ? { fontSize: undefined } : { fontSize: valueFontSizePx }),
         ...(valueColorForStyle ? { color: valueColorForStyle } : { color: undefined }),
       },
-      // Sem frame: não forçar coluna tipográfica — o CSS flex do card dá a altura ao FitText.
       { flexPart: valueFramed, fillHost: valueFramed },
     ),
     ...valueLayoutStyle,
-    // Auto-fit no flex: host precisa esticar (vence fit-content de caixa pintada).
-    ...(valueAutoFit && !valueFramed
+    // Layout livre + FitText: host precisa esticar na caixa % (vence fit-content pintado).
+    ...(valueUsesFitText
       ? {
           flex: "1 1 auto",
           alignSelf: "stretch",
@@ -630,7 +629,7 @@ export function DelpiKpiCard({
                       }
                     }}
                   />
-                ) : titleAutoFit && titleFramed ? (
+                ) : titleUsesFitText ? (
                   <>
                     <FitText
                       fixedPx={null}
@@ -694,7 +693,7 @@ export function DelpiKpiCard({
                 onDoubleClick={valuePtr.onDoubleClick}
               >
                 <FitText
-                  fixedPx={valueAutoFit ? null : valueFontSizePx}
+                  fixedPx={valueUsesFitText ? null : valueFontSizePx}
                   minPx={16}
                   maxPx={320}
                 >

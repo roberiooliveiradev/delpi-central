@@ -223,14 +223,13 @@ describe("DelpiKpiCard chrome", () => {
     expect(icon.style.height).toBe("96px");
   });
 
-  it("valor usa auto-fit no container (padrão), sem fontSize fixo 40px", () => {
+  it("valor sem frame usa px canônico (acompanha resize do bloco pai)", () => {
     const { container } = render(
       <DelpiKpiCard label="Consumo" value="10" fill />,
     );
     const fit = container.querySelector(".delpi-ui-fit-text") as HTMLElement;
     expect(fit).toBeTruthy();
-    // Sem fixedPx: FitText começa em minPx e ajusta ao host — não grava 40px.
-    expect(fit.style.fontSize).not.toBe("40px");
+    expect(fit.style.fontSize).toBe("40px");
   });
 
   it("valor com fontSize 40 + typographyMode fixed usa tamanho fixo", () => {
@@ -248,13 +247,31 @@ describe("DelpiKpiCard chrome", () => {
     expect(fit?.style.fontSize).toBe("40px");
   });
 
-  it("valor com só fontSize 40 (legado) usa auto-fit, não trava em 40px", () => {
+  it("valor sem frame com fontSize 80 (pós-resize do pai) renderiza 80px", () => {
     const { container } = render(
       <DelpiKpiCard
         label="Consumo"
         value="1.400"
         fill
-        kpiParts={{ value: { style: { fontSize: 40 } } }}
+        kpiParts={{ value: { style: { fontSize: 80 } } }}
+      />,
+    );
+    const fit = container.querySelector(".delpi-kpi-card__value .delpi-ui-fit-text") as HTMLElement;
+    expect(fit?.style.fontSize).toBe("80px");
+  });
+
+  it("valor com frame + typographyMode auto usa FitText (sem fixedPx)", () => {
+    const { container } = render(
+      <DelpiKpiCard
+        label="Consumo"
+        value="1.400"
+        fill
+        kpiParts={{
+          value: {
+            frame: { x: 3, y: 22, w: 70, h: 54 },
+            style: { fontSize: 40, typographyMode: "auto" },
+          },
+        }}
       />,
     );
     const fit = container.querySelector(".delpi-kpi-card__value .delpi-ui-fit-text") as HTMLElement;
