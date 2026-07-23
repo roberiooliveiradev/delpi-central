@@ -4,7 +4,7 @@
   "name": "Manutenção",
   "description": "Gestão de manutenção industrial. Tile único no menu do portal; submódulos e filiais navegam no MFE (rotas internas com showInMenu false, padrão strategic-indicators).",
   "icon": "wrench",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "microfrontend",
   "basePath": "/apps/maintenance",
   "entry": "/apps/maintenance/assets/remoteEntry.js",
@@ -43,6 +43,30 @@
       "code": "maintenance.mini-applicators.manage.filial-02",
       "name": "Mini-aplicadores — gerenciar (filial 02)",
       "description": "Reposições, motivos e status preventivo na filial 02.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.programas-maquinas.view.filial-01",
+      "name": "Programas de máquina — visualizar (filial 01)",
+      "description": "Ranking e consulta de produtos para programas de máquina na filial 01.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.programas-maquinas.manage.filial-01",
+      "name": "Programas de máquina — gerenciar (filial 01)",
+      "description": "Cadastrar e remover produtos dos programas de máquina na filial 01.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.programas-maquinas.view.filial-02",
+      "name": "Programas de máquina — visualizar (filial 02)",
+      "description": "Ranking e consulta de produtos para programas de máquina na filial 02.",
+      "module": "maintenance"
+    },
+    {
+      "code": "maintenance.programas-maquinas.manage.filial-02",
+      "name": "Programas de máquina — gerenciar (filial 02)",
+      "description": "Cadastrar e remover produtos dos programas de máquina na filial 02.",
       "module": "maintenance"
     },
     {
@@ -132,6 +156,15 @@
       "icon": "settings",
       "entry": null,
       "order": 23,
+      "showInMenu": false
+    },
+    {
+      "path": "/apps/maintenance/programas-maquinas",
+      "label": "Programas de máquina",
+      "permission": "maintenance.programas-maquinas.view.filial-01",
+      "icon": "cpu",
+      "entry": null,
+      "order": 24,
       "showInMenu": false
     }
   ],

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Query
 
 from app.interface.http.query_param_enums import (
     BRANCH_QUERY_OPTIONAL,
+    BRANCH_QUERY_REQUIRED,
     CONSUMPTION_TOP_ITEMS_GROUP_BY_QUERY,
     LOSS_TYPE_QUERY,
     PRODUCT_TYPE_QUERY,
@@ -13,6 +14,9 @@ from delpi_auth.authorization import require_permission
 
 from app.application.dto.production.get_production_order_by_op_request import (
     GetProductionOrderByOpRequest,
+)
+from app.application.dto.production.list_machine_program_top_intermediates_request import (
+    ListMachineProgramTopIntermediatesRequest,
 )
 from app.application.dto.production.production_operational_request import (
     ProductionOperationalRequest,
@@ -34,6 +38,7 @@ from app.composition.production_operational_composer import (
     build_get_production_schedule_today_use_case,
     build_get_production_work_center_average_planned_time_use_case,
     build_get_production_work_center_order_summary_use_case,
+    build_list_production_machine_program_top_intermediates_use_case,
 )
 from app.core.responses import error_response, not_found_response
 from app.domain.services.production.production_consumption_top_items_group_by_service import (
@@ -47,6 +52,7 @@ from app.interface.http.openapi_agent_metadata import (
     PRODUCTION_CONSUMPTION_TOP_ITEMS_VALIDATED,
     PRODUCTION_LOSSES_RECORDS,
     PRODUCTION_LOSSES_TOP_MATERIALS,
+    PRODUCTION_MACHINE_PROGRAM_TOP_INTERMEDIATES,
     PRODUCTION_ORDER_BY_OP,
     PRODUCTION_ORDERS_FINISHED,
     PRODUCTION_ORDERS_FINISHED_WITHOUT_CONSUMPTION,
@@ -133,6 +139,46 @@ def get_consumption_top_items(
     except Exception as exc:
         log_error(f"Erro em consumption/top-items: {exc}")
         return error_response(str(exc), status_code=500)
+
+
+@router.get(
+    "/machine-programs/top-intermediates",
+    **PRODUCTION_MACHINE_PROGRAM_TOP_INTERMEDIATES,
+)
+@require_permission(API_DELPI_ACCESS)
+def list_machine_program_top_intermediates(
+    branch: str = BRANCH_QUERY_REQUIRED(),
+    date_start: Optional[str] = Query(default=None),
+    date_end: Optional[str] = Query(default=None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    search: Optional[str] = Query(default=None),
+):
+    try:
+        result = build_list_production_machine_program_top_intermediates_use_case().execute(
+            ListMachineProgramTopIntermediatesRequest(
+                branch=branch,
+                date_start=date_start,
+                date_end=date_end,
+                page=page,
+                page_size=page_size,
+                search=search,
+            )
+        )
+        return api_delpi_success(
+            result,
+            operation_id=PRODUCTION_MACHINE_PROGRAM_TOP_INTERMEDIATES["operation_id"],
+            message="Ranking de intermediários para programas de máquina consultado.",
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação em machine-programs/top-intermediates: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro em machine-programs/top-intermediates: {exc}")
+        return error_response(
+            "Erro interno ao consultar ranking de intermediários.",
+            status_code=500,
+        )
 
 
 @router.get("/losses/records", **PRODUCTION_LOSSES_RECORDS)

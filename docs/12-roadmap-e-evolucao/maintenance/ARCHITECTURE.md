@@ -46,6 +46,8 @@ flowchart TB
 | Cadastro ferramentas/peças (SB1010, SG1010) | TOTVS via **api-delpi** | Gateway na API dedicada |
 | Golpes no período (SD4/SHY/SH4/SH6) | TOTVS via **api-delpi** | Gateway na API dedicada |
 | Estoque / árvore de componentes | TOTVS via **api-delpi** | Gateway na API dedicada |
+| Ranking PI / PA / CT (programas de máquina) | TOTVS via **api-delpi** (`/production/machine-programs/top-intermediates`) | Gateway na API dedicada |
+| Cadastro de produtos para programas de máquina | Postgres `programas_maquina_produtos` | API dedicada |
 | Filiais operacionais (01, 02) | Postgres ou api-delpi `/quality/branches` (avaliar reuse) | API dedicada |
 
 **Regra:** a `maintenance-api` **nunca** importa driver SQL Server nem copia SQL Protheus do legado WinForms.

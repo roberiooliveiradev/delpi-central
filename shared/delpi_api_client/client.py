@@ -343,6 +343,18 @@ class DelpiApiClient:
             authorization=authorization,
         )
 
+    def list_production_machine_program_top_intermediates(
+        self,
+        *,
+        params: Mapping[str, str | None] | None = None,
+        authorization: str | None = None,
+    ) -> dict[str, Any]:
+        return self._get(
+            "/production/machine-programs/top-intermediates",
+            params=params,
+            authorization=authorization,
+        )
+
     def get_product_parents(
         self,
         code: str,

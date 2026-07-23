@@ -632,6 +632,17 @@ PRODUCTION_CONSUMPTION_TOP_ITEMS = agent_route(
     operation_id="get_production_consumption_top_items",
 )
 
+PRODUCTION_MACHINE_PROGRAM_TOP_INTERMEDIATES = agent_route(
+    summary="Top intermediate products for machine programs",
+    description=(
+        "Paged ranking of intermediate products (PI) most produced from production "
+        "appointments (SH6010) in the period (default last ~6 months). Includes finished "
+        "product via mother OP suffix 01001, cutting work center from SG2 operation 01, "
+        "and open OP flag from SC2. Used by Maintenance machine-program registration."
+    ),
+    operation_id="list_production_machine_program_top_intermediates",
+)
+
 PURCHASES_TOP_PRODUCTS = agent_route(
     summary="Produtos mais comprados no período",
     description=(

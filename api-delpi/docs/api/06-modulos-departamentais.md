@@ -100,6 +100,7 @@ Parâmetros comuns: `branch`, `start_date`, `end_date` (normalização de datas 
 | GET | `/production/oee/series` | Série temporal de OEE por filial. Preserva a granularidade solicitada; até 366 buckets (um ano diário completo). |
 | GET | `/production/eficiencia-fabril/dashboard` | Dashboard eficiência fabril (agregado SQL + paginação; `items[].appointment_id`). |
 | GET | `/production/eficiencia-fabril/appointments` | Apontamentos eficiência fabril (carga bulk; `appointment_id` para detalhe). |
+| GET | `/production/machine-programs/top-intermediates` | Ranking de intermediários (PI) mais produzidos — programas de máquina (Manutenção). Doc: [production-machine-programs.md](./production-machine-programs.md). |
 
 **Performance (`/production/eficiencia-fabril/appointments`):**
 

@@ -10,6 +10,7 @@ export const MAINTENANCE_ROUTES = {
   miniAplicadoresConfiguracao: "/apps/maintenance/mini-aplicadores/configuracao",
   miniAplicadorDetail: (codigo: string) =>
     `/apps/maintenance/mini-aplicadores/${encodeURIComponent(codigo)}`,
+  programasMaquinas: "/apps/maintenance/programas-maquinas",
 } as const;
 
 /** @deprecated Use miniAplicadoresRelatorio */

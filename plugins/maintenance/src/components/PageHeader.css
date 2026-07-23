@@ -1,63 +1,50 @@
-.dashboard-maintenance .dm-page-header,
-.dashboard-maintenance .dm-page-header__brand,
-.dashboard-maintenance .dm-page-header__content,
-.dashboard-maintenance .dm-header-actions,
+.dashboard-maintenance .dm-home-header,
+.dashboard-maintenance .dm-home-header__shell,
+.dashboard-maintenance .dm-home-header__brand,
+.dashboard-maintenance .dm-home-header__titles,
+.dashboard-maintenance .dm-home-header__actions,
 .dashboard-maintenance .dm-nav {
   min-width: 0;
 }
 
-.dashboard-maintenance .dm-page-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 16px;
-  row-gap: 14px;
-  align-items: start;
+.dashboard-maintenance .dm-home-header {
+  margin-bottom: var(--dm-section-gap);
 }
 
-.dashboard-maintenance .dm-page-header__brand {
-  grid-column: 1;
-  grid-row: 1;
+.dashboard-maintenance .dm-home .dm-home-header {
+  margin-bottom: 0;
 }
 
-.dashboard-maintenance .dm-page-header__content {
-  flex: 1 1 auto;
-  min-width: 0;
+.dashboard-maintenance .dm-home-header--compact .dm-home-header__main {
+  padding: 16px 18px 12px;
 }
 
-.dashboard-maintenance .dm-page-header__context {
-  margin-bottom: 10px;
+.dashboard-maintenance .dm-home-header--compact .dm-home-header__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
 }
 
-.dashboard-maintenance .dm-page-header h1 {
+.dashboard-maintenance .dm-home-header--compact .dm-home-header__title-row h1 {
+  font-size: clamp(20px, 2vw, 26px);
+}
+
+.dashboard-maintenance .dm-home-header__nav {
+  margin-top: 12px;
+}
+
+.dashboard-maintenance .dm-home-header__nav .dm-nav--submodule {
+  margin-top: 0;
+}
+
+.dashboard-maintenance .dm-home-header__title-row h1 {
   overflow-wrap: anywhere;
   word-break: normal;
-}
-
-.dashboard-maintenance .dm-header-actions {
-  grid-column: 2;
-  grid-row: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  justify-content: flex-end;
-  align-self: start;
-  justify-self: end;
-  width: auto;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.dashboard-maintenance .dm-header-actions .dm-primary-btn,
-.dashboard-maintenance .dm-header-actions .dm-ghost-btn {
-  min-width: 0;
-  white-space: nowrap;
 }
 
 .dashboard-maintenance .dm-nav--submodule {
   display: grid;
   gap: 10px;
-  margin-top: 14px;
   width: 100%;
   max-width: 100%;
 }
@@ -112,24 +99,11 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-maintenance .dm-page-header {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .dashboard-maintenance .dm-page-header__brand {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .dashboard-maintenance .dm-header-actions {
-    grid-column: 1;
-    grid-row: 2;
-    justify-self: stretch;
+  .dashboard-maintenance .dm-home-header__actions {
     width: 100%;
   }
 
-  .dashboard-maintenance .dm-header-actions .dm-primary-btn {
+  .dashboard-maintenance .dm-home-header__actions .dm-primary-btn {
     width: 100%;
   }
 
