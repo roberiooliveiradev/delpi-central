@@ -4242,7 +4242,7 @@ body.td-composer--marqueeing *{
   --td-ribbon-height: auto;
   height: auto;
   min-height: 72px;
-  /* Organizar (2 filas + chevron + caption) precisa de folga vertical. */
+  /* Folga para caption + chevrons dos tiles (Organizar em linha). */
   max-height: min(240px, 38vh);
   overflow-x: auto;
   overflow-y: hidden;
