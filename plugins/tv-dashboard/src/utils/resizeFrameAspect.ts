@@ -1,4 +1,7 @@
-import type { ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
+import {
+  COMUNICADO_FRAME_MIN_SIZE_PCT,
+  type ComunicadoFrame,
+} from "@delpi/tv-dashboard-presentation";
 
 export type ResizeHandleMode =
   | "resize-nw"
@@ -12,7 +15,7 @@ export type ResizeHandleMode =
 
 export type GenericResizeHandle = "nw" | "n" | "ne" | "e" | "se" | "s" | "sw" | "w";
 
-const MIN_SIZE = 0.5;
+const MIN_SIZE = COMUNICADO_FRAME_MIN_SIZE_PCT;
 
 function isResizeHandleMode(mode: string): mode is ResizeHandleMode {
   return mode.startsWith("resize-");
@@ -66,23 +69,42 @@ function resizeFrameFree(
   dy: number,
   handle: GenericResizeHandle,
 ): ComunicadoFrame {
+  const right = frame.x + frame.w;
+  const bottom = frame.y + frame.h;
   switch (handle) {
     case "se":
-      return { ...frame, w: frame.w + dx, h: frame.h + dy };
+      return {
+        ...frame,
+        w: Math.max(MIN_SIZE, frame.w + dx),
+        h: Math.max(MIN_SIZE, frame.h + dy),
+      };
     case "e":
-      return { ...frame, w: frame.w + dx };
+      return { ...frame, w: Math.max(MIN_SIZE, frame.w + dx) };
     case "s":
-      return { ...frame, h: frame.h + dy };
-    case "n":
-      return { ...frame, y: frame.y + dy, h: frame.h - dy };
-    case "w":
-      return { ...frame, x: frame.x + dx, w: frame.w - dx };
-    case "ne":
-      return { ...frame, y: frame.y + dy, w: frame.w + dx, h: frame.h - dy };
-    case "nw":
-      return { ...frame, x: frame.x + dx, y: frame.y + dy, w: frame.w - dx, h: frame.h - dy };
-    case "sw":
-      return { ...frame, x: frame.x + dx, w: frame.w - dx, h: frame.h + dy };
+      return { ...frame, h: Math.max(MIN_SIZE, frame.h + dy) };
+    case "n": {
+      const h = Math.max(MIN_SIZE, frame.h - dy);
+      return { ...frame, y: bottom - h, h };
+    }
+    case "w": {
+      const w = Math.max(MIN_SIZE, frame.w - dx);
+      return { ...frame, x: right - w, w };
+    }
+    case "ne": {
+      const w = Math.max(MIN_SIZE, frame.w + dx);
+      const h = Math.max(MIN_SIZE, frame.h - dy);
+      return { ...frame, y: bottom - h, w, h };
+    }
+    case "nw": {
+      const w = Math.max(MIN_SIZE, frame.w - dx);
+      const h = Math.max(MIN_SIZE, frame.h - dy);
+      return { x: right - w, y: bottom - h, w, h };
+    }
+    case "sw": {
+      const w = Math.max(MIN_SIZE, frame.w - dx);
+      const h = Math.max(MIN_SIZE, frame.h + dy);
+      return { ...frame, x: right - w, w, h };
+    }
     default:
       return frame;
   }

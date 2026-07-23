@@ -6,7 +6,7 @@ import type {
   ComunicadoGeometryVertex,
   ComunicadoShapeBlock,
 } from "./comunicadoTypes";
-import { clampFramePositionPercent } from "./frameDesignPixels";
+import { clampFramePositionPercent, clampFrameSizePercent } from "./frameDesignPixels";
 import {
   isLineShapeKind,
   isPointShapeKind,
@@ -139,16 +139,16 @@ export function geometryBoundingFrame(geometry: ComunicadoShapeGeometry): Comuni
     return {
       x: minX - pad,
       y: minY - pad,
-      w: Math.max(0.5, rawW) + 2 * pad,
-      h: Math.max(0.5, rawH) + 2 * pad,
+      w: clampFrameSizePercent(rawW) + 2 * pad,
+      h: clampFrameSizePercent(rawH) + 2 * pad,
     };
   }
 
   return {
     x: minX,
     y: minY,
-    w: Math.max(0.5, rawW),
-    h: Math.max(0.5, rawH),
+    w: clampFrameSizePercent(rawW),
+    h: clampFrameSizePercent(rawH),
   };
 }
 
@@ -232,16 +232,16 @@ export function clampFrameForShapeBlock(block: ComunicadoShapeBlock, frame: Comu
     return {
       x: clampFramePositionPercent(frame.x),
       y: clampFramePositionPercent(frame.y),
-      w: Math.max(1, Math.min(100, frame.w)),
-      h: Math.max(0.5, Math.min(100, frame.h)),
+      w: clampFrameSizePercent(frame.w),
+      h: clampFrameSizePercent(frame.h),
     };
   }
 
   return {
     x: clampFramePositionPercent(frame.x),
     y: clampFramePositionPercent(frame.y),
-    w: Math.max(2, Math.min(100, frame.w)),
-    h: Math.max(1, Math.min(100, frame.h)),
+    w: clampFrameSizePercent(frame.w),
+    h: clampFrameSizePercent(frame.h),
   };
 }
 
@@ -250,8 +250,8 @@ export function clampFrameForBlock(block: ComunicadoBlock, frame: ComunicadoFram
   return {
     x: clampFramePositionPercent(frame.x),
     y: clampFramePositionPercent(frame.y),
-    w: Math.max(2, Math.min(100, frame.w)),
-    h: Math.max(1, Math.min(100, frame.h)),
+    w: clampFrameSizePercent(frame.w),
+    h: clampFrameSizePercent(frame.h),
   };
 }
 

@@ -1,4 +1,7 @@
-import type { ComunicadoFrame } from "@delpi/tv-dashboard-presentation";
+import {
+  COMUNICADO_FRAME_MIN_SIZE_PCT,
+  type ComunicadoFrame,
+} from "@delpi/tv-dashboard-presentation";
 
 import { clampRotationDeg } from "./comunicadoTransform";
 import { unionFramePercent } from "./comunicadoGrouping";
@@ -34,8 +37,8 @@ export function applyMultiFrameDelta(
     next.set(id, {
       x: start.x + dx,
       y: start.y + dy,
-      w: Math.max(0.5, start.w + dw),
-      h: Math.max(0.5, start.h + dh),
+      w: Math.max(COMUNICADO_FRAME_MIN_SIZE_PCT, start.w + dw),
+      h: Math.max(COMUNICADO_FRAME_MIN_SIZE_PCT, start.h + dh),
     });
   }
   return next;

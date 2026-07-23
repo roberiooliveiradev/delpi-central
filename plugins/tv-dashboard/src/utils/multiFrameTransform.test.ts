@@ -28,14 +28,17 @@ describe("applyMultiFrameDelta", () => {
     expect(next.get("b")).toEqual({ x: 60, y: 20, w: 30, h: 30 });
   });
 
-  it("respeita piso mínimo de tamanho nos secundários", () => {
+  it("respeita único piso > 0 nos secundários", () => {
     const start = new Map([
       ["a", { x: 0, y: 0, w: 10, h: 10 }],
       ["b", { x: 20, y: 0, w: 2, h: 2 }],
     ]);
     const next = applyMultiFrameDelta(start, "a", { x: 0, y: 0, w: 5, h: 5 });
-    expect(next.get("b")?.w).toBe(0.5);
-    expect(next.get("b")?.h).toBe(0.5);
+    // dw/dh = -5 → 2-5 = -3 → piso COMUNICADO_FRAME_MIN_SIZE_PCT
+    expect(next.get("b")?.w).toBeGreaterThan(0);
+    expect(next.get("b")?.h).toBeGreaterThan(0);
+    expect(next.get("b")?.w).toBeLessThan(0.01);
+    expect(next.get("b")?.h).toBeLessThan(0.01);
   });
 });
 

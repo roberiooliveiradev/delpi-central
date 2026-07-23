@@ -37,6 +37,8 @@ export {
 } from "./viewportPixelSize";
 export {
   clampFramePositionPercent,
+  clampFrameSizePercent,
+  COMUNICADO_FRAME_MIN_SIZE_PCT,
   designPxToPercent,
   formatDesignPx,
   FRAME_POSITION_SOFT_MAX,
@@ -188,6 +190,8 @@ export {
   ComunicadoShapeGraphic,
   ComunicadoShapePreview,
   lineArrowHeadPolygonPoints,
+  resolveLineArrowHeadSize,
+  type LineArrowHeadSize,
 } from "./comunicadoShapeGraphic";
 export {
   CONNECTION_SITE_SNAP_PCT,

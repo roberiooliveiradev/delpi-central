@@ -30,6 +30,10 @@ function a(values: number[], index: number, fallback: number): number {
   return typeof raw === "number" && Number.isFinite(raw) ? raw : fallback;
 }
 
+/**
+ * Seta estilo PowerPoint (7 vértices) — corpo retangular + cabeça triangular.
+ * Sem “barbas” intermediárias que geravam pontas finas no SVG.
+ */
 export function arrowRightPath(values: number[]): string {
   const head = a(values, 0, 0.35);
   const shaft = a(values, 1, 0.28);
@@ -37,7 +41,7 @@ export function arrowRightPath(values: number[]): string {
   const half = shaft * 50;
   const y1 = 50 - half;
   const y2 = 50 + half;
-  return `M4 ${y1} H${neckX} L${neckX - 12} ${y1 - 14} L${100 - head * 20} 24 L96 50 L${100 - head * 20} 76 L${neckX - 12} ${y2 + 14} L${neckX} ${y2} H4 Z`;
+  return `M4 ${y1} H${neckX} V8 L96 50 L${neckX} 92 V${y2} H4 Z`;
 }
 
 export function arrowLeftPath(values: number[]): string {
@@ -47,7 +51,7 @@ export function arrowLeftPath(values: number[]): string {
   const half = shaft * 50;
   const y1 = 50 - half;
   const y2 = 50 + half;
-  return `M96 ${y1} H${neckX} L${neckX + 12} ${y1 - 14} L${head * 20} 24 L4 50 L${head * 20} 76 L${neckX + 12} ${y2 + 14} L${neckX} ${y2} H96 Z`;
+  return `M96 ${y1} H${neckX} V8 L4 50 L${neckX} 92 V${y2} H96 Z`;
 }
 
 export function arrowUpPath(values: number[]): string {
@@ -57,7 +61,7 @@ export function arrowUpPath(values: number[]): string {
   const half = shaft * 50;
   const x1 = 50 - half;
   const x2 = 50 + half;
-  return `M50 4 L${x2 + 14} ${neckY} L${x2} ${neckY} V96 H${x1} V${neckY} L${x1 - 14} ${neckY} Z`;
+  return `M${x1} 96 V${neckY} H8 L50 4 L92 ${neckY} H${x2} V96 Z`;
 }
 
 export function arrowDownPath(values: number[]): string {
@@ -67,25 +71,29 @@ export function arrowDownPath(values: number[]): string {
   const half = shaft * 50;
   const x1 = 50 - half;
   const x2 = 50 + half;
-  return `M50 96 L${x1 - 14} ${neckY} L${x1} ${neckY} V4 H${x2} V${neckY} L${x2 + 14} ${neckY} Z`;
+  return `M${x1} 4 V${neckY} H8 L50 96 L92 ${neckY} H${x2} V4 Z`;
 }
 
 export function arrowLeftRightPath(values: number[]): string {
   const head = a(values, 0, 0.35);
   const shaft = a(values, 1, 0.28);
-  const left = head * 80;
-  const right = 100 - head * 80;
-  const half = shaft * 40;
-  return `M4 50 L${left} ${50 - half - 12} L${left} ${50 - half} H${right} L${right} ${50 - half - 12} L96 50 L${right} ${50 + half + 12} L${right} ${50 + half} H${left} L${left} ${50 + half + 12} Z`;
+  const left = head * 100;
+  const right = 100 - head * 100;
+  const half = shaft * 50;
+  const y1 = 50 - half;
+  const y2 = 50 + half;
+  return `M${left} ${y1} H${right} V8 L96 50 L${right} 92 V${y2} H${left} V92 L4 50 L${left} 8 Z`;
 }
 
 export function arrowUpDownPath(values: number[]): string {
   const head = a(values, 0, 0.35);
   const shaft = a(values, 1, 0.28);
-  const top = head * 80;
-  const bottom = 100 - head * 80;
-  const half = shaft * 40;
-  return `M50 4 L${50 + half + 12} ${top} L${50 + half} ${top} V${bottom} L${50 + half + 12} ${bottom} L50 96 L${50 - half - 12} ${bottom} L${50 - half} ${bottom} V${top} L${50 - half - 12} ${top} Z`;
+  const top = head * 100;
+  const bottom = 100 - head * 100;
+  const half = shaft * 50;
+  const x1 = 50 - half;
+  const x2 = 50 + half;
+  return `M${x1} ${top} V${bottom} H8 L50 96 L92 ${bottom} H${x2} V${top} H92 L50 4 L8 ${top} Z`;
 }
 
 export function parallelogramPoints(values: number[]): number[] {
@@ -137,25 +145,33 @@ export function crossPath(values: number[]): string {
   return `M${a0} 8 H${a1} V${a0} H92 V${a1} H${a1} V92 H${a0} V${a1} H8 V${a0} H${a0} Z`;
 }
 
+/** Chevron (faixa em V) — profundidade controla o avanço da ponta. */
 export function chevronRightPath(values: number[]): string {
   const depth = a(values, 0, 0.45) * 100;
-  return `M8 12 L${depth} 50 L8 88 L${depth * 0.35} 50 Z`;
+  const band = Math.min(28, Math.max(12, depth * 0.35));
+  const tip = Math.min(96, 8 + depth);
+  const inner = Math.max(8, tip - band);
+  return `M8 12 L${tip} 50 L8 88 H${8 + band} L${inner} 50 L${8 + band} 12 Z`;
 }
 
 export function chevronLeftPath(values: number[]): string {
   const depth = a(values, 0, 0.45) * 100;
-  const tip = 100 - depth;
-  return `M92 12 L${tip} 50 L92 88 L${100 - depth * 0.35} 50 Z`;
+  const band = Math.min(28, Math.max(12, depth * 0.35));
+  const tip = Math.max(4, 92 - depth);
+  const inner = Math.min(92, tip + band);
+  return `M92 12 L${tip} 50 L92 88 H${92 - band} L${inner} 50 L${92 - band} 12 Z`;
 }
 
+/** Seta com entalhe na base (PowerPoint notched right arrow). */
 export function notchedArrowPath(values: number[]): string {
   const head = a(values, 0, 0.35);
   const shaft = a(values, 1, 0.28);
   const neckX = 100 - head * 100;
-  const half = shaft * 40;
+  const half = shaft * 50;
   const y1 = 50 - half;
   const y2 = 50 + half;
-  return `M8 ${y1} H${neckX} L${neckX - 10} ${y1 - 12} L${100 - head * 25} 18 L96 50 L${100 - head * 25} 82 L${neckX - 10} ${y2 + 12} L${neckX} ${y2} H8 L20 50 Z`;
+  const notch = Math.min(18, half * 0.85);
+  return `M4 ${y1} H${neckX} V8 L96 50 L${neckX} 92 V${y2} H4 L${4 + notch} 50 Z`;
 }
 
 export function bannerPath(values: number[]): string {

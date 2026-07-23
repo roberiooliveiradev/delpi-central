@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { clampFrame, createBlock } from "./comunicadoHelpers";
+import { clampFrame, createBlock, createShapeBlock } from "./comunicadoHelpers";
 import {
   clampFramePositionPercent,
+  clampFrameSizePercent,
+  COMUNICADO_FRAME_MIN_SIZE_PCT,
   designPxToPercent,
   formatDesignPx,
   FRAME_POSITION_SOFT_MAX,
@@ -13,7 +15,7 @@ import {
   patchComunicadoFrameDesignPx,
   percentToDesignPx,
 } from "./frameDesignPixels";
-import { clampFrameForBlock } from "./comunicadoShapeGeometry";
+import { clampFrameForBlock, clampFrameForShapeBlock } from "./comunicadoShapeGeometry";
 
 const FULL_HD = { width: 1920, height: 1080 };
 
@@ -45,7 +47,7 @@ describe("frameDesignPixels", () => {
     });
   });
 
-  it("patchComunicadoFrame limita tamanho e permite posição fora do slide", () => {
+  it("patchComunicadoFrame só exige tamanho > 0 e permite posição fora do slide", () => {
     const base = { x: 10, y: 20, w: 30, h: 40 };
     expect(patchComunicadoFrame(base, "w", 95)).toEqual({
       x: 10,
@@ -53,6 +55,7 @@ describe("frameDesignPixels", () => {
       w: 95,
       h: 40,
     });
+    expect(patchComunicadoFrame(base, "w", 150).w).toBe(150);
     expect(patchComunicadoFrame(base, "x", 90)).toEqual({
       x: 90,
       y: 20,
@@ -65,7 +68,18 @@ describe("frameDesignPixels", () => {
       w: 30,
       h: 40,
     });
-    expect(patchComunicadoFrame(base, "h", 0).h).toBe(0.5);
+    expect(patchComunicadoFrame(base, "h", 0).h).toBe(COMUNICADO_FRAME_MIN_SIZE_PCT);
+    expect(clampFrameSizePercent(0.05)).toBe(0.05);
+  });
+
+  it("clampFrameForShapeBlock aceita forma muito fina (sem piso 2%)", () => {
+    const rect = createShapeBlock("rectangle");
+    const thin = clampFrameForShapeBlock(rect, { x: 40, y: 10, w: 0.2, h: 40 });
+    expect(thin.w).toBeCloseTo(0.2);
+    expect(thin.h).toBeCloseTo(40);
+    const zero = clampFrameForShapeBlock(rect, { x: 40, y: 10, w: 0, h: 0 });
+    expect(zero.w).toBe(COMUNICADO_FRAME_MIN_SIZE_PCT);
+    expect(zero.h).toBe(COMUNICADO_FRAME_MIN_SIZE_PCT);
   });
 
   it("patchComunicadoFrameDesignPx edita em px e persiste %", () => {

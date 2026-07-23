@@ -39,4 +39,15 @@ describe("resizeFrameWithOptionalAspect", () => {
     const next = resizeFrameWithOptionalAspect(start, 10, 0, "resize-se", 2, true);
     expect(next.w / next.h).toBeCloseTo(2, 5);
   });
+
+  it("resize livre permite largura muito fina (> 0)", () => {
+    const next = resizeFrameWithOptionalAspect(start, -39.9, 0, "e", 2, false);
+    expect(next.w).toBeCloseTo(0.1, 5);
+    expect(next.h).toBe(20);
+    // Aresta W: dx positivo = arrastar para dentro (direita).
+    const atFloor = resizeFrameWithOptionalAspect(start, 100, 0, "w", 2, false);
+    expect(atFloor.w).toBeGreaterThan(0);
+    expect(atFloor.w).toBeLessThan(0.01);
+    expect(atFloor.x + atFloor.w).toBeCloseTo(start.x + start.w, 5);
+  });
 });

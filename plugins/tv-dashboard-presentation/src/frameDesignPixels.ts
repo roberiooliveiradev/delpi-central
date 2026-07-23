@@ -60,12 +60,24 @@ export function hostDesignSizeFromFramePercent(
 export const FRAME_POSITION_SOFT_MIN = -500;
 export const FRAME_POSITION_SOFT_MAX = 500;
 
+/**
+ * Único piso de largura/altura do frame (% do palco): maior que zero.
+ * Sem teto artificial — o bloco pode ultrapassar o slide.
+ */
+export const COMUNICADO_FRAME_MIN_SIZE_PCT = 1e-4;
+
 export function clampFramePositionPercent(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(FRAME_POSITION_SOFT_MIN, Math.min(FRAME_POSITION_SOFT_MAX, value));
 }
 
-/** Ajusta eixo do frame: tamanho limitado; posição livre (fora do slide permitido). */
+/** Normaliza w/h: finito e > 0. Sem máximo. */
+export function clampFrameSizePercent(value: number): number {
+  if (!Number.isFinite(value)) return COMUNICADO_FRAME_MIN_SIZE_PCT;
+  return Math.max(COMUNICADO_FRAME_MIN_SIZE_PCT, value);
+}
+
+/** Ajusta eixo do frame: tamanho só > 0; posição livre (fora do slide permitido). */
 export function patchComunicadoFrame(
   frame: ComunicadoFrame,
   key: keyof ComunicadoFrame,
@@ -73,8 +85,7 @@ export function patchComunicadoFrame(
 ): ComunicadoFrame {
   const value = Number.isFinite(raw) ? raw : frame[key];
   if (key === "w" || key === "h") {
-    const size = Math.max(0.5, Math.min(100, value));
-    return { ...frame, [key]: size };
+    return { ...frame, [key]: clampFrameSizePercent(value) };
   }
   return { ...frame, [key]: clampFramePositionPercent(value) };
 }

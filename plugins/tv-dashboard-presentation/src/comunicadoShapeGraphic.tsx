@@ -1,7 +1,11 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import type { ComunicadoShapeGeometry } from "./comunicadoShapeGeometry";
-import { COMUNICADO_MARKER_RADIUS_DEFAULT, geometryBoundingFrame } from "./comunicadoShapeGeometry";
+import {
+  COMUNICADO_LINE_VISUAL_PAD_PCT,
+  COMUNICADO_MARKER_RADIUS_DEFAULT,
+  geometryBoundingFrame,
+} from "./comunicadoShapeGeometry";
 import { resolveShapeAdjustments } from "./comunicadoShapeAdjustments";
 import type { ComunicadoBlockStyle, ComunicadoShapeKind } from "./comunicadoTypes";
 import {
@@ -47,22 +51,37 @@ const PREVIEW_COLORS: ShapeGraphicColors = {
   strokeWidth: 1.75,
 };
 
-/** Proporção canônica do palco — setas isótropas com SVG `preserveAspectRatio="none"`. */
+/** Proporção canônica do palco — pontas isótropas em % do slide (não do bbox). */
 const COMUNICADO_STAGE_ASPECT = 16 / 9;
-/** Tamanho da ponta em unidades de tela relativas à altura do box (viewBox Y). */
-const LINE_ARROW_HEAD_LEN = 36;
-const LINE_ARROW_HEAD_HALF = 22;
+
+export type LineArrowHeadSize = {
+  /** Comprimento da ponta ao longo da linha (% do palco). */
+  length: number;
+  /** Meia-abertura perpendicular (% do palco, eixo Y de tela). */
+  halfWidth: number;
+};
 
 /**
- * Polígono da ponta da seta compensando aspect ratio do box (W/H × palco).
- * Sem compensação, linha horizontal com h≪w esmaga a seta no eixo Y.
+ * Tamanho da ponta em % do palco — cabe no pad visual e acompanha a espessura do traço.
+ */
+export function resolveLineArrowHeadSize(strokeWidth: number, lineLengthPct: number): LineArrowHeadSize {
+  const pad = COMUNICADO_LINE_VISUAL_PAD_PCT;
+  const fromStroke = Math.max(1.2, Math.min(2.4, strokeWidth * 0.55));
+  const length = Math.min(pad * 1.55, Math.max(1.1, fromStroke), Math.max(0.8, lineLengthPct * 0.32));
+  const halfWidth = Math.min(pad * 0.92, Math.max(0.9, length * 0.72));
+  return { length, halfWidth };
+}
+
+/**
+ * Polígono da ponta em coordenadas de palco (%).
+ * Compensa só o aspect 16:9 do slide — não o bbox achatado (isso esmagava a seta em agulha).
  */
 export function lineArrowHeadPolygonPoints(
   tip: { x: number; y: number },
   from: { x: number; y: number },
-  boxAspect: number,
+  head: LineArrowHeadSize = resolveLineArrowHeadSize(2, 40),
 ): string {
-  const aspect = Math.max(boxAspect, 0.001);
+  const aspect = COMUNICADO_STAGE_ASPECT;
   const dx = tip.x - from.x;
   const dy = tip.y - from.y;
   const sx = dx * aspect;
@@ -72,19 +91,19 @@ export function lineArrowHeadPolygonPoints(
   const uy = sy / len;
   const px = -uy;
   const py = ux;
-  const baseX = tip.x - (ux * LINE_ARROW_HEAD_LEN) / aspect;
-  const baseY = tip.y - uy * LINE_ARROW_HEAD_LEN;
-  const wingX = (px * LINE_ARROW_HEAD_HALF) / aspect;
-  const wingY = py * LINE_ARROW_HEAD_HALF;
+  const baseX = tip.x - (ux * head.length) / aspect;
+  const baseY = tip.y - uy * head.length;
+  const wingX = (px * head.halfWidth) / aspect;
+  const wingY = py * head.halfWidth;
   return `${tip.x},${tip.y} ${baseX + wingX},${baseY + wingY} ${baseX - wingX},${baseY - wingY}`;
 }
 
 function insetLineEnd(
   tip: { x: number; y: number },
   from: { x: number; y: number },
-  boxAspect: number,
+  headLength: number,
 ): { x: number; y: number } {
-  const aspect = Math.max(boxAspect, 0.001);
+  const aspect = COMUNICADO_STAGE_ASPECT;
   const dx = tip.x - from.x;
   const dy = tip.y - from.y;
   const sx = dx * aspect;
@@ -92,9 +111,11 @@ function insetLineEnd(
   const len = Math.max(Math.hypot(sx, sy), 1e-6);
   const ux = sx / len;
   const uy = sy / len;
+  /* Encaixa a base da seta sobre o fim do traço (butt) — evita ponta fina “passando”. */
+  const inset = headLength * 0.96;
   return {
-    x: tip.x - (ux * LINE_ARROW_HEAD_LEN) / aspect,
-    y: tip.y - uy * LINE_ARROW_HEAD_LEN,
+    x: tip.x - (ux * inset) / aspect,
+    y: tip.y - uy * inset,
   };
 }
 
@@ -105,25 +126,30 @@ function renderLineGeometry(
 ): ReactNode {
   const bbox = geometryBoundingFrame(geometry);
   const { stroke, strokeWidth } = colors;
-  const sw = Math.max(3, strokeWidth * 2);
-  const xSpan = Math.max(...geometry.points.map((p) => p.x)) - Math.min(...geometry.points.map((p) => p.x));
-  const ySpan = Math.max(...geometry.points.map((p) => p.y)) - Math.min(...geometry.points.map((p) => p.y));
-  const normalized = geometry.points.map((point) => ({
-    // Eixo degenerado (horizontal/vertical) fica centrado — evita seta colada em y=0.
-    x: xSpan > 1e-6 ? ((point.x - bbox.x) / bbox.w) * 100 : 50,
-    y: ySpan > 1e-6 ? ((point.y - bbox.y) / bbox.h) * 100 : 50,
-  }));
-  const [start, end] = normalized;
+  const [start, end] = geometry.points;
   if (!start || !end) return null;
 
-  const boxAspect = (bbox.w / Math.max(bbox.h, 0.001)) * COMUNICADO_STAGE_ASPECT;
+  const lineLen = Math.hypot(
+    (end.x - start.x) * COMUNICADO_STAGE_ASPECT,
+    end.y - start.y,
+  );
+  const head = resolveLineArrowHeadSize(strokeWidth, lineLen);
+  /* Traço em px de tela (não escala com bbox achatado) — evita “agulha” no fim. */
+  const sw = Math.max(2, strokeWidth);
   const arrowRight = kind === "line-arrow-right" || kind === "line-arrow-both";
   const arrowLeft = kind === "line-arrow-left" || kind === "line-arrow-both";
-  const lineStart = arrowLeft ? insetLineEnd(start, end, boxAspect) : start;
-  const lineEnd = arrowRight ? insetLineEnd(end, start, boxAspect) : end;
+  const lineStart = arrowLeft ? insetLineEnd(start, end, head.length) : start;
+  const lineEnd = arrowRight ? insetLineEnd(end, start, head.length) : end;
+  const hasArrow = arrowLeft || arrowRight;
 
   return (
-    <>
+    <svg
+      viewBox={`${bbox.x} ${bbox.y} ${Math.max(bbox.w, 0.001)} ${Math.max(bbox.h, 0.001)}`}
+      className={ensureComunicadoDualClass("tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line")}
+      aria-hidden="true"
+      preserveAspectRatio="none"
+      style={{ overflow: "visible", width: "100%", height: "100%" }}
+    >
       <line
         x1={lineStart.x}
         y1={lineStart.y}
@@ -131,15 +157,16 @@ function renderLineGeometry(
         y2={lineEnd.y}
         stroke={stroke}
         strokeWidth={sw}
-        strokeLinecap="round"
+        strokeLinecap={hasArrow ? "butt" : "round"}
+        vectorEffect="non-scaling-stroke"
       />
       {arrowRight ? (
-        <polygon points={lineArrowHeadPolygonPoints(end, start, boxAspect)} fill={stroke} />
+        <polygon points={lineArrowHeadPolygonPoints(end, start, head)} fill={stroke} stroke="none" />
       ) : null}
       {arrowLeft ? (
-        <polygon points={lineArrowHeadPolygonPoints(start, end, boxAspect)} fill={stroke} />
+        <polygon points={lineArrowHeadPolygonPoints(start, end, head)} fill={stroke} stroke="none" />
       ) : null}
-    </>
+    </svg>
   );
 }
 
@@ -185,27 +212,61 @@ function renderSvgShape(
         <circle cx="50" cy="50" r="10" fill={fill} stroke={stroke} strokeWidth={sw > 0 ? sw : 0} />
       );
     case "line":
-      return <line x1="4" y1="50" x2="96" y2="50" stroke={stroke} strokeWidth={Math.max(3, sw * 2)} />;
+      return (
+        <line
+          x1="8"
+          y1="50"
+          x2="92"
+          y2="50"
+          stroke={stroke}
+          strokeWidth={Math.max(3, sw * 2)}
+          strokeLinecap="round"
+        />
+      );
     case "line-arrow-right":
       return (
         <>
-          <line x1="4" y1="50" x2="78" y2="50" stroke={stroke} strokeWidth={Math.max(3, sw * 2)} />
-          <polygon points="78,38 96,50 78,62" fill={stroke} />
+          <line
+            x1="8"
+            y1="50"
+            x2="72"
+            y2="50"
+            stroke={stroke}
+            strokeWidth={Math.max(3, sw * 2)}
+            strokeLinecap="butt"
+          />
+          <polygon points="72,34 96,50 72,66" fill={stroke} />
         </>
       );
     case "line-arrow-left":
       return (
         <>
-          <polygon points="22,38 4,50 22,62" fill={stroke} />
-          <line x1="22" y1="50" x2="96" y2="50" stroke={stroke} strokeWidth={Math.max(3, sw * 2)} />
+          <polygon points="28,34 4,50 28,66" fill={stroke} />
+          <line
+            x1="28"
+            y1="50"
+            x2="92"
+            y2="50"
+            stroke={stroke}
+            strokeWidth={Math.max(3, sw * 2)}
+            strokeLinecap="butt"
+          />
         </>
       );
     case "line-arrow-both":
       return (
         <>
-          <polygon points="22,38 4,50 22,62" fill={stroke} />
-          <line x1="22" y1="50" x2="78" y2="50" stroke={stroke} strokeWidth={Math.max(3, sw * 2)} />
-          <polygon points="78,38 96,50 78,62" fill={stroke} />
+          <polygon points="28,34 4,50 28,66" fill={stroke} />
+          <line
+            x1="28"
+            y1="50"
+            x2="72"
+            y2="50"
+            stroke={stroke}
+            strokeWidth={Math.max(3, sw * 2)}
+            strokeLinecap="butt"
+          />
+          <polygon points="72,34 96,50 72,66" fill={stroke} />
         </>
       );
     case "triangle":
@@ -357,17 +418,65 @@ function renderSvgShape(
       );
     }
     case "arrow-right":
-      return <path d={arrowRightPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+      return (
+        <path
+          d={arrowRightPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
     case "arrow-left":
-      return <path d={arrowLeftPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+      return (
+        <path
+          d={arrowLeftPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
     case "arrow-up":
-      return <path d={arrowUpPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+      return (
+        <path
+          d={arrowUpPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
     case "arrow-down":
-      return <path d={arrowDownPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+      return (
+        <path
+          d={arrowDownPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
     case "arrow-left-right":
-      return <path d={arrowLeftRightPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+      return (
+        <path
+          d={arrowLeftRightPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
     case "arrow-up-down":
-      return <path d={arrowUpDownPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+      return (
+        <path
+          d={arrowUpDownPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
     case "chevron-right":
       return (
         <path
@@ -375,7 +484,7 @@ function renderSvgShape(
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
-          strokeLinejoin="round"
+          strokeLinejoin="miter"
         />
       );
     case "chevron-left":
@@ -385,11 +494,19 @@ function renderSvgShape(
           fill={fill}
           stroke={stroke}
           strokeWidth={sw}
-          strokeLinejoin="round"
+          strokeLinejoin="miter"
         />
       );
     case "notched-arrow-right":
-      return <path d={notchedArrowPath(adj)} fill={fill} stroke={stroke} strokeWidth={sw} />;
+      return (
+        <path
+          d={notchedArrowPath(adj)}
+          fill={fill}
+          stroke={stroke}
+          strokeWidth={sw}
+          strokeLinejoin="miter"
+        />
+      );
     case "star":
       return (
         <polygon
@@ -577,17 +694,8 @@ export function ComunicadoShapeGraphic({
   }
 
   if (geometry?.primitive === "line") {
-    return (
-      <svg
-        viewBox="0 0 100 100"
-        className={ensureComunicadoDualClass("tdp-comunicado__shape-svg tdp-comunicado__shape-svg--line")}
-        aria-hidden="true"
-        preserveAspectRatio="none"
-        style={{ overflow: "visible" }}
-      >
-        {renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth })}
-      </svg>
-    );
+    /* SVG próprio com viewBox = bbox do palco (evita normalizar 0–100 e esmagar a seta). */
+    return renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth });
   }
 
   if (kind === "line" || kind === "line-arrow-right" || kind === "line-arrow-left" || kind === "line-arrow-both") {

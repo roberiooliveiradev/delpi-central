@@ -109,18 +109,23 @@ describe("comunicadoShapeGeometry", () => {
 });
 
 describe("lineArrowHeadPolygonPoints", () => {
-  it("seta horizontal tem abertura vertical visível após compensar aspect achatado", () => {
-    const boxAspect = (84 / 4) * (16 / 9);
-    const points = lineArrowHeadPolygonPoints({ x: 96, y: 50 }, { x: 4, y: 50 }, boxAspect);
+  it("seta horizontal tem abertura vertical em % do palco (não agulha no bbox achatado)", () => {
+    const points = lineArrowHeadPolygonPoints(
+      { x: 40, y: 50 },
+      { x: 10, y: 50 },
+      { length: 2.5, halfWidth: 1.8 },
+    );
     const coords = points.split(/\s+/).map((pair) => {
       const [x, y] = pair.split(",").map(Number);
-      return { x, y };
+      return { x: x!, y: y! };
     });
     expect(coords).toHaveLength(3);
     const ys = coords.map((c) => c.y);
     const spanY = Math.max(...ys) - Math.min(...ys);
-    expect(spanY).toBeGreaterThan(30);
-    expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
-    expect(Math.max(...ys)).toBeLessThanOrEqual(100);
+    expect(spanY).toBeGreaterThan(3);
+    expect(spanY).toBeLessThan(5);
+    const tip = coords[0]!;
+    expect(tip.x).toBeCloseTo(40);
+    expect(tip.y).toBeCloseTo(50);
   });
 });
