@@ -5,6 +5,8 @@ import {
   shapeSupportsFill,
   shapeSupportsStroke,
   visualBoxSupportsShapeFormatting,
+  type ComunicadoBlock,
+  type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 import {
   ContextMenu,
@@ -35,6 +37,7 @@ import {
   Group,
   Heading,
   Layers,
+  Replace,
   RotateCcw,
   RotateCw,
   Scissors,
@@ -45,16 +48,19 @@ import {
   Trash2,
   Ungroup,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { TV_DASHBOARD_ROOT_CLASS } from "../constants/pluginRootClass";
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../content/helpTooltips";
 import { shortcutKeysLabel } from "../content/keyboardShortcuts";
+import { buildVisualBoxShapeKindPatch } from "../utils/applyVisualBoxShapeKind";
+import { rememberComunicadoShape } from "../utils/comunicadoRecentShapes";
 import type { LayoutAlignCommand } from "../utils/comunicadoLayoutAlign";
 import {
   isContextMenuActionEnabled,
   resolveContextMenuActionState,
 } from "../utils/comunicadoStageContextMenuActions";
+import { ComunicadoShapeLibraryMenu } from "./ComunicadoShapeLibraryMenu";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { TvRibbonColorPicker } from "./deck/TvRibbonColorPicker";
 
@@ -100,11 +106,16 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     flipSelectedVertical,
     removeSelected,
     requestRibbonTab,
+    updateSelected,
     updateSelectedStyle,
     addBlock,
     addShape,
     openDataCatalog,
   } = useComunicadoEditor();
+
+  const pickerAnchorRef = useRef<HTMLDivElement>(null);
+  const [pickerAnchorPoint, setPickerAnchorPoint] = useState<FixedPanelPoint | null>(null);
+  const [shapeLibraryOpen, setShapeLibraryOpen] = useState(false);
 
   const actionState = useMemo(
     () =>
@@ -144,10 +155,45 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
     run(() => alignSelected(command));
   }
 
+  function openShapeLibraryFromMenu() {
+    if (position) setPickerAnchorPoint(position);
+    onClose();
+    setShapeLibraryOpen(true);
+  }
+
+  function applyShapeKind(kind: ComunicadoShapeKind) {
+    if (!selected) return;
+    const patch = buildVisualBoxShapeKindPatch(selected, kind);
+    if (!patch) return;
+    updateSelected(patch as Partial<ComunicadoBlock>);
+    rememberComunicadoShape(kind);
+    setShapeLibraryOpen(false);
+  }
+
   const enabled = (action: Parameters<typeof isContextMenuActionEnabled>[0]) =>
     isContextMenuActionEnabled(action, actionState);
 
   return (
+    <>
+    <div
+      ref={pickerAnchorRef}
+      className="td-context-picker-anchor"
+      style={{
+        position: "fixed",
+        left: pickerAnchorPoint?.x ?? 0,
+        top: pickerAnchorPoint?.y ?? 0,
+        width: 0,
+        height: 0,
+        pointerEvents: "none",
+      }}
+      aria-hidden="true"
+    />
+    <ComunicadoShapeLibraryMenu
+      open={shapeLibraryOpen}
+      anchorRef={pickerAnchorRef}
+      onSelect={applyShapeKind}
+      onDismiss={() => setShapeLibraryOpen(false)}
+    />
     <ContextMenu
       open={open}
       position={position}
@@ -269,6 +315,18 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
             icon={SquarePen}
             disabled={!enabled("editText")}
             onSelect={() => run(() => selected && enterTextEdit(selected.id))}
+          />
+        </>
+      ) : null}
+
+      {actionState.canChangeShape ? (
+        <>
+          <ContextMenuDivider />
+          <ContextMenuItem
+            label={C.changeShape}
+            icon={Replace}
+            disabled={!enabled("changeShape")}
+            onSelect={openShapeLibraryFromMenu}
           />
         </>
       ) : null}
@@ -462,5 +520,6 @@ export function ComunicadoStageContextMenu({ open, position, onClose }: Props) {
         </>
       ) : null}
     </ContextMenu>
+    </>
   );
 }
