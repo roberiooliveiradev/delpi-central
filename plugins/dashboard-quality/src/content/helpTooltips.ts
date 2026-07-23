@@ -52,9 +52,12 @@ export const QUALITY_HELP_TOOLTIPS = {
   },
   charts: {
     ppmEvolution: "Evolução temporal do PPM conforme granularidade selecionada.",
-    kaizenByStatus: "Distribuição de kaizens por status no período.",
+    kaizenByStatus:
+      "Distribuição por status das ideias que entram no KPI do período (Aprovado ou Implantado pela data de aprovação no comitê). Não inclui implantados antigos que só geram ganho financeiro.",
     kaizenByPeriod:
       "Contagem de ideias aprovadas/implantadas por período, usando a data de aprovação no comitê (ou implantação se a aprovação não estiver cadastrada) — a mesma âncora do KPI Ideias aprovadas.",
+    kaizenSavingsBySector:
+      "Soma dos ganhos financeiros do período por setor (daily_savings × dias ativos), apenas de kaizens Implantados — a mesma base do KPI Ganhos financeiros.",
     audit5sEvolution: "Evolução das notas de auditoria 5S ao longo do tempo.",
   },
   pagination: {

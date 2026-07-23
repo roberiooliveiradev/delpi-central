@@ -21,6 +21,8 @@ export type Kaizen = {
   branch: string | null;
   /** Âncora do indicador de quantidade (aprovação comitê ou implantação). */
   quantity_date?: string | null;
+  /** Ganho no período (daily_savings × dias ativos) — vem em list_savings_kaizen. */
+  period_savings?: number | null;
 };
 
 export type KaizenDetail = Kaizen & {
@@ -40,6 +42,8 @@ export type KaizenSummary = DashboardGoalFields & {
   total_kaizens: number;
   total_savings: number;
   list_kaizen: Kaizen[];
+  /** Implantados que compõem total_savings (pode diferir de list_kaizen). */
+  list_savings_kaizen?: Kaizen[];
   /** Meta de ideias/mês (catálogo SI `quality_kaizen_ideas`). */
   ideas_goal?: KaizenIdeasGoalBlock | null;
 };

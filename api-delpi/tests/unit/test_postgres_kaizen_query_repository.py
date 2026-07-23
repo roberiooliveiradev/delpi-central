@@ -51,6 +51,45 @@ def test_postgres_kaizen_summary_counts_implanted_in_range() -> None:
     assert summary.total_kaizens == 1
     assert summary.list_kaizen[0].daily_savings == 7.54
     assert summary.total_savings == round(7.54 * 3, 2)
+    assert len(summary.list_savings_kaizen) == 1
+    assert summary.list_savings_kaizen[0].period_savings == round(7.54 * 3, 2)
+
+
+def test_postgres_kaizen_summary_savings_list_includes_prior_implants() -> None:
+    """Ganhos no período podem vir de implantados cuja quantity_date está fora do filtro."""
+    repository = _repository(
+        [
+            _row(
+                status="aprovado",
+                date_committee_approved=date(2026, 7, 10),
+                date_implemented=None,
+                daily_savings=Decimal("10.00"),
+                sector="Ideias novas",
+            ),
+            _row(
+                id=UUID("bbbbbbbb-bbbb-cccc-dddd-eeeeeeeeeeee"),
+                status="implantado",
+                date_committee_approved=date(2026, 1, 5),
+                date_implemented=date(2026, 1, 16),
+                daily_savings=Decimal("7.54"),
+                sector="Parque Fabril",
+            ),
+        ]
+    )
+
+    summary = repository.get_kaizen_summary(
+        KaizenSummaryRequest(
+            date_start="2026-07-01",
+            date_end="2026-07-23",
+        )
+    )
+
+    assert summary.total_kaizens == 1
+    assert summary.list_kaizen[0].status == "aprovado"
+    assert len(summary.list_savings_kaizen) == 1
+    assert summary.list_savings_kaizen[0].sector == "Parque Fabril"
+    assert summary.list_savings_kaizen[0].period_savings == summary.total_savings
+    assert summary.total_savings > 0
 
 
 def test_postgres_kaizen_summary_excludes_non_implanted() -> None:

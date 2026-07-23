@@ -16,6 +16,8 @@ class Kaizen:
     branch: Optional[str] = None
     # Âncora do indicador de quantidade: COALESCE(aprovação comitê, implantação).
     quantity_date: Optional[str] = None
+    # Ganho no período (daily_savings × dias ativos) — preenchido em list_savings_kaizen.
+    period_savings: Optional[float] = None
 
     def to_dict(self) -> dict:
         return asdict(self)

@@ -143,10 +143,16 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
                 savings_rows.append(row)
 
         kaizens: list[Kaizen] = [row_to_kaizen(row) for row in count_rows]
-        total_savings = sum(
-            self._calculate_row_total_savings(row, range_start, range_end)
-            for row in savings_rows
-        )
+        savings_kaizens: list[Kaizen] = []
+        total_savings = 0.0
+        for row in savings_rows:
+            period_savings = self._calculate_row_total_savings(
+                row, range_start, range_end
+            )
+            total_savings += period_savings
+            item = row_to_kaizen(row)
+            item.period_savings = period_savings
+            savings_kaizens.append(item)
 
         return KaizenSummaryResponse(
             date_start=request.date_start,
@@ -154,6 +160,7 @@ class PostgresKaizenQueryRepository(PluginBaseRepository, KaizenQueryRepositoryP
             total_kaizens=len(kaizens),
             total_savings=round(total_savings, 2),
             list_kaizen=kaizens,
+            list_savings_kaizen=savings_kaizens,
         )
 
     def get_kaizen_by_id(self, kaizen_id: str) -> Optional[KaizenDetail]:

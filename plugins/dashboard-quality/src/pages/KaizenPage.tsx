@@ -61,12 +61,16 @@ type KaizenPageProps = {
 function renderPieLabel({
   name,
   percent,
+  value,
 }: {
   name?: string;
   percent?: number;
+  value?: number;
 }) {
   if (!name || percent == null) return "";
-  return `${name} ${(percent * 100).toFixed(0)}%`;
+  const count =
+    typeof value === "number" && Number.isFinite(value) ? ` (${Math.round(value)})` : "";
+  return `${name}${count} ${(percent * 100).toFixed(0)}%`;
 }
 
 export function KaizenPage({ pathname }: KaizenPageProps) {
@@ -124,12 +128,13 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
   } = useKaizenSummary(listParams);
   const isRefreshing = loading && Boolean(data);
   const items = data?.list_kaizen ?? [];
+  const savingsItems = data?.list_savings_kaizen ?? [];
   const listItems = listData?.list_kaizen ?? [];
 
   const statusChart = useMemo(() => aggregateKaizenByStatus(items), [items]);
   const sectorChart = useMemo(
-    () => aggregateKaizenSavingsBySector(items),
-    [items]
+    () => aggregateKaizenSavingsBySector(savingsItems),
+    [savingsItems]
   );
   const periodChart = useMemo(
     () =>
@@ -391,7 +396,10 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
       </section>
 
       <section className="dq-charts-grid" aria-busy={loading}>
-        <ChartCard title="Kaizens por status">
+        <ChartCard
+          title="Kaizens por status"
+          hint={QUALITY_HELP_TOOLTIPS.charts.kaizenByStatus}
+        >
           {statusChart.length === 0 && !loading ? (
             <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico.</div>
           ) : (
@@ -420,7 +428,10 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
           )}
         </ChartCard>
 
-        <ChartCard title="Economia por setor (top 8)">
+        <ChartCard
+          title="Economia por setor (top 8)"
+          hint={QUALITY_HELP_TOOLTIPS.charts.kaizenSavingsBySector}
+        >
           {sectorChart.length === 0 && !loading ? (
             <div className={STATE_BOX_EMPTY}>Sem dados para o gráfico.</div>
           ) : (
@@ -435,7 +446,10 @@ export function KaizenPage({ pathname }: KaizenPageProps) {
                   tick={{ fontSize: 11 }}
                 />
                 <Tooltip
-                  formatter={(value) => [formatDecimal(Number(value)), "Economia/dia"]}
+                  formatter={(value) => [
+                    formatCurrency(Number(value)),
+                    "Ganho no período",
+                  ]}
                 />
                 <Bar dataKey="value" fill={CHART_COLORS[0]} radius={[0, 6, 6, 0]} />
               </BarChart>

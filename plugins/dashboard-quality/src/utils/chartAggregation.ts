@@ -30,8 +30,11 @@ export function aggregateKaizenSavingsBySector(items: Kaizen[]): ChartDatum[] {
   const buckets = new Map<string, number>();
 
   for (const item of items) {
+    // Preferir ganho do período (alinhado ao KPI); fallback diário para legado.
+    const amount = item.period_savings ?? item.daily_savings ?? 0;
+    if (amount <= 0) continue;
     const key = item.sector?.trim() || "Sem setor";
-    buckets.set(key, (buckets.get(key) ?? 0) + (item.daily_savings ?? 0));
+    buckets.set(key, (buckets.get(key) ?? 0) + amount);
   }
 
   return [...buckets.entries()]
