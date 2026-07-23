@@ -46,8 +46,9 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "insert-media": Image,
   "insert-illustrations": Shapes,
   "insert-data": Database,
-  /* Exibir — «Mostrar» vive na barra inferior do palco */
+  /* Exibir (Mostrar também na barra inferior do palco) */
   "view-zoom": Maximize2,
+  "view-show": Eye,
   /* Tela */
   "slide-current": Monitor,
   "slide-background": Paintbrush,
