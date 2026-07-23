@@ -1342,12 +1342,17 @@
   max-height: min(72vh, 560px);
   overflow: hidden;
   padding: 0;
+  /* Herda superfície/texto do popover (claro e escuro) — sem fallback #f8fafc. */
+  background: var(--delpi-ui-popover-bg, var(--td-surface));
+  color: var(--delpi-ui-text, var(--td-text));
 }
 .dashboard-tv-dashboard .td-shape-library__flyout{
   display: grid;
   grid-template-columns: minmax(132px, 0.42fr) minmax(0, 1fr);
   min-height: 220px;
   max-height: min(72vh, 560px);
+  background: inherit;
+  color: inherit;
 }
 .dashboard-tv-dashboard .td-shape-library__nav{
   display: flex;
@@ -1355,7 +1360,13 @@
   gap: 1px;
   padding: 6px 4px;
   border-right: 1px solid var(--delpi-ui-border, var(--td-border));
-  background: color-mix(in srgb, var(--delpi-ui-surface-2, var(--td-surface-2, #f8fafc)) 88%, transparent);
+  /* Wash relativo ao texto do tema (funciona em claro e escuro). */
+  background: color-mix(
+    in srgb,
+    var(--delpi-ui-text, var(--td-text)) 7%,
+    var(--delpi-ui-popover-bg, var(--td-surface))
+  );
+  color: inherit;
   overflow: auto;
   scrollbar-width: thin;
 }
@@ -1370,7 +1381,7 @@
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: var(--delpi-ui-text, var(--td-text));
+  color: inherit;
   font: inherit;
   font-size: 12px;
   font-weight: 600;
@@ -1379,12 +1390,12 @@
 }
 .dashboard-tv-dashboard .td-shape-library__nav-item:hover,
 .dashboard-tv-dashboard .td-shape-library__nav-item:focus-visible{
-  background: color-mix(in srgb, #089bdb 12%, transparent);
+  background: color-mix(in srgb, var(--td-accent, #089bdb) 14%, transparent);
   outline: none;
 }
 .dashboard-tv-dashboard .td-shape-library__nav-item--active{
-  background: color-mix(in srgb, #089bdb 18%, transparent);
-  color: color-mix(in srgb, #089bdb 70%, var(--delpi-ui-text, var(--td-text)));
+  background: color-mix(in srgb, var(--td-accent, #089bdb) 20%, transparent);
+  color: var(--td-accent, #089bdb);
 }
 .dashboard-tv-dashboard .td-shape-library__nav-label{
   min-width: 0;
@@ -1395,6 +1406,8 @@
   padding: 8px 10px 10px;
   overflow: auto;
   scrollbar-width: thin;
+  background: var(--delpi-ui-popover-bg, var(--td-surface));
+  color: inherit;
 }
 .dashboard-tv-dashboard .td-shape-library__section + .td-shape-library__section{
   margin-top: 8px;
@@ -1405,7 +1418,7 @@
   margin: 0 0 4px;
   font-size: 12px;
   font-weight: 700;
-  color: var(--delpi-ui-text, var(--td-text));
+  color: inherit;
 }
 .dashboard-tv-dashboard .td-shape-library__grid{
   display: grid;
@@ -1415,6 +1428,8 @@
 .dashboard-tv-dashboard .td-line-tools{
   width: min(220px, calc(100vw - 16px));
   padding: 4px;
+  background: var(--delpi-ui-popover-bg, var(--td-surface));
+  color: var(--delpi-ui-text, var(--td-text));
 }
 .dashboard-tv-dashboard .td-line-tools__list{
   list-style: none;
