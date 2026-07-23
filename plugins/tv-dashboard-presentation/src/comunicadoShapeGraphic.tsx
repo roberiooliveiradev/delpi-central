@@ -326,6 +326,37 @@ function renderSvgShape(
           <polygon points="72,34 96,50 72,66" fill={stroke} />
         </>
       );
+    case "polyline":
+      return (
+        <polyline
+          points="8,70 30,30 55,55 92,20"
+          fill="none"
+          stroke={stroke}
+          strokeWidth={Math.max(3, sw * 2)}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      );
+    case "curve":
+      return (
+        <path
+          d="M 8 70 Q 35 10 55 50 T 92 30"
+          fill="none"
+          stroke={stroke}
+          strokeWidth={Math.max(3, sw * 2)}
+          strokeLinecap="round"
+        />
+      );
+    case "scribble":
+      return (
+        <path
+          d="M 10 55 C 20 20, 35 80, 50 40 S 75 75, 90 45"
+          fill="none"
+          stroke={stroke}
+          strokeWidth={Math.max(3, sw * 2)}
+          strokeLinecap="round"
+        />
+      );
     case "triangle":
       return (
         <polygon points={polygonPoints(trianglePoints(adj))} fill={fill} stroke={stroke} strokeWidth={sw} />
@@ -758,7 +789,15 @@ export function ComunicadoShapeGraphic({
     return renderLineGeometry(geometry, kind, { fill, stroke, strokeWidth }, lineRouting);
   }
 
-  if (kind === "line" || kind === "line-arrow-right" || kind === "line-arrow-left" || kind === "line-arrow-both") {
+  if (
+    kind === "line" ||
+    kind === "line-arrow-right" ||
+    kind === "line-arrow-left" ||
+    kind === "line-arrow-both" ||
+    kind === "polyline" ||
+    kind === "curve" ||
+    kind === "scribble"
+  ) {
     return (
       <svg
         viewBox="0 0 100 100"

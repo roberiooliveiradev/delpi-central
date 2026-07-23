@@ -239,6 +239,9 @@ export {
 } from "./comunicadoConnectorRouting";
 export {
   createDrawnLineBlock,
+  createFreeformPathBlock,
+  isClickPathDrawTool,
+  isDragLineDrawTool,
   isLineDrawToolId,
   lineToolRouting,
   lineToolShapeKind,
@@ -248,6 +251,11 @@ export {
   type DrawnLineAttach,
   type LineDrawToolKind,
 } from "./comunicadoLineDraw";
+export {
+  pathLength,
+  simplifyPolyline,
+  smoothCurveThroughPoints,
+} from "./comunicadoFreeformPath";
 export {
   adjustmentHandleCssPosition,
   borderRadiusPxToCornerAdjustment,

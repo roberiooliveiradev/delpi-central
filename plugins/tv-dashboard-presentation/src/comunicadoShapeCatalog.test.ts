@@ -50,6 +50,9 @@ describe("comunicadoShapeCatalog (Onda 4K)", () => {
       "line-arrow",
       "elbow-connector",
       "curved-connector",
+      "curve",
+      "polyline",
+      "scribble",
     ]);
   });
 

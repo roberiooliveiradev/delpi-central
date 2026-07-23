@@ -12,6 +12,9 @@ const LINE_SHAPE_KINDS = new Set<ComunicadoShapeKind>([
   "line-arrow-right",
   "line-arrow-left",
   "line-arrow-both",
+  "polyline",
+  "curve",
+  "scribble",
 ]);
 
 export function resolveShapePrimitive(kind: ComunicadoShapeKind): ComunicadoVisualPrimitive {

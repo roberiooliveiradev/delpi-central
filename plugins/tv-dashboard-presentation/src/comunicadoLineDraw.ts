@@ -24,16 +24,17 @@ import {
   applyLinePolyline,
   geometryBoundingFrame,
 } from "./comunicadoShapeGeometry";
+import { simplifyPolyline, smoothCurveThroughPoints } from "./comunicadoFreeformPath";
 
-export type LineDrawToolKind = Extract<
-  ComunicadoLineToolId,
-  "line" | "line-arrow" | "elbow-connector" | "curved-connector"
->;
+export type LineDrawToolKind = ComunicadoLineToolId;
 
 export function lineToolShapeKind(tool: LineDrawToolKind): ComunicadoShapeKind {
   if (tool === "line-arrow" || tool === "elbow-connector" || tool === "curved-connector") {
     return "line-arrow-right";
   }
+  if (tool === "polyline") return "polyline";
+  if (tool === "curve") return "curve";
+  if (tool === "scribble") return "scribble";
   return "line";
 }
 
@@ -48,8 +49,23 @@ export function isLineDrawToolId(value: string | null | undefined): value is Lin
     value === "line" ||
     value === "line-arrow" ||
     value === "elbow-connector" ||
-    value === "curved-connector"
+    value === "curved-connector" ||
+    value === "curve" ||
+    value === "polyline" ||
+    value === "scribble"
   );
+}
+
+export function isClickPathDrawTool(
+  tool: LineDrawToolKind | null | undefined,
+): tool is "curve" | "polyline" {
+  return tool === "curve" || tool === "polyline";
+}
+
+export function isDragLineDrawTool(
+  tool: LineDrawToolKind | null | undefined,
+): tool is Exclude<LineDrawToolKind, "curve" | "polyline"> {
+  return isLineDrawToolId(tool) && !isClickPathDrawTool(tool);
 }
 
 function newLineId(): string {
@@ -173,4 +189,37 @@ export function createDrawnLineBlock(params: {
   }
 
   return draft;
+}
+
+/** Polilinha / curva / rabisco a partir de vértices do gesto. */
+export function createFreeformPathBlock(params: {
+  tool: "polyline" | "curve" | "scribble";
+  vertices: ComunicadoGeometryVertex[];
+  zIndex?: number;
+}): ComunicadoShapeBlock | null {
+  let points = params.vertices.map((point) => ({ ...point }));
+  if (points.length < 2) return null;
+
+  if (params.tool === "curve") {
+    points = smoothCurveThroughPoints(points);
+  } else if (params.tool === "scribble") {
+    points = simplifyPolyline(points);
+  }
+  if (points.length < 2) return null;
+
+  const shape = lineToolShapeKind(params.tool);
+  let draft: ComunicadoShapeBlock = {
+    id: newLineId(),
+    type: "shape",
+    shape,
+    frame: geometryBoundingFrame({ primitive: "line", points }),
+    style: {
+      zIndex: params.zIndex ?? 2,
+      stroke: "#089bdb",
+      strokeWidth: 3,
+      fill: "transparent",
+    },
+    content: "",
+  };
+  return applyLinePolyline(draft, points);
 }

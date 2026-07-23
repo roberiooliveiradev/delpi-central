@@ -7,6 +7,7 @@ import {
   buildCanvasTableDataLinkPatch,
   buildTextDataLinkPatch,
   comunicadoBackgroundCssProperties,
+  isClickPathDrawTool,
   isComunicadoVisualBoxBlock,
   isCanvasTableDataBoundBlockType,
   isDataSourceBlockType,
@@ -361,12 +362,23 @@ export function ComunicadoComposerCanvas() {
     };
   }, [canvasRef]);
 
-  const { drawPreview, beginDraw, isDrawToolActive } = useStageLineDraw({
+  const { drawPreview, beginDraw, isDrawToolActive, finishPathDraft } = useStageLineDraw({
     stageDrawTool,
     blocks,
     clientToCanvasPercent,
     addPreparedShapeBlock,
   });
+
+  useEditorShortcut(
+    "comunicado-stage-path-draw",
+    (event) => {
+      if (!isClickPathDrawTool(stageDrawTool)) return;
+      if (event.key === "Enter" && !event.ctrlKey && !event.metaKey) {
+        if (finishPathDraft()) return { handled: true };
+      }
+    },
+    { phase: "bubble", priority: 65 },
+  );
 
   const finishMarquee = useCallback(
     (additive: boolean) => {

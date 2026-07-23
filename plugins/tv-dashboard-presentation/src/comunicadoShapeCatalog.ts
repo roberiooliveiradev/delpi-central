@@ -82,6 +82,9 @@ const SHAPE_LABELS: Record<ComunicadoShapeKind, string> = {
   "line-arrow-right": "Linha com seta",
   "line-arrow-left": "Linha com seta esquerda",
   "line-arrow-both": "Linha com setas",
+  polyline: "Polilinha",
+  curve: "Curva",
+  scribble: "Rabisco",
   "flowchart-process": "Processo",
   "flowchart-decision": "Decisão",
   "flowchart-terminator": "Início/Fim",
@@ -190,7 +193,15 @@ export const COMUNICADO_SHAPE_CATALOG_CATEGORIES: ComunicadoShapeCatalogCategory
     label: "Linhas",
     primitive: "line",
     libraryFlyout: false,
-    shapes: ["line", "line-arrow-right", "line-arrow-left", "line-arrow-both"],
+    shapes: [
+      "line",
+      "line-arrow-right",
+      "line-arrow-left",
+      "line-arrow-both",
+      "polyline",
+      "curve",
+      "scribble",
+    ],
   },
 ];
 
@@ -208,9 +219,9 @@ export const COMUNICADO_LINE_TOOLS: ComunicadoLineToolDefinition[] = [
   { id: "line-arrow", label: "Seta", ready: true },
   { id: "elbow-connector", label: "Conector angulado", ready: true },
   { id: "curved-connector", label: "Conector curvado", ready: true },
-  { id: "curve", label: "Curva", ready: false },
-  { id: "polyline", label: "Polilinha", ready: false },
-  { id: "scribble", label: "Rabisco", ready: false },
+  { id: "curve", label: "Curva", ready: true },
+  { id: "polyline", label: "Polilinha", ready: true },
+  { id: "scribble", label: "Rabisco", ready: true },
 ];
 
 export const COMUNICADO_SHAPE_KINDS: Array<{ kind: ComunicadoShapeKind; label: string }> =
