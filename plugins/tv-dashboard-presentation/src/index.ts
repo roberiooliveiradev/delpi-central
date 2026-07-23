@@ -39,6 +39,10 @@ export {
   clampFramePositionPercent,
   clampFrameSizePercent,
   COMUNICADO_FRAME_MIN_SIZE_PCT,
+  DEFAULT_HEADING_INSERT_SIZE_PX,
+  DEFAULT_ICON_INSERT_SIZE_PX,
+  DEFAULT_SHAPE_INSERT_SIZE_PX,
+  DEFAULT_TEXT_INSERT_SIZE_PX,
   designPxToPercent,
   formatDesignPx,
   FRAME_POSITION_SOFT_MAX,
@@ -49,6 +53,7 @@ export {
   patchComunicadoFrame,
   patchComunicadoFrameDesignPx,
   percentToDesignPx,
+  squareFrameFromDesignPx,
 } from "./frameDesignPixels";
 export {
   TABLE_VIEW_DEFAULT_FONT_SIZE_PX,

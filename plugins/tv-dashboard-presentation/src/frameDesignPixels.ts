@@ -1,5 +1,14 @@
 import type { ComunicadoFrame } from "./comunicadoTypes";
-import type { ViewportPixelSize } from "./viewportPixelSize";
+import { resolveViewportPixelSize, type ViewportPixelSize } from "./viewportPixelSize";
+
+/** Lado padrão (px de design) ao inserir forma fechada / seta / balão. */
+export const DEFAULT_SHAPE_INSERT_SIZE_PX = 400;
+/** Lado padrão (px de design) ao inserir ícone. */
+export const DEFAULT_ICON_INSERT_SIZE_PX = 160;
+/** Lado padrão (px de design) ao inserir texto. */
+export const DEFAULT_TEXT_INSERT_SIZE_PX = 400;
+/** Lado padrão (px de design) ao inserir título. */
+export const DEFAULT_HEADING_INSERT_SIZE_PX = 480;
 
 /** % do eixo → px de design. */
 export function percentToDesignPx(percent: number, axisSize: number): number {
@@ -11,6 +20,24 @@ export function percentToDesignPx(percent: number, axisSize: number): number {
 export function designPxToPercent(px: number, axisSize: number): number {
   if (!(axisSize > 0) || !Number.isFinite(px)) return 0;
   return (px / axisSize) * 100;
+}
+
+/**
+ * Frame com o mesmo valor de largura e altura em px de design (quadrado visual).
+ * No palco 16:9 os % de w/h diferem — a UI (Larg./Alt. px) e o círculo ficam corretos.
+ */
+export function squareFrameFromDesignPx(
+  sizePx: number,
+  origin: { x?: number; y?: number } = {},
+  designSize: ViewportPixelSize = resolveViewportPixelSize("1080p"),
+): ComunicadoFrame {
+  const size = Math.max(1, Number.isFinite(sizePx) ? sizePx : 1);
+  return {
+    x: origin.x ?? 30,
+    y: origin.y ?? 30,
+    w: designPxToPercent(size, designSize.width),
+    h: designPxToPercent(size, designSize.height),
+  };
 }
 
 /** Frame persistido (%) → px de design do slide/host. */

@@ -12,7 +12,15 @@ import {
   resolvePaintTextColor,
 } from "@delpi/plugin-ui/index";
 
-import { clampFramePositionPercent, clampFrameSizePercent } from "./frameDesignPixels";
+import {
+  clampFramePositionPercent,
+  clampFrameSizePercent,
+  DEFAULT_HEADING_INSERT_SIZE_PX,
+  DEFAULT_ICON_INSERT_SIZE_PX,
+  DEFAULT_SHAPE_INSERT_SIZE_PX,
+  DEFAULT_TEXT_INSERT_SIZE_PX,
+  squareFrameFromDesignPx,
+} from "./frameDesignPixels";
 import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
   COMUNICADO_MARKER_RADIUS_DEFAULT,
@@ -455,11 +463,16 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
   if (type === "canvas_table") return { x: 20, y: 30, w: 60, h: 30 };
   if (type === "input") return { ...DECK_INPUT_DEFAULTS.frame };
   if (type === "kpi_view") return { ...DECK_KPI_DEFAULTS.frame };
-  if (type === "heading") return { x: 5, y: 12, w: 90, h: 18 };
-  if (type === "text") return { x: 5, y: 34, w: 90, h: 14 };
+  if (type === "heading") {
+    return squareFrameFromDesignPx(DEFAULT_HEADING_INSERT_SIZE_PX, { x: 5, y: 12 });
+  }
+  if (type === "text") {
+    return squareFrameFromDesignPx(DEFAULT_TEXT_INSERT_SIZE_PX, { x: 5, y: 34 });
+  }
   if (type === "image") return { x: 10, y: 22, w: 80, h: 56 };
   if (type === "video") return { x: 5, y: 15, w: 90, h: 70 };
   if (shape && isPointShapeKind(shape)) return { x: 45, y: 45, w: 0, h: 0 };
+  /* Linha permanece alongada — não é caixa quadrada. */
   if (shape && isLineShapeKind(shape)) return { x: 10, y: 48, w: 80, h: 4 };
   if (
     shape === "arrow-right" ||
@@ -472,13 +485,18 @@ export function defaultFrame(type: ComunicadoBlock["type"], shape?: ComunicadoSh
     shape === "chevron-left" ||
     shape === "notched-arrow-right"
   ) {
-    return { x: 35, y: 40, w: 30, h: 20 };
+    return squareFrameFromDesignPx(DEFAULT_SHAPE_INSERT_SIZE_PX, { x: 35, y: 30 });
   }
-  if (shape === "star" || shape === "star-4" || shape === "heart") return { x: 38, y: 35, w: 24, h: 24 };
-  if (shape === "flowchart-terminator") return { x: 30, y: 42, w: 40, h: 16 };
-  if (shape === "callout-rect") return { x: 28, y: 28, w: 44, h: 36 };
-  if (type === "icon") return { x: 42, y: 40, w: 16, h: 16 };
-  return { x: 30, y: 30, w: 40, h: 40 };
+  if (shape === "star" || shape === "star-4" || shape === "heart") {
+    return squareFrameFromDesignPx(DEFAULT_SHAPE_INSERT_SIZE_PX * 0.8, { x: 38, y: 28 });
+  }
+  if (shape === "flowchart-terminator" || shape === "callout-rect") {
+    return squareFrameFromDesignPx(DEFAULT_SHAPE_INSERT_SIZE_PX, { x: 30, y: 28 });
+  }
+  if (type === "icon") {
+    return squareFrameFromDesignPx(DEFAULT_ICON_INSERT_SIZE_PX, { x: 42, y: 40 });
+  }
+  return squareFrameFromDesignPx(DEFAULT_SHAPE_INSERT_SIZE_PX, { x: 30, y: 30 });
 }
 
 export function defaultStyle(type: ComunicadoBlock["type"], shape?: ComunicadoShapeKind) {

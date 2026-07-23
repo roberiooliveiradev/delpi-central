@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { clampFrame, createBlock, createShapeBlock } from "./comunicadoHelpers";
+import { clampFrame, createBlock, createShapeBlock, defaultFrame } from "./comunicadoHelpers";
 import {
   clampFramePositionPercent,
   clampFrameSizePercent,
   COMUNICADO_FRAME_MIN_SIZE_PCT,
+  DEFAULT_HEADING_INSERT_SIZE_PX,
+  DEFAULT_ICON_INSERT_SIZE_PX,
+  DEFAULT_SHAPE_INSERT_SIZE_PX,
+  DEFAULT_TEXT_INSERT_SIZE_PX,
   designPxToPercent,
   formatDesignPx,
   FRAME_POSITION_SOFT_MAX,
@@ -14,10 +18,17 @@ import {
   patchComunicadoFrame,
   patchComunicadoFrameDesignPx,
   percentToDesignPx,
+  squareFrameFromDesignPx,
 } from "./frameDesignPixels";
 import { clampFrameForBlock, clampFrameForShapeBlock } from "./comunicadoShapeGeometry";
 
 const FULL_HD = { width: 1920, height: 1080 };
+
+function expectSquareDesignPx(frame: { w: number; h: number }, sizePx: number) {
+  const px = framePercentToDesignPx({ x: 0, y: 0, w: frame.w, h: frame.h }, FULL_HD);
+  expect(px.w).toBeCloseTo(sizePx, 5);
+  expect(px.h).toBeCloseTo(sizePx, 5);
+}
 
 describe("frameDesignPixels", () => {
   it("converte % ↔ px de design (ida e volta)", () => {
@@ -45,6 +56,27 @@ describe("frameDesignPixels", () => {
       width: 384,
       height: 162,
     });
+  });
+
+  it("squareFrameFromDesignPx gera Larg. = Alt. em px de design", () => {
+    const frame = squareFrameFromDesignPx(400, { x: 10, y: 20 }, FULL_HD);
+    expect(frame.x).toBe(10);
+    expect(frame.y).toBe(20);
+    expectSquareDesignPx(frame, 400);
+    // No 16:9 os % diferem (h% > w%), mas o valor em px é o mesmo.
+    expect(frame.h).toBeGreaterThan(frame.w);
+  });
+
+  it("inserts de forma, texto e ícone vêm quadrados em px de design", () => {
+    expectSquareDesignPx(defaultFrame("shape", "rectangle"), DEFAULT_SHAPE_INSERT_SIZE_PX);
+    expectSquareDesignPx(defaultFrame("shape", "ellipse"), DEFAULT_SHAPE_INSERT_SIZE_PX);
+    expectSquareDesignPx(defaultFrame("shape", "arrow-right"), DEFAULT_SHAPE_INSERT_SIZE_PX);
+    expectSquareDesignPx(defaultFrame("shape", "callout-rect"), DEFAULT_SHAPE_INSERT_SIZE_PX);
+    expectSquareDesignPx(defaultFrame("text"), DEFAULT_TEXT_INSERT_SIZE_PX);
+    expectSquareDesignPx(defaultFrame("heading"), DEFAULT_HEADING_INSERT_SIZE_PX);
+    expectSquareDesignPx(defaultFrame("icon"), DEFAULT_ICON_INSERT_SIZE_PX);
+    expectSquareDesignPx(createShapeBlock("rounded-rect").frame, DEFAULT_SHAPE_INSERT_SIZE_PX);
+    expectSquareDesignPx(createBlock("text", "Olá").frame, DEFAULT_TEXT_INSERT_SIZE_PX);
   });
 
   it("patchComunicadoFrame só exige tamanho > 0 e permite posição fora do slide", () => {

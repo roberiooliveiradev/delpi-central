@@ -76,8 +76,11 @@ describe("comunicadoShapeGeometry", () => {
     expect(geometry.primitive).toBe("area");
     if (geometry.primitive !== "area") return;
     expect(geometry.points.length).toBeGreaterThanOrEqual(3);
-    expect(geometry.points[0]).toEqual({ x: 30, y: 30 });
-    expect(geometry.points[2]).toEqual({ x: 70, y: 70 });
+    expect(geometry.points[0]).toEqual({ x: block.frame.x, y: block.frame.y });
+    expect(geometry.points[2]).toEqual({
+      x: block.frame.x + block.frame.w,
+      y: block.frame.y + block.frame.h,
+    });
   });
 
   it("bbox do ponto usa apenas alvo de seleção", () => {
