@@ -51,8 +51,8 @@ _ENTITY_LABELS: dict[str, str] = {
     "direct_labor_cost_pct": "custo direto de mão de obra",
     "production_cost_pct": "custo de produção percentual",
     "depreciation_pct": "depreciação percentual",
-    "refugos_custo_x_rol": "custo de refugo sobre ROL",
-    "retrabalho_custo_x_rol": "custo de retrabalho sobre ROL",
+    "refugos_scrap_cost_pct": "scrap cost over ROL",
+    "retrabalho_rework_cost_pct": "rework cost over ROL",
     "overall_equipment_effectiveness": "OEE (eficiência global dos equipamentos)",
     "production_otd": "OTD de produção",
     "supplies_safety_stock_detail": (

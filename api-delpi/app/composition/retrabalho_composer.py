@@ -1,6 +1,3 @@
-from app.application.use_cases.retrabalho.get_retrabalho_custo_x_rol_use_case import (
-    GetRetrabalhoCustoXRolUseCase,
-)
 from app.application.use_cases.retrabalho.get_retrabalho_detalhes_use_case import (
     GetRetrabalhoDetalhesUseCase,
 )
@@ -19,6 +16,9 @@ from app.application.use_cases.retrabalho.get_retrabalho_rankings_use_case impor
 )
 from app.application.use_cases.retrabalho.get_retrabalho_resumo_use_case import (
     GetRetrabalhoResumoUseCase,
+)
+from app.application.use_cases.retrabalho.get_retrabalho_rework_cost_pct_use_case import (
+    GetRetrabalhoReworkCostPctUseCase,
 )
 from app.infrastructure.persistence.totvs.financial_repositories.financial_repository import (
     FinancialRepository,
@@ -44,8 +44,8 @@ def build_get_retrabalho_resumo_use_case() -> GetRetrabalhoResumoUseCase:
     return GetRetrabalhoResumoUseCase(repository=_repository())
 
 
-def build_get_retrabalho_custo_x_rol_use_case() -> GetRetrabalhoCustoXRolUseCase:
-    return GetRetrabalhoCustoXRolUseCase(
+def build_get_retrabalho_rework_cost_pct_use_case() -> GetRetrabalhoReworkCostPctUseCase:
+    return GetRetrabalhoReworkCostPctUseCase(
         retrabalho_repository=_repository(),
         financial_repository=FinancialRepository(),
     )

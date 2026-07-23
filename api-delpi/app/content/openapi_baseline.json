@@ -34525,197 +34525,6 @@
     },
     {
       "method": "GET",
-      "path": "/refugos/custo-x-rol",
-      "operationId": "get_refugos_custo_x_rol",
-      "summary": "Scrap cost vs ROL",
-      "tags": [
-        "Produção — Acompanhamento de Refugos"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "filial",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
-          "enum": [
-            "01",
-            "02"
-          ]
-        },
-        {
-          "name": "dataInicio",
-          "required": false,
-          "description": "Start date (YYYY-MM-DD). Default: first day of current month.",
-          "format": "date",
-          "type": "string"
-        },
-        {
-          "name": "dataFim",
-          "required": false,
-          "description": "End date (YYYY-MM-DD). Default: today.",
-          "format": "date",
-          "type": "string"
-        },
-        {
-          "name": "mp",
-          "required": false,
-          "description": "Raw material code filter.",
-          "type": "string"
-        },
-        {
-          "name": "pa",
-          "required": false,
-          "description": "Finished product code filter.",
-          "type": "string"
-        },
-        {
-          "name": "op",
-          "required": false,
-          "description": "Production order filter.",
-          "type": "string"
-        },
-        {
-          "name": "motivo",
-          "required": false,
-          "description": "Reason code filter (CYO).",
-          "type": "string"
-        },
-        {
-          "name": "centroTrabalho",
-          "required": false,
-          "description": "Work center filter (BC_RECURSO).",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "refugos_custo_x_rol",
-        "shape": "scalar",
-        "category": "quality",
-        "locale": {
-          "en": {
-            "summary": "Scrap cost vs ROL",
-            "description": "Scrap (refugo) cost over financial ROL (with IPI) for a branch and period. Optional filters (mp, pa, op, reason, work center) apply to the scrap numerator only.",
-            "whenToUse": "Use as a KPI card for scrap cost as a percentage of ROL. Prefer the same branch and period as /refugos/resumo and /financial/rol."
-          },
-          "pt-BR": {
-            "summary": "Custo de refugo × ROL",
-            "description": "Custo de refugo sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) aplicam-se só ao numerador de refugo.",
-            "whenToUse": "Usar no card KPI de custo de refugo como percentual do ROL. Prefira a mesma filial e período de /refugos/resumo e /financial/rol.",
-            "label": "Custo de refugo × ROL"
-          }
-        },
-        "params": {
-          "centroTrabalho": {
-            "locale": {
-              "en": {
-                "description": "Work center filter.",
-                "label": "Work center"
-              },
-              "pt-BR": {
-                "description": "Filtro por centro de trabalho.",
-                "label": "Centro de trabalho"
-              }
-            }
-          },
-          "dataFim": {
-            "locale": {
-              "en": {
-                "description": "Period end date (YYYY-MM-DD).",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Data final do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "dataInicio": {
-            "locale": {
-              "en": {
-                "description": "Period start date (YYYY-MM-DD).",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Data inicial do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          },
-          "filial": {
-            "locale": {
-              "en": {
-                "description": "Protheus branch code (e.g. 01 or 02).",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-                "label": "Filial"
-              }
-            }
-          },
-          "motivo": {
-            "locale": {
-              "en": {
-                "description": "Scrap/reason code filter (CYO).",
-                "label": "Reason"
-              },
-              "pt-BR": {
-                "description": "Filtro por código de motivo (CYO).",
-                "label": "Motivo"
-              }
-            }
-          },
-          "mp": {
-            "locale": {
-              "en": {
-                "description": "Raw material product code filter.",
-                "label": "Raw material"
-              },
-              "pt-BR": {
-                "description": "Filtro por código de matéria-prima.",
-                "label": "Matéria-prima"
-              }
-            }
-          },
-          "op": {
-            "locale": {
-              "en": {
-                "description": "Production order query parameter.",
-                "label": "Production order"
-              },
-              "pt-BR": {
-                "description": "Número da ordem de produção (OP).",
-                "label": "Ordem de produção"
-              }
-            }
-          },
-          "pa": {
-            "locale": {
-              "en": {
-                "description": "Finished product code filter.",
-                "label": "Finished product"
-              },
-              "pt-BR": {
-                "description": "Filtro por código de produto acabado.",
-                "label": "Produto acabado"
-              }
-            }
-          }
-        },
-        "tv": {
-          "whenToUse": "Usar no card KPI de custo de refugo como percentual do ROL. Prefira a mesma filial e período de /refugos/resumo e /financial/rol.",
-          "description": "Custo de refugo sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) aplicam-se só ao numerador de refugo.",
-          "label": "Custo de refugo × ROL"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Scrap (refugo) cost over financial ROL (with IPI) for a branch and period. Optional filters (mp, pa, op, reason, work center) apply to the scrap numerator only."
-    },
-    {
-      "method": "GET",
       "path": "/refugos/filtros",
       "operationId": "get_refugos_filtros",
       "summary": "Indicator — Refugos filtros",
@@ -35504,6 +35313,197 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Refugos summary."
+    },
+    {
+      "method": "GET",
+      "path": "/refugos/scrap_cost_pct",
+      "operationId": "get_refugos_scrap_cost_pct",
+      "summary": "Scrap cost / ROL",
+      "tags": [
+        "Produção — Acompanhamento de Refugos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "filial",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "dataInicio",
+          "required": false,
+          "description": "Start date (YYYY-MM-DD). Default: first day of current month.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "dataFim",
+          "required": false,
+          "description": "End date (YYYY-MM-DD). Default: today.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "mp",
+          "required": false,
+          "description": "Raw material code filter.",
+          "type": "string"
+        },
+        {
+          "name": "pa",
+          "required": false,
+          "description": "Finished product code filter.",
+          "type": "string"
+        },
+        {
+          "name": "op",
+          "required": false,
+          "description": "Production order filter.",
+          "type": "string"
+        },
+        {
+          "name": "motivo",
+          "required": false,
+          "description": "Reason code filter (CYO).",
+          "type": "string"
+        },
+        {
+          "name": "centroTrabalho",
+          "required": false,
+          "description": "Work center filter (BC_RECURSO).",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "refugos_scrap_cost_pct",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Scrap cost / ROL",
+            "description": "Scrap cost over financial ROL (with IPI) for a branch and period. Optional filters (mp, pa, op, reason, work center) apply to the scrap numerator only.",
+            "whenToUse": "Use as a KPI card for scrap cost as a percentage of ROL. Prefer the same branch and period as /refugos/resumo and /financial/rol."
+          },
+          "pt-BR": {
+            "summary": "Custo de refugo / ROL",
+            "description": "Custo de refugo sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) aplicam-se só ao numerador de refugo.",
+            "whenToUse": "Usar no card KPI de custo de refugo como percentual do ROL. Prefira a mesma filial e período de /refugos/resumo e /financial/rol.",
+            "label": "Custo de refugo / ROL"
+          }
+        },
+        "params": {
+          "centroTrabalho": {
+            "locale": {
+              "en": {
+                "description": "Work center filter.",
+                "label": "Work center"
+              },
+              "pt-BR": {
+                "description": "Filtro por centro de trabalho.",
+                "label": "Centro de trabalho"
+              }
+            }
+          },
+          "dataFim": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "dataInicio": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "filial": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02).",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+                "label": "Filial"
+              }
+            }
+          },
+          "motivo": {
+            "locale": {
+              "en": {
+                "description": "Scrap/reason code filter (CYO).",
+                "label": "Reason"
+              },
+              "pt-BR": {
+                "description": "Filtro por código de motivo (CYO).",
+                "label": "Motivo"
+              }
+            }
+          },
+          "mp": {
+            "locale": {
+              "en": {
+                "description": "Raw material product code filter.",
+                "label": "Raw material"
+              },
+              "pt-BR": {
+                "description": "Filtro por código de matéria-prima.",
+                "label": "Matéria-prima"
+              }
+            }
+          },
+          "op": {
+            "locale": {
+              "en": {
+                "description": "Production order query parameter.",
+                "label": "Production order"
+              },
+              "pt-BR": {
+                "description": "Número da ordem de produção (OP).",
+                "label": "Ordem de produção"
+              }
+            }
+          },
+          "pa": {
+            "locale": {
+              "en": {
+                "description": "Finished product code filter.",
+                "label": "Finished product"
+              },
+              "pt-BR": {
+                "description": "Filtro por código de produto acabado.",
+                "label": "Produto acabado"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI de custo de refugo como percentual do ROL. Prefira a mesma filial e período de /refugos/resumo e /financial/rol.",
+          "description": "Custo de refugo sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) aplicam-se só ao numerador de refugo.",
+          "label": "Custo de refugo / ROL"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Scrap cost over financial ROL (with IPI) for a branch and period. Optional filters (mp, pa, op, reason, work center) apply to the scrap numerator only."
     },
     {
       "method": "GET",
@@ -36338,161 +36338,6 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Retrabalhos colaboradores."
-    },
-    {
-      "method": "GET",
-      "path": "/retrabalhos/custo-x-rol",
-      "operationId": "get_retrabalhos_custo_x_rol",
-      "summary": "Rework cost vs ROL",
-      "tags": [
-        "Qualidade — Controle de Retrabalhos"
-      ],
-      "deprecated": false,
-      "parameters": [
-        {
-          "name": "filial",
-          "required": true,
-          "description": "Protheus branch code (01 or 02).",
-          "type": "string",
-          "enum": [
-            "01",
-            "02"
-          ]
-        },
-        {
-          "name": "dataInicio",
-          "required": false,
-          "description": "Start date (YYYY-MM-DD). Default: last 12 months.",
-          "format": "date",
-          "type": "string"
-        },
-        {
-          "name": "dataFim",
-          "required": false,
-          "description": "End date (YYYY-MM-DD). Default: today.",
-          "format": "date",
-          "type": "string"
-        },
-        {
-          "name": "recurso",
-          "required": false,
-          "description": "Resource filter.",
-          "type": "string"
-        },
-        {
-          "name": "centroCusto",
-          "required": false,
-          "description": "Cost center filter.",
-          "type": "string"
-        },
-        {
-          "name": "codigoOperador",
-          "required": false,
-          "description": "Operator code filter.",
-          "type": "string"
-        }
-      ],
-      "xDelpi": {
-        "entity": "retrabalho_custo_x_rol",
-        "shape": "scalar",
-        "category": "quality",
-        "locale": {
-          "en": {
-            "summary": "Rework cost vs ROL",
-            "description": "Rework (retrabalho) cost over financial ROL (with IPI) for a branch and period. Optional filters (resource, cost center, operator) apply to the rework numerator only.",
-            "whenToUse": "Use as a KPI card for rework cost as a percentage of ROL. Prefer the same branch and period as /retrabalhos/resumo and /financial/rol."
-          },
-          "pt-BR": {
-            "summary": "Custo de retrabalho × ROL",
-            "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (recurso, centro de custo, operador) aplicam-se só ao numerador de retrabalho.",
-            "whenToUse": "Usar no card KPI de custo de retrabalho como percentual do ROL. Prefira a mesma filial e período de /retrabalhos/resumo e /financial/rol.",
-            "label": "Custo de retrabalho × ROL"
-          }
-        },
-        "params": {
-          "centroCusto": {
-            "locale": {
-              "en": {
-                "description": "Cost center query parameter.",
-                "label": "Cost center"
-              },
-              "pt-BR": {
-                "description": "Código do centro de custo no Protheus.",
-                "label": "Centro de custo"
-              }
-            }
-          },
-          "codigoOperador": {
-            "locale": {
-              "en": {
-                "description": "Operator code query parameter.",
-                "label": "Operator code"
-              },
-              "pt-BR": {
-                "description": "Código do operador no Protheus.",
-                "label": "Código do operador"
-              }
-            }
-          },
-          "dataFim": {
-            "locale": {
-              "en": {
-                "description": "Period end date (YYYY-MM-DD).",
-                "label": "End date"
-              },
-              "pt-BR": {
-                "description": "Data final do período (AAAA-MM-DD).",
-                "label": "Data fim"
-              }
-            },
-            "format": "date"
-          },
-          "dataInicio": {
-            "locale": {
-              "en": {
-                "description": "Period start date (YYYY-MM-DD).",
-                "label": "Start date"
-              },
-              "pt-BR": {
-                "description": "Data inicial do período (AAAA-MM-DD).",
-                "label": "Data início"
-              }
-            },
-            "format": "date"
-          },
-          "filial": {
-            "locale": {
-              "en": {
-                "description": "Protheus branch code (e.g. 01 or 02).",
-                "label": "Branch"
-              },
-              "pt-BR": {
-                "description": "Código da filial no Protheus (ex.: 01 ou 02).",
-                "label": "Filial"
-              }
-            }
-          },
-          "recurso": {
-            "locale": {
-              "en": {
-                "description": "Resource query parameter.",
-                "label": "Resource"
-              },
-              "pt-BR": {
-                "description": "Código do recurso de produção.",
-                "label": "Recurso"
-              }
-            }
-          }
-        },
-        "tv": {
-          "whenToUse": "Usar no card KPI de custo de retrabalho como percentual do ROL. Prefira a mesma filial e período de /retrabalhos/resumo e /financial/rol.",
-          "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (recurso, centro de custo, operador) aplicam-se só ao numerador de retrabalho.",
-          "label": "Custo de retrabalho × ROL"
-        },
-        "presentationStrategy": "as_delivered"
-      },
-      "description": "Rework (retrabalho) cost over financial ROL (with IPI) for a branch and period. Optional filters (resource, cost center, operator) apply to the rework numerator only."
     },
     {
       "method": "GET",
@@ -37364,6 +37209,161 @@
         "presentationStrategy": "as_delivered"
       },
       "description": "Retrabalhos summary."
+    },
+    {
+      "method": "GET",
+      "path": "/retrabalhos/rework_cost_pct",
+      "operationId": "get_retrabalhos_rework_cost_pct",
+      "summary": "Rework cost / ROL",
+      "tags": [
+        "Qualidade — Controle de Retrabalhos"
+      ],
+      "deprecated": false,
+      "parameters": [
+        {
+          "name": "filial",
+          "required": true,
+          "description": "Protheus branch code (01 or 02).",
+          "type": "string",
+          "enum": [
+            "01",
+            "02"
+          ]
+        },
+        {
+          "name": "dataInicio",
+          "required": false,
+          "description": "Start date (YYYY-MM-DD). Default: last 12 months.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "dataFim",
+          "required": false,
+          "description": "End date (YYYY-MM-DD). Default: today.",
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "name": "recurso",
+          "required": false,
+          "description": "Resource filter.",
+          "type": "string"
+        },
+        {
+          "name": "centroCusto",
+          "required": false,
+          "description": "Cost center filter.",
+          "type": "string"
+        },
+        {
+          "name": "codigoOperador",
+          "required": false,
+          "description": "Operator code filter.",
+          "type": "string"
+        }
+      ],
+      "xDelpi": {
+        "entity": "retrabalho_rework_cost_pct",
+        "shape": "scalar",
+        "category": "quality",
+        "locale": {
+          "en": {
+            "summary": "Rework cost / ROL",
+            "description": "Rework cost over financial ROL (with IPI) for a branch and period. Optional filters (resource, cost center, operator) apply to the rework numerator only.",
+            "whenToUse": "Use as a KPI card for rework cost as a percentage of ROL. Prefer the same branch and period as /retrabalhos/resumo and /financial/rol."
+          },
+          "pt-BR": {
+            "summary": "Custo de retrabalho / ROL",
+            "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (recurso, centro de custo, operador) aplicam-se só ao numerador de retrabalho.",
+            "whenToUse": "Usar no card KPI de custo de retrabalho como percentual do ROL. Prefira a mesma filial e período de /retrabalhos/resumo e /financial/rol.",
+            "label": "Custo de retrabalho / ROL"
+          }
+        },
+        "params": {
+          "centroCusto": {
+            "locale": {
+              "en": {
+                "description": "Cost center query parameter.",
+                "label": "Cost center"
+              },
+              "pt-BR": {
+                "description": "Código do centro de custo no Protheus.",
+                "label": "Centro de custo"
+              }
+            }
+          },
+          "codigoOperador": {
+            "locale": {
+              "en": {
+                "description": "Operator code query parameter.",
+                "label": "Operator code"
+              },
+              "pt-BR": {
+                "description": "Código do operador no Protheus.",
+                "label": "Código do operador"
+              }
+            }
+          },
+          "dataFim": {
+            "locale": {
+              "en": {
+                "description": "Period end date (YYYY-MM-DD).",
+                "label": "End date"
+              },
+              "pt-BR": {
+                "description": "Data final do período (AAAA-MM-DD).",
+                "label": "Data fim"
+              }
+            },
+            "format": "date"
+          },
+          "dataInicio": {
+            "locale": {
+              "en": {
+                "description": "Period start date (YYYY-MM-DD).",
+                "label": "Start date"
+              },
+              "pt-BR": {
+                "description": "Data inicial do período (AAAA-MM-DD).",
+                "label": "Data início"
+              }
+            },
+            "format": "date"
+          },
+          "filial": {
+            "locale": {
+              "en": {
+                "description": "Protheus branch code (e.g. 01 or 02).",
+                "label": "Branch"
+              },
+              "pt-BR": {
+                "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+                "label": "Filial"
+              }
+            }
+          },
+          "recurso": {
+            "locale": {
+              "en": {
+                "description": "Resource query parameter.",
+                "label": "Resource"
+              },
+              "pt-BR": {
+                "description": "Código do recurso de produção.",
+                "label": "Recurso"
+              }
+            }
+          }
+        },
+        "tv": {
+          "whenToUse": "Usar no card KPI de custo de retrabalho como percentual do ROL. Prefira a mesma filial e período de /retrabalhos/resumo e /financial/rol.",
+          "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (recurso, centro de custo, operador) aplicam-se só ao numerador de retrabalho.",
+          "label": "Custo de retrabalho / ROL"
+        },
+        "presentationStrategy": "as_delivered"
+      },
+      "description": "Rework cost over financial ROL (with IPI) for a branch and period. Optional filters (resource, cost center, operator) apply to the rework numerator only."
     },
     {
       "method": "GET",

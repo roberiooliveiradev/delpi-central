@@ -21,7 +21,7 @@ Plugin consumidor: `plugins/scrap-monitoring` · Filiais: SC=`01`, ES=`02`.
 | GET | `/refugos/health` | `scalar` | `get_refugos_health` |
 | GET | `/refugos/filtros` | `scalar` | `get_refugos_filtros` |
 | GET | `/refugos/resumo` | `scalar` | `get_refugos_resumo` |
-| GET | `/refugos/custo-x-rol` | `scalar` | `get_refugos_custo_x_rol` |
+| GET | `/refugos/scrap_cost_pct` | `scalar` | `get_refugos_scrap_cost_pct` |
 | GET | `/refugos/rankings` | `playbook_report` | `get_refugos_rankings` |
 | GET | `/refugos/serie` | `playbook_report` | `get_refugos_serie` |
 | GET | `/refugos/registros` | `paged_list` | `get_refugos_registros` |
@@ -68,19 +68,19 @@ Retorna:
 
 ---
 
-## `/refugos/custo-x-rol`
+## `/refugos/scrap_cost_pct`
 
-**`meta.entity`:** `refugos_custo_x_rol`
+**`meta.entity`:** `refugos_scrap_cost_pct`
 
 Combina o custo de refugo do período (`/refugos/resumo` → `totalValor`) com o ROL financeiro da mesma filial/período (`/financial/rol` → `rol_with_ipi`).
 
 | Campo | Significado |
 |---|---|
-| `custoRefugo` | Custo de refugo (R$) no período |
-| `rol` / `rolWithIpi` | ROL financeiro do denominador |
-| `custoSobreRolPct` | `(custoRefugo / rolWithIpi) * 100` — `null` se ROL = 0 |
-| `filtrosAplicados` | `mp`, `pa`, `op`, `motivo`, `recurso` (afetam só o numerador) |
-| `financialContext` | Contexto do ROL (receita bruta, devoluções, etc.) |
+| `scrap_cost` | Custo de refugo (R$) no período |
+| `rol` / `rol_with_ipi` | ROL financeiro do denominador |
+| `scrap_cost_pct` | `(scrap_cost / rol_with_ipi) * 100` — `null` se ROL = 0 |
+| `filters_applied` | `mp`, `pa`, `op`, `motivo`, `recurso` (afetam só o numerador) |
+| `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
 
 Parâmetros: mesmos de `/refugos/resumo` (`filial` obrigatória; período e filtros opcionais).
 

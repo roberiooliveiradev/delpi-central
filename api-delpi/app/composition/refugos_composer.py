@@ -1,6 +1,3 @@
-from app.application.use_cases.refugos.get_refugos_custo_x_rol_use_case import (
-    GetRefugosCustoXRolUseCase,
-)
 from app.application.use_cases.refugos.get_refugos_filtros_use_case import (
     GetRefugosFiltrosUseCase,
 )
@@ -15,6 +12,9 @@ from app.application.use_cases.refugos.get_refugos_registros_use_case import (
 )
 from app.application.use_cases.refugos.get_refugos_resumo_use_case import (
     GetRefugosResumoUseCase,
+)
+from app.application.use_cases.refugos.get_refugos_scrap_cost_pct_use_case import (
+    GetRefugosScrapCostPctUseCase,
 )
 from app.application.use_cases.refugos.get_refugos_serie_use_case import (
     GetRefugosSerieUseCase,
@@ -43,8 +43,8 @@ def build_get_refugos_resumo_use_case() -> GetRefugosResumoUseCase:
     return GetRefugosResumoUseCase(repository=_repository())
 
 
-def build_get_refugos_custo_x_rol_use_case() -> GetRefugosCustoXRolUseCase:
-    return GetRefugosCustoXRolUseCase(
+def build_get_refugos_scrap_cost_pct_use_case() -> GetRefugosScrapCostPctUseCase:
+    return GetRefugosScrapCostPctUseCase(
         refugos_repository=_repository(),
         financial_repository=FinancialRepository(),
     )

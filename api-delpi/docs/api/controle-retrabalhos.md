@@ -19,7 +19,7 @@ Plugin consumidor: `plugins/controle-retrabalhos` · View: [ESPECIFICACAO-VIEW.m
 | GET | `/retrabalhos/health` | `scalar` | `get_retrabalhos_health` |
 | GET | `/retrabalhos/filtros` | `scalar` | `get_retrabalhos_filtros` |
 | GET | `/retrabalhos/resumo` | `scalar` | `get_retrabalhos_resumo` |
-| GET | `/retrabalhos/custo-x-rol` | `scalar` | `get_retrabalhos_custo_x_rol` |
+| GET | `/retrabalhos/rework_cost_pct` | `scalar` | `get_retrabalhos_rework_cost_pct` |
 | GET | `/retrabalhos/mensal` | `list` | `get_retrabalhos_mensal` |
 | GET | `/retrabalhos/recursos` | `list` | `get_retrabalhos_recursos` |
 | GET | `/retrabalhos/colaboradores` | `list` | `get_retrabalhos_colaboradores` |
@@ -42,20 +42,20 @@ Janela máxima: **24 meses**. Ranking default: top **10** (`limit` até 50). Det
 
 ---
 
-## GET `/retrabalhos/custo-x-rol`
+## GET `/retrabalhos/rework_cost_pct`
 
-**`meta.entity`:** `retrabalho_custo_x_rol`
+**`meta.entity`:** `retrabalho_rework_cost_pct`
 
 Combina o custo de retrabalho do período (`/retrabalhos/resumo` → `totalCusto`) com o ROL financeiro da mesma filial/período (`/financial/rol` → `rol_with_ipi`).
 
 | Campo | Descrição |
 |---|---|
-| `custoRetrabalho` | Custo de retrabalho (R$) no período |
-| `rol` / `rolWithIpi` | ROL financeiro do denominador |
-| `custoSobreRolPct` | `(custoRetrabalho / rolWithIpi) * 100` — `null` se ROL = 0 |
-| `totalHoras` / `custoMedioHora` | Horas e custo médio/hora do numerador |
-| `filtrosAplicados` | `recurso`, `centroCusto`, `codigoOperador` (afetam só o numerador) |
-| `financialContext` | Contexto do ROL (receita bruta, devoluções, etc.) |
+| `rework_cost` | Custo de retrabalho (R$) no período |
+| `rol` / `rol_with_ipi` | ROL financeiro do denominador |
+| `rework_cost_pct` | `(rework_cost / rol_with_ipi) * 100` — `null` se ROL = 0 |
+| `total_hours` / `average_cost_per_hour` | Horas e custo médio/hora do numerador |
+| `filters_applied` | `recurso`, `centro_custo`, `codigo_operador` (afetam só o numerador) |
+| `financial_context` | Contexto do ROL (receita bruta, devoluções, etc.) |
 
 Parâmetros: mesmos de `/retrabalhos/resumo` (`filial` obrigatória; período e filtros opcionais).
 

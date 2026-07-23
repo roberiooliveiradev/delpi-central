@@ -198,25 +198,25 @@ QUALITY_PPM_FIELD_LABELS: dict[str, str] = {
     "target": "Meta PPM",
 }
 
-REFUGOS_CUSTO_X_ROL_FIELD_LABELS: dict[str, str] = {
-    "custoRefugo": "Custo de refugo (R$)",
-    "rolWithIpi": "ROL com IPI (R$)",
+REFUGOS_SCRAP_COST_PCT_FIELD_LABELS: dict[str, str] = {
+    "scrap_cost": "Custo de refugo (R$)",
+    "rol_with_ipi": "ROL com IPI (R$)",
     "rol": "ROL (R$)",
-    "custoSobreRolPct": "Custo de refugo / ROL (%)",
-    "ocorrencias": "Ocorrências de refugo",
-    "registrosSemCusto": "Registros sem custo",
-    "totalQuantidade": "Quantidade total",
+    "scrap_cost_pct": "Custo de refugo / ROL (%)",
+    "occurrences": "Ocorrências de refugo",
+    "records_without_cost": "Registros sem custo",
+    "quantity": "Quantidade total",
 }
 
-RETRABALHO_CUSTO_X_ROL_FIELD_LABELS: dict[str, str] = {
-    "custoRetrabalho": "Custo de retrabalho (R$)",
-    "rolWithIpi": "ROL com IPI (R$)",
+RETRABALHO_REWORK_COST_PCT_FIELD_LABELS: dict[str, str] = {
+    "rework_cost": "Custo de retrabalho (R$)",
+    "rol_with_ipi": "ROL com IPI (R$)",
     "rol": "ROL (R$)",
-    "custoSobreRolPct": "Custo de retrabalho / ROL (%)",
-    "totalHoras": "Horas de retrabalho",
-    "totalApontamentos": "Apontamentos",
-    "custoMedioHora": "Custo médio por hora (R$)",
-    "registrosSemCusto": "Registros sem custo",
+    "rework_cost_pct": "Custo de retrabalho / ROL (%)",
+    "total_hours": "Horas de retrabalho",
+    "appointment_count": "Apontamentos",
+    "average_cost_per_hour": "Custo médio por hora (R$)",
+    "records_without_cost": "Registros sem custo",
 }
 
 QUALITY_PRODUCED_QUANTITY_FIELD_LABELS: dict[str, str] = {

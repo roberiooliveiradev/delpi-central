@@ -32,7 +32,7 @@ def test_router_exposes_all_endpoints(refugos_client: TestClient) -> None:
     assert router.prefix == "/refugos"
     assert "/refugos/health" in paths
     assert "/refugos/resumo" in paths
-    assert "/refugos/custo-x-rol" in paths
+    assert "/refugos/scrap_cost_pct" in paths
     assert "/refugos/rankings" in paths
     assert "/refugos/serie" in paths
     assert "/refugos/registros" in paths
@@ -77,33 +77,33 @@ def test_resumo_returns_envelope(mock_builder, _mock_branch, refugos_client: Tes
     return_value=None,
 )
 @patch(
-    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_custo_x_rol_use_case"
+    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_scrap_cost_pct_use_case"
 )
-def test_custo_x_rol_returns_envelope(
+def test_scrap_cost_pct_returns_envelope(
     mock_builder, _mock_branch, refugos_client: TestClient
 ) -> None:
     use_case = MagicMock()
     use_case.execute.return_value = {
-        "custoRefugo": 2500.0,
-        "rolWithIpi": 100_000.0,
-        "custoSobreRolPct": 2.5,
+        "scrap_cost": 2500.0,
+        "rol_with_ipi": 100_000.0,
+        "scrap_cost_pct": 2.5,
     }
     mock_builder.return_value = use_case
 
     response = refugos_client.get(
-        "/refugos/custo-x-rol",
+        "/refugos/scrap_cost_pct",
         params={"filial": "01", "dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
     )
     body = _body(response)
 
     assert response.status_code == 200
     assert body["success"] is True
-    assert body["meta"]["operationId"] == "get_refugos_custo_x_rol"
-    assert body["meta"]["entity"] == "refugos_custo_x_rol"
+    assert body["meta"]["operationId"] == "get_refugos_scrap_cost_pct"
+    assert body["meta"]["entity"] == "refugos_scrap_cost_pct"
     assert body["meta"]["shape"] == "scalar"
     assert body["meta"]["dataVersion"] == DATA_VERSION
-    assert body["data"]["custoSobreRolPct"] == 2.5
-    assert "custoSobreRolPct" in (body["meta"].get("fields") or {})
+    assert body["data"]["scrap_cost_pct"] == 2.5
+    assert "scrap_cost_pct" in (body["meta"].get("fields") or {})
 
 
 @patch(

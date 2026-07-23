@@ -8,17 +8,17 @@ from delpi_auth.authorization import require_any_permission
 
 from app.application.security.api_delpi_permissions import SCRAP_MONITORING_READ_PERMISSIONS
 from app.composition.refugos_composer import (
-    build_get_refugos_custo_x_rol_use_case,
     build_get_refugos_filtros_use_case,
     build_get_refugos_health_use_case,
     build_get_refugos_rankings_use_case,
     build_get_refugos_registros_use_case,
     build_get_refugos_resumo_use_case,
+    build_get_refugos_scrap_cost_pct_use_case,
     build_get_refugos_serie_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.kpi_field_labels import (
-    REFUGOS_CUSTO_X_ROL_FIELD_LABELS,
+    REFUGOS_SCRAP_COST_PCT_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
@@ -152,14 +152,14 @@ def get_refugos_resumo_route(
 
 
 @router.get(
-    "/custo-x-rol",
+    "/scrap_cost_pct",
     **OpenApiAgentMetadataBuilder.from_contract(
-        "get_refugos_custo_x_rol",
-        path="/refugos/custo-x-rol",
+        "get_refugos_scrap_cost_pct",
+        path="/refugos/scrap_cost_pct",
     ),
 )
 @require_any_permission(SCRAP_MONITORING_READ_PERMISSIONS)
-def get_refugos_custo_x_rol_route(
+def get_refugos_scrap_cost_pct(
     filial: str = FILIAL_QUERY(),
     data_inicio: Optional[str] = DATA_INICIO_QUERY(),
     data_fim: Optional[str] = DATA_FIM_QUERY(),
@@ -185,25 +185,25 @@ def get_refugos_custo_x_rol_route(
             recurso=recurso,
         )
     except ValueError as exc:
-        log_error(f"Erro de validação ao carregar custo de refugo x ROL: {exc}")
+        log_error(f"Erro de validação ao carregar scrap cost / ROL: {exc}")
         return error_response(str(exc), status_code=400)
 
     try:
-        use_case = build_get_refugos_custo_x_rol_use_case()
+        use_case = build_get_refugos_scrap_cost_pct_use_case()
         result = use_case.execute(request)
         return api_delpi_success(
             result,
-            operation_id="get_refugos_custo_x_rol",
+            operation_id="get_refugos_scrap_cost_pct",
             message="Custo de refugo / ROL carregado com sucesso.",
-            fields=kpi_fields(REFUGOS_CUSTO_X_ROL_FIELD_LABELS),
+            fields=kpi_fields(REFUGOS_SCRAP_COST_PCT_FIELD_LABELS),
         )
     except ValueError as exc:
-        log_error(f"Erro de validação ao carregar custo de refugo x ROL: {exc}")
+        log_error(f"Erro de validação ao carregar scrap cost / ROL: {exc}")
         return error_response(str(exc), status_code=400)
     except Exception as exc:
-        log_error(f"Erro ao carregar custo de refugo x ROL: {exc}")
+        log_error(f"Erro ao carregar scrap cost / ROL: {exc}")
         return error_response(
-            "Erro interno ao carregar custo de refugo x ROL.",
+            "Erro interno ao carregar custo de refugo / ROL.",
             status_code=500,
         )
 

@@ -9,17 +9,17 @@ from delpi_auth.authorization import require_any_permission
 from app.application.security.api_delpi_permissions import CONTROLE_RETRABALHO_READ_PERMISSIONS
 from app.composition.retrabalho_composer import (
     build_get_retrabalho_colaboradores_use_case,
-    build_get_retrabalho_custo_x_rol_use_case,
     build_get_retrabalho_detalhes_use_case,
     build_get_retrabalho_filtros_use_case,
     build_get_retrabalho_health_use_case,
     build_get_retrabalho_mensal_use_case,
     build_get_retrabalho_recursos_use_case,
     build_get_retrabalho_resumo_use_case,
+    build_get_retrabalho_rework_cost_pct_use_case,
 )
 from app.core.responses import error_response
 from app.interface.http.kpi_field_labels import (
-    RETRABALHO_CUSTO_X_ROL_FIELD_LABELS,
+    RETRABALHO_REWORK_COST_PCT_FIELD_LABELS,
     kpi_fields,
 )
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
@@ -154,14 +154,14 @@ def get_retrabalhos_resumo_route(
 
 
 @router.get(
-    "/custo-x-rol",
+    "/rework_cost_pct",
     **OpenApiAgentMetadataBuilder.from_contract(
-        "get_retrabalhos_custo_x_rol",
-        path="/retrabalhos/custo-x-rol",
+        "get_retrabalhos_rework_cost_pct",
+        path="/retrabalhos/rework_cost_pct",
     ),
 )
 @require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
-def get_retrabalhos_custo_x_rol_route(
+def get_retrabalhos_rework_cost_pct(
     filial: str = FILIAL_QUERY(),
     data_inicio: Optional[str] = DATA_INICIO_QUERY(),
     data_fim: Optional[str] = DATA_FIM_QUERY(),
@@ -183,25 +183,25 @@ def get_retrabalhos_custo_x_rol_route(
             codigo_operador=codigo_operador,
         )
     except ValueError as exc:
-        log_error(f"Erro de validação ao carregar custo de retrabalho x ROL: {exc}")
+        log_error(f"Erro de validação ao carregar rework cost / ROL: {exc}")
         return error_response(str(exc), status_code=400)
 
     try:
-        use_case = build_get_retrabalho_custo_x_rol_use_case()
+        use_case = build_get_retrabalho_rework_cost_pct_use_case()
         result = use_case.execute(request)
         return api_delpi_success(
             result,
-            operation_id="get_retrabalhos_custo_x_rol",
+            operation_id="get_retrabalhos_rework_cost_pct",
             message="Custo de retrabalho / ROL carregado com sucesso.",
-            fields=kpi_fields(RETRABALHO_CUSTO_X_ROL_FIELD_LABELS),
+            fields=kpi_fields(RETRABALHO_REWORK_COST_PCT_FIELD_LABELS),
         )
     except ValueError as exc:
-        log_error(f"Erro de validação ao carregar custo de retrabalho x ROL: {exc}")
+        log_error(f"Erro de validação ao carregar rework cost / ROL: {exc}")
         return error_response(str(exc), status_code=400)
     except Exception as exc:
-        log_error(f"Erro ao carregar custo de retrabalho x ROL: {exc}")
+        log_error(f"Erro ao carregar rework cost / ROL: {exc}")
         return error_response(
-            "Erro interno ao carregar custo de retrabalho x ROL.",
+            "Erro interno ao carregar custo de retrabalho / ROL.",
             status_code=500,
         )
 

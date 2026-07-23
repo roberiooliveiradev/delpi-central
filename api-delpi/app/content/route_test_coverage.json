@@ -3608,15 +3608,6 @@
       "status": "covered"
     },
     {
-      "operationId": "get_refugos_custo_x_rol",
-      "method": "GET",
-      "path": "/refugos/custo-x-rol",
-      "module": "refugos",
-      "entity": "refugos_custo_x_rol",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
       "operationId": "get_refugos_filtros",
       "method": "GET",
       "path": "/refugos/filtros",
@@ -3658,6 +3649,15 @@
       "path": "/refugos/resumo",
       "module": "refugos",
       "entity": "refugos_resumo",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_refugos_scrap_cost_pct",
+      "method": "GET",
+      "path": "/refugos/scrap_cost_pct",
+      "module": "refugos",
+      "entity": "refugos_scrap_cost_pct",
       "shape": "scalar",
       "status": "covered"
     },
@@ -3815,15 +3815,6 @@
       "status": "covered"
     },
     {
-      "operationId": "get_retrabalhos_custo_x_rol",
-      "method": "GET",
-      "path": "/retrabalhos/custo-x-rol",
-      "module": "retrabalhos",
-      "entity": "retrabalho_custo_x_rol",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
       "operationId": "get_retrabalhos_detalhes",
       "method": "GET",
       "path": "/retrabalhos/detalhes",
@@ -3874,6 +3865,15 @@
       "path": "/retrabalhos/resumo",
       "module": "retrabalhos",
       "entity": "retrabalho_horas_improdutivas_resumo",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_retrabalhos_rework_cost_pct",
+      "method": "GET",
+      "path": "/retrabalhos/rework_cost_pct",
+      "module": "retrabalhos",
+      "entity": "retrabalho_rework_cost_pct",
       "shape": "scalar",
       "status": "covered"
     },

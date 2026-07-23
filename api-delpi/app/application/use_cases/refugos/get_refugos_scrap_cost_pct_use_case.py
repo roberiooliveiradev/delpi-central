@@ -9,8 +9,8 @@ from app.domain.ports.financial.financial_query_repository_port import (
 from app.domain.ports.refugos.refugos_repository_port import RefugosRepositoryPort
 
 
-class GetRefugosCustoXRolUseCase:
-    """Combina custo de refugo (SBC) com ROL financeiro do mesmo período/filial."""
+class GetRefugosScrapCostPctUseCase:
+    """Scrap cost (SBC) over financial ROL for the same branch and period."""
 
     def __init__(
         self,
@@ -45,46 +45,47 @@ class GetRefugosCustoXRolUseCase:
             )
         )
 
-        custo_refugo = round_cost(row.get("total_valor"))
+        scrap_cost = round_cost(row.get("total_valor"))
         rol_with_ipi = round_cost(rol_data.get("rol_with_ipi"))
         rol = round_cost(rol_data.get("rol"))
-        custo_sobre_rol_pct = (
-            round((custo_refugo / rol_with_ipi) * 100, 4) if rol_with_ipi > 0 else None
+        scrap_cost_pct = (
+            round((scrap_cost / rol_with_ipi) * 100, 4) if rol_with_ipi > 0 else None
         )
 
         return {
-            "periodo": request.periodo_dict(),
-            "custoRefugo": custo_refugo,
-            "totalQuantidade": round_qty(row.get("total_quantidade")),
-            "ocorrencias": as_int(row.get("ocorrencias")),
-            "registrosSemCusto": as_int(row.get("registros_sem_custo")),
+            "branch": request.period.filial,
+            "start_date": start_iso,
+            "end_date": end_iso,
+            "scrap_cost": scrap_cost,
+            "quantity": round_qty(row.get("total_quantidade")),
+            "occurrences": as_int(row.get("ocorrencias")),
+            "records_without_cost": as_int(row.get("registros_sem_custo")),
             "rol": rol,
-            "rolWithIpi": rol_with_ipi,
-            "custoSobreRolPct": custo_sobre_rol_pct,
-            "filtrosAplicados": {
+            "rol_with_ipi": rol_with_ipi,
+            "scrap_cost_pct": scrap_cost_pct,
+            "filters_applied": {
                 "mp": request.mp,
                 "pa": request.pa,
                 "op": request.op,
                 "motivo": request.motivo,
                 "recurso": request.recurso,
             },
-            "financialContext": {
-                "grossRevenue": round_cost(rol_data.get("gross_revenue")),
+            "financial_context": {
+                "gross_revenue": round_cost(rol_data.get("gross_revenue")),
                 "returns": round_cost(rol_data.get("returns")),
                 "discounts": round_cost(rol_data.get("discounts")),
                 "rol": rol,
-                "rolWithIpi": rol_with_ipi,
-                "ipiSeparated": round_cost(rol_data.get("ipi_separated")),
+                "rol_with_ipi": rol_with_ipi,
+                "ipi_separated": round_cost(rol_data.get("ipi_separated")),
             },
-            "branchFilterApplied": True,
             "summary": {
                 "branch": request.period.filial,
                 "branch_filter_applied": True,
                 "consolidated_across_branches": False,
                 "period": {"start": start_iso, "end": end_iso},
-                "custo_refugo": custo_refugo,
+                "scrap_cost": scrap_cost,
                 "rol_with_ipi": rol_with_ipi,
-                "custo_sobre_rol_pct": custo_sobre_rol_pct,
+                "scrap_cost_pct": scrap_cost_pct,
                 "is_complete": True,
             },
         }

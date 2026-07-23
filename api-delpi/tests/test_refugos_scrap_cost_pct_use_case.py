@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 from app.application.dto.refugos.refugos_period import RefugosPeriod
 from app.application.dto.refugos.refugos_query_request import RefugosQueryRequest
-from app.application.use_cases.refugos.get_refugos_custo_x_rol_use_case import (
-    GetRefugosCustoXRolUseCase,
+from app.application.use_cases.refugos.get_refugos_scrap_cost_pct_use_case import (
+    GetRefugosScrapCostPctUseCase,
 )
 
 
@@ -26,7 +26,7 @@ def _request(
     )
 
 
-def test_custo_sobre_rol_pct_uses_rol_with_ipi() -> None:
+def test_scrap_cost_pct_uses_rol_with_ipi() -> None:
     refugos_repo = MagicMock()
     refugos_repo.get_resumo.return_value = {
         "total_valor": 2500.0,
@@ -44,14 +44,16 @@ def test_custo_sobre_rol_pct_uses_rol_with_ipi() -> None:
         "ipi_separated": 10_000.0,
     }
 
-    result = GetRefugosCustoXRolUseCase(refugos_repo, financial_repo).execute(_request())
+    result = GetRefugosScrapCostPctUseCase(refugos_repo, financial_repo).execute(
+        _request()
+    )
 
-    assert result["custoRefugo"] == 2500.0
-    assert result["rolWithIpi"] == 100_000.0
-    assert result["custoSobreRolPct"] == 2.5
-    assert result["summary"]["custo_sobre_rol_pct"] == 2.5
-    assert result["periodo"]["filial"] == "01"
-    assert result["filtrosAplicados"]["mp"] is None
+    assert result["scrap_cost"] == 2500.0
+    assert result["rol_with_ipi"] == 100_000.0
+    assert result["scrap_cost_pct"] == 2.5
+    assert result["summary"]["scrap_cost_pct"] == 2.5
+    assert result["branch"] == "01"
+    assert result["filters_applied"]["mp"] is None
 
     rol_request = financial_repo.get_rol.call_args.args[0]
     assert rol_request.branch == "01"
@@ -59,7 +61,7 @@ def test_custo_sobre_rol_pct_uses_rol_with_ipi() -> None:
     assert rol_request.end_date == "2026-06-30"
 
 
-def test_custo_sobre_rol_pct_null_when_rol_is_zero() -> None:
+def test_scrap_cost_pct_null_when_rol_is_zero() -> None:
     refugos_repo = MagicMock()
     refugos_repo.get_resumo.return_value = {
         "total_valor": 100.0,
@@ -77,10 +79,12 @@ def test_custo_sobre_rol_pct_null_when_rol_is_zero() -> None:
         "ipi_separated": 0.0,
     }
 
-    result = GetRefugosCustoXRolUseCase(refugos_repo, financial_repo).execute(_request())
+    result = GetRefugosScrapCostPctUseCase(refugos_repo, financial_repo).execute(
+        _request()
+    )
 
-    assert result["custoSobreRolPct"] is None
-    assert result["custoRefugo"] == 100.0
+    assert result["scrap_cost_pct"] is None
+    assert result["scrap_cost"] == 100.0
 
 
 def test_optional_mp_filter_forwarded_to_refugos_repository() -> None:
@@ -101,9 +105,9 @@ def test_optional_mp_filter_forwarded_to_refugos_repository() -> None:
         "ipi_separated": 0.0,
     }
 
-    result = GetRefugosCustoXRolUseCase(refugos_repo, financial_repo).execute(
+    result = GetRefugosScrapCostPctUseCase(refugos_repo, financial_repo).execute(
         _request(mp="MP-123")
     )
 
-    assert result["filtrosAplicados"]["mp"] == "MP-123"
+    assert result["filters_applied"]["mp"] == "MP-123"
     assert refugos_repo.get_resumo.call_args.kwargs["mp"] == "MP-123"
