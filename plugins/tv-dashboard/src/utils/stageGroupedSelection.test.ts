@@ -112,6 +112,30 @@ describe("resolveBlockWrapChromeFlags", () => {
       partChildrenActive: true,
     });
   });
+
+  it("filho de grupo isolado mantém outline e handles", () => {
+    const blocks = [block("a", { groupId: "g1" }), block("b", { groupId: "g1" })];
+    const hierarchy = resolveStageSelectionHierarchy({
+      blocks,
+      selectedIds: ["a"],
+    });
+    expect(
+      resolveBlockWrapChromeFlags({
+        hierarchy,
+        blockId: "a",
+        blockType: "shape",
+        isSelected: true,
+        editingText: false,
+        closedGroupActive: false,
+        selectedPart: null,
+      }),
+    ).toEqual({
+      showOutline: true,
+      showHandles: true,
+      mutedAsGroupMember: false,
+      partChildrenActive: false,
+    });
+  });
 });
 
 describe("resolveEscapeHierarchyAction", () => {

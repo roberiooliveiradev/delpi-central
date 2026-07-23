@@ -1,5 +1,13 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Eye,
+  EyeOff,
+  FolderOpen,
+  GripVertical,
+} from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui/index";
 import {
   assignStaggeredEntranceDelays,
@@ -12,7 +20,12 @@ import {
 } from "@delpi/tv-dashboard-presentation";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
-import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
+import {
+  buildSelectionTreeRows,
+  selectionTreeRowIsActive,
+  type SelectionTreeRow,
+} from "../../utils/buildSelectionTreeRows";
+import { membersOfGroup } from "../../utils/comunicadoGrouping";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
 import { comunicadoBlockSummary, comunicadoBlockTypeLabel } from "../../utils/comunicadoBlockLabels";
 import { DeckPropertySection } from "./DeckPropertySection";
@@ -34,15 +47,28 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     reorderBlockLayer,
     updateBlock,
     toggleBlockHidden,
+    setBlocksHidden,
     showAllBlocks,
     hideAllBlocks,
     bringForward,
     sendBackward,
   } = useComunicadoEditor();
   const [dragId, setDragId] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => new Set());
   const isRibbon = layout === "ribbon";
 
-  const layers = useMemo(() => [...sortBlocksByZIndex(blocks)].reverse(), [blocks]);
+  const treeRows = useMemo(() => buildSelectionTreeRows(blocks), [blocks]);
+
+  const visibleRows = useMemo(() => {
+    const rows: SelectionTreeRow[] = [];
+    for (const row of treeRows) {
+      if (row.kind === "block" && row.groupId && collapsedGroups.has(row.groupId)) {
+        continue;
+      }
+      rows.push(row);
+    }
+    return rows;
+  }, [collapsedGroups, treeRows]);
 
   const buildOrder = useMemo(
     () =>
@@ -58,10 +84,9 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
 
   function onDrop(targetId: string) {
     if (!dragId || dragId === targetId) return;
-    const targetReversedIndex = layers.findIndex((block) => block.id === targetId);
-    if (targetReversedIndex < 0) return;
     const sorted = sortBlocksByZIndex(blocks);
-    const targetIndex = sorted.length - 1 - targetReversedIndex;
+    const targetIndex = sorted.findIndex((block) => block.id === targetId);
+    if (targetIndex < 0) return;
     reorderBlockLayer(dragId, targetIndex);
     setDragId(null);
   }
@@ -70,6 +95,25 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     for (const [id, animations] of map.entries()) {
       updateBlock(id, { animations });
     }
+  }
+
+  function toggleGroupCollapsed(groupId: string) {
+    setCollapsedGroups((current) => {
+      const next = new Set(current);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  }
+
+  function toggleGroupHidden(groupId: string) {
+    const members = membersOfGroup(blocks, groupId);
+    if (members.length === 0) return;
+    const allHidden = members.every((member) => member.hidden === true);
+    setBlocksHidden(
+      members.map((member) => member.id),
+      !allHidden,
+    );
   }
 
   const buildOrderSection = (
@@ -171,24 +215,104 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
   const layersSection = (
     <>
       {selectionToolbar}
-      {layers.length === 0 ? (
+      {visibleRows.length === 0 ? (
         <p className="td-subtitle">Nenhum elemento no slide.</p>
       ) : (
-        <ul className="td-layers-list">
-          {layers.map((block) => {
+        <ul className="td-layers-list td-layers-list--tree">
+          {visibleRows.map((row) => {
+            if (row.kind === "group") {
+              const active = selectionTreeRowIsActive(row, selectedIds);
+              const members = membersOfGroup(blocks, row.groupId);
+              const allHidden = members.length > 0 && members.every((m) => m.hidden === true);
+              const collapsed = collapsedGroups.has(row.groupId);
+              return (
+                <li
+                  key={`group:${row.groupId}`}
+                  className="td-layers-list__row td-layers-list__row--group"
+                >
+                  <button
+                    type="button"
+                    className="td-layers-list__twist"
+                    aria-label={collapsed ? "Expandir grupo" : "Recolher grupo"}
+                    onClick={() => toggleGroupCollapsed(row.groupId)}
+                  >
+                    {collapsed ? (
+                      <ChevronRight size={14} aria-hidden="true" />
+                    ) : (
+                      <ChevronDown size={14} aria-hidden="true" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={[
+                      "td-layers-list__item",
+                      "td-layers-list__item--group-node",
+                      active ? "td-layers-list__item--active" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    draggable
+                    onDragStart={() => setDragId(row.anchorId)}
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={() => onDrop(row.anchorId)}
+                    onClick={() => selectBlocksByIds(row.memberIds)}
+                    title="Selecionar grupo inteiro"
+                  >
+                    <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
+                    <FolderOpen size={14} className="td-layers-list__group-icon" aria-hidden="true" />
+                    <span className="td-layers-list__meta">
+                      <span className="td-layers-list__type">Grupo · {row.memberIds.length}</span>
+                      <span className="td-layers-list__summary">
+                        {members.map((member) => comunicadoBlockTypeLabel(member.type)).join(" · ")}
+                      </span>
+                    </span>
+                  </button>
+                  <HintAction hint={L.toggleVisibility} ariaLabel="Ajuda: Visibilidade do grupo">
+                    <button
+                      type="button"
+                      className="td-layers-list__eye"
+                      aria-label={allHidden ? "Mostrar grupo" : "Ocultar grupo"}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        toggleGroupHidden(row.groupId);
+                      }}
+                    >
+                      {allHidden ? (
+                        <EyeOff size={16} aria-hidden="true" />
+                      ) : (
+                        <Eye size={16} aria-hidden="true" />
+                      )}
+                    </button>
+                  </HintAction>
+                </li>
+              );
+            }
+
+            const block = row.block;
             const active = selectedIds.includes(block.id);
             const hideReason = resolveBlockStageHideReason(block, blocks);
             const hiddenOnStage = hideReason != null;
             const userHidden = block.hidden === true;
-            const inGroup = Boolean(block.groupId);
             return (
-              <li key={block.id} className="td-layers-list__row">
+              <li
+                key={block.id}
+                className={[
+                  "td-layers-list__row",
+                  row.depth > 0 ? "td-layers-list__row--child" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                style={row.depth > 0 ? { paddingLeft: 18 } : undefined}
+              >
+                {row.depth > 0 ? (
+                  <span className="td-layers-list__tree-guide" aria-hidden="true" />
+                ) : null}
                 <button
                   type="button"
                   className={[
                     "td-layers-list__item",
                     active ? "td-layers-list__item--active" : "",
-                    inGroup ? "td-layers-list__item--grouped" : "",
+                    row.depth > 0 ? "td-layers-list__item--child" : "",
                     userHidden ? "td-layers-list__item--user-hidden" : "",
                   ]
                     .filter(Boolean)
@@ -208,23 +332,21 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                       ? "Oculta no palco (fonte vinculada) — seleção vai para o visual ligado"
                       : userHidden
                         ? "Oculto pelo usuário"
-                        : inGroup
-                          ? "Membro de grupo — clique seleciona só este elemento"
+                        : row.depth > 0
+                          ? "Membro do grupo — clique seleciona só este; Shift adiciona"
                           : undefined
                   }
                 >
                   <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
                   <span className="td-layers-list__meta">
                     <span className="td-layers-list__type">
-                      {inGroup ? "↳ " : ""}
                       {comunicadoBlockTypeLabel(block.type)}
-                      {inGroup ? " · grupo" : ""}
                       {hiddenOnStage ? " · oculto" : ""}
                     </span>
                     <span className="td-layers-list__summary">{comunicadoBlockSummary(block)}</span>
                   </span>
                 </button>
-                <HintAction hint={L.toggleVisibility} ariaLabel={`Ajuda: Visibilidade`}>
+                <HintAction hint={L.toggleVisibility} ariaLabel="Ajuda: Visibilidade">
                   <button
                     type="button"
                     className="td-layers-list__eye"
@@ -236,9 +358,9 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                     }}
                   >
                     {userHidden || hiddenOnStage ? (
-                      <EyeOff size={16} aria-hidden="true" />
+                      <EyeOff size={16} strokeWidth={2.25} aria-hidden="true" />
                     ) : (
-                      <Eye size={16} aria-hidden="true" />
+                      <Eye size={16} strokeWidth={2.25} aria-hidden="true" />
                     )}
                   </button>
                 </HintAction>
@@ -247,19 +369,6 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
           })}
         </ul>
       )}
-      {selectedIds.length === 1 && blocks.find((block) => block.id === selectedIds[0])?.groupId ? (
-        <button
-          type="button"
-          className="td-btn td-btn--sm"
-          onClick={() => {
-            const id = selectedIds[0];
-            if (!id) return;
-            selectBlocksByIds(expandSelectionWithGroups(blocks, [id]));
-          }}
-        >
-          Selecionar grupo inteiro
-        </button>
-      ) : null}
       {selectedIds.length > 1 ? (
         <button type="button" className="td-btn td-btn--sm" onClick={() => selectBlocksByIds([selectedIds[0]!])}>
           Focar primeiro selecionado

@@ -2,7 +2,6 @@ import { useCallback, useRef, useState, type MutableRefObject } from "react";
 
 import {
   applyComplexBlockFrameWithTypography,
-  clampFrameForBlock,
   isComplexViewBlock,
   isConnectorShapeBlock,
   isLineShapeKind,
@@ -18,12 +17,12 @@ import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHist
 import { useCanvasBlockInteraction } from "../../components/useCanvasBlockInteraction";
 import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import { applyMultiFrameDelta } from "../../utils/multiFrameTransform";
-import { snapComunicadoFrame } from "../../utils/comunicadoSnap";
 import {
   peerFramesForSmartGuides,
   snapFrameToPeerBlocks,
   type SmartGuideLine,
 } from "../../utils/comunicadoSmartGuides";
+import { finalizeMultiFramesWithSnap } from "../../utils/finalizeMultiFramesWithSnap";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
 
@@ -245,28 +244,37 @@ export function useComunicadoEditorDrag({
 
       let nextBlocks = [...(configRef.current.blocks ?? [])];
       const draggedIds = new Set(idsToFinalize);
+      const snapMode = mode === "resize" ? "resize" : "move";
+      const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
+      const startFrames = new Map<string, ComunicadoBlock["frame"]>();
+      const currentById = new Map<string, ComunicadoBlock["frame"]>();
+      for (const id of idsToFinalize) {
+        const beforeBlock = before.blocks?.find((block) => block.id === id);
+        const current = nextBlocks.find((block) => block.id === id);
+        if (beforeBlock) startFrames.set(id, { ...beforeBlock.frame });
+        if (current) currentById.set(id, { ...current.frame });
+      }
+      /*
+       * Snap a objetos já roda no live. No fim: grade/clamp no primário e
+       * delta aos irmãos — evita encaixar cada membro e desalinhhar o grupo.
+       */
+      const snappedById = finalizeMultiFramesWithSnap({
+        blocks: nextBlocks,
+        ids: idsToFinalize,
+        primaryId: blockId,
+        startFrames,
+        currentById,
+        mode: snapMode,
+        snapToGrid: snapToGridRef.current,
+        snapPercents,
+      });
+
       for (const id of idsToFinalize) {
         const index = nextBlocks.findIndex((block) => block.id === id);
         if (index < 0) continue;
         const current = nextBlocks[index];
         const beforeBlock = before.blocks?.find((block) => block.id === id);
-        const snapMode = mode === "resize" ? "resize" : "move";
-        const snapPercents = stageGridSnapPercents(stageGridSizePercentRef.current);
-
-        let snappedFrame = current.frame;
-        let didSnap = false;
-        /*
-         * Snap a objetos já roda no live (`handleUpdateFrame`). Reaplicar no
-         * pointerup puxa o frame de novo (ex.: item centralizado “salta” ao soltar).
-         * No fim só grade / clamp.
-         */
-        if (snapToGridRef.current) {
-          snappedFrame = snapComunicadoFrame(current, snappedFrame, snapMode, snapPercents);
-          didSnap = true;
-        }
-        if (!didSnap) {
-          snappedFrame = clampFrameForBlock(current, snappedFrame);
-        }
+        const snappedFrame = snappedById.get(id) ?? current.frame;
 
         let updated: ComunicadoBlock;
         if (mode === "resize" && beforeBlock && isComplexViewBlock(beforeBlock)) {

@@ -1909,6 +1909,48 @@ body.td-composer--marqueeing *{
 .dashboard-tv-dashboard .td-layers-list__item--grouped .td-layers-list__type{
   color: var(--td-accent, #3b82f6);
 }
+.dashboard-tv-dashboard .td-layers-list__row--group{
+  gap: 0;
+}
+.dashboard-tv-dashboard .td-layers-list__row--child{
+  position: relative;
+}
+.dashboard-tv-dashboard .td-layers-list__twist{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 22px;
+  width: 22px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.85;
+}
+.dashboard-tv-dashboard .td-layers-list__twist:hover{
+  opacity: 1;
+  background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
+}
+.dashboard-tv-dashboard .td-layers-list__item--group-node .td-layers-list__type,
+.dashboard-tv-dashboard .td-layers-list__item--child .td-layers-list__type{
+  color: var(--td-accent, #3b82f6);
+}
+.dashboard-tv-dashboard .td-layers-list__group-icon{
+  flex: 0 0 auto;
+  color: var(--td-accent, #3b82f6);
+  opacity: 0.9;
+}
+.dashboard-tv-dashboard .td-layers-list__tree-guide{
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: color-mix(in srgb, var(--td-accent, #3b82f6) 28%, transparent);
+  border-radius: 1px;
+  pointer-events: none;
+}
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > .tdp-comunicado__block,
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > .td-composer__block,
 .dashboard-tv-dashboard .td-composer__block-wrap--selected > [class*="tdp-comunicado__block"]{
@@ -3887,21 +3929,32 @@ body.td-composer--marqueeing *{
   flex: 1 1 auto;
   min-width: 0;
 }
+.dashboard-tv-dashboard .td-layers-list__row--group .td-layers-list__item{
+  flex: 1 1 auto;
+}
 .dashboard-tv-dashboard .td-layers-list__eye{
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 28px;
+  width: 32px;
+  min-height: 32px;
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: inherit;
+  color: var(--td-text, inherit);
   cursor: pointer;
-  opacity: 0.75;
+  opacity: 0.9;
+}
+.dashboard-tv-dashboard .td-layers-list__eye svg{
+  display: block;
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
 }
 .dashboard-tv-dashboard .td-layers-list__eye:hover{
   opacity: 1;
+  color: var(--td-accent, #089bdb);
   background: color-mix(in srgb, var(--delpi-ui-accent, #089bdb) 12%, transparent);
 }
 .dashboard-tv-dashboard .td-layers-list__item--user-hidden{

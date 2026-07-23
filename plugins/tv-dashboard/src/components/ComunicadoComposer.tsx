@@ -544,7 +544,7 @@ export function ComunicadoComposerCanvas() {
       blockType: block?.type,
       isSelected: isBlockSelected(blockId),
       editingText: editingTextId === blockId,
-      closedGroupActive: Boolean(closedGroup),
+      closedGroupActive: Boolean(closedGroup?.memberIds.includes(blockId)),
       selectedPart: partForChrome,
     });
     if (!flags.showHandles) return false;

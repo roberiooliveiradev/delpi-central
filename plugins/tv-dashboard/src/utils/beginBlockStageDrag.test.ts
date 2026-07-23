@@ -93,4 +93,28 @@ describe("beginBlockStageMoveDrag", () => {
     expect(armMultiDragSelection).toHaveBeenCalledWith(["a", "b"]);
     expect(startDrag).toHaveBeenCalled();
   });
+
+  it("Alt+clique isola o membro mesmo fora da seleção pai", () => {
+    const a = fakeBlock("a", "grp");
+    const b = fakeBlock("b", "grp");
+    const selectBlock = vi.fn();
+    const armMultiDragSelection = vi.fn();
+    const startDrag = vi.fn();
+    const result = beginBlockStageMoveDrag({
+      event: fakeEvent({ altKey: true }),
+      block: a,
+      blocks: [a, b],
+      isBlockSelected: () => false,
+      selectedIds: [],
+      selectedId: null,
+      selectBlock,
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection,
+      startDrag,
+    });
+    expect(result).toBe(true);
+    expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
+    expect(armMultiDragSelection).toHaveBeenCalledWith(["a"]);
+    expect(startDrag).toHaveBeenCalled();
+  });
 });

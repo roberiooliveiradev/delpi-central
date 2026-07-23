@@ -20,6 +20,7 @@ type BeginBlockStageDragArgs = {
 /**
  * Seleção + arm de multi + startDrag move.
  * - Shift = toggle multi sem expandir grupo.
+ * - Alt = isola o membro (seleciona só ele) e arrasta.
  * - Ctrl/Cmd = remove o alvo da seleção (sem pan / sem isolar).
  * - 2º clique com seleção pai fechada = isola o membro clicado e arrasta só ele.
  * - Clique normal em membro = seleciona o grupo inteiro e arrasta juntos.
@@ -46,6 +47,13 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
   if (event.ctrlKey || event.metaKey) {
     selectBlock(block.id, { subtract: true, expandGroup: false });
     return false;
+  }
+
+  if (event.altKey && block.groupId) {
+    selectBlock(block.id, { expandGroup: false });
+    armMultiDragSelection([block.id]);
+    startDrag(event, block, "move");
+    return true;
   }
 
   const closed = resolveClosedGroupSelection(blocks, selectedIds);
