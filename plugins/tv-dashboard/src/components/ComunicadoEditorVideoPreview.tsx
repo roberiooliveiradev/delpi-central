@@ -5,6 +5,8 @@ import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import type { ComunicadoMediaBlock } from "@delpi/tv-dashboard-presentation";
 import { ComunicadoMediaPlaceholder } from "@delpi/tv-dashboard-presentation";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
+import { useComunicadoEditor } from "./comunicadoEditorContext";
+import { resolveEditorMediaUrl } from "./slideCardPreview";
 
 type VideoBlock = ComunicadoMediaBlock;
 
@@ -23,7 +25,9 @@ type Props = {
 };
 
 export function ComunicadoEditorVideoPreview({ block, style, className = "" }: Props) {
-  const { src, loading, error } = useAuthenticatedBlobUrl(block.url);
+  const { playlistId } = useComunicadoEditor();
+  const mediaUrl = resolveEditorMediaUrl(playlistId, block.assetId, block.url);
+  const { src, loading, error } = useAuthenticatedBlobUrl(mediaUrl);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -93,9 +97,9 @@ export function ComunicadoEditorVideoPreview({ block, style, className = "" }: P
   );
 
   let body: ReactNode;
-  if (!block.url) {
+  if (!mediaUrl) {
     body = <ComunicadoMediaPlaceholder kind="video" />;
-  } else if (loading) {
+  } else if (loading || (!src && !error)) {
     body = <ComunicadoMediaPlaceholder kind="video" state="loading" />;
   } else if (error || !src) {
     body = <ComunicadoMediaPlaceholder kind="video" state="error" />;

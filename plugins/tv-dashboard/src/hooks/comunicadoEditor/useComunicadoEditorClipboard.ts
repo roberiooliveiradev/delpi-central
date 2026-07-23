@@ -7,7 +7,8 @@ import {
   type DataSourceDuplicatePolicy,
 } from "@delpi/tv-dashboard-presentation";
 
-import { adminMediaUrl, uploadPlaylistMedia } from "../../api/tvDashboardApi";
+import { uploadPlaylistMedia } from "../../api/tvDashboardApi";
+import { resolveEditorMediaUrl } from "../../components/slideCardPreview";
 import { isEditableKeyboardTarget } from "../../keyboard";
 import { cloneBlocksForClipboard, pasteClipboardBlocks } from "../../utils/comunicadoEditorClipboard";
 import {
@@ -129,7 +130,7 @@ export function useComunicadoEditorClipboard({
         for (let index = 0; index < files.length; index += 1) {
           const file = files[index];
           const asset = await uploadPlaylistMedia(playlistId, file);
-          const url = adminMediaUrl(playlistId, asset.id);
+          const url = resolveEditorMediaUrl(playlistId, asset.id) ?? "";
           const block = createBlock("image");
           const col = index % 2;
           const row = Math.floor(index / 2);

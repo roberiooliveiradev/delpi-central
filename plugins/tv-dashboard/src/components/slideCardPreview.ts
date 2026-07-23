@@ -17,6 +17,89 @@ import {
 function displayMediaUrl(playlistId: string, assetId: string): string {
   return withBrowserMediaAccessToken(adminMediaUrl(playlistId, assetId));
 }
+
+/**
+ * Resolve URL de exibição no editor a partir de `assetId` (preferencial) ou `url`.
+ * Serialize omite `url` — sem isso o bloco fica no placeholder até re-enrich (troca de slide).
+ */
+export function resolveEditorMediaUrl(
+  playlistId: string,
+  assetId?: string | null,
+  url?: string | null,
+): string | undefined {
+  const trimmedAsset = typeof assetId === "string" ? assetId.trim() : "";
+  if (playlistId && trimmedAsset) {
+    return displayMediaUrl(playlistId, trimmedAsset);
+  }
+  const trimmedUrl = typeof url === "string" ? url.trim() : "";
+  return trimmedUrl ? withBrowserMediaAccessToken(trimmedUrl) : undefined;
+}
+
+/**
+ * Garante `url` de mídia no config em memória do editor (não persistido).
+ * Cobre insert/upload, undo via snapshot sem url e eco do pai só com assetId.
+ */
+export function ensureComunicadoEditorMediaUrls(
+  config: ComunicadoConfig,
+  playlistId: string,
+): ComunicadoConfig {
+  if (!playlistId) return config;
+
+  let changed = false;
+
+  let background = config.background;
+  if (background?.type === "image" && background.assetId) {
+    const url = displayMediaUrl(playlistId, background.assetId);
+    if (background.url !== url) {
+      background = { ...background, url };
+      changed = true;
+    }
+  }
+
+  let blocks = config.blocks;
+  if (blocks?.length) {
+    let blocksChanged = false;
+    const nextBlocks = blocks.map((block) => {
+      if ((block.type === "image" || block.type === "video") && block.assetId) {
+        const url = displayMediaUrl(playlistId, block.assetId);
+        if (block.url !== url) {
+          blocksChanged = true;
+          return { ...block, url };
+        }
+      }
+      return block;
+    });
+    if (blocksChanged) {
+      blocks = nextBlocks;
+      changed = true;
+    }
+  }
+
+  let customFonts = config.customFonts;
+  if (customFonts?.length) {
+    let fontsChanged = false;
+    const nextFonts = customFonts.map((font) => {
+      const url = displayMediaUrl(playlistId, font.assetId);
+      if (font.url !== url) {
+        fontsChanged = true;
+        return { ...font, url };
+      }
+      return font;
+    });
+    if (fontsChanged) {
+      customFonts = nextFonts;
+      changed = true;
+    }
+  }
+
+  if (!changed) return config;
+  return {
+    ...config,
+    ...(background !== config.background ? { background } : {}),
+    ...(blocks !== config.blocks ? { blocks } : {}),
+    ...(customFonts !== config.customFonts ? { customFonts } : {}),
+  };
+}
 /**
  * Serializa o config do editor com `resolved` dos blocos de dados/views —
  * necessário para o filmstrip ser o print do palco (gráficos/tabelas ao vivo).

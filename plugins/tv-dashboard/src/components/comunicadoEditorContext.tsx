@@ -46,7 +46,11 @@ import { useComunicadoEditorKeyboard } from "../hooks/useComunicadoEditorKeyboar
 import { useSyncViewDataLinks } from "../hooks/useSyncViewDataLinks";
 import { resolveViewportPixelSize } from "../utils/viewportPixelSize";
 import { MediaLibraryModal } from "./MediaLibraryModal";
-import { enrichComunicadoConfigForEditor, resolveMasterForPreview } from "./slideCardPreview";
+import {
+  enrichComunicadoConfigForEditor,
+  ensureComunicadoEditorMediaUrls,
+  resolveMasterForPreview,
+} from "./slideCardPreview";
 import {
   ComunicadoEditorContext,
   useComunicadoEditor,
@@ -313,18 +317,20 @@ export function ComunicadoEditorProvider({
 
   const applyConfig = useCallback(
     (next: ComunicadoConfig, options?: { persist?: boolean }) => {
+      // Serialize omite url; re-injetar no estado local evita placeholder até troca de slide.
+      const withMedia = ensureComunicadoEditorMediaUrls(next, playlistId);
       // Atualiza o ref no mesmo tick — consumidores encadeados (ex.: input + dataFilters)
       // não devem ler o config prévio e sobrescrever a primeira edição.
-      configRef.current = next;
-      setConfig(next);
-      const serialized = serializeComunicadoConfig(next);
+      configRef.current = withMedia;
+      setConfig(withMedia);
+      const serialized = serializeComunicadoConfig(withMedia);
       lastEmittedFingerprintRef.current = fingerprintComunicadoValue(serialized);
       // Live (drag/resize) atualiza eco WS/preview sem disparar autosave a cada pointermove.
       deckHistory?.setLiveComunicadoConfig(serialized);
       if (options?.persist === false) return;
       onChange(serialized);
     },
-    [deckHistory, onChange],
+    [deckHistory, onChange, playlistId],
   );
 
   const {
@@ -396,6 +402,12 @@ export function ComunicadoEditorProvider({
         forceAccept: forceAcceptFromHistory || forceAcceptFromRemote,
       })
     ) {
+      // Eco rejeitado ainda pode ter perdido url no estado local (undo/snapshot).
+      const ensured = ensureComunicadoEditorMediaUrls(configRef.current, playlistId);
+      if (ensured !== configRef.current) {
+        configRef.current = ensured;
+        setConfig(ensured);
+      }
       return;
     }
 

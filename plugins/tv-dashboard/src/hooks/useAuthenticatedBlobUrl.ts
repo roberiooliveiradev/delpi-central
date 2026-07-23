@@ -9,7 +9,7 @@ export function useAuthenticatedBlobUrl(apiUrl: string | undefined): {
   error: boolean;
 } {
   const [src, setSrc] = useState<string | undefined>();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => Boolean(apiUrl));
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -29,8 +29,13 @@ export function useAuthenticatedBlobUrl(apiUrl: string | undefined): {
     void httpGetBlob(apiUrl)
       .then((blob) => {
         if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setSrc(objectUrl);
+        const next = URL.createObjectURL(blob);
+        if (cancelled) {
+          URL.revokeObjectURL(next);
+          return;
+        }
+        objectUrl = next;
+        setSrc(next);
         setLoading(false);
       })
       .catch(() => {

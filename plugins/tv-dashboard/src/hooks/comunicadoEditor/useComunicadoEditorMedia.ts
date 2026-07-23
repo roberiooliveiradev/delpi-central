@@ -7,8 +7,9 @@ import {
   type ComunicadoConfig,
 } from "@delpi/tv-dashboard-presentation";
 
-import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../../api/tvDashboardApi";
+import { uploadPlaylistMedia, type MediaAsset } from "../../api/tvDashboardApi";
 import type { MediaLibraryTarget } from "../../components/comunicadoEditorTypes";
+import { resolveEditorMediaUrl } from "../../components/slideCardPreview";
 import {
   dataTransferHasImageFiles,
   firstDataTransferImageFile,
@@ -57,7 +58,7 @@ export function useComunicadoEditorMedia({
   const applyMediaAsset = useCallback(
     (asset: MediaAsset, target?: MediaLibraryTarget) => {
       const resolvedTarget = target ?? mediaLibraryTargetRef.current;
-      const url = adminMediaUrl(playlistId, asset.id);
+      const url = resolveEditorMediaUrl(playlistId, asset.id) ?? "";
 
       if (resolvedTarget === "custom-font" || asset.mediaKind === "font") {
         const familyName = fontFamilyFromFilename(asset.originalName ?? asset.storedName);

@@ -4,7 +4,9 @@ import type { Slide } from "../api/tvDashboardApi";
 import {
   buildFilmstripSlidesWithThumbnailCache,
   buildSlideThumbnailNative,
+  ensureComunicadoEditorMediaUrls,
   externalSlideHost,
+  resolveEditorMediaUrl,
   serializeComunicadoConfigForThumbnail,
 } from "./slideCardPreview";
 
@@ -50,6 +52,31 @@ describe("slideCardPreview", () => {
     });
     const data = native?.data as { blocks?: Array<{ content?: string }> };
     expect(data.blocks?.[0]?.content).toBe("Ao vivo");
+  });
+
+  it("ensureComunicadoEditorMediaUrls re-injeta url a partir do assetId", () => {
+    const ensured = ensureComunicadoEditorMediaUrls(
+      {
+        version: 2,
+        blocks: [
+          {
+            id: "img-1",
+            type: "image",
+            assetId: "asset-9",
+            frame: { x: 0, y: 0, w: 20, h: 20 },
+            style: {},
+          },
+        ],
+      } as never,
+      "playlist-9",
+    );
+    expect(ensured.blocks?.[0]).toMatchObject({
+      assetId: "asset-9",
+      url: "/apps/tv-dashboard-api/playlists/playlist-9/media/asset-9",
+    });
+    expect(resolveEditorMediaUrl("playlist-9", "asset-9")).toBe(
+      "/apps/tv-dashboard-api/playlists/playlist-9/media/asset-9",
+    );
   });
 
   it("monta preview de comunicado com URL admin para mídia", () => {

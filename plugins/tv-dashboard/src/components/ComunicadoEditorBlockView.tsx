@@ -86,6 +86,7 @@ import { useComunicadoEditor } from "./comunicadoEditorContext";
 import { startLiveBlockPatchGesture } from "../utils/comunicadoLiveBlockGesture";
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
+import { resolveEditorMediaUrl } from "./slideCardPreview";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 type Props = {
@@ -107,7 +108,9 @@ function EditorImageBlock({
   className?: string;
   isSelected?: boolean;
 }) {
-  const { src, loading, error } = useAuthenticatedBlobUrl(block.url);
+  const { playlistId } = useComunicadoEditor();
+  const mediaUrl = resolveEditorMediaUrl(playlistId, block.assetId, block.url);
+  const { src, loading, error } = useAuthenticatedBlobUrl(mediaUrl);
 
   const blockClass = ensureComunicadoDualClass(
     [
@@ -132,9 +135,9 @@ function EditorImageBlock({
           alt=""
           style={comunicadoImageCropCssProperties(block.imageCrop, fit)}
         />
-      ) : block.url && loading ? (
+      ) : mediaUrl && (loading || !error) ? (
         <ComunicadoMediaPlaceholder kind="image" state="loading" />
-      ) : block.url && error ? (
+      ) : mediaUrl && error ? (
         <ComunicadoMediaPlaceholder kind="image" state="error" />
       ) : (
         <ComunicadoMediaPlaceholder kind="image" />
