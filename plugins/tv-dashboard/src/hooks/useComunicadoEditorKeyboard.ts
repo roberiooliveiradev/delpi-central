@@ -2,7 +2,11 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import type { ComunicadoEditorKeyboardActions } from "../components/comunicadoEditorTypes";
 import { isEditableKeyboardTarget, useEditorShortcut } from "../keyboard";
-import { resolveStageEscapeAction } from "../utils/stageInteractionPolicy";
+import {
+  resolveStageEnterKeyAction,
+  resolveStageEscapeAction,
+  resolveStageF2KeyAction,
+} from "../utils/stageInteractionPolicy";
 
 /** Atalhos do editor — recebe ações do provider (sem importar o contexto, evita ciclo ESM). */
 export function useComunicadoEditorKeyboard({
@@ -11,6 +15,9 @@ export function useComunicadoEditorKeyboard({
   hasPartSelection = false,
   clearPartSelection,
   clearSelection,
+  enterTextEdit,
+  exitTextEdit,
+  isolateChild,
   blocks = [],
   selectBlocksByIds,
   undo,
@@ -35,8 +42,22 @@ export function useComunicadoEditorKeyboard({
   useEditorShortcut(
     "comunicado-editor",
     (event) => {
-      if (isEditableKeyboardTarget(event.target)) return;
-      if (editingTextId) return;
+      if (isEditableKeyboardTarget(event.target)) {
+        /* Em contentEditable, F2 ainda alterna para seleção do objeto (PowerPoint). */
+        if (editingTextId && event.key === "F2") {
+          exitTextEdit?.();
+          return { handled: true };
+        }
+        return;
+      }
+
+      if (editingTextId) {
+        if (event.key === "F2") {
+          exitTextEdit?.();
+          return { handled: true };
+        }
+        return;
+      }
 
       const mod = event.ctrlKey || event.metaKey;
       const key = event.key.toLowerCase();
@@ -57,6 +78,34 @@ export function useComunicadoEditorKeyboard({
         }
         if (escape.type === "clear-selection") {
           clearSelection?.();
+          return { handled: true };
+        }
+      }
+
+      if (event.key === "F2") {
+        const action = resolveStageF2KeyAction({
+          blocks,
+          selectedIds,
+          editingTextId,
+        });
+        if (action.type === "enter-text-edit") {
+          enterTextEdit?.(action.blockId);
+          return { handled: true };
+        }
+        if (action.type === "exit-text-edit") {
+          exitTextEdit?.();
+          return { handled: true };
+        }
+      }
+
+      if (event.key === "Enter" && !mod) {
+        const action = resolveStageEnterKeyAction({ blocks, selectedIds });
+        if (action.type === "enter-text-edit") {
+          enterTextEdit?.(action.blockId);
+          return { handled: true };
+        }
+        if (action.type === "isolate-child") {
+          isolateChild?.(action.blockId);
           return { handled: true };
         }
       }

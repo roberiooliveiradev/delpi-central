@@ -12,6 +12,12 @@ export type ComunicadoEditorKeyboardActions = {
   hasPartSelection?: boolean;
   clearPartSelection?: () => void;
   clearSelection?: () => void;
+  /** Isola e entra em edição inline (F2 / Enter em texto). */
+  enterTextEdit?: (blockId: string) => void;
+  /** Sai da edição inline (F2 toggle). */
+  exitTextEdit?: () => void;
+  /** Isola filho sem expandir grupo (Enter em grupo). */
+  isolateChild?: (blockId: string) => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;

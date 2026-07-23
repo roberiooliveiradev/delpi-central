@@ -4,6 +4,8 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import {
   isInlineTextEditableBlock,
   resolveStageDblClickAction,
+  resolveStageEnterKeyAction,
+  resolveStageF2KeyAction,
   shouldArmTapDeselectOnDragCurrent,
 } from "./stageInteractionPolicy";
 
@@ -104,5 +106,41 @@ describe("stageInteractionPolicy dblclick", () => {
   it("shouldArmTapDeselectOnDragCurrent só para não-texto", () => {
     expect(shouldArmTapDeselectOnDragCurrent(groupedText)).toBe(false);
     expect(shouldArmTapDeselectOnDragCurrent(groupedIcon)).toBe(true);
+  });
+});
+
+describe("stageInteractionPolicy teclado", () => {
+  it("Enter em grupo fechado edita texto focado ou isola ícone", () => {
+    expect(
+      resolveStageEnterKeyAction({
+        blocks,
+        selectedIds: ["t1", "i1", "h1"],
+      }),
+    ).toEqual({ type: "enter-text-edit", blockId: "h1" });
+
+    expect(
+      resolveStageEnterKeyAction({
+        blocks,
+        selectedIds: ["t1", "i1"],
+      }),
+    ).toEqual({ type: "isolate-child", blockId: "i1" });
+  });
+
+  it("F2 entra e sai da edição de texto", () => {
+    expect(
+      resolveStageF2KeyAction({
+        blocks,
+        selectedIds: ["t1"],
+        editingTextId: null,
+      }),
+    ).toEqual({ type: "enter-text-edit", blockId: "t1" });
+
+    expect(
+      resolveStageF2KeyAction({
+        blocks,
+        selectedIds: ["t1"],
+        editingTextId: "t1",
+      }),
+    ).toEqual({ type: "exit-text-edit" });
   });
 });

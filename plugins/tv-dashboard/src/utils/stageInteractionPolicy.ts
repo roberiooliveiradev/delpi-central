@@ -71,6 +71,57 @@ export function resolveStageDblClickAction(params: {
   return { type: "isolate-child", blockId: block.id };
 }
 
+/**
+ * Enter (Figma): desce um nível — grupo fechado → isola foco; texto simples → edita.
+ */
+export function resolveStageEnterKeyAction(params: {
+  blocks: ComunicadoBlock[];
+  selectedIds: string[];
+}): StageDblClickAction {
+  const { blocks, selectedIds } = params;
+  if (selectedIds.length === 0) return { type: "none" };
+
+  const closed = resolveClosedGroupSelection(blocks, selectedIds);
+  if (closed) {
+    const focusId = selectedIds[selectedIds.length - 1];
+    const focus =
+      blocks.find((item) => item.id === focusId && item.groupId === closed.groupId) ??
+      blocks.find((item) => item.id === closed.memberIds[0]);
+    if (!focus) return { type: "none" };
+    if (isInlineTextEditableBlock(focus)) {
+      return { type: "enter-text-edit", blockId: focus.id };
+    }
+    return { type: "isolate-child", blockId: focus.id };
+  }
+
+  if (selectedIds.length === 1) {
+    const block = blocks.find((item) => item.id === selectedIds[0]);
+    if (block && isInlineTextEditableBlock(block)) {
+      return { type: "enter-text-edit", blockId: block.id };
+    }
+  }
+
+  return { type: "none" };
+}
+
+/**
+ * F2 (PowerPoint): entra em edição de texto do bloco focado, se editável.
+ */
+export function resolveStageF2KeyAction(params: {
+  blocks: ComunicadoBlock[];
+  selectedIds: string[];
+  editingTextId: string | null;
+}): { type: "enter-text-edit"; blockId: string } | { type: "exit-text-edit" } | { type: "none" } {
+  if (params.editingTextId) {
+    return { type: "exit-text-edit" };
+  }
+  if (params.selectedIds.length === 0) return { type: "none" };
+  const focusId = params.selectedIds[params.selectedIds.length - 1];
+  const block = params.blocks.find((item) => item.id === focusId);
+  if (!block || !isInlineTextEditableBlock(block)) return { type: "none" };
+  return { type: "enter-text-edit", blockId: block.id };
+}
+
 /** Facade — pointerdown de bloco no palco. */
 export function resolveStagePointerDownAction(
   params: Parameters<typeof resolveGroupedBlockPointerDownAction>[0],
