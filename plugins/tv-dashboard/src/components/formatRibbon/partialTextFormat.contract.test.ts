@@ -32,9 +32,13 @@ describe("partial text format (ribbon → contentRuns)", () => {
 
   it("texto e forma registram applyPartialStylePatch no bridge", () => {
     expect(textBlock).toContain("applyPartialStylePatch");
-    expect(textBlock).toContain("applyContentRunStyleInRange");
+    expect(textBlock).toContain("useVisualBoxTextEditorBridge");
     expect(shapeBlock).toContain("applyPartialStylePatch");
-    expect(shapeBlock).toContain("applyContentRunStyleInRange");
+    expect(shapeBlock).toContain("useVisualBoxTextEditorBridge");
     expect(shapeBlock).toContain("contentRunsFromEditableRoot");
+  });
+
+  it("limpar formatação usa clearVisualBoxTextFormatting (zera runs)", () => {
+    expect(typography).toContain("clearVisualBoxTextFormatting");
   });
 });

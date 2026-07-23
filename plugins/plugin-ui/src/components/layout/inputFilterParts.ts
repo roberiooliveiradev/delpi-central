@@ -54,6 +54,10 @@ export type InputPartState = {
   visible?: boolean;
   style?: InputPartStyle;
   frame?: InputPartFrame;
+  /** Rótulo/badge editável (override do schema). */
+  content?: string;
+  /** Formatação parcial (TextRun) do rótulo/badge. */
+  contentRuns?: import("../rich-text/deckContentRuns").DeckContentRun[];
 };
 
 export type InputPartsMap = Record<string, InputPartState>;

@@ -1,7 +1,13 @@
 import type { CSSProperties, ReactNode } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { HelpTooltip } from "../help/HelpTooltip";
+import {
+  DeckContentRunsView,
+  plainTextFromDeckContentRuns,
+  shouldPersistDeckContentRuns,
+  type DeckContentRun,
+} from "../rich-text/deckContentRuns";
 import {
   isAutomaticTextColor,
   resolveAutomaticTextColor,
@@ -297,6 +303,78 @@ function KpiSparklineSvg({ points }: { points: number[] }) {
       <path d={d} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
+}
+
+function KpiPartRichEditor({
+  partRef,
+  content,
+  contentRuns,
+  interaction,
+  className,
+}: {
+  partRef: { kind: "title" | "hint" };
+  content: string;
+  contentRuns?: DeckContentRun[];
+  interaction?: KpiCardInteraction | null;
+  className?: string;
+}) {
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    interaction?.onPartEditableMount?.(partRef, el);
+    const html =
+      interaction?.renderPartEditorHtml?.(partRef, content, contentRuns) ??
+      escapeHtml(content || "\u00a0");
+    el.innerHTML = html;
+    el.focus();
+    return () => interaction?.onPartEditableMount?.(partRef, null);
+    // Só na montagem da edição — não reescrever a cada keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only editor seed
+  }, []);
+
+  const commit = () => {
+    const el = editorRef.current;
+    if (!el) return;
+    const runs = interaction?.parsePartEditorRuns?.(partRef, el);
+    const nextContent = runs
+      ? plainTextFromDeckContentRuns(runs).replace(/\u00a0/g, " ").trim()
+      : (el.textContent ?? "").replace(/\u00a0/g, " ").trim();
+    const meta =
+      runs && shouldPersistDeckContentRuns(runs) ? { contentRuns: runs } : { contentRuns: undefined };
+    interaction?.onPartContentCommit?.(partRef, nextContent, meta);
+  };
+
+  return (
+    <div
+      ref={editorRef}
+      className={className}
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-label={partRef.kind === "title" ? "Editar título" : "Editar subtítulo"}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          (event.target as HTMLElement).blur();
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          interaction?.onPartEditCancel?.();
+        }
+      }}
+    />
+  );
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export function DelpiKpiCard({
@@ -613,21 +691,12 @@ export function DelpiKpiCard({
                 onDoubleClick={titlePtr.onDoubleClick}
               >
                 {titlePtr.editing ? (
-                  <input
+                  <KpiPartRichEditor
+                    partRef={{ kind: "title" }}
+                    content={titleContent}
+                    contentRuns={titleState?.contentRuns}
+                    interaction={interaction}
                     className="delpi-kpi-card__edit"
-                    defaultValue={titleContent}
-                    autoFocus
-                    onBlur={(event) => interaction?.onPartContentCommit?.({ kind: "title" }, event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        (event.target as HTMLInputElement).blur();
-                      }
-                      if (event.key === "Escape") {
-                        event.preventDefault();
-                        interaction?.onPartEditCancel?.();
-                      }
-                    }}
                   />
                 ) : titleUsesFitText ? (
                   <>
@@ -637,7 +706,10 @@ export function DelpiKpiCard({
                       maxPx={120}
                       className="delpi-kpi-card__title-fit"
                     >
-                      {titleContent}
+                      <DeckContentRunsView
+                        content={titleContent}
+                        contentRuns={titleState?.contentRuns}
+                      />
                     </FitText>
                     {titleHint && DELPI_KPI_CLASS_NAMES.labelHelp ? (
                       <HelpTooltip
@@ -649,7 +721,10 @@ export function DelpiKpiCard({
                   </>
                 ) : (
                   <>
-                    {titleContent}
+                    <DeckContentRunsView
+                      content={titleContent}
+                      contentRuns={titleState?.contentRuns}
+                    />
                     {titleHint && DELPI_KPI_CLASS_NAMES.labelHelp ? (
                       <HelpTooltip
                         content={titleHint}
@@ -827,24 +902,18 @@ export function DelpiKpiCard({
                 onDoubleClick={hintPtr.onDoubleClick}
               >
                 {hintPtr.editing ? (
-                  <input
+                  <KpiPartRichEditor
+                    partRef={{ kind: "hint" }}
+                    content={hintContent}
+                    contentRuns={hintState?.contentRuns}
+                    interaction={interaction}
                     className="delpi-kpi-card__edit"
-                    defaultValue={hintContent}
-                    autoFocus
-                    onBlur={(event) => interaction?.onPartContentCommit?.({ kind: "hint" }, event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        (event.target as HTMLInputElement).blur();
-                      }
-                      if (event.key === "Escape") {
-                        event.preventDefault();
-                        interaction?.onPartEditCancel?.();
-                      }
-                    }}
                   />
                 ) : (
-                  hintContent
+                  <DeckContentRunsView
+                    content={hintContent}
+                    contentRuns={hintState?.contentRuns}
+                  />
                 )}
                 <KpiPartResizeHandles
                   visible={hintShowResize}

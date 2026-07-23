@@ -90,7 +90,14 @@ import { startLiveBlockPatchGesture } from "../utils/comunicadoLiveBlockGesture"
 import { ComunicadoEditorVisualBoxBlock } from "./ComunicadoEditorVisualBoxBlock";
 import { ComunicadoEditorVideoPreview } from "./ComunicadoEditorVideoPreview";
 import { resolveEditorMediaUrl } from "./slideCardPreview";
-import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
+import { ensureComunicadoDualClass, type DeckContentRun } from "@delpi/plugin-ui/index";
+import {
+  createPartTextEditorBridge,
+  parsePartEditorRuns,
+  renderPartEditorHtml,
+  syncPartFieldsFromRuns,
+  toDeckContentRuns,
+} from "../utils/partTextEditorBridge";
 
 type Props = {
   block: ComunicadoBlock;
@@ -180,6 +187,8 @@ function EditorChartViewBlock({
     blocks,
     startDrag,
     armMultiDragSelection,
+    registerTextEditorBridge,
+    reportTextEditSelection,
   } = useComunicadoEditor();
 
   /**
@@ -281,17 +290,25 @@ function EditorChartViewBlock({
   );
 
   const onPartContentCommit = useCallback(
-    (ref: ComunicadoChartPartRef, content: string) => {
+    (
+      ref: ComunicadoChartPartRef,
+      content: string,
+      meta?: { contentRuns?: DeckContentRun[] },
+    ) => {
       if (
         editingChartPart &&
         ref.kind === editingChartPart.kind &&
         (ref.kind !== "axisTitle" ||
           (editingChartPart.kind === "axisTitle" && ref.axis === editingChartPart.axis))
       ) {
-        commitChartPartContent(content);
+        commitChartPartContent(content, meta);
         return;
       }
-      const nextParts = upsertChartPartState(block.chartParts, ref, { content, visible: true });
+      const nextParts = upsertChartPartState(block.chartParts, ref, {
+        content,
+        contentRuns: meta?.contentRuns,
+        visible: true,
+      });
       const nextOptions = mergeComunicadoChartOptions({
         ...block.chartOptions,
         ...partsToChartOptions(nextParts),
@@ -314,6 +331,41 @@ function EditorChartViewBlock({
       } as Partial<ComunicadoBlock>);
     },
     [block, commitChartPartContent, editingChartPart, updateBlock],
+  );
+
+  const onChartPartEditableMount = useCallback(
+    (ref: ComunicadoChartPartRef, element: HTMLElement | null) => {
+      const prev = element as (HTMLElement & { __delpiPartSelCleanup?: () => void }) | null;
+      if (!element) {
+        prev?.__delpiPartSelCleanup?.();
+        registerTextEditorBridge(block.id, null);
+        reportTextEditSelection(null);
+        return;
+      }
+      const bridge = createPartTextEditorBridge({
+        blockId: block.id,
+        editor: element,
+        reportTextEditSelection,
+        onRunsCommit: (runs) => {
+          const synced = syncPartFieldsFromRuns(runs);
+          const nextParts = upsertChartPartState(block.chartParts, ref, {
+            content: synced.content,
+            contentRuns: toDeckContentRuns(runs),
+            visible: true,
+          });
+          updateBlock(block.id, { chartParts: nextParts } as Partial<ComunicadoBlock>);
+        },
+      });
+      registerTextEditorBridge(block.id, bridge);
+      const onSel = () => bridge.refreshSelectionState?.();
+      element.addEventListener("keyup", onSel);
+      element.addEventListener("mouseup", onSel);
+      (element as HTMLElement & { __delpiPartSelCleanup?: () => void }).__delpiPartSelCleanup = () => {
+        element.removeEventListener("keyup", onSel);
+        element.removeEventListener("mouseup", onSel);
+      };
+    },
+    [block.chartParts, block.id, registerTextEditorBridge, reportTextEditSelection, updateBlock],
   );
 
   const onPartMovePointerDown = useCallback(
@@ -461,6 +513,14 @@ function EditorChartViewBlock({
           onPartMovePointerDown,
           onPartResizePointerDown,
           onPartFrameChange,
+          onPartEditableMount: onChartPartEditableMount,
+          renderPartEditorHtml: (
+            _ref: ComunicadoChartPartRef,
+            content: string,
+            contentRuns?: DeckContentRun[],
+          ) => renderPartEditorHtml(content, contentRuns),
+          parsePartEditorRuns: (_ref: ComunicadoChartPartRef, root: HTMLElement) =>
+            parsePartEditorRuns(root),
         }
       : null;
 
@@ -705,6 +765,8 @@ function EditorKpiViewBlock({
     blocks,
     startDrag,
     armMultiDragSelection,
+    registerTextEditorBridge,
+    reportTextEditSelection,
   } = useComunicadoEditor();
 
   const onPartPointerDown = useCallback(
@@ -788,13 +850,18 @@ function EditorKpiViewBlock({
   );
 
   const onPartContentCommit = useCallback(
-    (part: ComunicadoKpiPartRef, content: string) => {
+    (
+      part: ComunicadoKpiPartRef,
+      content: string,
+      meta?: { contentRuns?: DeckContentRun[] },
+    ) => {
       if (editingKpiPart && editingKpiPart.kind === part.kind) {
-        commitKpiPartContent(content);
+        commitKpiPartContent(content, meta);
         return;
       }
       const nextParts = upsertKpiPartState(block.kpiParts, part, {
         content,
+        contentRuns: meta?.contentRuns,
         visible: true,
       });
       const nextOptions = {
@@ -809,6 +876,39 @@ function EditorKpiViewBlock({
       } as Partial<ComunicadoBlock>);
     },
     [block, commitKpiPartContent, editingKpiPart, updateBlock],
+  );
+
+  const onKpiPartEditableMount = useCallback(
+    (part: ComunicadoKpiPartRef, element: HTMLElement | null) => {
+      if (!element) {
+        registerTextEditorBridge(block.id, null);
+        reportTextEditSelection(null);
+        return;
+      }
+      const bridge = createPartTextEditorBridge({
+        blockId: block.id,
+        editor: element,
+        reportTextEditSelection,
+        onRunsCommit: (runs) => {
+          const synced = syncPartFieldsFromRuns(runs);
+          const nextParts = upsertKpiPartState(block.kpiParts, part, {
+            content: synced.content,
+            contentRuns: toDeckContentRuns(runs),
+            visible: true,
+          });
+          updateBlock(block.id, { kpiParts: nextParts } as Partial<ComunicadoBlock>);
+        },
+      });
+      registerTextEditorBridge(block.id, bridge);
+      const onSel = () => bridge.refreshSelectionState?.();
+      element.addEventListener("keyup", onSel);
+      element.addEventListener("mouseup", onSel);
+      (element as HTMLElement & { __delpiPartSelCleanup?: () => void }).__delpiPartSelCleanup = () => {
+        element.removeEventListener("keyup", onSel);
+        element.removeEventListener("mouseup", onSel);
+      };
+    },
+    [block.id, block.kpiParts, registerTextEditorBridge, reportTextEditSelection, updateBlock],
   );
 
   const onPartMovePointerDown = useCallback(
@@ -1021,6 +1121,14 @@ function EditorKpiViewBlock({
           onPartResizePointerDown,
           onPartFrameChange,
           onPartCornerAdjustPointerDown,
+          onPartEditableMount: onKpiPartEditableMount,
+          renderPartEditorHtml: (
+            _ref: ComunicadoKpiPartRef,
+            content: string,
+            contentRuns?: DeckContentRun[],
+          ) => renderPartEditorHtml(content, contentRuns),
+          parsePartEditorRuns: (_ref: ComunicadoKpiPartRef, root: HTMLElement) =>
+            parsePartEditorRuns(root),
         }
       : null;
 

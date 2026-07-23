@@ -6,3 +6,10 @@ export {
   RICH_TEXT_FONT_SIZE_DEFAULT,
   RICH_TEXT_FONT_SIZE_PRESETS,
 } from "./richTextConfig";
+export {
+  DeckContentRunsView,
+  plainTextFromDeckContentRuns,
+  shouldPersistDeckContentRuns,
+  type DeckContentRun,
+  type DeckContentRunStyle,
+} from "./deckContentRuns";

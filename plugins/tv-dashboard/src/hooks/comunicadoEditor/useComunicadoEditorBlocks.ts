@@ -627,7 +627,10 @@ export function useComunicadoEditorBlocks({
   );
 
   const commitChartPartContent = useCallback(
-    (content: string) => {
+    (
+      content: string,
+      meta?: { contentRuns?: import("@delpi/plugin-ui/index").DeckContentRun[] },
+    ) => {
       const part = editingChartPart;
       const blockId = selectedIds[selectedIds.length - 1] ?? null;
       setEditingChartPart(null);
@@ -637,6 +640,7 @@ export function useComunicadoEditorBlocks({
 
       const nextParts = upsertChartPartState(block.chartParts, part, {
         content,
+        contentRuns: meta?.contentRuns,
         visible: true,
       });
       const nextOptions = mergeComunicadoChartOptions({
@@ -665,7 +669,10 @@ export function useComunicadoEditorBlocks({
   );
 
   const commitKpiPartContent = useCallback(
-    (content: string) => {
+    (
+      content: string,
+      meta?: { contentRuns?: import("@delpi/plugin-ui/index").DeckContentRun[] },
+    ) => {
       const part = editingKpiPart;
       const blockId = selectedIds[selectedIds.length - 1] ?? null;
       setEditingKpiPart(null);
@@ -717,6 +724,7 @@ export function useComunicadoEditorBlocks({
 
       const nextParts = upsertKpiPartState(block.kpiParts, part, {
         content,
+        contentRuns: meta?.contentRuns,
         visible: true,
       });
       const nextOptions = mergeComunicadoKpiOptions({

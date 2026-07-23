@@ -27,6 +27,7 @@ import {
   KPI_PART_FONT_SIZE_DEFAULTS,
   buildTextDecoration,
   clampFontSize,
+  clearVisualBoxTextFormatting,
   listComunicadoFontFamilyOptions,
   defaultNamedStyleForBlockType,
   ensureComunicadoGoogleFontsLoaded,
@@ -216,12 +217,19 @@ export function FormatRibbonTypographySections({
                     chartPartKind as keyof typeof CHART_PART_FONT_SIZE_DEFAULTS
                   ]
                 : 9;
+  const partEditBridgeActive =
+    textFormatTarget.mode === "part" &&
+    Boolean(selected) &&
+    textEditSelection &&
+    textEditSelection.blockId === selected?.id &&
+    textEditSelection.end > textEditSelection.start;
   const partialTextSelectionActive = Boolean(
-    visualBoxBlock &&
+    (visualBoxBlock &&
       editingTextId === visualBoxBlock.id &&
       textEditSelection &&
       textEditSelection.blockId === visualBoxBlock.id &&
-      textEditSelection.end > textEditSelection.start,
+      textEditSelection.end > textEditSelection.start) ||
+      partEditBridgeActive,
   );
   const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {
     if (partialTextSelectionActive) {
@@ -302,28 +310,41 @@ export function FormatRibbonTypographySections({
     ? textEditSelectionStyle?.strikethrough === true ||
       textEditSelectionStyle?.strikethrough === "mixed"
     : blockDecorationFlags.strikethrough;
-  const listSelectionState = textBlock
-    ? editingTextId === textBlock.id && textEditListSelection
+  const listSelectionState = visualBoxBlock
+    ? editingTextId === visualBoxBlock.id && textEditListSelection
       ? textEditListSelection
       : selectionListTypeState(
-          resolveTextBlockDisplayRuns(textBlock),
+          resolveTextBlockDisplayRuns({
+            content: visualBoxBlock.content ?? "",
+            contentRuns: visualBoxBlock.contentRuns,
+            textProjection: visualBoxBlock.textProjection,
+            resolved: "resolved" in visualBoxBlock ? visualBoxBlock.resolved : undefined,
+          }),
           0,
-          Math.max(0, textBlock.content.length),
+          Math.max(0, (visualBoxBlock.content ?? "").length),
         )
     : null;
   const bulletListActive =
     listSelectionState?.bullet === true || listSelectionState?.bullet === "mixed";
   const orderedListActive =
     listSelectionState?.ordered === true || listSelectionState?.ordered === "mixed";
-  const namedStyleSelection = textBlock
-    ? editingTextId === textBlock.id && textEditNamedStyleSelection
+  const namedStyleSelection = visualBoxBlock
+    ? editingTextId === visualBoxBlock.id && textEditNamedStyleSelection
       ? textEditNamedStyleSelection
-      : resolveNamedStyleSelectionForBlock(textBlock, 0, Math.max(0, textBlock.content.length))
+      : resolveNamedStyleSelectionForBlock(
+          {
+            type: visualBoxBlock.type === "heading" ? "heading" : "text",
+            content: visualBoxBlock.content ?? "",
+            contentRuns: visualBoxBlock.contentRuns,
+          },
+          0,
+          Math.max(0, (visualBoxBlock.content ?? "").length),
+        )
     : null;
   const namedStyleValue =
     namedStyleSelection && namedStyleSelection !== "mixed"
       ? namedStyleSelection
-      : defaultNamedStyleForBlockType(textBlock?.type === "heading" ? "heading" : "text");
+      : defaultNamedStyleForBlockType(visualBoxBlock?.type === "heading" ? "heading" : "text");
 
   const spacingSource = visualBoxBlock;
   const currentLineHeight = spacingSource?.style?.lineHeight ?? 1.15;
@@ -683,47 +704,13 @@ export function FormatRibbonTypographySections({
                 hint={H.clearFormatting}
                 ariaLabel="Limpar formatação"
                 onClick={() => {
-                  if (visualBoxBlock.type === "heading" || visualBoxBlock.type === "text") {
-                    const defaults = defaultTextBlockStyle(visualBoxBlock.type);
-                    updateSelected({
-                      style: {
-                        ...defaults,
-                        zIndex: visualBoxBlock.style?.zIndex ?? defaults.zIndex,
-                        fill: visualBoxBlock.style?.fill ?? defaults.fill,
-                        backgroundColor:
-                          visualBoxBlock.style?.backgroundColor ?? defaults.backgroundColor,
-                        stroke: visualBoxBlock.style?.stroke ?? defaults.stroke,
-                        strokeWidth: visualBoxBlock.style?.strokeWidth ?? defaults.strokeWidth,
-                        borderWidth: visualBoxBlock.style?.borderWidth ?? defaults.borderWidth,
-                        borderColor: visualBoxBlock.style?.borderColor ?? defaults.borderColor,
-                        borderRadius: visualBoxBlock.style?.borderRadius,
-                        boxShadow: visualBoxBlock.style?.boxShadow,
-                        opacity: visualBoxBlock.style?.opacity,
-                      },
-                    } as Partial<ComunicadoBlock>);
-                    return;
-                  }
-                  const defaults = defaultStyle("shape", visualBoxBlock.shape);
-                  updateSelected({
-                    style: {
-                      ...visualBoxBlock.style,
-                      fontFamily: defaults.fontFamily,
-                      fontSize: defaults.fontSize,
-                      fontWeight: defaults.fontWeight,
-                      fontStyle: undefined,
-                      color: defaults.color,
-                      textDecoration: undefined,
-                      textHighlight: undefined,
-                      textAlign: defaults.textAlign,
-                      verticalAlign: defaults.verticalAlign,
-                      lineHeight: defaults.lineHeight,
-                      letterSpacing: undefined,
-                      textShadow: undefined,
-                      textStrokeColor: undefined,
-                      textStrokeWidth: undefined,
-                      textReflection: undefined,
-                    },
-                  } as Partial<ComunicadoBlock>);
+                  const defaults =
+                    visualBoxBlock.type === "heading" || visualBoxBlock.type === "text"
+                      ? defaultTextBlockStyle(visualBoxBlock.type)
+                      : defaultStyle("shape", visualBoxBlock.shape);
+                  updateSelected(
+                    clearVisualBoxTextFormatting(visualBoxBlock, defaults) as Partial<ComunicadoBlock>,
+                  );
                 }}
               >
                 <RemoveFormatting size={15} aria-hidden="true" />

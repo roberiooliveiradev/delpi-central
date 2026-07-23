@@ -6,8 +6,10 @@
 import type {
   ComunicadoBlockStyle,
   ComunicadoCanvasTableBlock,
+  ComunicadoContentRun,
   ComunicadoTextDataRef,
 } from "./comunicadoTypes";
+import { normalizeContentRuns, shouldPersistContentRuns } from "./comunicadoContentRuns";
 import { normalizeTextDataRef } from "./textViewProjection";
 
 export const CANVAS_TABLE_MIN_ROWS = 1;
@@ -43,6 +45,8 @@ export type CanvasTableCell = {
   /** Série estática do sparkline (5–60 pontos). */
   series?: number[];
   style?: CanvasTableCellStyle;
+  /** Formatação parcial — sem runs = run implícito com `text` + `style`. */
+  contentRuns?: ComunicadoContentRun[];
   /** Campo dinâmico da fonte do bloco. */
   dataRef?: ComunicadoTextDataRef;
 };
@@ -105,11 +109,35 @@ export function normalizeCanvasTableCell(value: unknown): CanvasTableCell {
     if (value.style && typeof value.style === "object") {
       cell.style = { ...value.style };
     }
+    const runs = normalizeContentRuns((value as CanvasTableCell).contentRuns);
+    if (runs && shouldPersistContentRuns(runs)) cell.contentRuns = runs;
     const dataRef = normalizeTextDataRef((value as CanvasTableCell).dataRef);
     if (dataRef) cell.dataRef = dataRef;
     return cell;
   }
   return { kind: "text", text: value == null ? "" : String(value) };
+}
+
+/**
+ * Runs de exibição da célula — contentRuns ou um run implícito com estilo monolítico.
+ */
+export function canvasTableCellDisplayRuns(
+  cell: CanvasTableCell,
+  displayText: string,
+): ComunicadoContentRun[] {
+  if (cell.contentRuns?.length) return cell.contentRuns;
+  const style = cell.style
+    ? {
+        fontSize: cell.style.fontSize,
+        color: cell.style.color,
+        fontWeight:
+          cell.style.fontWeight != null && cell.style.fontWeight >= 600
+            ? ("bold" as const)
+            : undefined,
+      }
+    : undefined;
+  const hasStyle = Boolean(style && Object.values(style).some((v) => v != null));
+  return [{ text: displayText, style: hasStyle ? style : undefined }];
 }
 
 export function normalizeCanvasTableCells(

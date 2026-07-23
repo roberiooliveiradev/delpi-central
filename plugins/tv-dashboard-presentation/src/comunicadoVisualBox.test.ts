@@ -200,12 +200,13 @@ describe("comunicadoVisualBox", () => {
     );
   });
 
-  it("converte forma em texto rico preservando kind geométrico", () => {
+  it("garante contentRuns na forma sem converter o tipo", () => {
     const shape = { ...createShapeBlock("rounded-rect"), content: "Olá" };
     const rich = visualBoxEnsureRichTextBlock(shape);
-    expect(rich.type).toBe("text");
+    expect(rich.type).toBe("shape");
     expect(rich.shape).toBe("rounded-rect");
     expect(rich.content).toBe("Olá");
+    expect(rich.contentRuns).toEqual([{ text: "Olá" }]);
     expect(visualBoxSupportsInlineTextEditing(shape)).toBe(true);
   });
 

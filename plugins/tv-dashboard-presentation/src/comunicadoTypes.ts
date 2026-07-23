@@ -419,6 +419,10 @@ export type ComunicadoCanvasTableCell = {
   format?: ComunicadoCanvasTableNumberFormat;
   series?: number[];
   style?: ComunicadoCanvasTableCellStyle;
+  /**
+   * Formatação parcial (TextRun). Sem runs = um run implícito com `text` + `style`.
+   */
+  contentRuns?: ComunicadoContentRun[];
   /** Campo dinâmico da fonte do bloco (`dataSourceId`) — Onda Grade+dados. */
   dataRef?: ComunicadoTextDataRef;
 };

@@ -1,6 +1,7 @@
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 
 import {
+  DeckContentRunsView,
   NativeSelectControl,
   NativeTextControl,
   NATIVE_CONTROL_COMPACT_CLASS,
@@ -140,8 +141,13 @@ export function ComunicadoInputBlockView({
           label: block.input?.label?.trim() || paramKey,
         }
       : null);
+  const labelStateForContent = getInputPartState(parts, { kind: "label" });
   const label =
-    block.input?.label?.trim() || effectiveField?.label || paramKey || "Filtro";
+    labelStateForContent?.content?.trim() ||
+    block.input?.label?.trim() ||
+    effectiveField?.label ||
+    paramKey ||
+    "Filtro";
   const current = value !== undefined ? value : (block.input?.defaultValue ?? null);
   const options = enumOptions(effectiveField);
   const scope = resolveInputTargetScope(block.input);
@@ -209,7 +215,7 @@ export function ComunicadoInputBlockView({
 
   const selected = interaction?.selectedPart ?? null;
   const selectedParts = interaction?.selectedParts ?? null;
-  const isPartOn = (ref: InputPartRef) =>
+  const isPartOn = (ref: ComunicadoInputPartRef) =>
     isInputPartSelected(ref, selected, selectedParts);
   /** Editor com interaction: valor só clica quando a parte control está selecionada. */
   const controlValueInteractive =
@@ -386,7 +392,12 @@ export function ComunicadoInputBlockView({
               {...{ [INPUT_PART_DATA_ATTR]: "label" }}
               {...labelBind}
             >
-              <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-label-text")}>{label}</span>
+              <span className={ensureComunicadoDualClass("tdp-comunicado__input-block-label-text")}>
+                <DeckContentRunsView
+                  content={label}
+                  contentRuns={labelState?.contentRuns}
+                />
+              </span>
               {renderPartChrome({ kind: "label" })}
             </span>
           ) : null}
@@ -404,15 +415,23 @@ export function ComunicadoInputBlockView({
                 }),
                 fontSize: `${badgeFont}px`,
               }}
-              title={scopeBadge}
+              title={badgeState?.content?.trim() || scopeBadge}
               {...{ [INPUT_PART_DATA_ATTR]: "badge" }}
               {...badgeBind}
             >
-              <StatusBadge
-                label={scopeBadge}
-                variant={scope === "slide" ? "info" : "neutral"}
-                classNames={scopeBadgeClasses}
-              />
+              {badgeState?.contentRuns?.length ? (
+                <DeckContentRunsView
+                  content={badgeState.content?.trim() || scopeBadge}
+                  contentRuns={badgeState.contentRuns}
+                  className={scopeBadgeClasses.badge}
+                />
+              ) : (
+                <StatusBadge
+                  label={badgeState?.content?.trim() || scopeBadge}
+                  variant={scope === "slide" ? "info" : "neutral"}
+                  classNames={scopeBadgeClasses}
+                />
+              )}
               {renderPartChrome({ kind: "badge" })}
             </span>
           ) : null}

@@ -702,19 +702,29 @@ export function useComunicadoEditorSelection({
     );
   }, [configRef]);
 
+  const resolveActiveTextBridgeId = useCallback((): string | null => {
+    if (editingTextId) return editingTextId;
+    if (editingKpiPart || editingChartPart) {
+      return selectedIds[selectedIds.length - 1] ?? null;
+    }
+    return null;
+  }, [editingChartPart, editingKpiPart, editingTextId, selectedIds]);
+
   const toggleEditingTextRunStyle = useCallback((toggleKey: ContentRunStyleToggleKey) => {
-    if (!editingTextId) return;
-    const bridge = textEditorBridgesRef.current.get(editingTextId);
+    const bridgeId = resolveActiveTextBridgeId();
+    if (!bridgeId) return;
+    const bridge = textEditorBridgesRef.current.get(bridgeId);
     bridge?.applyPartialStyleToggle(toggleKey);
-  }, [editingTextId]);
+  }, [resolveActiveTextBridgeId]);
 
   const applyEditingTextRunStylePatch = useCallback(
     (patch: import("@delpi/tv-dashboard-presentation").ContentRunStylePatch) => {
-      if (!editingTextId) return;
-      const bridge = textEditorBridgesRef.current.get(editingTextId);
+      const bridgeId = resolveActiveTextBridgeId();
+      if (!bridgeId) return;
+      const bridge = textEditorBridgesRef.current.get(bridgeId);
       bridge?.applyPartialStylePatch?.(patch);
     },
-    [editingTextId],
+    [resolveActiveTextBridgeId],
   );
 
   const toggleSelectedTextListType = useCallback((listType: ComunicadoListType) => {
@@ -726,8 +736,8 @@ export function useComunicadoEditorSelection({
           : null;
     if (!target || !isComunicadoVisualBoxBlock(target)) return;
 
-    if (target.type === "shape") {
-      const rich = visualBoxEnsureRichTextBlock(target);
+    const rich = visualBoxEnsureRichTextBlock(target);
+    if (rich !== target) {
       const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
         block.id === rich.id ? rich : block,
       );
@@ -735,15 +745,18 @@ export function useComunicadoEditorSelection({
       target = rich;
     }
 
-    if (target.type !== "heading" && target.type !== "text") return;
-
     if (editingTextId === target.id) {
       const bridge = textEditorBridgesRef.current.get(editingTextId);
       bridge?.applyListToggle(listType);
       return;
     }
 
-    const runs = resolveTextBlockDisplayRuns(target);
+    const runs = resolveTextBlockDisplayRuns({
+      content: target.content ?? "",
+      contentRuns: target.contentRuns,
+      textProjection: target.textProjection,
+      resolved: "resolved" in target ? target.resolved : undefined,
+    });
     const nextRuns = toggleListTypeOnAllLines(runs, listType);
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
   }, [configRef, editingTextId, selected, updateBlockTextFieldsRef, updateBlocksRef]);
@@ -757,8 +770,8 @@ export function useComunicadoEditorSelection({
           : null;
     if (!target || !isComunicadoVisualBoxBlock(target)) return;
 
-    if (target.type === "shape") {
-      const rich = visualBoxEnsureRichTextBlock(target);
+    const rich = visualBoxEnsureRichTextBlock(target);
+    if (rich !== target) {
       const nextBlocks = (configRef.current.blocks ?? []).map((block) =>
         block.id === rich.id ? rich : block,
       );
@@ -766,15 +779,18 @@ export function useComunicadoEditorSelection({
       target = rich;
     }
 
-    if (target.type !== "heading" && target.type !== "text") return;
-
     if (editingTextId === target.id) {
       const bridge = textEditorBridgesRef.current.get(editingTextId);
       bridge?.applyNamedStyleToggle(namedStyle);
       return;
     }
 
-    const runs = resolveTextBlockDisplayRuns(target);
+    const runs = resolveTextBlockDisplayRuns({
+      content: target.content ?? "",
+      contentRuns: target.contentRuns,
+      textProjection: target.textProjection,
+      resolved: "resolved" in target ? target.resolved : undefined,
+    });
     const nextRuns = applyNamedStyleOnAllLines(runs, namedStyle);
     updateBlockTextFieldsRef.current(target.id, syncTextBlockFromRuns(nextRuns));
   }, [configRef, editingTextId, selected, updateBlockTextFieldsRef, updateBlocksRef]);

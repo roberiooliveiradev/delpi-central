@@ -128,7 +128,10 @@ export type ComunicadoEditorContextValue = {
   /** Edição inline de conteúdo da parte (título). */
   editingChartPart: ComunicadoChartPartRef | null;
   beginEditChartPart: (blockId: string, part: ComunicadoChartPartRef) => void;
-  commitChartPartContent: (content: string) => void;
+  commitChartPartContent: (
+    content: string,
+    meta?: { contentRuns?: import("@delpi/plugin-ui/index").DeckContentRun[] },
+  ) => void;
   cancelEditChartPart: () => void;
   /** Onda 4G.8 — subseleção de parte da tabela. */
   selectedTablePart: ComunicadoTablePartRef | null;
@@ -156,7 +159,10 @@ export type ComunicadoEditorContextValue = {
   clearKpiPartSelection: () => void;
   editingKpiPart: ComunicadoKpiPartRef | null;
   beginEditKpiPart: (blockId: string, part: ComunicadoKpiPartRef) => void;
-  commitKpiPartContent: (content: string) => void;
+  commitKpiPartContent: (
+    content: string,
+    meta?: { contentRuns?: import("@delpi/plugin-ui/index").DeckContentRun[] },
+  ) => void;
   cancelEditKpiPart: () => void;
   /** Filtro — subseleção de parte (frame/icon/label/badge/control). */
   selectedInputPart: ComunicadoInputPartRef | null;

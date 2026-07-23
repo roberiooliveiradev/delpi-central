@@ -99,6 +99,7 @@ export {
   clampCanvasTableDimension,
   normalizeCanvasTableCells,
   normalizeCanvasTableCell,
+  canvasTableCellDisplayRuns,
   canvasTableCellsToStringMatrix,
   canvasTableCellPlainText,
   inferCanvasTableCellFromText,

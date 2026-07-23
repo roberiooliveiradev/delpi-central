@@ -153,6 +153,8 @@ export type ChartPartState = {
   style?: ChartPartStyle;
   /** Título, axisTitle, seriesName, etc. */
   content?: string;
+  /** Formatação parcial (TextRun) — títulos/rótulos estáticos editáveis. */
+  contentRuns?: import("../rich-text/deckContentRuns").DeckContentRun[];
   /**
    * Posição % relativa ao bloco chart (title / legend / dataTable)
    * ou ao host do SVG (`plotArea`, 4H.6).
@@ -174,8 +176,22 @@ export type SeriesChartInteraction = {
   editingPart?: ChartPartRef | null;
   onPartPointerDown?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
   onPartDoubleClick?: (ref: ChartPartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
-  onPartContentCommit?: (ref: ChartPartRef, content: string) => void;
+  onPartContentCommit?: (
+    ref: ChartPartRef,
+    content: string,
+    meta?: { contentRuns?: import("../rich-text/deckContentRuns").DeckContentRun[] },
+  ) => void;
   onPartEditCancel?: () => void;
+  onPartEditableMount?: (ref: ChartPartRef, element: HTMLElement | null) => void;
+  renderPartEditorHtml?: (
+    ref: ChartPartRef,
+    content: string,
+    contentRuns?: import("../rich-text/deckContentRuns").DeckContentRun[],
+  ) => string;
+  parsePartEditorRuns?: (
+    ref: ChartPartRef,
+    root: HTMLElement,
+  ) => import("../rich-text/deckContentRuns").DeckContentRun[];
   /** Inicia arraste de parte móvel (title/legend). */
   onPartMovePointerDown?: (ref: ChartPartRef, event: ReactPointerEvent) => void;
   /** Inicia resize de parte com frame (title/legend/dataTable). */

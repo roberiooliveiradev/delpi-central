@@ -3,6 +3,7 @@ import type { CSSProperties, FocusEvent, KeyboardEvent, PointerEvent as ReactPoi
 import { resolveCanvasTableCellDisplay } from "./canvasTableProjection";
 import {
   buildCanvasTableSparklinePath,
+  canvasTableCellDisplayRuns,
   canvasTableCellPlainText,
   inferCanvasTableCellFromText,
   mergeCanvasTableOptions,
@@ -12,6 +13,8 @@ import {
   type CanvasTableCell,
   type CanvasTableCellRef,
 } from "./comunicadoCanvasTable";
+import { hasRichTextRuns } from "./comunicadoContentRuns";
+import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
 import type { ComunicadoCanvasTableBlock } from "./comunicadoTypes";
 
 export type ComunicadoCanvasTableInteraction = {
@@ -230,6 +233,15 @@ export function ComunicadoCanvasTableView({
                           <span className="td-canvas-table__sparkline-value">{displayText}</span>
                         ) : null}
                       </span>
+                    ) : !allowEdit &&
+                      hasRichTextRuns({ contentRuns: cell.contentRuns }) ? (
+                      <ComunicadoTextRunsView
+                        block={{
+                          content: displayText,
+                          contentRuns: canvasTableCellDisplayRuns(cell, displayText),
+                        }}
+                        as="span"
+                      />
                     ) : (
                       displayText
                     )}

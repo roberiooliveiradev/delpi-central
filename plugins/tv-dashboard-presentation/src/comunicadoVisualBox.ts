@@ -9,6 +9,7 @@ import type {
   ComunicadoTextBlock,
   ComunicadoVerticalAlign,
 } from "./comunicadoTypes";
+import { contentRunsFromPlainText } from "./comunicadoContentRuns";
 import {
   defaultStrokeWidthForPrimitive,
   resolveShapePrimitive,
@@ -33,7 +34,7 @@ export type ComunicadoVisualBoxProfile = {
   primitive: ComunicadoVisualPrimitive;
   /** Tag semântica do conteúdo interno. */
   textTag: "h1" | "p" | "span";
-  /** Bloco com contentRuns / tipografia rica (heading/text). */
+  /** Bloco com contentRuns / tipografia rica (heading/text/shape). */
   isRichTextBlock: boolean;
 };
 
@@ -97,7 +98,7 @@ export function resolveVisualBoxProfile(block: ComunicadoVisualBoxBlock): Comuni
     shapeKind,
     primitive,
     textTag: "span",
-    isRichTextBlock: false,
+    isRichTextBlock: true,
   };
 }
 
@@ -146,27 +147,18 @@ export function visualBoxSupportsInlineTextEditing(block: ComunicadoVisualBoxBlo
 }
 
 /**
- * Converte forma em bloco de texto rico preservando kind geométrico e estilo —
- * lista / estilo nomeado exigem contentRuns.
+ * Garante contentRuns para lista / estilo nomeado sem mudar o tipo do bloco.
+ * Formas permanecem `type: "shape"` (não convertem para text).
  */
 export function visualBoxEnsureRichTextBlock(
   block: ComunicadoVisualBoxBlock,
-): ComunicadoTextBlock {
-  if (block.type === "heading" || block.type === "text") return block;
+): ComunicadoVisualBoxBlock {
+  if (block.contentRuns?.length) return block;
+  const content = block.type === "shape" ? (block.content ?? "") : block.content;
   return {
-    id: block.id,
-    type: "text",
-    content: block.content ?? "",
-    contentRuns: block.contentRuns,
-    dataSourceId: block.dataSourceId,
-    textProjection: block.textProjection,
-    frame: block.frame,
-    style: block.style,
-    shape: block.shape,
-    href: block.href,
-    linkTarget: block.linkTarget,
-    groupId: block.groupId,
-    animations: block.animations,
+    ...block,
+    ...(block.type === "shape" ? { content } : {}),
+    contentRuns: contentRunsFromPlainText(content) ?? [{ text: content }],
   };
 }
 

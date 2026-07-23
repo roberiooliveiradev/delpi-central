@@ -82,6 +82,8 @@ export type KpiPartState = {
   visible?: boolean;
   style?: KpiPartStyle;
   content?: string;
+  /** Formatação parcial (TextRun) — título/hint editáveis. */
+  contentRuns?: import("../rich-text/deckContentRuns").DeckContentRun[];
   /** Posição/tamanho do ícone (% do card). */
   frame?: KpiPartFrame;
 };
@@ -95,8 +97,25 @@ export type KpiCardInteraction = {
   editingPart?: KpiPartRef | null;
   onPartPointerDown?: (ref: KpiPartRef, event: ReactPointerEvent) => void;
   onPartDoubleClick?: (ref: KpiPartRef, event: ReactPointerEvent | ReactMouseEvent) => void;
-  onPartContentCommit?: (ref: KpiPartRef, content: string) => void;
+  onPartContentCommit?: (
+    ref: KpiPartRef,
+    content: string,
+    meta?: { contentRuns?: import("../rich-text/deckContentRuns").DeckContentRun[] },
+  ) => void;
   onPartEditCancel?: () => void;
+  /** Monta/desmonta root contentEditable para bridge de formatação parcial. */
+  onPartEditableMount?: (ref: KpiPartRef, element: HTMLElement | null) => void;
+  /** HTML rico para iniciar edição (opcional — senão texto plano). */
+  renderPartEditorHtml?: (
+    ref: KpiPartRef,
+    content: string,
+    contentRuns?: import("../rich-text/deckContentRuns").DeckContentRun[],
+  ) => string;
+  /** Lê runs do DOM editável (opcional). */
+  parsePartEditorRuns?: (
+    ref: KpiPartRef,
+    root: HTMLElement,
+  ) => import("../rich-text/deckContentRuns").DeckContentRun[];
   /** Arrastar parte já selecionada (frame % relativo ao card). */
   onPartMovePointerDown?: (ref: KpiPartRef, event: ReactPointerEvent) => void;
   /** Resize pelos handles (paridade com chart_view). */

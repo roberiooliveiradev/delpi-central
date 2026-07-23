@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type CSSProperties } from "react";
 import {
   appendHrefLineToRuns,
-  applyContentRunStyleInRange,
   blockCssStyle,
   comunicadoTextInnerStyle,
   ComunicadoBlockView,
   contentRunsFromEditableRoot,
   getEditableTextSelectionOffsets,
   insertDataRefAtOffset,
-  insertLineBreakAtOffset,
-  applyNamedStyleInRange,
   partitionTextBlockRunsAndHref,
   patchTextProjectionFromEditedDisplay,
   plainTextFromContentRuns,
@@ -17,16 +14,11 @@ import {
   resolveTextBlockDisplayRuns,
   restoreEditableTextSelection,
   syncTextBlockFromRuns,
-  toggleContentRunStyleInRange,
-  toggleListTypeInRange,
   visualBoxBlockModifierClasses,
   type ComunicadoBlock,
-  type ComunicadoListType,
-  type ComunicadoNamedTextStyle,
   type ComunicadoTextDataRef,
-  type ContentRunStylePatch,
-  type ContentRunStyleToggleKey,
 } from "@delpi/tv-dashboard-presentation";
+import { useVisualBoxTextEditorBridge } from "../hooks/useVisualBoxTextEditorBridge";
 import { useComunicadoEditor } from "./comunicadoEditorContext";
 
 type TextBlock = Extract<ComunicadoBlock, { type: "heading" } | { type: "text" }>;
@@ -136,18 +128,6 @@ export function ComunicadoEditorTextBlock({
     [fontScale],
   );
 
-  const reportSelectionFromEditor = useCallback(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const offsets = getEditableTextSelectionOffsets(editor);
-    if (!offsets) {
-      reportTextEditSelection(null);
-      return;
-    }
-    const runs = contentRunsFromEditableRoot(editor);
-    reportTextEditSelection({ blockId: block.id, ...offsets }, runs);
-  }, [block.id, reportTextEditSelection]);
-
   const commitDraft = useCallback(
     (runs?: ReturnType<typeof contentRunsFromEditableRoot>) => {
       const fromEditor = runs ?? (editorRef.current ? contentRunsFromEditableRoot(editorRef.current) : null);
@@ -190,86 +170,29 @@ export function ComunicadoEditorTextBlock({
   const commitPendingRef = useRef(commitPending);
   commitPendingRef.current = commitPending;
 
-  const applyPartialStyleToggle = useCallback(
-    (toggleKey: ContentRunStyleToggleKey) => {
-      const editor = editorRef.current;
-      if (!editor) return;
-      const selection = getEditableTextSelectionOffsets(editor);
-      if (!selection || selection.start >= selection.end) return;
-      const runs = contentRunsFromEditableRoot(editor);
-      const nextRuns = toggleContentRunStyleInRange(runs, selection.start, selection.end, toggleKey);
-      draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
-      renderedSignatureRef.current = "";
-      syncEditorHtml(nextRuns, { start: selection.start, end: selection.end });
-      commitDraft(nextRuns);
-      reportTextEditSelection(
-        { blockId: block.id, start: selection.start, end: selection.end },
-        nextRuns,
-      );
-    },
-    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
+  const normalizeEditorRuns = useCallback(
+    (runs: import("@delpi/tv-dashboard-presentation").ComunicadoContentRun[]) =>
+      partitionTextBlockRunsAndHref(runs).runs,
+    [],
   );
 
-  const applyPartialStylePatch = useCallback(
-    (patch: ContentRunStylePatch) => {
-      const editor = editorRef.current;
-      if (!editor) return;
-      const selection = getEditableTextSelectionOffsets(editor);
-      if (!selection || selection.start >= selection.end) return;
-      const runs = contentRunsFromEditableRoot(editor);
-      const nextRuns = applyContentRunStyleInRange(
-        runs,
-        selection.start,
-        selection.end,
-        patch,
-      );
-      draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
-      renderedSignatureRef.current = "";
-      syncEditorHtml(nextRuns, { start: selection.start, end: selection.end });
-      commitDraft(nextRuns);
-      reportTextEditSelection(
-        { blockId: block.id, start: selection.start, end: selection.end },
-        nextRuns,
-      );
-    },
-    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
-  );
-
-  const applyListToggle = useCallback(
-    (listType: ComunicadoListType) => {
-      const editor = editorRef.current;
-      if (!editor) return;
-      const selection = getEditableTextSelectionOffsets(editor);
-      const runs = contentRunsFromEditableRoot(editor);
-      const start = selection?.start ?? runs.map((run) => run.text).join("").length;
-      const end = selection?.end ?? start;
-      const nextRuns = toggleListTypeInRange(runs, start, end, listType);
-      draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
-      renderedSignatureRef.current = "";
-      syncEditorHtml(nextRuns, { start, end });
-      commitDraft(nextRuns);
-      reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
-    },
-    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
-  );
-
-  const applyNamedStyleToggle = useCallback(
-    (namedStyle: ComunicadoNamedTextStyle) => {
-      const editor = editorRef.current;
-      if (!editor) return;
-      const selection = getEditableTextSelectionOffsets(editor);
-      const runs = contentRunsFromEditableRoot(editor);
-      const start = selection?.start ?? 0;
-      const end = selection?.end ?? runs.map((run) => run.text).join("").length;
-      const nextRuns = applyNamedStyleInRange(runs, start, end, namedStyle);
-      draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
-      renderedSignatureRef.current = "";
-      syncEditorHtml(nextRuns, { start, end });
-      commitDraft(nextRuns);
-      reportTextEditSelection({ blockId: block.id, start, end }, nextRuns);
-    },
-    [block.id, commitDraft, reportTextEditSelection, syncEditorHtml],
-  );
+  const {
+    applyPartialStyleToggle,
+    applyPartialStylePatch,
+    applyListToggle,
+    applyNamedStyleToggle,
+    insertLineBreak,
+    reportSelectionFromEditor,
+  } = useVisualBoxTextEditorBridge({
+    blockId: block.id,
+    editorRef,
+    draftRef,
+    renderedSignatureRef,
+    syncEditorHtml,
+    commitDraft,
+    reportTextEditSelection,
+    normalizeEditorRuns,
+  });
 
   const insertDataRefAtSelection = useCallback(
     (dataRef: ComunicadoTextDataRef) => {
@@ -294,21 +217,6 @@ export function ComunicadoEditorTextBlock({
     },
     [block.id, reportTextEditSelection, syncEditorHtml, updateBlock],
   );
-
-  const insertLineBreak = useCallback(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const selection = getEditableTextSelectionOffsets(editor);
-    if (!selection) return;
-    const runs = contentRunsFromEditableRoot(editor);
-    const nextRuns = insertLineBreakAtOffset(runs, selection.start);
-    const nextOffset = selection.start + 1;
-    draftRef.current = syncTextBlockFromRuns(partitionTextBlockRunsAndHref(nextRuns).runs);
-    renderedSignatureRef.current = "";
-    syncEditorHtml(nextRuns, { start: nextOffset, end: nextOffset });
-    commitDraft(nextRuns);
-    reportTextEditSelection({ blockId: block.id, start: nextOffset, end: nextOffset }, nextRuns);
-  }, [block.id, commitDraft, reportTextEditSelection, syncEditorHtml]);
 
   function exitEditing() {
     commitPending();

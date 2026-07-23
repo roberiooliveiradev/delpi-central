@@ -402,6 +402,7 @@ export {
   sortBlocksByZIndex,
   normalizeCanvasTableCells,
   normalizeCanvasTableCell,
+  canvasTableCellDisplayRuns,
   canvasTableCellsToStringMatrix,
   canvasTableCellPlainText,
   inferCanvasTableCellFromText,
@@ -462,6 +463,15 @@ export {
   visualBoxSupportsTextFormatting,
 } from "./comunicadoVisualBox";
 export { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
+export {
+  ComunicadoTextSurface,
+  resolveTextSurfaceDisplay,
+  textSurfaceNeedsRichPaint,
+} from "./ComunicadoTextSurface";
+export {
+  clearVisualBoxTextFormatting,
+  isClearableVisualBox,
+} from "./clearVisualBoxTextFormatting";
 export {
   contentRunStyleToCss,
   contentRunsFromPlainText,

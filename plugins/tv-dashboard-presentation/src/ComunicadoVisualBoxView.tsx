@@ -2,15 +2,13 @@ import type { CSSProperties, ReactNode } from "react";
 
 import { ComunicadoShapeGraphic } from "./comunicadoShapeGraphic";
 import { resolveShapeGeometry } from "./comunicadoShapeGeometry";
-import { ComunicadoTextRunsView } from "./ComunicadoTextRunsView";
+import { ComunicadoTextSurface } from "./ComunicadoTextSurface";
 import { comunicadoTextInnerStyle } from "./comunicadoHelpers";
 import type { ComunicadoVisualBoxBlock } from "./comunicadoVisualBox";
 import {
   resolveVisualBoxChrome,
   resolveVisualBoxContentLayoutStyle,
-  resolveVisualBoxProfile,
 } from "./comunicadoVisualBox";
-import { resolveVisualBoxDisplayText, textBlockHasDataBinding } from "./textViewProjection";
 import { ensureComunicadoDualClass } from "@delpi/plugin-ui/index";
 
 type Props = {
@@ -24,6 +22,10 @@ type Props = {
   editorInteractive?: boolean;
 };
 
+/**
+ * Conteúdo textual padrão — sempre via `ComunicadoTextSurface`
+ * (resolve + TextRunsView; nunca string crua com contentRuns).
+ */
 function DefaultTextContent({
   block,
   fontScale = 1,
@@ -35,50 +37,14 @@ function DefaultTextContent({
   className?: string;
   innerStyle?: CSSProperties;
 }) {
-  const profile = resolveVisualBoxProfile(block);
-
-  if (block.type === "shape") {
-    const display = textBlockHasDataBinding(block)
-      ? resolveVisualBoxDisplayText(block, "resolved" in block ? block.resolved : undefined)
-      : null;
-    const label = display?.content?.trim() ?? block.content?.trim();
-    if (!label && !(display?.contentRuns?.length)) return null;
-    if (display?.contentRuns?.length) {
-      return (
-        <ComunicadoTextRunsView
-          block={{
-            content: display.content,
-            contentRuns: display.contentRuns,
-            textProjection: block.textProjection,
-            resolved: "resolved" in block ? block.resolved : undefined,
-            dataSourceId: block.dataSourceId,
-          }}
-          as="span"
-          fontScale={fontScale}
-          className={className}
-        />
-      );
-    }
-    return <span className={className}>{label}</span>;
-  }
-
-  const textBlock = block;
-  const displayBlock = textBlockHasDataBinding(textBlock)
-    ? {
-        ...textBlock,
-        ...resolveVisualBoxDisplayText(textBlock, textBlock.resolved),
-      }
-    : textBlock;
-  const baseStyle = innerStyle ?? comunicadoTextInnerStyle(textBlock, { fontScale });
-  const Tag = profile.textTag;
-
   return (
-    <ComunicadoTextRunsView
-      block={displayBlock}
-      as={Tag}
-      baseStyle={baseStyle}
+    <ComunicadoTextSurface
+      block={block}
       fontScale={fontScale}
       className={className}
+      baseStyle={
+        block.type === "heading" || block.type === "text" ? innerStyle : undefined
+      }
     />
   );
 }
