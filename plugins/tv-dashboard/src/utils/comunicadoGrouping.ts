@@ -32,6 +32,39 @@ export function expandSelectionWithGroups(
   return filterStageSelectableIds([...expanded], blocks);
 }
 
+export type ClosedGroupSelection = {
+  groupId: string;
+  memberIds: string[];
+  members: ComunicadoBlock[];
+};
+
+/**
+ * Grupos cujos membros estão **todos** na seleção (pode haver outros ids além).
+ * Usado no chrome de multi-seleção de vários grupos.
+ */
+export function resolveFullySelectedGroups(
+  blocks: ComunicadoBlock[],
+  selectedIds: string[],
+): ClosedGroupSelection[] {
+  const selectedSet = new Set(selectedIds);
+  const seen = new Set<string>();
+  const out: ClosedGroupSelection[] = [];
+  for (const id of selectedIds) {
+    const block = blocks.find((item) => item.id === id);
+    if (!block?.groupId || seen.has(block.groupId)) continue;
+    seen.add(block.groupId);
+    const members = membersOfGroup(blocks, block.groupId);
+    if (members.length < 2) continue;
+    if (!members.every((member) => selectedSet.has(member.id))) continue;
+    out.push({
+      groupId: block.groupId,
+      memberIds: members.map((member) => member.id),
+      members,
+    });
+  }
+  return out;
+}
+
 /**
  * Seleção «pai»: todos os membros de um único groupId estão selecionados
  * (equivalente à moldura de KPI/gráfico — um chrome externo).
@@ -39,20 +72,12 @@ export function expandSelectionWithGroups(
 export function resolveClosedGroupSelection(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
-): { groupId: string; memberIds: string[]; members: ComunicadoBlock[] } | null {
-  if (selectedIds.length < 2) return null;
-  const selected = blocks.filter((block) => selectedIds.includes(block.id));
-  if (selected.length !== selectedIds.length) return null;
-  const groupId = selected[0]?.groupId;
-  if (!groupId) return null;
-  if (!selected.every((block) => block.groupId === groupId)) return null;
-  const members = membersOfGroup(blocks, groupId);
-  if (members.length < 2) return null;
-  const memberIds = members.map((block) => block.id);
-  const selectedSet = new Set(selectedIds);
-  if (memberIds.some((id) => !selectedSet.has(id))) return null;
-  if (selectedIds.some((id) => !memberIds.includes(id))) return null;
-  return { groupId, memberIds, members };
+): ClosedGroupSelection | null {
+  const groups = resolveFullySelectedGroups(blocks, selectedIds);
+  if (groups.length !== 1) return null;
+  const only = groups[0]!;
+  if (selectedIds.length !== only.memberIds.length) return null;
+  return only;
 }
 
 /**

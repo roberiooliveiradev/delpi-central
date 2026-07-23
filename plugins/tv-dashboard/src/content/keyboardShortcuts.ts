@@ -86,7 +86,7 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     group: "selecao",
     label: "Multi-seleção (clique)",
     keys: "Shift+Clique",
-    description: "Alterna o bloco na seleção",
+    description: "Alterna o grupo (ou bloco) na seleção. Com filho já isolado, alterna irmãos",
     showAltTip: false,
   },
   {

@@ -231,13 +231,15 @@ export function resolveEscapeHierarchyAction(params: {
  * Contrato:
  * - 1º clique em membro → seleciona o grupo (pai).
  * - Com o grupo selecionado, 2º clique no membro → isola o subitem.
- * - Shift → multi de subitens (sem expandir grupo); no pai fechado, Shift entra nos filhos.
- * - Alt → isola (atalho); Ctrl/Cmd → remove.
+ * - Shift → multi-seleção de **grupos** (ou blocos soltos); só em modo filhos
+ *   (já isolado) Shift alterna irmãos.
+ * - Alt → isola (atalho); Ctrl/Cmd → remove o grupo/bloco da seleção.
  */
 export type GroupedBlockPointerDownAction =
   | { type: "select-expand-group"; blockId: string }
   | { type: "isolate-child"; blockId: string }
   | { type: "toggle-child"; blockId: string }
+  | { type: "toggle-group"; blockId: string }
   | { type: "subtract"; blockId: string }
   | { type: "drag-current-selection" };
 
@@ -267,11 +269,11 @@ export function resolveGroupedBlockPointerDownAction(params: {
   const inChildrenGroup = Boolean(children && block.groupId === children.groupId);
 
   if (shiftKey) {
-    if (inClosedGroup) {
-      /* Entra no modo filhos a partir do membro clicado. */
-      return { type: "isolate-child", blockId: block.id };
+    /* Já em L3 (filhos): Shift multiplica irmãos. Senão: multi de grupos/blocos. */
+    if (inChildrenGroup) {
+      return { type: "toggle-child", blockId: block.id };
     }
-    return { type: "toggle-child", blockId: block.id };
+    return { type: "toggle-group", blockId: block.id };
   }
 
   if (inClosedGroup) {

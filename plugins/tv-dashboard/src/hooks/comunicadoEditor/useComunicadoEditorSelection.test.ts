@@ -72,6 +72,41 @@ describe("useComunicadoEditorSelection", () => {
     expect(result.current.selectedIds).toEqual(["b"]);
   });
 
+  it("additive com grupo expande/remove todos os membros", () => {
+    const grouped: ComunicadoBlock[] = [
+      { id: "a", type: "text", content: "A", frame: { x: 0, y: 0, w: 10, h: 10 }, groupId: "g1" },
+      { id: "b", type: "text", content: "B", frame: { x: 0, y: 0, w: 10, h: 10 }, groupId: "g1" },
+      { id: "c", type: "text", content: "C", frame: { x: 0, y: 0, w: 10, h: 10 }, groupId: "g2" },
+      { id: "d", type: "text", content: "D", frame: { x: 0, y: 0, w: 10, h: 10 }, groupId: "g2" },
+    ];
+    const { result } = renderHook(() => {
+      const configRef = useRef<ComunicadoConfig>({ version: 2, blocks: grouped });
+      const updateBlockTextFieldsRef = useRef(() => {});
+      const updateBlocksRef = useRef(() => {});
+      return useComunicadoEditorSelection({
+        configRef,
+        blocks: grouped,
+        updateBlockTextFieldsRef,
+        updateBlocksRef,
+      });
+    });
+
+    act(() => {
+      result.current.selectBlock("a");
+    });
+    expect(result.current.selectedIds.sort()).toEqual(["a", "b"]);
+
+    act(() => {
+      result.current.selectBlock("c", { additive: true, expandGroup: true });
+    });
+    expect(result.current.selectedIds.sort()).toEqual(["a", "b", "c", "d"]);
+
+    act(() => {
+      result.current.selectBlock("b", { additive: true, expandGroup: true });
+    });
+    expect(result.current.selectedIds.sort()).toEqual(["c", "d"]);
+  });
+
   it("subtract (Ctrl) remove da seleção sem alternar para incluir", () => {
     const { result } = renderSelectionHook();
 

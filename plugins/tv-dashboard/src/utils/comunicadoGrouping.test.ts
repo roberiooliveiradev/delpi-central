@@ -7,6 +7,7 @@ import {
   isIsolatedGroupChildSelection,
   partitionSelectionIntoLayoutUnits,
   resolveClosedGroupSelection,
+  resolveFullySelectedGroups,
   resolveParentGroupHintFrame,
   selectedHasGroup,
   ungroupBlocks,
@@ -47,6 +48,23 @@ describe("comunicadoGrouping", () => {
     expect(resolveClosedGroupSelection([a, b, c], [a.id])).toBeNull();
     expect(isIsolatedGroupChildSelection([a, b], [a.id])).toBe(true);
     expect(isIsolatedGroupChildSelection([a, b], [a.id, b.id])).toBe(false);
+  });
+
+  it("lista vários grupos fechados na multi-seleção", () => {
+    const a = createBlock("text", "A");
+    const b = createBlock("text", "B");
+    const c = createBlock("text", "C");
+    const d = createBlock("text", "D");
+    a.groupId = "g1";
+    b.groupId = "g1";
+    c.groupId = "g2";
+    d.groupId = "g2";
+    const multi = resolveFullySelectedGroups([a, b, c, d], [a.id, b.id, c.id, d.id]);
+    expect(multi.map((g) => g.groupId).sort()).toEqual(["g1", "g2"]);
+    expect(resolveClosedGroupSelection([a, b, c, d], [a.id, b.id, c.id, d.id])).toBeNull();
+    expect(resolveFullySelectedGroups([a, b, c, d], [a.id, b.id, c.id])).toEqual([
+      expect.objectContaining({ groupId: "g1" }),
+    ]);
   });
 
   it("une frames percentuais do grupo", () => {

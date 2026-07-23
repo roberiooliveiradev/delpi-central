@@ -104,7 +104,7 @@ describe("beginBlockStageMoveDrag", () => {
     expect(startDrag).toHaveBeenCalled();
   });
 
-  it("Shift com grupo selecionado isola o subitem para multi", () => {
+  it("Shift com grupo selecionado alterna o grupo (não isola subitem)", () => {
     const a = fakeBlock("a", "grp");
     const b = fakeBlock("b", "grp");
     const selectBlock = vi.fn();
@@ -123,7 +123,7 @@ describe("beginBlockStageMoveDrag", () => {
       armTapDeselect: vi.fn(),
     });
     expect(result).toBe(false);
-    expect(selectBlock).toHaveBeenCalledWith("a", { expandGroup: false });
+    expect(selectBlock).toHaveBeenCalledWith("a", { additive: true, expandGroup: true });
     expect(startDrag).not.toHaveBeenCalled();
   });
 

@@ -273,9 +273,21 @@ export function useComunicadoEditorSelection({
       }
       if (options?.additive) {
         setSelectedIds((current) => {
+          const block = blocksNow.find((item) => item.id === targetId);
+          const expandGroup = options?.expandGroup !== false;
+          const idsToToggle =
+            expandGroup && block?.groupId
+              ? blocksNow
+                  .filter((item) => item.groupId === block.groupId)
+                  .map((item) => item.id)
+              : [targetId];
           const set = new Set(current);
-          if (set.has(targetId)) set.delete(targetId);
-          else set.add(targetId);
+          const allPresent = idsToToggle.every((id) => set.has(id));
+          if (allPresent) {
+            for (const id of idsToToggle) set.delete(id);
+          } else {
+            for (const id of idsToToggle) set.add(id);
+          }
           return filterStageSelectableIds([...set], blocksNow);
         });
       } else {

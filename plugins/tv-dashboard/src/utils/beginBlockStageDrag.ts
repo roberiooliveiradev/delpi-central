@@ -61,6 +61,13 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
     return false;
   }
 
+  if (action.type === "toggle-group") {
+    armTapDeselect?.(null);
+    /* Multi-seleção no nível do grupo fechado (não isola subitem). */
+    selectBlock(action.blockId, { additive: true, expandGroup: true });
+    return false;
+  }
+
   if (action.type === "toggle-child") {
     armTapDeselect?.(null);
     selectBlock(action.blockId, { additive: true, expandGroup: false });

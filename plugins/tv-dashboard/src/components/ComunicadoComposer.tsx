@@ -37,7 +37,8 @@ import {
   type MarqueeRect,
 } from "../utils/comunicadoMarquee";
 import {
-  resolveClosedGroupSelection,
+  expandSelectionWithGroups,
+  resolveFullySelectedGroups,
   resolveParentGroupHintFrame,
   unionFramePercent,
 } from "../utils/comunicadoGrouping";
@@ -335,7 +336,8 @@ export function ComunicadoComposerCanvas() {
         return;
       }
 
-      const ids = blocksInMarquee(blocks, normalized);
+      /* Marquee pega membros; expande para o grupo fechado (paridade Shift+clique). */
+      const ids = expandSelectionWithGroups(blocks, blocksInMarquee(blocks, normalized));
       if (intent === "subtract") {
         selectBlocksByIds(subtractMarqueeSelection(selectedIds, ids));
         return;
@@ -476,10 +478,17 @@ export function ComunicadoComposerCanvas() {
   );
 
   const primarySelected = selectedId;
-  const closedGroup = useMemo(
-    () => resolveClosedGroupSelection(blocks, selectedIds),
+  const fullySelectedGroups = useMemo(
+    () => resolveFullySelectedGroups(blocks, selectedIds),
     [blocks, selectedIds],
   );
+  const fullySelectedMemberIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const group of fullySelectedGroups) {
+      for (const id of group.memberIds) ids.add(id);
+    }
+    return ids;
+  }, [fullySelectedGroups]);
   const selectionHierarchy = useMemo(() => {
     const primaryComplex = blocks.find((item) => item.id === selectedId);
     const selectedParts =
@@ -519,18 +528,6 @@ export function ComunicadoComposerCanvas() {
     selectedInputPart,
     selectedInputParts,
   ]);
-  const groupUnionFrame = useMemo(() => {
-    if (!closedGroup) return null;
-    return unionFramePercent(closedGroup.members.map((member) => member.frame));
-  }, [closedGroup]);
-  const groupAnchorBlock = useMemo(() => {
-    if (!closedGroup) return null;
-    return (
-      closedGroup.members.find((member) => member.id === primarySelected) ??
-      closedGroup.members[closedGroup.members.length - 1] ??
-      null
-    );
-  }, [closedGroup, primarySelected]);
   /** Contorno pontilhado do pai quando um (ou mais) filhos estão isolados. */
   const parentGroupHintFrame = useMemo(
     () => resolveParentGroupHintFrame(blocks, selectedIds),
@@ -554,7 +551,8 @@ export function ComunicadoComposerCanvas() {
       blockId,
       blockType: block?.type,
       isSelected: isBlockSelected(blockId),
-      closedGroupActive: Boolean(closedGroup?.memberIds.includes(blockId)),
+      /* Membro de qualquer grupo fechado na seleção → chrome no grupo, não no filho. */
+      closedGroupActive: fullySelectedMemberIds.has(blockId),
       selectedPart: partForChrome,
     });
     if (!flags.showHandles) return false;
@@ -648,7 +646,7 @@ export function ComunicadoComposerCanvas() {
               return null;
             }
             const isSelected = isBlockSelected(block.id);
-            const inClosedGroup = Boolean(closedGroup && isSelected);
+            const inClosedGroup = Boolean(isSelected && fullySelectedMemberIds.has(block.id));
             const remoteEditors = remoteSelections.filter((selection) =>
               selection.selectedIds.includes(block.id),
             );
@@ -857,13 +855,21 @@ export function ComunicadoComposerCanvas() {
               </div>
             );
           })}
-          {groupUnionFrame && groupAnchorBlock ? (
-            <GroupSelectionChrome
-              frame={groupUnionFrame}
-              anchorBlock={groupAnchorBlock}
-              onPointerDown={startDragRespectingPan}
-            />
-          ) : null}
+          {fullySelectedGroups.map((group) => {
+            const frame = unionFramePercent(group.members.map((member) => member.frame));
+            const anchor =
+              group.members.find((member) => member.id === primarySelected) ??
+              group.members[group.members.length - 1];
+            if (!anchor) return null;
+            return (
+              <GroupSelectionChrome
+                key={group.groupId}
+                frame={frame}
+                anchorBlock={anchor}
+                onPointerDown={startDragRespectingPan}
+              />
+            );
+          })}
           {parentGroupHintFrame ? (
             <div
               className="td-composer__group-chrome td-composer__group-chrome--parent-hint"

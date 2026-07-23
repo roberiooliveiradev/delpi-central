@@ -239,7 +239,7 @@ describe("resolveTapWithoutDragSelectionAction", () => {
 });
 
 describe("resolveGroupedBlockPointerDownAction", () => {
-  it("1º clique expande o grupo; 2º isola o filho; Shift multiplica filhos", () => {
+  it("1º clique expande o grupo; 2º isola o filho; Shift multiplica grupos", () => {
     const blocks = [block("a", { groupId: "g1" }), block("b", { groupId: "g1" })];
     expect(
       resolveGroupedBlockPointerDownAction({
@@ -263,6 +263,31 @@ describe("resolveGroupedBlockPointerDownAction", () => {
       }),
     ).toEqual({ type: "isolate-child", blockId: "a" });
 
+    /* Shift com outro grupo / fora do modo filhos → toggle do grupo fechado. */
+    expect(
+      resolveGroupedBlockPointerDownAction({
+        block: blocks[1]!,
+        blocks,
+        selectedIds: ["x"],
+        shiftKey: true,
+        ctrlOrMeta: false,
+        altKey: false,
+      }),
+    ).toEqual({ type: "toggle-group", blockId: "b" });
+
+    /* Shift com grupo fechado selecionado → também toggle-group (não isola). */
+    expect(
+      resolveGroupedBlockPointerDownAction({
+        block: blocks[0]!,
+        blocks,
+        selectedIds: ["a", "b"],
+        shiftKey: true,
+        ctrlOrMeta: false,
+        altKey: false,
+      }),
+    ).toEqual({ type: "toggle-group", blockId: "a" });
+
+    /* Já em modo filhos: Shift alterna irmãos. */
     expect(
       resolveGroupedBlockPointerDownAction({
         block: blocks[1]!,
