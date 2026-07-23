@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 import {
   createBlock,
@@ -18,6 +18,10 @@ import {
   type ExternalPastePlan,
 } from "../../utils/externalClipboardPaste";
 import { frameForImageNaturalSize, readImageNaturalSize } from "../../utils/imagePasteFrame";
+import {
+  placeFrameCenteredAt,
+  resolveViewportCenterCanvasPercent,
+} from "../../utils/placeBlockInViewport";
 
 type Options = {
   playlistId: string;
@@ -29,6 +33,8 @@ type Options = {
   chooseDataSourceDuplicatePolicy?: () => Promise<DataSourceDuplicatePolicy | null>;
   /** Id do bloco em edição inline — paste nativo no contentEditable. */
   getEditingTextId?: () => string | null;
+  canvasRef?: RefObject<HTMLElement | null>;
+  canvasWrapRef?: RefObject<HTMLElement | null>;
 };
 
 type PasteOptions = {
@@ -75,6 +81,8 @@ export function useComunicadoEditorClipboard({
   removeSelected,
   chooseDataSourceDuplicatePolicy,
   getEditingTextId,
+  canvasRef,
+  canvasWrapRef,
 }: Options) {
   const [clipboardRevision, setClipboardRevision] = useState(0);
   const [pastingExternal, setPastingExternal] = useState(false);
@@ -147,15 +155,25 @@ export function useComunicadoEditorClipboard({
             natural?.width ?? 0,
             natural?.height ?? 0,
           );
+          const viewportCenter = resolveViewportCenterCanvasPercent(
+            canvasRef?.current,
+            canvasWrapRef?.current,
+          );
+          const centered = viewportCenter
+            ? placeFrameCenteredAt(baseFrame, {
+                x: viewportCenter.x + col * 8,
+                y: viewportCenter.y + row * 8,
+              })
+            : {
+                ...baseFrame,
+                x: Math.min(55, baseFrame.x + col * 40),
+                y: Math.min(50, baseFrame.y + row * 35),
+              };
           created.push({
             ...block,
             assetId: asset.id,
             url,
-            frame: {
-              ...baseFrame,
-              x: Math.min(55, baseFrame.x + col * 40),
-              y: Math.min(50, baseFrame.y + row * 35),
-            },
+            frame: centered,
             style: {
               ...block.style,
               objectFit: "contain",
@@ -171,7 +189,7 @@ export function useComunicadoEditorClipboard({
         setPastingExternal(false);
       }
     },
-    [getExistingBlocks, playlistId, selectBlocksByIds, updateBlocks],
+    [canvasRef, canvasWrapRef, getExistingBlocks, playlistId, selectBlocksByIds, updateBlocks],
   );
 
   const applyPastePlan = useCallback(

@@ -9,6 +9,7 @@ import {
 
 import { adminMediaUrl, uploadPlaylistMedia, type MediaAsset } from "../../api/tvDashboardApi";
 import type { MediaLibraryTarget } from "../../components/comunicadoEditorTypes";
+import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
 
 type Options = {
   playlistId: string;
@@ -18,6 +19,8 @@ type Options = {
   commitWithHistory: (next: ComunicadoConfig) => void;
   updateBlocks: (nextBlocks: ComunicadoBlock[]) => void;
   setSelectedId: (id: string | null) => void;
+  canvasRef?: RefObject<HTMLElement | null>;
+  canvasWrapRef?: RefObject<HTMLElement | null>;
 };
 
 function fontFamilyFromFilename(filename: string | null | undefined): string {
@@ -36,6 +39,8 @@ export function useComunicadoEditorMedia({
   commitWithHistory,
   updateBlocks,
   setSelectedId,
+  canvasRef,
+  canvasWrapRef,
 }: Options) {
   const [uploading, setUploading] = useState(false);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
@@ -72,18 +77,24 @@ export function useComunicadoEditorMedia({
       }
 
       if (resolvedTarget === "insert-image") {
-        const block = createBlock("image");
-        const withMedia = { ...block, assetId: asset.id, url } as ComunicadoBlock;
-        const nextBlocks = [...(configRef.current.blocks ?? []), withMedia];
+        const block = placeBlockInViewportCenter(
+          { ...createBlock("image"), assetId: asset.id, url } as ComunicadoBlock,
+          canvasRef?.current,
+          canvasWrapRef?.current,
+        );
+        const nextBlocks = [...(configRef.current.blocks ?? []), block];
         updateBlocks(nextBlocks);
         setSelectedId(block.id);
         return;
       }
 
       if (resolvedTarget === "insert-video") {
-        const block = createBlock("video");
-        const withMedia = { ...block, assetId: asset.id, url } as ComunicadoBlock;
-        const nextBlocks = [...(configRef.current.blocks ?? []), withMedia];
+        const block = placeBlockInViewportCenter(
+          { ...createBlock("video"), assetId: asset.id, url } as ComunicadoBlock,
+          canvasRef?.current,
+          canvasWrapRef?.current,
+        );
+        const nextBlocks = [...(configRef.current.blocks ?? []), block];
         updateBlocks(nextBlocks);
         setSelectedId(block.id);
         return;
@@ -106,7 +117,7 @@ export function useComunicadoEditorMedia({
       );
       updateBlocks(nextBlocks);
     },
-    [commitWithHistory, configRef, playlistId, selected, selectedId, setSelectedId, updateBlocks],
+    [canvasRef, canvasWrapRef, commitWithHistory, configRef, playlistId, selected, selectedId, setSelectedId, updateBlocks],
   );
 
   const handleUploadFile = useCallback(

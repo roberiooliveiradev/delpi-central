@@ -1,4 +1,10 @@
-import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import {
+  useCallback,
+  type Dispatch,
+  type MutableRefObject,
+  type RefObject,
+  type SetStateAction,
+} from "react";
 
 import {
   chartOptionsToParts,
@@ -89,6 +95,7 @@ import {
   sendToBack,
 } from "../../utils/comunicadoLayerOrder";
 import { groupBlocks, ungroupBlocks } from "../../utils/comunicadoGrouping";
+import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
 import {
   isChartTextFormatPart,
   isKpiTextFormatPart,
@@ -96,6 +103,8 @@ import {
 } from "../../utils/selectedTextFormatTarget";
 
 type Options = {
+  canvasRef?: RefObject<HTMLElement | null>;
+  canvasWrapRef?: RefObject<HTMLElement | null>;
   configRef: MutableRefObject<ComunicadoConfig>;
   commitWithHistory: (next: ComunicadoConfig) => void;
   selectedIds: string[];
@@ -172,7 +181,15 @@ export function useComunicadoEditorBlocks({
   onInputBlocksRemoved,
   getSourceResolved,
   chooseDataSourceDuplicatePolicy,
+  canvasRef,
+  canvasWrapRef,
 }: Options) {
+  const placeInserted = useCallback(
+    <T extends ComunicadoBlock>(block: T): T =>
+      placeBlockInViewportCenter(block, canvasRef?.current, canvasWrapRef?.current),
+    [canvasRef, canvasWrapRef],
+  );
+
   const updateBlocks = useCallback(
     (nextBlocks: ComunicadoBlock[]) => {
       const withConnectors = syncAllConnectors(pruneOrphanConnectors(nextBlocks));
@@ -195,20 +212,21 @@ export function useComunicadoEditorBlocks({
 
   const addBlock = useCallback(
     (type: ComunicadoBlock["type"]) => {
-      const block = createBlock(
+      let block = createBlock(
         type,
         type === "heading" ? "Novo título" : type === "text" ? "Texto" : "",
       );
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      block = placeInserted(block);
       setSelectedId(block.id);
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, setSelectedId, updateBlocks],
+    [configRef, placeInserted, setSelectedId, updateBlocks],
   );
 
   const addDataBlock = useCallback(
     (block: ComunicadoBlock) => {
-      const withZ = {
+      let withZ = {
         ...block,
         style: { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) },
       };
@@ -218,10 +236,11 @@ export function useComunicadoEditorBlocks({
           setLastDataDisplayMode(mode);
         }
       }
+      withZ = placeInserted(withZ);
       setSelectedId(withZ.id);
       updateBlocks([...(configRef.current.blocks ?? []), withZ]);
     },
-    [configRef, setLastDataDisplayMode, setSelectedId, updateBlocks],
+    [configRef, placeInserted, setLastDataDisplayMode, setSelectedId, updateBlocks],
   );
 
   const linkViewToSource = useCallback(
@@ -266,10 +285,11 @@ export function useComunicadoEditorBlocks({
         block = linkViewToSource(block, sourceId);
       }
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      block = placeInserted(block);
       setSelectedId(block.id);
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks],
+    [configRef, linkViewToSource, placeInserted, selectedId, setSelectedId, updateBlocks],
   );
 
   const addTableViewBlock = useCallback(
@@ -280,28 +300,31 @@ export function useComunicadoEditorBlocks({
         block = linkViewToSource(block, sourceId);
       }
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      block = placeInserted(block);
       setSelectedId(block.id);
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks],
+    [configRef, linkViewToSource, placeInserted, selectedId, setSelectedId, updateBlocks],
   );
 
   const addCanvasTableBlock = useCallback(
     (rows = 3, cols = 3) => {
-      const block = createCanvasTableBlock(rows, cols);
+      let block = createCanvasTableBlock(rows, cols);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      block = placeInserted(block);
       setSelectedId(block.id);
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, setSelectedId, updateBlocks],
+    [configRef, placeInserted, setSelectedId, updateBlocks],
   );
 
   const addInputBlock = useCallback(() => {
-    const block = createInputBlock({ targetScope: "slide", paramKey: "" });
+    let block = createInputBlock({ targetScope: "slide", paramKey: "" });
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    block = placeInserted(block);
     setSelectedId(block.id);
     updateBlocks([...(configRef.current.blocks ?? []), block]);
-  }, [configRef, setSelectedId, updateBlocks]);
+  }, [configRef, placeInserted, setSelectedId, updateBlocks]);
 
   const addKpiViewBlock = useCallback(() => {
     let block = createKpiViewBlock();
@@ -310,19 +333,19 @@ export function useComunicadoEditorBlocks({
       block = linkViewToSource(block, sourceId);
     }
     block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+    block = placeInserted(block);
     setSelectedId(block.id);
     updateBlocks([...(configRef.current.blocks ?? []), block]);
-  }, [configRef, linkViewToSource, selectedId, setSelectedId, updateBlocks]);
+  }, [configRef, linkViewToSource, placeInserted, selectedId, setSelectedId, updateBlocks]);
 
   const addDataSourceBlock = useCallback(
     (block: ComunicadoBlock, options?: { preferredView?: DataInsertPreferredView }) => {
       const selectedBlock = configRef.current.blocks?.find((item) => item.id === selectedId);
       let nextBlocks = [...(configRef.current.blocks ?? [])];
-      const withZ = {
+      let withZ: ComunicadoBlock = {
         ...block,
         style: { ...block.style, zIndex: nextZIndex(nextBlocks) },
       };
-      nextBlocks = [...nextBlocks, withZ];
       let linkedExistingView = false;
       if (
         selectedBlock &&
@@ -330,20 +353,15 @@ export function useComunicadoEditorBlocks({
         !("dataSourceId" in selectedBlock && selectedBlock.dataSourceId?.trim())
       ) {
         linkedExistingView = true;
-        nextBlocks = nextBlocks.map((item) =>
-          item.id === selectedBlock.id ? linkViewToSource(item, withZ.id) : item,
-        );
       } else if (
         selectedBlock &&
         isComunicadoVisualBoxBlock(selectedBlock) &&
         !selectedBlock.dataSourceId?.trim()
       ) {
         linkedExistingView = true;
-        nextBlocks = nextBlocks.map((item) =>
-          item.id === selectedBlock.id ? linkViewToSource(item, withZ.id) : item,
-        );
       }
-      // Fonte sozinha no palco é só o chip — cria visual ligado (como no Testar rota).
+      // Com visual novo: centraliza o visual; chip da fonte fica no canto superior esquerdo do visual.
+      // Sem visual: centraliza a fonte. Ligando a view existente: só adiciona a fonte no centro.
       if (!linkedExistingView && options?.preferredView) {
         let viewBlock: ComunicadoBlock;
         if (options.preferredView === "series") {
@@ -360,9 +378,18 @@ export function useComunicadoEditorBlocks({
         viewBlock = linkViewToSource(viewBlock, withZ.id);
         viewBlock.style = {
           ...viewBlock.style,
-          zIndex: nextZIndex(nextBlocks),
+          zIndex: nextZIndex([...nextBlocks, withZ]),
         };
-        nextBlocks = [...nextBlocks, viewBlock];
+        viewBlock = placeInserted(viewBlock);
+        withZ = {
+          ...withZ,
+          frame: {
+            ...withZ.frame,
+            x: Math.max(0, Math.min(100 - withZ.frame.w, viewBlock.frame.x)),
+            y: Math.max(0, Math.min(100 - withZ.frame.h, Math.max(0, viewBlock.frame.y - withZ.frame.h - 1))),
+          },
+        };
+        nextBlocks = [...nextBlocks, withZ, viewBlock];
         if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
           const mode = withZ.dataBinding.displayMode;
           if (mode && mode !== "auto") {
@@ -374,6 +401,14 @@ export function useComunicadoEditorBlocks({
         updateBlocks(nextBlocks);
         return;
       }
+
+      withZ = placeInserted(withZ);
+      nextBlocks = [...nextBlocks, withZ];
+      if (linkedExistingView && selectedBlock) {
+        nextBlocks = nextBlocks.map((item) =>
+          item.id === selectedBlock.id ? linkViewToSource(item, withZ.id) : item,
+        );
+      }
       if (isDataBlockType(withZ.type) && "dataBinding" in withZ) {
         const mode = withZ.dataBinding.displayMode;
         if (mode && mode !== "auto") {
@@ -384,7 +419,16 @@ export function useComunicadoEditorBlocks({
       setSelectedId(withZ.id);
       updateBlocks(nextBlocks);
     },
-    [configRef, linkViewToSource, selectedId, setDataPanelOpen, setLastDataDisplayMode, setSelectedId, updateBlocks],
+    [
+      configRef,
+      linkViewToSource,
+      placeInserted,
+      selectedId,
+      setDataPanelOpen,
+      setLastDataDisplayMode,
+      setSelectedId,
+      updateBlocks,
+    ],
   );
 
   const openDataPanel = useCallback(() => {
@@ -470,24 +514,26 @@ export function useComunicadoEditorBlocks({
 
   const addShape = useCallback(
     (shape: ComunicadoShapeKind) => {
-      const block = createShapeBlock(shape);
+      let block = createShapeBlock(shape);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      block = placeInserted(block);
       setSelectedId(block.id);
       setShapeMenuOpen(false);
       setRibbonTabRequest("element");
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, setRibbonTabRequest, setSelectedId, setShapeMenuOpen, updateBlocks],
+    [configRef, placeInserted, setRibbonTabRequest, setSelectedId, setShapeMenuOpen, updateBlocks],
   );
 
   const addIconBlock = useCallback(
     (iconName: string) => {
-      const block = createIconBlock(iconName);
+      let block = createIconBlock(iconName);
       block.style = { ...block.style, zIndex: nextZIndex(configRef.current.blocks ?? []) };
+      block = placeInserted(block);
       setSelectedId(block.id);
       updateBlocks([...(configRef.current.blocks ?? []), block]);
     },
-    [configRef, setSelectedId, updateBlocks],
+    [configRef, placeInserted, setSelectedId, updateBlocks],
   );
 
   const groupSelected = useCallback(() => {
@@ -1179,12 +1225,14 @@ export function useComunicadoEditorBlocks({
       setDataCatalogMode("insert");
       setDataCatalogModalOpen(true);
     }
+    block = placeInserted(block);
     setSelectedId(block.id);
     updateBlocks([...(configRef.current.blocks ?? []), block]);
   }, [
     bindSelectedVisualBoxToData,
     configRef,
     linkViewToSource,
+    placeInserted,
     selected,
     selectedId,
     setDataCatalogModalOpen,

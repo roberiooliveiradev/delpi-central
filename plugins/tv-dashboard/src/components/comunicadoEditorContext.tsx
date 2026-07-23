@@ -432,6 +432,8 @@ export function ComunicadoEditorProvider({
     onInputBlocksRemoved,
     getSourceResolved: (sourceId: string) => resolvedByBlockId[sourceId],
     chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
+    canvasRef,
+    canvasWrapRef: stage.canvasWrapRef,
   });
 
   updateBlocksRef.current = blockActions.updateBlocks;
@@ -506,6 +508,8 @@ export function ComunicadoEditorProvider({
       removeSelected: () => removeSelectedRef.current(),
       chooseDataSourceDuplicatePolicy: chooseDataSourceDuplicatePolicy ?? undefined,
       getEditingTextId: () => editingTextIdRef.current,
+      canvasRef,
+      canvasWrapRef: stage.canvasWrapRef,
     });
 
   const media = useComunicadoEditorMedia({
@@ -516,6 +520,8 @@ export function ComunicadoEditorProvider({
     commitWithHistory,
     updateBlocks: blockActions.updateBlocks,
     setSelectedId: selection.setSelectedId,
+    canvasRef,
+    canvasWrapRef: stage.canvasWrapRef,
   });
 
   const resolvedMaster = useMemo(
