@@ -110,3 +110,43 @@
   color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 50%, transparent));
   letter-spacing: 0.02em;
 }
+
+.delpi-ui-context-menu__item-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--delpi-ui-muted, color-mix(in srgb, var(--text, #111) 50%, transparent));
+}
+
+/* Submenu lateral (Organizar ▸, Agrupar ▸) */
+.delpi-ui-context-menu__sub {
+  position: relative;
+}
+
+.delpi-ui-context-menu__sub-trigger {
+  grid-template-columns: 24px 1fr 16px;
+}
+
+.delpi-ui-context-menu__sub--open > .delpi-ui-context-menu__sub-trigger {
+  background: color-mix(in srgb, var(--delpi-ui-accent, var(--primary, #089bdb)) 8%, transparent);
+}
+
+.delpi-ui-context-menu__sub-panel {
+  position: absolute;
+  top: -4px;
+  z-index: 2;
+  min-width: 200px;
+  /* Painel aninhado: sem sombra dupla pesada no trigger. */
+  box-shadow:
+    0 4px 6px -1px color-mix(in srgb, #000 10%, transparent),
+    0 10px 24px -4px color-mix(in srgb, #000 16%, transparent);
+}
+
+.delpi-ui-context-menu__sub-panel--right {
+  left: calc(100% - 2px);
+}
+
+.delpi-ui-context-menu__sub-panel--left {
+  right: calc(100% - 2px);
+  left: auto;
+}
