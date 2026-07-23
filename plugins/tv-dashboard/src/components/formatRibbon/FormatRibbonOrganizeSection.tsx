@@ -14,7 +14,7 @@ import {
   type ComunicadoChartViewBlock,
   type ComunicadoKpiViewBlock,
 } from "@delpi/tv-dashboard-presentation";
-import { ArrowDown, ArrowUp, Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
+import { Copy, Crop, FolderOpen, Trash2, Upload } from "lucide-react";
 
 import { TV_DASHBOARD_HELP_TOOLTIPS } from "../../content/helpTooltips";
 import { DeckRangeField } from "../deck/DeckRangeField";
@@ -23,6 +23,12 @@ import { DeckRibbonTile } from "../deck/DeckRibbonTile";
 import { TdRibbonSelect } from "../tdRibbonUi";
 import { ShortcutTip } from "../ShortcutTip";
 import { useComunicadoEditor } from "../comunicadoEditorContext";
+import {
+  FormatRibbonOrganizeGroup,
+  FormatRibbonOrganizeLayers,
+} from "./FormatRibbonOrganizeGroup";
+
+export { FormatRibbonOrganizeGroup, FormatRibbonOrganizeLayers };
 
 type Labels = Record<string, string>;
 
@@ -42,41 +48,14 @@ type SectionProps = {
 
 /**
  * Compat: Organizar era ações+camadas no mesmo grupo.
- * Preferir `FormatRibbonOrganizeLayers` + `FormatRibbonElementActions`.
+ * Preferir `FormatRibbonOrganizeGroup` + `FormatRibbonElementActions`.
  */
 export function FormatRibbonOrganizeSection({ labels = {}, embed = false }: SectionProps) {
   return (
     <>
-      <FormatRibbonOrganizeLayers embed={embed} />
+      <FormatRibbonOrganizeGroup embed={embed} />
       <FormatRibbonElementActions labels={labels} embed={embed} />
     </>
-  );
-}
-
-/** Organizar — ordem de camadas (frente / fundo). */
-export function FormatRibbonOrganizeLayers({ embed = false }: Omit<SectionProps, "labels">) {
-  const { selected, moveLayer } = useComunicadoEditor();
-  if (!selected) return null;
-
-  return (
-    <DeckRibbonGroup
-      groupId="organize-layers"
-      label="Organizar"
-      hint={H.organize}
-      captionPlacement={embed ? "none" : "below"}
-    >
-      <div className="td-deck-ribbon__organize">
-        <div className="td-deck-ribbon__tiles td-deck-ribbon__tiles--compact">
-          <DeckRibbonTile icon={ArrowUp} label="Frente" hint={E.layerUp} onClick={() => moveLayer("up")} />
-          <DeckRibbonTile
-            icon={ArrowDown}
-            label="Fundo"
-            hint={E.layerDown}
-            onClick={() => moveLayer("down")}
-          />
-        </div>
-      </div>
-    </DeckRibbonGroup>
   );
 }
 

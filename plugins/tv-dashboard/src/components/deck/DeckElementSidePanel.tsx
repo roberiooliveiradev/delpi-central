@@ -127,7 +127,7 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
   const tab = selectionPanelTab;
 
   const panelTitle = useMemo(() => {
-    if (tab === "layers") return "Camadas";
+    if (tab === "layers") return "Seleção";
     if (tab === "data") {
       if (dataPanelIntent === "catalog" || dataContext.kind === "none") {
         return "Fontes de dados";
@@ -306,8 +306,8 @@ export function DeckElementSidePanel({ labels = {}, embedded = true, branchScope
               setCollapsed(false);
               handleTabChange("layers");
             }}
-            aria-label="Camadas"
-            title="Camadas"
+            aria-label="Seleção"
+            title="Seleção"
           >
             <Layers size={16} aria-hidden="true" />
           </button>

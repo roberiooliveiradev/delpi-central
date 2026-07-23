@@ -19,6 +19,7 @@ describe("deckRibbonTabMeta (Elemento / Tabela / Dados / Camadas)", () => {
     );
     expect(tabs.some((tab) => tab.id === "tableDesign")).toBe(false);
     expect(tabs.find((tab) => tab.id === "element")?.label).toBe("Elemento");
+    expect(tabs.find((tab) => tab.id === "layers")?.label).toBe("Seleção");
   });
 
   it("esconde Dados sem seleção data-bound (salvo showDataTab)", () => {

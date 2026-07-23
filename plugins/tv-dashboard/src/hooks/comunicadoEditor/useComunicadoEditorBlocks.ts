@@ -1,5 +1,6 @@
 import {
   useCallback,
+  useState,
   type Dispatch,
   type MutableRefObject,
   type RefObject,
@@ -94,7 +95,12 @@ import {
   sendBackward,
   sendToBack,
 } from "../../utils/comunicadoLayerOrder";
-import { groupBlocks, ungroupBlocks } from "../../utils/comunicadoGrouping";
+import { groupBlocks, ungroupBlocks, expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
+import {
+  flipHorizontalStyle,
+  flipVerticalStyle,
+  rotateBlockStyle,
+} from "../../utils/comunicadoTransform";
 import { placeBlockInViewportCenter } from "../../utils/placeBlockInViewport";
 import {
   isChartTextFormatPart,
@@ -132,6 +138,7 @@ type Options = {
   setDataCatalogMode: Dispatch<SetStateAction<DataCatalogMode>>;
   setShapeMenuOpen: Dispatch<SetStateAction<boolean>>;
   setRibbonTabRequest: Dispatch<SetStateAction<ComunicadoRibbonTabRequest | null>>;
+  requestRibbonTab?: (tab: ComunicadoRibbonTabRequest) => void;
   /** Preenchido pelo Provider para o clipboard. */
   removeSelectedRef: MutableRefObject<() => void>;
   /** Preenchido pelo Provider para o bridge de texto na seleção. */
@@ -176,6 +183,7 @@ export function useComunicadoEditorBlocks({
   setDataCatalogMode,
   setShapeMenuOpen,
   setRibbonTabRequest,
+  requestRibbonTab,
   removeSelectedRef,
   updateBlockTextFieldsRef,
   onInputBlocksRemoved,
@@ -184,6 +192,8 @@ export function useComunicadoEditorBlocks({
   canvasRef,
   canvasWrapRef,
 }: Options) {
+  const [lastUngroupedIds, setLastUngroupedIds] = useState<string[]>([]);
+
   const placeInserted = useCallback(
     <T extends ComunicadoBlock>(block: T): T =>
       placeBlockInViewportCenter(block, canvasRef?.current, canvasWrapRef?.current),
@@ -539,12 +549,27 @@ export function useComunicadoEditorBlocks({
   const groupSelected = useCallback(() => {
     if (selectedIds.length < 2) return;
     updateBlocks(groupBlocks(configRef.current.blocks ?? [], selectedIds));
+    setLastUngroupedIds([]);
   }, [configRef, selectedIds, updateBlocks]);
 
   const ungroupSelected = useCallback(() => {
     if (selectedIds.length === 0) return;
-    updateBlocks(ungroupBlocks(configRef.current.blocks ?? [], selectedIds));
+    const current = configRef.current.blocks ?? [];
+    const expanded = expandSelectionWithGroups(current, selectedIds);
+    const members = expanded.filter((id) => Boolean(current.find((block) => block.id === id)?.groupId));
+    if (members.length >= 2) setLastUngroupedIds(members);
+    updateBlocks(ungroupBlocks(current, expanded));
   }, [configRef, selectedIds, updateBlocks]);
+
+  const regroupSelected = useCallback(() => {
+    const current = configRef.current.blocks ?? [];
+    const present = new Set(current.map((block) => block.id));
+    const ids = lastUngroupedIds.filter((id) => present.has(id));
+    if (ids.length < 2) return;
+    updateBlocks(groupBlocks(current, ids));
+    selectBlocksByIds(ids);
+    setLastUngroupedIds([]);
+  }, [configRef, lastUngroupedIds, selectBlocksByIds, updateBlocks]);
 
   const updateSelected = useCallback(
     (patch: Partial<ComunicadoBlock>) => {
@@ -1166,6 +1191,91 @@ export function useComunicadoEditorBlocks({
     [configRef, selectedIds, updateBlocks],
   );
 
+  const rotateSelected = useCallback(
+    (deltaDeg: number) => {
+      if (selectedIds.length === 0) return;
+      const idSet = new Set(selectedIds);
+      updateBlocks(
+        (configRef.current.blocks ?? []).map((block) =>
+          idSet.has(block.id)
+            ? ({ ...block, style: rotateBlockStyle(block.style, deltaDeg) } as ComunicadoBlock)
+            : block,
+        ),
+      );
+    },
+    [configRef, selectedIds, updateBlocks],
+  );
+
+  const flipSelectedHorizontal = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    const idSet = new Set(selectedIds);
+    updateBlocks(
+      (configRef.current.blocks ?? []).map((block) =>
+        idSet.has(block.id)
+          ? ({ ...block, style: flipHorizontalStyle(block.style) } as ComunicadoBlock)
+          : block,
+      ),
+    );
+  }, [configRef, selectedIds, updateBlocks]);
+
+  const flipSelectedVertical = useCallback(() => {
+    if (selectedIds.length === 0) return;
+    const idSet = new Set(selectedIds);
+    updateBlocks(
+      (configRef.current.blocks ?? []).map((block) =>
+        idSet.has(block.id)
+          ? ({ ...block, style: flipVerticalStyle(block.style) } as ComunicadoBlock)
+          : block,
+      ),
+    );
+  }, [configRef, selectedIds, updateBlocks]);
+
+  const setBlocksHidden = useCallback(
+    (blockIds: string[], hidden: boolean) => {
+      if (blockIds.length === 0) return;
+      const idSet = new Set(blockIds);
+      updateBlocks(
+        (configRef.current.blocks ?? []).map((block) =>
+          idSet.has(block.id) ? ({ ...block, hidden } as ComunicadoBlock) : block,
+        ),
+      );
+    },
+    [configRef, updateBlocks],
+  );
+
+  const toggleBlockHidden = useCallback(
+    (blockId: string) => {
+      const block = (configRef.current.blocks ?? []).find((item) => item.id === blockId);
+      if (!block) return;
+      setBlocksHidden([blockId], block.hidden !== true);
+    },
+    [configRef, setBlocksHidden],
+  );
+
+  const showAllBlocks = useCallback(() => {
+    const ids = (configRef.current.blocks ?? [])
+      .filter((block) => block.hidden === true)
+      .map((block) => block.id);
+    setBlocksHidden(ids, false);
+  }, [configRef, setBlocksHidden]);
+
+  const hideAllBlocks = useCallback(() => {
+    const ids = (configRef.current.blocks ?? []).map((block) => block.id);
+    setBlocksHidden(ids, true);
+  }, [configRef, setBlocksHidden]);
+
+  const focusFrameRotationField = useCallback(() => {
+    if (requestRibbonTab) requestRibbonTab("element");
+    else setRibbonTabRequest("element");
+    window.requestAnimationFrame(() => {
+      const el = document.getElementById("td-ribbon-frame-rotation");
+      if (el instanceof HTMLElement) {
+        el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        el.focus();
+      }
+    });
+  }, [requestRibbonTab, setRibbonTabRequest]);
+
   const setBackgroundColor = useCallback(
     (color: string) => {
       commitWithHistory({ ...configRef.current, background: { type: "color", value: color } });
@@ -1261,6 +1371,8 @@ export function useComunicadoEditorBlocks({
     addIconBlock,
     groupSelected,
     ungroupSelected,
+    regroupSelected,
+    lastUngroupedIds,
     connectSelected,
     updateSelected,
     updateBlock,
@@ -1284,6 +1396,14 @@ export function useComunicadoEditorBlocks({
     applySlideTemplate,
     applySlideTheme,
     alignSelected,
+    rotateSelected,
+    flipSelectedHorizontal,
+    flipSelectedVertical,
+    setBlocksHidden,
+    toggleBlockHidden,
+    showAllBlocks,
+    hideAllBlocks,
+    focusFrameRotationField,
     setBackgroundColor,
     setBackgroundGradient,
     bindSelectedVisualBoxToData,

@@ -115,8 +115,8 @@ export const DECK_RIBBON_TABS: DeckRibbonTabMeta[] = [
   },
   {
     id: "layers",
-    label: "Camadas",
-    hint: PANEL.layers ?? "Ordem e construção das camadas do slide.",
+    label: "Seleção",
+    hint: PANEL.layers ?? "Painel de Seleção: ordem e visibilidade dos elementos.",
     icon: Layers,
     customOnly: true,
   },
@@ -226,8 +226,8 @@ export function resolveSelectionPanelTabs(options: {
   }
   tabs.push({
     id: "layers",
-    label: "Camadas",
-    hint: PANEL.layers ?? "Ordem e construção das camadas do slide.",
+    label: "Seleção",
+    hint: PANEL.layers ?? "Painel de Seleção: ordem e visibilidade dos elementos.",
     icon: Layers,
   });
   return tabs;

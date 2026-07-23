@@ -6,7 +6,7 @@ import {
 import type { ComunicadoBlock } from "./comunicadoTypes";
 
 /** Motivo canônico de ocultação no palco (extensível). */
-export type StageHideReason = "linked_data_source";
+export type StageHideReason = "linked_data_source" | "user_hidden";
 
 /**
  * Fonte de verdade: um bloco oculto no palco não participa de hit-test,
@@ -16,6 +16,7 @@ export function resolveBlockStageHideReason(
   block: ComunicadoBlock,
   blocks: ComunicadoBlock[],
 ): StageHideReason | null {
+  if (block.hidden === true) return "user_hidden";
   if (isDataSourceBlockType(block.type) && shouldHideDataSourceOnStage(block.id, blocks)) {
     return "linked_data_source";
   }

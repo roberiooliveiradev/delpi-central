@@ -48,7 +48,18 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     textShadow: "Preset de sombra tipográfica no texto selecionado.",
     strokeWidth: "Espessura do contorno da forma, em pixels.",
     organize:
-      "Ordem das camadas: trazer para frente ou enviar para o fundo.",
+      "Camadas, alinhamento, agrupamento e rotação — mesmo padrão Organizar do Excel.",
+    selectionPane:
+      "Abre o painel Seleção com a lista de elementos, visibilidade e ordem de camadas.",
+    rotateMenu: "Girar 90°, inverter ou abrir o campo de rotação em Tamanho e posição.",
+    moreRotationOptions: "Abre o campo Rotação em Tamanho e posição para ajuste fino.",
+    regroupSelection: "Reagrupa os elementos do último desagrupar (se ainda existirem).",
+    alignSlideLeft: "Alinha a borda esquerda do elemento (ou grupo) à esquerda do slide.",
+    alignSlideCenterH: "Centraliza horizontalmente no slide.",
+    alignSlideRight: "Alinha a borda direita à direita do slide.",
+    alignSlideTop: "Alinha o topo ao topo do slide.",
+    alignSlideCenterV: "Centraliza verticalmente no slide.",
+    alignSlideBottom: "Alinha a base à base do slide.",
     actions:
       "Ações do elemento: duplicar, remover e, em mídia, biblioteca/recorte/upload.",
     display:
@@ -165,9 +176,15 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Parâmetros globais da apresentação: resolução da TV, transição entre telas, duração padrão e link público.",
     data: "Catálogo de rotas api-delpi e configuração de fontes de dados para gráficos e tabelas.",
     layers:
-      "Ordem de aparição na TV e pilha visual (frente/fundo) dos elementos do slide.",
+      "Painel de Seleção: ordem de aparição na TV, pilha visual e visibilidade dos elementos.",
   },
   layers: {
+    panelTitle: "Seleção",
+    showAll: "Mostrar todos os elementos ocultos pelo usuário.",
+    hideAll: "Ocultar todos os elementos no palco (Painel de Seleção).",
+    toggleVisibility: "Mostrar ou ocultar este elemento no palco.",
+    moveUp: "Trazer uma camada à frente.",
+    moveDown: "Enviar uma camada para trás.",
     buildOrder:
       "Ordem em que os elementos aparecem na TV (atraso da animação de entrada). Use Sequenciar para um a um, Mesmo instante para todos juntos, ou Limpar para remover animações.",
     buildSequenciar:
@@ -193,7 +210,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     shape:
       "Ferramentas da forma selecionada: alterar forma, estilos, preenchimento, contorno e tamanho.",
     data: "Mesmos controles do painel lateral Dados: fonte, parâmetros e catálogo.",
-    layers: "Mesmos controles do painel lateral Camadas: ordem de construção e pilha visual.",
+    layers: "Mesmos controles do painel lateral Seleção: ordem de construção, pilha e visibilidade.",
     view: "Controles de exibição do palco: zoom, réguas, grade, guias e encaixes (grade e objetos).",
   },
   view: {

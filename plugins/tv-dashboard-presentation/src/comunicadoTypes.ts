@@ -169,6 +169,10 @@ export type ComunicadoBlockStyle = {
   textReflection?: boolean;
   opacity?: number;
   rotation?: number;
+  /** Espelho horizontal (−1 = invertido). */
+  scaleX?: number;
+  /** Espelho vertical (−1 = invertido). */
+  scaleY?: number;
   zIndex?: number;
   fill?: string;
   stroke?: string;
@@ -208,6 +212,8 @@ export type ComunicadoBlockBase = {
   frame: ComunicadoFrame;
   style?: ComunicadoBlockStyle;
   groupId?: string;
+  /** Oculto no palco pelo usuário (Painel de Seleção). */
+  hidden?: boolean;
   /** Animações do bloco (4E.2) — entrada na TV. */
   animations?: ComunicadoBlockAnimation[];
 };

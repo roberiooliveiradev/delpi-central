@@ -94,7 +94,7 @@ describe("resolveSelectionSections", () => {
         } as SelectionSectionContext["selected"],
         selectedIds: ["a", "b"],
       }),
-    ).toEqual(["alignMulti", "organize", "actions"]);
+    ).toEqual(["organize", "actions"]);
   });
 
   it("parte de gráfico prioriza partFormat + tipografia", () => {

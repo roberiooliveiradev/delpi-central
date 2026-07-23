@@ -5,6 +5,9 @@ import {
   type ComunicadoLayoutUnit,
 } from "./comunicadoGrouping";
 
+/** Caixa do slide em % de design (origem canto superior esquerdo do palco). */
+export const SLIDE_LAYOUT_BOUNDS: ComunicadoFrame = { x: 0, y: 0, w: 100, h: 100 };
+
 export type LayoutAlignCommand =
   | "align-left"
   | "align-center-h"
@@ -13,7 +16,17 @@ export type LayoutAlignCommand =
   | "align-center-v"
   | "align-bottom"
   | "distribute-h"
-  | "distribute-v";
+  | "distribute-v"
+  | "align-slide-left"
+  | "align-slide-center-h"
+  | "align-slide-right"
+  | "align-slide-top"
+  | "align-slide-center-v"
+  | "align-slide-bottom";
+
+function isSlideAlignCommand(command: LayoutAlignCommand): boolean {
+  return command.startsWith("align-slide-");
+}
 
 function applyUnitOrigins(
   blocks: ComunicadoBlock[],
@@ -42,6 +55,45 @@ function applyUnitOrigins(
     const frame = frameById.get(block.id);
     return frame ? { ...block, frame } : block;
   });
+}
+
+function computeSlideUnitOrigins(
+  units: ComunicadoLayoutUnit[],
+  command: LayoutAlignCommand,
+  slide: ComunicadoFrame = SLIDE_LAYOUT_BOUNDS,
+): Map<string, { x: number; y: number }> | null {
+  const origins = new Map<string, { x: number; y: number }>();
+  for (const unit of units) {
+    switch (command) {
+      case "align-slide-left":
+        origins.set(unit.key, { x: slide.x, y: unit.frame.y });
+        break;
+      case "align-slide-right":
+        origins.set(unit.key, { x: slide.x + slide.w - unit.frame.w, y: unit.frame.y });
+        break;
+      case "align-slide-center-h":
+        origins.set(unit.key, {
+          x: slide.x + (slide.w - unit.frame.w) / 2,
+          y: unit.frame.y,
+        });
+        break;
+      case "align-slide-top":
+        origins.set(unit.key, { x: unit.frame.x, y: slide.y });
+        break;
+      case "align-slide-bottom":
+        origins.set(unit.key, { x: unit.frame.x, y: slide.y + slide.h - unit.frame.h });
+        break;
+      case "align-slide-center-v":
+        origins.set(unit.key, {
+          x: unit.frame.x,
+          y: slide.y + (slide.h - unit.frame.h) / 2,
+        });
+        break;
+      default:
+        return null;
+    }
+  }
+  return origins;
 }
 
 function computeUnitOrigins(
@@ -129,14 +181,22 @@ function computeUnitOrigins(
 /**
  * Alinha/distribui a seleção por **unidades de layout** (grupos fechados ou blocos).
  * Membros de um grupo recebem o mesmo delta — layout interno preservado.
+ * Comandos `align-slide-*` alinham ao slide (0…100%) com 1+ unidades.
  */
 export function alignComunicadoBlocks(
   blocks: ComunicadoBlock[],
   selectedIds: string[],
   command: LayoutAlignCommand,
+  options?: { slideBounds?: ComunicadoFrame },
 ): ComunicadoBlock[] {
   const units = partitionSelectionIntoLayoutUnits(blocks, selectedIds);
   if (units.length === 0) return blocks;
+
+  if (isSlideAlignCommand(command)) {
+    const origins = computeSlideUnitOrigins(units, command, options?.slideBounds);
+    if (!origins) return blocks;
+    return applyUnitOrigins(blocks, units, origins);
+  }
 
   if (command === "distribute-h" || command === "distribute-v") {
     if (units.length < 3) return blocks;

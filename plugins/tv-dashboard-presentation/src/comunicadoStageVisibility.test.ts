@@ -5,6 +5,7 @@ import {
   isBlockHiddenOnStage,
   isBlockSelectableOnStage,
   listViewsLinkedToDataSource,
+  resolveBlockStageHideReason,
   resolveStageSelectionTargetId,
 } from "./comunicadoStageVisibility";
 import type { ComunicadoBlock } from "./comunicadoTypes";
@@ -64,5 +65,17 @@ describe("comunicadoStageVisibility", () => {
     ]);
     expect(resolveStageSelectionTargetId("src-1", blocks)).toBe("chart-1");
     expect(resolveStageSelectionTargetId("chart-1", blocks)).toBe("chart-1");
+  });
+
+  it("oculta bloco com hidden=true do usuário", () => {
+    const block: ComunicadoBlock = {
+      id: "text-1",
+      type: "text",
+      content: "A",
+      frame: { x: 0, y: 0, w: 10, h: 10 },
+      hidden: true,
+    };
+    expect(resolveBlockStageHideReason(block, [block])).toBe("user_hidden");
+    expect(isBlockHiddenOnStage(block, [block])).toBe(true);
   });
 });

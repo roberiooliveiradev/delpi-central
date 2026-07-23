@@ -208,6 +208,8 @@ export type ComunicadoEditorContextValue = {
   addIconBlock: (iconName: string) => void;
   groupSelected: () => void;
   ungroupSelected: () => void;
+  regroupSelected: () => void;
+  lastUngroupedIds: string[];
   /** Liga os dois blocos selecionados com uma seta (MVP conector). */
   connectSelected: () => void;
   setDataFilters: (filters: ComunicadoDataFilters | undefined) => void;
@@ -297,6 +299,14 @@ export type ComunicadoEditorContextValue = {
   applySlideTemplate: (nativeConfig: Record<string, unknown>) => void;
   applySlideTheme: (theme: ComunicadoSlideTheme) => void;
   alignSelected: (command: LayoutAlignCommand) => void;
+  rotateSelected: (deltaDeg: number) => void;
+  flipSelectedHorizontal: () => void;
+  flipSelectedVertical: () => void;
+  setBlocksHidden: (blockIds: string[], hidden: boolean) => void;
+  toggleBlockHidden: (blockId: string) => void;
+  showAllBlocks: () => void;
+  hideAllBlocks: () => void;
+  focusFrameRotationField: () => void;
   stageZoom: number;
   setStageZoom: (zoom: number) => void;
   fitStageToView: () => void;

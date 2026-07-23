@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
-import { GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, EyeOff, GripVertical } from "lucide-react";
 import { HintAction } from "@delpi/plugin-ui/index";
 import {
   assignStaggeredEntranceDelays,
   clearEntranceAnimations,
-  isBlockHiddenOnStage,
+  resolveBlockStageHideReason,
   resolveEntranceAnimation,
   sortBlocksByZIndex,
   syncEntranceDelaysSameInstant,
@@ -33,6 +33,11 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     selectBlocksByIds,
     reorderBlockLayer,
     updateBlock,
+    toggleBlockHidden,
+    showAllBlocks,
+    hideAllBlocks,
+    bringForward,
+    sendBackward,
   } = useComunicadoEditor();
   const [dragId, setDragId] = useState<string | null>(null);
   const isRibbon = layout === "ribbon";
@@ -124,24 +129,67 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
     </>
   );
 
+  const selectionToolbar = (
+    <div className="td-layers-list__toolbar">
+      <HintAction hint={L.showAll} ariaLabel="Ajuda: Mostrar tudo">
+        <button type="button" className="td-btn td-btn--sm" onClick={showAllBlocks}>
+          Mostrar tudo
+        </button>
+      </HintAction>
+      <HintAction hint={L.hideAll} ariaLabel="Ajuda: Ocultar tudo">
+        <button type="button" className="td-btn td-btn--sm" onClick={hideAllBlocks}>
+          Ocultar tudo
+        </button>
+      </HintAction>
+      <div className="td-layers-list__reorder">
+        <HintAction hint={L.moveUp} ariaLabel="Ajuda: Avançar camada">
+          <button
+            type="button"
+            className="td-btn td-btn--sm td-btn--icon"
+            disabled={selectedIds.length === 0}
+            onClick={bringForward}
+            aria-label="Avançar"
+          >
+            <ChevronUp size={16} aria-hidden="true" />
+          </button>
+        </HintAction>
+        <HintAction hint={L.moveDown} ariaLabel="Ajuda: Recuar camada">
+          <button
+            type="button"
+            className="td-btn td-btn--sm td-btn--icon"
+            disabled={selectedIds.length === 0}
+            onClick={sendBackward}
+            aria-label="Recuar"
+          >
+            <ChevronDown size={16} aria-hidden="true" />
+          </button>
+        </HintAction>
+      </div>
+    </div>
+  );
+
   const layersSection = (
     <>
+      {selectionToolbar}
       {layers.length === 0 ? (
         <p className="td-subtitle">Nenhum elemento no slide.</p>
       ) : (
         <ul className="td-layers-list">
           {layers.map((block) => {
             const active = selectedIds.includes(block.id);
-            const hiddenOnStage = isBlockHiddenOnStage(block, blocks);
+            const hideReason = resolveBlockStageHideReason(block, blocks);
+            const hiddenOnStage = hideReason != null;
+            const userHidden = block.hidden === true;
             const inGroup = Boolean(block.groupId);
             return (
-              <li key={block.id}>
+              <li key={block.id} className="td-layers-list__row">
                 <button
                   type="button"
                   className={[
                     "td-layers-list__item",
                     active ? "td-layers-list__item--active" : "",
                     inGroup ? "td-layers-list__item--grouped" : "",
+                    userHidden ? "td-layers-list__item--user-hidden" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -156,11 +204,13 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                     })
                   }
                   title={
-                    hiddenOnStage
+                    hideReason === "linked_data_source"
                       ? "Oculta no palco (fonte vinculada) — seleção vai para o visual ligado"
-                      : inGroup
-                        ? "Membro de grupo — clique seleciona só este elemento"
-                        : undefined
+                      : userHidden
+                        ? "Oculto pelo usuário"
+                        : inGroup
+                          ? "Membro de grupo — clique seleciona só este elemento"
+                          : undefined
                   }
                 >
                   <GripVertical size={16} className="td-layers-list__handle" aria-hidden="true" />
@@ -174,6 +224,24 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                     <span className="td-layers-list__summary">{comunicadoBlockSummary(block)}</span>
                   </span>
                 </button>
+                <HintAction hint={L.toggleVisibility} ariaLabel={`Ajuda: Visibilidade`}>
+                  <button
+                    type="button"
+                    className="td-layers-list__eye"
+                    aria-label={userHidden ? "Mostrar elemento" : "Ocultar elemento"}
+                    disabled={hideReason === "linked_data_source" && !userHidden}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      toggleBlockHidden(block.id);
+                    }}
+                  >
+                    {userHidden || hiddenOnStage ? (
+                      <EyeOff size={16} aria-hidden="true" />
+                    ) : (
+                      <Eye size={16} aria-hidden="true" />
+                    )}
+                  </button>
+                </HintAction>
               </li>
             );
           })}
@@ -208,7 +276,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
           {buildOrderSection}
         </div>
         <div className="td-deck-ribbon__panel-zone">
-          <h4 className="td-deck-ribbon__panel-zone-title">Lista de camadas</h4>
+          <h4 className="td-deck-ribbon__panel-zone-title">{L.panelTitle}</h4>
           {layersSection}
         </div>
       </div>
@@ -221,7 +289,7 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
         {buildOrderSection}
       </DeckPropertySection>
 
-      <DeckPropertySection pane={pane} title="Lista de camadas" hint={L.list} defaultOpen>
+      <DeckPropertySection pane={pane} title={L.panelTitle} hint={L.list} defaultOpen>
         {layersSection}
       </DeckPropertySection>
     </>

@@ -1,6 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  AlignHorizontalSpaceAround,
   AlignLeft,
   ArrowLeft,
   BarChart3,
@@ -75,8 +74,8 @@ export const DECK_RIBBON_COLLAPSE_ICONS: Readonly<Record<string, LucideIcon>> = 
   "shape-adjustments": Move,
   "frame-size": Move,
   "organize-layers": Layers,
+  organize: Layers,
   "element-actions": MoreHorizontal,
-  "align-selection": AlignHorizontalSpaceAround,
   "media-section": Image,
   "appearance-display": Eye,
   "data-source-hint": Database,

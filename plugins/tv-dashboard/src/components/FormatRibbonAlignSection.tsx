@@ -28,7 +28,7 @@ type Props = {
   connectSelected: () => void;
 };
 
-/** Seção Alinhar / Dist. / Agrupar / Conectar do ribbon de formato (seleção múltipla). */
+/** @deprecated Migrado para `FormatRibbonOrganizeGroup` (menus Alinhar/Agrupar). */
 export function FormatRibbonAlignSection({
   canDistribute,
   canGroup,

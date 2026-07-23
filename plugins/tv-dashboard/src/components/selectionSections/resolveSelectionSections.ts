@@ -24,7 +24,7 @@ export function resolveSelectionSections(
     selectedIds && selectedIds.length > 0 ? selectedIds : [selected.id];
 
   if (ids.length >= 2) {
-    return ["alignMulti", "organize", "actions"];
+    return ["organize", "actions"];
   }
 
   if (selected.type === "chart_view" && ctx.selectedChartPart) {

@@ -1476,9 +1476,19 @@ export function blockCssStyle(block: ComunicadoBlock, options?: { fontScale?: nu
     zIndex: style.zIndex ?? 1,
     opacity: style.opacity ?? 1,
   };
-  if (style.rotation) {
-    // Ponto: placement já é bbox (não centro com translate); só rotaciona no próprio box.
-    css.transform = `rotate(${style.rotation}deg)`;
+  {
+    const parts: string[] = [];
+    if (style.scaleX != null && Number.isFinite(style.scaleX) && style.scaleX !== 1) {
+      parts.push(`scaleX(${style.scaleX})`);
+    }
+    if (style.scaleY != null && Number.isFinite(style.scaleY) && style.scaleY !== 1) {
+      parts.push(`scaleY(${style.scaleY})`);
+    }
+    if (style.rotation) {
+      // Ponto: placement já é bbox (não centro com translate); só rotaciona no próprio box.
+      parts.push(`rotate(${style.rotation}deg)`);
+    }
+    if (parts.length > 0) css.transform = parts.join(" ");
   }
   applySharedBlockVisualStyle(style, css, fontScale);
 

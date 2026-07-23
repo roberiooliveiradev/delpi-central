@@ -60,4 +60,13 @@ describe("alignComunicadoBlocks", () => {
     expect(na.frame.y).toBe(0);
     expect(nc.frame.y).toBe(0);
   });
+
+  it("alinha ao slide com um bloco", () => {
+    const a = createBlock("text", "A");
+    a.frame = { x: 20, y: 30, w: 20, h: 10 };
+    const next = alignComunicadoBlocks([a], [a.id], "align-slide-left");
+    expect(next.find((block) => block.id === a.id)?.frame.x).toBe(0);
+    const centered = alignComunicadoBlocks([a], [a.id], "align-slide-center-h");
+    expect(centered.find((block) => block.id === a.id)?.frame.x).toBe(40);
+  });
 });
