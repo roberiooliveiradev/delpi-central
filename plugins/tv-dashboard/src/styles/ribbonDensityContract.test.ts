@@ -43,7 +43,7 @@ describe("ribbon density contract", () => {
       /\.td-deck-ribbon--compact\.td-deck-ribbon--fit\s*\{[^}]+\}/s,
     )?.[0];
     expect(fit).toMatch(/height:\s*auto/);
-    expect(fit).toMatch(/max-height:\s*min\(220px,\s*34vh\)/);
+    expect(fit).toMatch(/max-height:\s*min\(240px,\s*38vh\)/);
   });
 
   it("Raio/Opacidade na ribbon mantêm slider (full) com largura estreita no host", () => {
