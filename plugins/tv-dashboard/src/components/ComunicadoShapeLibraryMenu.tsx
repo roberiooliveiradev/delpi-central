@@ -8,6 +8,7 @@ import {
   COMUNICADO_SHAPE_CATALOG_CATEGORIES,
   ComunicadoShapePreview,
   comunicadoShapeLabel,
+  isLineShapeKind,
   type ComunicadoShapeKind,
 } from "@delpi/tv-dashboard-presentation";
 
@@ -76,9 +77,10 @@ function ShapeLibraryButton({
   onSelect: (kind: ComunicadoShapeKind) => void;
 }) {
   const label = comunicadoShapeLabel(kind);
+  const hintBase = isLineShapeKind(kind) ? (H.insertLineShape ?? H.insertShape) : H.insertShape;
 
   return (
-    <HintAction hint={`${H.insertShape} — ${label}`} ariaLabel={`Inserir ${label}`} placement="top">
+    <HintAction hint={`${hintBase} — ${label}`} ariaLabel={`Inserir ${label}`} placement="top">
       <button
         type="button"
         role="menuitem"

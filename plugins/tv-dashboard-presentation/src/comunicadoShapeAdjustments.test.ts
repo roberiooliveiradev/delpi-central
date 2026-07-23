@@ -8,26 +8,32 @@ import {
   shapeHasAdjustments,
 } from "./comunicadoShapeAdjustments";
 import { COMUNICADO_SHAPE_KIND_VALUES } from "./comunicadoShapeCatalog";
-import { parallelogramPoints, trianglePoints } from "./comunicadoShapePaths";
+import {
+  arrowRightPath,
+  hexagonPoints,
+  parallelogramPoints,
+  trapezoidPoints,
+  trianglePoints,
+} from "./comunicadoShapePaths";
 
 describe("comunicadoShapeAdjustments", () => {
   it("expõe ajustes para formas do catálogo com geometria editável", () => {
-    expect(shapeHasAdjustments("rectangle")).toBe(true);
+    expect(shapeHasAdjustments("rectangle")).toBe(false);
+    expect(shapeHasAdjustments("ellipse")).toBe(false);
     expect(shapeHasAdjustments("rounded-rect")).toBe(true);
     expect(shapeHasAdjustments("hexagon")).toBe(true);
     expect(shapeHasAdjustments("arrow-right")).toBe(true);
-    expect(shapeHasAdjustments("ellipse")).toBe(false);
     expect(shapeHasAdjustments("diamond")).toBe(false);
     expect(shapeHasAdjustments("point")).toBe(false);
   });
 
-  it("resolve defaults e legado borderRadius → adj de cantos", () => {
-    expect(defaultShapeAdjustments("rectangle")[0]).toBe(0);
+  it("resolve defaults e legado borderRadius → adj de cantos (rounded-rect)", () => {
+    expect(defaultShapeAdjustments("rectangle")).toEqual([]);
     expect(defaultShapeAdjustments("rounded-rect")[0]).toBeCloseTo(0.16);
-    const fromLegacy = resolveShapeAdjustments("rectangle", { borderRadius: 16 });
+    const fromLegacy = resolveShapeAdjustments("rounded-rect", { borderRadius: 16 });
     expect(fromLegacy[0]).toBeCloseTo(0.25);
-    expect(resolveShapeAdjustments("rectangle", { borderRadius: 0 })[0]).toBe(0);
-    expect(resolveShapeAdjustments("rectangle", {})[0]).toBe(0);
+    expect(resolveShapeAdjustments("rounded-rect", { borderRadius: 0 })[0]).toBe(0);
+    expect(resolveShapeAdjustments("rounded-rect", {})[0]).toBeCloseTo(0.16);
   });
 
   it("patchShapeAdjustment atualiza adjustments e borderRadius nos cantos", () => {
@@ -53,7 +59,7 @@ describe("comunicadoShapeAdjustments", () => {
     }
   });
 
-  it("handle amarelo de cantos: posição e ponteiro são inversos (distância estável)", () => {
+  it("handle laranja de cantos: posição e ponteiro são inversos (distância estável)", () => {
     const spec = shapeAdjustmentSpecs("rounded-rect")[0]!;
     for (const adj of [0, 0.1, 0.16, 0.25, 0.5]) {
       const pos = spec.handleAt([adj]);
@@ -71,5 +77,39 @@ describe("comunicadoShapeAdjustments", () => {
     expect(flat[0]).not.toBe(steep[0]);
     expect(trianglePoints([0.2])[0]).toBeCloseTo(20);
     expect(trianglePoints([0.8])[0]).toBeCloseTo(80);
+  });
+
+  it("gesto de adjust: default → drag → path muda (trapézio, hexágono, seta)", () => {
+    const cases: Array<{
+      kind: "trapezoid" | "hexagon" | "arrow-right";
+      dragTo: { x: number; y: number };
+      pathBefore: (values: number[]) => string | number[];
+    }> = [
+      {
+        kind: "trapezoid",
+        dragTo: { x: 40, y: 12 },
+        pathBefore: (v) => trapezoidPoints(v),
+      },
+      {
+        kind: "hexagon",
+        dragTo: { x: 85, y: 50 },
+        pathBefore: (v) => hexagonPoints(v),
+      },
+      {
+        kind: "arrow-right",
+        dragTo: { x: 50, y: 20 },
+        pathBefore: (v) => arrowRightPath(v),
+      },
+    ];
+    for (const item of cases) {
+      const spec = shapeAdjustmentSpecs(item.kind)[0]!;
+      const before = defaultShapeAdjustments(item.kind);
+      const after = [...before];
+      after[spec.index] = spec.valueFromPointer(item.dragTo.x, item.dragTo.y, before);
+      expect(after[spec.index]).not.toBeCloseTo(before[spec.index]!, 3);
+      expect(JSON.stringify(item.pathBefore(after))).not.toBe(JSON.stringify(item.pathBefore(before)));
+      const handle = spec.handleAt(after);
+      expect(spec.valueFromPointer(handle.x, handle.y, after)).toBeCloseTo(after[spec.index]!, 2);
+    }
   });
 });

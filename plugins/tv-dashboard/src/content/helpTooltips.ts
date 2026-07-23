@@ -106,7 +106,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     borderColor: "Cor da borda do elemento.",
     borderRadius: "Arredondamento dos cantos em pixels.",
     shapeAdjustment:
-      "Ajuste de geometria da forma (handles amarelos). Cantos usam pixels; demais valores são relativos (0–1).",
+      "Ajuste de geometria da forma (handles laranja). Cantos usam pixels; demais valores são relativos (0–1).",
     boxShadow:
       "Sombra: presets (inclui Elevada com 2 camadas e Interna), externa/interna, camadas e ajuste fino de X, Y, desfoque, expansão, opacidade e cor.",
     alignSelection: "Alinhar ou distribuir os elementos selecionados no palco.",
@@ -126,9 +126,11 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     groupSelection: "Agrupar elementos para mover e redimensionar juntos.",
     ungroupSelection: "Separar elementos de um grupo.",
     connectSelection:
-      "Criar uma seta conectando os dois elementos selecionados (centros). Arrastar a seta solta a ligação.",
+      "Criar uma seta entre os dois elementos selecionados, grudando nas âncoras mais próximas (N/S/E/W/centro). Arraste uma ponta no vazio para soltar só aquele lado; arraste até um ponto de conexão para grudar de novo.",
     insertIndicator: "Inserir bloco de indicador ou gráfico com dados da api-delpi.",
     insertIcon: "Ícones vetoriais prontos para o slide.",
+    insertLineShape:
+      "Linha livre: alças nas pontas. Arraste uma ponta até outro bloco para grudar (conector); os pontos de conexão aparecem ao aproximar.",
     iconEditor:
       "Trocar o glifo Lucide e a cor do traço. Fundo, contorno, sombra, raio e opacidade ficam em Forma (como nas formas).",
     iconPicker: "Escolha outro ícone da biblioteca Lucide.",
@@ -149,7 +151,8 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
     insertText: "Bloco de texto livre para mensagens e legendas.",
     insertImage: "Imagem posicionável no slide; envie o arquivo após inserir.",
     insertVideo: "Vídeo em loop no slide; envie o arquivo após inserir.",
-    insertShape: "Formas geométricas com preenchimento e contorno configuráveis.",
+    insertShape:
+      "Formas geométricas com preenchimento e contorno. Em Linhas, use as alças das pontas; aproxime de outro bloco para conectar (estilo PowerPoint).",
     chartData: "Fonte e vínculo dos dados do gráfico.",
     chartType: "Abre o catálogo de tipos (mesmo de Inserir → Gráficos) para trocar o gráfico.",
     tableData: "Fonte e vínculo dos dados da tabela.",
@@ -264,7 +267,7 @@ export const TV_DASHBOARD_HELP_TOOLTIPS = {
       "Link para abrir a apresentação em tela cheia no navegador da TV ou em um player dedicado.",
     borderRadius: "Arredondamento dos cantos em pixels.",
     shapeAdjustment:
-      "Ajuste de geometria da forma (handles amarelos). Cantos usam pixels; demais valores são relativos (0–1).",
+      "Ajuste de geometria da forma (handles laranja). Cantos usam pixels; demais valores são relativos (0–1).",
   },
   data: {
     catalogSearch:

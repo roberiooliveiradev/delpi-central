@@ -3,18 +3,21 @@ import { useCallback, useRef, useState, type MutableRefObject } from "react";
 import {
   applyComplexBlockFrameWithTypography,
   isComplexViewBlock,
-  isConnectorShapeBlock,
   isLineShapeKind,
   reconcileConnectorsAfterDrag,
   serializeComunicadoConfig,
-  syncLineVerticesFromFrame,
+  translateLineEndpoints,
   type ComunicadoBlock,
   type ComunicadoConfig,
   type ComunicadoFrame,
+  type ComunicadoShapeBlock,
 } from "@delpi/tv-dashboard-presentation";
 
 import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHistoryContext";
-import { useCanvasBlockInteraction } from "../../components/useCanvasBlockInteraction";
+import {
+  useCanvasBlockInteraction,
+  type ConnectionSitesPreview,
+} from "../../components/useCanvasBlockInteraction";
 import {
   applyGroupRotationDelta,
   applyMultiFrameDelta,
@@ -95,6 +98,8 @@ export function useComunicadoEditorDrag({
   const selectedIdsRef = useRef(selectedIds);
   selectedIdsRef.current = selectedIds;
   const [activeSmartGuides, setActiveSmartGuides] = useState<SmartGuideLine[]>([]);
+  const [connectionSitesPreview, setConnectionSitesPreview] =
+    useState<ConnectionSitesPreview | null>(null);
 
   const armMultiDragSelection = useCallback((ids: string[]) => {
     multiDragSelectionOverrideRef.current = [...new Set(ids.filter(Boolean))];
@@ -196,8 +201,12 @@ export function useComunicadoEditorDrag({
         if (patch.style) {
           next.style = { ...block.style, ...patch.style };
         }
+        if ("connector" in patch && patch.connector === undefined && next.type === "shape") {
+          delete (next as ComunicadoShapeBlock).connector;
+        }
         return next;
       });
+      /* Endpoint drag: não detach via reconcile — attach/detach parcial já veio no patch. */
       updateBlocksSilent(nextBlocks);
     },
     [configRef, updateBlocksSilent],
@@ -251,6 +260,15 @@ export function useComunicadoEditorDrag({
           if (isResize && isComplexViewBlock(base)) {
             return applyComplexBlockFrameWithTypography(base, workingFrame);
           }
+          if (
+            base.type === "shape" &&
+            isLineShapeKind(base.shape) &&
+            !isResize
+          ) {
+            const dx = workingFrame.x - base.frame.x;
+            const dy = workingFrame.y - base.frame.y;
+            return translateLineEndpoints(base, dx, dy);
+          }
           return { ...block, frame: workingFrame };
         });
       }
@@ -295,7 +313,11 @@ export function useComunicadoEditorDrag({
   }, [cancelPendingTapDeselect, configRef, selectedId, selectedIds]);
 
   const handleInteractionEnd = useCallback(
-    (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize" | "rotate" | "adjust") => {
+    (
+      blockId: string,
+      _frame: ComunicadoBlock["frame"],
+      mode: "move" | "resize" | "rotate" | "adjust" | "endpoint",
+    ) => {
       setActiveSmartGuides([]);
       const before = dragSnapshotRef.current;
       dragSnapshotRef.current = null;
@@ -308,12 +330,21 @@ export function useComunicadoEditorDrag({
         deckHistory?.recordBeforeChange(serializeComunicadoConfig(before));
       };
 
-      if (mode === "rotate" || mode === "adjust") {
+      if (mode === "rotate" || mode === "adjust" || mode === "endpoint") {
         const beforeBlock = before.blocks?.find((block) => block.id === blockId);
         const afterBlock = configRef.current.blocks?.find((block) => block.id === blockId);
         const unchanged =
           mode === "rotate"
             ? (beforeBlock?.style?.rotation ?? 0) === (afterBlock?.style?.rotation ?? 0)
+            : mode === "endpoint"
+              ? JSON.stringify(beforeBlock && "vertices" in beforeBlock ? beforeBlock.vertices : null) ===
+                  JSON.stringify(afterBlock && "vertices" in afterBlock ? afterBlock.vertices : null) &&
+                JSON.stringify(
+                  beforeBlock && "connector" in beforeBlock ? beforeBlock.connector : null,
+                ) ===
+                  JSON.stringify(
+                    afterBlock && "connector" in afterBlock ? afterBlock.connector : null,
+                  )
             : JSON.stringify({
                 style: beforeBlock?.style,
                 kpiParts: beforeBlock && "kpiParts" in beforeBlock ? beforeBlock.kpiParts : null,
@@ -381,17 +412,7 @@ export function useComunicadoEditorDrag({
           updated = { ...current, frame: snappedFrame };
         }
 
-        if (
-          updated.type === "shape" &&
-          isLineShapeKind(updated.shape) &&
-          !isConnectorShapeBlock(updated) &&
-          mode === "resize"
-        ) {
-          updated = {
-            ...updated,
-            vertices: syncLineVerticesFromFrame(updated, snappedFrame),
-          };
-        }
+        /* Linhas não usam resize de bbox — endpoints cuidam da geometria. */
         nextBlocks[index] = updated;
       }
       nextBlocks = reconcileConnectorsAfterDrag(nextBlocks, draggedIds);
@@ -432,6 +453,7 @@ export function useComunicadoEditorDrag({
     multiDragSelectionOverrideRef.current = null;
     cancelPendingTapDeselect();
     setActiveSmartGuides([]);
+    setConnectionSitesPreview(null);
   }, [cancelPendingTapDeselect]);
 
   const { canvasRef, startDrag } = useCanvasBlockInteraction({
@@ -442,6 +464,8 @@ export function useComunicadoEditorDrag({
     onInteractionEnd: handleInteractionEnd,
     onTapWithoutDrag: handleTapWithoutDrag,
     resolveBlock: (blockId) => configRef.current.blocks?.find((block) => block.id === blockId),
+    resolveBlocks: () => configRef.current.blocks ?? [],
+    onConnectionSitesPreview: setConnectionSitesPreview,
   });
 
   return {
@@ -452,5 +476,6 @@ export function useComunicadoEditorDrag({
     armTapDeselect,
     cancelPendingTapDeselect,
     activeSmartGuides,
+    connectionSitesPreview,
   };
 }

@@ -2,7 +2,7 @@ import type { ComunicadoBlockStyle, ComunicadoShapeKind } from "./comunicadoType
 
 /**
  * Ajustes de geometria no modelo PowerPoint (Adjustments 0..1 tipicamente).
- * Cada handle amarelo no canvas corresponde a um índice em `style.adjustments`.
+ * Cada handle laranja no canvas corresponde a um índice em `style.adjustments`.
  */
 export type ShapeAdjustmentAxis = "x" | "y" | "xy";
 
@@ -80,8 +80,12 @@ function topInsetSpec(index = 0): ShapeAdjustmentSpec {
     min: 0.05,
     max: 0.4,
     axis: "x",
-    handleAt: (values) => ({ x: (values[index] ?? 0.22) * 100, y: 8 }),
-    valueFromPointer: (localX) => linearFromX(localX, 0.05, 0.4),
+    /* Alinha ao vértice superior esquerdo do trapézio (`8 + inset*100`). */
+    handleAt: (values) => ({
+      x: clamp(8 + (values[index] ?? 0.22) * 100, 8, 48),
+      y: 12,
+    }),
+    valueFromPointer: (localX) => clamp((localX - 8) / 100, 0.05, 0.4),
   };
 }
 
@@ -108,8 +112,12 @@ function sideInsetSpec(index = 0): ShapeAdjustmentSpec {
     min: 0.05,
     max: 0.4,
     axis: "x",
-    handleAt: (values) => ({ x: 100 - (values[index] ?? 0.2) * 100, y: 50 }),
-    valueFromPointer: (localX) => clamp(1 - localX / 100, 0.05, 0.4),
+    /* Hexágono: faces laterais em `100 - adj*40` (ver `hexagonPoints`). */
+    handleAt: (values) => ({
+      x: clamp(100 - (values[index] ?? 0.2) * 40, 60, 98),
+      y: 50,
+    }),
+    valueFromPointer: (localX) => clamp((100 - localX) / 40, 0.05, 0.4),
   };
 }
 
@@ -345,8 +353,10 @@ function sunCoreSpec(index = 0): ShapeAdjustmentSpec {
 }
 
 const SPECS_BY_KIND: Partial<Record<ComunicadoShapeKind, ShapeAdjustmentSpec[]>> = {
-  /** Texto/título e retângulo: cantos retos por padrão (raio 0). */
-  rectangle: [cornerSpec(0, 0)],
+  /**
+   * Retângulo/elipse puros: sem losango (paridade PowerPoint).
+   * Cantos editáveis → `rounded-rect`; texto/título usam chrome `rounded-rect` no módulo de chrome.
+   */
   "rounded-rect": [cornerSpec(0)],
   "flowchart-process": [{ ...cornerSpec(0), defaultValue: 0.05 }],
   "snip-rect": [snipSpec(0)],

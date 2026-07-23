@@ -17,6 +17,7 @@ import { isComunicadoShapeKind } from "./comunicadoShapeCatalog";
 import {
   COMUNICADO_MARKER_RADIUS_DEFAULT,
   geometryToPersistedFrame,
+  lineEndpointsFromFrame,
   resolveBlockPlacementStyle,
   resolveShapeGeometry,
 } from "./comunicadoShapeGeometry";
@@ -599,7 +600,16 @@ export function createBlock(
   }
   if (type === "shape") {
     const kind = shape ?? "rectangle";
-    const shapeBlock = { ...base, type, shape: kind, content: content || "" } as ComunicadoBlock;
+    let shapeBlock = { ...base, type, shape: kind, content: content || "" } as ComunicadoBlock;
+    if (shapeBlock.type === "shape" && isLineShapeKind(kind)) {
+      const vertices = lineEndpointsFromFrame(shapeBlock.frame);
+      shapeBlock = {
+        ...shapeBlock,
+        vertices,
+        frame: geometryToPersistedFrame({ ...shapeBlock, vertices }),
+      };
+      return shapeBlock;
+    }
     if (shapeBlock.type === "shape") {
       return { ...shapeBlock, frame: geometryToPersistedFrame(shapeBlock) };
     }

@@ -40,7 +40,7 @@ import { DECK_INPUT_DEFAULTS } from "@delpi/plugin-ui/index";
 /**
  * Chrome de forma compartilhado (cantos / contorno) — caixa visual (texto/título/forma),
  * KPI card, tabela, chartArea, ícone e filtro.
- * Handles amarelos e ribbon usam este módulo; não duplicar por tipo de bloco.
+ * Handles laranja e ribbon usam este módulo; não duplicar por tipo de bloco.
  */
 
 const CHROME_CORNER_KIND = "rounded-rect" as const;
@@ -62,7 +62,17 @@ export function blockSupportsShapeChromeHandles(block: ComunicadoBlock): boolean
 /** Specs de ajuste para handles no palco (forma completa ou só cantos do chrome). */
 export function blockShapeChromeAdjustmentSpecs(block: ComunicadoBlock): ShapeAdjustmentSpec[] {
   if (isComunicadoVisualBoxBlock(block)) {
-    return shapeAdjustmentSpecs(resolveVisualBoxShapeKind(block));
+    const kind = resolveVisualBoxShapeKind(block);
+    const specs = shapeAdjustmentSpecs(kind);
+    if (specs.length > 0) return specs;
+    /*
+     * Retângulo/elipse puros não têm Adjustments no PPT.
+     * Texto/título ainda precisam do losango de cantos da caixa tipográfica.
+     */
+    if (block.type === "heading" || block.type === "text") {
+      return shapeAdjustmentSpecs(CHROME_CORNER_KIND);
+    }
+    return [];
   }
   if (blockSupportsShapeChromeHandles(block)) {
     return shapeAdjustmentSpecs(CHROME_CORNER_KIND);
@@ -110,7 +120,17 @@ export function resolveBlockShapeChromeAdjustmentValues(
   shortSidePx = 64,
 ): number[] {
   if (isComunicadoVisualBoxBlock(block)) {
-    return resolveShapeAdjustments(resolveVisualBoxShapeKind(block), block.style);
+    const kind = resolveVisualBoxShapeKind(block);
+    if (shapeAdjustmentSpecs(kind).length > 0) {
+      return resolveShapeAdjustments(kind, block.style);
+    }
+    if (block.type === "heading" || block.type === "text") {
+      const px = typeof block.style?.borderRadius === "number" ? block.style.borderRadius : 0;
+      const specs = shapeAdjustmentSpecs(CHROME_CORNER_KIND);
+      const adj = borderRadiusPxToCornerAdjustment(px, shortSidePx > 0 ? shortSidePx : 64);
+      return specs.map((spec, index) => (index === 0 ? adj : spec.defaultValue));
+    }
+    return [];
   }
   const px = resolveBlockShapeChromeCornerPx(block);
   const specs = shapeAdjustmentSpecs(CHROME_CORNER_KIND);
@@ -119,7 +139,7 @@ export function resolveBlockShapeChromeAdjustmentValues(
 }
 
 /**
- * Aplica ajuste de chrome (handle amarelo) → patch de bloco.
+ * Aplica ajuste de chrome (handle laranja) → patch de bloco.
  * Caixa visual grava em `style`; KPI atualiza `kpiParts.card`; chart atualiza `chartArea`; tabela atualiza `tableParts.frame`.
  */
 export function applyBlockShapeChromeAdjustment(
@@ -134,7 +154,13 @@ export function applyBlockShapeChromeAdjustment(
 
   if (isComunicadoVisualBoxBlock(block)) {
     const kind = resolveVisualBoxShapeKind(block);
-    const stylePatch = patchShapeAdjustment(kind, block.style, spec.index, value, shortSidePx);
+    const patchKind =
+      shapeAdjustmentSpecs(kind).length > 0
+        ? kind
+        : block.type === "heading" || block.type === "text"
+          ? CHROME_CORNER_KIND
+          : kind;
+    const stylePatch = patchShapeAdjustment(patchKind, block.style, spec.index, value, shortSidePx);
     return { style: { ...block.style, ...stylePatch } };
   }
 

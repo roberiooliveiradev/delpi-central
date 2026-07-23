@@ -26,7 +26,7 @@ type Props = {
 };
 
 /**
- * Controles contínuos dos ajustes de geometria (handles amarelos).
+ * Controles contínuos dos ajustes de geometria (handles laranja).
  * Raio/cantos ficam na seção Exibição (posição/tamanho) — omitidos aqui.
  */
 export function ShapeAdjustmentsControl({

@@ -3,7 +3,7 @@
 > **Arquivo:** `docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK-EXCELENCIA.md`
 > **Versão:** 1.5
 > **Data:** 2026-07-10
-> **Status:** … **v1.5+ (jul/2026):** … **§19.21–§19.23** tipografia/PDF, conectores, e backlog PPT MVP (fonte, reflexo, grade canvas, notas/apresentador, PPTX, presença). **Backlog restante / longo prazo:** import PPTX completo, colaboração CRDT, reflexo cross-browser, âncoras avançadas de conectores.
+> **Status:** … **v1.5+ (jul/2026):** … **§19.21–§19.23** tipografia/PDF, conectores, e backlog PPT MVP (fonte, reflexo, grade canvas, notas/apresentador, PPTX, presença). **§19.25** linhas vertices-first + connection sites (parcial). **Backlog restante / longo prazo:** import PPTX completo, colaboração CRDT, reflexo cross-browser, elbow/curva de conectores.
 > **Base:** requisito «painéis rotativos em TVs corporativas sem login» + convenções do monorepo `delpi-central` (plugins MFE, API dedicada de plugin, `public-hub`, gateway nginx)
 >
 > **Convenção de nomes:** identificadores técnicos (plugin, API, rotas, schema, env, permissões) em **inglês**; textos voltados ao usuário (rótulo de menu, mensagens, descrições) em **pt-BR**.
@@ -150,7 +150,7 @@ Excelência aqui **não** é «um iframe que roda Power BI». É permitir que qu
 
 **Commits de referência (main, jul/2026):** `dec7ded6f` (UX/camadas), `07e68c00e` (templates/temas), `af53f6aa0` (visual/alinhar/zoom/link), `6d968a5f7` (agrupar/rotação/formas), `2b9d122fc` (biblioteca mídia + crop).
 
-**Ainda pendente (paridade PPT / longo prazo):** import PPTX completo; colaboração CRDT/OT; reflexo tipográfico fora do Chromium; âncoras avançadas de conectores. MVPs de upload de fonte, reflexo Chromium, grade canvas, notas/apresentador, export PPTX e presença de editores concluídos (§19.21–§19.23).
+**Ainda pendente (paridade PPT / longo prazo):** import PPTX completo; colaboração CRDT/OT; reflexo tipográfico fora do Chromium; elbow/curva de conectores. Sites N/S/E/W + endpoints concluídos (§19.25). MVPs de upload de fonte, reflexo Chromium, grade canvas, notas/apresentador, export PPTX e presença de editores concluídos (§19.21–§19.23).
 
 ---
 
@@ -677,7 +677,7 @@ sequenceDiagram
 
 1. Upload de fonte; reflexo tipográfico.
 2. Tabelas canvas simples; upload de fonte.
-3. Import PPTX completo; colaboração CRDT; âncoras avançadas de conectores.
+3. Import PPTX completo; colaboração CRDT; elbow/curva de conectores.
 
 ### Concluído v2 (jul/2026)
 
@@ -768,7 +768,7 @@ Apresentação TV / preview
 | Bullets / listas numeradas | ✓ | ✅ v1.3.4 (4C.3) | `style.listType` + ribbon Marcadores/Numerada |
 | Estilos nomeados (Título 1, Corpo) | ✓ | ✅ v1.3.5 (4C.4) | `style.namedStyle` + ribbon Estilo |
 | Sombra / contorno / reflexo texto | ✓ | ⚠ | Sombra + contorno + reflexo Chromium ✅ (§19.21/§19.23); Safari/Firefox limitados |
-| Mais formas / conectores | ✓ | ⚠ | Catálogo amplo + **conectores MVP** ✅ (§19.22) |
+| Mais formas / conectores | ✓ | ⚠ | Catálogo + conectores + sites (§19.22 / §19.25); elbow ❌ |
 | Google Fonts / upload de fonte | ✓ | ✅ | Catálogo + **upload WOFF2/TTF/OTF** ✅ (§19.23) |
 | Hiperlink em imagem/forma | ✓ | ✅ v1.3 | Também vídeo e ícone |
 
@@ -784,7 +784,7 @@ Apresentação TV / preview
 | Biblioteca de mídia da playlist | ✓ | ✅ v1.3 | `GET …/media` + `MediaLibraryModal` |
 | Ícones / stickers | ✓ | ✅ v1.3 | Bloco `icon` (Lucide) |
 | Tabelas simples | ✓ | ⚠ | Grade canvas `canvas_table` ✅ (§19.23); não confundir com `table_view` live |
-| Mais formas / conectores | ✓ | ⚠ | Catálogo amplo + conectores MVP ✅ (§19.22); âncoras avançadas ❌ |
+| Mais formas / conectores | ✓ | ⚠ | Sites N/S/E/W ✅ (§19.25); elbow/waypoints ❌ |
 | Paleta / cores recentes / tema marca | ✓ | ⚠ | Temas de slide ✅; **cores recentes** ✅ (§19.21) |
 
 #### Dados operacionais live (prioridade alta — ver §18)
@@ -1003,7 +1003,8 @@ Estimativa: **S** ≤ 1 sprint, **M** 2–3 sprints, **L** 1 trimestre.
   Concluído (tipografia / export)    → §19.21 sombra/contorno texto; cores recentes; PDF
   Concluído (conectores MVP)         → §19.22 linha/seta entre dois blocos
   Concluído (backlog PPT MVP)        → §19.23 fonte, reflexo, grade, notas, PPTX, presença
-  Backlog restante                   → import PPTX; colaboração CRDT; âncoras conectores
+  Concluído (sites + endpoints)      → §19.25 vertices-first + snap de âncoras
+  Backlog restante                   → import PPTX; colaboração CRDT; elbow/curva
   Longo prazo                        → comentários / histórico de versões
 ```
 
@@ -1984,10 +1985,28 @@ O escopo **global** **não** unifica cor/fonte/fill das partes. Cada parte mant�
 | # | Entrega | Onde |
 |---|---------|------|
 | 19.22.1 | Contrato `shape.connector` + `vertices` persistidos; sync de endpoints | `comunicadoConnectors.ts` + parse/serialize |
-| 19.22.2 | Ação **Conectar** (2 blocos) → `line-arrow-right` entre centros | ribbon Alinhar + `connectSelected` |
+| 19.22.2 | Ação **Conectar** (2 blocos) → `line-arrow-right` (evoluído em §19.25 para âncoras mais próximas) | ribbon Alinhar + `connectSelected` |
 | 19.22.3 | Reattach ao mover/redimensionar alvos; detach se a linha for editada; prune órfãos | drag + `updateBlocks` |
 
 **Anti-padrões:** import circular helpers↔connectors; recriar geometria no MFE em vez de `reconcileConnectorsAfterDrag` / `syncAllConnectors`.
+
+### 19.25 Linhas vertices-first + connection sites (jul/2026)
+
+Paridade **PowerPoint** (não FigJam): linha reta + âncoras N/S/E/W/centro; elbow/curva ficam no backlog.
+
+| # | Entrega | Onde |
+|---|---------|------|
+| 19.25.1 | Geometria de linha **vertices-first** — arrastar ponta atualiza `vertices` → `frame`; move traduz endpoints; **sem** rehorizontalizar no resize de bbox | `comunicadoShapeGeometry.ts` |
+| 19.25.2 | Chrome de seleção: 2 alças de endpoint (+ rotação); sem 8 handles de bbox em linha | `BlockSelectionChrome.tsx` + CSS `td-composer__endpoint` |
+| 19.25.3 | Connection sites (`n`/`s`/`e`/`w`/`center`) + snap ao arrastar ponta; overlay de dots no palco | `comunicadoConnectionSites.ts` + `useCanvasBlockInteraction` |
+| 19.25.4 | Attach/detach **parcial** por ponta; conector parcial permitido; ribbon **Conectar** usa âncoras mais próximas | `comunicadoConnectors.ts` + `connectSelected` |
+| 19.25.5 | Losangos laranja só em kinds com Adjustments; retângulo/elipse puros sem handle; docs/tooltips alinhados | `comunicadoShapeAdjustments.ts` + help |
+
+**Contrato:** `connector.fromBlockId` / `toBlockId` opcionais (parcial); `fromAnchor`/`toAnchor` ∈ `n|s|e|w|center`. Drag da **ponta** NÃO passa por `reconcileConnectorsAfterDrag` (que solta os dois lados).
+
+**Âncoras avançadas:** parcialmente entregue (sites canônicos + picker por proximidade). **Backlog explícito:** elbow/curva, waypoints, import PPTX de connectors, sites custom no perímetro.
+
+**Anti-padrões:** 8 handles de bbox em linha; `syncLineVerticesFromFrame` forçando mid-Y; lógica de âncora só no MFE; `if` de forma no Composer fora do chrome/domínio.
 
 ### 19.23 Backlog PPT — MVPs (jul/2026)
 

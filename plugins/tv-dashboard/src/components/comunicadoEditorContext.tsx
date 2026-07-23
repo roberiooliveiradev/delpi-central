@@ -355,6 +355,7 @@ export function ComunicadoEditorProvider({
     armTapDeselect,
     cancelPendingTapDeselect,
     activeSmartGuides,
+    connectionSitesPreview,
   } = useComunicadoEditorDrag({
     configRef,
     selectedIds: selection.selectedIds,
@@ -767,6 +768,7 @@ export function ComunicadoEditorProvider({
     showStageGuides: stage.showStageGuides,
     setShowStageGuides: stage.setShowStageGuides,
     activeSmartGuides,
+    connectionSitesPreview,
     snapToGrid: stage.snapToGrid,
     setSnapToGrid: stage.setSnapToGrid,
     snapToObjects: stage.snapToObjects,

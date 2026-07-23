@@ -4,12 +4,15 @@ import { createShapeBlock } from "./comunicadoHelpers";
 import {
   COMUNICADO_LINE_VISUAL_PAD_PCT,
   COMUNICADO_POINT_HIT_SIZE_PCT,
+  applyLineEndpoints,
   geometryBoundingFrame,
   geometryToPersistedFrame,
   minimumVertexCount,
   resolveBlockPlacementStyle,
+  resolveLineEndpoints,
   resolveShapeGeometry,
   shapeBlockAllowsResize,
+  translateLineEndpoints,
 } from "./comunicadoShapeGeometry";
 import { lineArrowHeadPolygonPoints } from "./comunicadoShapeGraphic";
 
@@ -30,13 +33,31 @@ describe("comunicadoShapeGeometry", () => {
     expect(shapeBlockAllowsResize(block)).toBe(false);
   });
 
-  it("linha é formada por pelo menos dois pontos", () => {
+  it("linha é formada por pelo menos dois pontos (vertices iniciais)", () => {
     const block = createShapeBlock("line");
+    expect(block.type).toBe("shape");
+    if (block.type !== "shape") return;
+    expect(block.vertices?.length).toBeGreaterThanOrEqual(2);
     const geometry = resolveShapeGeometry(block);
     expect(geometry.primitive).toBe("line");
     if (geometry.primitive !== "line") return;
     expect(geometry.points.length).toBeGreaterThanOrEqual(2);
     expect(geometry.points[0].y).toBe(geometry.points[1].y);
+    expect(shapeBlockAllowsResize(block)).toBe(false);
+  });
+
+  it("applyLineEndpoints preserva diagonal e recalcula frame", () => {
+    const block = createShapeBlock("line");
+    if (block.type !== "shape") return;
+    const next = applyLineEndpoints(block, { x: 10, y: 10 }, { x: 80, y: 70 });
+    const [a, b] = resolveLineEndpoints(next);
+    expect(a).toEqual({ x: 10, y: 10 });
+    expect(b).toEqual({ x: 80, y: 70 });
+    expect(next.frame.w).toBeGreaterThan(next.frame.h);
+    const moved = translateLineEndpoints(next, 5, -5);
+    const [ma, mb] = resolveLineEndpoints(moved);
+    expect(ma).toEqual({ x: 15, y: 5 });
+    expect(mb).toEqual({ x: 85, y: 65 });
   });
 
   it("bbox de linha horizontal inclui padding para seta/espessura", () => {

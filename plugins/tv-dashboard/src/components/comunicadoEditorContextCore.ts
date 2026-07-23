@@ -343,6 +343,24 @@ export type ComunicadoEditorContextValue = {
   setShowStageGuides: (show: boolean) => void;
   /** Linhas de alinhamento entre componentes durante drag (smart guides). */
   activeSmartGuides: ReadonlyArray<{ orientation: "v" | "h"; position: number }>;
+  /** Sites de conexão visíveis ao arrastar ponta de linha. */
+  connectionSitesPreview: {
+    blockId: string;
+    endpointIndex: 0 | 1;
+    point: { x: number; y: number };
+    sites: ReadonlyArray<{
+      blockId: string;
+      id: string;
+      x: number;
+      y: number;
+    }>;
+    activeSite: {
+      blockId: string;
+      id: string;
+      x: number;
+      y: number;
+    } | null;
+  } | null;
   snapToGrid: boolean;
   setSnapToGrid: (enabled: boolean) => void;
   snapToObjects: boolean;

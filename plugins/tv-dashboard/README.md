@@ -68,7 +68,7 @@ Power Query M: [playbook](../../docs/12-roadmap-e-evolucao/tv-dashboard/PLAYBOOK
 
 - Opacidade: **0%–100%** (Organizar); com parte selecionada grava na parte, senão no bloco.
 - Preench./Contorno na ribbon Forma miram a **parte selecionada** (`resolveKpiShapeChromePartRef` / `resolveTableShapeChromePartRef` / chart part) — sem parte = só controles globais.
-- Handles amarelos de raio do KPI no palco só no chrome da parte (não no nível global do card).
+- Handles laranja de raio do KPI no palco só no chrome da parte (não no nível global do card).
 - TV / preview: `interactive={false}` — sem handlers de edição; mesmos `kpiParts` / `chartParts` / `tableParts`.
 
 Contrato: `@delpi/plugin-ui` (`kpiCardParts`, `seriesChartParts`, `configurableTableParts`) + `@delpi/tv-dashboard-presentation`.

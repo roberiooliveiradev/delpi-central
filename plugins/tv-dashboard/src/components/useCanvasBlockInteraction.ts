@@ -2,16 +2,24 @@ import { useCallback, useEffect, useRef, type PointerEvent as ReactPointerEvent 
 
 import {
   applyBlockShapeChromeAdjustment,
+  applyConnectorGeometry,
+  applyLineEndpointAt,
+  attachConnectorEndpoint,
   blockShapeChromeAdjustmentSpecs,
   blockSupportsShapeChromeHandles,
   clampFrame,
   clampFrameForBlock,
+  detachConnectorEndpoint,
+  findNearestConnectionSite,
+  isLineShapeKind,
   isPointShapeKind,
+  resolveBlockConnectionSites,
   resolveBlockShapeChromeAdjustmentValues,
   resolveShapeGeometry,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
   type ComunicadoFrame,
+  type ConnectionSite,
 } from "@delpi/tv-dashboard-presentation";
 
 import { resizeFrameWithOptionalAspect } from "../utils/resizeFrameAspect";
@@ -27,7 +35,17 @@ export type BlockDragMode =
   | "resize-s"
   | "resize-sw"
   | "resize-w"
-  | `adjust-${number}`;
+  | `adjust-${number}`
+  | "endpoint-0"
+  | "endpoint-1";
+
+export type ConnectionSitesPreview = {
+  blockId: string;
+  endpointIndex: 0 | 1;
+  point: { x: number; y: number };
+  sites: ConnectionSite[];
+  activeSite: ConnectionSite | null;
+};
 
 type DragState = {
   mode: BlockDragMode;
@@ -40,13 +58,14 @@ type DragState = {
   startPointerAngle?: number;
   centerX?: number;
   centerY?: number;
-  /** Ajuste de geometria / chrome herdado (handle amarelo). */
+  /** Ajuste de geometria / chrome herdado (handle laranja). */
   adjIndex?: number;
   startAdjustments?: number[];
   shortSidePx?: number;
   /** Posição local (0–100) no quadro no pointerdown — evita salto ao clicar. */
   startLocalX?: number;
   startLocalY?: number;
+  endpointIndex?: 0 | 1;
 };
 
 type PendingDragState = DragState & {
@@ -62,11 +81,13 @@ type Options = {
   onInteractionEnd?: (
     blockId: string,
     frame: ComunicadoFrame,
-    mode: "move" | "resize" | "rotate" | "adjust",
+    mode: "move" | "resize" | "rotate" | "adjust" | "endpoint",
   ) => void;
   /** Move cancelado antes do limiar (toque sem arrastar). */
   onTapWithoutDrag?: (blockId: string) => void;
   resolveBlock?: (blockId: string) => ComunicadoBlock | undefined;
+  resolveBlocks?: () => ComunicadoBlock[];
+  onConnectionSitesPreview?: (preview: ConnectionSitesPreview | null) => void;
 };
 
 const DRAG_THRESHOLD_PX = 5;
@@ -75,10 +96,20 @@ function isAdjustMode(mode: BlockDragMode): mode is `adjust-${number}` {
   return mode.startsWith("adjust-");
 }
 
+function isEndpointMode(mode: BlockDragMode): mode is "endpoint-0" | "endpoint-1" {
+  return mode === "endpoint-0" || mode === "endpoint-1";
+}
+
 function parseAdjustIndex(mode: BlockDragMode): number | null {
   if (!isAdjustMode(mode)) return null;
   const index = Number(mode.slice("adjust-".length));
   return Number.isFinite(index) ? index : null;
+}
+
+function parseEndpointIndex(mode: BlockDragMode): 0 | 1 | null {
+  if (mode === "endpoint-0") return 0;
+  if (mode === "endpoint-1") return 1;
+  return null;
 }
 
 function normalizeRotation(value: number): number {
@@ -96,6 +127,8 @@ export function useCanvasBlockInteraction({
   onInteractionEnd,
   onTapWithoutDrag,
   resolveBlock,
+  resolveBlocks,
+  onConnectionSitesPreview,
 }: Options) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -106,12 +139,16 @@ export function useCanvasBlockInteraction({
   const onInteractionStartRef = useRef(onInteractionStart);
   const onInteractionEndRef = useRef(onInteractionEnd);
   const onTapWithoutDragRef = useRef(onTapWithoutDrag);
+  const resolveBlocksRef = useRef(resolveBlocks);
+  const onConnectionSitesPreviewRef = useRef(onConnectionSitesPreview);
   onUpdateFrameRef.current = onUpdateFrame;
   onUpdateStyleRef.current = onUpdateStyle;
   onUpdateBlockRef.current = onUpdateBlock;
   onInteractionStartRef.current = onInteractionStart;
   onInteractionEndRef.current = onInteractionEnd;
   onTapWithoutDragRef.current = onTapWithoutDrag;
+  resolveBlocksRef.current = resolveBlocks;
+  onConnectionSitesPreviewRef.current = onConnectionSitesPreview;
 
   const pointerToPercent = useCallback((clientX: number, clientY: number) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -182,6 +219,44 @@ export function useCanvasBlockInteraction({
       return;
     }
 
+    if (isEndpointMode(drag.mode) && drag.endpointIndex != null) {
+      const block = resolveBlockRef.current?.(drag.blockId);
+      if (!block || block.type !== "shape" || !isLineShapeKind(block.shape)) return;
+      const allBlocks = resolveBlocksRef.current?.() ?? [];
+      const activeSite = findNearestConnectionSite(current, allBlocks, {
+        excludeBlockIds: new Set([drag.blockId]),
+      });
+      const point = activeSite
+        ? { x: activeSite.x, y: activeSite.y }
+        : { x: current.x, y: current.y };
+      let next = applyLineEndpointAt(block, drag.endpointIndex, point);
+      next = detachConnectorEndpoint(next, drag.endpointIndex);
+      if (activeSite) {
+        next = attachConnectorEndpoint(
+          next,
+          drag.endpointIndex,
+          activeSite.blockId,
+          activeSite.id,
+        );
+        next = applyConnectorGeometry(next, allBlocks);
+      }
+      onUpdateBlockRef.current?.(drag.blockId, {
+        vertices: next.vertices,
+        frame: next.frame,
+        connector: next.connector,
+      });
+      onConnectionSitesPreviewRef.current?.({
+        blockId: drag.blockId,
+        endpointIndex: drag.endpointIndex,
+        point,
+        sites: allBlocks.flatMap((item) =>
+          item.id === drag.blockId ? [] : resolveBlockConnectionSites(item),
+        ),
+        activeSite,
+      });
+      return;
+    }
+
     if (drag.mode === "move") {
       onUpdateFrameRef.current(
         drag.blockId,
@@ -221,16 +296,19 @@ export function useCanvasBlockInteraction({
   const finishInteraction = useCallback(() => {
     const drag = dragRef.current;
     if (drag && onInteractionEndRef.current) {
-      const mode: "move" | "resize" | "rotate" | "adjust" =
+      const mode: "move" | "resize" | "rotate" | "adjust" | "endpoint" =
         drag.mode === "move"
           ? "move"
           : drag.mode === "rotate"
             ? "rotate"
             : isAdjustMode(drag.mode)
               ? "adjust"
-              : "resize";
+              : isEndpointMode(drag.mode)
+                ? "endpoint"
+                : "resize";
       onInteractionEndRef.current(drag.blockId, drag.startFrame, mode);
     }
+    onConnectionSitesPreviewRef.current?.(null);
     pendingRef.current = null;
     dragRef.current = null;
     removePointerListeners();
@@ -320,6 +398,18 @@ export function useCanvasBlockInteraction({
           shortSidePx,
           startLocalX,
           startLocalY,
+        };
+        window.addEventListener("pointermove", listeners.onPointerMove);
+        window.addEventListener("pointerup", listeners.onPointerUp);
+        return;
+      }
+
+      const endpointIndex = parseEndpointIndex(mode);
+      if (endpointIndex != null && block.type === "shape" && isLineShapeKind(block.shape)) {
+        onInteractionStartRef.current?.();
+        dragRef.current = {
+          ...dragState,
+          endpointIndex,
         };
         window.addEventListener("pointermove", listeners.onPointerMove);
         window.addEventListener("pointerup", listeners.onPointerUp);

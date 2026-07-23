@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  attachConnectorEndpoint,
   canConnectBlocks,
   createConnectorBlock,
+  detachConnectorEndpoint,
   isConnectorShapeBlock,
   normalizeShapeConnector,
   parseComunicadoConfig,
@@ -26,25 +28,32 @@ function rect(id: string, x: number, y: number, w = 10, h = 10): ComunicadoBlock
 describe("comunicadoConnectors", () => {
   it("normalizeShapeConnector rejeita ids iguais ou vazios", () => {
     expect(normalizeShapeConnector({ fromBlockId: "a", toBlockId: "a" })).toBeUndefined();
-    expect(normalizeShapeConnector({ fromBlockId: "", toBlockId: "b" })).toBeUndefined();
+    expect(normalizeShapeConnector({ fromBlockId: "", toBlockId: "" })).toBeUndefined();
     expect(normalizeShapeConnector({ fromBlockId: "a", toBlockId: "b", fromAnchor: "n" })).toEqual({
       fromBlockId: "a",
       toBlockId: "b",
       fromAnchor: "n",
       toAnchor: "center",
     });
+    expect(normalizeShapeConnector({ fromBlockId: "a" })).toEqual({
+      fromBlockId: "a",
+      fromAnchor: "center",
+      toAnchor: "center",
+    });
   });
 
-  it("createConnectorBlock liga centros e gera vertices", () => {
+  it("createConnectorBlock liga âncoras mais próximas e gera vertices", () => {
     const a = rect("a", 0, 0, 20, 10);
     const b = rect("b", 80, 40, 20, 10);
     const line = createConnectorBlock(a, b);
     expect(isConnectorShapeBlock(line)).toBe(true);
     expect(line.connector?.fromBlockId).toBe("a");
     expect(line.connector?.toBlockId).toBe("b");
+    expect(line.connector?.fromAnchor).toBe("e");
+    expect(line.connector?.toAnchor).toBe("w");
     expect(line.vertices).toEqual([
-      { x: 10, y: 5 },
-      { x: 90, y: 45 },
+      { x: 20, y: 5 },
+      { x: 80, y: 45 },
     ]);
     expect(canConnectBlocks(a, b)).toBe(true);
     expect(canConnectBlocks(a, line)).toBe(false);
@@ -53,7 +62,7 @@ describe("comunicadoConnectors", () => {
   it("syncAllConnectors atualiza endpoints quando o alvo se move", () => {
     const a = rect("a", 0, 0, 20, 10);
     const b = rect("b", 80, 40, 20, 10);
-    const line = createConnectorBlock(a, b);
+    const line = createConnectorBlock(a, b, { fromAnchor: "center", toAnchor: "center" });
     const movedB = { ...b, frame: { ...b.frame, x: 60, y: 20 } };
     const synced = syncAllConnectors([a, movedB, line]);
     const nextLine = synced.find((block) => block.id === line.id);
@@ -61,6 +70,19 @@ describe("comunicadoConnectors", () => {
       { x: 10, y: 5 },
       { x: 70, y: 25 },
     ]);
+  });
+
+  it("detachConnectorEndpoint solta só uma ponta", () => {
+    const a = rect("a", 0, 0, 20, 10);
+    const b = rect("b", 80, 40, 20, 10);
+    const line = createConnectorBlock(a, b, { fromAnchor: "center", toAnchor: "center" });
+    const partial = detachConnectorEndpoint(line, 0);
+    expect(partial.connector?.fromBlockId).toBeUndefined();
+    expect(partial.connector?.toBlockId).toBe("b");
+    const reattached = attachConnectorEndpoint(partial, 0, "a", "e");
+    expect(reattached.connector?.fromBlockId).toBe("a");
+    expect(reattached.connector?.fromAnchor).toBe("e");
+    expect(reattached.connector?.toBlockId).toBe("b");
   });
 
   it("reconcileConnectorsAfterDrag solta o conector arrastado e mantém os demais", () => {
@@ -76,17 +98,31 @@ describe("comunicadoConnectors", () => {
     expect(free && free.type === "shape" ? free.connector : "missing").toBeUndefined();
   });
 
-  it("pruneOrphanConnectors remove linha sem alvo", () => {
+  it("pruneOrphanConnectors mantém parcial quando um alvo some", () => {
+    const a = rect("a", 0, 0);
+    const b = rect("b", 50, 50);
+    const line = createConnectorBlock(a, b, { fromAnchor: "center", toAnchor: "center" });
+    const pruned = pruneOrphanConnectors([a, line]);
+    expect(pruned.map((block) => block.id).sort()).toEqual([a.id, line.id].sort());
+    const nextLine = pruned.find((block) => block.id === line.id);
+    expect(nextLine && isConnectorShapeBlock(nextLine) ? nextLine.connector : null).toEqual({
+      fromBlockId: "a",
+      fromAnchor: "center",
+      toAnchor: "center",
+    });
+  });
+
+  it("pruneOrphanConnectors remove linha sem nenhum alvo", () => {
     const a = rect("a", 0, 0);
     const b = rect("b", 50, 50);
     const line = createConnectorBlock(a, b);
-    expect(pruneOrphanConnectors([a, line]).map((block) => block.id)).toEqual(["a"]);
+    expect(pruneOrphanConnectors([line]).map((block) => block.id)).toEqual([]);
   });
 
   it("parse/serialize preserva connector e vertices", () => {
     const a = rect("a", 0, 0, 20, 10);
     const b = rect("b", 80, 40, 20, 10);
-    const line = createConnectorBlock(a, b);
+    const line = createConnectorBlock(a, b, { fromAnchor: "center", toAnchor: "center" });
     const config = parseComunicadoConfig({
       version: 3,
       blocks: [a, b, line],

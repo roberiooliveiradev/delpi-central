@@ -139,6 +139,7 @@ export function ComunicadoComposerCanvas() {
     showStageGrid,
     showStageGuides,
     activeSmartGuides,
+    connectionSitesPreview,
     stageGridSizePercent,
     updateBlock,
     viewportProfile,
@@ -588,7 +589,8 @@ export function ComunicadoComposerCanvas() {
     [blocks, selectedIds],
   );
 
-  const showResizeHandles = (blockId: string) => {
+  /** Chrome de seleção (inclui endpoints de linha mesmo sem resize de bbox). */
+  const showSelectionChrome = (blockId: string) => {
     const block = blocks.find((item) => item.id === blockId);
     const partForChrome =
       block?.type === "kpi_view"
@@ -609,8 +611,7 @@ export function ComunicadoComposerCanvas() {
       closedGroupActive: fullySelectedMemberIds.has(blockId),
       selectedPart: partForChrome,
     });
-    if (!flags.showHandles) return false;
-    return block?.type === "shape" ? shapeBlockAllowsResize(block) : true;
+    return flags.showHandles;
   };
 
   const marqueeStyle = useMemo(() => {
@@ -694,6 +695,25 @@ export function ComunicadoComposerCanvas() {
                   aria-hidden="true"
                 />
               ))
+            : null}
+          {connectionSitesPreview
+            ? connectionSitesPreview.sites.map((site) => {
+                const isActive =
+                  connectionSitesPreview.activeSite?.blockId === site.blockId &&
+                  connectionSitesPreview.activeSite?.id === site.id;
+                return (
+                  <div
+                    key={`${site.blockId}-${site.id}`}
+                    className={
+                      isActive
+                        ? "td-composer__connection-site td-composer__connection-site--active"
+                        : "td-composer__connection-site"
+                    }
+                    style={{ left: `${site.x}%`, top: `${site.y}%` }}
+                    aria-hidden="true"
+                  />
+                );
+              })
             : null}
           {blocks.map((block) => {
             if (isBlockHiddenOnStage(block, blocks)) {
@@ -884,7 +904,7 @@ export function ComunicadoComposerCanvas() {
                     displayNames={remoteEditors.map((selection) => selection.displayName)}
                   />
                 ) : null}
-                {showResizeHandles(block.id) ? (
+                {showSelectionChrome(block.id) ? (
                   <BlockSelectionChrome
                     block={block}
                     designShortSidePx={Math.min(

@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createIconBlock,
   createKpiViewBlock,
@@ -8,8 +8,12 @@ import {
 
 import { BlockSelectionChrome } from "./BlockSelectionChrome";
 
+afterEach(() => {
+  cleanup();
+});
+
 describe("BlockSelectionChrome", () => {
-  it("expõe os mesmos controles de seleção para ícone e forma", () => {
+  it("expõe os mesmos controles de seleção para ícone e forma com ajuste", () => {
     const onPointerDown = vi.fn();
     const { rerender } = render(
       <BlockSelectionChrome
@@ -25,7 +29,7 @@ describe("BlockSelectionChrome", () => {
 
     rerender(
       <BlockSelectionChrome
-        block={createShapeBlock("rectangle")}
+        block={createShapeBlock("rounded-rect")}
         designShortSidePx={64}
         allowResize
         onPointerDown={onPointerDown}
@@ -34,6 +38,45 @@ describe("BlockSelectionChrome", () => {
     expect(screen.getByLabelText("Girar elemento")).toBeTruthy();
     expect(screen.getByLabelText(/canto superior esquerdo/i)).toBeTruthy();
     expect(screen.getByLabelText(/Ajustar/i)).toBeTruthy();
+  });
+
+  it("linha: só endpoints + giro — sem 8 handles de bbox", () => {
+    const onPointerDown = vi.fn();
+    const line = {
+      ...createShapeBlock("line"),
+      frame: { x: 10, y: 20, w: 30, h: 2 },
+      vertices: [
+        { x: 10, y: 21 },
+        { x: 40, y: 21 },
+      ],
+    };
+    render(
+      <BlockSelectionChrome
+        block={line}
+        designShortSidePx={20}
+        allowResize={false}
+        onPointerDown={onPointerDown}
+      />,
+    );
+    expect(screen.getByLabelText("Girar elemento")).toBeTruthy();
+    expect(screen.getByLabelText("Mover início da linha")).toBeTruthy();
+    expect(screen.getByLabelText("Mover fim da linha")).toBeTruthy();
+    expect(screen.queryByLabelText(/canto superior esquerdo/i)).toBeNull();
+    expect(screen.queryByLabelText(/Redimensionar borda/i)).toBeNull();
+  });
+
+  it("retângulo puro: sem losango de adjustment (paridade PPT)", () => {
+    const onPointerDown = vi.fn();
+    render(
+      <BlockSelectionChrome
+        block={createShapeBlock("rectangle")}
+        designShortSidePx={64}
+        allowResize
+        onPointerDown={onPointerDown}
+      />,
+    );
+    expect(screen.getByLabelText(/canto superior esquerdo/i)).toBeTruthy();
+    expect(screen.queryByLabelText(/Ajustar/i)).toBeNull();
   });
 
   it("expõe losango de ajuste também no KPI (cantos do card)", () => {

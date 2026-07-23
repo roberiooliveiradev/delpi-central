@@ -245,10 +245,13 @@ export type ComunicadoMediaBlock = ComunicadoBlockBase & {
 
 export type ComunicadoGeometryVertex = { x: number; y: number };
 
-/** Ligação entre blocos (MVP conector) — ver `comunicadoConnectors`. */
+/**
+ * Ligação entre blocos (conector) — ver `comunicadoConnectors`.
+ * from/to opcionais: ponta solta mantém o outro lado grudado (picker PPT).
+ */
 export type ComunicadoShapeConnector = {
-  fromBlockId: string;
-  toBlockId: string;
+  fromBlockId?: string;
+  toBlockId?: string;
   fromAnchor?: "center" | "n" | "s" | "e" | "w";
   toAnchor?: "center" | "n" | "s" | "e" | "w";
 };

@@ -36,13 +36,18 @@ export const COMUNICADO_POINT_HIT_SIZE_PCT = 2;
  */
 export const COMUNICADO_LINE_VISUAL_PAD_PCT = 2;
 
+function clampPct(value: number): number {
+  return Math.max(0, Math.min(100, value));
+}
+
 export function minimumVertexCount(primitive: ComunicadoVisualPrimitive): number {
   if (primitive === "point") return 1;
   if (primitive === "line") return 2;
   return 3;
 }
 
-function lineEndpointsFromFrame(frame: ComunicadoFrame): ComunicadoGeometryVertex[] {
+/** Fallback legado: linha horizontal no mid-Y do frame (só quando não há vertices). */
+export function lineEndpointsFromFrame(frame: ComunicadoFrame): ComunicadoGeometryVertex[] {
   const y = frame.y + frame.h / 2;
   return [
     { x: frame.x, y },
@@ -94,6 +99,24 @@ export function resolveShapeGeometry(block: ComunicadoShapeBlock): ComunicadoSha
   return { primitive: "area", points };
 }
 
+/** Endpoints canônicos de uma linha (sempre 2 pontos). */
+export function resolveLineEndpoints(
+  block: ComunicadoShapeBlock,
+): [ComunicadoGeometryVertex, ComunicadoGeometryVertex] {
+  const geometry = resolveShapeGeometry(block);
+  if (geometry.primitive !== "line") {
+    const fallback = lineEndpointsFromFrame(block.frame);
+    return [fallback[0]!, fallback[1]!];
+  }
+  return [
+    { x: geometry.points[0]!.x, y: geometry.points[0]!.y },
+    {
+      x: geometry.points[geometry.points.length - 1]!.x,
+      y: geometry.points[geometry.points.length - 1]!.y,
+    },
+  ];
+}
+
 /** Caixa de seleção / interseção — derivada da geometria, não da dimensão do ponto. */
 export function geometryBoundingFrame(geometry: ComunicadoShapeGeometry): ComunicadoFrame {
   if (geometry.primitive === "point") {
@@ -129,6 +152,57 @@ export function geometryBoundingFrame(geometry: ComunicadoShapeGeometry): Comuni
   };
 }
 
+export function frameFromLineEndpoints(
+  a: ComunicadoGeometryVertex,
+  b: ComunicadoGeometryVertex,
+): ComunicadoFrame {
+  return geometryBoundingFrame({ primitive: "line", points: [a, b] });
+}
+
+/**
+ * Define endpoints da linha (vertices-first) e recalcula o frame.
+ * Não força horizontal — diagonais são estáveis.
+ */
+export function applyLineEndpoints(
+  block: ComunicadoShapeBlock,
+  a: ComunicadoGeometryVertex,
+  b: ComunicadoGeometryVertex,
+): ComunicadoShapeBlock {
+  const start = { x: clampPct(a.x), y: clampPct(a.y) };
+  const end = { x: clampPct(b.x), y: clampPct(b.y) };
+  const vertices = [start, end];
+  return {
+    ...block,
+    vertices,
+    frame: frameFromLineEndpoints(start, end),
+  };
+}
+
+/** Translada ambos os endpoints (move do bloco linha). */
+export function translateLineEndpoints(
+  block: ComunicadoShapeBlock,
+  dx: number,
+  dy: number,
+): ComunicadoShapeBlock {
+  const [a, b] = resolveLineEndpoints(block);
+  return applyLineEndpoints(
+    block,
+    { x: a.x + dx, y: a.y + dy },
+    { x: b.x + dx, y: b.y + dy },
+  );
+}
+
+/** Atualiza um único endpoint (0 = início / from, 1 = fim / to). */
+export function applyLineEndpointAt(
+  block: ComunicadoShapeBlock,
+  endpointIndex: 0 | 1,
+  point: ComunicadoGeometryVertex,
+): ComunicadoShapeBlock {
+  const [a, b] = resolveLineEndpoints(block);
+  if (endpointIndex === 0) return applyLineEndpoints(block, point, b);
+  return applyLineEndpoints(block, a, point);
+}
+
 /** Frame persistido: ponto só posição (w=h=0); demais primitivos usam bbox da geometria. */
 export function geometryToPersistedFrame(block: ComunicadoShapeBlock): ComunicadoFrame {
   const geometry = resolveShapeGeometry(block);
@@ -138,8 +212,10 @@ export function geometryToPersistedFrame(block: ComunicadoShapeBlock): Comunicad
   return geometryBoundingFrame(geometry);
 }
 
+/** Linha e ponto não usam os 8 handles de bbox — linha usa endpoints. */
 export function shapeBlockAllowsResize(block: ComunicadoShapeBlock): boolean {
-  return !isPointShapeKind(block.shape);
+  if (isPointShapeKind(block.shape) || isLineShapeKind(block.shape)) return false;
+  return true;
 }
 
 export function clampFrameForShapeBlock(block: ComunicadoShapeBlock, frame: ComunicadoFrame): ComunicadoFrame {
@@ -221,10 +297,30 @@ export function resolveBlockPlacementStyle(block: ComunicadoBlock): CSSPropertie
   };
 }
 
-/** Normaliza vértices de linha após alteração do frame (bbox). */
+/**
+ * @deprecated Preferir `applyLineEndpoints` / `translateLineEndpoints`.
+ * Mantido para callers legados: se o frame só transladou (mesmo w/h), preserva diagonal;
+ * caso contrário (resize de bbox), regenera horizontal no mid-Y.
+ */
 export function syncLineVerticesFromFrame(
   block: ComunicadoShapeBlock,
   frame: ComunicadoFrame,
 ): ComunicadoGeometryVertex[] {
+  const [a, b] = resolveLineEndpoints(block);
+  const sameSize =
+    Math.abs(frame.w - block.frame.w) < 0.01 && Math.abs(frame.h - block.frame.h) < 0.01;
+  if (sameSize) {
+    const dx = frame.x - block.frame.x;
+    const dy = frame.y - block.frame.y;
+    return [
+      { x: clampPct(a.x + dx), y: clampPct(a.y + dy) },
+      { x: clampPct(b.x + dx), y: clampPct(b.y + dy) },
+    ];
+  }
+  return lineEndpointsFromFrame(frame);
+}
+
+/** Vertices iniciais para um bloco linha a partir do frame default. */
+export function initialLineVerticesFromFrame(frame: ComunicadoFrame): ComunicadoGeometryVertex[] {
   return lineEndpointsFromFrame(frame);
 }
