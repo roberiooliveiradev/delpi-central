@@ -1914,6 +1914,9 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-layers-list__row--child{
   position: relative;
+  /* twist (22) + recuo visual sob o pai */
+  padding-left: 38px;
+  box-sizing: border-box;
 }
 .dashboard-tv-dashboard .td-layers-list__twist{
   display: inline-flex;
@@ -1943,9 +1946,9 @@ body.td-composer--marqueeing *{
 }
 .dashboard-tv-dashboard .td-layers-list__tree-guide{
   position: absolute;
-  left: 10px;
-  top: 0;
-  bottom: 0;
+  left: 28px;
+  top: 2px;
+  bottom: 2px;
   width: 2px;
   background: color-mix(in srgb, var(--td-accent, #3b82f6) 28%, transparent);
   border-radius: 1px;

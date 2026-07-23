@@ -334,6 +334,7 @@ export function ComunicadoEditorProvider({
     clearDragSnapshot,
     armMultiDragSelection,
     armTapDeselect,
+    cancelPendingTapDeselect,
     activeSmartGuides,
   } = useComunicadoEditorDrag({
     configRef,
@@ -628,6 +629,7 @@ export function ComunicadoEditorProvider({
     startDrag,
     armMultiDragSelection,
     armTapDeselect,
+    cancelPendingTapDeselect,
     addBlock: blockActions.addBlock,
     addDataBlock: blockActions.addDataBlock,
     addDataSourceBlock: blockActions.addDataSourceBlock,

@@ -173,6 +173,8 @@ export type ComunicadoEditorContextValue = {
   armMultiDragSelection: (ids: string[]) => void;
   /** Marca limpeza de seleção se o toque não virar arraste. */
   armTapDeselect: (blockId: string | null) => void;
+  /** Cancela limpeza atrasada (ex.: clique duplo isolando filho). */
+  cancelPendingTapDeselect: () => void;
   addBlock: (type: ComunicadoBlock["type"]) => void;
   addDataBlock: (block: ComunicadoBlock) => void;
   addDataSourceBlock: (

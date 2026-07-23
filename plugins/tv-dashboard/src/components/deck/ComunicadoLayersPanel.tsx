@@ -302,7 +302,6 @@ export function ComunicadoLayersPanel({ pane = true, layout = "pane" }: Props) {
                 ]
                   .filter(Boolean)
                   .join(" ")}
-                style={row.depth > 0 ? { paddingLeft: 18 } : undefined}
               >
                 {row.depth > 0 ? (
                   <span className="td-layers-list__tree-guide" aria-hidden="true" />

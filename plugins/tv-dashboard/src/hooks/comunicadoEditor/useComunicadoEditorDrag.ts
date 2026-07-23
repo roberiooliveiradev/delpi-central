@@ -27,6 +27,9 @@ import { resolveTapWithoutDragSelectionAction } from "../../utils/stageGroupedSe
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
 
+/** Janela para distinguir 2º toque (limpa) de clique duplo (isola filho). */
+export const TAP_DESELECT_DELAY_MS = 280;
+
 type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
   selectedIds: string[];
@@ -80,6 +83,7 @@ export function useComunicadoEditorDrag({
   const multiDragSelectionOverrideRef = useRef<string[] | null>(null);
   /** Segundo toque: limpa seleção se soltar sem cruzar o limiar de arraste. */
   const tapDeselectBlockIdRef = useRef<string | null>(null);
+  const tapDeselectTimerRef = useRef<number | null>(null);
   const selectedIdsRef = useRef(selectedIds);
   selectedIdsRef.current = selectedIds;
   const [activeSmartGuides, setActiveSmartGuides] = useState<SmartGuideLine[]>([]);
@@ -92,6 +96,14 @@ export function useComunicadoEditorDrag({
     tapDeselectBlockIdRef.current = blockId;
   }, []);
 
+  const cancelPendingTapDeselect = useCallback(() => {
+    tapDeselectBlockIdRef.current = null;
+    if (tapDeselectTimerRef.current != null) {
+      window.clearTimeout(tapDeselectTimerRef.current);
+      tapDeselectTimerRef.current = null;
+    }
+  }, []);
+
   const handleTapWithoutDrag = useCallback(
     (blockId: string) => {
       const candidate = tapDeselectBlockIdRef.current;
@@ -102,9 +114,18 @@ export function useComunicadoEditorDrag({
         targetBlockId: blockId,
         wasAlreadySelected: true,
       });
-      if (action.type === "clear-selection") {
-        clearSelection();
+      if (action.type !== "clear-selection") return;
+      /*
+       * Atrasa a limpeza para não roubar o 1º clique de um clique duplo
+       * (isola subitem do grupo no dblclick).
+       */
+      if (tapDeselectTimerRef.current != null) {
+        window.clearTimeout(tapDeselectTimerRef.current);
       }
+      tapDeselectTimerRef.current = window.setTimeout(() => {
+        tapDeselectTimerRef.current = null;
+        clearSelection();
+      }, TAP_DESELECT_DELAY_MS);
     },
     [clearSelection],
   );
@@ -199,7 +220,7 @@ export function useComunicadoEditorDrag({
   );
 
   const handleInteractionStart = useCallback(() => {
-    tapDeselectBlockIdRef.current = null;
+    cancelPendingTapDeselect();
     setActiveSmartGuides([]);
     dragSnapshotRef.current = snapshotConfig(configRef.current);
     const override = multiDragSelectionOverrideRef.current;
@@ -223,7 +244,7 @@ export function useComunicadoEditorDrag({
     } else {
       multiDragRef.current = null;
     }
-  }, [configRef, selectedId, selectedIds]);
+  }, [cancelPendingTapDeselect, configRef, selectedId, selectedIds]);
 
   const handleInteractionEnd = useCallback(
     (blockId: string, _frame: ComunicadoBlock["frame"], mode: "move" | "resize" | "rotate" | "adjust") => {
@@ -361,9 +382,9 @@ export function useComunicadoEditorDrag({
   const clearDragSnapshot = useCallback(() => {
     dragSnapshotRef.current = null;
     multiDragSelectionOverrideRef.current = null;
-    tapDeselectBlockIdRef.current = null;
+    cancelPendingTapDeselect();
     setActiveSmartGuides([]);
-  }, []);
+  }, [cancelPendingTapDeselect]);
 
   const { canvasRef, startDrag } = useCanvasBlockInteraction({
     onUpdateFrame: handleUpdateFrame,
@@ -381,6 +402,7 @@ export function useComunicadoEditorDrag({
     clearDragSnapshot,
     armMultiDragSelection,
     armTapDeselect,
+    cancelPendingTapDeselect,
     activeSmartGuides,
   };
 }

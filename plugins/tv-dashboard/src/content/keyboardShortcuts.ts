@@ -93,8 +93,8 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     id: "isolate-group-child",
     group: "selecao",
     label: "Selecionar filho do grupo",
-    keys: "Alt+Clique",
-    description: "Isola um membro do grupo. Esc sobe para o grupo; Esc de novo limpa a seleção",
+    keys: "Clique duplo",
+    description: "Isola o subitem no palco. Alt+clique também isola. Esc volta ao grupo",
     showAltTip: false,
   },
   {
@@ -102,7 +102,7 @@ export const TV_KEYBOARD_SHORTCUTS: readonly KeyboardShortcutEntry[] = [
     group: "selecao",
     label: "Limpar seleção (toque)",
     keys: "2º toque",
-    description: "Toque de novo no item já selecionado (sem arrastar) para limpar a seleção",
+    description: "Toque de novo no item já selecionado (sem arrastar; não é clique duplo) para limpar",
     showAltTip: false,
   },
   {

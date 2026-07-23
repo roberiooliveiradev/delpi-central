@@ -27,6 +27,7 @@ const COMPOSER_STAGE_BEM = comunicadoStageBemClasses("tdp");
 import { useAuthenticatedBlobUrl } from "../hooks/useAuthenticatedBlobUrl";
 import { useAuthenticatedComunicadoCustomFonts } from "../hooks/useAuthenticatedComunicadoCustomFonts";
 import { beginBlockStageMoveDrag } from "../utils/beginBlockStageDrag";
+import { isolateGroupedBlockOnDoubleClick } from "../utils/isolateGroupedBlockOnDoubleClick";
 import {
   blocksInMarquee,
   mergeMarqueeSelection,
@@ -126,6 +127,7 @@ export function ComunicadoComposerCanvas() {
     startDrag,
     armMultiDragSelection,
     armTapDeselect,
+    cancelPendingTapDeselect,
     dataPreviewLoading,
     showStageGrid,
     showStageGuides,
@@ -700,8 +702,20 @@ export function ComunicadoComposerCanvas() {
                   ...(selectionRadius != null ? { borderRadius: selectionRadius } : {}),
                 }}
                 onContextMenu={(event) => handleBlockContextMenu(event, block.id)}
+                onDoubleClick={(event) => {
+                  if (shouldDeferToStagePan(event, stagePanMode)) return;
+                  event.stopPropagation();
+                  event.preventDefault();
+                  cancelPendingTapDeselect();
+                  isolateGroupedBlockOnDoubleClick({
+                    block,
+                    blocks,
+                    selectedIds,
+                    selectBlock,
+                  });
+                }}
                 onPointerDown={(event) => {
-                  /* Ctrl/Cmd+clique: remove da seleção (não pan; isolação = 2º clique no grupo). */
+                  /* Ctrl/Cmd+clique: remove da seleção (não pan). */
                   if (
                     (event.ctrlKey || event.metaKey) &&
                     !event.shiftKey &&
