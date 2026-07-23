@@ -10,6 +10,7 @@ import {
   resolveBlockWrapChromeFlags,
   resolveEscapeHierarchyAction,
   resolveGroupedBlockPointerDownAction,
+  resolveMultiDragBlockIds,
   resolveStageSelectionHierarchy,
   resolveTapWithoutDragSelectionAction,
 } from "./stageGroupedSelection";
@@ -54,6 +55,21 @@ describe("resolveStageSelectionHierarchy", () => {
     ).toEqual({ mode: "children", unit: "group", blockIds: ["a", "b"] });
     expect(isGroupChildrenSelection(blocks, ["a", "b"])).toBe(true);
     expect(isIsolatedGroupChildSelection(blocks, ["a"])).toBe(true);
+  });
+
+  it("resolveMultiDragBlockIds não reexpande filhos isolados", () => {
+    const blocks = [
+      block("a", { groupId: "g1" }),
+      block("b", { groupId: "g1" }),
+      block("c", { groupId: "g1" }),
+    ];
+    expect(resolveMultiDragBlockIds(blocks, ["a"])).toEqual(["a"]);
+    expect(resolveMultiDragBlockIds(blocks, ["a", "b"])).toEqual(["a", "b"]);
+    expect(resolveMultiDragBlockIds(blocks, ["a", "b", "c"]).sort()).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
   });
 
   it("KPI sem parte = pai complexo; com value = filhos", () => {

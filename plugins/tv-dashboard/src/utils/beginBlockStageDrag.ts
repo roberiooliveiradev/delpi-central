@@ -3,7 +3,10 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 
 import type { BlockDragMode } from "../components/useCanvasBlockInteraction";
 import { expandSelectionWithGroups } from "./comunicadoGrouping";
-import { resolveStageSelectionHierarchy } from "./stageGroupedSelection";
+import {
+  resolveMultiDragBlockIds,
+  resolveStageSelectionHierarchy,
+} from "./stageGroupedSelection";
 import {
   resolveStagePointerDownAction,
   shouldArmTapDeselectOnDragCurrent,
@@ -97,10 +100,7 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
 
   /* drag-current-selection: filhos não reexpandem o grupo ao arrastar. */
   const hierarchy = resolveStageSelectionHierarchy({ blocks, selectedIds });
-  const dragIds =
-    hierarchy.mode === "children"
-      ? [...selectedIds]
-      : expandSelectionWithGroups(blocks, selectedIds);
+  const dragIds = resolveMultiDragBlockIds(blocks, selectedIds);
   if (shouldArmTapDeselectOnDragCurrent(block)) {
     armTapDeselect?.(block.id);
   } else {

@@ -114,6 +114,23 @@ export function resolveStageSelectionHierarchy(params: {
   };
 }
 
+/**
+ * Ids efetivos do gesto multi (move/resize).
+ * Filhos isolados **não** reexpandem o grupo — só a seleção pai fechada
+ * (ou blocos soltos) usa `expandSelectionWithGroups`.
+ */
+export function resolveMultiDragBlockIds(
+  blocks: ComunicadoBlock[],
+  selectedIds: string[],
+): string[] {
+  if (selectedIds.length === 0) return [];
+  const hierarchy = resolveStageSelectionHierarchy({ blocks, selectedIds });
+  if (hierarchy.mode === "children") {
+    return [...selectedIds];
+  }
+  return expandSelectionWithGroups(blocks, selectedIds);
+}
+
 /** Re-export para consumidores do fluxo unificado. */
 export {
   isGroupChildrenSelection,

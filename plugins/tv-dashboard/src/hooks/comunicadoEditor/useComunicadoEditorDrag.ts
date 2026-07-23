@@ -15,7 +15,6 @@ import {
 
 import type { DeckEditorHistoryContextValue } from "../../context/deckEditorHistoryContext";
 import { useCanvasBlockInteraction } from "../../components/useCanvasBlockInteraction";
-import { expandSelectionWithGroups } from "../../utils/comunicadoGrouping";
 import { applyMultiFrameDelta } from "../../utils/multiFrameTransform";
 import {
   peerFramesForSmartGuides,
@@ -23,6 +22,7 @@ import {
   type SmartGuideLine,
 } from "../../utils/comunicadoSmartGuides";
 import { finalizeMultiFramesWithSnap } from "../../utils/finalizeMultiFramesWithSnap";
+import { resolveMultiDragBlockIds } from "../../utils/stageGroupedSelection";
 import { resolveStageTapWithoutDragAction } from "../../utils/stageInteractionPolicy";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
@@ -236,7 +236,8 @@ export function useComunicadoEditorDrag({
           : selectedId
             ? [selectedId]
             : [];
-    const activeIds = expandSelectionWithGroups(configRef.current.blocks ?? [], baseIds);
+    /* Filhos isolados: não reexpandir o grupo (senão resize/move afeta todos). */
+    const activeIds = resolveMultiDragBlockIds(configRef.current.blocks ?? [], baseIds);
     if (activeIds.length > 1) {
       const startFrames = new Map<string, ComunicadoBlock["frame"]>();
       for (const id of activeIds) {
