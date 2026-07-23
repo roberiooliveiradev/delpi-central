@@ -4,7 +4,10 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import type { BlockDragMode } from "../components/useCanvasBlockInteraction";
 import { expandSelectionWithGroups } from "./comunicadoGrouping";
 import { resolveStageSelectionHierarchy } from "./stageGroupedSelection";
-import { resolveStagePointerDownAction } from "./stageInteractionPolicy";
+import {
+  resolveStagePointerDownAction,
+  shouldArmTapDeselectOnDragCurrent,
+} from "./stageInteractionPolicy";
 
 type BeginBlockStageDragArgs = {
   event: ReactPointerEvent;
@@ -91,7 +94,11 @@ export function beginBlockStageMoveDrag(args: BeginBlockStageDragArgs): boolean 
     hierarchy.mode === "children"
       ? [...selectedIds]
       : expandSelectionWithGroups(blocks, selectedIds);
-  armTapDeselect?.(block.id);
+  if (shouldArmTapDeselectOnDragCurrent(block)) {
+    armTapDeselect?.(block.id);
+  } else {
+    armTapDeselect?.(null);
+  }
   if (selectedId !== block.id && hierarchy.mode !== "children") {
     selectBlocksByIds(dragIds);
   }

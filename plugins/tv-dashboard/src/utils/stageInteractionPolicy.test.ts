@@ -4,6 +4,7 @@ import type { ComunicadoBlock } from "@delpi/tv-dashboard-presentation";
 import {
   isInlineTextEditableBlock,
   resolveStageDblClickAction,
+  shouldArmTapDeselectOnDragCurrent,
 } from "./stageInteractionPolicy";
 
 const groupedText: ComunicadoBlock = {
@@ -98,5 +99,10 @@ describe("stageInteractionPolicy dblclick", () => {
       }),
     ).toBe(true);
     expect(isInlineTextEditableBlock(groupedIcon)).toBe(false);
+  });
+
+  it("shouldArmTapDeselectOnDragCurrent só para não-texto", () => {
+    expect(shouldArmTapDeselectOnDragCurrent(groupedText)).toBe(false);
+    expect(shouldArmTapDeselectOnDragCurrent(groupedIcon)).toBe(true);
   });
 });

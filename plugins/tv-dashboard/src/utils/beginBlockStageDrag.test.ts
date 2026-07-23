@@ -174,4 +174,56 @@ describe("beginBlockStageMoveDrag", () => {
     expect(armMultiDragSelection).toHaveBeenCalledWith(["a"]);
     expect(startDrag).toHaveBeenCalled();
   });
+
+  it("texto já isolado não arma tap-deselect (protege dblclick → editar)", () => {
+    const a = fakeBlock("a", "grp");
+    const b = fakeBlock("b", "grp");
+    const armTapDeselect = vi.fn();
+    beginBlockStageMoveDrag({
+      event: fakeEvent(),
+      block: a,
+      blocks: [a, b],
+      isBlockSelected: (id) => id === "a",
+      selectedIds: ["a"],
+      selectedId: "a",
+      selectBlock: vi.fn(),
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection: vi.fn(),
+      startDrag: vi.fn(),
+      armTapDeselect,
+    });
+    expect(armTapDeselect).toHaveBeenCalledWith(null);
+  });
+
+  it("ícone já isolado arma tap-deselect", () => {
+    const a: ComunicadoBlock = {
+      id: "a",
+      type: "icon",
+      iconName: "Target",
+      frame: { x: 10, y: 10, w: 20, h: 10 },
+      groupId: "grp",
+    };
+    const b: ComunicadoBlock = {
+      id: "b",
+      type: "icon",
+      iconName: "Star",
+      frame: { x: 30, y: 10, w: 20, h: 10 },
+      groupId: "grp",
+    };
+    const armTapDeselect = vi.fn();
+    beginBlockStageMoveDrag({
+      event: fakeEvent(),
+      block: a,
+      blocks: [a, b],
+      isBlockSelected: (id) => id === "a",
+      selectedIds: ["a"],
+      selectedId: "a",
+      selectBlock: vi.fn(),
+      selectBlocksByIds: vi.fn(),
+      armMultiDragSelection: vi.fn(),
+      startDrag: vi.fn(),
+      armTapDeselect,
+    });
+    expect(armTapDeselect).toHaveBeenCalledWith("a");
+  });
 });

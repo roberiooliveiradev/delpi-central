@@ -31,6 +31,17 @@ export function isInlineTextEditableBlock(block: ComunicadoBlock): boolean {
 }
 
 /**
+ * Prioridade de hit no palco (Grida-like):
+ * 1. stage pan · 2. handles resize/rotate · 3. conteúdo L5 ·
+ * 4. wrap do bloco · 5. marquee no fundo.
+ *
+ * Tap-deselect no 2º toque compete com dblclick → L5; em texto/shape não armar.
+ */
+export function shouldArmTapDeselectOnDragCurrent(block: ComunicadoBlock): boolean {
+  return !isInlineTextEditableBlock(block);
+}
+
+/**
  * Duplo clique no alvo sob o cursor:
  * - texto/título/shape → enter-text-edit (L5; isola se estiver em grupo)
  * - outro membro de grupo → isolate-child (L3)

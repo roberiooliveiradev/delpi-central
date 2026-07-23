@@ -611,7 +611,10 @@ export function ComunicadoEditorProvider({
     cancelEditKpiPart: selection.cancelEditKpiPart,
     editingTextId: selection.editingTextId,
     setEditingTextId: selection.setEditingTextId,
-    enterTextEdit: selection.enterTextEdit,
+    enterTextEdit: (blockId: string) => {
+      cancelPendingTapDeselect();
+      selection.enterTextEdit(blockId);
+    },
     textEditSelection: selection.textEditSelection,
     textEditSelectionStyle: selection.textEditSelectionStyle,
     textEditListSelection: selection.textEditListSelection,

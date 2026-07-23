@@ -23,12 +23,12 @@ import {
   type SmartGuideLine,
 } from "../../utils/comunicadoSmartGuides";
 import { finalizeMultiFramesWithSnap } from "../../utils/finalizeMultiFramesWithSnap";
-import { resolveTapWithoutDragSelectionAction } from "../../utils/stageGroupedSelection";
+import { resolveStageTapWithoutDragAction } from "../../utils/stageInteractionPolicy";
 import { stageGridSnapPercents } from "../../utils/stageGridSize";
 import { snapshotConfig } from "./useComunicadoEditorHistory";
 
-/** Janela para distinguir 2º toque (limpa) de clique duplo (isola filho). */
-export const TAP_DESELECT_DELAY_MS = 280;
+/** Janela para distinguir 2º toque (limpa) de clique duplo (isola / edita). */
+export const TAP_DESELECT_DELAY_MS = 320;
 
 type Options = {
   configRef: MutableRefObject<ComunicadoConfig>;
@@ -109,7 +109,7 @@ export function useComunicadoEditorDrag({
       const candidate = tapDeselectBlockIdRef.current;
       tapDeselectBlockIdRef.current = null;
       if (!candidate || candidate !== blockId) return;
-      const action = resolveTapWithoutDragSelectionAction({
+      const action = resolveStageTapWithoutDragAction({
         blocks: configRef.current.blocks ?? [],
         selectedIds: selectedIdsRef.current,
         targetBlockId: blockId,
@@ -119,7 +119,7 @@ export function useComunicadoEditorDrag({
       if (action.type !== "clear-selection") return;
       /*
        * Atrasa a limpeza para não roubar o 1º clique de um clique duplo
-       * (isola subitem do grupo no dblclick).
+       * (isolar subitem / editar texto).
        */
       if (tapDeselectTimerRef.current != null) {
         window.clearTimeout(tapDeselectTimerRef.current);
