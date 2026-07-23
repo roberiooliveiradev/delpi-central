@@ -527,6 +527,12 @@ export {
   type DynamicContentSpec,
 } from "./dynamicContent";
 export {
+  isFullContentTextSelection,
+  stripContentRunStylesOverriddenByContainer,
+  typographyKeysFromContainerPatch,
+  type ContainerTypographyStyleKey,
+} from "./containerTypographyOverride";
+export {
   groupContentRunsForDisplay,
   hasListContentRuns,
   splitContentRunsIntoLines,

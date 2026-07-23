@@ -1,7 +1,10 @@
 import {
   applyBlockShapeChromeStyle,
   blockUsesInnerShapeChrome,
+  isComunicadoVisualBoxBlock,
   isInnerShapeChromeStyleKey,
+  stripContentRunStylesOverriddenByContainer,
+  typographyKeysFromContainerPatch,
   type ComunicadoBlock,
   type ComunicadoBlockStyle,
   type ComunicadoInputPartRef,
@@ -70,6 +73,24 @@ export function applyComunicadoBlockStylePatch(
       delete nextStyle[key as keyof ComunicadoBlockStyle];
     }
     next = { ...next, style: nextStyle };
+  }
+
+  /*
+   * Tipografia do container sobrepõe a pontual: remove as mesmas chaves dos
+   * contentRuns para o CSS do bloco voltar a mandar (ex.: negrito no chip).
+   */
+  if (isComunicadoVisualBoxBlock(next) && "contentRuns" in next) {
+    const typographyKeys = typographyKeysFromContainerPatch({
+      ...restPatch,
+      ...Object.fromEntries(clearKeys.map((key) => [key, undefined])),
+    });
+    if (typographyKeys.length > 0) {
+      const nextRuns = stripContentRunStylesOverriddenByContainer(
+        next.contentRuns,
+        typographyKeys,
+      );
+      next = { ...next, contentRuns: nextRuns } as ComunicadoBlock;
+    }
   }
 
   return next;

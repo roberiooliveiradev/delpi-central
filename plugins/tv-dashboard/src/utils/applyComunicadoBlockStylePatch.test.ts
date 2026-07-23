@@ -63,4 +63,22 @@ describe("applyComunicadoBlockStylePatch", () => {
     expect(next.style?.zIndex).toBe(3);
     expect(next.style?.opacity).toBe(0.8);
   });
+
+  it("tipografia do container remove override pontual nos contentRuns", () => {
+    const block = {
+      ...createShapeBlock("rectangle"),
+      content: "Meta 1.400",
+      contentRuns: [
+        { text: "Meta ", style: { fontWeight: "bold" as const } },
+        { text: "1.400", dataRef: { field: "ppm" }, style: { fontWeight: "normal" as const } },
+      ],
+      style: { zIndex: 2, fontWeight: "normal" as const },
+    };
+    const next = applyComunicadoBlockStylePatch(block, { fontWeight: "bold" });
+    expect(next.style?.fontWeight).toBe("bold");
+    expect(next.type).toBe("shape");
+    if (next.type !== "shape") return;
+    expect(next.contentRuns?.every((run) => run.style?.fontWeight == null)).toBe(true);
+    expect(next.contentRuns?.some((run) => run.dataRef?.field === "ppm")).toBe(true);
+  });
 });

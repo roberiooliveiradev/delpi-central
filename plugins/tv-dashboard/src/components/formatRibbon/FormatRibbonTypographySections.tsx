@@ -32,6 +32,7 @@ import {
   ensureComunicadoGoogleFontsLoaded,
   defaultStyle,
   defaultTextBlockStyle,
+  isFullContentTextSelection,
   parseTextDecorationFlags,
   defaultVerticalAlignForBlock,
   resolveNamedStyleSelectionForBlock,
@@ -233,7 +234,26 @@ export function FormatRibbonTypographySections({
       effectivePartialSelection.blockId === visualBoxBlock.id) ||
       partEditBridgeActive,
   );
+  /*
+   * Seleção de todo o texto = tipografia de container: sobrepõe estilos pontuais
+   * (contentRuns) via updateSelectedTextFormatStyle + strip nos runs.
+   */
+  const fullContentSelectionActive = Boolean(
+    visualBoxBlock &&
+      effectivePartialSelection &&
+      effectivePartialSelection.blockId === visualBoxBlock.id &&
+      isFullContentTextSelection(
+        visualBoxBlock.contentRuns,
+        visualBoxBlock.content,
+        effectivePartialSelection.start,
+        effectivePartialSelection.end,
+      ),
+  );
   const applyTextFormatStyle = (patch: Parameters<typeof updateSelectedTextFormatStyle>[0]) => {
+    if (fullContentSelectionActive) {
+      updateSelectedTextFormatStyle(patch);
+      return;
+    }
     /*
      * Em edição, tenta o trecho via bridge (Range vivo) antes do state React —
      * senão o 1º clique na ribbon aplica no bloco inteiro até o botão direito
@@ -278,6 +298,28 @@ export function FormatRibbonTypographySections({
     }
     updateSelectedTextFormatStyle(patch);
   };
+
+  function applyToggleOrContainer(
+    toggleKey: "fontWeight" | "fontStyle" | "underline" | "strikethrough",
+    containerPatch: Parameters<typeof updateSelectedTextFormatStyle>[0],
+  ) {
+    if (fullContentSelectionActive) {
+      updateSelectedTextFormatStyle(containerPatch);
+      return;
+    }
+    if (
+      editingTextId &&
+      visualBoxBlock &&
+      editingTextId === visualBoxBlock.id &&
+      toggleEditingTextRunStyle(toggleKey)
+    ) {
+      return;
+    }
+    if (partialTextSelectionActive && toggleEditingTextRunStyle(toggleKey)) {
+      return;
+    }
+    updateSelectedTextFormatStyle(containerPatch);
+  }
   const fontSizeAuto = Boolean(formatStyle?.fontSizeAuto);
   const currentFontSize =
     partialTextSelectionActive &&
@@ -604,22 +646,11 @@ export function FormatRibbonTypographySections({
               hint={H.bold}
               ariaLabel="Negrito"
               active={Boolean(fontWeightActive)}
-              onClick={() => {
-                if (
-                  editingTextId &&
-                  visualBoxBlock &&
-                  editingTextId === visualBoxBlock.id &&
-                  toggleEditingTextRunStyle("fontWeight")
-                ) {
-                  return;
-                }
-                if (partialTextSelectionActive && toggleEditingTextRunStyle("fontWeight")) {
-                  return;
-                }
-                updateSelectedTextFormatStyle({
+              onClick={() =>
+                applyToggleOrContainer("fontWeight", {
                   fontWeight: formatStyle?.fontWeight === "bold" ? "normal" : "bold",
-                });
-              }}
+                })
+              }
             >
               <Bold size={15} aria-hidden="true" />
             </TdRibbonIconButton>
@@ -627,22 +658,11 @@ export function FormatRibbonTypographySections({
               hint={H.italic}
               ariaLabel="Itálico"
               active={Boolean(fontStyleActive)}
-              onClick={() => {
-                if (
-                  editingTextId &&
-                  visualBoxBlock &&
-                  editingTextId === visualBoxBlock.id &&
-                  toggleEditingTextRunStyle("fontStyle")
-                ) {
-                  return;
-                }
-                if (partialTextSelectionActive && toggleEditingTextRunStyle("fontStyle")) {
-                  return;
-                }
-                updateSelectedTextFormatStyle({
+              onClick={() =>
+                applyToggleOrContainer("fontStyle", {
                   fontStyle: formatStyle?.fontStyle === "italic" ? "normal" : "italic",
-                });
-              }}
+                })
+              }
             >
               <Italic size={15} aria-hidden="true" />
             </TdRibbonIconButton>
@@ -650,25 +670,14 @@ export function FormatRibbonTypographySections({
               hint={H.underline}
               ariaLabel="Sublinhado"
               active={Boolean(underlineActive)}
-              onClick={() => {
-                if (
-                  editingTextId &&
-                  visualBoxBlock &&
-                  editingTextId === visualBoxBlock.id &&
-                  toggleEditingTextRunStyle("underline")
-                ) {
-                  return;
-                }
-                if (partialTextSelectionActive && toggleEditingTextRunStyle("underline")) {
-                  return;
-                }
-                updateSelectedTextFormatStyle({
+              onClick={() =>
+                applyToggleOrContainer("underline", {
                   textDecoration: buildTextDecoration(
                     !blockDecorationFlags.underline,
                     blockDecorationFlags.strikethrough,
                   ),
-                });
-              }}
+                })
+              }
             >
               <Underline size={15} aria-hidden="true" />
             </TdRibbonIconButton>
@@ -676,25 +685,14 @@ export function FormatRibbonTypographySections({
               hint={H.strikethrough}
               ariaLabel="Tachado"
               active={Boolean(strikethroughActive)}
-              onClick={() => {
-                if (
-                  editingTextId &&
-                  visualBoxBlock &&
-                  editingTextId === visualBoxBlock.id &&
-                  toggleEditingTextRunStyle("strikethrough")
-                ) {
-                  return;
-                }
-                if (partialTextSelectionActive && toggleEditingTextRunStyle("strikethrough")) {
-                  return;
-                }
-                updateSelectedTextFormatStyle({
+              onClick={() =>
+                applyToggleOrContainer("strikethrough", {
                   textDecoration: buildTextDecoration(
                     blockDecorationFlags.underline,
                     !blockDecorationFlags.strikethrough,
                   ),
-                });
-              }}
+                })
+              }
             >
               <Strikethrough size={15} aria-hidden="true" />
             </TdRibbonIconButton>
