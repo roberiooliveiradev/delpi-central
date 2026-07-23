@@ -3561,6 +3561,22 @@
         }
       }
     },
+    "get_refugos_custo_x_rol": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Scrap cost vs ROL",
+          "description": "Scrap (refugo) cost over financial ROL (with IPI) for a branch and period. Optional filters (mp, pa, op, reason, work center) apply to the scrap numerator only.",
+          "whenToUse": "Use as a KPI card for scrap cost as a percentage of ROL. Prefer the same branch and period as /refugos/resumo and /financial/rol."
+        },
+        "pt-BR": {
+          "summary": "Custo de refugo × ROL",
+          "description": "Custo de refugo sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) aplicam-se só ao numerador de refugo.",
+          "whenToUse": "Usar no card KPI de custo de refugo como percentual do ROL. Prefira a mesma filial e período de /refugos/resumo e /financial/rol.",
+          "label": "Custo de refugo × ROL"
+        }
+      }
+    },
     "get_refugos_serie": {
       "category": "quality",
       "locale": {
@@ -3681,6 +3697,22 @@
         }
       },
       "category": "other"
+    },
+    "get_retrabalhos_custo_x_rol": {
+      "category": "quality",
+      "locale": {
+        "en": {
+          "summary": "Rework cost vs ROL",
+          "description": "Rework (retrabalho) cost over financial ROL (with IPI) for a branch and period. Optional filters (resource, cost center, operator) apply to the rework numerator only.",
+          "whenToUse": "Use as a KPI card for rework cost as a percentage of ROL. Prefer the same branch and period as /retrabalhos/resumo and /financial/rol."
+        },
+        "pt-BR": {
+          "summary": "Custo de retrabalho × ROL",
+          "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (recurso, centro de custo, operador) aplicam-se só ao numerador de retrabalho.",
+          "whenToUse": "Usar no card KPI de custo de retrabalho como percentual do ROL. Prefira a mesma filial e período de /retrabalhos/resumo e /financial/rol.",
+          "label": "Custo de retrabalho × ROL"
+        }
+      }
     },
     "get_sales_conversion_rate": {
       "category": "commercial",

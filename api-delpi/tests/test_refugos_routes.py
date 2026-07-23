@@ -32,6 +32,7 @@ def test_router_exposes_all_endpoints(refugos_client: TestClient) -> None:
     assert router.prefix == "/refugos"
     assert "/refugos/health" in paths
     assert "/refugos/resumo" in paths
+    assert "/refugos/custo-x-rol" in paths
     assert "/refugos/rankings" in paths
     assert "/refugos/serie" in paths
     assert "/refugos/registros" in paths
@@ -69,6 +70,40 @@ def test_resumo_returns_envelope(mock_builder, _mock_branch, refugos_client: Tes
     assert body["meta"]["shape"] == "scalar"
     assert body["meta"]["dataVersion"] == DATA_VERSION
     assert body["data"]["totalValor"] == 10.5
+
+
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.refugos.refugos_router.build_get_refugos_custo_x_rol_use_case"
+)
+def test_custo_x_rol_returns_envelope(
+    mock_builder, _mock_branch, refugos_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "custoRefugo": 2500.0,
+        "rolWithIpi": 100_000.0,
+        "custoSobreRolPct": 2.5,
+    }
+    mock_builder.return_value = use_case
+
+    response = refugos_client.get(
+        "/refugos/custo-x-rol",
+        params={"filial": "01", "dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["success"] is True
+    assert body["meta"]["operationId"] == "get_refugos_custo_x_rol"
+    assert body["meta"]["entity"] == "refugos_custo_x_rol"
+    assert body["meta"]["shape"] == "scalar"
+    assert body["meta"]["dataVersion"] == DATA_VERSION
+    assert body["data"]["custoSobreRolPct"] == 2.5
+    assert "custoSobreRolPct" in (body["meta"].get("fields") or {})
 
 
 @patch(

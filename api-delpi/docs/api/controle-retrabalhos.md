@@ -19,6 +19,7 @@ Plugin consumidor: `plugins/controle-retrabalhos` · View: [ESPECIFICACAO-VIEW.m
 | GET | `/retrabalhos/health` | `scalar` | `get_retrabalhos_health` |
 | GET | `/retrabalhos/filtros` | `scalar` | `get_retrabalhos_filtros` |
 | GET | `/retrabalhos/resumo` | `scalar` | `get_retrabalhos_resumo` |
+| GET | `/retrabalhos/custo-x-rol` | `scalar` | `get_retrabalhos_custo_x_rol` |
 | GET | `/retrabalhos/mensal` | `list` | `get_retrabalhos_mensal` |
 | GET | `/retrabalhos/recursos` | `list` | `get_retrabalhos_recursos` |
 | GET | `/retrabalhos/colaboradores` | `list` | `get_retrabalhos_colaboradores` |
@@ -38,6 +39,25 @@ Plugin consumidor: `plugins/controle-retrabalhos` · View: [ESPECIFICACAO-VIEW.m
 | `codigo_operador` | `codigoOperador` | Filtro opcional por operador |
 
 Janela máxima: **24 meses**. Ranking default: top **10** (`limit` até 50). Detalhes: `page`, `pageSize` (máx. 100).
+
+---
+
+## GET `/retrabalhos/custo-x-rol`
+
+**`meta.entity`:** `retrabalho_custo_x_rol`
+
+Combina o custo de retrabalho do período (`/retrabalhos/resumo` → `totalCusto`) com o ROL financeiro da mesma filial/período (`/financial/rol` → `rol_with_ipi`).
+
+| Campo | Descrição |
+|---|---|
+| `custoRetrabalho` | Custo de retrabalho (R$) no período |
+| `rol` / `rolWithIpi` | ROL financeiro do denominador |
+| `custoSobreRolPct` | `(custoRetrabalho / rolWithIpi) * 100` — `null` se ROL = 0 |
+| `totalHoras` / `custoMedioHora` | Horas e custo médio/hora do numerador |
+| `filtrosAplicados` | `recurso`, `centroCusto`, `codigoOperador` (afetam só o numerador) |
+| `financialContext` | Contexto do ROL (receita bruta, devoluções, etc.) |
+
+Parâmetros: mesmos de `/retrabalhos/resumo` (`filial` obrigatória; período e filtros opcionais).
 
 ---
 

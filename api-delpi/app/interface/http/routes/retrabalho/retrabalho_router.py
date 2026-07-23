@@ -9,6 +9,7 @@ from delpi_auth.authorization import require_any_permission
 from app.application.security.api_delpi_permissions import CONTROLE_RETRABALHO_READ_PERMISSIONS
 from app.composition.retrabalho_composer import (
     build_get_retrabalho_colaboradores_use_case,
+    build_get_retrabalho_custo_x_rol_use_case,
     build_get_retrabalho_detalhes_use_case,
     build_get_retrabalho_filtros_use_case,
     build_get_retrabalho_health_use_case,
@@ -17,6 +18,10 @@ from app.composition.retrabalho_composer import (
     build_get_retrabalho_resumo_use_case,
 )
 from app.core.responses import error_response
+from app.interface.http.kpi_field_labels import (
+    RETRABALHO_CUSTO_X_ROL_FIELD_LABELS,
+    kpi_fields,
+)
 from app.interface.http.openapi_agent_metadata_builder import OpenApiAgentMetadataBuilder
 from app.interface.http.route_response_helpers import api_delpi_success
 from app.interface.http.routes.retrabalho.retrabalho_route_helpers import (
@@ -146,6 +151,59 @@ def get_retrabalhos_resumo_route(
         success_message="Resumo de retrabalhos carregado com sucesso.",
         error_context="carregar resumo de retrabalhos",
     )
+
+
+@router.get(
+    "/custo-x-rol",
+    **OpenApiAgentMetadataBuilder.from_contract(
+        "get_retrabalhos_custo_x_rol",
+        path="/retrabalhos/custo-x-rol",
+    ),
+)
+@require_any_permission(CONTROLE_RETRABALHO_READ_PERMISSIONS)
+def get_retrabalhos_custo_x_rol_route(
+    filial: str = FILIAL_QUERY(),
+    data_inicio: Optional[str] = DATA_INICIO_QUERY(),
+    data_fim: Optional[str] = DATA_FIM_QUERY(),
+    recurso: Optional[str] = RECURSO_QUERY(),
+    centro_custo: Optional[str] = CENTRO_CUSTO_QUERY(),
+    codigo_operador: Optional[str] = CODIGO_OPERADOR_QUERY(),
+):
+    filial_error = branch_access_error(filial)
+    if filial_error:
+        return filial_error
+
+    try:
+        request = build_retrabalho_query_request(
+            filial=filial,
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            recurso=recurso,
+            centro_custo=centro_custo,
+            codigo_operador=codigo_operador,
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar custo de retrabalho x ROL: {exc}")
+        return error_response(str(exc), status_code=400)
+
+    try:
+        use_case = build_get_retrabalho_custo_x_rol_use_case()
+        result = use_case.execute(request)
+        return api_delpi_success(
+            result,
+            operation_id="get_retrabalhos_custo_x_rol",
+            message="Custo de retrabalho / ROL carregado com sucesso.",
+            fields=kpi_fields(RETRABALHO_CUSTO_X_ROL_FIELD_LABELS),
+        )
+    except ValueError as exc:
+        log_error(f"Erro de validação ao carregar custo de retrabalho x ROL: {exc}")
+        return error_response(str(exc), status_code=400)
+    except Exception as exc:
+        log_error(f"Erro ao carregar custo de retrabalho x ROL: {exc}")
+        return error_response(
+            "Erro interno ao carregar custo de retrabalho x ROL.",
+            status_code=500,
+        )
 
 
 @router.get(

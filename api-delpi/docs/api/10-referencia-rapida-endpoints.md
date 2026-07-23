@@ -309,6 +309,7 @@ Doc: [quality-action-plans-pac.md](./quality-action-plans-pac.md)
 | GET | `/retrabalhos/health` | CR |
 | GET | `/retrabalhos/filtros` | CR |
 | GET | `/retrabalhos/resumo` | CR |
+| GET | `/retrabalhos/custo-x-rol` | CR |
 | GET | `/retrabalhos/mensal` | CR |
 | GET | `/retrabalhos/recursos` | CR |
 | GET | `/retrabalhos/colaboradores` | CR |
@@ -323,7 +324,9 @@ Permissões: `controle-retrabalhos.*` ou `api-delpi.access`. Legenda: **CR** = c
 | GET | `/refugos/health` | SM |
 | GET | `/refugos/filtros` | SM |
 | GET | `/refugos/resumo` | SM |
+| GET | `/refugos/custo-x-rol` | SM |
 | GET | `/refugos/rankings` | SM |
+| GET | `/refugos/serie` | SM |
 | GET | `/refugos/registros` | SM |
 
 Permissões: `scrap-monitoring.*` ou `api-delpi.access`. Filiais SC/ES (`01`/`02`). Legenda: **SM** = scrap-monitoring. Doc: [scrap-monitoring.md](./scrap-monitoring.md).

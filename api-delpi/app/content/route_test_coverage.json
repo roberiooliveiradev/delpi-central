@@ -1,10 +1,10 @@
 {
   "version": 1,
   "generatedAt": "2026-07-23",
-  "baselineOperationCount": 434,
-  "operationCount": 434,
-  "coveredCount": 433,
-  "gapCount": 0,
+  "baselineOperationCount": 455,
+  "operationCount": 455,
+  "coveredCount": 453,
+  "gapCount": 1,
   "exemptCount": 1,
   "byModule": {
     "canal-denuncia": {
@@ -98,8 +98,8 @@
       "exempt": 0
     },
     "production": {
-      "total": 32,
-      "covered": 32,
+      "total": 33,
+      "covered": 33,
       "gap": 0,
       "exempt": 0
     },
@@ -134,14 +134,20 @@
       "exempt": 0
     },
     "refugos": {
-      "total": 6,
-      "covered": 6,
+      "total": 7,
+      "covered": 7,
       "gap": 0,
       "exempt": 0
     },
+    "reports": {
+      "total": 15,
+      "covered": 14,
+      "gap": 1,
+      "exempt": 0
+    },
     "retrabalhos": {
-      "total": 7,
-      "covered": 7,
+      "total": 8,
+      "covered": 8,
       "gap": 0,
       "exempt": 0
     },
@@ -158,8 +164,8 @@
       "exempt": 0
     },
     "supplies": {
-      "total": 11,
-      "covered": 11,
+      "total": 14,
+      "covered": 14,
       "gap": 0,
       "exempt": 0
     },
@@ -394,6 +400,582 @@
       "module": "dashboard",
       "entity": "dashboard_departments_indicators",
       "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_closing_rate_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-closing-rate/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_closing_rate_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-closing-rate/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-rol/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_rol_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-rol/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/commercial-sales-order-otd/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-projects-on-time/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_engineering_projects_on_time_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-projects-on-time/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-ebitda/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_financial_ebitda_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-ebitda/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-fixed-cost/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_financial_fixed_cost_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-fixed-cost/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-pmr/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_financial_pmr_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/financial-pmr/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-absenteeism/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_absenteeism_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-absenteeism/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-pdi/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_pdi_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-pdi/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-performance-reviews/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_performance_reviews_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-performance-reviews/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-satisfaction/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_satisfaction_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-satisfaction/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-training-hours/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_training_hours_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-training-hours/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-turnover/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_hr_turnover_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/hr-turnover/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-costs/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_costs_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-costs/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-depreciation/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_depreciation_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-depreciation/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-direct-labor/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_direct_labor_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-direct-labor/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-oee/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_oee_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-oee/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-otd/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_production_otd_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/production-otd/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-audit-5s/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_audit_5s_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-audit-5s/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-kaizen-ideas/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external-plugs/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_external_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-external/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal-plugs/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_quality_ppm_internal_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/quality-ppm-internal/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-cpv/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_cpv_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-cpv/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-negotiation-savings/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-otd/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_otd_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-otd/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-turnover/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_turnover_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-turnover/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_meta",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-value/meta",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_meta",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_si_indicator_supplies_stock_value_realized",
+      "method": "GET",
+      "path": "/dashboard/indicators/supplies-stock-value/realized",
+      "module": "dashboard",
+      "entity": "dashboard_si_indicator_realized",
+      "shape": "scalar",
       "status": "covered"
     },
     {
@@ -1286,6 +1868,15 @@
       "module": "production",
       "entity": "production_losses_top_materials",
       "shape": "playbook_report",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_production_machine_program_top_intermediates",
+      "method": "GET",
+      "path": "/production/machine-programs/top-intermediates",
+      "module": "production",
+      "entity": "production_machine_program_intermediate",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -3017,6 +3608,15 @@
       "status": "covered"
     },
     {
+      "operationId": "get_refugos_custo_x_rol",
+      "method": "GET",
+      "path": "/refugos/custo-x-rol",
+      "module": "refugos",
+      "entity": "refugos_custo_x_rol",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "get_refugos_filtros",
       "method": "GET",
       "path": "/refugos/filtros",
@@ -3071,12 +3671,156 @@
       "status": "covered"
     },
     {
+      "operationId": "list_report_definitions",
+      "method": "GET",
+      "path": "/reports/definitions",
+      "module": "reports",
+      "entity": "report_definition",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "create_report_definition",
+      "method": "POST",
+      "path": "/reports/definitions",
+      "module": "reports",
+      "entity": "report_definition",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_report_definition",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}",
+      "module": "reports",
+      "entity": "report_definition",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "update_report_definition",
+      "method": "PATCH",
+      "path": "/reports/definitions/{definition_id}",
+      "module": "reports",
+      "entity": "report_definition",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_report_recipients",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}/recipients",
+      "module": "reports",
+      "entity": "report_recipient",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "replace_report_recipients",
+      "method": "PUT",
+      "path": "/reports/definitions/{definition_id}/recipients",
+      "module": "reports",
+      "entity": "report_recipient",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "run_report_definition",
+      "method": "POST",
+      "path": "/reports/definitions/{definition_id}/run",
+      "module": "reports",
+      "entity": "report_run",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "delete_report_schedule",
+      "method": "DELETE",
+      "path": "/reports/definitions/{definition_id}/schedule",
+      "module": "reports",
+      "entity": "report_schedule",
+      "shape": "scalar",
+      "status": "gap"
+    },
+    {
+      "operationId": "get_report_schedule",
+      "method": "GET",
+      "path": "/reports/definitions/{definition_id}/schedule",
+      "module": "reports",
+      "entity": "report_schedule",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "upsert_report_schedule",
+      "method": "PUT",
+      "path": "/reports/definitions/{definition_id}/schedule",
+      "module": "reports",
+      "entity": "report_schedule",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_report_providers",
+      "method": "GET",
+      "path": "/reports/providers",
+      "module": "reports",
+      "entity": "report_provider",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "preview_report_provider_safety_stock_shortage_30d",
+      "method": "GET",
+      "path": "/reports/providers/safety_stock_shortage_30d/preview",
+      "module": "reports",
+      "entity": "report_dataset",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "list_report_runs",
+      "method": "GET",
+      "path": "/reports/runs",
+      "module": "reports",
+      "entity": "report_run",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_report_run",
+      "method": "GET",
+      "path": "/reports/runs/{run_id}",
+      "module": "reports",
+      "entity": "report_run",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "process_pending_report_schedules",
+      "method": "POST",
+      "path": "/reports/schedules/process-pending",
+      "module": "reports",
+      "entity": "report_schedule_batch",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
       "operationId": "get_retrabalhos_colaboradores",
       "method": "GET",
       "path": "/retrabalhos/colaboradores",
       "module": "retrabalhos",
       "entity": "retrabalho_horas_improdutivas_colaboradores",
       "shape": "list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_retrabalhos_custo_x_rol",
+      "method": "GET",
+      "path": "/retrabalhos/custo-x-rol",
+      "module": "retrabalhos",
+      "entity": "retrabalho_custo_x_rol",
+      "shape": "scalar",
       "status": "covered"
     },
     {
@@ -3265,6 +4009,33 @@
       "path": "/supplies/otd",
       "module": "supplies",
       "entity": "supplies_otd",
+      "shape": "scalar",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_items",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/items",
+      "module": "supplies",
+      "entity": "supplies_safety_stock_consumption_analysis_item",
+      "shape": "paged_list",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/items/{code}",
+      "module": "supplies",
+      "entity": "supplies_safety_stock_consumption_analysis_detail",
+      "shape": "composite_analysis",
+      "status": "covered"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_summary",
+      "method": "GET",
+      "path": "/supplies/safety-stock/consumption-analysis/summary",
+      "module": "supplies",
+      "entity": "supplies_safety_stock_consumption_analysis_summary",
       "shape": "scalar",
       "status": "covered"
     },
@@ -3481,7 +4252,7 @@
       "path": "/system/tables/{tableName}/indexes",
       "module": "system",
       "entity": "protheus_index",
-      "shape": "scalar",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -3490,7 +4261,7 @@
       "path": "/system/tables/{tableName}/relations",
       "module": "system",
       "entity": "protheus_relation",
-      "shape": "scalar",
+      "shape": "paged_list",
       "status": "covered"
     },
     {
@@ -3500,582 +4271,6 @@
       "module": "system",
       "entity": "protheus_table_schema",
       "shape": "composite_analysis",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_closing_rate_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-closing-rate/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_closing_rate_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-closing-rate/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_new_business_rol_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-new-business-rol/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_new_business_rol_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-new-business-rol/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_rol_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-rol/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_rol_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-rol/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-sales-order-otd/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/commercial-sales-order-otd/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_engineering_projects_on_time_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/engineering-projects-on-time/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_engineering_projects_on_time_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/engineering-projects-on-time/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_engineering_transforma_plus_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/engineering-transforma-plus/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_engineering_transforma_plus_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/engineering-transforma-plus/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_financial_ebitda_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-ebitda/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_financial_ebitda_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-ebitda/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_financial_fixed_cost_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-fixed-cost/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_financial_fixed_cost_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-fixed-cost/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_financial_pmr_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-pmr/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_financial_pmr_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/financial-pmr/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_absenteeism_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-absenteeism/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_absenteeism_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-absenteeism/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_pdi_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-pdi/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_pdi_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-pdi/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_performance_reviews_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-performance-reviews/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_performance_reviews_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-performance-reviews/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_satisfaction_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-satisfaction/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_satisfaction_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-satisfaction/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_training_hours_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-training-hours/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_training_hours_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-training-hours/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_turnover_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-turnover/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_hr_turnover_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/hr-turnover/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_costs_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-costs/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_costs_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-costs/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_depreciation_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-depreciation/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_depreciation_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-depreciation/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_direct_labor_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-direct-labor/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_direct_labor_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-direct-labor/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_oee_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-oee/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_oee_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-oee/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_otd_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-otd/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_production_otd_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/production-otd/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_audit_5s_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-audit-5s/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_audit_5s_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-audit-5s/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_financial_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-kaizen-financial/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_financial_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-kaizen-financial/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-kaizen-ideas/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-kaizen-ideas/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-external/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-external-plugs/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-external-plugs/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_external_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-external/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-internal/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-internal-plugs/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-internal-plugs/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_quality_ppm_internal_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/quality-ppm-internal/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_cpv_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-cpv/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_cpv_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-cpv/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-negotiation-savings/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-negotiation-savings/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_otd_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-otd/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_otd_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-otd/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_turnover_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-stock-turnover/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_turnover_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-stock-turnover/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_value_meta",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-stock-value/meta",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_meta",
-      "shape": "scalar",
-      "status": "covered"
-    },
-    {
-      "operationId": "get_si_indicator_supplies_stock_value_realized",
-      "method": "GET",
-      "path": "/dashboard/indicators/supplies-stock-value/realized",
-      "module": "dashboard",
-      "entity": "dashboard_si_indicator_realized",
-      "shape": "scalar",
       "status": "covered"
     }
   ]

@@ -1329,10 +1329,10 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "indicators",
       "tvConstraints": {
         "maxRows": 20
       },
+      "tableFields": "indicators",
       "valueFields": [
         "idd",
         "score"
@@ -1353,21 +1353,6 @@
       "description": "Lista cada departamento com IDD e indicadores aninhados (metas e realizado) no período.",
       "whenToUse": "Usar para painel completo de IDDs com metas e realizado por indicador.",
       "paramSchema": {
-        "department_id": {
-          "type": "string",
-          "optional": true,
-          "label": "Departamento",
-          "enum": [
-            "commercial",
-            "engineering",
-            "financial",
-            "hr",
-            "production",
-            "quality",
-            "supplies"
-          ],
-          "description": "Identificador do departamento no painel IDD."
-        },
         "competence": {
           "type": "string",
           "optional": true,
@@ -1396,6 +1381,21 @@
           ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
+        },
+        "department_id": {
+          "type": "string",
+          "optional": true,
+          "label": "Departamento",
+          "enum": [
+            "commercial",
+            "engineering",
+            "financial",
+            "hr",
+            "production",
+            "quality",
+            "supplies"
+          ],
+          "description": "Identificador do departamento no painel IDD."
         }
       },
       "paramStrategy": "date_range",
@@ -1406,10 +1406,10 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 20
       },
+      "tableFields": "items",
       "valueFields": [
         "idd",
         "score"
@@ -1451,6 +1451,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1463,15 +1467,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_closing_rate_realized",
@@ -1509,6 +1513,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1521,15 +1529,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_meta",
@@ -1567,6 +1575,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1579,15 +1591,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_new_business_rol_realized",
@@ -1625,6 +1637,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1637,15 +1653,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_rol_meta",
@@ -1683,6 +1699,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1695,15 +1715,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_rol_realized",
@@ -1741,6 +1761,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1753,15 +1777,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_meta",
@@ -1799,6 +1823,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1811,15 +1839,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_commercial_sales_order_otd_realized",
@@ -1857,6 +1885,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1869,15 +1901,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_meta",
@@ -1915,6 +1947,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1927,15 +1963,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_projects_on_time_realized",
@@ -1973,6 +2009,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -1985,15 +2025,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_meta",
@@ -2031,6 +2071,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2043,15 +2087,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_engineering_transforma_plus_realized",
@@ -2089,6 +2133,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2101,15 +2149,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_meta",
@@ -2147,6 +2195,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2159,15 +2211,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_ebitda_realized",
@@ -2205,6 +2257,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2217,15 +2273,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_meta",
@@ -2263,6 +2319,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2275,15 +2335,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_fixed_cost_realized",
@@ -2321,6 +2381,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2333,15 +2397,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_pmr_meta",
@@ -2379,6 +2443,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2391,15 +2459,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_financial_pmr_realized",
@@ -2437,6 +2505,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2449,15 +2521,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_meta",
@@ -2495,6 +2567,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2507,15 +2583,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_absenteeism_realized",
@@ -2553,6 +2629,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2565,15 +2645,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_pdi_meta",
@@ -2611,6 +2691,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2623,15 +2707,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_pdi_realized",
@@ -2669,6 +2753,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2681,15 +2769,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_meta",
@@ -2727,6 +2815,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2739,15 +2831,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_performance_reviews_realized",
@@ -2785,6 +2877,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2797,15 +2893,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_meta",
@@ -2843,6 +2939,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2855,15 +2955,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_satisfaction_realized",
@@ -2901,6 +3001,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2913,15 +3017,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_meta",
@@ -2959,6 +3063,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -2971,15 +3079,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_training_hours_realized",
@@ -3017,6 +3125,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3029,15 +3141,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_turnover_meta",
@@ -3075,6 +3187,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3087,15 +3203,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_hr_turnover_realized",
@@ -3133,6 +3249,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3145,15 +3265,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_costs_meta",
@@ -3191,6 +3311,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3203,15 +3327,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_costs_realized",
@@ -3249,6 +3373,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3261,15 +3389,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_depreciation_meta",
@@ -3307,6 +3435,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3319,15 +3451,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_depreciation_realized",
@@ -3365,6 +3497,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3377,15 +3513,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_meta",
@@ -3423,6 +3559,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3435,15 +3575,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_direct_labor_realized",
@@ -3481,6 +3621,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3493,15 +3637,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_oee_meta",
@@ -3539,6 +3683,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3551,15 +3699,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_oee_realized",
@@ -3597,6 +3745,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3609,15 +3761,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_otd_meta",
@@ -3655,6 +3807,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3667,15 +3823,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_production_otd_realized",
@@ -3713,6 +3869,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3725,15 +3885,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_meta",
@@ -3771,6 +3931,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3783,15 +3947,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_audit_5s_realized",
@@ -3829,6 +3993,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3841,15 +4009,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_meta",
@@ -3887,6 +4055,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3899,15 +4071,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_financial_realized",
@@ -3945,6 +4117,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -3957,15 +4133,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_meta",
@@ -4003,6 +4179,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4015,15 +4195,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_kaizen_ideas_realized",
@@ -4061,6 +4241,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4073,15 +4257,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_meta",
@@ -4119,6 +4303,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4131,15 +4319,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_plugs_realized",
@@ -4177,6 +4365,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4189,15 +4381,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_meta",
@@ -4235,6 +4427,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4247,15 +4443,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_external_realized",
@@ -4293,6 +4489,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4305,15 +4505,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_meta",
@@ -4351,6 +4551,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4363,15 +4567,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_plugs_realized",
@@ -4409,6 +4613,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4421,15 +4629,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_meta",
@@ -4467,6 +4675,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4479,15 +4691,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_quality_ppm_internal_realized",
@@ -4525,6 +4737,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4537,15 +4753,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_meta",
@@ -4583,6 +4799,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4595,15 +4815,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_cpv_realized",
@@ -4641,6 +4861,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4653,15 +4877,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_meta",
@@ -4699,6 +4923,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4711,15 +4939,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_negotiation_savings_realized",
@@ -4757,6 +4985,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4769,15 +5001,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_otd_meta",
@@ -4815,6 +5047,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4827,15 +5063,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_otd_realized",
@@ -4873,6 +5109,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4885,15 +5125,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_meta",
@@ -4931,6 +5171,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -4943,15 +5187,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_turnover_realized",
@@ -4989,6 +5233,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -5001,15 +5249,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_meta",
@@ -5047,6 +5295,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -5059,15 +5311,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "get_si_indicator_supplies_stock_value_realized",
@@ -5105,6 +5357,10 @@
           "type": "string",
           "optional": true,
           "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
           "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
           "default": "01"
         }
@@ -5117,15 +5373,15 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "valueFields": [
-        "value"
-      ],
+      "tvConstraints": {
+        "maxRows": 1
+      },
       "valueFieldTypes": {
         "value": "number"
       },
-      "tvConstraints": {
-        "maxRows": 1
-      }
+      "valueFields": [
+        "value"
+      ]
     },
     {
       "operationId": "list_lmps",
@@ -8387,6 +8643,12 @@
           "label": "Produto",
           "description": "Código ou identificador do produto."
         },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        },
         "page": {
           "type": "integer",
           "optional": true,
@@ -8476,6 +8738,12 @@
           "optional": true,
           "label": "Produto",
           "description": "Código ou identificador do produto."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
         },
         "page": {
           "type": "integer",
@@ -9346,6 +9614,73 @@
       }
     },
     {
+      "operationId": "list_production_machine_program_top_intermediates",
+      "httpMethod": "GET",
+      "label": "Intermediários para programas de máquina",
+      "category": "production",
+      "path": "/production/machine-programs/top-intermediates",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Ranking de PIs apontados (SH6010) com PA, CT de corte (SG2 op 01) e flag de OP aberta.",
+      "whenToUse": "Ao cadastrar produtos nos programas das máquinas com base no volume recente.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "date_start": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período consultado (AAAA-MM-DD)."
+        },
+        "date_end": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período consultado (AAAA-MM-DD)."
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "page_size": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 10,
+          "description": "Quantidade de linhas por página."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "date_start",
+        "date_end"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
       "operationId": "get_production_oee",
       "httpMethod": "GET",
       "label": "OEE produção — resumo e apontamentos (view fabril)",
@@ -9553,12 +9888,24 @@
       "defaultParams": {
         "periodDays": 7
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "tvConstraints": {
         "requiresBranchPermission": true
       },
+      "valueFieldTypes": {
+        "periodo": "date",
+        "sort_key": "string",
+        "date_start": "date",
+        "date_end": "date",
+        "oee_filial_01": "number",
+        "oee_filial_02": "number"
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "valueFields": [
+        "oee_filial_01",
+        "oee_filial_02"
+      ],
       "suggestedTransformSteps": [
         {
           "op": "select",
@@ -9574,19 +9921,7 @@
           "direction": "asc"
         }
       ],
-      "seriesField": "points",
-      "valueFields": [
-        "oee_filial_01",
-        "oee_filial_02"
-      ],
-      "valueFieldTypes": {
-        "periodo": "date",
-        "sort_key": "string",
-        "date_start": "date",
-        "date_end": "date",
-        "oee_filial_01": "number",
-        "oee_filial_02": "number"
-      }
+      "seriesField": "points"
     },
     {
       "operationId": "get_on_time_delivery_pct",
@@ -9992,13 +10327,9 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "fixedQueryParams": {
-        "granularity": "day"
-      },
       "tvConstraints": {
         "requiresBranchPermission": true
       },
-      "seriesField": "points",
       "valueFieldTypes": {
         "periodo": "date",
         "sort_key": "string",
@@ -10006,7 +10337,11 @@
         "date_end": "date",
         "otd_filial_01": "number",
         "otd_filial_02": "number"
-      }
+      },
+      "fixedQueryParams": {
+        "granularity": "day"
+      },
+      "seriesField": "points"
     },
     {
       "operationId": "get_overall_equipment_effectiveness_pct",
@@ -10597,14 +10932,14 @@
         }
       },
       "paramStrategy": "direct",
-      "defaultParams": {
-        "page": 1,
-        "page_size": 5
-      },
-      "tableFields": "items",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": false
+      },
+      "tableFields": "items",
+      "defaultParams": {
+        "page": 1,
+        "page_size": 5
       }
     },
     {
@@ -14638,6 +14973,83 @@
       "paramStrategy": "direct"
     },
     {
+      "operationId": "get_refugos_custo_x_rol",
+      "httpMethod": "GET",
+      "label": "Custo de refugo × ROL",
+      "category": "quality",
+      "path": "/refugos/custo-x-rol",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Custo de refugo sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (mp, pa, op, motivo, centro de trabalho) aplicam-se só ao numerador de refugo.",
+      "whenToUse": "Usar no card KPI de custo de refugo como percentual do ROL. Prefira a mesma filial e período de /refugos/resumo e /financial/rol.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        },
+        "mp": {
+          "type": "string",
+          "optional": true,
+          "label": "Matéria-prima",
+          "description": "Filtro por código de matéria-prima."
+        },
+        "pa": {
+          "type": "string",
+          "optional": true,
+          "label": "Produto acabado",
+          "description": "Filtro por código de produto acabado."
+        },
+        "op": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordem de produção",
+          "description": "Número da ordem de produção (OP)."
+        },
+        "motivo": {
+          "type": "string",
+          "optional": true,
+          "label": "Motivo",
+          "description": "Filtro por código de motivo (CYO)."
+        },
+        "centroTrabalho": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de trabalho",
+          "description": "Filtro por centro de trabalho."
+        }
+      },
+      "paramStrategy": "date_range",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
       "operationId": "get_refugos_filtros",
       "httpMethod": "GET",
       "label": "Indicador — Refugos filtros",
@@ -15053,6 +15465,169 @@
       }
     },
     {
+      "operationId": "list_report_definitions",
+      "httpMethod": "GET",
+      "label": "List Report Definitions",
+      "category": "other",
+      "path": "/reports/definitions",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_report_definition",
+      "httpMethod": "GET",
+      "label": "Get Report Definition",
+      "category": "other",
+      "path": "/reports/definitions/{definition_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_report_recipients",
+      "httpMethod": "GET",
+      "label": "List Report Recipients",
+      "category": "other",
+      "path": "/reports/definitions/{definition_id}/recipients",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "get_report_schedule",
+      "httpMethod": "GET",
+      "label": "Get Report Schedule",
+      "category": "other",
+      "path": "/reports/definitions/{definition_id}/schedule",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
+      "operationId": "list_report_providers",
+      "httpMethod": "GET",
+      "label": "List Report Providers",
+      "category": "other",
+      "path": "/reports/providers",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list"
+    },
+    {
+      "operationId": "preview_report_provider_safety_stock_shortage_30d",
+      "httpMethod": "GET",
+      "label": "Preview Safety Stock Shortage 30D",
+      "category": "other",
+      "path": "/reports/providers/safety_stock_shortage_30d/preview",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "horizonDays": {
+          "type": "integer",
+          "optional": true,
+          "label": "Horizondays",
+          "default": 30
+        },
+        "includeBlocked": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir bloqueados",
+          "default": false,
+          "description": "Inclui materiais bloqueados quando verdadeiro."
+        },
+        "productGroup": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupo de produto",
+          "description": "Filtro por grupo de produto (B1_GRUPO)."
+        },
+        "unit": {
+          "type": "string",
+          "optional": true,
+          "label": "Unidade",
+          "description": "Filtro por unidade de medida (B1_UM)."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        },
+        "includeWithoutSafetyStock": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir sem estoque de segurança",
+          "default": true,
+          "description": "Inclui matérias-primas sem estoque de segurança cadastrado."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "list_report_runs",
+      "httpMethod": "GET",
+      "label": "List Report Runs",
+      "category": "other",
+      "path": "/reports/runs",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "paramSchema": {
+        "definitionId": {
+          "type": "string",
+          "optional": true,
+          "label": "Definitionid"
+        },
+        "limit": {
+          "type": "integer",
+          "optional": true,
+          "label": "Limite",
+          "default": 50,
+          "description": "Máximo de registros retornados pela API (ranking ou listagem truncada)."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_report_run",
+      "httpMethod": "GET",
+      "label": "Get Report Run",
+      "category": "other",
+      "path": "/reports/runs/{run_id}",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar"
+    },
+    {
       "operationId": "get_retrabalhos_colaboradores",
       "httpMethod": "GET",
       "label": "Lista — Retrabalho horas improdutivas colaboradores",
@@ -15126,6 +15701,71 @@
         }
       },
       "paramStrategy": "direct",
+      "dateRangeKeys": [
+        "dataInicio",
+        "dataFim"
+      ],
+      "defaultParams": {
+        "periodDays": 30
+      }
+    },
+    {
+      "operationId": "get_retrabalhos_custo_x_rol",
+      "httpMethod": "GET",
+      "label": "Custo de retrabalho × ROL",
+      "category": "quality",
+      "path": "/retrabalhos/custo-x-rol",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Custo de retrabalho sobre o ROL financeiro (com IPI) por filial e período. Filtros opcionais (recurso, centro de custo, operador) aplicam-se só ao numerador de retrabalho.",
+      "whenToUse": "Usar no card KPI de custo de retrabalho como percentual do ROL. Prefira a mesma filial e período de /retrabalhos/resumo e /financial/rol.",
+      "paramSchema": {
+        "filial": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02).",
+          "default": "01"
+        },
+        "dataInicio": {
+          "type": "string",
+          "optional": true,
+          "label": "Data início",
+          "description": "Data inicial do período (AAAA-MM-DD)."
+        },
+        "dataFim": {
+          "type": "string",
+          "optional": true,
+          "label": "Data fim",
+          "description": "Data final do período (AAAA-MM-DD)."
+        },
+        "recurso": {
+          "type": "string",
+          "optional": true,
+          "label": "Recurso",
+          "description": "Código do recurso de produção."
+        },
+        "centroCusto": {
+          "type": "string",
+          "optional": true,
+          "label": "Centro de custo",
+          "description": "Código do centro de custo no Protheus."
+        },
+        "codigoOperador": {
+          "type": "string",
+          "optional": true,
+          "label": "Código do operador",
+          "description": "Código do operador no Protheus."
+        }
+      },
+      "paramStrategy": "date_range",
       "dateRangeKeys": [
         "dataInicio",
         "dataFim"
@@ -15947,6 +16587,181 @@
       }
     },
     {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_items",
+      "httpMethod": "GET",
+      "label": "Lista paginada — Itens da análise de consumo e estoque de segurança sugerido",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/consumption-analysis/items",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "paged_list",
+      "description": "Retorna itens da análise de consumo e estoque de segurança sugerido via API DELPI. Lista paginada de registros. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável. Suporta paginação (page, page_size).",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "page": {
+          "type": "integer",
+          "optional": true,
+          "label": "Página",
+          "default": 1,
+          "description": "Número da página na listagem paginada."
+        },
+        "pageSize": {
+          "type": "integer",
+          "optional": true,
+          "label": "Tamanho da página",
+          "default": 50,
+          "description": "Quantidade de linhas por página."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        },
+        "analysisStatus": {
+          "type": "string",
+          "optional": true,
+          "label": "Analysisstatus",
+          "description": "Filtro da análise: below_suggested, above_suggested, adequate ou inconsistent_data."
+        },
+        "productGroup": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupo de produto",
+          "description": "Filtro por grupo de produto (B1_GRUPO)."
+        },
+        "unit": {
+          "type": "string",
+          "optional": true,
+          "label": "Unidade",
+          "description": "Filtro por unidade de medida (B1_UM)."
+        },
+        "includeBlocked": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir bloqueados",
+          "default": false,
+          "description": "Inclui materiais bloqueados quando verdadeiro."
+        },
+        "sortBy": {
+          "type": "string",
+          "optional": true,
+          "label": "Ordenar por",
+          "default": "difference_quantity",
+          "description": "Campo de ordenação permitido."
+        },
+        "sortDirection": {
+          "type": "string",
+          "optional": true,
+          "label": "Direção",
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "description": "Direção da ordenação: asc ou desc."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_item_details",
+      "httpMethod": "GET",
+      "label": "Análise consolidada — Detalhe da análise de consumo com série mensal e memória de cálculo",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/consumption-analysis/items/{code}",
+      "allowedDisplayModes": [
+        "table",
+        "auto"
+      ],
+      "metaShape": "composite_analysis",
+      "description": "Retorna detalhe da análise de consumo com série mensal e memória de cálculo via API DELPI. Visão consolidada com múltiplas seções. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
+      "operationId": "get_supplies_safety_stock_consumption_analysis_summary",
+      "httpMethod": "GET",
+      "label": "Indicador — Resumo da análise de consumo versus estoque de segurança sugerido",
+      "category": "supplies",
+      "path": "/supplies/safety-stock/consumption-analysis/summary",
+      "allowedDisplayModes": [
+        "kpi",
+        "auto"
+      ],
+      "metaShape": "scalar",
+      "description": "Retorna resumo da análise de consumo versus estoque de segurança sugerido via API DELPI. Indicador agregado ou KPI pontual. Domínio: Suprimentos. Filtros comuns: filial (branch), date_start/date_end ou start_date/end_date quando aplicável.",
+      "paramSchema": {
+        "branch": {
+          "type": "string",
+          "optional": true,
+          "label": "Filial",
+          "enum": [
+            "01",
+            "02"
+          ],
+          "description": "Código da filial no Protheus (ex.: 01 ou 02). Vazio usa o consolidado da rota, quando permitido.",
+          "default": "01"
+        },
+        "includeBlocked": {
+          "type": "boolean",
+          "optional": true,
+          "label": "Incluir bloqueados",
+          "default": false,
+          "description": "Inclui materiais bloqueados quando verdadeiro."
+        },
+        "productGroup": {
+          "type": "string",
+          "optional": true,
+          "label": "Grupo de produto",
+          "description": "Filtro por grupo de produto (B1_GRUPO)."
+        },
+        "unit": {
+          "type": "string",
+          "optional": true,
+          "label": "Unidade",
+          "description": "Filtro por unidade de medida (B1_UM)."
+        },
+        "search": {
+          "type": "string",
+          "optional": true,
+          "label": "Busca",
+          "description": "Texto livre de busca."
+        },
+        "analysisStatus": {
+          "type": "string",
+          "optional": true,
+          "label": "Analysisstatus",
+          "description": "Filtro da análise: below_suggested, above_suggested, adequate ou inconsistent_data."
+        }
+      },
+      "paramStrategy": "direct"
+    },
+    {
       "operationId": "get_supplies_safety_stock_filters",
       "httpMethod": "GET",
       "label": "Indicador — Filtros de estoque de segurança",
@@ -16334,11 +17149,11 @@
       "defaultParams": {
         "periodDays": 30
       },
-      "tableFields": "top_products",
       "tvConstraints": {
         "maxRows": 6,
         "requiresBranchPermission": true
       },
+      "tableFields": "top_products",
       "valueFields": [
         "value",
         "stockValue",
@@ -16655,7 +17470,7 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Consulta índices (SIX010)»."
     },
     {
@@ -16668,7 +17483,7 @@
         "kpi",
         "auto"
       ],
-      "metaShape": "scalar",
+      "metaShape": "paged_list",
       "description": "Indicador numérico para «Consulta relacionamentos (SX9010)»."
     },
     {

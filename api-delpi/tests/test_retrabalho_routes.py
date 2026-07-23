@@ -31,6 +31,7 @@ def test_router_exposes_all_endpoints(retrabalho_client: TestClient) -> None:
     assert router.prefix == "/retrabalhos"
     assert "/retrabalhos/health" in paths
     assert "/retrabalhos/resumo" in paths
+    assert "/retrabalhos/custo-x-rol" in paths
     assert "/retrabalhos/mensal" in paths
     assert "/retrabalhos/detalhes" in paths
 
@@ -66,6 +67,40 @@ def test_resumo_returns_envelope(mock_builder, _mock_branch, retrabalho_client: 
     assert body["meta"]["shape"] == "scalar"
     assert body["meta"]["dataVersion"] == DATA_VERSION
     assert body["data"]["totalApontamentos"] == 10
+
+
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.branch_access_error",
+    return_value=None,
+)
+@patch(
+    "app.interface.http.routes.retrabalho.retrabalho_router.build_get_retrabalho_custo_x_rol_use_case"
+)
+def test_custo_x_rol_returns_envelope(
+    mock_builder, _mock_branch, retrabalho_client: TestClient
+) -> None:
+    use_case = MagicMock()
+    use_case.execute.return_value = {
+        "custoRetrabalho": 1500.0,
+        "rolWithIpi": 100_000.0,
+        "custoSobreRolPct": 1.5,
+    }
+    mock_builder.return_value = use_case
+
+    response = retrabalho_client.get(
+        "/retrabalhos/custo-x-rol",
+        params={"filial": "01", "dataInicio": "2026-06-01", "dataFim": "2026-06-30"},
+    )
+    body = _body(response)
+
+    assert response.status_code == 200
+    assert body["success"] is True
+    assert body["meta"]["operationId"] == "get_retrabalhos_custo_x_rol"
+    assert body["meta"]["entity"] == "retrabalho_custo_x_rol"
+    assert body["meta"]["shape"] == "scalar"
+    assert body["meta"]["dataVersion"] == DATA_VERSION
+    assert body["data"]["custoSobreRolPct"] == 1.5
+    assert "custoSobreRolPct" in (body["meta"].get("fields") or {})
 
 
 @patch(
